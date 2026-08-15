@@ -1,20 +1,20 @@
-// PM2 — UniPrésence
+// PM2 — University
 module.exports = {
   apps: [
     {
-      name: 'unipresence-api',
-      cwd: '/opt/apps/unipresence/backend',
+      name: 'university-api',
+      cwd: '/opt/apps/university/backend',
       script: 'dist/main.js',
       interpreter: 'node',
       instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 5031,
+        PORT: 5081,
       },
       max_memory_restart: '400M',
-      error_file: '/var/log/pm2/unipresence-api-error.log',
-      out_file: '/var/log/pm2/unipresence-api-out.log',
+      error_file: '/var/log/pm2/university-api-error.log',
+      out_file: '/var/log/pm2/university-api-out.log',
     },
   ],
 };
