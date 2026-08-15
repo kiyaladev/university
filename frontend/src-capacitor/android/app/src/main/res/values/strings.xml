@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">UniPrésence</string>
+    <string name="title_activity_main">UniPrésence</string>
+    <string name="package_name">gn.unipresence.controle</string>
+    <string name="custom_url_scheme">gn.unipresence.controle</string>
+</resources>

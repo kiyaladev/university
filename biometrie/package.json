@@ -1,0 +1,11 @@
+{
+  "name": "unipresence-biometrie",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Passerelle locale entre le lecteur d'empreintes et UniPrésence",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch src/index.ts"
+  }
+}

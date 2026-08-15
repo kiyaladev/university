@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Variante « maskable » : Android rogne l'icône en cercle, en goutte ou en
+  écusson selon le lanceur. Tout ce qui compte tient donc dans les 80 % centraux,
+  et le champ d'encre déborde jusqu'aux bords pour qu'aucun angle ne se vide.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#10251E" />
+
+
+  <!-- Zone sûre : 102 → 410. La coche y tient entièrement. -->
+  <path d="M170 266 L232 328 L346 208" fill="none" stroke="#FAFAF7" stroke-width="40"
+        stroke-linecap="square" stroke-linejoin="miter" />
+
+  <rect x="146" y="366" width="74" height="20" fill="#C4122E" />
+  <rect x="220" y="366" width="74" height="20" fill="#EFB700" />
+  <rect x="294" y="366" width="74" height="20" fill="#0F7A45" />
+</svg>

@@ -1,0 +1,52 @@
+{
+  "name": "unipresence-frontend",
+  "version": "1.0.0",
+  "description": "UniPrésence — contrôle numérique de présence des enseignants",
+  "productName": "UniPrésence",
+  "author": "UniPrésence",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "quasar dev -m pwa",
+    "build": "quasar build -m pwa",
+    "build:spa": "quasar build",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test:e2e": "node tests/smoke.mjs",
+    "test:pwa": "node tests/pwa.mjs",
+    "postinstall": "quasar prepare"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/anton": "^5.3.0",
+    "@quasar/extras": "^1.16.12",
+    "axios": "^1.7.9",
+    "chart.js": "^4.4.7",
+    "pinia": "^3.0.1",
+    "qrcode": "^1.5.4",
+    "quasar": "^2.17.0",
+    "register-service-worker": "^1.7.2",
+    "vue": "^3.5.13",
+    "vue-router": "^4.4.5"
+  },
+  "devDependencies": {
+    "@quasar/app-vite": "^2.1.0",
+    "@types/node": "^22.10.0",
+    "@types/qrcode": "^1.5.5",
+    "autoprefixer": "^10.4.20",
+    "playwright": "^1.62.1",
+    "sass-embedded": "^1.83.0",
+    "typescript": "^5.7.0",
+    "vue-tsc": "^2.2.0",
+    "workbox-build": "^7.0.0",
+    "workbox-cacheable-response": "^7.0.0",
+    "workbox-core": "^7.0.0",
+    "workbox-expiration": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
+    "workbox-routing": "^7.0.0",
+    "workbox-strategies": "^7.0.0"
+  },
+  "engines": {
+    "node": "^28 || ^26 || ^24 || ^22 || ^20"
+  }
+}

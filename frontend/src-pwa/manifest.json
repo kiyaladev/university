@@ -1,0 +1,64 @@
+{
+  "id": "/",
+  "name": "UniPrésence — contrôle des séances",
+  "short_name": "UniPrésence",
+  "description": "Le registre du contrôleur pédagogique : la tournée du jour, salle par salle, avec attestation de l'enseignant en salle. Fonctionne hors ligne.",
+  "lang": "fr",
+  "dir": "ltr",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "start_url": "./index.html",
+  "scope": "./",
+  "background_color": "#E4E6DE",
+  "theme_color": "#10251E",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-256x256.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ma tournée du jour",
+      "short_name": "Tournée",
+      "description": "Ouvrir la feuille de contrôle des séances du jour",
+      "url": "./index.html#/controle",
+      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

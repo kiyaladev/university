@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icône UniPrésence : une plaque du panneau. Champ d'encre, liséré clair en
+  retrait (la double règle des plaques émaillées), la coche du pointage tracée
+  à la craie, et les trois couleurs nationales en bas de plaque.
+  Source de toutes les tailles PNG du dossier icons/.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#10251E" />
+
+
+  <!-- Liséré en retrait -->
+  <rect x="34" y="34" width="444" height="444" fill="none" stroke="#FAFAF7" stroke-width="10" stroke-opacity="0.85" />
+
+  <!-- La coche du pointage, tracée d'un seul geste -->
+  <path d="M150 268 L226 344 L372 186" fill="none" stroke="#FAFAF7" stroke-width="46"
+        stroke-linecap="square" stroke-linejoin="miter" />
+
+  <!-- Les trois couleurs, en pied de plaque -->
+  <g>
+    <rect x="34" y="418" width="148" height="26" fill="#C4122E" />
+    <rect x="182" y="418" width="148" height="26" fill="#EFB700" />
+    <rect x="330" y="418" width="148" height="26" fill="#0F7A45" />
+  </g>
+</svg>

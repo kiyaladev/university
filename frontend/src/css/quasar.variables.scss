@@ -1,0 +1,45 @@
+// UniPrésence — palette « panneau peint », aux couleurs du drapeau guinéen.
+// Rouge, jaune, vert : employés légèrement, c'est-à-dire réservés aux ÉTATS
+// (présent, retard, absent et leurs variantes). Les surfaces, les actions et la
+// structure restent en encre et en chaux — sans quoi trois couleurs saturées
+// partout rendraient le panneau illisible en plein soleil.
+
+// Encre et fonds
+$encre:        #10251E; // vert-noir des filets, du lettrage et des actions
+$encre-douce:  #33463F;
+$chaux:        #E4E6DE; // fond du panneau, mur chaulé
+$chaux-claire: #F2F3EE; // plaques
+$blanc-craie:  #FAFAF7;
+
+// Les trois peintures du drapeau, ajustées pour tenir le contraste au soleil
+$vert:   #0F7A45; // séance assurée
+$jaune:  #EFB700; // retard, attente
+$rouge:  #C4122E; // absence, refus
+
+// Variantes : une nuance plus claire ou plus profonde de la même famille,
+// jamais une quatrième teinte.
+$vert-clair:  #3E9E6C; // séance assurée par un remplaçant
+$jaune-fonce: #C98A00; // départ anticipé
+$rouge-clair: #E0574F; // absence excusée
+
+// Rôles Quasar. L'action primaire est l'encre : si elle prenait l'une des trois
+// peintures, on ne distinguerait plus « à faire » de « fait ».
+$primary:   $encre;
+$secondary: $vert;
+$accent:    $jaune;
+
+$dark:      #12291F;
+$dark-page: #0D1F18;
+
+$positive:  $vert;
+$negative:  $rouge;
+$info:      $encre-douce;
+$warning:   $jaune;
+
+// Le panneau n'a pas d'angles arrondis : la peinture suit la règle.
+$generic-border-radius: 0;
+$button-border-radius: 0;
+$chip-border-radius: 0;
+$card-border-radius: 0;
+
+$typography-font-family: 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;

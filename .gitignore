@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.quasar/
+*.log
+.env
+.env.local
+coverage/
+.DS_Store
+
+# Android / Capacitor
+frontend/src-capacitor/www/
+frontend/src-capacitor/android/.gradle/
+frontend/src-capacitor/android/build/
+frontend/src-capacitor/android/app/build/
+frontend/src-capacitor/android/local.properties
+frontend/src-capacitor/android/capacitor-cordova-android-plugins/
+frontend/src-capacitor/android/app/src/main/assets/public/
+frontend/src-capacitor/android/app/libs/*.aar
+
+# Clé de signature de l'APK et APK publié : ne doivent jamais être versionnés.
+# Perdre la clé interdit toute mise à jour de l'application installée.
+android-cle/
+telechargement/
+
+# Sauvegardes de la base
+backups/
