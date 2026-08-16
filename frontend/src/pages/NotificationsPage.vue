@@ -19,66 +19,87 @@
       <q-tab name="historique" icon="history" label="Historique" no-caps />
     </q-tabs>
 
-    <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
-      <!-- ------------------------------------------------------- Diffusion -->
-      <q-tab-panel name="diffusion" class="q-pa-none">
-        <div class="notifications__diffusion">
-          <!-- Diffusion manuelle -->
-          <section class="plaque notif-bloc">
-            <h2 class="pochoir section-titre">Avis général</h2>
+    <!-- ============================================================== -->
+    <!-- DIFFUSION                                                         -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'diffusion'" name="diffusion" class="q-pa-none q-mt-md">
+      <div class="notifications__diffusion">
+        <!-- Diffusion manuelle -->
+        <section class="plaque notif-bloc">
+          <h2 class="pochoir section-titre">Avis général</h2>
 
-            <q-select
-              v-model="motif"
-              :options="motifs"
-              outlined
-              dense
-              emit-value
-              map-options
-              label="Motif"
+          <q-select
+            v-model="motif"
+            :options="motifs"
+            outlined
+            dense
+            emit-value
+            map-options
+            label="Motif"
+          />
+
+          <p class="pochoir notif-bloc__titre">Destinataires</p>
+          <q-option-group
+            v-model="destination"
+            :options="optionsDestinataires"
+            dense
+            class="q-mb-sm"
+          />
+
+          <q-input
+            v-if="destination === 'numeros'"
+            v-model="numerosSaisis"
+            type="textarea"
+            outlined
+            dense
+            label="Numéros, un par ligne (ou séparés par une virgule)"
+            :rules="[
+              (v) =>
+                v
+                  ? v
+                      .split(/[\s,;]+/)
+                      .filter(Boolean)
+                      .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
+                    || 'Certains numéros semblent invalides'
+                  : true,
+            ]"
+          />
+
+          <q-input
+            v-model="message"
+            type="textarea"
+            outlined
+            label="Message"
+            maxlength="160"
+            counter
+            :rules="[(v) => !!v || 'Le message est requis']"
+          >
+            <template #hint>Un SMS tient en 160 caractères</template>
+          </q-input>
+
+          <q-banner dense class="note--info">
+            <template #avatar><q-icon name="info" /></template>
+            <div v-if="destination === 'tous'">
+              Nombre de destinataires estimé : <strong>{{ nbInscrits }}</strong>
+            </div>
+            <div v-else-if="destination === 'numeros'">
+              {{ numerosComptes }} numéro(s) saisi(s)
+            </div>
+            <div v-else>
+              Diffusion des résultats de la délibération sélectionnée
+            </div>
+          </q-banner>
+
+          <div class="row q-gutter-sm">
+            <q-btn
+              outline
+              color="primary"
+              no-caps
+              icon="science"
+              label="Tester l'envoi"
+              :loading="testEnvoi"
+              @click="testerEnvoi"
             />
-
-            <p class="pochoir notif-bloc__titre">Destinataires</p>
-            <q-option-group
-              v-model="destination"
-              :options="[
-                { label: 'Tous les étudiants inscrits (année en cours)', value: 'tous' },
-                { label: 'Numéros saisis manuellement', value: 'numeros' },
-              ]"
-              dense
-              class="q-mb-sm"
-            />
-
-            <q-input
-              v-if="destination === 'numeros'"
-              v-model="numerosSaisis"
-              type="textarea"
-              outlined
-              dense
-              label="Numéros, un par ligne (ou séparés par une virgule)"
-              :rules="[
-                (v) =>
-                  v
-                    ? v
-                        .split(/[\s,;]+/)
-                        .filter(Boolean)
-                        .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
-                      || 'Certains numéros semblent invalides'
-                    : true,
-              ]"
-            />
-
-            <q-input
-              v-model="message"
-              type="textarea"
-              outlined
-              label="Message"
-              maxlength="160"
-              :counter="true"
-              :rules="[(v) => !!v || 'Le message est requis']"
-            >
-              <template #hint>Un SMS tient en 160 caractères</template>
-            </q-input>
-
             <q-btn
               unelevated
               color="primary"
@@ -88,143 +109,184 @@
               :loading="envoi"
               @click="envoyer"
             />
-          </section>
-
-          <!-- Résultats de délibération -->
-          <section class="plaque notif-bloc">
-            <h2 class="section-titre">Résultats de délibération</h2>
-            <p class="notif-bloc__aide">
-              Chaque étudiant ADMIS ou AJOURNÉ inscrit dans la délibération
-              reçoit sa moyenne et sa décision par SMS, sur le numéro de sa
-              fiche. Seules les délibérations validées par le jury peuvent
-              être diffusées.
-            </p>
-            <q-select
-              v-model="deliberationId"
-              :options="optionsDeliberations"
-              outlined
-              dense
-              emit-value
-              map-options
-              label="Délibération validée"
-              :loading="chargementDeliberations"
-            />
-            <q-btn
-              unelevated
-              color="secondary"
-              no-caps
-              icon="fact_check"
-              label="Diffuser les résultats"
-              :loading="envoiResultats"
-              :disable="!deliberationId"
-              @click="diffuserResultats"
-            />
-          </section>
-        </div>
-
-        <!-- Résumé du dernier envoi -->
-        <div v-if="resume" class="plaque notif-resume" :class="{ 'notif-resume--partiel': resume.echouees }">
-          <div class="notif-resume__cellule">
-            <p class="pochoir">Destinataires</p>
-            <p class="lettrage chiffres">{{ resume.total }}</p>
           </div>
-          <div class="notif-resume__cellule text-positive">
-            <p class="pochoir">Envoyés</p>
-            <p class="lettrage chiffres">{{ resume.envoyees }}</p>
-          </div>
-          <div class="notif-resume__cellule" :class="resume.echouees ? 'text-negative' : 'text-positive'">
-            <p class="pochoir">Échoués</p>
-            <p class="lettrage chiffres">{{ resume.echouees }}</p>
-          </div>
-        </div>
-      </q-tab-panel>
+        </section>
 
-      <!-- ------------------------------------------------------- Historique -->
-      <q-tab-panel name="historique" class="q-pa-none">
-        <div class="notifications__filtres">
+        <!-- Résultats de délibération -->
+        <section class="plaque notif-bloc">
+          <h2 class="section-titre">Résultats de délibération</h2>
+          <p class="notif-bloc__aide">
+            Chaque étudiant ADMIS ou AJOURNÉ inscrit dans la délibération
+            reçoit sa moyenne et sa décision par SMS, sur le numéro de sa
+            fiche. Seules les délibérations validées par le jury peuvent
+            être diffusées.
+          </p>
           <q-select
-            v-model="filtres.statut"
-            :options="optionsStatuts"
+            v-model="deliberationId"
+            :options="optionsDeliberations"
             outlined
             dense
+            emit-value
+            map-options
+            label="Délibération validée"
+            :loading="chargementDeliberations"
+          />
+          <q-btn
+            unelevated
+            color="secondary"
+            no-caps
+            icon="fact_check"
+            label="Diffuser les résultats"
+            :loading="envoiResultats"
+            :disable="!deliberationId"
+            @click="diffuserResultats"
+          />
+        </section>
+      </div>
+
+      <!-- Résumé du dernier envoi -->
+      <div v-if="resume" class="plaque notif-resume" :class="{ 'notif-resume--partiel': resume.echouees }">
+        <div class="notif-resume__cellule">
+          <p class="pochoir">Destinataires</p>
+          <p class="lettrage chiffres">{{ resume.total }}</p>
+        </div>
+        <div class="notif-resume__cellule text-positive">
+          <p class="pochoir">Envoyés</p>
+          <p class="lettrage chiffres">{{ resume.envoyees }}</p>
+        </div>
+        <div class="notif-resume__cellule" :class="resume.echouees ? 'text-negative' : 'text-positive'">
+          <p class="pochoir">Échoués</p>
+          <p class="lettrage chiffres">{{ resume.echouees }}</p>
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- ============================================================== -->
+    <!-- HISTORIQUE                                                        -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'historique'" name="historique" class="q-pa-none q-mt-md">
+      <filter-bar
+        v-model="filtresHistorique"
+        placeholder="Rechercher (téléphone, nom, message…)"
+        :recherche="true"
+        @reinitialiser="filtresHistorique = { recherche: '' }"
+      >
+        <template #avances>
+          <q-select
+            v-model="filtresHistorique.statut"
+            :options="optionsStatuts"
+            dense
+            outlined
             clearable
             emit-value
             map-options
             label="Statut"
-            style="min-width: 150px"
-            @update:model-value="chargerHistorique"
           />
           <q-input
-            v-model="filtres.recherche"
-            outlined
+            v-model="filtresHistorique.dateDebut"
+            type="date"
             dense
-            clearable
-            label="Rechercher (téléphone, nom…)"
-            style="min-width: 220px"
-            @keydown.enter="chargerHistorique"
-            @clear="chargerHistorique"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-          <q-btn round color="primary" icon="refresh" :loading="chargement" @click="chargerHistorique" />
-        </div>
+            outlined
+            label="Du"
+          />
+          <q-input
+            v-model="filtresHistorique.dateFin"
+            type="date"
+            dense
+            outlined
+            label="Au"
+          />
+        </template>
+      </filter-bar>
 
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="lignes"
-          :columns="colonnes"
-          row-key="id"
-          :loading="chargement"
-          :pagination="pagination"
-          @request="onRequete"
-        >
-          <template #body-cell-statut="p">
-            <q-td :props="p">
-              <q-chip
-                :color="couleurStatut[p.row.statut] ?? 'grey-8'"
-                text-color="white"
-                square
-                size="sm"
-              >
-                {{ LIBELLE_STATUT_NOTIFICATION[p.row.statut] }}
-              </q-chip>
-              <q-tooltip v-if="p.row.erreur" class="notif-erreur">
-                {{ p.row.erreur }}
-              </q-tooltip>
-            </q-td>
-          </template>
+      <pagination-bar
+        :page="pagination.page"
+        :page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-all="false"
+        @update:page="pagination.page = $event; chargerHistorique()"
+        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerHistorique()"
+        @tous="chargerToutHistorique"
+      />
 
-          <template #body-cell-message="p">
-            <q-td :props="p">
-              <q-btn flat dense no-caps align="left" class="notifications__message">
-                <span class="notifications__message-texte">{{ p.row.message }}</span>
-                <q-tooltip :offset="[0, 8]" class="notifications__message-complet">{{ p.row.message }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
+      <!-- Graphique de répartition -->
+      <q-card v-if="chartConfig" flat bordered class="carte q-mb-md">
+        <q-card-section>
+          <div class="text-subtitle1 text-weight-medium q-mb-sm">
+            Répartition sur 30 jours
+          </div>
+          <chart-canvas :config="chartConfig" :hauteur="220" />
+        </q-card-section>
+      </q-card>
 
-          <template #body-cell-destinataire="p">
-            <q-td :props="p">
-              <div class="notifications__qui">
-                <span v-if="p.row.destinataireNom">{{ p.row.destinataireNom }}</span>
-                <span class="pochoir pochoir--brut chiffres">{{ p.row.telephone }}</span>
-                <span v-if="p.row.etudiant?.matricule" class="pochoir pochoir--brut">
-                  {{ p.row.etudiant.matricule }}
-                </span>
-              </div>
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
-    </q-tab-panels>
+      <q-table
+        flat
+        bordered
+        class="carte"
+        :rows="lignes"
+        :columns="colonnes"
+        row-key="id"
+        :loading="chargement"
+        :rows-per-page-options="[0]"
+        hide-bottom
+      >
+        <template #body-cell-statut="p">
+          <q-td :props="p">
+            <q-chip
+              :color="couleurStatut[p.row.statut] ?? 'grey-8'"
+              text-color="white"
+              square
+              size="sm"
+            >
+              {{ LIBELLE_STATUT_NOTIFICATION[p.row.statut] }}
+            </q-chip>
+            <q-tooltip v-if="p.row.erreur" class="notif-erreur">
+              {{ p.row.erreur }}
+            </q-tooltip>
+          </q-td>
+        </template>
+
+        <template #body-cell-message="p">
+          <q-td :props="p">
+            <q-btn flat dense no-caps align="left" class="notifications__message">
+              <span class="notifications__message-texte">{{ p.row.message }}</span>
+              <q-tooltip :offset="[0, 8]" class="notifications__message-complet">{{ p.row.message }}</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+
+        <template #body-cell-destinataire="p">
+          <q-td :props="p">
+            <div class="notifications__qui">
+              <span v-if="p.row.destinataireNom">{{ p.row.destinataireNom }}</span>
+              <span class="pochoir pochoir--brut chiffres">{{ p.row.telephone }}</span>
+              <span v-if="p.row.etudiant?.matricule" class="pochoir pochoir--brut">
+                {{ p.row.etudiant.matricule }}
+              </span>
+            </div>
+          </q-td>
+        </template>
+
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn
+              v-if="p.row.statut === 'ECHOUE'"
+              flat dense round color="primary" icon="refresh"
+              @click="renvoyer(p.row)"
+            >
+              <q-tooltip>Renvoyer</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
+    </q-tab-panel>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import type { ChartConfiguration } from 'chart.js';
 import { api } from '../boot/axios';
 import {
   LIBELLE_SESSION_DELIBERATION,
@@ -233,6 +295,9 @@ import {
 } from '../utils/libelles';
 import type { Notification, StatutNotification } from '../types';
 import { useAuthStore } from '../stores/auth';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ChartCanvas from '../components/ChartCanvas.vue';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -249,18 +314,45 @@ const motifs = [
   { label: 'Autre', value: 'AUTRE' },
 ];
 
+const optionsDestinataires = [
+  { label: 'Tous les étudiants inscrits (année en cours)', value: 'tous' },
+  { label: 'Numéros saisis manuellement', value: 'numeros' },
+  { label: 'Résultats de délibération', value: 'resultatsDeliberation' },
+];
+
 const motif = ref('AVIS');
-const destination = ref<'tous' | 'numeros'>('tous');
+const destination = ref<'tous' | 'numeros' | 'resultatsDeliberation'>('tous');
 const numerosSaisis = ref('');
 const message = ref('');
 const envoi = ref(false);
+const testEnvoi = ref(false);
 const resume = ref<{ total: number; envoyees: number; echouees: number } | null>(null);
+
+const nbInscrits = ref(0);
+
+const numerosComptes = computed(() =>
+  numerosSaisis.value
+    .split(/[\s,;]+/)
+    .map((t) => t.trim())
+    .filter(Boolean).length,
+);
 
 function decouperNumeros(texte: string): string[] {
   return texte
     .split(/[\s,;]+/)
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+async function chargerNbInscrits() {
+  try {
+    const { data } = await api.get('/notifications/dest-inaires/estimes', {
+      params: { mode: 'tousInscrits' },
+    });
+    nbInscrits.value = data?.total ?? 0;
+  } catch {
+    nbInscrits.value = 0;
+  }
 }
 
 async function envoyer() {
@@ -276,6 +368,7 @@ async function envoyer() {
       motif: motif.value,
       tousInscrits: destination.value === 'tous',
       destinatairesTelephones: destination.value === 'numeros' ? numeros : undefined,
+      mode: destination.value === 'tous' ? 'tousInscrits' : 'manuel',
     });
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
@@ -288,6 +381,32 @@ async function envoyer() {
     $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Envoi impossible.' });
   } finally {
     envoi.value = false;
+  }
+}
+
+async function testerEnvoi() {
+  if (!message.value.trim()) {
+    $q.notify({ type: 'warning', message: 'Saisissez un message avant de tester.' });
+    return;
+  }
+  testEnvoi.value = true;
+  try {
+    const { data } = await api.post('/notifications', {
+      message: message.value,
+      motif: motif.value,
+      mode: 'manuel',
+      destinatairesTelephones: ['+224000000001', '+224000000002'],
+      simulation: true,
+    });
+    resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
+    $q.notify({
+      type: 'info',
+      message: `Test envoyé à ${data.total} numéro(s) : ${data.envoyees} reçu(s).`,
+    });
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Test impossible.' });
+  } finally {
+    testEnvoi.value = false;
   }
 }
 
@@ -340,15 +459,12 @@ async function diffuserResultats() {
 // ------------------------------------------------------------- historique
 const chargement = ref(false);
 const lignes = ref<Notification[]>([]);
-const pagination = ref({ page: 1, rowsPerPage: 25, rowsNumber: 0 });
-const filtres = ref<{ statut: StatutNotification | null; recherche: string }>({
-  statut: null,
-  recherche: '',
-});
+const pagination = ref({ page: 1, pageSize: 25, total: 0 });
+const filtresHistorique = ref<Record<string, any>>({ recherche: '' });
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_NOTIFICATION).map(([value, label]) => ({
+  value: value as StatutNotification,
   label,
-  value,
 }));
 
 const couleurStatut: Record<string, string> = {
@@ -386,30 +502,54 @@ const colonnes: QTableColumn[] = [
     field: (r: Notification) => r.envoyePar?.prenom ?? '',
     align: 'left',
   },
+  {
+    name: 'actions',
+    label: '',
+    field: 'id',
+    align: 'right',
+  },
 ];
 
 async function chargerHistorique() {
   chargement.value = true;
   try {
+    const f = filtresHistorique.value;
     const { data } = await api.get('/notifications', {
       params: {
         page: pagination.value.page,
-        pageSize: pagination.value.rowsPerPage,
-        statut: filtres.value.statut ?? undefined,
-        search: filtres.value.recherche.trim() || undefined,
+        pageSize: pagination.value.pageSize,
+        statut: f.statut ?? undefined,
+        search: (f.recherche ?? '').toString().trim() || undefined,
+        dateDebut: f.dateDebut || undefined,
+        dateFin: f.dateFin || undefined,
       },
     });
     lignes.value = data.data;
-    pagination.value.rowsNumber = data.total;
+    pagination.value.total = data.total;
   } finally {
     chargement.value = false;
   }
 }
 
-function onRequete(props: { pagination: { page: number; rowsPerPage: number } }) {
-  pagination.value.page = props.pagination.page;
-  pagination.value.rowsPerPage = props.pagination.rowsPerPage;
+async function chargerToutHistorique() {
+  pagination.value.page = 1;
+  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
+  await chargerHistorique();
+}
+
+watch(filtresHistorique, () => {
+  pagination.value.page = 1;
   void chargerHistorique();
+}, { deep: true });
+
+async function renvoyer(n: Notification) {
+  try {
+    await api.post(`/notifications/${n.id}/renvoyer`);
+    $q.notify({ type: 'positive', message: 'Renvoi demandé' });
+    await chargerHistorique();
+  } catch {
+    /* le boot axios affiche le motif */
+  }
 }
 
 // -------------------------------------------------------------------- stats
@@ -424,9 +564,49 @@ async function chargerStats() {
   }
 }
 
+const repartition30j = ref<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }[]>([]);
+
+async function chargerRepartition() {
+  try {
+    const { data } = await api.get('/notifications/stats/repartition', {
+      params: { jours: 30 },
+    });
+    repartition30j.value = Array.isArray(data) ? data : [];
+  } catch {
+    repartition30j.value = [];
+  }
+}
+
+const chartConfig = computed<ChartConfiguration | null>(() => {
+  if (!repartition30j.value.length) return null;
+  return {
+    type: 'bar',
+    data: {
+      labels: repartition30j.value.map((r) => r.date.slice(5)),
+      datasets: [
+        { label: 'En attente', data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: '#EFB700' },
+        { label: 'Envoyés', data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: '#0F7A45' },
+        { label: 'Échoués', data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: '#C4122E' },
+      ],
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } } },
+    },
+  };
+});
+
+watch(onglet, (v) => {
+  if (v === 'historique') {
+    void chargerRepartition();
+  }
+});
+
 onMounted(() => {
   void chargerHistorique();
   void chargerStats();
+  void chargerNbInscrits();
+  void chargerRepartition();
   if (auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) void chargerDeliberations();
 });
 </script>
@@ -465,19 +645,6 @@ onMounted(() => {
   }
 }
 
-.notif-bloc {
-  background: var(--up-plaque);
-  border: var(--up-filet);
-  padding: var(--up-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--up-3);
-
-  .section-titre {
-    margin: 0;
-  }
-}
-
 .notif-bloc__titre {
   margin: var(--up-2) 0 0;
   color: var(--up-encre-douce);
@@ -489,7 +656,6 @@ onMounted(() => {
   color: var(--up-encre-douce);
 }
 
-// Résumé d'envoi : la plaque qui suit la diffusion
 .notif-resume {
   margin-top: var(--up-4);
   display: grid;
@@ -506,15 +672,6 @@ onMounted(() => {
 
   p { margin: 0; }
   .lettrage { font-size: 1.8rem; }
-}
-
-// ------------------------------------------------------------- historique
-.notifications__filtres {
-  display: flex;
-  gap: var(--up-2);
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
 }
 
 .notifications__qui {

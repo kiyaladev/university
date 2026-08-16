@@ -21,35 +21,63 @@
       </div>
     </div>
 
+    <filter-bar
+      v-model="filtres"
+      :chips="chips"
+      placeholder="Rechercher une promotion…"
+      @reinitialiser="reinitialiser"
+    >
+      <template #avances>
+        <q-select
+          v-model="filtres.anneeId"
+          :options="optionsAnnees"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Année académique"
+        />
+        <q-select
+          v-model="filtres.promotionId"
+          :options="optionsPromotions"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Promotion"
+        />
+        <semestre-select
+          v-model="filtres.session"
+          type="session"
+          label="Session"
+          clearable
+        />
+      </template>
+      <template #actions>
+        <view-toggle
+          cle="deliberations"
+          :modes="['tableau', 'kanban']"
+          defaut="tableau"
+          @update:mode="(m) => (modeVue = (m as 'tableau' | 'kanban'))"
+        />
+      </template>
+    </filter-bar>
+
     <q-table
+      v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
-      :rows="deliberations"
+      :rows="deliberationsFiltrees"
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :filter="recherche"
       :pagination="{ rowsPerPage: 15 }"
     >
-      <template #top-left>
-        <div class="row q-gutter-sm items-center">
-          <q-input v-model="recherche" dense outlined clearable placeholder="Rechercher…">
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-          <q-select
-            v-model="filtreAnneeId"
-            :options="optionsAnnees"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Année"
-            style="min-width: 150px"
-            @update:model-value="charger"
-          />
-        </div>
+      <template #no-data>
+        <div class="text-center q-pa-md text-grey-7">Aucune délibération pour ces critères.</div>
       </template>
 
       <template #body-cell-session="p">
@@ -114,10 +142,26 @@
       </template>
     </q-table>
 
+    <kanban-board
+      v-else
+      :colonnes="colonnesKanban"
+    />
+
+    <pagination-bar
+      v-if="deliberations.length"
+      :page="page"
+      :page-size="pageSize"
+      :total="total"
+      @update:page="(v) => { page = v; charger(); }"
+      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
+      @tous="chargerTout"
+    />
+
     <deliberation-dialog
       v-model="dialogOuvert"
       :annees="annees"
       :promotions="promotions"
+      :matieres="matieres"
       @enregistre="charger"
     />
 
@@ -175,11 +219,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import DeliberationDialog from '../components/DeliberationDialog.vue';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import SemestreSelect from '../components/SemestreSelect.vue';
+import KanbanBoard from '../components/KanbanBoard.vue';
 import {
   LIBELLE_DECISION_JURY,
   LIBELLE_SESSION_DELIBERATION,
@@ -187,7 +236,7 @@ import {
   dateLisible,
   pourcentLisible,
 } from '../utils/libelles';
-import type { AnneeAcademique, Deliberation, DeliberationLigne, Promotion } from '../types';
+import type { AnneeAcademique, Deliberation, DeliberationLigne, Matiere, Promotion } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -199,14 +248,57 @@ const estJury = () => auth.aRole(['ADMIN', 'DIRECTION']);
 const deliberations = ref<Deliberation[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
+const matieres = ref<Matiere[]>([]);
 const chargement = ref(false);
-const recherche = ref('');
-const filtreAnneeId = ref<string | null>(null);
+const modeVue = ref<'tableau' | 'kanban'>('tableau');
+
+const page = ref(1);
+const pageSize = ref(15);
+const total = ref(0);
+const tousLesElements = ref(false);
+
+const filtres = ref<Record<string, any>>({});
+
 const dialogOuvert = ref(false);
 const dialogDetail = ref(false);
 const detail = ref<Deliberation | null>(null);
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
+const optionsPromotions = computed(() =>
+  promotions.value
+    .filter((p) => !filtres.value.anneeId || p.anneeId === filtres.value.anneeId)
+    .map((p) => ({ label: p.nom, value: p.id })),
+);
+
+const chips = computed(() => {
+  const cs: Array<{ label: string; value: any; icone?: string; defaut?: boolean }> = [];
+  if (filtres.value.recherche) {
+    cs.push({
+      label: `« ${filtres.value.recherche} »`,
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
+  }
+  if (filtres.value.anneeId) {
+    const a = annees.value.find((x) => x.id === filtres.value.anneeId);
+    cs.push({ label: `Année : ${a?.libelle ?? '?'}`, value: filtres.value.anneeId, icone: 'calendar_today' });
+  }
+  if (filtres.value.promotionId) {
+    const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
+    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+  }
+  if (filtres.value.session) {
+    cs.push({
+      label: `Session : ${LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session}`,
+      value: filtres.value.session,
+      icone: 'flag',
+    });
+  }
+  return cs;
+});
+
+const deliberationsFiltrees = computed(() => deliberations.value);
 
 const colonnes: QTableColumn[] = [
   { name: 'promotion', label: 'Promotion', field: (r) => r.promotion?.nom ?? '—', align: 'left' },
@@ -230,6 +322,86 @@ const colonnesDetail: QTableColumn[] = [
 
 const detailLignes = computed<DeliberationLigne[]>(() => detail.value?.lignes ?? []);
 
+const colonnesKanban = computed(() => {
+  const parColonne: Record<string, Deliberation[]> = {
+    PROPOSE: [],
+    VALIDE: [],
+    SOUTENU: [],
+    ABANDONNE: [],
+  };
+  for (const d of deliberationsFiltrees.value) {
+    const cle = bucketDeliberation(d);
+    (parColonne[cle] ||= []).push(d);
+  }
+
+  const cartes = (d: Deliberation) => ({
+    id: d.id,
+    titre: d.promotion?.nom ?? '—',
+    sousTitre: `${LIBELLE_SESSION_DELIBERATION[d.session]} · ${d.annee?.libelle ?? ''}`,
+    meta: `${(d as any)._count?.lignes ?? 0} étudiant(s) · créée le ${dateLisible(d.creeLe)}`,
+    badge: d.statut === 'VALIDEE'
+      ? (d.session === 'NORMALE' ? 'Validée' : 'Soutenue')
+      : (d.session === 'RATTRAPAGE' ? 'À reprendre' : 'Brouillon'),
+    couleur: d.statut === 'VALIDEE' ? 'positive' : 'warning',
+    actions: [
+      {
+        label: 'Calculer',
+        icone: 'replay',
+        couleur: 'primary',
+        onClick: () => peutSaisir() && calculer(d),
+      },
+      ...(d.statut === 'BROUILLON' && estJury()
+        ? [{
+            label: 'Valider',
+            icone: 'verified_user',
+            couleur: 'positive',
+            onClick: () => valider(d),
+          }]
+        : []),
+      {
+        label: 'Bulletins',
+        icone: 'picture_as_pdf',
+        onClick: () => allerBulletins(d),
+      },
+    ],
+    onClick: () => ouvrirDetail(d),
+  });
+
+  return [
+    {
+      identifiant: 'PROPOSE',
+      titre: 'Proposées (brouillon)',
+      couleur: '#EFB700',
+      cartes: parColonne.PROPOSE.map(cartes),
+    },
+    {
+      identifiant: 'VALIDE',
+      titre: 'Validées (jury)',
+      couleur: '#0F7A45',
+      cartes: parColonne.VALIDE.map(cartes),
+    },
+    {
+      identifiant: 'SOUTENU',
+      titre: 'Soutenues (rattrapage validé)',
+      couleur: '#3E9E6C',
+      cartes: parColonne.SOUTENU.map(cartes),
+    },
+    {
+      identifiant: 'ABANDONNE',
+      titre: 'Abandonnées',
+      couleur: '#C4122E',
+      cartes: parColonne.ABANDONNE.map(cartes),
+    },
+  ];
+});
+
+function bucketDeliberation(d: Deliberation): string {
+  if (d.session === 'RATTRAPAGE' && d.statut === 'VALIDEE') return 'SOUTENU';
+  if (d.session === 'RATTRAPAGE' && d.statut === 'BROUILLON') return 'ABANDONNE';
+  if (d.statut === 'VALIDEE') return 'VALIDE';
+  return 'PROPOSE';
+}
+
 function couleurDecision(d: string): string {
   return d === 'ADMIS' ? 'positive' : d === 'AJOURNE' ? 'warning' : 'negative';
 }
@@ -238,7 +410,8 @@ function urlToken(chemin: string) {
   return `${API_URL}${chemin}${chemin.includes('?') ? '&' : '?'}token=${auth.token}`;
 }
 
-function imprimerPv(d: Deliberation) {
+function imprimerPv(d: Deliberation | null) {
+  if (!d) return;
   window.open(urlToken(`/deliberations/${d.id}/imprimer`), '_blank');
 }
 
@@ -290,25 +463,78 @@ function valider(d: Deliberation) {
   });
 }
 
+function allerBulletins(d: Deliberation) {
+  // Délégué au routeur de BulletinsPage via une redirection HTML : on préfère
+  // ouvrir dans un nouvel onglet pour ne pas perdre la vue courante.
+  window.open(`/bulletins?promotionId=${d.promotionId}&anneeId=${d.anneeId}`, '_blank');
+}
+
 async function charger() {
   chargement.value = true;
   try {
     const { data } = await api.get('/deliberations', {
-      params: { all: '1', anneeId: filtreAnneeId.value || undefined },
+      params: {
+        all: '1',
+        page: page.value,
+        pageSize: pageSize.value,
+        anneeId: filtres.value.anneeId || undefined,
+        promotionId: filtres.value.promotionId || undefined,
+        session: filtres.value.session || undefined,
+        search: filtres.value.recherche || undefined,
+      },
     });
-    deliberations.value = data.data;
+    deliberations.value = data.data ?? [];
+    total.value = data.total ?? deliberations.value.length;
   } finally {
     chargement.value = false;
   }
 }
 
+async function chargerTout() {
+  chargement.value = true;
+  try {
+    const { data } = await api.get('/deliberations', {
+      params: {
+        all: '1',
+        pageSize: 1000,
+        anneeId: filtres.value.anneeId || undefined,
+        promotionId: filtres.value.promotionId || undefined,
+        session: filtres.value.session || undefined,
+      },
+    });
+    deliberations.value = data.data ?? [];
+    total.value = deliberations.value.length;
+    tousLesElements.value = true;
+  } finally {
+    chargement.value = false;
+  }
+}
+
+function reinitialiser() {
+  filtres.value = {};
+  page.value = 1;
+  tousLesElements.value = false;
+  charger();
+}
+
+watch(
+  () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session, filtres.value.recherche],
+  () => {
+    page.value = 1;
+    tousLesElements.value = false;
+    charger();
+  },
+);
+
 onMounted(async () => {
-  const [a, p] = await Promise.all([
+  const [a, p, m] = await Promise.all([
     api.get('/annees', { params: { all: '1' } }),
     api.get('/promotions', { params: { all: '1' } }),
+    api.get('/matieres', { params: { all: '1' } }).catch(() => ({ data: { data: [] } })),
   ]);
   annees.value = a.data.data;
   promotions.value = p.data.data;
+  matieres.value = m.data.data ?? [];
   await charger();
 });
 </script>

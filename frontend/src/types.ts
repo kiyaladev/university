@@ -544,10 +544,35 @@ export interface DocumentDepot {
   enseignantId?: string | null;
   etudiantId?: string | null;
   telechargements: number;
+  /** Texte plein extrait (PDF) pour la recherche full-text + anti-plagiat. */
+  contenuTexte?: string | null;
+  /** Mots-clés saisis à la main ou détectés par extraction. */
+  motsClefs?: string[];
+  /** Empreinte SHA-256 normalisée — sert au regroupement par similarité. */
+  empreinteHash?: string | null;
+  /** Indice synthétique de plagiat (0–100) — agrège le max des suspicions. */
+  indicePlagiat?: number | null;
+  /** Extrait autour du terme cherché (renvoyé par /documents/recherche). */
+  extraitContexte?: string | null;
   createdAt: string;
   departement?: Departement | null;
   enseignant?: Enseignant | null;
   etudiant?: Etudiant | null;
+}
+
+export interface SuspicionPlagiat {
+  id: string;
+  documentAId: string;
+  documentBId: string;
+  score: number;
+  statut: 'EN_ATTENTE' | 'ACQUITTE' | 'CONFIRME';
+  detecteLe: string;
+  acquitteParId?: string | null;
+  acquitteLe?: string | null;
+  commentaire?: string | null;
+  documentA?: DocumentDepot;
+  documentB?: DocumentDepot;
+  acquittePar?: { id: string; nom: string; prenom: string } | null;
 }
 
 export interface PortefeuilleResto {

@@ -4,7 +4,7 @@
       <div class="col">
         <div class="page-titre">Support IT & helpdesk</div>
         <div class="page-sous-titre">
-          Un QR sur chaque équipement : l’enseignant scanne, décrit le problème
+          Un QR sur chaque équipement : l'enseignant scanne, décrit le problème
           en deux clics, la DSI est prévenue sans attendre la rumeur.
         </div>
       </div>
@@ -19,268 +19,409 @@
       <q-tab v-if="dsi" name="equipements" icon="qr_code_2" label="Équipements & QR" no-caps />
     </q-tabs>
 
-    <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
-      <!-- ---------------------------------------------------------------- -->
-      <!-- Mes tickets : le tableau de bord du déclarant                    -->
-      <!-- ---------------------------------------------------------------- -->
-      <q-tab-panel name="mes-tickets" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-lg-4">
-            <q-card flat bordered class="carte">
-              <q-card-section>
-                <div class="text-h6">Déclarer en deux clics</div>
-                <div class="page-sous-titre q-mb-md">
-                  Arrivé par le QR d’un équipement ? Le formulaire s’ouvre déjà prêt —
-                  il ne reste qu’à choisir la catégorie et décrire la panne.
+    <!-- ============================================================== -->
+    <!-- MES TICKETS / DECLARER                                            -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'mes-tickets'" name="mes-tickets" class="q-pa-none q-mt-md">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-lg-4">
+          <q-card flat bordered class="carte">
+            <q-card-section>
+              <div class="text-h6">Déclarer en deux clics</div>
+              <div class="page-sous-titre q-mb-md">
+                Arrivé par le QR d'un équipement ? Le formulaire s'ouvre déjà prêt —
+                il ne reste qu'à choisir la catégorie et décrire la panne.
+              </div>
+              <div class="row q-col-gutter-sm">
+                <div v-for="c in categoriesApercu" :key="c.value" class="col-6">
+                  <q-btn
+                    flat
+                    no-caps
+                    class="tuile-cat full-width"
+                    @click="ouvrirDeclaration(c.value)"
+                  >
+                    <div class="column items-center">
+                      <q-icon :name="c.icone" size="22px" />
+                      <span class="q-mt-xs text-center">{{ c.label }}</span>
+                    </div>
+                  </q-btn>
                 </div>
-                <div class="row q-col-gutter-sm">
-                  <div v-for="c in categoriesApercu" :key="c.value" class="col-6">
-                    <q-btn
-                      flat
-                      no-caps
-                      class="tuile-cat full-width"
-                      @click="declarerOuvert = true"
-                    >
-                      <div class="column items-center">
-                        <q-icon :name="c.icone" size="22px" />
-                        <span class="q-mt-xs text-center">{{ c.label }}</span>
-                      </div>
-                    </q-btn>
-                  </div>
-                </div>
-                <div class="row q-mt-md">
-                  <q-btn unelevated color="primary" no-caps icon="add" label="Autre problème" class="full-width" @click="declarerOuvert = true" />
-                </div>
-              </q-card-section>
-            </q-card>
-          </div>
+              </div>
+              <div class="row q-mt-md">
+                <q-btn unelevated color="primary" no-caps icon="add" label="Autre problème" class="full-width" @click="ouvrirDeclaration()" />
+              </div>
+              <div class="row q-mt-md">
+                <q-btn outline color="primary" no-caps icon="qr_code_scanner" label="Scanner QR équipement" class="full-width" @click="scanEquipement = true" />
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
 
-          <div class="col-12 col-lg-8">
-            <q-table
-              flat
-              bordered
-              class="carte"
-              :rows="mesTickets"
-              :columns="colonnesMes"
-              row-key="id"
-              :loading="chargementMes"
-              :pagination="{ rowsPerPage: 10 }"
+        <div class="col-12 col-lg-8">
+          <q-table
+            flat
+            bordered
+            class="carte"
+            :rows="mesTickets"
+            :columns="colonnesMes"
+            row-key="id"
+            :loading="chargementMes"
+            :pagination="{ rowsPerPage: 10 }"
+          >
+            <template #top-left>
+              <div class="text-subtitle1 text-weight-medium">Mes déclarations</div>
+            </template>
+            <template #body-cell-statut="p">
+              <q-td :props="p">
+                <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
+                  <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
+                </span>
+              </q-td>
+            </template>
+            <template #body-cell-priorite="p">
+              <q-td :props="p">
+                <span class="ticket-champ" :class="`prio-champ--${p.row.priorite}`">
+                  <span class="pochoir">{{ libellePriorite(p.row.priorite) }}</span>
+                </span>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- ============================================================== -->
+    <!-- GESTION DSI                                                       -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="dsi && onglet === 'gestion'" name="gestion" class="q-pa-none q-mt-md">
+      <div class="row q-col-gutter-md q-mb-md">
+        <div v-for="s in statutPlaques" :key="s.cle" class="col-6 col-md-3">
+          <q-card flat bordered class="carte">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ stats?.[s.cle] ?? 0 }}</div>
+              <div class="pochoir text-grey-7">{{ s.libelle }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+      <q-banner v-if="dsi" class="note--info q-mb-md">
+        Taux de résolution le jour même : <strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong>
+        ({{ stats?.resolus24h ?? 0 }} résolu{{ (stats?.resolus24h ?? 0) > 1 ? 's' : '' }} au cours des 24 dernières heures)
+      </q-banner>
+
+      <filter-bar
+        v-model="filtres"
+        placeholder="Rechercher (N°, description…)"
+        :recherche="true"
+        @reinitialiser="filtres = { recherche: '' }"
+      >
+        <template #avances>
+          <q-select
+            v-model="filtres.statut"
+            :options="optionsStatuts"
+            dense
+            outlined
+            clearable
+            emit-value
+            map-options
+            label="Statut"
+          />
+          <q-select
+            v-model="filtres.categorie"
+            :options="optionsCategories"
+            dense
+            outlined
+            clearable
+            emit-value
+            map-options
+            label="Catégorie"
+          />
+          <q-select
+            v-model="filtres.priorite"
+            :options="optionsPriorites"
+            dense
+            outlined
+            clearable
+            emit-value
+            map-options
+            label="Priorité"
+          />
+          <autocomplete-async
+            v-model="filtres.equipementId"
+            endpoint="/equipements"
+            :label-fn="(e) => `${e.libelle}${e.emplacement ? ' — ' + e.emplacement : ''}`"
+            label="Équipement"
+          />
+        </template>
+        <template #actions>
+          <view-toggle
+            cle="helpdesk.gestion"
+            :modes="['tableau', 'cartes']"
+            @update:mode="(v: string) => (modeGestion = v as 'tableau' | 'cartes')"
+          />
+        </template>
+      </filter-bar>
+
+      <pagination-bar
+        :page="paginationGestion.page"
+        :page-size="paginationGestion.pageSize"
+        :total="paginationGestion.total"
+        :show-all="false"
+        @update:page="paginationGestion.page = $event; requeterGestion()"
+        @update:page-size="paginationGestion.pageSize = $event; paginationGestion.page = 1; requeterGestion()"
+        @tous="chargerTousGestion"
+      />
+
+      <q-table
+        v-if="modeGestion === 'tableau'"
+        flat
+        bordered
+        class="carte"
+        :rows="tickets"
+        :columns="colonnesGestion"
+        row-key="id"
+        :loading="chargementGestion"
+        :rows-per-page-options="[0]"
+        hide-bottom
+      >
+        <template #body-cell-priorite="p">
+          <q-td :props="p">
+            <span class="ticket-champ" :class="`prio-champ--${p.row.priorite}`">
+              <span class="pochoir">{{ libellePriorite(p.row.priorite) }}</span>
+            </span>
+          </q-td>
+        </template>
+        <template #body-cell-statut="p">
+          <q-td :props="p">
+            <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
+              <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
+            </span>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn flat dense round icon="visibility" @click="ticketDetail = p.row">
+              <q-tooltip>Visualiser</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="p.row.statut === 'OUVERT' || p.row.statut === 'EN_COURS'"
+              flat dense round icon="autorenew"
             >
-              <template #top-left>
-                <div class="text-subtitle1 text-weight-medium">Mes déclarations</div>
-              </template>
-              <template #body-cell-statut="p">
-                <q-td :props="p">
-                  <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
-                    <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-                  </span>
-                </q-td>
-              </template>
-              <template #body-cell-priorite="p">
-                <q-td :props="p">
-                  <span class="ticket-champ" :class="`prio-champ--${p.row.priorite}`">
-                    <span class="pochoir">{{ libellePriorite(p.row.priorite) }}</span>
-                  </span>
-                </q-td>
-              </template>
-            </q-table>
-          </div>
-        </div>
-      </q-tab-panel>
+              <q-tooltip>Changer le statut</q-tooltip>
+              <q-menu>
+                <q-list dense style="min-width: 220px">
+                  <q-item clickable v-close-popup @click="changerStatut(p.row, 'EN_COURS')">
+                    <q-item-section avatar><q-icon name="handyman" size="18px" /></q-item-section>
+                    <q-item-section>Passer « en cours »</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="changerStatut(p.row, 'RESOLU')">
+                    <q-item-section avatar><q-icon name="check_circle" size="18px" color="positive" /></q-item-section>
+                    <q-item-section>Résolu</q-item-section>
+                  </q-item>
+                  <q-item clickable v-close-popup @click="changerStatut(p.row, 'CLOTURE')">
+                    <q-item-section avatar><q-icon name="archive" size="18px" /></q-item-section>
+                    <q-item-section>Clôturer</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
 
-      <!-- ---------------------------------------------------------------- -->
-      <!-- Gestion DSI : tout le registre, filtres et prise en charge        -->
-      <!-- ---------------------------------------------------------------- -->
-      <q-tab-panel v-if="dsi" name="gestion" class="q-pa-none">
-        <div class="row q-col-gutter-md q-mb-md">
-          <div v-for="s in statutPlaques" :key="s.cle" class="col-6 col-md-3">
-            <q-card flat bordered class="carte">
-              <q-card-section class="text-center">
-                <div class="stat-chiffre chiffres">{{ stats?.[s.cle] ?? 0 }}</div>
-                <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-              </q-card-section>
-            </q-card>
-          </div>
-        </div>
-        <q-banner v-if="dsi" class="note--info q-mb-md">
-          Taux de résolution le jour même : <strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong>
-          ({{ stats?.resolus24h ?? 0 }} résolu{{ (stats?.resolus24h ?? 0) > 1 ? 's' : '' }} au cours des 24 dernières heures)
-        </q-banner>
-
-        <q-card flat bordered class="carte q-mb-md">
-          <q-card-section class="row q-col-gutter-sm">
-            <div class="col-6 col-md-2">
-              <q-select v-model="filtres.statut" :options="optionsStatuts" outlined dense clearable emit-value map-options label="Statut" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-select v-model="filtres.categorie" :options="optionsCategories" outlined dense clearable emit-value map-options label="Catégorie" />
-            </div>
-            <div class="col-6 col-md-2">
-              <q-select v-model="filtres.priorite" :options="optionsPriorites" outlined dense clearable emit-value map-options label="Priorité" />
-            </div>
-            <div class="col-6 col-md-3">
-              <q-select v-model="filtres.equipementId" :options="optionsEquipements" outlined dense clearable emit-value map-options label="Équipement" />
-            </div>
-            <div class="col-12 col-md-2">
-              <q-input v-model="filtres.search" outlined dense clearable placeholder="N°, description…">
-                <template #prepend><q-icon name="search" /></template>
-              </q-input>
-            </div>
-          </q-card-section>
-        </q-card>
-
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="tickets"
-          :columns="colonnesGestion"
-          row-key="id"
-          :loading="chargementGestion"
-          :pagination="{ rowsPerPage: 20 }"
-        >
-          <template #body-cell-priorite="p">
-            <q-td :props="p">
-              <span class="ticket-champ" :class="`prio-champ--${p.row.priorite}`">
-                <span class="pochoir">{{ libellePriorite(p.row.priorite) }}</span>
-              </span>
-            </q-td>
-          </template>
-          <template #body-cell-statut="p">
-            <q-td :props="p">
-              <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
-                <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-              </span>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn flat dense round icon="visibility" @click="ticketDetail = p.row">
-                <q-tooltip>Visualiser</q-tooltip>
-              </q-btn>
+      <div v-else class="row q-col-gutter-md">
+        <div v-for="t in tickets" :key="t.id" class="col-12 col-md-6 col-xl-4">
+          <q-card flat bordered class="carte">
+            <q-card-section class="row items-center q-pb-none">
+              <div class="col">
+                <div class="text-uppercase text-caption text-grey-7">{{ t.numero }}</div>
+                <div class="text-subtitle1 text-weight-medium">
+                  {{ libelleCategorie(t.categorie) }}
+                </div>
+              </div>
+              <div class="column items-end q-gutter-xs">
+                <span class="ticket-champ" :class="`ticket-champ--${t.statut}`">
+                  <span class="pochoir">{{ libelleStatut(t.statut) }}</span>
+                </span>
+                <span class="ticket-champ" :class="`prio-champ--${t.priorite}`">
+                  <span class="pochoir">{{ libellePriorite(t.priorite) }}</span>
+                </span>
+              </div>
+            </q-card-section>
+            <q-card-section class="q-pt-none q-gutter-y-xs">
+              <div v-if="t.equipement" class="row items-center">
+                <q-icon name="devices" size="16px" class="q-mr-sm text-grey-6" />
+                <span class="text-caption">
+                  {{ t.equipement.libelle }}
+                  <span v-if="t.equipement.emplacement" class="text-grey-7">— {{ t.equipement.emplacement }}</span>
+                </span>
+              </div>
+              <div v-if="t.utilisateur || t.declarantNom" class="row items-center">
+                <q-icon name="person" size="16px" class="q-mr-sm text-grey-6" />
+                <span class="text-caption">
+                  {{ t.utilisateur ? `${t.utilisateur.prenom} ${t.utilisateur.nom}` : (t.declarantNom ?? '—') }}
+                </span>
+              </div>
+              <div class="row items-center">
+                <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
+                <span class="text-caption">{{ dateHeureLisible(t.createdAt) }}</span>
+              </div>
+            </q-card-section>
+            <q-separator />
+            <q-card-actions class="q-px-md">
+              <q-btn flat dense no-caps icon="visibility" label="Détail" @click="ticketDetail = t" />
+              <q-space />
               <q-btn
-                v-if="p.row.statut === 'OUVERT' || p.row.statut === 'EN_COURS'"
-                flat
-                dense
-                round
-                icon="autorenew"
+                v-if="t.statut === 'OUVERT' || t.statut === 'EN_COURS'"
+                flat dense no-caps color="primary" icon="forward" label="Statut"
               >
-                <q-tooltip>Changer le statut</q-tooltip>
                 <q-menu>
-                  <q-list dense style="min-width: 220px">
-                    <q-item clickable v-close-popup @click="changerStatut(p.row, 'EN_COURS')">
-                      <q-item-section avatar><q-icon name="handyman" size="18px" /></q-item-section>
-                      <q-item-section>Passer « en cours »</q-item-section>
+                  <q-list dense style="min-width: 200px">
+                    <q-item clickable v-close-popup @click="changerStatut(t, 'EN_COURS')">
+                      <q-item-section>En cours</q-item-section>
                     </q-item>
-                    <q-item clickable v-close-popup @click="changerStatut(p.row, 'RESOLU')">
-                      <q-item-section avatar><q-icon name="check_circle" size="18px" color="positive" /></q-item-section>
+                    <q-item clickable v-close-popup @click="changerStatut(t, 'RESOLU')">
                       <q-item-section>Résolu</q-item-section>
                     </q-item>
-                    <q-item clickable v-close-popup @click="changerStatut(p.row, 'CLOTURE')">
-                      <q-item-section avatar><q-icon name="archive" size="18px" /></q-item-section>
+                    <q-item clickable v-close-popup @click="changerStatut(t, 'CLOTURE')">
                       <q-item-section>Clôturer</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
               </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
+            </q-card-actions>
+          </q-card>
+        </div>
+        <div v-if="!chargementGestion && !tickets.length" class="col-12 text-center text-grey-7 q-pa-lg">
+          <q-icon name="support_agent" size="42px" color="grey-5" />
+          <div class="q-mt-sm">Aucun ticket</div>
+        </div>
+      </div>
+    </q-tab-panel>
 
-      <!-- ---------------------------------------------------------------- -->
-      <!-- Équipements & QR : le parc, les étiquettes, la fiche                 -->
-      <!-- ---------------------------------------------------------------- -->
-      <q-tab-panel v-if="dsi" name="equipements" class="q-pa-none">
-        <div class="row items-center q-mb-md">
-          <div class="col">
-            <div class="page-sous-titre">
-              Chaque étiquette porte un QR unique : les pannes arrivent à la DSI
-              avec le nom exact de l’équipement, sans usurpation possible.
-            </div>
-          </div>
-          <div class="col-auto">
-            <q-btn unelevated color="primary" no-caps icon="add" label="Nouvel équipement" @click="ouvrirEquipement(null)" />
+    <!-- ============================================================== -->
+    <!-- EQUIPEMENTS & QR                                                  -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="dsi && onglet === 'equipements'" name="equipements" class="q-pa-none q-mt-md">
+      <div class="row items-center q-mb-md">
+        <div class="col">
+          <div class="page-sous-titre">
+            Chaque étiquette porte un QR unique : les pannes arrivent à la DSI
+            avec le nom exact de l'équipement, sans usurpation possible.
           </div>
         </div>
+        <div class="col-auto">
+          <q-btn unelevated color="primary" no-caps icon="add" label="Nouvel équipement" @click="ouvrirEquipement(null)" />
+        </div>
+      </div>
 
-        <q-card flat bordered class="carte q-mb-md">
-          <q-card-section class="row q-col-gutter-sm items-center">
-            <div class="col-12 col-md-4">
-              <q-input v-model="filtresEquip.search" outlined dense clearable placeholder="Rechercher…">
-                <template #prepend><q-icon name="search" /></template>
-              </q-input>
-            </div>
-            <div class="col-12 col-md-3">
-              <q-select
-                v-model="filtresEquip.actif"
-                :options="[
-                  { label: 'Tous', value: null },
-                  { label: 'En service', value: 'true' },
-                  { label: 'Inactifs', value: 'false' },
-                ]"
-                outlined
-                dense
-                emit-value
-                map-options
-                label="État"
-              />
-            </div>
-          </q-card-section>
-        </q-card>
+      <filter-bar
+        v-model="filtresEquip"
+        placeholder="Rechercher (libellé, emplacement, code QR…)"
+        :recherche="true"
+        @reinitialiser="filtresEquip = { recherche: '' }"
+      >
+        <template #avances>
+          <q-select
+            v-model="filtresEquip.actif"
+            :options="[
+              { label: 'Tous', value: null },
+              { label: 'En service', value: 'true' },
+              { label: 'Inactifs', value: 'false' },
+            ]"
+            dense
+            outlined
+            emit-value
+            map-options
+            label="État"
+          />
+        </template>
+        <template #actions>
+          <view-toggle
+            cle="helpdesk.equipements"
+            :modes="['tableau', 'cartes']"
+            @update:mode="(v: string) => (modeEquipements = v as 'tableau' | 'cartes')"
+          />
+        </template>
+      </filter-bar>
 
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="equipements"
-          :columns="colonnesEquipements"
-          row-key="id"
-          :loading="chargementEquipements"
-          :pagination="{ rowsPerPage: 20 }"
-        >
-          <template #body-cell-actif="p">
-            <q-td :props="p">
-              <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
-                {{ p.row.actif ? 'en service' : 'désactivé' }}
+      <q-table
+        v-if="modeEquipements === 'tableau'"
+        flat
+        bordered
+        class="carte"
+        :rows="equipements"
+        :columns="colonnesEquipements"
+        row-key="id"
+        :loading="chargementEquipements"
+        :pagination="{ rowsPerPage: 20 }"
+      >
+        <template #body-cell-actif="p">
+          <q-td :props="p">
+            <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
+              {{ p.row.actif ? 'en service' : 'désactivé' }}
+            </q-badge>
+          </q-td>
+        </template>
+        <template #body-cell-codeQr="p">
+          <q-td :props="p">
+            <span class="text-caption ellipsis" style="max-width: 200px; display: inline-block; vertical-align: middle">
+              {{ p.row.codeQr }}
+            </span>
+            <q-btn flat dense round size="sm" icon="content_copy" @click="copier(p.row.codeQr)">
+              <q-tooltip>Copier le code</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn flat dense round icon="print" @click="imprimerQr(p.row)">
+              <q-tooltip>Imprimer l'étiquette QR</q-tooltip>
+            </q-btn>
+            <q-btn flat dense round icon="edit" @click="ouvrirEquipement(p.row)">
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimerEquipement(p.row)">
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
+
+      <div v-else class="row q-col-gutter-md">
+        <div v-for="e in equipements" :key="e.id" class="col-12 col-md-6 col-xl-4">
+          <q-card flat bordered class="carte">
+            <q-card-section class="row items-center q-pb-none">
+              <div class="col">
+                <div class="text-uppercase text-caption text-grey-7">{{ e.codeQr }}</div>
+                <div class="text-subtitle1 text-weight-medium">{{ e.libelle }}</div>
+                <div v-if="e.emplacement" class="text-caption text-grey-7">{{ e.emplacement }}</div>
+              </div>
+              <q-badge :color="e.actif ? 'positive' : 'grey-7'">
+                {{ e.actif ? 'En service' : 'Désactivé' }}
               </q-badge>
-            </q-td>
-          </template>
-          <template #body-cell-codeQr="p">
-            <q-td :props="p">
-              <span class="text-caption ellipsis" style="max-width: 200px; display: inline-block; vertical-align: middle">
-                {{ p.row.codeQr }}
-              </span>
-              <q-btn flat dense round size="sm" icon="content_copy" @click="copier(p.row.codeQr)">
-                <q-tooltip>Copier le code</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn flat dense round icon="print" @click="imprimerQr(p.row)">
-                <q-tooltip>Imprimer l’étiquette QR</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="dsi"
-                flat
-                dense
-                round
-                icon="edit"
-                @click="ouvrirEquipement(p.row)"
-              >
-                <q-tooltip>Modifier</q-tooltip>
-              </q-btn>
-              <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimerEquipement(p.row)">
-                <q-tooltip>Supprimer</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
-    </q-tab-panels>
+            </q-card-section>
+            <q-card-section class="text-center">
+              <canvas ref="(el) => setQrCanvas(el, e.id)" :data-equipement="e.id" class="qr-canvas" style="width: 160px; height: 160px" />
+              <div class="text-caption text-grey-7 q-mt-xs">
+                {{ ticketsParEquipement[e.id] ?? 0 }} ticket(s) associé(s)
+              </div>
+            </q-card-section>
+            <q-card-actions class="q-px-md">
+              <q-btn flat dense no-caps icon="print" label="Imprimer" @click="imprimerQr(e)" />
+              <q-space />
+              <q-btn flat dense no-caps icon="edit" label="Modifier" @click="ouvrirEquipement(e)" />
+            </q-card-actions>
+          </q-card>
+        </div>
+        <div v-if="!chargementEquipements && !equipements.length" class="col-12 text-center text-grey-7 q-pa-lg">
+          <q-icon name="qr_code_2" size="42px" color="grey-5" />
+          <div class="q-mt-sm">Aucun équipement</div>
+        </div>
+      </div>
+    </q-tab-panel>
 
-    <!-- Détail d'un ticket (gestion DSI) -->
+    <!-- Détail d'un ticket -->
     <q-dialog :model-value="!!ticketDetail" @update:model-value="ticketDetail = null">
       <q-card style="width: 560px; max-width: 95vw">
         <q-card-section v-if="ticketDetail" class="text-h6">
@@ -360,22 +501,45 @@
       </q-card>
     </q-dialog>
 
-    <TicketDialog
+    <ticket-dialog
       v-model="declarerOuvert"
       :equipement="equipementScanne"
       :equipements="equipements"
+      :categorie-initiale="categorieInitiale"
       @declare="onDeclare"
     />
-    <EquipementDialog v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="rechargerEquipements" />
+    <equipement-dialog v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="rechargerEquipements" />
+
+    <!-- Scanner QR -->
+    <q-dialog v-model="scanEquipement">
+      <q-card style="width: 480px; max-width: 95vw">
+        <q-card-section class="text-h6">Scanner le QR d'un équipement</q-card-section>
+        <q-card-section>
+          <qr-scanner v-model="codeScanne" />
+          <p class="text-caption text-grey-7 q-mt-md">
+            Pointez la caméra sur l'étiquette QR de l'équipement pour pré-remplir la déclaration.
+          </p>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat label="Annuler" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute } from 'vue-router';
+import QRCode from 'qrcode';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import QrScanner from '../components/QrScanner.vue';
 import TicketDialog from '../components/TicketDialog.vue';
 import EquipementDialog from '../components/EquipementDialog.vue';
 import {
@@ -398,25 +562,27 @@ const tickets = ref<TicketSupport[]>([]);
 const equipements = ref<EquipementCampus[]>([]);
 const stats = ref<Record<string, number> | null>(null);
 
+const paginationGestion = ref({ page: 1, pageSize: 20, total: 0 });
+
 const chargementMes = ref(false);
 const chargementGestion = ref(false);
 const chargementEquipements = ref(false);
 
 const declarerOuvert = ref(false);
+const categorieInitiale = ref<CategorieIncident | ''>('');
 const equipementScanne = ref<EquipementCampus | null>(null);
 const ticketDetail = ref<TicketSupport | null>(null);
 const equipementDialogOuvert = ref(false);
 const equipementEdite = ref<EquipementCampus | null>(null);
 
-const filtres = ref({
-  statut: null as string | null,
-  categorie: null as string | null,
-  priorite: null as string | null,
-  equipementId: null as string | null,
-  search: '',
-});
+const scanEquipement = ref(false);
+const codeScanne = ref('');
 
-const filtresEquip = ref({ search: '', actif: null as string | null });
+const modeGestion = ref<'tableau' | 'cartes'>('tableau');
+const modeEquipements = ref<'tableau' | 'cartes'>('cartes');
+
+const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtresEquip = ref<Record<string, any>>({ recherche: '' });
 
 const ICONES_CATEGORIE: Record<CategorieIncident, string> = {
   VIDEO: 'videocam',
@@ -451,14 +617,14 @@ const optionsPriorites = Object.entries(LIBELLE_PRIORITE_TICKET).map(([value, la
   label,
   value,
 }));
-const optionsEquipements = computed(() =>
-  equipements.value
-    .filter((e) => e.actif || e.id === filtres.value.equipementId)
-    .map((e) => ({
-      label: e.emplacement ? `${e.libelle} — ${e.emplacement}` : e.libelle,
-      value: e.id,
-    })),
-);
+
+const ticketsParEquipement = computed(() => {
+  const map: Record<string, number> = {};
+  for (const t of mesTickets.value) {
+    if (t.equipementId) map[t.equipementId] = (map[t.equipementId] ?? 0) + 1;
+  }
+  return map;
+});
 
 const statutPlaques = [
   { cle: 'OUVERT', libelle: 'Ouverts' },
@@ -551,10 +717,16 @@ const colonnesEquipements: QTableColumn[] = [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
+function ouvrirDeclaration(cat?: CategorieIncident) {
+  categorieInitiale.value = (cat ?? '') as CategorieIncident | '';
+  declarerOuvert.value = true;
+}
+
 function onDeclare() {
+  categorieInitiale.value = '';
   void chargerMes();
   if (dsi.value) {
-    void chargerGestion();
+    void requeterGestion();
     void chargerStats();
   }
 }
@@ -569,24 +741,40 @@ async function chargerMes() {
   }
 }
 
-async function chargerGestion() {
+watch(filtres, () => {
+  paginationGestion.value.page = 1;
+  void requeterGestion();
+}, { deep: true });
+
+watch(filtresEquip, () => chargerEquipements(), { deep: true });
+
+async function requeterGestion() {
   if (!dsi.value) return;
   chargementGestion.value = true;
   try {
+    const f = filtres.value;
     const { data } = await api.get('/tickets', {
       params: {
-        all: '1',
-        statut: filtres.value.statut || undefined,
-        categorie: filtres.value.categorie || undefined,
-        priorite: filtres.value.priorite || undefined,
-        equipementId: filtres.value.equipementId || undefined,
-        search: filtres.value.search.trim() || undefined,
+        page: paginationGestion.value.page,
+        pageSize: paginationGestion.value.pageSize,
+        statut: f.statut || undefined,
+        categorie: f.categorie || undefined,
+        priorite: f.priorite || undefined,
+        equipementId: f.equipementId || undefined,
+        search: (f.recherche ?? '').toString().trim() || undefined,
       },
     });
     tickets.value = data.data;
+    paginationGestion.value.total = data.total;
   } finally {
     chargementGestion.value = false;
   }
+}
+
+async function chargerTousGestion() {
+  paginationGestion.value.page = 1;
+  paginationGestion.value.pageSize = Math.max(paginationGestion.value.total, 200) || 200;
+  await requeterGestion();
 }
 
 async function chargerStats() {
@@ -601,11 +789,13 @@ async function chargerEquipements() {
     const { data } = await api.get('/equipements', {
       params: {
         all: '1',
-        search: filtresEquip.value.search.trim() || undefined,
+        search: (filtresEquip.value.recherche ?? '').toString().trim() || undefined,
         actif: filtresEquip.value.actif || undefined,
       },
     });
     equipements.value = data.data;
+    await nextTick();
+    await dessinerTousLesQr();
   } finally {
     chargementEquipements.value = false;
   }
@@ -615,11 +805,22 @@ function rechargerEquipements() {
   void chargerEquipements();
 }
 
+async function dessinerTousLesQr() {
+  const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas.qr-canvas');
+  for (const canvas of canvases) {
+    const eqId = canvas.dataset.equipement;
+    const eq = equipements.value.find((e) => e.id === eqId);
+    if (!eq) continue;
+    const url = `${window.location.origin}/${window.location.hash.startsWith('#') ? '' : '#'}/helpdesk?equipement=${encodeURIComponent(eq.codeQr)}`;
+    await QRCode.toCanvas(canvas, url, { width: 160, margin: 1 });
+  }
+}
+
 async function changerStatut(t: TicketSupport, statut: StatutTicket) {
   try {
     await api.post(`/tickets/${t.id}/statut`, { statut });
     $q.notify({ type: 'positive', message: `Ticket ${t.numero} : ${libelleStatut(statut).toLowerCase()}` });
-    await Promise.all([chargerMes(), chargerGestion(), chargerStats()]);
+    await Promise.all([chargerMes(), requeterGestion(), chargerStats()]);
   } catch {
     /* le boot axios affiche déjà le motif */
   }
@@ -641,7 +842,7 @@ function ouvrirEquipement(e: EquipementCampus | null) {
 
 function supprimerEquipement(e: EquipementCampus) {
   $q.dialog({
-    title: 'Supprimer l’équipement',
+    title: 'Supprimer l\'équipement',
     message: `${e.libelle} sera retiré du parc. Les tickets déjà déclarés restent dans le registre (ils perdent le rattachement). Continuer ?`,
     cancel: true,
   }).onOk(async () => {
@@ -651,9 +852,7 @@ function supprimerEquipement(e: EquipementCampus) {
   });
 }
 
-/** Arrivée depuis le QR imprimé : ?equipement=UP-IT-… (ou ?code=). */
-async function resoudreScan() {
-  const brut = String(route.query.equipement ?? route.query.code ?? '').trim();
+async function resoudreScanCode(brut: string) {
   if (!brut) return;
   try {
     const { data } = await api.get(`/equipements/par-code/${encodeURIComponent(brut)}`);
@@ -665,17 +864,28 @@ async function resoudreScan() {
   }
 }
 
-watch(filtres, () => chargerGestion(), { deep: true });
-watch(filtresEquip, () => chargerEquipements(), { deep: true });
+watch(codeScanne, (v) => {
+  if (v) {
+    scanEquipement.value = false;
+    void resoudreScanCode(v);
+    codeScanne.value = '';
+  }
+});
+
+async function resoudreScanUrl() {
+  const brut = String(route.query.equipement ?? route.query.code ?? '').trim();
+  if (!brut) return;
+  await resoudreScanCode(brut);
+}
 
 onMounted(() => {
   void chargerMes();
   void chargerEquipements();
   if (dsi.value) {
-    void chargerGestion();
+    void requeterGestion();
     void chargerStats();
   }
-  void resoudreScan();
+  void resoudreScanUrl();
 });
 </script>
 
@@ -726,5 +936,10 @@ $rouge: #C4122E;
   }
   &.prio-champ--NORMALE { background: #EFB700; color: $encre; }
   &.prio-champ--HAUTE { background: $rouge; }
+}
+
+.qr-canvas {
+  margin: 0 auto;
+  display: block;
 }
 </style>

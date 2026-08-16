@@ -9,7 +9,7 @@
       </div>
 
       <p class="pochoir enseigne__sur-titre">Inscriptions en ligne</p>
-      <h1 class="lettrage enseigne__marque">Rejoignez l’université</h1>
+      <h1 class="lettrage enseigne__marque">Rejoignez l'université</h1>
       <p class="enseigne__phrase">
         Déposez votre dossier sans compte : choisissez votre filière, payez vos
         frais par Mobile Money (Orange Money, MTN MoMo ou Telecel), et la
@@ -19,7 +19,7 @@
       <dl class="enseigne__faits">
         <div>
           <dt class="pochoir">Sans cash</dt>
-          <dd>Paiement Mobile Money au numéro court de l’université</dd>
+          <dd>Paiement Mobile Money au numéro court de l'université</dd>
         </div>
         <div>
           <dt class="pochoir">Suivi du dossier</dt>
@@ -32,15 +32,45 @@
     <section class="acces__plaque">
       <h2 class="lettrage acces__titre">Déposer mon dossier</h2>
 
+      <!-- Indicateur d'étape -->
+      <div class="acces__etapes">
+        <div
+          v-for="(e, i) in libellesEtapes"
+          :key="i"
+          class="acces__etape"
+          :class="{
+            'acces__etape--actif': etape === i + 1,
+            'acces__etape--fait': etape > i + 1,
+          }"
+        >
+          <span class="acces__etape-num">{{ i + 1 }}</span>
+          <span class="acces__etape-label">{{ e }}</span>
+        </div>
+      </div>
+
       <!-- Étape 1 : identité -->
       <form v-if="etape === 1" class="acces__form" @submit.prevent="continuerEtape1">
         <span class="section-titre">Identité du candidat</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.nom" outlined dense label="Nom *" />
+            <q-input
+              v-model="form.nom"
+              outlined
+              dense
+              label="Nom *"
+              :rules="[(v) => !!v?.trim() || 'Nom obligatoire']"
+              lazy-rules
+            />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.prenom" outlined dense label="Prénom *" />
+            <q-input
+              v-model="form.prenom"
+              outlined
+              dense
+              label="Prénom *"
+              :rules="[(v) => !!v?.trim() || 'Prénom obligatoire']"
+              lazy-rules
+            />
           </div>
         </div>
 
@@ -65,18 +95,44 @@
             <q-input v-model="form.lieuNaissance" outlined dense label="Lieu de naissance" />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.telephone" outlined dense label="Téléphone *" />
+            <q-input
+              v-model="form.telephone"
+              outlined
+              dense
+              label="Téléphone *"
+              placeholder="622 00 00 00"
+              :rules="[
+                (v) => !!v?.trim() || 'Téléphone obligatoire',
+                (v) => !v || v.replace(/\D/g, '').length >= 8 || 'Au moins 8 chiffres',
+              ]"
+              lazy-rules
+            />
           </div>
         </div>
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.email" outlined dense type="email" label="Adresse e-mail" />
+            <q-input
+              v-model="form.email"
+              outlined
+              dense
+              type="email"
+              label="Adresse e-mail"
+              :rules="[
+                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail invalide',
+              ]"
+              lazy-rules
+            />
           </div>
           <div class="col-12 col-sm-6">
             <q-input v-model="form.adresse" outlined dense label="Adresse" />
           </div>
         </div>
+
+        <q-banner v-if="erreurValidation" class="note--erreur">
+          <template #avatar><q-icon name="error" /></template>
+          {{ erreurValidation }}
+        </q-banner>
 
         <q-btn
           type="submit"
@@ -98,27 +154,35 @@
         </q-banner>
 
         <template v-else>
-          <q-select
+          <autocomplete-async
             v-model="form.anneeId"
-            :options="optionsAnnees"
-            outlined
-            dense
-            emit-value
-            map-options
+            endpoint="/inscription-publique/annees"
+            :label-fn="(a) => a.libelle"
             label="Année académique *"
             :disable="annees.length <= 1"
-            @update:model-value="chargerPromotions"
+            @update:model-value="onAnneeChange"
           />
-          <q-select
+          <autocomplete-async
             v-model="form.promotionId"
-            :options="optionsPromotions"
-            outlined
-            dense
-            emit-value
-            map-options
+            :endpoint="endpointPromotions"
+            :label-fn="labelPromotion"
+            :disable="!form.anneeId"
+            :preload="false"
             label="Promotion *"
             placeholder="Choisissez votre filière et niveau"
+            @update:model-value="onPromotionChange"
           />
+
+          <div v-if="tarifCourant" class="plaque acces__tarif">
+            <div class="text-caption acces__tarif-libelle">Frais d'inscription</div>
+            <div class="lettrage chiffres acces__tarif-montant">
+              {{ montantLisible(tarifCourant.montant) }} {{ tarifCourant.devise }}
+            </div>
+          </div>
+          <div v-else-if="form.promotionId && chargementTarif" class="text-caption text-grey-7">
+            <q-spinner size="16px" class="q-mr-xs" />
+            Consultation du tarif officiel…
+          </div>
         </template>
 
         <q-banner v-if="messageDepotErreur" class="note--erreur">
@@ -166,17 +230,18 @@
         <p class="lettrage chiffres acces__resultat-numero">{{ resultat.numero }}</p>
 
         <div class="plaque acces__resultat-montant">
-          <div class="text-caption acces__resultat-libelle">Frais d’inscription à régler</div>
+          <div class="text-caption acces__resultat-libelle">Frais d'inscription à régler</div>
           <div class="lettrage chiffres acces__resultat-somme">
             {{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}
           </div>
         </div>
 
         <p class="acces__resultat-message">
-          Payez ce montant via Mobile Money au
-          <strong>{{ NUMERO_COURT_MM }}</strong> de l’université, en indiquant le
-          numéro de dossier en motivation. Dès réception du paiement, la
-          scolarité validera votre inscription.
+          Envoyez
+          <strong class="chiffres">{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong>
+          au <strong>{{ NUMERO_COURT_MM }}</strong> par Mobile Money, en mentionnant
+          la référence <strong>{{ resultat.numero }}</strong> en motivation. Dès
+          réception du paiement, la scolarité validera votre inscription.
         </p>
 
         <q-banner v-if="resultat?.avertissement" class="note--alerte">
@@ -199,9 +264,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { api } from '../boot/axios';
 import ChampDate from '../components/ChampDate.vue';
+import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import { montantLisible } from '../utils/libelles';
 import type { AnneeAcademique } from '../types';
 
@@ -211,6 +277,8 @@ import type { AnneeAcademique } from '../types';
  * pilote, les paiements sont confirmés au guichet par l'agent comptable.
  */
 const NUMERO_COURT_MM = '60 431 431';
+
+const CLE_BROUILLON = 'unipresence_inscription_publique_brouillon';
 
 interface PromotionOuverte {
   id: string;
@@ -230,8 +298,11 @@ interface ResultatDepot {
   avertissement?: string | null;
 }
 
+const libellesEtapes = ['Identité', 'Filière', 'Confirmation'];
+
 const etape = ref(1);
 const depotEnCours = ref(false);
+const erreurValidation = ref('');
 const messageDepotErreur = ref('');
 const resultat = ref<ResultatDepot | null>(null);
 
@@ -253,16 +324,50 @@ const form = ref({
   promotionId: '',
 });
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
+const tarifCourant = ref<{ montant: number; devise: string } | null>(null);
+const chargementTarif = ref(false);
+const endpointPromotions = computed(() =>
+  form.value.anneeId ? `/inscription-publique/annees/${form.value.anneeId}/promotions` : '/inscription-publique/annees',
 );
-const optionsPromotions = computed(() =>
-  promotionsFiltrees.value.map((p) => ({
-    label: `${p.filiere ? p.filiere.nom + ' — ' : ''}${p.nom}${
-      p.frais ? ` (Frais : ${montantLisible(p.frais.montant)} ${p.frais.devise})` : ''
-    }`,
-    value: p.id,
-  })),
+
+const labelPromotion = (p: PromotionOuverte) =>
+  `${p.filiere ? p.filiere.nom + ' — ' : ''}${p.nom}${
+    p.frais ? ` (Frais : ${montantLisible(p.frais.montant)} ${p.frais.devise})` : ''
+  }`;
+
+function persisterBrouillon() {
+  if (etape.value === 3) return;
+  try {
+    sessionStorage.setItem(
+      CLE_BROUILLON,
+      JSON.stringify({ etape: etape.value, form: form.value }),
+    );
+  } catch {
+    /* sessionStorage indisponible : on accepte de perdre le brouillon */
+  }
+}
+
+function chargerBrouillon(): { etape: number; form: typeof form.value } | null {
+  try {
+    const raw = sessionStorage.getItem(CLE_BROUILLON);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function oublierBrouillon() {
+  try {
+    sessionStorage.removeItem(CLE_BROUILLON);
+  } catch {
+    /* silencieux */
+  }
+}
+
+watch(
+  () => [etape.value, JSON.stringify(form.value)],
+  () => persisterBrouillon(),
 );
 
 async function chargerAnnees() {
@@ -270,9 +375,15 @@ async function chargerAnnees() {
   try {
     const { data } = await api.get('/inscription-publique/annees');
     annees.value = Array.isArray(data) ? data : [];
+    // Si l'année du brouillon n'existe plus, on retombe sur l'année active.
+    if (form.value.anneeId && !annees.value.find((a) => a.id === form.value.anneeId)) {
+      form.value.anneeId = '';
+    }
     // L'année active d'abord, sinon la première ouverte.
-    form.value.anneeId =
-      annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
+    if (!form.value.anneeId) {
+      form.value.anneeId =
+        annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
+    }
     if (form.value.anneeId) await chargerPromotions();
   } finally {
     chargementAnnees.value = false;
@@ -282,28 +393,69 @@ async function chargerAnnees() {
 async function chargerPromotions() {
   promotions.value = [];
   promotionsFiltrees.value = [];
-  form.value.promotionId = '';
   if (!form.value.anneeId) return;
   const { data } = await api.get(`/inscription-publique/annees/${form.value.anneeId}/promotions`);
   promotions.value = Array.isArray(data) ? data : [];
   promotionsFiltrees.value = promotions.value;
 }
 
-function continuerEtape1() {
-  if (!form.value.nom.trim() || !form.value.prenom.trim() || !form.value.telephone.trim()) {
-    messageErreur('Le nom, le prénom et le téléphone sont obligatoires');
-    return;
+async function onAnneeChange() {
+  form.value.promotionId = '';
+  tarifCourant.value = null;
+  await chargerPromotions();
+}
+
+async function onPromotionChange() {
+  tarifCourant.value = null;
+  if (!form.value.anneeId || !form.value.promotionId) return;
+  chargementTarif.value = true;
+  try {
+    const { data } = await api.get('/frais', {
+      params: { anneeId: form.value.anneeId, promotionId: form.value.promotionId },
+    });
+    const liste = Array.isArray(data) ? data : data.data ?? [];
+    if (liste.length) {
+      tarifCourant.value = { montant: liste[0].montant, devise: liste[0].devise };
+    }
+  } catch {
+    tarifCourant.value = null;
+  } finally {
+    chargementTarif.value = false;
   }
-  messageErreur('');
+}
+
+function validerEtape1(): boolean {
+  erreurValidation.value = '';
+  if (!form.value.nom.trim()) {
+    erreurValidation.value = 'Le nom est obligatoire';
+    return false;
+  }
+  if (!form.value.prenom.trim()) {
+    erreurValidation.value = 'Le prénom est obligatoire';
+    return false;
+  }
+  if (!form.value.telephone.trim()) {
+    erreurValidation.value = 'Le téléphone est obligatoire';
+    return false;
+  }
+  if (form.value.telephone.replace(/\D/g, '').length < 8) {
+    erreurValidation.value = 'Le téléphone doit comporter au moins 8 chiffres';
+    return false;
+  }
+  if (form.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
+    erreurValidation.value = 'L\'adresse e-mail est invalide';
+    return false;
+  }
+  return true;
+}
+
+function continuerEtape1() {
+  if (!validerEtape1()) return;
   etape.value = 2;
 }
 
-function messageErreur(v: string) {
-  messageDepotErreur.value = v;
-}
-
 async function deposer() {
-  messageErreur('');
+  messageDepotErreur.value = '';
   depotEnCours.value = true;
   try {
     const { data } = await api.post('/inscription-publique', {
@@ -320,8 +472,10 @@ async function deposer() {
     });
     resultat.value = data as ResultatDepot;
     etape.value = 3;
+    oublierBrouillon();
   } catch (e: any) {
-    messageErreur(e?.response?.data?.message ?? 'Dépôt impossible, réessayez');
+    messageDepotErreur.value =
+      e?.response?.data?.message ?? 'Dépôt impossible, votre brouillon est conservé — réessayez.';
   } finally {
     depotEnCours.value = false;
   }
@@ -341,12 +495,22 @@ function recommencer() {
     promotionId: '',
   };
   resultat.value = null;
-  messageErreur('');
+  messageDepotErreur.value = '';
+  erreurValidation.value = '';
+  tarifCourant.value = null;
+  oublierBrouillon();
   void chargerPromotions();
   etape.value = 1;
 }
 
-onMounted(chargerAnnees);
+onMounted(() => {
+  const brouillon = chargerBrouillon();
+  if (brouillon && brouillon.form) {
+    form.value = { ...form.value, ...brouillon.form };
+    etape.value = Math.min(Math.max(1, brouillon.etape ?? 1), 2);
+  }
+  void chargerAnnees();
+});
 </script>
 
 <style scoped lang="scss">
@@ -431,12 +595,72 @@ onMounted(chargerAnnees);
   border-bottom: 3px solid var(--up-encre);
 }
 
+.acces__etapes {
+  display: flex;
+  gap: var(--up-2);
+  margin-bottom: var(--up-4);
+}
+
+.acces__etape {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: var(--up-filet-fin);
+  color: var(--up-encre-douce);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.acces__etape-num {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  background: var(--up-encre);
+  color: $blanc-craie;
+}
+
+.acces__etape--actif {
+  border: 2px solid var(--up-encre);
+  color: var(--up-encre);
+}
+
+.acces__etape--actif .acces__etape-num {
+  background: var(--up-vert, $vert);
+}
+
+.acces__etape--fait {
+  color: var(--up-vert, $vert);
+  border-color: var(--up-vert, $vert);
+}
+
 .acces__form {
   display: grid;
   gap: var(--up-3);
 }
 
 .acces__bouton { min-height: 56px; }
+
+.acces__tarif {
+  padding: var(--up-3) var(--up-4);
+  display: grid;
+  gap: var(--up-1);
+}
+
+.acces__tarif-libelle {
+  text-transform: uppercase;
+  color: var(--up-encre-douce);
+  letter-spacing: 0.06em;
+}
+
+.acces__tarif-montant {
+  font-size: 1.4rem;
+  color: $vert;
+}
 
 // -------------------------------------------------------------- résultat
 .acces__resultat {

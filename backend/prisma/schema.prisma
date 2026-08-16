@@ -342,6 +342,8 @@ model User {
   ticketsTraites        TicketSupport[]       @relation("TicketTraitePar")
   formationsCrees       Formation[]           @relation("FormationCreePar")
 
+  suspicionsAcquittees SuspicionPlagiat[] @relation("SuspicionAcquitteePar")
+
   @@index([role])
 }
 
@@ -1121,12 +1123,28 @@ model AttributionLogement {
 // ---------------------------------------------------------------------------
 
 model DocumentDepot {
-  id              String       @id @default(uuid())
-  titre           String
-  type            TypeDocument @default(AUTRE)
-  auteurs         String? // texte libre : "Nom1 ; Nom2"
-  anneeEdition    Int?
-  resume          String?
+  id           String       @id @default(uuid())
+  titre        String
+  type         TypeDocument @default(AUTRE)
+  /// Texte libre : "Nom1 ; Nom2"
+  auteurs      String?
+  anneeEdition Int?
+  resume       String?
+
+  // ---------------------------------------------------------------- plein texte
+  /// Mots-clés saisis manuellement par le déposant (en plus de l'extraction
+  /// automatique et du titre).
+  motsClefs     String[]                 @default([])
+  /// Texte intégral extrait du PDF (recherche plein texte PostgreSQL).
+  contenuTexte  String?
+  /// Vecteur de recherche tsvector pour PostgreSQL FTS (français).
+  /// Mis à jour par trigger `tsvector_update_trigger` (migration).
+  recherche     Unsupported("tsvector")?
+  /// Hash SHA-256 du fichier pour la détection de doublons (anti-plagiat basique).
+  empreinteHash String?
+  /// Index de trigrammes pour la recherche full-text sur le résumé/titre.
+  /// Note : le tri-gram est porté par l'index SQL créé en migration.
+
   fichier         String? // data-url ou chemin ; document PDF
   typeMime        String?
   tailleKo        Int?
@@ -1140,11 +1158,46 @@ model DocumentDepot {
   deposeParId     String?
   deposePar       User?        @relation("DocumentDeposePar", fields: [deposeParId], references: [id], onDelete: SetNull)
   telechargements Int          @default(0)
+  /// Pourcentage de similarité avec d'autres documents du dépôt (0-100). Le
+  /// service de détection recalcule périodiquement (cron).
+  indicePlagiat   Int?         @default(0)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  suspicionsA SuspicionPlagiat[] @relation("SuspicionA")
+  suspicionsB SuspicionPlagiat[] @relation("SuspicionB")
+
   @@index([type])
   @@index([public])
+  @@index([empreinteHash])
+}
+
+/// Suspicion de doublon : pair de documents dont la similarité dépasse un
+/// seuil. L'admin peut « acquitter » (marquer comme légitime) ou « confirmer »
+/// (suppression du doublon).
+model SuspicionPlagiat {
+  id            String                 @id @default(uuid())
+  documentAId   String
+  documentA     DocumentDepot          @relation("SuspicionA", fields: [documentAId], references: [id], onDelete: Cascade)
+  documentBId   String
+  documentB     DocumentDepot          @relation("SuspicionB", fields: [documentBId], references: [id], onDelete: Cascade)
+  /// Score de similarité 0-100 (au-dessus de 80 % = suspicion forte).
+  score         Float
+  statut        StatutSuspicionPlagiat @default(EN_ATTENTE)
+  detecteLe     DateTime               @default(now())
+  acquitteParId String?
+  acquittePar   User?                  @relation("SuspicionAcquitteePar", fields: [acquitteParId], references: [id], onDelete: SetNull)
+  acquitteLe    DateTime?
+  commentaire   String?
+
+  @@index([statut])
+  @@index([score])
+}
+
+enum StatutSuspicionPlagiat {
+  EN_ATTENTE
+  ACQUITTE
+  CONFIRME
 }
 
 // ---------------------------------------------------------------------------

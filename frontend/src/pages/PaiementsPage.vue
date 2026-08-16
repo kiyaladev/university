@@ -16,78 +16,138 @@
           no-caps
           icon="add"
           label="Nouveau paiement"
-          @click="dialogPaiement = true"
+          @click="ouvrirNouveauPaiement"
         />
       </div>
     </div>
 
-    <q-card flat bordered class="carte q-mb-md">
-      <q-card-section class="row q-col-gutter-sm items-center">
-        <div class="col-6 col-md-3">
-          <q-select
-            v-model="filtres.statut"
-            :options="optionsStatuts"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            label="Statut"
-            @update:model-value="charger"
-          />
-        </div>
-        <div class="col-6 col-md-3">
-          <q-select
-            v-model="filtres.mode"
-            :options="optionsModes"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            label="Mode"
-            @update:model-value="charger"
-          />
-        </div>
-        <div class="col-6 col-md-3">
-          <q-input
-            v-model="recherche"
-            dense
-            outlined
-            clearable
-            debounce="300"
-            placeholder="Référence, étudiant…"
-            @update:model-value="charger"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-        </div>
-        <div class="col-6 col-md-auto text-right text-caption text-grey-7">
-          {{ paiements.length }} paiement(s)
-        </div>
-      </q-card-section>
-    </q-card>
+    <div class="row q-col-gutter-sm q-mb-md">
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte paiements-kpi">
+          <q-card-section class="row items-center">
+            <q-icon name="check_circle" color="positive" size="32px" class="q-mr-md" />
+            <div>
+              <div class="pochoir text-grey-7">Total encaissé</div>
+              <div class="lettrage chiffres paiements-kpi__valeur">
+                {{ montantLisible(kpis.totalEncaisse) }} GNF
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte paiements-kpi">
+          <q-card-section class="row items-center">
+            <q-icon name="hourglass_top" color="warning" size="32px" class="q-mr-md" />
+            <div>
+              <div class="pochoir text-grey-7">En attente</div>
+              <div class="lettrage chiffres paiements-kpi__valeur">
+                {{ kpis.enAttente }}
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte paiements-kpi">
+          <q-card-section class="row items-center">
+            <q-icon name="cancel" color="negative" size="32px" class="q-mr-md" />
+            <div>
+              <div class="pochoir text-grey-7">Échoués</div>
+              <div class="lettrage chiffres paiements-kpi__valeur">
+                {{ kpis.echoues }}
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
+    <filter-bar
+      v-model="filtres"
+      :chips="chips"
+      placeholder="Rechercher (référence, nom étudiant)…"
+      @reinitialiser="reinitialiser"
+    >
+      <template #avances>
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
+        <q-select
+          v-model="filtres.mode"
+          :options="optionsModes"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Mode"
+        />
+        <q-select
+          v-model="filtres.operateur"
+          :options="optionsOperateurs"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Opérateur"
+        />
+        <q-input
+          v-model="filtres.motif"
+          outlined
+          dense
+          clearable
+          label="Motif"
+          placeholder="Frais d'inscription…"
+        />
+        <autocomplete-async
+          v-if="filtres.inscriptionId"
+          v-model="filtres.inscriptionId"
+          endpoint="/inscriptions"
+          :label-fn="(i) => i.numero"
+          label="N° dossier"
+          clearable
+        />
+        <champ-date v-model="filtres.dateDebut" label="Depuis" />
+        <champ-date v-model="filtres.dateFin" label="Jusqu'à" />
+      </template>
+      <template #actions>
+        <view-toggle
+          cle="paiements"
+          :modes="['tableau', 'cartes']"
+          defaut="tableau"
+          @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
+        />
+      </template>
+    </filter-bar>
 
     <q-table
+      v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
-      :rows="paiements"
+      :rows="paiementsFiltres"
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
+      :pagination="{ rowsPerPage: 0 }"
     >
-      <template #header-cell-reference>
-        <q-th>Référence</q-th>
+      <template #no-data>
+        <div class="text-center q-pa-md text-grey-7">Aucun paiement pour ces critères.</div>
       </template>
 
       <template #body-cell-etudiant="p">
         <q-td :props="p">
           <div>{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">
-            {{ p.row.inscription?.numero ?? 'paiement libre' }}
-          </div>
+          <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule }}</div>
         </q-td>
       </template>
 
@@ -159,6 +219,111 @@
         </q-td>
       </template>
     </q-table>
+
+    <div v-else class="paiements-cartes">
+      <q-card
+        v-for="p in paiementsFiltres"
+        :key="p.id"
+        flat
+        bordered
+        class="carte paiements-cartes__carte"
+      >
+        <q-card-section>
+          <div class="row items-center q-mb-xs">
+            <span class="champ badge-statut" :class="classeStatut(p.statut)">
+              {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
+            </span>
+            <q-space />
+            <div class="text-caption text-grey-7">{{ p.reference }}</div>
+          </div>
+          <div class="text-subtitle1 text-weight-medium">
+            {{ p.etudiant?.nom }} {{ p.etudiant?.prenom }}
+          </div>
+          <div class="text-caption text-grey-7">
+            {{ p.etudiant?.matricule }}
+            <span v-if="p.inscription?.numero"> · {{ p.inscription.numero }}</span>
+          </div>
+          <div class="row q-mt-sm q-col-gutter-sm">
+            <div class="col-6">
+              <div class="text-caption text-grey-7">Mode</div>
+              <div class="text-weight-medium">
+                {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }}
+              </div>
+              <div class="text-caption text-grey-7">
+                {{ p.operateur ? LIBELLE_OPERATEUR_MM[p.operateur] ?? p.operateur : '—' }}
+              </div>
+            </div>
+            <div class="col-6 text-right">
+              <div class="text-caption text-grey-7">Montant</div>
+              <div class="text-weight-medium lettrage chiffres">
+                {{ montantLisible(p.montant) }} {{ p.devise }}
+              </div>
+            </div>
+          </div>
+          <div class="text-caption text-grey-7 q-mt-xs">
+            {{ dateHeureLisible(p.horodatage) }}
+          </div>
+          <div v-if="p.transactionId" class="text-caption text-grey-7">
+            Transaction : {{ p.transactionId }}
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right" class="q-gutter-xs">
+          <q-btn
+            flat
+            dense
+            color="primary"
+            icon="info"
+            no-caps
+            label="Détails"
+            @click="ouvrirDetail(p)"
+          />
+          <q-btn
+            v-if="peutSimuler(p)"
+            flat
+            dense
+            color="positive"
+            icon="check"
+            no-caps
+            label="Réussi"
+            @click="simuler(p, 'REUSSI')"
+          />
+          <q-btn
+            v-if="peutSimuler(p)"
+            flat
+            dense
+            color="negative"
+            icon="close"
+            no-caps
+            label="Échoué"
+            @click="simuler(p, 'ECHOUE')"
+          />
+          <q-btn
+            v-if="peutAnnuler(p)"
+            flat
+            dense
+            color="negative"
+            icon="block"
+            no-caps
+            label="Annuler"
+            @click="ouvrirAnnulation(p)"
+          />
+        </q-card-actions>
+      </q-card>
+      <div v-if="!paiementsFiltres.length" class="text-center q-pa-md text-grey-7">
+        Aucun paiement pour ces critères.
+      </div>
+    </div>
+
+    <pagination-bar
+      v-if="paiements.length"
+      :page="page"
+      :page-size="pageSize"
+      :total="total"
+      @update:page="(v) => { page = v; charger(); }"
+      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
+      @tous="chargerTout"
+    />
 
     <paiement-dialog v-model="dialogPaiement" @paye="charger" />
 
@@ -250,7 +415,7 @@
             dense
             type="textarea"
             rows="3"
-            label="Motif d’annulation *"
+            label="Motif d'annulation *"
             autofocus
           />
         </q-card-section>
@@ -273,26 +438,40 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import PaiementDialog from '../components/PaiementDialog.vue';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import ChampDate from '../components/ChampDate.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_PAIEMENT,
   dateHeureLisible,
+  dateLisible,
   montantLisible,
 } from '../utils/libelles';
-import type { Paiement } from '../types';
+import type { ModePaiement, Paiement, StatutPaiement } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 
 const paiements = ref<Paiement[]>([]);
 const chargement = ref(false);
-const recherche = ref('');
+const modeVue = ref<'tableau' | 'cartes'>('tableau');
+
+const page = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
+const tousLesElements = ref(false);
+
+const filtres = ref<Record<string, any>>({});
+
 const dialogPaiement = ref(false);
 const dialogDetail = ref(false);
 const detail = ref<Paiement | null>(null);
@@ -300,8 +479,6 @@ const dialogAnnulation = ref(false);
 const paiementAnnuler = ref<Paiement | null>(null);
 const motifAnnulation = ref('');
 const annulationEnCours = ref(false);
-
-const filtres = ref<{ statut: string | null; mode: string | null }>({ statut: null, mode: null });
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 const peutSimuler = (p: Paiement) =>
@@ -315,14 +492,18 @@ const optionsStatuts = computed(() =>
 const optionsModes = computed(() =>
   Object.entries(LIBELLE_MODE_PAIEMENT).map(([value, label]) => ({ value, label })),
 );
+const optionsOperateurs = computed(() =>
+  Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({ value, label })),
+);
 
 const colonnes: QTableColumn[] = [
   { name: 'reference', label: 'Référence', field: 'reference', align: 'left', sortable: true },
-  { name: 'etudiant', label: 'Étudiant / Dossier', field: 'etudiant', align: 'left' },
-  { name: 'motif', label: 'Motif', field: 'motif', align: 'left' },
+  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
   { name: 'mode', label: 'Mode / Opérateur', field: 'mode', align: 'left' },
   { name: 'montant', label: 'Montant', field: 'montant', align: 'right', sortable: true },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
+  { name: 'motif', label: 'Motif', field: 'motif', align: 'left' },
+  { name: 'transactionId', label: 'Transaction', field: 'transactionId', align: 'left' },
   { name: 'horodatage', label: 'Date', field: 'horodatage', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
@@ -336,9 +517,109 @@ const classeStatut = (s: string) =>
     REMBOURSE: 'champ--brouillon',
   })[s] ?? 'champ--brouillon';
 
+const chips = computed(() => {
+  const cs: Array<{ label: string; value: any; icone?: string; defaut?: boolean }> = [];
+  if (filtres.value.recherche) {
+    cs.push({
+      label: `« ${filtres.value.recherche} »`,
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
+  }
+  if (filtres.value.statut) {
+    cs.push({
+      label: `Statut : ${LIBELLE_STATUT_PAIEMENT[filtres.value.statut as StatutPaiement] ?? filtres.value.statut}`,
+      value: filtres.value.statut,
+      icone: 'flag',
+    });
+  }
+  if (filtres.value.mode) {
+    cs.push({
+      label: `Mode : ${LIBELLE_MODE_PAIEMENT[filtres.value.mode as ModePaiement] ?? filtres.value.mode}`,
+      value: filtres.value.mode,
+      icone: 'payments',
+    });
+  }
+  if (filtres.value.operateur) {
+    cs.push({
+      label: `Op. : ${LIBELLE_OPERATEUR_MM[filtres.value.operateur] ?? filtres.value.operateur}`,
+      value: filtres.value.operateur,
+      icone: 'cell_tower',
+    });
+  }
+  if (filtres.value.motif) {
+    cs.push({
+      label: `Motif : ${filtres.value.motif}`,
+      value: filtres.value.motif,
+      icone: 'description',
+    });
+  }
+  if (filtres.value.inscriptionId) {
+    cs.push({
+      label: `Dossier : ${filtres.value.inscriptionId}`,
+      value: filtres.value.inscriptionId,
+      icone: 'folder',
+    });
+  }
+  if (filtres.value.dateDebut) {
+    cs.push({
+      label: `Depuis : ${dateLisible(filtres.value.dateDebut)}`,
+      value: filtres.value.dateDebut,
+      icone: 'event',
+    });
+  }
+  if (filtres.value.dateFin) {
+    cs.push({
+      label: `Jusqu'à : ${dateLisible(filtres.value.dateFin)}`,
+      value: filtres.value.dateFin,
+      icone: 'event',
+    });
+  }
+  return cs;
+});
+
+const kpis = computed(() => {
+  const liste = paiements.value;
+  let totalEncaisse = 0;
+  let enAttente = 0;
+  let echoues = 0;
+  for (const p of liste) {
+    if (p.statut === 'REUSSI') totalEncaisse += p.montant;
+    if (p.statut === 'EN_ATTENTE') enAttente++;
+    if (p.statut === 'ECHOUE') echoues++;
+  }
+  return { totalEncaisse, enAttente, echoues };
+});
+
+/** Filtrage client pour les critères que le backend ne gère pas encore. */
+const paiementsFiltres = computed(() => {
+  let liste = paiements.value;
+  if (filtres.value.operateur) {
+    liste = liste.filter((p) => p.operateur === filtres.value.operateur);
+  }
+  if (filtres.value.motif) {
+    const needle = String(filtres.value.motif).toLowerCase();
+    liste = liste.filter((p) => (p.motif ?? '').toLowerCase().includes(needle));
+  }
+  if (filtres.value.dateDebut) {
+    const d = new Date(filtres.value.dateDebut).getTime();
+    liste = liste.filter((p) => new Date(p.horodatage).getTime() >= d);
+  }
+  if (filtres.value.dateFin) {
+    const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
+    liste = liste.filter((p) => new Date(p.horodatage).getTime() <= d);
+  }
+  return liste;
+});
+
 function ouvrirDetail(p: Paiement) {
   detail.value = p;
   dialogDetail.value = true;
+}
+
+function ouvrirNouveauPaiement() {
+  dialogPaiement.value = true;
 }
 
 function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
@@ -380,24 +661,82 @@ async function confirmerAnnulation() {
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/paiements', {
-      params: {
-        all: '1',
-        statut: filtres.value.statut || undefined,
-        mode: filtres.value.mode || undefined,
-        search: recherche.value || undefined,
-      },
-    });
-    paiements.value = data.data;
+    const params: Record<string, any> = {
+      all: '1',
+      page: page.value,
+      pageSize: pageSize.value,
+    };
+    if (filtres.value.recherche) params.search = filtres.value.recherche;
+    if (filtres.value.statut) params.statut = filtres.value.statut;
+    if (filtres.value.mode) params.mode = filtres.value.mode;
+    if (filtres.value.inscriptionId) params.inscriptionId = filtres.value.inscriptionId;
+    const { data } = await api.get('/paiements', { params });
+    paiements.value = data.data ?? [];
+    total.value = data.total ?? paiements.value.length;
   } finally {
     chargement.value = false;
   }
 }
 
+async function chargerTout() {
+  chargement.value = true;
+  try {
+    const params: Record<string, any> = { all: '1', pageSize: 1000 };
+    if (filtres.value.recherche) params.search = filtres.value.recherche;
+    if (filtres.value.statut) params.statut = filtres.value.statut;
+    if (filtres.value.mode) params.mode = filtres.value.mode;
+    if (filtres.value.inscriptionId) params.inscriptionId = filtres.value.inscriptionId;
+    const { data } = await api.get('/paiements', { params });
+    paiements.value = data.data ?? [];
+    total.value = paiements.value.length;
+    tousLesElements.value = true;
+  } finally {
+    chargement.value = false;
+  }
+}
+
+function reinitialiser() {
+  filtres.value = {};
+  page.value = 1;
+  tousLesElements.value = false;
+  charger();
+}
+
+watch(
+  () => [
+    filtres.value.recherche,
+    filtres.value.statut,
+    filtres.value.mode,
+    filtres.value.inscriptionId,
+  ],
+  () => {
+    page.value = 1;
+    tousLesElements.value = false;
+    charger();
+  },
+);
+
 onMounted(charger);
 </script>
 
-<style>
+<style scoped lang="scss">
+.paiements-kpi {
+  background: var(--up-plaque);
+  border: var(--up-filet);
+}
+.paiements-kpi__valeur {
+  font-size: 1.4rem;
+  margin-top: 2px;
+}
+.paiements-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--up-3);
+}
+.paiements-cartes__carte {
+  background: var(--up-plaque);
+}
+
 .champ.badge-statut {
   display: inline-flex;
   padding: 3px 12px;
@@ -407,7 +746,6 @@ onMounted(charger);
   text-transform: uppercase;
   white-space: nowrap;
 }
-
 .champ--brouillon { background: #cfd4d9; color: #33463f; }
 .champ--attente-paiement { background: #e8a317; color: #10251e; }
 .champ--payee { background: #1e7a4c; }

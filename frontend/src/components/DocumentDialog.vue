@@ -1,11 +1,12 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 600px; max-width: 95vw">
-      <q-card-section class="text-h6">
+    <q-card style="width: 720px; max-width: 95vw">
+      <q-card-section class="text-h6 row items-center">
+        <q-icon name="library_books" class="q-mr-sm" />
         {{ document ? 'Modifier le document' : 'Déposer un document' }}
       </q-card-section>
 
-      <q-card-section>
+      <q-card-section class="q-pt-none">
         <span class="section-titre">Fiche du document</span>
         <q-input
           v-model="form.titre"
@@ -22,6 +23,8 @@
               :options="typesDocument"
               outlined
               dense
+              emit-value
+              map-options
               label="Type *"
             />
           </div>
@@ -51,35 +54,84 @@
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-select
+            <autocomplete-async
               v-model="form.departementId"
-              :options="optionsDepartements"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
+              endpoint="/departements"
+              :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
               label="Département"
+              placeholder="Tapez le nom ou le code…"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-select
+            <autocomplete-async
               v-model="form.enseignantId"
-              :options="optionsEnseignants"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              label="Enseignant associé"
+              endpoint="/enseignants"
+              :label-fn="(e) => `${e.prenom} ${e.nom}${e.matricule ? ' — ' + e.matricule : ''}`"
+              label="Encadrant"
+              placeholder="Tapez le nom…"
             />
           </div>
         </div>
 
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-sm-6">
+            <autocomplete-async
+              v-model="form.etudiantId"
+              endpoint="/etudiants"
+              :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
+              label="Étudiant"
+              placeholder="Tapez le matricule ou le nom…"
+            />
+          </div>
+          <div class="col-12 col-sm-6 q-pt-md">
+            <q-toggle v-model="form.public" label="Visible sur la page publique" />
+          </div>
+        </div>
+
+        <span class="section-titre">Mots-clés</span>
+        <q-input
+          v-model="motCleSaisi"
+          outlined
+          dense
+          label="Ajouter un mot-clé"
+          placeholder="Tapez puis Entrée pour ajouter"
+          @keydown.enter.prevent="ajouterMotCle"
+        >
+          <template #append>
+            <q-icon
+              v-if="motCleSaisi"
+              name="add_circle"
+              class="cursor-pointer"
+              @click="ajouterMotCle"
+            >
+              <q-tooltip>Ajouter</q-tooltip>
+            </q-icon>
+          </template>
+        </q-input>
+        <div v-if="form.motsClefs.length" class="row q-gutter-xs q-mt-sm">
+          <q-chip
+            v-for="(mot, i) in form.motsClefs"
+            :key="`${mot}-${i}`"
+            dense
+            removable
+            color="primary"
+            text-color="white"
+            icon="sell"
+            :label="mot"
+            @remove="retirerMotCle(i)"
+          />
+        </div>
+        <div v-else class="text-caption text-grey-7 q-mt-xs">
+          Aucun mot-clé. Conseillé : « machine learning », « Conakry », « durabilité ».
+        </div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
         <span class="section-titre">Fichier (archivage natif)</span>
         <p class="text-caption text-grey-7 q-mt-xs q-mb-sm">
-          La numérisation des fonds papier sera facturée à part : ici on dépose
-          des fichiers PDF numériques.
+          PDF jusqu'à 8 Mo : converti en data-url base64 puis stocké côté serveur,
+          où son contenu texte sera extrait pour la recherche full-text et l'analyse
+          anti-plagiat.
         </p>
         <q-file
           v-model="fichierChoisi"
@@ -88,26 +140,55 @@
           outlined
           dense
           label="PDF joint"
-          hint="PDF jusqu'à 5 Mo : le data-url base64 pèse un tiers de plus, le serveur plafonne à 8 Mo"
-          :disable="conversionFichier"
+          :hint="`Max ${MAX_FICHIER_OCTETS_LABEL}`"
+          :disable="conversionFichier || extractionEnCours"
         >
           <template #prepend><q-icon name="attach_file" /></template>
         </q-file>
         <div v-if="document?.tailleKo" class="text-caption text-grey-7 q-mt-xs">
-          Fichier actuel : PDF joint ({{ (document.tailleKo / 1024).toFixed(1) }} Mo) — en choisir
+          Fichier actuel : PDF ({{ (document.tailleKo / 1024).toFixed(1) }} Mo) — en choisir
           un nouveau le remplace.
         </div>
-
-        <q-toggle v-model="form.public" label="Visible sur la page publique" />
+        <div v-if="conversionFichier" class="row items-center q-mt-sm text-caption text-grey-7">
+          <q-spinner size="16px" class="q-mr-sm" /> Conversion en base64…
+        </div>
+        <div v-else-if="extractionEnCours" class="row items-center q-mt-sm text-caption text-primary">
+          <q-spinner size="16px" class="q-mr-sm" /> Extraction du texte en cours (recherche full-text)…
+        </div>
       </q-card-section>
+
+      <q-banner
+        v-if="!form.public && suspicionDetectee"
+        dense
+        class="bg-orange-1 text-orange-10 q-mx-md q-mb-md"
+      >
+        <template #avatar><q-icon name="warning" color="orange" /></template>
+        <div class="text-weight-medium">Doublon potentiel détecté</div>
+        <div class="q-mt-xs text-caption">
+          Ce document pourrait être un doublon d'un document existant
+          (score {{ suspicionDetectee.score }} %) — vérifiez avant de publier.
+        </div>
+        <q-btn
+          flat
+          dense
+          no-caps
+          color="orange"
+          icon="open_in_new"
+          label="Voir la suspicion"
+          class="q-mt-xs"
+          @click="voirSuspicion"
+        />
+      </q-banner>
 
       <q-card-actions align="right">
         <q-btn flat label="Annuler" v-close-popup />
         <q-btn
           color="primary"
           unelevated
+          no-caps
           label="Enregistrer"
           :loading="enregistrement"
+          :disable="conversionFichier || extractionEnCours"
           @click="enregistrer"
         />
       </q-card-actions>
@@ -116,30 +197,42 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import AutocompleteAsync from './AutocompleteAsync.vue';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
-import type { Departement, DocumentDepot, Enseignant } from '../types';
+import type { DocumentDepot, SuspicionPlagiat } from '../types';
 
 const props = defineProps<{
   modelValue: boolean;
   document?: DocumentDepot | null;
-  departements: Departement[];
-  enseignants: Enseignant[];
+  departements?: { id: string; nom: string; code?: string | null }[];
+  enseignants?: { id: string; prenom: string; nom: string }[];
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+
+const emit = defineEmits<{
+  'update:modelValue': [boolean];
+  enregistre: [];
+}>();
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const router = useRouter();
+
 const enregistrement = ref(false);
 const fichierChoisi = ref<File | null>(null);
 const conversionFichier = ref(false);
 const fichierDataUrl = ref<string>();
+const extractionEnCours = ref(false);
+const suspicionDetectee = ref<SuspicionPlagiat | null>(null);
+const motCleSaisi = ref('');
 
-/** 5 Mo de PDF → ≈ 6,7 Mo de base64 : confortablement sous les 8 Mo du serveur. */
-const MAX_FICHIER_OCTETS = 5 * 1024 * 1024;
+/** 8 Mo côté frontend — l'extraction PDF côté serveur se fait en parallèle. */
+const MAX_FICHIER_OCTETS = 8 * 1024 * 1024;
+const MAX_FICHIER_OCTETS_LABEL = '8 Mo';
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({
   value,
@@ -148,21 +241,16 @@ const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label])
 
 const form = ref({
   titre: '',
-  type: 'AUTRE',
+  type: 'AUTRE' as DocumentDepot['type'],
   auteurs: '',
   anneeEdition: null as number | null,
   resume: '',
   departementId: null as string | null,
   enseignantId: null as string | null,
+  etudiantId: null as string | null,
   public: true,
+  motsClefs: [] as string[],
 });
-
-const optionsDepartements = computed(() =>
-  props.departements.map((d) => ({ label: d.nom, value: d.id })),
-);
-const optionsEnseignants = computed(() =>
-  props.enseignants.map((e) => ({ label: `${e.prenom} ${e.nom}`, value: e.id })),
-);
 
 watch(
   () => props.modelValue,
@@ -171,6 +259,9 @@ watch(
     const d = props.document;
     fichierChoisi.value = null;
     fichierDataUrl.value = undefined;
+    suspicionDetectee.value = null;
+    motCleSaisi.value = '';
+    extractionEnCours.value = false;
     form.value = {
       titre: d?.titre ?? '',
       type: d?.type ?? 'AUTRE',
@@ -178,12 +269,24 @@ watch(
       anneeEdition: d?.anneeEdition ?? null,
       resume: d?.resume ?? '',
       departementId: d?.departementId ?? null,
-      // Un enseignant qui dépose est présélectionné d'office comme auteur.
       enseignantId: d?.enseignantId ?? (auth.estEnseignant ? (auth.utilisateur?.enseignantId ?? null) : null),
+      etudiantId: d?.etudiantId ?? null,
       public: d?.public ?? true,
+      motsClefs: Array.isArray(d?.motsClefs) ? [...(d!.motsClefs as string[])] : [],
     };
   },
 );
+
+function ajouterMotCle() {
+  const mot = motCleSaisi.value.trim();
+  if (!mot) return;
+  if (!form.value.motsClefs.includes(mot)) form.value.motsClefs.push(mot);
+  motCleSaisi.value = '';
+}
+
+function retirerMotCle(index: number) {
+  form.value.motsClefs.splice(index, 1);
+}
 
 watch(fichierChoisi, (f) => {
   if (!f) {
@@ -193,12 +296,11 @@ watch(fichierChoisi, (f) => {
   if (f.size > MAX_FICHIER_OCTETS) {
     $q.notify({
       type: 'negative',
-      message: 'Document refusé : il dépasse la limite de 5 Mo.',
+      message: `Document refusé : il dépasse la limite de ${MAX_FICHIER_OCTETS_LABEL}.`,
     });
     fichierChoisi.value = null;
     return;
   }
-  // Conversion FileReader → data-url base64, comme l'exige le schéma.
   conversionFichier.value = true;
   const lecteur = new FileReader();
   lecteur.onload = () => {
@@ -213,29 +315,83 @@ watch(fichierChoisi, (f) => {
   lecteur.readAsDataURL(f);
 });
 
+function nettoyable(v: any) {
+  return v === undefined || v === null || v === '';
+}
+
 async function enregistrer() {
   if (!form.value.titre.trim()) {
     $q.notify({ type: 'warning', message: 'Le titre est obligatoire' });
     return;
   }
+  if (fichierDataUrl.value) extractionEnCours.value = true;
   enregistrement.value = true;
   try {
-    const payload = {
-      ...form.value,
-      anneeEdition: form.value.anneeEdition || undefined,
+    const payload: Record<string, any> = {
+      titre: form.value.titre.trim(),
+      type: form.value.type,
       auteurs: form.value.auteurs.trim() || undefined,
+      anneeEdition: form.value.anneeEdition || undefined,
       resume: form.value.resume.trim() || undefined,
       departementId: form.value.departementId || undefined,
       enseignantId: form.value.enseignantId || undefined,
+      etudiantId: form.value.etudiantId || undefined,
+      public: form.value.public,
+      motsClefs: form.value.motsClefs.length ? form.value.motsClefs : undefined,
       ...(fichierDataUrl.value ? { fichier: fichierDataUrl.value } : {}),
     };
-    if (props.document) await api.put(`/documents/${props.document.id}`, payload);
-    else await api.post('/documents', payload);
-    $q.notify({ type: 'positive', message: 'Document enregistré' });
-    emit('enregistre');
-    emit('update:modelValue', false);
+    // Nettoyage des clés vides.
+    Object.keys(payload).forEach((k) => nettoyable(payload[k]) && delete payload[k]);
+
+    const url = props.document ? `/documents/${props.document.id}` : '/documents';
+    const methode = props.document ? 'put' : 'post';
+    const reponse = await api[methode](url, payload);
+    const data = reponse.data;
+
+    // Le backend peut renvoyer des suspicions de plagiat nouvellement créées.
+    const suspicions: SuspicionPlagiat[] | undefined =
+      data?.suspicionsPlagiat ?? data?.data?.suspicionsPlagiat;
+    if (Array.isArray(suspicions) && suspicions.length && !suspicionDetectee.value) {
+      // On retient la suspicion la plus haute pour alerter avant publication.
+      const top = suspicions.slice().sort((a, b) => b.score - a.score)[0];
+      suspicionDetectee.value = top;
+    }
+
+    if (!suspicionDetectee.value) {
+      $q.notify({ type: 'positive', message: 'Document enregistré' });
+      emit('enregistre');
+      emit('update:modelValue', false);
+    } else {
+      $q.notify({
+        type: 'warning',
+        message: 'Document enregistré — vérifiez l’avertissement anti-plagiat',
+        timeout: 4000,
+      });
+    }
+  } catch {
+    // Notification déjà émise par l’intercepteur axios.
   } finally {
     enregistrement.value = false;
+    extractionEnCours.value = false;
   }
 }
+
+function voirSuspicion() {
+  if (!suspicionDetectee.value) return;
+  emit('update:modelValue', false);
+  void router.push(`/plagiat/${suspicionDetectee.value.id}`);
+}
 </script>
+
+<style scoped>
+.section-titre {
+  display: block;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--up-encre);
+}
+</style>

@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <div class="row justify-center">
-      <div class="col-12 col-md-10 col-lg-8">
+      <div class="col-12 col-md-10 col-lg-9">
         <div class="text-center q-mt-lg q-mb-lg">
           <div class="lettrage page-titre">Bibliothèque numérique</div>
           <div class="page-sous-titre biblio-intro">
@@ -11,20 +11,30 @@
           </div>
         </div>
 
-        <div class="row q-col-gutter-sm q-mb-md">
-          <div class="col-12 col-sm-7">
-            <q-input
-              v-model="recherche"
-              dense
-              outlined
-              clearable
-              debounce="300"
-              placeholder="Rechercher un titre, un auteur…"
-            >
-              <template #prepend><q-icon name="search" /></template>
-            </q-input>
-          </div>
-          <div class="col-12 col-sm-5">
+        <div class="q-mb-md">
+          <q-input
+            v-model="recherche"
+            dense
+            outlined
+            clearable
+            debounce="350"
+            placeholder="Rechercher dans tout le fonds (intitulé, mots-clés, contenu…)"
+            class="biblio-recherche"
+          >
+            <template #prepend><q-icon name="search" /></template>
+            <template #append>
+              <q-icon
+                v-if="recherche"
+                name="close"
+                class="cursor-pointer"
+                @click="recherche = ''"
+              />
+            </template>
+          </q-input>
+        </div>
+
+        <div class="row q-col-gutter-sm q-mb-md items-center">
+          <div class="col-12 col-sm-4">
             <q-select
               v-model="filtre.type"
               :options="typesDocument"
@@ -34,6 +44,38 @@
               emit-value
               map-options
               label="Type de document"
+            />
+          </div>
+          <div class="col-12 col-sm-4">
+            <q-select
+              v-model="filtre.departementId"
+              :options="optionsDepartements"
+              dense
+              outlined
+              clearable
+              emit-value
+              map-options
+              label="Département"
+              :loading="chargementDepartements"
+            />
+          </div>
+          <div class="col-12 col-sm-3">
+            <q-input
+              v-model.number="filtre.anneeEdition"
+              type="number"
+              dense
+              outlined
+              clearable
+              label="Année d'édition"
+              :min="1900"
+              :max="2100"
+            />
+          </div>
+          <div class="col-12 col-sm-1 text-right">
+            <view-toggle
+              cle="biblio.publique"
+              :modes="['tableau', 'cartes']"
+              @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
             />
           </div>
         </div>
@@ -46,10 +88,11 @@
           v-else-if="!documents.length"
           class="plaque q-pa-lg text-center text-grey-7"
         >
-          Aucun document publié ne correspond à votre recherche.
+          <q-icon name="search_off" size="38px" color="grey-5" />
+          <div class="q-mt-sm">Aucun document publié ne correspond à votre recherche.</div>
         </div>
 
-        <q-list v-else bordered separator class="plaque q-mb-md">
+        <q-list v-else-if="mode === 'cartes'" bordered separator class="plaque q-mb-md">
           <q-item v-for="doc in documents" :key="doc.id" class="q-pa-md">
             <q-item-section>
               <div class="row items-center q-col-gutter-sm">
@@ -62,6 +105,16 @@
                 />
                 <span class="doc-annee text-caption text-grey-7">
                   année {{ anneeDocument(doc) }}
+                </span>
+                <span
+                  v-if="Array.isArray(doc.motsClefs) && doc.motsClefs.length"
+                  class="text-caption text-grey-7 q-ml-md"
+                >
+                  <q-icon name="sell" size="14px" class="q-mr-xs" />
+                  <span v-for="(m, i) in doc.motsClefs.slice(0, 4)" :key="m + i">
+                    {{ m }}<span v-if="i < Math.min(doc.motsClefs.length, 4) - 1"> · </span>
+                  </span>
+                  <span v-if="doc.motsClefs.length > 4"> · +{{ doc.motsClefs.length - 4 }}</span>
                 </span>
                 <q-space />
                 <span
@@ -77,9 +130,8 @@
               <q-item-label v-if="doc.auteurs" caption class="q-mt-xs">
                 {{ doc.auteurs }}
               </q-item-label>
-              <q-item-label v-if="doc.resume" class="doc-resume q-mt-xs text-grey-7">
-                {{ doc.resume }}
-              </q-item-label>
+
+              <div v-if="doc.extraitContexte" class="doc-extrait q-mt-sm" v-html="surligner(doc.extraitContexte)" />
 
               <div class="row items-center q-mt-sm text-caption text-grey-7">
                 <div class="col">
@@ -105,9 +157,60 @@
           </q-item>
         </q-list>
 
-        <div v-if="total > documents.length" class="row justify-center q-mb-lg">
-          <q-btn outline color="primary" no-caps label="Voir plus de documents" @click="chargerPlus" />
-        </div>
+        <q-table
+          v-else
+          flat
+          bordered
+          class="carte"
+          :rows="documents"
+          :columns="colonnesTableau"
+          row-key="id"
+          :loading="chargement"
+          :rows-per-page-options="[0]"
+          hide-bottom
+        >
+          <template #body-cell-titre="p">
+            <q-td :props="p">
+              <div class="text-weight-medium">{{ p.row.titre }}</div>
+              <div v-if="p.row.auteurs" class="text-caption text-grey-7">{{ p.row.auteurs }}</div>
+            </q-td>
+          </template>
+          <template #body-cell-departement="p">
+            <q-td :props="p">{{ p.row.departement?.nom ?? '—' }}</q-td>
+          </template>
+          <template #body-cell-type="p">
+            <q-td :props="p">{{ LIBELLE_TYPE_DOCUMENT[p.row.type] ?? p.row.type }}</q-td>
+          </template>
+          <template #body-cell-telechargements="p">
+            <q-td :props="p" class="text-right">
+              <q-icon name="download" size="15px" class="q-mr-xs" />
+              {{ p.row.telechargements }}
+            </q-td>
+          </template>
+          <template #body-cell-actions="p">
+            <q-td :props="p" class="text-right">
+              <q-btn
+                v-if="p.row.fichier"
+                flat
+                dense
+                no-caps
+                icon="download"
+                label="Télécharger"
+                @click="telecharger(p.row)"
+              />
+            </q-td>
+          </template>
+        </q-table>
+
+        <pagination-bar
+          v-if="total > pageSize"
+          :page="page"
+          :page-size="pageSize"
+          :total="total"
+          :show-all="false"
+          @update:page="(v) => { page = v; charger(true) }"
+          @update:page-size="(v) => { pageSize = v; page = 1; charger(true) }"
+        />
 
         <div class="text-center text-caption text-grey-7 q-pb-lg">
           La consultation et le téléchargement sont libres et gratuits. La
@@ -119,68 +222,113 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import { api } from '../boot/axios';
-import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
-import type { DocumentDepot } from '../types';
-
 /**
- * Page publique de la bibliothèque : aucune garde d'authentification, aucun
- * appel à l'API privée. La liste et les fichiers viennent des routes @Public()
- * — un jeton présent dans le navigateur n'y change rien d'autre que la
- * visibilité du fonds non publié pour le staff.
+ * Bibliothèque publique : aucune garde d'authentification. La barre de
+ * recherche frappe directement `/documents/recherche` (public) ; les filtres
+ * affinent la liste de manière serveur. L'extrait renvoyé par le backend est
+ * surligné via <mark> pour donner du contexte au visiteur.
  */
+import { computed, onMounted, ref, watch } from 'vue';
+import { api } from '../boot/axios';
+import ViewToggle from '../components/ViewToggle.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
+import type { Departement, DocumentDepot } from '../types';
+
+interface OptionSimple { label: string; value: string }
+
 const documents = ref<DocumentDepot[]>([]);
+const departements = ref<Departement[]>([]);
+const chargementDepartements = ref(false);
 const chargement = ref(false);
 const total = ref(0);
 const page = ref(1);
+const pageSize = ref(10);
 const recherche = ref('');
-const filtre = ref({ type: '' as '' | DocumentDepot['type'] });
+const mode = ref<'tableau' | 'cartes'>('cartes');
 
-const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({
-  value,
-  label,
-}));
+const filtre = ref<{ type: '' | DocumentDepot['type']; departementId: ''; anneeEdition: number | null }>({
+  type: '',
+  departementId: '',
+  anneeEdition: null,
+});
+
+const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([v, l]) => ({ value: v, label: l }));
+const optionsDepartements = computed<OptionSimple[]>(() =>
+  departements.value.map((d) => ({ label: d.nom, value: d.id })),
+);
+
+const colonnesTableau = [
+  { name: 'titre', label: 'Document', field: 'titre', align: 'left' as const },
+  { name: 'departement', label: 'Département', field: 'departement', align: 'left' as const },
+  { name: 'type', label: 'Type', field: 'type', align: 'left' as const },
+  { name: 'annee', label: 'Année', field: 'anneeEdition', align: 'center' as const },
+  { name: 'telechargements', label: 'Téléchargements', field: 'telechargements', align: 'right' as const },
+  { name: 'actions', label: '', field: 'id', align: 'right' as const },
+];
 
 function anneeDocument(doc: DocumentDepot): number {
   return doc.anneeEdition ?? new Date(doc.createdAt).getFullYear();
+}
+
+/**
+ * Surligne toutes les occurrences du terme de recherche dans l'extrait. On
+ * opère côté client (le texte est déjà extrait par le backend) pour ne pas
+ * réintroduire de HTML non échappé.
+ */
+function surligner(texte: string): string {
+  const echappe = texte
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  const terme = recherche.value.trim();
+  if (!terme) return echappe;
+  // Échapper les caractères regex du terme.
+  const motif = terme.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(${motif})`, 'gi');
+  return echappe.replace(regex, '<mark>$1</mark>');
 }
 
 async function charger(reinit = true) {
   if (reinit) page.value = 1;
   chargement.value = true;
   try {
-    const { data } = await api.get('/documents', {
-      params: {
-        ...(recherche.value ? { search: recherche.value } : {}),
-        ...(filtre.value.type ? { type: filtre.value.type } : {}),
-        page: page.value,
-        pageSize: 15,
-      },
-      // Erreurs locales silencieuses : un visiteur sans compte ne doit pas
-      // être éjecté vers l'écran de connexion par un 401 d'usage de session.
+    const params: Record<string, any> = {
+      page: page.value,
+      pageSize: pageSize.value,
+      public: 'true',
+    };
+    if (recherche.value.trim()) params.q = recherche.value.trim();
+    if (filtre.value.type) params.type = filtre.value.type;
+    if (filtre.value.departementId) params.departementId = filtre.value.departementId;
+    if (filtre.value.anneeEdition) params.anneeEdition = filtre.value.anneeEdition;
+
+    const { data } = await api.get('/documents/recherche', {
+      params,
       silencieux: true,
     } as never);
-    documents.value = reinit ? data.data : [...documents.value, ...data.data];
-    total.value = data.total;
+    const liste: DocumentDepot[] = Array.isArray(data) ? data : (data.data ?? []);
+    documents.value = reinit ? liste : [...documents.value, ...liste];
+    total.value = Array.isArray(data)
+      ? documents.value.length
+      : (data.total ?? liste.length);
   } finally {
     chargement.value = false;
   }
 }
 
-function chargerPlus() {
-  page.value += 1;
-  void charger(false);
-}
-
-watch([recherche, filtre], () => void charger(true), { deep: true });
+watch([recherche, filtre], () => charger(true), { deep: true });
+watch(pageSize, () => charger(true));
+watch(page, () => charger(false));
 
 async function telecharger(doc: DocumentDepot) {
+  if (!doc.fichier) return;
   try {
     const { data, headers } = await api.get(`/documents/${doc.id}/fichier`, {
       responseType: 'blob',
       timeout: 60000,
-    });
+      silencieux: true,
+    } as never);
     const disposition: string | undefined = headers['content-disposition'];
     const correspondance = /filename="?([^";]+)"?/i.exec(disposition ?? '');
     const nom = correspondance?.[1] ?? `${doc.titre || 'document'}.pdf`;
@@ -192,30 +340,50 @@ async function telecharger(doc: DocumentDepot) {
     setTimeout(() => URL.revokeObjectURL(url), 4000);
     doc.telechargements += 1;
   } catch {
-    // Silencieux : page publique sans compte, pas de notification intrusive.
+    /* silencieux : un visiteur public ne doit pas voir de notification */
   }
 }
 
-onMounted(() => charger(true));
+onMounted(async () => {
+  chargementDepartements.value = true;
+  try {
+    const { data } = await api.get('/departements?all=1', { silencieux: true } as never);
+    departements.value = Array.isArray(data) ? data : (data.data ?? []);
+  } finally {
+    chargementDepartements.value = false;
+  }
+  await charger(true);
+});
 </script>
 
 <style scoped>
 .biblio-intro {
   margin: 0 auto;
+  max-width: 720px;
 }
-
+.biblio-recherche :deep(.q-field__control) {
+  font-size: 1rem;
+}
 .doc-titre {
   font-weight: 800;
   font-size: 1.08rem;
   line-height: 1.3;
   color: var(--up-encre);
 }
-
-.doc-resume {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  font-size: 0.86rem;
+.doc-extrait {
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--up-encre-douce);
+  background: rgba(0, 0, 0, 0.02);
+  padding: 6px 8px;
+  border-left: 3px solid var(--q-primary);
+  white-space: pre-wrap;
+}
+.doc-extrait :deep(mark) {
+  background: #fff3a0;
+  padding: 0 2px;
+  border-radius: 2px;
+  color: var(--up-encre);
+  font-weight: 600;
 }
 </style>

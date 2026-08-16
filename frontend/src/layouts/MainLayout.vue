@@ -226,7 +226,9 @@ const menu = computed(() => {
               { to: '/evaluations', icone: 'fact_check', libelle: 'Évaluations' },
               { to: '/notes', icone: 'edit_note', libelle: 'Saisie des notes' },
               { to: '/deliberations', icone: 'how_to_vote', libelle: 'Délibérations' },
+              { to: '/bulletins', icone: 'school', libelle: 'Bulletins' },
               { to: '/attestations', icone: 'verified_user', libelle: 'Attestations QR' },
+              { to: '/plagiat', icone: 'find_in_page', libelle: 'Anti-plagiat' },
             ]
           : []),
       ],

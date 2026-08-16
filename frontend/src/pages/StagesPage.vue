@@ -22,239 +22,322 @@
       </div>
     </div>
 
-    <!-- Compteurs par statut -->
-    <div class="row q-col-gutter-sm q-mb-md">
-      <div
-        v-for="c in compteurs"
-        :key="c.statut"
-        class="col-6 col-sm-4 col-lg-2"
+    <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
+      <q-tab name="travaux" icon="view_kanban" label="Travaux" no-caps />
+      <q-tab name="soutenances" icon="event" label="Soutenances" no-caps />
+    </q-tabs>
+
+    <!-- ============================================================== -->
+    <!-- TRAVAUX : Kanban + tableau + statistiques                          -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'travaux'" name="travaux" class="q-pa-none q-mt-md">
+      <filter-bar
+        v-model="filtresTravaux"
+        placeholder="Rechercher (intitulé, entreprise, lieu…)"
+        :recherche="true"
+        @reinitialiser="reinitialiserTravaux"
       >
-        <q-card
-          flat
-          bordered
-          class="carte carte-compteur"
-          :class="{ 'carte-compteur--actif': filtres.statut === c.statut }"
-          @click="basculerStatut(c.statut)"
+        <template #avances>
+          <q-select
+            v-model="filtresTravaux.type"
+            :options="optionsTypes"
+            emit-value
+            map-options
+            dense
+            outlined
+            clearable
+            label="Type"
+          />
+          <autocomplete-async
+            v-model="filtresTravaux.encadrantId"
+            endpoint="/enseignants"
+            :label-fn="(e) => `${e.nom} ${e.prenom} (${e.matricule})`"
+            label="Encadrant"
+          />
+        </template>
+        <template #actions>
+          <view-toggle
+            cle="stages.travaux"
+            :modes="['kanban', 'tableau']"
+            defaut="kanban"
+            @update:mode="(v: string) => (modeTravail = v as 'kanban' | 'tableau')"
+          />
+        </template>
+      </filter-bar>
+
+      <!-- Compteurs par statut -->
+      <div class="row q-col-gutter-sm q-mb-md">
+        <div
+          v-for="c in compteurs"
+          :key="c.statut"
+          class="col-6 col-sm-4 col-lg-2"
         >
-          <q-card-section class="text-center q-py-sm">
-            <div class="text-h5 q-mb-none">{{ c.nb }}</div>
-            <div class="text-caption text-grey-7">{{ c.label }}</div>
+          <q-card
+            flat
+            bordered
+            class="carte carte-compteur"
+            :class="{ 'carte-compteur--actif': filtresTravaux.statut === c.statut }"
+            @click="basculerStatut(c.statut)"
+          >
+            <q-card-section class="text-center q-py-sm">
+              <div class="text-h5 q-mb-none">{{ c.nb }}</div>
+              <div class="text-caption text-grey-7">{{ c.label }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <!-- Vue Kanban -->
+      <kanban-board
+        v-if="modeTravail === 'kanban'"
+        :colonnes="colonnesKanban"
+      />
+
+      <!-- Vue tableau -->
+      <q-table
+        v-else
+        flat
+        bordered
+        class="carte"
+        :rows="lignesVisibles"
+        :columns="colonnes"
+        row-key="id"
+        :loading="chargement"
+        :pagination="{ rowsPerPage: 20 }"
+      >
+        <template #body-cell-intitule="p">
+          <q-td :props="p">
+            <div class="text-weight-medium">
+              {{ LIBELLE_TYPE_ENCADREMENT[p.row.type] }} — {{ p.row.intitule }}
+            </div>
+            <div v-if="p.row.entreprise" class="text-caption text-grey-7">
+              {{ p.row.entreprise }}
+            </div>
+          </q-td>
+        </template>
+        <template #body-cell-etudiant="p">
+          <q-td :props="p">
+            <div>{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
+            <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule ?? '' }}</div>
+          </q-td>
+        </template>
+        <template #body-cell-encadrant="p">
+          <q-td :props="p">
+            <span v-if="p.row.encadrant">{{ p.row.encadrant.nom }} {{ p.row.encadrant.prenom }}</span>
+            <span v-else class="text-grey-6">À désigner</span>
+          </q-td>
+        </template>
+        <template #body-cell-periode="p">
+          <q-td :props="p">
+            <span v-if="p.row.dateDebut || p.row.dateFin">
+              {{ dateLisible(p.row.dateDebut) }} → {{ dateLisible(p.row.dateFin) }}
+            </span>
+            <span v-else class="text-grey-6">—</span>
+          </q-td>
+        </template>
+        <template #body-cell-statut="p">
+          <q-td :props="p">
+            <q-chip :color="couleurStatut(p.row.statut)" text-color="white" dense square>
+              {{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}
+            </q-chip>
+          </q-td>
+        </template>
+        <template #body-cell-rapport="p">
+          <q-td :props="p" class="text-center">
+            <q-toggle
+              :model-value="p.row.rapportRendu"
+              color="positive"
+              :disable="
+                ['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)
+              "
+              @update:model-value="(v: boolean) => basculerRapport(p.row, v)"
+            />
+            <div class="text-caption text-grey-7">
+              {{ p.row.rapportRendu ? 'Rendu' : 'En attente' }}
+            </div>
+          </q-td>
+        </template>
+        <template #body-cell-soutenance="p">
+          <q-td :props="p">
+            <template v-if="p.row.soutenance">
+              <div>{{ dateHeureLisible(p.row.soutenance.date) }}</div>
+              <div class="text-caption text-grey-7">
+                <template v-if="p.row.soutenance.note !== null">
+                  {{ p.row.soutenance.note }}/20<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
+                </template>
+                <span v-else>Constat en attente</span>
+              </div>
+            </template>
+            <span v-else class="text-grey-6">—</span>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn flat dense round icon="visibility" @click="detail = p.row">
+              <q-tooltip>Voir la fiche</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
+              flat dense round icon="edit" @click="ouvrirEdition(p.row)"
+            >
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
+            <q-btn flat dense round icon="print" @click="imprimer(p.row)">
+              <q-tooltip>Imprimer la fiche</q-tooltip>
+            </q-btn>
+            <template v-if="boutonsTransition(p.row).length">
+              <q-btn
+                v-for="b in boutonsTransition(p.row).slice(0, 1)"
+                :key="b.statut"
+                flat dense round
+                :color="b.couleur" :icon="b.icone"
+                @click="transition(p.row, b.statut)"
+              >
+                <q-tooltip>{{ b.libelle }}</q-tooltip>
+              </q-btn>
+            </template>
+            <q-btn
+              v-if="peutPlanifierSoutenance(p.row)"
+              flat dense round color="primary" icon="groups"
+              @click="ouvrirSoutenance(p.row)"
+            >
+              <q-tooltip>Planifier la soutenance</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="peutConstatJury(p.row)"
+              flat dense round color="deep-purple" icon="fact_check"
+              @click="ouvrirJury(p.row)"
+            >
+              <q-tooltip>Constat du jury</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
+              flat dense round color="negative" icon="delete"
+              @click="supprimer(p.row)"
+            >
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
+
+      <!-- Statistiques par type -->
+      <div class="row q-col-gutter-md q-mt-md">
+        <q-card flat bordered class="col-12 col-md-6 carte">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-medium q-mb-sm">Répartition par type</div>
+            <q-list dense>
+              <q-item v-for="s in statsParType" :key="s.type">
+                <q-item-section>
+                  <q-item-label>{{ s.label }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-badge color="primary" :label="s.nb" />
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-card-section>
+        </q-card>
+        <q-card flat bordered class="col-12 col-md-6 carte">
+          <q-card-section>
+            <div class="text-subtitle1 text-weight-medium q-mb-sm">Répartition par statut</div>
+            <q-list dense>
+              <q-item v-for="c in compteurs" :key="`stat-${c.statut}`">
+                <q-item-section>
+                  <q-item-label>{{ c.label }}</q-item-label>
+                </q-item-section>
+                <q-item-section side>
+                  <q-badge :color="couleurStatut(c.statut)" :label="c.nb" />
+                </q-item-section>
+              </q-item>
+            </q-list>
           </q-card-section>
         </q-card>
       </div>
-    </div>
+    </q-tab-panel>
 
-    <q-card flat bordered class="carte q-mb-md">
-      <q-card-section class="row q-col-gutter-sm">
+    <!-- ============================================================== -->
+    <!-- SOUTENANCES : calendrier des soutenances à venir                   -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'soutenances'" name="soutenances" class="q-pa-none q-mt-md">
+      <div class="row q-col-gutter-md q-mb-md">
         <div class="col-12 col-md-4">
-          <q-input
-            v-model="recherche"
-            dense
-            outlined
-            clearable
-            debounce="300"
-            placeholder="Intitulé, entreprise, lieu…"
-            @update:model-value="charger"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
+          <q-card flat bordered class="carte">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ soutenancesAVenir.length }}</div>
+              <div class="pochoir text-grey-7">Soutenances à venir</div>
+            </q-card-section>
+          </q-card>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-12 col-md-4">
+          <q-card flat bordered class="carte">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ travauxFiltresSoutenance.length }}</div>
+              <div class="pochoir text-grey-7">Travaux concernés</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-md-4">
+          <q-card flat bordered class="carte">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ soutenancesNotees.length }}</div>
+              <div class="pochoir text-grey-7">Notes attribuées</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <filter-bar
+        v-model="filtresSoutenances"
+        placeholder="Rechercher (intitulé, étudiant, salle…)"
+        :recherche="true"
+        @reinitialiser="filtresSoutenances = { recherche: '' }"
+      >
+        <template #avances>
           <q-select
-            v-model="filtres.type"
-            :options="optionsTypes"
-            outlined
-            dense
-            clearable
+            v-model="filtresSoutenances.statut"
+            :options="optionsStatutsTravail"
             emit-value
             map-options
-            label="Type"
-            @update:model-value="charger"
-          />
-        </div>
-        <div class="col-6 col-md-2">
-          <q-select
-            v-model="filtres.encadrantId"
-            :options="optionsEncadrants"
+            dense
             outlined
-            dense
             clearable
-            emit-value
-            map-options
-            use-input
-            input-debounce="300"
-            label="Encadrant"
-            :disable="auth.role === 'ENSEIGNANT'"
-            @filter="filtrerEncadrants"
+            label="Statut travail"
           />
-        </div>
-        <div class="col-12 col-md-4 text-right">
-          <q-btn
-            v-if="peutCreer"
-            flat
-            dense
-            no-caps
-            :label="`Soutenances à venir (${soutenancesAVenir.length})`"
-            icon="event"
-            @click="dialogCalendrier = true"
-          />
-        </div>
-      </q-card-section>
-    </q-card>
+        </template>
+      </filter-bar>
 
-    <q-table
-      flat
-      bordered
-      class="carte"
-      :rows="lignesVisibles"
-      :columns="colonnes"
-      row-key="id"
-      :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
-    >
-      <template #body-cell-intitule="p">
-        <q-td :props="p">
-          <div class="text-weight-medium">
-            {{ LIBELLE_TYPE_ENCADREMENT[p.row.type] }} — {{ p.row.intitule }}
-          </div>
-          <div v-if="p.row.entreprise" class="text-caption text-grey-7">
-            {{ p.row.entreprise }}
-          </div>
-        </q-td>
-      </template>
+      <calendar-grid
+        :evenements="evenementsSoutenances"
+        :compact="false"
+      />
 
-      <template #body-cell-etudiant="p">
-        <q-td :props="p">
-          <div>{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule ?? '' }}</div>
-        </q-td>
-      </template>
-
-      <template #body-cell-encadrant="p">
-        <q-td :props="p">
-          <span v-if="p.row.encadrant">{{ p.row.encadrant.nom }} {{ p.row.encadrant.prenom }}</span>
-          <span v-else class="text-grey-6">À désigner</span>
-        </q-td>
-      </template>
-
-      <template #body-cell-periode="p">
-        <q-td :props="p">
-          <span v-if="p.row.dateDebut || p.row.dateFin">
-            {{ dateLisible(p.row.dateDebut) }} → {{ dateLisible(p.row.dateFin) }}
-          </span>
-          <span v-else class="text-grey-6">—</span>
-        </q-td>
-      </template>
-
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <q-chip :color="couleurStatut(p.row.statut)" text-color="white" dense square>
-            {{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}
-          </q-chip>
-        </q-td>
-      </template>
-
-      <template #body-cell-rapport="p">
-        <q-td :props="p" class="text-center">
-          <q-toggle
-            :model-value="p.row.rapportRendu"
-            color="positive"
-            :disable="
-              ['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)
-            "
-            @update:model-value="(v: boolean) => basculerRapport(p.row, v)"
-          />
-          <div class="text-caption text-grey-7">
-            {{ p.row.rapportRendu ? 'Rendu' : 'En attente' }}
-          </div>
-        </q-td>
-      </template>
-
-      <template #body-cell-soutenance="p">
-        <q-td :props="p">
-          <template v-if="p.row.soutenance">
-            <div>{{ dateHeureLisible(p.row.soutenance.date) }}</div>
-            <div class="text-caption text-grey-7">
-              <template v-if="p.row.soutenance.note !== null">
-                {{ p.row.soutenance.note }}/20<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
-              </template>
-              <span v-else>Constat en attente</span>
-            </div>
-          </template>
-          <span v-else class="text-grey-6">—</span>
-        </q-td>
-      </template>
-
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="detail = p.row">
-            <q-tooltip>Voir la fiche</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-            flat
-            dense
-            round
-            icon="edit"
-            @click="ouvrirEdition(p.row)"
-          >
-            <q-tooltip>Modifier</q-tooltip>
-          </q-btn>
-          <q-btn flat dense round icon="print" @click="imprimer(p.row)">
-            <q-tooltip>Imprimer la fiche récapitulative</q-tooltip>
-          </q-btn>
-
-          <template v-if="boutonsTransition(p.row).length">
-            <q-btn
-              v-for="b in boutonsTransition(p.row)"
-              :key="b.statut"
-              flat
-              dense
-              round
-              :color="b.couleur"
-              :icon="b.icone"
-              @click="transition(p.row, b.statut)"
-            >
-              <q-tooltip>{{ b.libelle }}</q-tooltip>
-            </q-btn>
-          </template>
-
-          <q-btn
-            v-if="peutPlanifierSoutenance(p.row)"
-            flat
-            dense
-            round
-            color="primary"
-            icon="groups"
-            @click="ouvrirSoutenance(p.row)"
-          >
-            <q-tooltip>Planifier la soutenance</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutConstatJury(p.row)"
-            flat
-            dense
-            round
-            color="deep-purple"
-            icon="fact_check"
-            @click="ouvrirJury(p.row)"
-          >
-            <q-tooltip>Constat du jury</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-            flat
-            dense
-            round
-            color="negative"
-            icon="delete"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>Supprimer le dossier (PROPOSE / VALIDE)</q-tooltip>
-          </q-btn>
-        </q-td>
-      </template>
-    </q-table>
+      <q-list separator bordered class="q-mt-md carte">
+        <q-item-label header class="text-subtitle1">Soutenances à venir</q-item-label>
+        <q-item v-for="s in soutenancesFiltrees" :key="s.id" clickable @click="detail = s.travailEncadre ?? null">
+          <q-item-section>
+            <q-item-label>
+              {{ dateHeureLisible(s.date) }}
+              <span class="text-grey-7">· {{ s.salle ? `${s.salle.nom} (${s.salle.code})` : 'salle à fixer' }}</span>
+            </q-item-label>
+            <q-item-label caption>
+              {{ s.travailEncadre?.intitule }} — {{ s.travailEncadre?.etudiant?.nom }}
+              {{ s.travailEncadre?.etudiant?.prenom }}
+            </q-item-label>
+          </q-item-section>
+          <q-item-section side>
+            <q-chip v-if="s.president" size="sm" color="secondary" text-color="white" square>
+              {{ s.president.nom }} {{ s.president.prenom }}
+            </q-chip>
+          </q-item-section>
+        </q-item>
+        <q-item v-if="!soutenancesFiltrees.length">
+          <q-item-section class="text-grey-7 text-center">
+            Aucune soutenance à venir
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-tab-panel>
 
     <!-- Dialog création / édition -->
     <travail-dialog v-model="dialogTravail" :travail="travailEdite" @enregistre="charger" />
@@ -267,40 +350,6 @@
       :mode="modeSoutenance"
       @enregistre="charger"
     />
-
-    <!-- Calendrier des soutenances à venir -->
-    <q-dialog v-model="dialogCalendrier">
-      <q-card style="width: 560px; max-width: 95vw">
-        <q-card-section class="text-h6">Soutenances des 7 prochains jours</q-card-section>
-        <q-card-section v-if="!soutenancesAVenir.length" class="text-grey-7">
-          Aucune soutenance planifiée sur la semaine.
-        </q-card-section>
-        <q-list dense v-else>
-          <q-item v-for="s in soutenancesAVenir" :key="s.id">
-            <q-item-section>
-              <q-item-label>
-                {{ dateHeureLisible(s.date) }}
-                <span class="text-grey-7">
-                  · {{ s.salle ? `${s.salle.nom} (${s.salle.code})` : 'salle à fixer' }}
-                </span>
-              </q-item-label>
-              <q-item-label caption>
-                {{ s.travailEncadre?.intitule }} — {{ s.travailEncadre?.etudiant?.nom }}
-                {{ s.travailEncadre?.etudiant?.prenom }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-chip v-if="s.president" size="sm" color="secondary" text-color="white" square>
-                {{ s.president.nom }} {{ s.president.prenom }}
-              </q-chip>
-            </q-item-section>
-          </q-item>
-        </q-list>
-        <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
 
     <!-- Détail -->
     <q-dialog :model-value="!!detail" @update:model-value="detail = null">
@@ -386,7 +435,12 @@
 <script setup lang="ts">
 import SoutenanceDialog from '../components/SoutenanceDialog.vue';
 import TravailDialog from '../components/TravailDialog.vue';
-import { computed, onMounted, ref } from 'vue';
+import FilterBar from '../components/FilterBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import KanbanBoard from '../components/KanbanBoard.vue';
+import CalendarGrid from '../components/CalendarGrid.vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { API_URL, api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -395,10 +449,9 @@ import {
   LIBELLE_TYPE_ENCADREMENT,
   dateHeureLisible,
   dateLisible,
+  aujourdhui,
 } from '../utils/libelles';
 import type {
-  Enseignant,
-  Soutenance,
   StatutEncadrement,
   TravailEncadre,
   TypeEncadrement,
@@ -407,18 +460,36 @@ import type {
 const $q = useQuasar();
 const auth = useAuthStore();
 
-/** Le calendrier embarque le travail complet ; le type partagé ne le porte pas. */
-type SoutenanceCalendrier = Soutenance & { travailEncadre?: TravailEncadre };
+type SoutenanceCalendrier = {
+  id: string;
+  date: string;
+  salleId?: string | null;
+  presidentId?: string | null;
+  note?: number | null;
+  mention?: string | null;
+  salle?: { id: string; code: string; nom: string } | null;
+  president?: { id: string; nom: string; prenom: string } | null;
+  travailEncadre?: TravailEncadre | null;
+};
+
+const onglet = ref<'travaux' | 'soutenances'>('travaux');
+const modeTravail = ref<'kanban' | 'tableau'>('kanban');
 
 const travaux = ref<TravailEncadre[]>([]);
 const soutenancesAVenir = ref<SoutenanceCalendrier[]>([]);
 const chargement = ref(false);
-const recherche = ref('');
 const detail = ref<TravailEncadre | null>(null);
-const filtres = ref({
-  type: null as TypeEncadrement | null,
-  statut: null as StatutEncadrement | null,
-  encadrantId: null as string | null,
+
+const filtresTravaux = ref<Record<string, any>>({
+  recherche: '',
+  type: null,
+  statut: null,
+  encadrantId: null,
+});
+
+const filtresSoutenances = ref<Record<string, any>>({
+  recherche: '',
+  statut: null,
 });
 
 const dialogTravail = ref(false);
@@ -426,16 +497,17 @@ const travailEdite = ref<TravailEncadre | null>(null);
 const dialogSoutenance = ref(false);
 const travailSoutenance = ref<TravailEncadre | null>(null);
 const modeSoutenance = ref<'planifier' | 'jury'>('planifier');
-const dialogCalendrier = ref(false);
-
-const encadrantsTous = ref<Enseignant[]>([]);
-const optionsEncadrants = ref<{ label: string; value: string }[]>([]);
 
 const optionsTypes = [
   { label: 'Mémoire', value: 'MEMOIRE' },
   { label: 'Stage', value: 'STAGE' },
   { label: 'Rapport', value: 'RAPPORT' },
 ];
+
+const optionsStatutsTravail = (Object.keys(LIBELLE_STATUT_ENCADREMENT) as StatutEncadrement[]).map((v) => ({
+  label: LIBELLE_STATUT_ENCADREMENT[v],
+  value: v,
+}));
 
 interface BoutonTransition {
   statut: StatutEncadrement;
@@ -445,59 +517,26 @@ interface BoutonTransition {
   role?: string[];
 }
 
-/** Boutons proposés depuis l'état courant — réplique front de la machine à états. */
 const BOUTONS_PAR_STATUT: Record<StatutEncadrement, BoutonTransition[]> = {
   PROPOSE: [
-    { statut: 'VALIDE', libelle: 'Valider (un encadrant doit être désigné)', icone: 'check', couleur: 'positive' },
-    { statut: 'ABANDONNE', libelle: 'Abandonner le travail', icone: 'flag', couleur: 'negative' },
+    { statut: 'VALIDE', libelle: 'Valider', icone: 'check', couleur: 'positive' },
+    { statut: 'ABANDONNE', libelle: 'Abandonner', icone: 'flag', couleur: 'negative' },
   ],
   VALIDE: [
     { statut: 'EN_COURS', libelle: "Démarrer l'encadrement", icone: 'play_arrow', couleur: 'primary' },
-    { statut: 'ABANDONNE', libelle: 'Abandonner le travail', icone: 'flag', couleur: 'negative' },
+    { statut: 'ABANDONNE', libelle: 'Abandonner', icone: 'flag', couleur: 'negative' },
   ],
   EN_COURS: [
-    {
-      statut: 'SOUTENU',
-      libelle: 'Passer en SOUTENU (rapport rendu + soutenance enregistrée requis)',
-      icone: 'workspace_premium',
-      couleur: 'positive',
-    },
-    { statut: 'ABANDONNE', libelle: 'Abandonner le travail', icone: 'flag', couleur: 'negative' },
+    { statut: 'SOUTENU', libelle: 'Passer en SOUTENU', icone: 'workspace_premium', couleur: 'positive' },
+    { statut: 'ABANDONNE', libelle: 'Abandonner', icone: 'flag', couleur: 'negative' },
   ],
   SOUTENU: [],
   ABANDONNE: [
-    {
-      statut: 'PROPOSE',
-      libelle: 'Réactiver le dossier (réservé à l’administration)',
-      icone: 'restart_alt',
-      couleur: 'primary',
-      role: ['ADMIN'],
-    },
+    { statut: 'PROPOSE', libelle: 'Réactiver', icone: 'restart_alt', couleur: 'primary', role: ['ADMIN'] },
   ],
 };
 
-const compteurs = computed(() => {
-  const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];
-  return statuts.map((statut) => ({
-    statut,
-    label: LIBELLE_STATUT_ENCADREMENT[statut] ?? statut,
-    nb: travaux.value.filter((t) => t.statut === statut).length,
-  }));
-});
-
-const lignesVisibles = computed(() => {
-  if (!filtres.value.statut) return travaux.value;
-  return travaux.value.filter((t) => t.statut === filtres.value.statut);
-});
-
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-
-/** Rôles qui font vivre la machine à états (le service refuse les autres). */
-const peutTransitionner = computed(() =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT']),
-);
-
-const colonnes: QTableColumn[] = [
+const colonnes = ref<QTableColumn[]>([
   { name: 'intitule', label: 'Travail', field: 'intitule', align: 'left', sortable: true },
   { name: 'etudiant', label: 'Étudiant', field: 'etudiantId', align: 'left' },
   { name: 'encadrant', label: 'Encadrant', field: 'encadrantId', align: 'left' },
@@ -506,7 +545,7 @@ const colonnes: QTableColumn[] = [
   { name: 'rapport', label: 'Rapport', field: 'rapportRendu', align: 'center' },
   { name: 'soutenance', label: 'Soutenance', field: 'soutenance', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const couleurStatut = (s: string) =>
   s === 'SOUTENU'
@@ -519,11 +558,115 @@ const couleurStatut = (s: string) =>
           ? 'secondary'
           : 'grey-7';
 
+const COLONNES_KANBAN: Array<{
+  statut: StatutEncadrement;
+  titre: string;
+  couleur: string;
+}> = [
+  { statut: 'PROPOSE', titre: 'Proposé', couleur: '#6b7280' },
+  { statut: 'VALIDE', titre: 'Validé', couleur: '#0F7A45' },
+  { statut: 'EN_COURS', titre: 'En cours', couleur: '#10251E' },
+  { statut: 'SOUTENU', titre: 'Soutenu', couleur: '#0F7A45' },
+  { statut: 'ABANDONNE', titre: 'Abandonné', couleur: '#C4122E' },
+];
+
+const compteurs = computed(() => {
+  const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];
+  return statuts.map((statut) => ({
+    statut,
+    label: LIBELLE_STATUT_ENCADREMENT[statut] ?? statut,
+    nb: travaux.value.filter((t) => t.statut === statut).length,
+  }));
+});
+
+const lignesVisibles = computed(() => {
+  let liste = travaux.value;
+  if (filtresTravaux.value.statut) {
+    liste = liste.filter((t) => t.statut === filtresTravaux.value.statut);
+  }
+  return liste;
+});
+
+const statsParType = computed(() => {
+  const types: TypeEncadrement[] = ['STAGE', 'MEMOIRE', 'RAPPORT'];
+  return types.map((type) => ({
+    type,
+    label: LIBELLE_TYPE_ENCADREMENT[type],
+    nb: travaux.value.filter((t) => t.type === type).length,
+  }));
+});
+
+const colonnesKanban = computed(() => {
+  const f = filtresTravaux.value;
+  const recherche = (f.recherche ?? '').toString().trim().toLowerCase();
+  return COLONNES_KANBAN.map((col) => {
+    const cartes = travaux.value
+      .filter((t) => t.statut === col.statut)
+      .filter((t) => {
+        if (f.type && t.type !== f.type) return false;
+        if (f.encadrantId && t.encadrantId !== f.encadrantId) return false;
+        if (recherche) {
+          const blob = `${t.intitule} ${t.entreprise ?? ''} ${t.lieu ?? ''}`.toLowerCase();
+          if (!blob.includes(recherche)) return false;
+        }
+        return true;
+      })
+      .map((t) => ({
+        id: t.id,
+        titre: t.intitule,
+        sousTitre: t.etudiant ? `${t.etudiant.nom} ${t.etudiant.prenom} — ${t.etudiant.matricule ?? ''}` : 'Étudiant à désigner',
+        meta: `${t.encadrant ? `${t.encadrant.nom} ${t.encadrant.prenom}` : 'À désigner'}${t.entreprise ? ` · ${t.entreprise}` : ''}`,
+        badge: LIBELLE_TYPE_ENCADREMENT[t.type] ?? t.type,
+        couleur: col.couleur,
+        onClick: () => { detail.value = t; },
+        actions: [
+          ...(peutCreer.value && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(t.statut)
+            ? [{
+                label: 'Modifier',
+                icone: 'edit',
+                couleur: 'primary',
+                onClick: () => ouvrirEdition(t),
+              }]
+            : []),
+          ...(boutonsTransition(t).slice(0, 1).map((b) => ({
+            label: b.libelle,
+            icone: b.icone,
+            couleur: b.couleur,
+            onClick: () => transition(t, b.statut),
+          }))),
+          ...(peutPlanifierSoutenance(t) ? [{
+            label: 'Soutenance',
+            icone: 'groups',
+            couleur: 'primary',
+            onClick: () => ouvrirSoutenance(t),
+          }] : []),
+          ...(peutConstatJury(t) ? [{
+            label: 'Constat',
+            icone: 'fact_check',
+            couleur: 'deep-purple',
+            onClick: () => ouvrirJury(t),
+          }] : []),
+        ],
+      }));
+    return {
+      identifiant: col.statut,
+      titre: col.titre,
+      couleur: col.couleur,
+      cartes,
+    };
+  });
+});
+
+const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+
+const peutTransitionner = computed(() =>
+  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT']),
+);
+
 function basculerStatut(statut: StatutEncadrement) {
-  filtres.value.statut = filtres.value.statut === statut ? null : statut;
+  filtresTravaux.value.statut = filtresTravaux.value.statut === statut ? null : statut;
 }
 
-/** Boutons de transition visibles pour ce travail, selon le statut et le rôle. */
 function boutonsTransition(t: TravailEncadre) {
   if (!peutTransitionner.value) return [];
   if (auth.role === 'ENSEIGNANT' && t.encadrantId !== auth.utilisateur?.enseignantId) return [];
@@ -576,7 +719,7 @@ function transition(t: TravailEncadre, cible: StatutEncadrement) {
     title: `Passer en « ${libelle} »`,
     message:
       cible === 'ABANDONNE'
-        ? 'Le dossier reste consultable mais sort du parcours ; il faudra une intervention de l’administration pour le réactiver. Confirmer l’abandon ?'
+        ? 'Le dossier reste consultable mais sort du parcours. Confirmer l\'abandon ?'
         : cible === 'SOUTENU'
           ? 'Rapport rendu et soutenance enregistrée sont requis avant le passage en SOUTENU.'
           : 'Confirmer cette transition ?',
@@ -609,7 +752,7 @@ function imprimer(t: TravailEncadre) {
 function supprimer(t: TravailEncadre) {
   $q.dialog({
     title: 'Supprimer ce travail ?',
-    message: `${t.intitule} — casse du dossier réservée à l’administration, états PROPOSE / VALIDE uniquement.`,
+    message: `${t.intitule} — casse du dossier réservée à l'administration, états PROPOSE / VALIDE uniquement.`,
     cancel: true,
     ok: { color: 'negative', label: 'Supprimer' },
   }).onOk(async () => {
@@ -619,25 +762,64 @@ function supprimer(t: TravailEncadre) {
   });
 }
 
-function filtrerEncadrants(saisie: string, maj: (fn: () => void) => void) {
-  maj(() => {
-    const q = saisie.toLowerCase();
-    optionsEncadrants.value = encadrantsTous.value
-      .filter((e) => `${e.nom} ${e.prenom} ${e.matricule}`.toLowerCase().includes(q))
-      .map((e) => ({ label: `${e.nom} ${e.prenom}`, value: e.id }));
-  });
+function reinitialiserTravaux() {
+  filtresTravaux.value = {
+    recherche: filtresTravaux.value.recherche ?? '',
+    type: null,
+    statut: null,
+    encadrantId: null,
+  };
 }
+
+const travauxFiltresSoutenance = computed(() => {
+  return travaux.value.filter((t) => t.statut === 'EN_COURS' || t.statut === 'SOUTENU' || t.soutenance);
+});
+
+const soutenancesNotees = computed(() =>
+  soutenancesAVenir.value.filter((s) => s.note !== null && s.note !== undefined),
+);
+
+const soutenancesFiltrees = computed(() => {
+  const f = filtresSoutenances.value;
+  const q = (f.recherche ?? '').toString().trim().toLowerCase();
+  return soutenancesAVenir.value
+    .filter((s) => {
+      if (f.statut && s.travailEncadre?.statut !== f.statut) return false;
+      if (q) {
+        const blob = `${s.travailEncadre?.intitule ?? ''} ${s.travailEncadre?.etudiant?.nom ?? ''} ${s.travailEncadre?.etudiant?.prenom ?? ''} ${s.salle?.nom ?? ''}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+});
+
+const evenementsSoutenances = computed(() =>
+  soutenancesFiltrees.value.map((s) => ({
+    id: s.id,
+    date: s.date,
+    titre: `${s.travailEncadre?.intitule ?? 'Soutenance'} — ${s.travailEncadre?.etudiant?.nom ?? ''}`,
+    sousTitre: s.salle ? `${s.salle.nom} (${s.salle.code})` : 'salle à fixer',
+    couleur: '#0F7A45',
+    icone: 'groups',
+    onClick: () => {
+      if (s.travailEncadre) detail.value = s.travailEncadre;
+    },
+  })),
+);
 
 async function charger() {
   chargement.value = true;
   try {
+    const f = filtresTravaux.value;
     const [travauxRes, calendrierRes] = await Promise.all([
       api.get('/travaux-encadres', {
         params: {
           all: '1',
-          search: recherche.value || undefined,
-          type: filtres.value.type || undefined,
-          encadrantId: filtres.value.encadrantId || undefined,
+          search: f.recherche || undefined,
+          type: f.type || undefined,
+          encadrantId: f.encadrantId || undefined,
+          statut: f.statut || undefined,
         },
       }),
       peutCreer.value
@@ -645,20 +827,28 @@ async function charger() {
         : Promise.resolve({ data: [] }),
     ]);
     travaux.value = travauxRes.data.data;
-    soutenancesAVenir.value = calendrierRes.data;
+    const listeS = (calendrierRes.data ?? []) as Array<{
+      id: string;
+      date: string;
+      travailEncadre?: any;
+      travailEncadreId?: string;
+    }>;
+    const dateMin = aujourdhui();
+    soutenancesAVenir.value = (listeS as SoutenanceCalendrier[]).filter(
+      (s) => s.date.slice(0, 10) >= dateMin,
+    );
   } finally {
     chargement.value = false;
   }
 }
 
-onMounted(async () => {
-  const { data } = await api.get('/enseignants', { params: { all: '1' } });
-  encadrantsTous.value = data.data;
-  optionsEncadrants.value = data.data.map((e: Enseignant) => ({
-    label: `${e.nom} ${e.prenom}`,
-    value: e.id,
-  }));
-  await charger();
+watch(filtresTravaux, () => charger(), { deep: true });
+watch(filtresSoutenances, () => {
+  // recalcul via l'observateur computed
+}, { deep: true });
+
+onMounted(() => {
+  void charger();
 });
 </script>
 
@@ -670,5 +860,10 @@ onMounted(async () => {
 .carte-compteur--actif {
   background: #e3f2fd;
   border-color: #1565c0;
+}
+.stat-chiffre {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
 }
 </style>

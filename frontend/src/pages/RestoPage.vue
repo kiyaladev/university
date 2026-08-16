@@ -8,9 +8,8 @@
           valide le repas en deux secondes — zéro cash, zéro fraude
         </div>
       </div>
-      <div class="col-auto">
+      <div class="col-auto" v-if="peutRecharger">
         <q-btn
-          v-if="peutRecharger"
           unelevated
           color="primary"
           no-caps
@@ -27,285 +26,407 @@
       <q-tab name="transactions" icon="receipt_long" label="Transactions" no-caps />
     </q-tabs>
 
-    <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
-      <!-- ------------------------------------------------------------ Guichet -->
-      <q-tab-panel v-if="peutGuichet" name="guichet" class="q-pa-none">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-md-7">
-            <section class="plaque guichet">
-              <header class="guichet__entete">
-                <span class="lettrage">Poste de validation</span>
-                <span class="pochoir pochoir--brut">en ligne — le solde est contrôlé au serveur</span>
-              </header>
+    <!-- ============================================================== -->
+    <!-- GUICHET                                                          -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'guichet' && peutGuichet" name="guichet" class="q-pa-none q-mt-md">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-md-7">
+          <section class="plaque guichet">
+            <header class="guichet__entete">
+              <span class="lettrage">Poste de validation</span>
+              <span class="pochoir pochoir--brut">en ligne — le solde est contrôlé au serveur</span>
+            </header>
 
-              <label class="pochoir guichet__libelle">Carte de l'étudiant (QR, matricule ou téléphone)</label>
-              <QrScanner v-model="reference" />
+            <label class="pochoir guichet__libelle">Carte de l'étudiant (QR, matricule ou téléphone)</label>
+            <qr-scanner v-model="reference" />
 
-              <div class="row q-col-gutter-md q-mt-sm">
-                <div class="col-12 col-sm-6">
-                  <q-select
-                    v-model="repas"
-                    :options="optionsRepas"
-                    label="Repas *"
-                    outlined
-                    dense
-                    emit-value
-                    map-options
-                    @update:model-value="repasChoisi"
-                  />
-                </div>
-                <div class="col-6 col-sm-3">
-                  <q-input
-                    v-model.number="montant"
-                    type="number"
-                    min="500"
-                    step="500"
-                    outlined
-                    dense
-                    label="Montant"
-                    suffix="GNF"
-                  />
-                </div>
-                <div class="col-6 col-sm-3">
-                  <q-input
-                    v-model="cantine"
-                    outlined
-                    dense
-                    label="Cantine"
-                    placeholder="Principale"
-                  />
-                </div>
+            <div class="row q-col-gutter-md q-mt-sm">
+              <div class="col-12 col-sm-6">
+                <q-select
+                  v-model="repas"
+                  :options="optionsRepas"
+                  label="Repas *"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  @update:model-value="repasChoisi"
+                />
               </div>
-
-              <q-btn
-                unelevated
-                color="primary"
-                size="lg"
-                no-caps
-                icon="check"
-                label="Valider le repas"
-                class="guichet__valider full-width"
-                :loading="validationChargement"
-                :disable="!reference.trim() || !montant || montant < 500"
-                @click="validerRepas"
-              />
-
-              <p class="guichet__note">
-                <q-icon name="wifi" size="15px" />
-                Décision produit : la validation exige la connexion par défaut —
-                un solde local serait falsifiable et incohérent entre les postes.
-              </p>
-            </section>
-          </div>
-
-          <div class="col-12 col-md-5">
-            <!-- Écran vert : repas validé -->
-            <section v-if="resultat?.ok" class="plaque guichet-resultat guichet-resultat--ok">
-              <q-icon name="check_circle" size="52px" color="positive" />
-              <p class="lettrage guichet-resultat__titre">Repas validé</p>
-              <p class="guichet-resultat__nom">{{ resultat.etudiant.prenom }} {{ resultat.etudiant.nom }}</p>
-              <p class="pochoir chiffres">{{ resultat.etudiant.matricule }}</p>
-              <div class="guichet-resultat__lignes">
-                <div class="guichet-resultat__ligne">
-                  <span>{{ LIBELLE_TYPE_REPAS[resultat.consommation.repas] }}</span>
-                  <span class="chiffres">{{ montantLisible(resultat.consommation.montant) }} GNF</span>
-                </div>
-                <div v-if="resultat.consommation.cantine" class="guichet-resultat__ligne">
-                  <span>Cantine</span>
-                  <span>{{ resultat.consommation.cantine }}</span>
-                </div>
-                <div class="guichet-resultat__ligne guichet-resultat__ligne--fort">
-                  <span>Nouveau solde</span>
-                  <span class="chiffres">{{ montantLisible(resultat.solde) }} GNF</span>
-                </div>
+              <div class="col-6 col-sm-3">
+                <q-input
+                  v-model.number="montant"
+                  type="number"
+                  min="500"
+                  step="500"
+                  outlined
+                  dense
+                  label="Prix (GNF)"
+                  suffix="GNF"
+                />
               </div>
-            </section>
+              <div class="col-6 col-sm-3">
+                <q-input
+                  v-model="cantine"
+                  outlined
+                  dense
+                  label="Cantine"
+                  placeholder="Principale"
+                />
+              </div>
+            </div>
 
-            <!-- Écran d'erreur -->
-            <section v-else-if="resultat && !resultat.ok" class="plaque guichet-resultat guichet-resultat--ko">
-              <q-icon name="error" size="52px" color="negative" />
-              <p class="lettrage guichet-resultat__titre">Repas refusé</p>
-              <p class="guichet-resultat__message">{{ resultat.message }}</p>
-            </section>
-
-            <!-- État vide -->
-            <section v-else class="plaque guichet-resultat guichet-resultat--vide">
-              <q-icon name="qr_code_scanner" size="52px" color="grey-6" />
-              <p class="pochoir guichet-resultat__message">
-                Scannez la carte ou saisissez le matricule, choisissez le repas,
-                puis validez : l'écran affichera ici le verdict.
-              </p>
-            </section>
-          </div>
+            <q-btn
+              unelevated
+              color="primary"
+              size="lg"
+              no-caps
+              icon="check"
+              label="Valider le repas"
+              class="guichet__valider full-width"
+              :loading="validationChargement"
+              :disable="!reference.trim() || !montant || montant < 500"
+              @click="validerRepas"
+            />
+          </section>
         </div>
-      </q-tab-panel>
 
-      <!-- ------------------------------------------------------ Portefeuilles -->
-      <q-tab-panel name="portefeuilles" class="q-pa-none">
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="portefeuilles"
-          :columns="colonnesPortefeuilles"
-          row-key="id"
-          :loading="chargementPortefeuilles"
-          :pagination="{ rowsPerPage: 25 }"
-        >
-          <template #top-left>
-            <q-input
-              v-model="recherchePortefeuilles"
-              dense
-              outlined
-              clearable
-              placeholder="Matricule, nom…"
-              @update:model-value="chargerPortefeuilles"
-            >
-              <template #prepend><q-icon name="search" /></template>
-            </q-input>
-          </template>
+        <div class="col-12 col-md-5">
+          <!-- Écran vert : repas validé -->
+          <section v-if="resultat?.ok" class="plaque guichet-resultat guichet-resultat--ok">
+            <q-icon name="check_circle" size="52px" color="positive" />
+            <p class="lettrage guichet-resultat__titre">Repas validé</p>
+            <p class="guichet-resultat__nom">{{ resultat.etudiant.prenom }} {{ resultat.etudiant.nom }}</p>
+            <p class="pochoir chiffres">{{ resultat.etudiant.matricule }}</p>
+            <div class="guichet-resultat__lignes">
+              <div class="guichet-resultat__ligne">
+                <span>{{ LIBELLE_TYPE_REPAS[resultat.consommation.repas] }}</span>
+                <span class="chiffres">{{ montantLisible(resultat.consommation.montant) }} GNF</span>
+              </div>
+              <div v-if="resultat.consommation.cantine" class="guichet-resultat__ligne">
+                <span>Cantine</span>
+                <span>{{ resultat.consommation.cantine }}</span>
+              </div>
+              <div class="guichet-resultat__ligne guichet-resultat__ligne--fort">
+                <span>Nouveau solde</span>
+                <span class="chiffres">{{ montantLisible(resultat.solde) }} GNF</span>
+              </div>
+            </div>
+          </section>
 
-          <template #body-cell-etudiant="p">
-            <q-td :props="p">
-              <div class="text-weight-medium">{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
-              <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule }}</div>
-            </q-td>
-          </template>
-          <template #body-cell-solde="p">
-            <q-td :props="p" class="text-right">
-              <span class="chiffres text-weight-medium">{{ montantLisible(p.row.solde) }} GNF</span>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
+          <!-- Écran d'erreur -->
+          <section v-else-if="resultat && !resultat.ok" class="plaque guichet-resultat guichet-resultat--ko">
+            <q-icon name="error" size="52px" color="negative" />
+            <p class="lettrage guichet-resultat__titre">Repas refusé</p>
+            <p class="guichet-resultat__message">{{ resultat.message }}</p>
+            <q-btn
+              v-if="resultat.soldeInsuffisant"
+              unelevated
+              color="negative"
+              no-caps
+              icon="account_balance_wallet"
+              label="Recharger le portefeuille"
+              @click="rechargerDepuisGuichet"
+              class="q-mt-md"
+            />
+          </section>
+
+          <!-- État vide -->
+          <section v-else class="plaque guichet-resultat guichet-resultat--vide">
+            <q-icon name="qr_code_scanner" size="52px" color="grey-6" />
+            <p class="pochoir guichet-resultat__message">
+              Scannez la carte ou saisissez le matricule, choisissez le repas,
+              puis validez : l'écran affichera ici le verdict.
+            </p>
+          </section>
+        </div>
+      </div>
+    </q-tab-panel>
+
+    <!-- ============================================================== -->
+    <!-- PORTEFEUILLES                                                    -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'portefeuilles'" name="portefeuilles" class="q-pa-none q-mt-md">
+      <filter-bar
+        v-model="filtresPortefeuilles"
+        placeholder="Rechercher (matricule, nom, téléphone…)"
+        :recherche="true"
+        @reinitialiser="reinitialiserPortefeuilles"
+      >
+        <template #avances>
+          <q-input
+            v-model.number="filtresPortefeuilles.soldeMin"
+            type="number"
+            min="0"
+            dense
+            outlined
+            label="Solde min"
+            clearable
+          />
+          <q-input
+            v-model.number="filtresPortefeuilles.soldeMax"
+            type="number"
+            min="0"
+            dense
+            outlined
+            label="Solde max"
+            clearable
+          />
+        </template>
+        <template #actions>
+          <view-toggle cle="resto.portefeuilles" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modePortefeuilles = v as 'tableau' | 'cartes')" />
+        </template>
+      </filter-bar>
+
+      <pagination-bar
+        :page="paginationPortefeuilles.page"
+        :page-size="paginationPortefeuilles.pageSize"
+        :total="paginationPortefeuilles.total"
+        :show-all="false"
+        @update:page="paginationPortefeuilles.page = $event; requeterPortefeuilles()"
+        @update:page-size="paginationPortefeuilles.pageSize = $event; paginationPortefeuilles.page = 1; requeterPortefeuilles()"
+        @tous="chargerTousPortefeuilles"
+      />
+
+      <!-- Vue tableau -->
+      <q-table
+        v-if="modePortefeuilles === 'tableau'"
+        flat
+        bordered
+        class="carte"
+        :rows="portefeuilles"
+        :columns="colonnesPortefeuilles"
+        row-key="id"
+        :loading="chargementPortefeuilles"
+        :rows-per-page-options="[0]"
+        hide-bottom
+      >
+        <template #body-cell-etudiant="p">
+          <q-td :props="p">
+            <div class="text-weight-medium">{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
+            <div class="text-caption text-grey-7">{{ p.row.etudiant?.matricule }}</div>
+          </q-td>
+        </template>
+        <template #body-cell-solde="p">
+          <q-td :props="p" class="text-right">
+            <span class="chiffres text-weight-medium">{{ montantLisible(p.row.solde) }} GNF</span>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn v-if="peutRecharger" flat dense no-caps color="primary" icon="add" label="Recharger" @click="rechargerPortefeuille(p.row)" />
+          </q-td>
+        </template>
+      </q-table>
+
+      <!-- Vue cartes -->
+      <div v-else class="row q-col-gutter-md">
+        <div v-if="chargementPortefeuilles" class="col-12 q-pa-md text-center">
+          <q-spinner color="primary" />
+        </div>
+        <div v-for="p in portefeuilles" :key="p.id" class="col-12 col-md-6 col-xl-4">
+          <q-card flat bordered class="carte">
+            <q-card-section class="text-center">
+              <div class="pochoir text-grey-7">{{ p.etudiant?.matricule ?? '—' }}</div>
+              <div class="text-h4 chiffres q-mt-sm">{{ montantLisible(p.solde) }} <span class="text-h6">GNF</span></div>
+              <div class="text-subtitle1 q-mt-sm">{{ p.etudiant?.nom }} {{ p.etudiant?.prenom }}</div>
+              <div class="text-caption text-grey-7">{{ p.etudiant?.telephone ?? '—' }}</div>
+            </q-card-section>
+            <q-card-actions vertical class="q-px-md q-pb-md">
               <q-btn
                 v-if="peutRecharger"
-                flat
-                dense
-                no-caps
+                unelevated
                 color="primary"
+                no-caps
                 icon="add"
                 label="Recharger"
-                @click="rechargerPortefeuille(p.row)"
+                class="full-width"
+                @click="rechargerPortefeuille(p)"
               />
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
-
-      <!-- ------------------------------------------------------- Transactions -->
-      <q-tab-panel name="transactions" class="q-pa-none">
-        <div class="row items-center q-col-gutter-md q-mb-md">
-          <div class="col-auto">
-            <q-input v-model="dateDebut" type="date" dense outlined label="Du" style="width: 170px" />
-          </div>
-          <div class="col-auto">
-            <q-input v-model="dateFin" type="date" dense outlined label="Au" style="width: 170px" />
-          </div>
-          <div class="col-auto">
-            <q-btn dense outline no-caps icon="today" label="Aujourd'hui" @click="periodeAujourdhui" />
-          </div>
-          <q-space />
-          <q-btn dense flat no-caps icon="refresh" label="Recharger" @click="chargerTransactions" />
+            </q-card-actions>
+          </q-card>
         </div>
-
-        <div class="row q-col-gutter-sm q-mb-sm">
-          <div class="col-auto">
-            <q-chip :color=" 'positive'" text-color="white" icon="add">
-              Crédité : {{ montantLisible(totaux.credite) }} GNF
-            </q-chip>
-          </div>
-          <div class="col-auto">
-            <q-chip :color="totaux.net >= 0 ? 'blue-grey-7' : 'negative'" text-color="white" icon="remove">
-              Débité : {{ montantLisible(totaux.debite) }} GNF
-            </q-chip>
-          </div>
-          <div class="col-auto">
-            <q-chip :color="totaux.net >= 0 ? 'positive' : 'negative'" text-color="white" icon="account_balance">
-              {{ totaux.net >= 0 ? 'Recharges nettes' : 'Dépenses nettes' }} : {{ montantLisible(Math.abs(totaux.net)) }} GNF
-            </q-chip>
-          </div>
+        <div v-if="!chargementPortefeuilles && !portefeuilles.length" class="col-12 text-center text-grey-7 q-pa-lg">
+          <q-icon name="account_balance_wallet" size="42px" color="grey-5" />
+          <div class="q-mt-sm">Aucun portefeuille</div>
         </div>
+      </div>
+    </q-tab-panel>
 
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="transactions"
-          :columns="colonnesTransactions"
-          row-key="cle"
-          :loading="chargementTransactions"
-          :pagination="{ page: 1, rowsPerPage: 25 }"
-        >
-          <template #body-cell-date="p">
-            <q-td :props="p">{{ dateHeureLisible(p.row.date) }}</q-td>
-          </template>
-          <template #body-cell-type="p">
-            <q-td :props="p">
-              <q-badge outline :color="p.row.type === 'REPAS' ? 'deep-orange-8' : 'teal-8'" square>
-                {{ p.row.type === 'REPAS' ? 'Repas' : 'Recharge' }}
-              </q-badge>
-            </q-td>
-          </template>
-          <template #body-cell-montant="p">
-            <q-td :props="p" class="text-right">
-              <span class="chiffres" :class="p.row.montant < 0 ? 'text-negative' : 'text-positive'">
-                {{ p.row.montant < 0 ? '−' : '+' }}{{ montantLisible(Math.abs(p.row.montant)) }}
-              </span>
-            </q-td>
-          </template>
-          <template #body-cell-statut="p">
-            <q-td :props="p">
-              <span class="champ champ-statut champ-statut--dense" :class="classeStatut(p.row.statut)">
-                <span class="pochoir">{{ LIBELLE_STATUT_PAIEMENT[p.row.statut] ?? LIBELLE_STATUT_CONSOMMATION[p.row.statut] ?? p.row.statut }}</span>
-              </span>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                v-if="p.row.annulable"
-                flat
-                dense
-                round
-                color="negative"
-                icon="history_toggle_off"
-                title="Rembourser ce repas"
-                @click="annulerRepas(p.row)"
-              />
-            </q-td>
-          </template>
-        </q-table>
-      </q-tab-panel>
-    </q-tab-panels>
+    <!-- ============================================================== -->
+    <!-- TRANSACTIONS                                                     -->
+    <!-- ============================================================== -->
+    <q-tab-panel v-if="onglet === 'transactions'" name="transactions" class="q-pa-none q-mt-md">
+      <q-tabs v-model="ongletTransactions" dense align="left" class="onglets-panneau q-mb-sm" narrow-indicator>
+        <q-tab name="recharges" icon="add_card" label="Recharges" no-caps />
+        <q-tab name="consommations" icon="restaurant" label="Consommations" no-caps />
+      </q-tabs>
 
-    <RechargeDialog v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @rechargee="apresRecharge" />
+      <filter-bar
+        v-model="filtresTransactions"
+        :recherche="false"
+        @reinitialiser="reinitialiserTransactions"
+      >
+        <template #avances>
+          <q-input
+            v-model="filtresTransactions.dateDebut"
+            type="date"
+            dense
+            outlined
+            label="Du"
+          />
+          <q-input
+            v-model="filtresTransactions.dateFin"
+            type="date"
+            dense
+            outlined
+            label="Au"
+          />
+          <q-select
+            v-if="ongletTransactions === 'recharges'"
+            v-model="filtresTransactions.statut"
+            :options="optionsStatutsPaiement"
+            emit-value
+            map-options
+            dense
+            outlined
+            clearable
+            label="Statut"
+          />
+          <q-select
+            v-if="ongletTransactions === 'recharges'"
+            v-model="filtresTransactions.mode"
+            :options="optionsModePaiement"
+            emit-value
+            map-options
+            dense
+            outlined
+            clearable
+            label="Mode"
+          />
+          <q-select
+            v-if="ongletTransactions === 'recharges'"
+            v-model="filtresTransactions.operateur"
+            :options="optionsOperateurs"
+            emit-value
+            map-options
+            dense
+            outlined
+            clearable
+            label="Opérateur"
+          />
+          <q-input
+            v-if="ongletTransactions === 'consommations'"
+            v-model="filtresTransactions.cantine"
+            dense
+            outlined
+            label="Cantine"
+            clearable
+          />
+        </template>
+        <template #actions>
+          <q-btn flat dense no-caps icon="today" label="Aujourd'hui" @click="periodeAujourdhui" />
+          <q-btn flat dense no-caps icon="refresh" label="Recharger" @click="chargerTransactions" />
+        </template>
+      </filter-bar>
+
+      <!-- KPIs -->
+      <div class="row q-col-gutter-sm q-mb-md">
+        <div class="col-auto">
+          <q-chip color="positive" text-color="white" icon="add">
+            Encaissé : {{ montantLisible(totaux.credite) }} GNF
+          </q-chip>
+        </div>
+        <div class="col-auto">
+          <q-chip :color="totaux.debite > 0 ? 'blue-grey-7' : 'grey-7'" text-color="white" icon="remove">
+            Dépensé : {{ montantLisible(totaux.debite) }} GNF
+          </q-chip>
+        </div>
+        <div class="col-auto">
+          <q-chip :color="totaux.net >= 0 ? 'positive' : 'negative'" text-color="white" icon="account_balance">
+            {{ totaux.net >= 0 ? 'Net positif' : 'Net négatif' }} : {{ montantLisible(Math.abs(totaux.net)) }} GNF
+          </q-chip>
+        </div>
+      </div>
+
+      <q-table
+        flat
+        bordered
+        class="carte"
+        :rows="transactions"
+        :columns="colonnesTransactions"
+        row-key="cle"
+        :loading="chargementTransactions"
+        :rows-per-page-options="[0]"
+        hide-bottom
+        :sort-method="triTable"
+        :default-sort="{ sortBy: 'date', descending: true }"
+      >
+        <template #body-cell-date="p">
+          <q-td :props="p">{{ dateHeureLisible(p.row.date) }}</q-td>
+        </template>
+        <template #body-cell-type="p">
+          <q-td :props="p">
+            <q-badge outline :color="p.row.montant < 0 ? 'deep-orange-8' : 'teal-8'" square>
+              {{ p.row.type === 'REPAS' ? 'Repas' : 'Recharge' }}
+            </q-badge>
+          </q-td>
+        </template>
+        <template #body-cell-montant="p">
+          <q-td :props="p" class="text-right">
+            <span class="chiffres" :class="p.row.montant < 0 ? 'text-negative' : 'text-positive'">
+              {{ p.row.montant < 0 ? '−' : '+' }}{{ montantLisible(Math.abs(p.row.montant)) }}
+            </span>
+          </q-td>
+        </template>
+        <template #body-cell-statut="p">
+          <q-td :props="p">
+            <span class="champ champ-statut champ-statut--dense" :class="classeStatut(p.row.statut)">
+              <span class="pochoir">{{ LIBELLE_STATUT_PAIEMENT[p.row.statut] ?? LIBELLE_STATUT_CONSOMMATION[p.row.statut] ?? p.row.statut }}</span>
+            </span>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn
+              v-if="p.row.annulable"
+              flat dense round color="negative" icon="history_toggle_off"
+              @click="annulerRepas(p.row)"
+            >
+              <q-tooltip>Rembourser ce repas</q-tooltip>
+            </q-btn>
+          </q-td>
+        </template>
+      </q-table>
+    </q-tab-panel>
+
+    <recharge-dialog v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @rechargee="apresRecharge" />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
 import QrScanner from '../components/QrScanner.vue';
 import RechargeDialog from '../components/RechargeDialog.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
+  LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_CONSOMMATION,
   LIBELLE_STATUT_PAIEMENT,
   LIBELLE_TYPE_REPAS,
   dateHeureLisible,
+  aujourdhui,
   montantLisible,
 } from '../utils/libelles';
 import type { TypeRepas } from '../types';
 
-function aujourdhui(): string {
-  const d = new Date();
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-}
-
-/** Prix par défaut des repas, paramétrables ici (GNF). */
 const PRIX_REPAS: Record<TypeRepas, number> = {
   PETIT_DEJEUNER: 10_000,
   DEJEUNER: 15_000,
@@ -320,9 +441,9 @@ const $q = useQuasar();
 const peutGuichet = computed(() => auth.aRole(['CONTROLEUR', 'ADMIN', 'SCOLARITE']));
 const peutRecharger = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 
-// La direction consulte mais n'a pas accès au poste de guichet : on ouvre
-// alors directement sur les portefeuilles.
-const onglet = ref(peutGuichet.value ? 'guichet' : 'portefeuilles');
+const onglet = ref<'guichet' | 'portefeuilles' | 'transactions'>(
+  peutGuichet.value ? 'guichet' : 'portefeuilles',
+);
 
 // ------------------------------------------------------------------ guichet
 const reference = ref('');
@@ -330,7 +451,15 @@ const repas = ref<TypeRepas>('DEJEUNER');
 const montant = ref(PRIX_REPAS.DEJEUNER);
 const cantine = ref('');
 const validationChargement = ref(false);
-const resultat = ref<{ ok: boolean; message?: string; solde?: number; etudiant?: any; consommation?: any } | null>(null);
+const resultat = ref<{
+  ok: boolean;
+  message?: string;
+  solde?: number;
+  etudiant?: any;
+  consommation?: any;
+  soldeInsuffisant?: boolean;
+  etudiantId?: string;
+} | null>(null);
 
 const optionsRepas = (Object.keys(PRIX_REPAS) as TypeRepas[]).map((r) => ({
   value: r,
@@ -351,35 +480,74 @@ async function validerRepas() {
       montant: montant.value,
       cantine: cantine.value.trim() || undefined,
     });
-    resultat.value = { ok: true, etudiant: data.etudiant, consommation: data.consommation, solde: data.solde };
+    resultat.value = {
+      ok: true,
+      etudiant: data.etudiant,
+      consommation: data.consommation,
+      solde: data.solde,
+      etudiantId: data.etudiant?.id,
+    };
     reference.value = '';
   } catch (e: any) {
+    const data = e.response?.data;
+    const soldeInsuffisant = data?.soldeInsuffisant === true || data?.code === 'SOLDE_INSUFFISANT';
     resultat.value = {
       ok: false,
-      message: e.response?.data?.message ?? 'Erreur réseau : vérifiez la connexion du poste de guichet',
+      message: data?.message ?? 'Erreur réseau : vérifiez la connexion du poste de guichet',
+      soldeInsuffisant,
+      etudiantId: data?.etudiantId,
     };
   } finally {
     validationChargement.value = false;
   }
 }
 
+function rechargerDepuisGuichet() {
+  rechargeEtudiantId.value = resultat.value?.etudiantId ?? null;
+  dialogRecharge.value = true;
+}
+
 // ------------------------------------------------------------- portefeuilles
 const portefeuilles = ref<any[]>([]);
 const chargementPortefeuilles = ref(false);
-const recherchePortefeuilles = ref('');
+const paginationPortefeuilles = ref({ page: 1, pageSize: 20, total: 0 });
+const filtresPortefeuilles = ref<Record<string, any>>({ recherche: '' });
+const modePortefeuilles = ref<'tableau' | 'cartes'>('cartes');
 const dialogRecharge = ref(false);
 const rechargeEtudiantId = ref<string | null>(null);
 
-async function chargerPortefeuilles() {
+watch(filtresPortefeuilles, () => {
+  paginationPortefeuilles.value.page = 1;
+  requeterPortefeuilles();
+}, { deep: true });
+
+async function requeterPortefeuilles() {
   chargementPortefeuilles.value = true;
   try {
-    const { data } = await api.get('/resto/portefeuilles', {
-      params: { search: recherchePortefeuilles.value || undefined, pageSize: 100 },
-    });
+    const f = filtresPortefeuilles.value;
+    const params: Record<string, any> = {
+      page: paginationPortefeuilles.value.page,
+      pageSize: paginationPortefeuilles.value.pageSize,
+      search: (f.recherche ?? '').toString().trim() || undefined,
+      soldeMin: f.soldeMin ?? undefined,
+      soldeMax: f.soldeMax ?? undefined,
+    };
+    const { data } = await api.get('/resto/portefeuilles', { params });
     portefeuilles.value = data.data;
+    paginationPortefeuilles.value.total = data.total;
   } finally {
     chargementPortefeuilles.value = false;
   }
+}
+
+async function chargerTousPortefeuilles() {
+  paginationPortefeuilles.value.page = 1;
+  paginationPortefeuilles.value.pageSize = Math.max(paginationPortefeuilles.value.total, 200) || 200;
+  await requeterPortefeuilles();
+}
+
+function reinitialiserPortefeuilles() {
+  filtresPortefeuilles.value = { recherche: filtresPortefeuilles.value.recherche ?? '' };
 }
 
 function rechargerPortefeuille(row: any) {
@@ -392,17 +560,21 @@ function rechargerCible() {
   dialogRecharge.value = true;
 }
 
-const colonnesPortefeuilles = [
+const colonnesPortefeuilles: QTableColumn[] = [
   { name: 'etudiant', label: 'Étudiant', field: 'etudiant', sortable: true },
+  { name: 'telephone', label: 'Téléphone', field: (r: any) => r.etudiant?.telephone ?? '—', align: 'left' },
   { name: 'solde', label: 'Solde', field: 'solde', sortable: true, align: 'right' as const },
   { name: 'actions', label: '', field: 'actions', align: 'right' as const },
 ];
 
 // ------------------------------------------------------------ transactions
+const ongletTransactions = ref<'recharges' | 'consommations'>('recharges');
 const dateDebut = ref(aujourdhui());
 const dateFin = ref(aujourdhui());
 const chargementTransactions = ref(false);
 const transactions = ref<LigneTransaction[]>([]);
+
+const filtresTransactions = ref<Record<string, any>>({});
 
 interface LigneTransaction {
   cle: string;
@@ -417,6 +589,16 @@ interface LigneTransaction {
   annulable: boolean;
 }
 
+const optionsStatutsPaiement = Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({
+  value, label,
+}));
+const optionsModePaiement = Object.entries(LIBELLE_MODE_PAIEMENT).map(([value, label]) => ({
+  value, label,
+}));
+const optionsOperateurs = Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({
+  value, label,
+}));
+
 const totaux = computed(() => {
   let debite = 0;
   let credite = 0;
@@ -427,18 +609,42 @@ const totaux = computed(() => {
   return { debite, credite, net: credite - debite };
 });
 
+function reinitialiserTransactions() {
+  filtresTransactions.value = {
+    dateDebut: filtresTransactions.value.dateDebut,
+    dateFin: filtresTransactions.value.dateFin,
+  };
+}
+
 function periodeAujourdhui() {
   dateDebut.value = aujourdhui();
   dateFin.value = aujourdhui();
+  filtresTransactions.value.dateDebut = dateDebut.value;
+  filtresTransactions.value.dateFin = dateFin.value;
   void chargerTransactions();
 }
 
 async function chargerTransactions() {
   chargementTransactions.value = true;
   try {
+    dateDebut.value = filtresTransactions.value.dateDebut || dateDebut.value;
+    dateFin.value = filtresTransactions.value.dateFin || dateFin.value;
+    const params: Record<string, any> = {
+      dateDebut: dateDebut.value,
+      dateFin: dateFin.value,
+      pageSize: 200,
+    };
+    const paramsRecharges: Record<string, any> = { ...params };
+    if (filtresTransactions.value.statut) paramsRecharges.statut = filtresTransactions.value.statut;
+    if (filtresTransactions.value.mode) paramsRecharges.mode = filtresTransactions.value.mode;
+    if (filtresTransactions.value.operateur) paramsRecharges.operateur = filtresTransactions.value.operateur;
+
+    const paramsConso: Record<string, any> = { ...params };
+    if (filtresTransactions.value.cantine) paramsConso.cantine = filtresTransactions.value.cantine;
+
     const [cons, rech] = await Promise.all([
-      api.get('/resto/consommations', { params: { dateDebut: dateDebut.value, dateFin: dateFin.value, pageSize: 200 } }),
-      api.get('/resto/recharges', { params: { dateDebut: dateDebut.value, dateFin: dateFin.value, pageSize: 200 } }),
+      api.get('/resto/consommations', { params: paramsConso }),
+      api.get('/resto/recharges', { params: paramsRecharges }),
     ]);
     const lignes: LigneTransaction[] = [
       ...cons.data.data.map((c: any) => ({
@@ -465,12 +671,17 @@ async function chargerTransactions() {
           ? `${r.portefeuille.etudiant.matricule} ${r.portefeuille.etudiant.nom} ${r.portefeuille.etudiant.prenom}`
           : '',
         montant: r.montant,
-        statut: r.statut,
+        statut: r.paiement?.statut ?? r.statut,
         annulable: false,
       })),
     ];
-    lignes.sort((a, b) => (a.date < b.date ? 1 : -1));
-    transactions.value = lignes;
+    let visibles = lignes;
+    if (ongletTransactions.value === 'recharges') {
+      visibles = lignes.filter((l) => l.type === 'RECHARGE');
+    } else if (ongletTransactions.value === 'consommations') {
+      visibles = lignes.filter((l) => l.type === 'REPAS');
+    }
+    transactions.value = visibles.sort((a, b) => (a.date < b.date ? 1 : -1));
   } finally {
     chargementTransactions.value = false;
   }
@@ -502,7 +713,7 @@ function annulerRepas(ligne: LigneTransaction) {
   });
 }
 
-const colonnesTransactions = [
+const colonnesTransactions: QTableColumn[] = [
   { name: 'date', label: 'Le', field: 'date', sortable: true },
   { name: 'type', label: 'Opération', field: 'type' },
   { name: 'etudiant', label: 'Étudiant', field: 'etudiant' },
@@ -512,14 +723,32 @@ const colonnesTransactions = [
   { name: 'actions', label: '', field: 'actions', align: 'right' as const },
 ];
 
+function triTable(rows: readonly any[], sortBy: string, descending: boolean) {
+  const copie = [...rows];
+  copie.sort((a: any, b: any) => {
+    const va = a[sortBy];
+    const vb = b[sortBy];
+    if (va < vb) return descending ? 1 : -1;
+    if (va > vb) return descending ? -1 : 1;
+    return 0;
+  });
+  return copie;
+}
+
 // --------------------------------------------------------------- cycle de vie
 function apresRecharge() {
-  void chargerPortefeuilles();
+  void requeterPortefeuilles();
   void chargerTransactions();
 }
 
+watch(ongletTransactions, () => {
+  void chargerTransactions();
+});
+
 onMounted(() => {
-  void chargerPortefeuilles();
+  filtresTransactions.value.dateDebut = aujourdhui();
+  filtresTransactions.value.dateFin = aujourdhui();
+  void requeterPortefeuilles();
   void chargerTransactions();
 });
 </script>
@@ -553,18 +782,6 @@ onMounted(() => {
   margin-top: var(--up-1);
 }
 
-.guichet__note {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--up-2);
-  color: var(--up-encre-douce);
-  font-size: 0.82rem;
-  line-height: 1.45;
-  margin: 0;
-  border-top: var(--up-filet-fin);
-  padding-top: var(--up-2);
-}
-
 .guichet-resultat {
   min-height: 320px;
   display: flex;
@@ -578,6 +795,11 @@ onMounted(() => {
   &__titre {
     font-size: 1.5rem;
     margin: 0;
+  }
+
+  &__nom {
+    margin: 0;
+    font-size: 1.15rem;
   }
 
   &__message {

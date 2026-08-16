@@ -14,7 +14,106 @@
       </div>
     </div>
 
+    <filter-bar
+      v-model="filtres"
+      placeholder="Rechercher (titre, catégorie, lieu…)"
+      :recherche="true"
+      @reinitialiser="reinitialiserFiltres"
+    >
+      <template #avances>
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          dense
+          outlined
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
+        <q-input
+          v-model="filtres.categorie"
+          dense
+          outlined
+          label="Catégorie"
+          clearable
+        />
+        <q-input
+          v-model.number="filtres.prixMin"
+          type="number"
+          min="0"
+          dense
+          outlined
+          label="Prix min"
+          clearable
+        />
+        <q-input
+          v-model.number="filtres.prixMax"
+          type="number"
+          min="0"
+          dense
+          outlined
+          label="Prix max"
+          clearable
+        />
+      </template>
+      <template #actions>
+        <view-toggle
+          cle="formations.admin"
+          :modes="['tableau', 'cartes']"
+          @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
+        />
+      </template>
+    </filter-bar>
+
+    <pagination-bar
+      :page="pagination.page"
+      :page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-all="false"
+      @update:page="pagination.page = $event; requeter()"
+      @update:page-size="pagination.pageSize = $event; pagination.page = 1; requeter()"
+      @tous="chargerTout"
+    />
+
+    <!-- Statistiques -->
+    <div class="row q-col-gutter-md q-mb-md">
+      <div class="col-12 col-md-3">
+        <q-card flat bordered class="carte">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ stats.nbFormes }}</div>
+            <div class="pochoir text-grey-7">Formés (inscriptions confirmées)</div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-md-3">
+        <q-card flat bordered class="carte">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">GNF</span></div>
+            <div class="pochoir text-grey-7">Recette encaissée</div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-md-3">
+        <q-card flat bordered class="carte">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ stats.tauxRemplissage }} %</div>
+            <div class="pochoir text-grey-7">Taux de remplissage</div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-md-3">
+        <q-card flat bordered class="carte">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ stats.total }}</div>
+            <div class="pochoir text-grey-7">Formations</div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
+
     <q-table
+      v-if="mode === 'tableau'"
       flat
       bordered
       class="carte"
@@ -22,39 +121,9 @@
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="pagination"
-      :rows-per-page-options="[10, 20, 50]"
-      @request="repondreRequete"
+      :rows-per-page-options="[0]"
+      hide-bottom
     >
-      <template #top-left>
-        <div class="row q-gutter-sm items-center">
-          <q-input
-            v-model="filtres.search"
-            dense
-            outlined
-            clearable
-            debounce="300"
-            placeholder="Titre, catégorie, lieu…"
-            @update:model-value="recharger"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-          <q-select
-            v-model="filtres.statut"
-            :options="optionsStatuts"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Statut"
-            style="min-width: 150px"
-            @update:model-value="recharger"
-          />
-        </div>
-      </template>
-
-      <!-- Corps peint à la main : la ligne s'étend en plaque « registre » -->
       <template #body="p">
         <q-tr :props="p" :class="{ 'ligne-detail': p.expand }">
           <q-td key="titre" :props="p">
@@ -83,61 +152,40 @@
           <q-td key="actions" :props="p" class="text-right">
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
-              flat
-              dense
-              round
-              color="secondary"
-              icon="publish"
+              flat dense round color="secondary" icon="publish"
               @click="publier(p.row)"
             >
-              <q-tooltip>Publier la formation (vitrine en ligne)</q-tooltip>
+              <q-tooltip>Publier la formation</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'PUBLIEE'"
-              flat
-              dense
-              round
-              color="warning"
-              icon="lock"
+              flat dense round color="warning" icon="lock"
               @click="cloturer(p.row)"
             >
-              <q-tooltip>Clôturer : plus aucune demande acceptée</q-tooltip>
+              <q-tooltip>Clôturer</q-tooltip>
             </q-btn>
             <q-btn flat dense round icon="edit" @click="ouvrirModification(p.row)">
               <q-tooltip>Modifier</q-tooltip>
             </q-btn>
             <q-btn flat dense round icon="group" @click="basculerRegistre(p)">
-              <q-tooltip>Inscriptions de la formation</q-tooltip>
+              <q-tooltip>Inscriptions</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
-              flat
-              dense
-              round
-              color="negative"
-              icon="delete_outline"
+              flat dense round color="negative" icon="delete_outline"
               @click="supprimer(p.row)"
             >
-              <q-tooltip>Supprimer le brouillon (aucune demande déposée)</q-tooltip>
+              <q-tooltip>Supprimer le brouillon</q-tooltip>
             </q-btn>
           </q-td>
         </q-tr>
 
-        <!-- Registre : le panneau se descend sous la ligne étendue -->
         <tr v-if="p.expand" :key="`${p.row.id}-registre`" class="ligne-detail">
           <td colspan="6" class="q-pa-md">
             <div class="row items-center q-mb-sm">
               <div class="pochoir">Registre — {{ p.row.titre }}</div>
               <q-space />
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                label="Recharger"
-                icon="refresh"
-                @click="chargerRegistre(p.row, true)"
-              />
+              <q-btn flat dense no-caps color="primary" label="Recharger" icon="refresh" @click="chargerRegistre(p.row, true)" />
             </div>
             <q-table
               flat
@@ -187,35 +235,24 @@
                 <q-td :props="r" class="text-right">
                   <q-btn
                     v-if="r.row.statut === 'EN_ATTENTE'"
-                    flat
-                    dense
-                    round
-                    color="secondary"
-                    icon="check_circle"
+                    flat dense round color="secondary" icon="check_circle"
                     @click="confirmer(r.row)"
                   >
-                    <q-tooltip>Confirmer : paiement Mobile Money réussi (guichet)</q-tooltip>
+                    <q-tooltip>Confirmer le paiement</q-tooltip>
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut !== 'ANNULEE'"
-                    flat
-                    dense
-                    round
-                    color="negative"
-                    icon="block"
+                    flat dense round color="negative" icon="block"
                     @click="annuler(r.row)"
                   >
                     <q-tooltip>Annuler la demande</q-tooltip>
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut === 'CONFIRMEE'"
-                    flat
-                    dense
-                    round
-                    icon="print"
+                    flat dense round icon="print"
                     @click="imprimerCertificat(r.row)"
                   >
-                    <q-tooltip>Attestation de formation (A4)</q-tooltip>
+                    <q-tooltip>Attestation de formation</q-tooltip>
                   </q-btn>
                 </q-td>
               </template>
@@ -225,15 +262,145 @@
       </template>
     </q-table>
 
-    <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="recharger" />
+    <!-- Vue cartes -->
+    <div v-else class="row q-col-gutter-md">
+      <div v-if="chargement" class="col-12 q-pa-md text-center">
+        <q-spinner color="primary" />
+      </div>
+      <div v-for="f in formations" :key="f.id" class="col-12 col-md-6 col-xl-4">
+        <q-card flat bordered class="carte">
+          <q-card-section class="row items-center q-pb-none">
+            <div class="col">
+              <div class="text-uppercase text-caption text-grey-7">{{ f.categorie ?? '—' }}</div>
+              <div class="text-subtitle1 text-weight-medium">{{ f.titre }}</div>
+            </div>
+            <q-chip :color="couleurStatut(f.statut)" text-color="white" dense>
+              {{ LIBELLE_STATUT_FORMATION[f.statut] ?? f.statut }}
+            </q-chip>
+          </q-card-section>
+          <q-card-section class="text-center">
+            <div class="text-h3 chiffres">{{ montantLisible(f.prix) }} <span class="text-h6">{{ f.devise }}</span></div>
+            <div class="text-caption text-grey-7 q-mt-sm">
+              <span v-if="f.dureeHeures">{{ f.dureeHeures }} h</span>
+              <span v-if="f.dateDebut"> · {{ datesLisible(f) }}</span>
+            </div>
+            <div class="q-mt-md">
+              <q-badge
+                :color="placesRestantes(f) > 0 ? 'positive' : 'negative'"
+                :label="placesRestantesStr(f)"
+              />
+            </div>
+          </q-card-section>
+          <q-card-actions class="q-px-md">
+            <q-btn flat dense no-caps icon="group" label="Inscriptions" @click="basculerRegistreCarte(f)" />
+            <q-space />
+            <q-btn flat dense round icon="edit" @click="ouvrirModification(f)">
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="f.statut === 'BROUILLON'"
+              flat dense round color="secondary" icon="publish"
+              @click="publier(f)"
+            >
+              <q-tooltip>Publier</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="f.statut === 'PUBLIEE'"
+              flat dense round color="warning" icon="lock"
+              @click="cloturer(f)"
+            >
+              <q-tooltip>Clôturer</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="f.statut === 'BROUILLON'"
+              flat dense round color="negative" icon="delete_outline"
+              @click="supprimer(f)"
+            >
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
+          </q-card-actions>
+          <q-slide-transition>
+            <div v-if="registreOuvert[f.id]" class="q-px-md q-pb-md">
+              <q-separator class="q-mb-sm" />
+              <div class="row items-center q-mb-sm">
+                <div class="pochoir">Registre — {{ f.titre }}</div>
+                <q-space />
+                <q-btn flat dense no-caps color="primary" label="Recharger" icon="refresh" @click="chargerRegistre(f, true)" />
+              </div>
+              <q-table
+                flat
+                bordered
+                class="carte"
+                :rows="registres[f.id] ?? []"
+                :columns="colonnesRegistre"
+                row-key="id"
+                :loading="!!registreCharge[f.id]"
+                hide-bottom
+                :rows-per-page-options="[0]"
+              >
+                <template #body-cell-inscrit="r">
+                  <q-td :props="r">
+                    <div>{{ nomInscrit(r.row) }}</div>
+                    <div class="text-caption text-grey-7">
+                      {{ r.row.telephone ?? '—' }}
+                    </div>
+                  </q-td>
+                </template>
+                <template #body-cell-statut="r">
+                  <q-td :props="r">
+                    <q-chip :color="couleurInscription(r.row.statut)" text-color="white" dense>
+                      {{ LIBELLE_STATUT_INSCRIPTION_FORMATION[r.row.statut] ?? r.row.statut }}
+                    </q-chip>
+                  </q-td>
+                </template>
+                <template #body-cell-paiementStatut="r">
+                  <q-td :props="r">
+                    <q-chip :color="couleurPaiement(r.row.paiement?.statut)" text-color="white" dense>
+                      {{ LIBELLE_STATUT_PAIEMENT[r.row.paiement?.statut ?? ''] ?? '—' }}
+                    </q-chip>
+                  </q-td>
+                </template>
+                <template #body-cell-actionsRegistre="r">
+                  <q-td :props="r" class="text-right">
+                    <q-btn
+                      v-if="r.row.statut === 'EN_ATTENTE'"
+                      flat dense round color="secondary" icon="check_circle"
+                      @click="confirmer(r.row)"
+                    >
+                      <q-tooltip>Confirmer</q-tooltip>
+                    </q-btn>
+                    <q-btn
+                      v-if="r.row.statut !== 'ANNULEE'"
+                      flat dense round color="negative" icon="block"
+                      @click="annuler(r.row)"
+                    >
+                      <q-tooltip>Annuler</q-tooltip>
+                    </q-btn>
+                  </q-td>
+                </template>
+              </q-table>
+            </div>
+          </q-slide-transition>
+        </q-card>
+      </div>
+      <div v-if="!chargement && !formations.length" class="col-12 text-center text-grey-7 q-pa-lg">
+        <q-icon name="school" size="42px" color="grey-5" />
+        <div class="q-mt-sm">Aucune formation</div>
+      </div>
+    </div>
+
+    <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="requeter" />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
 import FormationDialog from '../components/FormationDialog.vue';
 import {
   LIBELLE_STATUT_FORMATION,
@@ -243,21 +410,21 @@ import {
 } from '../utils/libelles';
 import type { Etudiant, Formation, InscriptionFormation, Paiement, StatutFormation } from '../types';
 
-/** Ligne du registre : le paiement et la fiche sont joints par le serveur. */
 interface InscriptionFormationDetail extends InscriptionFormation {
   formation?: Formation | null;
   etudiant?: Etudiant | null;
   paiement?: Paiement | null;
 }
 
-const $q = useQuasar();
-const auth = useAuthStore();
+const $q = useAuthStore();
+const q = useQuasar();
 
 const formations = ref<Formation[]>([]);
 const chargement = ref(false);
-const pagination = ref({ page: 1, rowsPerPage: 20, rowsNumber: 0 });
+const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 
-const filtres = ref({ search: '', statut: null as StatutFormation | null });
+const filtres = ref<Record<string, any>>({ recherche: '' });
+const mode = ref<'tableau' | 'cartes'>('tableau');
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_FORMATION).map(([value, label]) => ({
   value: value as StatutFormation,
@@ -282,15 +449,18 @@ const colonnesRegistre: QTableColumn[] = [
   { name: 'actionsRegistre', label: '', field: 'id', align: 'right' },
 ];
 
-// ------------------------------------------------------------ registre
-
 const registres = ref<Record<string, InscriptionFormationDetail[]>>({});
 const registreCharge = ref<Record<string, boolean>>({});
+const registreOuvert = reactive<Record<string, boolean>>({});
 
-/** Extension inline (panneau « registre » descendu sous la ligne). */
 function basculerRegistre(p: { row: Formation; expand: boolean }) {
   p.expand = !p.expand;
   if (p.expand) void chargerRegistre(p.row);
+}
+
+function basculerRegistreCarte(f: Formation) {
+  registreOuvert[f.id] = !registreOuvert[f.id];
+  if (registreOuvert[f.id]) void chargerRegistre(f);
 }
 
 async function chargerRegistre(f: Formation, force = false) {
@@ -331,7 +501,16 @@ function datesLisible(f: Formation): string {
   return `${f.dateDebut} → ${f.dateFin}`;
 }
 
-// ------------------------------------------------------------ actions
+function placesRestantes(f: Formation): number {
+  if (!f.capacite) return Number.POSITIVE_INFINITY;
+  const occupe = (f._count?.inscriptions ?? 0) - (registres.value[f.id]?.filter((r) => r.statut === 'ANNULEE').length ?? 0);
+  return Math.max(0, f.capacite - occupe);
+}
+
+function placesRestantesStr(f: Formation): string {
+  if (!f.capacite) return 'Places illimitées';
+  return `${placesRestantes(f)} / ${f.capacite} places`;
+}
 
 const dialogFormation = ref(false);
 const formationEnCours = ref<Formation | null>(null);
@@ -346,21 +525,25 @@ function ouvrirModification(f: Formation) {
   dialogFormation.value = true;
 }
 
+function reinitialiserFiltres() {
+  filtres.value = { recherche: filtres.value.recherche ?? '' };
+}
+
 function publier(f: Formation) {
-  $q.dialog({
+  q.dialog({
     title: 'Publier cette formation ?',
     message: `« ${f.titre} » entre en vitrine publique : les demandes et les paiements Mobile Money deviendront possibles.`,
     cancel: true,
     ok: { color: 'secondary', label: 'Publier' },
   }).onOk(async () => {
     await api.post(`/formations/${f.id}/publier`);
-    $q.notify({ type: 'positive', message: 'Formation publiée — en vente sur la vitrine' });
-    await recharger();
+    q.notify({ type: 'positive', message: 'Formation publiée — en vente sur la vitrine' });
+    await requeter();
   });
 }
 
 function cloturer(f: Formation) {
-  $q.dialog({
+  q.dialog({
     title: 'Clôturer cette formation ?',
     message:
       `La vitrine cessera d'offrir « ${f.titre} » ; les demandes en attente ` +
@@ -369,26 +552,26 @@ function cloturer(f: Formation) {
     ok: { color: 'warning', label: 'Clôturer' },
   }).onOk(async () => {
     await api.post(`/formations/${f.id}/cloturer`);
-    $q.notify({ type: 'warning', message: 'Formation close — plus aucune nouvelle demande' });
-    await recharger();
+    q.notify({ type: 'warning', message: 'Formation close — plus aucune nouvelle demande' });
+    await requeter();
   });
 }
 
 function supprimer(f: Formation) {
-  $q.dialog({
+  q.dialog({
     title: 'Supprimer ce brouillon ?',
     message: `« ${f.titre} » ne s'est jamais vendu : sa suppression ne laisse aucune trace client.`,
     cancel: true,
     ok: { color: 'negative', label: 'Supprimer' },
   }).onOk(async () => {
     await api.delete(`/formations/${f.id}`);
-    $q.notify({ type: 'warning', message: 'Brouillon supprimé' });
-    await recharger();
+    q.notify({ type: 'warning', message: 'Brouillon supprimé' });
+    await requeter();
   });
 }
 
 function confirmer(i: InscriptionFormationDetail) {
-  $q.dialog({
+  q.dialog({
     title: 'Confirmer le paiement ?',
     message:
       `Confirmation pilote : l'opérateur Mobile Money a encaissé — ${i.paiement?.reference ?? 'le paiement'} ` +
@@ -397,55 +580,99 @@ function confirmer(i: InscriptionFormationDetail) {
     ok: { color: 'secondary', label: 'Confirmer' },
   }).onOk(async () => {
     await api.post(`/formations/inscriptions/${i.id}/confirmer`);
-    $q.notify({ type: 'positive', message: `${i.numero} confirmée — place réservée` });
-    await recharger();
+    q.notify({ type: 'positive', message: `${i.numero} confirmée — place réservée` });
+    await requeter();
   });
 }
 
 function annuler(i: InscriptionFormationDetail) {
-  $q.dialog({
+  q.dialog({
     title: 'Annuler cette demande ?',
     message: `La demande ${i.numero} sera annulée ; sa place est libérée pour la vitrine.`,
     cancel: 'Non, garder',
     ok: { color: 'negative', label: 'Annuler la demande' },
   }).onOk(async () => {
     await api.post(`/formations/inscriptions/${i.id}/annuler`);
-    $q.notify({ type: 'warning', message: `${i.numero} annulée` });
-    await recharger();
+    q.notify({ type: 'warning', message: `${i.numero} annulée` });
+    await requeter();
   });
 }
 
 function imprimerCertificat(i: InscriptionFormationDetail) {
-  window.open(`${API_URL}/formations/${i.id}/certificat?token=${auth.token}`, '_blank');
+  window.open(`${API_URL}/formations/${i.id}/certificat?token=${$q.token}`, '_blank');
 }
 
-// ------------------------------------------------------------ chargement
+// Stats
+const stats = computed(() => {
+  let nbFormes = 0;
+  let recette = 0;
+  let totalPlaces = 0;
+  let placesOccupees = 0;
+  for (const f of formations.value) {
+    const inscriptions = registres.value[f.id] ?? [];
+    const confirmes = inscriptions.filter((r) => r.statut === 'CONFIRMEE');
+    nbFormes += confirmes.length;
+    recette += confirmes.reduce((acc, r) => acc + (r.paiement?.montant ?? 0), 0);
+    if (f.capacite) {
+      totalPlaces += f.capacite;
+      const occupe = inscriptions.filter((r) => r.statut !== 'ANNULEE').length;
+      placesOccupees += Math.min(occupe, f.capacite);
+    }
+  }
+  const tauxRemplissage = totalPlaces > 0 ? Math.round((placesOccupees / totalPlaces) * 100) : 0;
+  return {
+    nbFormes,
+    recette,
+    tauxRemplissage,
+    total: formations.value.length,
+  };
+});
 
-async function repondreRequete(props: {
-  pagination: { page: number; rowsPerPage: number; rowsNumber?: number };
-}) {
-  const { page, rowsPerPage } = props.pagination;
+async function requeter() {
   chargement.value = true;
   try {
+    const f = filtres.value;
     const params: Record<string, unknown> = {
-      page,
-      pageSize: rowsPerPage === 0 ? undefined : rowsPerPage,
-      ...(filtres.value.statut ? { statut: filtres.value.statut } : {}),
-      ...(filtres.value.search ? { search: filtres.value.search } : {}),
+      page: pagination.value.page,
+      pageSize: pagination.value.pageSize,
+      search: (f.recherche ?? '').toString().trim() || undefined,
+      statut: f.statut || undefined,
+      categorie: f.categorie || undefined,
+      prixMin: f.prixMin ?? undefined,
+      prixMax: f.prixMax ?? undefined,
     };
     const { data } = await api.get('/formations', { params });
     formations.value = data.data;
-    pagination.value.rowsNumber = data.total;
-    pagination.value.page = data.page;
+    pagination.value.total = data.total;
+    // Précharger les inscriptions pour les stats et la vue cartes
+    await Promise.all(
+      formations.value.map((f) => chargerRegistre(f)),
+    );
   } finally {
     chargement.value = false;
   }
 }
 
-async function recharger() {
+async function chargerTout() {
   pagination.value.page = 1;
-  await repondreRequete({ pagination: pagination.value });
+  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
+  await requeter();
 }
 
-onMounted(() => repondreRequete({ pagination: pagination.value }));
+watch(filtres, () => {
+  pagination.value.page = 1;
+  void requeter();
+}, { deep: true });
+
+onMounted(() => {
+  void requeter();
+});
 </script>
+
+<style scoped lang="scss">
+.stat-chiffre {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+</style>

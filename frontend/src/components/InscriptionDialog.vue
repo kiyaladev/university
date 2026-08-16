@@ -5,50 +5,44 @@
 
       <q-card-section>
         <span class="section-titre">Étudiant</span>
-        <q-select
+        <autocomplete-async
           v-model="form.etudiantId"
-          :options="optionsEtudiants"
-          outlined
-          dense
-          use-input
-          input-debounce="300"
-          emit-value
-          map-options
+          endpoint="/etudiants"
+          :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ' (inactif)'}`"
           label="Étudiant *"
-          placeholder="Typez nom, prénom ou matricule…"
-          :loading="rechercheEtudiants"
-          @filter="filtrerEtudiants"
+          placeholder="Tapez nom, prénom ou matricule…"
         />
 
         <span class="section-titre">Parcours</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-select
+            <autocomplete-async
               v-model="form.anneeId"
-              :options="optionsAnnees"
-              outlined
-              dense
-              emit-value
-              map-options
+              endpoint="/annees"
+              :label-fn="(a) => a.libelle"
               label="Année académique *"
-              @update:model-value="rechargerPromotions"
+              @update:model-value="onAnneeChange"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-select
+            <autocomplete-async
               v-model="form.promotionId"
-              :options="optionsPromotions"
-              outlined
-              dense
-              emit-value
-              map-options
+              endpoint="/promotions"
+              :label-fn="(p) => p.nom"
               label="Promotion *"
+              :disable="!form.anneeId"
               @update:model-value="chargerTarif"
             />
           </div>
         </div>
 
         <span class="section-titre">Frais</span>
+        <div v-if="tarifOfficiel !== null" class="plaque acces-tarif q-mb-sm">
+          <div class="text-caption acces-tarif__libelle">Tarif officiel</div>
+          <div class="lettrage chiffres acces-tarif__montant">
+            {{ montantLisible(tarifOfficiel) }} GNF
+          </div>
+        </div>
         <q-input
           v-model.number="form.montantFrais"
           type="number"
@@ -56,7 +50,7 @@
           dense
           label="Montant des frais (GNF)"
           :disable="tarifOfficiel !== null"
-          :hint="tarifOfficiel !== null ? `Tarif officiel : ${montantLisible(tarifOfficiel)} GNF` : 'Aucun tarif paramétré : saisissez le montant'"
+          :hint="tarifOfficiel !== null ? 'Tarif officiel appliqué automatiquement' : 'Aucun tarif paramétré : saisissez le montant'"
         >
           <template #append>
             <q-icon
@@ -87,26 +81,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
+import AutocompleteAsync from './AutocompleteAsync.vue';
 import { montantLisible } from '../utils/libelles';
-import type { AnneeAcademique, Etudiant, Promotion } from '../types';
-
-interface EtudiantOption extends Etudiant {
-  inscriptions?: { promotion?: Promotion | null }[];
-}
 
 const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
 const enregistrement = ref(false);
-const rechercheEtudiants = ref(false);
-
-const annees = ref<AnneeAcademique[]>([]);
-const promotions = ref<Promotion[]>([]);
-const etudiants = ref<EtudiantOption[]>([]);
 const tarifOfficiel = ref<number | null>(null);
 
 const form = ref({
@@ -116,90 +101,54 @@ const form = ref({
   montantFrais: null as number | null,
 });
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
-);
-const optionsPromotions = computed(() =>
-  promotions.value
-    .filter((p) => !form.value.anneeId || p.anneeId === form.value.anneeId)
-    .map((p) => ({ label: p.nom, value: p.id })),
-);
-const optionsEtudiants = computed(() =>
-  etudiants.value.map((e) => ({
-    label: `${e.matricule} — ${e.nom} ${e.prenom}${
-      e.inscriptions?.length ? ` (inscrit·e : ${e.inscriptions[0].promotion?.nom ?? '—'})` : ''
-    }`,
-    value: e.id,
-  })),
+watch(
+  () => props.modelValue,
+  (ouvert) => {
+    if (!ouvert) return;
+    form.value = { etudiantId: '', anneeId: '', promotionId: '', montantFrais: null };
+    tarifOfficiel.value = null;
+    void chargerAnneeDefaut();
+  },
 );
 
-async function filtrerEtudiants(terme: string, update: (callbackFn: () => void) => void) {
-  if (terme === '') {
-    update(() => {
-      etudiants.value = [];
-    });
-    return;
-  }
-  rechercheEtudiants.value = true;
+async function chargerAnneeDefaut() {
   try {
-    const { data } = await api.get('/etudiants', {
-      params: { all: '1', search: terme },
-    });
-    update(() => {
-      etudiants.value = data.data;
-    });
-  } finally {
-    rechercheEtudiants.value = false;
+    const { data } = await api.get('/annees', { params: { all: '1' } });
+    const liste = Array.isArray(data) ? data : data.data ?? [];
+    form.value.anneeId = liste.find((a: any) => a.active)?.id ?? liste[0]?.id ?? '';
+  } catch {
+    form.value.anneeId = '';
   }
 }
 
-async function chargerAnnees() {
-  const { data } = await api.get('/annees', { params: { all: '1' } });
-  annees.value = data.data;
-  form.value.anneeId =
-    annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
-  await rechargerPromotions();
-}
-
-async function rechargerPromotions() {
-  promotions.value = [];
+async function onAnneeChange() {
   form.value.promotionId = '';
   tarifOfficiel.value = null;
-  if (!form.value.anneeId) return;
-  const { data } = await api.get('/promotions', { params: { all: '1' } });
-  promotions.value = data.data;
+  form.value.montantFrais = null;
 }
 
 async function chargerTarif() {
   tarifOfficiel.value = null;
   if (!form.value.promotionId) return;
-  const { data } = await api.get('/frais', {
-    params: { all: '1', promotionId: form.value.promotionId, anneeId: form.value.anneeId || undefined },
-  });
-  if (data.data.length) {
-    tarifOfficiel.value = data.data[0].montant;
-    form.value.montantFrais = data.data[0].montant;
-  } else {
+  try {
+    const { data } = await api.get('/frais', {
+      params: {
+        all: '1',
+        promotionId: form.value.promotionId,
+        anneeId: form.value.anneeId || undefined,
+      },
+    });
+    const liste = Array.isArray(data) ? data : data.data ?? [];
+    if (liste.length) {
+      tarifOfficiel.value = liste[0].montant;
+      form.value.montantFrais = liste[0].montant;
+    } else {
+      form.value.montantFrais = null;
+    }
+  } catch {
     form.value.montantFrais = null;
   }
 }
-
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    form.value = {
-      etudiantId: '',
-      anneeId: annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '',
-      promotionId: '',
-      montantFrais: null,
-    };
-    tarifOfficiel.value = null;
-    etudiants.value = [];
-    if (!annees.value.length) void chargerAnnees();
-    else void rechargerPromotions();
-  },
-);
 
 async function enregistrer() {
   enregistrement.value = true;
@@ -218,3 +167,20 @@ async function enregistrer() {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.acces-tarif {
+  padding: var(--up-3) var(--up-4);
+  display: grid;
+  gap: var(--up-1);
+}
+.acces-tarif__libelle {
+  text-transform: uppercase;
+  color: var(--up-encre-douce);
+  letter-spacing: 0.06em;
+}
+.acces-tarif__montant {
+  font-size: 1.3rem;
+  color: $vert;
+}
+</style>

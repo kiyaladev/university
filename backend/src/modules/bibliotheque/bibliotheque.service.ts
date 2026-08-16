@@ -13,11 +13,20 @@ import {
   DocumentQueryDto,
   UpdateDocumentDto,
 } from './bibliotheque.dto';
+import { PlagiatService } from './plagiat.service';
 
 /**
  * Dépôt institutionnel & bibliothèque numérique. En pilote : archivage natif
  * des fichiers chargés dans l'application. La numérisation des fonds papier
  * sera facturée à part (marché AUF/UNESCO) et n'a pas de représentation ici.
+ *
+ * À la création / mise à jour d'un document, le service déclenche :
+ *  - l'extraction du texte PDF et le calcul d'empreinte (cf. PlagiatService) ;
+ *  - la recherche de doublons parmi tous les autres documents du dépôt.
+ *
+ * La détection est asynchrone dans le sens où elle ne fait pas échouer la
+ * création si elle échoue : on loggue et on continue. Une suspicion peut être
+ * levée plus tard via le recalcul global.
  */
 const LIMITE_DATA_URL_OCTETS = 8 * 1024 * 1024;
 
@@ -36,7 +45,7 @@ export interface FichierDocument {
 
 @Injectable()
 export class BibliothequeService extends CrudService {
-  constructor(prisma: PrismaService) {
+  constructor(prisma: PrismaService, private readonly plagiat: PlagiatService) {
     super(prisma, 'documentDepot', {
       searchFields: ['titre', 'auteurs', 'resume'],
       orderBy: { createdAt: 'desc' },
@@ -52,9 +61,9 @@ export class BibliothequeService extends CrudService {
 
   /** Le JSON de réponse ne transporte jamais le fichier : la lourde charge
    *  base64 ne circule que sur la route de téléchargement dédiée. */
-  private sansFichier(doc: any): any {
+  private sansFichier<T extends { fichier?: unknown }>(doc: T): Omit<T, 'fichier'> {
     if (!doc) return doc;
-    const { fichier: _fichier, ...reste } = doc;
+    const { fichier: _fichier, ...reste } = doc as any;
     return reste;
   }
 
@@ -70,9 +79,15 @@ export class BibliothequeService extends CrudService {
    * Calcule les métadonnées du fichier joint et vérifie la taille. La limite de
    * 8 Mo porte sur le data-url lui-même (le body JSON d'express est plafonné à
    * 8 Mo dans main.ts) — en pratique express refuse avant nous au-delà.
+   * Retourne systématiquement un objet avec `typeMime` et `tailleKo` (nuls si
+   * pas de fichier) pour faciliter l'appel en aval.
    */
-  private preparerFichier(dto: CreateDocumentDto | UpdateDocumentDto) {
-    if (!dto.fichier) return dto;
+  private preparerFichier(
+    dto: CreateDocumentDto | UpdateDocumentDto,
+  ): (CreateDocumentDto | UpdateDocumentDto) & { typeMime: string | null; tailleKo: number | null } {
+    if (!dto.fichier) {
+      return { ...(dto as any), typeMime: null, tailleKo: null } as any;
+    }
     const longueur = Buffer.byteLength(dto.fichier, 'utf8');
     if (longueur >= LIMITE_DATA_URL_OCTETS) {
       const mo = (longueur / (1024 * 1024)).toFixed(1);
@@ -82,7 +97,20 @@ export class BibliothequeService extends CrudService {
       );
     }
     const { mime, octets } = this.decouperDataUrl(dto.fichier);
-    return { ...dto, typeMime: mime, tailleKo: Math.max(1, Math.round(octets.length / 1024)) };
+    return {
+      ...(dto as any),
+      typeMime: mime ?? null,
+      tailleKo: Math.max(1, Math.round(octets.length / 1024)),
+    } as any;
+  }
+
+  /**
+   * Lance la détection de doublons en arrière-plan via la variante
+   * silencieuse : un échec ne compromet pas la création du document, et le
+   * recalcul global ADMIN rattrapera l'oubli.
+   */
+  private async analyserDoublons(documentId: string): Promise<void> {
+    await this.plagiat.detecterSilencieusement(documentId);
   }
 
   /**
@@ -121,11 +149,23 @@ export class BibliothequeService extends CrudService {
     return (docs as any[]).map((d) => this.sansFichier(d));
   }
 
+  /**
+   * Dépôt d'un nouveau document : extrait le texte du PDF (s'il y a lieu),
+   * calcule l'empreinte, persiste, puis lance la détection de doublons.
+   */
   async deposer(dto: CreateDocumentDto, utilisateur: AuthUser) {
+    const prepare = this.preparerFichier(dto);
+    const { contenuTexte, empreinteHash } = await this.plagiat.preparerContenu(
+      prepare.fichier ?? null,
+      prepare.typeMime ?? null,
+    );
     const document = await this.create({
-      ...this.preparerFichier(dto),
+      ...prepare,
+      contenuTexte: contenuTexte ?? null,
+      empreinteHash: empreinteHash ?? null,
       deposeParId: utilisateur.id,
     });
+    void this.analyserDoublons(document.id);
     return this.sansFichier(document);
   }
 
@@ -136,7 +176,23 @@ export class BibliothequeService extends CrudService {
         'Seul le déposant initial peut modifier ce document (sauf administrateur)',
       );
     }
-    const miseAJour = await this.update(id, this.preparerFichier(dto));
+    const prepare = this.preparerFichier(dto);
+    // Si un nouveau fichier est fourni, on relance extraction + empreinte.
+    // Sinon, on conserve les valeurs existantes : le déposant n'est pas obligé
+    // de ré-uploader le PDF pour corriger un titre ou un résumé.
+    let contenuTexte = document.contenuTexte ?? null;
+    let empreinteHash = document.empreinteHash ?? null;
+    if (prepare.fichier) {
+      const extrait = await this.plagiat.preparerContenu(prepare.fichier, prepare.typeMime ?? null);
+      contenuTexte = extrait.contenuTexte;
+      empreinteHash = extrait.empreinteHash;
+    }
+    const miseAJour = await this.update(id, {
+      ...prepare,
+      contenuTexte,
+      empreinteHash,
+    });
+    void this.analyserDoublons(id);
     return this.sansFichier(miseAJour);
   }
 

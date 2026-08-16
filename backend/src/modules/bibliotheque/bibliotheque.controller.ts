@@ -17,17 +17,24 @@ import type { Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
+  AcquitterPlagiatDto,
   CreateDocumentDto,
   DocumentQueryDto,
+  RechercheDocumentDto,
   UpdateDocumentDto,
 } from './bibliotheque.dto';
 import { BibliothequeService } from './bibliotheque.service';
+import { PlagiatService } from './plagiat.service';
+import { RechercheService } from './recherche.service';
 
 /**
  * Dépôt institutionnel & bibliothèque numérique. La lecture est ouverte à
  * tous : la page publique consulte la même liste et la même route de fichier
  * que le staff. L'écriture est réservée à l'administration, la direction et
  * la scolarité — et, sauf ADMIN, au déposant initial.
+ *
+ * Routes spécialisées : recherche plein texte (FTS), détection de doublons
+ * (POST/PUT) et tableau de bord plagiat (admin/direction).
  */
 @ApiTags('Bibliothèque')
 @ApiBearerAuth()
@@ -35,6 +42,8 @@ import { BibliothequeService } from './bibliotheque.service';
 export class BibliothequeController {
   constructor(
     private readonly service: BibliothequeService,
+    private readonly recherche: RechercheService,
+    private readonly plagiat: PlagiatService,
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
   ) {}
@@ -88,6 +97,56 @@ export class BibliothequeController {
   @Get('populaires')
   populaires() {
     return this.service.populaires();
+  }
+
+  /** Recherche plein texte (PostgreSQL FTS, dictionnaire `french`). */
+  @Public()
+  @Get('recherche')
+  async rechercheFts(
+    @Query() query: RechercheDocumentDto,
+    @Headers('authorization') authorization?: string,
+  ) {
+    return this.recherche.rechercher(query, await this.porteur(authorization));
+  }
+
+  /** Tableau de bord plagiat : admin uniquement. */
+  @Roles(Role.ADMIN)
+  @Get('plagiat')
+  dashboardPlagiat() {
+    return this.plagiat.dashboard();
+  }
+
+  /** Déclenchement manuel du recalcul global : admin, coûteux (O(n²)). */
+  @Roles(Role.ADMIN)
+  @Post('recalculer-plagiat')
+  async recalculerPlagiat(@CurrentUser() utilisateur: AuthUser) {
+    const resultat = await this.plagiat.recalculerComplet();
+    await this.prisma.auditLog.create({
+      data: {
+        userId: utilisateur.id,
+        action: 'PLAGIAT_RECALCUL',
+        entite: 'SuspicionPlagiat',
+        details: `${resultat.creees} créées, ${resultat.misesAJour} mises à jour, ${resultat.ignorees} ignorées.`,
+      },
+    });
+    return resultat;
+  }
+
+  @Roles(Role.ADMIN)
+  @Get('plagiat/:id')
+  detailPlagiat(@Param('id') id: string) {
+    return this.plagiat.detail(id);
+  }
+
+  /** Acquittement humain d'une suspicion : admin et direction. */
+  @Roles(Role.ADMIN, Role.DIRECTION)
+  @Post('plagiat/:id/acquitter')
+  acquitter(
+    @Param('id') id: string,
+    @Body() dto: AcquitterPlagiatDto,
+    @CurrentUser() utilisateur: AuthUser,
+  ) {
+    return this.plagiat.acquitter(id, dto.decision, utilisateur, dto.commentaire);
   }
 
   @Get(':id')

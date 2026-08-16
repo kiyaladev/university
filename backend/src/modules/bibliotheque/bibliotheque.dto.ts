@@ -1,14 +1,18 @@
 import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsBooleanString,
   IsEnum,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Max,
+  MaxLength,
   Min,
   MinLength,
 } from 'class-validator';
@@ -29,6 +33,13 @@ export class CreateDocumentDto {
   @IsOptional() @IsUUID() departementId?: string;
   @IsOptional() @IsUUID() enseignantId?: string;
   @IsOptional() @IsUUID() etudiantId?: string;
+  /** Mots-clés saisis manuellement par le déposant. */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  @MaxLength(60, { each: true })
+  motsClefs?: string[];
 }
 
 export class UpdateDocumentDto extends PartialType(CreateDocumentDto) {}
@@ -40,4 +51,29 @@ export class DocumentQueryDto extends QueryDto {
   /** « 1 » ou « 0 » : ne s'applique qu'à la liste connectée (staff). Le
    *  visiteur public ne reçoit jamais un document non publié. */
   @IsOptional() @IsBooleanString() public?: string;
+}
+
+/**
+ * Recherche plein texte (PostgreSQL FTS, dictionnaire `french`) sur la colonne
+ * tsvector `recherche` du DocumentDepot. Les filtres classiques s'appliquent en
+ * sus du score. La requête accepte le préfixe : `mem*` équivaut à `mémoire`,
+ * `recherche*`, etc. Les caractères spéciaux tsquery (`! & | ( ) : *`) sont
+ * neutralisés avant construction de la requête.
+ */
+export class RechercheDocumentDto extends QueryDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(200)
+  q: string;
+  @IsOptional() @IsEnum(TypeDocument) type?: TypeDocument;
+  @IsOptional() @IsUUID() departementId?: string;
+  @IsOptional() @Type(() => Number) @IsInt() anneeEdition?: number;
+  @IsOptional() @IsBooleanString() public?: string;
+}
+
+/** Décision d'arbitrage d'une suspicion de plagiat. */
+export class AcquitterPlagiatDto {
+  @IsIn(['ACQUITTE', 'CONFIRME'])
+  decision: 'ACQUITTE' | 'CONFIRME';
+  @IsOptional() @IsString() @MaxLength(1000) commentaire?: string;
 }

@@ -235,6 +235,24 @@ const routes: RouteRecordRaw[] = [
         meta: { titre: 'Attestations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
       },
       {
+        path: 'plagiat',
+        name: 'plagiat',
+        component: () => import('pages/PlagiatPage.vue'),
+        meta: { titre: 'Anti-plagiat', roles: ['ADMIN', 'DIRECTION'] },
+      },
+      {
+        path: 'plagiat/:id',
+        name: 'plagiat-detail',
+        component: () => import('pages/PlagiatDetailPage.vue'),
+        meta: { titre: 'Détail suspicion', roles: ['ADMIN', 'DIRECTION'] },
+      },
+      {
+        path: 'bulletins',
+        name: 'bulletins',
+        component: () => import('pages/BulletinsPage.vue'),
+        meta: { titre: 'Bulletins', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+      },
+      {
         path: 'paie',
         name: 'paie',
         component: () => import('pages/PaiePage.vue'),

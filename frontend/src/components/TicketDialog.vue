@@ -57,7 +57,12 @@
           type="textarea"
           rows="3"
           counter
-          maxlength="2000"
+          :min-length="5"
+          :max-length="500"
+          :rules="[
+            (v) => (v ?? '').trim().length >= 5 || 'Au moins 5 caractères',
+            (v) => (v ?? '').trim().length <= 500 || 'Au plus 500 caractères',
+          ]"
           label="Décrivez le problème"
           placeholder="Ex. : l'image du vidéoprojecteur clignote puis s'éteint après quelques minutes"
           class="q-mb-md"
@@ -85,7 +90,7 @@
           icon="send"
           label="Envoyer"
           :loading="enregistrement"
-          :disable="!form.categorie || form.description.trim().length < 5"
+          :disable="!form.categorie || form.description.trim().length < 5 || form.description.trim().length > 500"
           @click="envoyer"
         />
       </q-card-actions>
@@ -111,6 +116,8 @@ const props = defineProps<{
   equipement?: EquipementCampus | null;
   /** Inventaire proposé au sélecteur (facultatif). */
   equipements?: EquipementCampus[];
+  /** Catégorie pré-sélectionnée (depuis les tuiles express). */
+  categorieInitiale?: CategorieIncident | '';
 }>();
 const emit = defineEmits<{
   'update:modelValue': [boolean];
@@ -174,7 +181,7 @@ watch(
     if (!ouvert) return;
     form.value = {
       equipementId: props.equipement?.id ?? null,
-      categorie: '',
+      categorie: (props.categorieInitiale ?? '') as CategorieIncident | '',
       description: '',
       priorite: 'NORMALE',
     };
@@ -182,7 +189,8 @@ watch(
 );
 
 async function envoyer() {
-  if (!form.value.categorie || form.value.description.trim().length < 5) return;
+  const len = form.value.description.trim().length;
+  if (!form.value.categorie || len < 5 || len > 500) return;
   enregistrement.value = true;
   try {
     const { data } = await api.post('/tickets', {
