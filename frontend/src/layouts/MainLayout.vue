@@ -276,7 +276,7 @@ const menu = computed(() => {
           ? [{ to: '/examens/scan', icone: 'qr_code_scanner', libelle: 'Scan examens' }]
           : []),
         ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/cartes-etudiants', icone: 'badge', libelle: 'Cartes étudiantes' }]
+          ? [{ to: '/cartes-etudiantes', icone: 'badge', libelle: 'Cartes étudiantes' }]
           : []),
         ...(est('ADMIN', 'SCOLARITE')
           ? [{ to: '/badges', icone: 'how_to_reg', libelle: 'Badges & visiteurs' }]

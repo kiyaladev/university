@@ -391,8 +391,8 @@ const routes: RouteRecordRaw[] = [
         meta: { titre: 'Tarifs des demandes', roles: ['ADMIN'] },
       },
       {
-        path: 'cartes-etudiants',
-        name: 'cartes-etudiants',
+        path: 'cartes-etudiantes',
+        name: 'cartes-etudiantes',
         component: () => import('pages/CarteEtudiantePage.vue'),
         meta: { titre: 'Cartes étudiantes', roles: ['ADMIN', 'SCOLARITE'] },
       },
