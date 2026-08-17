@@ -39,6 +39,22 @@ export class NotificationsController {
     return this.notifications.deliberationsDisponibles();
   }
 
+  /** Estimation du nombre de destinataires avant l'envoi (preview). */
+  @Roles(...ROLES_DIFFUSION)
+  @Get('destinataires/estimes')
+  async destinatairesEstimes(@Query() query: { mode?: string }) {
+    const total = await this.notifications.estimerDestinataires(query.mode);
+    return { total };
+  }
+
+  /** Répartition quotidienne des notifications sur les N derniers jours (pour graphique). */
+  @Roles(...ROLES_DIFFUSION)
+  @Get('stats/repartition')
+  async repartition(@Query() query: { jours?: string }) {
+    const jours = Math.min(90, Math.max(1, Number(query.jours ?? 30)));
+    return this.notifications.repartitionQuotidienne(jours);
+  }
+
   /**
    * Diffusion manuelle. Le débit est bridé (30 par minute) : chaque envoi
    * part en parallèle et chaque numéro fait l'objet d'une ligne d'historique.

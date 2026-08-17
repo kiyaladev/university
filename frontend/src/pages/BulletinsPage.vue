@@ -115,10 +115,15 @@
             dense
             no-caps
             icon="picture_as_pdf"
-            color="primary"
-            label="Imprimer"
+            :color="p.row.deliberationId ? 'primary' : 'grey-5'"
+            :label="p.row.deliberationId ? 'Imprimer' : 'Pas de jury'"
+            :disable="!p.row.deliberationId"
             @click.stop="imprimerUn(p.row)"
-          />
+          >
+            <q-tooltip v-if="!p.row.deliberationId">
+              Cet étudiant n'a pas de délibération validée.
+            </q-tooltip>
+          </q-btn>
           <q-btn
             flat
             dense

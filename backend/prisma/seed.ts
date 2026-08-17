@@ -51,6 +51,32 @@ const heure = (m: number) =>
 
 async function main() {
   console.log('→ Nettoyage…');
+  // Modules récents : suppression en cascade pour idempotence
+  await prisma.vueVOD.deleteMany();
+  await prisma.coursVOD.deleteMany();
+  await prisma.voteElection.deleteMany();
+  await prisma.candidatElection.deleteMany();
+  await prisma.election.deleteMany();
+  await prisma.badgeAcces.deleteMany();
+  await prisma.carteEtudiante.deleteMany();
+  await prisma.messageReclamation.deleteMany();
+  await prisma.reclamation.deleteMany();
+  await prisma.tarifDemande.deleteMany();
+  await prisma.demandeDocument.deleteMany();
+  await prisma.recetteExterne.deleteMany();
+  await prisma.tirage.deleteMany();
+  await prisma.scanExamen.deleteMany();
+  await prisma.examen.deleteMany();
+  await prisma.circuitCourrier.deleteMany();
+  await prisma.courrier.deleteMany();
+  await prisma.reparationMateriel.deleteMany();
+  await prisma.equipementPatrimoine.deleteMany();
+  await prisma.categoriePatrimoine.deleteMany();
+  await prisma.statistiqueMesrs.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.suspicionPlagiat.deleteMany();
+  await prisma.documentDepot.deleteMany();
+  // Modules principaux
   await prisma.auditLog.deleteMany();
   await prisma.justificatif.deleteMany();
   await prisma.controle.deleteMany();
@@ -58,9 +84,32 @@ async function main() {
   await prisma.creneau.deleteMany();
   await prisma.affectation.deleteMany();
   await prisma.matiere.deleteMany();
+  await prisma.ticketSupport.deleteMany();
+  await prisma.equipementCampus.deleteMany();
+  await prisma.recharge.deleteMany();
+  await prisma.consommationResto.deleteMany();
+  await prisma.portefeuilleResto.deleteMany();
+  await prisma.attributionLogement.deleteMany();
+  await prisma.chambre.deleteMany();
+  await prisma.residence.deleteMany();
+  await prisma.lignePaie.deleteMany();
+  await prisma.feuillePaie.deleteMany();
+  await prisma.attestation.deleteMany();
+  await prisma.deliberationLigne.deleteMany();
+  await prisma.deliberation.deleteMany();
+  await prisma.note.deleteMany();
+  await prisma.evaluation.deleteMany();
+  await prisma.paiement.deleteMany();
+  await prisma.inscription.deleteMany();
+  await prisma.inscriptionFormation.deleteMany();
+  await prisma.formation.deleteMany();
+  await prisma.soutenance.deleteMany();
+  await prisma.travailEncadre.deleteMany();
+  await prisma.reservationSalle.deleteMany();
   await prisma.promotion.deleteMany();
   await prisma.filiere.deleteMany();
   await prisma.enseignant.deleteMany();
+  await prisma.etudiant.deleteMany();
   await prisma.user.deleteMany();
   await prisma.departement.deleteMany();
   await prisma.salle.deleteMany();
@@ -626,6 +675,583 @@ async function main() {
       },
     }),
   ];
+
+  // ===================================================================
+  // Modules « université innovante » : seed des nouveaux modèles
+  // ===================================================================
+  console.log('→ Seed des nouveaux modules…');
+
+  // Récupération des références utiles
+  const anneeActive = await prisma.anneeAcademique.findFirst({ where: { active: true } });
+  const allPromotions = await prisma.promotion.findMany({ include: { filiere: { include: { departement: true } } } });
+  const allMatieres = await prisma.matiere.findMany();
+  const allSalles = await prisma.salle.findMany();
+  const adminUser = users.find((u) => u.role === Role.ADMIN)!;
+  const directionUser = users.find((u) => u.role === Role.DIRECTION)!;
+  const scolariteUser = users.find((u) => u.role === Role.SCOLARITE)!;
+  const chefInfo = users.find((u) => u.role === Role.CHEF_DEPARTEMENT && u.departementId === info.id)!;
+  const enseignant1 = await prisma.enseignant.findFirst({ where: { matricule: 'ENS-001' } });
+  const enseignant2 = await prisma.enseignant.findFirst({ where: { matricule: 'ENS-002' } });
+  const promoL1Info = allPromotions.find((p) => p.niveau === Niveau.L1 && p.filiere?.code === 'GL')!;
+  const promoM1Math = allPromotions.find((p) => p.niveau === Niveau.M1 && p.filiere?.code === 'MA')!;
+  const salleAmphi = allSalles.find((s) => s.code === 'AMPHI-A')!;
+  const salle204 = allSalles.find((s) => s.code === 'S204')!;
+
+  // ---- 1. Patrimoine & Matériel pédagogique ----
+  const categoriesPatrimoine = await Promise.all([
+    prisma.categoriePatrimoine.create({ data: { code: 'VIDEOPROJ', libelle: 'Vidéoprojecteur', dureeAmortissement: 60 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'ORDI',     libelle: 'Ordinateur',      dureeAmortissement: 36 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'MICRO',    libelle: 'Microphone',      dureeAmortissement: 48 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'CHAISE',   libelle: 'Chaise',         dureeAmortissement: 120 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'TABLEAU',  libelle: 'Tableau blanc',  dureeAmortissement: 120 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'IMPRIM',   libelle: 'Imprimante',     dureeAmortissement: 60 } }),
+  ]);
+  const equipementsPatrimoine: Awaited<ReturnType<typeof prisma.equipementPatrimoine.create>>[] = [];
+  const numInv = 1;
+  let inv = numInv;
+  const eqList = [
+    { libelle: 'Vidéoprojecteur Epson EB-X41', cat: 'VIDEOPROJ', valeur: 850000, salle: salleAmphi, dept: info.id },
+    { libelle: 'Vidéoprojecteur Epson EB-X41', cat: 'VIDEOPROJ', valeur: 850000, salle: allSalles[1], dept: math.id },
+    { libelle: 'Vidéoprojecteur BenQ MS550',   cat: 'VIDEOPROJ', valeur: 720000, salle: salle204, dept: info.id },
+    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI',    valeur: 1450000, salle: allSalles[5], dept: info.id },
+    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI',    valeur: 1450000, salle: allSalles[5], dept: info.id },
+    { libelle: 'Ordinateur Lenovo ThinkCentre', cat: 'ORDI',     valeur: 1200000, salle: salle204, dept: math.id },
+    { libelle: 'Microphone sans fil Shure',   cat: 'MICRO',    valeur: 320000, salle: salleAmphi, dept: null },
+    { libelle: 'Microphone sans fil Shure',   cat: 'MICRO',    valeur: 320000, salle: allSalles[1], dept: null },
+    { libelle: 'Chaise pédagogique (lot de 50)', cat: 'CHAISE', valeur: 350000, salle: salleAmphi, dept: null },
+    { libelle: 'Chaise pédagogique (lot de 40)', cat: 'CHAISE', valeur: 280000, salle: allSalles[1], dept: null },
+    { libelle: 'Tableau blanc interactif',    cat: 'TABLEAU',  valeur: 480000, salle: salleAmphi, dept: info.id },
+    { libelle: 'Tableau blanc interactif',    cat: 'TABLEAU',  valeur: 480000, salle: salle204, dept: info.id },
+    { libelle: 'Imprimante HP LaserJet Pro',  cat: 'IMPRIM',   valeur: 620000, salle: allSalles[4], dept: eco.id },
+  ];
+  for (const eq of eqList) {
+    const cat = categoriesPatrimoine.find((c) => c.code === eq.cat)!;
+    const eqItem = await prisma.equipementPatrimoine.create({
+      data: {
+        numeroSerie: `SN-${String(inv).padStart(6, '0')}`,
+        numeroInventaire: `INV-${String(inv).padStart(6, '0')}`,
+        libelle: eq.libelle,
+        categorieId: cat.id,
+        departementId: eq.dept,
+        salleId: eq.salle?.id ?? null,
+        dateAcquisition: dateOnly('2023-09-15'),
+        valeurAcquisition: eq.valeur,
+        qrCode: `UP-PAT-${randomBytes(8).toString('base64url')}`,
+        obsolescenceMois: 84,
+      },
+    });
+    equipementsPatrimoine.push(eqItem);
+    inv++;
+  }
+  // Quelques réparations en cours
+  const reparation = await prisma.reparationMateriel.create({
+    data: {
+      equipementId: equipementsPatrimoine[0].id,
+      description: 'Lampe grillée après 4000h d\u2019utilisation',
+      prestataire: 'Tech Service Conakry',
+      cout: 95000,
+      statut: 'EN_COURS',
+      dateResolution: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      declareParId: scolariteUser.id,
+    },
+  });
+  await prisma.reparationMateriel.create({
+    data: {
+      equipementId: equipementsPatrimoine[3].id,
+      description: 'Écran bleu au démarrage, alimentation HS',
+      statut: 'TERMINE',
+      cout: 175000,
+      declareParId: adminUser.id,
+      resoluParId: adminUser.id,
+      dateResolution: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // ---- 2. Courrier administratif ----
+  const courrierEntrant = await prisma.courrier.create({
+    data: {
+      numero: 'COUR-2026-00001',
+      type: 'ENTRANT',
+      objet: 'Convention de partenariat UGAN-CBG',
+      expediteur: 'Direction Générale CBG',
+      dateReception: dateOnly('2026-08-01'),
+      numeroReference: 'CBG/REF/2026/0042',
+      fichier: null, typeMime: null, tailleKo: null,
+      statut: 'EN_CIRCUIT',
+      enregistreParId: scolariteUser.id,
+      circuits: {
+        create: [
+          { ordre: 1, roleValideur: 'Secrétariat général', statut: 'TRAITE', parapheLe: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), commentaire: 'Réception et enregistrement' },
+          { ordre: 2, roleValideur: 'Recteur', statut: 'EN_CIRCUIT', commentaire: 'Pour signature' },
+        ],
+      },
+    },
+  });
+  const courrierSortant = await prisma.courrier.create({
+    data: {
+      numero: 'COUR-2026-00002',
+      type: 'SORTANT',
+      objet: 'Demande de subvention MESRS — bibliothèque numérique',
+      destinataire: 'Ministère de Enseignement Supérieur',
+      dateEnvoi: dateOnly('2026-08-10'),
+      statut: 'TRAITE',
+      enregistreParId: directionUser.id,
+      traiteParId: directionUser.id,
+      circuits: {
+        create: [
+          { ordre: 1, roleValideur: 'Direction des études', statut: 'TRAITE', parapheLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+          { ordre: 2, roleValideur: 'Recteur', statut: 'TRAITE', parapheLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+        ],
+      },
+    },
+  });
+  const courrierArchive = await prisma.courrier.create({
+    data: {
+      numero: 'COUR-2026-00003',
+      type: 'ENTRANT',
+      objet: 'Invitation cérémonie doctorale honorifique',
+      expediteur: 'Université Cheikh Anta Diop',
+      dateReception: dateOnly('2026-07-15'),
+      numeroReference: 'UCAD/DIP/2026/015',
+      statut: 'CLASSE',
+      enregistreParId: scolariteUser.id,
+      traiteParId: directionUser.id,
+    },
+  });
+
+  // ---- 3. Examens + Anti-fantômes ----
+  const finalAlgo = await prisma.examen.create({
+    data: {
+      intitule: 'Algorithmique — Examen final',
+      type: 'FINAL',
+      matiereId: allMatieres.find((m) => m.code === 'INF101')!.id,
+      promotionId: promoL1Info.id,
+      anneeId: anneeActive!.id,
+      dateExamen: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      heureDebut: '08:00', heureFin: '10:00',
+      salleId: salleAmphi.id,
+      nbInscrits: 8,
+      codeExamen: 'EXAM-2026-0001',
+      statut: 'PLANIFIE',
+      creeParId: scolariteUser.id,
+      surveillantId: compteEnseignant.id,
+    },
+  });
+  const partielAlgo = await prisma.examen.create({
+    data: {
+      intitule: 'Algorithmique — Partiel',
+      type: 'PARTIEL',
+      matiereId: allMatieres.find((m) => m.code === 'INF101')!.id,
+      promotionId: promoL1Info.id,
+      anneeId: anneeActive!.id,
+      dateExamen: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      heureDebut: '14:00', heureFin: '15:30',
+      salleId: salle204.id,
+      nbInscrits: 8,
+      codeExamen: 'EXAM-2026-0002',
+      statut: 'TERMINE',
+      creeParId: scolariteUser.id,
+    },
+  });
+  // Scans d'exemple (5 étudiants déjà scannés pour le partiel)
+  const inscriptionsL1 = await prisma.inscription.findMany({ where: { promotionId: promoL1Info.id, statut: 'VALIDEE' } });
+  for (let i = 0; i < Math.min(5, inscriptionsL1.length); i++) {
+    await prisma.scanExamen.create({
+      data: {
+        examenId: partielAlgo.id,
+        inscriptionId: inscriptionsL1[i].id,
+        heureScan: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000 + (10 + i) * 60 * 1000),
+        valide: true,
+        scanneurId: scolariteUser.id,
+      },
+    });
+  }
+  await prisma.examen.update({
+    where: { id: partielAlgo.id },
+    data: { nbPresents: Math.min(5, inscriptionsL1.length) },
+  });
+  // Un scan rejeté
+  if (inscriptionsL1.length > 0) {
+    await prisma.scanExamen.create({
+      data: {
+        examenId: partielAlgo.id,
+        matriculeSaisi: '2026-9999',
+        nomPorteur: 'INCONNU',
+        prenomPorteur: '',
+        valide: false,
+        motifRejet: 'Carte autre',
+        scanneurId: scolariteUser.id,
+      },
+    });
+  }
+
+  // ---- 4. Tirage épreuves ----
+  const tirage = await prisma.tirage.create({
+    data: {
+      examenId: partielAlgo.id,
+      dateTirage: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+      imprimeurId: adminUser.id,
+      nbExemplaires: 12,
+      empreinteSource: 'sha256:abc123def456...',
+      empreinteExemplaires: 'sha256:ex1,sha256:ex2,sha256:ex3,sha256:ex4,sha256:ex5,sha256:ex6,sha256:ex7,sha256:ex8,sha256:ex9,sha256:ex10,sha256:ex11,sha256:ex12',
+      circuitImpression: 'Salle reprographie A → Coffre-fort direction',
+      stade: 'RECUPERE',
+      notes: 'Tirage conforme — 12 copies conformes aux émargements',
+    },
+  });
+  await prisma.tirage.create({
+    data: {
+      examenId: finalAlgo.id,
+      dateTirage: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+      imprimeurId: adminUser.id,
+      nbExemplaires: 10,
+      empreinteSource: 'sha256:xyz789...',
+      stade: 'PROGRAMME',
+    },
+  });
+
+  // ---- 5. Régie des recettes ----
+  const recettes = await Promise.all([
+    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00001', type: 'LOCATION_AMPHI', libelle: 'Location Amphithéâtre A — Colloque AUF', description: 'Colloque sous-régional 2 jours', montant: 2500000, date: dateOnly('2026-08-05'), client: 'Agence Universitaire de la Francophonie' } }),
+    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00002', type: 'ANALYSE_LABO', libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008', description: 'Spectrométrie IR + UV-Vis', montant: 850000, date: dateOnly('2026-08-08'), client: 'Compagnie Minière de Dinguiraye', factureNum: 'FA-2026-0021' } }),
+    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00003', type: 'PRESTATION_FORMATION', libelle: 'Formation continue Excel avancé — Cohorte 1', description: '24h sur 4 jours, 18 participants', montant: 1800000, date: dateOnly('2026-07-22'), client: 'Banque Centrale de Guinée' } }),
+    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00004', type: 'PRESTATION_CONSEIL', libelle: 'Audit organisationnel — Service pédagogique', montant: 450000, date: dateOnly('2026-08-12'), client: 'Université Kindia' } }),
+  ]);
+
+  // ---- 6. Réclamations & Requêtes ----
+  const reclamations: Awaited<ReturnType<typeof prisma.reclamation.create>>[] = [];
+  reclamations.push(await prisma.reclamation.create({
+    data: {
+      numero: 'REC-CLAIM-00001',
+      type: 'NOTE_MANQUANTE',
+      sujet: 'Note de CC absente',
+      description: 'Ma note de contrôle continu d\u2019algorithmique n\u2019est pas affichée. J\u2019ai composé la semaine du 12 mai.',
+      etudiantId: etudiants[0].id,
+      priorite: 'NORMALE',
+      statut: 'EN_COURS',
+      assigneAId: scolariteUser.id,
+      messages: {
+        create: [
+          { contenu: 'Bonjour, j\u2019ai composé mon CC le 12 mai mais la note n\u2019apparaît pas dans mon bulletin. Merci de vérifier.', nomAffichage: 'Sory DOUMBOUYA', creeLe: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
+          { contenu: 'Bonjour, nous vérifions avec l\u2019enseignant et revenons vers vous sous 48h.', auteurId: scolariteUser.id, nomAffichage: 'Scolarité', creeLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+        ],
+      },
+    },
+  }));
+  reclamations.push(await prisma.reclamation.create({
+    data: {
+      numero: 'REC-CLAIM-00002',
+      type: 'ERREUR_SAISIE',
+      sujet: 'Erreur de saisie sur mon relevé',
+      description: 'Ma note de maths affiche 7/20 mais j\u2019ai eu 14/20 à l\u2019examen.',
+      etudiantId: etudiants[1].id,
+      priorite: 'HAUTE',
+      statut: 'RESOLUE',
+      assigneAId: scolariteUser.id,
+      fermeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      messages: {
+        create: [
+          { contenu: 'Note corrigée après vérification.', auteurId: scolariteUser.id, nomAffichage: 'Scolarité' },
+        ],
+      },
+    },
+  }));
+  reclamations.push(await prisma.reclamation.create({
+    data: {
+      numero: 'REC-CLAIM-00003',
+      type: 'ENSEIGNEMENT',
+      sujet: 'Cours non dispensés depuis 3 semaines',
+      description: 'Le cours de Base de données n\u2019a pas eu lieu depuis le début du mois.',
+      anonyme: true,
+      nomAuteur: 'Étudiant L3 INFO',
+      emailAuteur: 'anonyme@ugan.gn',
+      priorite: 'URGENTE',
+      statut: 'OUVERTE',
+      departementId: info.id,
+    },
+  }));
+
+  // ---- 7. Demandes de documents en ligne ----
+  const tarifs = await Promise.all([
+    prisma.tarifDemande.create({ data: { type: 'ATTESTATION_SCOLARITE', montant: 25000, delaiHeures: 24 } }),
+    prisma.tarifDemande.create({ data: { type: 'ATTESTATION_FREQUENTATION', montant: 15000, delaiHeures: 24 } }),
+    prisma.tarifDemande.create({ data: { type: 'RELEVE_NOTES', montant: 35000, delaiHeures: 48 } }),
+    prisma.tarifDemande.create({ data: { type: 'DUPLICATA_CARTE', montant: 50000, delaiHeures: 72 } }),
+    prisma.tarifDemande.create({ data: { type: 'ATTESTATION_REUSSITE', montant: 30000, delaiHeures: 24 } }),
+  ]);
+  await Promise.all([
+    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00001', type: 'ATTESTATION_SCOLARITE', motif: 'Dossier de bourse', etudiantId: etudiants[0].id, frais: 25000, statut: 'PRETE', notification: 'Votre attestation est prête au guichet', traiteParId: scolariteUser.id } }),
+    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00002', type: 'RELEVE_NOTES', motif: 'Constitution dossier master', etudiantId: etudiants[1].id, frais: 35000, statut: 'EN_TRAITEMENT', traiteParId: scolariteUser.id } }),
+    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00003', type: 'DUPLICATA_CARTE', motif: 'Carte perdue', etudiantId: etudiants[2].id, frais: 50000, statut: 'PAYEE' } }),
+    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00004', type: 'ATTESTATION_FREQUENTATION', motif: 'Stage en entreprise', etudiantId: etudiants[2].id, frais: 15000, statut: 'EN_ATTENTE_PAIEMENT' } }),
+  ]);
+
+  // ---- 8. Carte étudiante numérique ----
+  for (let i = 0; i < etudiants.length; i++) {
+    const e = etudiants[i];
+    const year = new Date().getFullYear();
+    const validite = new Date(`${year + 1}-09-30`);
+    await prisma.carteEtudiante.create({
+      data: {
+        etudiantId: e.id,
+        qrToken: `UP-CARTE-${randomBytes(10).toString('base64url')}`,
+        dateValidite: validite,
+        statut: 'EMISE',
+        creeParId: scolariteUser.id,
+      },
+    });
+  }
+
+  // ---- 9. Badges visiteurs ----
+  await Promise.all([
+    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00001', type: 'VISITEUR', nom: 'CAMARA', prenom: 'Alpha Boubacar', organisation: 'Banque Mondiale', dateValidite: new Date(Date.now() + 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
+    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00002', type: 'INTERVENANT', nom: 'DIALLO', prenom: 'Mamadou Saliou', fonction: 'Conférencier invité', organisation: 'AUF Dakar', dateValidite: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
+    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00003', type: 'TECHNICIEN', nom: 'SYLLA', prenom: 'Moussa', fonction: 'Maintenance réseau', organisation: 'SOGETEL', dateValidite: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
+    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00004', type: 'VIP', nom: 'BARRY', prenom: 'Hadja Mariama', fonction: 'Ministre de l\u2019Enseignement Supérieur', organisation: 'MESRS', dateValidite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
+  ]);
+
+  // ---- 10. VOD ----
+  await Promise.all([
+    prisma.coursVOD.create({ data: { titre: 'Introduction à l\u2019algorithmique', description: 'CM 1: définitions, complexité, structures de contrôle', matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, enseignantId: enseignant1?.id, type: 'VIDEO', url: 'https://vod.university.gn/info101-cm1.mp4', thumbnailUrl: 'https://vod.university.gn/info101-cm1.jpg', dureeSecondes: 5400, transcription: 'Algorithme, complexité temporelle...', public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), nbVues: 87, nbComplets: 42, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({ data: { titre: 'Bases de données relationnelles', description: 'CM 3: algèbre relationnelle, SQL, jointures', matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, enseignantId: enseignant2?.id, type: 'VIDEO', url: 'https://vod.university.gn/info201-cm3.mp4', dureeSecondes: 7200, public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), nbVues: 52, nbComplets: 21, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({ data: { titre: 'Microéconomie — CM 5', description: 'Offre et demande, équilibre', matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, type: 'AUDIO', url: 'https://vod.university.gn/eco101-cm5.mp3', dureeSecondes: 4800, public: true, statut: 'EN_LIGNE', nbVues: 24, creeParId: adminUser.id } }),
+  ]);
+
+  // ---- 11. Scolarité : Évaluations + Notes + Délibérations ( ----
+  // Utiliser promoL1Info (L1 GL) et promoL1Eco = L1 GES
+  const promoL1Ges = allPromotions.find((p) => p.niveau === Niveau.L1 && p.filiere?.code === 'GES')!;
+  const evaluations = await Promise.all([
+    prisma.evaluation.create({ data: { intitule: 'CC1 Algorithmique', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+    prisma.evaluation.create({ data: { intitule: 'Examen final Algorithmique', type: 'EXAMEN', coefficient: 2, matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+    prisma.evaluation.create({ data: { intitule: 'CC1 Bases de données', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+    prisma.evaluation.create({ data: { intitule: 'Examen Microéconomie', type: 'EXAMEN', coefficient: 2, matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, promotionId: promoL1Ges.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+    prisma.evaluation.create({ data: { intitule: 'CC1 Mathématiques', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'MAT101')!.id, promotionId: promoM1Math!.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+  ]);
+
+  // Saisie des notes — 5 étudiants x 5 évaluations
+  const notesCreees: { inscriptionId: string; evaluationId: string; note: number }[] = [];
+  for (const ins of inscriptionsL1.slice(0, 5)) {
+    for (const ev of evaluations.slice(0, 3)) {
+      const note = Math.round((8 + Math.random() * 12) * 10) / 10; // 8-20/20
+      await prisma.note.create({
+        data: {
+          evaluationId: ev.id,
+          inscriptionId: ins.id,
+          note,
+          present: true,
+          saisieParId: scolariteUser.id,
+        },
+      });
+      notesCreees.push({ inscriptionId: ins.id, evaluationId: ev.id, note });
+    }
+  }
+
+  // Délibération validée pour L1 INFO
+  const deliberationL1 = await prisma.deliberation.create({
+    data: {
+      anneeId: anneeActive!.id,
+      promotionId: promoL1Info.id,
+      session: 'NORMALE',
+      statut: 'VALIDEE',
+      tauxReussite: 100,
+      creeParId: scolariteUser.id,
+      valideeParId: adminUser.id,
+      valideeLe: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      commentaire: 'Tous les étudiants ont validé l\u2019unité d\u2019algorithmique (moyenne ≥ 10/20).',
+    },
+  });
+  // Lignes de délibération — calcul moyenne pondérée par crédits
+  const creditsParMatiere: Record<string, number> = { INF101: 6, INF201: 4, ECO101: 3, MAT101: 5, MAT301: 4, GES201: 4, GC301: 4, GC302: 4, INF301: 6, INF302: 4, RES201: 4 };
+  for (const ins of inscriptionsL1.slice(0, 5)) {
+    const mesNotes = notesCreees.filter((n) => n.inscriptionId === ins.id);
+    if (!mesNotes.length) continue;
+    // Moyenne par UE pondérée par coefficient d'épreuve et crédits de la matière
+    const parUe = new Map<string, { num: number; den: number }>();
+    for (const n of mesNotes) {
+      const ev = evaluations.find((e) => e.id === n.evaluationId)!;
+      const m = allMatieres.find((mat) => mat.id === ev.matiereId)!;
+      const code = m.code;
+      const credits = creditsParMatiere[code] ?? m.credits ?? 1;
+      const cur = parUe.get(code) ?? { num: 0, den: 0 };
+      cur.num += n.note * ev.coefficient;
+      cur.den += ev.coefficient;
+      parUe.set(code, cur);
+    }
+    let numTotal = 0;
+    let denTotal = 0;
+    const entrees = Array.from(parUe.entries());
+    for (let i = 0; i < entrees.length; i++) {
+      const [code, ue] = entrees[i];
+      const moyenneUE = ue.den === 0 ? 0 : ue.num / ue.den;
+      const credits = creditsParMatiere[code] ?? 1;
+      numTotal += moyenneUE * credits;
+      denTotal += credits;
+    }
+    const moyenneGenerale = denTotal === 0 ? 0 : numTotal / denTotal;
+    const decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT' = moyenneGenerale >= 10 ? 'ADMIS' : moyenneGenerale >= 8 ? 'AJOURNE' : 'DEFAILLANT';
+    await prisma.deliberationLigne.create({
+      data: {
+        deliberationId: deliberationL1.id,
+        inscriptionId: ins.id,
+        moyenne: Math.round(moyenneGenerale * 100) / 100,
+        decision,
+        mention: moyenneGenerale >= 16 ? 'Très bien' : moyenneGenerale >= 14 ? 'Bien' : moyenneGenerale >= 12 ? 'Assez bien' : 'Passable',
+        rang: 0, // recalculé après la boucle
+      },
+    });
+  }
+  // Mise à jour des rangs
+  const lignesDelib = await prisma.deliberationLigne.findMany({
+    where: { deliberationId: deliberationL1.id },
+    orderBy: { moyenne: 'desc' },
+  });
+  for (let i = 0; i < lignesDelib.length; i++) {
+    await prisma.deliberationLigne.update({ where: { id: lignesDelib[i].id }, data: { rang: i + 1 } });
+  }
+
+  // Attestations pré-émises pour les étudiants admis
+  for (const ligne of lignesDelib) {
+    if (ligne.decision === 'ADMIS') {
+      await prisma.attestation.create({
+        data: {
+          numero: `ATT-2026-${String(ligne.rang).padStart(5, '0')}`,
+          type: 'SCOLARITE',
+          motif: 'Inscription en master',
+          inscriptionId: ligne.inscriptionId,
+          anneeId: anneeActive!.id,
+          promotionId: promoL1Info.id,
+          etudiantId: (await prisma.inscription.findUnique({ where: { id: ligne.inscriptionId } }))!.etudiantId,
+          statut: 'EMISE',
+          emiseParId: scolariteUser.id,
+          qrToken: `UP-ATT-${randomBytes(12).toString('base64url')}`,
+        },
+      });
+    }
+  }
+
+  // Feuille de paie + lignes pour les vacataires (Module 2 — paie)
+  const vacataires = await prisma.enseignant.findMany({ where: { statut: 'VACATAIRE' } });
+  if (vacataires.length > 0) {
+    const feuille = await prisma.feuillePaie.create({
+      data: {
+        libelle: 'Août 2026',
+        mois: 8,
+        annee: 2026,
+        dateDebut: dateOnly('2026-08-01'),
+        dateFin: dateOnly('2026-08-31'),
+        statut: 'VALIDEE',
+        creeParId: adminUser.id,
+        valideeParId: adminUser.id,
+      },
+    });
+    for (const ens of vacataires) {
+      const heures = Math.round((8 + Math.random() * 16) * 10) / 10;
+      const montantNet = heures * ens.tauxHoraire;
+      await prisma.lignePaie.create({
+        data: {
+          feuilleId: feuille.id,
+          enseignantId: ens.id,
+          tauxHoraire: ens.tauxHoraire,
+          heuresReelles: heures,
+          volumePrevu: heures,
+          montantBrut: montantNet,
+          retenue: 0,
+          montantNet,
+        },
+      });
+    }
+  }
+
+  // ---- 11. Élections ----
+  const electionDelegue = await prisma.election.create({
+    data: {
+      titre: 'Délégués de promotion L1 Informatique 2026-2027',
+      type: 'DELEGUE_PROMOTION',
+      promotionId: promoL1Info.id,
+      description: 'Scrutin uninominal — élisez vos deux délégués de promotion',
+      dateOuverture: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      dateCloture: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      nbSieges: 2,
+      statut: 'OUVERTE',
+      creeParId: scolariteUser.id,
+    },
+  });
+  const candidatsL1 = await Promise.all([
+    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'DOUMBOUYA', prenom: 'Sory', etudiantId: etudiants[0].id, ordre: 1, programme: 'Améliorer la communication avec la scolarité, organiser des sessions de tutorat' } }),
+    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'DIALLO',   prenom: 'Mariama', etudiantId: etudiants[1].id, ordre: 2, programme: 'Bibliothèque ouverte 24/7, plus de TP' } }),
+    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'BALDÉ',    prenom: 'Alpha', etudiantId: etudiants[2].id, ordre: 3, programme: 'Représentation équitable des L1 INFO' } }),
+    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'CAMARA',   prenom: 'Mariama', etudiantId: etudiants[2].id, ordre: 4, programme: 'Sorties pédagogiques, ouverture bibliothèque' } }),
+  ]);
+  // Quelques votes déjà enregistrés
+  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[0].id } });
+  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[1].id, etudiantId: etudiants[1].id } });
+  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[2].id } });
+
+  const electionDelegueM1 = await prisma.election.create({
+    data: {
+      titre: 'Délégués de département — Mathématiques',
+      type: 'DELEGUE_DEPARTEMENT',
+      departementId: math.id,
+      description: 'Scrutin plurinominal — élisez vos trois délégués',
+      dateOuverture: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      dateCloture: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      nbSieges: 3,
+      statut: 'PROCLAMEE',
+      creeParId: directionUser.id,
+    },
+  });
+
+  // ---- 12. Statistiques MESRS (snapshot pré-calculé) ----
+  await prisma.statistiqueMesrs.create({
+    data: {
+      anneeId: anneeActive!.id,
+      genereParId: adminUser.id,
+      donnees: {
+        effectifTotal: 5,
+        effectifL1: 2,
+        effectifL2: 1,
+        effectifL3: 1,
+        effectifM1: 1,
+        effectifM2: 0,
+        nbEnseignants: 10,
+        nbVacataires: 3,
+        nbReclamationsEnCours: 1,
+        nbIncidentsHelpdesk: 1,
+        tauxReussiteL1: 0,
+        tauxReussiteGlobal: 100,
+        masseSalariale: 0,
+      },
+    },
+  });
+
+  // ---- Quelques Notification SMS récentes pour le graphe 30j ----
+  const maintenant = Date.now();
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(maintenant - i * 24 * 60 * 60 * 1000);
+    const statut: 'ENVOYEE' | 'ECHOUE' = i % 3 === 0 ? 'ECHOUE' : 'ENVOYEE';
+    await prisma.notification.create({
+      data: {
+        telephone: `62200000${i % 10}`,
+        message: `Notification de test #${i}`,
+        destinataireNom: 'Destinataire test',
+        etudiantId: etudiants[i % etudiants.length].id,
+        statut,
+        envoyeLe: statut === 'ENVOYEE' ? date : null,
+        envoyeParId: adminUser.id,
+        createdAt: date,
+        ...(statut === 'ECHOUE' ? { erreur: 'Passerelle SMS indisponible' } : {}),
+      },
+    });
+  }
+
+  // ---- Documentation — Bibliothèque ----
+  await Promise.all([
+    prisma.documentDepot.create({ data: { titre: 'Algorithmes de tri: état de l\u2019art', type: 'ARTICLE', auteurs: 'DIALLO M., CAMARA S.', anneeEdition: 2025, resume: 'Comparaison des complexités asymptotiques', motsClefs: ['algorithmes','tri','complexité'], contenuTexte: 'Les algorithmes de tri sont au cœur de l\u2019informatique. Cet article compare les complexités asymptotiques...', empreinteHash: 'sha256:doc1hash', public: true, deposeParId: adminUser.id } }),
+    prisma.documentDepot.create({ data: { titre: 'Mémoire de Master: détection de plagiat', type: 'MEMOIRE', auteurs: 'Sory DOUMBOUYA', anneeEdition: 2026, resume: 'Système anti-plagiat pour mémoires', motsClefs: ['plagiat','mémoire'], contenuTexte: 'Ce mémoire présente un système anti-plagiat utilisant la similarité de Jaccard...', empreinteHash: 'sha256:doc2hash', public: true, deposeParId: adminUser.id } }),
+    prisma.documentDepot.create({ data: { titre: 'Thèse: Microfinance en Guinée', type: 'THESE', auteurs: 'Mariama DIALLO', anneeEdition: 2024, resume: 'Impact socio-économique de la microfinance rurale', motsClefs: ['microfinance','Guinée','économie'], contenuTexte: 'Cette thèse analyse l\u2019impact de la microfinance rurale en Guinée entre 2010 et 2023...', empreinteHash: 'sha256:doc3hash', public: true, deposeParId: adminUser.id } }),
+  ]);
+
+  console.log('→ Seed étendu OK');
 
   console.log(`✔ ${etudiants.length} étudiants, ${inscriptions.length} inscriptions, ${paiements.length} paiements (Module 1)`);
 

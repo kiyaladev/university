@@ -218,4 +218,88 @@ export class NotificationsService {
       lignes: d._count.lignes,
     }));
   }
+
+  /**
+   * Estimation du nombre de destinataires pour une diffusion à venir.
+   * Utilisé par la page de diffusion pour prévisualiser l'impact.
+   */
+  async estimerDestinataires(mode?: string): Promise<number> {
+    if (mode === 'tousInscrits' || mode === 'tous') {
+      // Tous les étudiants inscrits (statut >= EN_ATTENTE_PAIEMENT sur l'année active)
+      const annee = await this.prisma.anneeAcademique.findFirst({
+        where: { active: true },
+        select: { id: true },
+      });
+      if (!annee) return 0;
+      const total = await this.prisma.inscription.count({
+        where: {
+          anneeId: annee.id,
+          statut: { in: ['EN_ATTENTE_PAIEMENT', 'PAYEE', 'VALIDEE'] },
+        },
+      });
+      // Soustraire ceux sans téléphone (un envoi SMS échouerait)
+      const avecNumero = await this.prisma.etudiant.count({
+        where: {
+          inscriptions: { some: { anneeId: annee.id, statut: { in: ['EN_ATTENTE_PAIEMENT', 'PAYEE', 'VALIDEE'] } } },
+          telephone: { not: null },
+        },
+      });
+      return avecNumero;
+    }
+    if (mode === 'vacataires') {
+      return await this.prisma.enseignant.count({
+        where: { statut: 'VACATAIRE', actif: true, telephone: { not: null } },
+      });
+    }
+    if (mode === 'enseignants') {
+      return await this.prisma.enseignant.count({
+        where: { actif: true, telephone: { not: null } },
+      });
+    }
+    return 0;
+  }
+
+  /**
+   * Répartition quotidienne des envois sur les N derniers jours.
+   * Retourne un tableau de { date, EN_ATTENTE, ENVOYEE, ECHOUE } par jour calendaire.
+   * Les jours sans envoi sont retournés avec 0 pour assurer la continuité du graphique.
+   */
+  async repartitionQuotidienne(jours: number): Promise<Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>> {
+    const depuis = new Date();
+    depuis.setUTCDate(depuis.getUTCDate() - jours + 1);
+    depuis.setUTCHours(0, 0, 0, 0);
+
+    // Postgres date_trunc pour grouper par jour (UTC) — portable, performant
+    const lignes = await this.prisma.$queryRaw<
+      Array<{ jour: Date; statut: StatutNotification; n: bigint }>
+    >`
+      SELECT date_trunc('day', "createdAt") AS jour,
+             statut,
+             COUNT(*)::bigint AS n
+      FROM "Notification"
+      WHERE "createdAt" >= ${depuis}
+      GROUP BY date_trunc('day', "createdAt"), statut
+      ORDER BY jour ASC
+    `;
+
+    // Indexation par date ISO (YYYY-MM-DD)
+    const parJour = new Map<string, { EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>();
+    for (const l of lignes) {
+      const cle = l.jour.toISOString().slice(0, 10);
+      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYEE: 0, ECHOUE: 0 };
+      cur[l.statut] = Number(l.n);
+      parJour.set(cle, cur);
+    }
+
+    // Compléter avec les jours manquants pour assurer la continuité
+    const sortie: Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }> = [];
+    for (let i = 0; i < jours; i++) {
+      const d = new Date(depuis);
+      d.setUTCDate(d.getUTCDate() + i);
+      const cle = d.toISOString().slice(0, 10);
+      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYEE: 0, ECHOUE: 0 };
+      sortie.push({ date: cle, ...cur });
+    }
+    return sortie;
+  }
 }
