@@ -28,6 +28,18 @@ import { ReservationsModule } from './modules/reservations/reservations.module';
 import { StagesModule } from './modules/stages/stages.module';
 import { HelpdeskModule } from './modules/helpdesk/helpdesk.module';
 import { FormationsModule } from './modules/formations/formations.module';
+import { RectoratModule } from './modules/rectorat/rectorat.module';
+import { PatrimoineModule } from './modules/patrimoine/patrimoine.module';
+import { CourrierModule } from './modules/courrier/courrier.module';
+import { ExamensModule } from './modules/examens/examens.module';
+import { TirageModule } from './modules/tirage/tirage.module';
+import { RecettesModule } from './modules/recettes/recettes.module';
+import { ReclamationsModule } from './modules/reclamations/reclamations.module';
+import { DocumentsDemandeModule } from './modules/documents-demande/documents-demande.module';
+import { ElectionsModule } from './modules/elections/elections.module';
+import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.module';
+import { BadgesModule } from './modules/badges/badges.module';
+import { VodModule } from './modules/vod/vod.module';
 
 @ApiTags('Santé')
 @Controller()
@@ -72,6 +84,18 @@ export class HealthController {
     StagesModule,
     HelpdeskModule,
     FormationsModule,
+    RectoratModule,
+    PatrimoineModule,
+    CourrierModule,
+    ExamensModule,
+    TirageModule,
+    RecettesModule,
+    ReclamationsModule,
+    DocumentsDemandeModule,
+    ElectionsModule,
+    CarteEtudianteModule,
+    BadgesModule,
+    VodModule,
   ],
   controllers: [HealthController],
   providers: [

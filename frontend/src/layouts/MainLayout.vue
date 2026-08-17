@@ -245,12 +245,53 @@ const menu = computed(() => {
         ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
           ? [{ to: '/notifications', icone: 'sms', libelle: 'Notifications SMS' }]
           : []),
-        ...(est('ADMIN')
-          ? [
-              { to: '/utilisateurs', icone: 'manage_accounts', libelle: 'Utilisateurs' },
-              { to: '/parametres', icone: 'settings', libelle: 'Paramètres' },
-            ]
+        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
+          ? [{ to: '/rectorat', icone: 'dashboard', libelle: 'Tableau de bord Rectorat' }]
           : []),
+        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
+          ? [{ to: '/statistiques-mesrs', icone: 'analytics', libelle: 'Statistiques MESRS' }]
+          : []),
+        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
+          ? [{ to: '/courrier', icone: 'mail', libelle: 'Courrier administratif' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE')
+          ? [{ to: '/recettes', icone: 'request_quote', libelle: 'Régie des recettes' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
+          ? [{ to: '/patrimoine', icone: 'inventory_2', libelle: 'Patrimoine' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE')
+          ? [{ to: '/tirage', icone: 'local_printshop', libelle: 'Tirage épreuves' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
+          ? [{ to: '/reclamations', icone: 'support_agent', libelle: 'Réclamations' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE')
+          ? [{ to: '/demandes-docs', icone: 'description', libelle: 'Demandes documents' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
+          ? [{ to: '/examens', icone: 'quiz', libelle: 'Examens' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR')
+          ? [{ to: '/examens/scan', icone: 'qr_code_scanner', libelle: 'Scan examens' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE')
+          ? [{ to: '/cartes-etudiants', icone: 'badge', libelle: 'Cartes étudiantes' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE')
+          ? [{ to: '/badges', icone: 'how_to_reg', libelle: 'Badges & visiteurs' }]
+          : []),
+        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
+          ? [{ to: '/elections', icone: 'how_to_vote', libelle: 'Élections' }]
+          : []),
+        ...(est('ADMIN')
+          ? [{ to: '/demandes-docs/tarifs', icone: 'price_change', libelle: 'Tarifs demandes' }]
+          : []),
+        ...(est('ADMIN')
+          ? [{ to: '/utilisateurs', icone: 'manage_accounts', libelle: 'Utilisateurs' },
+             { to: '/parametres', icone: 'settings', libelle: 'Paramètres' }]
+          : []),
+        { to: '/vod', icone: 'play_circle', libelle: 'VOD des cours' },
       ],
     },
     {
@@ -258,6 +299,14 @@ const menu = computed(() => {
       liens: [
         ...(est('ETUDIANT')
           ? [{ to: '/portail', icone: 'person', libelle: 'Mon espace' }]
+          : []),
+        ...(est('ETUDIANT')
+          ? [
+              { to: '/ma-carte', icone: 'badge', libelle: 'Ma carte étudiante' },
+              { to: '/demandes-docs/mes', icone: 'description', libelle: 'Mes demandes documents' },
+              { to: '/reclamations/mes', icone: 'support_agent', libelle: 'Mes réclamations' },
+              { to: '/elections/vote', icone: 'how_to_vote', libelle: 'Voter' },
+            ]
           : []),
       ],
     },

@@ -233,6 +233,53 @@ export const LIBELLE_ATTESTATION: Record<string, string> = {
   EMPREINTE: 'Empreinte digitale',
 };
 
+// --- Modules Courrier / Examens / Tirage / Recettes ---
+
+export const LIBELLE_STATUT_COURRIER: Record<string, string> = {
+  RECU: 'Reçu',
+  ENREGISTRE: 'Enregistré',
+  EN_CIRCUIT: 'En circuit',
+  TRAITE: 'Traité',
+  CLASSE: 'Classé',
+  ARCHIVE: 'Archivé',
+};
+
+export const LIBELLE_TYPE_COURRIER: Record<string, string> = {
+  ENTRANT: 'Entrant',
+  SORTANT: 'Sortant',
+};
+
+export const LIBELLE_TYPE_EXAMEN: Record<string, string> = {
+  PARTIEL: 'Partiel',
+  FINAL: 'Examen final',
+  RATTRAPAGE: 'Rattrapage',
+  CONTROLE_CONTINU: 'Contrôle continu',
+};
+
+export const LIBELLE_STATUT_EXAMEN: Record<string, string> = {
+  PLANIFIE: 'Planifié',
+  EN_COURS: 'En cours',
+  TERMINE: 'Terminé',
+  ANNULE: 'Annulé',
+};
+
+export const LIBELLE_STADE_TIRAGE: Record<string, string> = {
+  PROGRAMME: 'Programmé',
+  IMPRIME: 'Imprimé',
+  MIS_SOUS_PLI: 'Mis sous pli',
+  DISTRIBUE: 'Distribué',
+  RECUPERE: 'Récupéré',
+  ANNULE: 'Annulé',
+};
+
+export const LIBELLE_TYPE_RECETTE: Record<string, string> = {
+  ANALYSE_LABO: 'Analyse laboratoire',
+  LOCATION_AMPHI: "Location d'amphithéâtre",
+  PRESTATION_FORMATION: 'Prestation de formation',
+  PRESTATION_CONSEIL: 'Prestation de conseil',
+  AUTRE: 'Autre',
+};
+
 export const ICONE_ATTESTATION: Record<string, string> = {
   AUCUNE: 'help_outline',
   SIGNATURE: 'draw',

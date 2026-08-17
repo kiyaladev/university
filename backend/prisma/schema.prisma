@@ -344,6 +344,25 @@ model User {
 
   suspicionsAcquittees SuspicionPlagiat[] @relation("SuspicionAcquitteePar")
 
+  statistiquesGenerees  StatistiqueMesrs[]   @relation("StatistiqueGenerePar")
+  reparationsDeclarees  ReparationMateriel[] @relation("ReparationDeclareePar")
+  reparationsResolues   ReparationMateriel[] @relation("ReparationResoluePar")
+  courriersEnregistres  Courrier[]           @relation("CourrierEnregistrePar")
+  courriersTraites      Courrier[]           @relation("CourrierTraitePar")
+  courrierValidations   CircuitCourrier[]    @relation("CourrierValideur")
+  examensCrees          Examen[]             @relation("ExamenCreePar")
+  examensSurveilles     Examen[]             @relation("ExamenSurveillant")
+  scansExamenEffectues  ScanExamen[]         @relation("ScanExamenOperateur")
+  tiragesImprimes       Tirage[]             @relation("TirageImprimeur")
+  recettesCrees         RecetteExterne[]     @relation("RecetteCreePar")
+  reclamationsAssignees Reclamation[]        @relation("ReclamationAssignee")
+  messagesReclamation   MessageReclamation[] @relation("MessageReclamationAuteur")
+  demandesTraitees      DemandeDocument[]    @relation("DemandeDocumentTraitee")
+  electionsCrees        Election[]           @relation("ElectionCreePar")
+  cartesCrees           CarteEtudiante[]     @relation("CarteCreePar")
+  badgesCrees           BadgeAcces[]         @relation("BadgeCreePar")
+  vodCrees              CoursVOD[]           @relation("VodCreePar")
+
   @@index([role])
 }
 
@@ -366,6 +385,9 @@ model AnneeAcademique {
   feuillesPaie         FeuillePaie[]
   frais                Frais[]
   attributionsLogement AttributionLogement[]
+
+  statistiquesMesrs StatistiqueMesrs[]
+  examens           Examen[]
 }
 
 model Departement {
@@ -376,11 +398,14 @@ model Departement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  membres     User[]          @relation("MembresDepartement")
-  enseignants Enseignant[]
-  filieres    Filiere[]
-  matieres    Matiere[]
-  documents   DocumentDepot[]
+  membres               User[]                 @relation("MembresDepartement")
+  enseignants           Enseignant[]
+  filieres              Filiere[]
+  matieres              Matiere[]
+  documents             DocumentDepot[]
+  equipementsPatrimoine EquipementPatrimoine[]
+  reclamations          Reclamation[]
+  elections             Election[]
 }
 
 model Filiere {
@@ -414,6 +439,8 @@ model Promotion {
   evaluations   Evaluation[]
   deliberations Deliberation[]
   attestations  Attestation[]
+  examens       Examen[]
+  elections     Election[]
 
   @@unique([nom, anneeId])
 }
@@ -435,10 +462,12 @@ model Salle {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  creneaux          Creneau[]
-  seances           Seance[]
-  reservationSalles ReservationSalle[]
-  soutenances       Soutenance[]
+  creneaux              Creneau[]
+  seances               Seance[]
+  reservationSalles     ReservationSalle[]
+  soutenances           Soutenance[]
+  equipementsPatrimoine EquipementPatrimoine[]
+  examens               Examen[]
 }
 
 // ---------------------------------------------------------------------------
@@ -483,13 +512,15 @@ model Enseignant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  affectations    Affectation[]
-  remplacements   Controle[]       @relation("EnseignantRemplacant")
-  justificatifs   Justificatif[]
-  lignePaies      LignePaie[]
-  documentDepots  DocumentDepot[]
-  travailEncadres TravailEncadre[]
-  soutenances     Soutenance[]
+  affectations      Affectation[]
+  remplacements     Controle[]         @relation("EnseignantRemplacant")
+  justificatifs     Justificatif[]
+  lignePaies        LignePaie[]
+  documentDepots    DocumentDepot[]
+  travailEncadres   TravailEncadre[]
+  soutenances       Soutenance[]
+  candidatsElection CandidatElection[]
+  coursVOD          CoursVOD[]
 
   @@index([nom, prenom])
 }
@@ -510,6 +541,8 @@ model Matiere {
 
   affectations Affectation[]
   evaluations  Evaluation[]
+  examens      Examen[]
+  coursVOD     CoursVOD[]
 }
 
 /// Charge d'enseignement : un enseignant assure une matière pour une promotion
@@ -593,6 +626,7 @@ model Seance {
 
   controle     Controle?
   justificatif Justificatif?
+  coursVOD     CoursVOD[]
 
   @@unique([affectationId, date, heureDebut])
   @@index([date, statut])
@@ -740,16 +774,23 @@ model Etudiant {
   userId String? @unique
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  inscriptions          Inscription[]
-  paiements             Paiement[]
-  attestations          Attestation[]
-  notifications         Notification[]
+  inscriptions      Inscription[]
+  paiements         Paiement[]
+  attestations      Attestation[]
+  notifications     Notification[]
+  reclamations      Reclamation[]
+  demandesDocuments DemandeDocument[]
+  carteEtudiante    CarteEtudiante?
+  candidatsElection CandidatElection[]
+  votesElection     VoteElection[]
+  vuesVOD           VueVOD[]
+
   attributionLogements  AttributionLogement[]
-  documentDepots        DocumentDepot[]
-  portefeuilleResto     PortefeuilleResto?
+  documents             DocumentDepot[]
+  portefeuillesResto    PortefeuilleResto[]
   recharges             Recharge[]
-  travailEncadres       TravailEncadre[]
   inscriptionFormations InscriptionFormation[]
+  travauxEncadres       TravailEncadre[]
 
   @@index([nom, prenom])
 }
@@ -776,10 +817,13 @@ model Inscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  paiements     Paiement[]
-  notes         Note[]
-  deliberations DeliberationLigne[]
-  attestations  Attestation[]
+  paiements         Paiement[]
+  notes             Note[]
+  deliberations     DeliberationLigne[]
+  attestations      Attestation[]
+  scansExamen       ScanExamen[]
+  demandesDocuments DemandeDocument[]
+  coursVOD          CoursVOD[]
 
   @@unique([etudiantId, anneeId])
   @@index([statut])
@@ -832,9 +876,11 @@ model Paiement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Liens verso les paiements des autres portefeuilles (resto, formations)
+  // Liens verso les paiements des autres portefeuilles (resto, formations, recettes, demandes documents)
   recharges            Recharge[]            @relation("PaiementRecharge")
   inscriptionFormation InscriptionFormation? @relation("PaiementFormation")
+  rechargesRecette     RecetteExterne?       @relation("PaiementRecette")
+  demandeDocument      DemandeDocument?      @relation("PaiementDemandeDocument")
 
   @@index([statut])
   @@index([inscriptionId])
@@ -1329,25 +1375,30 @@ model EquipementCampus {
 }
 
 model TicketSupport {
-  id                 String            @id @default(uuid())
-  numero             String            @unique // "TKT-2026-0001"
-  equipementId       String?
-  equipement         EquipementCampus? @relation(fields: [equipementId], references: [id], onDelete: SetNull)
-  categorie          CategorieIncident @default(AUTRE)
-  description        String
-  priorite           PrioriteTicket    @default(NORMALE)
-  statut             StatutTicket      @default(OUVERT)
-  declarantNom       String?
-  declarantEmail     String?
-  declarantTelephone String?
-  utilisateurId      String?
-  utilisateur        User?             @relation("TicketDeclarePar", fields: [utilisateurId], references: [id], onDelete: SetNull)
-  traiteParId        String?
-  traitePar          User?             @relation("TicketTraitePar", fields: [traiteParId], references: [id], onDelete: SetNull)
-  traiteLe           DateTime?
-  clicheLe           DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
+  id                     String                @id @default(uuid())
+  numero                 String                @unique // "TKT-2026-0001"
+  categorie              CategorieIncident     @default(AUTRE)
+  description            String
+  priorite               PrioriteTicket        @default(NORMALE)
+  statut                 StatutTicket          @default(OUVERT)
+  declarantNom           String?
+  declarantEmail         String?
+  declarantTelephone     String?
+  // Équipement Helpdesk (salle, signalement QR rapide)
+  equipementId           String?
+  equipement             EquipementCampus?     @relation(fields: [equipementId], references: [id], onDelete: SetNull)
+  // Liaison optionnelle au patrimoine (lorsque le ticket provient d'un
+  // équipement inventorié)
+  equipementPatrimoineId String?
+  equipementPatrimoine   EquipementPatrimoine? @relation("TicketEquipementPatrimoine", fields: [equipementPatrimoineId], references: [id], onDelete: SetNull)
+  utilisateurId          String?
+  utilisateur            User?                 @relation("TicketDeclarePar", fields: [utilisateurId], references: [id], onDelete: SetNull)
+  traiteParId            String?
+  traitePar              User?                 @relation("TicketTraitePar", fields: [traiteParId], references: [id], onDelete: SetNull)
+  traiteLe               DateTime?
+  clicheLe               DateTime?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
 
   @@index([statut])
 }
@@ -1396,4 +1447,658 @@ model InscriptionFormation {
   inscriteLe  DateTime                   @default(now())
 
   @@index([formationId])
+}
+
+// =========================================================================
+// Module 4 (Recherche & Valorisation) — module Anti-plagiat (déjà livré)
+// =========================================================================
+
+// La table SuspicionPlagiat est déjà créée plus haut dans ce schéma.
+
+// =========================================================================
+// Module 5 (Université innovante) — 12 nouveaux modules
+// =========================================================================
+
+// ------------------ Tableau de Bord Rectorat & Statistiques MESRS --------
+
+/// Chiffres-clés agrégés automatiquement (effectifs, taux de réussite, masse
+/// salariale) destinés aux rapports ministériels. Calculés par un cron
+/// quotidien, archivés pour permettre la traçabilité historique.
+model StatistiqueMesrs {
+  id          String          @id @default(uuid())
+  anneeId     String
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  /// JSON des chiffres : { effectifTotal, effectifL1, ..., tauxReussiteL1,
+  /// masseSalariale, ..., parDepartement: { deptId: {...}} }
+  donnees     Json
+  genereLe    DateTime        @default(now())
+  genereParId String?
+  generePar   User?           @relation("StatistiqueGenerePar", fields: [genereParId], references: [id], onDelete: SetNull)
+
+  @@index([anneeId, genereLe])
+}
+
+// ------------------ Gestion du Patrimoine & Matériel Pédagogique ---------
+
+/// Catégorie d'équipement (Vidéoprojecteur, Micro, Ordinateur...).
+model CategoriePatrimoine {
+  id                 String                 @id @default(uuid())
+  code               String                 @unique
+  libelle            String
+  dureeAmortissement Int? // mois
+  actif              Boolean                @default(true)
+  equipements        EquipementPatrimoine[]
+}
+
+/// Équipement physique inventorié (le Helpdesk utilise déjà `EquipementCampus`
+/// pour les QR de signalement ; ce modèle est distinct pour l'inventaire MESRS).
+model EquipementPatrimoine {
+  id                String              @id @default(uuid())
+  numeroSerie       String              @unique
+  libelle           String
+  categorieId       String
+  categorie         CategoriePatrimoine @relation(fields: [categorieId], references: [id])
+  departementId     String?
+  departement       Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  salleId           String?
+  salle             Salle?              @relation(fields: [salleId], references: [id], onDelete: SetNull)
+  dateAcquisition   DateTime?           @db.Date
+  valeurAcquisition Float?
+  numeroInventaire  String              @unique
+  qrCode            String              @unique // "UP-PAT-<base64url>" — QR d'inventaire
+  actif             Boolean             @default(true)
+  enReparation      Boolean             @default(false)
+  obsolescenceMois  Int?                @default(60)
+  notes             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  reparations ReparationMateriel[]
+  tickets     TicketSupport[]      @relation("TicketEquipementPatrimoine")
+
+  @@index([categorieId])
+  @@index([actif])
+}
+
+enum StatutReparation {
+  DECLARE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+model ReparationMateriel {
+  id              String               @id @default(uuid())
+  equipementId    String
+  equipement      EquipementPatrimoine @relation(fields: [equipementId], references: [id], onDelete: Cascade)
+  dateDeclaration DateTime             @default(now())
+  description     String
+  prestataire     String?
+  // Coût en GNF
+  cout            Float                @default(0)
+  statut          StatutReparation     @default(DECLARE)
+  dateResolution  DateTime?
+  declareParId    String?
+  declarePar      User?                @relation("ReparationDeclareePar", fields: [declareParId], references: [id], onDelete: SetNull)
+  resoluParId     String?
+  resoluPar       User?                @relation("ReparationResoluePar", fields: [resoluParId], references: [id], onDelete: SetNull)
+  notes           String?
+
+  @@index([statut])
+}
+
+// ------------------ Gestion du Courrier Administratif -------------------
+
+enum TypeCourrier {
+  ENTRANT
+  SORTANT
+}
+
+enum StatutCourrier {
+  RECU
+  ENREGISTRE
+  EN_CIRCUIT
+  TRAITE
+  CLASSE
+  ARCHIVE
+}
+
+model Courrier {
+  id              String         @id @default(uuid())
+  numero          String         @unique // "COUR-2026-00042"
+  type            TypeCourrier
+  objet           String
+  expediteur      String? // pour les entrants
+  destinataire    String? // pour les sortants
+  dateReception   DateTime?      @db.Date
+  dateEnvoi       DateTime?      @db.Date
+  fichier         String? // data-url du PDF scanné
+  typeMime        String?
+  tailleKo        Int?
+  numeroReference String? // référence archive/archive de l'expéditeur
+  paraphe         String? // hash du paraphe électronique (signature)
+  statut          StatutCourrier @default(RECU)
+  enregistreParId String?
+  enregistrePar   User?          @relation("CourrierEnregistrePar", fields: [enregistreParId], references: [id], onDelete: SetNull)
+  traiteParId     String?
+  traitePar       User?          @relation("CourrierTraitePar", fields: [traiteParId], references: [id], onDelete: SetNull)
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  circuits CircuitCourrier[]
+
+  @@index([type, statut])
+}
+
+/// Étape de validation d'un courrier (paraphe).
+model CircuitCourrier {
+  id           String         @id @default(uuid())
+  courrierId   String
+  courrier     Courrier       @relation(fields: [courrierId], references: [id], onDelete: Cascade)
+  ordre        Int // 1, 2, 3 ...
+  valideurId   String?
+  valideur     User?          @relation("CourrierValideur", fields: [valideurId], references: [id], onDelete: SetNull)
+  roleValideur String? // "Chef département", "Secrétariat général", "Recteur"
+  statut       StatutCourrier @default(EN_CIRCUIT)
+  paraphe      String? // hash paraphé à cette étape
+  parapheLe    DateTime?
+  commentaire  String?
+
+  @@index([courrierId, ordre])
+}
+
+// ------------------ Anti-Fantômes & Contrôle d'Accès Examens ----------
+
+enum TypeExamen {
+  PARTIEL
+  FINAL
+  RATTRAPAGE
+  CONTROLE_CONTINU
+}
+
+enum StatutExamen {
+  PLANIFIE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+model Examen {
+  id            String          @id @default(uuid())
+  intitule      String
+  type          TypeExamen      @default(FINAL)
+  matiereId     String
+  matiere       Matiere         @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  promotionId   String
+  promotion     Promotion       @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  anneeId       String
+  annee         AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  dateExamen    DateTime
+  heureDebut    String
+  heureFin      String
+  salleId       String?
+  salle         Salle?          @relation(fields: [salleId], references: [id], onDelete: SetNull)
+  nbInscrits    Int             @default(0)
+  nbPresents    Int             @default(0)
+  // Identifiant unique de session pour empêcher les substitutions
+  codeExamen    String          @unique // "EXAM-2026-0001"
+  statut        StatutExamen    @default(PLANIFIE)
+  creeParId     String?
+  creePar       User?           @relation("ExamenCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  surveillantId String?
+  surveillant   User?           @relation("ExamenSurveillant", fields: [surveillantId], references: [id], onDelete: SetNull)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  scans ScanExamen[]
+
+  tirages Tirage[]
+
+  @@index([dateExamen])
+  @@index([promotionId])
+}
+
+/// Scan de la carte étudiante à l'entrée de la salle d'examen.
+model ScanExamen {
+  id             String       @id @default(uuid())
+  examenId       String
+  examen         Examen       @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  // Identifiant porteur : étudiant (via son inscription) ou un agent
+  inscriptionId  String?
+  inscription    Inscription? @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  matriculeSaisi String? // fallback si QR ne marche pas
+  nomPorteur     String? // capture au scan
+  prenomPorteur  String?
+  heureScan      DateTime     @default(now())
+  // Le scan est validé (porteur légitime) ou rejeté (substitution)
+  valide         Boolean      @default(true)
+  motifRejet     String? // "carte autre", "photo non reconnue", "introuvable"
+  scanneurId     String?
+  scanneur       User?        @relation("ScanExamenOperateur", fields: [scanneurId], references: [id], onDelete: SetNull)
+  ipAppareil     String?
+
+  @@index([examenId, heureScan])
+}
+
+// ------------------ Tirage & Distribution Sécurisée des Épreuves -----
+
+enum StadeTirage {
+  PROGRAMME
+  IMPRIME
+  MIS_SOUS_PLI
+  DISTRIBUE
+  RECUPERE
+  ANNULE
+}
+
+model Tirage {
+  id                   String      @id @default(uuid())
+  examenId             String
+  examen               Examen      @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  dateTirage           DateTime
+  imprimeurId          String?
+  imprimeur            User?       @relation("TirageImprimeur", fields: [imprimeurId], references: [id], onDelete: SetNull)
+  nbExemplaires        Int         @default(0)
+  // Empreinte du fichier source pour traçabilité
+  empreinteSource      String
+  // Hash des exemplaires (un par copie)
+  empreinteExemplaires String? // CSV "hash1,hash2,..."
+  circuitImpression    String? // "Salle 1 → Salle 2 → …"
+  stade                StadeTirage @default(PROGRAMME)
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([examenId])
+}
+
+// ------------------ Régie des Recettes d'Ateliers & Prestations Externes
+
+enum TypeRecette {
+  ANALYSE_LABO
+  LOCATION_AMPHI
+  PRESTATION_FORMATION
+  PRESTATION_CONSEIL
+  AUTRE
+}
+
+model RecetteExterne {
+  id          String      @id @default(uuid())
+  numero      String      @unique // "REC-2026-00001"
+  type        TypeRecette
+  libelle     String
+  description String?
+  montant     Float
+  devise      String      @default("GNF")
+  date        DateTime    @db.Date
+  client      String?
+  factureNum  String?
+  paiementId  String?     @unique
+  paiement    Paiement?   @relation("PaiementRecette", fields: [paiementId], references: [id], onDelete: SetNull)
+  creeParId   String?
+  creePar     User?       @relation("RecetteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+
+  @@index([type, date])
+}
+
+// ------------------ Plateforme de Réclamations & Requêtes -----------
+
+enum TypeReclamation {
+  NOTE_MANQUANTE
+  ERREUR_SAISIE
+  INSCRIPTION
+  ENSEIGNEMENT
+  SCOLARITE
+  TECHNIQUE
+  AUTRE
+}
+
+enum PrioriteReclamation {
+  BASSE
+  NORMALE
+  HAUTE
+  URGENTE
+}
+
+enum StatutReclamation {
+  OUVERTE
+  EN_COURS
+  EN_ATTENTE_REPONSE
+  RESOLUE
+  FERMEE
+  REJETEE
+}
+
+model Reclamation {
+  id                  String              @id @default(uuid())
+  numero              String              @unique // "REC-2026-00001"
+  type                TypeReclamation
+  sujet               String
+  description         String
+  // Bascule de l'anonymat : l'étudiant peut choisir de s'identifier ou pas
+  anonyme             Boolean             @default(false)
+  etudiantId          String?
+  etudiant            Etudiant?           @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  nomAuteur           String? // stocké si anonyme
+  emailAuteur         String?
+  priorite            PrioriteReclamation @default(NORMALE)
+  statut              StatutReclamation   @default(OUVERTE)
+  departementId       String?
+  departement         Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  assigneAId          String?
+  assigneA            User?               @relation("ReclamationAssignee", fields: [assigneAId], references: [id], onDelete: SetNull)
+  // Délai d'escalade (en heures) — au bout de ce délai sans réponse, escalade
+  delaiEscaladeHeures Int?                @default(48)
+  escaladeLe          DateTime?
+  creeLe              DateTime            @default(now())
+  fermeLe             DateTime?
+  notes               String?
+
+  messages MessageReclamation[]
+
+  @@index([statut, priorite])
+  @@index([etudiantId])
+}
+
+model MessageReclamation {
+  id            String      @id @default(uuid())
+  reclamationId String
+  reclamation   Reclamation @relation(fields: [reclamationId], references: [id], onDelete: Cascade)
+  auteurId      String?
+  auteur        User?       @relation("MessageReclamationAuteur", fields: [auteurId], references: [id], onDelete: SetNull)
+  // Si l'auteur est l'étudiant (anonyme ou non), on peut indiquer son nom
+  nomAffichage  String?
+  contenu       String
+  joint         String?
+  creeLe        DateTime    @default(now())
+
+  @@index([reclamationId, creeLe])
+}
+
+// ------------------ Plateforme de Demande de Documents en Ligne ----
+
+enum TypeDemandeDocument {
+  ATTESTATION_SCOLARITE
+  ATTESTATION_FREQUENTATION
+  RELEVE_NOTES
+  DUPLICATA_CARTE
+  ATTESTATION_REUSSITE
+  CERTIFICAT_SCOLARITE
+  AUTRE
+}
+
+enum StatutDemande {
+  EN_ATTENTE_PAIEMENT
+  PAYEE
+  EN_TRAITEMENT
+  PRETE
+  REMISE
+  REJETEE
+}
+
+model DemandeDocument {
+  id            String              @id @default(uuid())
+  numero        String              @unique // "DOC-2026-00001"
+  type          TypeDemandeDocument
+  motif         String?
+  etudiantId    String
+  etudiant      Etudiant            @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  inscriptionId String?
+  inscription   Inscription?        @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  frais         Float               @default(0)
+  devise        String              @default("GNF")
+  paiementId    String?             @unique
+  paiement      Paiement?           @relation("PaiementDemandeDocument", fields: [paiementId], references: [id], onDelete: SetNull)
+  statut        StatutDemande       @default(EN_ATTENTE_PAIEMENT)
+  notification  String? // "Le document est prêt à être retiré au guichet"
+  traiteParId   String?
+  traitePar     User?               @relation("DemandeDocumentTraitee", fields: [traiteParId], references: [id], onDelete: SetNull)
+  creeLe        DateTime            @default(now())
+  remiseLe      DateTime?
+  notes         String?
+
+  @@index([etudiantId, statut])
+}
+
+/// Choix du tarif par type (paramétrable).
+model TarifDemande {
+  id          String              @id @default(uuid())
+  type        TypeDemandeDocument @unique
+  montant     Float               @default(0)
+  devise      String              @default("GNF")
+  // Délai de traitement en heures
+  delaiHeures Int                 @default(72)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+// ------------------ Plateforme Élection des Délégués --------------
+
+enum TypeElection {
+  DELEGUE_PROMOTION
+  DELEGUE_DEPARTEMENT
+  PRESIDENT_UNIVERSITE
+  SYNDICAT
+  CLUB
+}
+
+enum StatutElection {
+  BROUILLON
+  OUVERTE
+  CLOSE
+  PROCLAMEE
+  ANNULEE
+}
+
+model Election {
+  id            String         @id @default(uuid())
+  titre         String
+  type          TypeElection
+  // Périmètre : promotionId / départementId / null (=toute l'université)
+  promotionId   String?
+  promotion     Promotion?     @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  departementId String?
+  departement   Departement?   @relation(fields: [departementId], references: [id], onDelete: Cascade)
+  description   String?
+  dateOuverture DateTime
+  dateCloture   DateTime
+  // Configuration du scrutin : scrutin uninominal, plurinominal, liste...
+  nbSieges      Int            @default(1)
+  // Règles de vote : un inscrit par scrutin, vote blanc autorisé, etc.
+  bulletin      String? // design du bulletin (par défaut)
+  statut        StatutElection @default(BROUILLON)
+  creeParId     String?
+  creePar       User?          @relation("ElectionCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  candidats CandidatElection[]
+  votes     VoteElection[]
+
+  @@index([statut, dateOuverture])
+}
+
+model CandidatElection {
+  id           String      @id @default(uuid())
+  electionId   String
+  election     Election    @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  nom          String
+  prenom       String
+  // Lien optionnel à un étudiant ou enseignant
+  etudiantId   String?
+  etudiant     Etudiant?   @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  enseignantId String?
+  enseignant   Enseignant? @relation(fields: [enseignantId], references: [id], onDelete: SetNull)
+  photoUrl     String?
+  programme    String?
+  ordre        Int         @default(0)
+
+  votes VoteElection[]
+
+  @@index([electionId, ordre])
+}
+
+enum ModeVote {
+  WEB
+  KIOSQUE
+  SMS
+}
+
+model VoteElection {
+  id         String           @id @default(uuid())
+  electionId String
+  election   Election         @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  // Au plurinominal : un seul vote avec un tableau de candidats (1..nbSieges)
+  // À l'uninominal : un vote par candidat (un électeur distribue 1 voix)
+  // On modélise ici un vote SUR UN candidat (donc nbSieges = 1 par vote).
+  // Au plurinominal : plusieurs votes du même électeur (un par candidat choisi)
+  // Un électeur peut voter N fois (N ≤ nbSieges).
+  candidatId String
+  candidat   CandidatElection @relation(fields: [candidatId], references: [id], onDelete: Cascade)
+  // Porteur du vote
+  etudiantId String?
+  etudiant   Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  scrutinId  String? // jeton de vote (anonymisation)
+  mode       ModeVote         @default(WEB)
+  ipAppareil String?
+  horodatage DateTime         @default(now())
+
+  // Un même électeur ne peut pas voter 2 fois pour le même candidat
+  @@unique([electionId, candidatId, etudiantId])
+  @@index([electionId, candidatId])
+}
+
+// ------------------ Carte d'Étudiant Numérique -----------------
+
+/// Apparaît dans `Etudiant` (déjà : `qrRestoToken String? @unique`).
+/// Pour la carte d'étudiant on complète avec `carteQrToken` + URL de vérification.
+model CarteEtudiante {
+  id              String            @id @default(uuid())
+  etudiantId      String            @unique
+  etudiant        Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  /// Jeton encodé dans le QR d'identification (différent du qrRestoToken)
+  qrToken         String            @unique // "UP-CARTE-<base64url>"
+  dateEmission    DateTime          @default(now())
+  dateValidite    DateTime? // à fixer chaque année
+  statut          StatutAttestation @default(EMISE) // réutilise : EMISE/REVOQUEE
+  motifRevocation String?
+  // Pour l'impression : photoUrl, signature
+  photoUrl        String?
+  // NIP optionnel (code personnel à 4 chiffres à la demande)
+  nip             String? // hash bcrypt
+  creeParId       String?
+  creePar         User?             @relation("CarteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  active          Boolean           @default(true)
+}
+
+// ------------------ Générateur de Badges (visiteur, intervenant) -
+
+enum StatutBadge {
+  ACTIF
+  EXPIRE
+  ANNULE
+}
+
+model BadgeAcces {
+  id             String      @id @default(uuid())
+  numero         String      @unique // "BADGE-2026-00001"
+  /// Visiteur, intervenant, technicien, personnage officielle
+  type           String // "VISITEUR", "INTERVENANT", "TECHNICIEN", "VIP"
+  nom            String
+  prenom         String
+  fonction       String?
+  organisation   String?
+  telephone      String?
+  email          String?
+  pieceIdentite  String? // Type de pièce d'identité
+  numeroPiece    String?
+  dateDelivrance DateTime    @default(now())
+  dateValidite   DateTime
+  zonesAccess    String? // Liste des zones autorisées (CSV)
+  qrToken        String      @unique // "UP-BADGE-<base64url>"
+  statut         StatutBadge @default(ACTIF)
+  motif          String?
+  creeParId      String?
+  creePar        User?       @relation("BadgeCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Aperçu photo
+  photoUrl       String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([statut, dateValidite])
+}
+
+// ------------------ Plateforme VOD des Cours Magistraux -----------
+
+enum TypeRessourceVOD {
+  AUDIO
+  VIDEO
+  NOTES
+  TRANSCRIPTION
+}
+
+enum StatutVOD {
+  BROUILLON
+  EN_LIGNE
+  HORS_LIGNE
+  ARCHIVE
+}
+
+model CoursVOD {
+  id              String           @id @default(uuid())
+  titre           String
+  description     String?
+  matiereId       String?
+  matiere         Matiere?         @relation(fields: [matiereId], references: [id], onDelete: SetNull)
+  // Séance ratée que cet enregistrement remplace
+  seanceId        String?
+  seance          Seance?          @relation(fields: [seanceId], references: [id], onDelete: SetNull)
+  enseignantId    String?
+  enseignant      Enseignant?      @relation(fields: [enseignantId], references: [id], onDelete: SetNull)
+  type            TypeRessourceVOD @default(VIDEO)
+  // URL du fichier (Mux, S3, CDN, ou chemin local)
+  url             String
+  thumbnailUrl    String?
+  dureeSecondes   Int?
+  tailleKo        Int?
+  // Transcription automatique (recherche full-text dédiée à la VOD)
+  transcription   String?
+  // Statistiques de visionnage
+  nbVues          Int              @default(0)
+  nbComplets      Int              @default(0)
+  // Accès (public, inscription, payant)
+  public          Boolean          @default(true)
+  inscriptionId   String?
+  inscription     Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  // Métadonnées
+  statut          StatutVOD        @default(BROUILLON)
+  creeParId       String?
+  creePar         User?            @relation("VodCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  dateMiseEnLigne DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  vues VueVOD[]
+
+  @@index([type, statut])
+  @@index([matiereId])
+}
+
+model VueVOD {
+  id               String    @id @default(uuid())
+  vodId            String
+  vod              CoursVOD  @relation(fields: [vodId], references: [id], onDelete: Cascade)
+  etudiantId       String?
+  etudiant         Etudiant? @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  // Position de lecture (pour reprendre)
+  positionSecondes Int       @default(0)
+  termine          Boolean   @default(false)
+  dureeSecondes    Int       @default(0)
+  ipAppareil       String?
+  dateDebut        DateTime  @default(now())
+  dateFin          DateTime?
+
+  @@index([vodId, etudiantId])
 }

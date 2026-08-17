@@ -711,3 +711,553 @@ export interface InscriptionFormation {
   formation?: Formation;
   etudiant?: Etudiant | null;
 }
+
+// ---------------------------------------------------------------------------
+// Modules Courrier / Examens / Tirage / Recettes
+// ---------------------------------------------------------------------------
+
+export type TypeCourrier = 'ENTRANT' | 'SORTANT';
+export type StatutCourrier =
+  | 'RECU'
+  | 'ENREGISTRE'
+  | 'EN_CIRCUIT'
+  | 'TRAITE'
+  | 'CLASSE'
+  | 'ARCHIVE';
+export type TypeExamen = 'PARTIEL' | 'FINAL' | 'RATTRAPAGE' | 'CONTROLE_CONTINU';
+export type StatutExamen = 'PLANIFIE' | 'EN_COURS' | 'TERMINE' | 'ANNULE';
+export type StadeTirage =
+  | 'PROGRAMME'
+  | 'IMPRIME'
+  | 'MIS_SOUS_PLI'
+  | 'DISTRIBUE'
+  | 'RECUPERE'
+  | 'ANNULE';
+export type TypeRecette =
+  | 'ANALYSE_LABO'
+  | 'LOCATION_AMPHI'
+  | 'PRESTATION_FORMATION'
+  | 'PRESTATION_CONSEIL'
+  | 'AUTRE';
+
+export interface CircuitCourrier {
+  id: string;
+  courrierId: string;
+  ordre: number;
+  valideurId?: string | null;
+  roleValideur?: string | null;
+  statut: StatutCourrier;
+  paraphe?: string | null;
+  parapheLe?: string | null;
+  commentaire?: string | null;
+  valideur?: { id: string; nom: string; prenom: string; role: Role } | null;
+}
+
+export interface Courrier {
+  id: string;
+  numero: string;
+  type: TypeCourrier;
+  objet: string;
+  expediteur?: string | null;
+  destinataire?: string | null;
+  dateReception?: string | null;
+  dateEnvoi?: string | null;
+  fichier?: string | null;
+  typeMime?: string | null;
+  tailleKo?: number | null;
+  numeroReference?: string | null;
+  paraphe?: string | null;
+  statut: StatutCourrier;
+  enregistreParId?: string | null;
+  traiteParId?: string | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  circuits?: CircuitCourrier[];
+  enregistrePar?: { id: string; nom: string; prenom: string } | null;
+  traitePar?: { id: string; nom: string; prenom: string } | null;
+}
+
+export interface Examen {
+  id: string;
+  intitule: string;
+  type: TypeExamen;
+  matiereId: string;
+  promotionId: string;
+  anneeId: string;
+  dateExamen: string;
+  heureDebut: string;
+  heureFin: string;
+  salleId?: string | null;
+  nbInscrits: number;
+  nbPresents: number;
+  codeExamen: string;
+  statut: StatutExamen;
+  creeParId?: string | null;
+  surveillantId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  matiere?: Matiere;
+  promotion?: Promotion;
+  annee?: AnneeAcademique;
+  salle?: Salle | null;
+  surveillant?: { id: string; nom: string; prenom: string } | null;
+  creePar?: { id: string; nom: string; prenom: string } | null;
+  _count?: { scans: number; tirages: number };
+}
+
+export interface ScanExamen {
+  id: string;
+  examenId: string;
+  inscriptionId?: string | null;
+  matriculeSaisi?: string | null;
+  nomPorteur?: string | null;
+  prenomPorteur?: string | null;
+  heureScan: string;
+  valide: boolean;
+  motifRejet?: string | null;
+  scanneurId?: string | null;
+  ipAppareil?: string | null;
+  inscription?: (Inscription & { etudiant?: Etudiant }) | null;
+  scanneur?: { id: string; nom: string; prenom: string } | null;
+  examen?: {
+    id: string;
+    intitule: string;
+    codeExamen: string;
+    dateExamen: string;
+    heureDebut: string;
+    heureFin: string;
+  };
+}
+
+export interface Tirage {
+  id: string;
+  examenId: string;
+  dateTirage: string;
+  imprimeurId?: string | null;
+  nbExemplaires: number;
+  empreinteSource: string;
+  empreinteExemplaires?: string | null;
+  circuitImpression?: string | null;
+  stade: StadeTirage;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  examen?: Examen;
+  imprimeur?: { id: string; nom: string; prenom: string } | null;
+}
+
+export interface RecetteExterne {
+  id: string;
+  numero: string;
+  type: TypeRecette;
+  libelle: string;
+  description?: string | null;
+  montant: number;
+  devise: string;
+  date: string;
+  client?: string | null;
+  factureNum?: string | null;
+  paiementId?: string | null;
+  creeParId?: string | null;
+  createdAt: string;
+  paiement?: Paiement | null;
+  creePar?: { id: string; nom: string; prenom: string } | null;
+}
+
+// ---------------------------------------------------------------------------
+// Plateforme de réclamations & demandes de documents
+// ---------------------------------------------------------------------------
+
+export type TypeReclamation =
+  | 'NOTE_MANQUANTE'
+  | 'ERREUR_SAISIE'
+  | 'INSCRIPTION'
+  | 'ENSEIGNEMENT'
+  | 'SCOLARITE'
+  | 'TECHNIQUE'
+  | 'AUTRE';
+
+export type PrioriteReclamation = 'BASSE' | 'NORMALE' | 'HAUTE' | 'URGENTE';
+
+export type StatutReclamation =
+  | 'OUVERTE'
+  | 'EN_COURS'
+  | 'EN_ATTENTE_REPONSE'
+  | 'RESOLUE'
+  | 'FERMEE'
+  | 'REJETEE';
+
+export interface MessageReclamation {
+  id: string;
+  reclamationId: string;
+  auteurId?: string | null;
+  nomAffichage?: string | null;
+  contenu: string;
+  joint?: string | null;
+  creeLe: string;
+  auteur?: { id: string; nom: string; prenom: string; role: Role } | null;
+}
+
+export interface Reclamation {
+  id: string;
+  numero: string;
+  type: TypeReclamation;
+  sujet: string;
+  description: string;
+  anonyme: boolean;
+  etudiantId?: string | null;
+  nomAuteur?: string | null;
+  emailAuteur?: string | null;
+  priorite: PrioriteReclamation;
+  statut: StatutReclamation;
+  departementId?: string | null;
+  assigneAId?: string | null;
+  delaiEscaladeHeures?: number | null;
+  escaladeLe?: string | null;
+  creeLe: string;
+  fermeLe?: string | null;
+  notes?: string | null;
+  etudiant?: Etudiant | null;
+  departement?: Departement | null;
+  assigneA?: { id: string; nom: string; prenom: string; role: Role } | null;
+  messages?: MessageReclamation[];
+  _count?: { messages: number };
+}
+
+export type TypeDemandeDocument =
+  | 'ATTESTATION_SCOLARITE'
+  | 'ATTESTATION_FREQUENTATION'
+  | 'RELEVE_NOTES'
+  | 'DUPLICATA_CARTE'
+  | 'ATTESTATION_REUSSITE'
+  | 'CERTIFICAT_SCOLARITE'
+  | 'AUTRE';
+
+export type StatutDemande =
+  | 'EN_ATTENTE_PAIEMENT'
+  | 'PAYEE'
+  | 'EN_TRAITEMENT'
+  | 'PRETE'
+  | 'REMISE'
+  | 'REJETEE';
+
+export interface TarifDemande {
+  id: string;
+  type: TypeDemandeDocument;
+  montant: number;
+  devise: string;
+  delaiHeures: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DemandeDocument {
+  id: string;
+  numero: string;
+  type: TypeDemandeDocument;
+  motif?: string | null;
+  etudiantId: string;
+  inscriptionId?: string | null;
+  frais: number;
+  devise: string;
+  paiementId?: string | null;
+  statut: StatutDemande;
+  notification?: string | null;
+  traiteParId?: string | null;
+  creeLe: string;
+  remiseLe?: string | null;
+  notes?: string | null;
+  etudiant?: Etudiant | null;
+  inscription?: { id: string; numero: string } | null;
+  paiement?: {
+    id: string;
+    reference: string;
+    statut: StatutPaiement;
+    montant: number;
+    devise: string;
+    mode: ModePaiement;
+  } | null;
+  traitePar?: { id: string; nom: string; prenom: string; role: Role } | null;
+}
+
+// ---------------------------------------------------------------------------
+// Modules transverses : carte étudiante, badges d'accès, VOD, élections
+// ---------------------------------------------------------------------------
+
+export type StatutCarteEtudiante = 'EMISE' | 'REVOQUEE';
+export type TypeBadge = 'VISITEUR' | 'INTERVENANT' | 'TECHNICIEN' | 'VIP';
+export type StatutBadge = 'ACTIF' | 'EXPIRE' | 'ANNULE';
+export type TypeRessourceVOD = 'AUDIO' | 'VIDEO' | 'NOTES' | 'TRANSCRIPTION';
+export type StatutVOD = 'BROUILLON' | 'EN_LIGNE' | 'HORS_LIGNE' | 'ARCHIVE';
+export type TypeElection =
+  | 'DELEGUE_PROMOTION'
+  | 'DELEGUE_DEPARTEMENT'
+  | 'PRESIDENT_UNIVERSITE'
+  | 'SYNDICAT'
+  | 'CLUB';
+export type StatutElection = 'BROUILLON' | 'OUVERTE' | 'CLOSE' | 'PROCLAMEE' | 'ANNULEE';
+export type ModeVote = 'WEB' | 'KIOSQUE' | 'SMS';
+
+export interface CarteEtudiante {
+  id: string;
+  etudiantId: string;
+  qrToken: string;
+  dateEmission: string;
+  dateValidite?: string | null;
+  statut: StatutCarteEtudiante;
+  motifRevocation?: string | null;
+  photoUrl?: string | null;
+  creeParId?: string | null;
+  active: boolean;
+  etudiant?: Pick<Etudiant, 'id' | 'matricule' | 'nom' | 'prenom'> & {
+    sexe?: string | null;
+    dateNaissance?: string | null;
+    lieuNaissance?: string | null;
+    photoUrl?: string | null;
+  };
+  creePar?: { id: string; nom: string; prenom: string } | null;
+}
+
+export interface BadgeAcces {
+  id: string;
+  numero: string;
+  type: TypeBadge;
+  nom: string;
+  prenom: string;
+  fonction?: string | null;
+  organisation?: string | null;
+  telephone?: string | null;
+  email?: string | null;
+  pieceIdentite?: string | null;
+  numeroPiece?: string | null;
+  dateDelivrance: string;
+  dateValidite: string;
+  zonesAccess?: string | null;
+  qrToken: string;
+  statut: StatutBadge;
+  motif?: string | null;
+  creeParId?: string | null;
+  photoUrl?: string | null;
+  creePar?: { id: string; nom: string; prenom: string } | null;
+}
+
+export interface CoursVOD {
+  id: string;
+  titre: string;
+  description?: string | null;
+  matiereId?: string | null;
+  seanceId?: string | null;
+  enseignantId?: string | null;
+  type: TypeRessourceVOD;
+  url: string;
+  thumbnailUrl?: string | null;
+  dureeSecondes?: number | null;
+  tailleKo?: number | null;
+  transcription?: string | null;
+  nbVues: number;
+  nbComplets: number;
+  public: boolean;
+  inscriptionId?: string | null;
+  statut: StatutVOD;
+  creeParId?: string | null;
+  dateMiseEnLigne?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  matiere?: Pick<Matiere, 'id' | 'code' | 'intitule'> | null;
+  enseignant?: Pick<Enseignant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+  creePar?: { id: string; nom: string; prenom: string } | null;
+  _count?: { vues: number };
+}
+
+export interface VueVOD {
+  id: string;
+  vodId: string;
+  etudiantId?: string | null;
+  positionSecondes: number;
+  termine: boolean;
+  dureeSecondes: number;
+  ipAppareil?: string | null;
+  dateDebut: string;
+  dateFin?: string | null;
+}
+
+export interface CandidatElection {
+  id: string;
+  electionId: string;
+  nom: string;
+  prenom: string;
+  etudiantId?: string | null;
+  enseignantId?: string | null;
+  photoUrl?: string | null;
+  programme?: string | null;
+  ordre: number;
+  etudiant?: Pick<Etudiant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+  enseignant?: Pick<Enseignant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+  _count?: { votes: number };
+}
+
+export interface Election {
+  id: string;
+  titre: string;
+  type: TypeElection;
+  promotionId?: string | null;
+  departementId?: string | null;
+  description?: string | null;
+  dateOuverture: string;
+  dateCloture: string;
+  nbSieges: number;
+  bulletin?: string | null;
+  statut: StatutElection;
+  creeParId?: string | null;
+  promotion?: Promotion | null;
+  departement?: Departement | null;
+  creePar?: { id: string; nom: string; prenom: string } | null;
+  candidats?: CandidatElection[];
+  _count?: { candidats: number; votes: number };
+}
+
+export interface VoteElection {
+  id: string;
+  electionId: string;
+  candidatId: string;
+  etudiantId?: string | null;
+  scrutinId?: string | null;
+  mode: ModeVote;
+  ipAppareil?: string | null;
+  horodatage: string;
+}
+
+export interface ResultatElection {
+  election: {
+    id: string;
+    titre: string;
+    type: TypeElection;
+    nbSieges: number;
+    statut: StatutElection;
+    dateOuverture: string;
+    dateCloture: string;
+  };
+  participation: {
+    nbBulletins: number;
+    voixTotales: number;
+    siegesPourvoir: number;
+  };
+  candidats: Array<{
+    id: string;
+    nom: string;
+    prenom: string;
+    ordre: number;
+    voix: number;
+    elu: boolean;
+    etudiant?: Pick<Etudiant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+    enseignant?: Pick<Enseignant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+  }>;
+}
+
+export interface CarteCollecteVOD {
+  id: string;
+  titre: string;
+  description?: string | null;
+  type: TypeRessourceVOD;
+  url: string;
+  thumbnailUrl?: string | null;
+  dureeSecondes?: number | null;
+  matiere?: Pick<Matiere, 'id' | 'code' | 'intitule'> | null;
+  enseignant?: Pick<Enseignant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
+  dernierePosition: number;
+  termine: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Tableau de bord Rectorat & Patrimoine
+// ---------------------------------------------------------------------------
+
+export type StatutReparation = 'DECLARE' | 'EN_COURS' | 'TERMINE' | 'ANNULE';
+
+export interface CategoriePatrimoine {
+  id: string;
+  code: string;
+  libelle: string;
+  dureeAmortissement?: number | null;
+  actif: boolean;
+  _count?: { equipements: number };
+}
+
+export interface EquipementPatrimoine {
+  id: string;
+  numeroSerie: string;
+  libelle: string;
+  categorieId: string;
+  categorie?: Pick<CategoriePatrimoine, 'id' | 'code' | 'libelle'>;
+  departementId?: string | null;
+  departement?: Pick<Departement, 'id' | 'code' | 'nom'> | null;
+  salleId?: string | null;
+  salle?: Pick<Salle, 'id' | 'code' | 'nom'> | null;
+  dateAcquisition?: string | null;
+  valeurAcquisition?: number | null;
+  numeroInventaire: string;
+  qrCode: string;
+  actif: boolean;
+  enReparation: boolean;
+  obsolescenceMois?: number | null;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { reparations: number; tickets: number };
+}
+
+export interface ReparationMateriel {
+  id: string;
+  equipementId: string;
+  equipement?: Pick<EquipementPatrimoine, 'id' | 'libelle' | 'numeroInventaire'>;
+  dateDeclaration: string;
+  description: string;
+  prestataire?: string | null;
+  cout: number;
+  statut: StatutReparation;
+  dateResolution?: string | null;
+  declareParId?: string | null;
+  declarePar?: { id: string; nom: string; prenom: string } | null;
+  resoluParId?: string | null;
+  resoluPar?: { id: string; nom: string; prenom: string } | null;
+  notes?: string | null;
+}
+
+export interface StatistiqueMesrs {
+  id: string;
+  anneeId: string;
+  annee?: Pick<AnneeAcademique, 'id' | 'libelle'>;
+  donnees: any;
+  genereLe: string;
+  genereParId?: string | null;
+  generePar?: { id: string; nom: string; prenom: string } | null;
+}
+
+export interface TableauBordRectorat {
+  annee: { id: string; libelle: string } | null;
+  effectifTotal: number;
+  effectifParPromotion: Array<{
+    promotionId: string;
+    effectif: number;
+    nom: string;
+    niveau?: string | null;
+    filiere?: { id: string; code: string; nom: string } | null;
+  }>;
+  tauxReussite: number;
+  masseSalariale: number;
+  masseSalarialeMois: string;
+  nbEnseignants: number;
+  nbVacataires: number;
+  nbReclamationsEnCours: number;
+  nbIncidentsHelpdesk24h: number;
+}
+
+export interface TableauBordPatrimoine {
+  total: number;
+  valeur: number;
+  enReparation: number;
+  obsoletes: number;
+  parCategorie: Array<{ code: string; libelle: string; nombre: number; valeur: number }>;
+  parDepartement: Array<{ code: string; nom: string; nombre: number; valeur: number }>;
+}
