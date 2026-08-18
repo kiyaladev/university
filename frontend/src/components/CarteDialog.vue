@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { api } from '../boot/axios';
-import type { CarteEtudiante, Etudiant, StatutCarteEtudiante } from '../types';
+import type { CarteEtudiante, Etudiant } from '../types';
 
 const $q = useQuasar();
 
@@ -19,7 +19,6 @@ const formulaire = ref({
   dateValidite: null as string | null,
   photoUrl: null as string | null,
   nip: null as string | null,
-  motifRevocation: null as string | null,
 });
 
 const enregistrement = ref(false);
@@ -33,7 +32,6 @@ watch(
         dateValidite: props.carte?.dateValidite?.slice(0, 10) ?? null,
         photoUrl: props.carte?.photoUrl ?? null,
         nip: null,
-        motifRevocation: null,
       };
     }
   },
@@ -121,19 +119,15 @@ function fermer() {
           placeholder="https://…"
         />
 
-        <q-input
-          v-if="enEdition"
-          v-model="formulaire.motifRevocation"
-          label="Motif (en cas de révocation à venir)"
-          outlined
-          dense
-          type="textarea"
-          autogrow
-        />
+        <q-banner v-if="enEdition" class="note--info">
+          La révocation d'une carte se fait depuis la liste (bouton « Révoquer »)
+          : elle exige un motif et invalide immédiatement le QR.
+        </q-banner>
 
-        <q-banner v-if="!enEdition" class="bg-grey-2">
-          Le code NIP est défini directement par l'étudiant depuis son portail. Si
-          vous devez l'initialiser pour lui, renseignez 4 à 6 chiffres ci-dessous.
+        <q-banner v-if="!enEdition" class="note--info">
+          Le NIP est normalement défini par l'étudiant depuis « Ma carte
+          étudiante ». Si vous devez l'initialiser pour lui, renseignez 4 à 6
+          chiffres ci-dessous — lui seul pourra ensuite le changer.
         </q-banner>
 
         <q-input
@@ -143,7 +137,7 @@ function fermer() {
           outlined
           dense
           mask="######"
-          hint="Laisserez l'étudiant le redéfinir à la première connexion."
+          hint="Facultatif : l'étudiant pourra le redéfinir depuis son portail."
         />
       </q-card-section>
 

@@ -72,10 +72,11 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat no-caps label="Annuler" v-close-popup />
         <q-btn
           color="primary"
           unelevated
+          no-caps
           label="Créer"
           :loading="enregistrement"
           :disable="!form.anneeId || !form.promotionId"
@@ -133,7 +134,6 @@ const apercu = computed(() => {
   const p = promotionSelectionnee.value;
   const a = anneeSelectionnee.value;
   const lignes = (props.matieres ?? [])
-    .filter((m) => !m.departementId || !p?.filiere?.departementId || true)
     .slice(0, 4)
     .map((m) => ({
       intitule: m.intitule,
@@ -182,6 +182,11 @@ async function creer() {
     $q.notify({ type: 'positive', message: 'Délibération créée, moyennes calculées' });
     emit('enregistre');
     emit('update:modelValue', false);
+  } catch (e: any) {
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Création impossible — une délibération existe peut-être déjà pour cette promotion et cette session.',
+    });
   } finally {
     enregistrement.value = false;
   }

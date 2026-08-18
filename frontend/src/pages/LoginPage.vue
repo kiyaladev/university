@@ -8,6 +8,7 @@
         <span class="bande bande--vert" />
       </div>
 
+      <p class="pochoir enseigne__sur-titre">Personnel de l’université</p>
       <h1 class="lettrage enseigne__marque">UniPrésence</h1>
       <p class="enseigne__phrase">
         Le registre du contrôleur, salle par salle : il relève la séance, fait
@@ -28,7 +29,14 @@
 
     <!-- La plaque d'accès -->
     <section class="acces__plaque">
-      <h2 class="lettrage acces__titre">Accès au registre</h2>
+      <h2 class="lettrage acces__titre">Connexion</h2>
+      <p class="acces__intro">
+        Réservée au personnel de l’université — contrôleurs, scolarité,
+        enseignants, direction. Vous êtes étudiant ?
+        <router-link to="/portail-connexion" class="acces__lien-lien">
+          Entrez par le portail étudiant
+        </router-link>.
+      </p>
 
       <q-form class="acces__form" @submit.prevent="connexion">
         <q-input
@@ -64,7 +72,7 @@
           </template>
         </q-input>
 
-        <q-banner v-if="erreur" class="acces__erreur">
+        <q-banner v-if="erreur" class="acces__erreur" role="alert" aria-live="assertive">
           <template #avatar><q-icon name="error" /></template>
           {{ erreur }}
         </q-banner>
@@ -76,12 +84,18 @@
           size="lg"
           unelevated
           no-caps
-          label="Ouvrir ma tournée"
+          label="Se connecter"
           :loading="auth.chargement"
         />
       </q-form>
 
-      <q-expansion-item dense icon="badge" label="Comptes de démonstration" class="acces__demo">
+      <q-expansion-item
+        v-if="afficherDemo"
+        dense
+        icon="badge"
+        label="Comptes de démonstration"
+        class="acces__demo"
+      >
         <q-list separator dense>
           <q-item v-for="c in comptesDemo" :key="c.email" clickable @click="prefill(c.email)">
             <q-item-section>
@@ -93,6 +107,45 @@
         </q-list>
         <p class="pochoir acces__mot-demo">Mot de passe commun : Passer@2026</p>
       </q-expansion-item>
+
+      <q-separator class="acces__separateur" />
+
+      <!-- Services ouverts sans compte : un visiteur ne doit pas rester bloqué ici. -->
+      <nav class="acces__services" aria-label="Services accessibles sans compte">
+        <p class="pochoir acces__services-titre">Sans compte</p>
+        <ul class="acces__liens">
+          <li>
+            <router-link to="/portail-connexion" class="acces__lien-lien">
+              Portail étudiant (connexion par SMS) →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/s-inscrire" class="acces__lien-lien">
+              Se préinscrire en ligne →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/formations" class="acces__lien-lien">
+              Formation continue →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/bibliotheque" class="acces__lien-lien">
+              Bibliothèque numérique →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/verification" class="acces__lien-lien">
+              Vérifier une attestation →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/verification-carte" class="acces__lien-lien">
+              Vérifier une carte étudiante →
+            </router-link>
+          </li>
+        </ul>
+      </nav>
     </section>
   </q-page>
 </template>
@@ -101,6 +154,7 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import type { Role } from '../types';
 
 const auth = useAuthStore();
 const router = useRouter();
@@ -110,6 +164,9 @@ const email = ref('');
 const motDePasse = ref('');
 const voirMotDePasse = ref(false);
 const erreur = ref('');
+
+/** Les comptes de démonstration n'apparaissent qu'en mode dev. */
+const afficherDemo = import.meta.env.DEV;
 
 const comptesDemo = [
   { libelle: 'Contrôleur pédagogique', email: 'controleur1@unipresence.gn' },
@@ -125,21 +182,35 @@ function prefill(adresse: string) {
   motDePasse.value = 'Passer@2026';
 }
 
+/** Le back renvoie parfois un tableau de messages de validation. */
+function messageErreur(e: any): string {
+  const message = e?.response?.data?.message;
+  if (Array.isArray(message)) return message.join(' · ');
+  return message ?? 'Adresse e-mail ou mot de passe incorrect.';
+}
+
 async function connexion() {
   erreur.value = '';
   try {
     const utilisateur = await auth.connexion(email.value, motDePasse.value);
     const suite = route.query.suite as string | undefined;
     if (suite) return router.push(suite);
-    // Le contrôleur arrive directement sur sa tournée du jour.
-    return router.push(utilisateur.role === 'CONTROLEUR' ? '/controle' : '/');
+    // Chaque rôle atterrit sur sa page d'entrée : tournée, séances, portail.
+    const routeParRole: Partial<Record<Role, string>> = {
+      CONTROLEUR: '/controle',
+      ENSEIGNANT: '/mes-seances',
+      ETUDIANT: '/portail',
+    };
+    return router.push(routeParRole[utilisateur.role] ?? '/');
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Identifiants incorrects';
+    erreur.value = messageErreur(e);
   }
 }
 </script>
 
 <style scoped lang="scss">
+@use '../css/mixins' as *;
+
 .acces {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
@@ -149,18 +220,7 @@ async function connexion() {
 
 // -------------------------------------------------------------- enseigne
 .enseigne {
-  background: $encre;
-  color: $blanc-craie;
-  padding: var(--up-6) var(--up-5);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--up-4);
-  background-image: repeating-linear-gradient(
-    92deg,
-    rgba(255, 255, 255, 0.045) 0 2px,
-    rgba(255, 255, 255, 0) 2px 5px
-  );
+  @include enseignePlaque;
 }
 
 .enseigne__bandes {
@@ -169,10 +229,10 @@ async function connexion() {
   max-width: 320px;
 }
 
-.bande { flex: 1; }
-.bande--rouge { background: $rouge; }
-.bande--jaune { background: $jaune; }
-.bande--vert { background: $vert; }
+.enseigne__sur-titre {
+  color: rgba(250, 250, 247, 0.6);
+  margin: 0;
+}
 
 .enseigne__marque {
   font-size: clamp(2.8rem, 1.8rem + 5vw, 5.2rem);
@@ -211,9 +271,16 @@ async function connexion() {
 
 .acces__titre {
   font-size: 1.7rem;
-  margin: 0 0 var(--up-4);
+  margin: 0 0 var(--up-3);
   padding-bottom: var(--up-2);
   border-bottom: 3px solid var(--up-encre);
+}
+
+.acces__intro {
+  margin: 0 0 var(--up-4);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--up-encre-douce);
 }
 
 .acces__form {
@@ -237,6 +304,30 @@ async function connexion() {
 .acces__mot-demo {
   color: var(--up-encre-douce);
   padding: 0 var(--up-3) var(--up-3);
+}
+
+.acces__separateur { margin: var(--up-4) 0 var(--up-3); }
+
+.acces__services-titre {
+  margin: 0 0 var(--up-2);
+  color: var(--up-encre-douce);
+}
+
+.acces__liens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--up-1);
+  font-size: 0.9rem;
+}
+
+.acces__lien-lien {
+  color: var(--up-encre-douce);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
 }
 
 @media (max-width: 1023px) {

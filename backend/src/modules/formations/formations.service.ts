@@ -23,7 +23,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma, StatutFormation, StatutInscriptionFormation } from '@prisma/client';
+import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
@@ -278,6 +278,80 @@ export class FormationsService {
   }
 
   // -------------------------------------------------------------- gestion
+
+  /**
+   * Tableau de bord agrégé pour la page d'administration : chaque formation
+   * expose ses compteurs (inscrits, payés, recette encaissée) et les totaux
+   * sont cumulés en une seule passe — un groupBy pour les inscrits, un
+   * findMany pour les paiements réussis (la relation est nullable, on
+   * cumule en mémoire). On évite ainsi le N+1 du front qui itérait sur la
+   * liste des formations.
+   */
+  async dashboard() {
+    const [formations, inscritsParFormation, paiementsReussis] = await Promise.all([
+      this.prisma.formation.findMany({
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, titre: true, prix: true, devise: true, statut: true },
+      }),
+      this.prisma.inscriptionFormation.groupBy({
+        by: ['formationId'],
+        _count: { _all: true },
+      }),
+      this.prisma.paiement.findMany({
+        where: {
+          statut: StatutPaiement.REUSSI,
+          inscriptionFormation: { isNot: null },
+        },
+        select: {
+          montant: true,
+          inscriptionFormation: { select: { formationId: true } },
+        },
+      }),
+    ]);
+
+    const inscritsMap = new Map(
+      inscritsParFormation.map((g) => [g.formationId, g._count._all]),
+    );
+
+    const paiementParFormation = new Map<string, { nbPayes: number; recette: number }>();
+    for (const p of paiementsReussis) {
+      const formationId = p.inscriptionFormation?.formationId;
+      if (!formationId) continue;
+      const acc = paiementParFormation.get(formationId) ?? { nbPayes: 0, recette: 0 };
+      acc.nbPayes += 1;
+      acc.recette += p.montant;
+      paiementParFormation.set(formationId, acc);
+    }
+
+    const parFormation = formations.map((f) => {
+      const paiement = paiementParFormation.get(f.id) ?? { nbPayes: 0, recette: 0 };
+      return {
+        id: f.id,
+        intitule: f.titre,
+        statut: f.statut,
+        prix: f.prix,
+        devise: f.devise,
+        nbInscrits: inscritsMap.get(f.id) ?? 0,
+        nbPayes: paiement.nbPayes,
+        recette: paiement.recette,
+      };
+    });
+
+    const totaux = parFormation.reduce(
+      (acc, f) => ({
+        inscrits: acc.inscrits + f.nbInscrits,
+        payes: acc.payes + f.nbPayes,
+        recette: acc.recette + f.recette,
+      }),
+      { inscrits: 0, payes: 0, recette: 0 },
+    );
+
+    return {
+      total: parFormation.length,
+      parFormation,
+      totaux,
+    };
+  }
 
   async liste(query: FormationQueryDto): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);

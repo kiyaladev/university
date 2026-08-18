@@ -21,6 +21,21 @@ const SEUIL_JACCARD = 0.8;
 const TAILLE_MIN_JACCARD = 30;
 
 /**
+ * Ce que la fiche d'un document suspect doit porter pour être lisible à
+ * l'écran : sans `auteurs` ni `departement`, la carte de suspicion n'affichait
+ * qu'un titre et deux tirets, alors qu'on y arbitre une accusation.
+ */
+const DOCUMENT_SUSPECT_SELECT = {
+  id: true,
+  titre: true,
+  type: true,
+  auteurs: true,
+  deposeParId: true,
+  empreinteHash: true,
+  departement: { select: { id: true, nom: true } },
+} as const;
+
+/**
  * Découpe une data-url en mime + octets. Tolère une chaîne sans en-tête
  * `data:` (cas rare, ex : payload déjà extrait) : on tente alors le base64
  * brut sans mime.
@@ -249,12 +264,10 @@ export class PlagiatService {
         where: { statut: StatutSuspicionPlagiat.EN_ATTENTE },
         orderBy: [{ score: 'desc' }, { detecteLe: 'desc' }],
         include: {
-          documentA: {
-            select: { id: true, titre: true, type: true, deposeParId: true, empreinteHash: true },
-          },
-          documentB: {
-            select: { id: true, titre: true, type: true, deposeParId: true, empreinteHash: true },
-          },
+          // La carte de suspicion nomme les auteurs et le département : sans
+          // eux elle n'affichait que des tirets.
+          documentA: { select: DOCUMENT_SUSPECT_SELECT },
+          documentB: { select: DOCUMENT_SUSPECT_SELECT },
         },
       }),
       this.prisma.suspicionPlagiat.count(),

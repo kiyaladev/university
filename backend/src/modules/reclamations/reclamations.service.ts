@@ -69,6 +69,18 @@ export class ReclamationsService extends CrudService {
     return user.role === Role.ADMIN || user.role === Role.DIRECTION || user.role === Role.SCOLARITE;
   }
 
+  /**
+   * Le champ `notes` est le bloc-notes interne de la scolarité : il concatène
+   * les commentaires de changement de statut et les notes de clôture, donc les
+   * motifs de rejet rédigés « entre nous ». L'étudiant est propriétaire de sa
+   * réclamation, pas de la délibération interne : on retire le champ de la
+   * projection dès que le demandeur est un étudiant. `omit` agit côté Prisma,
+   * le champ ne quitte donc jamais la base.
+   */
+  private omissionPour(user: AuthUser): Prisma.ReclamationOmit | undefined {
+    return user.role === Role.ETUDIANT ? { notes: true } : undefined;
+  }
+
   /** Numéro séquentiel par année : "REC-2026-00001". */
   private async prochainNumero(
     tx: Prisma.TransactionClient,
@@ -141,6 +153,7 @@ export class ReclamationsService extends CrudService {
       this.prisma.reclamation.findMany({
         where,
         include: RECLAMATION_INCLUDE,
+        omit: this.omissionPour(user),
         orderBy: [{ priorite: 'desc' }, { creeLe: 'desc' }],
         ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
@@ -163,9 +176,20 @@ export class ReclamationsService extends CrudService {
     return this.liste(query, user);
   }
 
-  /** Détail d'une réclamation — l'étudiant ne peut voir que les siennes. */
+  /**
+   * Détail d'une réclamation — l'étudiant ne peut voir que les siennes, et
+   * sans le bloc-notes interne (voir `omissionPour`). On requête ici plutôt
+   * que via `findOne` du CRUD générique, qui ne sait pas omettre de champ.
+   */
   async findOnePour(id: string, user: AuthUser) {
-    const reclamation = await this.findOne(id);
+    const reclamation = await this.prisma.reclamation.findUnique({
+      where: { id },
+      include: RECLAMATION_INCLUDE,
+      omit: this.omissionPour(user),
+    });
+    if (!reclamation) {
+      throw new NotFoundException('Réclamation introuvable');
+    }
     if (!this.voitTout(user) && reclamation.etudiantId !== user.etudiantId) {
       throw new NotFoundException('Réclamation introuvable');
     }

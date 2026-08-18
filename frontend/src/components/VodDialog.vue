@@ -65,8 +65,9 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const { default: api } = await import('../boot/axios');
-const url = enEdition.value ? `/vod/${props.vod!.id}` : '/vod';
+    // `api` est l'export nommé de boot/axios : l'import dynamique du default
+    // (la fonction de boot) masquait l'instance et cassait l'enregistrement.
+    const url = enEdition.value ? `/vod/${props.vod!.id}` : '/vod';
     const methode = enEdition.value ? 'put' : 'post';
     const payload: Record<string, unknown> = {
       titre: formulaire.value.titre,
@@ -79,7 +80,7 @@ const url = enEdition.value ? `/vod/${props.vod!.id}` : '/vod';
       dureeSecondes: formulaire.value.dureeSecondes ?? undefined,
       public: formulaire.value.public,
     };
-    const { data } = await api[methode](url, payload);
+    const { data } = methode === 'put' ? await api.put(url, payload) : await api.post(url, payload);
     $q.notify({ type: 'positive', message: enEdition.value ? 'Ressource mise à jour.' : 'Ressource créée.' });
     emit('enregistre', data);
     emit('update:modelValue', false);

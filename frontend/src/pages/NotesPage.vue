@@ -24,34 +24,30 @@
 
     <div class="carte q-pa-md q-mb-md">
       <div class="row q-col-gutter-md items-end">
-        <div class="col-12 col-md-6">
+        <div class="col-12 col-md-8">
           <autocomplete-async
             v-model="selEvaluationId"
             endpoint="/evaluations"
             label="Évaluation à noter"
-            :label-fn="(e) => `${e.intitule} · ${LIBELLE_TYPE_EVALUATION[e.type as TypeEvaluation] ?? e.type} · ${e.matiere?.intitule ?? ''} (${e.promotion?.nom ?? ''})`"
+            placeholder="Tapez l’intitulé de l’épreuve…"
+            :label-fn="libelleEvaluation"
             @update:model-value="(v, raw) => { if (raw) choisir(raw); else chargerDepuisId(v); }"
           />
         </div>
-        <div class="col-12 col-md-3">
-          <q-select
-            v-model="filtreStatut"
-            :options="optionsFiltres"
-            outlined
-            dense
-            emit-value
-            map-options
-            label="Filtrer"
-            @update:model-value="chargerEvaluations"
-          />
-        </div>
-        <div class="col-12 col-md-3 text-right">
+        <div class="col-12 col-md-4 text-right q-gutter-sm">
           <q-btn
-            v-if="evaluationActive && evaluationActive.statut === 'OUVERTE' && peutSaisir()"
+            flat
+            no-caps
+            icon="fact_check"
+            label="Toutes les évaluations"
+            @click="allerAuxEvaluations"
+          />
+          <q-btn
+            v-if="evaluationActive && evaluationActive.statut === 'OUVERTE' && peutCloturer()"
             outline
             no-caps
             icon="lock"
-            label="Clôturer l'évaluation"
+            label="Clôturer l’évaluation"
             @click="cloturer"
           />
         </div>
@@ -84,7 +80,7 @@
 
       <notes-saisie-masse
         :evaluation-id="evaluationActive.id"
-        :inscriptions="lignesPourComposant"
+        :inscriptions="lignes"
         :notes-existantes="notesExistantes"
         :lecture-seule="cloturee || !peutSaisir()"
         :motif-lecture-seule="motifLectureSeule"
@@ -95,13 +91,25 @@
     <div v-else class="carte q-pa-lg text-center text-grey-6">
       <q-icon name="table_chart" size="48px" class="q-mb-sm" />
       <div>Sélectionnez une évaluation ci-dessus pour ouvrir la feuille de notes.</div>
+      <div class="text-caption q-mt-xs">
+        La feuille reprend les étudiants dont le dossier d’inscription est validé.
+      </div>
+      <q-btn
+        class="q-mt-md"
+        unelevated
+        color="primary"
+        no-caps
+        icon="fact_check"
+        label="Parcourir les évaluations"
+        @click="allerAuxEvaluations"
+      />
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -112,10 +120,13 @@ import type { Evaluation, Note, TypeEvaluation } from '../types';
 
 const $q = useQuasar();
 const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 
-/** Qui saisit les notes (direction comprise, elle arbitre). */
+/** Qui saisit les notes (direction comprise, elle arbitre) — cf. `PUT /notes/saisie`. */
 const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION']);
+/** Clôturer fige le registre : réservé à la scolarité, comme côté API. */
+const peutCloturer = () => auth.aRole(['ADMIN', 'SCOLARITE']);
 
 const selEvaluationId = ref<string | null>(null);
 const evaluationActive = ref<Evaluation | null>(null);
@@ -131,10 +142,18 @@ const lignes = ref<Array<{
 const notesExistantes = ref<Note[]>([]);
 const chargementInitial = ref(true);
 
-type FiltreEval = 'OUVERTES' | 'TOUTES' | 'CLOTUREES';
-const filtreStatut = ref<FiltreEval>('OUVERTES');
-
 const cloturee = computed(() => evaluationActive.value?.statut === 'CLOTUREE');
+
+/** Une ligne d'autocomplétion doit dire l'épreuve, la matière, la promo et l'état. */
+function libelleEvaluation(e: any): string {
+  const type = LIBELLE_TYPE_EVALUATION[e.type as TypeEvaluation] ?? e.type;
+  const etat = LIBELLE_STATUT_EVALUATION[e.statut] ?? e.statut;
+  return `${e.intitule} · ${type} · ${e.matiere?.intitule ?? ''} (${e.promotion?.nom ?? ''}) — ${etat}`;
+}
+
+function allerAuxEvaluations() {
+  void router.push({ path: '/evaluations' });
+}
 
 const motifLectureSeule = computed(() => {
   if (!evaluationActive.value) return '';
@@ -146,51 +165,6 @@ const motifLectureSeule = computed(() => {
   }
   return '';
 });
-
-const optionsFiltres = [
-  { label: 'Ouvertes (en saisie)', value: 'OUVERTES' as FiltreEval },
-  { label: 'Toutes', value: 'TOUTES' as FiltreEval },
-  { label: 'Clôturées', value: 'CLOTUREES' as FiltreEval },
-];
-
-const lignesPourComposant = computed(() =>
-  lignes.value.map((l) => ({
-    inscriptionId: l.inscriptionId,
-    numero: l.numero,
-    matricule: l.matricule,
-    nom: l.nom,
-    prenom: l.prenom,
-    note: l.note,
-    present: l.present,
-  })),
-);
-
-watch(
-  () => filtreStatut.value,
-  () => {
-    if (selEvaluationId.value) chargerEvaluations();
-  },
-);
-
-async function chargerEvaluations() {
-  // Pas de préchargement massif : AutocompleteAsync gère sa propre liste.
-  // On garde la valeur courante si elle est dans le filtre.
-  if (!selEvaluationId.value) return;
-  try {
-    const { data } = await api.get(`/evaluations/${selEvaluationId.value}`);
-    if (data && filtreStatut.value !== 'TOUTES') {
-      const ev = data as Evaluation;
-      if (filtreStatut.value === 'OUVERTES' && ev.statut !== 'OUVERTE') {
-        $q.notify({
-          type: 'warning',
-          message: 'Cette évaluation n’est plus ouverte à la saisie.',
-        });
-      }
-    }
-  } catch {
-    /* silencieux : si l’évaluation a disparu on ne casse pas l’UI */
-  }
-}
 
 async function choisir(e: Evaluation) {
   chargementInitial.value = true;
@@ -225,6 +199,7 @@ async function chargerDepuisId(id: string | null) {
   if (!id) {
     evaluationActive.value = null;
     lignes.value = [];
+    notesExistantes.value = [];
     return;
   }
   try {
@@ -233,6 +208,11 @@ async function chargerDepuisId(id: string | null) {
   } catch {
     evaluationActive.value = null;
     lignes.value = [];
+    notesExistantes.value = [];
+    $q.notify({
+      type: 'warning',
+      message: 'Évaluation introuvable : elle a pu être supprimée.',
+    });
   }
 }
 
@@ -261,17 +241,32 @@ function cloturer() {
     cancel: true,
     ok: { color: 'primary', label: 'Clôturer', unelevated: true, noCaps: true },
   }).onOk(async () => {
-    await api.post(`/evaluations/${e.id}/cloturer`);
-    await choisir({ ...e, statut: 'CLOTUREE' });
+    try {
+      await api.post(`/evaluations/${e.id}/cloturer`);
+      $q.notify({ type: 'positive', message: 'Évaluation clôturée' });
+      await choisir({ ...e, statut: 'CLOTUREE' });
+    } catch {
+      /* Notification gérée par l’intercepteur axios */
+    }
   });
 }
 
+/** Ouvre la feuille demandée par l'URL (`/notes?evaluation=…`). */
+async function ouvrirDepuisRoute(id?: string) {
+  if (!id || id === evaluationActive.value?.id) return;
+  selEvaluationId.value = id;
+  await chargerDepuisId(id);
+}
+
+// La navigation depuis Évaluations peut survenir alors que la page est déjà
+// montée : on suit le paramètre, pas seulement le premier rendu.
+watch(
+  () => route.query.evaluation as string | undefined,
+  (id) => void ouvrirDepuisRoute(id),
+);
+
 onMounted(async () => {
-  const demande = route.query.evaluation as string | undefined;
-  if (demande) {
-    selEvaluationId.value = demande;
-    await chargerDepuisId(demande);
-  }
+  await ouvrirDepuisRoute(route.query.evaluation as string | undefined);
   chargementInitial.value = false;
 });
 </script>

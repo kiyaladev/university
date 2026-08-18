@@ -2,7 +2,7 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Support IT & helpdesk</div>
+        <div class="page-titre">Support IT</div>
         <div class="page-sous-titre">
           Un QR sur chaque équipement : l'enseignant scanne, décrit le problème
           en deux clics, la DSI est prévenue sans attendre la rumeur.
@@ -14,7 +14,7 @@
     </div>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="mes-tickets" icon="assignment_outlined" label="Mes tickets / Déclarer" no-caps />
+      <q-tab name="mes-tickets" icon="assignment_outlined" label="Tickets / Déclarer" no-caps />
       <q-tab v-if="dsi" name="gestion" icon="support_agent" label="Gestion DSI" no-caps />
       <q-tab v-if="dsi" name="equipements" icon="qr_code_2" label="Équipements & QR" no-caps />
     </q-tabs>
@@ -31,6 +31,7 @@
               <div class="page-sous-titre q-mb-md">
                 Arrivé par le QR d'un équipement ? Le formulaire s'ouvre déjà prêt —
                 il ne reste qu'à choisir la catégorie et décrire la panne.
+                <span v-if="dsi">L'ADMIN voit tous les tickets ici.</span>
               </div>
               <div class="row q-col-gutter-sm">
                 <div v-for="c in categoriesApercu" :key="c.value" class="col-6">
@@ -69,7 +70,21 @@
             :pagination="{ rowsPerPage: 10 }"
           >
             <template #top-left>
-              <div class="text-subtitle1 text-weight-medium">Mes déclarations</div>
+              <div class="text-subtitle1 text-weight-medium">
+                {{ dsi ? 'Toutes les déclarations' : 'Mes déclarations' }}
+              </div>
+            </template>
+            <template #no-data>
+              <div class="full-width text-center text-grey-7 q-pa-lg">
+                <q-icon name="assignment_turned_in" size="38px" color="grey-5" />
+                <div class="q-mt-sm">
+                  {{ dsi ? 'Aucun ticket déclaré.' : 'Vous n’avez déclaré aucun incident.' }}
+                </div>
+                <div class="text-caption q-mt-xs">
+                  Choisissez une catégorie à gauche, ou scannez le QR de
+                  l'équipement en panne.
+                </div>
+              </div>
             </template>
             <template #body-cell-statut="p">
               <q-td :props="p">
@@ -111,8 +126,8 @@
 
       <filter-bar
         v-model="filtres"
+        :chips="chipsTickets"
         placeholder="Rechercher (N°, description…)"
-        :recherche="true"
         @reinitialiser="filtres = { recherche: '' }"
       >
         <template #avances>
@@ -198,14 +213,25 @@
             </span>
           </q-td>
         </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="support_agent" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucun ticket pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Le registre se remplit par les déclarations : élargissez les
+              filtres pour retrouver les tickets clôturés.
+            </div>
+          </div>
+        </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" @click="ticketDetail = p.row">
+            <q-btn flat dense round icon="visibility" aria-label="Visualiser le ticket" @click="ticketDetail = p.row">
               <q-tooltip>Visualiser</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'OUVERT' || p.row.statut === 'EN_COURS'"
               flat dense round icon="autorenew"
+              aria-label="Changer le statut du ticket"
             >
               <q-tooltip>Changer le statut</q-tooltip>
               <q-menu>
@@ -294,7 +320,10 @@
         </div>
         <div v-if="!chargementGestion && !tickets.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="support_agent" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun ticket</div>
+          <div class="q-mt-sm">Aucun ticket pour ces critères.</div>
+          <div class="text-caption q-mt-xs">
+            Élargissez les filtres pour retrouver les tickets clôturés.
+          </div>
         </div>
       </div>
     </q-tab-panel>
@@ -317,8 +346,8 @@
 
       <filter-bar
         v-model="filtresEquip"
+        :chips="chipsEquipements"
         placeholder="Rechercher (libellé, emplacement, code QR…)"
-        :recherche="true"
         @reinitialiser="filtresEquip = { recherche: '' }"
       >
         <template #avances>
@@ -368,23 +397,42 @@
             <span class="text-caption ellipsis" style="max-width: 200px; display: inline-block; vertical-align: middle">
               {{ p.row.codeQr }}
             </span>
-            <q-btn flat dense round size="sm" icon="content_copy" @click="copier(p.row.codeQr)">
+            <q-btn flat dense round size="sm" icon="content_copy" aria-label="Copier le code QR" @click="copier(p.row.codeQr)">
               <q-tooltip>Copier le code</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="print" @click="imprimerQr(p.row)">
+            <q-btn flat dense round icon="print" aria-label="Imprimer l'étiquette QR" @click="imprimerQr(p.row)">
               <q-tooltip>Imprimer l'étiquette QR</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="edit" @click="ouvrirEquipement(p.row)">
+            <q-btn flat dense round icon="edit" aria-label="Modifier l'équipement" @click="ouvrirEquipement(p.row)">
               <q-tooltip>Modifier</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimerEquipement(p.row)">
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer l'équipement" @click="supprimerEquipement(p.row)">
               <q-tooltip>Supprimer</q-tooltip>
             </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="qr_code_2" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucun équipement pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Déclarez le parc pour que chaque panne arrive avec le nom exact du
+              matériel.
+            </div>
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              label="Nouvel équipement"
+              class="q-mt-sm"
+              @click="ouvrirEquipement(null)"
+            />
+          </div>
         </template>
       </q-table>
 
@@ -402,9 +450,16 @@
               </q-badge>
             </q-card-section>
             <q-card-section class="text-center">
-              <canvas ref="(el) => setQrCanvas(el, e.id)" :data-equipement="e.id" class="qr-canvas" style="width: 160px; height: 160px" />
+              <!-- Le rendu QR se fait via le fallback querySelectorAll() dans dessinerTousLesQr() -->
+              <canvas
+                :data-equipement="e.id"
+                class="qr-canvas"
+                style="width: 160px; height: 160px"
+                :aria-label="`QR de l'équipement ${e.libelle}`"
+                role="img"
+              />
               <div class="text-caption text-grey-7 q-mt-xs">
-                {{ ticketsParEquipement[e.id] ?? 0 }} ticket(s) associé(s)
+                {{ e._count?.tickets ?? 0 }} ticket(s) associé(s)
               </div>
             </q-card-section>
             <q-card-actions class="q-px-md">
@@ -416,7 +471,16 @@
         </div>
         <div v-if="!chargementEquipements && !equipements.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="qr_code_2" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun équipement</div>
+          <div class="q-mt-sm">Aucun équipement pour ces critères.</div>
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            icon="add"
+            label="Nouvel équipement"
+            class="q-mt-sm"
+            @click="ouvrirEquipement(null)"
+          />
         </div>
       </div>
     </q-tab-panel>
@@ -515,7 +579,11 @@
       <q-card style="width: 480px; max-width: 95vw">
         <q-card-section class="text-h6">Scanner le QR d'un équipement</q-card-section>
         <q-card-section>
-          <qr-scanner v-model="codeScanne" />
+          <qr-scanner
+            v-model="codeScanne"
+            label="Code QR de l'équipement"
+            hint="Scannez l'étiquette de l'équipement ou saisissez son code"
+          />
           <p class="text-caption text-grey-7 q-mt-md">
             Pointez la caméra sur l'étiquette QR de l'équipement pour pré-remplir la déclaration.
           </p>
@@ -531,7 +599,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import QRCode from 'qrcode';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -548,11 +616,12 @@ import {
   LIBELLE_STATUT_TICKET,
   dateHeureLisible,
 } from '../utils/libelles';
-import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport } from '../types';
+import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
+const router = useRouter();
 
 const dsi = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 
@@ -618,12 +687,38 @@ const optionsPriorites = Object.entries(LIBELLE_PRIORITE_TICKET).map(([value, la
   value,
 }));
 
-const ticketsParEquipement = computed(() => {
-  const map: Record<string, number> = {};
-  for (const t of mesTickets.value) {
-    if (t.equipementId) map[t.equipementId] = (map[t.equipementId] ?? 0) + 1;
+const chipsTickets = computed(() => {
+  const f = filtres.value;
+  const cs: ChipFiltre[] = [];
+  if (f.recherche) {
+    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
   }
-  return map;
+  if (f.statut) cs.push({ label: libelleStatut(f.statut), value: f.statut, icone: 'flag', cle: 'statut'});
+  if (f.categorie) {
+    cs.push({ label: libelleCategorie(f.categorie), value: f.categorie, icone: 'category', cle: 'categorie'});
+  }
+  if (f.priorite) {
+    cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite'});
+  }
+  if (f.equipementId) {
+    cs.push({ label: 'Équipement filtré', value: f.equipementId, icone: 'devices', cle: 'equipementId'});
+  }
+  return cs;
+});
+
+const chipsEquipements = computed(() => {
+  const f = filtresEquip.value;
+  const cs: ChipFiltre[] = [];
+  if (f.recherche) {
+    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+  }
+  if (f.actif) {
+    cs.push({
+      label: f.actif === 'true' ? 'En service' : 'Inactifs',
+      value: f.actif,
+      icone: 'toggle_on', cle: 'actif'});
+  }
+  return cs;
 });
 
 const statutPlaques = [
@@ -805,14 +900,23 @@ function rechargerEquipements() {
   void chargerEquipements();
 }
 
+/**
+ * URL encodée dans l'étiquette : construite par le routeur, pour rester juste
+ * quel que soit le mode (hash ou history). Une URL bricolée à la main donnait
+ * « origin//helpdesk », que l'application ne sait pas router.
+ */
+function urlEtiquette(codeQr: string): string {
+  const href = router.resolve({ name: 'helpdesk', query: { equipement: codeQr } }).href;
+  return new URL(href, window.location.origin).toString();
+}
+
 async function dessinerTousLesQr() {
   const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas.qr-canvas');
   for (const canvas of canvases) {
     const eqId = canvas.dataset.equipement;
     const eq = equipements.value.find((e) => e.id === eqId);
     if (!eq) continue;
-    const url = `${window.location.origin}/${window.location.hash.startsWith('#') ? '' : '#'}/helpdesk?equipement=${encodeURIComponent(eq.codeQr)}`;
-    await QRCode.toCanvas(canvas, url, { width: 160, margin: 1 });
+    await QRCode.toCanvas(canvas, urlEtiquette(eq.codeQr), { width: 160, margin: 1 });
   }
 }
 
@@ -832,7 +936,8 @@ function copier(texte: string) {
 }
 
 function imprimerQr(e: EquipementCampus) {
-  window.open(`${API_URL}/equipements/${e.id}/imprimer-qr?token=${auth.token}`, '_blank');
+  const url = `${API_URL}/equipements/${e.id}/imprimer-qr?token=${encodeURIComponent(auth.token)}`;
+  window.open(url, '_blank');
 }
 
 function ouvrirEquipement(e: EquipementCampus | null) {

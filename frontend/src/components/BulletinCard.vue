@@ -5,6 +5,7 @@
  * promotion. Bouton « Imprimer » qui ouvre la version A4 officielle.
  */
 import { computed } from 'vue';
+import { LIBELLE_DECISION_JURY, dateLisible } from '../utils/libelles';
 
 interface Ligne {
   matiere: string;
@@ -18,11 +19,11 @@ interface Bulletin {
   etudiant: { matricule: string; nom: string; prenom: string };
   promotion: string;
   annee: string;
-  session: string; // 'Session 1' / 'Session 2 (rattrapage)'
+  session: string; // libellé déjà résolu : « Session normale » / « Rattrapage »
   dateDeliberation?: string;
   lignes: Ligne[];
   moyenneGenerale: number;
-  decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT';
+  decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT' | null;
   mention?: string;
   rang?: number;
   effectif?: number;
@@ -34,14 +35,20 @@ const props = defineProps<{
   urlImpression?: string;
 }>();
 
+/** Même code couleur que les listes de délibération et de bulletins. */
 const COULEUR: Record<string, string> = {
   ADMIS: 'positive',
-  AJOURNE: 'negative',
-  DEFAILLANT: 'dark',
+  AJOURNE: 'warning',
+  DEFAILLANT: 'negative',
 };
 
 const totalCredits = computed(() => props.bulletin.lignes.reduce((acc, l) => acc + l.credits, 0));
-const couleur = computed(() => COULEUR[props.bulletin.decision] ?? 'primary');
+const couleur = computed(() => COULEUR[props.bulletin.decision ?? ''] ?? 'grey-7');
+const libelleDecision = computed(() =>
+  props.bulletin.decision
+    ? (LIBELLE_DECISION_JURY[props.bulletin.decision] ?? props.bulletin.decision)
+    : 'Non délibéré',
+);
 
 function imprimer() {
   if (!props.urlImpression) return;
@@ -56,13 +63,26 @@ function imprimer() {
         <div class="bulletin__nom">{{ bulletin.etudiant.prenom }} {{ bulletin.etudiant.nom }}</div>
         <div class="bulletin__meta">Matricule {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} · {{ bulletin.annee }}</div>
       </div>
-      <q-badge :color="couleur" :label="bulletin.decision" />
+      <q-badge :color="couleur" :label="libelleDecision" />
     </q-card-section>
 
     <q-separator />
 
     <q-card-section class="bulletin__corps">
+      <!--
+        Le détail par UE n'est calculé que par la route d'impression officielle :
+        tant qu'il n'est pas fourni, on annonce où le lire plutôt que d'afficher
+        un tableau vide sur un document qui fait foi.
+      -->
+      <div v-if="!bulletin.lignes.length" class="bulletin__sans-detail">
+        <q-icon name="description" size="24px" color="grey-5" />
+        <div class="q-mt-xs">
+          Le détail par matière (UE, crédits, épreuves) figure sur le bulletin
+          officiel imprimable.
+        </div>
+      </div>
       <q-table
+        v-else
         flat
         :columns="[
           { name: 'matiere', label: 'Matière', field: 'matiere', align: 'left' },
@@ -88,7 +108,10 @@ function imprimer() {
 
     <q-card-section class="bulletin__pied">
       <div>
-        <div class="bulletin__total">Total crédits : {{ totalCredits }}</div>
+        <div v-if="totalCredits" class="bulletin__total">Total crédits : {{ totalCredits }}</div>
+        <div v-if="bulletin.dateDeliberation" class="bulletin__total">
+          Délibéré le {{ dateLisible(bulletin.dateDeliberation) }} · {{ bulletin.session }}
+        </div>
         <div class="bulletin__moyenne">
           Moyenne générale : <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>/20
         </div>
@@ -136,6 +159,13 @@ function imprimer() {
 .bulletin__total {
   font-size: 12px;
   color: #555;
+}
+.bulletin__sans-detail {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  background: rgba(0, 0, 0, 0.02);
 }
 .bulletin__moyenne {
   font-size: 14px;

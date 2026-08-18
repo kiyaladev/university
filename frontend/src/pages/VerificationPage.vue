@@ -1,8 +1,12 @@
 <template>
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
+      <div class="row justify-end q-gutter-sm q-mb-sm">
+        <q-btn flat dense no-caps icon="badge" label="Vérifier une carte étudiante" to="/verification-carte" />
+        <q-btn flat dense no-caps icon="login" label="Se connecter" to="/connexion" />
+      </div>
       <div class="text-center q-my-lg">
-        <div class="lettrage page-titre">Vérification d'un document</div>
+        <div class="lettrage page-titre">Vérification d’attestation</div>
         <div class="page-sous-titre verification-intro">
           Cette page publique atteste de l'authenticité d'une attestation
           délivrée par l'établissement : le document existe, est intact et n'a
@@ -21,7 +25,11 @@
           label="Numéro d'attestation"
           hint="Ex. ATT-2026-00001"
         />
-        <qr-scanner v-model="codeQr" />
+        <qr-scanner
+          v-model="codeQr"
+          label="Code QR de l’attestation"
+          hint="Scannez le QR du document ou saisissez le code"
+        />
         <div class="text-caption text-grey-7 q-mt-xs">
           Le QR scanné (ou collé) est une URL : ses paramètres
           <code>ref</code> et <code>k</code> remplissent le formulaire
@@ -44,7 +52,7 @@
       <!-- Résultat : plaque verte (authentique) ou rouge (révoqué / inconnu) -->
       <div v-if="resultat" class="q-mt-lg se-peint">
         <div
-          class="plaque q-pa-lg text-center"
+          class="plaque plaque-verite q-pa-lg text-center"
           :class="resultat.valide ? 'plaque-verite--valide' : 'plaque-verite--invalide'"
         >
           <q-icon
@@ -53,7 +61,7 @@
             :color="resultat.valide ? 'positive' : 'negative'"
           />
           <div class="lettrage resultat-titre">
-            {{ resultat.valide ? 'Attestation authentique' : 'Document non valable' }}
+            {{ resultat.valide ? 'Attestation authentique' : 'Attestation non valable' }}
           </div>
 
           <div v-if="resultat.valide && detail" class="q-mt-md text-left">
@@ -109,8 +117,8 @@
       </div>
 
       <div class="text-center q-mt-xl text-caption text-grey-7">
-        La vérification est gratuite et ne requiert aucun compte. Un document
-        révoqué ou un numéro inconnu ne prouve rien — méfiance.
+        La vérification est gratuite et ne requiert aucun compte. Une
+        attestation révoquée ou un numéro inconnu ne prouve rien — méfiance.
       </div>
     </div>
   </q-page>
@@ -134,7 +142,6 @@ interface ResultatVerification {
   valide: boolean;
   raison?: string;
   verificationId?: string;
-  message?: string;
   attestation?: {
     numero?: string;
     type?: string;
@@ -221,11 +228,6 @@ function dateHeureFr(v: Date): string {
 <style scoped>
 .verification-intro {
   margin: 0 auto;
-}
-
-.section-title {
-  display: inline-block;
-  margin-bottom: var(--up-3);
 }
 
 .resultat-titre {

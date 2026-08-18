@@ -211,14 +211,17 @@ export class RapportsService {
         .filter((e) => e.absent > 0)
         .sort((a, b) => b.absent - a.absent)
         .slice(0, 10),
+      // Clés d'énumération et non libellés : le serveur ne traduit pas. Les
+      // libellés vivaient ici en double des libellés du client et avaient déjà
+      // divergé (« Excusé » ici, « Absence excusée » à l'écran).
       repartition: [
-        { statut: 'Présent', valeur: global.present },
-        { statut: 'Retard', valeur: global.retard },
-        { statut: 'Absent', valeur: global.absent },
-        { statut: 'Excusé', valeur: global.excuse },
-        { statut: 'Remplacé', valeur: global.remplace },
-        { statut: 'Départ anticipé', valeur: global.departAnticipe },
-        { statut: 'Non contrôlé', valeur: global.planifiees - global.controlees },
+        { statut: 'PRESENT', valeur: global.present },
+        { statut: 'RETARD', valeur: global.retard },
+        { statut: 'ABSENT', valeur: global.absent },
+        { statut: 'EXCUSE', valeur: global.excuse },
+        { statut: 'REMPLACE', valeur: global.remplace },
+        { statut: 'DEPART_ANTICIPE', valeur: global.departAnticipe },
+        { statut: 'NON_CONTROLE', valeur: global.planifiees - global.controlees },
       ],
     };
   }

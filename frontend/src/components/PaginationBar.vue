@@ -17,7 +17,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:page': [v: number];
   'update:pageSize': [v: number];
-  'update:all': [v: boolean];
   'tous': [];
 }>();
 
@@ -28,7 +27,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
 
 <template>
   <div class="barre-pagination">
-    <span class="barre-pagination__compte">
+    <span class="pochoir chiffres barre-pagination__compte" aria-live="polite">
       {{ debut }}–{{ fin }} sur {{ total }}
     </span>
     <q-space />
@@ -48,6 +47,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
       dense
       outlined
       label="Par page"
+      aria-label="Nombre de lignes par page"
       class="barre-pagination__taille"
       @update:model-value="(v) => emit('update:pageSize', v)"
     />
@@ -57,6 +57,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
       dense
       icon="select_all"
       label="Charger tout"
+      aria-label="Charger la totalité des lignes, sans pagination"
       no-caps
       @click="emit('tous')"
     />
@@ -70,9 +71,9 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
   gap: 12px;
   padding: 6px 0;
 }
+/* Corps « label » du système, porté par `.pochoir` dans le gabarit. */
 .barre-pagination__compte {
-  font-size: 13px;
-  color: #555;
+  color: var(--up-encre-douce);
 }
 .barre-pagination__taille {
   min-width: 110px;

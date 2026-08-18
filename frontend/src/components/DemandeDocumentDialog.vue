@@ -13,7 +13,6 @@
           emit-value
           map-options
           label="Type"
-          @update:model-value="onTypeChange"
         >
           <template #option="scope">
             <q-item v-bind="scope.itemProps">
@@ -95,7 +94,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
-import { montantLisible } from '../utils/libelles';
+import { LIBELLE_TYPE_DEMANDE, montantLisible } from '../utils/libelles';
 import type { DemandeDocument, Inscription, TarifDemande, TypeDemandeDocument } from '../types';
 
 const props = defineProps<{
@@ -110,16 +109,6 @@ const $q = useQuasar();
 const enregistrement = ref(false);
 const erreur = ref('');
 
-const LIBELLE_TYPE: Record<TypeDemandeDocument, string> = {
-  ATTESTATION_SCOLARITE: 'Attestation de scolarité',
-  ATTESTATION_FREQUENTATION: 'Attestation de fréquentation',
-  RELEVE_NOTES: 'Relevé de notes',
-  DUPLICATA_CARTE: 'Duplicata de carte',
-  ATTESTATION_REUSSITE: 'Attestation de réussite',
-  CERTIFICAT_SCOLARITE: 'Certificat de scolarité',
-  AUTRE: 'Autre',
-};
-
 const tarifs = ref<TarifDemande[]>([]);
 const inscriptions = ref<Inscription[]>([]);
 const form = ref<{
@@ -133,10 +122,10 @@ const form = ref<{
 });
 
 const optionsType = computed(() =>
-  (Object.keys(LIBELLE_TYPE) as TypeDemandeDocument[]).map((value) => {
+  (Object.keys(LIBELLE_TYPE_DEMANDE) as TypeDemandeDocument[]).map((value) => {
     const tarif = tarifs.value.find((t) => t.type === value);
     return {
-      label: LIBELLE_TYPE[value],
+      label: LIBELLE_TYPE_DEMANDE[value],
       value,
       montant: tarif?.montant,
       devise: tarif?.devise,
@@ -148,10 +137,6 @@ const optionsType = computed(() =>
 const tarifSelectionne = computed(() =>
   tarifs.value.find((t) => t.type === form.value.type) ?? null,
 );
-
-function onTypeChange() {
-  // Le tarif se déduit du type, rien à recalculer.
-}
 
 watch(
   () => props.modelValue,

@@ -25,7 +25,7 @@
             @update:model-value="remplirDossier"
           />
           <div v-if="dossierChoisi" class="row q-col-gutter-md">
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-4">
               <q-input
                 :model-value="dossierChoisi.etudiant ? `${dossierChoisi.etudiant.nom} ${dossierChoisi.etudiant.prenom}` : ''"
                 outlined
@@ -34,13 +34,22 @@
                 label="Étudiant"
               />
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-4">
               <q-input
                 :model-value="`${montantLisible(dossierChoisi.montantFrais)} GNF`"
                 outlined
                 dense
                 readonly
-                label="Frais du dossier"
+                label="Frais d’inscription"
+              />
+            </div>
+            <div class="col-12 col-sm-4">
+              <q-input
+                :model-value="`${montantLisible(resteAPayer)} GNF`"
+                outlined
+                dense
+                readonly
+                label="Reste à payer"
               />
             </div>
           </div>
@@ -74,11 +83,17 @@
             <q-input
               v-model.number="form.montant"
               type="number"
+              min="1"
               outlined
               dense
               label="Montant (GNF) *"
-              :disable="montantVerrouille"
-              :hint="montantVerrouille ? 'Montant du dossier' : undefined"
+              :error="montantExcessif"
+              :error-message="`Le reste à payer n’est que de ${montantLisible(resteAPayer)} GNF`"
+              :hint="
+                resteAPayer !== null
+                  ? 'Reste dû proposé — modifiable pour un versement partiel'
+                  : undefined
+              "
             />
           </div>
         </div>
@@ -136,7 +151,7 @@
           icon="check"
           label="Simuler comme REUSSI"
           :loading="enregistrementSimu"
-          :disable="!form.montant || !form.mode || !telephoneOuNom"
+          :disable="!montantValide || !form.mode || !telephoneOuNom"
           @click="enregistrerEnSimulantReussi"
         />
         <q-btn
@@ -145,7 +160,7 @@
           no-caps
           label="Enregistrer le paiement"
           :loading="enregistrement"
-          :disable="!form.montant || !form.mode || !telephoneOuNom"
+          :disable="!montantValide || !form.mode || !telephoneOuNom"
           @click="enregistrer"
         />
       </q-card-actions>
@@ -206,11 +221,32 @@ const peutSimulerReussi = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOL
 const dossierChoisi = computed(() =>
   inscriptions.value.find((i) => i.id === form.value.inscriptionId) ?? null,
 );
-const montantVerrouille = computed(
-  () => typePaiement.value === 'inscription' && form.value.inscriptionId !== '',
+
+/** Déjà encaissé sur le dossier : seuls les paiements réussis comptent. */
+function montantPaye(dossier: Inscription): number {
+  return (dossier.paiements ?? [])
+    .filter((p) => p.statut === 'REUSSI')
+    .reduce((t, p) => t + p.montant, 0);
+}
+
+/** Reste dû : le montant proposé par défaut, jamais le total des frais. */
+const resteAPayer = computed(() =>
+  dossierChoisi.value
+    ? Math.max(0, dossierChoisi.value.montantFrais - montantPaye(dossierChoisi.value))
+    : null,
 );
+
 const telephoneOuNom = computed(() =>
   form.value.mode === 'MOBILE_MONEY' ? !!form.value.telephone : !!form.value.nomComplet,
+);
+
+/** Un règlement partiel est permis, mais jamais au-delà du reste dû. */
+const montantExcessif = computed(
+  () => resteAPayer.value !== null && (form.value.montant ?? 0) > resteAPayer.value,
+);
+
+const montantValide = computed(
+  () => !!form.value.montant && form.value.montant > 0 && !montantExcessif.value,
 );
 
 async function charger() {
@@ -223,12 +259,17 @@ async function charger() {
   if (form.value.inscriptionId) remplirDossier();
 }
 
+/**
+ * Choix d'un dossier : on propose le reste dû (et non le total des frais,
+ * qui ferait payer deux fois un dossier déjà réglé en partie). Le montant
+ * reste modifiable pour accepter un versement partiel.
+ */
 function remplirDossier() {
   const dossier = dossierChoisi.value;
   if (!dossier) return;
   form.value.etudiantId = dossier.etudiantId;
-  form.value.montant = dossier.montantFrais;
-  if (!form.value.motif) form.value.motif = `Frais d'inscription ${dossier.numero}`;
+  form.value.montant = resteAPayer.value ?? dossier.montantFrais;
+  if (!form.value.motif) form.value.motif = `Frais d’inscription ${dossier.numero}`;
 }
 
 watch(

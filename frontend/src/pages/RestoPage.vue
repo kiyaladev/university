@@ -2,10 +2,10 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Cantine & portefeuille resto</div>
+        <div class="page-titre">Resto numérique</div>
         <div class="page-sous-titre">
           Fini les tickets papier : le guichet scanne la carte de l'étudiant,
-          valide le repas en deux secondes — zéro cash, zéro fraude
+          valide le repas en deux secondes — zéro cash, zéro fraude.
         </div>
       </div>
       <div class="col-auto" v-if="peutRecharger">
@@ -14,7 +14,7 @@
           color="primary"
           no-caps
           icon="account_balance_wallet"
-          label="Recharger un portefeuille"
+          label="Créditer un portefeuille"
           @click="rechargerCible"
         />
       </div>
@@ -38,8 +38,11 @@
               <span class="pochoir pochoir--brut">en ligne — le solde est contrôlé au serveur</span>
             </header>
 
-            <label class="pochoir guichet__libelle">Carte de l'étudiant (QR, matricule ou téléphone)</label>
-            <qr-scanner v-model="reference" />
+            <qr-scanner
+              v-model="reference"
+              label="Carte de l'étudiant (QR, matricule ou téléphone)"
+              hint="Scannez la carte du convive ou saisissez son matricule"
+            />
 
             <div class="row q-col-gutter-md q-mt-sm">
               <div class="col-12 col-sm-6">
@@ -148,32 +151,14 @@
     <!-- PORTEFEUILLES                                                    -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'portefeuilles'" name="portefeuilles" class="q-pa-none q-mt-md">
+      <!-- Le serveur ne filtre que sur l'étudiant (matricule, nom, prénom) :
+           pas de filtre avancé qui ne serait pas appliqué. -->
       <filter-bar
         v-model="filtresPortefeuilles"
-        placeholder="Rechercher (matricule, nom, téléphone…)"
-        :recherche="true"
+        :chips="chipsPortefeuilles"
+        placeholder="Rechercher (matricule, nom, prénom…)"
         @reinitialiser="reinitialiserPortefeuilles"
       >
-        <template #avances>
-          <q-input
-            v-model.number="filtresPortefeuilles.soldeMin"
-            type="number"
-            min="0"
-            dense
-            outlined
-            label="Solde min"
-            clearable
-          />
-          <q-input
-            v-model.number="filtresPortefeuilles.soldeMax"
-            type="number"
-            min="0"
-            dense
-            outlined
-            label="Solde max"
-            clearable
-          />
-        </template>
         <template #actions>
           <view-toggle cle="resto.portefeuilles" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modePortefeuilles = v as 'tableau' | 'cartes')" />
         </template>
@@ -218,6 +203,26 @@
             <q-btn v-if="peutRecharger" flat dense no-caps color="primary" icon="add" label="Recharger" @click="rechargerPortefeuille(p.row)" />
           </q-td>
         </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="account_balance_wallet" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucun portefeuille pour cette recherche.</div>
+            <div class="text-caption q-mt-xs">
+              Un portefeuille naît à la première recharge : créditez-en un pour
+              ouvrir le compte resto d'un étudiant.
+            </div>
+            <q-btn
+              v-if="peutRecharger"
+              flat
+              no-caps
+              color="primary"
+              icon="account_balance_wallet"
+              label="Créditer un portefeuille"
+              class="q-mt-sm"
+              @click="rechargerCible"
+            />
+          </div>
+        </template>
       </q-table>
 
       <!-- Vue cartes -->
@@ -249,7 +254,17 @@
         </div>
         <div v-if="!chargementPortefeuilles && !portefeuilles.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="account_balance_wallet" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun portefeuille</div>
+          <div class="q-mt-sm">Aucun portefeuille pour cette recherche.</div>
+          <q-btn
+            v-if="peutRecharger"
+            flat
+            no-caps
+            color="primary"
+            icon="account_balance_wallet"
+            label="Créditer un portefeuille"
+            class="q-mt-sm"
+            @click="rechargerCible"
+          />
         </div>
       </div>
     </q-tab-panel>
@@ -265,24 +280,14 @@
 
       <filter-bar
         v-model="filtresTransactions"
+        :chips="chipsTransactions"
         :recherche="false"
         @reinitialiser="reinitialiserTransactions"
       >
         <template #avances>
-          <q-input
-            v-model="filtresTransactions.dateDebut"
-            type="date"
-            dense
-            outlined
-            label="Du"
-          />
-          <q-input
-            v-model="filtresTransactions.dateFin"
-            type="date"
-            dense
-            outlined
-            label="Au"
-          />
+          <champ-date v-model="filtresTransactions.dateDebut" label="Du" />
+          <champ-date v-model="filtresTransactions.dateFin" label="Au" />
+          <!-- Le serveur ne filtre les recharges que par statut de paiement. -->
           <q-select
             v-if="ongletTransactions === 'recharges'"
             v-model="filtresTransactions.statut"
@@ -292,29 +297,7 @@
             dense
             outlined
             clearable
-            label="Statut"
-          />
-          <q-select
-            v-if="ongletTransactions === 'recharges'"
-            v-model="filtresTransactions.mode"
-            :options="optionsModePaiement"
-            emit-value
-            map-options
-            dense
-            outlined
-            clearable
-            label="Mode"
-          />
-          <q-select
-            v-if="ongletTransactions === 'recharges'"
-            v-model="filtresTransactions.operateur"
-            :options="optionsOperateurs"
-            emit-value
-            map-options
-            dense
-            outlined
-            clearable
-            label="Opérateur"
+            label="Statut du paiement"
           />
           <q-input
             v-if="ongletTransactions === 'consommations'"
@@ -327,12 +310,14 @@
         </template>
         <template #actions>
           <q-btn flat dense no-caps icon="today" label="Aujourd'hui" @click="periodeAujourdhui" />
-          <q-btn flat dense no-caps icon="refresh" label="Recharger" @click="chargerTransactions" />
+          <q-btn flat dense round icon="refresh" aria-label="Actualiser la liste" @click="chargerTransactions">
+            <q-tooltip>Actualiser la liste</q-tooltip>
+          </q-btn>
         </template>
       </filter-bar>
 
-      <!-- KPIs -->
-      <div class="row q-col-gutter-sm q-mb-md">
+      <!-- KPIs : toujours calculés sur la période entière, quel que soit l'onglet -->
+      <div class="row q-col-gutter-sm q-mb-md items-center">
         <div class="col-auto">
           <q-chip color="positive" text-color="white" icon="add">
             Encaissé : {{ montantLisible(totaux.credite) }} GNF
@@ -392,11 +377,24 @@
             <q-btn
               v-if="p.row.annulable"
               flat dense round color="negative" icon="history_toggle_off"
+              aria-label="Rembourser ce repas"
               @click="annulerRepas(p.row)"
             >
               <q-tooltip>Rembourser ce repas</q-tooltip>
             </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="receipt_long" size="38px" color="grey-5" />
+            <div class="q-mt-sm">
+              Aucune {{ ongletTransactions === 'recharges' ? 'recharge' : 'consommation' }} sur cette période.
+            </div>
+            <div class="text-caption q-mt-xs">
+              La période va du {{ dateLisible(filtresTransactions.dateDebut) }} au
+              {{ dateLisible(filtresTransactions.dateFin) }} — élargissez-la pour voir plus loin.
+            </div>
+          </div>
         </template>
       </q-table>
     </q-tab-panel>
@@ -414,18 +412,19 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import QrScanner from '../components/QrScanner.vue';
+import ChampDate from '../components/ChampDate.vue';
 import RechargeDialog from '../components/RechargeDialog.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
-  LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_CONSOMMATION,
   LIBELLE_STATUT_PAIEMENT,
   LIBELLE_TYPE_REPAS,
   dateHeureLisible,
+  dateLisible,
   aujourdhui,
   montantLisible,
 } from '../utils/libelles';
-import type { TypeRepas } from '../types';
+import type { TypeRepas, ChipFiltre } from '../types';
 
 const PRIX_REPAS: Record<TypeRepas, number> = {
   PETIT_DEJEUNER: 10_000,
@@ -521,6 +520,17 @@ watch(filtresPortefeuilles, () => {
   requeterPortefeuilles();
 }, { deep: true });
 
+const chipsPortefeuilles = computed(() =>
+  filtresPortefeuilles.value.recherche
+    ? [{
+        label: `« ${filtresPortefeuilles.value.recherche} »`,
+        value: filtresPortefeuilles.value.recherche,
+        icone: 'search',
+        defaut: true,
+      }]
+    : [],
+);
+
 async function requeterPortefeuilles() {
   chargementPortefeuilles.value = true;
   try {
@@ -529,8 +539,6 @@ async function requeterPortefeuilles() {
       page: paginationPortefeuilles.value.page,
       pageSize: paginationPortefeuilles.value.pageSize,
       search: (f.recherche ?? '').toString().trim() || undefined,
-      soldeMin: f.soldeMin ?? undefined,
-      soldeMax: f.soldeMax ?? undefined,
     };
     const { data } = await api.get('/resto/portefeuilles', { params });
     portefeuilles.value = data.data;
@@ -569,12 +577,21 @@ const colonnesPortefeuilles: QTableColumn[] = [
 
 // ------------------------------------------------------------ transactions
 const ongletTransactions = ref<'recharges' | 'consommations'>('recharges');
-const dateDebut = ref(aujourdhui());
-const dateFin = ref(aujourdhui());
 const chargementTransactions = ref(false);
-const transactions = ref<LigneTransaction[]>([]);
+/** Les deux flux de la période : les KPI portent sur l'ensemble. */
+const toutesLignes = ref<LigneTransaction[]>([]);
 
-const filtresTransactions = ref<Record<string, any>>({});
+const filtresTransactions = ref<Record<string, any>>({
+  dateDebut: aujourdhui(),
+  dateFin: aujourdhui(),
+});
+
+/** L'onglet ne fait que trancher dans ce qui est déjà chargé. */
+const transactions = computed(() =>
+  toutesLignes.value.filter((l) =>
+    ongletTransactions.value === 'recharges' ? l.type === 'RECHARGE' : l.type === 'REPAS',
+  ),
+);
 
 interface LigneTransaction {
   cle: string;
@@ -592,23 +609,37 @@ interface LigneTransaction {
 const optionsStatutsPaiement = Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({
   value, label,
 }));
-const optionsModePaiement = Object.entries(LIBELLE_MODE_PAIEMENT).map(([value, label]) => ({
-  value, label,
-}));
-const optionsOperateurs = Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({
-  value, label,
-}));
 
 const totaux = computed(() => {
   let debite = 0;
   let credite = 0;
-  for (const t of transactions.value) {
+  for (const t of toutesLignes.value) {
     if (t.montant < 0) debite += -t.montant;
     else credite += t.montant;
   }
   return { debite, credite, net: credite - debite };
 });
 
+const chipsTransactions = computed(() => {
+  const f = filtresTransactions.value;
+  const cs: ChipFiltre[] = [
+    {
+      label: `${dateLisible(f.dateDebut)} → ${dateLisible(f.dateFin)}`,
+      value: `${f.dateDebut}-${f.dateFin}`,
+      icone: 'date_range',
+    },
+  ];
+  if (f.statut) {
+    cs.push({
+      label: LIBELLE_STATUT_PAIEMENT[f.statut] ?? f.statut,
+      value: f.statut,
+      icone: 'payments', cle: 'statut'});
+  }
+  if (f.cantine) cs.push({ label: `Cantine : ${f.cantine}`, value: f.cantine, icone: 'restaurant' });
+  return cs;
+});
+
+/** La période reste : c'est le cadre de lecture, pas un filtre parmi d'autres. */
 function reinitialiserTransactions() {
   filtresTransactions.value = {
     dateDebut: filtresTransactions.value.dateDebut,
@@ -617,27 +648,24 @@ function reinitialiserTransactions() {
 }
 
 function periodeAujourdhui() {
-  dateDebut.value = aujourdhui();
-  dateFin.value = aujourdhui();
-  filtresTransactions.value.dateDebut = dateDebut.value;
-  filtresTransactions.value.dateFin = dateFin.value;
-  void chargerTransactions();
+  filtresTransactions.value = {
+    ...filtresTransactions.value,
+    dateDebut: aujourdhui(),
+    dateFin: aujourdhui(),
+  };
 }
 
 async function chargerTransactions() {
   chargementTransactions.value = true;
   try {
-    dateDebut.value = filtresTransactions.value.dateDebut || dateDebut.value;
-    dateFin.value = filtresTransactions.value.dateFin || dateFin.value;
     const params: Record<string, any> = {
-      dateDebut: dateDebut.value,
-      dateFin: dateFin.value,
+      dateDebut: filtresTransactions.value.dateDebut || aujourdhui(),
+      dateFin: filtresTransactions.value.dateFin || aujourdhui(),
       pageSize: 200,
     };
+    // Le serveur ne filtre les recharges que par statut de paiement.
     const paramsRecharges: Record<string, any> = { ...params };
     if (filtresTransactions.value.statut) paramsRecharges.statut = filtresTransactions.value.statut;
-    if (filtresTransactions.value.mode) paramsRecharges.mode = filtresTransactions.value.mode;
-    if (filtresTransactions.value.operateur) paramsRecharges.operateur = filtresTransactions.value.operateur;
 
     const paramsConso: Record<string, any> = { ...params };
     if (filtresTransactions.value.cantine) paramsConso.cantine = filtresTransactions.value.cantine;
@@ -675,13 +703,7 @@ async function chargerTransactions() {
         annulable: false,
       })),
     ];
-    let visibles = lignes;
-    if (ongletTransactions.value === 'recharges') {
-      visibles = lignes.filter((l) => l.type === 'RECHARGE');
-    } else if (ongletTransactions.value === 'consommations') {
-      visibles = lignes.filter((l) => l.type === 'REPAS');
-    }
-    transactions.value = visibles.sort((a, b) => (a.date < b.date ? 1 : -1));
+    toutesLignes.value = lignes.sort((a, b) => (a.date < b.date ? 1 : -1));
   } finally {
     chargementTransactions.value = false;
   }
@@ -741,13 +763,13 @@ function apresRecharge() {
   void chargerTransactions();
 }
 
-watch(ongletTransactions, () => {
+// Sans ce watcher, changer les dates n'avait aucun effet tant qu'on ne
+// cliquait pas sur « Actualiser ».
+watch(filtresTransactions, () => {
   void chargerTransactions();
-});
+}, { deep: true });
 
 onMounted(() => {
-  filtresTransactions.value.dateDebut = aujourdhui();
-  filtresTransactions.value.dateFin = aujourdhui();
   void requeterPortefeuilles();
   void chargerTransactions();
 });
@@ -770,12 +792,6 @@ onMounted(() => {
   .lettrage {
     font-size: 1.25rem;
   }
-}
-
-.guichet__libelle {
-  color: var(--up-encre-douce);
-  margin-bottom: var(--up-1);
-  font-size: 0.9rem;
 }
 
 .guichet__valider {

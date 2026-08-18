@@ -9,8 +9,8 @@
         </div>
       </div>
       <div class="col-auto row q-gutter-sm">
-        <champ-date v-model="dateDebut" style="width: 160px" />
-        <champ-date v-model="dateFin" style="width: 160px" />
+        <champ-date v-model="dateDebut" label="Du" style="width: 160px" />
+        <champ-date v-model="dateFin" label="Au" style="width: 160px" />
         <q-select
           v-model="departementId"
           :options="optionsDepartements"
@@ -22,7 +22,16 @@
           label="Département"
           style="min-width: 180px"
         />
-        <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+        <q-btn
+          round
+          color="primary"
+          icon="refresh"
+          aria-label="Recalculer le tableau de bord"
+          :loading="chargement"
+          @click="charger"
+        >
+          <q-tooltip>Recalculer</q-tooltip>
+        </q-btn>
       </div>
     </div>
 
@@ -51,6 +60,16 @@
         label="Aller à la tournée"
         to="/controle"
       />
+      <q-btn
+        v-else
+        unelevated
+        no-caps
+        color="white"
+        text-color="primary"
+        icon="event_note"
+        label="Voir le registre des séances"
+        :to="lienSeancesJour"
+      />
     </section>
 
     <!-- Relevé du panneau : une lecture par ligne, comme sur la planche peinte -->
@@ -69,10 +88,11 @@
         <q-card flat bordered class="carte">
           <q-card-section>
             <div class="text-subtitle2">Évolution sur 14 jours</div>
-            <div class="text-caption text-grey-7">Séances assurées, absences et retards</div>
+            <div class="text-caption">Séances assurées, absences et retards</div>
           </q-card-section>
           <q-card-section>
             <chart-canvas v-if="d" :config="configEvolution" :hauteur="260" />
+            <p v-else class="pochoir carte__vide">Aucune donnée sur la période.</p>
           </q-card-section>
         </q-card>
       </div>
@@ -81,19 +101,31 @@
         <q-card flat bordered class="carte">
           <q-card-section>
             <div class="text-subtitle2">Répartition des constats</div>
-            <div class="text-caption text-grey-7">Sur la période sélectionnée</div>
+            <div class="text-caption">Sur la période sélectionnée</div>
           </q-card-section>
           <q-card-section>
             <chart-canvas v-if="d" :config="configRepartition" :hauteur="260" />
+            <p v-else class="pochoir carte__vide">Aucune donnée sur la période.</p>
           </q-card-section>
         </q-card>
       </div>
 
       <div class="col-12 col-md-6">
         <q-card flat bordered class="carte">
-          <q-card-section class="text-subtitle2">Assiduité par département</q-card-section>
+          <q-card-section class="row items-center">
+            <div class="col text-subtitle2">Assiduité par département</div>
+            <div class="text-caption">Cliquez pour filtrer le tableau</div>
+          </q-card-section>
           <q-list separator>
-            <q-item v-for="dep in d?.departements ?? []" :key="dep.id">
+            <!-- « Sans département » n'est pas un identifiant : la ligne se lit
+                 mais ne filtre pas. -->
+            <q-item
+              v-for="dep in d?.departements ?? []"
+              :key="dep.id"
+              :clickable="dep.id !== 'sans'"
+              :active="departementId === dep.id"
+              @click="basculerDepartement(dep.id)"
+            >
               <q-item-section>
                 <q-item-label>{{ dep.nom }}</q-item-label>
                 <q-item-label caption>
@@ -101,14 +133,13 @@
                   {{ heuresLisibles(dep.heuresRealisees) }} réalisées
                 </q-item-label>
               </q-item-section>
-              <q-item-section side style="width: 130px">
-                <q-linear-progress
-                  :value="dep.tauxPresence / 100"
-                  size="10px"
-                  rounded
-                  :color="dep.tauxPresence >= 85 ? 'positive' : dep.tauxPresence >= 70 ? 'warning' : 'negative'"
-                />
-                <div class="text-caption text-right">{{ pourcentLisible(dep.tauxPresence) }}</div>
+              <q-item-section side style="width: 140px">
+                <barre-taux :valeur="dep.tauxPresence" />
+              </q-item-section>
+            </q-item>
+            <q-item v-if="!d?.departements?.length">
+              <q-item-section class="pochoir carte__vide">
+                Aucune séance rattachée à un département sur la période.
               </q-item-section>
             </q-item>
           </q-list>
@@ -117,18 +148,24 @@
 
       <div class="col-12 col-md-6">
         <q-card flat bordered class="carte">
-          <q-card-section class="row items-center">
+          <q-card-section class="row items-center q-gutter-sm">
             <div class="col text-subtitle2">Enseignants les plus absents</div>
-            <q-badge v-if="d?.justificatifsEnAttente" color="warning" class="q-ml-sm">
-              {{ d.justificatifsEnAttente }} justificatif(s) en attente
-            </q-badge>
+            <q-btn
+              v-if="d?.justificatifsEnAttente"
+              outline
+              dense
+              no-caps
+              icon="assignment_late"
+              :label="`${d.justificatifsEnAttente} justificatif(s) à arbitrer`"
+              :to="{ name: 'justificatifs', query: { statut: 'EN_ATTENTE' } }"
+            />
           </q-card-section>
           <q-list separator>
             <q-item v-for="e in d?.enseignantsAbsents ?? []" :key="e.id">
               <q-item-section avatar>
-                <q-avatar color="red-1" text-color="negative" size="34px">
-                  {{ e.absent }}
-                </q-avatar>
+                <span class="champ champ--absent tableau-de-bord__compte">
+                  <span class="lettrage chiffres">{{ e.absent }}</span>
+                </span>
               </q-item-section>
               <q-item-section>
                 <q-item-label>{{ e.nom }}</q-item-label>
@@ -136,27 +173,53 @@
                   {{ e.planifiees }} séance(s) programmée(s) · présence {{ pourcentLisible(e.tauxPresence) }}
                 </q-item-label>
               </q-item-section>
+              <q-item-section side>
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="event_note"
+                  aria-label="Voir les séances de cet enseignant"
+                  :to="lienSeancesEnseignant(e.id)"
+                >
+                  <q-tooltip>Voir ses séances sur la période</q-tooltip>
+                </q-btn>
+              </q-item-section>
             </q-item>
             <q-item v-if="!d?.enseignantsAbsents?.length">
-              <q-item-section class="text-grey-6">
+              <q-item-section class="pochoir carte__vide">
                 Aucune absence constatée sur la période.
               </q-item-section>
             </q-item>
           </q-list>
+          <q-card-actions align="right">
+            <q-btn
+              v-if="peutVoirStatistiques"
+              flat
+              no-caps
+              icon="query_stats"
+              label="Statistiques par enseignant"
+              :to="lienStatistiques"
+            />
+          </q-card-actions>
         </q-card>
       </div>
     </div>
+
+    <q-inner-loading :showing="chargement" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import ChampDate from '../components/ChampDate.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { ChartConfiguration } from 'chart.js';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import ChartCanvas from '../components/ChartCanvas.vue';
+import BarreTaux from '../components/BarreTaux.vue';
 import {
+  LIBELLE_STATUT_PRESENCE,
   aujourdhui,
   dateLisible,
   decalerJours,
@@ -166,6 +229,34 @@ import {
 import type { Departement } from '../types';
 
 const auth = useAuthStore();
+
+/**
+ * Les peintures du panneau, reprises de `css/quasar.variables.scss` : Chart.js
+ * ne lit pas les variables Sass, la liste doit donc rester alignée à la main.
+ */
+const VERT = '#0F7A45';
+const JAUNE = '#EFB700';
+const ROUGE = '#C4122E';
+const VERT_CLAIR = '#3E9E6C';
+const JAUNE_FONCE = '#C98A00';
+const ROUGE_CLAIR = '#E0574F';
+const ENCRE = '#10251E';
+const ENCRE_DOUCE = '#33463F';
+
+/**
+ * Une peinture par statut, indexée par la clé d'énumération et non par la
+ * position : le serveur renvoie désormais les clés (`PRESENT`, `EXCUSE`…) et
+ * c'est l'écran qui les traduit, comme partout ailleurs dans l'application.
+ */
+const PEINTURE_STATUT: Record<string, string> = {
+  PRESENT: VERT,
+  RETARD: JAUNE,
+  ABSENT: ROUGE,
+  EXCUSE: ROUGE_CLAIR,
+  REMPLACE: VERT_CLAIR,
+  DEPART_ANTICIPE: JAUNE_FONCE,
+  NON_CONTROLE: ENCRE_DOUCE,
+};
 
 const dateDebut = ref(decalerJours(aujourdhui(), -29));
 const dateFin = ref(aujourdhui());
@@ -177,6 +268,32 @@ const chargement = ref(false);
 const optionsDepartements = computed(() =>
   departements.value.map((x) => ({ label: x.nom, value: x.id })),
 );
+
+const peutVoirStatistiques = computed(() =>
+  auth.aRole(['CONTROLEUR', 'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT']),
+);
+
+/** Les liens sortants transportent la période lue ici : on retrouve le même
+ *  cadrage sur le registre et sur les relevés, pas les valeurs par défaut. */
+const lienStatistiques = computed(() => ({
+  name: 'statistiques',
+  query: { onglet: 'enseignants', dateDebut: dateDebut.value, dateFin: dateFin.value },
+}));
+
+const lienSeancesJour = computed(() => ({
+  name: 'seances',
+  query: { dateDebut: dateDebut.value, dateFin: dateFin.value },
+}));
+
+function basculerDepartement(id: string) {
+  if (id === 'sans') return;
+  departementId.value = departementId.value === id ? null : id;
+}
+
+const lienSeancesEnseignant = (enseignantId: string) => ({
+  name: 'seances',
+  query: { enseignantId, dateDebut: dateDebut.value, dateFin: dateFin.value },
+});
 
 const kpis = computed(() => {
   const g = d.value?.global;
@@ -216,7 +333,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
       {
         label: 'Séances assurées',
         data: (d.value?.evolution ?? []).map((e: any) => e.assurees),
-        borderColor: '#0F7A45',
+        borderColor: VERT,
         backgroundColor: 'rgba(15,122,69,.16)',
         borderWidth: 3,
         fill: true,
@@ -226,7 +343,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
       {
         label: 'Absences',
         data: (d.value?.evolution ?? []).map((e: any) => e.absences),
-        borderColor: '#C4122E',
+        borderColor: ROUGE,
         borderWidth: 3,
         tension: 0,
         pointRadius: 0,
@@ -234,7 +351,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
       {
         label: 'Retards',
         data: (d.value?.evolution ?? []).map((e: any) => e.retards),
-        borderColor: '#EFB700',
+        borderColor: JAUNE,
         borderWidth: 3,
         tension: 0,
         pointRadius: 0,
@@ -250,20 +367,16 @@ const configEvolution = computed<ChartConfiguration>(() => ({
 const configRepartition = computed<ChartConfiguration>(() => ({
   type: 'doughnut',
   data: {
-    labels: (d.value?.repartition ?? []).map((r: any) => r.statut),
+    labels: (d.value?.repartition ?? []).map(
+      (r: any) => LIBELLE_STATUT_PRESENCE[r.statut as keyof typeof LIBELLE_STATUT_PRESENCE] ?? r.statut,
+    ),
     datasets: [
       {
         data: (d.value?.repartition ?? []).map((r: any) => r.valeur),
-        backgroundColor: [
-          '#0F7A45',
-          '#EFB700',
-          '#C4122E',
-          '#E0574F',
-          '#3E9E6C',
-          '#C98A00',
-          '#33463F',
-        ],
-        borderColor: '#10251E',
+        backgroundColor: (d.value?.repartition ?? []).map(
+          (r: any) => PEINTURE_STATUT[r.statut] ?? ENCRE_DOUCE,
+        ),
+        borderColor: ENCRE,
         borderWidth: 2,
       },
     ],
@@ -291,10 +404,18 @@ async function charger() {
 }
 
 onMounted(async () => {
-  const { data } = await api.get('/departements', { params: { all: '1' } });
-  departements.value = data.data;
+  // Le référentiel n'alimente qu'une liste déroulante : son échec ne doit pas
+  // priver la page de son tableau.
+  try {
+    const { data } = await api.get('/departements', { params: { all: '1' } });
+    departements.value = data.data;
+  } catch {
+    departements.value = [];
+  }
   await charger();
 });
+
+watch([dateDebut, dateFin, departementId], charger);
 </script>
 
 <style scoped lang="scss">
@@ -341,6 +462,20 @@ onMounted(async () => {
   position: relative;
   padding-left: var(--up-2);
   color: #fff;
+}
+
+// Compteur d'absences en champ peint : la règle du statut peint interdit la
+// pastille pastel posée sur du blanc.
+.tableau-de-bord__compte {
+  width: 34px;
+  height: 34px;
+  color: #fff;
+}
+
+.carte__vide {
+  color: var(--up-encre-douce);
+  margin: 0;
+  padding: var(--up-2) 0;
 }
 
 .releve { margin-bottom: var(--up-3); }

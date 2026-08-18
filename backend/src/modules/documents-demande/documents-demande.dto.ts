@@ -130,4 +130,6 @@ export class DocumentsDemandeQueryDto extends QueryDto {
 
 export class MesDemandesQueryDto extends QueryDto {
   @IsOptional() @IsEnum(StatutDemande) statut?: StatutDemande;
+  /** L'étudiant filtre aussi par nature de document (le service gère `type`). */
+  @IsOptional() @IsEnum(TypeDemandeDocument) type?: TypeDemandeDocument;
 }

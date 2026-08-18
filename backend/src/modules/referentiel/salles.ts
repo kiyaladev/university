@@ -5,7 +5,7 @@ import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { Roles } from '../../common/decorators';
@@ -47,6 +47,14 @@ export class SallesService extends CrudService {
       where: { id },
       data: { qrToken: this.nouveauToken() },
     });
+  }
+
+  /** Une salle où des séances ou des réservations sont posées se garde. */
+  async remove(id: string) {
+    return supprimerOuConflit(
+      () => super.remove(id),
+      'Cette salle ne peut pas être supprimée : des séances ou des réservations y sont rattachées. Désactivez-la plutôt que de la supprimer.',
+    );
   }
 }
 

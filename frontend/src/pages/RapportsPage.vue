@@ -2,8 +2,20 @@
   <q-page class="q-pa-md">
     <div class="page-titre">Rapports & états</div>
     <div class="page-sous-titre q-mb-md">
-      Exploitation des contrôles : assiduité, volume horaire réalisé, paiement des vacataires
+      Les états ligne à ligne du registre de contrôle, sur une période choisie :
+      qui a assuré quoi, combien d'heures, combien à payer. C'est la pièce
+      justificative — imprimable et exportable. Les indicateurs de suivi
+      quotidien sont dans Statistiques, la synthèse annuelle dans le Tableau de
+      bord Rectorat.
     </div>
+
+    <liens-croises
+      :liens="[
+        { to: '/statistiques', libelle: 'Statistiques', icone: 'query_stats', aide: 'Indicateurs de contrôle au jour le jour' },
+        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'Synthèse annuelle : effectifs, réussite, masse salariale' },
+        { to: '/paie', libelle: 'Paie des vacataires', icone: 'payments', aide: 'Feuilles mensuelles issues de ces heures contrôlées' },
+      ]"
+    />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm items-center">
@@ -38,7 +50,16 @@
           />
         </div>
         <div class="col-auto">
-          <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+          <q-btn
+            round
+            color="primary"
+            icon="refresh"
+            aria-label="Recharger les états sur la période"
+            :loading="chargement"
+            @click="charger"
+          >
+            <q-tooltip>Recharger les états</q-tooltip>
+          </q-btn>
         </div>
         <div class="col-auto">
           <q-btn
@@ -46,11 +67,16 @@
             color="secondary"
             no-caps
             icon="table_view"
-            label="Exporter en CSV"
+            :label="`Exporter ${libelleOnglet} en CSV`"
             @click="exporter"
           >
-            <q-tooltip>Exporte l’onglet affiché (tableur Excel / LibreOffice)</q-tooltip>
+            <q-tooltip>
+              Tableur (Excel / LibreOffice) — {{ libelleOnglet }}, {{ periodeLisible }}
+            </q-tooltip>
           </q-btn>
+        </div>
+        <div class="col-12 text-caption text-grey-7">
+          Période analysée : {{ periodeLisible }} — 30 derniers jours par défaut.
         </div>
       </q-card-section>
     </q-card>
@@ -84,27 +110,33 @@
           </template>
           <template #body-cell-taux="p">
             <q-td :props="p">
-              <div class="row items-center no-wrap q-gutter-sm">
-                <q-linear-progress
-                  class="col"
-                  style="min-width: 90px"
-                  :value="p.row.tauxPresence / 100"
-                  size="10px"
-                  rounded
-                  :color="p.row.tauxPresence >= 85 ? 'positive' : p.row.tauxPresence >= 70 ? 'warning' : 'negative'"
-                />
-                <div class="col-auto text-caption text-weight-medium" style="width: 46px">
-                  {{ pourcentLisible(p.row.tauxPresence) }}
-                </div>
-              </div>
+              <barre-taux :valeur="p.row.tauxPresence" />
             </q-td>
           </template>
           <template #body-cell-actions="p">
             <q-td :props="p" class="text-right">
-              <q-btn flat dense round icon="print" @click="imprimerFiche(p.row.enseignantId)">
-                <q-tooltip>Fiche individuelle</q-tooltip>
+              <q-btn
+                flat
+                dense
+                round
+                icon="print"
+                :aria-label="`Imprimer la fiche individuelle de ${p.row.nom}`"
+                @click="imprimerFiche(p.row.enseignantId)"
+              >
+                <q-tooltip>Fiche individuelle (A4)</q-tooltip>
               </q-btn>
             </q-td>
+          </template>
+          <template #no-data>
+            <div class="etat-vide">
+              <q-icon name="how_to_reg" size="36px" />
+              <div class="text-subtitle2 q-mt-sm">Aucune séance programmée sur la période</div>
+              <div class="text-caption">
+                L'assiduité se calcule à partir des séances de l'emploi du temps.
+                Élargissez la période ou retirez les filtres département / promotion.
+              </div>
+              <q-btn flat dense no-caps color="primary" icon="event" label="Ouvrir l'emploi du temps" to="/emploi-du-temps" />
+            </div>
           </template>
         </q-table>
       </q-tab-panel>
@@ -123,20 +155,21 @@
         >
           <template #body-cell-avancement="p">
             <q-td :props="p">
-              <div class="row items-center no-wrap q-gutter-sm">
-                <q-linear-progress
-                  class="col"
-                  style="min-width: 90px"
-                  :value="Math.min(1, p.row.tauxContrat / 100)"
-                  size="10px"
-                  rounded
-                  :color="p.row.tauxContrat >= 90 ? 'positive' : p.row.tauxContrat >= 50 ? 'primary' : 'warning'"
-                />
-                <div class="col-auto text-caption text-weight-medium" style="width: 46px">
-                  {{ pourcentLisible(p.row.tauxContrat) }}
-                </div>
-              </div>
+              <!-- Un contrat est « en avance » bien plus tôt qu'un taux de
+                   présence : les seuils sont propres à cet indicateur. -->
+              <barre-taux :valeur="p.row.tauxContrat" :seuil-bas="50" :seuil-haut="90" />
             </q-td>
+          </template>
+          <template #no-data>
+            <div class="etat-vide">
+              <q-icon name="timelapse" size="36px" />
+              <div class="text-subtitle2 q-mt-sm">Aucune charge d'enseignement sur la période</div>
+              <div class="text-caption">
+                Le volume horaire compare les heures réalisées au contrat de chaque
+                affectation. Sans affectation, rien à comparer.
+              </div>
+              <q-btn flat dense no-caps color="primary" icon="assignment_ind" label="Ouvrir les charges d'enseignement" to="/affectations" />
+            </div>
           </template>
         </q-table>
       </q-tab-panel>
@@ -168,7 +201,16 @@
               />
             </div>
             <div class="col-auto">
-              <q-btn color="primary" unelevated icon="print" no-caps label="Imprimer l’état" @click="imprimerPaiement" />
+              <q-btn
+                color="primary"
+                unelevated
+                icon="print"
+                no-caps
+                label="Imprimer l’état de paiement (A4)"
+                @click="imprimerPaiement"
+              >
+                <q-tooltip>{{ periodeLisible }}{{ statutEnseignant ? ` — ${statutEnseignant.toLowerCase()}s` : '' }}</q-tooltip>
+              </q-btn>
             </div>
           </q-card-section>
         </q-card>
@@ -191,11 +233,22 @@
               <q-td colspan="100%">
                 <div class="text-caption text-grey-8">
                   <span v-for="d in p.row.detail" :key="d.libelle" class="q-mr-md">
-                    {{ d.libelle }} : {{ d.heures }} h ({{ d.seances }} séances)
+                    {{ d.libelle }} : {{ heuresLisibles(d.heures) }} ({{ d.seances }} séances)
                   </span>
                 </div>
               </q-td>
             </q-tr>
+          </template>
+          <template #no-data>
+            <div class="etat-vide">
+              <q-icon name="payments" size="36px" />
+              <div class="text-subtitle2 q-mt-sm">Aucune heure payable sur la période</div>
+              <div class="text-caption">
+                Seules les heures constatées lors d'un contrôle sont payables.
+                Vérifiez la période, ou le filtre de statut ci-dessus.
+              </div>
+              <q-btn flat dense no-caps color="primary" icon="fact_check" label="Ouvrir le contrôle des séances" to="/controle" />
+            </div>
           </template>
         </q-table>
       </q-tab-panel>
@@ -215,7 +268,16 @@
               </div>
             </div>
             <div class="col-auto">
-              <q-btn color="primary" unelevated icon="print" no-caps label="Imprimer le registre" @click="imprimerRegistre" />
+              <q-btn
+                color="primary"
+                unelevated
+                icon="print"
+                no-caps
+                label="Imprimer le registre (A4)"
+                @click="imprimerRegistre"
+              >
+                <q-tooltip>{{ periodeLisible }}</q-tooltip>
+              </q-btn>
             </div>
           </q-card-section>
         </q-card>
@@ -235,6 +297,17 @@
               <champ-statut :statut="p.row.statut" dense />
             </q-td>
           </template>
+          <template #no-data>
+            <div class="etat-vide">
+              <q-icon name="menu_book" size="36px" />
+              <div class="text-subtitle2 q-mt-sm">Registre vide sur la période</div>
+              <div class="text-caption">
+                Le registre transcrit les séances programmées, contrôlées ou non.
+                Élargissez la période pour retrouver des lignes.
+              </div>
+              <q-btn flat dense no-caps color="primary" icon="event" label="Ouvrir les séances" to="/seances" />
+            </div>
+          </template>
         </q-table>
       </q-tab-panel>
     </q-tab-panels>
@@ -244,13 +317,17 @@
 <script setup lang="ts">
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
-import type { QTableColumn } from 'quasar';
+import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
+import BarreTaux from '../components/BarreTaux.vue';
+import ChampStatut from '../components/ChampStatut.vue';
+import LiensCroises from '../components/LiensCroises.vue';
 import {
-  LIBELLE_STATUT_PRESENCE,
   STATUTS_ENSEIGNANT,
   aujourdhui,
+  dateLisible,
   decalerJours,
   dureeLisible,
   heuresLisibles,
@@ -259,7 +336,17 @@ import {
 } from '../utils/libelles';
 import type { Departement, Promotion } from '../types';
 
+const $q = useQuasar();
 const auth = useAuthStore();
+const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
+
+/** Périmètre de chaque onglet : sert au libellé du bouton d'export et au chemin d'API. */
+const ONGLETS: Record<string, { libelle: string; chemin: string }> = {
+  assiduite: { libelle: 'l’assiduité des enseignants', chemin: 'presence-enseignants' },
+  volume: { libelle: 'le volume horaire', chemin: 'volume-horaire' },
+  paiement: { libelle: 'l’état de paiement', chemin: 'etat-paiement' },
+  registre: { libelle: 'le registre', chemin: 'registre' },
+};
 
 const onglet = ref('assiduite');
 const chargement = ref(false);
@@ -283,6 +370,11 @@ const optionsDepartements = computed(() =>
 );
 const optionsPromotions = computed(() =>
   promotions.value.map((p) => ({ label: p.nom, value: p.id })),
+);
+
+const libelleOnglet = computed(() => ONGLETS[onglet.value]?.libelle ?? 'l’onglet affiché');
+const periodeLisible = computed(
+  () => `du ${dateLisible(filtres.value.dateDebut)} au ${dateLisible(filtres.value.dateFin)}`,
 );
 
 const colonnesAssiduite: QTableColumn[] = [
@@ -360,29 +452,29 @@ function parametres() {
   };
 }
 
+/**
+ * Une URL d'impression ou d'export porte exactement les mêmes filtres que le
+ * tableau affiché — promotion comprise, sans quoi le CSV ne correspondrait pas
+ * à ce que l'écran montre.
+ */
 function url(base: string, chemin: string, extra = '') {
   const p = parametres();
   return (
     `${API_URL}/${base}/${chemin}?dateDebut=${p.dateDebut}&dateFin=${p.dateFin}` +
-    `${p.departementId ? `&departementId=${p.departementId}` : ''}${extra}&token=${auth.token}`
+    `${p.departementId ? `&departementId=${p.departementId}` : ''}` +
+    `${p.promotionId ? `&promotionId=${p.promotionId}` : ''}${extra}&token=${auth.token}`
   );
 }
 
 const urlImpression = (chemin: string, extra = '') => url('impression', chemin, extra);
 
-/** Export CSV de l'onglet affiché. */
+/** Export CSV de l'onglet affiché, filtres et période inclus. */
 function exporter() {
-  const chemins: Record<string, string> = {
-    assiduite: 'presence-enseignants',
-    volume: 'volume-horaire',
-    paiement: 'etat-paiement',
-    registre: 'registre',
-  };
   const extra =
     onglet.value === 'paiement' && statutEnseignant.value
       ? `&statutEnseignant=${statutEnseignant.value}`
       : '';
-  window.open(url('export', chemins[onglet.value], extra), '_blank');
+  window.open(url('export', ONGLETS[onglet.value].chemin, extra), '_blank');
 }
 
 const imprimerRegistre = () => window.open(urlImpression('registre'), '_blank');
@@ -391,7 +483,8 @@ const imprimerPaiement = () =>
     urlImpression('etat-paiement', statutEnseignant.value ? `&statutEnseignant=${statutEnseignant.value}` : ''),
     '_blank',
   );
-const imprimerFiche = (id: string) => window.open(urlImpression(`fiche-enseignant/${id}`), '_blank');
+const imprimerFiche = (id: string) =>
+  ouvrirFicheEnseignant(id, filtres.value.dateDebut, filtres.value.dateFin);
 
 async function charger() {
   chargement.value = true;
@@ -409,6 +502,11 @@ async function charger() {
     volume.value = v.data;
     paiement.value = pa.data;
     registre.value = r.data;
+  } catch (e: any) {
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement des états impossible.',
+    });
   } finally {
     chargement.value = false;
   }
@@ -417,12 +515,19 @@ async function charger() {
 watch(filtres, charger, { deep: true });
 
 onMounted(async () => {
-  const [d, p] = await Promise.all([
-    api.get('/departements', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-  ]);
-  departements.value = d.data.data;
-  promotions.value = p.data.data;
+  try {
+    const [d, p] = await Promise.all([
+      api.get('/departements', { params: { all: '1' } }),
+      api.get('/promotions', { params: { all: '1' } }),
+    ]);
+    departements.value = d.data.data;
+    promotions.value = p.data.data;
+  } catch {
+    $q.notify({ type: 'warning', message: 'Départements et promotions indisponibles : les filtres resteront vides.' });
+  }
   await charger();
 });
 </script>
+
+<style scoped lang="scss">
+</style>

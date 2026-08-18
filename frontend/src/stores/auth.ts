@@ -88,7 +88,7 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await api.post(
           '/portail/otp/verifier',
           { telephone, code },
-          { silencieux: true } as never,
+          { silencieux: true },
         );
         this.token = data.token;
         localStorage.setItem(CLE_TOKEN, data.token);

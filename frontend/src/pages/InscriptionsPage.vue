@@ -21,6 +21,16 @@
       </div>
     </div>
 
+    <!-- Arrivée depuis la fiche d'un étudiant : le ciblage est annoncé et se lève. -->
+    <q-banner v-if="etudiantCible" dense class="note--info q-mb-md">
+      <template #avatar><q-icon name="person_search" /></template>
+      Dossiers de <strong>{{ etudiantCible.prenom }} {{ etudiantCible.nom }}</strong>
+      ({{ etudiantCible.matricule }}) — toutes années confondues.
+      <template #action>
+        <q-btn flat dense no-caps label="Voir tous les dossiers" @click="retirerEtudiantCible" />
+      </template>
+    </q-banner>
+
     <filter-bar
       v-model="filtres"
       :chips="chips"
@@ -37,7 +47,7 @@
           emit-value
           map-options
           label="Année académique"
-          @update:model-value="chargerPromotions; filtres.promotionId = null"
+          @update:model-value="filtres.promotionId = null"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -84,7 +94,29 @@
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">Aucun dossier pour ces critères.</div>
+        <div class="inscriptions-vide">
+          <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
+          <div>{{ messageVide }}</div>
+          <div class="q-mt-sm q-gutter-sm">
+            <q-btn
+              v-if="filtresActifs"
+              outline
+              no-caps
+              icon="refresh"
+              label="Réinitialiser les filtres"
+              @click="reinitialiser"
+            />
+            <q-btn
+              v-if="peutGerer"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              label="Nouvelle inscription au guichet"
+              @click="dialogInscription = true"
+            />
+          </div>
+        </div>
       </template>
 
       <template #body-cell-etudiant="p">
@@ -116,16 +148,18 @@
       </template>
 
       <template #body-cell-paye="p">
-        <q-td :props="p" class="text-right">
-          <span :class="{ 'text-positive text-weight-medium': solde(p.row) >= p.row.montantFrais }">
-            {{ montantLisible(solde(p.row)) }}
+        <q-td :props="p" class="text-right chiffres">
+          <span :class="{ 'text-positive text-weight-medium': resteAPayer(p.row) === 0 }">
+            {{ montantLisible(montantPaye(p.row)) }}
           </span>
         </q-td>
       </template>
 
       <template #body-cell-solde="p">
-        <q-td :props="p" class="text-right text-weight-medium">
-          {{ montantLisible(Math.max(0, p.row.montantFrais - solde(p.row))) }}
+        <q-td :props="p" class="text-right text-weight-medium chiffres">
+          <span :class="{ 'text-negative': resteAPayer(p.row) > 0 }">
+            {{ montantLisible(resteAPayer(p.row)) }}
+          </span>
         </q-td>
       </template>
 
@@ -138,14 +172,28 @@
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn
+            v-if="peutEncaisserDossier(p.row)"
             flat
             dense
             round
             color="primary"
             icon="payments"
+            aria-label="Encaisser un paiement sur ce dossier"
             @click="encaisser(p.row)"
           >
-            <q-tooltip>Encaisser un paiement</q-tooltip>
+            <q-tooltip>
+              Encaisser — reste {{ montantLisible(resteAPayer(p.row)) }} GNF
+            </q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            dense
+            round
+            icon="receipt_long"
+            aria-label="Voir les paiements de ce dossier"
+            @click="voirPaiements(p.row)"
+          >
+            <q-tooltip>Paiements du dossier</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutValider(p.row)"
@@ -154,6 +202,7 @@
             round
             color="positive"
             icon="verified"
+            aria-label="Valider le dossier"
             @click="valider(p.row)"
           >
             <q-tooltip>Valider le dossier (frais réglés)</q-tooltip>
@@ -165,12 +214,20 @@
             round
             color="negative"
             icon="cancel"
+            aria-label="Annuler le dossier"
             @click="annuler(p.row)"
           >
             <q-tooltip>Annuler le dossier</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="print" @click="imprimer(p.row)">
-            <q-tooltip>Attestation d'inscription A4</q-tooltip>
+          <q-btn
+            flat
+            dense
+            round
+            icon="print"
+            aria-label="Imprimer le certificat d'inscription"
+            @click="imprimer(p.row)"
+          >
+            <q-tooltip>Certificat d’inscription A4</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -178,15 +235,23 @@
             round
             color="primary"
             icon="person"
+            aria-label="Voir la fiche de l'étudiant"
             @click="voirEtudiant(p.row)"
           >
-            <q-tooltip>Voir l'étudiant</q-tooltip>
+            <q-tooltip>Fiche de l’étudiant</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
-    <div v-else class="inscriptions-cartes">
+    <q-linear-progress
+      v-if="modeVue === 'cartes' && chargement"
+      indeterminate
+      color="primary"
+      class="q-mb-sm"
+    />
+
+    <div v-else-if="modeVue === 'cartes'" class="inscriptions-cartes">
       <q-card
         v-for="d in inscriptions"
         :key="d.id"
@@ -216,13 +281,16 @@
             <div class="col-4">
               <div class="text-caption text-grey-7">Payé</div>
               <div class="text-weight-medium chiffres text-positive">
-                {{ montantLisible(solde(d)) }}
+                {{ montantLisible(montantPaye(d)) }}
               </div>
             </div>
             <div class="col-4">
-              <div class="text-caption text-grey-7">Solde</div>
-              <div class="text-weight-medium chiffres">
-                {{ montantLisible(Math.max(0, d.montantFrais - solde(d))) }}
+              <div class="text-caption text-grey-7">Reste à payer</div>
+              <div
+                class="text-weight-medium chiffres"
+                :class="{ 'text-negative': resteAPayer(d) > 0 }"
+              >
+                {{ montantLisible(resteAPayer(d)) }}
               </div>
             </div>
           </div>
@@ -233,6 +301,7 @@
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
           <q-btn
+            v-if="peutEncaisserDossier(d)"
             flat
             dense
             color="primary"
@@ -240,6 +309,14 @@
             no-caps
             label="Encaisser"
             @click="encaisser(d)"
+          />
+          <q-btn
+            flat
+            dense
+            icon="receipt_long"
+            no-caps
+            label="Paiements"
+            @click="voirPaiements(d)"
           />
           <q-btn
             v-if="peutValider(d)"
@@ -267,7 +344,7 @@
             color="primary"
             icon="print"
             no-caps
-            label="Attestation"
+            label="Certificat"
             @click="imprimer(d)"
           />
           <q-btn
@@ -280,8 +357,28 @@
           />
         </q-card-actions>
       </q-card>
-      <div v-if="!inscriptions.length" class="text-center q-pa-md text-grey-7">
-        Aucun dossier pour ces critères.
+      <div v-if="!inscriptions.length" class="inscriptions-vide">
+        <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
+        <div>{{ messageVide }}</div>
+        <div class="q-mt-sm q-gutter-sm">
+          <q-btn
+            v-if="filtresActifs"
+            outline
+            no-caps
+            icon="refresh"
+            label="Réinitialiser les filtres"
+            @click="reinitialiser"
+          />
+          <q-btn
+            v-if="peutGerer"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            label="Nouvelle inscription au guichet"
+            @click="dialogInscription = true"
+          />
+        </div>
       </div>
     </div>
 
@@ -299,6 +396,7 @@
     <paiement-dialog
       v-model="dialogPaiement"
       :inscription-id="paiementInscriptionId"
+      :montant-initial="paiementMontantInitial"
       @paye="charger"
     />
     <etudiant-dialog
@@ -322,7 +420,11 @@
           <q-btn flat round dense icon="close" v-close-popup />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <q-list separator dense>
+          <q-linear-progress v-if="chargementEtudiant" indeterminate color="primary" />
+          <div v-else-if="!etudiantApercu" class="text-center q-pa-md text-grey-7">
+            Fiche étudiant indisponible.
+          </div>
+          <q-list v-else separator dense>
             <q-item>
               <q-item-section>
                 <q-item-label caption>Sexe</q-item-label>
@@ -364,9 +466,25 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat no-caps label="Fermer" v-close-popup />
           <q-btn
-            v-if="peutGerer"
+            v-if="etudiantApercu"
+            flat
+            no-caps
+            icon="groups"
+            label="Registre"
+            @click="ouvrirRegistreEtudiant"
+          />
+          <q-btn
+            v-if="etudiantApercu && peutGerer"
+            flat
+            no-caps
+            icon="payments"
+            label="Ses paiements"
+            @click="voirPaiementsEtudiant"
+          />
+          <q-btn
+            v-if="peutGerer && etudiantApercu"
             color="primary"
             unelevated
             no-caps
@@ -382,6 +500,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -403,10 +522,11 @@ import type {
   Inscription,
   Paiement,
   Promotion,
-  StatutInscription,
-} from '../types';
+  StatutInscription, ChipFiltre } from '../types';
 
 const $q = useQuasar();
+const route = useRoute();
+const router = useRouter();
 const auth = useAuthStore();
 
 const inscriptions = ref<Inscription[]>([]);
@@ -418,20 +538,27 @@ const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
-const tousLesElements = ref(false);
+/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
+const pret = ref(false);
 
 const filtres = ref<Record<string, any>>({});
+/** Étudiant reçu en paramètre d'URL (`/inscriptions?etudiant=…`). */
+const etudiantCible = ref<Etudiant | null>(null);
 
 const dialogInscription = ref(false);
 const dialogPaiement = ref(false);
 const paiementInscriptionId = ref<string | undefined>(undefined);
+const paiementMontantInitial = ref<number | undefined>(undefined);
 
 const dialogEtudiant = ref(false);
 const etudiantApercu = ref<Etudiant | null>(null);
+const chargementEtudiant = ref(false);
 const etudiantEdite = ref<Etudiant | null>(null);
 const dialogFicheEtudiant = ref(false);
 
 const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+/** Encaisser, c'est créer un paiement : mêmes rôles que `POST /paiements`. */
+const peutEncaisser = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -450,7 +577,7 @@ const colonnes: QTableColumn[] = [
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
   { name: 'montantFrais', label: 'Frais (GNF)', field: 'montantFrais', align: 'right', sortable: true },
   { name: 'paye', label: 'Payé (GNF)', field: 'paye', align: 'right' },
-  { name: 'solde', label: 'Solde (GNF)', field: 'solde', align: 'right' },
+  { name: 'solde', label: 'Reste à payer (GNF)', field: 'solde', align: 'right' },
   { name: 'dateInscription', label: 'Inscrit le', field: 'dateInscription', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
@@ -464,8 +591,24 @@ const classeStatut = (s: string) =>
     ANNULEE: 'champ--annulee',
   })[s] ?? 'champ--brouillon';
 
+/** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
+const filtresActifs = computed(
+  () =>
+    !!etudiantCible.value ||
+    Object.entries(filtres.value).some(([, v]) => v !== null && v !== undefined && v !== ''),
+);
+
+const messageVide = computed(() => {
+  if (etudiantCible.value) {
+    return `${etudiantCible.value.prenom} ${etudiantCible.value.nom} n’a aucun dossier d’inscription.`;
+  }
+  return filtresActifs.value
+    ? 'Aucun dossier ne correspond à ces critères.'
+    : 'Aucun dossier d’inscription : ouvrez-en un au guichet.';
+});
+
 const chips = computed(() => {
-  const cs: Array<{ label: string; value: any; icone?: string; defaut?: boolean }> = [];
+  const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
       label: `« ${filtres.value.recherche} »`,
@@ -506,20 +649,36 @@ const chips = computed(() => {
   return cs;
 });
 
-function solde(dossier: Inscription): number {
+/** Somme réellement encaissée sur le dossier (seuls les paiements réussis comptent). */
+function montantPaye(dossier: Inscription): number {
   return (dossier.paiements ?? [])
     .filter((p: Paiement) => p.statut === 'REUSSI')
     .reduce((t, p) => t + p.montant, 0);
+}
+
+/** Reste dû sur les frais d'inscription. */
+function resteAPayer(dossier: Inscription): number {
+  return Math.max(0, dossier.montantFrais - montantPaye(dossier));
 }
 
 const peutValider = (d: Inscription) =>
   auth.aRole(['SCOLARITE', 'ADMIN']) && d.statut === 'PAYEE';
 const peutAnnuler = (d: Inscription) =>
   auth.aRole(['ADMIN', 'DIRECTION']) && !['VALIDEE', 'ANNULEE'].includes(d.statut);
+/** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
+const peutEncaisserDossier = (d: Inscription) =>
+  peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
 
+/** Encaissement : le dialogue s'ouvre sur le dossier, au montant restant dû. */
 function encaisser(row: Inscription) {
   paiementInscriptionId.value = row.id;
+  paiementMontantInitial.value = resteAPayer(row);
   dialogPaiement.value = true;
+}
+
+/** Écran Paiements préfiltré sur le dossier. */
+function voirPaiements(dossier: Inscription) {
+  void router.push({ path: '/paiements', query: { inscription: dossier.id } });
 }
 
 function valider(dossier: Inscription) {
@@ -557,12 +716,32 @@ function imprimer(dossier: Inscription) {
 
 async function voirEtudiant(dossier: Inscription) {
   dialogEtudiant.value = true;
+  chargementEtudiant.value = true;
+  etudiantApercu.value = null;
   try {
     const { data } = await api.get(`/etudiants/${dossier.etudiantId}`);
     etudiantApercu.value = data;
   } catch {
     etudiantApercu.value = null;
+  } finally {
+    chargementEtudiant.value = false;
   }
+}
+
+/** Registre des étudiants, recherche posée sur le matricule du dossier. */
+function ouvrirRegistreEtudiant() {
+  const e = etudiantApercu.value;
+  if (!e) return;
+  dialogEtudiant.value = false;
+  void router.push({ path: '/etudiants', query: { recherche: e.matricule } });
+}
+
+/** Paiements de l'étudiant, tous dossiers confondus. */
+function voirPaiementsEtudiant() {
+  const e = etudiantApercu.value;
+  if (!e) return;
+  dialogEtudiant.value = false;
+  void router.push({ path: '/paiements', query: { etudiant: e.id } });
 }
 
 function ouvrirModificationEtudiant() {
@@ -572,36 +751,54 @@ function ouvrirModificationEtudiant() {
   dialogFicheEtudiant.value = true;
 }
 
+/** Paramètres réellement compris par `GET /inscriptions`. */
+function paramsServeur(): Record<string, any> {
+  const params: Record<string, any> = { all: '1' };
+  if (filtres.value.recherche) params.search = filtres.value.recherche;
+  if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
+  if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
+  if (filtres.value.statut) params.statut = filtres.value.statut;
+  return params;
+}
+
+/**
+ * Les bornes de date ne sont pas filtrées par l'API ; l'étudiant ciblé non
+ * plus (la recherche par matricule dégrossit, on resserre ici sur l'identifiant).
+ */
+function filtrerLocalement(liste: Inscription[]): Inscription[] {
+  let r = liste;
+  if (etudiantCible.value) {
+    r = r.filter((i) => i.etudiantId === etudiantCible.value!.id);
+  }
+  if (filtres.value.dateDebut) {
+    const d = new Date(filtres.value.dateDebut).getTime();
+    r = r.filter((i) => {
+      const c = i.dateInscription ?? i.createdAt;
+      return c ? new Date(c).getTime() >= d : true;
+    });
+  }
+  if (filtres.value.dateFin) {
+    const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
+    r = r.filter((i) => {
+      const c = i.dateInscription ?? i.createdAt;
+      return c ? new Date(c).getTime() <= d : true;
+    });
+  }
+  return r;
+}
+
 async function charger() {
   chargement.value = true;
   try {
-    const params: Record<string, any> = {
-      all: '1',
-      page: page.value,
-      pageSize: pageSize.value,
-    };
-    if (filtres.value.recherche) params.search = filtres.value.recherche;
-    if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
-    if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
-    if (filtres.value.statut) params.statut = filtres.value.statut;
-    const { data } = await api.get('/inscriptions', { params });
-    let liste: Inscription[] = data.data ?? [];
-    if (filtres.value.dateDebut) {
-      const d = new Date(filtres.value.dateDebut).getTime();
-      liste = liste.filter((i) => {
-        const c = i.dateInscription ?? i.createdAt;
-        return c ? new Date(c).getTime() >= d : true;
-      });
-    }
-    if (filtres.value.dateFin) {
-      const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
-      liste = liste.filter((i) => {
-        const c = i.dateInscription ?? i.createdAt;
-        return c ? new Date(c).getTime() <= d : true;
-      });
-    }
+    const { data } = await api.get('/inscriptions', {
+      params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
+    });
+    const liste = filtrerLocalement(data.data ?? []);
     inscriptions.value = liste;
     total.value = data.total ?? liste.length;
+  } catch {
+    inscriptions.value = [];
+    total.value = 0;
   } finally {
     chargement.value = false;
   }
@@ -610,30 +807,41 @@ async function charger() {
 async function chargerTout() {
   chargement.value = true;
   try {
-    const params: Record<string, any> = { all: '1', pageSize: 1000 };
-    if (filtres.value.recherche) params.search = filtres.value.recherche;
-    if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
-    if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
-    if (filtres.value.statut) params.statut = filtres.value.statut;
-    const { data } = await api.get('/inscriptions', { params });
-    inscriptions.value = data.data ?? [];
-    total.value = inscriptions.value.length;
-    tousLesElements.value = true;
+    const { data } = await api.get('/inscriptions', {
+      params: { ...paramsServeur(), pageSize: 1000 },
+    });
+    const liste = filtrerLocalement(data.data ?? []);
+    inscriptions.value = liste;
+    total.value = liste.length;
+    pageSize.value = Math.max(liste.length, 1);
+    page.value = 1;
+  } catch {
+    inscriptions.value = [];
+    total.value = 0;
   } finally {
     chargement.value = false;
   }
 }
 
-async function chargerPromotions() {
-  const { data } = await api.get('/promotions', { params: { all: '1' } });
-  promotions.value = data.data;
-}
-
 function reinitialiser() {
   filtres.value = {};
+  retirerEtudiantCible();
   page.value = 1;
-  tousLesElements.value = false;
-  charger();
+  void charger();
+}
+
+/** Lève le ciblage venu de l'URL et nettoie la barre d'adresse. */
+async function retirerEtudiantCible() {
+  if (!etudiantCible.value) return;
+  // Le drapeau évite que chaque retrait de filtre déclenche sa propre requête.
+  pret.value = false;
+  etudiantCible.value = null;
+  delete filtres.value.recherche;
+  filtres.value.anneeId = annees.value.find((an) => an.active)?.id ?? null;
+  await router.replace({ path: '/inscriptions' });
+  page.value = 1;
+  pret.value = true;
+  await charger();
 }
 
 watch(
@@ -646,20 +854,57 @@ watch(
     filtres.value.dateFin,
   ],
   () => {
+    if (!pret.value) return;
     page.value = 1;
-    tousLesElements.value = false;
-    charger();
+    void charger();
   },
 );
 
+/**
+ * `/inscriptions?etudiant=<id>` : on lit la fiche pour afficher son nom et
+ * poser la recherche sur son matricule — `GET /inscriptions` ne filtre pas par
+ * étudiant, mais sa recherche couvre le matricule.
+ */
+async function appliquerEtudiantCible(id: string) {
+  try {
+    const { data } = await api.get(`/etudiants/${id}`);
+    etudiantCible.value = data;
+    filtres.value.recherche = data.matricule;
+    // Le dossier cherché peut relever d'une autre année que l'année active.
+    filtres.value.anneeId = null;
+  } catch {
+    etudiantCible.value = null;
+    $q.notify({ type: 'warning', message: 'Étudiant introuvable : filtre ignoré.' });
+  }
+}
+
 onMounted(async () => {
-  const [a, promos] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-  ]);
-  annees.value = a.data.data;
-  promotions.value = promos.data.data;
-  filtres.value.anneeId = annees.value.find((an) => an.active)?.id ?? null;
+  try {
+    const [a, promos] = await Promise.all([
+      api.get('/annees', { params: { all: '1' } }),
+      api.get('/promotions', { params: { all: '1' } }),
+    ]);
+    annees.value = a.data.data ?? [];
+    promotions.value = promos.data.data ?? [];
+  } catch {
+    annees.value = [];
+    promotions.value = [];
+  }
+
+  const cible = route.query.etudiant as string | undefined;
+  const recherche = route.query.recherche as string | undefined;
+  if (cible) {
+    await appliquerEtudiantCible(cible);
+  } else if (recherche) {
+    // Arrivée par n° de dossier (depuis un paiement) : toutes années confondues.
+    filtres.value.recherche = recherche;
+    filtres.value.anneeId = null;
+  } else {
+    filtres.value.anneeId = annees.value.find((an) => an.active)?.id ?? null;
+  }
+
+  pret.value = true;
+  await charger();
 });
 </script>
 
@@ -671,6 +916,14 @@ onMounted(async () => {
 }
 .inscriptions-cartes__carte {
   background: var(--up-plaque);
+}
+
+// État vide : on nomme la cause et on offre la sortie.
+.inscriptions-vide {
+  grid-column: 1 / -1;
+  padding: var(--up-5);
+  text-align: center;
+  color: var(--up-encre-douce);
 }
 
 .champ.badge-statut {

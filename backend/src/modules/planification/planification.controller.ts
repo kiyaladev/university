@@ -17,6 +17,22 @@ import {
 
 const PLANIFICATEURS = [Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT] as const;
 
+/**
+ * Le registre des séances est un outil de service. `where()` restreint bien
+ * l'enseignant à ses séances et le chef de département aux siennes, mais ne
+ * connaît aucun périmètre pour un étudiant : sans cette barrière, un jeton
+ * étudiant listait toutes les séances de l'université. L'étudiant lit son
+ * emploi du temps par les créneaux, pas par le registre.
+ */
+const PERSONNEL = [
+  Role.ADMIN,
+  Role.DIRECTION,
+  Role.SCOLARITE,
+  Role.CHEF_DEPARTEMENT,
+  Role.CONTROLEUR,
+  Role.ENSEIGNANT,
+] as const;
+
 @ApiTags("Emploi du temps")
 @ApiBearerAuth()
 @Controller('creneaux')
@@ -59,6 +75,7 @@ export class CreneauxController {
 @ApiTags('Séances')
 @ApiBearerAuth()
 @Controller('seances')
+@Roles(...PERSONNEL)
 export class SeancesController {
   constructor(private readonly service: SeancesService) {}
 

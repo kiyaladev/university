@@ -13,7 +13,7 @@
           unelevated
           color="primary"
           no-caps
-          :icon="onglet === 'residences' ? 'add' : onglet === 'chambres' ? 'add' : 'how_to_reg'"
+          :icon="onglet === 'attributions' ? 'how_to_reg' : 'add'"
           :label="boutonOnglet"
           @click="ouvrirCourant"
         />
@@ -32,8 +32,8 @@
     <q-tab-panel v-if="onglet === 'residences'" name="residences" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresResidences"
+        :chips="chipsResidences"
         placeholder="Rechercher (code, nom, ville, responsable…)"
-        :recherche="true"
         @reinitialiser="reinitialiserResidences"
       >
         <template #avances>
@@ -94,13 +94,42 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn v-if="peutGererResidences" flat dense round icon="edit" @click="ouvrirResidence(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="meeting_room"
+              aria-label="Voir les chambres de cette résidence"
+              @click="voirChambresDe(p.row)"
+            >
+              <q-tooltip>Voir ses chambres</q-tooltip>
+            </q-btn>
+            <q-btn v-if="peutGererResidences" flat dense round icon="edit" aria-label="Modifier la résidence" @click="ouvrirResidence(p.row)">
               <q-tooltip>Modifier</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimerResidence(p.row)">
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer la résidence" @click="supprimerResidence(p.row)">
               <q-tooltip>Supprimer</q-tooltip>
             </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="apartment" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucune résidence pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Une résidence porte les chambres ; les chambres portent les attributions.
+            </div>
+            <q-btn
+              v-if="peutGererResidences"
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              label="Nouvelle résidence"
+              class="q-mt-sm"
+              @click="ouvrirResidence(null)"
+            />
+          </div>
         </template>
       </q-table>
 
@@ -147,10 +176,10 @@
               <q-icon name="person_outline" size="16px" class="q-mr-xs" />
               {{ r.responsable ?? 'Aucun responsable renseigné' }}
               <q-space />
-              <q-btn v-if="peutGererResidences" flat dense round size="sm" icon="edit" @click="ouvrirResidence(r)">
+              <q-btn v-if="peutGererResidences" flat dense round size="sm" icon="edit" aria-label="Modifier la résidence" @click="ouvrirResidence(r)">
                 <q-tooltip>Modifier</q-tooltip>
               </q-btn>
-              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" @click="supprimerResidence(r)">
+              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" aria-label="Supprimer la résidence" @click="supprimerResidence(r)">
                 <q-tooltip>Supprimer</q-tooltip>
               </q-btn>
             </q-card-actions>
@@ -158,7 +187,17 @@
         </div>
         <div v-if="!chargementResidences && !residencesFiltrees.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="apartment" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune résidence</div>
+          <div class="q-mt-sm">Aucune résidence pour ces critères.</div>
+          <q-btn
+            v-if="peutGererResidences"
+            flat
+            no-caps
+            color="primary"
+            icon="add"
+            label="Nouvelle résidence"
+            class="q-mt-sm"
+            @click="ouvrirResidence(null)"
+          />
         </div>
       </div>
     </q-tab-panel>
@@ -169,8 +208,8 @@
     <q-tab-panel v-if="onglet === 'chambres'" name="chambres" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresChambres"
+        :chips="chipsChambres"
         placeholder="Rechercher (code de chambre…)"
-        :recherche="true"
         @reinitialiser="reinitialiserChambres"
       >
         <template #avances>
@@ -199,15 +238,6 @@
             outlined
             clearable
             label="Statut"
-          />
-          <q-input
-            v-model.number="filtresChambres.capaciteMin"
-            type="number"
-            min="0"
-            dense
-            outlined
-            label="Capacité (lits) min"
-            clearable
           />
         </template>
         <template #actions>
@@ -256,13 +286,42 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn v-if="peutGererChambres" flat dense round icon="edit" @click="ouvrirChambre(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="how_to_reg"
+              aria-label="Voir les attributions de cette chambre"
+              @click="voirAttributionsDe(p.row)"
+            >
+              <q-tooltip>Qui l'occupe ? (attributions)</q-tooltip>
+            </q-btn>
+            <q-btn v-if="peutGererChambres" flat dense round icon="edit" aria-label="Modifier la chambre" @click="ouvrirChambre(p.row)">
               <q-tooltip>Modifier</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimerChambre(p.row)">
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer la chambre" @click="supprimerChambre(p.row)">
               <q-tooltip>Supprimer</q-tooltip>
             </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="meeting_room" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucune chambre pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Chaque chambre appartient à une résidence et porte son loyer.
+            </div>
+            <q-btn
+              v-if="peutGererChambres"
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              label="Nouvelle chambre"
+              class="q-mt-sm"
+              @click="ouvrirChambre(null)"
+            />
+          </div>
         </template>
       </q-table>
 
@@ -301,10 +360,10 @@
               <q-icon name="payments" size="16px" class="q-mr-xs" />
               <span class="chiffres text-weight-medium">{{ montantLisible(c.loyer) }} {{ c.devise }}</span>
               <q-space />
-              <q-btn v-if="peutGererChambres" flat dense round size="sm" icon="edit" @click="ouvrirChambre(c)">
+              <q-btn v-if="peutGererChambres" flat dense round size="sm" icon="edit" aria-label="Modifier la chambre" @click="ouvrirChambre(c)">
                 <q-tooltip>Modifier</q-tooltip>
               </q-btn>
-              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" @click="supprimerChambre(c)">
+              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" aria-label="Supprimer la chambre" @click="supprimerChambre(c)">
                 <q-tooltip>Supprimer</q-tooltip>
               </q-btn>
             </q-card-actions>
@@ -312,7 +371,17 @@
         </div>
         <div v-if="!chargementChambres && !chambres.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="meeting_room" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune chambre</div>
+          <div class="q-mt-sm">Aucune chambre pour ces critères.</div>
+          <q-btn
+            v-if="peutGererChambres"
+            flat
+            no-caps
+            color="primary"
+            icon="add"
+            label="Nouvelle chambre"
+            class="q-mt-sm"
+            @click="ouvrirChambre(null)"
+          />
         </div>
       </div>
     </q-tab-panel>
@@ -323,6 +392,7 @@
     <q-tab-panel v-if="onglet === 'attributions'" name="attributions" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresAttributions"
+        :chips="chipsAttributions"
         :recherche="false"
         @reinitialiser="reinitialiserAttributions"
       >
@@ -427,16 +497,35 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn v-if="p.row.statut === 'EN_ATTENTE' && peutDecider" flat dense round color="primary" icon="gavel" @click="ouvrirDecision(p.row)">
+            <q-btn v-if="p.row.statut === 'EN_ATTENTE' && peutDecider" flat dense round color="primary" icon="gavel" aria-label="Décider de l'attribution" @click="ouvrirDecision(p.row)">
               <q-tooltip>Décider</q-tooltip>
             </q-btn>
-            <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin" flat dense round color="negative" icon="undo" @click="retirerAttribution(p.row)">
+            <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin" flat dense round color="negative" icon="undo" aria-label="Retirer l'attribution" @click="retirerAttribution(p.row)">
               <q-tooltip>Retirer</q-tooltip>
             </q-btn>
-            <q-btn v-if="p.row.etudiant" flat dense round icon="person" @click="voirEtudiant(p.row)">
+            <q-btn v-if="p.row.etudiant" flat dense round icon="person" aria-label="Voir l'étudiant attributaire" @click="voirEtudiant(p.row)">
               <q-tooltip>Voir l'étudiant</q-tooltip>
             </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="how_to_reg" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucune attribution pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Une demande naît « en attente », puis le jury l'accorde ou la refuse.
+            </div>
+            <q-btn
+              v-if="peutCreerAttribution"
+              flat
+              no-caps
+              color="primary"
+              icon="how_to_reg"
+              label="Nouvelle attribution"
+              class="q-mt-sm"
+              @click="ouvrirCourant"
+            />
+          </div>
         </template>
       </q-table>
 
@@ -500,7 +589,17 @@
         </div>
         <div v-if="!chargementAttributions && !attributions.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="how_to_reg" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune attribution</div>
+          <div class="q-mt-sm">Aucune attribution pour ces critères.</div>
+          <q-btn
+            v-if="peutCreerAttribution"
+            flat
+            no-caps
+            color="primary"
+            icon="how_to_reg"
+            label="Nouvelle attribution"
+            class="q-mt-sm"
+            @click="ouvrirCourant"
+          />
         </div>
       </div>
     </q-tab-panel>
@@ -508,6 +607,8 @@
     <!-- Dialogues -->
     <residence-dialog v-model="residenceDialog" :residence="residenceEditee" @enregistre="chargerResidences" />
     <chambre-dialog v-model="chambreDialog" :chambre="chambreEditee" :residences="residences" @enregistre="chargerChambres" />
+    <!-- `ouvrirCourant` recharge tout le parc avant d'ouvrir ce dialogue :
+         l'attribution doit pouvoir viser une chambre hors de la page affichée. -->
     <attribution-dialog
       v-model="attributionDialog"
       :chambres="chambres"
@@ -595,7 +696,7 @@ import {
   montantLisible,
   nombreLisible,
 } from '../utils/libelles';
-import type { AnneeAcademique, AttributionLogement, Chambre, Residence } from '../types';
+import type { AnneeAcademique, AttributionLogement, Chambre, Residence, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -647,6 +748,71 @@ const optionsAnnees = computed(() =>
 const optionsStatutsAttribution = computed(() =>
   Object.entries(LIBELLE_STATUT_ATTRIBUTION).map(([value, label]) => ({ value, label })),
 );
+
+// ------------------------------------------------------------------ chips
+// FilterBar masque « Réinitialiser » tant qu'aucun chip personnalisé n'existe :
+// chaque onglet décrit donc ses filtres actifs.
+type Chip = ChipFiltre;
+
+function chipRecherche(f: Record<string, any>): Chip[] {
+  return f.recherche
+    ? [{ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true }]
+    : [];
+}
+
+const chipsResidences = computed<Chip[]>(() => {
+  const f = filtresResidences.value;
+  const cs = chipRecherche(f);
+  if (f.capaciteMin) cs.push({ label: `≥ ${f.capaciteMin} lits`, value: f.capaciteMin, icone: 'bed' });
+  if (f.actif) {
+    cs.push({ label: f.actif === 'true' ? 'Actives' : 'Inactives', value: f.actif, icone: 'toggle_on', cle: 'actif'});
+  }
+  if (f.ville) cs.push({ label: `Ville : ${f.ville}`, value: f.ville, icone: 'place' });
+  return cs;
+});
+
+const chipsChambres = computed<Chip[]>(() => {
+  const f = filtresChambres.value;
+  const cs = chipRecherche(f);
+  if (f.residenceId) {
+    const r = residences.value.find((x) => x.id === f.residenceId);
+    cs.push({ label: `Résidence : ${r?.code ?? '…'}`, value: f.residenceId, icone: 'apartment' });
+  }
+  if (f.categorie) {
+    cs.push({
+      label: LIBELLE_CATEGORIE_CHAMBRE[f.categorie] ?? f.categorie,
+      value: f.categorie,
+      icone: 'category', cle: 'categorie'});
+  }
+  if (f.statut) {
+    cs.push({
+      label: LIBELLE_STATUT_CHAMBRE[f.statut] ?? f.statut,
+      value: f.statut,
+      icone: 'meeting_room', cle: 'statut'});
+  }
+  return cs;
+});
+
+const chipsAttributions = computed<Chip[]>(() => {
+  const f = filtresAttributions.value;
+  const cs: Chip[] = [];
+  if (f.anneeId) {
+    const a = annees.value.find((x) => x.id === f.anneeId);
+    cs.push({ label: a?.libelle ?? 'Année', value: f.anneeId, icone: 'event', cle: 'anneeId'});
+  }
+  if (f.statut) {
+    cs.push({
+      label: LIBELLE_STATUT_ATTRIBUTION[f.statut] ?? f.statut,
+      value: f.statut,
+      icone: 'how_to_reg', cle: 'statut'});
+  }
+  if (f.residenceId) {
+    const r = residences.value.find((x) => x.id === f.residenceId);
+    cs.push({ label: `Résidence : ${r?.code ?? '…'}`, value: f.residenceId, icone: 'apartment' });
+  }
+  if (f.etudiant) cs.push({ label: `Étudiant : ${f.etudiant}`, value: f.etudiant, icone: 'person' });
+  return cs;
+});
 
 watch(filtresChambres, () => {
   paginationChambres.value.page = 1;
@@ -709,7 +875,14 @@ const boutonOnglet = computed(() =>
 function ouvrirCourant() {
   if (onglet.value === 'residences') ouvrirResidence(null);
   else if (onglet.value === 'chambres') ouvrirChambre(null);
-  else attributionDialog.value = true;
+  else {
+    // Recharge toutes les chambres (non filtrées par la page courante) pour
+    // que le dialogue d'attribution propose la totalité du parc.
+    void api.get('/chambres', { params: { all: '1' } }).then(({ data }) => {
+      chambres.value = data.data ?? chambres.value;
+    }).catch(() => undefined);
+    attributionDialog.value = true;
+  }
 }
 
 // ----------------------------------------------------------- résidences
@@ -793,13 +966,12 @@ async function requeterChambres() {
       residenceId: f.residenceId || undefined,
       categorie: f.categorie || undefined,
       statut: f.statut || undefined,
-      capaciteMin: f.capaciteMin !== null && f.capaciteMin !== undefined ? f.capaciteMin : undefined,
     };
     const { data } = await api.get('/chambres', { params });
     chambres.value = data.data;
     paginationChambres.value.total = data.total;
   } finally {
-  chargementChambres.value = false;
+    chargementChambres.value = false;
   }
 }
 
@@ -830,7 +1002,7 @@ async function requeterAttributions() {
     attributions.value = data.data;
     paginationAttributions.value.total = data.total;
   } finally {
-  chargementAttributions.value = false;
+    chargementAttributions.value = false;
   }
 }
 
@@ -858,9 +1030,11 @@ async function decider() {
   if (!decision.value) return;
   decisionEnCours.value = true;
   try {
+    // Le backend attend `commentaire` : envoyé sous « motif », il était
+    // silencieusement écarté et le motif de la décision se perdait.
     await api.put(`/attributions-logement/${decision.value.id}/decider`, {
       statut: decisionStatut.value,
-      motif: decisionMotif.value || undefined,
+      commentaire: decisionMotif.value || undefined,
     });
     $q.notify({
       type: decisionStatut.value === 'ACCORDEE' ? 'positive' : 'info',
@@ -893,10 +1067,36 @@ function retirerAttribution(a: AttributionLogement) {
 function voirEtudiant(a: AttributionLogement) {
   const e = a.etudiant;
   if (!e) return;
+  const chambre = a.chambre
+    ? `\nChambre : ${a.chambre.code} (${a.chambre.residence?.nom ?? '—'})`
+    : '';
   $q.dialog({
     title: `${e.prenom} ${e.nom}`,
-    message: `Matricule : ${e.matricule}\nTéléphone : ${e.telephone ?? '—'}\nEmail : ${e.email ?? '—'}`,
+    message:
+      `Matricule : ${e.matricule}\nTéléphone : ${e.telephone ?? '—'}\n`
+      + `E-mail : ${e.email ?? '—'}${chambre}`,
     ok: { label: 'Fermer', flat: true },
+  });
+}
+
+/** Résidence → ses chambres : on bascule d'onglet en portant le filtre. */
+function voirChambresDe(r: Residence) {
+  filtresChambres.value = { recherche: '', residenceId: r.id };
+  onglet.value = 'chambres';
+}
+
+/**
+ * Chambre → qui l'occupe. Le service ne filtre pas par chambre : on cadre sur
+ * sa résidence et on rappelle le code recherché.
+ */
+function voirAttributionsDe(c: Chambre) {
+  filtresAttributions.value = {
+    ...(c.residenceId ? { residenceId: c.residenceId } : {}),
+  };
+  onglet.value = 'attributions';
+  $q.notify({
+    type: 'info',
+    message: `Attributions de la résidence — repérez la chambre ${c.code}`,
   });
 }
 

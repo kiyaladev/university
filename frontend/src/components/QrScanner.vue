@@ -9,6 +9,7 @@
         color="white"
         text-color="dark"
         icon="close"
+        aria-label="Arrêter la caméra"
         @click="arreter"
       />
     </div>
@@ -19,8 +20,8 @@
           :model-value="modelValue"
           outlined
           dense
-          label="Code QR de la salle"
-          hint="Scannez l’affiche de la salle ou saisissez le code"
+          :label="label"
+          :hint="hint"
           @update:model-value="(v) => emit('update:modelValue', String(v ?? ''))"
         >
           <template #prepend><q-icon name="qr_code_2" /></template>
@@ -31,6 +32,7 @@
           color="secondary"
           icon="photo_camera"
           :disable="!scannerDisponible"
+          :aria-label="scannerDisponible ? 'Scanner avec la caméra' : 'Caméra indisponible sur cet appareil'"
           @click="demarrer"
         >
           <q-tooltip>
@@ -40,7 +42,7 @@
       </div>
     </div>
 
-    <div v-if="erreur" class="text-caption text-negative q-mt-xs">{{ erreur }}</div>
+    <div v-if="erreur" role="alert" class="text-caption text-negative q-mt-xs">{{ erreur }}</div>
   </div>
 </template>
 
@@ -48,10 +50,17 @@
 import { onBeforeUnmount, ref } from 'vue';
 
 /**
- * Lecture du QR affiché dans la salle. Utilise l'API BarcodeDetector du
- * navigateur quand elle existe ; sinon le code peut être saisi à la main.
+ * Lecture d'un QR. Utilise l'API BarcodeDetector du navigateur quand elle
+ * existe ; sinon le code peut toujours être saisi à la main.
+ *
+ * Le composant sert à six écrans qui ne scannent pas la même chose (affiche de
+ * salle, carte étudiante, badge, plateau resto, attestation) : `label` et
+ * `hint` disent lequel, au lieu de parler de salle partout.
  */
-defineProps<{ modelValue?: string }>();
+withDefaults(defineProps<{ modelValue?: string; label?: string; hint?: string }>(), {
+  label: 'Code QR de la salle',
+  hint: 'Scannez l’affiche de la salle ou saisissez le code',
+});
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 
 const video = ref<HTMLVideoElement | null>(null);
@@ -89,8 +98,9 @@ async function demarrer() {
         /* image non exploitable : on réessaie au tour suivant */
       }
     }, 400);
-  } catch (e: any) {
-    erreur.value = "Accès à la caméra refusé — saisissez le code manuellement";
+  } catch {
+    erreur.value =
+      'Accès à la caméra refusé ou indisponible — saisissez le code à la main dans le champ ci-dessus.';
     camera.value = false;
   }
 }

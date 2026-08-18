@@ -92,7 +92,7 @@
               :key="lien.to"
               clickable
               :to="lien.to"
-              exact
+              :exact="lien.exact"
               class="index__lien"
             >
               <q-item-section avatar><q-icon :name="lien.icone" /></q-item-section>
@@ -162,179 +162,229 @@ const titrePage = computed(() => route.meta.titre ?? '');
 const menu = computed(() => {
   const r = auth.utilisateur?.role;
   const est = (...roles: string[]) => !!r && roles.includes(r);
+  /**
+   * Un lien n'apparaît que pour les rôles que la route accepte : la liste de
+   * rôles écrite ici doit rester le miroir exact de `meta.roles` dans
+   * router/routes.ts, sinon le lien renvoie l'utilisateur à son accueil.
+   */
+  const lien = (
+    roles: string[] | null,
+    to: string,
+    icone: string,
+    libelle: string,
+    badge?: number,
+  ) => (roles === null || est(...roles) ? [{ to, icone, libelle, badge, exact: false }] : []);
 
-  return [
+  const groupes = [
+    // L'étudiant ouvre le panneau sur ce qui le concerne : sa rubrique passe
+    // avant celles du personnel, qui pour lui sont toutes vides.
+    {
+      titre: 'Mon espace',
+      liens: [
+        ...lien(['ETUDIANT'], '/portail', 'person', 'Mon espace'),
+        ...lien(['ETUDIANT'], '/emploi-du-temps', 'calendar_month', 'Emploi du temps'),
+        ...lien(['ETUDIANT'], '/vod', 'play_circle', 'Cours en vidéo'),
+        ...lien(['ETUDIANT'], '/ma-carte', 'badge', 'Ma carte étudiante'),
+        ...lien(['ETUDIANT'], '/demandes-docs/mes', 'description', 'Mes demandes de documents'),
+        ...lien(['ETUDIANT'], '/reclamations/mes', 'support_agent', 'Mes réclamations'),
+        ...lien(['ETUDIANT'], '/elections/vote', 'how_to_vote', 'Voter'),
+      ],
+    },
     {
       titre: 'Suivi',
       liens: [
-        { to: '/', icone: 'dashboard', libelle: 'Tableau de bord' },
-        ...(auth.peutPointer
-          ? [{ to: '/controle', icone: 'fact_check', libelle: 'Contrôle des séances' }]
-          : []),
-        { to: '/seances', icone: 'event_note', libelle: 'Séances' },
-        ...(est('ENSEIGNANT')
-          ? [{ to: '/mes-seances', icone: 'person_pin', libelle: 'Mes séances' }]
-          : []),
-        ...(auth.peutPointer
-          ? [{ to: '/statistiques', icone: 'query_stats', libelle: 'Statistiques' }]
-          : []),
-        // Les justificatifs sont un acte d'administration : la scolarité les
-        // enregistre, la direction arbitre. Le contrôleur n'y agit pas.
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'ENSEIGNANT')
-          ? [
-              {
-                to: '/justificatifs',
-                icone: 'assignment_late',
-                libelle: 'Justificatifs',
-                badge: justificatifsEnAttente.value || undefined,
-              },
-            ]
-          : []),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
+          '/',
+          'dashboard',
+          'Tableau de bord',
+        ),
+        ...lien(
+          ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
+          '/controle',
+          'fact_check',
+          'Contrôle des séances',
+        ),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
+          '/seances',
+          'event_note',
+          'Séances',
+        ),
+        ...lien(['ENSEIGNANT'], '/mes-seances', 'person_pin', 'Mes séances'),
+        // Les justificatifs sont un acte d'administration : l'enseignant
+        // dépose, la scolarité enregistre, la direction arbitre. Le contrôleur
+        // constate sur le terrain mais n'instruit pas.
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'ENSEIGNANT'],
+          '/justificatifs',
+          'assignment_late',
+          'Justificatifs d’absence',
+          justificatifsEnAttente.value || undefined,
+        ),
+        ...lien(
+          ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
+          '/statistiques',
+          'query_stats',
+          'Statistiques',
+        ),
       ],
     },
     {
       titre: 'Organisation',
       liens: [
-        { to: '/emploi-du-temps', icone: 'calendar_month', libelle: 'Emploi du temps' },
-        ...(est('ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION')
-          ? [
-              { to: '/affectations', icone: 'assignment_ind', libelle: "Charges d'enseignement" },
-              { to: '/enseignants', icone: 'school', libelle: 'Enseignants' },
-              { to: '/matieres', icone: 'menu_book', libelle: 'Matières' },
-            ]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
-          ? [{ to: '/structure', icone: 'account_tree', libelle: 'Structure académique' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR')
-          ? [{ to: '/salles', icone: 'meeting_room', libelle: 'Salles & QR' }]
-          : []),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
+          '/emploi-du-temps',
+          'calendar_month',
+          'Emploi du temps',
+        ),
+        ...lien(
+          ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'],
+          '/affectations',
+          'assignment_ind',
+          'Charges d’enseignement',
+        ),
+        ...lien(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'], '/enseignants', 'person', 'Enseignants'),
+        ...lien(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'], '/matieres', 'menu_book', 'Matières'),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/structure', 'account_tree', 'Structure académique'),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'], '/salles', 'meeting_room', 'Salles & QR'),
       ],
     },
     {
       titre: 'Scolarité',
       liens: [
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT')
-          ? [
-              { to: '/etudiants', icone: 'groups', libelle: 'Étudiants' },
-              { to: '/inscriptions', icone: 'how_to_reg', libelle: 'Inscriptions' },
-            ]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [
-              { to: '/paiements', icone: 'payments', libelle: 'Paiements' },
-              { to: '/evaluations', icone: 'fact_check', libelle: 'Évaluations' },
-              { to: '/notes', icone: 'edit_note', libelle: 'Saisie des notes' },
-              { to: '/deliberations', icone: 'how_to_vote', libelle: 'Délibérations' },
-              { to: '/bulletins', icone: 'school', libelle: 'Bulletins' },
-              { to: '/attestations', icone: 'verified_user', libelle: 'Attestations QR' },
-              { to: '/plagiat', icone: 'find_in_page', libelle: 'Anti-plagiat' },
-            ]
-          : []),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/etudiants', 'groups', 'Étudiants'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/inscriptions', 'how_to_reg', 'Inscriptions'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/paiements', 'payments', 'Paiements'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/evaluations', 'fact_check', 'Évaluations'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/notes', 'edit_note', 'Saisie des notes'),
       ],
     },
+    // De l'épreuve au diplôme : composer, tirer, scanner, délibérer, éditer.
     {
-      titre: 'Pilotage',
+      titre: 'Examens & résultats',
       liens: [
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT')
-          ? [{ to: '/rapports', icone: 'insights', libelle: 'Rapports & états' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [{ to: '/paie', icone: 'payments', libelle: 'Paie des vacataires' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [{ to: '/notifications', icone: 'sms', libelle: 'Notifications SMS' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [{ to: '/rectorat', icone: 'dashboard', libelle: 'Tableau de bord Rectorat' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [{ to: '/statistiques-mesrs', icone: 'analytics', libelle: 'Statistiques MESRS' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [{ to: '/courrier', icone: 'mail', libelle: 'Courrier administratif' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/recettes', icone: 'request_quote', libelle: 'Régie des recettes' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
-          ? [{ to: '/patrimoine', icone: 'inventory_2', libelle: 'Patrimoine' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/tirage', icone: 'local_printshop', libelle: 'Tirage épreuves' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
-          ? [{ to: '/reclamations', icone: 'support_agent', libelle: 'Réclamations' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/demandes-docs', icone: 'description', libelle: 'Demandes documents' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
-          ? [{ to: '/examens', icone: 'quiz', libelle: 'Examens' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR')
-          ? [{ to: '/examens/scan', icone: 'qr_code_scanner', libelle: 'Scan examens' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/cartes-etudiantes', icone: 'badge', libelle: 'Cartes étudiantes' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE')
-          ? [{ to: '/badges', icone: 'how_to_reg', libelle: 'Badges & visiteurs' }]
-          : []),
-        ...(est('ADMIN', 'SCOLARITE', 'DIRECTION')
-          ? [{ to: '/elections', icone: 'how_to_vote', libelle: 'Élections' }]
-          : []),
-        ...(est('ADMIN')
-          ? [{ to: '/demandes-docs/tarifs', icone: 'price_change', libelle: 'Tarifs demandes' }]
-          : []),
-        ...(est('ADMIN')
-          ? [{ to: '/utilisateurs', icone: 'manage_accounts', libelle: 'Utilisateurs' },
-             { to: '/parametres', icone: 'settings', libelle: 'Paramètres' }]
-          : []),
-        { to: '/vod', icone: 'play_circle', libelle: 'VOD des cours' },
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/examens', 'quiz', 'Examens'),
+        ...lien(
+          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'],
+          '/examens/scan',
+          'qr_code_scanner',
+          'Scan examens',
+        ),
+        ...lien(['ADMIN', 'SCOLARITE'], '/tirage', 'local_printshop', 'Tirage des épreuves'),
+        ...lien(
+          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'],
+          '/deliberations',
+          'gavel',
+          'Délibérations',
+        ),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/bulletins', 'school', 'Bulletins'),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/attestations', 'verified_user', 'Attestations'),
+        ...lien(['ADMIN', 'DIRECTION'], '/plagiat', 'find_in_page', 'Anti-plagiat'),
       ],
     },
+    // Le guichet : ce que l'étudiant demande et ce qu'on lui délivre.
     {
-      titre: 'Étudiant',
+      titre: 'Guichet & documents',
       liens: [
-        ...(est('ETUDIANT')
-          ? [{ to: '/portail', icone: 'person', libelle: 'Mon espace' }]
-          : []),
-        ...(est('ETUDIANT')
-          ? [
-              { to: '/ma-carte', icone: 'badge', libelle: 'Ma carte étudiante' },
-              { to: '/demandes-docs/mes', icone: 'description', libelle: 'Mes demandes documents' },
-              { to: '/reclamations/mes', icone: 'support_agent', libelle: 'Mes réclamations' },
-              { to: '/elections/vote', icone: 'how_to_vote', libelle: 'Voter' },
-            ]
-          : []),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/reclamations', 'support_agent', 'Réclamations & requêtes'),
+        ...lien(['ADMIN', 'SCOLARITE'], '/demandes-docs', 'description', 'Demandes de documents'),
+        ...lien(['ADMIN', 'SCOLARITE'], '/cartes-etudiantes', 'badge', 'Cartes étudiantes'),
+        ...lien(['ADMIN', 'SCOLARITE'], '/badges', 'how_to_reg', 'Badges & visiteurs'),
       ],
     },
     {
       titre: 'Campus',
       liens: [
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE')
-          ? [
-              { to: '/cites', icone: 'apartment', libelle: 'Cités universitaires' },
-              { to: '/formations-admin', icone: 'workspace_premium', libelle: 'Formation continue' },
-            ]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT')
-          ? [{ to: '/bibliotheque-gestion', icone: 'local_library', libelle: 'Bibliothèque numérique' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'CONTROLEUR')
-          ? [{ to: '/resto', icone: 'restaurant', libelle: 'Resto numérique' }]
-          : []),
-        ...(est('ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT', 'CONTROLEUR')
-          ? [
-              { to: '/reservations', icone: 'event_seat', libelle: 'Salles & réservations' },
-              { to: '/stages', icone: 'work', libelle: 'Stages & mémoires' },
-              { to: '/helpdesk', icone: 'support_agent', libelle: 'Support IT' },
-            ]
-          : []),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/cites', 'apartment', 'Cités universitaires'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CONTROLEUR'], '/resto', 'restaurant', 'Resto numérique'),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT'],
+          '/bibliotheque-gestion',
+          'local_library',
+          'Bibliothèque numérique',
+        ),
+        ...lien(['ENSEIGNANT', 'ADMIN', 'SCOLARITE', 'DIRECTION'], '/vod', 'play_circle', 'VOD des cours'),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE'],
+          '/formations-admin',
+          'workspace_premium',
+          'Formation continue',
+        ),
+        ...lien(
+          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT'],
+          '/stages',
+          'work',
+          'Stages & mémoires',
+        ),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT', 'CONTROLEUR'],
+          '/reservations',
+          'event_seat',
+          'Réservations de salles',
+        ),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT', 'CONTROLEUR'],
+          '/helpdesk',
+          'headset_mic',
+          'Support IT',
+        ),
+      ],
+    },
+    {
+      titre: 'Vie universitaire',
+      liens: [
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/elections', 'how_to_vote', 'Élections'),
+        ...lien(['ENSEIGNANT', 'CONTROLEUR', 'ADMIN'], '/elections/vote', 'ballot', 'Voter'),
+      ],
+    },
+    {
+      titre: 'Pilotage & administration',
+      liens: [
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
+          '/rapports',
+          'insights',
+          'Rapports & états',
+        ),
+        ...lien(['ADMIN', 'DIRECTION'], '/statistiques-mesrs', 'analytics', 'Statistiques MESRS'),
+        ...lien(['ADMIN', 'DIRECTION'], '/rectorat', 'account_balance', 'Tableau de bord Rectorat'),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/recettes', 'request_quote', 'Régie des recettes'),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/paie', 'payments', 'Paie des vacataires'),
+        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/patrimoine', 'inventory_2', 'Patrimoine & matériel'),
+        ...lien(
+          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
+          '/courrier',
+          'mail',
+          'Courrier administratif',
+        ),
+        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/notifications', 'sms', 'Notifications SMS'),
+      ],
+    },
+    {
+      titre: 'Paramétrage',
+      liens: [
+        ...lien(['ADMIN'], '/demandes-docs/tarifs', 'price_change', 'Tarifs des demandes'),
+        ...lien(['ADMIN'], '/utilisateurs', 'manage_accounts', 'Utilisateurs'),
+        ...lien(['ADMIN'], '/parametres', 'settings', 'Paramètres'),
       ],
     },
   ];
+
+  /**
+   * Un lien ne se surligne « exactement » que s'il chapeaute d'autres liens du
+   * panneau (« /examens » face à « /examens/scan ») : ailleurs, la
+   * correspondance large permet à la rubrique de rester allumée sur ses pages
+   * de détail, comme « /plagiat » quand on lit une suspicion.
+   */
+  const adresses = groupes.flatMap((g) => g.liens.map((l) => l.to));
+  for (const groupe of groupes) {
+    for (const l of groupe.liens) {
+      l.exact = l.to === '/' || adresses.some((a) => a.startsWith(`${l.to}/`));
+    }
+  }
+  return groupes;
 });
 
 async function changerMotDePasse() {
@@ -409,16 +459,18 @@ onMounted(async () => {
 }
 
 .entete__marque {
-  font-size: 1.35rem;
+  // Corps « title » du système : la marque a le même poids dans les deux
+  // enveloppes, publique et connectée.
+  font-size: 1.22rem;
   line-height: 1.25; // laisse respirer l'accent de « UniPrésence »
-  color: #fff;
+  color: var(--up-craie-fixe);
 }
 
 .entete__page {
   margin-left: var(--up-3);
-  color: rgba(255, 255, 255, 0.74);
+  color: var(--up-sur-bandeau);
   padding-left: var(--up-3);
-  border-left: 1px solid rgba(255, 255, 255, 0.34);
+  border-left: var(--up-filet-bandeau);
 }
 
 .index {

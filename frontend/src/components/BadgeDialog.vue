@@ -3,6 +3,10 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import type { BadgeAcces, TypeBadge } from '../types';
+import {
+  LIBELLE_TYPE_BADGE,
+  optionsDepuis,
+} from '../utils/libelles';
 
 const $q = useQuasar();
 
@@ -13,12 +17,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'update:modelValue': [v: boolean]; enregistre: [b: BadgeAcces] }>();
 
-const OPTIONS_TYPE: Array<{ value: TypeBadge; label: string }> = [
-  { value: 'VISITEUR', label: 'Visiteur' },
-  { value: 'INTERVENANT', label: 'Intervenant' },
-  { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'VIP', label: 'Personnalité officielle' },
-];
+const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_BADGE);
 
 const formulaire = ref({
   type: 'VISITEUR' as TypeBadge,
@@ -76,7 +75,6 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const { default: api } = await import('../boot/axios');
     const url = enEdition.value ? `/badges/${props.badge!.id}` : '/badges';
     const methode = enEdition.value ? 'put' : 'post';
     const payload: Record<string, unknown> = {
@@ -149,7 +147,8 @@ function fermer() {
         <q-input
           v-if="enEdition"
           v-model="formulaire.motif"
-          label="Motif (si annulé)"
+          label="Motif d'annulation"
+          hint="Renseigné automatiquement lors de l'annulation du badge."
           outlined
           dense
           type="textarea"

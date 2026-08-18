@@ -24,6 +24,8 @@ export interface LigneSaisie {
   present: boolean;
   /** Note brute venant du serveur (null si jamais saisie) */
   noteOriginale: number | null;
+  /** Présence telle que reçue du serveur : marquer un absent est une modification. */
+  presentOriginal: boolean;
 }
 
 const props = withDefaults(defineProps<{
@@ -72,6 +74,7 @@ function construireLignes() {
       note,
       present,
       noteOriginale: note,
+      presentOriginal: present,
     };
   });
   sauvegardeFaite.value = false;
@@ -85,9 +88,11 @@ watch(
 
 onMounted(construireLignes);
 
-const lignesModifiees = computed(() =>
-  lignes.value.filter((l) => l.note !== l.noteOriginale || false),
-);
+/** Une ligne est modifiée si sa note OU sa présence a bougé. */
+const estModifiee = (l: LigneSaisie) =>
+  l.note !== l.noteOriginale || l.present !== l.presentOriginal;
+
+const lignesModifiees = computed(() => lignes.value.filter(estModifiee));
 
 const remplies = computed(
   () => lignes.value.filter((l) => l.present && l.note !== null).length,
@@ -218,7 +223,7 @@ const peutEditer = computed(() => !props.lectureSeule);
         v-for="(l, idx) in lignes"
         :key="l.inscriptionId"
         class="saisie-masse__ligne"
-        :class="{ 'saisie-masse__ligne--mod': l.note !== l.noteOriginale }"
+        :class="{ 'saisie-masse__ligne--mod': estModifiee(l) }"
       >
         <div class="col-num chiffres">{{ l.numero }}</div>
         <div class="col-mat chiffres">{{ l.matricule }}</div>
@@ -235,6 +240,7 @@ const peutEditer = computed(() => !props.lectureSeule);
             :disable="!peutEditer"
             dense
             color="primary"
+            :aria-label="`Présence de ${l.prenom} ${l.nom}`"
             @update:model-value="(v) => { l.present = !!v; if (!v) l.note = null; }"
             @focus="surFocus(idx, 'present')"
           />
@@ -254,6 +260,7 @@ const peutEditer = computed(() => !props.lectureSeule);
             max="20"
             step="0.25"
             input-class="text-center chiffres"
+            :aria-label="`Note sur 20 de ${l.prenom} ${l.nom}`"
             :placeholder="l.present ? '/20' : 'absent'"
             @update:model-value="borner(l)"
             @focus="surFocus(idx, 'note')"
@@ -272,7 +279,7 @@ const peutEditer = computed(() => !props.lectureSeule);
             label="absent"
           />
           <q-badge
-            v-else-if="l.note !== l.noteOriginale"
+            v-else-if="estModifiee(l)"
             color="warning"
             icon="edit"
             label="modifié"
@@ -287,7 +294,9 @@ const peutEditer = computed(() => !props.lectureSeule);
       </div>
 
       <div v-if="!lignes.length" class="saisie-masse__vide">
-        Aucun étudiant à noter.
+        Aucun étudiant à noter : la feuille ne reprend que les dossiers
+        d’inscription <strong>validés</strong> de cette promotion pour l’année
+        de l’évaluation.
       </div>
     </div>
 

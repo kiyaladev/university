@@ -2,7 +2,7 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Réclamations</div>
+        <div class="page-titre">Réclamations & requêtes</div>
         <div class="page-sous-titre">
           Guichet unique des doléances étudiantes — note manquante, erreur de
           saisie, scolarité, enseignement. Chaque réclamation suit un cycle
@@ -128,7 +128,10 @@
       @row-click="(_, row) => ouvrir(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">Aucune réclamation pour le.</div>
+        <div class="text-center q-pa-md text-grey-7">
+          Aucune réclamation pour ces critères. Réinitialisez les filtres ou
+          ouvrez une réclamation au nom d'un étudiant.
+        </div>
       </template>
       <template #body-cell-numero="p">
         <q-td :props="p" class="text-weight-medium">{{ p.row.numero }}</q-td>
@@ -169,19 +172,15 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click.stop="ouvrir(p.row)">
-            <q-tooltip>Voir</q-tooltip>
-          </q-btn>
           <q-btn
-            v-if="p.row.statut === 'OUVERTE' || p.row.statut === 'EN_COURS'"
             flat
             dense
             round
-            icon="person_add"
-            color="primary"
-            @click.stop="assignerDirect(p.row)"
+            icon="visibility"
+            aria-label="Ouvrir le détail de la réclamation"
+            @click.stop="ouvrir(p.row)"
           >
-            <q-tooltip>Assigner</q-tooltip>
+            <q-tooltip>Détail, fil de discussion et assignation</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.aRole(['ADMIN', 'DIRECTION']) && p.row.statut !== 'FERMEE' && p.row.statut !== 'REJETEE' && p.row.statut !== 'RESOLUE'"
@@ -190,6 +189,7 @@
             round
             icon="priority_high"
             color="warning"
+            aria-label="Escalader la réclamation"
             @click.stop="escalader(p.row)"
           >
             <q-tooltip>Escalader</q-tooltip>
@@ -248,16 +248,6 @@
           <q-card-actions align="right" class="q-px-md">
             <q-btn flat dense no-caps icon="visibility" label="Détail" @click="ouvrir(r)" />
             <q-btn
-              v-if="r.statut === 'OUVERTE' || r.statut === 'EN_COURS'"
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="person_add"
-              label="Assigner"
-              @click="assignerDirect(r)"
-            />
-            <q-btn
               v-if="auth.aRole(['ADMIN', 'DIRECTION']) && r.statut !== 'FERMEE' && r.statut !== 'REJETEE' && r.statut !== 'RESOLUE'"
               flat
               dense
@@ -272,7 +262,10 @@
       </div>
       <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="forum" size="42px" color="grey-5" />
-        <div class="q-mt-sm">Aucune réclamation pour le.</div>
+        <div class="q-mt-sm">
+          Aucune réclamation pour ces critères. Réinitialisez les filtres ou
+          ouvrez une réclamation au nom d'un étudiant.
+        </div>
       </div>
     </div>
 
@@ -290,7 +283,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -300,9 +293,14 @@ import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
-import { dateHeureLisible } from '../utils/libelles';
+import {
+  LIBELLE_PRIORITE_RECLAMATION,
+  LIBELLE_STATUT_RECLAMATION,
+  LIBELLE_TYPE_RECLAMATION,
+  dateHeureLisible,
+  optionsDepuis,
+} from '../utils/libelles';
 import type {
-  Departement,
   PrioriteReclamation,
   Reclamation,
   StatutReclamation,
@@ -313,44 +311,9 @@ import type {
 const $q = useQuasar();
 const auth = useAuthStore();
 
-const LIBELLE_STATUT: Record<StatutReclamation, string> = {
-  OUVERTE: 'Ouverte',
-  EN_COURS: 'En cours',
-  EN_ATTENTE_REPONSE: 'Attente réponse',
-  RESOLUE: 'Résolue',
-  FERMEE: 'Fermée',
-  REJETEE: 'Rejetée',
-};
-
-const LIBELLE_TYPE: Record<TypeReclamation, string> = {
-  NOTE_MANQUANTE: 'Note manquante',
-  ERREUR_SAISIE: 'Erreur de saisie',
-  INSCRIPTION: 'Inscription',
-  ENSEIGNEMENT: 'Enseignement',
-  SCOLARITE: 'Scolarité',
-  TECHNIQUE: 'Technique',
-  AUTRE: 'Autre',
-};
-
-const LIBELLE_PRIORITE: Record<PrioriteReclamation, string> = {
-  BASSE: 'Basse',
-  NORMALE: 'Normale',
-  HAUTE: 'Haute',
-  URGENTE: 'Urgente',
-};
-
-const OPTIONS_STATUTS = (Object.keys(LIBELLE_STATUT) as StatutReclamation[]).map((v) => ({
-  label: LIBELLE_STATUT[v],
-  value: v,
-}));
-const OPTIONS_TYPES = (Object.keys(LIBELLE_TYPE) as TypeReclamation[]).map((v) => ({
-  label: LIBELLE_TYPE[v],
-  value: v,
-}));
-const OPTIONS_PRIORITES = (Object.keys(LIBELLE_PRIORITE) as PrioriteReclamation[]).map((v) => ({
-  label: LIBELLE_PRIORITE[v],
-  value: v,
-}));
+const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
+const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
+const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 const OPTIONS_ESCALADE = [
   { label: 'Toutes', value: '' },
   { label: 'Escaladées', value: 'oui' },
@@ -368,21 +331,22 @@ const creationOuverte = ref(false);
 const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
 
-const plaques = computed(() => [
-  { cle: 'OUVERTE', libelle: 'Ouvertes', alerte: true },
-  { cle: 'EN_ATTENTE_REPONSE', libelle: 'En attente', alerte: true },
+// Seuls les compteurs qui appellent une action sont mis en alerte.
+const plaques = [
+  { cle: 'OUVERTE', libelle: 'Ouvertes', alerte: false },
+  { cle: 'EN_ATTENTE_REPONSE', libelle: 'Attente réponse', alerte: false },
   { cle: 'urgentes', libelle: 'Urgentes', alerte: true },
   { cle: 'delaiDepasse', libelle: 'Délai dépassé', alerte: true },
-]);
+];
 
 function libelleStatut(s: string) {
-  return LIBELLE_STATUT[s as StatutReclamation] ?? s;
+  return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
 }
 function libelleType(t: string) {
-  return LIBELLE_TYPE[t as TypeReclamation] ?? t;
+  return LIBELLE_TYPE_RECLAMATION[t as TypeReclamation] ?? t;
 }
 function libellePriorite(p: string) {
-  return LIBELLE_PRIORITE[p as PrioriteReclamation] ?? p;
+  return LIBELLE_PRIORITE_RECLAMATION[p as PrioriteReclamation] ?? p;
 }
 
 const colonnes: QTableColumn[] = [
@@ -433,7 +397,8 @@ async function chargerTout() {
 }
 
 async function chargerStats() {
-  if (!auth.aRole(['ADMIN', 'DIRECTION'])) return;
+  // Même périmètre que /reclamations/dashboard côté API.
+  if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return;
   try {
     const { data } = await api.get('/reclamations/dashboard');
     stats.value = data;
@@ -464,13 +429,6 @@ function onCreee() {
 function onChange() {
   void requeter();
   void chargerStats();
-}
-
-function assignerDirect(r: Reclamation) {
-  reclamationSelectionnee.value = r;
-  detailOuvert.value = true;
-  // L'utilisateur cliquera ensuite sur le bouton "Assigner" du dialogue.
-  $q.notify({ type: 'info', message: `Réclamation ${r.numero} ouverte — cliquez sur Assigner` });
 }
 
 async function escalader(r: Reclamation) {
@@ -512,9 +470,7 @@ onMounted(() => {
 
 <style scoped lang="scss">
 $encre: #10251E;
-$encre-douce: #33463F;
 $chaux-claire: #F2F3EE;
-$blanc-craie: #FAFAF7;
 $vert: #0F7A45;
 $jaune-fonce: #C98A00;
 $rouge: #C4122E;

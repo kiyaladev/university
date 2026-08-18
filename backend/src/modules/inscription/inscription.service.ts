@@ -151,6 +151,7 @@ export class InscriptionService {
     const where: Prisma.InscriptionWhereInput = {
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
+      ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.search
         ? {

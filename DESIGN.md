@@ -1,18 +1,23 @@
 ---
 name: UniPrésence
 description: Le registre de contrôle des séances comme panneau d'emploi du temps peint à la main.
+# Valeurs alignées sur `frontend/src/css/quasar.variables.scss`, seule source
+# appliquée à l'exécution : le document annonçait quatre teintes que le code
+# n'employait pas (outremer notamment, jamais présent dans le code).
 colors:
   encre: "#10251E"
   encre-douce: "#33463F"
   chaux: "#E4E6DE"
   plaque: "#F2F3EE"
   craie: "#FAFAF7"
-  outremer: "#1B4FA6"
-  vert-peint: "#1E7A4C"
-  minium: "#C2321E"
-  jaune-signal: "#E8A317"
-  ocre: "#B4661E"
+  vert-peint: "#0F7A45"
+  vert-clair: "#3E9E6C"
+  jaune-signal: "#EFB700"
+  ocre: "#C98A00"
+  minium: "#C4122E"
+  minium-clair: "#E0574F"
   encre-nuit: "#0D1F18"
+  encre-sombre: "#12291F"
 typography:
   display:
     fontFamily: "Anton, 'Archivo Variable', sans-serif"
@@ -76,11 +81,11 @@ components:
     textColor: "#FFFFFF"
     rounded: "{rounded.aucun}"
   champ-excuse:
-    backgroundColor: "{colors.outremer}"
+    backgroundColor: "{colors.minium-clair}"
     textColor: "#FFFFFF"
     rounded: "{rounded.aucun}"
   champ-remplace:
-    backgroundColor: "{colors.ocre}"
+    backgroundColor: "{colors.vert-clair}"
     textColor: "#FFFFFF"
     rounded: "{rounded.aucun}"
   champ-attente:
@@ -88,7 +93,7 @@ components:
     textColor: "{colors.encre-douce}"
     rounded: "{rounded.aucun}"
   button-primary:
-    backgroundColor: "{colors.outremer}"
+    backgroundColor: "{colors.encre}"
     textColor: "#FFFFFF"
     rounded: "{rounded.aucun}"
     typography: "{typography.body}"
@@ -150,15 +155,17 @@ Refus explicites portés par le code : la carte arrondie à ombre douce, le band
 Une palette de peintures d'atelier : deux neutres (mur chaulé, encre vert-noir) et cinq aplats saturés dont chacun porte un statut ou une action, jamais une humeur.
 
 ### Primary
-- **Outremer** (#1B4FA6) : la couleur de l'action. Elle peint tout ce sur quoi on appuie — le champ « Pointer » vierge d'une plaque non contrôlée, le bouton de soumission, le bloc d'heure d'une séance en cours, la bordure de focus des champs de saisie et l'anneau `:focus-visible` (3 px, en retrait). Elle est aussi le statut « absence excusée ». Blanc sur outremer : 7,73:1.
+- **Encre** (#10251E) : la couleur de l'action. Elle peint tout ce sur quoi on appuie — le champ « Pointer » vierge d'une plaque non contrôlée, le bouton de soumission, le bloc d'heure d'une séance en cours, la bordure de focus des champs de saisie et l'anneau `:focus-visible` (3 px, en retrait). L'action ne prend aucune des trois peintures du drapeau : si elle le faisait, on ne distinguerait plus « à faire » de « fait ».
 
-### Secondary
-- **Vert peinture** (#1E7A4C) : la séance assurée. Champ de statut « Présent », jauge de taux de contrôle remplie, cachet de tournée complète. Blanc sur vert peinture : 5,33:1.
-- **Minium** (#C2321E) : l'absence. Champ « Absent », filet et texte des notes d'erreur, bordure des champs de saisie en erreur. Blanc sur minium : 5,57:1.
+### Secondary — les trois peintures, réservées aux états
+- **Vert peinture** (#0F7A45) : la séance assurée. Champ de statut « Présent », jauge de taux de contrôle remplie, cachet de tournée complète.
+- **Jaune signal** (#EFB700) : le retard et l'attente. Texte en encre, jamais en blanc.
+- **Minium** (#C4122E) : l'absence. Champ « Absent », filet et texte des notes d'erreur, bordure des champs de saisie en erreur.
+
+Chaque peinture n'a qu'une variante, nuance de la même famille et jamais une quatrième teinte : **vert clair** (#3E9E6C) pour la séance assurée par un remplaçant, **ocre** (#C98A00) pour le départ anticipé, **minium clair** (#E0574F) pour l'absence excusée — excusée ou non, une absence reste une absence, elle garde donc la famille du rouge.
 
 ### Tertiary
-- **Jaune signalétique** (#E8A317) : le retard, et l'alerte de terrain (bandeau « hors ligne »). Toujours porteur d'**encre** en texte, jamais de blanc. Encre sur jaune : 7,42:1.
-- **Ocre** (#B4661E) : les statuts intermédiaires — remplacement, départ anticipé — et le filet des notes d'avertissement. Blanc sur ocre : 4,32:1, donc réservé au grand texte et aux libellés en capitales de 11 px gras ; jamais du corps de texte.
+- **Ocre** (#C98A00) : le départ anticipé et le filet des notes d'avertissement. Porteur d'encre en texte ; en blanc, réservé aux libellés en capitales de 11 px gras, jamais au corps de texte.
 
 ### Neutral
 - **Encre vert-noir** (#10251E) : le trait du monde. Tout le texte courant, tous les filets, le fond du bandeau de tournée, l'en-tête des registres, l'onglet actif, l'élément de navigation actif, la barre de défilement des registres. C'est aussi la `theme-color` du document.
@@ -233,7 +240,7 @@ Les formes récurrentes du monde : la **plaque** (rectangle de chaux claire cern
 
 ### Buttons
 - **Shape:** angle vif (rayon 0), sans ombre, capitales non forcées (`text-transform: none`), graisse 700, interlettrage 0,04em.
-- **Primary:** aplat outremer, texte blanc, hauteur minimale 48 px sur téléphone (56 px pour le bouton d'accès plein largeur).
+- **Primary:** aplat d'encre, texte craie, hauteur minimale 48 px sur téléphone (56 px pour le bouton d'accès plein largeur).
 - **Appui / survol:** assombrissement à 88 % de luminosité à l'appui ; pas de relief, pas d'élévation, pas de transformation.
 - **Outline:** trait de 2 px, angle vif.
 - **Désactivé:** opacité pleine mais peinture retirée — fond gris chaux (#CDD0C8) et texte d'encre à 55 %. Un bouton inerte doit se voir inerte, pas se voir translucide.
@@ -250,7 +257,7 @@ Les formes récurrentes du monde : la **plaque** (rectangle de chaux claire cern
 
 ### Inputs / Fields
 - **Style:** fond de craie, contour de 2 px à 34 % d'encre, angle vif ; libellé en pochoir 11 px capitales grasses.
-- **Focus:** le contour passe en outremer plein, 2 px. Aucun halo.
+- **Focus:** le contour passe en encre pleine, 2 px. Aucun halo.
 - **Erreur:** contour minium 2 px.
 - **Sombre:** fond blanc à 6 %, contour craie à 38 %.
 - **Cibles:** 48 px de hauteur minimale sous 600 px.
@@ -265,7 +272,7 @@ Les formes récurrentes du monde : la **plaque** (rectangle de chaux claire cern
 En-tête sur fond d'encre, texte de craie en pochoir ; lignes séparées par un filet fin, corps à 14 px ; survol de ligne à 6 % d'encre ; pied séparé par un filet épais. Une ligne de détail dépliée est teintée à 5 % d'encre, jamais grise.
 
 ### La plaque de séance (composant signature)
-L'unité du monde. Trois zones dans un même rectangle cerné : bloc d'heure peint en encre à gauche (heure de début en Anton 1,5 rem, heure de fin précédée d'une flèche, mention « en cours » sous un filet clair — le bloc passe en outremer quand la séance est en cours), corps d'identité au centre (enseignant en lettrage, matière, promotion, plaque de salle, constat en chiffres tabulaires), champ d'action à droite sur toute la hauteur : outremer « Pointer » tant que rien n'est constaté, puis la peinture du statut constaté. Le champ d'action est un `<button>` natif, avec anneau de focus outremer de 3 px en retrait de 6 px.
+L'unité du monde. Trois zones dans un même rectangle cerné : bloc d'heure peint en encre à gauche (heure de début en Anton 1,5 rem, heure de fin précédée d'une flèche, mention « en cours » sous un filet clair — le bloc s'assombrit en encre nuit quand la séance est en cours), corps d'identité au centre (enseignant en lettrage, matière, promotion, plaque de salle, constat en chiffres tabulaires), champ d'action à droite sur toute la hauteur : encre « Pointer » tant que rien n'est constaté, puis la peinture du statut constaté. Le champ d'action est un `<button>` natif, avec anneau de focus en encre de 3 px en retrait de 6 px.
 
 ### Le champ de statut (`ChampStatut`)
 Même grammaire partout — tournée, registres, relevés : aplat de peinture, filet d'encre de 2 px, libellé au pochoir. L'état « non contrôlé » est le seul champ sans peinture : transparent, texte en encre douce, filet en pointillé.

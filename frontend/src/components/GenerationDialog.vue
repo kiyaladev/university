@@ -4,7 +4,7 @@
       <q-card-section class="text-h6">Générer les séances</q-card-section>
 
       <q-card-section>
-        <p class="text-body2 text-grey-8">
+        <p class="text-body2">
           Les séances sont créées à partir des créneaux de l’emploi du temps, jour par jour.
           Les séances déjà existantes sont conservées telles quelles.
         </p>
@@ -46,12 +46,14 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Fermer" v-close-popup />
+        <q-btn flat no-caps label="Fermer" v-close-popup />
         <q-btn
           color="primary"
           unelevated
+          no-caps
           icon="auto_awesome_motion"
-          label="Générer"
+          label="Générer les séances"
+          :disable="!anneeId"
           :loading="chargement"
           @click="generer"
         />
@@ -63,6 +65,7 @@
 <script setup lang="ts">
 import ChampDate from './ChampDate.vue';
 import { computed, onMounted, ref } from 'vue';
+import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import { aujourdhui, decalerJours } from '../utils/libelles';
 import type { AnneeAcademique } from '../types';
@@ -70,6 +73,7 @@ import type { AnneeAcademique } from '../types';
 defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; genere: [] }>();
 
+const $q = useQuasar();
 const annees = ref<AnneeAcademique[]>([]);
 const anneeId = ref<string>('');
 const dateDebut = ref(aujourdhui());
@@ -83,6 +87,12 @@ const optionsAnnees = computed(() =>
 );
 
 async function generer() {
+  // Sans année académique, le serveur refuse : on le dit ici plutôt que de
+  // faire remonter une erreur de validation.
+  if (!anneeId.value) {
+    $q.notify({ type: 'warning', message: 'Choisissez l’année académique à générer.' });
+    return;
+  }
   chargement.value = true;
   try {
     const { data } = await api.post('/seances/generer', {

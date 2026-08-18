@@ -52,6 +52,8 @@ export class UpdateEtudiantDto extends PartialType(CreateEtudiantDto) {}
 
 export class EtudiantQueryDto extends QueryDto {
   @IsOptional() @IsIn(['true', 'false', '1', '0']) actif?: string;
+  /** Restreint le registre aux étudiants inscrits dans cette promotion. */
+  @IsOptional() @IsUUID() promotionId?: string;
 }
 
 export class CreateFraisDto {
@@ -80,6 +82,8 @@ export class CreateInscriptionDto {
 export class InscriptionQueryDto extends QueryDto {
   @IsOptional() @IsUUID() anneeId?: string;
   @IsOptional() @IsUUID() promotionId?: string;
+  /** Tous les dossiers d'un étudiant donné (fiche étudiant, historique). */
+  @IsOptional() @IsUUID() etudiantId?: string;
   @IsOptional() @IsEnum(StatutInscription) statut?: StatutInscription;
 }
 

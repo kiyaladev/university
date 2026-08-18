@@ -116,10 +116,12 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
   display: grid;
   gap: 8px;
 }
+/* Plaque entière cernée d'un filet : le bandeau latéral coloré n'est pas une
+   forme de ce monde. */
 .kanban__carte {
-  background: white;
+  background: var(--up-plaque);
   cursor: pointer;
-  border-left: 4px solid var(--up-encre);
+  border: var(--up-filet-fin);
 }
 .kanban__carte-corps {
   padding: 8px 10px;

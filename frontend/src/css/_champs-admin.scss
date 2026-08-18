@@ -1,0 +1,46 @@
+@use './quasar.variables' as *;
+
+// Champs de statut des dossiers administratifs — paie et courrier.
+//
+// Ces cycles de vie ne sont pas des états de séance : ils n'ont donc pas leur
+// place dans les `.champ--present / --absent…` de `app.scss`. Ils partagent en
+// revanche la même grammaire — aplat peint pleine hauteur, filet, libellé au
+// pochoir — et les mêmes peintures d'un écran à l'autre :
+//
+//   attente (brouillon, reçu, enregistré) → chaux grise, texte d'encre
+//   en cours (circuit de paraphe)         → ocre, la couleur des intermédiaires
+//   acquis  (validée, traité)             → vert peinture
+//   clos    (payée, classé, archivé)      → encre, la fin du chemin
+//
+// Le fichier est repris à l'identique par PaiePage, FeuillePaieDialog,
+// CourrierPage et CourrierDetailDialog : une seule définition, quatre écrans.
+
+.champ.badge-statut {
+  display: inline-flex;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.champ--brouillon {
+  background: #cfd4d9;
+  color: $encre;
+}
+
+.champ--en-cours {
+  background: $jaune-fonce;
+  color: #fff;
+}
+
+.champ--validee {
+  background: $vert;
+  color: #fff;
+}
+
+.champ--close {
+  background: $encre;
+  color: $blanc-craie;
+}

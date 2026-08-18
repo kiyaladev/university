@@ -1,5 +1,16 @@
 <template>
   <q-page class="vitrine">
+    <!-- L'en-tête public (AuthLayout) porte les liens du site ; ici on n'ajoute
+         que l'entrée vers l'espace de travail, utile au personnel. -->
+    <q-btn
+      flat
+      dense
+      no-caps
+      icon="login"
+      label="Se connecter"
+      to="/connexion"
+      class="vitrine__connexion"
+    />
     <!-- L'enseigne du hub : ce que voit l'acheteur avant la vitrine -->
     <section class="vitrine__enseigne">
       <div class="vitrine__bandes" aria-hidden="true">
@@ -55,12 +66,13 @@
           <div class="carte-formation__tete">
             <span v-if="f.categorie" class="pochoir carte-formation__categorie">{{ f.categorie }}</span>
             <span v-else class="pochoir carte-formation__categorie">Formation</span>
+            <!-- `placesRestantes` vaut null/undefined quand la capacité est libre. -->
             <span
-              v-if="f.placesRestantes !== null"
+              v-if="f.placesRestantes != null"
               class="pochoir carte-formation__places"
               :class="{ 'carte-formation__places--dernieres': f.placesRestantes <= 5 }"
             >
-              {{ f.placesRestantes === 0 ? 'Complet' : `${f.placesRestantes} places` }}
+              {{ f.placesRestantes === 0 ? 'Complet' : `${f.placesRestantes} places restantes` }}
             </span>
           </div>
 
@@ -157,7 +169,7 @@
               <span class="recapitulatif__valeur">{{ selection?.titre }}</span>
             </div>
             <div class="recapitulatif__ligne">
-              <span class="pochoir">Diplômé(e)</span>
+              <span class="pochoir">Participant(e)</span>
               <span class="recapitulatif__valeur">{{ form.nomComplet }}</span>
             </div>
             <div class="recapitulatif__ligne">
@@ -215,11 +227,22 @@
 
         <q-card-actions align="right">
           <template v-if="etape === 1">
-            <q-btn flat label="Fermer" v-close-popup />
-            <q-btn color="primary" unelevated no-caps label="Voir le récapitulatif" @click="etape = 2" />
+            <q-btn flat no-caps label="Fermer" v-close-popup />
+            <q-btn
+              color="primary"
+              unelevated
+              no-caps
+              label="Voir le récapitulatif"
+              :disable="!identiteValide"
+              @click="etape = 2"
+            >
+              <q-tooltip v-if="!identiteValide">
+                Renseignez d'abord votre nom et votre téléphone
+              </q-tooltip>
+            </q-btn>
           </template>
           <template v-else-if="etape === 2">
-            <q-btn flat label="Retour" @click="etape = 1" />
+            <q-btn flat no-caps label="Retour" @click="etape = 1" />
             <q-btn
               color="primary"
               unelevated
@@ -230,13 +253,13 @@
             />
           </template>
           <template v-else>
-            <q-btn flat label="Fermer" v-close-popup @click="fermer" />
+            <q-btn flat no-caps label="Fermer" v-close-popup @click="fermer" />
             <q-btn
               color="primary"
               unelevated
               no-caps
               label="Inscrire un autre participant"
-              @click="fermer"
+              @click="inscrireUnAutre"
             />
           </template>
         </q-card-actions>
@@ -246,32 +269,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import { api } from '../boot/axios';
-import { montantLisible } from '../utils/libelles';
-
-/** Formation de vitrine : la fiche publique porte les places restantes. */
-interface FormationVitrine {
-  id: string;
-  titre: string;
-  description?: string | null;
-  categorie?: string | null;
-  prix: number;
-  devise: string;
-  dureeHeures?: number | null;
-  dateDebut?: string | null;
-  dateFin?: string | null;
-  lieu?: string | null;
-  placesRestantes?: number | null;
-}
-
-interface ResultatDepot {
-  inscriptionId: string;
-  numero: string;
-  montant: number;
-  devise: string;
-  message: string;
-}
+/**
+ * Vitrine publique de la formation continue : même objet « formation » que
+ * l'écran de gestion `/formations-admin`, mais restreint côté serveur aux
+ * formations publiées. Tout passe par `formationsService`.
+ */
+import { computed, onMounted, ref } from 'vue';
+import {
+  formationsService,
+  type FormationVitrine,
+  type ResultatDepotInscription,
+} from '../services/formations';
+import { dateLisible, montantLisible } from '../utils/libelles';
 
 const formations = ref<FormationVitrine[]>([]);
 const chargement = ref(true);
@@ -281,14 +290,21 @@ const selection = ref<FormationVitrine | null>(null);
 const etape = ref(1);
 const depotEnCours = ref(false);
 const messageErreur = ref('');
-const resultat = ref<ResultatDepot | null>(null);
+const resultat = ref<ResultatDepotInscription | null>(null);
 
 const form = ref({ nomComplet: '', telephone: '', email: '', matricule: '' });
+
+/** Les deux champs obligatoires du dépôt : contrôlés dès l'étape 1. */
+const identiteValide = computed(
+  () =>
+    form.value.nomComplet.trim().length >= 2 &&
+    form.value.telephone.trim().length >= 6,
+);
 
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/formations/publiques');
+    const { data } = await formationsService.publiques();
     formations.value = Array.isArray(data) ? data : [];
   } finally {
     chargement.value = false;
@@ -296,39 +312,48 @@ async function charger() {
 }
 
 function periodeLisible(f: FormationVitrine): string {
-  if (!f.dateDebut) return f.dateFin ?? '';
-  if (!f.dateFin) return f.dateDebut;
-  return `${f.dateDebut} → ${f.dateFin}`;
+  if (!f.dateDebut) return f.dateFin ? dateLisible(f.dateFin) : '';
+  if (!f.dateFin) return dateLisible(f.dateDebut);
+  return `${dateLisible(f.dateDebut)} → ${dateLisible(f.dateFin)}`;
 }
 
 function ouvrirInscription(f: FormationVitrine) {
   selection.value = f;
+  reinitialiserFormulaire();
+  dialogInscription.value = true;
+}
+
+function reinitialiserFormulaire() {
   form.value = { nomComplet: '', telephone: '', email: '', matricule: '' };
   messageErreur.value = '';
   resultat.value = null;
   etape.value = 1;
-  dialogInscription.value = true;
 }
 
 function fermer() {
   dialogInscription.value = false;
 }
 
+/** Enchaîner un second participant sur la même formation, sans ressortir. */
+function inscrireUnAutre() {
+  reinitialiserFormulaire();
+}
+
 async function deposer() {
   messageErreur.value = '';
-  if (form.value.nomComplet.trim().length < 2 || form.value.telephone.trim().length < 6) {
+  if (!identiteValide.value) {
     messageErreur.value = 'Le nom complet et le téléphone sont obligatoires';
     return;
   }
   depotEnCours.value = true;
   try {
-    const { data } = await api.post(`/formations/${selection.value!.id}/inscription`, {
+    const { data } = await formationsService.inscriptionPublique(selection.value!.id, {
       nomComplet: form.value.nomComplet.trim(),
       telephone: form.value.telephone.trim(),
       email: form.value.email.trim() || undefined,
       matricule: form.value.matricule.trim() || undefined,
     });
-    resultat.value = data as ResultatDepot;
+    resultat.value = data;
     etape.value = 3;
   } catch (e: any) {
     messageErreur.value = e?.response?.data?.message ?? 'Dépôt impossible, réessayez';
@@ -341,24 +366,24 @@ onMounted(charger);
 </script>
 
 <style scoped lang="scss">
+@use '../css/mixins' as *;
+
 .vitrine {
   min-height: 100vh;
   background: var(--up-chaux);
+  position: relative;
+}
+
+.vitrine__connexion {
+  position: absolute;
+  top: var(--up-3);
+  right: var(--up-3);
+  z-index: 2;
 }
 
 // ---------------------------------------------------------------- enseigne
 .vitrine__enseigne {
-  background: $encre;
-  color: $blanc-craie;
-  padding: var(--up-6) var(--up-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--up-4);
-  background-image: repeating-linear-gradient(
-    92deg,
-    rgba(255, 255, 255, 0.045) 0 2px,
-    rgba(255, 255, 255, 0) 2px 5px
-  );
+  @include enseignePlaque(false);
 }
 
 .vitrine__bandes {
@@ -366,11 +391,6 @@ onMounted(charger);
   height: 14px;
   max-width: 320px;
 }
-
-.bande { flex: 1; }
-.bande--rouge { background: $rouge; }
-.bande--jaune { background: $jaune; }
-.bande--vert { background: $vert; }
 
 .vitrine__sur-titre {
   color: rgba(250, 250, 247, 0.6);

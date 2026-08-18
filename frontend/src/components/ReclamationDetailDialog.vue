@@ -6,7 +6,28 @@
           <div class="text-h6">{{ reclamation.numero }} — {{ reclamation.sujet }}</div>
           <div class="text-caption text-grey-7">
             {{ reclamation.etudiant ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom : (reclamation.anonyme ? 'Anonyme' : '—') }}
+            <span v-if="reclamation.etudiant"> · {{ reclamation.etudiant.matricule }}</span>
             <span v-if="reclamation.departement"> · {{ reclamation.departement.nom }}</span>
+          </div>
+          <div v-if="peutOuvrirDossier && reclamation.etudiant" class="q-mt-xs">
+            <q-btn
+              flat
+              dense
+              no-caps
+              size="sm"
+              icon="description"
+              label="Ses demandes de documents"
+              @click="ouvrirDossier('demandes-docs')"
+            />
+            <q-btn
+              flat
+              dense
+              no-caps
+              size="sm"
+              icon="badge"
+              label="Sa carte étudiante"
+              @click="ouvrirDossier('cartes-etudiantes')"
+            />
           </div>
         </div>
         <span
@@ -107,8 +128,8 @@
           <p v-else class="text-caption text-grey-7 q-mt-sm">Aucun message pour le moment.</p>
         </div>
 
-        <!-- Notes internes -->
-        <div v-if="reclamation.notes" class="q-mt-md">
+        <!-- Notes internes : réservées au personnel, jamais montrées à l'étudiant -->
+        <div v-if="estStaff && reclamation.notes" class="q-mt-md">
           <span class="section-titre">Notes internes</span>
           <div class="reclamation-notes" style="white-space: pre-wrap">{{ reclamation.notes }}</div>
         </div>
@@ -129,7 +150,7 @@
         />
         <div class="row items-center q-mt-sm q-gutter-sm">
           <q-btn
-            v-if="auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && reclamation.statut !== 'FERMEE' && reclamation.statut !== 'REJETEE' && reclamation.statut !== 'RESOLUE'"
+            v-if="estStaff && reclamation.statut !== 'FERMEE' && reclamation.statut !== 'REJETEE' && reclamation.statut !== 'RESOLUE'"
             outline
             color="primary"
             no-caps
@@ -182,10 +203,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import WorkflowStepper, { type Transition } from './WorkflowStepper.vue';
 import { useAuthStore } from '../stores/auth';
-import { LIBELLE_ROLE, dateHeureLisible } from '../utils/libelles';
+import {
+  LIBELLE_PRIORITE_RECLAMATION,
+  LIBELLE_ROLE,
+  LIBELLE_STATUT_RECLAMATION,
+  LIBELLE_TYPE_RECLAMATION,
+  dateHeureLisible,
+} from '../utils/libelles';
 import type {
   PrioriteReclamation,
   Reclamation,
@@ -209,39 +237,22 @@ const emit = defineEmits<{
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const router = useRouter();
+
+/** Rebond vers le dossier de l'étudiant concerné, filtré sur lui. */
+function ouvrirDossier(nomRoute: 'demandes-docs' | 'cartes-etudiantes') {
+  const etudiantId = props.reclamation?.etudiant?.id;
+  if (!etudiantId) return;
+  emit('update:modelValue', false);
+  void router.push({ name: nomRoute, query: { etudiantId } });
+}
 
 const enCours = ref('');
 const messageCourant = ref('');
-const noteCloture = ref('');
-const assigneDialogOuvert = ref(false);
-const assigneCible = ref<string | null>(null);
-const clotureDialogOuvert = ref(false);
 
-const LIBELLE_STATUT: Record<StatutReclamation, string> = {
-  OUVERTE: 'Ouverte',
-  EN_COURS: 'En cours',
-  EN_ATTENTE_REPONSE: 'Attente réponse',
-  RESOLUE: 'Résolue',
-  FERMEE: 'Fermée',
-  REJETEE: 'Rejetée',
-};
-
-const LIBELLE_TYPE_RECLAMATION: Record<TypeReclamation, string> = {
-  NOTE_MANQUANTE: 'Note manquante',
-  ERREUR_SAISIE: 'Erreur de saisie',
-  INSCRIPTION: 'Inscription',
-  ENSEIGNEMENT: 'Enseignement',
-  SCOLARITE: 'Scolarité',
-  TECHNIQUE: 'Technique',
-  AUTRE: 'Autre',
-};
-
-const LIBELLE_PRIORITE_RECLAMATION: Record<PrioriteReclamation, string> = {
-  BASSE: 'Basse',
-  NORMALE: 'Normale',
-  HAUTE: 'Haute',
-  URGENTE: 'Urgente',
-};
+/** Le personnel voit les notes internes et les liens vers le dossier étudiant. */
+const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+const peutOuvrirDossier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
 const ETAPES_RECLAMATION = [
   { identifiant: 'OUVERTE', libelle: 'Ouverte', icone: 'inbox' },
@@ -258,7 +269,7 @@ const peutPoster = computed(() => {
 
 const transitionsAutorisees = computed<Transition[]>(() => {
   if (!props.reclamation) return [];
-  if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return [];
+  if (!estStaff.value) return [];
   const clos: StatutReclamation[] = ['RESOLUE', 'FERMEE', 'REJETEE'];
   if (clos.includes(props.reclamation.statut)) return [];
 
@@ -280,7 +291,7 @@ const transitionsAutorisees = computed<Transition[]>(() => {
 });
 
 function libelleStatut(s: string) {
-  return LIBELLE_STATUT[s as StatutReclamation] ?? s;
+  return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
 }
 function libelleType(t: string) {
   return LIBELLE_TYPE_RECLAMATION[t as TypeReclamation] ?? t;
@@ -325,18 +336,21 @@ async function changerStatut(cible: StatutReclamation) {
   if (!props.reclamation) return;
   let commentaire = '';
   if (cible === 'REJETEE') {
-    commentaire = '';
-    const ok = await new Promise<boolean>((resolve) => {
+    // Le motif est celui saisi dans l'invite : il arrive par le callback,
+    // jamais en relisant le DOM d'un dialogue déjà fermé.
+    const motif = await new Promise<string | null>((resolve) => {
       $q.dialog({
         title: 'Rejeter la réclamation',
         message: 'Indiquez le motif du rejet (obligatoire) :',
-        prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'text' },
+        prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
         cancel: true,
         ok: { label: 'Rejeter', color: 'negative' },
-      }).onOk(() => resolve(true)).onCancel(() => resolve(false));
+      })
+        .onOk((valeur: string) => resolve(valeur))
+        .onCancel(() => resolve(null));
     });
-    if (!ok) return;
-    commentaire = (document.querySelector('.q-dialog input') as HTMLInputElement | null)?.value ?? '';
+    if (motif === null || !motif.trim()) return;
+    commentaire = motif.trim();
   }
   enCours.value = 'statut';
   try {
@@ -427,7 +441,6 @@ function cloturer() {
 
 <style scoped lang="scss">
 $encre: #10251E;
-$encre-douce: #33463F;
 $chaux-claire: #F2F3EE;
 $blanc-craie: #FAFAF7;
 $vert: #0F7A45;
@@ -499,13 +512,15 @@ $rouge: #C4122E;
   font-size: 0.95rem;
 }
 
+// Qui parle se lit à l'aplat et au filet complet du message, pas à un bandeau
+// latéral coloré.
 .reclamation-message {
-  background: rgba(16, 37, 30, 0.04);
-  border-left: 3px solid var(--up-encre-douce);
+  background: var(--up-craie);
+  border: var(--up-filet-fin);
 
   &--staff {
-    background: rgba(15, 122, 69, 0.06);
-    border-left-color: $vert;
+    background: var(--up-plaque);
+    border-color: $vert;
   }
 }
 </style>

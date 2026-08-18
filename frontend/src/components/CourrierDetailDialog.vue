@@ -150,18 +150,16 @@ const aRoleAutorise = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEP
 const peutCloturer = computed(() => auth.role === 'ADMIN' && courrier.value
   && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(courrier.value.statut));
 
+/** Mêmes peintures que l'écran du courrier — voir `css/_champs-admin.scss`. */
 function classeStatut(s: string) {
   switch (s) {
-    case 'RECU':
-    case 'ENREGISTRE':
-      return 'champ--brouillon';
     case 'EN_CIRCUIT':
-      return 'champ--orange';
+      return 'champ--en-cours';
     case 'TRAITE':
       return 'champ--validee';
     case 'CLASSE':
     case 'ARCHIVE':
-      return 'champ--bleue';
+      return 'champ--close';
     default:
       return 'champ--brouillon';
   }
@@ -171,18 +169,22 @@ function libelleStatut(s: string) {
   return LIBELLE_STATUT_COURRIER[s] ?? s;
 }
 
+/**
+ * Étape du circuit : les rôles Quasar sont déjà réglés sur les peintures du
+ * panneau (accent = jaune de l'attente, secondary = vert de l'acquis,
+ * primary = encre de la fin). Aucune teinte Material n'entre ici.
+ */
 function couleurStatut(s: string) {
   switch (s) {
     case 'EN_CIRCUIT':
-      return 'orange';
+      return 'accent';
     case 'TRAITE':
-      return 'primary';
+      return 'secondary';
     case 'CLASSE':
-      return 'blue';
     case 'ARCHIVE':
-      return 'grey-7';
+      return 'primary';
     default:
-      return 'grey-5';
+      return 'grey-7';
   }
 }
 
@@ -259,30 +261,8 @@ watch(
 );
 </script>
 
-<style>
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.champ--brouillon {
-  background: #cfd4d9;
-  color: #33463f;
-}
-.champ--validee {
-  background: #0f7a45;
-  color: white;
-}
-.champ--orange {
-  background: #ff9800;
-  color: white;
-}
-.champ--bleue {
-  background: #1565c0;
-  color: white;
-}
+<style scoped lang="scss">
+// Le champ de statut du courrier : une seule définition, partagée avec
+// CourrierPage et la paie.
+@use '../css/champs-admin' as *;
 </style>

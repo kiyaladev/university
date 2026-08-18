@@ -2,10 +2,10 @@
   <q-page class="resas">
     <header class="resas__entete">
       <div>
-        <h1 class="page-titre">Réservations & salles</h1>
+        <h1 class="page-titre">Salles &amp; réservations</h1>
         <p class="page-sous-titre">
           Le calendrier des événements — soutenances, conférences, réunions — sur
-          les amphis et salles de cours
+          les amphis et salles de cours, superposé à l'emploi du temps.
         </p>
       </div>
       <div class="resas__actions">
@@ -15,18 +15,29 @@
           color="primary"
           no-caps
           icon="event_available"
-          label="Réserver"
+          label="Réserver une salle"
           @click="dialogReservation = true"
         />
         <view-toggle cle="reservations" :modes="['calendrier', 'tableau']" defaut="calendrier" @update:mode="(v: string) => (modeVue = v as 'calendrier' | 'tableau')" />
-        <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+        <q-btn
+          round
+          color="primary"
+          icon="refresh"
+          aria-label="Recharger la période"
+          :loading="chargement"
+          @click="charger"
+        >
+          <q-tooltip>Recharger</q-tooltip>
+        </q-btn>
       </div>
     </header>
 
     <!-- Filtres -->
     <filter-bar
       v-model="filtresReservations"
+      :chips="chips"
       :recherche="false"
+      @reinitialiser="reinitialiser"
     >
       <template #avances>
         <autocomplete-async
@@ -35,11 +46,19 @@
           :label-fn="(s) => `${s.code} — ${s.nom} (${s.capacite} places)`"
           label="Salle"
         />
-        <champ-date v-model="filtresReservations.dateDebut" label="Date début" />
-        <champ-date v-model="filtresReservations.dateFin" label="Date fin" />
+        <champ-date v-model="filtresReservations.dateDebut" label="Du" />
+        <champ-date v-model="filtresReservations.dateFin" label="Au" />
       </template>
       <template #actions>
-        <q-btn flat dense no-caps icon="today" label="Aujourd'hui" @click="filtresReservations.dateDebut = aujourdhui(); filtresReservations.dateFin = aujourdhui(); charger()" />
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="today"
+          label="Aujourd'hui"
+          @click="cadrerAujourdhui"
+        />
+        <q-btn flat dense no-caps icon="calendar_month" label="Ce mois-ci" @click="cadrerLeMois" />
       </template>
     </filter-bar>
 
@@ -104,10 +123,37 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="ouvrir(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Voir le détail de la réservation"
+            @click="ouvrir(p.row)"
+          >
             <q-tooltip>Voir le détail</q-tooltip>
           </q-btn>
         </q-td>
+      </template>
+      <template #no-data>
+        <div class="full-width text-center text-grey-7 q-pa-lg">
+          <q-icon name="event_busy" size="38px" color="grey-5" />
+          <div class="q-mt-sm">Aucune réservation sur cette période.</div>
+          <div class="text-caption q-mt-xs">
+            Élargissez les dates, ou déposez une demande : elle part en « en
+            attente » jusqu'à l'arbitrage de la scolarité.
+          </div>
+          <q-btn
+            v-if="peutReserver"
+            flat
+            no-caps
+            color="primary"
+            icon="event_available"
+            label="Réserver une salle"
+            class="q-mt-sm"
+            @click="dialogReservation = true"
+          />
+        </div>
       </template>
     </q-table>
 
@@ -137,62 +183,120 @@ import {
   aujourdhui,
   dateLisible,
 } from '../utils/libelles';
-import type { ReservationSalle, Role, Salle } from '../types';
+import type { ReservationSalle, Role, Salle, ChipFiltre } from '../types';
 
 const auth = useAuthStore();
 
 const ROLES_RESERVATION: Role[] = ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'];
 const peutReserver = computed(() => auth.aRole(ROLES_RESERVATION));
 
-const LEGENDE = {
-  EN_ATTENTE: 'En attente',
-  CONFIRMEE: 'Confirmée',
-  REFUSEE: 'Refusée',
-  ANNULEE: 'Annulée',
-};
+/** Une seule source pour les libellés de statut : utils/libelles.ts. */
+const LEGENDE = LIBELLE_STATUT_RESERVATION;
+
+/** Séance d'emploi du temps telle que la renvoie `/reservations/calendrier`. */
+interface SeanceCalendrier {
+  id: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+  salleId: string | null;
+  affectation?: {
+    matiere?: { intitule: string } | null;
+    promotion?: { nom: string } | null;
+    enseignant?: { nom: string; prenom: string } | null;
+  } | null;
+}
+
+/** Un jour de la fenêtre : ses réservations et ses séances. */
+interface JourCalendrier {
+  date: string;
+  reservations: ReservationSalle[];
+  seances: SeanceCalendrier[];
+}
 
 const salles = ref<Salle[]>([]);
-const reservations = ref<ReservationSalle[]>([]);
-const reservationsCalendrier = ref<ReservationSalle[]>([]);
+const jours = ref<JourCalendrier[]>([]);
 const chargement = ref(false);
 const dialogReservation = ref(false);
 const dialogDetail = ref(false);
 const reservationChoisie = ref<ReservationSalle | null>(null);
 const modeVue = ref<'calendrier' | 'tableau'>('calendrier');
 
+/** Par défaut : le mois courant en entier — le calendrier affiche un mois. */
+function premierJourDuMois(iso = aujourdhui()): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+function dernierJourDuMois(iso = aujourdhui()): string {
+  const [annee, mois] = iso.split('-').map(Number);
+  const dernier = new Date(annee!, mois!, 0).getDate();
+  return `${iso.slice(0, 7)}-${String(dernier).padStart(2, '0')}`;
+}
+
 const filtresReservations = ref<Record<string, any>>({
-  dateDebut: aujourdhui(),
-  dateFin: aujourdhui(),
+  dateDebut: premierJourDuMois(),
+  dateFin: dernierJourDuMois(),
 });
 
 const moisCalendrier = computed(() =>
   (filtresReservations.value.dateDebut || aujourdhui()).slice(0, 7),
 );
 
-const reservationsFiltrees = computed(() => {
-  const f = filtresReservations.value;
-  let liste = reservations.value;
-  if (f.salleId) liste = liste.filter((r) => r.salleId === f.salleId);
-  return liste.sort((a, b) => (a.dateJour < b.dateJour ? -1 : a.dateJour > b.dateJour ? 1 : 0));
-});
+/** La fenêtre est déjà filtrée par le serveur : on ne fait qu'aplatir et trier. */
+const reservationsFiltrees = computed(() =>
+  jours.value
+    .flatMap((j) => j.reservations)
+    .slice()
+    .sort((a, b) =>
+      a.dateJour === b.dateJour
+        ? a.heureDebut.localeCompare(b.heureDebut)
+        : a.dateJour.localeCompare(b.dateJour),
+    ),
+);
 
-const evenementsCalendrier = computed(() => {
-  const map: Record<string, string> = {
-    EN_ATTENTE: '#EFB700',
-    CONFIRMEE: '#0F7A45',
-    REFUSEE: '#9ca3af',
-    ANNULEE: '#9ca3af',
-  };
-  return reservationsCalendrier.value.map((r) => ({
-    id: r.id,
-    date: r.dateJour,
-    titre: `${r.heureDebut} ${r.motif}`,
-    sousTitre: `${r.salle?.code ?? ''} — ${r.organisme ?? ''}`,
-    couleur: map[r.statut] ?? '#9ca3af',
-    icone: 'event',
-    onClick: () => ouvrir(r),
-  }));
-});
+const COULEUR_STATUT: Record<string, string> = {
+  EN_ATTENTE: '#EFB700',
+  CONFIRMEE: '#0F7A45',
+  REFUSEE: '#9ca3af',
+  ANNULEE: '#9ca3af',
+};
+/** Gris sourd : les séances ne sont là que pour le repérage, en lecture seule. */
+const COULEUR_SEANCE = '#6b7280';
+
+function libelleSeance(s: SeanceCalendrier): string {
+  return s.affectation?.matiere?.intitule ?? 'Séance';
+}
+
+const evenementsCalendrier = computed(() => [
+  ...jours.value.flatMap((j) =>
+    j.reservations.map((r) => ({
+      id: r.id,
+      date: r.dateJour,
+      titre: `${r.heureDebut} ${r.motif}`,
+      sousTitre: `${r.salle?.code ?? ''}${r.organisme ? ` — ${r.organisme}` : ''}`,
+      couleur: COULEUR_STATUT[r.statut] ?? '#9ca3af',
+      icone: 'event',
+      onClick: () => ouvrir(r),
+    })),
+  ),
+  // Les séances de l'emploi du temps : repère d'occupation, non cliquables.
+  ...jours.value.flatMap((j) =>
+    j.seances.map((s) => ({
+      id: `seance-${s.id}`,
+      date: j.date,
+      titre: `${s.heureDebut} ${libelleSeance(s)}`,
+      sousTitre: [nomSalle(s.salleId), s.affectation?.promotion?.nom]
+        .filter(Boolean)
+        .join(' — '),
+      couleur: COULEUR_SEANCE,
+      icone: 'school',
+    })),
+  ),
+]);
+
+function nomSalle(salleId: string | null): string {
+  if (!salleId) return '';
+  return salles.value.find((s) => s.id === salleId)?.code ?? '';
+}
 
 const colonnesReservations = [
   { name: 'creneau', label: 'Créneau', field: 'dateJour', align: 'left' as const },
@@ -209,35 +313,62 @@ function ouvrir(r: ReservationSalle) {
   dialogDetail.value = true;
 }
 
+const chips = computed(() => {
+  const f = filtresReservations.value;
+  const cs: ChipFiltre[] = [];
+  if (f.salleId) {
+    const salle = salles.value.find((s) => s.id === f.salleId);
+    cs.push({ label: `Salle : ${salle?.code ?? '…'}`, value: f.salleId, icone: 'meeting_room' });
+  }
+  if (f.dateDebut || f.dateFin) {
+    cs.push({
+      label: `${dateLisible(f.dateDebut)} → ${dateLisible(f.dateFin)}`,
+      value: `${f.dateDebut}-${f.dateFin}`,
+      icone: 'date_range',
+    });
+  }
+  return cs;
+});
+
+function cadrerAujourdhui() {
+  filtresReservations.value = {
+    ...filtresReservations.value,
+    dateDebut: aujourdhui(),
+    dateFin: aujourdhui(),
+  };
+}
+
+function cadrerLeMois() {
+  filtresReservations.value = {
+    ...filtresReservations.value,
+    dateDebut: premierJourDuMois(),
+    dateFin: dernierJourDuMois(),
+  };
+}
+
+/** Retour à la fenêtre par défaut : le mois courant, toutes salles. */
+function reinitialiser() {
+  filtresReservations.value = {
+    dateDebut: premierJourDuMois(),
+    dateFin: dernierJourDuMois(),
+  };
+}
+
+/**
+ * Une seule requête pour les deux vues : `/reservations/calendrier` est la
+ * seule route qui filtre réellement sur une période (la liste `/reservations`
+ * n'accepte qu'un `dateJour`). Elle renvoie déjà les salles et les séances.
+ */
 async function charger() {
+  const debut = filtresReservations.value.dateDebut || premierJourDuMois();
+  const fin = filtresReservations.value.dateFin || dernierJourDuMois(debut);
   chargement.value = true;
   try {
-    const params: Record<string, any> = {
-      all: '1',
-      dateDebut: filtresReservations.value.dateDebut || undefined,
-      dateFin: filtresReservations.value.dateFin || undefined,
-    };
-    if (filtresReservations.value.salleId) {
-      params.salleId = filtresReservations.value.salleId;
-    }
-    const { data } = await api.get('/reservations', { params });
-    reservations.value = data.data;
-    // Le calendrier agrège également les séances d'emploi du temps pour le repérage
-    const calParams: Record<string, any> = {
-      dateDebut: filtresReservations.value.dateDebut || undefined,
-      dateFin: filtresReservations.value.dateFin || undefined,
-    };
-    if (filtresReservations.value.salleId) calParams.salleId = filtresReservations.value.salleId;
-    const { data: cal } = await api.get('/reservations/calendrier', { params: calParams });
-    const calData = cal?.data ?? cal;
-    const reservationsApi: ReservationSalle[] = (calData?.reservations ?? calData?.data ?? []) as ReservationSalle[];
-    reservationsCalendrier.value = Array.isArray(reservationsApi) ? reservationsApi : [];
-    if (calData?.salles) {
-      salles.value = calData.salles;
-    } else {
-      const { data: sallesData } = await api.get('/salles', { params: { all: '1' } });
-      salles.value = sallesData.data;
-    }
+    const params: Record<string, any> = { dateDebut: debut, dateFin: fin };
+    if (filtresReservations.value.salleId) params.salleId = filtresReservations.value.salleId;
+    const { data } = await api.get('/reservations/calendrier', { params });
+    jours.value = Array.isArray(data?.jours) ? data.jours : [];
+    salles.value = Array.isArray(data?.salles) ? data.salles : [];
   } finally {
     chargement.value = false;
   }

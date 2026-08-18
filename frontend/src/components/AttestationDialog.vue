@@ -101,7 +101,7 @@
           color="primary"
           unelevated
           no-caps
-          icon="qrcode"
+          icon="qr_code_2"
           label="Émettre"
           :disable="!formulaireValide"
           :loading="enregistrement"
@@ -121,6 +121,14 @@ import type { AnneeAcademique, Etudiant, Inscription, Promotion } from '../types
 
 const $q = useQuasar();
 const emit = defineEmits<{ enregistre: [] }>();
+
+/**
+ * `prefill` permet à un autre écran (un bulletin ADMIS, par exemple) d'ouvrir
+ * l'émission déjà renseignée : l'opérateur n'a plus qu'à vérifier et valider.
+ */
+const props = defineProps<{
+  prefill?: Record<string, string> | null;
+}>();
 
 const dialogOuvert = defineModel<boolean>({ default: false });
 
@@ -239,9 +247,34 @@ async function enregistrer() {
 watch(dialogOuvert, (ouvert) => {
   if (ouvert) {
     reinitialiser();
-    void chargerReferentiels();
+    void chargerReferentiels().then(appliquerPrefill);
   }
 });
+
+/**
+ * Le sélecteur d'étudiant travaille sur une recherche serveur : pour un
+ * préremplissage par identifiant, on charge la fiche afin d'afficher un nom
+ * plutôt qu'un identifiant technique.
+ */
+async function appliquerPrefill() {
+  const p = props.prefill;
+  if (!p) return;
+  if (p.type) form.value.type = p.type;
+  if (p.anneeId) form.value.anneeId = p.anneeId;
+  if (p.promotionId) form.value.promotionId = p.promotionId;
+  if (p.etudiantId) {
+    form.value.etudiantId = p.etudiantId;
+    try {
+      const { data } = await api.get(`/etudiants/${p.etudiantId}`);
+      optionsEtudiants.value = [
+        { label: `${data.nom} ${data.prenom} — ${data.matricule}`, value: data.id },
+      ];
+    } catch {
+      optionsEtudiants.value = [];
+    }
+    await chargerInscriptions();
+  }
+}
 
 async function chargerReferentiels() {
   const [rAnnees, rPromotions] = await Promise.all([

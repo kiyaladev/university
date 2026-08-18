@@ -24,9 +24,16 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  // `whitelist` retire en silence tout paramètre absent du DTO : un filtre
+  // oublié côté serveur ne remonte alors aucune erreur, il ne filtre juste
+  // rien. Hors production on refuse explicitement l'inconnu (400) pour que le
+  // décalage se voie tout de suite ; en production on garde le silence, une
+  // requête un peu bavarde ne doit pas casser un écran en service.
+  const enProduction = process.env.NODE_ENV === 'production';
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
+      forbidNonWhitelisted: !enProduction,
       transform: true,
       transformOptions: { enableImplicitConversion: true },
     }),

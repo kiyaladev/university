@@ -2,13 +2,23 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Bibliothèque</div>
+        <div class="page-titre">Bibliothèque numérique</div>
         <div class="page-sous-titre">
-          Dépôt institutionnel : mémoires, thèses, articles et supports de cours
-          — le fonds qui porte les subventions AUF / UNESCO.
+          Gestion du dépôt institutionnel : mémoires, thèses, articles et
+          supports de cours — le fonds qui porte les subventions AUF / UNESCO.
+          Vous voyez ici le fonds <strong>complet</strong>, publié ou non.
         </div>
       </div>
       <div class="col-auto row q-gutter-xs">
+        <q-btn
+          flat
+          no-caps
+          icon="public"
+          label="Voir la vitrine publique"
+          to="/bibliotheque"
+        >
+          <q-tooltip>Page consultée par les visiteurs — documents publiés uniquement</q-tooltip>
+        </q-btn>
         <q-btn
           v-if="auth.estAdmin"
           unelevated
@@ -87,7 +97,7 @@
 
     <filter-bar
       v-model="filtres"
-      placeholder="Affiner (mots-clés, mot-clé principal)…"
+      :chips="chips"
       :recherche="false"
       @reinitialiser="reinitialiser"
     >
@@ -127,33 +137,16 @@
           map-options
           label="Publication"
         />
-        <q-input
-          v-model="filtres.motsClefs"
-          dense
-          outlined
-          label="Mots-clés (texte libre)"
-          placeholder="machine learning, durabilité, Conakry…"
-          hint="Recherche classique dans le champ motsClefs"
-          clearable
-        />
       </template>
       <template #actions>
         <view-toggle
           cle="biblio.gestion"
           :modes="['tableau', 'cartes']"
+          defaut="cartes"
           @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
-
-    <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      @update:page="(v) => { pagination.page = v; charger(true) }"
-      @update:page-size="(v) => { pagination.pageSize = v; pagination.page = 1; charger(true); }"
-      @tous="chargerTout"
-    />
 
     <div v-if="chargement && !documents.length" class="row justify-center q-py-xl">
       <q-spinner color="primary" size="40px" />
@@ -162,6 +155,20 @@
     <div v-else-if="!documents.length" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="library_books" size="38px" color="grey-5" />
       <div class="q-mt-sm">Aucun document ne correspond à ces critères.</div>
+      <div class="text-caption q-mt-xs">
+        Le fonds se remplit par dépôt : un mémoire, une thèse ou un support de
+        cours, avec son fichier PDF.
+      </div>
+      <q-btn
+        v-if="peutDeposer"
+        flat
+        no-caps
+        color="primary"
+        icon="add"
+        label="Déposer un document"
+        class="q-mt-sm"
+        @click="ouvrir(null)"
+      />
     </div>
 
     <q-table
@@ -233,22 +240,35 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn v-if="p.row.fichier" flat dense round icon="download" @click="telecharger(p.row)">
+          <q-btn v-if="p.row.fichier" flat dense round icon="download" aria-label="Télécharger le document" @click="telecharger(p.row)">
             <q-tooltip>Télécharger</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="visibility" @click="ouvrirApercu(p.row)">
+          <q-btn flat dense round icon="visibility" aria-label="Aperçu du contenu" @click="ouvrirApercu(p.row)">
             <q-tooltip>Aperçu contenu</q-tooltip>
           </q-btn>
-          <q-btn v-if="peutGerer(p.row)" flat dense round icon="edit" @click="ouvrir(p.row)">
+          <q-btn v-if="peutGerer" flat dense round icon="edit" aria-label="Modifier le document" @click="ouvrir(p.row)">
             <q-tooltip>Modifier</q-tooltip>
           </q-btn>
-          <q-btn v-if="peutGerer(p.row)" flat dense round :icon="p.row.public ? 'visibility_off' : 'visibility'" :color="p.row.public ? 'orange' : 'primary'" @click="basculerPublic(p.row)">
+          <q-btn
+            v-if="peutGerer"
+            flat dense round
+            :icon="p.row.public ? 'visibility_off' : 'visibility'"
+            :color="p.row.public ? 'orange' : 'primary'"
+            :aria-label="p.row.public ? 'Retirer de la vitrine publique' : 'Publier sur la vitrine publique'"
+            @click="basculerPublic(p.row)"
+          >
             <q-tooltip>{{ p.row.public ? 'Dépublier' : 'Publier' }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="p.row.indicePlagiat !== null && p.row.indicePlagiat !== undefined && p.row.indicePlagiat > 0" flat dense round icon="policy" :color="couleurPlagiat(p.row.indicePlagiat)" @click="voirScore(p.row)">
+          <q-btn
+            v-if="peutVoirPlagiat && (p.row.indicePlagiat ?? 0) > 0"
+            flat dense round icon="policy"
+            :color="couleurPlagiat(p.row.indicePlagiat ?? 0)"
+            aria-label="Voir le score de plagiat"
+            @click="voirScore(p.row)"
+          >
             <q-tooltip>Voir le score de plagiat</q-tooltip>
           </q-btn>
-          <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimer(p.row)">
+          <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer le document" @click="supprimer(p.row)">
             <q-tooltip>Supprimer</q-tooltip>
           </q-btn>
         </q-td>
@@ -303,16 +323,47 @@
           </div>
 
           <div class="row q-mt-sm q-col-gutter-xs justify-end">
-            <q-btn v-if="doc.fichier" flat dense outline color="primary" icon="download" label="Télécharger" @click="telecharger(doc)" />
-            <q-btn flat dense outline icon="visibility" label="Aperçu" @click="ouvrirApercu(doc)" />
-            <q-btn v-if="peutGerer(doc)" flat dense round icon="edit" @click="ouvrir(doc)" />
-            <q-btn v-if="peutGerer(doc)" flat dense round :icon="doc.public ? 'visibility_off' : 'visibility'" :color="doc.public ? 'orange' : 'primary'" @click="basculerPublic(doc)" />
-            <q-btn v-if="(doc.indicePlagiat ?? 0) > 0" flat dense round icon="policy" :color="couleurPlagiat(doc.indicePlagiat ?? 0)" @click="voirScore(doc)" />
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" @click="supprimer(doc)" />
+            <q-btn v-if="doc.fichier" flat dense outline color="primary" icon="download" label="Télécharger" no-caps @click="telecharger(doc)" />
+            <q-btn flat dense outline icon="visibility" label="Aperçu" no-caps @click="ouvrirApercu(doc)" />
+            <q-btn v-if="peutGerer" flat dense round icon="edit" aria-label="Modifier le document" @click="ouvrir(doc)">
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="peutGerer"
+              flat dense round
+              :icon="doc.public ? 'visibility_off' : 'visibility'"
+              :color="doc.public ? 'orange' : 'primary'"
+              :aria-label="doc.public ? 'Retirer de la vitrine publique' : 'Publier sur la vitrine publique'"
+              @click="basculerPublic(doc)"
+            >
+              <q-tooltip>{{ doc.public ? 'Dépublier' : 'Publier' }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-if="peutVoirPlagiat && (doc.indicePlagiat ?? 0) > 0"
+              flat dense round icon="policy"
+              :color="couleurPlagiat(doc.indicePlagiat ?? 0)"
+              aria-label="Voir le score de plagiat"
+              @click="voirScore(doc)"
+            >
+              <q-tooltip>Voir le score de plagiat</q-tooltip>
+            </q-btn>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer le document" @click="supprimer(doc)">
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
           </div>
         </q-card>
       </div>
     </div>
+
+    <pagination-bar
+      v-if="documents.length"
+      :page="pagination.page"
+      :page-size="pagination.pageSize"
+      :total="pagination.total"
+      @update:page="(v) => { pagination.page = v; charger(false); }"
+      @update:page-size="(v) => { pagination.pageSize = v; charger(true); }"
+      @tous="chargerTout"
+    />
 
     <document-dialog
       v-model="dialogOuvert"
@@ -350,7 +401,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '../boot/axios';
+import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
 import DocumentDialog from '../components/DocumentDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -358,7 +409,7 @@ import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import { useAuthStore } from '../stores/auth';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
-import type { DocumentDepot } from '../types';
+import type { DocumentDepot, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -378,7 +429,6 @@ const filtres = ref<Record<string, any>>({
   departementId: '',
   anneeEdition: null,
   public: '',
-  motsClefs: '',
 });
 
 const mode = ref<'tableau' | 'cartes'>('cartes');
@@ -393,17 +443,39 @@ const apercuChargement = ref(false);
 const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
+/** Les mêmes rôles que le backend : PUT/POST /documents. */
 const peutDeposer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-
-function peutGerer(doc: DocumentDepot) {
-  return auth.estAdmin;
-}
+/** Modifier / (dé)publier suit le droit de dépôt ; supprimer reste à l'admin. */
+const peutGerer = computed(() => peutDeposer.value);
+/** Le tableau de bord anti-plagiat est réservé à l'admin et à la direction. */
+const peutVoirPlagiat = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({ value, label }));
 const statutsPublics = [
   { value: '1', label: 'Publiés' },
   { value: '0', label: 'Non publiés' },
 ];
+
+/** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
+const chips = computed(() => {
+  const f = filtres.value;
+  const cs: ChipFiltre[] = [];
+  if (f.type) {
+    cs.push({ label: LIBELLE_TYPE_DOCUMENT[f.type] ?? f.type, value: f.type, icone: 'category', cle: 'type'});
+  }
+  if (f.departementId) cs.push({ label: 'Département filtré', value: f.departementId, icone: 'account_tree', cle: 'departementId'});
+  if (f.anneeEdition) cs.push({ label: `Année ${f.anneeEdition}`, value: f.anneeEdition, icone: 'event' });
+  if (f.public) {
+    cs.push({
+      label: f.public === '1' ? 'Publiés' : 'Non publiés',
+      value: f.public,
+      icone: f.public === '1' ? 'visibility' : 'visibility_off', cle: 'public'});
+  }
+  if (rechercheTexte.value) {
+    cs.push({ label: `« ${rechercheTexte.value} »`, value: rechercheTexte.value, icone: 'search' });
+  }
+  return cs;
+});
 
 const colonnes: QTableColumn<DocumentDepot>[] = [
   { name: 'type', label: 'Type', field: 'type', align: 'left' },
@@ -444,7 +516,7 @@ async function charger(reinit = true) {
   if (reinit) pagination.value.page = 1;
   chargement.value = true;
   try {
-    const params: Record<string, any> = {
+    const params: Record<string, unknown> = {
       page: pagination.value.page,
       pageSize: pagination.value.pageSize,
     };
@@ -455,11 +527,11 @@ async function charger(reinit = true) {
     if (f.anneeEdition) params.anneeEdition = f.anneeEdition;
     if (f.public === '1') params.public = 'true';
     if (f.public === '0') params.public = 'false';
-    if (f.motsClefs) params.search = f.motsClefs;
 
-    const { data } = await api.get('/documents', { params });
-    documents.value = data.data;
-    pagination.value.total = data.total;
+    const { data } = await bibliothequeService.liste(params);
+    const resultat = normaliserDocuments(data);
+    documents.value = resultat.liste;
+    pagination.value.total = resultat.total;
   } finally {
     chargement.value = false;
   }
@@ -472,7 +544,9 @@ async function chargerTout() {
 }
 
 function reinitialiser() {
-  filtres.value = { type: '', departementId: '', anneeEdition: null, public: '', motsClefs: '' };
+  rechercheSelectionnee.value = null;
+  rechercheTexte.value = '';
+  filtres.value = { type: '', departementId: '', anneeEdition: null, public: '' };
 }
 
 async function rechercherSuggestions(terme: string, miseAJour: (cb: () => void) => void) {
@@ -485,11 +559,8 @@ async function rechercherSuggestions(terme: string, miseAJour: (cb: () => void) 
   timerSuggestions = setTimeout(async () => {
     chargementSuggestions.value = true;
     try {
-      const { data } = await api.get('/documents/recherche', {
-        params: { q: terme, pageSize: 10 },
-      });
-      const liste: DocumentDepot[] = Array.isArray(data) ? data : (data.data ?? []);
-      suggestions.value = liste.slice(0, 10);
+      const { data } = await bibliothequeService.rechercheFts({ q: terme, pageSize: 10 });
+      suggestions.value = normaliserDocuments(data).liste.slice(0, 10);
       miseAJour(() => {});
     } finally {
       chargementSuggestions.value = false;
@@ -512,10 +583,7 @@ function surSelectionSuggestion(id: string | null) {
 async function telecharger(doc: DocumentDepot) {
   if (!doc.fichier) return;
   try {
-    const { data, headers } = await api.get(`/documents/${doc.id}/fichier`, {
-      responseType: 'blob',
-      timeout: 60000,
-    });
+    const { data, headers } = await bibliothequeService.fichier(doc.id);
     const disposition: string | undefined = headers['content-disposition'];
     const correspondance = /filename="?([^";]+)"?/i.exec(disposition ?? '');
     const nom = correspondance?.[1] ?? `${doc.titre || 'document'}.pdf`;
@@ -537,7 +605,7 @@ async function ouvrirApercu(doc: DocumentDepot) {
   apercuTexte.value = '';
   apercuChargement.value = true;
   try {
-    const { data } = await api.get(`/documents/${doc.id}`);
+    const { data } = await bibliothequeService.detail(doc.id);
     apercuTexte.value = (data?.contenuTexte ?? doc.contenuTexte ?? '').toString();
     rechercheTexte.value = doc.titre;
   } catch {
@@ -560,8 +628,14 @@ function basculerPublic(doc: DocumentDepot) {
     cancel: true,
     ok: { color: 'primary', label: doc.public ? 'Dépublier' : 'Publier' },
   }).onOk(async () => {
-    await api.put(`/documents/${doc.id}`, { public: !doc.public });
+    await bibliothequeService.modifier(doc.id, { public: !doc.public });
     doc.public = !doc.public;
+    $q.notify({
+      type: 'positive',
+      message: doc.public
+        ? 'Document publié — visible sur la vitrine'
+        : 'Document retiré de la vitrine publique',
+    });
   });
 }
 
@@ -572,7 +646,8 @@ function supprimer(doc: DocumentDepot) {
     cancel: true,
     ok: { color: 'negative', label: 'Supprimer' },
   }).onOk(async () => {
-    await api.delete(`/documents/${doc.id}`);
+    await bibliothequeService.supprimer(doc.id);
+    $q.notify({ type: 'warning', message: 'Document supprimé du fonds' });
     await charger(true);
   });
 }
@@ -593,7 +668,7 @@ async function lancerRecalcul() {
   }).onOk(async () => {
     recalculEnCours.value = true;
     try {
-      const { data } = await api.post('/documents/recalculer-plagiat', {});
+      const { data } = await bibliothequeService.recalculerPlagiat();
       const total = (data?.total ?? data?.suspicionsCreees ?? data?.data?.total) as number | undefined;
       const docAnalyses = (data?.documentsAnalyses ?? data?.data?.documentsAnalyses) as number | undefined;
       dernierRecap.value = {
@@ -630,17 +705,22 @@ onMounted(() => charger(true));
   font-size: 0.85rem;
   color: var(--up-encre-douce);
 }
+/* Un extrait cité est une plaque cernée, pas une carte à bandeau latéral :
+   le monde « panneau peint » trace des filets entiers. */
 .doc-extrait {
   font-size: 0.83rem;
   line-height: 1.4;
   color: var(--up-encre-douce);
-  background: rgba(0, 0, 0, 0.02);
-  padding: 6px 8px;
-  border-left: 3px solid var(--q-primary);
+  background: var(--up-craie);
+  padding: var(--up-2);
+  border: var(--up-filet-fin);
   white-space: pre-wrap;
 }
+/* Le surlignage reprend le jaune signal du panneau, qui porte toujours de
+   l'encre et jamais du blanc. */
 .doc-extrait :deep(mark) {
-  background: #fff3a0;
+  background: $jaune;
+  color: var(--up-encre);
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

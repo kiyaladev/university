@@ -21,6 +21,12 @@
       </div>
     </div>
 
+    <q-tabs v-model="onglet" dense no-caps align="left" class="onglets-panneau q-mb-md" narrow-indicator>
+      <q-tab name="ENTRANT" label="Entrants" icon="inbox" />
+      <q-tab name="SORTANT" label="Sortants" icon="send" />
+      <q-tab name="ARCHIVE" label="Archives" icon="inventory_2" />
+    </q-tabs>
+
     <filter-bar
       v-model="filtres"
       placeholder="Rechercher (numéro, objet, expéditeur, destinataire…)"
@@ -28,19 +34,9 @@
       @reinitialiser="reinitialiser"
     >
       <template #actions>
-        <view-toggle v-model="modeVue" :modes="['tableau', 'cartes']" cle="courrier" />
+        <view-toggle cle="courrier" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')" />
       </template>
       <template #avances>
-        <q-select
-          v-model="filtres.type"
-          :options="optionsTypes"
-          outlined
-          dense
-          clearable
-          emit-value
-          map-options
-          label="Type"
-        />
         <q-select
           v-model="filtres.statut"
           :options="optionsStatuts"
@@ -56,12 +52,9 @@
       </template>
     </filter-bar>
 
-    <div class="q-mb-md">
-      <q-tabs v-model="onglet" dense no-caps align="left" class="text-grey-9">
-        <q-tab name="ENTRANT" label="Entrants" icon="inbox" />
-        <q-tab name="SORTANT" label="Sortants" icon="send" />
-        <q-tab name="ARCHIVE" label="Archives" icon="inventory_2" />
-      </q-tabs>
+    <div class="text-caption text-grey-7 q-mb-sm">
+      {{ libelleOnglet }} · {{ periodeLisible }} — 90 derniers jours par défaut.
+      {{ total }} courrier(s).
     </div>
 
     <q-table
@@ -69,16 +62,20 @@
       flat
       bordered
       class="carte"
-      :rows="courriersFiltres"
+      :rows="courriers"
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
+      :rows-per-page-options="[0]"
+      hide-bottom
       @row-click="(_, row) => ouvrirDetail(row)"
     >
       <template #body-cell-type="p">
         <q-td :props="p">
-          <q-badge :color="p.row.type === 'ENTRANT' ? 'primary' : 'accent'" :label="p.row.type" />
+          <q-badge
+            :color="p.row.type === 'ENTRANT' ? 'primary' : 'secondary'"
+            :label="LIBELLE_TYPE_COURRIER[p.row.type] ?? p.row.type"
+          />
         </q-td>
       </template>
       <template #body-cell-statut="p">
@@ -97,24 +94,63 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" color="primary" @click.stop="ouvrirDetail(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            color="primary"
+            :aria-label="`Détail du courrier ${p.row.numero}`"
+            @click.stop="ouvrirDetail(p.row)"
+          >
             <q-tooltip>Détail / parapher</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="print" @click.stop="imprimer(p.row)">
-            <q-tooltip>Imprimer le bordereau</q-tooltip>
+          <q-btn
+            flat
+            dense
+            round
+            icon="print"
+            :aria-label="`Imprimer le bordereau du courrier ${p.row.numero}`"
+            @click.stop="imprimer(p.row)"
+          >
+            <q-tooltip>Imprimer le bordereau (A4)</q-tooltip>
           </q-btn>
           <template v-if="peutCloturer(p.row)">
-            <q-btn flat dense round color="negative" icon="archive" @click.stop="cloturer(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              color="negative"
+              icon="archive"
+              :aria-label="`Clôturer le courrier ${p.row.numero}`"
+              @click.stop="cloturer(p.row)"
+            >
               <q-tooltip>Clôturer / archiver</q-tooltip>
             </q-btn>
           </template>
         </q-td>
       </template>
+      <template #no-data>
+        <div class="etat-vide">
+          <q-icon name="mail" size="36px" />
+          <div class="text-subtitle2 q-mt-sm">{{ titreVide }}</div>
+          <div class="text-caption">{{ aideVide }}</div>
+          <q-btn
+            v-if="peutCreer"
+            unelevated
+            no-caps
+            color="primary"
+            icon="add"
+            label="Enregistrer un courrier"
+            @click="ouvrirCreation"
+          />
+        </div>
+      </template>
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
       <div
-        v-for="c in courriersFiltres"
+        v-for="c in courriers"
         :key="c.id"
         class="col-12 col-sm-6 col-md-4"
       >
@@ -122,7 +158,6 @@
           flat
           bordered
           class="carte courrier-carte full-height"
-          :style="{ borderLeftColor: couleurStatut(c.statut), borderLeftWidth: '6px' }"
           @click="ouvrirDetail(c)"
         >
           <q-card-section>
@@ -152,20 +187,35 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="print" label="Imprimer" @click.stop="imprimer(c)" />
+            <q-btn flat dense no-caps icon="print" label="Imprimer le bordereau" @click.stop="imprimer(c)" />
             <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" label="Clôturer" @click.stop="cloturer(c)" />
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!courriersFiltres.length" class="col-12 text-center text-grey-7 q-pa-xl">
-        Aucun courrier ne correspond aux filtres.
+      <div v-if="!courriers.length && !chargement" class="col-12">
+        <div class="etat-vide">
+          <q-icon name="mail" size="36px" />
+          <div class="text-subtitle2 q-mt-sm">{{ titreVide }}</div>
+          <div class="text-caption">{{ aideVide }}</div>
+          <q-btn
+            v-if="peutCreer"
+            unelevated
+            no-caps
+            color="primary"
+            icon="add"
+            label="Enregistrer un courrier"
+            @click="ouvrirCreation"
+          />
+        </div>
       </div>
     </div>
 
     <pagination-bar
-      :page.sync="filtres.page"
-      :page-size.sync="filtres.pageSize"
+      :page="filtres.page"
+      :page-size="filtres.pageSize"
       :total="total"
+      @update:page="filtres.page = $event; charger()"
+      @update:page-size="filtres.pageSize = $event; filtres.page = 1; charger()"
       @tous="chargerTout"
     />
 
@@ -201,13 +251,16 @@ import {
   dateLisible,
   decalerJours,
 } from '../utils/libelles';
-import type { Courrier } from '../types';
+import type { Courrier, ChipFiltre } from '../types';
+
+/** Les archives ne sont pas un type de courrier mais deux statuts de fin. */
+const STATUTS_ARCHIVE = ['CLASSE', 'ARCHIVE'];
 
 const $q = useQuasar();
 const auth = useAuthStore();
 
 const onglet = ref<'ENTRANT' | 'SORTANT' | 'ARCHIVE'>('ENTRANT');
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const courriers = ref<Courrier[]>([]);
 const total = ref(0);
 const chargement = ref(false);
@@ -217,7 +270,6 @@ const courrierSelectionne = ref<Courrier | null>(null);
 
 const filtres = ref<Record<string, any>>({
   recherche: '',
-  type: null as 'ENTRANT' | 'SORTANT' | null,
   statut: null as string | null,
   dateDebut: decalerJours(aujourdhui(), -90),
   dateFin: aujourdhui(),
@@ -229,28 +281,37 @@ const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTE
 const peutCloturer = (c: Courrier) =>
   auth.role === 'ADMIN' && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(c.statut);
 
-const optionsTypes = [
-  { label: 'Entrant', value: 'ENTRANT' },
-  { label: 'Sortant', value: 'SORTANT' },
-];
 const optionsStatuts = Object.entries(LIBELLE_STATUT_COURRIER).map(([value, label]) => ({
   value,
   label,
 }));
 
 const chipsFiltres = computed(() => {
-  const chips: Array<{ label: string; value: any; defaut?: boolean }> = [];
+  const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     chips.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, defaut: true });
-  }
-  if (filtres.value.type) {
-    chips.push({ label: `Type : ${LIBELLE_TYPE_COURRIER[filtres.value.type]}`, value: filtres.value.type });
   }
   if (filtres.value.statut) {
     chips.push({ label: `Statut : ${LIBELLE_STATUT_COURRIER[filtres.value.statut] ?? filtres.value.statut}`, value: filtres.value.statut });
   }
   return chips;
 });
+
+const libelleOnglet = computed(() =>
+  onglet.value === 'ARCHIVE' ? 'Archives' : `Courriers ${LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase()}s`,
+);
+const periodeLisible = computed(
+  () => `du ${dateLisible(filtres.value.dateDebut)} au ${dateLisible(filtres.value.dateFin)}`,
+);
+
+const titreVide = computed(() =>
+  onglet.value === 'ARCHIVE' ? 'Aucun courrier archivé' : `Aucun courrier ${LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase()}`,
+);
+const aideVide = computed(() =>
+  onglet.value === 'ARCHIVE'
+    ? 'Un courrier rejoint les archives une fois classé puis clôturé. Élargissez la période, ou suivez les circuits encore ouverts dans les onglets Entrants et Sortants.'
+    : `Aucun courrier ${LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase()} ${periodeLisible.value}. Élargissez la période ou retirez les filtres avancés.`,
+);
 
 const colonnes: QTableColumn[] = [
   { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
@@ -278,44 +339,18 @@ const colonnes: QTableColumn[] = [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
-const courriersFiltres = computed(() => {
-  if (onglet.value === 'ARCHIVE') {
-    return courriers.value.filter((c) => c.statut === 'CLASSE' || c.statut === 'ARCHIVE');
-  }
-  return courriers.value.filter((c) => c.type === onglet.value);
-});
-
+/** Cycle de vie du courrier, peint aux couleurs partagées avec la paie. */
 function classeStatut(s: string) {
   switch (s) {
-    case 'RECU':
-    case 'ENREGISTRE':
-      return 'champ--brouillon';
     case 'EN_CIRCUIT':
-      return 'champ--orange';
+      return 'champ--en-cours';
     case 'TRAITE':
       return 'champ--validee';
     case 'CLASSE':
     case 'ARCHIVE':
-      return 'champ--bleue';
+      return 'champ--close';
     default:
       return 'champ--brouillon';
-  }
-}
-
-function couleurStatut(s: string) {
-  switch (s) {
-    case 'RECU':
-    case 'ENREGISTRE':
-      return '#cfd4d9';
-    case 'EN_CIRCUIT':
-      return '#ff9800';
-    case 'TRAITE':
-      return '#0f7a45';
-    case 'CLASSE':
-    case 'ARCHIVE':
-      return '#1565c0';
-    default:
-      return '#cfd4d9';
   }
 }
 
@@ -328,23 +363,54 @@ function dateCourrier(c: Courrier): string {
   return dateLisible(d);
 }
 
+/**
+ * L'onglet est un filtre serveur, pas un tri d'affichage : filtrer en local une
+ * page déjà découpée par le serveur donnait un compteur qui ne correspondait
+ * jamais à la liste (« 1–20 sur 137 » au-dessus de trois lignes).
+ *
+ * Les archives (deux statuts de fin) se demandent statut par statut : l'API
+ * n'accepte qu'un statut à la fois, on additionne donc les deux appels.
+ */
 async function charger() {
   chargement.value = true;
   try {
+    const commun = {
+      search: filtres.value.recherche || undefined,
+      dateDebut: filtres.value.dateDebut || undefined,
+      dateFin: filtres.value.dateFin || undefined,
+      page: filtres.value.page,
+      pageSize: filtres.value.pageSize,
+    };
+
+    if (onglet.value === 'ARCHIVE') {
+      const statuts = filtres.value.statut
+        ? [filtres.value.statut].filter((s) => STATUTS_ARCHIVE.includes(s))
+        : STATUTS_ARCHIVE;
+      if (!statuts.length) {
+        courriers.value = [];
+        total.value = 0;
+        return;
+      }
+      const reponses = await Promise.all(
+        statuts.map((statut) => api.get('/courrier', { params: { ...commun, statut } })),
+      );
+      courriers.value = reponses.flatMap((r) => r.data.data as Courrier[]);
+      total.value = reponses.reduce((t, r) => t + (r.data.total ?? 0), 0);
+      return;
+    }
+
     const { data } = await api.get('/courrier', {
-      params: {
-        all: '1',
-        search: filtres.value.recherche || undefined,
-        type: filtres.value.type || undefined,
-        statut: filtres.value.statut || undefined,
-        dateDebut: filtres.value.dateDebut || undefined,
-        dateFin: filtres.value.dateFin || undefined,
-        page: filtres.value.page,
-        pageSize: filtres.value.pageSize,
-      },
+      params: { ...commun, type: onglet.value, statut: filtres.value.statut || undefined },
     });
     courriers.value = data.data;
     total.value = data.total;
+  } catch (e: any) {
+    courriers.value = [];
+    total.value = 0;
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement du courrier impossible.',
+    });
   } finally {
     chargement.value = false;
   }
@@ -359,7 +425,6 @@ async function chargerTout() {
 function reinitialiser() {
   filtres.value = {
     recherche: '',
-    type: null,
     statut: null,
     dateDebut: decalerJours(aujourdhui(), -90),
     dateFin: aujourdhui(),
@@ -399,11 +464,13 @@ function cloturer(c: Courrier) {
   });
 }
 
-watch(onglet, () => charger());
+watch(onglet, () => {
+  filtres.value.page = 1;
+  charger();
+});
 watch(
   () => [
     filtres.value.recherche,
-    filtres.value.type,
     filtres.value.statut,
     filtres.value.dateDebut,
     filtres.value.dateFin,
@@ -416,41 +483,16 @@ watch(
 onMounted(charger);
 </script>
 
-<style>
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-.champ--brouillon {
-  background: #cfd4d9;
-  color: #33463f;
-}
-.champ--validee {
-  background: #0f7a45;
-  color: white;
-}
-.champ--orange {
-  background: #ff9800;
-  color: white;
-}
-.champ--bleue {
-  background: #1565c0;
-  color: white;
-}
-</style>
-
 <style scoped lang="scss">
+@use '../css/champs-admin' as *;
+
 .courrier-carte {
   cursor: pointer;
   transition: background var(--up-transition);
-  border-left: 4px solid var(--up-encre);
+
   &:hover {
     background: var(--up-craie);
   }
 }
+
 </style>

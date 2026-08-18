@@ -57,7 +57,16 @@
         @click="filtresOuverts = !filtresOuverts"
       />
       <bascule-vue v-model="vue" />
-      <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+      <q-btn
+        round
+        color="primary"
+        icon="refresh"
+        aria-label="Recharger le registre"
+        :loading="chargement"
+        @click="charger"
+      >
+        <q-tooltip>Recharger</q-tooltip>
+      </q-btn>
     </div>
 
     <div v-if="filtresOuverts" class="registre__filtres">
@@ -121,11 +130,44 @@
 
     <q-inner-loading :showing="chargement" />
 
-    <p v-if="!chargement && !seancesFiltrees.length" class="registre__vide">
+    <div v-if="!chargement && !seancesFiltrees.length" class="registre__vide">
       <q-icon name="event_busy" size="42px" />
       <span class="lettrage registre__vide-titre">Aucune séance</span>
-      <span class="pochoir">Élargissez la période ou retirez les filtres.</span>
-    </p>
+      <span class="pochoir">
+        {{
+          filtresActifs
+            ? 'Aucune séance ne correspond aux filtres posés sur cette période.'
+            : 'Aucune séance n’est programmée sur cette période.'
+        }}
+      </span>
+      <div class="registre__vide-actions">
+        <q-btn
+          v-if="filtresActifs"
+          outline
+          no-caps
+          icon="filter_alt_off"
+          label="Retirer les filtres"
+          @click="reinitialiserFiltres"
+        />
+        <q-btn
+          v-else
+          outline
+          no-caps
+          icon="date_range"
+          label="Élargir à 30 jours"
+          @click="elargirA30Jours"
+        />
+        <q-btn
+          v-if="auth.peutPlanifier"
+          unelevated
+          color="primary"
+          no-caps
+          icon="auto_awesome_motion"
+          label="Générer depuis l’emploi du temps"
+          @click="dialogGeneration = true"
+        />
+      </div>
+    </div>
 
     <!-- Vue tableau : pour comparer et trier, quand la lecture par jour ne
          suffit plus (recherche d'une salle, d'un enseignant, tri par état). -->
@@ -151,7 +193,14 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="detail = p.row">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Voir le détail de la séance"
+            @click="detail = p.row"
+          >
             <q-tooltip>Détail</q-tooltip>
           </q-btn>
           <q-btn
@@ -192,7 +241,7 @@
               </h3>
               <p class="ligne__matiere">
                 {{ s.affectation?.matiere?.intitule }}
-                <span class="pochoir ligne__type">{{ s.type }}</span>
+                <span class="pochoir ligne__type" :title="LIBELLE_TYPE_COURS[s.type]">{{ s.type }}</span>
               </p>
               <p class="pochoir ligne__lieu">
                 {{ s.affectation?.promotion?.nom }}
@@ -211,7 +260,14 @@
               <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">annulée</q-badge>
 
               <div class="ligne__boutons">
-                <q-btn flat dense round icon="visibility" @click="detail = s">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="visibility"
+                  aria-label="Voir le détail de la séance"
+                  @click="detail = s"
+                >
                   <q-tooltip>Détail</q-tooltip>
                 </q-btn>
                 <q-btn
@@ -231,6 +287,7 @@
                   round
                   color="negative"
                   icon="event_busy"
+                  aria-label="Annuler la séance"
                   @click="annuler(s)"
                 >
                   <q-tooltip>Annuler la séance</q-tooltip>
@@ -270,6 +327,9 @@
               {{ detail.affectation?.matiere?.intitule }} — {{ detail.affectation?.promotion?.nom }}
             </dd>
 
+            <dt class="pochoir">Type de cours</dt>
+            <dd>{{ LIBELLE_TYPE_COURS[detail.type] ?? detail.type }}</dd>
+
             <dt class="pochoir">Horaire prévu</dt>
             <dd class="chiffres">{{ detail.heureDebut }} – {{ detail.heureFin }}</dd>
 
@@ -278,6 +338,22 @@
               <span v-if="detail.salle" class="plaque-salle">{{ detail.salle.code }}</span>
               <span v-else>—</span>
             </dd>
+
+            <template v-if="detail.justificatif">
+              <dt class="pochoir">Justificatif d’absence</dt>
+              <dd>
+                {{ LIBELLE_STATUT_JUSTIFICATIF[detail.justificatif.statut] ?? detail.justificatif.statut }}
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  size="sm"
+                  icon="open_in_new"
+                  label="Ouvrir le dossier"
+                  :to="{ name: 'justificatifs', query: { statut: detail.justificatif.statut } }"
+                />
+              </dd>
+            </template>
 
             <template v-if="detail.controle">
               <dt class="pochoir fiche-detail__coupure">Constat</dt>
@@ -321,6 +397,29 @@
             </template>
           </dl>
         </q-card-section>
+        <!-- Depuis une séance, on rejoint les deux lectures voisines : tout ce
+             que cet enseignant a fait, et tout ce qui s'est tenu dans cette salle. -->
+        <q-card-actions align="left" class="fiche-detail__liens">
+          <q-btn
+            v-if="detail?.affectation?.enseignantId"
+            flat
+            dense
+            no-caps
+            icon="person_pin"
+            label="Ses autres séances"
+            @click="filtrerDepuisDetail('enseignantId', detail.affectation.enseignantId)"
+          />
+          <q-btn
+            v-if="detail?.salle"
+            flat
+            dense
+            no-caps
+            icon="meeting_room"
+            :label="`Séances en ${detail.salle.code}`"
+            @click="filtrerDepuisDetail('salleId', detail.salle.id)"
+          />
+        </q-card-actions>
+
         <q-card-actions align="right">
           <q-btn flat no-caps label="Fermer" v-close-popup />
           <q-btn
@@ -339,6 +438,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -351,6 +451,9 @@ import BasculeVue from '../components/BasculeVue.vue';
 import { useVuePreferee } from '../composables/vuePreferee';
 import {
   LIBELLE_ATTESTATION,
+  LIBELLE_STATUT_JUSTIFICATIF,
+  LIBELLE_STATUT_SEANCE,
+  LIBELLE_TYPE_COURS,
   aujourdhui,
   dateHeureLisible,
   dateLisible,
@@ -360,6 +463,7 @@ import {
 import type { Enseignant, Salle, Seance } from '../types';
 
 const $q = useQuasar();
+const route = useRoute();
 const auth = useAuthStore();
 const vue = useVuePreferee('seances');
 
@@ -453,12 +557,11 @@ const raccourcis = [
   { label: 'À venir', debut: 1, fin: 14 },
 ];
 
-const optionsStatuts = [
-  { label: 'Planifiée', value: 'PLANIFIEE' },
-  { label: 'Contrôlée', value: 'CONTROLEE' },
-  { label: 'Non tenue', value: 'NON_TENUE' },
-  { label: 'Annulée', value: 'ANNULEE' },
-];
+/** Les états de séance viennent du référentiel partagé, jamais d'une liste locale. */
+const optionsStatuts = Object.entries(LIBELLE_STATUT_SEANCE).map(([value, label]) => ({
+  label,
+  value,
+}));
 
 const optionsSalles = computed(() =>
   salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
@@ -474,6 +577,27 @@ const etiquetteFiltres = computed(() => {
   ].filter(Boolean);
   return actifs.length ? `Filtres : ${actifs.join(', ')}` : 'Filtrer';
 });
+
+const filtresActifs = computed(
+  () =>
+    !!filtres.value.enseignantId ||
+    !!filtres.value.salleId ||
+    !!filtres.value.statut ||
+    !!recherche.value ||
+    seulementAPointer.value,
+);
+
+/** Le vide le plus courant vient d'une fenêtre trop courte : on l'élargit. */
+function elargirA30Jours() {
+  const trente = raccourcis.find((r) => r.label === '30 jours');
+  if (trente) appliquer(trente);
+}
+
+function reinitialiserFiltres() {
+  recherche.value = '';
+  seulementAPointer.value = false;
+  filtres.value = { ...filtres.value, enseignantId: null, salleId: null, statut: null };
+}
 
 const seancesFiltrees = computed(() => {
   const q = (recherche.value ?? '').toLowerCase();
@@ -546,6 +670,14 @@ function ouvrirPointage(s: Seance) {
   dialogPointage.value = true;
 }
 
+/** Rebondir depuis une séance vers la même lecture, élargie à un enseignant
+ *  ou à une salle : la fiche se ferme, le registre se recadre. */
+function filtrerDepuisDetail(cle: 'enseignantId' | 'salleId', valeur: string) {
+  detail.value = null;
+  filtresOuverts.value = true;
+  filtres.value = { ...filtres.value, [cle]: valeur };
+}
+
 function depuisDetail() {
   const s = detail.value;
   detail.value = null;
@@ -562,9 +694,12 @@ async function apresCreation(creee: Seance) {
 function annuler(s: Seance) {
   $q.dialog({
     title: 'Annuler la séance',
-    message: 'Motif de l’annulation (grève, jour férié, indisponibilité…)',
+    message:
+      `Séance du ${dateLisible(s.date)} à ${s.heureDebut}. ` +
+      'Motif de l’annulation (grève, jour férié, indisponibilité…)',
     prompt: { model: '', type: 'text' },
-    cancel: true,
+    ok: { label: 'Annuler la séance', color: 'negative', unelevated: true, noCaps: true },
+    cancel: { label: 'Ne rien faire', flat: true, noCaps: true },
   }).onOk(async (motif: string) => {
     await api.post(`/seances/${s.id}/annuler`, { motif });
     $q.notify({ type: 'positive', message: 'Séance annulée' });
@@ -610,16 +745,48 @@ async function charger() {
   }
 }
 
+/**
+ * Le registre est la destination des liens du tableau de bord et des relevés :
+ * il accepte donc la même période et les mêmes clés de filtre en paramètres.
+ */
+function appliquerParametresUrl() {
+  const q = route.query;
+  const lire = (cle: string) => (q[cle] ? String(q[cle]) : null);
+  const debut = lire('dateDebut');
+  const fin = lire('dateFin');
+  const enseignantId = lire('enseignantId');
+  const salleId = lire('salleId');
+  const statut = lire('statut');
+
+  if (!debut && !fin && !enseignantId && !salleId && !statut) return;
+
+  raccourciActif.value = '';
+  filtres.value = {
+    dateDebut: debut ?? filtres.value.dateDebut,
+    dateFin: fin ?? filtres.value.dateFin,
+    enseignantId,
+    salleId,
+    statut,
+  };
+  // Les filtres arrivés par l'URL doivent se voir : sinon on lit un registre
+  // restreint sans savoir pourquoi.
+  filtresOuverts.value = !!(enseignantId || salleId || statut);
+}
+
+// Appliqué avant l'observateur : l'arrivée par lien ne déclenche qu'un chargement.
+appliquerParametresUrl();
 watch(filtres, charger, { deep: true });
 
 onMounted(async () => {
+  await charger();
+  // Les référentiels n'alimentent que des listes déroulantes : ils ne doivent
+  // pas retarder l'affichage du registre.
   const [s, e] = await Promise.all([
     api.get('/salles', { params: { all: '1' } }),
     api.get('/enseignants', { params: { all: '1' } }),
   ]);
   salles.value = s.data.data;
   enseignants.value = e.data.data;
-  await charger();
 });
 </script>
 
@@ -648,6 +815,12 @@ onMounted(async () => {
     border-top: var(--up-filet-fin);
     padding-top: var(--up-3);
   }
+}
+
+.fiche-detail__liens {
+  border-top: var(--up-filet-fin);
+  flex-wrap: wrap;
+  gap: var(--up-2);
 }
 
 @media (max-width: 599px) {
@@ -836,6 +1009,14 @@ onMounted(async () => {
 }
 
 .registre__vide-titre { font-size: 1.3rem; color: var(--up-encre); }
+
+.registre__vide-actions {
+  display: flex;
+  gap: var(--up-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--up-3);
+}
 
 @media (max-width: 767px) {
   .registre__releve { grid-template-columns: repeat(2, 1fr); }

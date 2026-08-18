@@ -56,17 +56,17 @@
         {{ seancesFiltrees.length }} affichée{{ seancesFiltrees.length > 1 ? 's' : '' }}
       </span>
 
-      <!-- La ligne blanche du cahier : un cours trouvé en salle sans être au
-           programme s'ouvre puis se pointe comme les autres. -->
       <q-btn
         flat
         dense
         no-caps
-        icon="add_box"
-        label="Séance non programmée"
-        class="barre-tri__ajout"
-        @click="ouvrirSeanceNonProgrammee"
-      />
+        icon="query_stats"
+        label="Relevés"
+        class="barre-tri__releves"
+        :to="lienStatistiques"
+      >
+        <q-tooltip>Ce que la tournée a produit, salle par salle</q-tooltip>
+      </q-btn>
     </div>
 
     <div v-if="triOuvert" class="filtres">
@@ -98,6 +98,15 @@
     <q-banner v-if="!pointages.enLigne" class="hors-ligne">
       <template #avatar><q-icon name="cloud_off" size="24px" /></template>
       Hors ligne — vos pointages restent sur l’appareil et partiront au retour du réseau.
+      <q-chip
+        v-if="pointages.enAttente > 0"
+        color="warning"
+        icon="cloud_sync"
+        text-color="dark"
+        class="q-ml-md"
+      >
+        {{ pointages.enAttente }} en attente
+      </q-chip>
     </q-banner>
 
     <!-- Le panneau : une plaque par séance, dans l'ordre des heures -->
@@ -118,14 +127,6 @@
       </span>
       <div class="etat-vide__actions">
         <q-btn
-          unelevated
-          color="primary"
-          no-caps
-          icon="add_box"
-          label="Ouvrir une séance non programmée"
-          @click="ouvrirSeanceNonProgrammee"
-        />
-        <q-btn
           v-if="filtreEtat !== 'toutes' || recherche"
           outline
           no-caps
@@ -133,6 +134,23 @@
           label="Retirer les filtres"
           @click="((filtreEtat = 'toutes'), (recherche = ''))"
         />
+        <template v-else>
+          <q-btn
+            outline
+            no-caps
+            icon="calendar_month"
+            label="Voir l’emploi du temps"
+            to="/emploi-du-temps"
+          />
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="add_box"
+            label="Ouvrir une séance non programmée"
+            @click="ouvrirSeanceNonProgrammee"
+          />
+        </template>
       </div>
     </div>
 
@@ -151,7 +169,7 @@
             </h2>
             <p class="seance__matiere">
               {{ s.affectation?.matiere?.intitule }}
-              <span class="pochoir seance__type">{{ s.type }}</span>
+              <span class="pochoir seance__type" :title="LIBELLE_TYPE_COURS[s.type]">{{ s.type }}</span>
             </p>
             <p class="pochoir seance__lieu">
               {{ s.affectation?.promotion?.nom }}
@@ -210,13 +228,16 @@
           {{ pointees }} séance(s) pointée(s) sur {{ total }} · {{ jourLisible }}
         </p>
       </div>
-      <q-btn
-        outline
-        no-caps
-        icon="print"
-        label="Imprimer le registre du jour"
-        @click="imprimerRegistre"
-      />
+      <div class="fin-tournee__actions">
+        <q-btn flat no-caps icon="event_note" label="Registre complet" :to="lienRegistreJour" />
+        <q-btn
+          outline
+          no-caps
+          icon="print"
+          label="Imprimer le registre du jour"
+          @click="imprimerRegistre"
+        />
+      </div>
     </footer>
 
     <!-- Cible du pouce : toujours atteignable, même quand la tournée est finie -->
@@ -254,6 +275,7 @@ import {
   ICONE_ATTESTATION,
   LIBELLE_ATTESTATION,
   LIBELLE_STATUT_PRESENCE,
+  LIBELLE_TYPE_COURS,
   aujourdhui,
   decalerJours,
   dureeLisible,
@@ -279,6 +301,17 @@ const filtres = [
   { label: 'À pointer', value: 'attente' as const },
   { label: 'Pointées', value: 'faites' as const },
 ];
+
+/** Les deux lectures voisines de la tournée, cadrées sur le jour affiché. */
+const lienRegistreJour = computed(() => ({
+  name: 'seances',
+  query: { dateDebut: date.value, dateFin: date.value },
+}));
+
+const lienStatistiques = computed(() => ({
+  name: 'statistiques',
+  query: { dateDebut: decalerJours(date.value, -29), dateFin: date.value },
+}));
 
 const jourLisible = computed(() =>
   new Date(`${date.value}T12:00:00`).toLocaleDateString('fr-FR', {
@@ -469,7 +502,7 @@ onMounted(async () => {
 
 .barre-tri__actif { color: var(--up-encre-douce); }
 
-.barre-tri__ajout { margin-left: auto; color: var(--up-encre); }
+.barre-tri__releves { margin-left: auto; color: var(--up-encre); }
 
 .filtres {
   display: flex;
@@ -656,16 +689,14 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-// --------------------------------------------------------------- vides
-.etat-vide {
+.fin-tournee__actions {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: var(--up-2);
-  padding: var(--up-6) var(--up-3);
-  color: var(--up-encre-douce);
-  text-align: center;
+  flex-wrap: wrap;
 }
+
+// --------------------------------------------------------------- vides
 
 .etat-vide__titre { font-size: 1.3rem; color: var(--up-encre); }
 

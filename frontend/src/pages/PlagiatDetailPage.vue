@@ -7,22 +7,38 @@
     <div v-else-if="!suspicion" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="error" size="38px" color="negative" />
       <div class="q-mt-sm">Suspicion introuvable ou supprimée.</div>
-      <q-btn flat no-caps color="primary" icon="arrow_back" label="Retour" to="/plagiat" class="q-mt-md" />
+      <q-btn
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour à la file d'arbitrage"
+        :to="{ name: 'plagiat' }"
+        class="q-mt-md"
+      />
     </div>
 
     <template v-else>
-      <q-btn flat dense no-caps icon="arrow_back" label="Liste des suspicions" to="/plagiat" class="q-mb-md" />
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="arrow_back"
+        label="Liste des suspicions"
+        :to="{ name: 'plagiat' }"
+        class="q-mb-md"
+      />
 
       <div class="row items-center q-col-gutter-md q-mb-md">
         <div class="col">
-          <div class="page-titre">Détail de la suspicion</div>
+          <div class="page-titre">Détail suspicion</div>
           <div class="page-sous-titre">
             Comparaison automatique par empreinte + similarité Jaccard.
           </div>
         </div>
         <div class="col-auto">
           <q-chip :color="couleurStatut(suspicion.statut)" text-color="white" dense size="md" :icon="iconeStatut(suspicion.statut)">
-            {{ libelleStatut[suspicion.statut] }}
+            {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
           </q-chip>
         </div>
       </div>
@@ -77,7 +93,14 @@
             </q-card-section>
             <q-separator />
             <q-card-actions>
-              <q-btn flat dense no-caps icon="library_books" label="Voir la fiche" :to="`/bibliotheque-gestion?documentId=${suspicion.documentAId}`" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="library_books"
+                label="Voir la fiche du document"
+                :to="{ name: 'bibliotheque', query: { documentId: suspicion.documentAId } }"
+              />
             </q-card-actions>
           </q-card>
         </div>
@@ -114,7 +137,14 @@
             </q-card-section>
             <q-separator />
             <q-card-actions>
-              <q-btn flat dense no-caps icon="library_books" label="Voir la fiche" :to="`/bibliotheque-gestion?documentId=${suspicion.documentBId}`" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="library_books"
+                label="Voir la fiche du document"
+                :to="{ name: 'bibliotheque', query: { documentId: suspicion.documentBId } }"
+              />
             </q-card-actions>
           </q-card>
         </div>
@@ -250,7 +280,7 @@ import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
-import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
+import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '../types';
 
 const $q = useQuasar();
@@ -270,12 +300,6 @@ const decisionEnCours = ref(false);
 const id = computed(() => String(route.params.id ?? ''));
 
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
-
-const libelleStatut: Record<SuspicionPlagiat['statut'], string> = {
-  EN_ATTENTE: 'En attente',
-  ACQUITTE: 'Acquittée',
-  CONFIRME: 'Confirmée',
-};
 
 const couleurStatut = (s: SuspicionPlagiat['statut']) =>
   ({ EN_ATTENTE: 'orange', ACQUITTE: 'positive', CONFIRME: 'negative' }[s]);
@@ -301,6 +325,9 @@ async function charger() {
     suspicion.value = data;
     decisionStatut.value = 'ACQUITTE';
     decisionMotif.value = data?.commentaire ?? '';
+  } catch (e: any) {
+    suspicion.value = null;
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Suspicion introuvable' });
   } finally {
     chargement.value = false;
   }
@@ -377,14 +404,16 @@ async function validerDecision() {
         ? 'Suspicion acquittée'
         : 'Plagiat confirmé — procédure ouverte',
     });
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Décision impossible' });
   } finally {
     decisionEnCours.value = false;
   }
 }
 
-watch(id, () => {
-  charger();
-  chargerTextes();
+watch(id, async () => {
+  await charger();
+  await chargerTextes();
 });
 
 onMounted(async () => {

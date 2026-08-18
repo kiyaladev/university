@@ -111,7 +111,7 @@ function aujourdhui() {
             v-for="ev in (evenementsParJour[cellule.iso] ?? [])"
             :key="ev.id"
             class="cal__event"
-            :style="{ borderLeftColor: ev.couleur ?? 'var(--up-primary)' }"
+            :style="{ borderColor: ev.couleur ?? 'var(--up-encre)' }"
             @click="ev.onClick?.()"
           >
             <q-icon v-if="ev.icone" :name="ev.icone" size="14px" />
@@ -190,9 +190,11 @@ function aujourdhui() {
   display: grid;
   gap: 2px;
 }
+/* La couleur du type d'événement cerne la pastille entière : un filet tracé,
+   pas un onglet collé sur le flanc. */
 .cal__event {
-  background: rgba(0, 0, 0, 0.04);
-  border-left: 3px solid;
+  background: var(--up-craie);
+  border: 2px solid;
   padding: 2px 4px;
   font-size: 11px;
   display: flex;

@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { api } from '../boot/axios';
+import { OPTIONS_TYPE_ELECTION } from '../services/elections';
 import type { Departement, Election, Promotion, TypeElection } from '../types';
 
 const $q = useQuasar();
@@ -14,13 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ 'update:modelValue': [v: boolean]; enregistre: [e: Election] }>();
 
-const OPTIONS_TYPE: Array<{ value: TypeElection; label: string }> = [
-  { value: 'DELEGUE_PROMOTION', label: 'Délégué de promotion' },
-  { value: 'DELEGUE_DEPARTEMENT', label: 'Délégué de département' },
-  { value: 'PRESIDENT_UNIVERSITE', label: 'Président d\'université' },
-  { value: 'SYNDICAT', label: 'Syndicat' },
-  { value: 'CLUB', label: 'Club' },
-];
+const OPTIONS_TYPE = OPTIONS_TYPE_ELECTION;
 
 const formulaire = ref({
   titre: '',
@@ -66,8 +61,7 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const { default: api } = await import('../boot/axios');
-const url = enEdition.value ? `/elections/${props.election!.id}` : '/elections';
+    const url = enEdition.value ? `/elections/${props.election!.id}` : '/elections';
     const methode = enEdition.value ? 'put' : 'post';
     const payload: Record<string, unknown> = {
       titre: formulaire.value.titre,

@@ -10,7 +10,22 @@
       <div class="col-auto row q-gutter-sm items-center">
         <champ-date v-model="dateDebut" label="Du" style="width: 152px" />
         <champ-date v-model="dateFin" label="Au" style="width: 152px" />
-        <q-btn outline color="primary" icon="print" no-caps label="Ma fiche" @click="imprimer" />
+        <q-btn
+          flat
+          no-caps
+          icon="assignment_turned_in"
+          label="Mes justificatifs"
+          to="/justificatifs"
+        />
+        <q-btn
+          outline
+          color="primary"
+          icon="print"
+          no-caps
+          label="Imprimer ma fiche d’assiduité"
+          :disable="!auth.utilisateur?.enseignantId"
+          @click="imprimer"
+        />
       </div>
     </div>
 
@@ -47,8 +62,8 @@
           </div>
         </article>
       </li>
-      <li v-if="!fiche?.seances?.length" class="seance-relevee__vide pochoir">
-        Aucune séance sur cette période.
+      <li v-if="!chargement && !fiche?.seances?.length" class="seance-relevee__vide pochoir">
+        Aucune séance sur cette période. Élargissez les dates pour remonter plus loin.
       </li>
     </ol>
 
@@ -62,6 +77,8 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 25 }"
+      no-data-label="Aucune séance sur cette période. Élargissez les dates pour remonter plus loin."
+      loading-label="Chargement de vos séances…"
     >
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -69,6 +86,8 @@
         </q-td>
       </template>
     </q-table>
+
+    <q-inner-loading :showing="chargement && $q.screen.lt.md" />
   </q-page>
 </template>
 
@@ -76,8 +95,9 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '../components/ChampDate.vue';
 import {
@@ -90,6 +110,7 @@ import {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const dateDebut = ref(decalerJours(aujourdhui(), -60));
 const dateFin = ref(aujourdhui());
@@ -123,11 +144,15 @@ const colonnes: QTableColumn[] = [
 ];
 
 function imprimer() {
-  window.open(
-    `${API_URL}/impression/fiche-enseignant/${auth.utilisateur?.enseignantId}` +
-      `?dateDebut=${dateDebut.value}&dateFin=${dateFin.value}&token=${auth.token}`,
-    '_blank',
-  );
+  const enseignantId = auth.utilisateur?.enseignantId;
+  if (!enseignantId) {
+    $q.notify({
+      type: 'warning',
+      message: 'Votre compte n’est rattaché à aucun dossier d’enseignant : la fiche est indisponible.',
+    });
+    return;
+  }
+  ouvrirFicheEnseignant(enseignantId, dateDebut.value, dateFin.value);
 }
 
 async function charger() {

@@ -14,7 +14,6 @@
           endpoint="/examens"
           label="Examen *"
           :label-fn="(e) => `${e.codeExamen} — ${e.intitule}`"
-          @update:model-value="remplirEmpreinteSiVide"
         />
         <div class="row q-col-gutter-md">
           <div class="col-6">
@@ -29,10 +28,17 @@
           outlined
           dense
           label="Empreinte SHA-256 du fichier source *"
-          hint="Empreinte à vérifier au moment de l'impression."
+          hint="64 caractères hexadécimaux — cette empreinte sera réclamée à l'identique au moment d'imprimer."
         >
           <template #append>
-            <q-btn round dense flat icon="calculate" @click="calculerDepuisFichier" />
+            <q-btn
+              round
+              dense
+              flat
+              icon="calculate"
+              aria-label="Calculer l'empreinte depuis le fichier chargé"
+              @click="calculerDepuisFichier"
+            />
             <q-tooltip>Calculer depuis un fichier</q-tooltip>
           </template>
         </q-input>
@@ -41,8 +47,8 @@
         <q-input v-model="form.notes" outlined dense type="textarea" rows="2" label="Notes" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn unelevated color="primary" label="Programmer" :loading="envoi" @click="enregistrer" />
+        <q-btn flat no-caps label="Annuler" v-close-popup />
+        <q-btn unelevated no-caps color="primary" label="Programmer" :loading="envoi" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -87,15 +93,16 @@ async function calculerDepuisFichier() {
     .join('');
 }
 
-function remplirEmpreinteSiVide() {
-  if (!form.value.empreinteSource) {
-    form.value.empreinteSource = 'À_CONFRONTER_AVEC_EMPREINTE_FOURNIE_PAR_LE_SERVICE';
-  }
-}
-
 async function enregistrer() {
   if (!form.value.examenId || !form.value.dateTirage || !form.value.nbExemplaires || !form.value.empreinteSource) {
-    $q.notify({ type: 'warning', message: 'Tous les champs sont obligatoires' });
+    $q.notify({ type: 'warning', message: 'Examen, date, nombre d’exemplaires et empreinte sont obligatoires' });
+    return;
+  }
+  if (!/^[0-9a-f]{64}$/i.test(form.value.empreinteSource.trim())) {
+    $q.notify({
+      type: 'warning',
+      message: 'L’empreinte doit être un SHA-256 (64 caractères hexadécimaux) — chargez le fichier pour la calculer.',
+    });
     return;
   }
   envoi.value = true;

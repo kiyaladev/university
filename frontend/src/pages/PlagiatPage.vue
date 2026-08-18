@@ -4,9 +4,20 @@
       <div class="col">
         <div class="page-titre">Anti-plagiat</div>
         <div class="page-sous-titre">
-          Tableau de bord des suspicions détectées par empreinte sur les documents déposés.
-          Les acquisitions acquittent la suspicion ; les confirmations ouvrent une procédure disciplinaire.
+          File d'arbitrage des suspicions détectées par empreinte sur les documents
+          déposés. Acquitter lève la suspicion ; confirmer ouvre une procédure
+          disciplinaire — les deux décisions sont définitives et journalisées.
         </div>
+      </div>
+      <div class="col-auto">
+        <q-btn
+          outline
+          color="secondary"
+          no-caps
+          icon="library_books"
+          label="Bibliothèque"
+          @click="router.push({ name: 'bibliotheque' })"
+        />
       </div>
       <div class="col-auto">
         <q-btn
@@ -22,13 +33,13 @@
       </div>
     </div>
 
-    <!-- KPIs -->
+    <!-- KPIs : chiffres globaux renvoyés par le moteur, tous statuts confondus -->
     <div class="row q-col-gutter-md q-mb-md">
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
             <div class="text-caption text-grey-7 text-uppercase">Total suspicions</div>
-            <div class="kpi-carte__chiffre">{{ stats.total }}</div>
+            <div class="kpi-carte__chiffre">{{ kpis.total }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -37,8 +48,7 @@
           <q-card-section>
             <div class="text-caption text-grey-7 text-uppercase">Score moyen</div>
             <div class="kpi-carte__chiffre">
-              {{ stats.total ? stats.scoreMoyen.toFixed(1) : '0' }}
-              <span class="kpi-carte__unite">%</span>
+              {{ nombreLisible(kpis.scoreMoyen, 1) }}<span class="kpi-carte__unite">%</span>
             </div>
           </q-card-section>
         </q-card>
@@ -46,16 +56,21 @@
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">En attente</div>
-            <div class="kpi-carte__chiffre text-orange">{{ stats.enAttente }}</div>
+            <div class="text-caption text-grey-7 text-uppercase">En attente d'arbitrage</div>
+            <div class="kpi-carte__chiffre text-orange">{{ kpis.enAttente }}</div>
           </q-card-section>
         </q-card>
       </div>
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">Confirmées</div>
-            <div class="kpi-carte__chiffre text-negative">{{ stats.confirmees }}</div>
+            <div class="text-caption text-grey-7 text-uppercase">Arbitrées</div>
+            <div class="kpi-carte__chiffre">
+              <span class="text-positive">{{ kpis.acquittees }}</span>
+              <span class="kpi-carte__unite"> acquittées · </span>
+              <span class="text-negative">{{ kpis.confirmees }}</span>
+              <span class="kpi-carte__unite"> confirmées</span>
+            </div>
           </q-card-section>
         </q-card>
       </div>
@@ -65,24 +80,15 @@
       <template #avatar><q-icon name="check_circle" /></template>
       <div class="text-weight-medium">{{ dernierRecap.titre }}</div>
       <div class="text-caption">{{ dernierRecap.message }}</div>
+      <template #action>
+        <q-btn flat dense no-caps label="Masquer" aria-label="Masquer le récapitulatif" @click="dernierRecap = null" />
+      </template>
     </q-banner>
-
-    <q-tabs
-      v-model="onglet"
-      dense
-      align="left"
-      narrow-indicator
-      class="onglets-panneau q-mb-md"
-    >
-      <q-tab name="en_attente" icon="hourglass_empty" label="En attente" no-caps />
-      <q-tab name="acquittees" icon="thumb_down" label="Acquittées" no-caps />
-      <q-tab name="confirmees" icon="gavel" label="Confirmées" no-caps />
-      <q-tab name="toutes" icon="list" label="Toutes" no-caps />
-    </q-tabs>
 
     <filter-bar
       v-model="filtres"
-      placeholder="Recherche (document, commentaire, détecteur…)"
+      :chips="chips"
+      placeholder="Rechercher (titre, auteurs d'un document…)"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -93,163 +99,192 @@
           max="100"
           dense
           outlined
-          label="Score minimum"
           clearable
+          label="Score minimum (%)"
         />
         <autocomplete-async
           v-model="filtres.documentId"
           endpoint="/documents"
           :label-fn="(d) => `${d.titre}${d.auteurs ? ' — ' + d.auteurs : ''}`"
-          label="Document"
+          label="Document concerné"
           placeholder="Tapez le titre…"
-        />
-        <q-input
-          v-model="filtres.dateMin"
-          type="date"
-          dense
-          outlined
           clearable
-          label="Du"
         />
-        <q-input
-          v-model="filtres.dateMax"
-          type="date"
-          dense
-          outlined
-          clearable
-          label="Au"
-        />
+        <champ-date v-model="filtres.dateMin" label="Détecté du" />
+        <champ-date v-model="filtres.dateMax" label="au" />
       </template>
       <template #actions>
         <view-toggle
           cle="plagiat.dashboard"
           :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
+          defaut="cartes"
+          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
 
-    <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      @update:page="(v) => { pagination.page = v; charger(true) }"
-      @update:page-size="(v) => { pagination.pageSize = v; pagination.page = 1; charger(true); }"
-      @tous="chargerTout"
-    />
-
     <!-- Top 5 documents les plus dupliqués -->
-    <q-banner v-if="stats.topDocuments.length" dense class="bg-grey-2 text-grey-10 q-mb-md">
-      <template #avatar><q-icon name="leaderboard" /></template>
-      <div class="text-caption text-weight-medium q-mb-xs">Top 5 documents les plus dupliqués</div>
+    <q-banner v-if="topDocuments.length" dense class="carte q-mb-md">
+      <template #avatar><q-icon name="leaderboard" color="primary" /></template>
+      <div class="text-caption text-weight-medium q-mb-xs">Documents les plus dupliqués</div>
       <ol class="q-pl-md q-mb-none">
-        <li v-for="d in stats.topDocuments" :key="d.id" class="text-caption">
-          {{ d.titre }} —
-          <span class="text-grey-9">{{ d.compte }} suspicion(s)</span>
+        <li v-for="d in topDocuments" :key="d.id" class="text-caption">
+          {{ d.titre }} — <span class="text-grey-9">{{ d.compte }} suspicion(s)</span>
         </li>
       </ol>
     </q-banner>
 
-    <div v-if="chargement && !suspicions.length" class="row justify-center q-py-xl">
+    <div v-if="chargement" class="row justify-center q-py-xl">
       <q-spinner color="primary" size="40px" />
     </div>
 
-    <div v-else-if="!suspicions.length" class="plaque q-pa-lg text-center text-grey-7">
+    <div v-else-if="!suspicionsFiltrees.length" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="verified" size="38px" color="positive" />
-      <div class="q-mt-sm">Aucune suspicion à afficher dans cet onglet.</div>
-    </div>
-
-    <q-table
-      v-else-if="mode === 'tableau'"
-      flat
-      bordered
-      class="carte"
-      :rows="suspicions"
-      :columns="colonnes"
-      row-key="id"
-      :loading="chargement"
-      :rows-per-page-options="[0]"
-      hide-bottom
-    >
-      <template #body-cell-score="p">
-        <q-td :props="p">
-          <q-badge
-            :color="couleurScore(p.row.score)"
-            text-color="white"
-            dense
-            size="md"
-          >
-            {{ Math.round(p.row.score) }}
-          </q-badge>
-        </q-td>
-      </template>
-      <template #body-cell-documentA="p">
-        <q-td :props="p">
-          <div class="text-weight-medium">{{ p.row.documentA?.titre ?? p.row.documentAId }}</div>
-          <div class="text-caption text-grey-7">{{ p.row.documentA?.auteurs ?? '—' }}</div>
-        </q-td>
-      </template>
-      <template #body-cell-documentB="p">
-        <q-td :props="p">
-          <div class="text-weight-medium">{{ p.row.documentB?.titre ?? p.row.documentBId }}</div>
-          <div class="text-caption text-grey-7">{{ p.row.documentB?.auteurs ?? '—' }}</div>
-        </q-td>
-      </template>
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <q-badge :color="couleurStatut(p.row.statut)" text-color="white">
-            {{ libelleStatut[p.row.statut] }}
-          </q-badge>
-        </q-td>
-      </template>
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="open_in_new" @click="voirDetail(p.row)">
-            <q-tooltip>Voir le détail</q-tooltip>
-          </q-btn>
-          <template v-if="peutDecider && p.row.statut === 'EN_ATTENTE'">
-            <q-btn flat dense round color="positive" icon="thumb_down" @click="acquitter(p.row)">
-              <q-tooltip>Acquitter</q-tooltip>
-            </q-btn>
-            <q-btn flat dense round color="negative" icon="gavel" @click="confirmer(p.row)">
-              <q-tooltip>Confirmer</q-tooltip>
-            </q-btn>
-          </template>
-        </q-td>
-      </template>
-    </q-table>
-
-    <div v-else class="row q-col-gutter-md">
-      <div v-for="s in suspicions" :key="s.id" class="col-12 col-sm-6 col-lg-4">
-        <plagiat-card
-          :suspicion="s"
-          :show-actions="peutDecider"
-          @voir="voirDetail"
-          @acquitter="acquitter"
-          @confirmer="confirmer"
-        />
+      <div class="q-mt-sm text-weight-medium">
+        {{ filtresActifs ? 'Aucune suspicion ne correspond à ces critères.' : 'Aucune suspicion en attente d’arbitrage.' }}
       </div>
+      <div class="text-caption q-mt-xs">
+        {{
+          filtresActifs
+            ? 'Élargissez les critères pour revoir la file d’arbitrage.'
+            : 'Les nouveaux dépôts sont comparés automatiquement ; relancez un recalcul complet après un import massif.'
+        }}
+      </div>
+      <q-btn
+        v-if="filtresActifs"
+        flat
+        no-caps
+        color="primary"
+        icon="refresh"
+        label="Réinitialiser les filtres"
+        class="q-mt-md"
+        @click="reinitialiser"
+      />
     </div>
+
+    <template v-else>
+      <q-table
+        v-if="modeVue === 'tableau'"
+        flat
+        bordered
+        class="carte"
+        :rows="suspicionsPage"
+        :columns="colonnes"
+        row-key="id"
+        :pagination="{ rowsPerPage: 0 }"
+        @row-click="(_, row) => voirDetail(row)"
+      >
+        <template #body-cell-score="p">
+          <q-td :props="p" class="text-center">
+            <q-badge :color="couleurScore(p.row.score)" text-color="white" dense>
+              {{ Math.round(p.row.score) }} %
+            </q-badge>
+          </q-td>
+        </template>
+        <template #body-cell-documentA="p">
+          <q-td :props="p">
+            <div class="text-weight-medium">{{ p.row.documentA?.titre ?? '—' }}</div>
+            <div class="text-caption text-grey-7">{{ p.row.documentA?.auteurs ?? '—' }}</div>
+          </q-td>
+        </template>
+        <template #body-cell-documentB="p">
+          <q-td :props="p">
+            <div class="text-weight-medium">{{ p.row.documentB?.titre ?? '—' }}</div>
+            <div class="text-caption text-grey-7">{{ p.row.documentB?.auteurs ?? '—' }}</div>
+          </q-td>
+        </template>
+        <template #body-cell-statut="p">
+          <q-td :props="p">
+            <q-badge :color="couleurStatut(p.row.statut)" text-color="white">
+              {{ LIBELLE_STATUT_SUSPICION[p.row.statut] ?? p.row.statut }}
+            </q-badge>
+          </q-td>
+        </template>
+        <template #body-cell-actions="p">
+          <q-td :props="p" class="text-right">
+            <q-btn
+              flat
+              dense
+              round
+              icon="open_in_new"
+              aria-label="Voir le détail de la suspicion"
+              @click.stop="voirDetail(p.row)"
+            >
+              <q-tooltip>Voir le détail et le diff</q-tooltip>
+            </q-btn>
+            <template v-if="peutDecider && p.row.statut === 'EN_ATTENTE'">
+              <q-btn
+                flat
+                dense
+                round
+                color="positive"
+                icon="thumb_down"
+                aria-label="Acquitter la suspicion"
+                @click.stop="acquitter(p.row)"
+              >
+                <q-tooltip>Acquitter</q-tooltip>
+              </q-btn>
+              <q-btn
+                flat
+                dense
+                round
+                color="negative"
+                icon="gavel"
+                aria-label="Confirmer le plagiat"
+                @click.stop="confirmer(p.row)"
+              >
+                <q-tooltip>Confirmer le plagiat</q-tooltip>
+              </q-btn>
+            </template>
+          </q-td>
+        </template>
+      </q-table>
+
+      <div v-else class="row q-col-gutter-md">
+        <div v-for="s in suspicionsPage" :key="s.id" class="col-12 col-sm-6 col-lg-4">
+          <plagiat-card
+            :suspicion="s"
+            :show-actions="peutDecider"
+            @voir="voirDetail"
+            @acquitter="acquitter"
+            @confirmer="confirmer"
+          />
+        </div>
+      </div>
+
+      <pagination-bar
+        :page="page"
+        :page-size="pageSize"
+        :total="suspicionsFiltrees.length"
+        :show-all="false"
+        @update:page="(v) => (page = v)"
+        @update:page-size="(v) => { pageSize = v; page = 1; }"
+      />
+    </template>
 
     <!-- Dialog de décision rapide (acquittement / confirmation) -->
     <q-dialog v-model="decisionDialogOuvert">
-      <q-card style="width: 540px; max-width: 95vw" v-if="decisionCourante">
+      <q-card v-if="decisionCourante" style="width: 540px; max-width: 95vw">
         <q-card-section class="text-h6">
           {{ decisionStatut === 'ACQUITTE' ? 'Acquitter la suspicion' : 'Confirmer le plagiat' }}
         </q-card-section>
         <q-card-section class="q-pt-none text-caption text-grey-7">
-          Score : <strong>{{ Math.round(decisionCourante.score) }} %</strong>
-          — Documents n° {{ decisionCourante.documentAId.slice(0, 8) }}
-          et {{ decisionCourante.documentBId.slice(0, 8) }}
+          Score <strong>{{ Math.round(decisionCourante.score) }} %</strong> —
+          « {{ decisionCourante.documentA?.titre ?? '—' }} »
+          contre « {{ decisionCourante.documentB?.titre ?? '—' }} »
         </q-card-section>
         <q-card-section>
-          <q-banner
-            v-if="decisionStatut === 'CONFIRME'"
-            dense
-            class="bg-red-1 text-red-10 q-mb-md"
-          >
-            <template #avatar><q-icon name="warning" color="negative" /></template>
-            Confirmer ouvre une procédure disciplinaire. Le motif est obligatoire.
+          <q-banner dense :class="decisionStatut === 'CONFIRME' ? 'bg-red-1 text-red-10 q-mb-md' : 'carte q-mb-md'">
+            <template #avatar>
+              <q-icon :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'" :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'" />
+            </template>
+            <template v-if="decisionStatut === 'CONFIRME'">
+              Confirmer ouvre une procédure disciplinaire. Le motif est obligatoire
+              et la décision ne pourra plus être modifiée.
+            </template>
+            <template v-else>
+              La suspicion sera close sans suite. La décision ne pourra plus être modifiée.
+            </template>
           </q-banner>
           <q-input
             v-model="decisionMotif"
@@ -257,16 +292,17 @@
             dense
             type="textarea"
             autogrow
-            label="Motif"
-            :rules="decisionStatut === 'CONFIRME' ? [(v: string) => (v && v.trim().length > 0) || 'Motif obligatoire'] : []"
+            :label="decisionStatut === 'CONFIRME' ? 'Motif *' : 'Motif (facultatif)'"
           />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Annuler" v-close-popup />
           <q-btn
             unelevated
+            no-caps
             :color="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
-            :label="decisionStatut === 'ACQUITTE' ? 'Acquitter' : 'Confirmer le plagiat'"
+            :label="decisionStatut === 'ACQUITTE' ? 'Acquitter définitivement' : 'Confirmer le plagiat'"
+            :disable="decisionStatut === 'CONFIRME' && !decisionMotif.trim()"
             :loading="decisionEnCours"
             @click="validerDecision"
           />
@@ -279,37 +315,41 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
+import ChampDate from '../components/ChampDate.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import PlagiatCard from '../components/PlagiatCard.vue';
 import { useAuthStore } from '../stores/auth';
-import type { SuspicionPlagiat } from '../types';
+import { LIBELLE_STATUT_SUSPICION, dateLisible, nombreLisible } from '../utils/libelles';
+import type { SuspicionPlagiat, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const route = useRoute();
 const router = useRouter();
 
-type Onglet = 'en_attente' | 'acquittees' | 'confirmees' | 'toutes';
-const onglet = ref<Onglet>('en_attente');
-const mode = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = ref<'tableau' | 'cartes'>('cartes');
 
+/**
+ * `GET /documents/plagiat` renvoie un tableau de bord complet — file d'attente,
+ * compteurs globaux et top des documents — sans paramètre de filtre ni de
+ * pagination : le tri, la recherche et la pagination sont donc faits ici.
+ */
 const suspicions = ref<SuspicionPlagiat[]>([]);
+const kpis = ref({ total: 0, scoreMoyen: 0, enAttente: 0, acquittees: 0, confirmees: 0 });
+const topDocuments = ref<Array<{ id: string; titre: string; compte: number }>>([]);
+
 const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 12, total: 0 });
+const page = ref(1);
+const pageSize = ref(12);
 const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
-const filtres = ref<Record<string, any>>({
-  recherche: '',
-  scoreMin: null as number | null,
-  documentId: '',
-  dateMin: '',
-  dateMax: '',
-});
+const filtres = ref<Record<string, any>>({});
 
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
@@ -317,16 +357,10 @@ const colonnes: QTableColumn<SuspicionPlagiat>[] = [
   { name: 'score', label: 'Score', field: 'score', align: 'center', sortable: true },
   { name: 'documentA', label: 'Document A', field: 'documentAId', align: 'left' },
   { name: 'documentB', label: 'Document B', field: 'documentBId', align: 'left' },
-  { name: 'detecteLe', label: 'Détecté', field: 'detecteLe', align: 'center', sortable: true },
+  { name: 'detecteLe', label: 'Détecté le', field: (r) => dateLisible(r.detecteLe), align: 'center', sortable: true },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
-
-const libelleStatut: Record<SuspicionPlagiat['statut'], string> = {
-  EN_ATTENTE: 'En attente',
-  ACQUITTE: 'Acquittée',
-  CONFIRME: 'Confirmée',
-};
 
 function couleurScore(score: number): string {
   if (score >= 80) return 'negative';
@@ -338,75 +372,118 @@ function couleurStatut(s: SuspicionPlagiat['statut']): string {
   return { EN_ATTENTE: 'orange', ACQUITTE: 'positive', CONFIRME: 'negative' }[s];
 }
 
-const stats = computed(() => {
-  const total = suspicions.value.length;
-  const scoreMoyen = total
-    ? suspicions.value.reduce((acc, s) => acc + (s.score ?? 0), 0) / total
-    : 0;
-  const enAttente = suspicions.value.filter((s) => s.statut === 'EN_ATTENTE').length;
-  const confirmees = suspicions.value.filter((s) => s.statut === 'CONFIRME').length;
+const filtresActifs = computed(() =>
+  Boolean(
+    filtres.value.recherche ||
+      filtres.value.documentId ||
+      filtres.value.dateMin ||
+      filtres.value.dateMax ||
+      (filtres.value.scoreMin ?? null) !== null,
+  ),
+);
 
-  // Calcul local du top 5 — agrège par titre de document A.
-  const compteur = new Map<string, { id: string; titre: string; compte: number }>();
-  suspicions.value.forEach((s) => {
-    const docs = [s.documentA, s.documentB].filter((d): d is NonNullable<typeof d> => !!d);
-    docs.forEach((d) => {
-      const ex = compteur.get(d.id);
-      if (ex) ex.compte += 1;
-      else compteur.set(d.id, { id: d.id, titre: d.titre, compte: 1 });
-    });
-  });
-  const topDocuments = Array.from(compteur.values())
-    .sort((a, b) => b.compte - a.compte)
-    .slice(0, 5);
-
-  return { total, scoreMoyen, enAttente, confirmees, topDocuments };
+const chips = computed(() => {
+  const cs: ChipFiltre[] = [];
+  if (filtres.value.recherche) {
+    cs.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+  }
+  if ((filtres.value.scoreMin ?? null) !== null && filtres.value.scoreMin !== '') {
+    cs.push({ label: `Score ≥ ${filtres.value.scoreMin} %`, value: filtres.value.scoreMin, icone: 'speed' });
+  }
+  if (filtres.value.documentId) {
+    cs.push({ label: 'Document ciblé', value: filtres.value.documentId, icone: 'description', cle: 'documentId'});
+  }
+  if (filtres.value.dateMin) {
+    cs.push({ label: `Depuis : ${dateLisible(filtres.value.dateMin)}`, value: filtres.value.dateMin, icone: 'event' });
+  }
+  if (filtres.value.dateMax) {
+    cs.push({ label: `Jusqu'à : ${dateLisible(filtres.value.dateMax)}`, value: filtres.value.dateMax, icone: 'event' });
+  }
+  return cs;
 });
 
-async function charger(reinit = true) {
-  if (reinit) pagination.value.page = 1;
+const suspicionsFiltrees = computed(() => {
+  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  const scoreMin = Number(filtres.value.scoreMin ?? NaN);
+  const debut = filtres.value.dateMin ? new Date(String(filtres.value.dateMin)).getTime() : null;
+  const fin = filtres.value.dateMax
+    ? new Date(String(filtres.value.dateMax)).getTime() + 86_400_000 - 1
+    : null;
+
+  return suspicions.value.filter((s) => {
+    if (!Number.isNaN(scoreMin) && (s.score ?? 0) < scoreMin) return false;
+    if (filtres.value.documentId
+      && s.documentAId !== filtres.value.documentId
+      && s.documentBId !== filtres.value.documentId) return false;
+    const t = new Date(s.detecteLe).getTime();
+    if (debut !== null && t < debut) return false;
+    if (fin !== null && t > fin) return false;
+    if (q) {
+      const texte = [
+        s.documentA?.titre,
+        s.documentA?.auteurs,
+        s.documentB?.titre,
+        s.documentB?.auteurs,
+        s.commentaire,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!texte.includes(q)) return false;
+    }
+    return true;
+  });
+});
+
+const suspicionsPage = computed(() =>
+  suspicionsFiltrees.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
+);
+
+async function charger() {
   chargement.value = true;
   try {
-    const params: Record<string, any> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
+    const { data } = await api.get('/documents/plagiat');
+    suspicions.value = data?.suspicions ?? [];
+    kpis.value = {
+      total: data?.kpis?.total ?? 0,
+      scoreMoyen: data?.kpis?.scoreMoyen ?? 0,
+      enAttente: data?.kpis?.enAttente ?? 0,
+      acquittees: data?.kpis?.acquittees ?? 0,
+      confirmees: data?.kpis?.confirmees ?? 0,
     };
-    const f = filtres.value;
-    if (f.scoreMin !== null && f.scoreMin !== undefined && f.scoreMin !== '') {
-      params.scoreMin = f.scoreMin;
-    }
-    if (f.documentId) params.documentId = f.documentId;
-    if (f.dateMin) params.dateMin = f.dateMin;
-    if (f.dateMax) params.dateMax = f.dateMax;
-    if (f.recherche) params.search = f.recherche;
 
-    switch (onglet.value) {
-      case 'en_attente': params.statut = 'EN_ATTENTE'; break;
-      case 'acquittees': params.statut = 'ACQUITTE'; break;
-      case 'confirmees': params.statut = 'CONFIRME'; break;
-      default: break;
+    // Le « top » est renvoyé sous forme de suspicions : on agrège par document.
+    const compteur = new Map<string, { id: string; titre: string; compte: number }>();
+    for (const s of (data?.topDix ?? []) as SuspicionPlagiat[]) {
+      for (const d of [s.documentA, s.documentB]) {
+        if (!d) continue;
+        const ex = compteur.get(d.id);
+        if (ex) ex.compte += 1;
+        else compteur.set(d.id, { id: d.id, titre: d.titre, compte: 1 });
+      }
     }
-
-    const { data } = await api.get('/documents/plagiat', { params });
-    suspicions.value = data.data;
-    pagination.value.total = data.total;
+    topDocuments.value = Array.from(compteur.values())
+      .sort((a, b) => b.compte - a.compte)
+      .slice(0, 5);
+  } catch (e: any) {
+    suspicions.value = [];
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Tableau de bord anti-plagiat indisponible',
+    });
   } finally {
     chargement.value = false;
+    page.value = 1;
   }
 }
 
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await charger(true);
-}
-
 function reinitialiser() {
-  filtres.value = { recherche: '', scoreMin: null, documentId: '', dateMin: '', dateMax: '' };
+  filtres.value = {};
+  page.value = 1;
 }
 
 function voirDetail(s: SuspicionPlagiat) {
-  void router.push(`/plagiat/${s.id}`);
+  void router.push({ name: 'plagiat-detail', params: { id: s.id } });
 }
 
 // Dialog de décision rapide
@@ -416,19 +493,15 @@ const decisionStatut = ref<'ACQUITTE' | 'CONFIRME'>('ACQUITTE');
 const decisionMotif = ref('');
 const decisionEnCours = ref(false);
 
-function acquitter(s: SuspicionPlagiat) {
+function ouvrirDecision(s: SuspicionPlagiat, statut: 'ACQUITTE' | 'CONFIRME') {
   decisionCourante.value = s;
-  decisionStatut.value = 'ACQUITTE';
+  decisionStatut.value = statut;
   decisionMotif.value = '';
   decisionDialogOuvert.value = true;
 }
 
-function confirmer(s: SuspicionPlagiat) {
-  decisionCourante.value = s;
-  decisionStatut.value = 'CONFIRME';
-  decisionMotif.value = '';
-  decisionDialogOuvert.value = true;
-}
+const acquitter = (s: SuspicionPlagiat) => ouvrirDecision(s, 'ACQUITTE');
+const confirmer = (s: SuspicionPlagiat) => ouvrirDecision(s, 'CONFIRME');
 
 async function validerDecision() {
   if (!decisionCourante.value) return;
@@ -438,21 +511,21 @@ async function validerDecision() {
   }
   decisionEnCours.value = true;
   try {
-    await api.post(
-      `/documents/plagiat/${decisionCourante.value.id}/acquitter`,
-      {
-        decision: decisionStatut.value,
-        commentaire: decisionMotif.value.trim() || undefined,
-      },
-    );
+    await api.post(`/documents/plagiat/${decisionCourante.value.id}/acquitter`, {
+      decision: decisionStatut.value,
+      commentaire: decisionMotif.value.trim() || undefined,
+    });
     $q.notify({
       type: 'positive',
-      message: decisionStatut.value === 'ACQUITTE'
-        ? 'Suspicion acquittée'
-        : 'Plagiat confirmé — procédure ouverte',
+      message:
+        decisionStatut.value === 'ACQUITTE'
+          ? 'Suspicion acquittée'
+          : 'Plagiat confirmé — procédure ouverte',
     });
     decisionDialogOuvert.value = false;
-    await charger(true);
+    await charger();
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Décision impossible' });
   } finally {
     decisionEnCours.value = false;
   }
@@ -462,31 +535,40 @@ async function lancerRecalcul() {
   $q.dialog({
     title: 'Recalculer toutes les suspicions',
     message:
-      'Cette opération compare tous les documents et peut prendre plusieurs minutes. '
-      + 'Confirmez pour lancer le calcul.',
+      'Tous les documents déposés seront comparés deux à deux : l’opération peut '
+      + 'prendre plusieurs minutes. Les décisions déjà prises ne sont pas remises en cause.',
     cancel: true,
-    ok: { color: 'negative', label: 'Lancer le recalcul', unelevated: true },
+    ok: { color: 'negative', label: 'Lancer le recalcul', unelevated: true, noCaps: true },
   }).onOk(async () => {
     recalculEnCours.value = true;
     try {
       const { data } = await api.post('/documents/recalculer-plagiat', {});
-      const total = (data?.total ?? data?.suspicionsCreees ?? data?.data?.total) as number | undefined;
-      const docs = (data?.documentsAnalyses ?? data?.data?.documentsAnalyses) as number | undefined;
       dernierRecap.value = {
         titre: 'Recalcul terminé',
-        message: `${docs ?? '?'} document(s) analysés — ${total ?? '?'} suspicion(s) détectée(s).`,
+        message: `${data?.creees ?? 0} suspicion(s) créée(s), ${data?.misesAJour ?? 0} mise(s) à jour, ${data?.ignorees ?? 0} ignorée(s).`,
       };
       $q.notify({ type: 'positive', message: 'Recalcul anti-plagiat terminé' });
-      await charger(true);
+      await charger();
+    } catch (e: any) {
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Recalcul impossible' });
     } finally {
       recalculEnCours.value = false;
     }
   });
 }
 
-watch([filtres, onglet], () => charger(true), { deep: true });
+watch(
+  () => [filtres.value.recherche, filtres.value.scoreMin, filtres.value.documentId, filtres.value.dateMin, filtres.value.dateMax],
+  () => {
+    page.value = 1;
+  },
+);
 
-onMounted(() => charger(true));
+onMounted(async () => {
+  // La bibliothèque renvoie ici avec le document à examiner.
+  if (route.query.documentId) filtres.value.documentId = String(route.query.documentId);
+  await charger();
+});
 </script>
 
 <style scoped>

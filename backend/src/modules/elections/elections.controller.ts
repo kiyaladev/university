@@ -56,6 +56,11 @@ export class ElectionsController {
     return this.service.actives();
   }
 
+  @Get(':id/mon-vote')
+  monVote(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.monVote(id, user);
+  }
+
   @Get(':id')
   trouver(@Param('id') id: string) {
     return this.service.trouver(id);

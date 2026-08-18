@@ -98,6 +98,9 @@ export class PaieService {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.annee ? { annee: query.annee } : {}),
       ...(query.mois ? { mois: query.mois } : {}),
+      // `FeuilleQueryDto` hérite de `QueryDto` et expose donc `search` : le
+      // seul texte d'une feuille est son libellé (« Janvier 2026 »).
+      ...(query.search ? { libelle: { contains: query.search, mode: 'insensitive' } } : {}),
     };
 
     const [data, total] = await Promise.all([

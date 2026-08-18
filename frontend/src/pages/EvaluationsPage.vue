@@ -9,7 +9,7 @@
       </div>
       <div class="col-auto">
         <q-btn
-          v-if="peutSaisir()"
+          v-if="peutGererEvaluation()"
           unelevated
           color="primary"
           no-caps
@@ -90,14 +90,36 @@
       flat
       bordered
       class="carte"
-      :rows="evaluationsFiltrees"
+      :rows="evaluations"
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">Aucune évaluation pour ces critères.</div>
+        <div class="evaluations-vide">
+          <q-icon name="fact_check" size="42px" class="q-mb-sm" />
+          <div>{{ messageVide }}</div>
+          <div class="q-mt-sm q-gutter-sm">
+            <q-btn
+              v-if="filtresActifs"
+              outline
+              no-caps
+              icon="refresh"
+              label="Réinitialiser les filtres"
+              @click="reinitialiser"
+            />
+            <q-btn
+              v-if="peutGererEvaluation() && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              label="Nouvelle évaluation"
+              @click="ouvrir(null)"
+            />
+          </div>
+        </div>
       </template>
 
       <template #body-cell-type="p">
@@ -114,11 +136,7 @@
 
       <template #body-cell-notes="p">
         <q-td :props="p">
-          <q-badge
-            outline
-            color="primary"
-            :label="`${(p.row as any)._count?.notes ?? 0} note${(p.row as any)._count?.notes > 1 ? 's' : ''}`"
-          />
+          <q-badge outline color="primary" :label="libelleNotes(p.row)" />
         </q-td>
       </template>
 
@@ -128,51 +146,64 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="voirNotes(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Voir les notes de l'évaluation"
+            @click="voirNotes(p.row)"
+          >
             <q-tooltip>Voir les notes</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'OUVERTE' && peutSaisir()"
+            v-if="p.row.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
             dense
             round
             icon="edit_note"
             color="primary"
+            aria-label="Saisir les notes"
             @click="saisirNotes(p.row)"
           >
             <q-tooltip>Saisir les notes (plein écran)</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'OUVERTE' && peutSaisir()"
+            v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
             dense
             round
             icon="lock"
+            aria-label="Clôturer l'évaluation"
             @click="cloturer(p.row)"
           >
             <q-tooltip>Clôturer l’évaluation (notes figées)</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'OUVERTE' && peutSaisir()"
+            v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
             dense
             round
             icon="edit"
+            aria-label="Modifier l'évaluation"
             @click="ouvrir(p.row)"
-          />
+          >
+            <q-tooltip>Modifier l’évaluation</q-tooltip>
+          </q-btn>
           <q-btn
-            v-if="peutSaisir()"
+            v-if="peutGererEvaluation()"
             flat
             dense
             round
             color="negative"
             icon="delete"
-            :disable="(p.row as any)._count?.notes > 0"
+            aria-label="Supprimer l'évaluation"
+            :disable="nombreNotes(p.row) > 0"
             @click="supprimer(p.row)"
           >
             <q-tooltip>
               {{
-                (p.row as any)._count?.notes > 0
+                nombreNotes(p.row) > 0
                   ? 'Des notes sont déjà saisies : suppression impossible'
                   : 'Supprimer'
               }}
@@ -182,9 +213,16 @@
       </template>
     </q-table>
 
-    <div v-else class="evaluations-cartes">
+    <q-linear-progress
+      v-if="modeVue === 'cartes' && chargement"
+      indeterminate
+      color="primary"
+      class="q-mb-sm"
+    />
+
+    <div v-else-if="modeVue === 'cartes'" class="evaluations-cartes">
       <q-card
-        v-for="e in evaluationsFiltrees"
+        v-for="e in evaluations"
         :key="e.id"
         flat
         bordered
@@ -212,18 +250,14 @@
             {{ e.matiere?.intitule }} — {{ e.promotion?.nom }}
           </div>
           <div class="q-mt-sm">
-            <q-badge
-              outline
-              color="primary"
-              :label="`${(e as any)._count?.notes ?? 0} note${(e as any)._count?.notes > 1 ? 's' : ''}`"
-            />
+            <q-badge outline color="primary" :label="libelleNotes(e)" />
           </div>
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
           <q-btn flat dense icon="visibility" no-caps label="Notes" @click="voirNotes(e)" />
           <q-btn
-            v-if="e.statut === 'OUVERTE' && peutSaisir()"
+            v-if="e.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
             dense
             color="primary"
@@ -233,7 +267,7 @@
             @click="saisirNotes(e)"
           />
           <q-btn
-            v-if="peutSaisir() && e.statut === 'OUVERTE'"
+            v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
             dense
             icon="edit"
@@ -241,10 +275,50 @@
             label="Modifier"
             @click="ouvrir(e)"
           />
+          <q-btn
+            v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
+            flat
+            dense
+            icon="lock"
+            no-caps
+            label="Clôturer"
+            @click="cloturer(e)"
+          />
+          <q-btn
+            v-if="peutGererEvaluation()"
+            flat
+            dense
+            color="negative"
+            icon="delete"
+            no-caps
+            label="Supprimer"
+            :disable="nombreNotes(e) > 0"
+            @click="supprimer(e)"
+          />
         </q-card-actions>
       </q-card>
-      <div v-if="!evaluationsFiltrees.length" class="text-center q-pa-md text-grey-7">
-        Aucune évaluation pour ces critères.
+      <div v-if="!evaluations.length" class="evaluations-vide">
+        <q-icon name="fact_check" size="42px" class="q-mb-sm" />
+        <div>{{ messageVide }}</div>
+        <div class="q-mt-sm q-gutter-sm">
+          <q-btn
+            v-if="filtresActifs"
+            outline
+            no-caps
+            icon="refresh"
+            label="Réinitialiser les filtres"
+            @click="reinitialiser"
+          />
+          <q-btn
+            v-if="peutGererEvaluation() && !filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            label="Nouvelle évaluation"
+            @click="ouvrir(null)"
+          />
+        </div>
       </div>
     </div>
 
@@ -282,12 +356,12 @@
             </div>
           </div>
           <q-btn
-            v-if="evaluationSelectionnee?.statut === 'OUVERTE' && peutSaisir()"
+            v-if="evaluationSelectionnee?.statut === 'OUVERTE' && peutSaisirNotes()"
             unelevated
             color="primary"
             no-caps
             icon="edit_note"
-            label="Saisir"
+            label="Saisir les notes"
             @click="saisirDepuisConsultation"
           />
         </q-card-section>
@@ -309,6 +383,12 @@
             :pagination="{ rowsPerPage: 0 }"
             dense
           >
+            <template #no-data>
+              <div class="text-center q-pa-md text-grey-7">
+                Aucun étudiant à noter : seuls les dossiers d’inscription
+                <strong>validés</strong> de cette promotion figurent sur la feuille.
+              </div>
+            </template>
             <template #body-cell-note="p">
               <q-td :props="p" class="text-center chiffres">
                 <span
@@ -342,7 +422,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -362,15 +442,21 @@ import type {
   Matiere,
   Promotion,
   StatutEvaluation,
-  TypeEvaluation,
-} from '../types';
+  TypeEvaluation, ChipFiltre } from '../types';
 
 const $q = useQuasar();
+const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 
-/** Qui saisit les notes et gère les évaluations. */
-const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT']);
+/**
+ * Deux droits distincts, alignés sur l'API :
+ * — créer / modifier / clôturer / supprimer une évaluation : SCOLARITE, ADMIN ;
+ * — saisir les notes (`PUT /notes/saisie`) : + DIRECTION et CHEF_DEPARTEMENT.
+ */
+const peutGererEvaluation = () => auth.aRole(['ADMIN', 'SCOLARITE']);
+const peutSaisirNotes = () =>
+  auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']);
 
 const evaluations = ref<Evaluation[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
@@ -384,12 +470,13 @@ const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const page = ref(1);
 const pageSize = ref(20);
 const total = ref(0);
-const tousLesElements = ref(false);
+/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
+const pret = ref(false);
 
 const filtres = ref<Record<string, any>>({});
 
 const chips = computed(() => {
-  const cs: Array<{ label: string; value: any; icone?: string; defaut?: boolean }> = [];
+  const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
       label: `« ${filtres.value.recherche} »`,
@@ -427,10 +514,16 @@ const chips = computed(() => {
   return cs;
 });
 
-const evaluationsFiltrees = computed(() => {
-  if (!tousLesElements.value && !filtres.value.recherche) return evaluations.value;
-  return evaluations.value;
-});
+/** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
+const filtresActifs = computed(() =>
+  Object.entries(filtres.value).some(([, v]) => v !== null && v !== undefined && v !== ''),
+);
+
+const messageVide = computed(() =>
+  filtresActifs.value
+    ? 'Aucune évaluation ne correspond à ces critères.'
+    : 'Aucune évaluation : créez la première épreuve de la promotion.',
+);
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -469,13 +562,22 @@ const colonnes: QTableColumn[] = [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
+/** Nombre de notes déjà saisies sur l'évaluation. */
+const nombreNotes = (e: Evaluation) => e._count?.notes ?? 0;
+
+const libelleNotes = (e: Evaluation) => {
+  const n = nombreNotes(e);
+  return `${n} note${n > 1 ? 's' : ''}`;
+};
+
 function ouvrir(e: Evaluation | null) {
   evaluationEditee.value = e;
   dialogOuvert.value = true;
 }
 
+/** Feuille de saisie plein écran, sur l'évaluation choisie. */
 function saisirNotes(e: Evaluation) {
-  router.push({ path: '/notes', query: { evaluation: e.id } });
+  void router.push({ path: '/notes', query: { evaluation: e.id } });
 }
 
 function cloturer(e: Evaluation) {
@@ -532,19 +634,24 @@ const colonnesNotesConsultation: QTableColumn[] = [
   { name: 'note', label: 'Note', field: 'note', align: 'center' },
 ];
 
+/**
+ * Feuille de l'évaluation. `GET /evaluations/:id/etudiants` renvoie
+ * `{ evaluation, lignes }` — les inscrits sont dans `lignes`, jamais à la
+ * racine ni dans `data`.
+ */
 async function voirNotes(e: Evaluation) {
   evaluationSelectionnee.value = e;
   dialogNotes.value = true;
   chargementNotes.value = true;
   try {
     const { data } = await api.get(`/evaluations/${e.id}/etudiants`);
-    const liste = Array.isArray(data) ? data : data?.data ?? [];
+    const liste = Array.isArray(data) ? data : data?.lignes ?? [];
     notesConsultation.value = liste.map((l: any) => ({
       inscriptionId: l.inscriptionId ?? l.id,
-      matricule: l.matricule ?? l.inscription?.etudiant?.matricule ?? '—',
-      nom: l.nom ?? l.inscription?.etudiant?.nom ?? '',
-      prenom: l.prenom ?? l.inscription?.etudiant?.prenom ?? '',
-      numero: l.numero ?? l.inscription?.numero ?? '—',
+      matricule: l.matricule ?? '—',
+      nom: l.nom ?? '',
+      prenom: l.prenom ?? '',
+      numero: l.numero ?? '—',
       note: l.note ?? null,
       present: l.present ?? true,
     }));
@@ -582,6 +689,9 @@ async function charger() {
     });
     evaluations.value = data.data ?? [];
     total.value = data.total ?? evaluations.value.length;
+  } catch {
+    evaluations.value = [];
+    total.value = 0;
   } finally {
     chargement.value = false;
   }
@@ -604,7 +714,11 @@ async function chargerTout() {
     });
     evaluations.value = data.data ?? [];
     total.value = evaluations.value.length;
-    tousLesElements.value = true;
+    pageSize.value = Math.max(evaluations.value.length, 1);
+    page.value = 1;
+  } catch {
+    evaluations.value = [];
+    total.value = 0;
   } finally {
     chargement.value = false;
   }
@@ -613,29 +727,38 @@ async function chargerTout() {
 function reinitialiser() {
   filtres.value = {};
   page.value = 1;
-  tousLesElements.value = false;
-  charger();
+  void charger();
 }
 
 watch(
   () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.matiereId,
          filtres.value.type, filtres.value.statut, filtres.value.recherche],
   () => {
+    if (!pret.value) return;
     page.value = 1;
-    tousLesElements.value = false;
-    charger();
+    void charger();
   },
 );
 
 onMounted(async () => {
-  const [a, promos, m] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-    api.get('/matieres', { params: { all: '1' } }),
-  ]);
-  annees.value = a.data.data;
-  promotions.value = promos.data.data;
-  matieres.value = m.data.data;
+  try {
+    const [a, promos, m] = await Promise.all([
+      api.get('/annees', { params: { all: '1' } }),
+      api.get('/promotions', { params: { all: '1' } }),
+      api.get('/matieres', { params: { all: '1' } }),
+    ]);
+    annees.value = a.data.data ?? [];
+    promotions.value = promos.data.data ?? [];
+    matieres.value = m.data.data ?? [];
+  } catch {
+    annees.value = [];
+    promotions.value = [];
+    matieres.value = [];
+  }
+  // `/evaluations?promotion=…` : arrivée depuis la fiche d'un étudiant.
+  const promotion = route.query.promotion as string | undefined;
+  if (promotion) filtres.value.promotionId = promotion;
+  pret.value = true;
   await charger();
 });
 </script>
@@ -648,5 +771,13 @@ onMounted(async () => {
 }
 .evaluations-cartes__carte {
   background: var(--up-plaque);
+}
+
+// État vide : on nomme la cause et on offre la sortie.
+.evaluations-vide {
+  grid-column: 1 / -1;
+  padding: var(--up-5);
+  text-align: center;
+  color: var(--up-encre-douce);
 }
 </style>

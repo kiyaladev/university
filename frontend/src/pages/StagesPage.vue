@@ -33,8 +33,8 @@
     <q-tab-panel v-if="onglet === 'travaux'" name="travaux" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresTravaux"
+        :chips="chipsTravaux"
         placeholder="Rechercher (intitulé, entreprise, lieu…)"
-        :recherche="true"
         @reinitialiser="reinitialiserTravaux"
       >
         <template #avances>
@@ -105,6 +105,27 @@
         :loading="chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
+        <template #no-data>
+          <div class="full-width text-center text-grey-7 q-pa-lg">
+            <q-icon name="work_off" size="38px" color="grey-5" />
+            <div class="q-mt-sm">Aucun travail encadré pour ces critères.</div>
+            <div class="text-caption q-mt-xs">
+              Le parcours commence par un sujet proposé, puis validé par la
+              scolarité.
+            </div>
+            <q-btn
+              v-if="peutCreer"
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              label="Nouveau travail"
+              class="q-mt-sm"
+              @click="ouvrirCreation"
+            />
+          </div>
+        </template>
+
         <template #body-cell-intitule="p">
           <q-td :props="p">
             <div class="text-weight-medium">
@@ -173,16 +194,16 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" @click="detail = p.row">
+            <q-btn flat dense round icon="visibility" aria-label="Voir la fiche du travail" @click="detail = p.row">
               <q-tooltip>Voir la fiche</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-              flat dense round icon="edit" @click="ouvrirEdition(p.row)"
+              flat dense round icon="edit" aria-label="Modifier le travail" @click="ouvrirEdition(p.row)"
             >
               <q-tooltip>Modifier</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="print" @click="imprimer(p.row)">
+            <q-btn flat dense round icon="print" aria-label="Imprimer la fiche" @click="imprimer(p.row)">
               <q-tooltip>Imprimer la fiche</q-tooltip>
             </q-btn>
             <template v-if="boutonsTransition(p.row).length">
@@ -190,7 +211,9 @@
                 v-for="b in boutonsTransition(p.row).slice(0, 1)"
                 :key="b.statut"
                 flat dense round
-                :color="b.couleur" :icon="b.icone"
+                :color="b.couleur"
+                :icon="b.icone"
+                :aria-label="b.libelle"
                 @click="transition(p.row, b.statut)"
               >
                 <q-tooltip>{{ b.libelle }}</q-tooltip>
@@ -199,6 +222,7 @@
             <q-btn
               v-if="peutPlanifierSoutenance(p.row)"
               flat dense round color="primary" icon="groups"
+              aria-label="Planifier la soutenance"
               @click="ouvrirSoutenance(p.row)"
             >
               <q-tooltip>Planifier la soutenance</q-tooltip>
@@ -206,6 +230,7 @@
             <q-btn
               v-if="peutConstatJury(p.row)"
               flat dense round color="deep-purple" icon="fact_check"
+              aria-label="Saisir le constat du jury"
               @click="ouvrirJury(p.row)"
             >
               <q-tooltip>Constat du jury</q-tooltip>
@@ -213,6 +238,7 @@
             <q-btn
               v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
               flat dense round color="negative" icon="delete"
+              aria-label="Supprimer le travail"
               @click="supprimer(p.row)"
             >
               <q-tooltip>Supprimer</q-tooltip>
@@ -265,7 +291,7 @@
           <q-card flat bordered class="carte">
             <q-card-section class="text-center">
               <div class="stat-chiffre chiffres">{{ soutenancesAVenir.length }}</div>
-              <div class="pochoir text-grey-7">Soutenances à venir</div>
+              <div class="pochoir text-grey-7">Soutenances des 7 prochains jours</div>
             </q-card-section>
           </q-card>
         </div>
@@ -273,15 +299,15 @@
           <q-card flat bordered class="carte">
             <q-card-section class="text-center">
               <div class="stat-chiffre chiffres">{{ travauxFiltresSoutenance.length }}</div>
-              <div class="pochoir text-grey-7">Travaux concernés</div>
+              <div class="pochoir text-grey-7">Travaux en phase de soutenance</div>
             </q-card-section>
           </q-card>
         </div>
         <div class="col-12 col-md-4">
           <q-card flat bordered class="carte">
             <q-card-section class="text-center">
-              <div class="stat-chiffre chiffres">{{ soutenancesNotees.length }}</div>
-              <div class="pochoir text-grey-7">Notes attribuées</div>
+              <div class="stat-chiffre chiffres">{{ travauxSoutenus.length }}</div>
+              <div class="pochoir text-grey-7">Travaux soutenus</div>
             </q-card-section>
           </q-card>
         </div>
@@ -289,9 +315,9 @@
 
       <filter-bar
         v-model="filtresSoutenances"
+        :chips="chipsSoutenances"
         placeholder="Rechercher (intitulé, étudiant, salle…)"
-        :recherche="true"
-        @reinitialiser="filtresSoutenances = { recherche: '' }"
+        @reinitialiser="filtresSoutenances = { recherche: '', statut: null }"
       >
         <template #avances>
           <q-select
@@ -312,8 +338,11 @@
         :compact="false"
       />
 
+      <!-- Le serveur ne renvoie que la fenêtre des 7 jours : on le dit. -->
       <q-list separator bordered class="q-mt-md carte">
-        <q-item-label header class="text-subtitle1">Soutenances à venir</q-item-label>
+        <q-item-label header class="text-subtitle1">
+          Soutenances des 7 prochains jours
+        </q-item-label>
         <q-item v-for="s in soutenancesFiltrees" :key="s.id" clickable @click="detail = s.travailEncadre ?? null">
           <q-item-section>
             <q-item-label>
@@ -332,8 +361,12 @@
           </q-item-section>
         </q-item>
         <q-item v-if="!soutenancesFiltrees.length">
-          <q-item-section class="text-grey-7 text-center">
-            Aucune soutenance à venir
+          <q-item-section class="text-grey-7 text-center q-py-md">
+            <div>Aucune soutenance programmée dans les 7 prochains jours.</div>
+            <div class="text-caption q-mt-xs">
+              Une soutenance se planifie depuis l'onglet « Travaux », sur un
+              dossier en cours dont le rapport est rendu.
+            </div>
           </q-item-section>
         </q-item>
       </q-list>
@@ -454,8 +487,7 @@ import {
 import type {
   StatutEncadrement,
   TravailEncadre,
-  TypeEncadrement,
-} from '../types';
+  TypeEncadrement, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -536,7 +568,7 @@ const BOUTONS_PAR_STATUT: Record<StatutEncadrement, BoutonTransition[]> = {
   ],
 };
 
-const colonnes = ref<QTableColumn[]>([
+const colonnes: QTableColumn[] = [
   { name: 'intitule', label: 'Travail', field: 'intitule', align: 'left', sortable: true },
   { name: 'etudiant', label: 'Étudiant', field: 'etudiantId', align: 'left' },
   { name: 'encadrant', label: 'Encadrant', field: 'encadrantId', align: 'left' },
@@ -545,7 +577,7 @@ const colonnes = ref<QTableColumn[]>([
   { name: 'rapport', label: 'Rapport', field: 'rapportRendu', align: 'center' },
   { name: 'soutenance', label: 'Soutenance', field: 'soutenance', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-]);
+];
 
 const couleurStatut = (s: string) =>
   s === 'SOUTENU'
@@ -587,6 +619,41 @@ const lignesVisibles = computed(() => {
   return liste;
 });
 
+/** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
+const chipsTravaux = computed(() => {
+  const f = filtresTravaux.value;
+  const cs: ChipFiltre[] = [];
+  if (f.recherche) {
+    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+  }
+  if (f.type) {
+    cs.push({ label: LIBELLE_TYPE_ENCADREMENT[f.type] ?? f.type, value: f.type, icone: 'work', cle: 'type'});
+  }
+  if (f.statut) {
+    cs.push({
+      label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut,
+      value: f.statut,
+      icone: 'flag', cle: 'statut'});
+  }
+  if (f.encadrantId) cs.push({ label: 'Encadrant filtré', value: f.encadrantId, icone: 'person', cle: 'encadrantId'});
+  return cs;
+});
+
+const chipsSoutenances = computed(() => {
+  const f = filtresSoutenances.value;
+  const cs: ChipFiltre[] = [];
+  if (f.recherche) {
+    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+  }
+  if (f.statut) {
+    cs.push({
+      label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut,
+      value: f.statut,
+      icone: 'flag', cle: 'statut'});
+  }
+  return cs;
+});
+
 const statsParType = computed(() => {
   const types: TypeEncadrement[] = ['STAGE', 'MEMOIRE', 'RAPPORT'];
   return types.map((type) => ({
@@ -599,7 +666,12 @@ const statsParType = computed(() => {
 const colonnesKanban = computed(() => {
   const f = filtresTravaux.value;
   const recherche = (f.recherche ?? '').toString().trim().toLowerCase();
-  return COLONNES_KANBAN.map((col) => {
+  // Un compteur sélectionné ne garde que sa colonne : le tableau et le kanban
+  // montrent alors exactement le même sous-ensemble.
+  const colonnesRetenues = f.statut
+    ? COLONNES_KANBAN.filter((c) => c.statut === f.statut)
+    : COLONNES_KANBAN;
+  return colonnesRetenues.map((col) => {
     const cartes = travaux.value
       .filter((t) => t.statut === col.statut)
       .filter((t) => {
@@ -741,10 +813,10 @@ async function basculerRapport(t: TravailEncadre, rendu: boolean) {
 }
 
 function imprimer(t: TravailEncadre) {
-  const token = localStorage.getItem('unipresence_token');
-  if (!token) return;
+  // Le jeton voyage en paramètre : l'onglet ouvert ne porte pas l'en-tête.
+  if (!auth.token) return;
   window.open(
-    `${API_URL}/travaux-encadres/${t.id}/fiche?token=${encodeURIComponent(token)}`,
+    `${API_URL}/travaux-encadres/${t.id}/fiche?token=${encodeURIComponent(auth.token)}`,
     '_blank',
   );
 }
@@ -775,9 +847,8 @@ const travauxFiltresSoutenance = computed(() => {
   return travaux.value.filter((t) => t.statut === 'EN_COURS' || t.statut === 'SOUTENU' || t.soutenance);
 });
 
-const soutenancesNotees = computed(() =>
-  soutenancesAVenir.value.filter((s) => s.note !== null && s.note !== undefined),
-);
+/** Dossiers arrivés au bout du parcours — calculés sur la liste complète. */
+const travauxSoutenus = computed(() => travaux.value.filter((t) => t.statut === 'SOUTENU'));
 
 const soutenancesFiltrees = computed(() => {
   const f = filtresSoutenances.value;
@@ -812,6 +883,8 @@ async function charger() {
   chargement.value = true;
   try {
     const f = filtresTravaux.value;
+    // Le statut reste un filtre d'affichage : envoyé au serveur, il viderait
+    // les compteurs des autres états et les colonnes du kanban.
     const [travauxRes, calendrierRes] = await Promise.all([
       api.get('/travaux-encadres', {
         params: {
@@ -819,7 +892,6 @@ async function charger() {
           search: f.recherche || undefined,
           type: f.type || undefined,
           encadrantId: f.encadrantId || undefined,
-          statut: f.statut || undefined,
         },
       }),
       peutCreer.value
@@ -842,10 +914,8 @@ async function charger() {
   }
 }
 
+// Les filtres de soutenance sont purement locaux : aucun rechargement.
 watch(filtresTravaux, () => charger(), { deep: true });
-watch(filtresSoutenances, () => {
-  // recalcul via l'observateur computed
-}, { deep: true });
 
 onMounted(() => {
   void charger();

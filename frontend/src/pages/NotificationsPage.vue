@@ -4,15 +4,25 @@
       <div>
         <h1 class="page-titre">Notifications SMS</h1>
         <p class="page-sous-titre">
-          Diffusion d'avis et de résultats aux étudiants, et historique
-          des envois consignés
+          Le seul canal qui atteint un étudiant sans connexion : avis généraux et
+          résultats de délibération. Chaque envoi est consigné, avec son motif,
+          son destinataire et son sort.
         </p>
       </div>
       <q-chip v-if="stats" square color="warning" text-color="dark" icon="sms">
         En file : {{ stats.EN_ATTENTE }}
-        <q-tooltip>Envoyées {{ stats.ENVOYEE }} · Échouées {{ stats.ECHOUE }}</q-tooltip>
+        <q-tooltip>
+          Envoyées {{ stats.ENVOYEE }} · Échouées {{ stats.ECHOUE }}
+        </q-tooltip>
       </q-chip>
     </header>
+
+    <liens-croises
+      :liens="[
+        { to: '/deliberations', libelle: 'Délibérations', icone: 'how_to_vote', aide: 'La source des résultats diffusés par SMS' },
+        { to: '/etudiants', libelle: 'Étudiants', icone: 'groups', aide: 'Les numéros de téléphone utilisés pour la diffusion' },
+      ]"
+    />
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="diffusion" icon="campaign" label="Diffusion" no-caps />
@@ -25,92 +35,95 @@
     <q-tab-panel v-if="onglet === 'diffusion'" name="diffusion" class="q-pa-none q-mt-md">
       <div class="notifications__diffusion">
         <!-- Diffusion manuelle -->
-        <section class="plaque notif-bloc">
-          <h2 class="pochoir section-titre">Avis général</h2>
+        <q-form ref="formRef" @submit.prevent="confirmerEnvoi">
+          <section class="plaque notif-bloc">
+            <h2 class="pochoir section-titre">Avis général</h2>
 
-          <q-select
-            v-model="motif"
-            :options="motifs"
-            outlined
-            dense
-            emit-value
-            map-options
-            label="Motif"
-          />
-
-          <p class="pochoir notif-bloc__titre">Destinataires</p>
-          <q-option-group
-            v-model="destination"
-            :options="optionsDestinataires"
-            dense
-            class="q-mb-sm"
-          />
-
-          <q-input
-            v-if="destination === 'numeros'"
-            v-model="numerosSaisis"
-            type="textarea"
-            outlined
-            dense
-            label="Numéros, un par ligne (ou séparés par une virgule)"
-            :rules="[
-              (v) =>
-                v
-                  ? v
-                      .split(/[\s,;]+/)
-                      .filter(Boolean)
-                      .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
-                    || 'Certains numéros semblent invalides'
-                  : true,
-            ]"
-          />
-
-          <q-input
-            v-model="message"
-            type="textarea"
-            outlined
-            label="Message"
-            maxlength="160"
-            counter
-            :rules="[(v) => !!v || 'Le message est requis']"
-          >
-            <template #hint>Un SMS tient en 160 caractères</template>
-          </q-input>
-
-          <q-banner dense class="note--info">
-            <template #avatar><q-icon name="info" /></template>
-            <div v-if="destination === 'tous'">
-              Nombre de destinataires estimé : <strong>{{ nbInscrits }}</strong>
-            </div>
-            <div v-else-if="destination === 'numeros'">
-              {{ numerosComptes }} numéro(s) saisi(s)
-            </div>
-            <div v-else>
-              Diffusion des résultats de la délibération sélectionnée
-            </div>
-          </q-banner>
-
-          <div class="row q-gutter-sm">
-            <q-btn
-              outline
-              color="primary"
-              no-caps
-              icon="science"
-              label="Tester l'envoi"
-              :loading="testEnvoi"
-              @click="testerEnvoi"
+            <q-select
+              v-model="motif"
+              :options="motifs"
+              outlined
+              dense
+              emit-value
+              map-options
+              label="Motif"
             />
-            <q-btn
-              unelevated
-              color="primary"
-              no-caps
-              icon="send"
-              label="Envoyer"
-              :loading="envoi"
-              @click="envoyer"
+
+            <p class="pochoir notif-bloc__titre">Destinataires</p>
+            <q-option-group
+              v-model="destination"
+              :options="optionsDestinataires"
+              dense
+              class="q-mb-sm"
             />
-          </div>
-        </section>
+
+            <q-input
+              v-if="destination === 'numeros'"
+              v-model="numerosSaisis"
+              type="textarea"
+              outlined
+              dense
+              label="Numéros, un par ligne (ou séparés par une virgule)"
+              :rules="[
+                (v) =>
+                  v
+                    ? v
+                        .split(/[\s,;]+/)
+                        .filter(Boolean)
+                        .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
+                      || 'Certains numéros semblent invalides'
+                    : true,
+              ]"
+            />
+
+            <q-input
+              v-model="message"
+              type="textarea"
+              outlined
+              label="Message"
+              maxlength="160"
+              counter
+              :rules="[(v) => !!v || 'Le message est requis']"
+            >
+              <template #hint>Un SMS tient en 160 caractères</template>
+            </q-input>
+
+            <q-banner dense class="note--info">
+              <template #avatar><q-icon name="info" /></template>
+              <div v-if="destination === 'tous'">
+                Nombre de destinataires estimé : <strong>{{ nbInscrits }}</strong>
+              </div>
+              <div v-else-if="destination === 'numeros'">
+                {{ numerosComptes }} numéro(s) saisi(s)
+              </div>
+              <div v-else>
+                Diffusion des résultats de la délibération sélectionnée
+              </div>
+            </q-banner>
+
+            <div class="row q-gutter-sm">
+              <q-btn
+                outline
+                color="primary"
+                no-caps
+                icon="science"
+                label="Tester l'envoi"
+                :loading="testEnvoi"
+                @click="testerEnvoi"
+              />
+              <q-btn
+                unelevated
+                color="primary"
+                no-caps
+                icon="send"
+                label="Envoyer"
+                :loading="envoi"
+                :disable="!formulaireValide"
+                @click="confirmerEnvoi"
+              />
+            </div>
+          </section>
+        </q-form>
 
         <!-- Résultats de délibération -->
         <section class="plaque notif-bloc">
@@ -182,40 +195,30 @@
             map-options
             label="Statut"
           />
-          <q-input
-            v-model="filtresHistorique.dateDebut"
-            type="date"
-            dense
-            outlined
-            label="Du"
-          />
-          <q-input
-            v-model="filtresHistorique.dateFin"
-            type="date"
-            dense
-            outlined
-            label="Au"
-          />
+          <champ-date v-model="filtresHistorique.dateDebut" label="Du" />
+          <champ-date v-model="filtresHistorique.dateFin" label="Au" />
         </template>
       </filter-bar>
 
-      <pagination-bar
-        :page="pagination.page"
-        :page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-all="false"
-        @update:page="pagination.page = $event; chargerHistorique()"
-        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerHistorique()"
-        @tous="chargerToutHistorique"
-      />
+      <div class="text-caption text-grey-7 q-mb-sm">
+        {{ pagination.total }} envoi(s) — {{ legendePeriode }}.
+      </div>
 
       <!-- Graphique de répartition -->
       <q-card v-if="chartConfig" flat bordered class="carte q-mb-md">
         <q-card-section>
-          <div class="text-subtitle1 text-weight-medium q-mb-sm">
-            Répartition sur 30 jours
+          <div class="text-subtitle1 text-weight-medium">
+            Répartition des 30 derniers jours
           </div>
-          <chart-canvas :config="chartConfig" :hauteur="220" />
+          <div class="text-caption text-grey-7 q-mb-sm">
+            Tous les envois consignés, quel que soit le filtre du registre ci-dessous
+          </div>
+          <chart-canvas
+            :config="chartConfig"
+            :hauteur="220"
+            role="img"
+            :aria-label="resumeRepartition"
+          />
         </q-card-section>
       </q-card>
 
@@ -271,14 +274,62 @@
           <q-td :props="p" class="text-right">
             <q-btn
               v-if="p.row.statut === 'ECHOUE'"
-              flat dense round color="primary" icon="refresh"
+              flat
+              dense
+              round
+              color="primary"
+              icon="refresh"
+              :aria-label="`Renvoyer le SMS au ${p.row.telephone}`"
+              :loading="renvoiEnCours === p.row.id"
               @click="renvoyer(p.row)"
             >
-              <q-tooltip>Renvoyer</q-tooltip>
+              <q-tooltip>Renvoyer ce message</q-tooltip>
             </q-btn>
           </q-td>
         </template>
+
+        <template #no-data>
+          <div class="etat-vide">
+            <q-icon name="sms" size="36px" />
+            <div class="text-subtitle2 q-mt-sm">Aucun envoi consigné</div>
+            <div class="text-caption">
+              Le registre garde la trace de chaque SMS parti d'UniPrésence.
+              {{ aDesFiltresHistorique
+                ? 'Aucun ne correspond aux filtres en cours.'
+                : 'Diffusez un avis depuis l’onglet Diffusion pour commencer.' }}
+            </div>
+            <q-btn
+              v-if="aDesFiltresHistorique"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="filter_alt_off"
+              label="Retirer les filtres"
+              @click="reinitialiserHistorique"
+            />
+            <q-btn
+              v-else
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="campaign"
+              label="Aller à la diffusion"
+              @click="onglet = 'diffusion'"
+            />
+          </div>
+        </template>
       </q-table>
+
+      <pagination-bar
+        :page="pagination.page"
+        :page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-all="false"
+        @update:page="pagination.page = $event; chargerHistorique()"
+        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerHistorique()"
+      />
     </q-tab-panel>
   </q-page>
 </template>
@@ -292,17 +343,41 @@ import {
   LIBELLE_SESSION_DELIBERATION,
   LIBELLE_STATUT_NOTIFICATION,
   dateHeureLisible,
+  dateLisible,
 } from '../utils/libelles';
 import type { Notification, StatutNotification } from '../types';
 import { useAuthStore } from '../stores/auth';
+import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChartCanvas from '../components/ChartCanvas.vue';
+import LiensCroises from '../components/LiensCroises.vue';
+
+/**
+ * Peintures des états d'envoi, identiques aux pastilles du registre :
+ * attente en jaune, envoyé en vert, échec en rouge.
+ */
+const PEINTURE_ATTENTE = '#EFB700';
+const PEINTURE_ENVOYE = '#0F7A45';
+const PEINTURE_ECHEC = '#C4122E';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 
 const onglet = ref('diffusion');
+
+const formRef = ref();
+
+const formulaireValide = computed(() => {
+  if (!message.value.trim()) return false;
+  if (destination.value === 'numeros') {
+    const numeros = decouperNumeros(numerosSaisis.value);
+    if (!numeros.length) return false;
+    const tousValides = numeros.every((n) => /^\+?[\d\s().-]{6,20}$/.test(n));
+    if (!tousValides) return false;
+  }
+  return true;
+});
 
 // ----------------------------------------------------------------- diffusion
 const motifs = [
@@ -346,13 +421,29 @@ function decouperNumeros(texte: string): string[] {
 
 async function chargerNbInscrits() {
   try {
-    const { data } = await api.get('/notifications/dest-inaires/estimes', {
+    const { data } = await api.get('/notifications/destinataires/estimes', {
       params: { mode: 'tousInscrits' },
     });
     nbInscrits.value = data?.total ?? 0;
   } catch {
     nbInscrits.value = 0;
   }
+}
+
+async function confirmerEnvoi() {
+  const valide = await formRef.value?.validate();
+  if (valide === false) return;
+  const nbDestinaires = destination.value === 'tous'
+    ? nbInscrits.value
+    : destination.value === 'numeros'
+      ? numerosComptes.value
+      : 0;
+  $q.dialog({
+    title: "Confirmer l'envoi",
+    message: `Vous allez envoyer un SMS à ${nbDestinaires} destinataire(s). Continuer ?`,
+    cancel: true,
+    ok: { color: 'primary', label: 'Envoyer', unelevated: true },
+  }).onOk(() => envoyer());
 }
 
 async function envoyer() {
@@ -510,6 +601,19 @@ const colonnes: QTableColumn[] = [
   },
 ];
 
+const aDesFiltresHistorique = computed(() => {
+  const f = filtresHistorique.value;
+  return !!(f.recherche || f.statut || f.dateDebut || f.dateFin);
+});
+
+const legendePeriode = computed(() => {
+  const f = filtresHistorique.value;
+  if (f.dateDebut && f.dateFin) return `du ${dateLisible(f.dateDebut)} au ${dateLisible(f.dateFin)}`;
+  if (f.dateDebut) return `depuis le ${dateLisible(f.dateDebut)}`;
+  if (f.dateFin) return `jusqu'au ${dateLisible(f.dateFin)}`;
+  return 'tout l’historique';
+});
+
 async function chargerHistorique() {
   chargement.value = true;
   try {
@@ -526,15 +630,20 @@ async function chargerHistorique() {
     });
     lignes.value = data.data;
     pagination.value.total = data.total;
+  } catch (e: any) {
+    lignes.value = [];
+    pagination.value.total = 0;
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement de l’historique impossible.',
+    });
   } finally {
     chargement.value = false;
   }
 }
 
-async function chargerToutHistorique() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await chargerHistorique();
+function reinitialiserHistorique() {
+  filtresHistorique.value = { recherche: '' };
 }
 
 watch(filtresHistorique, () => {
@@ -542,13 +651,36 @@ watch(filtresHistorique, () => {
   void chargerHistorique();
 }, { deep: true });
 
+const renvoiEnCours = ref<string | null>(null);
+
+/**
+ * Renvoyer, c'est réémettre le même message au même numéro : la passerelle ne
+ * sait pas rejouer un envoi consigné, on repasse donc par la diffusion
+ * manuelle. La ligne échouée reste au registre — elle est l'historique — et le
+ * nouvel envoi s'y ajoute.
+ */
 async function renvoyer(n: Notification) {
+  renvoiEnCours.value = n.id;
   try {
-    await api.post(`/notifications/${n.id}/renvoyer`);
-    $q.notify({ type: 'positive', message: 'Renvoi demandé' });
+    const { data } = await api.post('/notifications', {
+      message: n.message,
+      motif: n.motif ?? 'AUTRE',
+      mode: 'manuel',
+      destinatairesTelephones: [n.telephone],
+    });
+    $q.notify({
+      type: data.echouees ? 'warning' : 'positive',
+      message: data.echouees
+        ? `Renvoi au ${n.telephone} : échec à nouveau.`
+        : `Message renvoyé au ${n.telephone}.`,
+    });
     await chargerHistorique();
-  } catch {
-    /* le boot axios affiche le motif */
+    await chargerStats();
+    await chargerRepartition();
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Renvoi impossible.' });
+  } finally {
+    renvoiEnCours.value = null;
   }
 }
 
@@ -577,6 +709,22 @@ async function chargerRepartition() {
   }
 }
 
+/** Alternative textuelle du graphique, pour qui ne voit pas les barres. */
+const resumeRepartition = computed(() => {
+  const t = repartition30j.value.reduce(
+    (acc, r) => ({
+      attente: acc.attente + r.EN_ATTENTE,
+      envoyes: acc.envoyes + r.ENVOYEE,
+      echoues: acc.echoues + r.ECHOUE,
+    }),
+    { attente: 0, envoyes: 0, echoues: 0 },
+  );
+  return (
+    `Répartition des envois sur 30 jours : ${t.envoyes} envoyé(s), ` +
+    `${t.echoues} échoué(s), ${t.attente} en file.`
+  );
+});
+
 const chartConfig = computed<ChartConfiguration | null>(() => {
   if (!repartition30j.value.length) return null;
   return {
@@ -584,9 +732,9 @@ const chartConfig = computed<ChartConfiguration | null>(() => {
     data: {
       labels: repartition30j.value.map((r) => r.date.slice(5)),
       datasets: [
-        { label: 'En attente', data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: '#EFB700' },
-        { label: 'Envoyés', data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: '#0F7A45' },
-        { label: 'Échoués', data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: '#C4122E' },
+        { label: 'En file', data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
+        { label: 'Envoyés', data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
+        { label: 'Échoués', data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
       ],
     },
     options: {
@@ -701,4 +849,5 @@ onMounted(() => {
   text-transform: none;
   letter-spacing: 0;
 }
+
 </style>

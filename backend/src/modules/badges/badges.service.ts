@@ -23,6 +23,7 @@ import {
   BadgeQueryDto,
   CreateBadgeDto,
   RallongerBadgeDto,
+  VerifierBadgePubliqueDto,
   UpdateBadgeDto,
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
@@ -64,7 +65,7 @@ export class BadgesService {
     return `UP-BADGE-${randomBytes(12).toString('base64url')}`;
   }
 
-  private async evaluerStatut(b: { dateValidite: Date | string; statut: StatutBadge }): Promise<StatutBadge> {
+  private evaluerStatut(b: { dateValidite: Date | string; statut: StatutBadge }): StatutBadge {
     if (b.statut === StatutBadge.ANNULE) return StatutBadge.ANNULE;
     const exp = new Date(b.dateValidite);
     if (exp < new Date()) return StatutBadge.EXPIRE;
@@ -103,7 +104,16 @@ export class BadgesService {
       this.prisma.badgeAcces.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    // Le statut stocké se périme tout seul : sans réévaluation, un badge dont
+    // la date de validité est passée continue de s'afficher « ACTIF » dans la
+    // liste alors que son détail (et le vigile qui scanne) le voit « EXPIRE ».
+    // Projection en sortie seulement : une lecture de liste n'écrit pas en base
+    // — c'est `trouver` / `modifier` qui régularisent la ligne.
+    // Réserve connue : le filtre `?statut=` porte toujours sur la valeur
+    // stockée, un badge périmé remonte donc encore dans le filtre « ACTIF ».
+    const lignes = data.map((b) => ({ ...b, statut: this.evaluerStatut(b) }));
+
+    return { data: lignes, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
   }
 
   async trouver(id: string) {
@@ -113,7 +123,7 @@ export class BadgesService {
     });
     if (!badge) throw new NotFoundException('Badge introuvable');
     // Auto-promotion du statut si la date de validité est dépassée.
-    const evalue = await this.evaluerStatut(badge);
+    const evalue = this.evaluerStatut(badge);
     if (evalue !== badge.statut) {
       return this.prisma.badgeAcces.update({
         where: { id },
@@ -203,7 +213,7 @@ export class BadgesService {
     });
 
     // Si on a rallongé la validité et que le badge était EXPIRE, on le réactive.
-    const evalue = await this.evaluerStatut(miseAJour);
+    const evalue = this.evaluerStatut(miseAJour);
     if (evalue !== miseAJour.statut) {
       const final = await this.prisma.badgeAcces.update({
         where: { id },
@@ -276,6 +286,83 @@ export class BadgesService {
   private urlVerification(baseUrl: string, badgeId: string, qrToken: string): string {
     const params = new URLSearchParams({ badge: badgeId, k: qrToken });
     return `${baseUrl.replace(/\/+$/, '')}/#/verification-badge?${params.toString()}`;
+  }
+
+  /**
+   * Page de vérité du badge : ce que voit le vigile qui scanne le QR imprimé.
+   * Ouverte à tous — la sécurité tient au jeton, pas à une session — et
+   * volontairement avare : on confirme une identité présentée, on ne publie
+   * pas le carnet des visiteurs (ni téléphone, ni e-mail, ni pièce).
+   */
+  async verifier(dto: VerifierBadgePubliqueDto, ip?: string) {
+    const id = String(dto.badge ?? '').trim();
+    const jeton = String(dto.k ?? '').trim();
+
+    const badge = await this.prisma.badgeAcces.findUnique({ where: { id } });
+
+    if (!badge) {
+      await this.prisma.auditLog.create({
+        data: {
+          action: 'VERIF_BADGE_ECHEC',
+          entite: 'badges',
+          entiteId: id,
+          details: `Identifiant inconnu ${id}`,
+          ip,
+        },
+      });
+      return { valide: false, raison: 'Aucun badge ne correspond à cet identifiant.' };
+    }
+
+    const jetonOk = badge.qrToken === jeton;
+    const statutEffectif = this.evaluerStatut(badge);
+    const valide = jetonOk && statutEffectif === StatutBadge.ACTIF;
+
+    await this.prisma.auditLog.create({
+      data: {
+        action: valide ? 'VERIF_BADGE_OK' : 'VERIF_BADGE_ECHEC',
+        entite: 'badges',
+        entiteId: badge.id,
+        details: valide
+          ? 'Vérification publique réussie'
+          : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${statutEffectif}`,
+        ip,
+      },
+    });
+
+    if (!jetonOk) {
+      return {
+        valide: false,
+        raison:
+          "Le code de vérification ne correspond pas à ce badge : le document présenté est peut-être une copie falsifiée.",
+      };
+    }
+    if (statutEffectif === StatutBadge.ANNULE) {
+      return {
+        valide: false,
+        raison: `Ce badge a été annulé${badge.motif ? ` (motif : ${badge.motif})` : ''}. Il n'ouvre plus aucun accès.`,
+      };
+    }
+    if (statutEffectif === StatutBadge.EXPIRE) {
+      return {
+        valide: false,
+        raison: 'La validité de ce badge est expirée : il doit être rallongé par la scolarité.',
+      };
+    }
+
+    return {
+      valide: true,
+      message: 'Badge authentique',
+      badge: {
+        numero: badge.numero,
+        type: badge.type,
+        porteur: `${badge.prenom} ${badge.nom}`,
+        fonction: badge.fonction,
+        organisation: badge.organisation,
+        zonesAccess: badge.zonesAccess,
+        dateDelivrance: badge.dateDelivrance,
+        dateValidite: badge.dateValidite,
+      },
+    };
   }
 
   async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {

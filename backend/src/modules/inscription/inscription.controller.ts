@@ -84,6 +84,11 @@ export class EtudiantsController {
       query.actif === 'false' || query.actif === '0' ? false : query.actif ? true : undefined;
     return this.service.findAll(query, {
       ...(actif !== undefined ? { actif } : {}),
+      // Un étudiant appartient à une promotion par ses inscriptions : le lien
+      // n'est pas porté par la fiche, on filtre donc sur la relation.
+      ...(query.promotionId
+        ? { inscriptions: { some: { promotionId: query.promotionId } } }
+        : {}),
     });
   }
 
@@ -118,6 +123,7 @@ export class EtudiantsController {
 export class FraisController {
   constructor(private readonly service: FraisService) {}
 
+  @Public()
   @Get()
   liste(@Query() query: FraisQueryDto) {
     return this.service.findAll(query, {
@@ -245,5 +251,16 @@ export class InscriptionsController {
       throw new UnauthorizedException('Jeton invalide ou expiré');
     }
     res.type('html').send(await this.service.attestationInscription(id));
+  }
+
+  /**
+   * Détail d'un dossier. Déclarée en dernier pour que le segment `:id` ne
+   * capture pas les routes littérales déclarées au-dessus. Mêmes droits que
+   * la liste (tout utilisateur authentifié) : sans elle, le préchargement du
+   * libellé par identifiant côté client échouait en silence.
+   */
+  @Get(':id')
+  detail(@Param('id') id: string) {
+    return this.service.trouverInscription(id);
   }
 }

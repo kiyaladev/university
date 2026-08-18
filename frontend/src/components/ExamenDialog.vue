@@ -67,8 +67,8 @@
         </div>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn unelevated color="primary" label="Enregistrer" :loading="envoi" @click="enregistrer" />
+        <q-btn flat no-caps label="Annuler" v-close-popup />
+        <q-btn unelevated no-caps color="primary" label="Enregistrer" :loading="envoi" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -82,9 +82,8 @@ import AutocompleteAsync from './AutocompleteAsync.vue';
 import ChampDate from './ChampDate.vue';
 import { LIBELLE_TYPE_EXAMEN } from '../utils/libelles';
 
-const props = defineProps<{
+defineProps<{
   modelValue: boolean;
-  existant?: any;
 }>();
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];

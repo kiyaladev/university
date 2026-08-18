@@ -2,15 +2,12 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Feuilles de paie</div>
+        <div class="page-titre">Paie des vacataires</div>
         <div class="page-sous-titre">
-          Garantir le paiement rapide des heures effectuées : les feuilles
-          mensuelles figent les heures contrôlées, la direction valide, la
-          comptabilité paie.
+          Le chemin d'une feuille mensuelle : elle agrège les heures constatées
+          lors des contrôles, la direction la valide — les montants sont alors
+          figés —, puis l'administration la marque payée.
         </div>
-      </div>
-      <div class="col-auto">
-        <bascule-vue v-model="modeVue" />
       </div>
       <div class="col-auto">
         <q-btn
@@ -25,44 +22,69 @@
       </div>
     </div>
 
-    <!-- Filtres : statut et année -->
-    <q-card flat bordered class="carte q-mb-md">
-      <q-card-section class="row q-col-gutter-sm items-center">
-        <div class="col-6 col-md-3">
-          <q-select
-            v-model="filtres.statut"
-            :options="optionsStatuts"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            label="Statut"
-            @update:model-value="charger"
-          />
-        </div>
-        <div class="col-6 col-md-3">
-          <q-select
-            v-model="filtres.annee"
-            :options="optionsAnnees"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            label="Année"
-            @update:model-value="charger"
-          />
-        </div>
-        <div class="col-auto">
-          <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
-        </div>
-        <div class="col-12 col-md-auto text-right text-caption text-grey-7">
-          {{ feuilles.length }} feuille(s) ·
-          total {{ montantLisible(totalMontant) }} GNF
-        </div>
-      </q-card-section>
-    </q-card>
+    <liens-croises
+      :liens="[
+        { to: '/rapports', libelle: 'Rapports & états', icone: 'insights', aide: 'L’état de paiement détaillé, enseignant par enseignant' },
+        { to: '/affectations', libelle: 'Charges d’enseignement', icone: 'assignment_ind', aide: 'Les taux horaires et volumes contractuels utilisés au calcul' },
+        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'La masse salariale consolidée sur 12 mois' },
+      ]"
+    />
+
+    <filter-bar
+      v-model="filtres"
+      :recherche="false"
+      :chips="chipsFiltres"
+      @reinitialiser="reinitialiser"
+    >
+      <template #actions>
+        <view-toggle
+          cle="feuilles_paie"
+          :modes="['tableau', 'cartes']"
+          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
+        />
+        <q-btn
+          flat
+          dense
+          round
+          color="primary"
+          icon="refresh"
+          aria-label="Recharger les feuilles de paie"
+          :loading="chargement"
+          @click="charger"
+        >
+          <q-tooltip>Recharger</q-tooltip>
+        </q-btn>
+      </template>
+      <template #avances>
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
+        <q-select
+          v-model="filtres.annee"
+          :options="optionsAnnees"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Année"
+        />
+      </template>
+    </filter-bar>
+
+    <div class="text-caption text-grey-7 q-mb-sm">
+      {{ pagination.total }} feuille(s) —
+      {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : 'tous statuts' }},
+      {{ filtres.annee ?? 'toutes années' }} · total affiché
+      {{ montantLisible(totalMontant) }} GNF
+    </div>
 
     <!-- Vue tableau -->
     <q-table
@@ -96,33 +118,110 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" color="primary" @click="ouvrirDetail(null, p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            color="primary"
+            :aria-label="`Détail des lignes de ${p.row.libelle}`"
+            @click.stop="ouvrirDetail(null, p.row)"
+          >
             <q-tooltip>Détail des lignes</q-tooltip>
           </q-btn>
           <template v-if="peutCalculer(p.row)">
-            <q-btn flat dense round icon="refresh" @click="recalculer(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="refresh"
+              :aria-label="`Recalculer ${p.row.libelle}`"
+              @click.stop="recalculer(p.row)"
+            >
               <q-tooltip>Recalculer les heures contrôlées</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutValider(p.row)">
-            <q-btn flat dense round color="positive" icon="verified" @click="valider(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              color="positive"
+              icon="verified"
+              :aria-label="`Valider ${p.row.libelle}`"
+              @click.stop="valider(p.row)"
+            >
               <q-tooltip>Valider et figer les montants</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutPayer(p.row)">
-            <q-btn flat dense round color="primary" icon="payments" @click="payer(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              color="primary"
+              icon="payments"
+              :aria-label="`Marquer ${p.row.libelle} payée`"
+              @click.stop="payer(p.row)"
+            >
               <q-tooltip>Marquer payée</q-tooltip>
             </q-btn>
           </template>
-          <q-btn flat dense round icon="print" @click="imprimer(p.row)">
-            <q-tooltip>Imprimer en A4</q-tooltip>
+          <q-btn
+            v-if="peutImprimer"
+            flat
+            dense
+            round
+            icon="print"
+            :aria-label="`Imprimer ${p.row.libelle}`"
+            @click.stop="imprimer(p.row)"
+          >
+            <q-tooltip>Imprimer la feuille (A4)</q-tooltip>
           </q-btn>
           <template v-if="peutSupprimer(p.row)">
-            <q-btn flat dense round color="negative" icon="delete" @click="supprimer(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              color="negative"
+              icon="delete"
+              :aria-label="`Supprimer ${p.row.libelle}`"
+              @click.stop="supprimer(p.row)"
+            >
               <q-tooltip>Supprimer</q-tooltip>
             </q-btn>
           </template>
         </q-td>
+      </template>
+      <template #no-data>
+        <div class="etat-vide">
+          <q-icon name="payments" size="36px" />
+          <div class="text-subtitle2 q-mt-sm">Aucune feuille de paie</div>
+          <div class="text-caption">
+            Une feuille couvre un mois : elle rassemble les heures contrôlées de
+            la période et les convertit en montants au taux de chaque enseignant.
+            {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+          </div>
+          <q-btn
+            v-if="aDesFiltres"
+            flat
+            dense
+            no-caps
+            color="primary"
+            icon="filter_alt_off"
+            label="Retirer les filtres"
+            @click="reinitialiser"
+          />
+          <q-btn
+            v-else-if="peutCreer"
+            unelevated
+            no-caps
+            color="primary"
+            icon="add"
+            label="Créer la première feuille"
+            @click="dialogCreation = true"
+          />
+        </div>
       </template>
     </q-table>
 
@@ -161,22 +260,77 @@
           </q-card-section>
           <q-card-actions align="right">
             <template v-if="peutCalculer(f)">
-              <q-btn flat dense no-caps icon="refresh" label="Recalc." @click.stop="recalculer(f)" />
+              <q-btn flat dense no-caps icon="refresh" label="Recalculer" @click.stop="recalculer(f)" />
             </template>
             <template v-if="peutValider(f)">
               <q-btn flat dense no-caps color="positive" icon="verified" label="Valider" @click.stop="valider(f)" />
             </template>
             <template v-if="peutPayer(f)">
-              <q-btn flat dense no-caps icon="payments" label="Payer" @click.stop="payer(f)" />
+              <q-btn flat dense no-caps icon="payments" label="Marquer payée" @click.stop="payer(f)" />
             </template>
-            <q-btn flat dense no-caps icon="print" label="Imprimer" @click.stop="imprimer(f)" />
+            <q-btn
+              v-if="peutImprimer"
+              flat
+              dense
+              no-caps
+              icon="print"
+              label="Imprimer"
+              @click.stop="imprimer(f)"
+            />
             <template v-if="peutSupprimer(f)">
-              <q-btn flat dense round color="negative" icon="delete" @click.stop="supprimer(f)" />
+              <q-btn
+                flat
+                dense
+                round
+                color="negative"
+                icon="delete"
+                :aria-label="`Supprimer ${f.libelle}`"
+                @click.stop="supprimer(f)"
+              />
             </template>
           </q-card-actions>
         </q-card>
       </div>
+      <div v-if="!feuilles.length && !chargement" class="col-12">
+        <div class="etat-vide">
+          <q-icon name="payments" size="36px" />
+          <div class="text-subtitle2 q-mt-sm">Aucune feuille de paie</div>
+          <div class="text-caption">
+            Une feuille couvre un mois : elle rassemble les heures contrôlées de
+            la période et les convertit en montants au taux de chaque enseignant.
+            {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+          </div>
+          <q-btn
+            v-if="aDesFiltres"
+            flat
+            dense
+            no-caps
+            color="primary"
+            icon="filter_alt_off"
+            label="Retirer les filtres"
+            @click="reinitialiser"
+          />
+          <q-btn
+            v-else-if="peutCreer"
+            unelevated
+            no-caps
+            color="primary"
+            icon="add"
+            label="Créer la première feuille"
+            @click="dialogCreation = true"
+          />
+        </div>
+      </div>
     </div>
+
+    <pagination-bar
+      :page="pagination.page"
+      :page-size="pagination.pageSize"
+      :total="pagination.total"
+      :show-all="false"
+      @update:page="pagination.page = $event; charger()"
+      @update:page-size="pagination.pageSize = $event; pagination.page = 1; charger()"
+    />
 
     <!-- Détail : lignes de la feuille -->
     <q-dialog v-model="dialogDetail">
@@ -215,21 +369,37 @@
                 </div>
               </q-td>
             </template>
+            <template #no-data>
+              <div class="etat-vide">
+                <div class="text-subtitle2">Feuille sans ligne</div>
+                <div class="text-caption">
+                  Aucune heure contrôlée n'a été trouvée sur la période. Lancez un
+                  recalcul, ou vérifiez que les séances du mois ont bien été pointées.
+                </div>
+              </div>
+            </template>
             <template #bottom>
               <div class="detail-total">
                 <div class="text-weight-medium">
                   Total — {{ detail?.lignes?.length ?? 0 }} enseignant(s)
                 </div>
-                <div class="text-weight-medium">{{ heuresTotal }} h réalisées</div>
-                <div class="text-weight-medium">{{ montantLisible(detail?.montantTotal) }} GNF</div>
+                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} réalisées</div>
+                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} GNF</div>
               </div>
             </template>
           </q-table>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps icon="print" label="Imprimer" @click="detail && imprimer(detail)" />
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn
+            v-if="peutImprimer"
+            flat
+            no-caps
+            icon="print"
+            label="Imprimer la feuille (A4)"
+            @click="detail && imprimer(detail)"
+          />
+          <q-btn flat no-caps label="Fermer" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -244,36 +414,64 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
-import BasculeVue from '../components/BasculeVue.vue';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import LiensCroises from '../components/LiensCroises.vue';
 import FeuillePaieDialog from '../components/FeuillePaieDialog.vue';
-import { useVuePreferee } from '../composables/vuePreferee';
-import { LIBELLE_STATUT_PAIE, dateLisible, montantLisible } from '../utils/libelles';
+import {
+  LIBELLE_STATUT_PAIE,
+  dateLisible,
+  heuresLisibles,
+  montantLisible,
+} from '../utils/libelles';
 import type { FeuillePaie } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 
-const modeVue = useVuePreferee('feuilles_paie');
+const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const feuilles = ref<FeuillePaie[]>([]);
+const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const chargement = ref(false);
 const dialogCreation = ref(false);
 const dialogDetail = ref(false);
 const detail = ref<FeuillePaie | null>(null);
 
-const filtres = ref<{ statut: string | null; annee: number | null }>({ statut: null, annee: null });
+// La barre de filtres travaille sur un Record : la recherche plein texte est
+// désactivée parce que l'API des feuilles n'indexe rien d'autre que le couple
+// statut / année — un champ de recherche inerte serait un mensonge.
+const filtres = ref<Record<string, any>>({ statut: null, annee: null });
 
-const peutCreer = () => auth.aRole(['ADMIN', 'DIRECTION']);
+const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutImprimer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const aDesFiltres = computed(() => !!filtres.value.statut || !!filtres.value.annee);
 
 const optionsStatuts = ['BROUILLON', 'VALIDEE', 'PAYEE'].map((v) => ({
   label: LIBELLE_STATUT_PAIE[v],
   value: v,
 }));
 
+const chipsFiltres = computed(() => {
+  const chips: Array<{ label: string; value: any }> = [];
+  if (filtres.value.statut) {
+    chips.push({ label: `Statut : ${LIBELLE_STATUT_PAIE[filtres.value.statut]}`, value: filtres.value.statut });
+  }
+  if (filtres.value.annee) {
+    chips.push({ label: `Année : ${filtres.value.annee}`, value: filtres.value.annee });
+  }
+  return chips;
+});
+
 const anneesExistantes = computed(() => feuilles.value.map((f) => f.annee));
+
+/** Cycle de vie d'une feuille, peint aux couleurs partagées avec le courrier. */
+const classeStatut = (s: string) =>
+  s === 'BROUILLON' ? 'champ--brouillon' : s === 'VALIDEE' ? 'champ--validee' : 'champ--close';
 
 const optionsAnnees = computed(() => {
   const courante = new Date().getFullYear();
@@ -295,9 +493,6 @@ const heuresTotal = computed(() =>
   (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0),
 );
 
-const classeStatut = (s: string) =>
-  s === 'BROUILLON' ? 'champ--brouillon' : s === 'VALIDEE' ? 'champ--validee' : 'champ--payee';
-
 const colonnes: QTableColumn[] = [
   { name: 'libelle', label: 'Feuille', field: 'libelle', align: 'left', sortable: true },
   {
@@ -318,19 +513,47 @@ const colonnes: QTableColumn[] = [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
+// Toutes les grandeurs monétaires passent par le même formateur, et les heures
+// par le même : sans quoi une colonne dit « 12000 » quand la voisine dit
+// « 12 000 ».
 const colonnesLignes: QTableColumn[] = [
   { name: 'enseignant', label: 'Enseignant', field: 'enseignant', align: 'left' },
-  { name: 'taux', label: 'Taux', field: 'tauxHoraire', align: 'right' },
-  { name: 'heures', label: 'Heures réalisées', field: 'heuresReelles', align: 'right' },
-  { name: 'volume', label: 'Volume prévu', field: 'volumePrevu', align: 'right' },
+  {
+    name: 'taux',
+    label: 'Taux horaire (GNF)',
+    field: (r: any) => montantLisible(r.tauxHoraire),
+    align: 'right',
+  },
+  {
+    name: 'heures',
+    label: 'Heures réalisées',
+    field: (r: any) => heuresLisibles(r.heuresReelles),
+    align: 'right',
+  },
+  {
+    name: 'volume',
+    label: 'Volume prévu',
+    field: (r: any) => heuresLisibles(r.volumePrevu),
+    align: 'right',
+  },
   {
     name: 'brut',
-    label: 'Brut',
+    label: 'Brut (GNF)',
     field: (r: any) => montantLisible(r.montantBrut),
     align: 'right',
   },
-  { name: 'retenue', label: 'Retenue', field: 'retenue', align: 'right' },
-  { name: 'montant', label: 'Net', field: 'montantNet', align: 'right' },
+  {
+    name: 'retenue',
+    label: 'Retenue (GNF)',
+    field: (r: any) => montantLisible(r.retenue),
+    align: 'right',
+  },
+  {
+    name: 'montant',
+    label: 'Net (GNF)',
+    field: (r: any) => montantLisible(r.montantNet),
+    align: 'right',
+  },
   { name: 'commentaire', label: 'Commentaire', field: 'commentaire', align: 'left' },
 ];
 
@@ -339,15 +562,28 @@ async function charger() {
   try {
     const { data } = await api.get('/feuilles-paie', {
       params: {
-        all: '1',
+        page: pagination.value.page,
+        pageSize: pagination.value.pageSize,
         statut: filtres.value.statut || undefined,
         annee: filtres.value.annee || undefined,
       },
     });
     feuilles.value = data.data;
+    pagination.value.total = data.total;
+  } catch (e: any) {
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement des feuilles de paie impossible.',
+    });
   } finally {
     chargement.value = false;
   }
+}
+
+function reinitialiser() {
+  filtres.value = { statut: null, annee: null };
+  pagination.value.page = 1;
+  charger();
 }
 
 function ouvrirDetail(_event: unknown, f: FeuillePaie) {
@@ -445,38 +681,22 @@ const peutValider = (f: FeuillePaie) =>
 const peutPayer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'VALIDEE';
 const peutSupprimer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'BROUILLON';
 
+// Un changement de filtre repart de la première page : rester en page 4 d'une
+// liste qui n'en compte plus qu'une donne un écran vide sans raison visible.
+watch(
+  () => [filtres.value.statut, filtres.value.annee],
+  () => {
+    pagination.value.page = 1;
+    charger();
+  },
+);
+
 onMounted(charger);
 </script>
 
-<!-- Badges de statut de la paie (couleurs maison, partagées avec les dialogs) :
-     gris clair pour le brouillon, vert secondaire pour la validation, bleu
-     pour la paye — repris dans l'impression A4. -->
-<style>
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.champ--brouillon {
-  background: #cfd4d9;
-  color: #33463f;
-}
-
-.champ--validee {
-  background: #0f7a45;
-}
-
-.champ--payee {
-  background: #1565c0;
-}
-</style>
-
 <style scoped lang="scss">
+@use '../css/champs-admin' as *;
+
 .carte-feuille {
   cursor: pointer;
   transition: background var(--up-transition);
@@ -491,7 +711,8 @@ onMounted(charger);
   justify-content: space-between;
   gap: var(--up-2);
   padding: 10px var(--up-3);
-  border-top: 2px solid var(--up-encre);
+  border-top: var(--up-filet);
   background: var(--up-craie);
 }
+
 </style>

@@ -359,6 +359,7 @@ model User {
   messagesReclamation   MessageReclamation[] @relation("MessageReclamationAuteur")
   demandesTraitees      DemandeDocument[]    @relation("DemandeDocumentTraitee")
   electionsCrees        Election[]           @relation("ElectionCreePar")
+  bulletinsDeposes      VoteElection[]       @relation("VoteElecteur")
   cartesCrees           CarteEtudiante[]     @relation("CarteCreePar")
   badgesCrees           BadgeAcces[]         @relation("BadgeCreePar")
   vodCrees              CoursVOD[]           @relation("VodCreePar")
@@ -1960,14 +1961,24 @@ model VoteElection {
   // Porteur du vote
   etudiantId String?
   etudiant   Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  /// Électeur, quel que soit son rôle. `etudiantId` ne couvrait que les
+  /// étudiants : un enseignant, un contrôleur ou un administrateur y était nul,
+  /// et PostgreSQL tenant deux NULL pour distincts, l'unicité ne jouait pas —
+  /// ces électeurs-là pouvaient déposer autant de bulletins qu'ils voulaient.
+  electeurId String?
+  electeur   User?            @relation("VoteElecteur", fields: [electeurId], references: [id], onDelete: SetNull)
   scrutinId  String? // jeton de vote (anonymisation)
   mode       ModeVote         @default(WEB)
   ipAppareil String?
   horodatage DateTime         @default(now())
 
-  // Un même électeur ne peut pas voter 2 fois pour le même candidat
+  // Un même électeur ne peut pas voter 2 fois pour le même candidat. La
+  // première contrainte protège l'historique déjà en base (votes étudiants),
+  // la seconde couvre tous les rôles.
   @@unique([electionId, candidatId, etudiantId])
+  @@unique([electionId, candidatId, electeurId])
   @@index([electionId, candidatId])
+  @@index([electionId, electeurId])
 }
 
 // ------------------ Carte d'Étudiant Numérique -----------------

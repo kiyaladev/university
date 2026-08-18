@@ -7,7 +7,7 @@
  * confirmation) — seul `@click` est exposé.
  */
 import { computed } from 'vue';
-import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
+import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { DocumentDepot, SuspicionPlagiat } from '../types';
 
 const props = withDefaults(defineProps<{
@@ -41,12 +41,6 @@ const libelleScore = computed(() => {
   return 'Risque élevé';
 });
 
-const libelleStatut: Record<SuspicionPlagiat['statut'], string> = {
-  EN_ATTENTE: 'En attente',
-  ACQUITTE: 'Acquittée',
-  CONFIRME: 'Confirmée',
-};
-
 const couleurStatut: Record<SuspicionPlagiat['statut'], string> = {
   EN_ATTENTE: 'orange',
   ACQUITTE: 'positive',
@@ -69,7 +63,7 @@ function miniature(doc?: DocumentDepot | null) {
     <q-card-section class="row items-center q-pb-none">
       <div class="col">
         <div class="text-caption text-grey-7 text-uppercase">
-          Suspicion {{ libelleStatut[suspicion.statut] }}
+          Suspicion {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
         </div>
         <div class="plagiat-carte__score" :class="`plagiat-carte__score--${couleurScore}`">
           {{ score }}<span class="plagiat-carte__score-unite">%</span>
@@ -80,7 +74,7 @@ function miniature(doc?: DocumentDepot | null) {
       </div>
       <div class="col-auto">
         <q-badge :color="couleurStatut[suspicion.statut]" text-color="white">
-          {{ libelleStatut[suspicion.statut] }}
+          {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
         </q-badge>
       </div>
     </q-card-section>

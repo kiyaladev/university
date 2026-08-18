@@ -444,6 +444,26 @@ export class PatrimoineService {
   }
 
   /**
+   * Registre global des réparations, tous équipements confondus. Le filtre
+   * statut est optionnel : passé en query string, le front laisse le libre
+   * choix (les « ouvertes » sont DECLARE + EN_COURS).
+   */
+  async listeReparations(filtres: { statut?: string }) {
+    const where: Prisma.ReparationMaterielWhereInput = filtres.statut
+      ? { statut: filtres.statut as StatutReparation }
+      : {};
+    return this.prisma.reparationMateriel.findMany({
+      where,
+      include: {
+        equipement: { select: { id: true, libelle: true, numeroInventaire: true } },
+        declarePar: { select: { id: true, nom: true, prenom: true } },
+        resoluPar: { select: { id: true, nom: true, prenom: true } },
+      },
+      orderBy: { dateDeclaration: 'desc' },
+    });
+  }
+
+  /**
    * Toutes les réparations en cours, tous équipements confondus : pour
    * l'onglet « Réparations » du front. Triées par ancienneté, les plus
    * anciennes en premier (l'œil se pose sur ce qui traîne).

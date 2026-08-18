@@ -8,6 +8,18 @@ declare module 'vue' {
   }
 }
 
+/**
+ * Option maison lue par l'intercepteur : une requête « silencieuse » n'affiche
+ * pas de notification d'erreur, la page se charge de le dire elle-même (code
+ * OTP faux, référentiel accessoire absent…). Elle était passée partout avec un
+ * `as never` faute d'être déclarée ; elle l'est désormais.
+ */
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    silencieux?: boolean;
+  }
+}
+
 /** URL de l'API : fournie au build via la variable d'environnement API_URL. */
 export const API_URL = process.env.API_URL || 'http://localhost:5031/api';
 

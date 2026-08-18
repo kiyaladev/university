@@ -109,8 +109,8 @@ export class BibliothequeController {
     return this.recherche.rechercher(query, await this.porteur(authorization));
   }
 
-  /** Tableau de bord plagiat : admin uniquement. */
-  @Roles(Role.ADMIN)
+  /** Tableau de bord plagiat : la direction arbitre, elle doit donc le lire. */
+  @Roles(Role.ADMIN, Role.DIRECTION)
   @Get('plagiat')
   dashboardPlagiat() {
     return this.plagiat.dashboard();
@@ -132,7 +132,7 @@ export class BibliothequeController {
     return resultat;
   }
 
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.DIRECTION)
   @Get('plagiat/:id')
   detailPlagiat(@Param('id') id: string) {
     return this.plagiat.detail(id);

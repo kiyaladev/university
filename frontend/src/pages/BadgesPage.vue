@@ -8,6 +8,11 @@ import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import BadgeDialog from '../components/BadgeDialog.vue';
 import type { BadgeAcces, TypeBadge } from '../types';
+import {
+  LIBELLE_STATUT_BADGE,
+  LIBELLE_TYPE_BADGE,
+  optionsDepuis,
+} from '../utils/libelles';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -21,24 +26,9 @@ const modeVue = ref<'tableau' | 'cartes'>('tableau');
 
 const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
-const OPTIONS_TYPE: Array<{ value: TypeBadge; label: string }> = [
-  { value: 'VISITEUR', label: 'Visiteur' },
-  { value: 'INTERVENANT', label: 'Intervenant' },
-  { value: 'TECHNICIEN', label: 'Technicien' },
-  { value: 'VIP', label: 'VIP' },
-];
-const OPTIONS_STATUT: Array<{ value: string; label: string }> = [
-  { value: 'ACTIF', label: 'Actif' },
-  { value: 'EXPIRE', label: 'Expiré' },
-  { value: 'ANNULE', label: 'Annulé' },
-];
+const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_BADGE);
+const OPTIONS_STATUT = optionsDepuis(LIBELLE_STATUT_BADGE);
 
-const LIBELLE_STATUT: Record<string, string> = {
-  ACTIF: 'Actif',
-  EXPIRE: 'Expiré',
-  ANNULE: 'Annulé',
-};
-const LIBELLE_TYPE: Record<string, string> = Object.fromEntries(OPTIONS_TYPE.map((o) => [o.value, o.label]));
 const CLASSE_STATUT: Record<string, string> = {
   ACTIF: 'badge--ok',
   EXPIRE: 'badge--attention',
@@ -82,9 +72,11 @@ function ouvrirAnnulation(b: BadgeAcces) {
 }
 
 async function confirmerAnnulation() {
-  if (!badgeAnnulation.value || !motifAnnulation.value) return;
+  if (!badgeAnnulation.value || motifAnnulation.value.trim().length < 3) return;
   try {
-    await api.post(`/badges/${badgeAnnulation.value.id}/annuler`, { motif: motifAnnulation.value });
+    await api.post(`/badges/${badgeAnnulation.value.id}/annuler`, {
+      motif: motifAnnulation.value.trim(),
+    });
     $q.notify({ type: 'warning', message: 'Badge annulé.' });
     dialogAnnulation.value = false;
     await charger();
@@ -139,6 +131,16 @@ function dateFr(v?: string | null): string {
   return new Date(v).toLocaleDateString('fr-FR');
 }
 
+/**
+ * La liste renvoie le statut stocké : le passage à EXPIRE n'est calculé par
+ * l'API qu'à l'ouverture d'un badge. On applique ici la même règle pour ne pas
+ * afficher « Actif » sur un badge dont la date est passée.
+ */
+function statutEffectif(b: BadgeAcces): string {
+  if (b.statut === 'ANNULE') return 'ANNULE';
+  return new Date(b.dateValidite) < new Date() ? 'EXPIRE' : 'ACTIF';
+}
+
 onMounted(charger);
 </script>
 
@@ -146,19 +148,13 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Badges d'accès</div>
+        <div class="page-titre">Badges & visiteurs</div>
         <div class="page-sous-titre">
-          Visiteurs, intervenants, techniciens, personnalités — badge avec QR
-          vérifiable en ligne et validité paramétrable.
+          Visiteurs, intervenants, techniciens, personnalités — badge imprimable
+          avec QR et validité paramétrable, prolongeable ou annulable.
         </div>
       </div>
       <div class="col-auto">
-        <view-toggle
-          cle="badges"
-          :modes="['tableau', 'cartes']"
-          :defaut="modeVue"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
         <q-btn
           v-if="peutEditer"
           unelevated
@@ -176,6 +172,14 @@ onMounted(charger);
       placeholder="Nom, organisation, numéro…"
       @update:model-value="recharger"
     >
+      <template #actions>
+        <view-toggle
+          cle="badges"
+          :modes="['tableau', 'cartes']"
+          :defaut="modeVue"
+          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
+        />
+      </template>
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -223,8 +227,14 @@ onMounted(charger);
       :rows-per-page-options="[0]"
       hide-bottom
     >
+      <template #no-data>
+        <div class="text-center q-pa-md text-grey-7">
+          Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un
+          intervenant attendu.
+        </div>
+      </template>
       <template #body-cell-type="p">
-        <q-td :props="p">{{ LIBELLE_TYPE[p.row.type] ?? p.row.type }}</q-td>
+        <q-td :props="p">{{ LIBELLE_TYPE_BADGE[p.row.type] ?? p.row.type }}</q-td>
       </template>
       <template #body-cell-identite="p">
         <q-td :props="p">
@@ -242,30 +252,41 @@ onMounted(charger);
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut" :class="CLASSE_STATUT[p.row.statut]">
-            <span class="pochoir">{{ LIBELLE_STATUT[p.row.statut] }}</span>
+          <span class="champ champ-statut" :class="CLASSE_STATUT[statutEffectif(p.row)]">
+            <span class="pochoir">{{ LIBELLE_STATUT_BADGE[statutEffectif(p.row)] }}</span>
           </span>
+          <div v-if="p.row.statut === 'ANNULE' && p.row.motif" class="text-caption text-grey-7">
+            {{ p.row.motif }}
+          </div>
         </q-td>
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat round dense icon="print" @click="imprimer(p.row)" />
+          <q-btn flat round dense icon="print" aria-label="Imprimer le badge" @click="imprimer(p.row)">
+            <q-tooltip>Imprimer</q-tooltip>
+          </q-btn>
           <q-btn
             v-if="peutEditer"
             flat
             round
             dense
             icon="edit"
+            aria-label="Modifier le badge"
             @click="ouvrirEdition(p.row)"
-          />
+          >
+            <q-tooltip>Modifier</q-tooltip>
+          </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
             flat
             round
             dense
             icon="schedule"
+            aria-label="Prolonger la validité"
             @click="ouvrirRallonge(p.row)"
-          />
+          >
+            <q-tooltip>Prolonger la validité</q-tooltip>
+          </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
             flat
@@ -273,8 +294,11 @@ onMounted(charger);
             dense
             icon="block"
             color="negative"
+            aria-label="Annuler le badge"
             @click="ouvrirAnnulation(p.row)"
-          />
+          >
+            <q-tooltip>Annuler</q-tooltip>
+          </q-btn>
         </q-td>
       </template>
     </q-table>
@@ -284,27 +308,30 @@ onMounted(charger);
         <q-card class="badge-carte">
           <q-card-section class="row items-center q-gutter-sm">
             <q-avatar size="56px" color="grey-3" text-color="primary">
-              <img v-if="b.photoUrl" :src="b.photoUrl" />
+              <img v-if="b.photoUrl" :src="b.photoUrl" :alt="`${b.prenom} ${b.nom}`" />
               <q-icon v-else name="badge" size="32px" />
             </q-avatar>
             <div class="col">
               <div class="text-weight-bold">{{ b.prenom }} {{ b.nom }}</div>
               <div class="text-caption text-grey-7">{{ b.organisation ?? '—' }}</div>
             </div>
-            <span class="champ champ-statut" :class="CLASSE_STATUT[b.statut]">
-              <span class="pochoir">{{ LIBELLE_STATUT[b.statut] }}</span>
+            <span class="champ champ-statut" :class="CLASSE_STATUT[statutEffectif(b)]">
+              <span class="pochoir">{{ LIBELLE_STATUT_BADGE[statutEffectif(b)] }}</span>
             </span>
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
             <q-chip dense :color="b.type === 'VIP' ? 'amber-7' : 'primary'" text-color="white">
-              {{ LIBELLE_TYPE[b.type] ?? b.type }}
+              {{ LIBELLE_TYPE_BADGE[b.type] ?? b.type }}
             </q-chip>
             <div class="q-mt-sm">
               Délivré le {{ dateFr(b.dateDelivrance) }}<br>
               Valable jusqu'au <strong>{{ dateFr(b.dateValidite) }}</strong>
             </div>
             <div class="q-mt-sm"><code>{{ b.numero }}</code></div>
+            <div v-if="b.statut === 'ANNULE' && b.motif" class="q-mt-sm text-grey-7">
+              Motif d'annulation : {{ b.motif }}
+            </div>
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat dense icon="print" label="Imprimer" no-caps @click="imprimer(b)" />
@@ -339,6 +366,13 @@ onMounted(charger);
           </q-card-actions>
         </q-card>
       </div>
+      <div v-if="!chargement && !badges.length" class="col-12 text-center text-grey-7 q-pa-lg">
+        <q-icon name="how_to_reg" size="42px" color="grey-5" />
+        <div class="q-mt-sm">
+          Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un
+          intervenant attendu.
+        </div>
+      </div>
     </div>
 
     <badge-dialog v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="charger" />
@@ -346,17 +380,23 @@ onMounted(charger);
     <q-dialog v-model="dialogAnnulation">
       <q-card style="min-width: 420px">
         <q-card-section class="row items-center">
-          <div class="text-h6">Annuler le badge</div>
-          <q-space />
-          <q-btn flat round dense icon="close" @click="dialogAnnulation = false" />
+          <div class="col">
+            <div class="text-h6">Annuler le badge</div>
+            <div v-if="badgeAnnulation" class="text-caption text-grey-7">
+              {{ badgeAnnulation.prenom }} {{ badgeAnnulation.nom }} · {{ badgeAnnulation.numero }}
+            </div>
+          </div>
+          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogAnnulation = false" />
         </q-card-section>
         <q-card-section>
-          <q-banner class="bg-orange-1 text-orange-10 q-mb-md">
-            Un badge annulé ne peut plus être réactivé : créez-en un nouveau si besoin.
+          <q-banner class="note--alerte q-mb-md">
+            Action irréversible : un badge annulé ne peut plus être réactivé ni
+            prolongé. Émettez-en un nouveau si besoin.
           </q-banner>
           <q-input
             v-model="motifAnnulation"
             label="Motif d'annulation"
+            hint="3 caractères minimum."
             outlined
             dense
             type="textarea"
@@ -365,7 +405,14 @@ onMounted(charger);
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Annuler" no-caps @click="dialogAnnulation = false" />
-          <q-btn unelevated color="negative" no-caps label="Confirmer" :disable="!motifAnnulation" @click="confirmerAnnulation" />
+          <q-btn
+            unelevated
+            color="negative"
+            no-caps
+            label="Annuler définitivement"
+            :disable="motifAnnulation.trim().length < 3"
+            @click="confirmerAnnulation"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -373,13 +420,18 @@ onMounted(charger);
     <q-dialog v-model="dialogRallonge">
       <q-card style="min-width: 420px">
         <q-card-section class="row items-center">
-          <div class="text-h6">Prolonger la validité</div>
-          <q-space />
-          <q-btn flat round dense icon="close" @click="dialogRallonge = false" />
+          <div class="col">
+            <div class="text-h6">Prolonger la validité</div>
+            <div v-if="badgeRallonge" class="text-caption text-grey-7">
+              {{ badgeRallonge.prenom }} {{ badgeRallonge.nom }} · {{ badgeRallonge.numero }}
+            </div>
+          </div>
+          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogRallonge = false" />
         </q-card-section>
         <q-card-section>
-          <q-banner class="bg-info text-white q-mb-md">
-            Le badge repassera en statut ACTIF et conservera son numéro et son QR.
+          <q-banner class="note--info q-mb-md">
+            Le badge repassera en statut « Actif » et conservera son numéro et
+            son QR : inutile de le réimprimer.
           </q-banner>
           <q-input
             v-model="dateRallonge"
@@ -399,10 +451,18 @@ onMounted(charger);
 </template>
 
 <style scoped>
+/* Pas d'arrondi : le badge est une plaque, comme les cartes étudiantes. */
 .badge-carte {
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 10px;
+  border: var(--up-filet-fin);
   height: 100%;
+  background: var(--up-plaque);
+}
+
+/* Pastille de statut : même gabarit que sur les cartes étudiantes. */
+.champ-statut {
+  display: inline-flex;
+  padding: 3px 8px;
+  min-height: 24px;
 }
 .badge--ok { background: #e3f5e9; color: #17683a; }
 .badge--ko { background: #fdeaea; color: #a52020; }

@@ -171,6 +171,7 @@ export class DocumentsDemandeService extends CrudService {
       pageSize?: number;
       all?: string;
       statut?: StatutDemande;
+      type?: TypeDemandeDocument;
     },
     user: AuthUser,
   ) {

@@ -117,6 +117,38 @@ export class ElectionsService {
     return election;
   }
 
+  /**
+   * Position de l'électeur courant sur cette élection : a-t-il déjà déposé
+   * un bulletin ? L'identifiant du scrutin anonymise le vote (un seul token
+   * par électeur pour une élection donnée).
+   */
+  async monVote(electionId: string, user: AuthUser) {
+    // On interroge l'électeur, pas l'étudiant : un enseignant, un contrôleur
+    // ou un administrateur n'a pas d'`etudiantId` et s'entendait donc répondre
+    // « vous n'avez pas voté » même après avoir déposé son bulletin.
+    // `etudiantId` reste consulté pour les bulletins antérieurs à la colonne
+    // `electeurId`, qui n'en portent pas.
+    const scrutin = await this.prisma.voteElection.findFirst({
+      where: {
+        electionId,
+        OR: [
+          { electeurId: user.id },
+          ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : []),
+        ],
+      },
+      orderBy: { horodatage: 'desc' },
+      select: { scrutinId: true, horodatage: true },
+    });
+    if (!scrutin) {
+      return { aVote: false, scrutinId: null, dateVote: null };
+    }
+    return {
+      aVote: true,
+      scrutinId: scrutin.scrutinId,
+      dateVote: scrutin.horodatage,
+    };
+  }
+
   // ---------------------------------------------------------------- édition
 
   async creer(dto: CreateElectionDto, user: AuthUser) {
@@ -311,6 +343,27 @@ export class ElectionsService {
       throw new BadRequestException("Au moins un candidat n'appartient pas à cette élection.");
     }
 
+    /**
+     * Un électeur dépose UN bulletin, pas une voix à la fois. La contrainte
+     * d'unicité, elle, porte sur le couple (scrutin, candidat, électeur) :
+     * elle empêche de voter deux fois pour le même candidat, mais laisserait
+     * quelqu'un étaler ses voix sur plusieurs requêtes et dépasser le nombre
+     * de sièges. On refuse donc tout second dépôt sur la même élection.
+     */
+    const dejaVote = await this.prisma.voteElection.findFirst({
+      where: {
+        electionId: dto.electionId,
+        OR: [
+          { electeurId: user.id },
+          ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    if (dejaVote) {
+      throw new ConflictException('Vous avez déjà déposé un bulletin pour cette élection.');
+    }
+
     const scrutinId = randomBytes(8).toString('hex');
     try {
       await this.prisma.$transaction(
@@ -320,6 +373,9 @@ export class ElectionsService {
               electionId: dto.electionId,
               candidatId,
               etudiantId: user.etudiantId ?? null,
+              // L'électeur, quel que soit son rôle : c'est lui que la
+              // contrainte d'unicité empêche de voter deux fois.
+              electeurId: user.id,
               scrutinId,
               mode: dto.mode ?? 'WEB',
               ipAppareil: ip ?? null,

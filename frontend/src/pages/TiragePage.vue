@@ -4,8 +4,8 @@
       <div class="col">
         <div class="page-titre">Tirage des épreuves</div>
         <div class="page-sous-titre">
-          Suivi sécurisé d'un tirage : l'empreinte source est vérifiée au moment de l'impression
-          pour bloquer toute substitution de fichier.
+          Entre l'examen planifié et la salle : l'empreinte SHA-256 du sujet est
+          revérifiée à l'impression pour bloquer toute substitution de fichier.
         </div>
       </div>
       <div class="col-auto">
@@ -16,10 +16,29 @@
           no-caps
           icon="add"
           label="Programmer un tirage"
-          @click="ouvrirCreation"
+          @click="dialogCreationOuvert = true"
+        />
+      </div>
+      <div class="col-auto">
+        <q-btn
+          outline
+          color="secondary"
+          no-caps
+          icon="quiz"
+          label="Examens"
+          @click="router.push({ name: 'examens' })"
         />
       </div>
     </div>
+
+    <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
+      <template #avatar><q-icon name="filter_alt" color="primary" /></template>
+      Tirages de l'examen <strong>{{ examenFiltre.codeExamen }}</strong> —
+      {{ examenFiltre.intitule }}.
+      <template #action>
+        <q-btn flat dense no-caps label="Voir tous les tirages" @click="retirerFiltreExamen" />
+      </template>
+    </q-banner>
 
     <filter-bar
       v-model="filtres"
@@ -28,8 +47,12 @@
       @reinitialiser="reinitialiser"
     >
       <template #actions>
-        <q-btn outline color="secondary" no-caps icon="view_kanban" label="Tableau" :flat="mode === 'kanban'" @click="mode = 'kanban'" />
-        <q-btn outline color="secondary" no-caps icon="view_list" label="Liste" :flat="mode === 'liste'" @click="mode = 'liste'" />
+        <view-toggle
+          cle="tirage"
+          :modes="['kanban', 'tableau']"
+          defaut="kanban"
+          @update:mode="(m) => (modeVue = m as 'kanban' | 'tableau')"
+        />
       </template>
       <template #avances>
         <autocomplete-async
@@ -37,13 +60,22 @@
           endpoint="/examens"
           label="Examen"
           :label-fn="(e) => `${e.codeExamen} — ${e.intitule}`"
+          clearable
         />
-        <champ-date v-model="filtres.dateDebut" label="Tirage du" />
-        <champ-date v-model="filtres.dateFin" label="au" />
+        <q-select
+          v-model="filtres.stade"
+          :options="optionsStades"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Stade"
+        />
       </template>
     </filter-bar>
 
-    <div v-if="mode === 'kanban'" class="q-mt-md">
+    <div v-if="modeVue === 'kanban'" class="q-mt-md">
       <kanban-board :colonnes="colonnesKanban" />
     </div>
 
@@ -52,13 +84,29 @@
       flat
       bordered
       class="carte q-mt-md"
-      :rows="tirages"
+      :rows="tiragesFiltres"
       :columns="colonnesTableau"
       row-key="id"
       :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
-      @row-click="(_, row) => voirBordereau(row)"
+      :pagination="{ rowsPerPage: 0 }"
     >
+      <template #no-data>
+        <div class="etat-vide">
+          <q-icon name="local_printshop" size="32px" color="grey-5" />
+          <div class="q-mt-sm">Aucun tirage pour ces critères.</div>
+          <q-btn
+            v-if="peutCreer"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            label="Programmer un tirage"
+            class="q-mt-sm"
+            @click="dialogCreationOuvert = true"
+          />
+        </div>
+      </template>
+
       <template #body-cell-examen="p">
         <q-td :props="p">
           <div class="text-weight-medium">{{ p.row.examen?.codeExamen ?? '—' }}</div>
@@ -67,7 +115,8 @@
       </template>
       <template #body-cell-empreinte="p">
         <q-td :props="p">
-          <code class="empreinte-courte">{{ p.row.empreinteSource.slice(0, 16) }}…</code>
+          <code class="empreinte-courte">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</code>
+          <q-tooltip>{{ p.row.empreinteSource }}</q-tooltip>
         </q-td>
       </template>
       <template #body-cell-stade="p">
@@ -77,21 +126,58 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="print" @click.stop="voirBordereau(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="print"
+            aria-label="Imprimer le bordereau du tirage"
+            @click.stop="voirBordereau(p.row)"
+          >
             <q-tooltip>Bordereau</q-tooltip>
           </q-btn>
-          <q-btn v-if="transitionSuivante(p.row.stade)" flat dense no-caps color="primary" :label="labelSuivant(p.row.stade)" @click.stop="avancer(p.row)" />
-          <q-btn v-if="p.row.stade === 'PROGRAMME' && peutCreer" flat dense round color="negative" icon="block" @click.stop="annuler(p.row)">
-            <q-tooltip>Annuler</q-tooltip>
+          <q-btn
+            flat
+            dense
+            round
+            icon="quiz"
+            aria-label="Voir l'examen de ce tirage"
+            @click.stop="allerExamen(p.row)"
+          >
+            <q-tooltip>Voir l'examen</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="transitionSuivante(p.row.stade) && peutCreer"
+            flat
+            dense
+            no-caps
+            color="primary"
+            :label="labelSuivant(p.row.stade)"
+            @click.stop="avancer(p.row)"
+          />
+          <q-btn
+            v-if="p.row.stade === 'PROGRAMME' && peutCreer"
+            flat
+            dense
+            round
+            color="negative"
+            icon="block"
+            aria-label="Annuler le tirage"
+            @click.stop="annuler(p.row)"
+          >
+            <q-tooltip>Annuler le tirage</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
     <pagination-bar
-      :page.sync="filtres.page"
-      :page-size.sync="filtres.pageSize"
+      v-if="total"
+      :page="filtres.page"
+      :page-size="filtres.pageSize"
       :total="total"
+      @update:page="(v) => { filtres.page = v; charger(); }"
+      @update:page-size="(v) => { filtres.pageSize = v; filtres.page = 1; charger(); }"
       @tous="chargerTout"
     />
 
@@ -102,74 +188,104 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useRoute, useRouter } from 'vue-router';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
 import KanbanBoard from '../components/KanbanBoard.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
-import ChampDate from '../components/ChampDate.vue';
 import TirageDialog from '../components/TirageDialog.vue';
-import {
-  LIBELLE_STADE_TIRAGE,
-  aujourdhui,
-  dateHeureLisible,
-  decalerJours,
-} from '../utils/libelles';
-import type { StadeTirage, Tirage } from '../types';
+import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '../utils/libelles';
+import type { Examen, StadeTirage, Tirage, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const route = useRoute();
+const router = useRouter();
 
-const mode = ref<'kanban' | 'liste'>('kanban');
+const modeVue = ref<'kanban' | 'tableau'>('kanban');
 const tirages = ref<Tirage[]>([]);
 const total = ref(0);
 const chargement = ref(false);
 const dialogCreationOuvert = ref(false);
+/** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
+const examenFiltre = ref<Examen | null>(null);
 
-const filtres = ref<Record<string, any>>({
-  recherche: '',
-  examenId: null as string | null,
-  dateDebut: decalerJours(aujourdhui(), -30),
-  dateFin: aujourdhui(),
-  page: 1,
-  pageSize: 50,
-});
+function filtresParDefaut() {
+  return {
+    recherche: '',
+    examenId: null as string | null,
+    stade: null as StadeTirage | null,
+    page: 1,
+    pageSize: 50,
+  };
+}
+
+const filtres = ref<Record<string, any>>(filtresParDefaut());
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
+const ORDRES: StadeTirage[] = ['PROGRAMME', 'IMPRIME', 'MIS_SOUS_PLI', 'DISTRIBUE', 'RECUPERE', 'ANNULE'];
+
+const optionsStades = ORDRES.map((value) => ({ value, label: LIBELLE_STADE_TIRAGE[value] }));
+
 const chipsFiltres = computed(() => {
-  const chips: any[] = [];
+  const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    chips.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, defaut: true });
+    chips.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+  }
+  if (filtres.value.stade) {
+    chips.push({
+      label: `Stade : ${LIBELLE_STADE_TIRAGE[filtres.value.stade] ?? filtres.value.stade}`,
+      value: filtres.value.stade,
+      icone: 'flag',
+    });
+  }
+  if (examenFiltre.value) {
+    chips.push({ label: `Examen : ${examenFiltre.value.codeExamen}`, value: examenFiltre.value.id, icone: 'quiz' });
   }
   return chips;
 });
 
-const ORDRES: StadeTirage[] = ['PROGRAMME', 'IMPRIME', 'MIS_SOUS_PLI', 'DISTRIBUE', 'RECUPERE', 'ANNULE'];
+/**
+ * `/tirage` ne sait pas filtrer sur le texte : la recherche s'applique donc
+ * aux lignes chargées, pour que le champ ne soit pas décoratif.
+ */
+const tiragesFiltres = computed(() => {
+  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  if (!q) return tirages.value;
+  return tirages.value.filter((t) =>
+    [t.examen?.codeExamen, t.examen?.intitule, t.circuitImpression]
+      .filter(Boolean)
+      .some((v) => String(v).toLowerCase().includes(q)),
+  );
+});
 
 const colonnesTableau = computed<QTableColumn[]>(() => [
   { name: 'examen', label: 'Examen', field: 'examen', align: 'left' },
-  { name: 'date', label: 'Date tirage', field: (r: Tirage) => dateHeureLisible(r.dateTirage), align: 'left' },
+  { name: 'date', label: 'Date du tirage', field: (r: Tirage) => dateHeureLisible(r.dateTirage), align: 'left' },
   { name: 'exemplaires', label: 'Exemplaires', field: 'nbExemplaires', align: 'right' },
   { name: 'empreinte', label: 'Empreinte SHA-256', field: 'empreinteSource', align: 'left' },
-  { name: 'imprimeur', label: 'Imprimeur', field: (r: Tirage) => r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—', align: 'left' },
+  { name: 'imprimeur', label: 'Imprimeur', field: (r: Tirage) => (r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—'), align: 'left' },
   { name: 'stade', label: 'Stade', field: 'stade', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-const colonnesKanban = computed(() => {
-  return ORDRES.map((stade) => {
-    const cartes = tirages.value
+const colonnesKanban = computed(() =>
+  ORDRES.map((stade) => {
+    const cartes = tiragesFiltres.value
       .filter((t) => t.stade === stade)
       .map((t) => ({
         id: t.id,
         titre: t.examen?.codeExamen ?? '—',
         sousTitre: t.examen?.intitule ?? '',
-        meta: `${t.nbExemplaires} ex. · ${dateHeureLisible(t.dateTirage)} · ${t.empreinteSource.slice(0, 12)}…`,
+        meta: `${t.nbExemplaires} ex. · ${dateHeureLisible(t.dateTirage)} · ${(t.empreinteSource ?? '').slice(0, 12)}…`,
         badge: LIBELLE_STADE_TIRAGE[stade],
         couleur: couleurStade(stade),
         actions: actionsPourCarte(t),
+        onClick: () => allerExamen(t),
       }));
     return {
       identifiant: stade,
@@ -177,8 +293,8 @@ const colonnesKanban = computed(() => {
       couleur: couleurStade(stade),
       cartes,
     };
-  });
-});
+  }),
+);
 
 function couleurStade(s: string) {
   switch (s) {
@@ -225,21 +341,18 @@ function labelSuivant(stade: string) {
 
 function actionsPourCarte(t: Tirage) {
   const acts: Array<{ label: string; icone: string; couleur: string; onClick: () => void }> = [
-    {
-      label: 'Bordereau',
-      icone: 'print',
-      couleur: 'primary',
-      onClick: () => voirBordereau(t),
-    },
+    { label: 'Bordereau', icone: 'print', couleur: 'primary', onClick: () => voirBordereau(t) },
   ];
-  const suiv = transitionSuivante(t.stade);
-  if (suiv) {
+  if (transitionSuivante(t.stade) && peutCreer.value) {
     acts.push({
       label: labelSuivant(t.stade),
       icone: 'arrow_forward',
       couleur: 'primary',
       onClick: () => avancer(t),
     });
+  }
+  if (t.stade === 'PROGRAMME' && peutCreer.value) {
+    acts.push({ label: 'Annuler', icone: 'block', couleur: 'negative', onClick: () => annuler(t) });
   }
   return acts;
 }
@@ -249,15 +362,18 @@ async function charger() {
   try {
     const { data } = await api.get('/tirage', {
       params: {
-        all: '1',
-        search: filtres.value.recherche || undefined,
         examenId: filtres.value.examenId || undefined,
+        stade: filtres.value.stade || undefined,
         page: filtres.value.page,
         pageSize: filtres.value.pageSize,
       },
     });
-    tirages.value = data.data;
-    total.value = data.total;
+    tirages.value = data.data ?? [];
+    total.value = data.total ?? tirages.value.length;
+  } catch (e: any) {
+    tirages.value = [];
+    total.value = 0;
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des tirages impossible' });
   } finally {
     chargement.value = false;
   }
@@ -270,25 +386,38 @@ async function chargerTout() {
 }
 
 function reinitialiser() {
-  filtres.value = {
-    recherche: '',
-    examenId: null,
-    dateDebut: decalerJours(aujourdhui(), -30),
-    dateFin: aujourdhui(),
-    page: 1,
-    pageSize: 50,
-  };
+  filtres.value = filtresParDefaut();
+  examenFiltre.value = null;
   charger();
 }
 
-function ouvrirCreation() {
-  dialogCreationOuvert.value = true;
+function retirerFiltreExamen() {
+  examenFiltre.value = null;
+  filtres.value.examenId = null;
+}
+
+/** Tirage → examen : la page Examens se positionne sur le code de l'épreuve. */
+function allerExamen(t: Tirage) {
+  if (!t.examen) return;
+  void router.push({ name: 'examens', query: { recherche: t.examen.codeExamen } });
 }
 
 function voirBordereau(t: Tirage | null) {
   if (!t) return;
   window.open(`${API_URL}/tirage/${t.id}/imprimer-bordereau?token=${auth.token}`, '_blank');
 }
+
+/** Libellés des étapes : chaque passage est tracé et ne se rejoue pas. */
+const MESSAGES_TRANSITION: Record<string, string> = {
+  IMPRIME:
+    "Confirmez l'empreinte SHA-256 du fichier source. Si elle ne correspond pas à celle enregistrée à la programmation, l'impression sera refusée.",
+  MIS_SOUS_PLI:
+    'Les exemplaires sont déclarés mis sous pli et scellés. Cette étape est enregistrée au journal et ne peut pas être annulée.',
+  DISTRIBUE:
+    'Les plis sont déclarés remis au centre d’examen. Cette étape est enregistrée au journal et ne peut pas être annulée.',
+  RECUPERE:
+    'Les copies sont déclarées récupérées : le tirage est clos. Cette étape est définitive.',
+};
 
 async function avancer(t: Tirage) {
   const stade = transitionSuivante(t.stade);
@@ -301,14 +430,13 @@ async function avancer(t: Tirage) {
     'recuperer';
 
   const validerEtAvancer = async (empreinteSaisie?: string) => {
-    let payload: any = { stade };
+    let payload: Record<string, unknown> = {};
     if (stade === 'IMPRIME') {
       if (!empreinteSaisie) {
         $q.notify({ type: 'negative', message: 'Empreinte requise pour imprimer' });
         return;
       }
       payload = {
-        ...payload,
         empreinteSource: empreinteSaisie,
         empreinteExemplaires: t.empreinteExemplaires ?? undefined,
       };
@@ -325,21 +453,28 @@ async function avancer(t: Tirage) {
   if (stade === 'IMPRIME') {
     $q.dialog({
       title: "Confirmer l'impression",
-      message: `Confirmer l'empreinte source avant impression (SHA-256).`,
+      message: MESSAGES_TRANSITION.IMPRIME,
       prompt: { model: t.empreinteSource, type: 'text' },
       cancel: true,
+      ok: { color: 'primary', label: 'Imprimer', unelevated: true, noCaps: true },
     }).onOk((value: string) => validerEtAvancer(value));
     return;
   }
-  await validerEtAvancer();
+
+  $q.dialog({
+    title: `Passer au stade « ${libelleStade(stade)} »`,
+    message: MESSAGES_TRANSITION[stade] ?? '',
+    cancel: true,
+    ok: { color: 'primary', label: libelleStade(stade), unelevated: true, noCaps: true },
+  }).onOk(() => validerEtAvancer());
 }
 
 function annuler(t: Tirage) {
   $q.dialog({
     title: 'Annuler le tirage',
-    message: `Annuler le tirage ${t.examen?.codeExamen ?? ''} ?`,
-    cancel: true,
-    ok: { color: 'negative', label: 'Annuler', unelevated: true },
+    message: `Annuler définitivement le tirage de ${t.examen?.codeExamen ?? 'cet examen'} ? Les exemplaires programmés ne seront pas imprimés.`,
+    cancel: { flat: true, label: 'Revenir', noCaps: true },
+    ok: { color: 'negative', label: 'Annuler le tirage', unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/tirage/${t.id}/annuler`);
@@ -352,21 +487,42 @@ function annuler(t: Tirage) {
 }
 
 watch(
-  () => [filtres.value.recherche, filtres.value.examenId],
+  () => [filtres.value.examenId, filtres.value.stade],
   () => {
     filtres.value.page = 1;
     charger();
   },
 );
-onMounted(charger);
+
+onMounted(async () => {
+  // Chaîne : un examen ouvre directement ses tirages.
+  const examenId = String(route.query.examenId ?? '');
+  if (examenId) {
+    filtres.value.examenId = examenId;
+    try {
+      const { data } = await api.get(`/examens/${examenId}`);
+      examenFiltre.value = data;
+    } catch {
+      examenFiltre.value = null;
+    }
+  }
+  await charger();
+});
 </script>
 
 <style scoped lang="scss">
+/**
+ * Une empreinte SHA-256 se relit caractère par caractère : chasse fixe
+ * obligatoire. On s'en tient à la pile générique — aucune fonte à chasse fixe
+ * n'est chargée par l'application, nommer « JetBrains Mono » ne faisait que
+ * promettre une fonte absente.
+ */
 .empreinte-courte {
-  font-family: 'JetBrains Mono', 'Roboto Mono', monospace;
+  font-family: monospace;
   font-size: 11px;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--up-craie);
+  border: var(--up-filet-fin);
   padding: 2px 6px;
-  border-radius: 3px;
 }
+/* `.etat-vide` est désormais porté par app.scss. */
 </style>

@@ -20,6 +20,13 @@
       </div>
     </div>
 
+    <!-- Un enseignant ne dépose pas lui-même : il doit savoir par où passer. -->
+    <q-banner v-if="!peutDeposer" class="note--info q-mb-md">
+      <template #avatar><q-icon name="info" /></template>
+      Un justificatif s’enregistre auprès de la scolarité, sur présentation de la pièce.
+      Vous retrouvez ici l’état de vos demandes.
+    </q-banner>
+
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm">
         <div class="col-6 col-md-3">
@@ -63,7 +70,9 @@
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
+      :pagination="{ rowsPerPage: 20, sortBy: 'date', descending: true }"
+      loading-label="Chargement des justificatifs…"
+      :no-data-label="messageVide"
     >
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -75,13 +84,38 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="detail = p.row" />
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Voir le justificatif"
+            @click="detail = p.row"
+          >
+            <q-tooltip>Détail</q-tooltip>
+          </q-btn>
           <template v-if="p.row.statut === 'EN_ATTENTE' && peutArbitrer">
-            <q-btn flat dense round color="positive" icon="check" @click="traiter(p.row, 'VALIDE')">
-              <q-tooltip>Valider</q-tooltip>
+            <q-btn
+              flat
+              dense
+              round
+              color="positive"
+              icon="check"
+              aria-label="Valider ce justificatif"
+              @click="traiter(p.row, 'VALIDE')"
+            >
+              <q-tooltip>Valider — la séance passera en absence excusée</q-tooltip>
             </q-btn>
-            <q-btn flat dense round color="negative" icon="close" @click="traiter(p.row, 'REJETE')">
-              <q-tooltip>Rejeter</q-tooltip>
+            <q-btn
+              flat
+              dense
+              round
+              color="negative"
+              icon="close"
+              aria-label="Rejeter ce justificatif"
+              @click="traiter(p.row, 'REJETE')"
+            >
+              <q-tooltip>Rejeter — l’absence reste constatée</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -150,8 +184,16 @@
           </q-file>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
-          <q-btn color="primary" unelevated label="Déposer" :loading="enregistrement" @click="deposer" />
+          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            icon="post_add"
+            label="Déposer le justificatif"
+            :loading="enregistrement"
+            @click="deposer"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -176,24 +218,54 @@
             </q-item>
             <q-item>
               <q-item-section>Motif</q-item-section>
-              <q-item-section side>{{ detail.type }}</q-item-section>
+              <q-item-section side>{{ libelleMotif(detail.type) }}</q-item-section>
             </q-item>
             <q-item>
               <q-item-section>Explication</q-item-section>
               <q-item-section side class="text-right">{{ detail.motif }}</q-item-section>
             </q-item>
+            <q-item>
+              <q-item-section>Statut</q-item-section>
+              <q-item-section side>
+                <span class="champ champ-justificatif" :class="`champ--${champStatut(detail.statut)}`">
+                  <span class="pochoir">{{ libelleStatut(detail.statut) }}</span>
+                </span>
+              </q-item-section>
+            </q-item>
             <q-item v-if="detail.commentaire">
-              <q-item-section>Décision</q-item-section>
-              <q-item-section side>{{ detail.commentaire }}</q-item-section>
+              <q-item-section>Commentaire de décision</q-item-section>
+              <q-item-section side class="text-right">{{ detail.commentaire }}</q-item-section>
+            </q-item>
+            <q-item v-if="detail.traitePar">
+              <q-item-section>Arbitré par</q-item-section>
+              <q-item-section side>
+                {{ detail.traitePar.prenom }} {{ detail.traitePar.nom }}
+                <span v-if="detail.traiteLe" class="chiffres">
+                  · {{ dateLisible(detail.traiteLe) }}
+                </span>
+              </q-item-section>
             </q-item>
           </q-list>
           <div v-if="detail.piece" class="q-mt-md">
-            <img v-if="detail.piece.startsWith('data:image')" :src="detail.piece" class="full-width" />
+            <img
+              v-if="detail.piece.startsWith('data:image')"
+              :src="detail.piece"
+              class="full-width"
+              alt="Pièce justificative fournie par l’enseignant"
+            />
             <q-btn v-else flat icon="download" no-caps label="Ouvrir la pièce jointe" :href="detail.piece" target="_blank" />
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn
+            v-if="detail?.seance"
+            flat
+            no-caps
+            icon="event_note"
+            label="Voir la séance au registre"
+            :to="lienSeance(detail)"
+          />
+          <q-btn flat no-caps label="Fermer" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -203,10 +275,12 @@
 <script setup lang="ts">
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import {
+  LIBELLE_STATUT_JUSTIFICATIF,
   TYPES_JUSTIFICATIF,
   aujourdhui,
   dateLisible,
@@ -215,6 +289,7 @@ import {
 import type { Enseignant, Justificatif, Seance } from '../types';
 
 const $q = useQuasar();
+const route = useRoute();
 const auth = useAuthStore();
 
 const justificatifs = ref<Justificatif[]>([]);
@@ -237,16 +312,37 @@ const filtres = ref({
 
 const form = ref({ seanceId: '', type: 'MALADIE', motif: '', piece: undefined as string | undefined });
 
-const optionsStatuts = [
-  { label: 'En attente', value: 'EN_ATTENTE' },
-  { label: 'Validé', value: 'VALIDE' },
-  { label: 'Rejeté', value: 'REJETE' },
-];
+/** Le champ peint d'un justificatif reprend la grammaire des constats. */
+const CHAMP_STATUT_JUSTIFICATIF: Record<string, string> = {
+  EN_ATTENTE: 'retard',
+  VALIDE: 'present',
+  REJETE: 'absent',
+};
+
+const optionsStatuts = Object.entries(LIBELLE_STATUT_JUSTIFICATIF).map(([value, label]) => ({
+  label,
+  value,
+}));
 
 const peutArbitrer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT']));
 const peutDeposer = computed(() =>
   auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT']),
 );
+
+const messageVide = computed(() =>
+  filtres.value.statut || filtres.value.type
+    ? 'Aucun justificatif ne correspond à ces filtres sur la période.'
+    : 'Aucun justificatif déposé sur cette période.',
+);
+
+/** Un justificatif se lit avec sa séance : le registre s'ouvre sur son jour. */
+const lienSeance = (j: Justificatif | null) => {
+  const jour = String(j?.seance?.date ?? '').slice(0, 10);
+  return {
+    name: 'seances',
+    query: { dateDebut: jour, dateFin: jour, enseignantId: j?.enseignantId },
+  };
+};
 
 const optionsSeances = computed(() =>
   seancesJustifiables.value.map((s) => ({
@@ -276,26 +372,45 @@ const colonnes: QTableColumn[] = [
     field: (r: Justificatif) => r.seance?.affectation?.matiere?.intitule ?? '—',
     align: 'left',
   },
-  { name: 'type', label: 'Motif', field: 'type', align: 'left' },
+  {
+    name: 'type',
+    label: 'Motif',
+    field: (r: Justificatif) => libelleMotif(r.type),
+    align: 'left',
+    sortable: true,
+  },
   { name: 'explication', label: 'Explication', field: 'motif', align: 'left' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
-const champStatut = (s: string) =>
-  s === 'VALIDE' ? 'present' : s === 'REJETE' ? 'absent' : 'retard';
-const libelleStatut = (s: string) =>
-  s === 'VALIDE' ? 'Validé' : s === 'REJETE' ? 'Rejeté' : 'En attente';
+const champStatut = (s: string) => CHAMP_STATUT_JUSTIFICATIF[s] ?? 'attente';
+const libelleStatut = (s: string) => LIBELLE_STATUT_JUSTIFICATIF[s] ?? s;
+const libelleMotif = (t?: string | null) =>
+  TYPES_JUSTIFICATIF.find((x) => x.value === t)?.label ?? t ?? '—';
 
+/** Le message dit la conséquence : valider excuse l'absence dans les relevés. */
 function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
+  const valide = statut === 'VALIDE';
   $q.dialog({
-    title: statut === 'VALIDE' ? 'Valider le justificatif' : 'Rejeter le justificatif',
-    message: 'Commentaire (facultatif)',
+    title: valide ? 'Valider le justificatif' : 'Rejeter le justificatif',
+    message: valide
+      ? 'La séance passera en « absence excusée » dans les statistiques. Commentaire (facultatif) :'
+      : 'L’absence restera constatée telle quelle. Motif du rejet (facultatif) :',
     prompt: { model: '', type: 'text' },
-    cancel: true,
+    ok: {
+      label: valide ? 'Valider le justificatif' : 'Rejeter le justificatif',
+      color: valide ? 'positive' : 'negative',
+      unelevated: true,
+      noCaps: true,
+    },
+    cancel: { label: 'Ne rien faire', flat: true, noCaps: true },
   }).onOk(async (commentaire: string) => {
     await api.put(`/justificatifs/${j.id}/traiter`, { statut, commentaire });
-    $q.notify({ type: 'positive', message: 'Justificatif traité' });
+    $q.notify({
+      type: 'positive',
+      message: valide ? 'Justificatif validé — absence excusée' : 'Justificatif rejeté',
+    });
     await charger();
   });
 }
@@ -349,6 +464,13 @@ async function chargerSeancesJustifiables() {
 }
 
 async function deposer() {
+  if (!enseignantChoisi.value || !form.value.seanceId || !form.value.motif.trim()) {
+    $q.notify({
+      type: 'warning',
+      message: 'Enseignant, séance concernée et explication sont obligatoires.',
+    });
+    return;
+  }
   enregistrement.value = true;
   try {
     await api.post('/justificatifs', { ...form.value, enseignantId: enseignantChoisi.value });
@@ -377,6 +499,10 @@ async function charger() {
     chargement.value = false;
   }
 }
+
+/** Arrivée par lien (« justificatifs à arbitrer » du tableau de bord). */
+if (route.query.statut) filtres.value.statut = String(route.query.statut);
+if (route.query.type) filtres.value.type = String(route.query.type);
 
 watch(filtres, charger, { deep: true });
 onMounted(charger);

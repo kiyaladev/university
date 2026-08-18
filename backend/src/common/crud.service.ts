@@ -1,6 +1,28 @@
-import { NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Paginated, QueryDto } from './dto';
+
+/**
+ * Enveloppe une suppression dure. Sur les référentiels (années, structure,
+ * salles), une ligne encore référencée fait échouer le DELETE côté PostgreSQL :
+ * Prisma lève alors P2003 et, sans traitement, l'utilisateur reçoit une 500
+ * illisible pour une situation parfaitement normale. On la traduit en 409 avec
+ * un message qui dit quoi faire.
+ */
+export async function supprimerOuConflit<T>(
+  suppression: () => Promise<T>,
+  message: string,
+): Promise<T> {
+  try {
+    return await suppression();
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+      throw new ConflictException(message);
+    }
+    throw e;
+  }
+}
 
 export interface CrudOptions {
   /** Champs textuels balayés par `?search=`. */

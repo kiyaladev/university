@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Ip,
   Param,
   Post,
   Put,
@@ -21,6 +22,7 @@ import {
   CreateBadgeDto,
   RallongerBadgeDto,
   UpdateBadgeDto,
+  VerifierBadgePubliqueDto,
 } from './badges.dto';
 
 /**
@@ -37,6 +39,17 @@ import {
 @Controller('badges')
 export class BadgesController {
   constructor(private readonly service: BadgesService) {}
+
+  /**
+   * Vérification publique par QR : déclarée avant `:id` pour que « verifier »
+   * ne soit pas capturé comme identifiant. Ouverte, car celui qui contrôle un
+   * badge à l'entrée n'a pas de compte — c'est le jeton qui fait foi.
+   */
+  @Public()
+  @Get('verifier')
+  verifier(@Query() query: VerifierBadgePubliqueDto, @Ip() ip: string) {
+    return this.service.verifier(query, ip);
+  }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()

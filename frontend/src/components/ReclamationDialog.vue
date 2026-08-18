@@ -135,6 +135,11 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import {
+  LIBELLE_PRIORITE_RECLAMATION,
+  LIBELLE_TYPE_RECLAMATION,
+  optionsDepuis,
+} from '../utils/libelles';
 import type { PrioriteReclamation, Reclamation, TypeReclamation } from '../types';
 
 const props = defineProps<{
@@ -165,28 +170,15 @@ const ICONE_TYPE: Record<TypeReclamation, string> = {
   AUTRE: 'help',
 };
 
-const LIBELLE_TYPE: Record<TypeReclamation, string> = {
-  NOTE_MANQUANTE: 'Note manquante',
-  ERREUR_SAISIE: 'Erreur de saisie',
-  INSCRIPTION: 'Inscription',
-  ENSEIGNEMENT: 'Enseignement',
-  SCOLARITE: 'Scolarité',
-  TECHNIQUE: 'Technique',
-  AUTRE: 'Autre',
-};
+const TYPES: TuileType[] = (Object.keys(LIBELLE_TYPE_RECLAMATION) as TypeReclamation[]).map(
+  (value) => ({
+    value,
+    label: LIBELLE_TYPE_RECLAMATION[value],
+    icone: ICONE_TYPE[value],
+  }),
+);
 
-const TYPES = (Object.keys(LIBELLE_TYPE) as TypeReclamation[]).map((value) => ({
-  value,
-  label: LIBELLE_TYPE[value],
-  icone: ICONE_TYPE[value],
-}));
-
-const OPTIONS_PRIORITES = [
-  { label: 'Basse', value: 'BASSE' as const },
-  { label: 'Normale', value: 'NORMALE' as const },
-  { label: 'Haute', value: 'HAUTE' as const },
-  { label: 'Urgente', value: 'URGENTE' as const },
-];
+const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 
 const form = ref({
   type: '' as TypeReclamation | '',

@@ -9,14 +9,17 @@
  * déclenche lui-même le rechargement de la liste quand le watcher réagit.
  */
 import { computed, ref } from 'vue';
-import { useQuasar } from 'quasar';
+import type { ChipFiltre } from '../types';
 
-const $q = useQuasar();
 const props = withDefaults(defineProps<{
   modelValue?: Record<string, any>;
   placeholder?: string;
-  /** Liste affichée des chips à partir des filtres (libellé + clé) */
-  chips?: Array<{ label: string; value: any; icone?: string; defaut?: boolean }>;
+  /**
+   * Rappel des filtres actifs. Un chip n'est décrochable que si le parent dit
+   * de quelle clé il provient (`cle`) — ou s'il s'agit du chip de recherche
+   * (`defaut`) : sans cela, la croix serait un bouton qui ne fait rien.
+   */
+  chips?: ChipFiltre[];
   /** Affiche la recherche globale */
   recherche?: boolean;
   /** Slot right for custom actions */
@@ -43,15 +46,16 @@ function setFiltre(cle: string, valeur: any) {
   emit('update:modelValue', nv);
 }
 
-function retirerChip(chip: { value: any; defaut?: boolean }) {
-  // Pour un chip « par défaut » c'est juste la valeur du champ `recherche`
+function retirerChip(chip: ChipFiltre) {
+  // Pour un chip « par défaut » c'est juste la valeur du champ `recherche`.
   if (chip.defaut) {
     setFiltre('recherche', '');
     return;
   }
-  // Pour un chip personnalisé, on ne sait pas à quelle clé il correspond —
-  // convention : le composant parent passe des chips avec une `cle` supplémentaire
-  // ; on l'utilise si présente, sinon on retombe sur la valeur stringifiée.
+  // Sinon on efface la clé que le parent a nommée. Sans clé, le chip n'est pas
+  // décrochable (voir `removable` dans le gabarit) : on ne peut pas deviner
+  // quel filtre il représente.
+  if (chip.cle) setFiltre(chip.cle, undefined);
 }
 
 function reinit() {
@@ -59,7 +63,12 @@ function reinit() {
   emit('reinitialiser');
 }
 
-const recherche = computed({
+/**
+ * Le texte saisi. À ne surtout pas nommer `recherche` : la prop du même nom
+ * serait masquée dans le gabarit, et `v-if="recherche"` testerait alors le
+ * texte au lieu du drapeau d'affichage — le champ ne s'affichait jamais.
+ */
+const texteRecherche = computed({
   get: () => filtres.value.recherche ?? '',
   set: (v) => setFiltre('recherche', v),
 });
@@ -72,9 +81,10 @@ const developpe = ref(false);
   <div class="barre-filtres">
     <div class="barre-filtres__ligne">
       <q-input
-        v-if="recherche"
-        v-model="recherche"
+        v-if="props.recherche"
+        v-model="texteRecherche"
         :placeholder="placeholder"
+        :aria-label="placeholder"
         outlined
         dense
         clearable
@@ -115,7 +125,7 @@ const developpe = ref(false);
       <q-chip
         v-for="chip in chips"
         :key="String(chip.value) + chip.label"
-        removable
+        :removable="!!chip.defaut || !!chip.cle"
         :icon="chip.icone"
         :label="chip.label"
         @remove="retirerChip(chip)"
@@ -135,20 +145,24 @@ const developpe = ref(false);
 .barre-filtres__ligne {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+.barre-filtres__ligne > * {
+  min-width: 0;
 }
 .barre-filtres__recherche {
   flex: 1 1 320px;
   max-width: 480px;
 }
 .barre-filtres__avances--actif {
-  background: var(--up-chaux, #f2f3ee);
+  background: var(--up-chaux);
 }
+/* Un panneau dépliable est une plaque de plus : filet tracé, angles vifs. */
 .barre-filtres__avances-panneau {
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 6px;
+  padding: var(--up-3);
+  background: var(--up-craie);
+  border: var(--up-filet-fin);
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;

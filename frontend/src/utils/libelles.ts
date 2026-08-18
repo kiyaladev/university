@@ -1,5 +1,18 @@
 /** Libellés et couleurs partagés par les écrans. */
-import type { Role, StatutPresence, StatutSeance, TypeCours } from '../types';
+import type {
+  PrioriteReclamation,
+  Role,
+  StatutCarteEtudiante,
+  StatutDemande,
+  StatutPresence,
+  StatutReclamation,
+  StatutSeance,
+  StatutVOD,
+  TypeCours,
+  TypeDemandeDocument,
+  TypeReclamation,
+  TypeRessourceVOD,
+} from '../types';
 
 export const LIBELLE_STATUT_PRESENCE: Record<StatutPresence | 'NON_CONTROLE', string> = {
   PRESENT: 'Présent',
@@ -95,6 +108,10 @@ export const LIBELLE_SESSION_DELIBERATION: Record<string, string> = {
 export const LIBELLE_STATUT_DELIBERATION: Record<string, string> = {
   BROUILLON: 'Brouillon',
   VALIDEE: 'Validée',
+  PROPOSE: 'Proposé',
+  VALIDE: 'Validé (lecture seule)',
+  SOUTENU: 'Soutenu (rattrapage validé)',
+  ABANDONNE: 'Abandonné',
 };
 
 export const LIBELLE_DECISION_JURY: Record<string, string> = {
@@ -325,7 +342,144 @@ export const TYPES_JUSTIFICATIF = [
   { value: 'AUTRE', label: 'Autre' },
 ];
 
+/**
+ * Badges d'accès. Le même badge se nomme dans le registre, dans le formulaire
+ * d'émission et sur la page publique de vérification : un seul jeu de mots.
+ */
+export const LIBELLE_TYPE_BADGE: Record<string, string> = {
+  VISITEUR: 'Visiteur',
+  INTERVENANT: 'Intervenant',
+  TECHNICIEN: 'Technicien',
+  VIP: 'Personnalité',
+};
+
+export const LIBELLE_STATUT_BADGE: Record<string, string> = {
+  ACTIF: 'Actif',
+  EXPIRE: 'Expiré',
+  ANNULE: 'Annulé',
+};
+
+/**
+ * Réclamations. Le même dossier se lit dans le registre de la scolarité, dans
+ * « Mes réclamations » côté étudiant, dans le formulaire de dépôt et dans le
+ * dialogue de détail : les quatre écrans doivent nommer un statut, un motif et
+ * une priorité de la même façon, sinon l'étudiant et l'agent ne parlent plus du
+ * même dossier.
+ */
+export const LIBELLE_STATUT_RECLAMATION: Record<StatutReclamation, string> = {
+  OUVERTE: 'Ouverte',
+  EN_COURS: 'En cours',
+  EN_ATTENTE_REPONSE: 'Attente réponse',
+  RESOLUE: 'Résolue',
+  FERMEE: 'Fermée',
+  REJETEE: 'Rejetée',
+};
+
+export const LIBELLE_TYPE_RECLAMATION: Record<TypeReclamation, string> = {
+  NOTE_MANQUANTE: 'Note manquante',
+  ERREUR_SAISIE: 'Erreur de saisie',
+  INSCRIPTION: 'Inscription',
+  ENSEIGNEMENT: 'Enseignement',
+  SCOLARITE: 'Scolarité',
+  TECHNIQUE: 'Technique',
+  AUTRE: 'Autre',
+};
+
+/** Priorité propre aux réclamations : elle monte jusqu'à « Urgente », contrairement aux tickets helpdesk. */
+export const LIBELLE_PRIORITE_RECLAMATION: Record<PrioriteReclamation, string> = {
+  BASSE: 'Basse',
+  NORMALE: 'Normale',
+  HAUTE: 'Haute',
+  URGENTE: 'Urgente',
+};
+
+/**
+ * Demandes de documents. Une même demande s'affiche au guichet de la scolarité,
+ * dans le suivi de l'étudiant, dans le formulaire de dépôt et dans la grille
+ * tarifaire : un seul jeu de mots pour le statut et pour le type de document.
+ */
+export const LIBELLE_STATUT_DEMANDE: Record<StatutDemande, string> = {
+  EN_ATTENTE_PAIEMENT: 'Attente paiement',
+  PAYEE: 'Payée',
+  EN_TRAITEMENT: 'En traitement',
+  PRETE: 'Prête',
+  REMISE: 'Remise',
+  REJETEE: 'Rejetée',
+};
+
+export const LIBELLE_TYPE_DEMANDE: Record<TypeDemandeDocument, string> = {
+  ATTESTATION_SCOLARITE: 'Attestation de scolarité',
+  ATTESTATION_FREQUENTATION: 'Attestation de fréquentation',
+  RELEVE_NOTES: 'Relevé de notes',
+  DUPLICATA_CARTE: 'Duplicata de carte',
+  ATTESTATION_REUSSITE: 'Attestation de réussite',
+  CERTIFICAT_SCOLARITE: 'Certificat de scolarité',
+  AUTRE: 'Autre',
+};
+
+/**
+ * Carte étudiante. Volontairement distincte de `LIBELLE_STATUT_ATTESTATION`
+ * même si les mots coïncident aujourd'hui : révoquer une carte et révoquer une
+ * attestation sont deux gestes métier séparés, qui peuvent diverger demain.
+ */
+export const LIBELLE_STATUT_CARTE: Record<StatutCarteEtudiante, string> = {
+  EMISE: 'Émise',
+  REVOQUEE: 'Révoquée',
+};
+
+/** Classes de pastille de la carte : le registre et « Ma carte » se colorent pareil. */
+export const CLASSE_STATUT_CARTE: Record<StatutCarteEtudiante, string> = {
+  EMISE: 'badge--ok',
+  REVOQUEE: 'badge--ko',
+};
+
+/**
+ * Cours en VOD. Le catalogue et le formulaire d'édition proposaient chacun leur
+ * liste de types : une seule sert désormais aux deux, statut compris.
+ */
+export const LIBELLE_TYPE_RESSOURCE_VOD: Record<TypeRessourceVOD, string> = {
+  AUDIO: 'Audio',
+  VIDEO: 'Vidéo',
+  NOTES: 'Notes',
+  TRANSCRIPTION: 'Transcription',
+};
+
+export const LIBELLE_STATUT_VOD: Record<StatutVOD, string> = {
+  BROUILLON: 'Brouillon',
+  EN_LIGNE: 'En ligne',
+  HORS_LIGNE: 'Hors ligne',
+  ARCHIVE: 'Archivée',
+};
+
+/** Options prêtes pour un `q-select` (`emit-value` / `map-options`). */
+export function optionsDepuis(libelles: Record<string, string>) {
+  return Object.entries(libelles).map(([value, label]) => ({ value, label }));
+}
+
+/** Arbitrage d'une suspicion de plagiat (liste, détail et carte le disaient chacun à sa façon). */
+export const LIBELLE_STATUT_SUSPICION: Record<string, string> = {
+  EN_ATTENTE: 'En attente',
+  ACQUITTE: 'Acquittée',
+  CONFIRME: 'Confirmée',
+};
+
 export const STATUTS_ENSEIGNANT = ['PERMANENT', 'VACATAIRE', 'CONTRACTUEL'];
+
+export const LIBELLE_STATUT_ENSEIGNANT: Record<string, string> = {
+  PERMANENT: 'Permanent',
+  VACATAIRE: 'Vacataire',
+  CONTRACTUEL: 'Contractuel',
+};
+
+/**
+ * Arbitrage d'un justificatif d'absence. Dernier statut du domaine à vivre en
+ * dur dans les écrans : il se dit maintenant d'une seule voix.
+ */
+export const LIBELLE_STATUT_JUSTIFICATIF: Record<string, string> = {
+  EN_ATTENTE: 'En attente',
+  VALIDE: 'Validé',
+  REJETE: 'Rejeté',
+};
 
 /** "1h45" à partir de minutes. */
 export function dureeLisible(minutes?: number | null): string {

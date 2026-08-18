@@ -508,6 +508,12 @@ export class ScolariteService {
         matiereId,
         matiereIntitule: matiere.intitule,
         credits: matiere.credits,
+        matiere: {
+          id: matiere.id,
+          code: matiere.code,
+          intitule: matiere.intitule,
+          credits: matiere.credits,
+        },
         moyenne: moyenne.moyenne,
         enDefaut: moyenne.enDefaut,
         absenceCloturee: moyenne.absencesCloturees,

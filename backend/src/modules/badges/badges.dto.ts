@@ -41,6 +41,18 @@ export class CreateBadgeDto {
   @IsOptional() @IsString() @MaxLength(500) photoUrl?: string;
 }
 
+/**
+ * Vérification publique d'un badge présenté à l'entrée. Le QR imprimé porte
+ * l'identifiant et le jeton : le vigile scanne, il ne se connecte pas.
+ */
+export class VerifierBadgePubliqueDto {
+  @IsString()
+  badge: string;
+
+  @IsString()
+  k: string;
+}
+
 export class UpdateBadgeDto extends PartialType(CreateBadgeDto) {
   @IsOptional() @IsString() @MaxLength(500) motif?: string;
 }

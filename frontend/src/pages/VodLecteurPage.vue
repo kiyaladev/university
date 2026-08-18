@@ -1,4 +1,10 @@
 <script setup lang="ts">
+/**
+ * Lecteur d'une ressource VOD (`/vod/lecteur/:id`). On garde les contrôles
+ * natifs du navigateur — ils sont accessibles au clavier et aux lecteurs
+ * d'écran — et on y ajoute une barre de reprise (lecture/pause, vitesse,
+ * plein écran) qui pilote le même élément média.
+ */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
@@ -40,12 +46,21 @@ async function charger() {
     const { data } = await api.get(`/vod/${id}`);
     vod.value = data;
     dureeMax.value = data.dureeSecondes ?? 0;
-  } catch (e: any) {
+  } catch {
     $q.notify({ type: 'negative', message: 'Ressource introuvable.' });
-    void router.back();
+    retour();
   } finally {
     chargement.value = false;
   }
+}
+
+/**
+ * Retour au catalogue. Une URL de lecteur peut être ouverte directement (lien
+ * partagé) : sans historique, `back()` sortirait de l'application.
+ */
+function retour() {
+  if (window.history.length > 1) router.back();
+  else void router.push({ name: 'vod' });
 }
 
 function basculerLecture() {
@@ -67,7 +82,11 @@ function surTimeUpdate() {
     dureeMax.value = mediaRef.value.duration;
   }
   if (dureeMax.value > 0 && dureeActuelle.value / dureeMax.value >= SEUIL_COMPLET) {
-    void signalerVue(true);
+    const maintenant = Date.now();
+    if (maintenant - dernierSignal > 15_000) {
+      void signalerVue(true);
+      dernierSignal = maintenant;
+    }
   } else if (Date.now() - dernierSignal > 15_000) {
     void signalerVue(false);
   }
@@ -125,7 +144,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
 
 <template>
   <q-page class="q-pa-md lecteur-page">
-    <q-btn flat icon="arrow_back" label="Retour" no-caps @click="router.back()" />
+    <q-btn flat icon="arrow_back" label="Retour au catalogue" no-caps @click="retour" />
 
     <q-card v-if="chargement" class="q-pa-md q-mt-md">
       <q-spinner /> Chargement…
@@ -145,6 +164,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           v-if="typeMedia === 'video'"
           ref="mediaRef"
           :src="vod.url"
+          :aria-label="`Vidéo : ${vod.titre}`"
           controls
           preload="metadata"
           class="lecteur-video"
@@ -158,6 +178,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           v-else
           ref="mediaRef"
           :src="vod.url"
+          :aria-label="`Audio : ${vod.titre}`"
           controls
           preload="metadata"
           class="lecteur-audio"
@@ -170,7 +191,16 @@ onBeforeUnmount(() => { void signalerVue(false); });
       </q-card-section>
 
       <q-card-section>
-        <q-linear-progress :value="progression / 100" color="primary" rounded class="q-mb-sm" />
+        <q-linear-progress
+          :value="progression / 100"
+          color="primary"
+          class="q-mb-sm"
+          role="progressbar"
+          :aria-valuenow="Math.round(progression)"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-label="Progression de la lecture"
+        />
         <div class="row items-center q-col-gutter-md">
           <q-btn
             unelevated
@@ -178,8 +208,11 @@ onBeforeUnmount(() => { void signalerVue(false); });
             :icon="enLecture ? 'pause' : 'play_arrow'"
             round
             size="lg"
+            :aria-label="enLecture ? 'Mettre en pause' : 'Lancer la lecture'"
             @click="basculerLecture"
-          />
+          >
+            <q-tooltip>{{ enLecture ? 'Pause' : 'Lecture' }}</q-tooltip>
+          </q-btn>
           <span class="text-caption">
             {{ formaterDuree(dureeActuelle) }} / {{ formaterDuree(dureeMax) }}
           </span>
@@ -193,13 +226,39 @@ onBeforeUnmount(() => { void signalerVue(false); });
             style="min-width: 110px"
             @update:model-value="changerVitesse"
           />
-          <q-btn flat icon="fullscreen" round dense @click="basculerPleinEcran" />
+          <q-btn
+            flat
+            icon="fullscreen"
+            round
+            dense
+            :aria-label="pleinEcran ? 'Quitter le plein écran' : 'Passer en plein écran'"
+            @click="basculerPleinEcran"
+          >
+            <q-tooltip>{{ pleinEcran ? 'Quitter le plein écran' : 'Plein écran' }}</q-tooltip>
+          </q-btn>
         </div>
       </q-card-section>
 
       <q-card-section v-if="vod.description">
         <div class="text-caption text-grey-7">{{ vod.description }}</div>
       </q-card-section>
+    </q-card>
+
+    <q-card v-else class="lecteur-carte q-mt-md q-pa-lg text-center text-grey-7">
+      <q-icon name="videocam_off" size="38px" color="grey-5" />
+      <div class="q-mt-sm">Cette ressource n'est pas disponible.</div>
+      <div class="text-caption q-mt-xs">
+        Elle a peut-être été archivée ou n'est pas ouverte à votre profil.
+      </div>
+      <q-btn
+        flat
+        no-caps
+        color="primary"
+        icon="arrow_back"
+        label="Retour au catalogue"
+        class="q-mt-sm"
+        @click="retour"
+      />
     </q-card>
   </q-page>
 </template>
@@ -213,7 +272,6 @@ onBeforeUnmount(() => { void signalerVue(false); });
   width: 100%;
   max-height: 520px;
   background: black;
-  border-radius: 6px;
 }
 .lecteur-audio {
   width: 100%;

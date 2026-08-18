@@ -166,6 +166,19 @@ export class PatrimoineController {
     return this.service.reparations(id);
   }
 
+  /**
+   * Registre global des réparations, tous équipements confondus. Remplace
+   * le N+1 que la page « Réparations » faisait sur l'onglet : un seul
+   * findMany, on évite de recharger la liste des équipements pour chaque
+   * fiche. Filtre optionnel sur le statut (DECLARE, EN_COURS, TERMINE,
+   * ANNULE).
+   */
+  @Roles(...ROLES_GESTION, ...ROLES_DIRECTION)
+  @Get('reparations')
+  listeReparations(@Query('statut') statut?: string) {
+    return this.service.listeReparations({ statut });
+  }
+
   // ============================================================ Dashboard
 
   @Roles(...ROLES_GESTION, ...ROLES_DIRECTION)

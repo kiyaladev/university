@@ -9,9 +9,18 @@
       </div>
 
       <div class="stats__periode">
-        <champ-date v-model="filtres.dateDebut" label="Du" />
-        <champ-date v-model="filtres.dateFin" label="Au" />
-        <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+        <champ-date v-model="filtres.dateDebut" label="Du" @update:model-value="raccourciActif = ''" />
+        <champ-date v-model="filtres.dateFin" label="Au" @update:model-value="raccourciActif = ''" />
+        <q-btn
+          round
+          color="primary"
+          icon="refresh"
+          aria-label="Recalculer les relevés"
+          :loading="chargement"
+          @click="charger"
+        >
+          <q-tooltip>Recalculer</q-tooltip>
+        </q-btn>
       </div>
     </header>
 
@@ -21,7 +30,9 @@
         :key="r.label"
         type="button"
         class="pochoir raccourci"
-        @click="appliquer(r.jours)"
+        :class="{ 'raccourci--actif': raccourciActif === r.label }"
+        :aria-pressed="raccourciActif === r.label"
+        @click="appliquer(r)"
       >
         {{ r.label }}
       </button>
@@ -106,16 +117,28 @@
                 <barre-taux :valeur="l.tauxPresence" />
               </div>
 
-              <footer class="pochoir fiche__pied">
-                <template v-if="l.derniereVisite">
-                  Vue le <span class="chiffres">{{ dateLisible(l.derniereVisite) }}</span>
-                </template>
-                <span v-else class="text-negative">jamais visitée</span>
+              <footer class="fiche__pied">
+                <span class="pochoir">
+                  <template v-if="l.derniereVisite">
+                    Vue le <span class="chiffres">{{ dateLisible(l.derniereVisite) }}</span>
+                  </template>
+                  <span v-else class="text-negative">jamais visitée</span>
+                </span>
+                <q-btn
+                  v-if="l.salleId"
+                  flat
+                  dense
+                  no-caps
+                  size="sm"
+                  icon="event_note"
+                  label="Ses séances"
+                  :to="lienSeancesSalle(l.salleId)"
+                />
               </footer>
             </article>
           </li>
           <li v-if="!(salles?.lignes ?? []).length" class="stats__vide pochoir">
-            Aucune salle sur la période.
+            Aucune séance programmée en salle sur cette période — élargissez les dates.
           </li>
         </ul>
 
@@ -130,6 +153,8 @@
           :loading="chargement"
           :pagination="{ rowsPerPage: 25, sortBy: 'code' }"
           :visible-columns="colonnesSallesVisibles"
+          loading-label="Calcul du relevé…"
+          no-data-label="Aucune séance programmée en salle sur cette période."
         >
           <template #body-cell-salle="p">
             <q-td :props="p">
@@ -159,6 +184,22 @@
                 {{ dateLisible(p.row.derniereVisite) }}
               </span>
               <span v-else class="pochoir text-negative">jamais visitée</span>
+            </q-td>
+          </template>
+
+          <template #body-cell-registre="p">
+            <q-td :props="p" class="text-right">
+              <q-btn
+                v-if="p.row.salleId"
+                flat
+                dense
+                round
+                icon="event_note"
+                aria-label="Voir les séances de cette salle"
+                :to="lienSeancesSalle(p.row.salleId)"
+              >
+                <q-tooltip>Ses séances sur la période</q-tooltip>
+              </q-btn>
             </q-td>
           </template>
         </q-table>
@@ -203,9 +244,28 @@
                     {{ l.matricule }}<template v-if="l.departement"> · {{ l.departement }}</template>
                   </span>
                 </span>
-                <q-btn flat dense round icon="print" @click="imprimerFiche(l.enseignantId)">
-                  <q-tooltip>Fiche d’assiduité</q-tooltip>
-                </q-btn>
+                <span class="fiche__actions">
+                  <q-btn
+                    flat
+                    dense
+                    round
+                    icon="event_note"
+                    aria-label="Voir ses séances au registre"
+                    :to="lienSeancesEnseignant(l.enseignantId)"
+                  >
+                    <q-tooltip>Ses séances sur la période</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    flat
+                    dense
+                    round
+                    icon="print"
+                    aria-label="Imprimer sa fiche d’assiduité"
+                    @click="imprimerFiche(l.enseignantId)"
+                  >
+                    <q-tooltip>Fiche d’assiduité</q-tooltip>
+                  </q-btn>
+                </span>
               </header>
 
               <div class="fiche__chiffres">
@@ -240,7 +300,7 @@
             </article>
           </li>
           <li v-if="!(enseignants?.lignes ?? []).length" class="stats__vide pochoir">
-            Aucun enseignant sur la période.
+            Aucun enseignant n’a de séance programmée sur cette période — élargissez les dates.
           </li>
         </ul>
 
@@ -255,22 +315,33 @@
           :loading="chargement"
           :pagination="{ rowsPerPage: 25 }"
           :visible-columns="colonnesEnseignantsVisibles"
+          loading-label="Calcul du relevé…"
+          no-data-label="Aucun enseignant n’a de séance programmée sur cette période."
         >
-          <template #top-right>
-            <div class="text-caption">
-              {{ enseignants?.total?.planifiees ?? 0 }} séances ·
-              présence {{ pourcentLisible(enseignants?.total?.tauxPresence) }} ·
-              {{ heuresLisibles(enseignants?.total?.heuresRealisees) }} assurées
-            </div>
-          </template>
-
           <template #body-cell-presence="p">
             <q-td :props="p"><barre-taux :valeur="p.row.tauxPresence" /></q-td>
           </template>
 
           <template #body-cell-fiche="p">
             <q-td :props="p" class="text-right">
-              <q-btn flat dense round icon="print" @click="imprimerFiche(p.row.enseignantId)">
+              <q-btn
+                flat
+                dense
+                round
+                icon="event_note"
+                aria-label="Voir ses séances au registre"
+                :to="lienSeancesEnseignant(p.row.enseignantId)"
+              >
+                <q-tooltip>Ses séances sur la période</q-tooltip>
+              </q-btn>
+              <q-btn
+                flat
+                dense
+                round
+                icon="print"
+                aria-label="Imprimer sa fiche d’assiduité"
+                @click="imprimerFiche(p.row.enseignantId)"
+              >
                 <q-tooltip>Fiche d’assiduité</q-tooltip>
               </q-btn>
             </q-td>
@@ -283,13 +354,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
-import { useAuthStore } from '../stores/auth';
+import { api } from '../boot/axios';
 import ChampDate from '../components/ChampDate.vue';
 import BarreTaux from '../components/BarreTaux.vue';
 import BasculeVue from '../components/BasculeVue.vue';
 import { useVuePreferee } from '../composables/vuePreferee';
+import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
   aujourdhui,
   dateLisible,
@@ -299,17 +371,22 @@ import {
 } from '../utils/libelles';
 
 const $q = useQuasar();
-const auth = useAuthStore();
+const route = useRoute();
+const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
-const onglet = ref<'salles' | 'enseignants'>('salles');
+const onglet = ref<'salles' | 'enseignants'>(
+  route.query.onglet === 'enseignants' ? 'enseignants' : 'salles',
+);
 const vue = useVuePreferee('statistiques');
 const chargement = ref(false);
 const salles = ref<any>(null);
 const enseignants = ref<any>(null);
 
 const filtres = ref({
-  dateDebut: decalerJours(aujourdhui(), -29),
-  dateFin: aujourdhui(),
+  dateDebut: route.query.dateDebut
+    ? String(route.query.dateDebut)
+    : decalerJours(aujourdhui(), -29),
+  dateFin: route.query.dateFin ? String(route.query.dateFin) : aujourdhui(),
 });
 
 const raccourcis = [
@@ -318,9 +395,28 @@ const raccourcis = [
   { label: '90 jours', jours: 90 },
 ];
 
-const appliquer = (jours: number) => {
-  filtres.value = { dateDebut: decalerJours(aujourdhui(), -(jours - 1)), dateFin: aujourdhui() };
+// La période choisie doit se voir : sans état actif, les trois raccourcis
+// ressemblent à trois boutons inertes.
+const raccourciActif = ref(route.query.dateDebut ? '' : '30 jours');
+
+const appliquer = (r: (typeof raccourcis)[number]) => {
+  raccourciActif.value = r.label;
+  filtres.value = {
+    dateDebut: decalerJours(aujourdhui(), -(r.jours - 1)),
+    dateFin: aujourdhui(),
+  };
 };
+
+/** Un relevé se termine toujours par « et concrètement, quelles séances ? ». */
+const lienSeancesSalle = (salleId: string) => ({
+  name: 'seances',
+  query: { salleId, dateDebut: filtres.value.dateDebut, dateFin: filtres.value.dateFin },
+});
+
+const lienSeancesEnseignant = (enseignantId: string) => ({
+  name: 'seances',
+  query: { enseignantId, dateDebut: filtres.value.dateDebut, dateFin: filtres.value.dateFin },
+});
 
 const sallesVisitees = computed(
   () => (salles.value?.lignes ?? []).filter((l: any) => l.controlees > 0).length,
@@ -335,6 +431,7 @@ const colonnesSalles: QTableColumn[] = [
   { name: 'occupation', label: 'Occupation', field: 'tauxOccupation', align: 'left', sortable: true },
   { name: 'presence', label: 'Présence', field: 'tauxPresence', align: 'left', sortable: true },
   { name: 'visite', label: 'Vue le', field: 'derniereVisite', align: 'left', sortable: true },
+  { name: 'registre', label: '', field: 'salleId', align: 'right' },
 ];
 
 // Sur téléphone, on garde ce que le contrôleur cherche : où il est passé, ce
@@ -370,11 +467,7 @@ const colonnesEnseignants: QTableColumn[] = [
 ];
 
 function imprimerFiche(id: string) {
-  window.open(
-    `${API_URL}/impression/fiche-enseignant/${id}` +
-      `?dateDebut=${filtres.value.dateDebut}&dateFin=${filtres.value.dateFin}&token=${auth.token}`,
-    '_blank',
-  );
+  ouvrirFicheEnseignant(id, filtres.value.dateDebut, filtres.value.dateFin);
 }
 
 async function charger() {
@@ -393,6 +486,7 @@ async function charger() {
 
 watch(filtres, charger, { deep: true });
 onMounted(charger);
+
 
 </script>
 
@@ -433,6 +527,11 @@ onMounted(charger);
 
   & + & { border-left-width: 0; }
   &:hover { background: var(--up-craie); }
+
+  &--actif {
+    background: var(--up-encre);
+    color: var(--up-craie);
+  }
 }
 
 .stats__salle {
@@ -562,6 +661,17 @@ onMounted(charger);
   border-top: var(--up-filet-fin);
   padding-top: var(--up-2);
   margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--up-2);
+  flex-wrap: wrap;
+}
+
+.fiche__actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .stats__vide {

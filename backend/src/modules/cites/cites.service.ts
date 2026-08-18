@@ -136,6 +136,7 @@ export class AttributionsService extends CrudService {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
+      ...(query.chambreId ? { chambreId: query.chambreId } : {}),
       ...(query.residenceId ? { chambre: { residenceId: query.residenceId } } : {}),
       ...(search
         ? {

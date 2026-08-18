@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Injectable, Param, Post, Put, Query } fr
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { Roles } from '../../common/decorators';
@@ -58,6 +58,18 @@ export class AnneesService extends CrudService {
   async modifier(id: string, dto: UpdateAnneeDto) {
     if (dto.active) await this.desactiverAutres(id);
     return this.update(id, this.prepare(dto));
+  }
+
+  /**
+   * Une année académique porte tout le reste (promotions, inscriptions,
+   * séances, délibérations…) : dès qu'elle a servi, on la clôture, on ne
+   * l'efface pas.
+   */
+  async remove(id: string) {
+    return supprimerOuConflit(
+      () => super.remove(id),
+      'Cette année académique ne peut pas être supprimée : des données y sont rattachées (promotions, inscriptions, séances…). Clôturez-la plutôt que de la supprimer.',
+    );
   }
 }
 

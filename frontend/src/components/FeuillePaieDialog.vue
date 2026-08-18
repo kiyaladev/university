@@ -170,3 +170,8 @@ async function creer() {
   }
 }
 </script>
+
+<style scoped lang="scss">
+// Le champ de statut de la feuille : même peinture que sur l'écran de la paie.
+@use '../css/champs-admin' as *;
+</style>

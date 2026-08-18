@@ -10,18 +10,87 @@
       </div>
       <div class="col-auto">
         <q-btn
+          outline
+          color="secondary"
+          no-caps
+          icon="school"
+          label="Bulletins"
+          @click="router.push({ name: 'bulletins' })"
+        />
+      </div>
+      <div class="col-auto">
+        <q-btn
           v-if="peutEmettre"
           unelevated
           color="primary"
           no-caps
           icon="add"
           label="Émettre une attestation"
-          @click="dialogEmission = true"
+          @click="ouvrirEmission()"
         />
       </div>
     </div>
 
+    <filter-bar
+      v-model="filtres"
+      :chips="chips"
+      placeholder="Rechercher (numéro, nom, matricule)…"
+      @reinitialiser="reinitialiser"
+    >
+      <template #avances>
+        <q-select
+          v-model="filtres.type"
+          :options="optionsTypes"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Type de document"
+        />
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
+        <q-select
+          v-model="filtres.anneeId"
+          :options="optionsAnnees"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Année académique"
+        />
+        <q-select
+          v-model="filtres.promotionId"
+          :options="optionsPromotions"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Promotion"
+        />
+      </template>
+      <template #actions>
+        <view-toggle
+          cle="attestations"
+          :modes="['tableau', 'cartes']"
+          defaut="tableau"
+          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
+        />
+      </template>
+    </filter-bar>
+
     <q-table
+      v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
@@ -29,70 +98,22 @@
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="pagination"
-      :rows-per-page-options="[10, 20, 50]"
-      @request="repondreRequete"
+      :pagination="{ rowsPerPage: 0 }"
+      @row-click="(_, row) => ouvrirDetail(row)"
     >
-      <template #top-left>
-        <div class="row q-gutter-sm items-center">
-          <q-input
-            v-model="filtres.search"
-            dense
-            outlined
-            clearable
-            debounce="300"
-            placeholder="Numéro, nom, matricule…"
-            @update:model-value="recharger"
-          >
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-          <q-select
-            v-model="filtres.type"
-            :options="optionsTypes"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Type"
-            style="min-width: 160px"
-            @update:model-value="recharger"
-          />
-          <q-select
-            v-model="filtres.statut"
-            :options="optionsStatuts"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Statut"
-            style="min-width: 140px"
-            @update:model-value="recharger"
-          />
-          <q-select
-            v-model="filtres.anneeId"
-            :options="optionsAnnees"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Année"
-            style="min-width: 150px"
-            @update:model-value="recharger"
-          />
-          <q-select
-            v-model="filtres.promotionId"
-            :options="optionsPromotions"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Promotion"
-            style="min-width: 180px"
-            @update:model-value="recharger"
+      <template #no-data>
+        <div class="etat-vide">
+          <q-icon name="verified_user" size="32px" color="grey-5" />
+          <div class="q-mt-sm">Aucune attestation pour ces critères.</div>
+          <q-btn
+            v-if="peutEmettre"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            label="Émettre une attestation"
+            class="q-mt-sm"
+            @click="ouvrirEmission()"
           />
         </div>
       </template>
@@ -110,11 +131,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-chip
-            :color="p.row.statut === 'EMISE' ? 'secondary' : 'negative'"
-            text-color="white"
-            dense
-          >
+          <q-chip :color="p.row.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
             {{ LIBELLE_STATUT_ATTESTATION[p.row.statut] ?? p.row.statut }}
           </q-chip>
         </q-td>
@@ -128,7 +145,7 @@
       </template>
 
       <template #body-cell-verifications="p">
-        <q-td :props="p">
+        <q-td :props="p" class="text-center">
           <q-btn
             v-if="auth.estAdmin"
             flat
@@ -136,7 +153,8 @@
             no-caps
             :label="String(p.row._count?.verifications ?? 0)"
             icon="qr_code_scanner"
-            @click="ouvrirVerifications(p.row)"
+            aria-label="Journal des vérifications de ce document"
+            @click.stop="ouvrirVerifications(p.row)"
           >
             <q-tooltip>Journal des vérifications de ce document</q-tooltip>
           </q-btn>
@@ -146,7 +164,7 @@
 
       <template #body-cell-emiseLe="p">
         <q-td :props="p">
-          <div>{{ dateFr(p.row.emiseLe) }}</div>
+          <div>{{ dateLisible(p.row.emiseLe) }}</div>
           <div class="text-caption text-grey-7">
             {{ p.row.emisePar ? `${p.row.emisePar.prenom} ${p.row.emisePar.nom}` : '—' }}
           </div>
@@ -155,20 +173,35 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="qr_code_2" @click="ouvrirDetail(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="qr_code_2"
+            aria-label="Voir le détail et le QR du document"
+            @click.stop="ouvrirDetail(p.row)"
+          >
             <q-tooltip>Détail et QR du document</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="print" @click="imprimer(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="print"
+            aria-label="Imprimer le document"
+            @click.stop="imprimer(p.row)"
+          >
             <q-tooltip>Imprimer le document A4</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutRevoguer && p.row.statut === 'EMISE'"
+            v-if="peutRevoquer && p.row.statut === 'EMISE'"
             flat
             dense
             round
             color="negative"
             icon="block"
-            @click="revoguer(p.row)"
+            aria-label="Révoquer le document"
+            @click.stop="revoquer(p.row)"
           >
             <q-tooltip>Révoquer le document</q-tooltip>
           </q-btn>
@@ -176,7 +209,72 @@
       </template>
     </q-table>
 
-    <attestation-dialog v-model="dialogEmission" @enregistre="recharger" />
+    <div v-else class="attestations-cartes">
+      <q-card
+        v-for="a in attestations"
+        :key="a.id"
+        flat
+        bordered
+        class="carte attestations-cartes__carte"
+        @click="ouvrirDetail(a)"
+      >
+        <q-card-section>
+          <div class="row items-center q-mb-xs">
+            <q-chip :color="a.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
+              {{ LIBELLE_STATUT_ATTESTATION[a.statut] ?? a.statut }}
+            </q-chip>
+            <q-space />
+            <div class="text-caption text-grey-7">{{ a.numero }}</div>
+          </div>
+          <div class="text-subtitle1 text-weight-medium">
+            {{ a.etudiant?.nom }} {{ a.etudiant?.prenom }}
+          </div>
+          <div class="text-caption text-grey-7">{{ a.etudiant?.matricule }}</div>
+          <div class="q-mt-sm text-caption">
+            {{ LIBELLE_TYPE_ATTESTATION[a.type] ?? a.type }} ·
+            {{ a.annee?.libelle ?? '—' }}{{ a.promotion?.nom ? ` · ${a.promotion.nom}` : '' }}
+          </div>
+          <div class="text-caption text-grey-7 q-mt-xs">
+            Émise le {{ dateLisible(a.emiseLe) }} · {{ a._count?.verifications ?? 0 }} vérification(s)
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right">
+          <q-btn flat dense no-caps icon="qr_code_2" label="QR" @click.stop="ouvrirDetail(a)" />
+          <q-btn flat dense no-caps icon="print" label="Imprimer" @click.stop="imprimer(a)" />
+          <q-btn
+            v-if="peutRevoquer && a.statut === 'EMISE'"
+            flat
+            dense
+            no-caps
+            color="negative"
+            icon="block"
+            label="Révoquer"
+            @click.stop="revoquer(a)"
+          />
+        </q-card-actions>
+      </q-card>
+      <div v-if="!attestations.length" class="etat-vide plaque">
+        <q-icon name="verified_user" size="32px" color="grey-5" />
+        <div class="q-mt-sm">Aucune attestation pour ces critères.</div>
+      </div>
+    </div>
+
+    <pagination-bar
+      v-if="total"
+      :page="page"
+      :page-size="pageSize"
+      :total="total"
+      @update:page="(v) => { page = v; charger(); }"
+      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
+      @tous="chargerTout"
+    />
+
+    <attestation-dialog
+      v-model="dialogEmission"
+      :prefill="prefillEmission"
+      @enregistre="recharger"
+    />
 
     <!-- Détail d'une attestation : QR peint sur le panneau -->
     <q-dialog v-model="dialogDetail">
@@ -204,16 +302,25 @@
               {{ detail.promotion?.nom ? ` · ${detail.promotion.nom}` : '' }}
             </div>
             <div class="q-mt-sm">
-              Émise le {{ dateFr(detail.emiseLe) }} par
+              Émise le {{ dateLisible(detail.emiseLe) }} par
               {{ detail.emisePar ? `${detail.emisePar.prenom} ${detail.emisePar.nom}` : '—' }}
             </div>
             <div v-if="detail.statut === 'REVOQUEE'" class="text-negative">
-              Révoquée le {{ dateFr(detail.revoqueeLe) }} — {{ detail.motifRevocation }}
+              Révoquée le {{ dateLisible(detail.revoqueeLe) }} — {{ detail.motifRevocation }}
             </div>
           </div>
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Fermer" v-close-popup />
+          <q-btn
+            v-if="detail?.anneeId && detail?.promotionId"
+            flat
+            no-caps
+            color="secondary"
+            icon="school"
+            label="Bulletin"
+            @click="allerBulletin(detail)"
+          />
           <q-btn
             v-if="detail"
             flat
@@ -231,10 +338,10 @@
     <q-dialog v-model="dialogRevocation">
       <q-card style="width: 460px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6">Révoquer {{ attestationRevoguer?.numero }}</div>
+          <div class="text-h6">Révoquer {{ attestationARevoquer?.numero }}</div>
           <div class="text-caption text-grey-7">
             Le QR cessera de garantir le document : l'authenticité de la
-            révocation est elle-même vérifiable en ligne.
+            révocation est elle-même vérifiable en ligne. L'opération est définitive.
           </div>
         </q-card-section>
         <q-card-section>
@@ -245,6 +352,7 @@
             type="textarea"
             rows="3"
             label="Motif de révocation *"
+            hint="Trois caractères minimum — ce motif est affiché lors des vérifications publiques"
             autofocus
           />
         </q-card-section>
@@ -255,7 +363,7 @@
             unelevated
             no-caps
             icon="block"
-            label="Révoquer"
+            label="Révoquer définitivement"
             :disable="motifRevocation.trim().length < 3"
             :loading="revocationEnCours"
             @click="confirmerRevocation"
@@ -285,7 +393,7 @@
                     :label="v.resultat ? 'valide' : 'échec'"
                     class="q-mr-sm"
                   />
-                  {{ dateHeureFr(v.verifieeLe) }}
+                  {{ dateHeureLisible(v.verifieeLe) }}
                 </q-item-label>
                 <q-item-label caption>IP : {{ v.ip ?? 'inconnue' }}</q-item-label>
               </q-item-section>
@@ -304,14 +412,23 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import QRCode from 'qrcode';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import AttestationDialog from '../components/AttestationDialog.vue';
-import { LIBELLE_STATUT_ATTESTATION, LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
-import type { AnneeAcademique, Attestation, Promotion } from '../types';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import {
+  LIBELLE_STATUT_ATTESTATION,
+  LIBELLE_TYPE_ATTESTATION,
+  dateHeureLisible,
+  dateLisible,
+} from '../utils/libelles';
+import type { AnneeAcademique, Attestation, Promotion, ChipFiltre } from '../types';
 
 /** Ligne du journal des vérifications (types.ts n'expose pas encore le modèle). */
 interface VerificationAttestation {
@@ -324,21 +441,21 @@ interface VerificationAttestation {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const route = useRoute();
+const router = useRouter();
 
 const attestations = ref<Attestation[]>([]);
 const chargement = ref(false);
-const pagination = ref({ page: 1, rowsPerPage: 20, rowsNumber: 0 });
+const modeVue = ref<'tableau' | 'cartes'>('tableau');
 
-const filtres = ref({
-  search: '',
-  type: null as string | null,
-  statut: null as string | null,
-  anneeId: null as string | null,
-  promotionId: null as string | null,
-});
+const page = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
+
+const filtres = ref<Record<string, any>>({});
 
 const annees = ref<AnneeAcademique[]>([]);
-const promotions = ref<{ id: string; nom: string; anneeId: string }[]>([]);
+const promotions = ref<Promotion[]>([]);
 
 const optionsTypes = computed(() =>
   Object.entries(LIBELLE_TYPE_ATTESTATION).map(([value, label]) => ({ value, label })),
@@ -346,30 +463,65 @@ const optionsTypes = computed(() =>
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_ATTESTATION).map(([value, label]) => ({ value, label })),
 );
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
+const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
+const optionsPromotions = computed(() =>
+  promotions.value
+    .filter((p) => !filtres.value.anneeId || p.anneeId === filtres.value.anneeId)
+    .map((p) => ({ label: p.nom, value: p.id })),
 );
-const optionsPromotions = computed(() => {
-  let liste = promotions.value;
-  if (filtres.value.anneeId) liste = liste.filter((p) => p.anneeId === filtres.value.anneeId);
-  return liste.map((p) => ({ label: p.nom, value: p.id }));
-});
 
 const peutEmettre = computed(() => auth.aRole(['SCOLARITE', 'ADMIN']));
-const peutRevoguer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutRevoquer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+
+const chips = computed(() => {
+  const cs: ChipFiltre[] = [];
+  if (filtres.value.recherche) {
+    cs.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+  }
+  if (filtres.value.type) {
+    cs.push({
+      label: `Type : ${LIBELLE_TYPE_ATTESTATION[filtres.value.type] ?? filtres.value.type}`,
+      value: filtres.value.type,
+      icone: 'description',
+    });
+  }
+  if (filtres.value.statut) {
+    cs.push({
+      label: `Statut : ${LIBELLE_STATUT_ATTESTATION[filtres.value.statut] ?? filtres.value.statut}`,
+      value: filtres.value.statut,
+      icone: 'verified',
+    });
+  }
+  if (filtres.value.anneeId) {
+    const a = annees.value.find((x) => x.id === filtres.value.anneeId);
+    cs.push({ label: `Année : ${a?.libelle ?? '?'}`, value: filtres.value.anneeId, icone: 'calendar_today' });
+  }
+  if (filtres.value.promotionId) {
+    const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
+    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+  }
+  return cs;
+});
 
 const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left' },
+  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
   { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
-  { name: 'parcours', label: 'Année / Promo', field: 'parcours', align: 'left' },
+  { name: 'etudiant', label: 'Étudiant', field: (r) => `${r.etudiant?.nom ?? ''} ${r.etudiant?.prenom ?? ''}`, align: 'left' },
+  { name: 'parcours', label: 'Année / promotion', field: 'anneeId', align: 'left' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
-  { name: 'verifications', label: 'Vérifs', field: 'verifications', align: 'center' },
-  { name: 'emiseLe', label: 'Émise le', field: 'emiseLe', align: 'left' },
+  { name: 'verifications', label: 'Vérifications', field: (r) => r._count?.verifications ?? 0, align: 'center' },
+  { name: 'emiseLe', label: 'Émise le', field: 'emiseLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
+// ------------------------------------------------------------------ émission
 const dialogEmission = ref(false);
+const prefillEmission = ref<Record<string, string> | null>(null);
+
+function ouvrirEmission(prefill: Record<string, string> | null = null) {
+  prefillEmission.value = prefill;
+  dialogEmission.value = true;
+}
 
 // --------------------------------------------------------- QR du détail
 const dialogDetail = ref(false);
@@ -402,27 +554,41 @@ function imprimer(a: Attestation) {
   window.open(`${API_URL}/attestations/${a.id}/imprimer?token=${auth.token}`, '_blank');
 }
 
+/** Attestation → bulletin : on remonte au relevé de la même promotion. */
+function allerBulletin(a: Attestation) {
+  void router.push({
+    name: 'bulletins',
+    query: {
+      ...(a.anneeId ? { anneeId: a.anneeId } : {}),
+      ...(a.promotionId ? { promotionId: a.promotionId } : {}),
+    },
+  });
+}
+
 // -------------------------------------------------------------------- révocation
 const dialogRevocation = ref(false);
-const attestationRevoguer = ref<Attestation | null>(null);
+const attestationARevoquer = ref<Attestation | null>(null);
 const motifRevocation = ref('');
 const revocationEnCours = ref(false);
 
-function revoguer(a: Attestation) {
-  attestationRevoguer.value = a;
+function revoquer(a: Attestation) {
+  attestationARevoquer.value = a;
   motifRevocation.value = '';
   dialogRevocation.value = true;
 }
 
 async function confirmerRevocation() {
+  if (!attestationARevoquer.value) return;
   revocationEnCours.value = true;
   try {
-    await api.post(`/attestations/${attestationRevoguer.value!.id}/revoquer`, {
+    await api.post(`/attestations/${attestationARevoquer.value.id}/revoquer`, {
       motifRevocation: motifRevocation.value,
     });
     $q.notify({ type: 'warning', message: 'Attestation révoquée — le QR ne sera plus valable' });
     dialogRevocation.value = false;
     await recharger();
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Révocation impossible' });
   } finally {
     revocationEnCours.value = false;
   }
@@ -437,58 +603,56 @@ async function ouvrirVerifications(a: Attestation) {
   attestationVerifs.value = a;
   verifications.value = [];
   dialogVerifications.value = true;
-  const { data } = await api.get(`/attestations/${a.id}/verifications`);
-  verifications.value = data;
+  try {
+    const { data } = await api.get(`/attestations/${a.id}/verifications`);
+    verifications.value = data;
+  } catch {
+    verifications.value = [];
+  }
 }
 
 // ------------------------------------------------------------------ chargement
 
-async function repondreRequete(props: {
-  pagination: { page: number; rowsPerPage: number; rowsNumber?: number };
-}) {
-  const { page, rowsPerPage } = props.pagination;
+async function charger() {
   chargement.value = true;
   try {
-    const params: Record<string, unknown> = {
-      page,
-      pageSize: rowsPerPage === 0 ? undefined : rowsPerPage,
-      ...(filtres.value.type ? { type: filtres.value.type } : {}),
-      ...(filtres.value.statut ? { statut: filtres.value.statut } : {}),
-      ...(filtres.value.anneeId ? { anneeId: filtres.value.anneeId } : {}),
-      ...(filtres.value.promotionId ? { promotionId: filtres.value.promotionId } : {}),
-      ...(filtres.value.search ? { search: filtres.value.search } : {}),
-    };
-    const { data } = await api.get('/attestations', { params });
-    attestations.value = data.data;
-    pagination.value.rowsNumber = data.total;
-    pagination.value.page = data.page;
+    const { data } = await api.get('/attestations', {
+      params: {
+        page: page.value,
+        pageSize: pageSize.value,
+        type: filtres.value.type || undefined,
+        statut: filtres.value.statut || undefined,
+        anneeId: filtres.value.anneeId || undefined,
+        promotionId: filtres.value.promotionId || undefined,
+        search: filtres.value.recherche || undefined,
+      },
+    });
+    attestations.value = data.data ?? [];
+    total.value = data.total ?? attestations.value.length;
+  } catch (e: any) {
+    attestations.value = [];
+    total.value = 0;
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des attestations impossible' });
   } finally {
     chargement.value = false;
   }
 }
 
 async function recharger() {
-  pagination.value.page = 1;
+  page.value = 1;
   await charger();
 }
 
-async function charger() {
-  await repondreRequete({ pagination: pagination.value });
+async function chargerTout() {
+  page.value = 1;
+  pageSize.value = Math.max(total.value, 200);
+  await charger();
 }
 
-function dateFr(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
-}
-
-function dateHeureFr(v: string): string {
-  return new Date(v).toLocaleString('fr-FR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+function reinitialiser() {
+  filtres.value = {};
+  page.value = 1;
+  charger();
 }
 
 async function chargerReferentiels() {
@@ -500,7 +664,42 @@ async function chargerReferentiels() {
   promotions.value = rPromotions.data.data;
 }
 
+watch(
+  () => [
+    filtres.value.recherche,
+    filtres.value.type,
+    filtres.value.statut,
+    filtres.value.anneeId,
+    filtres.value.promotionId,
+  ],
+  () => {
+    page.value = 1;
+    charger();
+  },
+);
+
 onMounted(async () => {
   await Promise.all([charger(), chargerReferentiels()]);
+
+  // Chaîne : un bulletin ADMIS ouvre l'émission de l'attestation de réussite.
+  if (route.query.emettre === '1') {
+    ouvrirEmission({
+      etudiantId: String(route.query.etudiantId ?? ''),
+      type: String(route.query.type ?? 'REUSSITE'),
+      anneeId: String(route.query.anneeId ?? ''),
+      promotionId: String(route.query.promotionId ?? ''),
+    });
+  }
 });
 </script>
+
+<style scoped lang="scss">
+.attestations-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--up-3);
+}
+.attestations-cartes__carte {
+  cursor: pointer;
+}
+</style>

@@ -169,8 +169,8 @@
             Toute correction du constat exige une nouvelle attestation de l’enseignant.
           </span>
           <span v-else>
-            L’enseignant atteste sa présence ci-dessus — signature, code, empreinte ou
-            téléphone — avant l’enregistrement.
+            L’enseignant atteste sa présence ci-dessus — signature, code PIN ou
+            empreinte — avant l’enregistrement.
           </span>
         </p>
         <div class="fiche__actions">

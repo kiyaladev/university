@@ -23,8 +23,17 @@
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
       Cette page est réservée aux comptes étudiants. Vous êtes connecté en
-      {{ auth.utilisateur?.role }} — utilisez la page « Réclamations » du
-      tableau de bord.
+      {{ auth.utilisateur?.role }} — le registre complet se trouve sur
+      « Réclamations & requêtes ».
+      <template #action>
+        <q-btn
+          flat
+          no-caps
+          icon="support_agent"
+          label="Réclamations & requêtes"
+          :to="{ name: 'reclamations' }"
+        />
+      </template>
     </q-banner>
 
     <div v-if="!rolePasBon" class="row q-col-gutter-md q-mb-md">
@@ -35,6 +44,9 @@
             <div class="pochoir text-grey-7">{{ s.libelle }}</div>
           </q-card-section>
         </q-card>
+      </div>
+      <div class="col-12 text-caption text-grey-7">
+        Compteurs calculés sur les réclamations affichées ci-dessous.
       </div>
     </div>
 
@@ -110,6 +122,13 @@
       hide-bottom
       @row-click="(_, row) => ouvrir(row)"
     >
+      <template #no-data>
+        <div class="text-center q-pa-md text-grey-7">
+          Aucune réclamation pour ces critères. Ouvrez-en une si une note, une
+          inscription ou un document pose problème : la scolarité vous répond
+          dans le fil de discussion.
+        </div>
+      </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
           <span class="reclamation-statut" :class="`statut-${p.row.statut}`">
@@ -122,6 +141,20 @@
           <span class="reclamation-prio" :class="`prio-${p.row.priorite}`">
             <span class="pochoir">{{ libellePriorite(p.row.priorite) }}</span>
           </span>
+        </q-td>
+      </template>
+      <template #body-cell-actions="p">
+        <q-td :props="p" class="text-right">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Ouvrir le suivi de la réclamation"
+            @click.stop="ouvrir(p.row)"
+          >
+            <q-tooltip>Suivi et fil de discussion</q-tooltip>
+          </q-btn>
         </q-td>
       </template>
     </q-table>
@@ -165,7 +198,20 @@
       </div>
       <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="forum" size="42px" color="grey-5" />
-        <div class="q-mt-sm">Aucune réclamation</div>
+        <div class="q-mt-sm">
+          Aucune réclamation pour ces critères. Ouvrez-en une si une note, une
+          inscription ou un document pose problème : la scolarité vous répond
+          dans le fil de discussion.
+        </div>
+        <q-btn
+          class="q-mt-md"
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          label="Nouvelle réclamation"
+          @click="creationOuverte = true"
+        />
       </div>
     </div>
 
@@ -188,7 +234,13 @@ import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
-import { dateHeureLisible } from '../utils/libelles';
+import {
+  LIBELLE_PRIORITE_RECLAMATION,
+  LIBELLE_STATUT_RECLAMATION,
+  LIBELLE_TYPE_RECLAMATION,
+  dateHeureLisible,
+  optionsDepuis,
+} from '../utils/libelles';
 import type {
   PrioriteReclamation,
   Reclamation,
@@ -200,44 +252,9 @@ const auth = useAuthStore();
 
 const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 'ETUDIANT');
 
-const LIBELLE_STATUT: Record<StatutReclamation, string> = {
-  OUVERTE: 'Ouverte',
-  EN_COURS: 'En cours',
-  EN_ATTENTE_REPONSE: 'Attente réponse',
-  RESOLUE: 'Résolue',
-  FERMEE: 'Fermée',
-  REJETEE: 'Rejetée',
-};
-
-const LIBELLE_TYPE: Record<TypeReclamation, string> = {
-  NOTE_MANQUANTE: 'Note manquante',
-  ERREUR_SAISIE: 'Erreur de saisie',
-  INSCRIPTION: 'Inscription',
-  ENSEIGNEMENT: 'Enseignement',
-  SCOLARITE: 'Scolarité',
-  TECHNIQUE: 'Technique',
-  AUTRE: 'Autre',
-};
-
-const LIBELLE_PRIORITE: Record<PrioriteReclamation, string> = {
-  BASSE: 'Basse',
-  NORMALE: 'Normale',
-  HAUTE: 'Haute',
-  URGENTE: 'Urgente',
-};
-
-const OPTIONS_STATUTS = (Object.keys(LIBELLE_STATUT) as StatutReclamation[]).map((v) => ({
-  label: LIBELLE_STATUT[v],
-  value: v,
-}));
-const OPTIONS_TYPES = (Object.keys(LIBELLE_TYPE) as TypeReclamation[]).map((v) => ({
-  label: LIBELLE_TYPE[v],
-  value: v,
-}));
-const OPTIONS_PRIORITES = (Object.keys(LIBELLE_PRIORITE) as PrioriteReclamation[]).map((v) => ({
-  label: LIBELLE_PRIORITE[v],
-  value: v,
-}));
+const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
+const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
+const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 
 const reclamations = ref<Reclamation[]>([]);
 const stats = ref<Record<string, number> | null>(null);
@@ -249,21 +266,22 @@ const creationOuverte = ref(false);
 const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
 
+// Mêmes intitulés de statut que le registre de la scolarité.
 const plaques = [
   { cle: 'OUVERTE', libelle: 'Ouvertes' },
   { cle: 'EN_COURS', libelle: 'En cours' },
+  { cle: 'EN_ATTENTE_REPONSE', libelle: 'Attente réponse' },
   { cle: 'RESOLUE', libelle: 'Résolues' },
-  { cle: 'REJETEE', libelle: 'Rejetées' },
 ];
 
 function libelleStatut(s: string) {
-  return LIBELLE_STATUT[s as StatutReclamation] ?? s;
+  return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
 }
 function libelleType(t: string) {
-  return LIBELLE_TYPE[t as TypeReclamation] ?? t;
+  return LIBELLE_TYPE_RECLAMATION[t as TypeReclamation] ?? t;
 }
 function libellePriorite(p: string) {
-  return LIBELLE_PRIORITE[p as PrioriteReclamation] ?? p;
+  return LIBELLE_PRIORITE_RECLAMATION[p as PrioriteReclamation] ?? p;
 }
 
 const colonnes: QTableColumn[] = [
@@ -272,7 +290,14 @@ const colonnes: QTableColumn[] = [
   { name: 'type', label: 'Type', field: 'type', align: 'left' },
   { name: 'priorite', label: 'Priorité', field: 'priorite', align: 'left' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'creeLe', label: 'Créée le', field: 'creeLe', align: 'left' },
+  {
+    name: 'creeLe',
+    label: 'Créée le',
+    field: 'creeLe',
+    align: 'left',
+    format: (v: string) => dateHeureLisible(v),
+  },
+  { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
 function ouvrir(r: Reclamation) {
@@ -298,12 +323,13 @@ async function requeter() {
     reclamations.value = data.data;
     pagination.value.total = data.total;
 
-    // Petit calcul local pour les KPIs
+    // Compteurs calculés sur les réclamations affichées (l'API étudiante ne
+    // fournit pas de tableau de bord dédié).
     const counts: Record<string, number> = {
       OUVERTE: 0,
       EN_COURS: 0,
+      EN_ATTENTE_REPONSE: 0,
       RESOLUE: 0,
-      REJETEE: 0,
     };
     for (const r of reclamations.value) {
       if (counts[r.statut] != null) counts[r.statut]++;

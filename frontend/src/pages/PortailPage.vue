@@ -6,15 +6,30 @@
       <span class="lettrage portail__autre-titre">Espace étudiant</span>
       <p class="portail__autre-texte">
         Cette vue est réservée aux comptes étudiants, ouverts par connexion
-        par SMS depuis le portail.
+        par SMS depuis le portail étudiant.
       </p>
-      <q-btn unelevated color="primary" no-caps icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+      <div class="portail__autre-actions">
+        <q-btn unelevated color="primary" no-caps icon="home" label="Retour à mon accueil" to="/" />
+        <q-btn flat no-caps icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+      </div>
     </div>
 
-    <template v-else-if="profil && resultats">
+    <!-- Le dossier n'a pas pu être chargé : on le dit et on propose la suite -->
+    <div v-else-if="erreur" class="plaque portail__autre-role">
+      <q-icon name="error_outline" size="46px" color="negative" />
+      <span class="lettrage portail__autre-titre">Dossier indisponible</span>
+      <p class="portail__autre-texte">{{ erreur }}</p>
+      <div class="portail__autre-actions">
+        <q-btn unelevated color="primary" no-caps icon="refresh" label="Réessayer" @click="charger" />
+        <q-btn flat no-caps icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+      </div>
+    </div>
+
+    <template v-else-if="profil">
       <!-- Bandeau de bienvenue -->
       <header class="bandeau portail__entete">
         <div>
+          <p class="pochoir portail__sur-titre">Mon espace</p>
           <h1 class="lettrage portail__bonjour">
             Bonjour, {{ profil.etudiant.prenom || profil.etudiant.nom }}
           </h1>
@@ -31,6 +46,23 @@
           @click="seDeconnecter"
         />
       </header>
+
+      <!-- Tout ce que l'étudiant peut faire, au même endroit -->
+      <nav class="plaque portail__services" aria-label="Mes démarches">
+        <h2 class="pochoir section-titre">Mes démarches</h2>
+        <ul class="portail__services-liste">
+          <li v-for="s in services" :key="s.vers">
+            <router-link :to="s.vers" class="portail__service">
+              <q-icon :name="s.icone" size="24px" />
+              <span class="portail__service-texte">
+                <span class="lettrage portail__service-titre">{{ s.libelle }}</span>
+                <span class="portail__service-aide">{{ s.aide }}</span>
+              </span>
+              <q-icon name="east" size="18px" class="portail__service-fleche" />
+            </router-link>
+          </li>
+        </ul>
+      </nav>
 
       <div class="portail__grille">
         <!-- Inscription -->
@@ -91,14 +123,17 @@
           <h2 class="pochoir section-titre">Paiements récents</h2>
           <ul v-if="profil.paiements.length" class="carte-portail__liste">
             <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
-              <span class="carte-portail__libelle">
-                {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
+              <span class="carte-portail__item-texte">
+                <span class="lettrage carte-portail__item-titre">
+                  {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
+                </span>
+                <span class="pochoir pochoir--brut carte-portail__date chiffres">
+                  {{ p.reference }} · {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }} ·
+                  {{ dateLisible(p.horodatage) }}
+                </span>
               </span>
               <span class="chiffres carte-portail__montant-petit">
                 {{ montantLisible(p.montant) }} {{ p.devise }}
-              </span>
-              <span class="pochoir pochoir--brut carte-portail__date chiffres">
-                {{ dateLisible(p.horodatage) }}
               </span>
             </li>
           </ul>
@@ -108,7 +143,7 @@
         <!-- Résultats -->
         <section class="plaque carte-portail carte-portail--resultat">
           <h2 class="pochoir section-titre">Résultat</h2>
-          <template v-if="resultats.finale">
+          <template v-if="resultats?.finale">
             <div class="carte-portail__resultat-panneau">
               <span
                 class="lettrage carte-portail__resultat-moyenne chiffres"
@@ -170,18 +205,24 @@
               </q-btn>
             </li>
           </ul>
-          <p v-else class="carte-portail__aucune">Aucune attestation émise.</p>
-          <p class="pochoir carte-portail__avertissement">
-            L'impression des attestations sera bientôt accessible depuis ce
-            portail — l'onglet peut n'afficher rien pour le moment.
+          <p v-else class="carte-portail__aucune">
+            Aucune attestation émise. Demandez un certificat de scolarité ou un
+            relevé depuis
+            <router-link to="/demandes-docs/mes" class="carte-portail__lien">
+              Mes demandes de documents
+            </router-link>.
+          </p>
+          <p class="carte-portail__note">
+            Chaque attestation porte un QR code : n'importe qui peut en vérifier
+            l'authenticité sur la page
+            <router-link to="/verification" class="carte-portail__lien">
+              Vérification d'attestation
+            </router-link>.
           </p>
         </section>
 
         <!-- Portefeuille resto — section appendée (module resto) -->
-        <section
-          v-if="auth.role === 'ETUDIANT' && resto"
-          class="plaque carte-portail carte-portail--large"
-        >
+        <section v-if="resto" class="plaque carte-portail carte-portail--large">
           <h2 class="pochoir section-titre">Portefeuille resto</h2>
           <div class="carte-portail__recap">
             <span class="lettrage chiffres carte-portail__montant">
@@ -225,49 +266,56 @@
             {{ resto.instructions }}
           </p>
         </section>
-
-        <!-- Dialogue de rechargement du portefeuille resto -->
-        <q-dialog v-model="dialogResto">
-          <q-card style="width: 400px; max-width: 95vw">
-            <q-card-section class="text-h6">Recharger le portefeuille resto</q-card-section>
-            <q-card-section>
-              <q-input
-                v-model.number="montantResto"
-                type="number"
-                min="500"
-                step="500"
-                outlined
-                dense
-                label="Montant (GNF)"
-                suffix="GNF"
-              />
-              <q-select
-                v-model="operateurResto"
-                :options="optionsOperateursResto"
-                label="Opérateur Mobile Money"
-                outlined
-                dense
-                class="q-mt-md"
-              />
-              <p class="pochoir carte-portail__vide q-mt-md">
-                Vous paierez par Mobile Money : une référence vous sera
-                communiquée pour le transfert.
-              </p>
-            </q-card-section>
-            <q-card-actions align="right">
-              <q-btn flat label="Annuler" v-close-popup />
-              <q-btn
-                color="primary"
-                unelevated
-                label="Demander le paiement"
-                :loading="rechargementResto"
-                :disable="!montantResto || montantResto < 500"
-                @click="rechargerResto"
-              />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
       </div>
+
+      <!-- Dialogue de rechargement du portefeuille resto -->
+      <q-dialog v-model="dialogResto">
+        <q-card style="width: 400px; max-width: 95vw">
+          <q-card-section class="text-h6">Recharger le portefeuille resto</q-card-section>
+          <q-card-section>
+            <q-input
+              v-model.number="montantResto"
+              type="number"
+              min="500"
+              step="500"
+              outlined
+              dense
+              label="Montant (GNF)"
+              suffix="GNF"
+              hint="Minimum 500 GNF"
+              :error="!montantResto || montantResto < 500"
+              error-message="Saisissez un montant d'au moins 500 GNF"
+            />
+            <q-select
+              v-model="operateurResto"
+              :options="optionsOperateursResto"
+              emit-value
+              map-options
+              label="Opérateur Mobile Money"
+              outlined
+              dense
+              class="q-mt-md"
+            />
+            <p class="pochoir carte-portail__vide q-mt-md">
+              Vous paierez par Mobile Money : une référence vous sera
+              communiquée pour le transfert. Le solde est crédité après
+              confirmation du guichet.
+            </p>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn v-close-popup flat no-caps label="Annuler" />
+            <q-btn
+              color="primary"
+              unelevated
+              no-caps
+              label="Demander le paiement"
+              :loading="rechargementResto"
+              :disable="!montantResto || montantResto < 500"
+              @click="rechargerResto"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
     </template>
 
     <div v-else class="portail__chargement">
@@ -286,6 +334,8 @@ import { useAuthStore } from '../stores/auth';
 import BarreTaux from '../components/BarreTaux.vue';
 import {
   LIBELLE_DECISION_JURY,
+  LIBELLE_MODE_PAIEMENT,
+  LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_CONSOMMATION,
   LIBELLE_STATUT_INSCRIPTION,
   LIBELLE_STATUT_PAIEMENT,
@@ -296,6 +346,49 @@ import {
   dateLisible,
   montantLisible,
 } from '../utils/libelles';
+
+/**
+ * Tout ce que l'étudiant peut faire depuis son espace. Chaque cible est une
+ * route réelle de router/routes.ts ouverte au rôle ETUDIANT (ou publique).
+ */
+const services = [
+  {
+    vers: '/ma-carte',
+    icone: 'badge',
+    libelle: 'Ma carte étudiante',
+    aide: 'Carte numérique, QR code et code personnel',
+  },
+  {
+    vers: '/demandes-docs/mes',
+    icone: 'description',
+    libelle: 'Mes demandes de documents',
+    aide: 'Certificats, relevés et attestations à demander',
+  },
+  {
+    vers: '/reclamations/mes',
+    icone: 'support_agent',
+    libelle: 'Mes réclamations',
+    aide: 'Contester une note, signaler une erreur de dossier',
+  },
+  {
+    vers: '/elections/vote',
+    icone: 'how_to_vote',
+    libelle: 'Voter',
+    aide: 'Élections des délégués et résultats proclamés',
+  },
+  {
+    vers: '/bibliotheque',
+    icone: 'menu_book',
+    libelle: 'Bibliothèque numérique',
+    aide: 'Mémoires, thèses et supports de cours',
+  },
+  {
+    vers: '/formations',
+    icone: 'workspace_premium',
+    libelle: 'Formation continue',
+    aide: 'Catalogue des formations ouvertes à l’inscription',
+  },
+];
 
 interface PaiementPortail {
   id: string;
@@ -352,7 +445,6 @@ interface PortailProfil {
   } | null;
   frais: { montant: number; devise: string; paye: number; solde: number; taux: number } | null;
   paiements: PaiementPortail[];
-  deliberations: LigneResultat[];
   attestations: AttestationPortail[];
 }
 
@@ -362,6 +454,7 @@ const router = useRouter();
 
 const profil = ref<PortailProfil | null>(null);
 const resultats = ref<{ deliberations: LigneResultat[]; finale: LigneResultat | null } | null>(null);
+const erreur = ref('');
 
 const couleurInscription: Record<string, string> = {
   VALIDEE: 'positive',
@@ -393,18 +486,28 @@ function voirAttestation(a: AttestationPortail) {
   }
 }
 
-onMounted(async () => {
+/**
+ * Le dossier et les résultats se chargent ensemble. Un échec n'est jamais
+ * muet : sans message, l'étudiant reste devant un sablier sans fin.
+ */
+async function charger() {
+  erreur.value = '';
+  profil.value = null;
   try {
     const [p, r] = await Promise.all([
-      api.get('/portail/me', { silencieux: true } as never),
-      api.get('/portail/resultats', { silencieux: true } as never),
+      api.get('/portail/me', { silencieux: true }),
+      api.get('/portail/resultats', { silencieux: true }),
     ]);
     profil.value = p.data;
     resultats.value = r.data;
-  } catch {
-    profil.value = null;
+  } catch (e: any) {
+    const message = e?.response?.data?.message;
+    erreur.value = Array.isArray(message)
+      ? message.join(' · ')
+      : (message ??
+        'Votre dossier n’a pas pu être chargé. Vérifiez votre connexion, puis réessayez.');
   }
-});
+}
 
 // ---------------------------------------------------------------- resto
 // Section portefeuille resto (module resto — appendée sans rien casser).
@@ -429,11 +532,11 @@ const operateurResto = ref('ORANGE_MONEY');
 const rechargementResto = ref(false);
 const resto = ref<PortefeuilleRestoPortail | null>(null);
 
-const optionsOperateursResto = [
-  { value: 'ORANGE_MONEY', label: 'Orange Money' },
-  { value: 'MTN_MOMO', label: 'MTN MoMo' },
-  { value: 'TELECEL', label: 'Telecel' },
-];
+// Les opérateurs sont nommés une seule fois pour toute l'application.
+const optionsOperateursResto = (['ORANGE_MONEY', 'MTN_MOMO', 'TELECEL'] as const).map((value) => ({
+  value,
+  label: LIBELLE_OPERATEUR_MM[value] ?? value,
+}));
 
 function lignesResto(donnees: any): LigneResto[] {
   const recharges = (donnees.recharges ?? []).map((r: any) => ({
@@ -457,8 +560,13 @@ function lignesResto(donnees: any): LigneResto[] {
 
 async function chargerResto() {
   try {
-    const { data } = await api.get('/portail/resto/me', { silencieux: true } as never);
-    resto.value = { solde: data.solde, lignes: lignesResto(data) };
+    const { data } = await api.get('/portail/resto/me', { silencieux: true });
+    // Les instructions de paiement déjà affichées survivent au rechargement.
+    resto.value = {
+      solde: data.solde,
+      lignes: lignesResto(data),
+      instructions: resto.value?.instructions ?? null,
+    };
   } catch {
     // Sans portefeuille, la section reste masquée.
   }
@@ -472,19 +580,20 @@ async function rechargerResto() {
       mode: 'MOBILE_MONEY',
       operateur: operateurResto.value,
     });
+    dialogResto.value = false;
+    await chargerResto();
     if (resto.value) resto.value.instructions = data.instructions;
     $q.notify({
       type: 'info',
       message: `Recharge ${data.paiement.reference} en attente — suivez les instructions de paiement`,
     });
-    dialogResto.value = false;
-    await chargerResto();
   } finally {
     rechargementResto.value = false;
   }
 }
 
 onMounted(() => {
+  void charger();
   void chargerResto();
 });
 </script>
@@ -505,6 +614,11 @@ onMounted(() => {
   border: 2px solid var(--up-encre);
 }
 
+.portail__sur-titre {
+  margin: 0 0 4px;
+  color: rgba(250, 250, 247, 0.6);
+}
+
 .portail__bonjour {
   font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
   margin: 0;
@@ -514,6 +628,59 @@ onMounted(() => {
   margin: 6px 0 0;
   color: rgba(250, 250, 247, 0.74);
 }
+
+// ------------------------------------------------------------ démarches
+// L'espace étudiant est d'abord une porte : tout ce qui lui est ouvert est
+// listé ici, une ligne par démarche.
+.portail__services {
+  padding: var(--up-4);
+  margin-bottom: var(--up-4);
+
+  .section-titre { margin: 0 0 var(--up-3); }
+}
+
+.portail__services-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--up-2);
+}
+
+.portail__service {
+  display: flex;
+  align-items: center;
+  gap: var(--up-3);
+  padding: var(--up-3);
+  border: var(--up-filet-fin);
+  color: var(--up-encre);
+  text-decoration: none;
+  height: 100%;
+
+  &:hover,
+  &:focus-visible {
+    border: 2px solid var(--up-encre);
+    background: var(--up-craie);
+  }
+}
+
+.portail__service-texte {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.portail__service-titre { font-size: 0.98rem; }
+
+.portail__service-aide {
+  font-size: 0.82rem;
+  color: var(--up-encre-douce);
+}
+
+.portail__service-fleche { color: var(--up-encre-douce); }
 
 .portail__grille {
   display: grid;
@@ -647,6 +814,22 @@ onMounted(() => {
   padding-top: var(--up-2);
 }
 
+.carte-portail__note {
+  color: var(--up-encre-douce);
+  font-size: 0.85rem;
+  margin: var(--up-2) 0 0;
+  border-top: var(--up-filet-fin);
+  padding-top: var(--up-2);
+}
+
+.carte-portail__lien {
+  color: inherit;
+  text-decoration: underline;
+
+  &:hover,
+  &:focus-visible { color: var(--up-encre); }
+}
+
 // ------------------------------------------------- autres rôles & chargement
 .portail__autre-role {
   max-width: 480px;
@@ -666,6 +849,14 @@ onMounted(() => {
 .portail__autre-texte {
   margin: 0;
   color: var(--up-encre-douce);
+}
+
+.portail__autre-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--up-2);
+  margin-top: var(--up-2);
 }
 
 .portail__chargement {

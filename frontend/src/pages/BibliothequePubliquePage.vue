@@ -1,5 +1,17 @@
 <template>
   <q-page class="q-pa-md">
+    <!-- L'en-tête public (AuthLayout) porte déjà les liens du site : ici on ne
+         garde que l'entrée vers l'espace de travail, utile au personnel. -->
+    <div class="row justify-end q-mb-sm">
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="login"
+        label="Se connecter"
+        to="/connexion"
+      />
+    </div>
     <div class="row justify-center">
       <div class="col-12 col-md-10 col-lg-9">
         <div class="text-center q-mt-lg q-mb-lg">
@@ -34,7 +46,7 @@
         </div>
 
         <div class="row q-col-gutter-sm q-mb-md items-center">
-          <div class="col-12 col-sm-4">
+          <div class="col-12 col-sm-3">
             <q-select
               v-model="filtre.type"
               :options="typesDocument"
@@ -46,7 +58,7 @@
               label="Type de document"
             />
           </div>
-          <div class="col-12 col-sm-4">
+          <div class="col-12 col-sm-3">
             <q-select
               v-model="filtre.departementId"
               :options="optionsDepartements"
@@ -59,7 +71,7 @@
               :loading="chargementDepartements"
             />
           </div>
-          <div class="col-12 col-sm-3">
+          <div class="col-6 col-sm-2">
             <q-input
               v-model.number="filtre.anneeEdition"
               type="number"
@@ -71,10 +83,11 @@
               :max="2100"
             />
           </div>
-          <div class="col-12 col-sm-1 text-right">
+          <div class="col-6 col-sm-4 text-right">
             <view-toggle
               cle="biblio.publique"
               :modes="['tableau', 'cartes']"
+              defaut="cartes"
               @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
             />
           </div>
@@ -88,8 +101,29 @@
           v-else-if="!documents.length"
           class="plaque q-pa-lg text-center text-grey-7"
         >
-          <q-icon name="search_off" size="38px" color="grey-5" />
-          <div class="q-mt-sm">Aucun document publié ne correspond à votre recherche.</div>
+          <q-icon :name="filtrageActif ? 'search_off' : 'library_books'" size="38px" color="grey-5" />
+          <div v-if="filtrageActif" class="q-mt-sm">
+            <div>Aucun document ne correspond à votre recherche.</div>
+            <div class="text-caption q-mt-xs">
+              Essayez un mot-clé plus court, ou élargissez le type et le département.
+            </div>
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon="refresh"
+              label="Effacer la recherche"
+              class="q-mt-sm"
+              @click="reinitialiser"
+            />
+          </div>
+          <div v-else class="q-mt-sm">
+            <div>Le fonds ne contient encore aucun document publié.</div>
+            <div class="text-caption q-mt-xs">
+              Les mémoires, thèses et supports de cours apparaîtront ici dès leur
+              mise en ligne par la bibliothèque.
+            </div>
+          </div>
         </div>
 
         <q-list v-else-if="mode === 'cartes'" bordered separator class="plaque q-mb-md">
@@ -203,13 +237,13 @@
         </q-table>
 
         <pagination-bar
-          v-if="total > pageSize"
+          v-if="documents.length"
           :page="page"
           :page-size="pageSize"
           :total="total"
           :show-all="false"
-          @update:page="(v) => { page = v; charger(true) }"
-          @update:page-size="(v) => { pageSize = v; page = 1; charger(true) }"
+          @update:page="(v) => { page = v; charger(); }"
+          @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
         />
 
         <div class="text-center text-caption text-grey-7 q-pb-lg">
@@ -223,15 +257,18 @@
 
 <script setup lang="ts">
 /**
- * Bibliothèque publique : aucune garde d'authentification. La barre de
- * recherche frappe directement `/documents/recherche` (public) ; les filtres
- * affinent la liste de manière serveur. L'extrait renvoyé par le backend est
- * surligné via <mark> pour donner du contexte au visiteur.
+ * Bibliothèque publique (vitrine) : aucune garde d'authentification. Le même
+ * fonds que l'écran de gestion `/bibliotheque-gestion`, mais restreint côté
+ * serveur aux documents publiés. Tout passe par `bibliothequeService`, qui
+ * choisit la liste ou la recherche plein texte selon le terme saisi — la route
+ * FTS refuse un appel sans `q`. L'extrait renvoyé par le backend est surligné
+ * via <mark> pour donner du contexte au visiteur.
  */
 import { computed, onMounted, ref, watch } from 'vue';
 import { api } from '../boot/axios';
 import ViewToggle from '../components/ViewToggle.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { Departement, DocumentDepot } from '../types';
 
@@ -244,14 +281,33 @@ const chargement = ref(false);
 const total = ref(0);
 const page = ref(1);
 const pageSize = ref(10);
-const recherche = ref('');
+/** `clearable` remet la valeur à null : le type l'assume. */
+const recherche = ref<string | null>('');
 const mode = ref<'tableau' | 'cartes'>('cartes');
 
-const filtre = ref<{ type: '' | DocumentDepot['type']; departementId: ''; anneeEdition: number | null }>({
+const filtre = ref<{
+  type: string | null;
+  departementId: string | null;
+  anneeEdition: number | null;
+}>({
   type: '',
   departementId: '',
   anneeEdition: null,
 });
+
+/** Un visiteur a-t-il restreint la liste ? Distingue les deux états vides. */
+const filtrageActif = computed(
+  () =>
+    !!recherche.value?.trim() ||
+    !!filtre.value.type ||
+    !!filtre.value.departementId ||
+    !!filtre.value.anneeEdition,
+);
+
+function reinitialiser() {
+  recherche.value = '';
+  filtre.value = { type: '', departementId: '', anneeEdition: null };
+}
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([v, l]) => ({ value: v, label: l }));
 const optionsDepartements = computed<OptionSimple[]>(() =>
@@ -281,7 +337,7 @@ function surligner(texte: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  const terme = recherche.value.trim();
+  const terme = recherche.value?.trim() ?? '';
   if (!terme) return echappe;
   // Échapper les caractères regex du terme.
   const motif = terme.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -289,46 +345,38 @@ function surligner(texte: string): string {
   return echappe.replace(regex, '<mark>$1</mark>');
 }
 
-async function charger(reinit = true) {
-  if (reinit) page.value = 1;
+async function charger() {
   chargement.value = true;
   try {
-    const params: Record<string, any> = {
+    const params: Record<string, unknown> = {
       page: page.value,
       pageSize: pageSize.value,
       public: 'true',
     };
-    if (recherche.value.trim()) params.q = recherche.value.trim();
     if (filtre.value.type) params.type = filtre.value.type;
     if (filtre.value.departementId) params.departementId = filtre.value.departementId;
     if (filtre.value.anneeEdition) params.anneeEdition = filtre.value.anneeEdition;
 
-    const { data } = await api.get('/documents/recherche', {
+    const { data } = await bibliothequeService.rechercher(
+      recherche.value ?? '',
       params,
-      silencieux: true,
-    } as never);
-    const liste: DocumentDepot[] = Array.isArray(data) ? data : (data.data ?? []);
-    documents.value = reinit ? liste : [...documents.value, ...liste];
-    total.value = Array.isArray(data)
-      ? documents.value.length
-      : (data.total ?? liste.length);
+      true,
+    );
+    const resultat = normaliserDocuments(data);
+    documents.value = resultat.liste;
+    total.value = resultat.total;
   } finally {
     chargement.value = false;
   }
 }
 
-watch([recherche, filtre], () => charger(true), { deep: true });
-watch(pageSize, () => charger(true));
-watch(page, () => charger(false));
+/** Toute modification d'un critère ramène à la première page. */
+watch([recherche, filtre], () => { page.value = 1; void charger(); }, { deep: true });
 
 async function telecharger(doc: DocumentDepot) {
   if (!doc.fichier) return;
   try {
-    const { data, headers } = await api.get(`/documents/${doc.id}/fichier`, {
-      responseType: 'blob',
-      timeout: 60000,
-      silencieux: true,
-    } as never);
+    const { data, headers } = await bibliothequeService.fichier(doc.id, true);
     const disposition: string | undefined = headers['content-disposition'];
     const correspondance = /filename="?([^";]+)"?/i.exec(disposition ?? '');
     const nom = correspondance?.[1] ?? `${doc.titre || 'document'}.pdf`;
@@ -347,12 +395,12 @@ async function telecharger(doc: DocumentDepot) {
 onMounted(async () => {
   chargementDepartements.value = true;
   try {
-    const { data } = await api.get('/departements?all=1', { silencieux: true } as never);
+    const { data } = await api.get('/departements?all=1', { silencieux: true });
     departements.value = Array.isArray(data) ? data : (data.data ?? []);
   } finally {
     chargementDepartements.value = false;
   }
-  await charger(true);
+  await charger();
 });
 </script>
 
@@ -370,17 +418,22 @@ onMounted(async () => {
   line-height: 1.3;
   color: var(--up-encre);
 }
+/* Un extrait cité est une plaque cernée, pas une carte à bandeau latéral :
+   le monde « panneau peint » trace des filets entiers. */
 .doc-extrait {
   font-size: 0.88rem;
   line-height: 1.45;
   color: var(--up-encre-douce);
-  background: rgba(0, 0, 0, 0.02);
-  padding: 6px 8px;
-  border-left: 3px solid var(--q-primary);
+  background: var(--up-craie);
+  padding: var(--up-2);
+  border: var(--up-filet-fin);
   white-space: pre-wrap;
 }
+/* Le surlignage reprend le jaune signal du panneau, qui porte toujours de
+   l'encre et jamais du blanc. */
 .doc-extrait :deep(mark) {
-  background: #fff3a0;
+  background: $jaune;
+  color: var(--up-encre);
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

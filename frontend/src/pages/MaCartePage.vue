@@ -4,6 +4,7 @@ import { useQuasar } from 'quasar';
 import QRCode from 'qrcode';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
 
 const $q = useQuasar();
@@ -18,16 +19,8 @@ const nipDialog = ref(false);
 const nipValeur = ref('');
 const nipConfirmation = ref('');
 
-const LIBELLE_STATUT: Record<string, string> = {
-  EMISE: 'Émise',
-  REVOQUEE: 'Révoquée',
-};
-const CLASSE_STATUT: Record<string, string> = {
-  EMISE: 'badge--ok',
-  REVOQUEE: 'badge--ko',
-};
-
-const peutVoirCarte = computed(() => Boolean(carte.value && carte.value.statut === 'EMISE'));
+/** Une carte révoquée ne s'imprime plus et n'accepte plus de NIP. */
+const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut === 'EMISE'));
 
 async function charger() {
   chargement.value = true;
@@ -43,12 +36,25 @@ async function charger() {
         errorCorrectionLevel: 'M',
       });
     }
-  } catch (e: any) {
-    if (e?.response?.status === 404) {
-      carte.value = null;
-    }
+  } catch {
+    // 404 : aucune carte émise. Toute autre erreur est déjà notifiée par l'API.
+    carte.value = null;
   } finally {
     chargement.value = false;
+  }
+}
+
+/** Ouvre la page publique de vérification, exactement comme le ferait un scan. */
+function ouvrirVerification() {
+  if (urlVerification.value) window.open(urlVerification.value, '_blank');
+}
+
+async function copierUrlVerification() {
+  try {
+    await navigator.clipboard.writeText(urlVerification.value);
+    $q.notify({ type: 'positive', message: 'Lien de vérification copié.' });
+  } catch {
+    $q.notify({ type: 'warning', message: 'Copie impossible : sélectionnez le lien à la main.' });
   }
 }
 
@@ -79,7 +85,7 @@ async function confirmerNip() {
 
 function imprimer() {
   if (!carte.value) return;
-  window.open(`${API_URL}/cartes-etudiants/${carte.value.id}/imprimer?token=${auth.token}`, '_blank');
+  window.open(`${API_URL}/cartes-etudiantes/${carte.value.id}/imprimer?token=${auth.token}`, '_blank');
 }
 
 function dateFr(v?: string | null): string {
@@ -94,26 +100,47 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Ma carte d'étudiant</div>
+        <div class="page-titre">Ma carte étudiante</div>
         <div class="page-sous-titre">
-          Votre carte numérique, vérifiable en ligne par QR code.
+          Votre carte numérique, vérifiable en ligne par QR code, avec un NIP
+          personnel pour le resto U, la cité et les contrôles.
         </div>
       </div>
     </div>
 
-    <q-card v-if="chargement" class="q-pa-md">
+    <q-card v-if="chargement" class="carte q-pa-md">
       <q-spinner /> Chargement de votre carte…
     </q-card>
 
-    <q-card v-else-if="!carte" class="q-pa-md">
-      <q-banner class="bg-info text-white">
-        Aucune carte n'a encore été émise pour votre profil. La scolarité en
-        générera une à partir de votre inscription. Revenez plus tard ou
-        contactez le secrétariat pédagogique.
-      </q-banner>
+    <q-card v-else-if="!carte" class="carte ma-carte q-pa-md text-center">
+      <q-icon name="badge" size="42px" color="grey-5" />
+      <div class="text-subtitle1 q-mt-sm">Aucune carte émise</div>
+      <div class="text-body2 text-grey-8 q-mt-xs">
+        La scolarité génère votre carte à partir de votre inscription. Si votre
+        inscription est validée depuis plusieurs jours, demandez un duplicata ou
+        ouvrez une réclamation.
+      </div>
+      <div class="row justify-center q-gutter-sm q-mt-md">
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="description"
+          label="Demander un document"
+          :to="{ name: 'mes-demandes-docs' }"
+        />
+        <q-btn
+          outline
+          color="primary"
+          no-caps
+          icon="support_agent"
+          label="Ouvrir une réclamation"
+          :to="{ name: 'mes-reclamations' }"
+        />
+      </div>
     </q-card>
 
-    <q-card v-else class="ma-carte">
+    <q-card v-else class="carte ma-carte">
       <q-card-section class="row items-center q-gutter-md">
         <q-avatar size="80px" color="grey-3" text-color="primary">
           <img v-if="carte.photoUrl" :src="carte.photoUrl" :alt="carte.etudiant?.prenom" />
@@ -127,8 +154,8 @@ onMounted(charger);
             Matricule <code>{{ carte.etudiant?.matricule }}</code>
           </div>
           <div class="q-mt-sm">
-            <span class="champ champ-statut" :class="CLASSE_STATUT[carte.statut]">
-              <span class="pochoir">{{ LIBELLE_STATUT[carte.statut] }}</span>
+            <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[carte.statut]">
+              <span class="pochoir">{{ LIBELLE_STATUT_CARTE[carte.statut] }}</span>
             </span>
           </div>
         </div>
@@ -136,10 +163,18 @@ onMounted(charger);
 
       <q-separator />
 
+      <q-banner v-if="!carteUtilisable" class="note--erreur">
+        <template #avatar><q-icon name="block" /></template>
+        Cette carte a été révoquée par l'établissement : elle n'est plus
+        valable et son QR affiche « carte non valable ».
+        <span v-if="carte.motifRevocation"> Motif : {{ carte.motifRevocation }}.</span>
+        Demandez un duplicata à la scolarité.
+      </q-banner>
+
       <q-card-section>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
-            <div class="text-caption text-grey-7">Date d'émission</div>
+            <div class="text-caption text-grey-7">Émise le</div>
             <div class="text-body1">{{ dateFr(carte.dateEmission) }}</div>
           </div>
           <div class="col-12 col-md-6">
@@ -156,16 +191,35 @@ onMounted(charger);
         <div class="text-caption text-grey-7 q-mt-sm">
           Scannez ce QR pour vérifier votre carte. Toute consultation est journalisée.
         </div>
-        <div class="text-caption text-grey-7 q-mt-xs">
-          URL : <code>{{ urlVerification }}</code>
+        <div class="text-caption text-grey-7 q-mt-xs url-verification">
+          <code>{{ urlVerification }}</code>
+        </div>
+        <div class="row justify-center q-gutter-sm q-mt-sm">
+          <q-btn flat dense no-caps icon="content_copy" label="Copier le lien" @click="copierUrlVerification" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="verified_user"
+            label="Ouvrir la vérification"
+            @click="ouvrirVerification"
+          />
         </div>
       </q-card-section>
 
       <q-separator />
 
       <q-card-actions align="right">
-        <q-btn unelevated color="primary" no-caps icon="lock" label="Définir un NIP" @click="ouvrirDialogNip" />
-        <q-btn flat no-caps icon="print" label="Imprimer A4" :disable="!peutVoirCarte" @click="imprimer" />
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="lock"
+          label="Définir un NIP"
+          :disable="!carteUtilisable"
+          @click="ouvrirDialogNip"
+        />
+        <q-btn flat no-caps icon="print" label="Imprimer A4" :disable="!carteUtilisable" @click="imprimer" />
       </q-card-actions>
     </q-card>
 
@@ -174,7 +228,7 @@ onMounted(charger);
         <q-card-section>
           <div class="text-h6">Définir votre NIP</div>
           <div class="text-caption text-grey-7">
-            Le NIP est un code personnel à 4 chiffres qui authentifie votre carte
+            Le NIP est un code personnel à 4 à 6 chiffres qui authentifie votre carte
             pour les partenaires (resto U, cité, contrôles à distance).
           </div>
         </q-card-section>
@@ -209,6 +263,17 @@ onMounted(charger);
   max-width: 720px;
   margin: 0 auto;
 }
-.badge--ok { background: #e3f5e9; color: #17683a; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
-.badge--ko { background: #fdeaea; color: #a52020; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+
+/* Pastille de statut : même gabarit que sur l'écran de gestion. */
+.champ-statut {
+  display: inline-flex;
+  padding: 3px 8px;
+  min-height: 24px;
+}
+.badge--ok { background: #e3f5e9; color: #17683a; }
+.badge--ko { background: #fdeaea; color: #a52020; }
+
+.url-verification code {
+  word-break: break-all;
+}
 </style>

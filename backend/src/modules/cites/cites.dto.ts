@@ -88,5 +88,7 @@ export class AttributionQueryDto extends QueryDto {
   @IsOptional() @IsEnum(StatutAttributionLogement) statut?: StatutAttributionLogement;
   @IsOptional() @IsUUID() anneeId?: string;
   @IsOptional() @IsUUID() residenceId?: string;
+  /** Historique des demandes portant sur une chambre précise. */
+  @IsOptional() @IsUUID() chambreId?: string;
   @IsOptional() @IsUUID() etudiantId?: string;
 }

@@ -86,6 +86,17 @@ export class FormationsController {
     return this.service.liste(query);
   }
 
+  /**
+   * Tableau de bord agrégé : total, par formation (inscrits, payés, recette)
+   * et totaux généraux. Évite le N+1 du front qui itérait sur la liste des
+   * formations pour reconstituer les chiffres.
+   */
+  @Roles(...GESTIONNAIRES)
+  @Get('dashboard')
+  dashboard() {
+    return this.service.dashboard();
+  }
+
   /** Toute création naît en BROUILLON : rien ne s'expose sans publication. */
   @Roles(...GESTIONNAIRES)
   @Post()

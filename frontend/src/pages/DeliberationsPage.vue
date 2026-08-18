@@ -5,18 +5,28 @@
         <div class="page-titre">Délibérations</div>
         <div class="page-sous-titre">
           Sessions du jury : moyennes pondérées par les crédits, décisions ADMIS /
-          AJOURNÉ / DÉFAILLANT
+          AJOURNÉ / DÉFAILLANT, puis édition des bulletins.
         </div>
       </div>
       <div class="col-auto">
         <q-btn
-          v-if="peutSaisir()"
+          v-if="peutSaisir"
           unelevated
           color="primary"
           no-caps
           icon="gavel"
           label="Nouvelle délibération"
           @click="dialogOuvert = true"
+        />
+      </div>
+      <div class="col-auto">
+        <q-btn
+          outline
+          color="secondary"
+          no-caps
+          icon="school"
+          label="Bulletins"
+          @click="allerBulletins(null)"
         />
       </div>
     </div>
@@ -54,13 +64,23 @@
           label="Session"
           clearable
         />
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
       </template>
       <template #actions>
         <view-toggle
           cle="deliberations"
           :modes="['tableau', 'kanban']"
           defaut="tableau"
-          @update:mode="(m) => (modeVue = (m as 'tableau' | 'kanban'))"
+          @update:mode="(m) => (modeVue = m as 'tableau' | 'kanban')"
         />
       </template>
     </filter-bar>
@@ -70,30 +90,44 @@
       flat
       bordered
       class="carte"
-      :rows="deliberationsFiltrees"
+      :rows="deliberationsPage"
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :pagination="{ rowsPerPage: 15 }"
+      :pagination="{ rowsPerPage: 0 }"
+      @row-click="(_, row) => ouvrirDetail(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">Aucune délibération pour ces critères.</div>
+        <div class="etat-vide">
+          <q-icon name="gavel" size="32px" color="grey-5" />
+          <div class="q-mt-sm">Aucune délibération pour ces critères.</div>
+          <q-btn
+            v-if="peutSaisir"
+            unelevated
+            color="primary"
+            no-caps
+            icon="gavel"
+            label="Nouvelle délibération"
+            class="q-mt-sm"
+            @click="dialogOuvert = true"
+          />
+        </div>
       </template>
 
       <template #body-cell-session="p">
-        <q-td :props="p">{{ LIBELLE_SESSION_DELIBERATION[p.row.session] }}</q-td>
+        <q-td :props="p">{{ LIBELLE_SESSION_DELIBERATION[p.row.session] ?? p.row.session }}</q-td>
       </template>
 
       <template #body-cell-statut="p">
         <q-td :props="p">
           <q-badge :color="p.row.statut === 'VALIDEE' ? 'positive' : 'warning'">
-            {{ LIBELLE_STATUT_DELIBERATION[p.row.statut] }}
+            {{ LIBELLE_STATUT_DELIBERATION[p.row.statut] ?? p.row.statut }}
           </q-badge>
         </q-td>
       </template>
 
       <template #body-cell-taux="p">
-        <q-td :props="p">
+        <q-td :props="p" class="text-center">
           <template v-if="p.row.tauxReussite !== null && p.row.tauxReussite !== undefined">
             {{ pourcentLisible(p.row.tauxReussite) }}
           </template>
@@ -102,7 +136,7 @@
       </template>
 
       <template #body-cell-effectif="p">
-        <q-td :props="p">{{ (p.row as any)._count?.lignes ?? 0 }}</q-td>
+        <q-td :props="p" class="text-center chiffres">{{ p.row._count?.lignes ?? 0 }}</q-td>
       </template>
 
       <template #body-cell-creeLe="p">
@@ -111,50 +145,73 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="visibility" @click="ouvrirDetail(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            aria-label="Voir le détail de la délibération"
+            @click.stop="ouvrirDetail(p.row)"
+          >
             <q-tooltip>Détail des lignes</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'BROUILLON' && peutSaisir()"
+            v-if="p.row.statut === 'BROUILLON' && peutSaisir"
             flat
             dense
             round
             icon="replay"
             color="primary"
-            @click="calculer(p.row)"
+            aria-label="Recalculer moyennes et décisions"
+            @click.stop="calculer(p.row)"
           >
             <q-tooltip>Recalculer moyennes et décisions</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'BROUILLON' && estJury()"
+            v-if="p.row.statut === 'BROUILLON' && estJury"
             flat
             dense
             no-caps
             icon="verified_user"
             color="positive"
             label="Valider le jury"
-            @click="valider(p.row)"
+            @click.stop="valider(p.row)"
           />
-          <q-btn flat dense round icon="print" @click="imprimerPv(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="school"
+            color="primary"
+            aria-label="Voir les bulletins de cette délibération"
+            @click.stop="allerBulletins(p.row)"
+          >
+            <q-tooltip>Bulletins de cette promotion</q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            dense
+            round
+            icon="print"
+            aria-label="Imprimer le procès-verbal"
+            @click.stop="imprimerPv(p.row)"
+          >
             <q-tooltip>Imprimer le PV</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
-    <kanban-board
-      v-else
-      :colonnes="colonnesKanban"
-    />
+    <kanban-board v-else :colonnes="colonnesKanban" />
 
     <pagination-bar
-      v-if="deliberations.length"
+      v-if="modeVue === 'tableau' && totalFiltre"
       :page="page"
       :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      :total="totalFiltre"
+      :show-all="false"
+      @update:page="(v) => (page = v)"
+      @update:page-size="(v) => { pageSize = v; page = 1; }"
     />
 
     <deliberation-dialog
@@ -165,27 +222,33 @@
       @enregistre="charger"
     />
 
-    <!-- Détail des lignes -->
+    <!-- Détail des lignes : les décisions individuelles du jury -->
     <q-dialog v-model="dialogDetail" :maximized="$q.screen.lt.md">
       <q-card style="width: 900px; max-width: 95vw">
-        <q-card-section class="row items-center">
+        <q-card-section class="row items-center q-col-gutter-md">
           <div class="col">
-            <div class="text-h6">Délibération — {{ detail?.promotion?.nom }}</div>
+            <div class="text-h6">Délibération — {{ detail?.promotion?.nom ?? '—' }}</div>
             <div class="text-caption text-grey-7">
               {{ LIBELLE_SESSION_DELIBERATION[detail?.session ?? 'NORMALE'] }} ·
-              {{ detail?.annee?.libelle }} ·
-              {{
-                detail?.statut === 'VALIDEE' ? 'validée par le jury' : 'brouillon'
-              }}
+              {{ detail?.annee?.libelle ?? '—' }} ·
+              {{ LIBELLE_STATUT_DELIBERATION[detail?.statut ?? 'BROUILLON'] }}
             </div>
+          </div>
+          <div class="col-auto">
+            <q-btn outline no-caps icon="school" label="Bulletins" @click="allerBulletins(detail)" />
           </div>
           <div class="col-auto">
             <q-btn outline no-caps icon="print" label="PV" @click="imprimerPv(detail)" />
           </div>
+          <div class="col-auto">
+            <q-btn flat round dense icon="close" aria-label="Fermer le détail" v-close-popup />
+          </div>
         </q-card-section>
 
         <q-card-section class="q-pt-none">
+          <q-linear-progress v-if="chargementDetail" indeterminate color="primary" class="q-mb-sm" />
           <q-table
+            v-else
             flat
             bordered
             :rows="detailLignes"
@@ -193,16 +256,36 @@
             row-key="id"
             :pagination="{ rowsPerPage: 0 }"
           >
+            <template #no-data>
+              <div class="etat-vide">
+                <q-icon name="how_to_reg" size="28px" color="grey-5" />
+                <div class="q-mt-sm">
+                  Aucune ligne : lancez le recalcul pour produire les moyennes et les décisions.
+                </div>
+              </div>
+            </template>
+            <template #body-cell-moyenne="p">
+              <q-td :props="p" class="text-center chiffres">
+                {{ p.row.moyenne !== null && p.row.moyenne !== undefined ? p.row.moyenne.toFixed(2) : '—' }}
+              </q-td>
+            </template>
             <template #body-cell-decision="p">
               <q-td :props="p">
                 <q-badge :color="couleurDecision(p.row.decision)">
-                  {{ LIBELLE_DECISION_JURY[p.row.decision] }}
+                  {{ LIBELLE_DECISION_JURY[p.row.decision] ?? p.row.decision }}
                 </q-badge>
               </q-td>
             </template>
             <template #body-cell-actions="p">
               <q-td :props="p" class="text-right">
-                <q-btn flat dense round icon="print" @click="imprimerBulletin(p.row)">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="print"
+                  aria-label="Imprimer le bulletin individuel"
+                  @click="imprimerBulletin(p.row)"
+                >
                   <q-tooltip>Bulletin individuel</q-tooltip>
                 </q-btn>
               </q-td>
@@ -220,6 +303,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api, API_URL } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -236,16 +320,22 @@ import {
   dateLisible,
   pourcentLisible,
 } from '../utils/libelles';
-import type { AnneeAcademique, Deliberation, DeliberationLigne, Matiere, Promotion } from '../types';
+import type { AnneeAcademique, Deliberation, DeliberationLigne, Matiere, Promotion, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const router = useRouter();
 
-const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE']);
+/** La liste renvoie l'effectif agrégé, absent du modèle partagé. */
+interface DeliberationListe extends Deliberation {
+  _count?: { lignes: number };
+}
+
+const peutSaisir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 /** Le jury : direction et administrateur figent les résultats. */
-const estJury = () => auth.aRole(['ADMIN', 'DIRECTION']);
+const estJury = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
-const deliberations = ref<Deliberation[]>([]);
+const deliberations = ref<DeliberationListe[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
 const matieres = ref<Matiere[]>([]);
@@ -254,14 +344,13 @@ const modeVue = ref<'tableau' | 'kanban'>('tableau');
 
 const page = ref(1);
 const pageSize = ref(15);
-const total = ref(0);
-const tousLesElements = ref(false);
 
 const filtres = ref<Record<string, any>>({});
 
 const dialogOuvert = ref(false);
 const dialogDetail = ref(false);
-const detail = ref<Deliberation | null>(null);
+const detail = ref<DeliberationListe | null>(null);
+const chargementDetail = ref(false);
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -269,9 +358,13 @@ const optionsPromotions = computed(() =>
     .filter((p) => !filtres.value.anneeId || p.anneeId === filtres.value.anneeId)
     .map((p) => ({ label: p.nom, value: p.id })),
 );
+const optionsStatuts = [
+  { label: LIBELLE_STATUT_DELIBERATION.BROUILLON, value: 'BROUILLON' },
+  { label: LIBELLE_STATUT_DELIBERATION.VALIDEE, value: 'VALIDEE' },
+];
 
 const chips = computed(() => {
-  const cs: Array<{ label: string; value: any; icone?: string; defaut?: boolean }> = [];
+  const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
       label: `« ${filtres.value.recherche} »`,
@@ -295,111 +388,101 @@ const chips = computed(() => {
       icone: 'flag',
     });
   }
+  if (filtres.value.statut) {
+    cs.push({
+      label: `Statut : ${LIBELLE_STATUT_DELIBERATION[filtres.value.statut] ?? filtres.value.statut}`,
+      value: filtres.value.statut,
+      icone: 'verified',
+    });
+  }
   return cs;
 });
 
-const deliberationsFiltrees = computed(() => deliberations.value);
+/**
+ * `/deliberations` ne filtre que sur l'année : promotion, session, statut et
+ * recherche sont appliqués ici, sur la liste complète déjà chargée (`all=1`).
+ */
+const deliberationsFiltrees = computed(() => {
+  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  return deliberations.value.filter((d) => {
+    if (filtres.value.promotionId && d.promotionId !== filtres.value.promotionId) return false;
+    if (filtres.value.session && d.session !== filtres.value.session) return false;
+    if (filtres.value.statut && d.statut !== filtres.value.statut) return false;
+    if (q && !`${d.promotion?.nom ?? ''} ${d.annee?.libelle ?? ''}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+});
+
+const totalFiltre = computed(() => deliberationsFiltrees.value.length);
+const deliberationsPage = computed(() =>
+  deliberationsFiltrees.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
+);
 
 const colonnes: QTableColumn[] = [
-  { name: 'promotion', label: 'Promotion', field: (r) => r.promotion?.nom ?? '—', align: 'left' },
+  { name: 'promotion', label: 'Promotion', field: (r) => r.promotion?.nom ?? '—', align: 'left', sortable: true },
+  { name: 'annee', label: 'Année', field: (r) => r.annee?.libelle ?? '—', align: 'left' },
   { name: 'session', label: 'Session', field: 'session', align: 'left' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'taux', label: 'Taux de réussite', field: 'tauxReussite', align: 'center' },
-  { name: 'effectif', label: 'Étudiants', field: 'id', align: 'center' },
-  { name: 'creeLe', label: 'Créée le', field: 'creeLe', align: 'left' },
+  { name: 'taux', label: 'Taux de réussite', field: 'tauxReussite', align: 'center', sortable: true },
+  { name: 'effectif', label: 'Étudiants', field: (r) => r._count?.lignes ?? 0, align: 'center' },
+  { name: 'creeLe', label: 'Créée le', field: 'creeLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
 const colonnesDetail: QTableColumn[] = [
   { name: 'rang', label: 'Rang', field: 'rang', align: 'center' },
   { name: 'matricule', label: 'Matricule', field: (r) => r.inscription?.etudiant?.matricule ?? '—', align: 'left' },
-  { name: 'etudiant', label: 'Étudiant', field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`, align: 'left' },
+  { name: 'etudiant', label: 'Étudiant', field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`.trim() || '—', align: 'left' },
   { name: 'moyenne', label: 'Moyenne', field: 'moyenne', align: 'center' },
   { name: 'decision', label: 'Décision', field: 'decision', align: 'center' },
-  { name: 'mention', label: 'Mention', field: 'mention', align: 'left' },
+  { name: 'mention', label: 'Mention', field: (r) => r.mention ?? '—', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
 const detailLignes = computed<DeliberationLigne[]>(() => detail.value?.lignes ?? []);
 
 const colonnesKanban = computed(() => {
-  const parColonne: Record<string, Deliberation[]> = {
+  const parColonne: Record<string, DeliberationListe[]> = {
     PROPOSE: [],
     VALIDE: [],
     SOUTENU: [],
     ABANDONNE: [],
   };
   for (const d of deliberationsFiltrees.value) {
-    const cle = bucketDeliberation(d);
-    (parColonne[cle] ||= []).push(d);
+    (parColonne[bucketDeliberation(d)] ||= []).push(d);
   }
 
-  const cartes = (d: Deliberation) => ({
+  const carte = (d: DeliberationListe) => ({
     id: d.id,
     titre: d.promotion?.nom ?? '—',
     sousTitre: `${LIBELLE_SESSION_DELIBERATION[d.session]} · ${d.annee?.libelle ?? ''}`,
-    meta: `${(d as any)._count?.lignes ?? 0} étudiant(s) · créée le ${dateLisible(d.creeLe)}`,
-    badge: d.statut === 'VALIDEE'
-      ? (d.session === 'NORMALE' ? 'Validée' : 'Soutenue')
-      : (d.session === 'RATTRAPAGE' ? 'À reprendre' : 'Brouillon'),
+    meta: `${d._count?.lignes ?? 0} étudiant(s) · créée le ${dateLisible(d.creeLe)}`,
+    badge: LIBELLE_STATUT_DELIBERATION[d.statut] ?? d.statut,
     couleur: d.statut === 'VALIDEE' ? 'positive' : 'warning',
     actions: [
-      {
-        label: 'Calculer',
-        icone: 'replay',
-        couleur: 'primary',
-        onClick: () => peutSaisir() && calculer(d),
-      },
-      ...(d.statut === 'BROUILLON' && estJury()
-        ? [{
-            label: 'Valider',
-            icone: 'verified_user',
-            couleur: 'positive',
-            onClick: () => valider(d),
-          }]
+      ...(d.statut === 'BROUILLON' && peutSaisir.value
+        ? [{ label: 'Recalculer', icone: 'replay', couleur: 'primary', onClick: () => calculer(d) }]
         : []),
-      {
-        label: 'Bulletins',
-        icone: 'picture_as_pdf',
-        onClick: () => allerBulletins(d),
-      },
+      ...(d.statut === 'BROUILLON' && estJury.value
+        ? [{ label: 'Valider', icone: 'verified_user', couleur: 'positive', onClick: () => valider(d) }]
+        : []),
+      { label: 'Bulletins', icone: 'school', couleur: 'primary', onClick: () => allerBulletins(d) },
+      { label: 'PV', icone: 'print', couleur: 'primary', onClick: () => imprimerPv(d) },
     ],
     onClick: () => ouvrirDetail(d),
   });
 
   return [
-    {
-      identifiant: 'PROPOSE',
-      titre: 'Proposées (brouillon)',
-      couleur: '#EFB700',
-      cartes: parColonne.PROPOSE.map(cartes),
-    },
-    {
-      identifiant: 'VALIDE',
-      titre: 'Validées (jury)',
-      couleur: '#0F7A45',
-      cartes: parColonne.VALIDE.map(cartes),
-    },
-    {
-      identifiant: 'SOUTENU',
-      titre: 'Soutenues (rattrapage validé)',
-      couleur: '#3E9E6C',
-      cartes: parColonne.SOUTENU.map(cartes),
-    },
-    {
-      identifiant: 'ABANDONNE',
-      titre: 'Abandonnées',
-      couleur: '#C4122E',
-      cartes: parColonne.ABANDONNE.map(cartes),
-    },
+    { identifiant: 'PROPOSE', titre: 'Proposées (brouillon)', couleur: '#EFB700', cartes: parColonne.PROPOSE.map(carte) },
+    { identifiant: 'VALIDE', titre: 'Validées (jury)', couleur: '#0F7A45', cartes: parColonne.VALIDE.map(carte) },
+    { identifiant: 'SOUTENU', titre: 'Rattrapages validés', couleur: '#3E9E6C', cartes: parColonne.SOUTENU.map(carte) },
+    { identifiant: 'ABANDONNE', titre: 'Rattrapages en attente', couleur: '#C4122E', cartes: parColonne.ABANDONNE.map(carte) },
   ];
 });
 
-function bucketDeliberation(d: Deliberation): string {
-  if (d.session === 'RATTRAPAGE' && d.statut === 'VALIDEE') return 'SOUTENU';
-  if (d.session === 'RATTRAPAGE' && d.statut === 'BROUILLON') return 'ABANDONNE';
-  if (d.statut === 'VALIDEE') return 'VALIDE';
-  return 'PROPOSE';
+function bucketDeliberation(d: DeliberationListe): string {
+  if (d.session === 'RATTRAPAGE') return d.statut === 'VALIDEE' ? 'SOUTENU' : 'ABANDONNE';
+  return d.statut === 'VALIDEE' ? 'VALIDE' : 'PROPOSE';
 }
 
 function couleurDecision(d: string): string {
@@ -410,25 +493,35 @@ function urlToken(chemin: string) {
   return `${API_URL}${chemin}${chemin.includes('?') ? '&' : '?'}token=${auth.token}`;
 }
 
-function imprimerPv(d: Deliberation | null) {
+function imprimerPv(d: DeliberationListe | null) {
   if (!d) return;
   window.open(urlToken(`/deliberations/${d.id}/imprimer`), '_blank');
 }
 
 function imprimerBulletin(l: DeliberationLigne) {
   if (!detail.value) return;
-  window.open(
-    urlToken(`/deliberations/${detail.value.id}/releve/${l.inscriptionId}`),
-    '_blank',
-  );
+  window.open(urlToken(`/deliberations/${detail.value.id}/releve/${l.inscriptionId}`), '_blank');
 }
 
-function ouvrirDetail(d: Deliberation) {
+/**
+ * La liste ne renvoie pas les lignes : le détail est rechargé sur l'identifiant
+ * pour afficher les décisions individuelles réelles.
+ */
+async function ouvrirDetail(d: DeliberationListe) {
   detail.value = d;
   dialogDetail.value = true;
+  chargementDetail.value = true;
+  try {
+    const { data } = await api.get(`/deliberations/${d.id}`);
+    detail.value = data;
+  } catch (e: any) {
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Détail indisponible' });
+  } finally {
+    chargementDetail.value = false;
+  }
 }
 
-function calculer(d: Deliberation) {
+function calculer(d: DeliberationListe) {
   $q.dialog({
     title: 'Recalculer la délibération',
     message:
@@ -436,13 +529,17 @@ function calculer(d: Deliberation) {
     cancel: true,
     ok: { color: 'primary', label: 'Recalculer', unelevated: true, noCaps: true },
   }).onOk(async () => {
-    await api.post(`/deliberations/${d.id}/calculer`);
-    $q.notify({ type: 'positive', message: 'Délibération recalculée' });
-    await charger();
+    try {
+      await api.post(`/deliberations/${d.id}/calculer`);
+      $q.notify({ type: 'positive', message: 'Délibération recalculée' });
+      await charger();
+    } catch (e: any) {
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Recalcul impossible' });
+    }
   });
 }
 
-function valider(d: Deliberation) {
+function valider(d: DeliberationListe) {
   $q.dialog({
     title: 'Valider les résultats du jury',
     html: true,
@@ -453,58 +550,40 @@ function valider(d: Deliberation) {
         <li>DÉFAILLANT si une matière n’a aucune note à une épreuve clôturée ;</li>
         <li>AJOURNÉ sinon — en rattrapage, seuls les AJOURNÉ sont repositionnés.</li>
       </ul>
-      <p><strong>Après validation, tout recalcul sera bloqué.</strong> Continuer ?</p>`,
-    cancel: true,
+      <p><strong>Après validation, tout recalcul sera bloqué et les bulletins deviendront officiels.</strong> Continuer ?</p>`,
+    cancel: { flat: true, label: 'Revenir', noCaps: true },
     ok: { color: 'positive', label: 'Valider le jury', unelevated: true, noCaps: true },
   }).onOk(async () => {
-    await api.post(`/deliberations/${d.id}/valider`);
-    $q.notify({ type: 'positive', message: 'Délibération validée par le jury' });
-    await charger();
+    try {
+      await api.post(`/deliberations/${d.id}/valider`);
+      $q.notify({ type: 'positive', message: 'Délibération validée par le jury' });
+      await charger();
+    } catch (e: any) {
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Validation impossible' });
+    }
   });
 }
 
-function allerBulletins(d: Deliberation) {
-  // Délégué au routeur de BulletinsPage via une redirection HTML : on préfère
-  // ouvrir dans un nouvel onglet pour ne pas perdre la vue courante.
-  window.open(`/bulletins?promotionId=${d.promotionId}&anneeId=${d.anneeId}`, '_blank');
+/** Délibération → bulletins : la page Bulletins s'ouvre sur la même promotion. */
+function allerBulletins(d: DeliberationListe | null) {
+  void router.push({
+    name: 'bulletins',
+    query: d
+      ? { anneeId: d.anneeId, promotionId: d.promotionId, session: d.session }
+      : {},
+  });
 }
 
 async function charger() {
   chargement.value = true;
   try {
     const { data } = await api.get('/deliberations', {
-      params: {
-        all: '1',
-        page: page.value,
-        pageSize: pageSize.value,
-        anneeId: filtres.value.anneeId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        session: filtres.value.session || undefined,
-        search: filtres.value.recherche || undefined,
-      },
+      params: { all: '1', anneeId: filtres.value.anneeId || undefined },
     });
     deliberations.value = data.data ?? [];
-    total.value = data.total ?? deliberations.value.length;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/deliberations', {
-      params: {
-        all: '1',
-        pageSize: 1000,
-        anneeId: filtres.value.anneeId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        session: filtres.value.session || undefined,
-      },
-    });
-    deliberations.value = data.data ?? [];
-    total.value = deliberations.value.length;
-    tousLesElements.value = true;
+  } catch (e: any) {
+    deliberations.value = [];
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des délibérations impossible' });
   } finally {
     chargement.value = false;
   }
@@ -513,16 +592,17 @@ async function chargerTout() {
 function reinitialiser() {
   filtres.value = {};
   page.value = 1;
-  tousLesElements.value = false;
   charger();
 }
 
+watch(() => filtres.value.anneeId, () => {
+  page.value = 1;
+  charger();
+});
 watch(
-  () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session, filtres.value.recherche],
+  () => [filtres.value.promotionId, filtres.value.session, filtres.value.statut, filtres.value.recherche],
   () => {
     page.value = 1;
-    tousLesElements.value = false;
-    charger();
   },
 );
 
@@ -538,3 +618,6 @@ onMounted(async () => {
   await charger();
 });
 </script>
+
+<style scoped lang="scss">
+</style>

@@ -33,8 +33,8 @@
       <h2 class="lettrage acces__titre">Déposer mon dossier</h2>
 
       <!-- Indicateur d'étape -->
-      <div class="acces__etapes">
-        <div
+      <ol class="acces__etapes" aria-label="Étapes de la préinscription">
+        <li
           v-for="(e, i) in libellesEtapes"
           :key="i"
           class="acces__etape"
@@ -42,23 +42,29 @@
             'acces__etape--actif': etape === i + 1,
             'acces__etape--fait': etape > i + 1,
           }"
+          :aria-current="etape === i + 1 ? 'step' : undefined"
         >
-          <span class="acces__etape-num">{{ i + 1 }}</span>
+          <span class="acces__etape-num chiffres">{{ i + 1 }}</span>
           <span class="acces__etape-label">{{ e }}</span>
-        </div>
-      </div>
+        </li>
+      </ol>
 
       <!-- Étape 1 : identité -->
-      <form v-if="etape === 1" class="acces__form" @submit.prevent="continuerEtape1">
+      <q-form v-if="etape === 1" class="acces__form" @submit.prevent="continuerEtape1">
         <span class="section-titre">Identité du candidat</span>
+        <p class="pochoir acces__aide">
+          Les champs marqués d'une étoile sont obligatoires. Le reste peut être
+          complété plus tard à la scolarité.
+        </p>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-input
               v-model="form.nom"
               outlined
               dense
+              autocomplete="family-name"
               label="Nom *"
-              :rules="[(v) => !!v?.trim() || 'Nom obligatoire']"
+              :rules="[(v) => !!v?.trim() || 'Le nom est obligatoire']"
               lazy-rules
             />
           </div>
@@ -67,8 +73,9 @@
               v-model="form.prenom"
               outlined
               dense
+              autocomplete="given-name"
               label="Prénom *"
-              :rules="[(v) => !!v?.trim() || 'Prénom obligatoire']"
+              :rules="[(v) => !!v?.trim() || 'Le prénom est obligatoire']"
               lazy-rules
             />
           </div>
@@ -78,7 +85,9 @@
           <div class="col-12 col-sm-4">
             <q-select
               v-model="form.sexe"
-              :options="['M', 'F']"
+              :options="OPTIONS_SEXE"
+              emit-value
+              map-options
               outlined
               dense
               clearable
@@ -99,11 +108,15 @@
               v-model="form.telephone"
               outlined
               dense
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
               label="Téléphone *"
               placeholder="622 00 00 00"
+              hint="C'est ce numéro qui recevra le code d'accès à votre espace"
               :rules="[
-                (v) => !!v?.trim() || 'Téléphone obligatoire',
-                (v) => !v || v.replace(/\D/g, '').length >= 8 || 'Au moins 8 chiffres',
+                (v) => !!v?.trim() || 'Le téléphone est obligatoire',
+                (v) => !v || v.replace(/\D/g, '').length >= 8 || 'Le numéro doit comporter au moins 8 chiffres',
               ]"
               lazy-rules
             />
@@ -117,22 +130,24 @@
               outlined
               dense
               type="email"
+              autocomplete="email"
               label="Adresse e-mail"
               :rules="[
-                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'E-mail invalide',
+                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Adresse e-mail invalide',
               ]"
               lazy-rules
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.adresse" outlined dense label="Adresse" />
+            <q-input
+              v-model="form.adresse"
+              outlined
+              dense
+              autocomplete="street-address"
+              label="Adresse"
+            />
           </div>
         </div>
-
-        <q-banner v-if="erreurValidation" class="note--erreur">
-          <template #avatar><q-icon name="error" /></template>
-          {{ erreurValidation }}
-        </q-banner>
 
         <q-btn
           type="submit"
@@ -143,10 +158,10 @@
           no-caps
           label="Continuer — choisir ma filière"
         />
-      </form>
+      </q-form>
 
       <!-- Étape 2 : promotion -->
-      <form v-else-if="etape === 2" class="acces__form" @submit.prevent="deposer">
+      <q-form v-else-if="etape === 2" class="acces__form" @submit.prevent="deposer">
         <span class="section-titre">Choix de la promotion</span>
         <q-banner v-if="chargementAnnees" class="note--info">
           <template #avatar><q-spinner size="20px" /></template>
@@ -185,20 +200,23 @@
           </div>
         </template>
 
-        <q-banner v-if="messageDepotErreur" class="note--erreur">
+        <q-banner v-if="messageDepotErreur" class="note--erreur" role="alert" aria-live="assertive">
           <template #avatar><q-icon name="error" /></template>
           {{ messageDepotErreur }}
         </q-banner>
 
+        <p v-if="!chargementAnnees && !form.promotionId" class="pochoir acces__aide">
+          Choisissez votre promotion pour pouvoir déposer votre dossier.
+        </p>
+
         <div class="row q-col-gutter-sm">
           <div class="col-6">
             <q-btn
-              flat
               outline
-              class="full-width"
+              class="full-width acces__bouton"
               size="lg"
-              unelevated
               no-caps
+              icon="chevron_left"
               label="Retour"
               @click="etape = 1"
             />
@@ -207,7 +225,7 @@
             <q-btn
               type="submit"
               color="primary"
-              class="full-width"
+              class="full-width acces__bouton"
               size="lg"
               unelevated
               no-caps
@@ -217,7 +235,7 @@
             />
           </div>
         </div>
-      </form>
+      </q-form>
 
       <!-- Étape 3 : dossier déposé -->
       <div v-else class="acces__resultat">
@@ -227,7 +245,10 @@
         </div>
 
         <p class="pochoir acces__resultat-ref">N° de dossier</p>
-        <p class="lettrage chiffres acces__resultat-numero">{{ resultat.numero }}</p>
+        <p class="lettrage chiffres acces__resultat-numero">{{ resultat?.numero }}</p>
+        <p class="pochoir acces__aide">
+          Notez ce numéro : il vous sera demandé à la scolarité et pour tout suivi.
+        </p>
 
         <div class="plaque acces__resultat-montant">
           <div class="text-caption acces__resultat-libelle">Frais d'inscription à régler</div>
@@ -239,9 +260,11 @@
         <p class="acces__resultat-message">
           Envoyez
           <strong class="chiffres">{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong>
-          au <strong>{{ NUMERO_COURT_MM }}</strong> par Mobile Money, en mentionnant
-          la référence <strong>{{ resultat.numero }}</strong> en motivation. Dès
-          réception du paiement, la scolarité validera votre inscription.
+          au <strong class="chiffres">{{ NUMERO_COURT_MM }}</strong> par Mobile Money, en
+          mentionnant la référence <strong>{{ resultat?.numero }}</strong> en motif. Dès
+          réception du paiement, la scolarité validera votre inscription. Vous
+          accéderez ensuite à votre espace avec un code envoyé par SMS au
+          numéro que vous avez indiqué.
         </p>
 
         <q-banner v-if="resultat?.avertissement" class="note--alerte">
@@ -249,16 +272,63 @@
           {{ resultat.avertissement }}
         </q-banner>
 
-        <q-btn
-          color="primary"
-          class="full-width acces__bouton"
-          size="lg"
-          unelevated
-          no-caps
-          label="Préinscrire un autre candidat"
-          @click="recommencer"
-        />
+        <div class="acces__resultat-actions">
+          <q-btn
+            color="primary"
+            class="acces__bouton"
+            size="lg"
+            unelevated
+            no-caps
+            icon="print"
+            label="Imprimer ce récépissé"
+            @click="imprimerRecepisse"
+          />
+          <q-btn
+            outline
+            class="acces__bouton"
+            size="lg"
+            no-caps
+            icon="person_add"
+            label="Préinscrire un autre candidat"
+            @click="recommencer"
+          />
+        </div>
+
+        <p class="pochoir acces__resultat-lien">
+          Une fois votre inscription validée :
+          <router-link to="/portail-connexion" class="acces__lien-lien">
+            entrez dans votre espace étudiant →
+          </router-link>
+        </p>
       </div>
+
+      <q-separator class="acces__separateur" />
+
+      <nav class="acces__services" aria-label="Autres services publics">
+        <p class="pochoir acces__services-titre">Autres services</p>
+        <ul class="acces__liens">
+          <li>
+            <router-link to="/portail-connexion" class="acces__lien-lien">
+              Portail étudiant (connexion par SMS) →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/formations" class="acces__lien-lien">
+              Formation continue →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/bibliotheque" class="acces__lien-lien">
+              Bibliothèque numérique →
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/connexion" class="acces__lien-lien">
+              Connexion du personnel →
+            </router-link>
+          </li>
+        </ul>
+      </nav>
     </section>
   </q-page>
 </template>
@@ -300,15 +370,17 @@ interface ResultatDepot {
 
 const libellesEtapes = ['Identité', 'Filière', 'Confirmation'];
 
+const OPTIONS_SEXE = [
+  { value: 'M', label: 'Masculin' },
+  { value: 'F', label: 'Féminin' },
+];
+
 const etape = ref(1);
 const depotEnCours = ref(false);
-const erreurValidation = ref('');
 const messageDepotErreur = ref('');
 const resultat = ref<ResultatDepot | null>(null);
 
 const annees = ref<AnneeAcademique[]>([]);
-const promotions = ref<PromotionOuverte[]>([]);
-const promotionsFiltrees = ref<PromotionOuverte[]>([]);
 const chargementAnnees = ref(true);
 
 const form = ref({
@@ -384,25 +456,15 @@ async function chargerAnnees() {
       form.value.anneeId =
         annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
     }
-    if (form.value.anneeId) await chargerPromotions();
   } finally {
     chargementAnnees.value = false;
   }
 }
 
-async function chargerPromotions() {
-  promotions.value = [];
-  promotionsFiltrees.value = [];
-  if (!form.value.anneeId) return;
-  const { data } = await api.get(`/inscription-publique/annees/${form.value.anneeId}/promotions`);
-  promotions.value = Array.isArray(data) ? data : [];
-  promotionsFiltrees.value = promotions.value;
-}
-
-async function onAnneeChange() {
+/** Changer d'année remet la promotion à zéro : les tarifs en dépendent. */
+function onAnneeChange() {
   form.value.promotionId = '';
   tarifCourant.value = null;
-  await chargerPromotions();
 }
 
 async function onPromotionChange() {
@@ -424,33 +486,11 @@ async function onPromotionChange() {
   }
 }
 
-function validerEtape1(): boolean {
-  erreurValidation.value = '';
-  if (!form.value.nom.trim()) {
-    erreurValidation.value = 'Le nom est obligatoire';
-    return false;
-  }
-  if (!form.value.prenom.trim()) {
-    erreurValidation.value = 'Le prénom est obligatoire';
-    return false;
-  }
-  if (!form.value.telephone.trim()) {
-    erreurValidation.value = 'Le téléphone est obligatoire';
-    return false;
-  }
-  if (form.value.telephone.replace(/\D/g, '').length < 8) {
-    erreurValidation.value = 'Le téléphone doit comporter au moins 8 chiffres';
-    return false;
-  }
-  if (form.value.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.value.email)) {
-    erreurValidation.value = 'L\'adresse e-mail est invalide';
-    return false;
-  }
-  return true;
-}
-
+/**
+ * `q-form` a déjà validé chaque champ (les règles portées par les q-input)
+ * avant d'émettre `submit` : il ne reste qu'à passer au choix de la filière.
+ */
 function continuerEtape1() {
-  if (!validerEtape1()) return;
   etape.value = 2;
 }
 
@@ -481,6 +521,11 @@ async function deposer() {
   }
 }
 
+/** Le récépissé se conserve : l'impression du navigateur suffit, sans serveur. */
+function imprimerRecepisse() {
+  window.print();
+}
+
 function recommencer() {
   form.value = {
     nom: '',
@@ -496,10 +541,8 @@ function recommencer() {
   };
   resultat.value = null;
   messageDepotErreur.value = '';
-  erreurValidation.value = '';
   tarifCourant.value = null;
   oublierBrouillon();
-  void chargerPromotions();
   etape.value = 1;
 }
 
@@ -514,27 +557,19 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use '../css/mixins' as *;
+
 .acces {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   min-height: 100vh;
   background: var(--up-chaux);
+  position: relative;
 }
 
 // -------------------------------------------------------------- enseigne
 .enseigne {
-  background: $encre;
-  color: $blanc-craie;
-  padding: var(--up-6) var(--up-5);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--up-4);
-  background-image: repeating-linear-gradient(
-    92deg,
-    rgba(255, 255, 255, 0.045) 0 2px,
-    rgba(255, 255, 255, 0) 2px 5px
-  );
+  @include enseignePlaque;
 }
 
 .enseigne__bandes {
@@ -542,11 +577,6 @@ onMounted(() => {
   height: 14px;
   max-width: 320px;
 }
-
-.bande { flex: 1; }
-.bande--rouge { background: $rouge; }
-.bande--jaune { background: $jaune; }
-.bande--vert { background: $vert; }
 
 .enseigne__sur-titre {
   color: rgba(250, 250, 247, 0.6);
@@ -597,8 +627,11 @@ onMounted(() => {
 
 .acces__etapes {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--up-2);
-  margin-bottom: var(--up-4);
+  margin: 0 0 var(--up-4);
+  padding: 0;
+  list-style: none;
 }
 
 .acces__etape {
@@ -641,6 +674,11 @@ onMounted(() => {
 .acces__form {
   display: grid;
   gap: var(--up-3);
+}
+
+.acces__aide {
+  color: var(--up-encre-douce);
+  margin: -4px 0 0;
 }
 
 .acces__bouton { min-height: 56px; }
@@ -711,6 +749,48 @@ onMounted(() => {
   line-height: 1.55;
   margin: 0;
   max-width: 46ch;
+}
+
+.acces__resultat-actions {
+  display: grid;
+  gap: var(--up-2);
+}
+
+.acces__resultat-lien { margin: 0; }
+
+// -------------------------------------------------------- autres services
+.acces__separateur { margin: var(--up-4) 0 var(--up-3); }
+
+.acces__services-titre {
+  margin: 0 0 var(--up-2);
+  color: var(--up-encre-douce);
+}
+
+.acces__liens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--up-1);
+  font-size: 0.9rem;
+}
+
+.acces__lien-lien {
+  color: var(--up-encre-douce);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
+}
+
+// À l'impression du récépissé, seule la plaque du dossier a du sens.
+@media print {
+  .enseigne,
+  .acces__services,
+  .acces__separateur,
+  .acces__resultat-actions { display: none; }
+
+  .acces { display: block; background: #fff; }
 }
 
 @media (max-width: 1023px) {

@@ -3,10 +3,10 @@ import { Body, Controller, Delete, Get, Injectable, Param, Post, Put, Query } fr
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Niveau, Role } from '@prisma/client';
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
-import { Roles } from '../../common/decorators';
+import { Public, Roles } from '../../common/decorators';
 
 const GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
 
@@ -28,6 +28,14 @@ export class DepartementsService extends CrudService {
       label: 'Département',
     });
   }
+
+  /** Un département qui porte encore des enseignants ou des filières se garde. */
+  async remove(id: string) {
+    return supprimerOuConflit(
+      () => super.remove(id),
+      'Ce département ne peut pas être supprimé : des enseignants ou des filières y sont encore rattachés. Réaffectez-les d’abord.',
+    );
+  }
 }
 
 @ApiTags('Départements')
@@ -36,6 +44,7 @@ export class DepartementsService extends CrudService {
 export class DepartementsController {
   constructor(private readonly service: DepartementsService) {}
 
+  @Public()
   @Get() findAll(@Query() query: QueryDto) {
     return this.service.findAll(query);
   }
@@ -77,6 +86,14 @@ export class FilieresService extends CrudService {
       include: { departement: true },
       label: 'Filière',
     });
+  }
+
+  /** Une filière qui porte encore des promotions se garde. */
+  async remove(id: string) {
+    return supprimerOuConflit(
+      () => super.remove(id),
+      'Cette filière ne peut pas être supprimée : des promotions y sont encore rattachées. Supprimez ou réaffectez-les d’abord.',
+    );
   }
 }
 
@@ -134,6 +151,14 @@ export class PromotionsService extends CrudService {
       include: { filiere: { include: { departement: true } }, annee: true },
       label: 'Promotion',
     });
+  }
+
+  /** Une promotion qui porte encore inscriptions, affectations ou frais se garde. */
+  async remove(id: string) {
+    return supprimerOuConflit(
+      () => super.remove(id),
+      'Cette promotion ne peut pas être supprimée : des données y sont rattachées (inscriptions, affectations, frais…). Traitez-les d’abord.',
+    );
   }
 }
 

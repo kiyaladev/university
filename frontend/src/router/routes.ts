@@ -84,6 +84,31 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    path: '/verification-carte',
+    component: () => import('layouts/AuthLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'verification-carte',
+        component: () => import('pages/VerificationCartePage.vue'),
+        meta: { public: true, titre: 'Vérification de carte étudiante' },
+      },
+    ],
+  },
+  {
+    /** Destination du QR imprimé sur les badges d'accès (voir badges.service). */
+    path: '/verification-badge',
+    component: () => import('layouts/AuthLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'verification-badge',
+        component: () => import('pages/VerificationBadgePage.vue'),
+        meta: { public: true, titre: 'Vérification de badge d’accès' },
+      },
+    ],
+  },
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
@@ -91,7 +116,11 @@ const routes: RouteRecordRaw[] = [
         path: '',
         name: 'tableau-de-bord',
         component: () => import('pages/DashboardPage.vue'),
-        meta: { titre: 'Tableau de bord' },
+        /** Registre de contrôle : l'étudiant est renvoyé vers son espace (voir la garde). */
+        meta: {
+          titre: 'Tableau de bord',
+          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
+        },
       },
       {
         path: 'controle',
@@ -103,23 +132,43 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        /** Registre de travail du personnel : on y pointe et on y programme. */
         path: 'seances',
         name: 'seances',
         component: () => import('pages/SeancesPage.vue'),
-        meta: { titre: 'Séances' },
+        meta: {
+          titre: 'Séances',
+          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
+        },
       },
       {
+        /**
+         * Seul écran de la partie connectée ouvert à tous les rôles, étudiants
+         * compris : le tableau des créneaux se lit, il ne se modifie qu'avec
+         * les droits de planification (contrôlés dans la page elle-même).
+         */
         path: 'emploi-du-temps',
         name: 'emploi-du-temps',
         component: () => import('pages/EmploiDuTempsPage.vue'),
-        meta: { titre: 'Emploi du temps' },
+        meta: {
+          titre: 'Emploi du temps',
+          roles: [
+            'ADMIN',
+            'DIRECTION',
+            'SCOLARITE',
+            'CHEF_DEPARTEMENT',
+            'CONTROLEUR',
+            'ENSEIGNANT',
+            'ETUDIANT',
+          ],
+        },
       },
       {
         path: 'affectations',
         name: 'affectations',
         component: () => import('pages/AffectationsPage.vue'),
         meta: {
-          titre: "Charges d'enseignement",
+          titre: 'Charges d’enseignement',
           roles: ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'],
         },
       },
@@ -148,13 +197,20 @@ const routes: RouteRecordRaw[] = [
         path: 'salles',
         name: 'salles',
         component: () => import('pages/SallesPage.vue'),
-        meta: { titre: 'Salles', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'] },
+        meta: { titre: 'Salles & QR', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'] },
       },
       {
+        /**
+         * L'enseignant dépose, la scolarité enregistre, la direction arbitre :
+         * le contrôleur constate mais n'instruit pas, l'étudiant n'y figure pas.
+         */
         path: 'justificatifs',
         name: 'justificatifs',
         component: () => import('pages/JustificatifsPage.vue'),
-        meta: { titre: 'Justificatifs d’absence' },
+        meta: {
+          titre: 'Justificatifs d’absence',
+          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'ENSEIGNANT'],
+        },
       },
       {
         path: 'statistiques',
@@ -226,7 +282,7 @@ const routes: RouteRecordRaw[] = [
         path: 'deliberations',
         name: 'deliberations',
         component: () => import('pages/DeliberationsPage.vue'),
-        meta: { titre: 'Délibérations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: { titre: 'Délibérations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
       },
       {
         path: 'attestations',
@@ -292,7 +348,7 @@ const routes: RouteRecordRaw[] = [
         path: 'reservations',
         name: 'reservations',
         component: () => import('pages/ReservationsPage.vue'),
-        meta: { titre: 'Salles & réservations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'] },
+        meta: { titre: 'Réservations de salles', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'] },
       },
       {
         path: 'stages',
@@ -352,7 +408,7 @@ const routes: RouteRecordRaw[] = [
         path: 'tirage',
         name: 'tirage',
         component: () => import('pages/TiragePage.vue'),
-        meta: { titre: 'Tirage sécurisé des épreuves', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: { titre: 'Tirage des épreuves', roles: ['ADMIN', 'SCOLARITE'] },
       },
       {
         path: 'recettes',
@@ -412,13 +468,25 @@ const routes: RouteRecordRaw[] = [
         path: 'vod',
         name: 'vod',
         component: () => import('pages/VodPage.vue'),
-        meta: { titre: 'VOD des cours' },
+        /**
+         * L'étudiant y entre en lecture seule : la page bascule alors sur
+         * `/vod/ma-collecte`, l'endpoint que le backend lui réserve. Sans cette
+         * ouverture, il pouvait lire une vidéo dont on lui donnait le lien mais
+         * n'avait aucun catalogue où la trouver.
+         */
+        meta: {
+          titre: 'VOD des cours',
+          roles: ['ENSEIGNANT', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
+        },
       },
       {
         path: 'vod/lecteur/:id',
         name: 'vod-lecteur',
         component: () => import('pages/VodLecteurPage.vue'),
-        meta: { titre: 'Lecteur VOD' },
+        meta: {
+          titre: 'Lecteur VOD',
+          roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
+        },
       },
       {
         path: 'elections',
@@ -435,9 +503,15 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
+    /**
+     * Volontairement sans enveloppe : la page se suffit à elle-même et propose
+     * une sortie adaptée au visiteur comme au personnel connecté. L'envelopper
+     * dans `AuthLayout` afficherait la barre des services publics à un agent
+     * déjà connecté, qui n'en a que faire.
+     */
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),
-    meta: { public: true },
+    meta: { public: true, titre: 'Page introuvable' },
   },
 ];
 

@@ -64,42 +64,47 @@
         />
 
         <span class="section-titre">Matricule</span>
-        <div class="row q-col-gutter-md items-center">
-          <div class="col-12 col-sm-8">
-            <q-input
-              v-model="form.matricule"
-              outlined
-              dense
-              label="Matricule"
-              :hint="etudiant ? 'Vide = conserver le matricule existant' : 'Laissez vide pour générer automatiquement'"
-            >
-              <template #prepend><q-icon name="badge" /></template>
-            </q-input>
-          </div>
-          <div class="col-12 col-sm-4">
-            <q-btn
-              outline
-              color="primary"
-              no-caps
-              icon="auto_fix_high"
-              label="Générer"
-              class="full-width"
-              :loading="generationMatricule"
-              :disable="!!etudiant"
-              @click="genererMatricule"
-            />
-          </div>
-        </div>
+        <!--
+          Le matricule (INE « 2026-0004 ») est attribué par le registre à la
+          création et ne se modifie pas : on l'affiche, on ne le saisit pas.
+        -->
+        <q-input
+          :model-value="etudiant?.matricule ?? 'Attribué à l’enregistrement'"
+          outlined
+          dense
+          readonly
+          label="Matricule (INE)"
+          :hint="
+            etudiant
+              ? 'Attribué par le registre, non modifiable'
+              : 'Numéro séquentiel généré automatiquement à l’enregistrement'
+          "
+        >
+          <template #prepend><q-icon name="badge" /></template>
+        </q-input>
 
-        <span class="section-titre">Promotion actuelle</span>
-        <autocomplete-async
-          v-model="form.promotionActuelleId"
-          endpoint="/promotions"
-          :label-fn="(p) => p.nom"
-          label="Promotion actuelle (optionnel)"
-          placeholder="Filière / niveau de l'étudiant"
-          clearable
-        />
+        <span class="section-titre">Promotion</span>
+        <!--
+          La promotion se porte par un dossier d'inscription, jamais par la
+          fiche : on renvoie vers l'écran qui en a la charge.
+        -->
+        <div class="plaque etudiant-dialog__renvoi">
+          <div class="text-caption">
+            <template v-if="promotionActuelle">
+              Promotion actuelle : <strong>{{ promotionActuelle }}</strong>.
+            </template>
+            <template v-else>Aucune inscription : l’étudiant n’est rattaché à aucune promotion.</template>
+            La promotion se change en ouvrant un dossier d’inscription.
+          </div>
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="how_to_reg"
+            :label="etudiant ? 'Voir ses inscriptions' : 'Ouvrir les inscriptions'"
+            @click="allerAuxInscriptions"
+          />
+        </div>
 
         <span class="section-titre">Compte portail</span>
         <q-toggle
@@ -154,14 +159,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
-import AutocompleteAsync from './AutocompleteAsync.vue';
-import type { Etudiant } from '../types';
+import type { Etudiant, Promotion } from '../types';
 
 interface EtudiantAvecInscriptions extends Etudiant {
-  inscriptions?: { promotionId?: string }[];
+  inscriptions?: { promotionId?: string; promotion?: Promotion | null }[];
 }
 
 const props = defineProps<{
@@ -171,13 +176,24 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const router = useRouter();
 const enregistrement = ref(false);
-const generationMatricule = ref(false);
 
-const PREFIXE_MATRICULE = `${new Date().getFullYear()}-`;
+/** Promotion portée par le dernier dossier — lecture seule, pour information. */
+const promotionActuelle = computed(() => {
+  const e = props.etudiant as EtudiantAvecInscriptions | null;
+  return e?.inscriptions?.[0]?.promotion?.nom ?? null;
+});
+
+function allerAuxInscriptions() {
+  emit('update:modelValue', false);
+  void router.push({
+    path: '/inscriptions',
+    ...(props.etudiant ? { query: { etudiant: props.etudiant.id } } : {}),
+  });
+}
 
 const form = ref({
-  matricule: '',
   nom: '',
   prenom: '',
   sexe: null as string | null,
@@ -187,7 +203,6 @@ const form = ref({
   email: '',
   adresse: '',
   actif: true,
-  promotionActuelleId: null as string | null,
   creerCompte: false,
   emailCompte: '',
   motDePasse: '',
@@ -202,9 +217,7 @@ watch(
   (ouvert) => {
     if (!ouvert) return;
     const e = props.etudiant as EtudiantAvecInscriptions | null;
-    const derniere = e?.inscriptions?.[0] ?? null;
     form.value = {
-      matricule: e?.matricule ?? '',
       nom: e?.nom ?? '',
       prenom: e?.prenom ?? '',
       sexe: e?.sexe ?? null,
@@ -214,7 +227,6 @@ watch(
       email: e?.email ?? '',
       adresse: e?.adresse ?? '',
       actif: e?.actif ?? true,
-      promotionActuelleId: derniere?.promotionId ?? null,
       creerCompte: false,
       emailCompte: '',
       motDePasse: '',
@@ -222,53 +234,11 @@ watch(
   },
 );
 
-/**
- * Génère un matricule. Tente d'abord l'endpoint `/etudiants/prochain-matricule`
- * (utile si l'université l'active); sinon, retombe sur une lecture locale des
- * matricules déjà chargés.
- */
-async function genererMatricule() {
-  generationMatricule.value = true;
-  try {
-    try {
-      const { data } = await api.get('/etudiants/prochain-matricule');
-      const m = typeof data === 'string' ? data : data?.matricule;
-      if (m) {
-        form.value.matricule = String(m);
-        return;
-      }
-    } catch {
-      /* endpoint absent : on retombe sur le calcul local */
-    }
-    form.value.matricule = await prochainMatriculeLocal();
-  } finally {
-    generationMatricule.value = false;
-  }
-}
-
-/** Calcule un matricule « AAAA-NNNN » à partir des étudiants déjà connus. */
-async function prochainMatriculeLocal(): Promise<string> {
-  try {
-    const { data } = await api.get('/etudiants', { params: { all: '1', pageSize: 1000 } });
-    const liste: Etudiant[] = Array.isArray(data) ? data : data?.data ?? [];
-    const existants = liste
-      .map((e) => e.matricule)
-      .filter((m) => m?.startsWith(PREFIXE_MATRICULE))
-      .map((m) => Number(m.slice(PREFIXE_MATRICULE.length)))
-      .filter((n) => Number.isFinite(n));
-    const next = (existants.length ? Math.max(...existants) : 0) + 1;
-    return `${PREFIXE_MATRICULE}${String(next).padStart(4, '0')}`;
-  } catch {
-    return `${PREFIXE_MATRICULE}0001`;
-  }
-}
-
 async function enregistrer() {
   if (!formulaireValide.value) return;
   enregistrement.value = true;
   try {
     const payload: Record<string, unknown> = {
-      matricule: form.value.matricule || undefined,
       nom: form.value.nom,
       prenom: form.value.prenom,
       sexe: form.value.sexe ?? undefined,
@@ -294,3 +264,15 @@ async function enregistrer() {
   }
 }
 </script>
+
+<style scoped lang="scss">
+// Renvoi vers l'écran qui porte réellement la donnée.
+.etudiant-dialog__renvoi {
+  padding: var(--up-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--up-3);
+  flex-wrap: wrap;
+}
+</style>

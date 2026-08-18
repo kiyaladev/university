@@ -18,7 +18,46 @@
       </div>
     </div>
 
+    <filter-bar
+      v-model="filtres"
+      :chips="chips"
+      placeholder="Rechercher (matricule, nom, e-mail)…"
+      @reinitialiser="reinitialiser"
+    >
+      <template #avances>
+        <q-select
+          v-model="filtres.departementId"
+          :options="optionsDepartements"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Département"
+        />
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          label="Statut"
+        />
+      </template>
+      <template #actions>
+        <view-toggle
+          cle="enseignants"
+          :modes="['tableau', 'cartes']"
+          defaut="tableau"
+          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
+        />
+      </template>
+    </filter-bar>
+
     <q-table
+      v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
@@ -26,44 +65,50 @@
       :columns="colonnes"
       row-key="id"
       :loading="chargement"
-      :filter="recherche"
-      :pagination="{ rowsPerPage: 20 }"
+      :pagination="{ rowsPerPage: 0 }"
     >
-      <template #top-left>
-        <div class="row q-gutter-sm">
-          <q-input v-model="recherche" dense outlined clearable placeholder="Rechercher…">
-            <template #prepend><q-icon name="search" /></template>
-          </q-input>
-          <q-select
-            v-model="departementId"
-            :options="optionsDepartements"
-            dense
-            outlined
-            clearable
-            emit-value
-            map-options
-            label="Département"
-            style="min-width: 180px"
-            @update:model-value="charger"
+      <template #no-data>
+        <div class="etat-vide">
+          <q-icon name="person" size="34px" />
+          <div class="pochoir">{{ messageVide }}</div>
+          <q-btn
+            v-if="auth.peutPlanifier && !filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            label="Créer le premier enseignant"
+            @click="ouvrir(null)"
+          />
+          <q-btn
+            v-else-if="filtresActifs"
+            flat
+            no-caps
+            icon="refresh"
+            label="Réinitialiser les filtres"
+            @click="reinitialiser"
           />
         </div>
       </template>
 
+      <template #body-cell-nom="p">
+        <q-td :props="p">
+          <div>{{ p.row.nom }} {{ p.row.prenom }}</div>
+          <div class="text-caption text-grey-7">{{ p.row.matricule }}</div>
+        </q-td>
+      </template>
+
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-chip
-            dense
-            :color="p.row.statut === 'PERMANENT' ? 'primary' : p.row.statut === 'VACATAIRE' ? 'accent' : 'secondary'"
-            text-color="white"
-          >
-            {{ p.row.statut }}
+          <q-chip dense :color="couleurStatut(p.row.statut)" text-color="white">
+            {{ LIBELLE_STATUT_ENSEIGNANT[p.row.statut] ?? p.row.statut }}
           </q-chip>
           <q-badge v-if="!p.row.actif" color="grey-7" class="q-ml-xs">inactif</q-badge>
         </q-td>
       </template>
 
       <template #body-cell-compte="p">
-        <q-td :props="p">
+        <q-td :props="p" class="text-center">
           <q-icon
             :name="p.row.user ? 'check_circle' : 'remove_circle_outline'"
             :color="p.row.user ? 'positive' : 'grey-5'"
@@ -74,20 +119,50 @@
         </q-td>
       </template>
 
-      <template #body-cell-attestation="p">
-        <q-td :props="p">
-          <q-btn flat dense no-caps color="primary" icon="verified_user" @click="ouvrirMoyens(p.row)">
-            <q-tooltip>Moyens d’attestation de présence</q-tooltip>
-          </q-btn>
-        </q-td>
-      </template>
-
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="assessment" @click="imprimerFiche(p.row)">
-            <q-tooltip>Fiche d’assiduité</q-tooltip>
+          <q-btn
+            flat
+            dense
+            round
+            icon="assignment_ind"
+            aria-label="Voir les charges d’enseignement"
+            @click="voirCharges(p.row)"
+          >
+            <q-tooltip>Ses charges d’enseignement</q-tooltip>
           </q-btn>
-          <q-btn v-if="auth.peutPlanifier" flat dense round icon="edit" @click="ouvrir(p.row)" />
+          <q-btn
+            flat
+            dense
+            round
+            color="primary"
+            icon="verified_user"
+            aria-label="Moyens d’attestation de présence"
+            @click="ouvrirMoyens(p.row)"
+          >
+            <q-tooltip>Moyens d’attestation de présence</q-tooltip>
+          </q-btn>
+          <q-btn
+            flat
+            dense
+            round
+            icon="assessment"
+            aria-label="Imprimer la fiche d’assiduité"
+            @click="imprimerFiche(p.row)"
+          >
+            <q-tooltip>Fiche d’assiduité (90 derniers jours)</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="auth.peutPlanifier"
+            flat
+            dense
+            round
+            icon="edit"
+            aria-label="Modifier l’enseignant"
+            @click="ouvrir(p.row)"
+          >
+            <q-tooltip>Modifier</q-tooltip>
+          </q-btn>
           <q-btn
             v-if="auth.estAdmin"
             flat
@@ -95,11 +170,103 @@
             round
             color="negative"
             icon="delete"
+            aria-label="Supprimer l’enseignant"
             @click="supprimer(p.row)"
-          />
+          >
+            <q-tooltip>Supprimer</q-tooltip>
+          </q-btn>
         </q-td>
       </template>
     </q-table>
+
+    <div v-else class="grille-cartes">
+      <q-card v-for="e in enseignants" :key="e.id" flat bordered class="carte grille-cartes__carte">
+        <q-card-section>
+          <div class="row items-center q-mb-xs">
+            <q-chip dense :color="couleurStatut(e.statut)" text-color="white">
+              {{ LIBELLE_STATUT_ENSEIGNANT[e.statut] ?? e.statut }}
+            </q-chip>
+            <q-badge v-if="!e.actif" color="grey-7">inactif</q-badge>
+            <q-space />
+            <div class="text-caption text-grey-7">{{ e.matricule }}</div>
+          </div>
+          <div class="text-subtitle1 text-weight-medium">{{ e.nom }} {{ e.prenom }}</div>
+          <div class="text-caption text-grey-7">{{ e.grade || 'Grade non renseigné' }}</div>
+          <div class="text-caption text-grey-7">{{ e.departement?.nom ?? 'Sans département' }}</div>
+          <div class="text-caption text-grey-7 q-mt-sm">
+            <q-icon name="call" size="14px" /> {{ e.telephone || '—' }}
+            <span class="q-ml-sm">
+              <q-icon
+                :name="e.user ? 'check_circle' : 'remove_circle_outline'"
+                :color="e.user ? 'positive' : 'grey-5'"
+                size="14px"
+              />
+              {{ e.user ? 'Compte actif' : 'Sans compte' }}
+            </span>
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right">
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="assignment_ind"
+            label="Ses charges"
+            @click="voirCharges(e)"
+          />
+          <q-btn
+            flat
+            dense
+            no-caps
+            color="primary"
+            icon="verified_user"
+            label="Attestation"
+            @click="ouvrirMoyens(e)"
+          />
+          <q-btn
+            v-if="auth.peutPlanifier"
+            flat
+            dense
+            no-caps
+            icon="edit"
+            label="Modifier"
+            @click="ouvrir(e)"
+          />
+        </q-card-actions>
+      </q-card>
+      <div v-if="!enseignants.length && !chargement" class="etat-vide">
+        <q-icon name="person" size="34px" />
+        <div class="pochoir">{{ messageVide }}</div>
+        <q-btn
+          v-if="auth.peutPlanifier && !filtresActifs"
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          label="Créer le premier enseignant"
+          @click="ouvrir(null)"
+        />
+        <q-btn
+          v-else-if="filtresActifs"
+          flat
+          no-caps
+          icon="refresh"
+          label="Réinitialiser les filtres"
+          @click="reinitialiser"
+        />
+      </div>
+    </div>
+
+    <pagination-bar
+      v-if="enseignants.length"
+      :page="page"
+      :page-size="pageSize"
+      :total="total"
+      @update:page="(v) => { page = v; charger(); }"
+      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
+      @tous="chargerTout"
+    />
 
     <enseignant-dialog
       v-model="dialogOuvert"
@@ -119,7 +286,9 @@
           </div>
         </q-card-section>
 
-        <q-list separator>
+        <q-linear-progress v-if="chargementMoyens" indeterminate color="primary" />
+
+        <q-list v-if="!chargementMoyens" separator>
           <q-item>
             <q-item-section avatar><q-icon name="dialpad" color="secondary" /></q-item-section>
             <q-item-section>
@@ -129,7 +298,13 @@
               </q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-btn flat dense no-caps label="Réinitialiser" @click="reinitialiserPin" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                :label="moyens?.codePin ? 'Réinitialiser' : 'Générer un code'"
+                @click="reinitialiserPin"
+              />
             </q-item-section>
           </q-item>
 
@@ -156,10 +331,13 @@
                 :disable="!passerellePrete"
                 :loading="enrolementEnCours"
                 @click="enrolerEmpreinte"
-              />
+              >
+                <q-tooltip v-if="!passerellePrete">
+                  Branchez le lecteur d’empreintes sur ce poste pour enrôler.
+                </q-tooltip>
+              </q-btn>
             </q-item-section>
           </q-item>
-
         </q-list>
 
         <q-banner v-if="codeGenere" class="note--valide q-ma-md">
@@ -169,7 +347,7 @@
         </q-banner>
 
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat no-caps label="Fermer" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -177,32 +355,48 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
+import FilterBar from '../components/FilterBar.vue';
+import PaginationBar from '../components/PaginationBar.vue';
+import ViewToggle from '../components/ViewToggle.vue';
+import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
+  LIBELLE_STATUT_ENSEIGNANT,
+  STATUTS_ENSEIGNANT,
   aujourdhui,
   decalerJours,
   montantLisible,
   passerelleConfiguree,
   urlPasserelle,
 } from '../utils/libelles';
-import type { Departement, Enseignant, MoyensAttestation } from '../types';
+import type { Departement, Enseignant, MoyensAttestation, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const route = useRoute();
+const router = useRouter();
+const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const enseignants = ref<Enseignant[]>([]);
 const departements = ref<Departement[]>([]);
-const departementId = ref<string | null>(null);
 const chargement = ref(false);
-const recherche = ref('');
+const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const dialogOuvert = ref(false);
 const enseignantEdite = ref<Enseignant | null>(null);
 
+const page = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
+
+const filtres = ref<Record<string, any>>({});
+
 const dialogMoyens = ref(false);
+const chargementMoyens = ref(false);
 const enseignantMoyens = ref<Enseignant | null>(null);
 const moyens = ref<MoyensAttestation | null>(null);
 const passerellePrete = ref(false);
@@ -212,17 +406,50 @@ const codeGenere = ref('');
 const optionsDepartements = computed(() =>
   departements.value.map((d) => ({ label: d.nom, value: d.id })),
 );
+const optionsStatuts = STATUTS_ENSEIGNANT.map((s) => ({
+  label: LIBELLE_STATUT_ENSEIGNANT[s] ?? s,
+  value: s,
+}));
+
+const filtresActifs = computed(() =>
+  Boolean(filtres.value.recherche || filtres.value.departementId || filtres.value.statut),
+);
+const messageVide = computed(() =>
+  filtresActifs.value
+    ? 'Aucun enseignant pour ces critères.'
+    : 'Aucun enseignant enregistré.',
+);
+
+const couleurStatut = (s: string) =>
+  s === 'PERMANENT' ? 'primary' : s === 'VACATAIRE' ? 'accent' : 'secondary';
+
+const chips = computed(() => {
+  const cs: ChipFiltre[] = [];
+  if (filtres.value.recherche) {
+    cs.push({
+      label: `« ${filtres.value.recherche} »`,
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
+  }
+  if (filtres.value.departementId) {
+    const d = departements.value.find((x) => x.id === filtres.value.departementId);
+    cs.push({
+      label: `Département : ${d?.nom ?? '?'}`,
+      value: filtres.value.departementId,
+      icone: 'apartment',
+    });
+  }
+  if (filtres.value.statut) {
+    cs.push({ label: `Statut : ${LIBELLE_STATUT_ENSEIGNANT[filtres.value.statut] ?? filtres.value.statut}`, value: filtres.value.statut, icone: 'badge' });
+  }
+  return cs;
+});
 
 const colonnes: QTableColumn[] = [
-  { name: 'matricule', label: 'Matricule', field: 'matricule', align: 'left', sortable: true },
-  {
-    name: 'nom',
-    label: 'Nom & prénom',
-    field: (r: Enseignant) => `${r.nom} ${r.prenom}`,
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'grade', label: 'Grade', field: 'grade', align: 'left' },
+  { name: 'nom', label: 'Nom & prénom', field: 'nom', align: 'left', sortable: true },
+  { name: 'grade', label: 'Grade', field: (r: Enseignant) => r.grade || '—', align: 'left' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
   {
     name: 'departement',
@@ -236,15 +463,19 @@ const colonnes: QTableColumn[] = [
     field: (r: Enseignant) => (r.tauxHoraire ? montantLisible(r.tauxHoraire) : '—'),
     align: 'right',
   },
-  { name: 'telephone', label: 'Téléphone', field: 'telephone', align: 'left' },
+  { name: 'telephone', label: 'Téléphone', field: (r: Enseignant) => r.telephone || '—', align: 'left' },
   { name: 'compte', label: 'Compte', field: 'id', align: 'center' },
-  { name: 'attestation', label: 'Attestation', field: 'id', align: 'center' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
+  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
 ];
 
 function ouvrir(e: Enseignant | null) {
   enseignantEdite.value = e;
   dialogOuvert.value = true;
+}
+
+/** Un enseignant se lit d'abord par ce qu'il enseigne : on ouvre ses charges. */
+function voirCharges(e: Enseignant) {
+  void router.push({ path: '/affectations', query: { enseignantId: e.id } });
 }
 
 // ------------------------------------------------- moyens d'attestation
@@ -254,9 +485,21 @@ async function ouvrirMoyens(e: Enseignant) {
   codeGenere.value = '';
   moyens.value = null;
   dialogMoyens.value = true;
+  chargementMoyens.value = true;
 
-  const { data } = await api.get(`/attestation/enseignants/${e.id}/moyens`);
-  moyens.value = data;
+  try {
+    const { data } = await api.get(`/attestation/enseignants/${e.id}/moyens`);
+    moyens.value = data;
+  } catch (err: any) {
+    $q.notify({
+      type: 'negative',
+      message: err?.response?.data?.message ?? 'Moyens d’attestation illisibles',
+    });
+    dialogMoyens.value = false;
+    return;
+  } finally {
+    chargementMoyens.value = false;
+  }
 
   // Le lecteur d'empreintes est branché sur le poste, pas sur le serveur.
   if (!passerelleConfiguree()) {
@@ -275,13 +518,21 @@ function reinitialiserPin() {
   $q.dialog({
     title: 'Réinitialiser le code personnel',
     message: 'Un nouveau code sera généré et affiché une seule fois. Continuer ?',
-    cancel: true,
+    cancel: { label: 'Annuler', flat: true, noCaps: true },
+    ok: { color: 'primary', label: 'Générer', unelevated: true, noCaps: true },
   }).onOk(async () => {
-    const { data } = await api.post(
-      `/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`,
-    );
-    codeGenere.value = data.code;
-    moyens.value = { ...moyens.value!, codePin: true };
+    try {
+      const { data } = await api.post(
+        `/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`,
+      );
+      codeGenere.value = data.code;
+      moyens.value = { ...moyens.value!, codePin: true };
+    } catch (e: any) {
+      $q.notify({
+        type: 'negative',
+        message: e?.response?.data?.message ?? 'Génération du code impossible',
+      });
+    }
   });
 }
 
@@ -352,40 +603,100 @@ async function enrolerEmpreinte() {
 
 function imprimerFiche(e: Enseignant) {
   const debut = decalerJours(aujourdhui(), -90);
-  window.open(
-    `${API_URL}/impression/fiche-enseignant/${e.id}?dateDebut=${debut}&dateFin=${aujourdhui()}&token=${auth.token}`,
-    '_blank',
-  );
+  ouvrirFicheEnseignant(e.id, debut, aujourdhui());
 }
 
 function supprimer(e: Enseignant) {
   $q.dialog({
-    title: 'Supprimer',
+    title: 'Supprimer l’enseignant',
     message: `Supprimer définitivement ${e.nom} ${e.prenom} ainsi que ses affectations et séances ?`,
-    cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    cancel: { label: 'Annuler', flat: true, noCaps: true },
+    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
   }).onOk(async () => {
-    await api.delete(`/enseignants/${e.id}`);
-    $q.notify({ type: 'positive', message: 'Enseignant supprimé' });
-    await charger();
+    try {
+      await api.delete(`/enseignants/${e.id}`);
+      $q.notify({ type: 'positive', message: 'Enseignant supprimé' });
+      await charger();
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err?.response?.data?.message ?? 'Suppression impossible',
+      });
+    }
   });
 }
 
-async function charger() {
+function parametres(tout = false) {
+  const params: Record<string, any> = tout
+    ? { all: '1' }
+    : { page: page.value, pageSize: pageSize.value };
+  if (filtres.value.recherche) params.search = filtres.value.recherche;
+  if (filtres.value.departementId) params.departementId = filtres.value.departementId;
+  if (filtres.value.statut) params.statut = filtres.value.statut;
+  return params;
+}
+
+async function charger(tout = false) {
   chargement.value = true;
   try {
-    const { data } = await api.get('/enseignants', {
-      params: { all: '1', departementId: departementId.value || undefined },
+    const { data } = await api.get('/enseignants', { params: parametres(tout) });
+    enseignants.value = data.data ?? [];
+    total.value = data.total ?? enseignants.value.length;
+  } catch (e: any) {
+    enseignants.value = [];
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement des enseignants impossible',
     });
-    enseignants.value = data.data;
   } finally {
     chargement.value = false;
   }
 }
 
+function chargerTout() {
+  page.value = 1;
+  return charger(true);
+}
+
+function reinitialiser() {
+  filtres.value = {};
+  page.value = 1;
+  void charger();
+}
+
+watch(
+  () => [filtres.value.recherche, filtres.value.departementId, filtres.value.statut],
+  () => {
+    page.value = 1;
+    void charger();
+  },
+);
+
 onMounted(async () => {
   const { data } = await api.get('/departements', { params: { all: '1' } });
   departements.value = data.data;
+
+  // Arrivée depuis « Utilisateurs » : la fiche visée est pré-recherchée.
+  const depuis: Record<string, any> = {};
+  for (const cle of ['recherche', 'departementId', 'statut']) {
+    const v = route.query[cle];
+    if (typeof v === 'string' && v) depuis[cle] = v;
+  }
+  if (Object.keys(depuis).length) {
+    filtres.value = depuis;
+    return; // le watcher déclenche le chargement
+  }
   await charger();
 });
 </script>
+
+<style scoped lang="scss">
+.grille-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--up-3);
+}
+.grille-cartes__carte {
+  background: var(--up-plaque);
+}
+</style>

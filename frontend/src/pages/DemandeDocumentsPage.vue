@@ -11,15 +11,23 @@
       </div>
       <div class="col-auto">
         <q-btn
+          v-if="auth.estAdmin"
           outline
           color="primary"
           no-caps
-          icon="tune"
-          label="Tarifs"
-          :to="{ name: 'tarifs-demande-admin' }"
+          icon="price_change"
+          label="Tarifs des demandes"
+          :to="{ name: 'tarifs-demandes' }"
         />
       </div>
     </div>
+
+    <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
+      Registre restreint aux demandes d'un seul étudiant (lien entrant).
+      <template #action>
+        <q-btn flat no-caps label="Voir toutes les demandes" @click="retirerFiltreEtudiant" />
+      </template>
+    </q-banner>
 
     <div class="row q-col-gutter-md q-mb-md">
       <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
@@ -29,11 +37,11 @@
               {{ stats?.[s.cle] ?? 0 }}
             </div>
             <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-            <div v-if="s.montant" class="text-caption text-grey-7">
-              {{ montantLisible(stats?.recettes ?? 0) }} GNF encaissés
-            </div>
           </q-card-section>
         </q-card>
+      </div>
+      <div class="col-12 text-caption text-grey-7">
+        Recettes encaissées : {{ montantLisible(stats?.recettes ?? 0) }} GNF.
       </div>
     </div>
 
@@ -103,8 +111,23 @@
       hide-bottom
       @row-click="(_, row) => selectionner(row)"
     >
+      <template #no-data>
+        <div class="text-center q-pa-md text-grey-7">
+          Aucune demande pour ces critères. Les demandes sont créées par les
+          étudiants depuis « Mes demandes de documents ».
+        </div>
+      </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ libelleType(p.row.type) }}</q-td>
+      </template>
+      <template #body-cell-etudiant="p">
+        <q-td :props="p">
+          <template v-if="p.row.etudiant">
+            <div>{{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}</div>
+            <div class="text-caption text-grey-7">{{ p.row.etudiant.matricule }}</div>
+          </template>
+          <span v-else class="text-grey-7">—</span>
+        </q-td>
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -138,8 +161,67 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="more_horiz" @click.stop="ouvrirMenu(p.row, $event)">
-            <q-tooltip>Actions</q-tooltip>
+          <q-btn
+            v-if="p.row.statut === 'EN_ATTENTE_PAIEMENT'"
+            flat
+            dense
+            round
+            icon="verified"
+            color="positive"
+            :loading="enCours === 'confirmer'"
+            @click.stop="confirmerPaiement(p.row)"
+          >
+            <q-tooltip>Confirmer le paiement</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
+            flat
+            dense
+            round
+            icon="play_arrow"
+            :loading="enCours === 'traitement'"
+            @click.stop="lancerTraitement(p.row)"
+          >
+            <q-tooltip>Lancer le traitement</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
+            flat
+            dense
+            round
+            icon="check_circle"
+            color="positive"
+            :loading="enCours === 'prete'"
+            @click.stop="marquerPrete(p.row)"
+          >
+            <q-tooltip>Marquer prête</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="p.row.statut === 'PRETE'"
+            flat
+            dense
+            round
+            icon="assignment_turned_in"
+            color="positive"
+            :loading="enCours === 'remettre'"
+            @click.stop="remettre(p.row)"
+          >
+            <q-tooltip>Remettre</q-tooltip>
+          </q-btn>
+          <q-btn
+            v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
+            flat
+            dense
+            round
+            icon="block"
+            color="negative"
+            :loading="enCours === 'rejeter'"
+            @click.stop="rejeter(p.row)"
+          >
+            <q-tooltip>Rejeter</q-tooltip>
+          </q-btn>
+          <q-btn flat dense round icon="visibility" @click.stop="selectionner(p.row)">
+            <q-tooltip>Détail</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -187,48 +269,73 @@
             </div>
           </q-card-section>
           <q-separator />
-          <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="more_horiz" label="Actions" @click.stop="ouvrirMenu(d, $event)" />
+          <q-card-actions align="right" class="q-gutter-xs">
+            <q-btn
+              v-if="d.statut === 'EN_ATTENTE_PAIEMENT'"
+              flat
+              dense
+              no-caps
+              icon="verified"
+              color="positive"
+              label="Confirmer"
+              :loading="enCours === 'confirmer'"
+              @click.stop="confirmerPaiement(d)"
+            />
+            <q-btn
+              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
+              flat
+              dense
+              no-caps
+              icon="play_arrow"
+              label="Traiter"
+              :loading="enCours === 'traitement'"
+              @click.stop="lancerTraitement(d)"
+            />
+            <q-btn
+              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
+              flat
+              dense
+              no-caps
+              icon="check_circle"
+              color="positive"
+              label="Prête"
+              :loading="enCours === 'prete'"
+              @click.stop="marquerPrete(d)"
+            />
+            <q-btn
+              v-if="d.statut === 'PRETE'"
+              flat
+              dense
+              no-caps
+              icon="assignment_turned_in"
+              color="positive"
+              label="Remettre"
+              :loading="enCours === 'remettre'"
+              @click.stop="remettre(d)"
+            />
+            <q-btn
+              v-if="d.statut !== 'REMISE' && d.statut !== 'REJETEE'"
+              flat
+              dense
+              no-caps
+              icon="block"
+              color="negative"
+              label="Rejeter"
+              :loading="enCours === 'rejeter'"
+              @click.stop="rejeter(d)"
+            />
+            <q-btn flat dense no-caps icon="visibility" label="Détail" @click.stop="selectionner(d)" />
           </q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="description" size="42px" color="grey-5" />
-        <div class="q-mt-sm">Aucune demande</div>
+        <div class="q-mt-sm">
+          Aucune demande pour ces critères. Les demandes sont créées par les
+          étudiants depuis « Mes demandes de documents ».
+        </div>
       </div>
     </div>
-
-    <!-- Menu d'actions contextuelles -->
-    <q-menu touch-position context-menu>
-      <q-list dense style="min-width: 240px">
-        <q-item v-if="cible?.statut === 'EN_ATTENTE_PAIEMENT'" clickable v-close-popup @click="confirmerPaiement(cible)">
-          <q-item-section avatar><q-icon name="verified" color="positive" /></q-item-section>
-          <q-item-section>Confirmer le paiement</q-item-section>
-        </q-item>
-        <q-item v-if="['PAYEE', 'EN_TRAITEMENT'].includes(cible?.statut ?? '')" clickable v-close-popup @click="lancerTraitement(cible)">
-          <q-item-section avatar><q-icon name="play_arrow" /></q-item-section>
-          <q-item-section>Lancer le traitement</q-item-section>
-        </q-item>
-        <q-item v-if="['PAYEE', 'EN_TRAITEMENT'].includes(cible?.statut ?? '')" clickable v-close-popup @click="marquerPrete(cible)">
-          <q-item-section avatar><q-icon name="check_circle" color="positive" /></q-item-section>
-          <q-item-section>Marquer prête</q-item-section>
-        </q-item>
-        <q-item v-if="cible?.statut === 'PRETE'" clickable v-close-popup @click="remettre(cible)">
-          <q-item-section avatar><q-icon name="assignment_turned_in" color="positive" /></q-item-section>
-          <q-item-section>Remettre</q-item-section>
-        </q-item>
-        <q-separator v-if="cible && cible.statut !== 'REMISE' && cible.statut !== 'REJETEE'" />
-        <q-item v-if="cible && cible.statut !== 'REMISE' && cible.statut !== 'REJETEE'" clickable v-close-popup @click="rejeter(cible)">
-          <q-item-section avatar><q-icon name="block" color="negative" /></q-item-section>
-          <q-item-section>Rejeter</q-item-section>
-        </q-item>
-        <q-separator />
-        <q-item clickable v-close-popup @click="selectionner(cible)">
-          <q-item-section avatar><q-icon name="visibility" /></q-item-section>
-          <q-item-section>Détail</q-item-section>
-        </q-item>
-      </q-list>
-    </q-menu>
 
     <!-- Dialog de détail -->
     <q-dialog v-model="detailOuvert">
@@ -253,6 +360,15 @@
               <span class="pochoir">Étudiant</span>
               <span v-if="demandeSelectionnee.etudiant">
                 {{ demandeSelectionnee.etudiant.prenom }} {{ demandeSelectionnee.etudiant.nom }} ({{ demandeSelectionnee.etudiant.matricule }})
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  size="sm"
+                  icon="badge"
+                  label="Sa carte"
+                  @click="ouvrirCarteEtudiante(demandeSelectionnee)"
+                />
               </span>
               <span v-else>—</span>
             </div>
@@ -363,8 +479,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -373,33 +490,19 @@ import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import WorkflowStepper from '../components/WorkflowStepper.vue';
 import {
+  LIBELLE_STATUT_DEMANDE,
   LIBELLE_STATUT_PAIEMENT,
+  LIBELLE_TYPE_DEMANDE,
   dateHeureLisible,
   montantLisible,
+  optionsDepuis,
 } from '../utils/libelles';
 import type { DemandeDocument, StatutDemande, StatutPaiement, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
-
-const LIBELLE_STATUT: Record<StatutDemande, string> = {
-  EN_ATTENTE_PAIEMENT: 'Attente paiement',
-  PAYEE: 'Payée',
-  EN_TRAITEMENT: 'En traitement',
-  PRETE: 'Prête',
-  REMISE: 'Remise',
-  REJETEE: 'Rejetée',
-};
-
-const LIBELLE_TYPE: Record<TypeDemandeDocument, string> = {
-  ATTESTATION_SCOLARITE: 'Attestation de scolarité',
-  ATTESTATION_FREQUENTATION: 'Attestation de fréquentation',
-  RELEVE_NOTES: 'Relevé de notes',
-  DUPLICATA_CARTE: 'Duplicata de carte',
-  ATTESTATION_REUSSITE: 'Attestation de réussite',
-  CERTIFICAT_SCOLARITE: 'Certificat de scolarité',
-  AUTRE: 'Autre',
-};
+const route = useRoute();
+const router = useRouter();
 
 const ETAPES_DEMANDE = [
   { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: 'Paiement', icone: 'payments' },
@@ -409,38 +512,38 @@ const ETAPES_DEMANDE = [
   { identifiant: 'REMISE', libelle: 'Remise', icone: 'task_alt' },
 ];
 
-const OPTIONS_STATUTS = (Object.keys(LIBELLE_STATUT) as StatutDemande[]).map((v) => ({
-  label: LIBELLE_STATUT[v],
-  value: v,
-}));
-const OPTIONS_TYPES = (Object.keys(LIBELLE_TYPE) as TypeDemandeDocument[]).map((v) => ({
-  label: LIBELLE_TYPE[v],
-  value: v,
-}));
+const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_DEMANDE);
+const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_DEMANDE);
 
 const demandes = ref<DemandeDocument[]>([]);
 const stats = ref<Record<string, number> | null>(null);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
+/**
+ * Liaison depuis les autres écrans du dossier (réclamations, carte) :
+ * `/demandes-docs?etudiantId=…` ouvre le registre filtré sur cet étudiant.
+ */
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  etudiantId: String(route.query.etudiantId ?? '') || undefined,
+});
 const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const chargement = ref(false);
 const detailOuvert = ref(false);
 const demandeSelectionnee = ref<DemandeDocument | null>(null);
-const cible = ref<DemandeDocument | null>(null);
 const enCours = ref('');
 
-const plaques = computed(() => [
-  { cle: 'EN_ATTENTE_PAIEMENT', libelle: 'À payer', alerte: true },
-  { cle: 'EN_TRAITEMENT', libelle: 'En traitement' },
-  { cle: 'PRETE', libelle: 'Prêtes' },
-  { cle: 'pretesNonRemises', libelle: 'Prêtes > 7 j', alerte: true, montant: true },
-]);
+const plaques = [
+  { cle: 'EN_ATTENTE_PAIEMENT', libelle: 'À payer', alerte: false },
+  { cle: 'EN_TRAITEMENT', libelle: 'En traitement', alerte: false },
+  { cle: 'PRETE', libelle: 'Prêtes', alerte: false },
+  { cle: 'pretesNonRemises', libelle: 'Prêtes > 7 j', alerte: true },
+];
 
 function libelleStatut(s: string) {
-  return LIBELLE_STATUT[s as StatutDemande] ?? s;
+  return LIBELLE_STATUT_DEMANDE[s as StatutDemande] ?? s;
 }
 function libelleType(t: string) {
-  return LIBELLE_TYPE[t as TypeDemandeDocument] ?? t;
+  return LIBELLE_TYPE_DEMANDE[t as TypeDemandeDocument] ?? t;
 }
 function libellePaiement(s: StatutPaiement | string) {
   return LIBELLE_STATUT_PAIEMENT[s] ?? s;
@@ -452,7 +555,13 @@ const colonnes: QTableColumn[] = [
   { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
   { name: 'frais', label: 'Frais', field: 'frais', align: 'right' },
   { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'creeLe', label: 'Créée le', field: 'creeLe', align: 'left' },
+  {
+    name: 'creeLe',
+    label: 'Créée le',
+    field: 'creeLe',
+    align: 'left',
+    format: (v: string) => dateHeureLisible(v),
+  },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ];
 
@@ -462,12 +571,21 @@ function selectionner(d: DemandeDocument | null) {
   detailOuvert.value = true;
 }
 
-function ouvrirMenu(d: DemandeDocument | null, _e: Event) {
-  cible.value = d;
+/** Retire le filtre « un seul étudiant » posé par un lien entrant. */
+function retirerFiltreEtudiant() {
+  filtres.value = { ...filtres.value, etudiantId: undefined };
+}
+
+/** Rebond vers la carte étudiante du demandeur. */
+function ouvrirCarteEtudiante(d: DemandeDocument | null) {
+  if (!d?.etudiantId) return;
+  detailOuvert.value = false;
+  void router.push({ name: 'cartes-etudiantes', query: { etudiantId: d.etudiantId } });
 }
 
 async function requeter() {
-  if (!auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION'])) return;
+  // Même périmètre que GET /documents-demande côté API.
+  if (!auth.aRole(['ADMIN', 'SCOLARITE'])) return;
   chargement.value = true;
   try {
     const f = filtres.value;
@@ -483,6 +601,17 @@ async function requeter() {
     });
     demandes.value = data.data;
     pagination.value.total = data.total;
+  } catch (e: any) {
+    if (e?.response?.status === 403) {
+      $q.notify({ type: 'warning', message: "Vous n'avez pas accès à cette section." });
+    } else if (e?.response?.status !== 401) {
+      $q.notify({
+        type: 'negative',
+        message: e?.response?.data?.message ?? 'Chargement impossible',
+      });
+    }
+    demandes.value = [];
+    pagination.value.total = 0;
   } finally {
     chargement.value = false;
   }
@@ -495,7 +624,7 @@ async function chargerTout() {
 }
 
 async function chargerStats() {
-  if (!auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION'])) return;
+  if (!auth.aRole(['ADMIN', 'SCOLARITE'])) return;
   try {
     const { data } = await api.get('/documents-demande/dashboard');
     stats.value = data;
@@ -649,7 +778,6 @@ onMounted(() => {
 
 <style scoped lang="scss">
 $encre: #10251E;
-$chaux-claire: #F2F3EE;
 $vert: #0F7A45;
 $jaune-fonce: #C98A00;
 $rouge: #C4122E;

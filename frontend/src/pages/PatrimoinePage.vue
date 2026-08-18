@@ -2,10 +2,11 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Patrimoine</div>
+        <div class="page-titre">Patrimoine & matériel</div>
         <div class="page-sous-titre">
-          Inventaire des équipements de l'université — chaque pièce porte un QR
-          d'inventaire et un carnet de réparations
+          L'inventaire des équipements de l'université. Chaque pièce porte un QR
+          d'inventaire, une valeur d'acquisition et un carnet de réparations qui
+          la suit de sa mise en service à sa réforme.
         </div>
       </div>
       <div class="col-auto" v-if="onglet === 'equipements' && auth.peutPlanifier">
@@ -27,6 +28,49 @@
           label="Nouvelle catégorie"
           @click="ouvrirCategorie(null)"
         />
+      </div>
+    </div>
+
+    <liens-croises
+      :liens="[
+        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'Les obsolescences ci-dessous, dans la vue d’ensemble de la direction' },
+        { to: '/helpdesk', libelle: 'Support IT', icone: 'support_agent', aide: 'Les incidents déclarés sur ces mêmes équipements' },
+        { to: '/salles', libelle: 'Salles', icone: 'meeting_room', aide: 'Les lieux où le matériel est affecté' },
+      ]"
+    />
+
+    <!-- Les mêmes trois chiffres que le Tableau de bord Rectorat, à la source. -->
+    <div v-if="synthese" class="row q-col-gutter-md q-mb-md">
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte full-height">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.total, 0) }}</div>
+            <div class="pochoir text-grey-7">équipements en service</div>
+            <div class="text-caption text-grey-6">
+              valeur d'acquisition {{ montantLisible(synthese.valeur) }} GNF
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte full-height">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.enReparation, 0) }}</div>
+            <div class="pochoir text-grey-7">en réparation</div>
+            <div class="text-caption text-grey-6">carnet ouvert, pièce indisponible</div>
+          </q-card-section>
+        </q-card>
+      </div>
+      <div class="col-12 col-sm-4">
+        <q-card flat bordered class="carte full-height">
+          <q-card-section class="text-center">
+            <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.obsoletes, 0) }}</div>
+            <div class="pochoir text-grey-7">obsolètes</div>
+            <div class="text-caption text-grey-6">
+              âge supérieur à la durée d'amortissement de leur catégorie
+            </div>
+          </q-card-section>
+        </q-card>
       </div>
     </div>
 
@@ -101,16 +145,6 @@
         </template>
       </filter-bar>
 
-      <pagination-bar
-        :page="pagination.page"
-        :page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-all="false"
-        @update:page="pagination.page = $event; chargerEquipements()"
-        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerEquipements()"
-        @tous="chargerToutEquipements"
-      />
-
       <q-table
         v-if="modeEquipements === 'tableau'"
         flat
@@ -163,11 +197,25 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" @click="voirDetails(p.row)">
-              <q-tooltip>Détails</q-tooltip>
+            <q-btn
+              flat
+              dense
+              round
+              icon="visibility"
+              :aria-label="`Détails de ${p.row.libelle}`"
+              @click="voirDetails(p.row)"
+            >
+              <q-tooltip>Détails et carnet de réparations</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="print" @click="imprimerEtiquette(p.row)">
-              <q-tooltip>Étiquette A4</q-tooltip>
+            <q-btn
+              flat
+              dense
+              round
+              icon="print"
+              :aria-label="`Imprimer l'étiquette de ${p.row.libelle}`"
+              @click="imprimerEtiquette(p.row)"
+            >
+              <q-tooltip>Étiquette d'inventaire (A4)</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.peutPlanifier && !p.row.enReparation"
@@ -175,6 +223,7 @@
               dense
               round
               icon="build"
+              :aria-label="`Déclarer une réparation sur ${p.row.libelle}`"
               @click="ouvrirReparation(p.row, 'declarer')"
             >
               <q-tooltip>Déclarer une réparation</q-tooltip>
@@ -185,8 +234,11 @@
               dense
               round
               icon="edit"
+              :aria-label="`Modifier ${p.row.libelle}`"
               @click="ouvrirEquipement(p.row)"
-            />
+            >
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
             <q-btn
               v-if="auth.estAdmin"
               flat
@@ -194,9 +246,41 @@
               round
               color="negative"
               icon="delete"
+              :aria-label="`Supprimer ${p.row.libelle}`"
               @click="supprimerEquipement(p.row)"
-            />
+            >
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="etat-vide">
+            <q-icon name="inventory_2" size="36px" />
+            <div class="text-subtitle2 q-mt-sm">Aucun équipement</div>
+            <div class="text-caption">
+              L'inventaire recense le matériel de l'université, pièce par pièce.
+              {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+            </div>
+            <q-btn
+              v-if="aDesFiltres"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="filter_alt_off"
+              label="Retirer les filtres"
+              @click="reinitialiserFiltres"
+            />
+            <q-btn
+              v-else-if="auth.peutPlanifier"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              label="Enregistrer le premier équipement"
+              @click="ouvrirEquipement(null)"
+            />
+          </div>
         </template>
       </q-table>
 
@@ -256,9 +340,10 @@
                 dense
                 round
                 icon="build"
+                :aria-label="`Déclarer une réparation sur ${e.libelle}`"
                 @click="ouvrirReparation(e, 'declarer')"
               >
-                <q-tooltip>Déclarer réparation</q-tooltip>
+                <q-tooltip>Déclarer une réparation</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="auth.peutPlanifier"
@@ -266,16 +351,53 @@
                 dense
                 round
                 icon="edit"
+                :aria-label="`Modifier ${e.libelle}`"
                 @click="ouvrirEquipement(e)"
-              />
+              >
+                <q-tooltip>Modifier</q-tooltip>
+              </q-btn>
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!equipements.length && !chargement" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="inventory_2" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun équipement</div>
+        <div v-if="!equipements.length && !chargement" class="col-12">
+          <div class="etat-vide">
+            <q-icon name="inventory_2" size="36px" />
+            <div class="text-subtitle2 q-mt-sm">Aucun équipement</div>
+            <div class="text-caption">
+              L'inventaire recense le matériel de l'université, pièce par pièce.
+              {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+            </div>
+            <q-btn
+              v-if="aDesFiltres"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="filter_alt_off"
+              label="Retirer les filtres"
+              @click="reinitialiserFiltres"
+            />
+            <q-btn
+              v-else-if="auth.peutPlanifier"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              label="Enregistrer le premier équipement"
+              @click="ouvrirEquipement(null)"
+            />
+          </div>
         </div>
       </div>
+
+      <pagination-bar
+        :page="pagination.page"
+        :page-size="pagination.pageSize"
+        :total="pagination.total"
+        :show-all="false"
+        @update:page="pagination.page = $event; chargerEquipements()"
+        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerEquipements()"
+      />
     </template>
 
     <!-- ============================== Catégories -->
@@ -303,8 +425,11 @@
               dense
               round
               icon="edit"
+              :aria-label="`Modifier la catégorie ${p.row.libelle}`"
               @click="ouvrirCategorie(p.row)"
-            />
+            >
+              <q-tooltip>Modifier</q-tooltip>
+            </q-btn>
             <q-btn
               v-if="auth.estAdmin"
               flat
@@ -312,9 +437,32 @@
               round
               color="negative"
               icon="delete"
+              :aria-label="`Supprimer la catégorie ${p.row.libelle}`"
               @click="supprimerCategorie(p.row)"
-            />
+            >
+              <q-tooltip>Supprimer</q-tooltip>
+            </q-btn>
           </q-td>
+        </template>
+        <template #no-data>
+          <div class="etat-vide">
+            <q-icon name="category" size="36px" />
+            <div class="text-subtitle2 q-mt-sm">Aucune catégorie</div>
+            <div class="text-caption">
+              Une catégorie regroupe un type de matériel et porte sa durée
+              d'amortissement : c'est elle qui décide quand un équipement devient
+              obsolète. Sans catégorie, aucun équipement ne peut être enregistré.
+            </div>
+            <q-btn
+              v-if="auth.peutPlanifier"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              label="Créer la première catégorie"
+              @click="ouvrirCategorie(null)"
+            />
+          </div>
         </template>
       </q-table>
     </template>
@@ -350,10 +498,10 @@
             <q-td :props="p">
               <q-chip
                 dense
-                :color="p.row.statut === 'EN_COURS' ? 'warning' : 'accent'"
-                text-color="white"
+                :color="p.row.statut === 'EN_COURS' ? 'warning' : 'grey-7'"
+                :text-color="p.row.statut === 'EN_COURS' ? 'dark' : 'white'"
               >
-                {{ p.row.statut === 'EN_COURS' ? 'En cours' : 'Déclarée' }}
+                {{ libelleStatutReparation(p.row.statut) }}
               </q-chip>
             </q-td>
           </template>
@@ -367,7 +515,7 @@
               <q-chip
                 dense
                 :color="couleurDelai(joursEcarts(p.row.dateDeclaration))"
-                text-color="white"
+                :text-color="couleurDelai(joursEcarts(p.row.dateDeclaration)) === 'warning' ? 'dark' : 'white'"
               >
                 {{ joursEcarts(p.row.dateDeclaration) }} j
               </q-chip>
@@ -382,11 +530,31 @@
                 round
                 color="positive"
                 icon="check_circle"
+                :aria-label="`Clore la réparation de ${p.row.equipement?.libelle ?? 'l’équipement'}`"
                 @click="resoudreReparation(p.row)"
               >
-                <q-tooltip>Marquer résolu</q-tooltip>
+                <q-tooltip>Marquer la réparation résolue</q-tooltip>
               </q-btn>
             </q-td>
+          </template>
+          <template #no-data>
+            <div class="etat-vide">
+              <q-icon name="build" size="36px" />
+              <div class="text-subtitle2 q-mt-sm">Aucune réparation en cours</div>
+              <div class="text-caption">
+                Tout le matériel en service est disponible. Une réparation se
+                déclare depuis la fiche d'un équipement, dans l'onglet Équipements.
+              </div>
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="inventory_2"
+                label="Aller aux équipements"
+                @click="onglet = 'equipements'"
+              />
+            </div>
           </template>
         </q-table>
       </q-card>
@@ -395,7 +563,7 @@
     <patrimoine-dialog
       v-model="dialogEquipement"
       :equipement="equipementEdite"
-      @enregistre="chargerEquipements"
+      @enregistre="() => { chargerEquipements(); chargerSynthese(); }"
     />
 
     <q-dialog v-model="dialogCategorie">
@@ -449,7 +617,7 @@
       :mode="modeReparation"
       :equipement="equipementReparation"
       :reparation-ouverte="reparationOuverte"
-      @enregistre="chargerReparations; chargerEquipements()"
+      @enregistre="() => { chargerReparations(); chargerEquipements(); chargerSynthese(); }"
     />
 
     <q-dialog v-model="dialogDetails">
@@ -517,20 +685,23 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import QRCode from 'qrcode';
-import { api, API_URL } from '../boot/axios';
+import { API_URL } from '../boot/axios';
+import { patrimoineService } from '../services/patrimoine';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import LiensCroises from '../components/LiensCroises.vue';
 import PatrimoineDialog from '../components/PatrimoineDialog.vue';
 import ReparationDialog from '../components/ReparationDialog.vue';
-import { dateLisible, montantLisible } from '../utils/libelles';
+import { dateLisible, montantLisible, nombreLisible } from '../utils/libelles';
 import type {
   CategoriePatrimoine,
   EquipementPatrimoine,
   ReparationMateriel,
   StatutReparation,
+  TableauBordPatrimoine,
 } from '../types';
 
 const $q = useQuasar();
@@ -566,6 +737,19 @@ const reparationOuverte = ref<ReparationMateriel | null>(null);
 
 const dialogDetails = ref(false);
 const equipementDetail = ref<EquipementPatrimoine | null>(null);
+
+const synthese = ref<TableauBordPatrimoine | null>(null);
+
+/** Un filtre autre que la recherche vide est posé sur la liste. */
+const aDesFiltres = computed(() =>
+  Boolean(
+    filtres.value.recherche ||
+      filtres.value.categorieId ||
+      filtres.value.departementId ||
+      filtres.value.actif ||
+      filtres.value.enReparation,
+  ),
+);
 
 const colonnesEquipements: QTableColumn[] = [
   { name: 'libelle', label: 'Équipement', field: 'libelle', align: 'left' },
@@ -612,13 +796,8 @@ const colonnesReparations: QTableColumn[] = [
 
 // --- Helpers
 
-const cartes = ref<
-  Map<string, HTMLCanvasElement | null>
->(new Map());
-
 function enregistrerCanvas(el: any, e: EquipementPatrimoine) {
   if (!el) return;
-  cartes.value.set(e.id, el);
   QRCode.toCanvas(el, e.qrCode, { width: 96, margin: 1 }).catch(() => {});
 }
 
@@ -674,24 +853,16 @@ const queryEquipements = computed(() => {
 async function chargerEquipements() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/patrimoine/equipements', { params: queryEquipements.value });
+    const { data } = await patrimoineService.listeEquipements(queryEquipements.value);
     equipements.value = data.data;
     pagination.value.total = data.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerToutEquipements() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/patrimoine/equipements', {
-      params: { ...queryEquipements.value, all: '1' },
+  } catch (e: any) {
+    equipements.value = [];
+    pagination.value.total = 0;
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement de l’inventaire impossible.',
     });
-    equipements.value = data.data;
-    pagination.value.total = data.total;
-    pagination.value.page = 1;
-    pagination.value.pageSize = data.total;
   } finally {
     chargement.value = false;
   }
@@ -700,8 +871,14 @@ async function chargerToutEquipements() {
 async function chargerCategories() {
   chargementCategories.value = true;
   try {
-    const { data } = await api.get('/patrimoine/categories', { params: { all: '1' } });
+    const { data } = await patrimoineService.listeCategories();
     categories.value = Array.isArray(data) ? data : data.data ?? [];
+  } catch (e: any) {
+    categories.value = [];
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement des catégories impossible.',
+    });
   } finally {
     chargementCategories.value = false;
   }
@@ -710,35 +887,32 @@ async function chargerCategories() {
 async function chargerReparations() {
   chargementReparations.value = true;
   try {
-    const { data } = await api.get('/patrimoine/equipements');
-    void data;
-    // Récupère toutes les réparations en cours via une route dédiée : faute
-    // de mieux, on parcourt les équipements et leurs réparations.
-    const equipementsListe = equipements.value.length
-      ? equipements.value
-      : (
-          await api.get('/patrimoine/equipements', { params: { all: '1' } })
-        ).data.data;
-    const listes = await Promise.all(
-      equipementsListe.map((e: EquipementPatrimoine) =>
-        api
-          .get(`/patrimoine/equipements/${e.id}/reparations`)
-          .then((r) => r.data)
-          .catch(() => []),
-      ),
-    );
-    const aplats: ReparationMateriel[] = [];
-    for (const l of listes) {
-      for (const r of l as ReparationMateriel[]) {
-        if (r.statut === 'EN_COURS' || r.statut === 'DECLARE') aplats.push(r);
-      }
-    }
-    aplats.sort(
-      (a, b) => new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime(),
-    );
-    reparationsEnCours.value = aplats;
+    const { data } = await patrimoineService.listeReparations({});
+    const toutes = (data ?? []) as ReparationMateriel[];
+    reparationsEnCours.value = toutes
+      .filter((r) => r.statut === 'EN_COURS' || r.statut === 'DECLARE')
+      .sort(
+        (a, b) =>
+          new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime(),
+      );
+  } catch (e: any) {
+    reparationsEnCours.value = [];
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Chargement des réparations impossible.',
+    });
   } finally {
     chargementReparations.value = false;
+  }
+}
+
+/** Les trois chiffres d'en-tête, ceux-là mêmes que reprend le Rectorat. */
+async function chargerSynthese() {
+  try {
+    const { data } = await patrimoineService.tableauDeBord();
+    synthese.value = data;
+  } catch {
+    synthese.value = null;
   }
 }
 
@@ -772,14 +946,19 @@ async function enregistrerCategorie() {
       dureeAmortissement: formCategorie.value.dureeAmortissement ?? undefined,
     };
     if (categorieEditee.value) {
-      await api.put(`/patrimoine/categories/${categorieEditee.value.id}`, payload);
+      await patrimoineService.modifierCategorie(categorieEditee.value.id, payload);
       $q.notify({ type: 'positive', message: 'Catégorie mise à jour' });
     } else {
-      await api.post('/patrimoine/categories', payload);
+      await patrimoineService.creerCategorie(payload);
       $q.notify({ type: 'positive', message: 'Catégorie enregistrée' });
     }
     dialogCategorie.value = false;
     await chargerCategories();
+  } catch (e: any) {
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? 'Enregistrement de la catégorie impossible',
+    });
   } finally {
     enregistrementCategorie.value = false;
   }
@@ -793,7 +972,7 @@ function supprimerCategorie(c: CategoriePatrimoine) {
     ok: { color: 'negative', label: 'Supprimer' },
   }).onOk(async () => {
     try {
-      await api.delete(`/patrimoine/categories/${c.id}`);
+      await patrimoineService.supprimerCategorie(c.id);
       $q.notify({ type: 'positive', message: 'Catégorie supprimée' });
       await chargerCategories();
     } catch (e: any) {
@@ -813,9 +992,10 @@ function supprimerEquipement(e: EquipementPatrimoine) {
     ok: { color: 'negative', label: 'Supprimer' },
   }).onOk(async () => {
     try {
-      await api.delete(`/patrimoine/equipements/${e.id}`);
+      await patrimoineService.supprimerEquipement(e.id);
       $q.notify({ type: 'positive', message: 'Équipement supprimé' });
       await chargerEquipements();
+      await chargerSynthese();
     } catch (err: any) {
       $q.notify({
         type: 'negative',
@@ -836,9 +1016,19 @@ function ouvrirReparation(
   dialogReparation.value = true;
 }
 
+/**
+ * La réparation porte son équipement : le chercher dans la page d'inventaire
+ * courante échouait dès que la pièce n'était pas sur la page affichée — cas le
+ * plus fréquent, l'onglet Réparations ne suivant pas la pagination.
+ */
 function resoudreReparation(r: ReparationMateriel) {
-  const eq = equipements.value.find((e) => e.id === r.equipementId);
-  if (!eq) return;
+  const eq =
+    (r.equipement as EquipementPatrimoine | undefined) ??
+    equipements.value.find((e) => e.id === r.equipementId);
+  if (!eq) {
+    $q.notify({ type: 'warning', message: 'Équipement introuvable, rechargez la page.' });
+    return;
+  }
   ouvrirReparation(eq, 'resoudre', r);
 }
 
@@ -852,8 +1042,13 @@ function imprimerEtiquette(e: EquipementPatrimoine) {
 async function voirDetails(e: EquipementPatrimoine) {
   equipementDetail.value = e;
   dialogDetails.value = true;
-  const { data } = await api.get(`/patrimoine/equipements/${e.id}/reparations`);
-  reparationsDetail.value = data;
+  reparationsDetail.value = [];
+  try {
+    const { data } = await patrimoineService.reparationsEquipement(e.id);
+    reparationsDetail.value = data;
+  } catch {
+    $q.notify({ type: 'warning', message: 'Carnet de réparations indisponible.' });
+  }
 }
 
 // --- Wiring
@@ -871,5 +1066,16 @@ watch(filtres, () => {
 onMounted(async () => {
   await chargerCategories();
   await chargerEquipements();
+  await chargerSynthese();
 });
 </script>
+
+<style scoped lang="scss">
+/* Même définition que les autres tableaux de bord de l'application. */
+.stat-chiffre {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+</style>

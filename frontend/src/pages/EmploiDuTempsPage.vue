@@ -18,6 +18,16 @@
           @click="dialogGeneration = true"
         />
         <q-btn
+          v-if="peutVoirRegistre"
+          flat
+          no-caps
+          icon="event_note"
+          label="Séances de la semaine"
+          :to="lienSeancesSemaine"
+        >
+          <q-tooltip>Ce que la semaine affichée a produit au registre</q-tooltip>
+        </q-btn>
+        <q-btn
           v-if="auth.peutTenirEmploiDuTemps"
           unelevated
           color="primary"
@@ -34,9 +44,15 @@
       <q-btn flat dense round icon="chevron_left" @click="decalerSemaine(-1)">
         <q-tooltip>Semaine précédente</q-tooltip>
       </q-btn>
-      <button type="button" class="plaque edt__semaine-plaque" @click="semaineDu = lundiDe(new Date())">
+      <button
+        type="button"
+        class="plaque edt__semaine-plaque"
+        aria-label="Revenir à la semaine en cours"
+        @click="semaineDu = lundiDe(new Date())"
+      >
         <span class="pochoir">Semaine du</span>
         <span class="lettrage chiffres edt__semaine-dates">{{ libelleSemaine }}</span>
+        <q-tooltip>Revenir à la semaine en cours</q-tooltip>
       </button>
       <q-btn flat dense round icon="chevron_right" @click="decalerSemaine(1)">
         <q-tooltip>Semaine suivante</q-tooltip>
@@ -80,7 +96,16 @@
         map-options
         label="Salle"
       />
-      <q-btn round color="primary" icon="refresh" :loading="chargement" @click="charger" />
+      <q-btn
+        round
+        color="primary"
+        icon="refresh"
+        aria-label="Recharger l’emploi du temps"
+        :loading="chargement"
+        @click="charger"
+      >
+        <q-tooltip>Recharger</q-tooltip>
+      </q-btn>
     </div>
 
     <!-- Relevé de la semaine affichée -->
@@ -118,8 +143,40 @@
 
     <q-inner-loading :showing="chargement" />
 
+    <!-- Semaine sans le moindre créneau : on dit pourquoi, et par où sortir -->
+    <div v-if="!chargement && !totalCreneaux" class="edt__etat-vide">
+      <q-icon name="calendar_month" size="42px" />
+      <span class="lettrage edt__etat-vide-titre">Semaine vide</span>
+      <span class="pochoir edt__etat-vide-mention">
+        {{
+          filtresActifs
+            ? 'Aucun créneau ne correspond aux filtres posés sur cette semaine.'
+            : 'Aucun créneau n’est déclaré sur cette semaine. La semaine type produit les séances à contrôler : c’est ici qu’elle se pose.'
+        }}
+      </span>
+      <div class="edt__etat-vide-actions">
+        <q-btn
+          v-if="filtresActifs"
+          outline
+          no-caps
+          icon="filter_alt_off"
+          label="Retirer les filtres"
+          @click="reinitialiserFiltres"
+        />
+        <q-btn
+          v-if="auth.peutTenirEmploiDuTemps"
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          label="Poser un créneau"
+          @click="ouvrir(null)"
+        />
+      </div>
+    </div>
+
     <!-- La grille : axe des heures à gauche, une colonne par jour -->
-    <div v-if="!ecranEtroit" class="grille">
+    <div v-else-if="!ecranEtroit" class="grille">
       <div class="grille__axe">
         <div class="grille__coin" />
         <div v-for="h in heures" :key="h" class="grille__heure">
@@ -159,7 +216,7 @@
             </span>
             <span class="pochoir creneau__promotion">{{ c.affectation?.promotion?.nom }}</span>
             <span class="creneau__pied">
-              <span class="pochoir creneau__type">{{ c.type }}</span>
+              <span class="pochoir creneau__type" :title="LIBELLE_TYPE_COURS[c.type]">{{ c.type }}</span>
               <span v-if="c.salle" class="plaque-salle">{{ c.salle.code }}</span>
             </span>
             <span v-if="libellePeriode(c)" class="pochoir creneau__periode chiffres">
@@ -173,30 +230,34 @@
     <!-- Sur téléphone : la journée choisie, dans l'ordre des heures -->
     <ol v-else class="edt__liste">
       <li v-for="c in creneauxDuJourActif" :key="c.id">
-        <article
+        <button
+          type="button"
           class="plaque creneau-ligne"
           :class="{ 'creneau--inactif': !c.actif }"
-          @click="auth.peutTenirEmploiDuTemps && ouvrir(c)"
+          :disabled="!auth.peutTenirEmploiDuTemps"
+          @click="ouvrir(c)"
         >
-          <div class="champ creneau-ligne__heure">
+          <span class="champ creneau-ligne__heure">
             <span class="lettrage chiffres">{{ c.heureDebut }}</span>
             <span class="pochoir chiffres">{{ c.heureFin }}</span>
-          </div>
-          <div class="creneau-ligne__corps">
-            <h2 class="lettrage creneau-ligne__matiere">{{ c.affectation?.matiere?.intitule }}</h2>
-            <p class="creneau-ligne__enseignant">
+          </span>
+          <span class="creneau-ligne__corps">
+            <span class="lettrage creneau-ligne__matiere">
+              {{ c.affectation?.matiere?.intitule }}
+            </span>
+            <span class="creneau-ligne__enseignant">
               {{ c.affectation?.enseignant?.nom }} {{ c.affectation?.enseignant?.prenom }}
-            </p>
-            <p class="pochoir creneau-ligne__meta">
+            </span>
+            <span class="pochoir creneau-ligne__meta">
               {{ c.affectation?.promotion?.nom }}
-              <span class="pochoir creneau__type">{{ c.type }}</span>
+              <span class="pochoir creneau__type" :title="LIBELLE_TYPE_COURS[c.type]">{{ c.type }}</span>
               <span v-if="c.salle" class="plaque-salle">{{ c.salle.code }}</span>
-            </p>
-            <p v-if="libellePeriode(c)" class="pochoir chiffres creneau__periode">
+            </span>
+            <span v-if="libellePeriode(c)" class="pochoir chiffres creneau__periode">
               {{ libellePeriode(c) }}
-            </p>
-          </div>
-        </article>
+            </span>
+          </span>
+        </button>
       </li>
       <li v-if="!creneauxDuJourActif.length" class="edt__vide pochoir">
         Aucun cours ce jour-là.
@@ -220,7 +281,7 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import CreneauDialog from '../components/CreneauDialog.vue';
 import GenerationDialog from '../components/GenerationDialog.vue';
-import { heuresLisibles } from '../utils/libelles';
+import { LIBELLE_TYPE_COURS, decalerJours, heuresLisibles } from '../utils/libelles';
 import type { Creneau, Enseignant, Promotion, Salle } from '../types';
 
 const $q = useQuasar();
@@ -312,6 +373,33 @@ const creneauxDuJourActif = computed(
   () => semaine.value.find((j) => j.jour === jourActif.value)?.creneaux ?? [],
 );
 
+/** Miroir des rôles que le menu principal autorise sur `/seances`. */
+const peutVoirRegistre = computed(() =>
+  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT']),
+);
+
+const filtresActifs = computed(
+  () => !!filtres.value.promotionId || !!filtres.value.enseignantId || !!filtres.value.salleId,
+);
+
+function reinitialiserFiltres() {
+  filtres.value = { promotionId: null, enseignantId: null, salleId: null };
+}
+
+/**
+ * La semaine type produit les séances : le lien porte la même semaine et les
+ * mêmes filtres, pour retrouver au registre ce qu'on lit sur la grille.
+ */
+const lienSeancesSemaine = computed(() => ({
+  name: 'seances',
+  query: {
+    dateDebut: semaineDu.value,
+    dateFin: decalerJours(semaineDu.value, 6),
+    ...(filtres.value.enseignantId ? { enseignantId: filtres.value.enseignantId } : {}),
+    ...(filtres.value.salleId ? { salleId: filtres.value.salleId } : {}),
+  },
+}));
+
 /**
  * Place les créneaux dans la colonne du jour : position et hauteur selon
  * l'heure réelle, et répartition en couloirs quand deux cours se chevauchent —
@@ -386,19 +474,25 @@ watch(filtres, charger, { deep: true });
 watch(semaineDu, charger);
 
 onMounted(async () => {
-  const [s, p, e] = await Promise.all([
-    api.get('/salles', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-    api.get('/enseignants', { params: { all: '1' } }),
-  ]);
-  salles.value = s.data.data;
-  promotions.value = p.data.data;
-  enseignants.value = e.data.data;
-
   // On ouvre sur le jour courant quand la semaine le contient.
   const js = new Date().getDay();
   jourActif.value = js === 0 ? 1 : js;
   await charger();
+
+  // Les référentiels n'alimentent que les listes de filtres : leur échec ne
+  // doit pas laisser la grille vide.
+  try {
+    const [s, p, e] = await Promise.all([
+      api.get('/salles', { params: { all: '1' } }),
+      api.get('/promotions', { params: { all: '1' } }),
+      api.get('/enseignants', { params: { all: '1' } }),
+    ]);
+    salles.value = s.data.data;
+    promotions.value = p.data.data;
+    enseignants.value = e.data.data;
+  } catch {
+    // Les listes déroulantes restent vides : la grille, elle, est lisible.
+  }
 });
 </script>
 
@@ -640,11 +734,19 @@ onMounted(async () => {
 }
 
 .creneau-ligne {
+  appearance: none;
+  width: 100%;
   display: grid;
   grid-template-columns: 74px minmax(0, 1fr);
   min-height: 92px;
   cursor: pointer;
   overflow: hidden;
+  text-align: left;
+  font: inherit;
+  color: var(--up-encre);
+
+  &:focus-visible { outline: 3px solid $vert; outline-offset: -4px; }
+  &:disabled { cursor: default; }
 }
 
 .creneau-ligne__heure {
@@ -655,16 +757,17 @@ onMounted(async () => {
 }
 
 .creneau-ligne__corps {
+  display: block;
   padding: var(--up-3);
   min-width: 0;
 }
 
-.creneau-ligne__matiere { font-size: 1rem; margin: 0; }
+.creneau-ligne__matiere { display: block; font-size: 1rem; }
 
-.creneau-ligne__enseignant { margin: 3px 0 0; font-size: 0.9rem; }
+.creneau-ligne__enseignant { display: block; margin-top: 3px; font-size: 0.9rem; }
 
 .creneau-ligne__meta {
-  margin: 6px 0 0;
+  margin-top: 6px;
   color: var(--up-encre-douce);
   display: flex;
   align-items: center;
@@ -678,40 +781,34 @@ onMounted(async () => {
   color: var(--up-encre-douce);
 }
 
+.edt__etat-vide {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--up-2);
+  padding: var(--up-6) var(--up-3);
+  color: var(--up-encre-douce);
+  text-align: center;
+  border: var(--up-filet);
+  background: var(--up-plaque);
+}
+
+.edt__etat-vide-titre { font-size: 1.3rem; color: var(--up-encre); }
+
+.edt__etat-vide-mention { max-width: 52ch; }
+
+.edt__etat-vide-actions {
+  display: flex;
+  gap: var(--up-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--up-3);
+}
+
 @media (max-width: 767px) {
   /* Un filtre par ligne : les libellés « Promotion », « Enseignant »
      n’ont plus à se tronquer, et le rafraîchi reste à portée de pouce. */
-  .edt__semaine {
-  display: flex;
-  align-items: center;
-  gap: var(--up-2);
-  margin-bottom: var(--up-3);
-}
-
-.edt__semaine-plaque {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: var(--up-2) var(--up-3);
-  cursor: pointer;
-  color: var(--up-encre);
-
-  &:hover { background: var(--up-craie); }
-}
-
-.edt__semaine-dates { font-size: 1.05rem; }
-
-.edt__semaine-note {
-  color: var(--up-encre-douce);
-  max-width: 34ch;
-}
-
-@media (max-width: 767px) {
-  .edt__semaine-note { display: none; }
-}
-
-.edt__filtres { grid-template-columns: minmax(0, 1fr) auto; }
+  .edt__filtres { grid-template-columns: minmax(0, 1fr) auto; }
   .edt__filtres > .q-field { grid-column: 1; }
   .edt__releve { grid-template-columns: 1fr; }
 
