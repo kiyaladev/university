@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-03",
+  "route": "GET /frais",
+  "acces": "Public, utilisé par les formulaires d’inscription publique et de guichet.",
+  "correction": "La réponse conserve pagination et filtres année/promotion mais sélectionne uniquement id, montant et devise. La projection relationnelle précédente incluait toute la filière alors que les formulaires n’affichent que le montant.",
+  "verification": {
+    "commande": "npm test -- --runInBand src/modules/inscription/frais-public.spec.ts src/modules/inscription/frais-audit.spec.ts",
+    "resultat": "5 tests réussis dans 2 suites ; tests de projection, pagination, all=true, visibilité publique et cycle d’audit des tarifs.",
+    "buildBackend": "Réussi."
+  },
+  "limites": [
+    "Les contrôles QA connectés des formulaires restent nécessaires pour confirmer le contrat rendu sur les deux parcours.",
+    "Les 190 lectures GET ont été relues par familles sur les 32 modules. La politique de rattachement d’une préinscription à un dossier étudiant reste à trancher."
+  ]
+}

@@ -2,38 +2,37 @@
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
-        <q-btn flat dense no-caps icon="badge" label="Vérifier une carte étudiante" to="/verification-carte" />
-        <q-btn flat dense no-caps icon="login" label="Se connecter" to="/connexion" />
+        <q-btn flat dense no-caps icon="badge" :label="$t('verification.nav.verifyCard')" to="/verification-carte" />
+        <q-btn flat dense no-caps icon="login" :label="$t('verification.nav.login')" to="/connexion" />
       </div>
       <div class="text-center q-my-lg">
-        <div class="lettrage page-titre">Vérification d’attestation</div>
+        <h1 class="lettrage page-titre">{{ $t('verification.title') }}</h1>
         <div class="page-sous-titre verification-intro">
-          Cette page publique atteste de l'authenticité d'une attestation
-          délivrée par l'établissement : le document existe, est intact et n'a
-          pas été révoqué. Chaque consultation est journalisée.
+          {{ $t('verification.subtitle') }}
         </div>
       </div>
 
       <!-- Formulaire de saisie / scan -->
       <div class="plaque q-pa-md q-mb-lg">
-        <span class="section-titre">Saisir le numéro et le code du QR</span>
+        <span class="section-titre">{{ $t('verification.form.sectionTitle') }}</span>
         <q-input
           v-model="numero"
           dense
           outlined
           clearable
-          label="Numéro d'attestation"
-          hint="Ex. ATT-2026-00001"
+          :label="$t('verification.form.numeroLabel')"
+          :hint="$t('verification.form.numeroHint')"
         />
         <qr-scanner
           v-model="codeQr"
-          label="Code QR de l’attestation"
-          hint="Scannez le QR du document ou saisissez le code"
+          :label="$t('verification.form.qrLabel')"
+          :hint="$t('verification.form.qrHint')"
         />
         <div class="text-caption text-grey-7 q-mt-xs">
-          Le QR scanné (ou collé) est une URL : ses paramètres
-          <code>ref</code> et <code>k</code> remplissent le formulaire
-          automatiquement.
+          <i18n-t keypath="verification.form.qrParamsHint" tag="span">
+            <template #ref><code>ref</code></template>
+            <template #k><code>k</code></template>
+          </i18n-t>
         </div>
         <div class="row justify-end q-mt-md">
           <q-btn
@@ -41,7 +40,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            label="Vérifier"
+            :label="$t('verification.form.submit')"
             :disable="!numero.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -61,54 +60,54 @@
             :color="resultat.valide ? 'positive' : 'negative'"
           />
           <div class="lettrage resultat-titre">
-            {{ resultat.valide ? 'Attestation authentique' : 'Attestation non valable' }}
+            {{ resultat.valide ? $t('verification.result.valid') : $t('verification.result.invalid') }}
           </div>
 
           <div v-if="resultat.valide && detail" class="q-mt-md text-left">
             <p class="q-mb-sm">
-              L'attestation <strong>{{ detail.numero }}</strong> existe bien dans
-              le registre de l'établissement. Mentions vérifiées :
+              <i18n-t keypath="verification.result.intro" tag="span">
+                <template #numero><strong>{{ detail.numero }}</strong></template>
+              </i18n-t>
             </p>
             <table class="table-verification">
               <tbody>
                 <tr>
-                  <td class="ta-intitule">Attestation</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.attestation') }}</td>
                   <td>
                     {{ LIBELLE_TYPE_ATTESTATION[detail.type ?? ''] ?? detail.type }}
-                    — n° {{ detail.numero }}
+                    {{ $t('verification.result.table.attestationValue', { numero: detail.numero }) }}
                   </td>
                 </tr>
                 <tr v-if="detail.etudiant">
-                  <td class="ta-intitule">Étudiant</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.etudiant') }}</td>
                   <td>
-                    {{ detail.etudiant.prenom }} {{ detail.etudiant.nom }} —
-                    matricule {{ detail.etudiant.matricule }}
+                    {{ detail.etudiant.prenom }} {{ detail.etudiant.nom }}
+                    {{ $t('verification.result.table.etudiantValue', { matricule: detail.etudiant.matricule }) }}
                   </td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Parcours</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.parcours') }}</td>
                   <td>
                     {{ detail.annee ?? '—' }}
                     {{ detail.promotion ? ` · ${detail.promotion}` : '' }}
                   </td>
                 </tr>
                 <tr v-if="detail.motif">
-                  <td class="ta-intitule">Motif</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.motif') }}</td>
                   <td>{{ detail.motif }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Émise le</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.emiseLe') }}</td>
                   <td>{{ dateFr(detail.emiseLe) }}</td>
                 </tr>
                 <tr v-if="resultat.verificationId">
-                  <td class="ta-intitule">Référence de contrôle</td>
+                  <td class="ta-intitule">{{ $t('verification.result.table.reference') }}</td>
                   <td class="chiffres">{{ resultat.verificationId }}</td>
                 </tr>
               </tbody>
             </table>
             <div class="text-caption text-grey-7 q-mt-md">
-              Vérifié le {{ dateHeureFr(new Date()) }} — cette consultation a été
-              enregistrée dans le journal du document.
+              {{ $t('verification.result.checkedAt', { date: dateHeureFr(new Date()) }) }}
             </div>
           </div>
 
@@ -117,8 +116,7 @@
       </div>
 
       <div class="text-center q-mt-xl text-caption text-grey-7">
-        La vérification est gratuite et ne requiert aucun compte. Une
-        attestation révoquée ou un numéro inconnu ne prouve rien — méfiance.
+        {{ $t('verification.footer') }}
       </div>
     </div>
   </q-page>
@@ -127,6 +125,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import QrScanner from '../components/QrScanner.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
@@ -154,6 +153,7 @@ interface ResultatVerification {
 }
 
 const route = useRoute();
+const { t } = useI18n();
 
 const numero = ref('');
 const codeQr = ref('');
@@ -201,8 +201,7 @@ async function verifier() {
   } catch {
     resultat.value = {
       valide: false,
-      raison:
-        "La vérification n'a pas pu aboutir : le service est momentanément indisponible. Réessayez dans un instant.",
+      raison: t('verification.errors.serviceUnavailable'),
     };
   } finally {
     verificationEnCours.value = false;
@@ -240,7 +239,7 @@ function dateHeureFr(v: Date): string {
 }
 
 .plaque-verite--valide {
-  border-color: #2e7d32 !important;
+  border-color: #027a0b !important;
 }
 
 .plaque-verite--invalide {
@@ -262,10 +261,9 @@ function dateHeureFr(v: Date): string {
 
 .ta-intitule {
   width: 150px;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 590;
   font-size: 11px !important;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
   background: rgba(16, 37, 30, 0.06);
 }
 </style>

@@ -2,12 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Réclamations & requêtes</div>
+        <h1 class="page-titre">{{ $t('reclamations.title') }}</h1>
         <div class="page-sous-titre">
-          Guichet unique des doléances étudiantes — note manquante, erreur de
-          saisie, scolarité, enseignement. Chaque réclamation suit un cycle
-          tracé : de l'ouverture à la clôture, en passant par l'assignation et
-          l'escalade automatique à 48 h.
+          {{ $t('reclamations.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -16,7 +13,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle réclamation"
+          :label="$t('reclamations.actions.newReclamation')"
           @click="creationOuverte = true"
         />
       </div>
@@ -37,7 +34,7 @@
 
     <filter-bar
       v-model="filtres"
-      placeholder="Rechercher (N°, sujet, nom…)"
+      :placeholder="$t('reclamations.search.placeholder')"
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
@@ -50,7 +47,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('reclamations.filters.statut')"
         />
         <q-select
           v-model="filtres.type"
@@ -60,7 +57,7 @@
           clearable
           emit-value
           map-options
-          label="Type"
+          :label="$t('reclamations.filters.type')"
         />
         <q-select
           v-model="filtres.priorite"
@@ -70,19 +67,19 @@
           clearable
           emit-value
           map-options
-          label="Priorité"
+          :label="$t('reclamations.filters.priorite')"
         />
         <autocomplete-async
           v-model="filtres.departementId"
           endpoint="/departements"
           :label-fn="(d) => `${d.code} — ${d.nom}`"
-          label="Département"
+          :label="$t('reclamations.filters.departement')"
         />
-        <autocomplete-async
+        <q-select
           v-model="filtres.assigneAId"
-          endpoint="/utilisateurs"
-          :label-fn="(u) => `${u.prenom} ${u.nom} (${u.role})`"
-          label="Assigné à"
+          :options="membresStaff.map((u) => ({ value: u.id, label: `${u.prenom} ${u.nom} (${u.role})` }))"
+          outlined dense clearable emit-value map-options
+          :label="$t('reclamations.filters.assigneA')"
         />
         <q-select
           v-model="filtres.escalade"
@@ -92,7 +89,7 @@
           clearable
           emit-value
           map-options
-          label="Escalade"
+          :label="$t('reclamations.filters.escalade')"
         />
       </template>
       <template #actions>
@@ -124,13 +121,12 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || reclamations.length > 0"
       @row-click="(_, row) => ouvrir(row)"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucune réclamation pour ces critères. Réinitialisez les filtres ou
-          ouvrez une réclamation au nom d'un étudiant.
+          {{ $t('reclamations.emptyState.message') }}
         </div>
       </template>
       <template #body-cell-numero="p">
@@ -155,18 +151,20 @@
       </template>
       <template #body-cell-auteur="p">
         <q-td :props="p">
-          <span v-if="p.row.anonyme">Anonyme</span>
+          <span v-if="p.row.anonyme">{{ $t('reclamations.fields.anonyme') }}</span>
           <span v-else-if="p.row.etudiant">
             {{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}
           </span>
-          <span v-else class="text-grey-7">—</span>
+          <span v-else-if="p.row.nomAuteur">{{ p.row.nomAuteur }}</span>
+          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
       <template #body-cell-activite="p">
         <q-td :props="p">
           <div>{{ dateHeureLisible(p.row.creeLe) }}</div>
           <div v-if="p.row.escaladeLe" class="text-caption text-warning">
-            <q-icon name="priority_high" size="14px" /> Escaladée {{ dateHeureLisible(p.row.escaladeLe) }}
+            <q-icon name="priority_high" size="14px" />
+            {{ $t('reclamations.fields.escaladeeLe', { date: dateHeureLisible(p.row.escaladeLe) }) }}
           </div>
         </q-td>
       </template>
@@ -177,10 +175,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Ouvrir le détail de la réclamation"
+            :aria-label="$t('reclamations.ariaLabels.openDetail')"
             @click.stop="ouvrir(p.row)"
           >
-            <q-tooltip>Détail, fil de discussion et assignation</q-tooltip>
+            <q-tooltip>{{ $t('reclamations.tooltips.detail') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.aRole(['ADMIN', 'DIRECTION']) && p.row.statut !== 'FERMEE' && p.row.statut !== 'REJETEE' && p.row.statut !== 'RESOLUE'"
@@ -189,10 +187,10 @@
             round
             icon="priority_high"
             color="warning"
-            aria-label="Escalader la réclamation"
+            :aria-label="$t('reclamations.ariaLabels.escalate')"
             @click.stop="escalader(p.row)"
           >
-            <q-tooltip>Escalader</q-tooltip>
+            <q-tooltip>{{ $t('reclamations.tooltips.escalate') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -222,9 +220,9 @@
             <div class="row items-center">
               <q-icon name="person" size="16px" class="q-mr-sm text-grey-6" />
               <span class="text-caption">
-                <span v-if="r.anonyme">Anonyme</span>
+                <span v-if="r.anonyme">{{ $t('reclamations.fields.anonyme') }}</span>
                 <span v-else-if="r.etudiant">{{ r.etudiant.prenom }} {{ r.etudiant.nom }}</span>
-                <span v-else>—</span>
+                <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
               </span>
             </div>
             <div v-if="r.departement" class="row items-center">
@@ -233,7 +231,9 @@
             </div>
             <div class="row items-center">
               <q-icon name="chat" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ r._count?.messages ?? 0 }} message(s)</span>
+              <span class="text-caption">{{
+                $t('reclamations.fields.messagesCount', { count: r._count?.messages ?? 0 })
+              }}</span>
             </div>
             <div class="row items-center">
               <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
@@ -241,12 +241,21 @@
             </div>
             <div v-if="r.escaladeLe" class="row items-center text-warning">
               <q-icon name="priority_high" size="16px" class="q-mr-sm" />
-              <span class="text-caption">Escaladée {{ dateHeureLisible(r.escaladeLe) }}</span>
+              <span class="text-caption">{{
+                $t('reclamations.fields.escaladeeLe', { date: dateHeureLisible(r.escaladeLe) })
+              }}</span>
             </div>
           </q-card-section>
           <q-separator />
           <q-card-actions align="right" class="q-px-md">
-            <q-btn flat dense no-caps icon="visibility" label="Détail" @click="ouvrir(r)" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              icon="visibility"
+              :label="$t('reclamations.actions.detail')"
+              @click="ouvrir(r)"
+            />
             <q-btn
               v-if="auth.aRole(['ADMIN', 'DIRECTION']) && r.statut !== 'FERMEE' && r.statut !== 'REJETEE' && r.statut !== 'RESOLUE'"
               flat
@@ -254,7 +263,7 @@
               no-caps
               color="warning"
               icon="priority_high"
-              label="Escalader"
+              :label="$t('reclamations.actions.escalate')"
               @click="escalader(r)"
             />
           </q-card-actions>
@@ -263,8 +272,7 @@
       <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="forum" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucune réclamation pour ces critères. Réinitialisez les filtres ou
-          ouvrez une réclamation au nom d'un étudiant.
+          {{ $t('reclamations.emptyState.message') }}
         </div>
       </div>
     </div>
@@ -283,7 +291,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -309,16 +318,17 @@ import type {
 } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
 const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
-const OPTIONS_ESCALADE = [
-  { label: 'Toutes', value: '' },
-  { label: 'Escaladées', value: 'oui' },
-  { label: 'Non escaladées', value: 'non' },
-];
+const OPTIONS_ESCALADE = computed(() => [
+  { label: t('reclamations.escaladeOptions.toutes'), value: '' },
+  { label: t('reclamations.escaladeOptions.escaladees'), value: 'oui' },
+  { label: t('reclamations.escaladeOptions.nonEscaladees'), value: 'non' },
+]);
 
 const reclamations = ref<Reclamation[]>([]);
 const stats = ref<Record<string, number> | null>(null);
@@ -332,12 +342,12 @@ const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
 
 // Seuls les compteurs qui appellent une action sont mis en alerte.
-const plaques = [
-  { cle: 'OUVERTE', libelle: 'Ouvertes', alerte: false },
-  { cle: 'EN_ATTENTE_REPONSE', libelle: 'Attente réponse', alerte: false },
-  { cle: 'urgentes', libelle: 'Urgentes', alerte: true },
-  { cle: 'delaiDepasse', libelle: 'Délai dépassé', alerte: true },
-];
+const plaques = computed(() => [
+  { cle: 'OUVERTE', libelle: t('reclamations.stats.ouvertes'), alerte: false },
+  { cle: 'EN_ATTENTE_REPONSE', libelle: t('reclamations.stats.attenteReponse'), alerte: false },
+  { cle: 'urgentes', libelle: t('reclamations.stats.urgentes'), alerte: true },
+  { cle: 'delaiDepasse', libelle: t('reclamations.stats.delaiDepasse'), alerte: true },
+]);
 
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
@@ -349,16 +359,16 @@ function libellePriorite(p: string) {
   return LIBELLE_PRIORITE_RECLAMATION[p as PrioriteReclamation] ?? p;
 }
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
-  { name: 'sujet', label: 'Sujet', field: 'sujet', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'priorite', label: 'Priorité', field: 'priorite', align: 'left' },
-  { name: 'auteur', label: 'Auteur', field: 'auteur', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'activite', label: 'Activité', field: 'creeLe', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('reclamations.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
+  { name: 'sujet', label: t('reclamations.table.columns.sujet'), field: 'sujet', align: 'left' },
+  { name: 'type', label: t('reclamations.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'priorite', label: t('reclamations.table.columns.priorite'), field: 'priorite', align: 'left' },
+  { name: 'auteur', label: t('reclamations.table.columns.auteur'), field: 'auteur', align: 'left' },
+  { name: 'statut', label: t('reclamations.table.columns.statut'), field: 'statut', align: 'left' },
+  { name: 'activite', label: t('reclamations.table.columns.activite'), field: 'creeLe', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ouvrir(r: Reclamation) {
   reclamationSelectionnee.value = r;
@@ -410,9 +420,7 @@ async function chargerStats() {
 async function chargerStaff() {
   if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return;
   try {
-    const { data } = await api.get('/utilisateurs', {
-      params: { all: '1', actif: 'true' },
-    });
+    const { data } = await api.get('/reclamations/agents');
     membresStaff.value = (Array.isArray(data) ? data : data.data ?? []).filter((u: Utilisateur) =>
       ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'].includes(u.role),
     );
@@ -434,13 +442,13 @@ function onChange() {
 async function escalader(r: Reclamation) {
   try {
     await api.post(`/reclamations/${r.id}/escalader`);
-    $q.notify({ type: 'warning', message: `Réclamation ${r.numero} escaladée` });
+    $q.notify({ type: 'warning', message: t('reclamations.messages.escalated', { numero: r.numero }) });
     await requeter();
     await chargerStats();
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e.response?.data?.message ?? 'Escalade impossible',
+      message: e.response?.data?.message ?? t('reclamations.messages.escalateError'),
     });
   }
 }
@@ -469,16 +477,16 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$chaux-claire: #F2F3EE;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$chaux-claire: #FFFFFF;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .reclamation-prio {
@@ -486,22 +494,21 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
   &.prio-BASSE {
-    background: $chaux-claire;
-    color: $encre;
-    border: 2px solid rgba(16, 37, 30, 0.45);
+    background: var(--up-gris-inerte);
+    color: var(--up-encre);
+    border: var(--up-filet);
   }
-  &.prio-NORMALE { background: #EFB700; color: $encre; }
-  &.prio-HAUTE { background: $rouge; color: #fff; }
+  &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
+  &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
   &.prio-URGENTE {
-    background: $rouge;
-    color: #fff;
+    background: $rouge-fond; color: #{$rouge};
+    color: var(--up-encre);
     animation: clignote 1.4s ease-in-out infinite;
   }
 }
@@ -511,20 +518,18 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
-  &.statut-OUVERTE { background: $jaune-fonce; }
-  &.statut-EN_COURS { background: $encre; }
-  &.statut-EN_ATTENTE_REPONSE { background: #6b7280; }
-  &.statut-RESOLUE { background: $vert; }
-  &.statut-FERMEE { background: #4b5563; }
-  &.statut-REJETEE { background: $rouge; }
+  &.statut-OUVERTE { background: $jaune-fond; color: $jaune-texte; }
+  &.statut-EN_COURS { background: $vert-fond; color: $vert-lien; }
+  &.statut-EN_ATTENTE_REPONSE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &.statut-RESOLUE { background: $vert-fond; color: #{$vert}; }
+  &.statut-FERMEE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .reclamation-carte { background: var(--up-plaque); }

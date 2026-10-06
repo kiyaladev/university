@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
@@ -23,9 +23,14 @@ export class AttestationController {
   constructor(private readonly service: AttestationService) {}
 
   /** Consulté par l'écran de pointage pour savoir quoi proposer au contrôleur. */
+  @Roles(...GESTION, Role.CONTROLEUR)
   @Get('enseignants/:id/moyens')
-  moyens(@Param('id') id: string) {
-    return this.service.moyens(id);
+  moyens(
+    @Param('id') id: string,
+    @Query('seanceId') seanceId: string | undefined,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.moyens(id, user, seanceId);
   }
 
   @Roles(...GESTION)
@@ -92,9 +97,13 @@ export class AttestationController {
   }
 
   /** Gabarit transmis à la passerelle pour la comparaison en salle. */
-  @Roles(Role.CONTROLEUR, Role.ADMIN, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.SCOLARITE)
+  @Roles(Role.CONTROLEUR, Role.ADMIN, Role.SCOLARITE)
   @Get('enseignants/:id/gabarit')
-  gabarit(@Param('id') id: string) {
-    return this.service.gabarit(id);
+  gabarit(
+    @Param('id') id: string,
+    @Query('seanceId', new ParseUUIDPipe()) seanceId: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.gabarit(id, seanceId, user);
   }
 }

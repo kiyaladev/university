@@ -6,7 +6,8 @@
     :dense="dense"
     readonly
     class="champ-date"
-    @click="ouvert = true"
+    :disable="disable"
+    @click="ouvrir"
   >
     <template #prepend><q-icon name="event" /></template>
     <q-popup-proxy v-model="ouvert" cover transition-show="scale" transition-hide="scale">
@@ -15,6 +16,7 @@
         mask="YYYY-MM-DD"
         minimal
         today-btn
+        :disable="disable"
         @update:model-value="choisir"
       />
     </q-popup-proxy>
@@ -30,8 +32,8 @@ import { computed, ref } from 'vue';
  * parle que français, la date se saisit ici au calendrier, en JJ/MM/AAAA.
  */
 const props = withDefaults(
-  defineProps<{ modelValue: string; label?: string; dense?: boolean }>(),
-  { label: '', dense: true },
+  defineProps<{ modelValue: string; label?: string; dense?: boolean; disable?: boolean }>(),
+  { label: '', dense: true, disable: false },
 );
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 
@@ -46,6 +48,10 @@ const affichage = computed(() => {
 function choisir(valeur: string | null) {
   if (valeur) emit('update:modelValue', valeur);
   ouvert.value = false;
+}
+
+function ouvrir() {
+  if (!props.disable) ouvert.value = true;
 }
 </script>
 

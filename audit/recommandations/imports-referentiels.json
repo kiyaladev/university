@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-02",
+  "portee": "Importer des enseignants, matières, salles et créneaux depuis CSV ou XLSX, avec aperçu préalable et rapport de validation ligne par ligne.",
+  "implementation": {
+    "interface": "Route /imports, lien dans la rubrique Organisation, accessible aux rôles ADMIN et SCOLARITE. Modèles CSV téléchargeables par type.",
+    "formats": "CSV UTF-8 séparé par point-virgule ou virgule ; XLSX première feuille. En-têtes accentués, alias usuels et colonnes réordonnées reconnus.",
+    "validation": "Jusqu’à 2 000 lignes, détection des clés déjà présentes et des doublons internes, validation DTO, département/affectation/salle et collisions horaires. Le résultat donne aperçu et erreurs par numéro de ligne.",
+    "application": "Les lignes valides sont créées séparément ; un échec ne retire pas les créations réussies. Les nouvelles collisions ou doublons apparus depuis l’aperçu sont refusés.",
+    "limitesXlsx": "Fichier inférieur à 5 Mo, XML décompressé limité à 16 Mo, 2 000 entrées ZIP, sans ZIP64 ni classeur chiffré. Seule la première feuille est lue."
+  },
+  "verification": {
+    "backendImport": "12 tests ciblés couvrent le parseur CSV, les accents/BOM, les champs cités, les doublons, les références, les collisions de créneaux et les dates.",
+    "buildBackend": "Réussi.",
+    "typecheckFrontend": "Réussi.",
+    "decodeurXlsxChromium": "Classeur synthétique lu dans Chromium : première feuille, chaînes partagées, caractères Unicode et conversion en CSV vérifiés.",
+    "catalogues": "326 clés utilisées, 384 clés par langue, aucune clé utilisée ou traduite manquante."
+  },
+  "limite": "La recette avec les fichiers historiques réels de l’établissement et la vérification de tous leurs alias de colonnes restent à faire. Le format XLS binaire n’est pas accepté."
+}

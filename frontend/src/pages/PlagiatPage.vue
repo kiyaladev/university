@@ -2,11 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Anti-plagiat</div>
+        <h1 class="page-titre">{{ $t('plagiatPage.title') }}</h1>
         <div class="page-sous-titre">
-          File d'arbitrage des suspicions détectées par empreinte sur les documents
-          déposés. Acquitter lève la suspicion ; confirmer ouvre une procédure
-          disciplinaire — les deux décisions sont définitives et journalisées.
+          {{ $t('plagiatPage.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -15,7 +13,7 @@
           color="secondary"
           no-caps
           icon="library_books"
-          label="Bibliothèque"
+          :label="$t('plagiatPage.actions.library')"
           @click="router.push({ name: 'bibliotheque' })"
         />
       </div>
@@ -26,7 +24,7 @@
           color="negative"
           no-caps
           icon="refresh"
-          label="Recalculer toutes les suspicions"
+          :label="$t('plagiatPage.actions.recalculateAll')"
           :loading="recalculEnCours"
           @click="lancerRecalcul"
         />
@@ -38,7 +36,7 @@
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">Total suspicions</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatPage.kpis.total') }}</div>
             <div class="kpi-carte__chiffre">{{ kpis.total }}</div>
           </q-card-section>
         </q-card>
@@ -46,7 +44,7 @@
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">Score moyen</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatPage.kpis.avgScore') }}</div>
             <div class="kpi-carte__chiffre">
               {{ nombreLisible(kpis.scoreMoyen, 1) }}<span class="kpi-carte__unite">%</span>
             </div>
@@ -56,7 +54,7 @@
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">En attente d'arbitrage</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatPage.kpis.pending') }}</div>
             <div class="kpi-carte__chiffre text-orange">{{ kpis.enAttente }}</div>
           </q-card-section>
         </q-card>
@@ -64,12 +62,12 @@
       <div class="col-12 col-sm-6 col-md-3">
         <q-card flat bordered class="carte kpi-carte">
           <q-card-section>
-            <div class="text-caption text-grey-7 text-uppercase">Arbitrées</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatPage.kpis.arbitrated') }}</div>
             <div class="kpi-carte__chiffre">
               <span class="text-positive">{{ kpis.acquittees }}</span>
-              <span class="kpi-carte__unite"> acquittées · </span>
+              <span class="kpi-carte__unite"> {{ $t('plagiatPage.kpis.acquittedSuffix') }}</span>
               <span class="text-negative">{{ kpis.confirmees }}</span>
-              <span class="kpi-carte__unite"> confirmées</span>
+              <span class="kpi-carte__unite"> {{ $t('plagiatPage.kpis.confirmedSuffix') }}</span>
             </div>
           </q-card-section>
         </q-card>
@@ -81,14 +79,14 @@
       <div class="text-weight-medium">{{ dernierRecap.titre }}</div>
       <div class="text-caption">{{ dernierRecap.message }}</div>
       <template #action>
-        <q-btn flat dense no-caps label="Masquer" aria-label="Masquer le récapitulatif" @click="dernierRecap = null" />
+        <q-btn flat dense no-caps :label="$t('plagiatPage.banner.dismiss')" :aria-label="$t('plagiatPage.banner.dismissAria')" @click="dernierRecap = null" />
       </template>
     </q-banner>
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (titre, auteurs d'un document…)"
+      :placeholder="$t('plagiatPage.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -100,18 +98,18 @@
           dense
           outlined
           clearable
-          label="Score minimum (%)"
+          :label="$t('plagiatPage.filters.scoreMin')"
         />
         <autocomplete-async
           v-model="filtres.documentId"
           endpoint="/documents"
           :label-fn="(d) => `${d.titre}${d.auteurs ? ' — ' + d.auteurs : ''}`"
-          label="Document concerné"
-          placeholder="Tapez le titre…"
+          :label="$t('plagiatPage.filters.document')"
+          :placeholder="$t('plagiatPage.filters.documentPlaceholder')"
           clearable
         />
-        <champ-date v-model="filtres.dateMin" label="Détecté du" />
-        <champ-date v-model="filtres.dateMax" label="au" />
+        <champ-date v-model="filtres.dateMin" :label="$t('plagiatPage.filters.detectedFrom')" />
+        <champ-date v-model="filtres.dateMax" :label="$t('plagiatPage.filters.detectedTo')" />
       </template>
       <template #actions>
         <view-toggle
@@ -126,10 +124,10 @@
     <!-- Top 5 documents les plus dupliqués -->
     <q-banner v-if="topDocuments.length" dense class="carte q-mb-md">
       <template #avatar><q-icon name="leaderboard" color="primary" /></template>
-      <div class="text-caption text-weight-medium q-mb-xs">Documents les plus dupliqués</div>
+      <div class="text-caption text-weight-medium q-mb-xs">{{ $t('plagiatPage.topDocuments.title') }}</div>
       <ol class="q-pl-md q-mb-none">
         <li v-for="d in topDocuments" :key="d.id" class="text-caption">
-          {{ d.titre }} — <span class="text-grey-9">{{ d.compte }} suspicion(s)</span>
+          {{ d.titre }} {{ $t('rectoratPage.subtitleFallback') }} <span class="text-grey-9">{{ $t('plagiatPage.topDocuments.count', { count: d.compte }) }}</span>
         </li>
       </ol>
     </q-banner>
@@ -141,13 +139,13 @@
     <div v-else-if="!suspicionsFiltrees.length" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="verified" size="38px" color="positive" />
       <div class="q-mt-sm text-weight-medium">
-        {{ filtresActifs ? 'Aucune suspicion ne correspond à ces critères.' : 'Aucune suspicion en attente d’arbitrage.' }}
+        {{ filtresActifs ? $t('plagiatPage.emptyState.filteredTitle') : $t('plagiatPage.emptyState.defaultTitle') }}
       </div>
       <div class="text-caption q-mt-xs">
         {{
           filtresActifs
-            ? 'Élargissez les critères pour revoir la file d’arbitrage.'
-            : 'Les nouveaux dépôts sont comparés automatiquement ; relancez un recalcul complet après un import massif.'
+            ? $t('plagiatPage.emptyState.filteredHint')
+            : $t('plagiatPage.emptyState.defaultHint')
         }}
       </div>
       <q-btn
@@ -156,7 +154,7 @@
         no-caps
         color="primary"
         icon="refresh"
-        label="Réinitialiser les filtres"
+        :label="$t('plagiatPage.emptyState.resetFilters')"
         class="q-mt-md"
         @click="reinitialiser"
       />
@@ -207,10 +205,10 @@
               dense
               round
               icon="open_in_new"
-              aria-label="Voir le détail de la suspicion"
+              :aria-label="$t('plagiatPage.table.actions.viewDetailAria')"
               @click.stop="voirDetail(p.row)"
             >
-              <q-tooltip>Voir le détail et le diff</q-tooltip>
+              <q-tooltip>{{ $t('plagiatPage.table.actions.viewDetailTooltip') }}</q-tooltip>
             </q-btn>
             <template v-if="peutDecider && p.row.statut === 'EN_ATTENTE'">
               <q-btn
@@ -219,10 +217,10 @@
                 round
                 color="positive"
                 icon="thumb_down"
-                aria-label="Acquitter la suspicion"
+                :aria-label="$t('plagiatPage.table.actions.acquitAria')"
                 @click.stop="acquitter(p.row)"
               >
-                <q-tooltip>Acquitter</q-tooltip>
+                <q-tooltip>{{ $t('plagiatPage.table.actions.acquitTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 flat
@@ -230,10 +228,10 @@
                 round
                 color="negative"
                 icon="gavel"
-                aria-label="Confirmer le plagiat"
+                :aria-label="$t('plagiatPage.table.actions.confirmAria')"
                 @click.stop="confirmer(p.row)"
               >
-                <q-tooltip>Confirmer le plagiat</q-tooltip>
+                <q-tooltip>{{ $t('plagiatPage.table.actions.confirmTooltip') }}</q-tooltip>
               </q-btn>
             </template>
           </q-td>
@@ -266,12 +264,14 @@
     <q-dialog v-model="decisionDialogOuvert">
       <q-card v-if="decisionCourante" style="width: 540px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ decisionStatut === 'ACQUITTE' ? 'Acquitter la suspicion' : 'Confirmer le plagiat' }}
+          {{ decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.titleAcquit') : $t('plagiatPage.dialog.titleConfirm') }}
         </q-card-section>
         <q-card-section class="q-pt-none text-caption text-grey-7">
-          Score <strong>{{ Math.round(decisionCourante.score) }} %</strong> —
-          « {{ decisionCourante.documentA?.titre ?? '—' }} »
-          contre « {{ decisionCourante.documentB?.titre ?? '—' }} »
+          {{ $t('plagiatPage.dialog.scoreLabel') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('rectoratPage.subtitleFallback') }}
+          {{ $t('plagiatPage.dialog.comparisonDocs', {
+            documentA: decisionCourante.documentA?.titre ?? '—',
+            documentB: decisionCourante.documentB?.titre ?? '—',
+          }) }}
         </q-card-section>
         <q-card-section>
           <q-banner dense :class="decisionStatut === 'CONFIRME' ? 'bg-red-1 text-red-10 q-mb-md' : 'carte q-mb-md'">
@@ -279,11 +279,10 @@
               <q-icon :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'" :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'" />
             </template>
             <template v-if="decisionStatut === 'CONFIRME'">
-              Confirmer ouvre une procédure disciplinaire. Le motif est obligatoire
-              et la décision ne pourra plus être modifiée.
+              {{ $t('plagiatPage.dialog.confirmWarning') }}
             </template>
             <template v-else>
-              La suspicion sera close sans suite. La décision ne pourra plus être modifiée.
+              {{ $t('plagiatPage.dialog.acquitWarning') }}
             </template>
           </q-banner>
           <q-input
@@ -292,16 +291,16 @@
             dense
             type="textarea"
             autogrow
-            :label="decisionStatut === 'CONFIRME' ? 'Motif *' : 'Motif (facultatif)'"
+            :label="decisionStatut === 'CONFIRME' ? $t('plagiatPage.dialog.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('plagiatPage.dialog.cancel')" v-close-popup />
           <q-btn
             unelevated
             no-caps
             :color="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
-            :label="decisionStatut === 'ACQUITTE' ? 'Acquitter définitivement' : 'Confirmer le plagiat'"
+            :label="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.acquitSubmit') : $t('plagiatPage.dialog.confirmSubmit')"
             :disable="decisionStatut === 'CONFIRME' && !decisionMotif.trim()"
             :loading="decisionEnCours"
             @click="validerDecision"
@@ -315,6 +314,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import FilterBar from '../components/FilterBar.vue';
@@ -328,6 +328,7 @@ import { LIBELLE_STATUT_SUSPICION, dateLisible, nombreLisible } from '../utils/l
 import type { SuspicionPlagiat, ChipFiltre } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -353,14 +354,14 @@ const filtres = ref<Record<string, any>>({});
 
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
-const colonnes: QTableColumn<SuspicionPlagiat>[] = [
-  { name: 'score', label: 'Score', field: 'score', align: 'center', sortable: true },
-  { name: 'documentA', label: 'Document A', field: 'documentAId', align: 'left' },
-  { name: 'documentB', label: 'Document B', field: 'documentBId', align: 'left' },
-  { name: 'detecteLe', label: 'Détecté le', field: (r) => dateLisible(r.detecteLe), align: 'center', sortable: true },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'score', label: t('plagiatPage.table.columns.score'), field: 'score', align: 'center', sortable: true },
+  { name: 'documentA', label: t('plagiatPage.table.columns.documentA'), field: 'documentAId', align: 'left' },
+  { name: 'documentB', label: t('plagiatPage.table.columns.documentB'), field: 'documentBId', align: 'left' },
+  { name: 'detecteLe', label: t('plagiatPage.table.columns.detectedOn'), field: (r) => dateLisible(r.detecteLe), align: 'center', sortable: true },
+  { name: 'statut', label: t('plagiatPage.table.columns.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function couleurScore(score: number): string {
   if (score >= 80) return 'negative';
@@ -385,19 +386,19 @@ const filtresActifs = computed(() =>
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    cs.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+    cs.push({ label: t('plagiatPage.chips.search', { value: filtres.value.recherche }), value: filtres.value.recherche, icone: 'search', defaut: true });
   }
   if ((filtres.value.scoreMin ?? null) !== null && filtres.value.scoreMin !== '') {
-    cs.push({ label: `Score ≥ ${filtres.value.scoreMin} %`, value: filtres.value.scoreMin, icone: 'speed' });
+    cs.push({ label: t('plagiatPage.chips.scoreMin', { value: filtres.value.scoreMin }), value: filtres.value.scoreMin, icone: 'speed' });
   }
   if (filtres.value.documentId) {
-    cs.push({ label: 'Document ciblé', value: filtres.value.documentId, icone: 'description', cle: 'documentId'});
+    cs.push({ label: t('plagiatPage.chips.targetedDocument'), value: filtres.value.documentId, icone: 'description', cle: 'documentId'});
   }
   if (filtres.value.dateMin) {
-    cs.push({ label: `Depuis : ${dateLisible(filtres.value.dateMin)}`, value: filtres.value.dateMin, icone: 'event' });
+    cs.push({ label: t('plagiatPage.chips.since', { date: dateLisible(filtres.value.dateMin) }), value: filtres.value.dateMin, icone: 'event' });
   }
   if (filtres.value.dateMax) {
-    cs.push({ label: `Jusqu'à : ${dateLisible(filtres.value.dateMax)}`, value: filtres.value.dateMax, icone: 'event' });
+    cs.push({ label: t('plagiatPage.chips.until', { date: dateLisible(filtres.value.dateMax) }), value: filtres.value.dateMax, icone: 'event' });
   }
   return cs;
 });
@@ -415,9 +416,9 @@ const suspicionsFiltrees = computed(() => {
     if (filtres.value.documentId
       && s.documentAId !== filtres.value.documentId
       && s.documentBId !== filtres.value.documentId) return false;
-    const t = new Date(s.detecteLe).getTime();
-    if (debut !== null && t < debut) return false;
-    if (fin !== null && t > fin) return false;
+    const detecteLeTs = new Date(s.detecteLe).getTime();
+    if (debut !== null && detecteLeTs < debut) return false;
+    if (fin !== null && detecteLeTs > fin) return false;
     if (q) {
       const texte = [
         s.documentA?.titre,
@@ -469,7 +470,7 @@ async function charger() {
     suspicions.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Tableau de bord anti-plagiat indisponible',
+      message: e?.response?.data?.message ?? t('plagiatPage.messages.dashboardUnavailable'),
     });
   } finally {
     chargement.value = false;
@@ -506,7 +507,7 @@ const confirmer = (s: SuspicionPlagiat) => ouvrirDecision(s, 'CONFIRME');
 async function validerDecision() {
   if (!decisionCourante.value) return;
   if (decisionStatut.value === 'CONFIRME' && !decisionMotif.value.trim()) {
-    $q.notify({ type: 'warning', message: 'Le motif est obligatoire pour une confirmation' });
+    $q.notify({ type: 'warning', message: t('plagiatPage.messages.motifRequired') });
     return;
   }
   decisionEnCours.value = true;
@@ -519,13 +520,13 @@ async function validerDecision() {
       type: 'positive',
       message:
         decisionStatut.value === 'ACQUITTE'
-          ? 'Suspicion acquittée'
-          : 'Plagiat confirmé — procédure ouverte',
+          ? t('plagiatPage.messages.acquitted')
+          : t('plagiatPage.messages.confirmed'),
     });
     decisionDialogOuvert.value = false;
     await charger();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Décision impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('plagiatPage.messages.decisionFailed') });
   } finally {
     decisionEnCours.value = false;
   }
@@ -533,24 +534,26 @@ async function validerDecision() {
 
 async function lancerRecalcul() {
   $q.dialog({
-    title: 'Recalculer toutes les suspicions',
-    message:
-      'Tous les documents déposés seront comparés deux à deux : l’opération peut '
-      + 'prendre plusieurs minutes. Les décisions déjà prises ne sont pas remises en cause.',
+    title: t('plagiatPage.messages.recalculateDialogTitle'),
+    message: t('plagiatPage.messages.recalculateDialogMessage'),
     cancel: true,
-    ok: { color: 'negative', label: 'Lancer le recalcul', unelevated: true, noCaps: true },
+    ok: { color: 'negative', label: t('plagiatPage.messages.recalculateDialogOk'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     recalculEnCours.value = true;
     try {
       const { data } = await api.post('/documents/recalculer-plagiat', {});
       dernierRecap.value = {
-        titre: 'Recalcul terminé',
-        message: `${data?.creees ?? 0} suspicion(s) créée(s), ${data?.misesAJour ?? 0} mise(s) à jour, ${data?.ignorees ?? 0} ignorée(s).`,
+        titre: t('plagiatPage.messages.recalculateDoneTitle'),
+        message: t('plagiatPage.messages.recalculateDoneMessage', {
+          created: data?.creees ?? 0,
+          updated: data?.misesAJour ?? 0,
+          ignored: data?.ignorees ?? 0,
+        }),
       };
-      $q.notify({ type: 'positive', message: 'Recalcul anti-plagiat terminé' });
+      $q.notify({ type: 'positive', message: t('plagiatPage.messages.recalculateSuccess') });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Recalcul impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('plagiatPage.messages.recalculateFailed') });
     } finally {
       recalculEnCours.value = false;
     }

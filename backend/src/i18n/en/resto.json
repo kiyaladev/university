@@ -1,0 +1,21 @@
+{
+  "compte_non_rattache_a_une_fiche_etudiante": "Account is not linked to a student record",
+  "etudiant_introuvable": "Student not found",
+  "portefeuille_introuvable": "Wallet not found",
+  "recharge_introuvable": "Top-up not found",
+  "cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech": "This top-up is already collected and cannot be marked as failed",
+  "cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee": "This top-up is closed and can no longer be confirmed",
+  "consommation_introuvable": "Meal record not found",
+  "reference_vide_scannez_le_qr_ou_saisissez_le_matricule": "Empty reference: scan the QR code or enter the student ID",
+  "etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie": "Student not found — check the scanned or entered reference",
+  "reference_de_paiement_temporairement_indisponible_reessayez": "Payment reference temporarily unavailable, please try again",
+  "jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet": "Invalid or expired token — please reconnect the counter workstation",
+  "jeton_invalide": "Invalid token",
+  "compte_inexistant_ou_desactive": "Account does not exist or is disabled",
+  "session_expiree_reconnectez_vous": "Session expired, please log in again",
+  "le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola": "The counter workstation is reserved for controllers, academic services, and administrators — log in with one of these accounts.",
+  "solde_insuffisant_rechargez_via_le_portail_solde_portefeuill": "Insufficient balance — please top up via the portal (balance: {portefeuille.solde} GNF, meal: {dto.montant} GNF)",
+  "cette_consommation_est_deja_consommation_statut_seul_un_repa": "This meal record is already \"{consommation.statut}\": only a validated meal can be refunded.",
+  "solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_": "Insufficient balance: {solde} GNF available for a meal costing {montant} GNF. Top up through the portal.",
+  "cette_consommation_est_deja_consommation_statut_seul_un_repas_vali": "This meal is already “{statut}”: only a validated meal can be refunded."
+}

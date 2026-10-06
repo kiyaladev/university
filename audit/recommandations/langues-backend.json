@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-02T11:21:44.937Z",
+  "checks": [
+    {
+      "language": "fr-FR",
+      "status": 400,
+      "message": "L’évaluation « Épreuve QA de traduction » est clôturée : la saisie des notes est fermée.",
+      "result": "OK"
+    },
+    {
+      "language": "en-US",
+      "status": 400,
+      "message": "Assessment “Épreuve QA de traduction” is closed: grades can no longer be entered.",
+      "result": "OK"
+    }
+  ]
+}

@@ -2,11 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Mes réclamations</div>
+        <h1 class="page-titre">{{ $t('mesReclamations.title') }}</h1>
         <div class="page-sous-titre">
-          Le guichet unique pour vos doléances : note manquante, erreur de
-          saisie, scolarité, enseignement. Chaque réclamation suit un cycle tracé
-          et peut être anonyme si vous préférez.
+          {{ $t('mesReclamations.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -15,22 +13,20 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle réclamation"
+          :label="$t('mesReclamations.actions.new')"
           @click="creationOuverte = true"
         />
       </div>
     </div>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
-      Cette page est réservée aux comptes étudiants. Vous êtes connecté en
-      {{ auth.utilisateur?.role }} — le registre complet se trouve sur
-      « Réclamations & requêtes ».
+      {{ $t('mesReclamations.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesReclamations.banner.goToRegistry') }) }}
       <template #action>
         <q-btn
           flat
           no-caps
           icon="support_agent"
-          label="Réclamations & requêtes"
+          :label="$t('mesReclamations.banner.goToRegistry')"
           :to="{ name: 'reclamations' }"
         />
       </template>
@@ -46,14 +42,14 @@
         </q-card>
       </div>
       <div class="col-12 text-caption text-grey-7">
-        Compteurs calculés sur les réclamations affichées ci-dessous.
+        {{ $t('mesReclamations.stats.caption') }}
       </div>
     </div>
 
     <filter-bar
       v-if="!rolePasBon"
       v-model="filtres"
-      placeholder="Rechercher (N°, sujet…)"
+      :placeholder="$t('mesReclamations.filters.searchPlaceholder')"
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
@@ -66,7 +62,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('mesReclamations.filters.status')"
         />
         <q-select
           v-model="filtres.type"
@@ -76,7 +72,7 @@
           clearable
           emit-value
           map-options
-          label="Type"
+          :label="$t('mesReclamations.filters.type')"
         />
         <q-select
           v-model="filtres.priorite"
@@ -86,7 +82,7 @@
           clearable
           emit-value
           map-options
-          label="Priorité"
+          :label="$t('mesReclamations.filters.priority')"
         />
       </template>
       <template #actions>
@@ -119,14 +115,12 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || reclamations.length > 0"
       @row-click="(_, row) => ouvrir(row)"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucune réclamation pour ces critères. Ouvrez-en une si une note, une
-          inscription ou un document pose problème : la scolarité vous répond
-          dans le fil de discussion.
+          {{ $t('mesReclamations.emptyState.description') }}
         </div>
       </template>
       <template #body-cell-statut="p">
@@ -150,10 +144,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Ouvrir le suivi de la réclamation"
+            :aria-label="$t('mesReclamations.table.openTracking')"
             @click.stop="ouvrir(p.row)"
           >
-            <q-tooltip>Suivi et fil de discussion</q-tooltip>
+            <q-tooltip>{{ $t('mesReclamations.table.trackingTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -184,24 +178,22 @@
             </div>
             <div class="row items-center">
               <q-icon name="chat" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ r._count?.messages ?? 0 }} message(s)</span>
+              <span class="text-caption">{{ $t('mesReclamations.cards.messagesCount', { count: r._count?.messages ?? 0 }) }}</span>
             </div>
             <div v-if="r.escaladeLe" class="row items-center text-warning">
               <q-icon name="priority_high" size="16px" class="q-mr-sm" />
-              <span class="text-caption">Escaladée le {{ dateHeureLisible(r.escaladeLe) }}</span>
+              <span class="text-caption">{{ $t('mesReclamations.cards.escalatedOn', { date: dateHeureLisible(r.escaladeLe) }) }}</span>
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="visibility" label="Détail" @click="ouvrir(r)" />
+            <q-btn flat dense no-caps icon="visibility" :label="$t('mesReclamations.cards.detail')" @click="ouvrir(r)" />
           </q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="forum" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucune réclamation pour ces critères. Ouvrez-en une si une note, une
-          inscription ou un document pose problème : la scolarité vous répond
-          dans le fil de discussion.
+          {{ $t('mesReclamations.emptyState.description') }}
         </div>
         <q-btn
           class="q-mt-md"
@@ -209,7 +201,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle réclamation"
+          :label="$t('mesReclamations.actions.new')"
           @click="creationOuverte = true"
         />
       </div>
@@ -227,6 +219,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -249,6 +242,7 @@ import type {
 } from '../types';
 
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 'ETUDIANT');
 
@@ -267,12 +261,12 @@ const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
 
 // Mêmes intitulés de statut que le registre de la scolarité.
-const plaques = [
-  { cle: 'OUVERTE', libelle: 'Ouvertes' },
-  { cle: 'EN_COURS', libelle: 'En cours' },
-  { cle: 'EN_ATTENTE_REPONSE', libelle: 'Attente réponse' },
-  { cle: 'RESOLUE', libelle: 'Résolues' },
-];
+const plaques = computed(() => [
+  { cle: 'OUVERTE', libelle: t('mesReclamations.stats.labels.open') },
+  { cle: 'EN_COURS', libelle: t('mesReclamations.stats.labels.inProgress') },
+  { cle: 'EN_ATTENTE_REPONSE', libelle: t('mesReclamations.stats.labels.awaitingReply') },
+  { cle: 'RESOLUE', libelle: t('mesReclamations.stats.labels.resolved') },
+]);
 
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
@@ -284,21 +278,21 @@ function libellePriorite(p: string) {
   return LIBELLE_PRIORITE_RECLAMATION[p as PrioriteReclamation] ?? p;
 }
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
-  { name: 'sujet', label: 'Sujet', field: 'sujet', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'priorite', label: 'Priorité', field: 'priorite', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('mesReclamations.table.columns.number'), field: 'numero', align: 'left', sortable: true },
+  { name: 'sujet', label: t('mesReclamations.table.columns.subject'), field: 'sujet', align: 'left' },
+  { name: 'type', label: t('mesReclamations.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'priorite', label: t('mesReclamations.table.columns.priority'), field: 'priorite', align: 'left' },
+  { name: 'statut', label: t('mesReclamations.table.columns.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: 'Créée le',
+    label: t('mesReclamations.table.columns.createdAt'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ouvrir(r: Reclamation) {
   reclamationSelectionnee.value = r;
@@ -368,16 +362,16 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$chaux-claire: #F2F3EE;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$chaux-claire: #FFFFFF;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .reclamation-prio {
@@ -385,22 +379,21 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
   &.prio-BASSE {
-    background: $chaux-claire;
-    color: $encre;
-    border: 2px solid rgba(16, 37, 30, 0.45);
+    background: var(--up-gris-inerte);
+    color: var(--up-encre);
+    border: var(--up-filet);
   }
-  &.prio-NORMALE { background: #EFB700; color: $encre; }
-  &.prio-HAUTE { background: $rouge; color: #fff; }
+  &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
+  &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
   &.prio-URGENTE {
-    background: $rouge;
-    color: #fff;
+    background: $rouge-fond; color: #{$rouge};
+    color: var(--up-encre);
     animation: clignote 1.4s ease-in-out infinite;
   }
 }
@@ -410,20 +403,18 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
-  &.statut-OUVERTE { background: $jaune-fonce; }
-  &.statut-EN_COURS { background: $encre; }
-  &.statut-EN_ATTENTE_REPONSE { background: #6b7280; }
-  &.statut-RESOLUE { background: $vert; }
-  &.statut-FERMEE { background: #4b5563; }
-  &.statut-REJETEE { background: $rouge; }
+  &.statut-OUVERTE { background: $jaune-fond; color: $jaune-texte; }
+  &.statut-EN_COURS { background: $vert-fond; color: $vert-lien; }
+  &.statut-EN_ATTENTE_REPONSE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &.statut-RESOLUE { background: $vert-fond; color: #{$vert}; }
+  &.statut-FERMEE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .reclamation-carte { background: var(--up-plaque); }

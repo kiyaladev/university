@@ -23,22 +23,29 @@ fi
 [[ -f "$FICHIER" ]] || { echo "fichier introuvable : $FICHIER" >&2; exit 66; }
 
 RACINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-DATABASE_URL="$(grep -E '^DATABASE_URL=' "$RACINE/backend/.env" | head -1 | cut -d= -f2- | tr -d '"'"'"'')"
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  DATABASE_URL="$(sed -n 's/^DATABASE_URL=//p' "$RACINE/backend/.env" | head -1 | tr -d '\"'"'"'"')"
+fi
 DATABASE_URL="${DATABASE_URL%%\?*}"
-BASE_URL="${DATABASE_URL%/*}"          # postgresql://user:pass@hote:port
+[[ -n "$DATABASE_URL" ]] || { echo "DATABASE_URL manquante" >&2; exit 1; }
+[[ "$CIBLE" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] || { echo "Nom de base cible invalide" >&2; exit 64; }
+BASE_SOURCE="${DATABASE_URL##*/}"
+BASE_URL="${DATABASE_URL%/*}"
 URL_CIBLE="${BASE_URL}/${CIBLE}"
 
-if [[ "$CIBLE" == "unipresence" ]]; then
-  read -rp "Restaurer sur la base de PRODUCTION « unipresence » ? (tapez OUI) " reponse
+if [[ "$CIBLE" == "$BASE_SOURCE" || "$CIBLE" == "unipresence" || "$CIBLE" == "university" ]]; then
+  read -rp "Écraser la base source/exploitation « $CIBLE » ? (tapez OUI) " reponse
   [[ "$reponse" == "OUI" ]] || { echo "annulé"; exit 1; }
 fi
+# Une archive illisible est refusée avant toute mutation de la cible.
+pg_restore --list "$FICHIER" > /dev/null
 
 echo "→ restauration de $FICHIER vers $CIBLE"
-pg_restore --clean --if-exists --no-owner --no-privileges --dbname="$URL_CIBLE" "$FICHIER"
+pg_restore --exit-on-error --single-transaction --clean --if-exists --no-owner --no-privileges --dbname="$URL_CIBLE" "$FICHIER"
 
 # Contrôle de vraisemblance : une restauration « réussie » sur une base vide
 # ne vaut rien, on compte ce qui est réellement arrivé.
-psql "$URL_CIBLE" -t -A -F' ' -c 'select
+psql "$URL_CIBLE" --set ON_ERROR_STOP=1 -t -A -F' ' -c 'select
   (select count(*) from "Enseignant") as enseignants,
   (select count(*) from "Seance")     as seances,
   (select count(*) from "Controle")   as controles;' \

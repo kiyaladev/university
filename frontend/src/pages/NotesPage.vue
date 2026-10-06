@@ -1,14 +1,8 @@
 <template>
   <q-page class="notes-page">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Saisie des notes</div>
-        <div class="page-sous-titre">
-          Saisie en lot, type tableur : Tab pour naviguer, Enter pour valider.
-          Une ligne jamais saisie rend la matière défaillante à la délibération.
-        </div>
-      </div>
-      <div class="col-auto" v-if="evaluationActive">
+    <page-header :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
+      <template #actions>
+<div class="col-auto" v-if="evaluationActive">
         <q-badge
           :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
           class="q-px-sm q-py-xs text-body2"
@@ -20,7 +14,10 @@
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="resultats" />
 
     <div class="carte q-pa-md q-mb-md">
       <div class="row q-col-gutter-md items-end">
@@ -28,8 +25,8 @@
           <autocomplete-async
             v-model="selEvaluationId"
             endpoint="/evaluations"
-            label="Évaluation à noter"
-            placeholder="Tapez l’intitulé de l’épreuve…"
+            :label="$t('notes.form.evaluationLabel')"
+            :placeholder="$t('notes.form.evaluationPlaceholder')"
             :label-fn="libelleEvaluation"
             @update:model-value="(v, raw) => { if (raw) choisir(raw); else chargerDepuisId(v); }"
           />
@@ -39,7 +36,7 @@
             flat
             no-caps
             icon="fact_check"
-            label="Toutes les évaluations"
+            :label="$t('notes.actions.allEvaluations')"
             @click="allerAuxEvaluations"
           />
           <q-btn
@@ -47,7 +44,7 @@
             outline
             no-caps
             icon="lock"
-            label="Clôturer l’évaluation"
+            :label="$t('notes.actions.closeEvaluation')"
             @click="cloturer"
           />
         </div>
@@ -56,7 +53,7 @@
 
     <div v-if="chargementInitial" class="carte q-pa-lg text-center text-grey-6">
       <q-spinner size="36px" color="primary" />
-      <div class="q-mt-sm">Chargement…</div>
+      <div class="q-mt-sm">{{ $t('notes.loading') }}</div>
     </div>
 
     <div v-else-if="evaluationActive" class="carte q-pa-md">
@@ -66,14 +63,14 @@
             {{ evaluationActive.intitule }}
           </div>
           <div class="text-caption text-grey-7">
-            {{ evaluationActive.matiere?.intitule }} —
-            {{ evaluationActive.promotion?.nom }} — semestre
+            {{ evaluationActive.matiere?.intitule }} {{ $t('rectoratPage.subtitleFallback') }}
+            {{ evaluationActive.promotion?.nom }} — {{ $t('notes.semester') }}
             {{ evaluationActive.semestre }}
           </div>
         </div>
         <div class="col-auto" v-if="!cloturee">
           <q-chip outline color="primary" icon="edit_note">
-            {{ lignes.length }} étudiants
+            {{ $t('notes.studentsCount', { count: lignes.length }) }}
           </q-chip>
         </div>
       </div>
@@ -90,9 +87,9 @@
 
     <div v-else class="carte q-pa-lg text-center text-grey-6">
       <q-icon name="table_chart" size="48px" class="q-mb-sm" />
-      <div>Sélectionnez une évaluation ci-dessus pour ouvrir la feuille de notes.</div>
+      <div>{{ $t('notes.emptyState.title') }}</div>
       <div class="text-caption q-mt-xs">
-        La feuille reprend les étudiants dont le dossier d’inscription est validé.
+        {{ $t('notes.emptyState.hint') }}
       </div>
       <q-btn
         class="q-mt-md"
@@ -100,7 +97,7 @@
         color="primary"
         no-caps
         icon="fact_check"
-        label="Parcourir les évaluations"
+        :label="$t('notes.actions.browseEvaluations')"
         @click="allerAuxEvaluations"
       />
     </div>
@@ -108,9 +105,12 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
@@ -122,6 +122,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 /** Qui saisit les notes (direction comprise, elle arbitre) — cf. `PUT /notes/saisie`. */
 const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION']);
@@ -158,10 +159,10 @@ function allerAuxEvaluations() {
 const motifLectureSeule = computed(() => {
   if (!evaluationActive.value) return '';
   if (cloturee.value) {
-    return 'L’évaluation est clôturée : les notes sont définitives.';
+    return t('notes.readOnly.closed');
   }
   if (!peutSaisir()) {
-    return 'La saisie est réservée à la scolarité et à la direction.';
+    return t('notes.readOnly.forbidden');
   }
   return '';
 });
@@ -211,7 +212,7 @@ async function chargerDepuisId(id: string | null) {
     notesExistantes.value = [];
     $q.notify({
       type: 'warning',
-      message: 'Évaluation introuvable : elle a pu être supprimée.',
+      message: t('notes.messages.evaluationNotFound'),
     });
   }
 }
@@ -222,9 +223,12 @@ async function enregistrer(payload: {
 }) {
   try {
     const { data } = await api.put('/notes/saisie', payload);
+    const count = data.n ?? payload.notes.length;
     $q.notify({
       type: 'positive',
-      message: `${data.n ?? payload.notes.length} note${(data.n ?? payload.notes.length) > 1 ? 's' : ''} enregistrée${(data.n ?? payload.notes.length) > 1 ? 's' : ''}${data.ignorees ? ` · ${data.ignorees} ignorée${data.ignorees > 1 ? 's' : ''}` : ''}`,
+      message: data.ignorees
+        ? t('notes.messages.savedWithIgnored', { count, ignored: data.ignorees })
+        : t('notes.messages.saved', { count }),
     });
     if (evaluationActive.value) await choisir(evaluationActive.value);
   } catch {
@@ -236,14 +240,14 @@ function cloturer() {
   if (!evaluationActive.value) return;
   const e = evaluationActive.value;
   $q.dialog({
-    title: 'Clôturer l’évaluation',
-    message: `Clôturer « ${e.intitule} » ? Les notes deviennent définitives et un recalage de délibération les prendra en compte.`,
+    title: t('notes.dialogs.close.title'),
+    message: t('notes.dialogs.close.message', { name: e.intitule }),
     cancel: true,
-    ok: { color: 'primary', label: 'Clôturer', unelevated: true, noCaps: true },
+    ok: { color: 'primary', label: t('notes.dialogs.close.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/evaluations/${e.id}/cloturer`);
-      $q.notify({ type: 'positive', message: 'Évaluation clôturée' });
+      $q.notify({ type: 'positive', message: t('notes.messages.closed') });
       await choisir({ ...e, statut: 'CLOTUREE' });
     } catch {
       /* Notification gérée par l’intercepteur axios */

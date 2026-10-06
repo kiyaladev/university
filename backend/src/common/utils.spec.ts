@@ -1,4 +1,5 @@
 import {
+  signaturePng,
   distanceMetres,
   dureeMinutes,
   fromMinutes,
@@ -63,5 +64,16 @@ describe('utilitaires statistiques', () => {
   it('évite la division par zéro dans les taux', () => {
     expect(pct(3, 4)).toBe(75);
     expect(pct(0, 0)).toBe(0);
+  });
+});
+
+
+describe('Images de signature imprimables', () => {
+  it('conserve une source PNG base64', () => {
+    expect(signaturePng('data:image/png;base64,aGVsbG8=')).toBe('data:image/png;base64,aGVsbG8=');
+  });
+  it.each(['https://example.com/image.png', 'data:image/svg+xml;base64,PHN2Zz4=',
+    'data:image/png;base64,xxx" onerror="alert(1)', 'javascript:alert(1)', ''])('refuse une source dangereuse %s', value => {
+    expect(signaturePng(value)).toBeNull();
   });
 });

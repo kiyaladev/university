@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-06T14:59:08.396Z",
+  "statut": "valide",
+  "coverage": {
+    "periode": {
+      "debut": "2026-10-01",
+      "fin": "2026-10-31"
+    },
+    "nonAffectees": {
+      "seancesPlanifiees": 1,
+      "seancesPassees": 1,
+      "visitees": 0,
+      "nonVisitees": 1,
+      "realiseesParAssigne": 0,
+      "realiseesParUnAutre": 0,
+      "tauxCouverture": 0,
+      "tauxParAssigne": 0
+    },
+    "lignes": [
+      {
+        "controleurId": "60681554-da80-43fe-94fe-ae3ddb742c28",
+        "nom": "0 Controleur QA",
+        "seancesPlanifiees": 4,
+        "seancesPassees": 3,
+        "visitees": 2,
+        "nonVisitees": 1,
+        "realiseesParAssigne": 1,
+        "realiseesParUnAutre": 1,
+        "tauxCouverture": 66.67,
+        "tauxParAssigne": 33.33
+      }
+    ]
+  },
+  "assignmentPreview": {
+    "seancesSansAffectation": 1,
+    "seancesAffectables": 1,
+    "ignoreesAnneeCloturee": 0
+  },
+  "observations": [
+    "Affectation individuelle persistée",
+    "Trois séances passées et une future",
+    "Une visite par agent prévu et une par collègue",
+    "Taux couverture 66,67 et réalisation assignée 33,33",
+    "Une séance non affectée puis affectation groupée",
+    "Agent non contrôleur rejeté",
+    "Lectures étudiant et enseignant refusées"
+  ],
+  "fixturesRestantes": 0,
+  "productionUntouched": true,
+  "limites": [
+    "Tournées réelles, validation humaine et appareil terrain non qualifiés"
+  ]
+}

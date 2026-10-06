@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-06T14:32:18.534726+00:00",
+  "reproductionHTTP": "Enseignant CSV actif=non persisté avec actif=true",
+  "cause": "enableImplicitConversion convertit les chaînes booléennes avant le Transform spécifique CSV",
+  "correction": "Conversions explicites des DTO préservées, conversion implicite désactivée",
+  "testsEnCours": false,
+  "backendBuildEnCours": false,
+  "qaReloadPending": false,
+  "httpReplayPending": false,
+  "fixturesReproductionSupprimees": true,
+  "targetedTests": 24,
+  "targetedSuites": 2,
+  "targetedPassed": true,
+  "backendBuildPassed": true,
+  "httpProof": "imports-http.json"
+}

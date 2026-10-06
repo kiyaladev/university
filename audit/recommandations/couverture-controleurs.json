@@ -1,0 +1,8 @@
+{
+  "date": "2026-10-02",
+  "schema": "Seance.controleurAssigneId référence un compte CONTROLEUR actif ; index par contrôleur et date, suppression de compte avec retrait du lien.",
+  "affectation": "ADMIN/SCOLARITE affectent ou retirent un contrôleur depuis le détail, ou attribuent en groupe les séances libres par période/département après prévisualisation. Le service n’écrase pas les attributions existantes, vérifie le compte actif, ignore les années clôturées et journalise chaque lot dans une transaction sérialisable.",
+  "rapport": "ADMIN/DIRECTION/SCOLARITE filtrent la couverture par période : séances passées, visitées, non visitées, prises par l’assigné ou par un collègue, taux de couverture et taux propre. Les séances futures n’entrent pas dans le dénominateur.",
+  "tests": "Sept tests de tournées passent : métriques temporelles, affectations simple et groupée, prévisualisation, conservation des attributions, refus du compte inactif et refus d’une année clôturée.",
+  "limite": "La base ne contenait pas de tournées affectées ; les équipes doivent saisir les responsables pour mesurer une couverture réelle. Les premières affectations peuvent se faire par période et département depuis le registre."
+}

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-06T09:30:56.507Z",
+  "checks": [
+    "sélection des pilotes depuis les paramètres",
+    "enregistrement réel et essentiels conservés",
+    "paramètres sans débordement à 375 px",
+    "menu et accès direct VOD retirés",
+    "service public formation retiré",
+    "marque publique sans troncature à 375 px"
+  ]
+}

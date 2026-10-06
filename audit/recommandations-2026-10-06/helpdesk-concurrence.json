@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-06T14:27:11.969739+00:00",
+  "statut": "valide",
+  "tests": 30,
+  "suites": 2,
+  "correction": "Verrou TicketSupport et contrôle de statut relu avant mutation dans la transaction",
+  "regression": "Lecture initiale OUVERT, lecture transactionnelle RESOLU : prise en charge refusée sans mutation ni journal",
+  "compilationEnCours": false,
+  "qaReloadPending": false,
+  "httpConcurrencyPending": false,
+  "productionUntouched": true,
+  "backendBuildPassed": true,
+  "httpProof": "helpdesk-concurrence-http.json"
+}

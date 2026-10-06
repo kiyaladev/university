@@ -9,6 +9,7 @@
  *    d'écriture disparaissent — le backend les réserve à ADMIN/ENSEIGNANT.
  */
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
@@ -37,6 +38,7 @@ interface RessourceCatalogue {
   thumbnailUrl?: string | null;
   dureeSecondes?: number | null;
   statut?: StatutVOD;
+  creeParId?: string | null;
   nbVues?: number;
   matiere?: { id: string; code: string; intitule: string } | null;
   enseignant?: { id: string; nom: string; prenom: string } | null;
@@ -48,6 +50,7 @@ interface RessourceCatalogue {
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const ressources = ref<RessourceCatalogue[]>([]);
 const chargement = ref(false);
@@ -58,6 +61,9 @@ const modeVue = ref<'tableau' | 'cartes'>('cartes');
 
 /** Écriture : les mêmes rôles que le backend (POST/PUT/publier/archiver). */
 const peutEditer = computed(() => auth.aRole(['ADMIN', 'ENSEIGNANT']));
+function peutGererRessource(v: RessourceCatalogue) {
+  return peutEditer.value && (auth.aRole(['ADMIN']) || v.creeParId === auth.utilisateur?.id);
+}
 /** Un étudiant ne voit que sa collecte : ni statuts, ni actions. */
 const estEtudiant = computed(() => auth.aRole(['ETUDIANT']));
 
@@ -72,16 +78,23 @@ const CLASSE_STATUT: Record<string, string> = {
 
 /** La colonne « Statut » n'a pas de sens dans la collecte étudiante. */
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'titre', label: 'Titre', field: 'titre', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'matiere', label: 'Matière', field: 'matiere', align: 'left' },
-  { name: 'enseignant', label: 'Enseignant', field: 'enseignant', align: 'left' },
-  { name: 'duree', label: 'Durée', field: 'dureeSecondes', align: 'center' },
+  { name: 'titre', label: t('vodPage.table.columns.title'), field: 'titre', align: 'left' },
+  { name: 'type', label: t('vodPage.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'matiere', label: t('vodPage.table.columns.subject'), field: 'matiere', align: 'left' },
+  { name: 'enseignant', label: t('vodPage.table.columns.teacher'), field: 'enseignant', align: 'left' },
+  { name: 'duree', label: t('vodPage.table.columns.duration'), field: 'dureeSecondes', align: 'center' },
   ...(estEtudiant.value
-    ? ([{ name: 'avancement', label: 'Où j’en suis', field: 'dernierePosition', align: 'center' }] as QTableColumn[])
+    ? ([
+        {
+          name: 'avancement',
+          label: t('vodPage.table.columns.progress'),
+          field: 'dernierePosition',
+          align: 'center',
+        },
+      ] as QTableColumn[])
     : ([
-        { name: 'vues', label: 'Vues', field: 'nbVues', align: 'center' },
-        { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
+        { name: 'vues', label: t('vodPage.table.columns.views'), field: 'nbVues', align: 'center' },
+        { name: 'statut', label: t('vodPage.table.columns.status'), field: 'statut', align: 'center' },
       ] as QTableColumn[])),
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -102,12 +115,12 @@ const chips = computed(() => {
 /** Un état vide se raconte : pourquoi c'est vide, et quoi faire ensuite. */
 const messageVide = computed(() => {
   if (filtres.value.recherche || filtres.value.type || filtres.value.statut) {
-    return 'Aucune ressource ne correspond à ces critères.';
+    return t('vodPage.emptyState.filtered');
   }
   if (estEtudiant.value) {
-    return 'Aucun cours en ligne pour vos inscriptions : vos enseignants n’ont pas encore publié de replay.';
+    return t('vodPage.emptyState.student');
   }
-  return 'Aucune ressource au catalogue : déposez un replay, un podcast ou une transcription.';
+  return t('vodPage.emptyState.staff');
 });
 
 const dialogEdition = ref(false);
@@ -126,26 +139,32 @@ function lecteur(v: RessourceCatalogue) {
 async function publier(v: RessourceCatalogue) {
   try {
     await api.post(`/vod/${v.id}/publier`);
-    $q.notify({ type: 'positive', message: 'Ressource mise en ligne.' });
+    $q.notify({ type: 'positive', message: t('vodPage.messages.published') });
     await charger();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Publication impossible.' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? t('vodPage.messages.publishFailed'),
+    });
   }
 }
 
 function archiver(v: RessourceCatalogue) {
   $q.dialog({
-    title: 'Archiver cette ressource ?',
-    message: `« ${v.titre} » sortira du catalogue : plus personne ne pourra la lire.`,
+    title: t('vodPage.dialogs.archive.title'),
+    message: t('vodPage.dialogs.archive.message', { title: v.titre }),
     cancel: true,
-    ok: { color: 'negative', label: 'Archiver' },
+    ok: { color: 'negative', label: t('vodPage.dialogs.archive.confirm') },
   }).onOk(async () => {
     try {
       await api.post(`/vod/${v.id}/archiver`, {});
-      $q.notify({ type: 'warning', message: 'Ressource archivée.' });
+      $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Archivage impossible.' });
+      $q.notify({
+        type: 'negative',
+        message: e?.response?.data?.message ?? t('vodPage.messages.archiveFailed'),
+      });
     }
   });
 }
@@ -219,15 +238,13 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">VOD des cours</div>
+        <h1 class="page-titre">{{ $t('vodPage.title') }}</h1>
         <div class="page-sous-titre">
           <template v-if="estEtudiant">
-            Replays, podcasts, notes et transcriptions de vos cours : ce que vos
-            inscriptions vous ouvrent, plus le fonds public.
+            {{ $t('vodPage.subtitle.student') }}
           </template>
           <template v-else>
-            Replays, podcasts, notes, transcriptions — l'accès aux cours en
-            différé. Vous voyez ici le catalogue complet, brouillons compris.
+            {{ $t('vodPage.subtitle.staff') }}
           </template>
         </div>
       </div>
@@ -238,7 +255,7 @@ onMounted(charger);
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle ressource"
+          :label="$t('vodPage.actions.newResource')"
           @click="ouvrirEdition()"
         />
       </div>
@@ -247,7 +264,7 @@ onMounted(charger);
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Titre, description…"
+      :placeholder="$t('vodPage.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -256,7 +273,7 @@ onMounted(charger);
           :options="OPTIONS_TYPE"
           emit-value
           map-options
-          label="Type de ressource"
+          :label="$t('vodPage.filters.resourceType')"
           outlined
           dense
           clearable
@@ -267,7 +284,7 @@ onMounted(charger);
           :options="OPTIONS_STATUT"
           emit-value
           map-options
-          label="Statut"
+          :label="$t('vodPage.filters.status')"
           outlined
           dense
           clearable
@@ -293,7 +310,7 @@ onMounted(charger);
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || ressources.length > 0"
     >
       <template #no-data>
         <div class="full-width text-center text-grey-7 q-pa-lg">
@@ -305,7 +322,7 @@ onMounted(charger);
             no-caps
             color="primary"
             icon="add"
-            label="Nouvelle ressource"
+            :label="$t('vodPage.actions.newResource')"
             class="q-mt-sm"
             @click="ouvrirEdition()"
           />
@@ -320,7 +337,7 @@ onMounted(charger);
             {{ p.row.matiere.code }}
             <q-tooltip>{{ p.row.matiere.intitule }}</q-tooltip>
           </span>
-          <span v-else class="text-grey-7">—</span>
+          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
       <template #body-cell-enseignant="p">
@@ -333,9 +350,9 @@ onMounted(charger);
       </template>
       <template #body-cell-avancement="p">
         <q-td :props="p">
-          <q-chip v-if="p.row.termine" dense color="positive" text-color="white" label="Terminé" />
+          <q-chip v-if="p.row.termine" dense color="positive" text-color="white" :label="$t('vodPage.card.done')" />
           <span v-else-if="avancement(p.row) > 0">{{ avancement(p.row) }} %</span>
-          <span v-else class="text-grey-7">Jamais ouvert</span>
+          <span v-else class="text-grey-7">{{ $t('vodPage.card.neverOpened') }}</span>
         </q-td>
       </template>
       <template #body-cell-statut="p">
@@ -352,44 +369,44 @@ onMounted(charger);
             round
             dense
             icon="play_arrow"
-            :aria-label="`Lire « ${p.row.titre} »`"
+            :aria-label="$t('vodPage.aria.play', { title: p.row.titre })"
             @click="lecteur(p.row)"
           >
-            <q-tooltip>Ouvrir le lecteur</q-tooltip>
+            <q-tooltip>{{ $t('vodPage.tooltips.openPlayer') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutEditer && p.row.statut !== 'EN_LIGNE'"
+            v-if="peutGererRessource(p.row) && ['BROUILLON', 'HORS_LIGNE'].includes(p.row.statut)"
             flat
             round
             dense
             icon="publish"
-            aria-label="Mettre la ressource en ligne"
+            :aria-label="$t('vodPage.aria.publish')"
             @click="publier(p.row)"
           >
-            <q-tooltip>Mettre en ligne</q-tooltip>
+            <q-tooltip>{{ $t('vodPage.tooltips.publish') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutEditer"
+            v-if="peutGererRessource(p.row) && p.row.statut !== 'ARCHIVE'"
             flat
             round
             dense
             icon="edit"
-            aria-label="Modifier la ressource"
+            :aria-label="$t('vodPage.aria.edit')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('vodPage.tooltips.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutEditer && p.row.statut !== 'ARCHIVE'"
+            v-if="peutGererRessource(p.row) && p.row.statut !== 'ARCHIVE'"
             flat
             round
             dense
             icon="archive"
             color="negative"
-            aria-label="Archiver la ressource"
+            :aria-label="$t('vodPage.aria.archive')"
             @click="archiver(p.row)"
           >
-            <q-tooltip>Archiver</q-tooltip>
+            <q-tooltip>{{ $t('vodPage.tooltips.archive') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -403,7 +420,7 @@ onMounted(charger);
             :src="v.thumbnailUrl"
             :ratio="16 / 9"
             no-spinner
-            :alt="`Aperçu de ${v.titre}`"
+            :alt="$t('vodPage.card.previewAlt', { title: v.titre })"
           />
           <div v-else class="vod-placeholder" aria-hidden="true">
             <q-icon name="play_circle_outline" size="56px" />
@@ -416,11 +433,11 @@ onMounted(charger);
               <q-chip dense outline color="primary">
                 {{ LIBELLE_TYPE_RESSOURCE_VOD[v.type] ?? v.type }}
               </q-chip>
-              <q-chip v-if="v.termine" dense color="positive" text-color="white" label="Terminé" />
+              <q-chip v-if="v.termine" dense color="positive" text-color="white" :label="$t('vodPage.card.done')" />
             </div>
             <div class="text-weight-bold q-mt-sm">{{ v.titre }}</div>
             <div class="text-caption text-grey-7">
-              {{ v.enseignant ? `${v.enseignant.prenom} ${v.enseignant.nom}` : 'Sans enseignant' }}
+              {{ v.enseignant ? `${v.enseignant.prenom} ${v.enseignant.nom}` : $t('vodPage.card.noTeacher') }}
               <span v-if="v.matiere"> · {{ v.matiere.code }}</span>
             </div>
             <q-linear-progress
@@ -435,7 +452,7 @@ onMounted(charger);
               <q-space />
               <template v-if="!estEtudiant">
                 <q-icon name="visibility" size="16px" class="q-mr-xs" />
-                <span class="text-caption">{{ v.nbVues ?? 0 }} vue(s)</span>
+                <span class="text-caption">{{ $t('vodPage.card.views', { count: v.nbVues ?? 0 }) }}</span>
               </template>
             </div>
           </q-card-section>
@@ -444,40 +461,40 @@ onMounted(charger);
               unelevated
               color="primary"
               icon="play_arrow"
-              :label="estEtudiant && avancement(v) > 0 && !v.termine ? 'Reprendre' : 'Lecteur'"
+              :label="estEtudiant && avancement(v) > 0 && !v.termine ? $t('vodPage.actions.resume') : $t('vodPage.actions.player')"
               no-caps
               @click="lecteur(v)"
             />
             <q-btn
-              v-if="peutEditer"
+              v-if="peutGererRessource(v) && v.statut !== 'ARCHIVE'"
               flat
               icon="edit"
               no-caps
-              aria-label="Modifier la ressource"
+              :aria-label="$t('vodPage.aria.edit')"
               @click="ouvrirEdition(v)"
             >
-              <q-tooltip>Modifier</q-tooltip>
+              <q-tooltip>{{ $t('vodPage.tooltips.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
-              v-if="peutEditer && v.statut !== 'EN_LIGNE'"
+              v-if="peutGererRessource(v) && ['BROUILLON', 'HORS_LIGNE'].includes(v.statut ?? '')"
               flat
               icon="publish"
               no-caps
-              aria-label="Mettre la ressource en ligne"
+              :aria-label="$t('vodPage.aria.publish')"
               @click="publier(v)"
             >
-              <q-tooltip>Mettre en ligne</q-tooltip>
+              <q-tooltip>{{ $t('vodPage.tooltips.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
-              v-if="peutEditer && v.statut !== 'ARCHIVE'"
+              v-if="peutGererRessource(v) && v.statut !== 'ARCHIVE'"
               flat
               icon="archive"
               color="negative"
               no-caps
-              aria-label="Archiver la ressource"
+              :aria-label="$t('vodPage.aria.archive')"
               @click="archiver(v)"
             >
-              <q-tooltip>Archiver</q-tooltip>
+              <q-tooltip>{{ $t('vodPage.tooltips.archive') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
         </q-card>
@@ -491,7 +508,7 @@ onMounted(charger);
           no-caps
           color="primary"
           icon="add"
-          label="Nouvelle ressource"
+          :label="$t('vodPage.actions.newResource')"
           class="q-mt-sm"
           @click="ouvrirEdition()"
         />
@@ -528,8 +545,8 @@ onMounted(charger);
   align-items: center;
   justify-content: center;
 }
-.badge--ok { background: #e3f5e9; color: #17683a; }
-.badge--ko { background: #fdeaea; color: #a52020; }
-.badge--neutre { background: #eef0f4; color: #455a64; }
-.badge--attention { background: #fff4e0; color: #8a5300; }
+.badge--ok { background: #f1fbf2; color: #027a0b; }
+.badge--ko { background: #fff1f2; color: #c10000; }
+.badge--neutre { background: #f5f5f7; color: #6e6e73; }
+.badge--attention { background: #fff6ef; color: #b64400; }
 </style>

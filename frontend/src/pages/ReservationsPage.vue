@@ -2,10 +2,9 @@
   <q-page class="resas">
     <header class="resas__entete">
       <div>
-        <h1 class="page-titre">Salles &amp; réservations</h1>
+        <h1 class="page-titre">{{ $t('reservations.title') }}</h1>
         <p class="page-sous-titre">
-          Le calendrier des événements — soutenances, conférences, réunions — sur
-          les amphis et salles de cours, superposé à l'emploi du temps.
+          {{ $t('reservations.subtitle') }}
         </p>
       </div>
       <div class="resas__actions">
@@ -15,7 +14,7 @@
           color="primary"
           no-caps
           icon="event_available"
-          label="Réserver une salle"
+          :label="$t('reservations.actions.reserve')"
           @click="dialogReservation = true"
         />
         <view-toggle cle="reservations" :modes="['calendrier', 'tableau']" defaut="calendrier" @update:mode="(v: string) => (modeVue = v as 'calendrier' | 'tableau')" />
@@ -23,11 +22,11 @@
           round
           color="primary"
           icon="refresh"
-          aria-label="Recharger la période"
+          :aria-label="$t('reservations.actions.reloadPeriod')"
           :loading="chargement"
           @click="charger"
         >
-          <q-tooltip>Recharger</q-tooltip>
+          <q-tooltip>{{ $t('reservations.actions.reload') }}</q-tooltip>
         </q-btn>
       </div>
     </header>
@@ -43,11 +42,11 @@
         <autocomplete-async
           v-model="filtresReservations.salleId"
           endpoint="/salles"
-          :label-fn="(s) => `${s.code} — ${s.nom} (${s.capacite} places)`"
-          label="Salle"
+          :label-fn="(s) => $t('reservations.filters.roomOption', { code: s.code, name: s.nom, capacity: s.capacite })"
+          :label="$t('reservations.filters.room')"
         />
-        <champ-date v-model="filtresReservations.dateDebut" label="Du" />
-        <champ-date v-model="filtresReservations.dateFin" label="Au" />
+        <champ-date v-model="filtresReservations.dateDebut" :label="$t('reservations.filters.from')" />
+        <champ-date v-model="filtresReservations.dateFin" :label="$t('reservations.filters.to')" />
       </template>
       <template #actions>
         <q-btn
@@ -55,10 +54,10 @@
           dense
           no-caps
           icon="today"
-          label="Aujourd'hui"
+          :label="$t('reservations.actions.today')"
           @click="cadrerAujourdhui"
         />
-        <q-btn flat dense no-caps icon="calendar_month" label="Ce mois-ci" @click="cadrerLeMois" />
+        <q-btn flat dense no-caps icon="calendar_month" :label="$t('reservations.actions.thisMonth')" @click="cadrerLeMois" />
       </template>
     </filter-bar>
 
@@ -73,11 +72,11 @@
         {{ lib }}
       </span>
       <span class="resas__legende-entree resas__legende-entree--seance">
-        Emploi du temps (lecture seule)
+        {{ $t('reservations.legend.timetable') }}
       </span>
       <q-space />
       <span class="text-caption text-grey-7">
-        {{ reservationsFiltrees.length }} réservation(s) sur la période
+        {{ $t('reservations.legend.count', { count: reservationsFiltrees.length }) }}
       </span>
     </div>
 
@@ -100,7 +99,7 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || reservationsFiltrees.length > 0"
     >
       <template #body-cell-creneau="p">
         <q-td :props="p">
@@ -128,20 +127,19 @@
             dense
             round
             icon="visibility"
-            aria-label="Voir le détail de la réservation"
+            :aria-label="$t('reservations.table.viewDetail')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Voir le détail</q-tooltip>
+            <q-tooltip>{{ $t('reservations.table.viewDetailTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
       <template #no-data>
         <div class="full-width text-center text-grey-7 q-pa-lg">
           <q-icon name="event_busy" size="38px" color="grey-5" />
-          <div class="q-mt-sm">Aucune réservation sur cette période.</div>
+          <div class="q-mt-sm">{{ $t('reservations.emptyState.title') }}</div>
           <div class="text-caption q-mt-xs">
-            Élargissez les dates, ou déposez une demande : elle part en « en
-            attente » jusqu'à l'arbitrage de la scolarité.
+            {{ $t('reservations.emptyState.description') }}
           </div>
           <q-btn
             v-if="peutReserver"
@@ -149,7 +147,7 @@
             no-caps
             color="primary"
             icon="event_available"
-            label="Réserver une salle"
+            :label="$t('reservations.actions.reserve')"
             class="q-mt-sm"
             @click="dialogReservation = true"
           />
@@ -169,6 +167,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -186,6 +185,7 @@ import {
 import type { ReservationSalle, Role, Salle, ChipFiltre } from '../types';
 
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const ROLES_RESERVATION: Role[] = ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'];
 const peutReserver = computed(() => auth.aRole(ROLES_RESERVATION));
@@ -254,16 +254,16 @@ const reservationsFiltrees = computed(() =>
 );
 
 const COULEUR_STATUT: Record<string, string> = {
-  EN_ATTENTE: '#EFB700',
-  CONFIRMEE: '#0F7A45',
-  REFUSEE: '#9ca3af',
-  ANNULEE: '#9ca3af',
+  EN_ATTENTE: '#FCD116',
+  CONFIRMEE: '#007A4D',
+  REFUSEE: '#86868b',
+  ANNULEE: '#86868b',
 };
 /** Gris sourd : les séances ne sont là que pour le repérage, en lecture seule. */
-const COULEUR_SEANCE = '#6b7280';
+const COULEUR_SEANCE = '#86868b';
 
 function libelleSeance(s: SeanceCalendrier): string {
-  return s.affectation?.matiere?.intitule ?? 'Séance';
+  return s.affectation?.matiere?.intitule ?? t('reservations.session.defaultLabel');
 }
 
 const evenementsCalendrier = computed(() => [
@@ -271,11 +271,11 @@ const evenementsCalendrier = computed(() => [
     j.reservations.map((r) => ({
       id: r.id,
       date: r.dateJour,
-      titre: `${r.heureDebut} ${r.motif}`,
+      titre: r.demandeurId ? `${r.heureDebut} ${r.motif}` : `${r.heureDebut} ${t('reservations.calendar.reserved')}`,
       sousTitre: `${r.salle?.code ?? ''}${r.organisme ? ` — ${r.organisme}` : ''}`,
-      couleur: COULEUR_STATUT[r.statut] ?? '#9ca3af',
+      couleur: COULEUR_STATUT[r.statut] ?? '#86868b',
       icone: 'event',
-      onClick: () => ouvrir(r),
+      onClick: r.demandeurId ? () => ouvrir(r) : undefined,
     })),
   ),
   // Les séances de l'emploi du temps : repère d'occupation, non cliquables.
@@ -298,15 +298,15 @@ function nomSalle(salleId: string | null): string {
   return salles.value.find((s) => s.id === salleId)?.code ?? '';
 }
 
-const colonnesReservations = [
-  { name: 'creneau', label: 'Créneau', field: 'dateJour', align: 'left' as const },
-  { name: 'salle', label: 'Salle', field: 'salle', align: 'left' as const },
-  { name: 'motif', label: 'Motif', field: 'motif', align: 'left' as const },
-  { name: 'organisme', label: 'Organisme', field: 'organisme', align: 'left' as const },
-  { name: 'responsable', label: 'Responsable', field: 'responsable', align: 'left' as const },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' as const },
+const colonnesReservations = computed(() => [
+  { name: 'creneau', label: t('reservations.table.columns.slot'), field: 'dateJour', align: 'left' as const },
+  { name: 'salle', label: t('reservations.table.columns.room'), field: 'salle', align: 'left' as const },
+  { name: 'motif', label: t('reservations.table.columns.reason'), field: 'motif', align: 'left' as const },
+  { name: 'organisme', label: t('reservations.table.columns.organization'), field: 'organisme', align: 'left' as const },
+  { name: 'responsable', label: t('reservations.table.columns.responsible'), field: 'responsable', align: 'left' as const },
+  { name: 'statut', label: t('reservations.table.columns.status'), field: 'statut', align: 'left' as const },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
-];
+]);
 
 function ouvrir(r: ReservationSalle) {
   reservationChoisie.value = r;
@@ -318,7 +318,11 @@ const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (f.salleId) {
     const salle = salles.value.find((s) => s.id === f.salleId);
-    cs.push({ label: `Salle : ${salle?.code ?? '…'}`, value: f.salleId, icone: 'meeting_room' });
+    cs.push({
+      label: t('reservations.chips.room', { code: salle?.code ?? t('reservations.chips.roomFallback') }),
+      value: f.salleId,
+      icone: 'meeting_room',
+    });
   }
   if (f.dateDebut || f.dateFin) {
     cs.push({
@@ -424,10 +428,10 @@ onMounted(() => {
     border: 1px solid var(--up-encre);
   }
 
-  &--en_attente::before { background: #EFB700; }
-  &--confirmee::before { background: #0F7A45; }
+  &--en_attente::before { background: #FCD116; }
+  &--confirmee::before { background: #007A4D; }
   &--refusee::before,
-  &--annulee::before { background: #9ca3af; }
+  &--annulee::before { background: #86868b; }
   &--seance::before { background: var(--up-encre-douce); }
 }
 

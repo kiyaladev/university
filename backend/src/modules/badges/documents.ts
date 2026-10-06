@@ -6,6 +6,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutBadge } from '@prisma/client';
+import { echapper } from '../../common/utils';
 
 export interface BadgeImprimable {
   id: string;
@@ -21,14 +22,6 @@ export interface BadgeImprimable {
   statut: StatutBadge;
   motif?: string | null;
   photoUrl?: string | null;
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function dateFr(v: Date | string | null | undefined): string {

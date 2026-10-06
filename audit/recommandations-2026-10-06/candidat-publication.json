@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-06T15:09:58.917864+00:00",
+  "candidatePublished": false,
+  "candidatePath": "/tmp/university-recommandations-production",
+  "frontend": {
+    "files": 263,
+    "sha256": "4a612d501fa31d0189765fe68e5489ad75d2a2d16117d00ef36d6c255dbad86e"
+  },
+  "backendDist": {
+    "files": 426,
+    "sha256": "c73f0e81fc1330f6c93fe94fe1f6bd5571c9057dbb46f49b55675ae12fbadb37"
+  },
+  "backendSource": {
+    "files": 358,
+    "sha256": "af60ebc090ff7becd2acd2a8765e95471f108bae7fb549079c4bc14409b680d4"
+  },
+  "frontendSource": {
+    "files": 316,
+    "sha256": "6d2bfe7ebc43db6ec59c45530d9b134fc6d08d4f1a185c246b1e112aacc74484"
+  },
+  "migrations": [
+    {
+      "name": "20260812162634_init",
+      "sha256": "823dc311e5bc8ad5630bd3c05030f46eb1da5c2809490d5ad0da8dc4e30b56bd"
+    },
+    {
+      "name": "20260813102609_attestation_enseignant",
+      "sha256": "cb56894838bf43e255f7316583768eda3675ca563cccffcd31f894c7cd6b7c5e"
+    },
+    {
+      "name": "20260814090000_attestation_en_salle_uniquement",
+      "sha256": "610f20798855c58103530857d3247612ca79e3e129032cf31221412b59110c5e"
+    },
+    {
+      "name": "20260814140000_durcissement_connexion",
+      "sha256": "6caf3884ca671e0cd062bbf5c19eeb1b151a58052c7a9934d2d48f31bf036f55"
+    },
+    {
+      "name": "20260814150000_biometrie_consentement",
+      "sha256": "0e231dde9cae2cee314ef55cc21a816e164fb1114849e67e3c043af96558c0e2"
+    },
+    {
+      "name": "20260814160000_creneau_periode",
+      "sha256": "b47ba9685e40e68f5d116176336f9d748904abfc665f072dc8fbec74d2f6d0e8"
+    },
+    {
+      "name": "20260814170000_appareils_signature",
+      "sha256": "4d98c265442470df6c4e220bedc1f6cd90709aca2aec97830d5f0c1c250d720e"
+    },
+    {
+      "name": "20260815130608_modules_university",
+      "sha256": "95f468e7c5ec80b269bb32aa5183f5aee5a919f7ee93fec3698bdfe0214bd020"
+    },
+    {
+      "name": "20260815160000_modules_kankan",
+      "sha256": "8d50f92a8c449da08862ea097bf77918647d087913d632006b99d9da46766151"
+    },
+    {
+      "name": "20260815220000_bibliotheque_recherche",
+      "sha256": "622ebc60fedca8e32a84061f7d6189bbf81c70b5a4d35fc624b4499e59ce0d01"
+    },
+    {
+      "name": "20260815230000_modules_universite_avancee",
+      "sha256": "6732a99261894af9c09cfc127ecef733bbc7b95345a478a9600bec09c4407bbc"
+    },
+    {
+      "name": "20260818000000_vote_electeur",
+      "sha256": "6066e6832eeb53d9359e4780050522798b452816c1605d79320a1ed19c3c658e"
+    },
+    {
+      "name": "20261002190000_reclamation_anonyme_owner",
+      "sha256": "2ff1930df986a0dbc2c4b6280c5bb2c7114aa272a841e90708b55dd9d7f75dc1"
+    },
+    {
+      "name": "20261002193000_seance_controleur_assigne",
+      "sha256": "0f71b61fe70d5df480b3aacdcbb9957aaada555ebf783a05a552b60f2a145999"
+    },
+    {
+      "name": "20261002220000_restrict_annee_academique_delete",
+      "sha256": "8d811d3f7766f649dc9d3577bc52870967959b3c917fa8769511426b9c761482"
+    },
+    {
+      "name": "20261002230000_paiement_annee_academique",
+      "sha256": "74b0378cc81b8807b909b9f12d6d8da22320945dd1f655a2c0b7e3bf54cd649a"
+    },
+    {
+      "name": "20261002233000_unique_active_annee",
+      "sha256": "4d27b1c667ab65a753214ba9d9cedf661034f8b7832847f0acdf21b4234ed3aa"
+    },
+    {
+      "name": "20261002234000_restrict_academic_archive_delete",
+      "sha256": "99c6e6c5fd55f491a9422c6f048f53a15f6d1a6cede0dc562e222012034c3ecd"
+    },
+    {
+      "name": "20261003080000_restrict_election_archive_delete",
+      "sha256": "6e1278d65b851167427df275ee617868dddf5499c774ffa0b325784836ed8d32"
+    },
+    {
+      "name": "20261003150000_unique_scan_examen",
+      "sha256": "3e188b6b30d42e436137e7c70133cc92ce839f2941fd00e260961bd331f0b795"
+    },
+    {
+      "name": "20261006130000_courrier_departement",
+      "sha256": "fd1669a90498e82b00a17b11ac7571ca2d13e8a2f54eaae5f34bff20bdb97b60"
+    }
+  ],
+  "apiCorrect": true,
+  "qaApiAbsent": true,
+  "demoMediaAbsent": true,
+  "preflightEvidenceDate": "2026-10-06T15:04:14.812Z",
+  "deploymentReady": false,
+  "blockers": [
+    "Aucun administrateur actif avec un mot de passe hors démonstration.",
+    "10 comptes actifs conservent un mot de passe de démonstration.",
+    "Destination SSH de sauvegarde hors serveur non configurée.",
+    "9 migrations en attente : planifier leur application après sauvegarde distante et restauration vérifiées."
+  ],
+  "limits": [
+    "Les hashes identifient ces fichiers ; ils ne prouvent pas que tous les changements sont déployés ou validés par métier.",
+    "Toute modification des sources ou nouveau build exige un inventaire actualisé."
+  ],
+  "backendFullTests": {
+    "passed": true,
+    "tests": 933,
+    "suites": 109,
+    "evidence": "backend-tests-current.log"
+  }
+}

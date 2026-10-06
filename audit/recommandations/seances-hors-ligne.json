@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-03",
+  "portee": "Création d’une séance non programmée sans réseau, puis synchronisation idempotente avant les pointages associés.",
+  "implementation": {
+    "preparation": "Le bouton de préparation met en cache affectations et salles par utilisateur ; les caches ont une durée de 24 heures.",
+    "file": "Les séances sont conservées séparément des pointages, associées au propriétaire de session et supprimées après sept jours.",
+    "identite": "Un UUID client devient l’identifiant serveur : le rejeu d’une requête acceptée ne crée pas de doublon.",
+    "synchronisation": "POST /seances/sync accepte jusqu’à 50 créations, retourne les erreurs par entrée et précède la synchronisation des contrôles.",
+    "affichage": "Les séances en attente apparaissent dans la tournée et peuvent recevoir leur pointage hors ligne ; la boîte de synchronisation permet le rejeu ou le retrait."
+  },
+  "verification": {
+    "testsBackend": "5 cas dédiés couvrent création, rejeu, clé en conflit, erreur partielle et année académique clôturée.",
+    "testsCibles": "28 tests réussis dans les services de séances et créneaux.",
+    "buildBackend": "Réussi.",
+    "typecheckFrontend": "Réussi.",
+    "catalogues": "Parité FR/EN maintenue : 372 clés par langue, aucune clé manquante.",
+    "buildPWA": "PWA de production compilée sans erreur le 2026-10-03 dans /tmp/university-final-current avec API_URL=http://127.0.0.1:15032/api.",
+    "coquePWA": "PWA_BUILD_DIR=/tmp/university-final-current bun run test:pwa passe le 2026-10-03 : manifeste, sept icônes, Service Worker actif, portée racine et démarrage de la coque sans réseau ; zéro échec.",
+    "recetteNavigateur": "Rejouée le 2026-10-03 à 18:03 UTC avec TEST_API_PORT=15032 et PWA_BUILD_DIR=/tmp/university-final-current ; le test vérifie que le bundle cible uniquement le serveur HTTP synthétique local. Aucune base métier n’est touchée.",
+    "parcoursChromium": "Réussi le 2026-10-03 à 18:03 UTC : création UUID hors ligne, affectations et salles mises en cache, persistance après rechargement, synchronisation unique au retour réseau, relations locales exclues de la charge utile."
+  },
+  "limite": "La recette couvre le client PWA et un serveur HTTP simulé ; le cycle doit encore être validé avec l’API/base QA, un compte contrôleur réel et sur l’appareil utilisé sur le terrain."
+}

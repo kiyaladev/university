@@ -1,36 +1,28 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Mes demandes de documents</div>
-        <div class="page-sous-titre">
-          Demandez vos attestations et relevés en ligne : payez les frais au
-          tarif paramétré, suivez l'avancement, retirez au guichet lorsque le
-          statut passe à « Prête ».
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('mesDemandes.title')" :subtitle="$t('mesDemandes.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle demande"
+          :label="$t('mesDemandes.actions.new')"
           @click="creationOuverte = true"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
-      Cette page est réservée aux comptes étudiants. Vous êtes connecté en
-      {{ auth.utilisateur?.role }} — le registre complet se trouve sur
-      « Demandes de documents ».
+      {{ $t('mesDemandes.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesDemandes.banner.goToRegistry') }) }}
       <template #action>
         <q-btn
           flat
           no-caps
           icon="description"
-          label="Demandes de documents"
+          :label="$t('mesDemandes.banner.goToRegistry')"
           :to="{ name: 'demandes-docs' }"
         />
       </template>
@@ -48,14 +40,14 @@
         </q-card>
       </div>
       <div class="col-12 text-caption text-grey-7">
-        Compteurs calculés sur les demandes affichées ci-dessous.
+        {{ $t('mesDemandes.stats.caption') }}
       </div>
     </div>
 
     <filter-bar
       v-if="!rolePasBon"
       v-model="filtres"
-      placeholder="Rechercher (N°, motif…)"
+      :placeholder="$t('mesDemandes.filters.searchPlaceholder')"
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
@@ -68,7 +60,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('mesDemandes.filters.status')"
         />
       </template>
       <template #actions>
@@ -101,14 +93,12 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || demandes.length > 0"
       @row-click="(_, row) => ouvrirSuivi(row)"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucune demande pour ces critères. Demandez une attestation, un relevé
-          de notes ou un duplicata : les frais et le délai s'affichent avant
-          d'envoyer.
+          {{ $t('mesDemandes.emptyState.description') }}
         </div>
       </template>
       <template #body-cell-type="p">
@@ -131,7 +121,7 @@
             size="14px"
             class="q-ml-xs"
           >
-            <q-tooltip>Paiement confirmé</q-tooltip>
+            <q-tooltip>{{ $t('mesDemandes.table.paymentConfirmed') }}</q-tooltip>
           </q-icon>
         </q-td>
       </template>
@@ -144,7 +134,7 @@
             dense
             no-caps
             icon="payments"
-            label="Payer"
+            :label="$t('mesDemandes.actions.pay')"
             @click.stop="ouvrirPaiement(p.row)"
           />
           <q-btn
@@ -152,10 +142,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Suivre la demande"
+            :aria-label="$t('mesDemandes.table.trackAria')"
             @click.stop="ouvrirSuivi(p.row)"
           >
-            <q-tooltip>Suivre la demande</q-tooltip>
+            <q-tooltip>{{ $t('mesDemandes.table.trackTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -169,7 +159,7 @@
               <div class="text-uppercase text-caption text-grey-7">{{ d.numero }}</div>
               <div class="text-subtitle1 text-weight-medium">{{ libelleType(d.type) }}</div>
               <div class="text-caption text-grey-7">
-                Créée le {{ dateHeureLisible(d.creeLe) }}
+                {{ $t('mesDemandes.cards.createdOn', { date: dateHeureLisible(d.creeLe) }) }}
               </div>
             </div>
             <span class="demande-statut" :class="`statut-${d.statut}`">
@@ -200,14 +190,14 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="visibility" label="Suivre" @click="ouvrirSuivi(d)" />
+            <q-btn flat dense no-caps icon="visibility" :label="$t('mesDemandes.actions.track')" @click="ouvrirSuivi(d)" />
             <q-btn
               v-if="d.statut === 'EN_ATTENTE_PAIEMENT' && d.frais > 0"
               unelevated
               color="primary"
               no-caps
               icon="payments"
-              label="Payer maintenant"
+              :label="$t('mesDemandes.actions.payNow')"
               @click="ouvrirPaiement(d)"
             />
           </q-card-actions>
@@ -216,9 +206,7 @@
       <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="description" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucune demande pour ces critères. Demandez une attestation, un relevé
-          de notes ou un duplicata : les frais et le délai s'affichent avant
-          d'envoyer.
+          {{ $t('mesDemandes.emptyState.description') }}
         </div>
         <q-btn
           class="q-mt-md"
@@ -226,7 +214,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle demande"
+          :label="$t('mesDemandes.actions.new')"
           @click="creationOuverte = true"
         />
       </div>
@@ -258,51 +246,51 @@
 
           <div class="demande-meta q-mt-md">
             <div>
-              <span class="pochoir">Frais</span>
+              <span class="pochoir">{{ $t('mesDemandes.dialog.fees') }}</span>
               <span class="chiffres">
                 {{ montantLisible(demandeSuivie.frais) }} {{ demandeSuivie.devise }}
               </span>
             </div>
             <div>
-              <span class="pochoir">Paiement</span>
+              <span class="pochoir">{{ $t('mesDemandes.dialog.payment') }}</span>
               <span v-if="demandeSuivie.paiement">
                 {{ demandeSuivie.paiement.reference }} ·
                 {{ LIBELLE_STATUT_PAIEMENT[demandeSuivie.paiement.statut] ?? demandeSuivie.paiement.statut }}
               </span>
-              <span v-else class="text-grey-7">Non initié</span>
+              <span v-else class="text-grey-7">{{ $t('mesDemandes.dialog.notInitiated') }}</span>
             </div>
             <div>
-              <span class="pochoir">Créée le</span>
+              <span class="pochoir">{{ $t('mesDemandes.dialog.createdAt') }}</span>
               <span>{{ dateHeureLisible(demandeSuivie.creeLe) }}</span>
             </div>
             <div v-if="demandeSuivie.remiseLe">
-              <span class="pochoir">Remise le</span>
+              <span class="pochoir">{{ $t('mesDemandes.dialog.deliveredAt') }}</span>
               <span>{{ dateHeureLisible(demandeSuivie.remiseLe) }}</span>
             </div>
           </div>
 
           <div v-if="demandeSuivie.motif" class="q-mt-md">
-            <span class="section-titre">Motif de votre demande</span>
+            <span class="section-titre">{{ $t('mesDemandes.dialog.requestReason') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.motif }}</div>
           </div>
           <div v-if="demandeSuivie.notification" class="q-mt-md">
-            <span class="section-titre">Message de la scolarité</span>
+            <span class="section-titre">{{ $t('mesDemandes.dialog.registrarMessage') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notification }}</div>
           </div>
           <div v-if="demandeSuivie.statut === 'REJETEE' && demandeSuivie.notes" class="q-mt-md">
-            <span class="section-titre">Motif du rejet</span>
+            <span class="section-titre">{{ $t('mesDemandes.dialog.rejectionReason') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notes }}</div>
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" no-caps v-close-popup />
+          <q-btn flat :label="$t('mesDemandes.actions.close')" no-caps v-close-popup />
           <q-btn
             v-if="demandeSuivie && demandeSuivie.statut === 'EN_ATTENTE_PAIEMENT' && demandeSuivie.frais > 0"
             unelevated
             color="primary"
             no-caps
             icon="payments"
-            label="Payer maintenant"
+            :label="$t('mesDemandes.actions.payNow')"
             @click="ouvrirPaiement(demandeSuivie)"
           />
         </q-card-actions>
@@ -312,7 +300,7 @@
     <!-- Dialogue de paiement -->
     <q-dialog v-model="paiementOuvert">
       <q-card style="width: 480px; max-width: 95vw">
-        <q-card-section class="text-h6">Payer la demande</q-card-section>
+        <q-card-section class="text-h6">{{ $t('mesDemandes.paymentDialog.title') }}</q-card-section>
         <q-card-section v-if="demandeAPayer">
           <div class="row q-col-gutter-md items-center q-mb-md">
             <div class="col">
@@ -330,7 +318,7 @@
             dense
             emit-value
             map-options
-            label="Mode de paiement"
+            :label="$t('mesDemandes.paymentDialog.mode')"
             class="q-mb-md"
           />
           <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
@@ -341,26 +329,23 @@
               dense
               emit-value
               map-options
-              label="Opérateur"
+              :label="$t('mesDemandes.paymentDialog.operator')"
               class="q-mb-sm"
             />
             <q-input
               v-model="formPaiement.telephone"
               outlined
               dense
-              label="Numéro Mobile Money"
-              hint="Le numéro qui sera débité"
+              :label="$t('mesDemandes.paymentDialog.phoneLabel')"
+              :hint="$t('mesDemandes.paymentDialog.phoneHint')"
             />
           </template>
           <q-banner class="note--info q-mt-md">
             <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
-              Mode pilote : aucune passerelle Mobile Money n'est connectée. Le
-              paiement est enregistré comme réussi et la demande passe en
-              traitement.
+              {{ $t('mesDemandes.paymentDialog.mobileMoneyNote') }}
             </template>
             <template v-else>
-              Le paiement sera enregistré en attente : réglez au guichet de la
-              scolarité, qui confirmera pour lancer le traitement.
+              {{ $t('mesDemandes.paymentDialog.pendingNote') }}
             </template>
           </q-banner>
         </q-card-section>
@@ -369,12 +354,12 @@
           {{ erreurPaiement }}
         </q-banner>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('mesDemandes.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             icon="payments"
-            label="Payer"
+            :label="$t('mesDemandes.actions.pay')"
             :loading="enregistrementPaiement"
             @click="payer"
           />
@@ -385,8 +370,10 @@
 </template>
 
 <script setup lang="ts">
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -405,40 +392,40 @@ import {
 import type { DemandeDocument, ModePaiement, StatutDemande, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 'ETUDIANT');
 
 /** Le même statut, dit sans jargon administratif. */
-const EXPLICATION_STATUT: Record<StatutDemande, string> = {
-  EN_ATTENTE_PAIEMENT:
-    'Réglez les frais pour lancer le traitement. Sans paiement, la demande reste en attente.',
-  PAYEE: 'Frais reçus. La scolarité va prendre votre demande en charge.',
-  EN_TRAITEMENT: 'La scolarité prépare votre document.',
-  PRETE: 'Votre document est prêt : présentez-vous au guichet de la scolarité avec votre carte.',
-  REMISE: 'Document remis. Rien de plus à faire.',
-  REJETEE: 'Demande rejetée. Le motif est indiqué ci-dessous ; vous pouvez en déposer une nouvelle.',
-};
+const EXPLICATION_STATUT = computed<Record<StatutDemande, string>>(() => ({
+  EN_ATTENTE_PAIEMENT: t('mesDemandes.statusExplanations.EN_ATTENTE_PAIEMENT'),
+  PAYEE: t('mesDemandes.statusExplanations.PAYEE'),
+  EN_TRAITEMENT: t('mesDemandes.statusExplanations.EN_TRAITEMENT'),
+  PRETE: t('mesDemandes.statusExplanations.PRETE'),
+  REMISE: t('mesDemandes.statusExplanations.REMISE'),
+  REJETEE: t('mesDemandes.statusExplanations.REJETEE'),
+}));
 
-const ETAPES_DEMANDE = [
-  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: 'Paiement', icone: 'payments' },
-  { identifiant: 'PAYEE', libelle: 'Payée', icone: 'verified' },
-  { identifiant: 'EN_TRAITEMENT', libelle: 'Traitement', icone: 'build' },
-  { identifiant: 'PRETE', libelle: 'Prête', icone: 'check_circle' },
-  { identifiant: 'REMISE', libelle: 'Remise', icone: 'task_alt' },
-];
+const ETAPES_DEMANDE = computed(() => [
+  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('mesDemandes.steps.payment'), icone: 'payments' },
+  { identifiant: 'PAYEE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
+  { identifiant: 'EN_TRAITEMENT', libelle: t('mesDemandes.steps.processing'), icone: 'build' },
+  { identifiant: 'PRETE', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
+  { identifiant: 'REMISE', libelle: t('mesDemandes.steps.delivered'), icone: 'task_alt' },
+]);
 
 const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_DEMANDE);
-const OPTIONS_PAIEMENT = [
-  { label: 'Mobile Money', value: 'MOBILE_MONEY' as const },
-  { label: 'Espèces (au guichet)', value: 'ESPECES' as const },
-  { label: 'Virement bancaire', value: 'VIREMENT' as const },
-];
-const OPTIONS_OPERATEUR = [
-  { label: 'Orange Money', value: 'ORANGE_MONEY' },
-  { label: 'MTN MoMo', value: 'MTN_MOMO' },
-  { label: 'Telecel', value: 'TELECEL' },
-];
+const OPTIONS_PAIEMENT = computed(() => [
+  { label: t('mesDemandes.paymentOptions.mobileMoney'), value: 'MOBILE_MONEY' as const },
+  { label: t('mesDemandes.paymentOptions.cash'), value: 'ESPECES' as const },
+  { label: t('mesDemandes.paymentOptions.transfer'), value: 'VIREMENT' as const },
+]);
+const OPTIONS_OPERATEUR = computed(() => [
+  { label: t('mesDemandes.operatorOptions.orangeMoney'), value: 'ORANGE_MONEY' },
+  { label: t('mesDemandes.operatorOptions.mtnMomo'), value: 'MTN_MOMO' },
+  { label: t('mesDemandes.operatorOptions.telecel'), value: 'TELECEL' },
+]);
 
 const demandes = ref<DemandeDocument[]>([]);
 const stats = ref<Record<string, number> | null>(null);
@@ -460,12 +447,12 @@ const formPaiement = ref({
   telephone: '',
 });
 
-const plaques = [
-  { cle: 'EN_ATTENTE_PAIEMENT', libelle: 'À payer', alerte: true },
-  { cle: 'EN_TRAITEMENT', libelle: 'En traitement', alerte: false },
-  { cle: 'PRETE', libelle: 'Prêtes', alerte: false },
-  { cle: 'REMISE', libelle: 'Remises', alerte: false },
-];
+const plaques = computed(() => [
+  { cle: 'EN_ATTENTE_PAIEMENT', libelle: t('mesDemandes.stats.labels.toPay'), alerte: true },
+  { cle: 'EN_TRAITEMENT', libelle: t('mesDemandes.stats.labels.inProgress'), alerte: false },
+  { cle: 'PRETE', libelle: t('mesDemandes.stats.labels.ready'), alerte: false },
+  { cle: 'REMISE', libelle: t('mesDemandes.stats.labels.delivered'), alerte: false },
+]);
 
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_DEMANDE[s as StatutDemande] ?? s;
@@ -474,20 +461,20 @@ function libelleType(t: string) {
   return LIBELLE_TYPE_DEMANDE[t as TypeDemandeDocument] ?? t;
 }
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'frais', label: 'Frais', field: 'frais', align: 'right' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('mesDemandes.table.columns.number'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('mesDemandes.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'frais', label: t('mesDemandes.table.columns.fees'), field: 'frais', align: 'right' },
+  { name: 'statut', label: t('mesDemandes.table.columns.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: 'Créée le',
+    label: t('mesDemandes.table.columns.createdAt'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ouvrirSuivi(d: DemandeDocument) {
   demandeSuivie.value = d;
@@ -511,28 +498,29 @@ async function payer() {
   enregistrementPaiement.value = true;
   erreurPaiement.value = '';
   try {
-    // Mode pilote : seul le Mobile Money est confirmé automatiquement. Les
-    // espèces et le virement sont encaissés puis confirmés par la scolarité.
-    const simuler = formPaiement.value.mode === 'MOBILE_MONEY';
+    const mobileMoney = formPaiement.value.mode === 'MOBILE_MONEY';
+    if (mobileMoney && !/^\+?[\d\s().-]{6,20}$/.test(formPaiement.value.telephone.trim())) {
+      erreurPaiement.value = t('mesDemandes.messages.phoneRequired');
+      return;
+    }
     const body: Record<string, unknown> = {
       mode: formPaiement.value.mode,
-      simuler,
     };
-    if (formPaiement.value.mode === 'MOBILE_MONEY') {
+    if (mobileMoney) {
       body.operateur = formPaiement.value.operateur;
-      if (formPaiement.value.telephone) body.telephone = formPaiement.value.telephone;
+      body.telephone = formPaiement.value.telephone.trim();
     }
     await api.post(`/documents-demande/${demandeAPayer.value.id}/payer`, body);
     $q.notify({
       type: 'positive',
-      message: simuler
-        ? 'Paiement enregistré : votre demande passe en traitement.'
-        : 'Paiement initié : présentez-vous au guichet, la scolarité confirmera.',
+      message: mobileMoney
+        ? t('mesDemandes.messages.mobileMoneyPending')
+        : t('mesDemandes.messages.paymentInitiatedPending'),
     });
     paiementOuvert.value = false;
     void requeter();
   } catch (e: any) {
-    erreurPaiement.value = e.response?.data?.message ?? 'Paiement impossible';
+    erreurPaiement.value = e.response?.data?.message ?? t('mesDemandes.messages.paymentFailed');
   } finally {
     enregistrementPaiement.value = false;
   }
@@ -595,15 +583,15 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 /* Mêmes blocs de détail que le registre de la scolarité. */
@@ -626,7 +614,7 @@ $rouge: #C4122E;
   background: var(--up-craie);
   border: var(--up-filet-fin);
   padding: var(--up-2);
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   font-size: 0.95rem;
 }
 
@@ -635,19 +623,17 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
-  &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fonce; }
-  &.statut-PAYEE { background: #1e7a4c; }
-  &.statut-EN_TRAITEMENT { background: $encre; }
-  &.statut-PRETE { background: $vert; }
-  &.statut-REMISE { background: #1565c0; }
-  &.statut-REJETEE { background: $rouge; }
+  &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fond; color: $jaune-texte; }
+  &.statut-PAYEE { background: #007a4d; }
+  &.statut-EN_TRAITEMENT { background: $vert-fond; color: $vert-lien; }
+  &.statut-PRETE { background: $vert-fond; color: #{$vert}; }
+  &.statut-REMISE { background: #0066cc; }
+  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 </style>

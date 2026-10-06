@@ -1,24 +1,58 @@
 @use './quasar.variables' as *;
 
+/**
+ * Le panneau d'accueil des écrans publics — connexion, préinscription,
+ * catalogue, page d'erreur.
+ *
+ * C'était une enseigne peinte : aplat d'encre, rainures au pochoir, trois
+ * bandes du drapeau en pied. Apple ne signe pas ses pages par une couleur, il
+ * les signe par du vide — un titre serré, beaucoup d'air autour, et une surface
+ * qui ne dit rien d'autre que « ceci est le début ». C'est ce que fait ce mixin.
+ */
+/**
+ * Le filet du drapeau : rouge, jaune, vert en un seul trait de 4 px, large de
+ * 72 px. C'est la touche — la seule décoration du monde, et elle tient en une
+ * ligne. Les trois bandes pleine largeur du panneau peint criaient ; ce filet
+ * dit la même chose sans prendre la parole.
+ */
+@mixin filetDrapeau($largeur: 72px) {
+  content: '';
+  display: block;
+  flex: 0 0 auto;
+  width: $largeur;
+  height: 4px;
+  border-radius: 980px;
+  background: linear-gradient(
+    90deg,
+    #{$rouge} 0 33.34%,
+    #{$jaune} 33.34% 66.67%,
+    #{$vert-drapeau} 66.67% 100%
+  );
+}
+
 @mixin enseignePlaque($centrer: true) {
-  background: $encre;
-  color: $blanc-craie;
+  background: var(--up-chaux);
+  color: var(--up-encre);
   padding: var(--up-6) var(--up-5);
   display: flex;
   flex-direction: column;
   gap: var(--up-4);
-  background-image: repeating-linear-gradient(
-    92deg,
-    rgba(255, 255, 255, 0.045) 0 2px,
-    rgba(255, 255, 255, 0) 2px 5px
-  );
 
   @if $centrer {
     justify-content: center;
   }
 
-  .bande { flex: 1; }
-  .bande--rouge { background: $rouge; }
-  .bande--jaune { background: $jaune; }
-  .bande--vert { background: $vert; }
+  // Le filet du drapeau ouvre l'enseigne, sans rien demander au gabarit.
+  &::before { @include filetDrapeau; }
+
+  // Les trois bandes pleine largeur ont été retirées des gabarits. Si l'une
+  // survit quelque part, elle se lit comme un filet gris et non comme une
+  // couleur posée là sans raison.
+  .bande,
+  .bande--rouge,
+  .bande--jaune,
+  .bande--vert {
+    flex: 0 0 1px;
+    background: #{$gris-filet};
+  }
 }

@@ -1,0 +1,8 @@
+{
+  "salle_referenced_delete": "Cette salle ne peut pas être supprimée : des séances ou des réservations y sont rattachées. Désactivez-la plutôt que de la supprimer.",
+  "departement_referenced_delete": "Ce département ne peut pas être supprimé : des enseignants ou des filières y sont encore rattachés. Réaffectez-les d'abord.",
+  "filiere_referenced_delete": "Cette filière ne peut pas être supprimée : des promotions y sont encore rattachées. Supprimez ou réaffectez-les d'abord.",
+  "promotion_referenced_delete": "Cette promotion ne peut pas être supprimée : des données y sont rattachées (inscriptions, affectations, frais…). Traitez-les d'abord.",
+  "annee_referenced_delete": "Cette année académique ne peut pas être supprimée : des données y sont rattachées (promotions, inscriptions, séances…). Clôturez-la plutôt que de la supprimer.",
+  "annee_dates_incoherentes": "La date de fin d’une année académique doit être postérieure à sa date de début."
+}

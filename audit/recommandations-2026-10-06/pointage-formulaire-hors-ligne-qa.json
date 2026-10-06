@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-06T14:57:13.636Z",
+  "statut": "valide",
+  "api": "http://127.0.0.1:15041/api",
+  "simulatedApi": false,
+  "actualPrepareButtonVerified": true,
+  "actualOfflineFormVerified": true,
+  "actualPointageFormAndCanvasVerified": true,
+  "uuid": "69894aab-6601-4e85-8759-00f70f258a94",
+  "singlePersistedSessionAndAudit": true,
+  "singleOfflineControlPersisted": true,
+  "productionUntouched": true,
+  "physicalDevicePending": true,
+  "scope": "Préparation, séance et présence signée par formulaires, API QA réelle",
+  "encryptedPointageVerified": true
+}

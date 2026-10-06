@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
+import { I18nContext } from 'nestjs-i18n';
 import { PDFParse } from 'pdf-parse';
-import { StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
+import { Prisma, StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 
@@ -66,6 +67,14 @@ function tokeniser(texte: string): Set<string> {
  * et 1. Renvoie `0` si l'un des ensembles est trop petit : sur quelques mots,
  * la « similarité » n'a pas de sens (un mot commun sur quatre donne déjà 25 %).
  */
+/**
+ * Clé d'une paire de documents, indépendante de l'ordre : le schéma autorise
+ * (A, B) comme (B, A), et la comparaison doit retrouver la même ligne.
+ */
+function clePaire(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
 function jaccard(a: Set<string>, b: Set<string>): number {
   if (a.size < TAILLE_MIN_JACCARD || b.size < TAILLE_MIN_JACCARD) return 0;
   const inter = new Set<string>();
@@ -101,6 +110,93 @@ function nettoyerTextePdf(brut: string): string {
 export interface ContenuExtrait {
   contenuTexte: string | null;
   empreinteHash: string | null;
+}
+
+/**
+ * Trace d'audit écrite par la transaction qui porte la mutation : une décision
+ * d'arbitrage sans trace, ou une trace d'une décision annulée, ne sont plus
+ * possibles. `details` porte le format avant/après commun aux modules — c'est
+ * lui que l'écran « Journal » sait lire.
+ *
+ * `user` peut être nul : le moteur de détection n'a pas d'acteur, et l'on ne
+ * veut pas attribuer à un compte le travail d'un calcul automatique.
+ */
+function journaliser(
+  tx: Prisma.TransactionClient,
+  user: AuthUser | null,
+  action: string,
+  entite: string,
+  entiteId: string,
+  details: Record<string, unknown>,
+) {
+  return tx.auditLog.create({
+    data: {
+      userId: user?.id ?? null,
+      action,
+      entite,
+      entiteId,
+      details: JSON.stringify(details),
+    },
+  });
+}
+
+/**
+ * Suspicion projetée pour le journal : la vie du dossier d'arbitrage —
+ * la paire de documents comparés, le statut, l'horodatage de détection, qui a
+ * tranché et quand.
+ *
+ * Le score est conservé : c'est la mesure sur laquelle le dossier a été
+ * arbitré, et un pourcentage de similarité ne dit rien du texte. En revanche
+ * le commentaire d'arbitrage reste hors journal — il est écrit librement par
+ * l'agent et peut citer le document ou l'étudiant — et le titre, les auteurs et
+ * l'empreinte des documents ne sont jamais recopiés : c'est le contenu du
+ * dépôt qui doit rester absent du journal.
+ */
+function instantaneSuspicion(suspicion: {
+  id: string;
+  documentAId?: string;
+  documentBId?: string;
+  score?: number | null;
+  statut?: StatutSuspicionPlagiat | null;
+  detecteLe?: Date | string | null;
+  acquitteParId?: string | null;
+  acquitteLe?: Date | string | null;
+  commentaire?: string | null;
+}) {
+  return {
+    id: suspicion.id,
+    documentAId: suspicion.documentAId ?? null,
+    documentBId: suspicion.documentBId ?? null,
+    statut: suspicion.statut ?? null,
+    score: suspicion.score ?? null,
+    detecteLe: suspicion.detecteLe ?? null,
+    acquitteParId: suspicion.acquitteParId ?? null,
+    acquitteLe: suspicion.acquitteLe ?? null,
+    // Présence seule du motif d'arbitrage, jamais son texte.
+    commentaireFourni: Boolean(suspicion.commentaire),
+  };
+}
+
+/**
+ * Document projeté pour le journal : on ne note que l'indice de plagiat
+ * affiché au dépôt et la *présence* de ce qui a servi à le calculer. Le titre,
+ * les auteurs, le résumé, le texte extrait, le fichier et l'empreinte — donc
+ * l'identité de l'auteur du document déposé — restent hors journal.
+ */
+function instantaneDocumentDepot(document: {
+  id: string;
+  type?: string | null;
+  indicePlagiat?: number | null;
+  contenuTexte?: string | null;
+  empreinteHash?: string | null;
+}) {
+  return {
+    id: document.id,
+    type: document.type ?? null,
+    indicePlagiat: document.indicePlagiat ?? null,
+    texteExtrait: Boolean(document.contenuTexte),
+    empreintePresente: Boolean(document.empreinteHash),
+  };
 }
 
 @Injectable()
@@ -166,6 +262,14 @@ export class PlagiatService {
    * paire : on range la paire dans l'ordre canonique (idMin, idMax) pour
    * confondre (A,B) et (B,A). Les suspicions déjà tranchées ne sont pas
    * écrasées — l'arbitrage humain reste prioritaire.
+   *
+   * La lecture (comparaison, appariement) précède les écritures : les
+   * écritures et leurs traces partagent ensuite une seule transaction, comme
+   * les décisions d'arbitrage. Chaque nouvelle suspicion et chaque indice
+   * réellement modifié au dépôt produit une entrée ; la mise à jour d'un score
+   * d'un dossier déjà ouvert est journalisée, mais le balayage complet
+   * (`recalculerComplet`) ne l'est pas : il produirait une entrée par
+   * document du dépôt alors qu'une seule trace de synthèse suffit.
    */
   async detecterDoublons(documentId: string): Promise<{ creees: number; ignorees: number }> {
     const cible = await this.prisma.documentDepot.findUnique({
@@ -177,6 +281,8 @@ export class PlagiatService {
         resume: true,
         motsClefs: true,
         empreinteHash: true,
+        type: true,
+        indicePlagiat: true,
       },
     });
     if (!cible) return { creees: 0, ignorees: 0 };
@@ -197,6 +303,24 @@ export class PlagiatService {
     let creees = 0;
     let ignorees = 0;
     const nouvelIndice = cible.empreinteHash ? 100 : 0;
+    // Suspicion à écrire : création si elle est inconnue, mise à jour du score
+    // si elle est encore en attente et que la mesure progresse.
+    const aEcrire: Array<{
+      aId: string;
+      bId: string;
+      score: number;
+      existante: {
+        id: string;
+        documentAId: string;
+        documentBId: string;
+        score: number;
+        statut: StatutSuspicionPlagiat;
+        detecteLe: Date;
+        acquitteParId: string | null;
+        acquitteLe: Date | null;
+        commentaire: string | null;
+      } | null;
+    }> = [];
 
     for (const autre of autres) {
       let score = 0;
@@ -224,31 +348,64 @@ export class PlagiatService {
       });
       if (existante) {
         if (existante.statut === StatutSuspicionPlagiat.EN_ATTENTE && existante.score < score) {
-          await this.prisma.suspicionPlagiat.update({
-            where: { id: existante.id },
-            data: { score },
-          });
+          aEcrire.push({ aId, bId, score, existante });
           creees += 1;
         } else {
           ignorees += 1;
         }
         continue;
       }
-      await this.prisma.suspicionPlagiat.create({
-        data: {
-          documentAId: aId,
-          documentBId: bId,
-          score,
-          statut: StatutSuspicionPlagiat.EN_ATTENTE,
-        },
-      });
+      aEcrire.push({ aId, bId, score, existante: null });
       creees += 1;
     }
 
-    if (nouvelIndice > 0) {
-      await this.prisma.documentDepot.update({
-        where: { id: cible.id },
-        data: { indicePlagiat: nouvelIndice },
+    // Écrire la valeur déjà appliquée ne change rien : l'écriture reste (elle
+    // porte aussi le `updatedAt` du document), mais elle ne mérite pas de trace.
+    const indiceChange = nouvelIndice > 0 && cible.indicePlagiat !== nouvelIndice;
+    const instantaneAvant = instantaneDocumentDepot(cible);
+
+    if (aEcrire.length || indiceChange) {
+      await this.prisma.$transaction(async (tx) => {
+        for (const p of aEcrire) {
+          if (p.existante) {
+            const avant = instantaneSuspicion(p.existante);
+            const apres = { ...avant, score: p.score };
+            await tx.suspicionPlagiat.update({ where: { id: p.existante.id }, data: { score: p.score } });
+            await journaliser(tx, null, 'PLAGIAT_SUSPICION_REEVALUEE', 'SuspicionPlagiat', p.existante.id, {
+              avant,
+              apres,
+              champsModifies: ['score'],
+            });
+            continue;
+          }
+          const creee = await tx.suspicionPlagiat.create({
+            data: {
+              documentAId: p.aId,
+              documentBId: p.bId,
+              score: p.score,
+              statut: StatutSuspicionPlagiat.EN_ATTENTE,
+            },
+          });
+          await journaliser(tx, null, 'PLAGIAT_SUSPICION_OUVERTE', 'SuspicionPlagiat', creee.id, {
+            avant: null,
+            apres: instantaneSuspicion(creee),
+          });
+        }
+
+        if (nouvelIndice > 0) {
+          await tx.documentDepot.update({
+            where: { id: cible.id },
+            data: { indicePlagiat: nouvelIndice },
+          });
+          if (indiceChange) {
+            await journaliser(tx, null, 'PLAGIAT_INDICE_MAJ', 'DocumentDepot', cible.id, {
+              avant: instantaneAvant,
+              apres: { ...instantaneAvant, indicePlagiat: nouvelIndice },
+              champsModifies: ['indicePlagiat'],
+              suspicionsCreees: aEcrire.filter((p) => !p.existante).length,
+            });
+          }
+        }
       });
     }
     return { creees, ignorees };
@@ -256,13 +413,15 @@ export class PlagiatService {
 
   /**
    * Dashboard admin : liste des suspicions en attente (les plus fortes en
-   * tête), KPIs agrégés et top 10 des paires par score.
+   * tête), KPIs agrégés et top 10 des paires par score. Lecture pure : ni
+   * transaction, ni entrée de journal.
    */
   async dashboard() {
     const [suspicions, total, moyenneRow, topDix, parStatut] = await Promise.all([
       this.prisma.suspicionPlagiat.findMany({
         where: { statut: StatutSuspicionPlagiat.EN_ATTENTE },
         orderBy: [{ score: 'desc' }, { detecteLe: 'desc' }],
+        take: 100,
         include: {
           // La carte de suspicion nomme les auteurs et le département : sans
           // eux elle n'affichait que des tirets.
@@ -299,6 +458,7 @@ export class PlagiatService {
     };
   }
 
+  /** Fiche d'une suspicion : lecture, jamais journalisée. */
   async detail(id: string) {
     const suspicion = await this.prisma.suspicionPlagiat.findUnique({
       where: { id },
@@ -318,7 +478,7 @@ export class PlagiatService {
         acquittePar: { select: { id: true, nom: true, prenom: true, role: true } },
       },
     });
-    if (!suspicion) throw new NotFoundException('Suspicion introuvable');
+    if (!suspicion) throw new NotFoundException(I18nContext.current()!.t('bibliotheque.suspicion_introuvable'));
     // Le payload FTS (contenuTexte) et le data-url (fichier) sont trop lourds
     // pour figurer dans la réponse d'un détail : on les retire à la source.
     const copie = JSON.parse(JSON.stringify(suspicion)) as Record<string, unknown>;
@@ -339,6 +499,12 @@ export class PlagiatService {
    * Acquittement humain : l'admin (ou la direction) tranche. Le couple
    * « ACQUITTE » + commentaire alimente le journal d'audit pour qu'on
    * retrouve plus tard la justification.
+   *
+   * C'est le seul arbitrage du module, donc la seule décision qu'un compte peut
+   * être tenu pour responsable : elle est journalisée avant/après, et dans la
+   * transaction qui la porte — une décision tracée alors que la mise à jour a
+   * échoué (ou l'inverse) fausserait le journal. Le motif reste hors trace :
+   * sa présence seule est notée.
    */
   async acquitter(
     id: string,
@@ -346,39 +512,41 @@ export class PlagiatService {
     utilisateur: AuthUser,
     commentaire?: string,
   ): Promise<SuspicionPlagiat> {
-    const existante = await this.prisma.suspicionPlagiat.findUnique({ where: { id } });
-    if (!existante) throw new NotFoundException('Suspicion introuvable');
-    if (
-      decision !== StatutSuspicionPlagiat.ACQUITTE &&
-      decision !== StatutSuspicionPlagiat.CONFIRME
-    ) {
-      throw new BadRequestException('Décision de plagiat invalide');
-    }
-    const miseAJour = await this.prisma.suspicionPlagiat.update({
-      where: { id },
-      data: {
-        statut: decision,
-        acquitteParId: utilisateur.id,
-        acquitteLe: new Date(),
-        commentaire: commentaire ?? existante.commentaire,
-      },
-      include: {
-        documentA: { select: { id: true, titre: true } },
-        documentB: { select: { id: true, titre: true } },
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const existante = await tx.suspicionPlagiat.findUnique({ where: { id } });
+      if (!existante) throw new NotFoundException(I18nContext.current()!.t('bibliotheque.suspicion_introuvable'));
+      if (
+        decision !== StatutSuspicionPlagiat.ACQUITTE &&
+        decision !== StatutSuspicionPlagiat.CONFIRME
+      ) {
+        throw new BadRequestException(I18nContext.current()!.t('bibliotheque.decision_de_plagiat_invalide'));
+      }
+      const avant = instantaneSuspicion(existante);
+      const miseAJour = await tx.suspicionPlagiat.update({
+        where: { id },
+        data: {
+          statut: decision,
+          acquitteParId: utilisateur.id,
+          acquitteLe: new Date(),
+          commentaire: commentaire ?? existante.commentaire,
+        },
+        include: {
+          documentA: { select: { id: true, titre: true } },
+          documentB: { select: { id: true, titre: true } },
+        },
+      });
+      await journaliser(tx, utilisateur, `PLAGIAT_${decision}`, 'SuspicionPlagiat', id, {
+        avant,
+        apres: instantaneSuspicion(miseAJour),
+        champsModifies: [
+          'statut',
+          'acquitteParId',
+          'acquitteLe',
+          ...(commentaire ? ['commentaire'] : []),
+        ],
+      });
+      return miseAJour;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: utilisateur.id,
-        action: `PLAGIAT_${decision}`,
-        entite: 'SuspicionPlagiat',
-        entiteId: id,
-        details: commentaire
-          ? `${miseAJour.documentA.titre} ↔ ${miseAJour.documentB.titre} : ${commentaire}`
-          : `${miseAJour.documentA.titre} ↔ ${miseAJour.documentB.titre}`,
-      },
-    });
-    return miseAJour;
   }
 
   /**
@@ -386,6 +554,12 @@ export class PlagiatService {
    * les suspicions. Coûteux (O(n²) en mémoire) — c'est pour ça qu'il est
    * gardé derrière un endpoint ADMIN. Les paires déjà tranchées ne sont pas
    * écrasées.
+   *
+   * Ce balayage n'écrit aucune entrée de journal, contrairement à la détection
+   * d'un dépôt : il toucherait presque tous les documents du fonds, et une
+   * trace par document noierait le journal sans rien apprendre. Qui l'a
+   * déclenché, et le bilan Created/updated/ignored, sont déjà portés par la
+   * trace unique `PLAGIAT_RECALCUL` du contrôleur.
    */
   async recalculerComplet(): Promise<{ creees: number; misesAJour: number; ignorees: number }> {
     const docs = await this.prisma.documentDepot.findMany({
@@ -401,9 +575,26 @@ export class PlagiatService {
     const tokensParDoc = new Map<string, Set<string>>();
     for (const d of docs) tokensParDoc.set(d.id, tokeniser(texteDeComparaison(d)));
 
+    // Les paires déjà connues sont chargées une seule fois. La version
+    // précédente interrogeait `suspicionPlagiat` pour chaque paire scored :
+    // O(n²) requêtes dans une même requête HTTP, soit ~500 000 allers-retours
+    // pour mille documents.
+    const connues = await this.prisma.suspicionPlagiat.findMany({
+      select: { id: true, documentAId: true, documentBId: true, score: true, statut: true },
+    });
+    const parPaire = new Map<string, (typeof connues)[number]>();
+    for (const s of connues) parPaire.set(clePaire(s.documentAId, s.documentBId), s);
+
     let creees = 0;
     let misesAJour = 0;
     let ignorees = 0;
+    const aMettreAJour: Array<{ id: string; score: number }> = [];
+    const aCreer: Array<{
+      documentAId: string;
+      documentBId: string;
+      score: number;
+      statut: StatutSuspicionPlagiat;
+    }> = [];
 
     for (let i = 0; i < docs.length; i++) {
       const a = docs[i];
@@ -420,36 +611,26 @@ export class PlagiatService {
         }
         if (score === 0) continue;
         const [aId, bId] = [a.id, b.id].sort();
-        const existante = await this.prisma.suspicionPlagiat.findFirst({
-          where: {
-            OR: [
-              { documentAId: aId, documentBId: bId },
-              { documentAId: bId, documentBId: aId },
-            ],
-          },
-        });
+        const existante = parPaire.get(clePaire(aId, bId));
         if (existante) {
           if (existante.statut === StatutSuspicionPlagiat.EN_ATTENTE && existante.score < score) {
-            await this.prisma.suspicionPlagiat.update({
-              where: { id: existante.id },
-              data: { score },
-            });
+            aMettreAJour.push({ id: existante.id, score });
             misesAJour += 1;
           } else {
             ignorees += 1;
           }
           continue;
         }
-        await this.prisma.suspicionPlagiat.create({
-          data: {
-            documentAId: aId,
-            documentBId: bId,
-            score,
-            statut: StatutSuspicionPlagiat.EN_ATTENTE,
-          },
-        });
+        aCreer.push({ documentAId: aId, documentBId: bId, score, statut: StatutSuspicionPlagiat.EN_ATTENTE });
         creees += 1;
       }
+    }
+
+    for (const m of aMettreAJour) {
+      await this.prisma.suspicionPlagiat.update({ where: { id: m.id }, data: { score: m.score } });
+    }
+    if (aCreer.length) {
+      await this.prisma.suspicionPlagiat.createMany({ data: aCreer });
     }
 
     // Met à jour l'indicePlagiat agrégé par document (le max des suspicions

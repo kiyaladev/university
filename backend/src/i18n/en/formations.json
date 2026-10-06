@@ -1,0 +1,20 @@
+{
+  "formation_introuvable": "Course not found",
+  "reference_de_dossier_temporairement_indisponible_reessayez": "Application reference temporarily unavailable, please try again",
+  "inscription_a_la_formation_introuvable": "Course application not found",
+  "cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee": "This request is cancelled and can no longer be confirmed",
+  "cette_demande_est_deja_annulee": "This request is already cancelled",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "cette_formation_n_est_pas_ouverte_aux_inscriptions": "This course is not open for enrollment",
+  "aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi": "No payment linked to this request: please confirm impossibility",
+  "formation_complete_toutes_les_places_sont_reservees_contacte": "Course full: all seats are reserved. Please contact academic services.",
+  "formation_close_le_contenu_en_est_fige_rouvrez_la_avant_de_l": "Course closed: its content is frozen, reopen it before editing",
+  "confirmee_inscription_s_deja_confirmee_s_et_payee_s_le_titre": "{confirmee} application(s) already confirmed and paid: the course title and price are frozen.",
+  "des_demandes_sont_deja_deposees_sur_cette_formation_annulez_": "Applications are already submitted for this course: cancel them before deleting",
+  "aucun_etudiant_ne_porte_le_matricule_dto_matricule_laissez_l": "No student has registration number {matricule}. Leave this field empty to register an external participant.",
+  "une_formation_publiee_ou_complete_ne_s_efface_pas_cloturez_l": "A published or fully booked course cannot be deleted. Close it instead.",
+  "la_formation_est_close_cette_place_ne_peut_plus_etre_confirm": "The course is closed: this place can no longer be confirmed.",
+  "inscription_numero_n_est_pas_confirmee_libelle_statut_inscri": "Registration {numero} is not confirmed (status: {statut}).",
+  "capacite_inferieure_aux_inscriptions_confirmees": "Capacity cannot be lower than the number of confirmed registrations.",
+  "annulation_inscription_confirmee_exige_remboursement": "A confirmed registration cannot be cancelled without an explicit refund."
+}

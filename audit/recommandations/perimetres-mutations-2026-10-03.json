@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-03",
+  "portee": "Corrections issues de la revue MiniMax des écritures de planification, de pointage et des mutations liées aux années académiques.",
+  "corrections": {
+    "creneaux": "Création, lecture directe, modification et suppression réutilisent le périmètre d’affectation du chef de département ; un changement d’affectation cible est contrôlé dans le même périmètre.",
+    "seances": "Création et synchronisation valident l’affectation cible ; modification et annulation relisent la séance dans le périmètre ; la génération filtre les créneaux du département.",
+    "pointages": "Un chef ne peut pas créer un pointage pour une séance dont l’enseignant appartient à un autre département.",
+    "bilanMesrs": "La ligne de l’année est verrouillée et vérifiée dans la transaction avant la création d’un snapshot.",
+    "attestations": "Une attestation liée à une promotion hérite de son année si aucune année n’est donnée ; une année explicitement différente est refusée et l’année effective est vérifiée comme ouverte.",
+    "suppressionAnnee": "La vérification de dépendances inclut les paiements ; la suppression vide et son snapshot avant/après sont atomiques et journalisés.",
+    "tirage": "La création, l’impression, les transitions et l’annulation verrouillent l’année de l’examen dans la même transaction que l’écriture et son audit.",
+    "deliberation": "Le verrou transactionnel de l’année précède maintenant l’insertion de la délibération.",
+    "reservations": "Création, modification et décision vérifient chevauchement, propriétaire et statut dans la même transaction Serializable que la mutation et l’audit ; les collisions de sérialisation deviennent une réponse 409 lisible.",
+    "courrierConcurrent": "La signature d’étape utilise un compare-and-set EN_CIRCUIT ; modification et clôture relisent le courrier dans leur transaction et conditionnent la transition au statut observé.",
+    "periodeAnnee": "Les dates d’une année académique doivent respecter dateDebut < dateFin à la création et à la modification.",
+    "vodAnnee": "Une ressource VOD liée à la fois à une séance et à une inscription vérifie dans la transaction que les deux appartiennent à la même année.",
+    "paiementDemandeDocument": "Le paiement d’une demande documentaire reprend inscriptionId et anneeId lorsque la demande est liée à une inscription.",
+    "reclamationsConcurrence": "Messages, transitions, affectations, clôtures et escalades relisent l’état dans une transaction Serializable ; les transitions utilisent un compare-and-set, les conflits deviennent 409, et le cron ne journalise que les lignes effectivement escaladées.",
+    "paiementDemandeDocumentConcurrence": "L’initiation relit le propriétaire, le statut et le paiement lié dans la transaction ; un compare-and-set empêche deux paiements concurrents d’être rattachés à la même demande.",
+    "transitionsPaie": "Validation, paiement et suppression de feuilles de paie relisent l’état dans la transaction et conditionnent la mutation au statut attendu.",
+    "badgeRallongeConcurrence": "Le rallongement compare le statut observé avant de réactiver le badge ; une révocation concurrente ne peut pas être annulée par une ancienne requête.",
+    "changementMotDePasse": "Le changement de mot de passe compare l’ancien hash dans une mutation conditionnelle et partage transaction et journal ; seuls la révocation des sessions et l’action sont journalisés, jamais le secret.",
+    "creationFicheEtudiant": "La création de fiche et son instantané d’audit minimisé sont validés dans la même transaction.",
+    "codePIN": "Définition, réinitialisation et suppression du code personnel sont journalisées dans leur transaction ; le code et son hash ne sont pas copiés au journal.",
+    "rechercheBibliothequePublique": "La recherche plein texte publique est plafonnée à 30 requêtes par minute et son budget est testé via les métadonnées du contrôleur."
+  },
+  "validation": {
+    "testsCibles": "Les suites creneaux, séances, pointage, référentiel années, rectorat, attestations, tirage et délibération ont passé leurs tests ciblés ; les fiches étudiantes ont également des tests dédiés d’audit atomique.",
+    "suiteComplete": "795 tests réussis dans 100 suites.",
+    "buildBackend": "Réussi."
+  },
+  "limites": [
+    "La revue des rattachements indirects élections, VOD, demandes documentaires et paie reste décrite dans matrice-mutations-annee-2026-10-03.json ; il n’existe pas de garde Prisma global qui puisse inférer uniformément l’année de chaque écriture.",
+    "La politique de correction historique et de réouverture attend toujours la décision produit sur les rôles, motifs et traces requis.",
+    "Le périmètre multi-établissement n’existe pas encore ; son modèle dépend du choix de produit mono ou multi-établissement."
+  ]
+}

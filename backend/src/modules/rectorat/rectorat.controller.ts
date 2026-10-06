@@ -17,10 +17,11 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { RectoratService } from './rectorat.service';
 import { GenererBilanDto, RectoratQueryDto } from './rectorat.dto';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 
 /** Direction + administration : le Rectorat est un public resserré. */
 const ROLES_RECTORAT = [Role.ADMIN, Role.DIRECTION];
@@ -59,15 +60,14 @@ export class RectoratController {
    * Bilan MESRS en A4, ouvert dans un nouvel onglet. Public + jeton en query
    * string : la fenêtre d'impression n'envoie pas l'en-tête Authorization.
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION)
   @Get('bilan-mesrs/:id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.imprimerBilan(id, token, base));
+    res.type('html').send(await this.service.imprimerBilan(id, jetonImprimable(req), base));
   }
 }

@@ -1,21 +1,21 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="page-titre">Structure académique</div>
+    <h1 class="page-titre">{{ $t('structure.title') }}</h1>
     <div class="page-sous-titre q-mb-md">
-      Années, départements, filières et promotions — socle de l’emploi du temps
+      {{ $t('structure.subtitle') }}
     </div>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="annees" icon="event" label="Années académiques" no-caps />
-      <q-tab name="departements" icon="apartment" label="Départements" no-caps />
-      <q-tab name="filieres" icon="account_tree" label="Filières" no-caps />
-      <q-tab name="promotions" icon="groups" label="Promotions" no-caps />
+      <q-tab name="annees" icon="event" :label="$t('structure.tabs.annees')" no-caps />
+      <q-tab name="departements" icon="apartment" :label="$t('structure.tabs.departements')" no-caps />
+      <q-tab name="filieres" icon="account_tree" :label="$t('structure.tabs.filieres')" no-caps />
+      <q-tab name="promotions" icon="groups" :label="$t('structure.tabs.promotions')" no-caps />
     </q-tabs>
 
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
       <!-- ------------------------------------------------------- Années -->
       <q-tab-panel name="annees" class="q-pa-none">
-        <filter-bar v-model="filtres.annees" placeholder="Rechercher une année…">
+        <filter-bar v-model="filtres.annees" :placeholder="$t('structure.search.annees')">
           <template #actions>
             <q-btn
               v-if="peutGerer"
@@ -23,7 +23,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouvelle année"
+              :label="$t('structure.actions.newAnnee')"
               @click="ouvrirAnnee(null)"
             />
           </template>
@@ -44,7 +44,7 @@
             <div class="etat-vide">
               <q-icon name="event" size="34px" />
               <div class="pochoir">
-                {{ messageVide('annees', 'Aucune année académique enregistrée.') }}
+                {{ messageVide('annees', t('structure.emptyState.annees')) }}
               </div>
               <q-btn
                 v-if="peutGerer"
@@ -52,15 +52,17 @@
                 color="primary"
                 no-caps
                 icon="add"
-                label="Créer une année"
+                :label="$t('structure.actions.createAnnee')"
                 @click="ouvrirAnnee(null)"
               />
             </div>
           </template>
           <template #body-cell-active="p">
             <q-td :props="p">
-              <q-chip v-if="p.row.active" dense color="positive" text-color="white">en cours</q-chip>
-              <span v-else class="text-grey-6">—</span>
+              <q-chip v-if="p.row.active" dense color="positive" text-color="white">{{
+                $t('structure.table.active')
+              }}</q-chip>
+              <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
             </q-td>
           </template>
           <template #body-cell-actions="p">
@@ -70,10 +72,10 @@
                 dense
                 round
                 icon="groups"
-                aria-label="Voir les promotions de cette année"
+                :aria-label="$t('structure.ariaLabels.seePromotionsOfAnnee')"
                 @click="voirPromotionsDeLAnnee(p.row)"
               >
-                <q-tooltip>Ses promotions</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.seesPromotions') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutGerer"
@@ -81,10 +83,10 @@
                 dense
                 round
                 icon="edit"
-                aria-label="Modifier l’année académique"
+                :aria-label="$t('structure.ariaLabels.editAnnee')"
                 @click="ouvrirAnnee(p.row)"
               >
-                <q-tooltip>Modifier</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -93,10 +95,10 @@
                 round
                 color="negative"
                 icon="delete"
-                aria-label="Supprimer l’année académique"
+                :aria-label="$t('structure.ariaLabels.deleteAnnee')"
                 @click="supprimer('annees', p.row.libelle, p.row.id)"
               >
-                <q-tooltip>Supprimer</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -105,7 +107,7 @@
 
       <!-- -------------------------------------------------- Départements -->
       <q-tab-panel name="departements" class="q-pa-none">
-        <filter-bar v-model="filtres.departements" placeholder="Rechercher un département…">
+        <filter-bar v-model="filtres.departements" :placeholder="$t('structure.search.departements')">
           <template #actions>
             <q-btn
               v-if="peutGerer"
@@ -113,7 +115,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouveau département"
+              :label="$t('structure.actions.newDepartement')"
               @click="ouvrirDepartement(null)"
             />
           </template>
@@ -134,7 +136,7 @@
             <div class="etat-vide">
               <q-icon name="apartment" size="34px" />
               <div class="pochoir">
-                {{ messageVide('departements', 'Aucun département enregistré.') }}
+                {{ messageVide('departements', t('structure.emptyState.departements')) }}
               </div>
               <q-btn
                 v-if="peutGerer"
@@ -142,7 +144,7 @@
                 color="primary"
                 no-caps
                 icon="add"
-                label="Créer un département"
+                :label="$t('structure.actions.createDepartement')"
                 @click="ouvrirDepartement(null)"
               />
             </div>
@@ -155,10 +157,12 @@
                 no-caps
                 :label="String(p.row._count?.filieres ?? 0)"
                 :disable="!(p.row._count?.filieres ?? 0)"
-                aria-label="Voir les filières du département"
+                :aria-label="$t('structure.ariaLabels.seeFilieresOfDepartement')"
                 @click="voirFilieresDuDepartement(p.row)"
               >
-                <q-tooltip v-if="p.row._count?.filieres">Voir ses filières</q-tooltip>
+                <q-tooltip v-if="p.row._count?.filieres">{{
+                  $t('structure.tooltips.seeFilieres')
+                }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -170,10 +174,10 @@
                 dense
                 round
                 icon="edit"
-                aria-label="Modifier le département"
+                :aria-label="$t('structure.ariaLabels.editDepartement')"
                 @click="ouvrirDepartement(p.row)"
               >
-                <q-tooltip>Modifier</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -182,10 +186,10 @@
                 round
                 color="negative"
                 icon="delete"
-                aria-label="Supprimer le département"
+                :aria-label="$t('structure.ariaLabels.deleteDepartement')"
                 @click="supprimer('departements', p.row.nom, p.row.id)"
               >
-                <q-tooltip>Supprimer</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -197,7 +201,7 @@
         <filter-bar
           v-model="filtres.filieres"
           :chips="chipsFilieres"
-          placeholder="Rechercher une filière…"
+          :placeholder="$t('structure.search.filieres')"
           @reinitialiser="filtres.filieres = {}"
         >
           <template #avances>
@@ -209,7 +213,7 @@
               clearable
               emit-value
               map-options
-              label="Département"
+              :label="$t('structure.filters.departement')"
             />
           </template>
           <template #actions>
@@ -219,7 +223,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouvelle filière"
+              :label="$t('structure.actions.newFiliere')"
               @click="ouvrirFiliere(null)"
             />
           </template>
@@ -240,7 +244,7 @@
             <div class="etat-vide">
               <q-icon name="account_tree" size="34px" />
               <div class="pochoir">
-                {{ messageVide('filieres', 'Aucune filière enregistrée.') }}
+                {{ messageVide('filieres', t('structure.emptyState.filieres')) }}
               </div>
               <q-btn
                 v-if="peutGerer"
@@ -248,7 +252,7 @@
                 color="primary"
                 no-caps
                 icon="add"
-                label="Créer une filière"
+                :label="$t('structure.actions.createFiliere')"
                 @click="ouvrirFiliere(null)"
               />
             </div>
@@ -260,10 +264,10 @@
                 dense
                 round
                 icon="groups"
-                aria-label="Voir les promotions de la filière"
+                :aria-label="$t('structure.ariaLabels.seePromotionsOfFiliere')"
                 @click="voirPromotionsDeLaFiliere(p.row)"
               >
-                <q-tooltip>Ses promotions</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.seesPromotions') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutGerer"
@@ -271,10 +275,10 @@
                 dense
                 round
                 icon="edit"
-                aria-label="Modifier la filière"
+                :aria-label="$t('structure.ariaLabels.editFiliere')"
                 @click="ouvrirFiliere(p.row)"
               >
-                <q-tooltip>Modifier</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -283,10 +287,10 @@
                 round
                 color="negative"
                 icon="delete"
-                aria-label="Supprimer la filière"
+                :aria-label="$t('structure.ariaLabels.deleteFiliere')"
                 @click="supprimer('filieres', p.row.nom, p.row.id)"
               >
-                <q-tooltip>Supprimer</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -298,7 +302,7 @@
         <filter-bar
           v-model="filtres.promotions"
           :chips="chipsPromotions"
-          placeholder="Rechercher une promotion…"
+          :placeholder="$t('structure.search.promotions')"
           @reinitialiser="filtres.promotions = {}"
         >
           <template #avances>
@@ -310,7 +314,7 @@
               clearable
               emit-value
               map-options
-              label="Filière"
+              :label="$t('structure.filters.filiere')"
             />
             <q-select
               v-model="filtres.promotions.anneeId"
@@ -320,7 +324,7 @@
               clearable
               emit-value
               map-options
-              label="Année académique"
+              :label="$t('structure.filters.annee')"
             />
             <q-select
               v-model="filtres.promotions.niveau"
@@ -328,7 +332,7 @@
               outlined
               dense
               clearable
-              label="Niveau"
+              :label="$t('structure.filters.niveau')"
             />
           </template>
           <template #actions>
@@ -338,7 +342,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouvelle promotion"
+              :label="$t('structure.actions.newPromotion')"
               @click="ouvrirPromotion(null)"
             />
           </template>
@@ -359,7 +363,7 @@
             <div class="etat-vide">
               <q-icon name="groups" size="34px" />
               <div class="pochoir">
-                {{ messageVide('promotions', 'Aucune promotion enregistrée.') }}
+                {{ messageVide('promotions', t('structure.emptyState.promotions')) }}
               </div>
               <q-btn
                 v-if="peutGerer"
@@ -367,7 +371,7 @@
                 color="primary"
                 no-caps
                 icon="add"
-                label="Créer une promotion"
+                :label="$t('structure.actions.createPromotion')"
                 @click="ouvrirPromotion(null)"
               />
             </div>
@@ -379,10 +383,10 @@
                 dense
                 round
                 icon="assignment_ind"
-                aria-label="Voir les charges d’enseignement de la promotion"
+                :aria-label="$t('structure.ariaLabels.seeChargesOfPromotion')"
                 @click="voirChargesDeLaPromotion(p.row)"
               >
-                <q-tooltip>Ses charges d’enseignement</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.seesCharges') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutGerer"
@@ -390,10 +394,10 @@
                 dense
                 round
                 icon="edit"
-                aria-label="Modifier la promotion"
+                :aria-label="$t('structure.ariaLabels.editPromotion')"
                 @click="ouvrirPromotion(p.row)"
               >
-                <q-tooltip>Modifier</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -402,10 +406,10 @@
                 round
                 color="negative"
                 icon="delete"
-                aria-label="Supprimer la promotion"
+                :aria-label="$t('structure.ariaLabels.deletePromotion')"
                 @click="supprimer('promotions', p.row.nom, p.row.id)"
               >
-                <q-tooltip>Supprimer</q-tooltip>
+                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -417,38 +421,42 @@
     <q-dialog v-model="dialogAnnee">
       <q-card style="width: 420px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ anneeEditee ? 'Modifier l’année académique' : 'Nouvelle année académique' }}
+          {{
+            anneeEditee
+              ? $t('structure.dialogs.annee.editTitle')
+              : $t('structure.dialogs.annee.newTitle')
+          }}
         </q-card-section>
         <q-card-section>
           <q-input
             v-model="formAnnee.libelle"
             outlined
             dense
-            label="Libellé *"
-            hint="ex. 2025-2026"
+            :label="$t('structure.dialogs.annee.libelle')"
+            :hint="$t('structure.dialogs.annee.libelleHint')"
             :error="erreurs.anneeLibelle"
-            error-message="Le libellé est obligatoire"
+            :error-message="$t('structure.dialogs.annee.libelleError')"
           />
           <div class="row q-col-gutter-md">
             <div class="col-6">
-              <champ-date v-model="formAnnee.dateDebut" label="Début" />
+              <champ-date v-model="formAnnee.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
             </div>
             <div class="col-6">
-              <champ-date v-model="formAnnee.dateFin" label="Fin" />
+              <champ-date v-model="formAnnee.dateFin" :label="$t('structure.dialogs.annee.fin')" />
             </div>
           </div>
-          <q-toggle v-model="formAnnee.active" label="Année en cours" />
+          <q-toggle v-model="formAnnee.active" :label="$t('structure.dialogs.annee.active')" />
           <div class="text-caption text-grey-7">
-            L’année en cours est celle proposée par défaut dans les charges et les promotions.
+            {{ $t('structure.dialogs.annee.activeHint') }}
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('structure.dialogs.actions.save')"
             :loading="enregistrement"
             @click="enregistrerAnnee"
           />
@@ -460,35 +468,44 @@
     <q-dialog v-model="dialogDepartement">
       <q-card style="width: 420px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ departementEdite ? 'Modifier le département' : 'Nouveau département' }}
+          {{
+            departementEdite
+              ? $t('structure.dialogs.departement.editTitle')
+              : $t('structure.dialogs.departement.newTitle')
+          }}
         </q-card-section>
         <q-card-section>
           <q-input
             v-model="formDepartement.code"
             outlined
             dense
-            label="Code *"
-            hint="ex. INFO"
+            :label="$t('structure.dialogs.departement.code')"
+            :hint="$t('structure.dialogs.departement.codeHint')"
             :error="erreurs.departementCode"
-            error-message="Le code est obligatoire"
+            :error-message="$t('structure.dialogs.departement.codeError')"
           />
           <q-input
             v-model="formDepartement.nom"
             outlined
             dense
-            label="Nom *"
+            :label="$t('structure.dialogs.departement.nom')"
             :error="erreurs.departementNom"
-            error-message="Le nom est obligatoire"
+            :error-message="$t('structure.dialogs.departement.nomError')"
           />
-          <q-input v-model="formDepartement.faculte" outlined dense label="Faculté / UFR" />
+          <q-input
+            v-model="formDepartement.faculte"
+            outlined
+            dense
+            :label="$t('structure.dialogs.departement.faculte')"
+          />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('structure.dialogs.actions.save')"
             :loading="enregistrement"
             @click="enregistrerDepartement"
           />
@@ -500,24 +517,28 @@
     <q-dialog v-model="dialogFiliere">
       <q-card style="width: 420px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ filiereEditee ? 'Modifier la filière' : 'Nouvelle filière' }}
+          {{
+            filiereEditee
+              ? $t('structure.dialogs.filiere.editTitle')
+              : $t('structure.dialogs.filiere.newTitle')
+          }}
         </q-card-section>
         <q-card-section>
           <q-input
             v-model="formFiliere.code"
             outlined
             dense
-            label="Code *"
+            :label="$t('structure.dialogs.filiere.code')"
             :error="erreurs.filiereCode"
-            error-message="Le code est obligatoire"
+            :error-message="$t('structure.dialogs.filiere.codeError')"
           />
           <q-input
             v-model="formFiliere.nom"
             outlined
             dense
-            label="Nom *"
+            :label="$t('structure.dialogs.filiere.nom')"
             :error="erreurs.filiereNom"
-            error-message="Le nom est obligatoire"
+            :error-message="$t('structure.dialogs.filiere.nomError')"
           />
           <q-select
             v-model="formFiliere.departementId"
@@ -526,18 +547,18 @@
             dense
             emit-value
             map-options
-            label="Département *"
+            :label="$t('structure.dialogs.filiere.departement')"
             :error="erreurs.filiereDepartement"
-            error-message="Rattachez la filière à un département"
+            :error-message="$t('structure.dialogs.filiere.departementError')"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('structure.dialogs.actions.save')"
             :loading="enregistrement"
             @click="enregistrerFiliere"
           />
@@ -549,17 +570,21 @@
     <q-dialog v-model="dialogPromotion">
       <q-card style="width: 440px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ promotionEditee ? 'Modifier la promotion' : 'Nouvelle promotion' }}
+          {{
+            promotionEditee
+              ? $t('structure.dialogs.promotion.editTitle')
+              : $t('structure.dialogs.promotion.newTitle')
+          }}
         </q-card-section>
         <q-card-section>
           <q-input
             v-model="formPromotion.nom"
             outlined
             dense
-            label="Nom *"
-            hint="ex. L1 Génie Logiciel"
+            :label="$t('structure.dialogs.promotion.nom')"
+            :hint="$t('structure.dialogs.promotion.nomHint')"
             :error="erreurs.promotionNom"
-            error-message="Le nom est obligatoire"
+            :error-message="$t('structure.dialogs.promotion.nomError')"
           />
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-6">
@@ -568,7 +593,7 @@
                 :options="NIVEAUX"
                 outlined
                 dense
-                label="Niveau *"
+                :label="$t('structure.dialogs.promotion.niveau')"
               />
             </div>
             <div class="col-6">
@@ -578,7 +603,7 @@
                 min="0"
                 outlined
                 dense
-                label="Effectif"
+                :label="$t('structure.dialogs.promotion.effectif')"
               />
             </div>
           </div>
@@ -589,9 +614,9 @@
             dense
             emit-value
             map-options
-            label="Filière *"
+            :label="$t('structure.dialogs.promotion.filiere')"
             :error="erreurs.promotionFiliere"
-            error-message="Rattachez la promotion à une filière"
+            :error-message="$t('structure.dialogs.promotion.filiereError')"
           />
           <q-select
             v-model="formPromotion.anneeId"
@@ -600,18 +625,18 @@
             dense
             emit-value
             map-options
-            label="Année académique *"
+            :label="$t('structure.dialogs.promotion.annee')"
             :error="erreurs.promotionAnnee"
-            error-message="Choisissez l’année académique"
+            :error-message="$t('structure.dialogs.promotion.anneeError')"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('structure.dialogs.actions.save')"
             :loading="enregistrement"
             @click="enregistrerPromotion"
           />
@@ -624,6 +649,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
@@ -640,6 +666,7 @@ interface PromotionListee extends Promotion {
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const onglet = ref('annees');
 const chargement = ref(false);
@@ -713,11 +740,20 @@ const chipsFilieres = computed(() => {
   const cs: ChipFiltre[] = [];
   const f = filtres.value.filieres;
   if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('structure.chips.search', { value: f.recherche }),
+      value: f.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (f.departementId) {
     const d = departements.value.find((x) => x.id === f.departementId);
-    cs.push({ label: `Département : ${d?.nom ?? '?'}`, value: f.departementId, icone: 'apartment' });
+    cs.push({
+      label: t('structure.chips.departement', { value: d?.nom ?? '?' }),
+      value: f.departementId,
+      icone: 'apartment',
+    });
   }
   return cs;
 });
@@ -726,18 +762,31 @@ const chipsPromotions = computed(() => {
   const cs: ChipFiltre[] = [];
   const f = filtres.value.promotions;
   if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('structure.chips.search', { value: f.recherche }),
+      value: f.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (f.filiereId) {
     const x = filieres.value.find((y) => y.id === f.filiereId);
-    cs.push({ label: `Filière : ${x?.nom ?? '?'}`, value: f.filiereId, icone: 'account_tree' });
+    cs.push({
+      label: t('structure.chips.filiere', { value: x?.nom ?? '?' }),
+      value: f.filiereId,
+      icone: 'account_tree',
+    });
   }
   if (f.anneeId) {
     const x = annees.value.find((y) => y.id === f.anneeId);
-    cs.push({ label: `Année : ${x?.libelle ?? '?'}`, value: f.anneeId, icone: 'event' });
+    cs.push({
+      label: t('structure.chips.annee', { value: x?.libelle ?? '?' }),
+      value: f.anneeId,
+      icone: 'event',
+    });
   }
   if (f.niveau) {
-    cs.push({ label: `Niveau : ${f.niveau}`, value: f.niveau, icone: 'school' });
+    cs.push({ label: t('structure.chips.niveau', { value: f.niveau }), value: f.niveau, icone: 'school' });
   }
   return cs;
 });
@@ -745,78 +794,83 @@ const chipsPromotions = computed(() => {
 function messageVide(cle: string, parDefaut: string) {
   const f = filtres.value[cle] ?? {};
   const actif = Object.values(f).some((v) => v !== undefined && v !== null && v !== '');
-  return actif ? 'Aucun résultat pour ces critères.' : parDefaut;
+  return actif ? t('structure.emptyState.noResults') : parDefaut;
 }
 
-const colonnesAnnees: QTableColumn[] = [
-  { name: 'libelle', label: 'Année', field: 'libelle', align: 'left', sortable: true },
+const colonnesAnnees = computed<QTableColumn[]>(() => [
+  { name: 'libelle', label: t('structure.table.columns.annee'), field: 'libelle', align: 'left', sortable: true },
   {
     name: 'debut',
-    label: 'Début',
+    label: t('structure.table.columns.debut'),
     field: (r: AnneeAcademique) => dateLisible(r.dateDebut),
     align: 'left',
   },
   {
     name: 'fin',
-    label: 'Fin',
+    label: t('structure.table.columns.fin'),
     field: (r: AnneeAcademique) => dateLisible(r.dateFin),
     align: 'left',
   },
-  { name: 'active', label: 'Statut', field: 'active', align: 'left' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'active', label: t('structure.table.columns.statut'), field: 'active', align: 'left' },
+  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
-const colonnesDepartements: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: 'Nom', field: 'nom', align: 'left', sortable: true },
-  { name: 'faculte', label: 'Faculté', field: (r: Departement) => r.faculte || '—', align: 'left' },
+const colonnesDepartements = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('structure.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('structure.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  {
+    name: 'faculte',
+    label: t('structure.table.columns.faculte'),
+    field: (r: Departement) => r.faculte || '—',
+    align: 'left',
+  },
   {
     name: 'enseignants',
-    label: 'Enseignants',
+    label: t('structure.table.columns.enseignants'),
     field: (r: Departement) => r._count?.enseignants ?? 0,
     align: 'right',
     sortable: true,
   },
   {
     name: 'filieres',
-    label: 'Filières',
+    label: t('structure.table.columns.filieres'),
     field: (r: Departement) => r._count?.filieres ?? 0,
     align: 'right',
     sortable: true,
   },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
-const colonnesFilieres: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: 'Nom', field: 'nom', align: 'left', sortable: true },
+const colonnesFilieres = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('structure.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('structure.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: 'Département',
+    label: t('structure.table.columns.departement'),
     field: (r: Filiere) => r.departement?.nom ?? '—',
     align: 'left',
   },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
-const colonnesPromotions: QTableColumn[] = [
-  { name: 'nom', label: 'Promotion', field: 'nom', align: 'left', sortable: true },
-  { name: 'niveau', label: 'Niveau', field: 'niveau', align: 'left', sortable: true },
+const colonnesPromotions = computed<QTableColumn[]>(() => [
+  { name: 'nom', label: t('structure.table.columns.promotion'), field: 'nom', align: 'left', sortable: true },
+  { name: 'niveau', label: t('structure.table.columns.niveau'), field: 'niveau', align: 'left', sortable: true },
   {
     name: 'filiere',
-    label: 'Filière',
+    label: t('structure.table.columns.filiere'),
     field: (r: PromotionListee) => r.filiere?.nom ?? '—',
     align: 'left',
   },
   {
     name: 'annee',
-    label: 'Année',
+    label: t('structure.table.columns.annee'),
     field: (r: PromotionListee) => r.annee?.libelle ?? '—',
     align: 'left',
   },
-  { name: 'effectif', label: 'Effectif', field: 'effectif', align: 'right', sortable: true },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'effectif', label: t('structure.table.columns.effectif'), field: 'effectif', align: 'right', sortable: true },
+  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 // ------------------------------------------------------------ liaisons
 
@@ -912,7 +966,7 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement impossible',
+      message: e?.response?.data?.message ?? t('structure.messages.saveError'),
     });
     return false;
   } finally {
@@ -921,14 +975,14 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
 }
 
 function champsIncomplets() {
-  $q.notify({ type: 'warning', message: 'Complétez les champs obligatoires' });
+  $q.notify({ type: 'warning', message: t('structure.messages.incompleteFields') });
 }
 
 async function enregistrerAnnee() {
   erreurs.value.anneeLibelle = !formAnnee.value.libelle.trim();
   if (erreurs.value.anneeLibelle) return champsIncomplets();
   const url = anneeEditee.value ? `/annees/${anneeEditee.value.id}` : '/annees';
-  if (await envoyer(url, !!anneeEditee.value, formAnnee.value, 'Année académique enregistrée')) {
+  if (await envoyer(url, !!anneeEditee.value, formAnnee.value, t('structure.messages.anneeSaved'))) {
     dialogAnnee.value = false;
   }
 }
@@ -941,7 +995,7 @@ async function enregistrerDepartement() {
   const url = departementEdite.value
     ? `/departements/${departementEdite.value.id}`
     : '/departements';
-  if (await envoyer(url, !!departementEdite.value, payload, 'Département enregistré')) {
+  if (await envoyer(url, !!departementEdite.value, payload, t('structure.messages.departementSaved'))) {
     dialogDepartement.value = false;
   }
 }
@@ -958,7 +1012,7 @@ async function enregistrerFiliere() {
     return champsIncomplets();
   }
   const url = filiereEditee.value ? `/filieres/${filiereEditee.value.id}` : '/filieres';
-  if (await envoyer(url, !!filiereEditee.value, formFiliere.value, 'Filière enregistrée')) {
+  if (await envoyer(url, !!filiereEditee.value, formFiliere.value, t('structure.messages.filiereSaved'))) {
     dialogFiliere.value = false;
   }
 }
@@ -975,28 +1029,26 @@ async function enregistrerPromotion() {
     return champsIncomplets();
   }
   const url = promotionEditee.value ? `/promotions/${promotionEditee.value.id}` : '/promotions';
-  if (await envoyer(url, !!promotionEditee.value, formPromotion.value, 'Promotion enregistrée')) {
+  if (await envoyer(url, !!promotionEditee.value, formPromotion.value, t('structure.messages.promotionSaved'))) {
     dialogPromotion.value = false;
   }
 }
 
 function supprimer(ressource: string, libelle: string, id: string) {
   $q.dialog({
-    title: 'Supprimer',
-    message: `Supprimer « ${libelle} » ? Les données rattachées seront également supprimées.`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('structure.deleteDialog.title'),
+    message: t('structure.deleteDialog.message', { label: libelle }),
+    cancel: { label: t('structure.deleteDialog.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('structure.deleteDialog.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/${ressource}/${id}`);
-      $q.notify({ type: 'positive', message: `« ${libelle} » supprimé` });
+      $q.notify({ type: 'positive', message: t('structure.messages.deleted', { label: libelle }) });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message:
-          e?.response?.data?.message ??
-          'Suppression impossible — des données rattachées l’empêchent',
+        message: e?.response?.data?.message ?? t('structure.messages.deleteError'),
       });
     }
   });
@@ -1018,7 +1070,7 @@ async function charger() {
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement de la structure impossible',
+      message: e?.response?.data?.message ?? t('structure.messages.loadError'),
     });
   } finally {
     chargement.value = false;

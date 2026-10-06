@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-03",
+  "portee": "Audit des écritures financières du portefeuille resto : création de recharge, confirmation, validation d’un repas et remboursement par annulation.",
+  "mesures": [
+    "Le journal d’audit est créé dans la transaction qui modifie le paiement, la recharge, la consommation ou le solde ; un échec de journalisation annule l’écriture financière.",
+    "Les détails conservent les montants, statuts et soldes avant/après, ainsi que les noms des champs modifiés.",
+    "Les identifiants, noms, matricules, téléphones et motifs libres des étudiants ne sont pas copiés dans les détails.",
+    "Les transitions concurrentes de confirmation et d’annulation conservent leur garde conditionnelle avant l’effet sur le portefeuille."
+  ],
+  "verification": {
+    "commande": "npm test -- --runInBand src/modules/resto/resto.concurrency.spec.ts",
+    "resultat": "7 tests réussis dans 1 suite.",
+    "buildBackend": "Réussi."
+  },
+  "limites": [
+    "Cette preuve couvre les écritures financières du resto, pas l’audit complet des opérations de tous les modules.",
+    "Les cartes étudiantes et badges d’accès sont désormais couverts par une preuve dédiée ([audit cartes et badges](audit-cartes-badges.json))."
+  ]
+}

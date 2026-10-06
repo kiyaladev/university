@@ -39,7 +39,7 @@ const classe = computed(
   gap: 5px;
   padding: 5px 9px;
   min-height: 28px;
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
 }
 
 .champ-statut--dense {

@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-06T15:19:49.348Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "action": "TICKET_OUVERT",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TICKET_OUVERT",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "ELECTION_CREEE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Ticket helpdesk et élection réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile"
+}

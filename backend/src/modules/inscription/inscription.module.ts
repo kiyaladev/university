@@ -7,6 +7,7 @@
  * (mode pilote : rien n'atteint l'opérateur sans MOBILE_MONEY_URL), puis la
  * scolarité valide. La base des étudiants alimente tous les autres modules.
  */
+import { AuthModule } from '../auth/auth.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
@@ -19,15 +20,13 @@ import {
 } from './inscription.controller';
 import { EtudiantsService } from './etudiants.service';
 import { FraisService, InscriptionService } from './inscription.service';
-import { MobileMoneyService } from './mobile-money.service';
+import { MobileMoneyModule } from './mobile-money.module';
 
 @Module({
   imports: [
+    AuthModule,
     ParametresModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
+    MobileMoneyModule,
   ],
   controllers: [
     InscriptionPubliqueController,
@@ -36,7 +35,7 @@ import { MobileMoneyService } from './mobile-money.service';
     PaiementsController,
     InscriptionsController,
   ],
-  providers: [InscriptionService, EtudiantsService, FraisService, MobileMoneyService],
+  providers: [InscriptionService, EtudiantsService, FraisService],
   exports: [],
 })
 export class InscriptionModule {}

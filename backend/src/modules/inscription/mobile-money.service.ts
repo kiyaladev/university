@@ -8,6 +8,7 @@
  * transmit en clair dans les logs : la clé d'API passe en en-tête d'autorisation.
  */
 import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { t } from '../../common/i18n';
 
 export interface DemandePaiement {
   reference: string;
@@ -32,7 +33,7 @@ export class MobileMoneyService {
     if (!url) {
       this.logger.log(
         `[SIMULATION] Paiement ${dto.reference} : ${dto.montant} ${dto.devise} via ${dto.operateur} ` +
-          `(numéro ${dto.telephone}) — MOBILE_MONEY_URL absent, confirmation au guichet ` +
+          `— MOBILE_MONEY_URL absent, confirmation au guichet ` +
           `(POST /paiements/:id/simuler)`,
       );
       return { mode: 'simulation', transactionId: null };
@@ -59,11 +60,10 @@ export class MobileMoneyService {
       });
     } catch (e: any) {
       this.logger.error(
-        `Passerelle Mobile Money injoignable pour ${dto.reference} : ${e?.message ?? e}`,
+        `Passerelle Mobile Money injoignable pour ${dto.reference}`,
       );
       throw new HttpException(
-        'La passerelle Mobile Money est injoignable : le paiement reste en attente, ' +
-          'la confirmation se fera au guichet.',
+        t('inscription.mobileMoneyUnavailable'),
         502,
       );
     }
@@ -71,17 +71,24 @@ export class MobileMoneyService {
     const corps: any = await reponse.json().catch(() => ({}));
     if (!reponse.ok) {
       this.logger.warn(
-        `Passerelle Mobile Money a refusé ${dto.reference} : ${reponse.status} ${JSON.stringify(corps).slice(0, 240)}`,
+        `Passerelle Mobile Money a refusé ${dto.reference} : HTTP ${reponse.status}`,
       );
       throw new HttpException(
-        `La demande de paiement a été refusée par l'opérateur (${corps?.message ?? `statut ${reponse.status}`}) — le paiement reste en attente.`,
+        t('inscription.mobileMoneyRejected', { status: reponse.status }),
         502,
       );
     }
 
+    const transaction = corps?.transactionId ?? corps?.reference ?? corps?.id;
+    if ((typeof transaction !== 'string' && typeof transaction !== 'number') ||
+      !String(transaction).trim() || String(transaction).length > 200 ||
+      (typeof transaction === 'number' && (!Number.isFinite(transaction) || transaction <= 0))) {
+      this.logger.warn(`Passerelle Mobile Money : référence de transaction absente pour ${dto.reference}`);
+      throw new HttpException(t('inscription.mobileMoneyInvalidResponse'), 502);
+    }
     return {
       mode: 'operateur',
-      transactionId: corps?.transactionId ?? corps?.reference ?? corps?.id ?? null,
+      transactionId: String(transaction).trim(),
     };
   }
 }

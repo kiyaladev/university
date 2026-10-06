@@ -1,13 +1,18 @@
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import BadgeDialog from '../components/BadgeDialog.vue';
 import type { BadgeAcces, TypeBadge } from '../types';
+import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_STATUT_BADGE,
   LIBELLE_TYPE_BADGE,
@@ -16,6 +21,7 @@ import {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const badges = ref<BadgeAcces[]>([]);
 const chargement = ref(false);
@@ -35,15 +41,20 @@ const CLASSE_STATUT: Record<string, string> = {
   ANNULE: 'badge--ko',
 };
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'identite', label: 'Identité', field: 'nom', align: 'left' },
-  { name: 'organisation', label: 'Organisation', field: 'organisation', align: 'left' },
-  { name: 'validite', label: 'Validité', field: 'dateValidite', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('badges.table.columns.number'), field: 'numero', align: 'left' },
+  { name: 'type', label: t('badges.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'identite', label: t('badges.table.columns.identity'), field: 'nom', align: 'left' },
+  {
+    name: 'organisation',
+    label: t('badges.table.columns.organization'),
+    field: 'organisation',
+    align: 'left',
+  },
+  { name: 'validite', label: t('badges.table.columns.validity'), field: 'dateValidite', align: 'left' },
+  { name: 'statut', label: t('badges.table.columns.status'), field: 'statut', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const dialogEdition = ref(false);
 const badgeEnEdition = ref<BadgeAcces | null>(null);
@@ -62,7 +73,7 @@ function ouvrirEdition(b?: BadgeAcces) {
 }
 
 function imprimer(b: BadgeAcces) {
-  window.open(`${API_URL}/badges/${b.id}/imprimer?token=${auth.token}`, '_blank');
+  void ouvrirImpression(`/badges/${b.id}/imprimer`);
 }
 
 function ouvrirAnnulation(b: BadgeAcces) {
@@ -77,11 +88,14 @@ async function confirmerAnnulation() {
     await api.post(`/badges/${badgeAnnulation.value.id}/annuler`, {
       motif: motifAnnulation.value.trim(),
     });
-    $q.notify({ type: 'warning', message: 'Badge annulé.' });
+    $q.notify({ type: 'warning', message: t('badges.messages.cancelled') });
     dialogAnnulation.value = false;
     await charger();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Annulation impossible.' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? t('badges.messages.cancelFailed'),
+    });
   }
 }
 
@@ -95,11 +109,14 @@ async function confirmerRallonge() {
   if (!badgeRallonge.value || !dateRallonge.value) return;
   try {
     await api.post(`/badges/${badgeRallonge.value.id}/rallonger`, { dateValidite: dateRallonge.value });
-    $q.notify({ type: 'positive', message: 'Validité prolongée.' });
+    $q.notify({ type: 'positive', message: t('badges.messages.extended') });
     dialogRallonge.value = false;
     await charger();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Prolongation impossible.' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? t('badges.messages.extendFailed'),
+    });
   }
 }
 
@@ -146,30 +163,27 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Badges & visiteurs</div>
-        <div class="page-sous-titre">
-          Visiteurs, intervenants, techniciens, personnalités — badge imprimable
-          avec QR et validité paramétrable, prolongeable ou annulable.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('badges.title')" :subtitle="$t('badges.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutEditer"
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Émettre un badge"
+          :label="$t('badges.actions.issueBadge')"
           @click="ouvrirEdition()"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="documents" />
 
     <filter-bar
       v-model="filtres"
-      placeholder="Nom, organisation, numéro…"
+      :placeholder="$t('badges.filters.searchPlaceholder')"
       @update:model-value="recharger"
     >
       <template #actions>
@@ -186,7 +200,7 @@ onMounted(charger);
           :options="OPTIONS_TYPE"
           emit-value
           map-options
-          label="Type"
+          :label="$t('badges.filters.type')"
           outlined
           dense
           clearable
@@ -197,7 +211,7 @@ onMounted(charger);
           :options="OPTIONS_STATUT"
           emit-value
           map-options
-          label="Statut"
+          :label="$t('badges.filters.status')"
           outlined
           dense
           clearable
@@ -225,12 +239,11 @@ onMounted(charger);
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || badges.length > 0"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un
-          intervenant attendu.
+          {{ $t('badges.emptyState.message') }}
         </div>
       </template>
       <template #body-cell-type="p">
@@ -262,8 +275,8 @@ onMounted(charger);
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat round dense icon="print" aria-label="Imprimer le badge" @click="imprimer(p.row)">
-            <q-tooltip>Imprimer</q-tooltip>
+          <q-btn flat round dense icon="print" :aria-label="$t('badges.aria.printBadge')" @click="imprimer(p.row)">
+            <q-tooltip>{{ $t('badges.tooltips.print') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer"
@@ -271,10 +284,10 @@ onMounted(charger);
             round
             dense
             icon="edit"
-            aria-label="Modifier le badge"
+            :aria-label="$t('badges.aria.editBadge')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('badges.tooltips.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
@@ -282,10 +295,10 @@ onMounted(charger);
             round
             dense
             icon="schedule"
-            aria-label="Prolonger la validité"
+            :aria-label="$t('badges.aria.extendBadge')"
             @click="ouvrirRallonge(p.row)"
           >
-            <q-tooltip>Prolonger la validité</q-tooltip>
+            <q-tooltip>{{ $t('badges.tooltips.extend') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
@@ -294,10 +307,10 @@ onMounted(charger);
             dense
             icon="block"
             color="negative"
-            aria-label="Annuler le badge"
+            :aria-label="$t('badges.aria.cancelBadge')"
             @click="ouvrirAnnulation(p.row)"
           >
-            <q-tooltip>Annuler</q-tooltip>
+            <q-tooltip>{{ $t('badges.tooltips.cancel') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -325,22 +338,24 @@ onMounted(charger);
               {{ LIBELLE_TYPE_BADGE[b.type] ?? b.type }}
             </q-chip>
             <div class="q-mt-sm">
-              Délivré le {{ dateFr(b.dateDelivrance) }}<br>
-              Valable jusqu'au <strong>{{ dateFr(b.dateValidite) }}</strong>
+              {{ $t('badges.card.issuedOn', { date: dateFr(b.dateDelivrance) }) }}<br>
+              <i18n-t keypath="badges.card.validUntil" tag="span">
+                <template #date><strong>{{ dateFr(b.dateValidite) }}</strong></template>
+              </i18n-t>
             </div>
             <div class="q-mt-sm"><code>{{ b.numero }}</code></div>
             <div v-if="b.statut === 'ANNULE' && b.motif" class="q-mt-sm text-grey-7">
-              Motif d'annulation : {{ b.motif }}
+              {{ $t('badges.card.cancelReason', { reason: b.motif }) }}
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense icon="print" label="Imprimer" no-caps @click="imprimer(b)" />
+            <q-btn flat dense icon="print" :label="$t('badges.actions.print')" no-caps @click="imprimer(b)" />
             <q-btn
               v-if="peutEditer"
               flat
               dense
               icon="edit"
-              label="Éditer"
+              :label="$t('badges.actions.edit')"
               no-caps
               @click="ouvrirEdition(b)"
             />
@@ -349,7 +364,7 @@ onMounted(charger);
               flat
               dense
               icon="schedule"
-              label="Rallonger"
+              :label="$t('badges.actions.extend')"
               no-caps
               @click="ouvrirRallonge(b)"
             />
@@ -359,7 +374,7 @@ onMounted(charger);
               dense
               icon="block"
               color="negative"
-              label="Annuler"
+              :label="$t('badges.actions.cancel')"
               no-caps
               @click="ouvrirAnnulation(b)"
             />
@@ -369,8 +384,7 @@ onMounted(charger);
       <div v-if="!chargement && !badges.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="how_to_reg" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un
-          intervenant attendu.
+          {{ $t('badges.emptyState.message') }}
         </div>
       </div>
     </div>
@@ -381,22 +395,21 @@ onMounted(charger);
       <q-card style="min-width: 420px">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-h6">Annuler le badge</div>
+            <div class="text-h6">{{ $t('badges.dialogs.cancel.title') }}</div>
             <div v-if="badgeAnnulation" class="text-caption text-grey-7">
               {{ badgeAnnulation.prenom }} {{ badgeAnnulation.nom }} · {{ badgeAnnulation.numero }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogAnnulation = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('badges.aria.close')" @click="dialogAnnulation = false" />
         </q-card-section>
         <q-card-section>
           <q-banner class="note--alerte q-mb-md">
-            Action irréversible : un badge annulé ne peut plus être réactivé ni
-            prolongé. Émettez-en un nouveau si besoin.
+            {{ $t('badges.dialogs.cancel.warning') }}
           </q-banner>
           <q-input
             v-model="motifAnnulation"
-            label="Motif d'annulation"
-            hint="3 caractères minimum."
+            :label="$t('badges.dialogs.cancel.reasonLabel')"
+            :hint="$t('badges.dialogs.cancel.reasonHint')"
             outlined
             dense
             type="textarea"
@@ -404,12 +417,12 @@ onMounted(charger);
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" no-caps @click="dialogAnnulation = false" />
+          <q-btn flat :label="$t('badges.dialogs.cancel.cancelAction')" no-caps @click="dialogAnnulation = false" />
           <q-btn
             unelevated
             color="negative"
             no-caps
-            label="Annuler définitivement"
+            :label="$t('badges.dialogs.cancel.confirmAction')"
             :disable="motifAnnulation.trim().length < 3"
             @click="confirmerAnnulation"
           />
@@ -421,29 +434,35 @@ onMounted(charger);
       <q-card style="min-width: 420px">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-h6">Prolonger la validité</div>
+            <div class="text-h6">{{ $t('badges.dialogs.extend.title') }}</div>
             <div v-if="badgeRallonge" class="text-caption text-grey-7">
               {{ badgeRallonge.prenom }} {{ badgeRallonge.nom }} · {{ badgeRallonge.numero }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogRallonge = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('badges.aria.close')" @click="dialogRallonge = false" />
         </q-card-section>
         <q-card-section>
           <q-banner class="note--info q-mb-md">
-            Le badge repassera en statut « Actif » et conservera son numéro et
-            son QR : inutile de le réimprimer.
+            {{ $t('badges.dialogs.extend.info') }}
           </q-banner>
           <q-input
             v-model="dateRallonge"
             type="date"
-            label="Nouvelle date de validité"
+            :label="$t('badges.dialogs.extend.newValidityDateLabel')"
             outlined
             dense
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" no-caps @click="dialogRallonge = false" />
-          <q-btn unelevated color="primary" no-caps label="Prolonger" :disable="!dateRallonge" @click="confirmerRallonge" />
+          <q-btn flat :label="$t('badges.dialogs.extend.cancelAction')" no-caps @click="dialogRallonge = false" />
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            :label="$t('badges.dialogs.extend.confirmAction')"
+            :disable="!dateRallonge"
+            @click="confirmerRallonge"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -464,7 +483,7 @@ onMounted(charger);
   padding: 3px 8px;
   min-height: 24px;
 }
-.badge--ok { background: #e3f5e9; color: #17683a; }
-.badge--ko { background: #fdeaea; color: #a52020; }
-.badge--attention { background: #fff4e0; color: #8a5300; }
+.badge--ok { background: #f1fbf2; color: #027a0b; }
+.badge--ko { background: #fff1f2; color: #c10000; }
+.badge--attention { background: #fff6ef; color: #b64400; }
 </style>

@@ -1,0 +1,8 @@
+{
+  "equipement_inconnu_ou_desactive": "Équipement inconnu ou désactivé",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "ticket_introuvable": "Ticket introuvable",
+  "numero_de_ticket_temporairement_indisponible_reessayez": "Numéro de ticket temporairement indisponible, réessayez.",
+  "l_equipement_vise_est_inconnu_ou_desactive": "L'équipement visé est inconnu ou désactivé",
+  "seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_": "Seuls les tickets ouverts ou en cours changent de statut : un ticket résolu ou clôturé est clos."
+}

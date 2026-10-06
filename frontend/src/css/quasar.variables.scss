@@ -1,45 +1,119 @@
-// UniPrésence — palette « panneau peint », aux couleurs du drapeau guinéen.
-// Rouge, jaune, vert : employés légèrement, c'est-à-dire réservés aux ÉTATS
-// (présent, retard, absent et leurs variantes). Les surfaces, les actions et la
-// structure restent en encre et en chaux — sans quoi trois couleurs saturées
-// partout rendraient le panneau illisible en plein soleil.
+// UniPrésence — palette Apple.
+//
+// Relevée sur les feuilles de style d'apple.com (les variables `--sk-*` de
+// `main.built.css`) plutôt que reconstituée à l'œil.
+//
+// Le principe : l'interface est en gris et en encre ; la couleur ne sert qu'à
+// dire un état, jamais à décorer une surface. Sur une page d'Apple, la seule
+// teinte saturée est le bleu du bouton d'achat — tout le reste est blanc,
+// #f5f5f7 et #1d1d1f. C'est cette économie qu'on reprend : sobre et aéré.
 
-// Encre et fonds
-$encre:        #10251E; // vert-noir des filets, du lettrage et des actions
-$encre-douce:  #33463F;
-$chaux:        #E4E6DE; // fond du panneau, mur chaulé
-$chaux-claire: #F2F3EE; // plaques
-$blanc-craie:  #FAFAF7;
+// ------------------------------------------------------------ encre et gris
+// Les seules teintes des surfaces, de la structure et du texte.
+$encre:           #1D1D1F; // --sk-body-text-color : titres, texte principal
+$encre-douce:     #59595F; // --sk-fill-gray-secondary : texte secondaire
+$encre-tertiaire: #59595F; // légendes, mentions, texte inerte
+$gris-fond:       #F5F5F7; // --sk-fill-gray : le gris de section d'Apple
+$gris-surface:    #FAFAFC; // --sk-fill-secondary
+$gris-filet:      #D2D2D7; // --sk-fill-gray-tertiary : le filet d'un cheveu
+$gris-inerte:     #E8E8ED; // --sk-fill-gray-quaternary : fond des états inertes
+$blanc:           #FFFFFF;
 
-// Les trois peintures du drapeau, ajustées pour tenir le contraste au soleil
-$vert:   #0F7A45; // séance assurée
-$jaune:  #EFB700; // retard, attente
-$rouge:  #C4122E; // absence, refus
+// ------------------------------------------------- rouge, jaune, vert
+// Les trois couleurs du drapeau guinéen — rouge #CE1126, jaune #FCD116,
+// vert #009460 — reprises comme *touches*, dans la grammaire sobre d'Apple :
+// elles ne couvrent jamais une surface, elles ponctuent.
+//
+// Les teintes officielles sont gardées telles quelles là où elles portent du
+// blanc ou servent de repère coloré ; là où elles doivent porter du texte, on
+// en emploie une version assombrie qui tient le contraste (AA, ≥ 4,5:1).
 
-// Variantes : une nuance plus claire ou plus profonde de la même famille,
-// jamais une quatrième teinte.
-$vert-clair:  #3E9E6C; // séance assurée par un remplaçant
-$jaune-fonce: #C98A00; // départ anticipé
-$rouge-clair: #E0574F; // absence excusée
+// ---------------------------------------------------------------- l'action
+// Une seule couleur d'action dans toute l'application : le vert du drapeau.
+// #009460 tel quel ne donne que 3,88:1 avec du texte blanc — insuffisant pour
+// un libellé de bouton. On le descend d'un cran : #007A4D, 5,40:1.
+$vert-action: #007A4D; // le bouton plein, le lien, l'anneau de focus
+$vert-survol: #008856;
+$vert-appui:  #006B43;
+$vert-lien:   #007A4D;
+$vert-nuit:   #35C88A; // le même lien en thème sombre, sur fond noir
 
-// Rôles Quasar. L'action primaire est l'encre : si elle prenait l'une des trois
-// peintures, on ne distinguerait plus « à faire » de « fait ».
-$primary:   $encre;
-$secondary: $vert;
-$accent:    $jaune;
+// ----------------------------------------------------------------- états
+// Chaque état porte sa couleur dans le texte, sur un fond très dilué — jamais
+// en aplat saturé pleine surface.
+$vert:   #007A4D; // séance assurée — même vert que l'action, autre traitement
+$jaune:  #FCD116; // jaune du drapeau : repère coloré, jamais du texte
+$rouge:  #CE1126; // absence, refus
 
-$dark:      #12291F;
-$dark-page: #0D1F18;
+// Les teintes officielles du drapeau, réservées au filet décoratif : elles ne
+// portent jamais de texte, donc rien ne les oblige à tenir un contraste.
+$vert-drapeau: #009460;
+
+// Le jaune ne peut pas porter de texte : #FCD116 sur blanc tombe à 1,4:1.
+// Toute mention « retard / en attente » s'écrit donc dans cet ocre.
+$jaune-texte: #8A6300; // 5,43:1 sur blanc
+
+// Fonds dilués correspondants, à peine teintés.
+$vert-fond:  #EFF7F2;
+$jaune-fond: #FFF8E1;
+$rouge-fond: #FDF0F2;
+
+// Variantes : une nuance de la même famille, jamais une quatrième teinte.
+$vert-clair:  #2E9E70; // séance assurée par un remplaçant
+$jaune-fonce: #8A6300; // départ anticipé
+$rouge-clair: #E05A6B; // absence excusée
+
+// --------------------------------------------------------------- rôles Quasar
+// L'action primaire est le vert du drapeau ; l'encre reste au texte et aux titres.
+$primary:   $vert-action;
+$secondary: $encre;
+$accent:    $vert-lien;
+
+$dark:      #1D1D1F;
+$dark-page: #000000;
 
 $positive:  $vert;
 $negative:  $rouge;
 $info:      $encre-douce;
-$warning:   $jaune;
+$warning:   $jaune-texte;
 
-// Le panneau n'a pas d'angles arrondis : la peinture suit la règle.
-$generic-border-radius: 0;
-$button-border-radius: 0;
-$chip-border-radius: 0;
-$card-border-radius: 0;
+// ------------------------------------------------------------------ formes
+// Le rayon d'Apple : la pilule pour un bouton, 12px pour un champ, 18px pour
+// une carte. Aucun angle vif — la matière est douce.
+$generic-border-radius: 12px;
+$button-border-radius: 980px;
+$chip-border-radius: 980px;
+$card-border-radius: 18px;
 
-$typography-font-family: 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+// ---------------------------------------------------------------- lettrage
+// La fonte système d'abord : sur un appareil Apple c'est SF Pro, déjà réglée en
+// tracking et en optical sizing (règle §15 du guide — « default to the
+// platform's system font »). Ailleurs — Android, Windows — Inter prend le
+// relais : même grotesque néo, même hauteur d'x, embarquée dans le bundle pour
+// un campus sans réseau.
+$typography-font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display',
+  'SF Pro Text', 'Inter Variable', 'Inter', 'Helvetica Neue', Helvetica, Arial,
+  sans-serif;
+
+// -------------------------------------------------------------- anciens noms
+// Le monde précédent (panneau émaillé) nommait ses peintures dans une
+// cinquantaine d'écrans, et la première bascule vers Apple avait introduit une
+// famille `$orange` / `$bleu`. Plutôt que de rouvrir chaque feuille scoped, ces
+// noms restent vivants et pointent vers la palette du drapeau : rien d'oublié
+// ne fait échouer la compilation, et rien d'oublié ne réintroduit du bleu.
+$chaux:        $gris-fond;
+$chaux-claire: $blanc;
+$blanc-craie:  $blanc;
+
+// L'orange de la première bascule est devenu le jaune du drapeau.
+$orange:       $jaune;
+$orange-fond:  $jaune-fond;
+$orange-fonce: $jaune-texte;
+
+// Le bleu d'action est devenu le vert du drapeau.
+$bleu:        $vert-action;
+$bleu-survol: $vert-survol;
+$bleu-appui:  $vert-appui;
+$bleu-lien:   $vert-lien;
+$bleu-nuit:   $vert-nuit;
+$bleu-fond:   $vert-fond;

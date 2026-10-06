@@ -9,6 +9,7 @@
  * déclenche lui-même le rechargement de la liste quand le watcher réagit.
  */
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { ChipFiltre } from '../types';
 
 const props = withDefaults(defineProps<{
@@ -33,6 +34,7 @@ const emit = defineEmits<{
   'update:modelValue': [value: Record<string, any>];
   'reinitialiser': [];
 }>();
+const { t } = useI18n();
 
 const filtres = computed(() => ({ ...(props.modelValue ?? {}) }));
 
@@ -97,7 +99,7 @@ const developpe = ref(false);
         flat
         dense
         :icon="developpe ? 'tune' : 'tune'"
-        :label="developpe ? 'Masquer les filtres' : 'Filtres avancés'"
+        :label="developpe ? t('common.search.hideAdvanced') : t('common.search.advanced')"
         no-caps
         class="barre-filtres__avances"
         :class="{ 'barre-filtres__avances--actif': developpe }"
@@ -110,7 +112,7 @@ const developpe = ref(false);
         flat
         dense
         icon="refresh"
-        label="Réinitialiser"
+        :label="$t('common.actions.reset')"
         no-caps
         class="barre-filtres__reset"
         @click="reinit"

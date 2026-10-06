@@ -3,6 +3,7 @@ import { TypeCours } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -14,6 +15,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
@@ -77,6 +79,17 @@ export class CreateSeanceDto {
   @IsOptional() @IsString() thematique?: string;
 }
 
+/** Une clé UUID créée sur l’appareil rend le rejeu hors ligne idempotent. */
+export class SeanceHorsLigneDto extends CreateSeanceDto {
+  @IsUUID() idClient: string;
+}
+
+export class SyncSeancesDto {
+  @IsArray() @ArrayMaxSize(50) @ValidateNested({ each: true })
+  @Type(() => SeanceHorsLigneDto)
+  seances: SeanceHorsLigneDto[];
+}
+
 export class UpdateSeanceDto extends PartialType(CreateSeanceDto) {}
 
 export class SeanceQueryDto extends QueryDto {
@@ -99,8 +112,15 @@ export class AnnulerSeanceDto {
   @IsOptional() @IsString() motif?: string;
 }
 
-export class CopierSemaineDto {
-  @IsDateString() semaineSource: string;
-  @IsDateString() semaineCible: string;
-  @IsOptional() @IsArray() @ArrayNotEmpty() @IsUUID('4', { each: true }) promotionIds?: string[];
+/** Un planificateur attribue une séance à un contrôleur ou retire l’affectation. */
+export class AffecterControleurDto {
+  @IsOptional() @IsUUID() controleurId?: string | null;
+}
+
+/** Affectation groupée des séances non attribuées d’une période, par établissement/département. */
+export class AffecterTourneeDto {
+  @IsDateString() dateDebut: string;
+  @IsDateString() dateFin: string;
+  @IsUUID() controleurId: string;
+  @IsOptional() @IsUUID() departementId?: string;
 }

@@ -2,19 +2,24 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">Planifier un examen</div>
-        <div class="text-caption text-grey-7">
-          Le code examen est utilisé par les scanneurs pour identifier la session active.
-        </div>
+        <div class="text-h6">{{ $t('examens.actions.schedule') }}</div>
+        <div class="text-caption text-grey-7">{{ $t('examens.fields.codeHint') }}</div>
       </q-card-section>
       <q-card-section class="q-gutter-md">
-        <q-input v-model="form.intitule" outlined dense label="Intitulé" />
+        <q-input v-model="form.intitule" outlined dense :label="$t('evaluations.table.columns.title')" />
+        <autocomplete-async
+          v-model="form.surveillantId"
+          endpoint="/examens/surveillants"
+          :label="$t('examens.fields.supervisor')"
+          :label-fn="(u) => `${u.prenom} ${u.nom} — ${u.role}`"
+          :clearable="true"
+        />
         <div class="row q-col-gutter-md">
           <div class="col-6">
-            <q-select v-model="form.type" :options="optionsTypes" outlined dense emit-value map-options label="Type" />
+            <q-select v-model="form.type" :options="optionsTypes" outlined dense emit-value map-options :label="$t('common.fields.type')" />
           </div>
           <div class="col-6">
-            <q-input v-model="form.codeExamen" outlined dense label="Code (EXAM-AAAA-XXXXX)" />
+            <q-input v-model="form.codeExamen" outlined dense :label="$t('examens.fields.code')" />
           </div>
         </div>
         <div class="row q-col-gutter-md">
@@ -22,7 +27,7 @@
             <autocomplete-async
               v-model="form.matiereId"
               endpoint="/matieres"
-              label="Matière *"
+              :label="$t('affectations.dialog.fields.subject')"
               :label-fn="(m) => `${m.code} — ${m.intitule}`"
             />
           </div>
@@ -30,7 +35,7 @@
             <autocomplete-async
               v-model="form.promotionId"
               endpoint="/referentiel/promotions"
-              label="Promotion *"
+              :label="$t('affectations.dialog.fields.promotion')"
               :label-fn="(p) => `${p.nom} — ${p.niveau}`"
             />
           </div>
@@ -40,7 +45,7 @@
             <autocomplete-async
               v-model="form.anneeId"
               endpoint="/referentiel/annees"
-              label="Année académique *"
+              :label="$t('affectations.dialog.fields.year')"
               :label-fn="(a) => a.libelle"
             />
           </div>
@@ -48,7 +53,7 @@
             <autocomplete-async
               v-model="form.salleId"
               endpoint="/salles"
-              label="Salle"
+              :label="$t('common.fields.classroom')"
               :label-fn="(s) => `${s.code} — ${s.nom}`"
               :clearable="true"
             />
@@ -56,19 +61,19 @@
         </div>
         <div class="row q-col-gutter-md">
           <div class="col-4">
-            <champ-date v-model="form.dateExamen" label="Date de l'examen *" />
+            <champ-date v-model="form.dateExamen" :label="$t('examens.fields.examDate')" />
           </div>
           <div class="col-4">
-            <q-input v-model="form.heureDebut" outlined dense type="time" label="Heure début *" />
+            <q-input v-model="form.heureDebut" outlined dense type="time" :label="$t('examens.fields.startTime')" />
           </div>
           <div class="col-4">
-            <q-input v-model="form.heureFin" outlined dense type="time" label="Heure fin *" />
+            <q-input v-model="form.heureFin" outlined dense type="time" :label="$t('examens.fields.endTime')" />
           </div>
         </div>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat no-caps label="Annuler" v-close-popup />
-        <q-btn unelevated no-caps color="primary" label="Enregistrer" :loading="envoi" @click="enregistrer" />
+        <q-btn flat no-caps :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn unelevated no-caps color="primary" :label="$t('common.actions.register')" :loading="envoi" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -108,6 +113,7 @@ const form = ref({
   dateExamen: '',
   heureDebut: '08:00',
   heureFin: '10:00',
+  surveillantId: null as string | null,
 });
 
 const envoi = ref(false);

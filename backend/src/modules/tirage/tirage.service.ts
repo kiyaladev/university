@@ -14,10 +14,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as crypto from 'node:crypto';
+import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StadeTirage } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
+import { echapper } from '../../common/utils';
+import { exigerAnneeOuverte } from '../../common/annee';
 import {
   CreateTirageDto,
   ImprimerTirageDto,
@@ -31,7 +34,7 @@ const TIRAGE_INCLUDE = {
       matiere: true,
       promotion: true,
       annee: true,
-      salle: true,
+      salle: { select: { id: true, code: true, nom: true } },
       surveillant: { select: { id: true, nom: true, prenom: true } },
     },
   },
@@ -56,8 +59,8 @@ export class TirageService {
 
   async liste(query: TirageQueryDto): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.TirageWhereInput = {
       ...(query.stade ? { stade: query.stade } : {}),
@@ -70,11 +73,11 @@ export class TirageService {
         where,
         include: TIRAGE_INCLUDE,
         orderBy: { dateTirage: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.tirage.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouver(id: string) {
@@ -82,41 +85,45 @@ export class TirageService {
       where: { id },
       include: TIRAGE_INCLUDE,
     });
-    if (!tirage) throw new NotFoundException('Tirage introuvable');
+    if (!tirage) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
     return tirage;
   }
 
   // ---------------------------------------------------- création
 
   async creer(dto: CreateTirageDto, user: AuthUser) {
-    const examen = await this.prisma.examen.findUnique({
-      where: { id: dto.examenId },
-    });
-    if (!examen) throw new BadRequestException('Examen introuvable');
+    return this.prisma.$transaction(async (tx) => {
+      const examen = await tx.examen.findUnique({
+        where: { id: dto.examenId },
+        select: { id: true, codeExamen: true, anneeId: true },
+      });
+      if (!examen) throw new BadRequestException(I18nContext.current()!.t('tirage.examen_introuvable'));
+      await exigerAnneeOuverte(tx, examen.anneeId);
 
-    const tirage = await this.prisma.tirage.create({
-      data: {
-        examenId: dto.examenId,
-        dateTirage: new Date(dto.dateTirage),
-        nbExemplaires: dto.nbExemplaires,
-        empreinteSource: dto.empreinteSource.toLowerCase(),
-        circuitImpression: dto.circuitImpression ?? null,
-        notes: dto.notes ?? null,
-        stade: StadeTirage.PROGRAMME,
-      },
-      include: TIRAGE_INCLUDE,
-    });
+      const tirage = await tx.tirage.create({
+        data: {
+          examenId: dto.examenId,
+          dateTirage: new Date(dto.dateTirage),
+          nbExemplaires: dto.nbExemplaires,
+          empreinteSource: dto.empreinteSource.toLowerCase(),
+          circuitImpression: dto.circuitImpression ?? null,
+          notes: dto.notes ?? null,
+          stade: StadeTirage.PROGRAMME,
+        },
+        include: TIRAGE_INCLUDE,
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'TIRAGE_CREE',
-        entite: 'Tirage',
-        entiteId: tirage.id,
-        details: `Examen ${examen.codeExamen} — ${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'TIRAGE_CREE',
+          entite: 'Tirage',
+          entiteId: tirage.id,
+          details: `Examen ${examen.codeExamen} — ${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
+        },
+      });
+      return tirage;
     });
-    return tirage;
   }
 
   // ------------------------------------------------ transitions
@@ -129,38 +136,39 @@ export class TirageService {
    * est consigné.
    */
   async imprimer(id: string, dto: ImprimerTirageDto, user: AuthUser) {
-    const tirage = await this.trouver(id);
-    if (tirage.stade !== StadeTirage.PROGRAMME) {
-      throw new BadRequestException(
-        `Tirage ${tirage.stade} : seul un tirage PROGRAMME peut être imprimé`,
-      );
-    }
-    if (dto.empreinteSource.toLowerCase() !== tirage.empreinteSource) {
-      throw new BadRequestException(
-        "Empreinte source fournie ne correspond pas à celle enregistrée — impression refusée",
-      );
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const tirage = await this.trouverDans(tx, id);
+      await exigerAnneeOuverte(tx, tirage.examen.anneeId);
+      if (tirage.stade !== StadeTirage.PROGRAMME) {
+        throw new BadRequestException(
+          `Tirage ${tirage.stade} : seul un tirage PROGRAMME peut être imprimé`,
+        );
+      }
+      if (dto.empreinteSource.toLowerCase() !== tirage.empreinteSource) {
+        throw new BadRequestException(I18nContext.current()!.t('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr'));
+      }
 
-    const maj = await this.prisma.tirage.update({
-      where: { id },
-      data: {
-        stade: StadeTirage.IMPRIME,
-        imprimeurId: user.id,
-        empreinteExemplaires: dto.empreinteExemplaires ?? null,
-      },
-      include: TIRAGE_INCLUDE,
-    });
+      const maj = await tx.tirage.update({
+        where: { id },
+        data: {
+          stade: StadeTirage.IMPRIME,
+          imprimeurId: user.id,
+          empreinteExemplaires: dto.empreinteExemplaires ?? null,
+        },
+        include: TIRAGE_INCLUDE,
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'TIRAGE_IMPRIME',
-        entite: 'Tirage',
-        entiteId: id,
-        details: `${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'TIRAGE_IMPRIME',
+          entite: 'Tirage',
+          entiteId: id,
+          details: `${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
+        },
+      });
+      return maj;
     });
-    return maj;
   }
 
   /** Transition générique avec garde de séquence. */
@@ -169,44 +177,60 @@ export class TirageService {
     dto: UpdateStadeTirageDto,
     user: AuthUser,
     actionAudit: string,
+    stadeAttendu: StadeTirage,
   ) {
-    const tirage = await this.trouver(id);
-    const cible = TRANSITIONS[tirage.stade];
-    if (!cible || cible !== dto.stade) {
-      throw new BadRequestException(
-        `Transition impossible depuis ${tirage.stade} vers ${dto.stade}`,
-      );
+    if (dto.stade !== stadeAttendu) {
+      throw new BadRequestException(I18nContext.current()!.t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { args: { 'tirage.stade': stadeAttendu, 'dto.stade': dto.stade } }));
     }
-    const maj = await this.prisma.tirage.update({
-      where: { id },
-      data: {
-        stade: dto.stade,
-        ...(dto.notes ? { notes: dto.notes } : {}),
-      },
-      include: TIRAGE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const tirage = await this.trouverDans(tx, id);
+      await exigerAnneeOuverte(tx, tirage.examen.anneeId);
+      const cible = TRANSITIONS[tirage.stade];
+      if (!cible || cible !== dto.stade) {
+        throw new BadRequestException(I18nContext.current()!.t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { args: { 'tirage.stade': tirage.stade, 'dto.stade': dto.stade } }));
+      }
+      const maj = await tx.tirage.update({
+        where: { id },
+        data: {
+          stade: dto.stade,
+          ...(dto.notes ? { notes: dto.notes } : {}),
+        },
+        include: TIRAGE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: actionAudit,
+          entite: 'Tirage',
+          entiteId: id,
+          details: `${tirage.stade} → ${maj.stade}`,
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: actionAudit,
-        entite: 'Tirage',
-        entiteId: id,
-        details: `${tirage.stade} → ${maj.stade}`,
-      },
-    });
-    return maj;
+  }
+
+  private async trouverDans(db: Prisma.TransactionClient, id: string) {
+    const initial = await db.tirage.findUnique({ where: { id }, include: TIRAGE_INCLUDE });
+    if (!initial) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
+    // Année puis tirage : même ordre que les autres écritures académiques.
+    await exigerAnneeOuverte(db, initial.examen.anneeId);
+    await db.$queryRaw`SELECT id FROM "Tirage" WHERE id = ${id} FOR UPDATE`;
+    const tirage = await db.tirage.findUnique({ where: { id }, include: TIRAGE_INCLUDE });
+    if (!tirage) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
+    return tirage;
   }
 
   mettreSousPli(id: string, dto: UpdateStadeTirageDto, user: AuthUser) {
-    return this.transition(id, dto, user, 'TIRAGE_MIS_SOUS_PLI');
+    return this.transition(id, dto, user, 'TIRAGE_MIS_SOUS_PLI', StadeTirage.MIS_SOUS_PLI);
   }
 
   distribuer(id: string, dto: UpdateStadeTirageDto, user: AuthUser) {
-    return this.transition(id, dto, user, 'TIRAGE_DISTRIBUE');
+    return this.transition(id, dto, user, 'TIRAGE_DISTRIBUE', StadeTirage.DISTRIBUE);
   }
 
   recuperer(id: string, dto: UpdateStadeTirageDto, user: AuthUser) {
-    return this.transition(id, dto, user, 'TIRAGE_RECUPERE');
+    return this.transition(id, dto, user, 'TIRAGE_RECUPERE', StadeTirage.RECUPERE);
   }
 
   /**
@@ -215,27 +239,28 @@ export class TirageService {
    * faut créer un nouveau tirage.
    */
   async annuler(id: string, user: AuthUser) {
-    const tirage = await this.trouver(id);
-    if (tirage.stade !== StadeTirage.PROGRAMME) {
-      throw new BadRequestException(
-        `Tirage ${tirage.stade} : annulation possible uniquement depuis PROGRAMME`,
-      );
-    }
-    const maj = await this.prisma.tirage.update({
-      where: { id },
-      data: { stade: StadeTirage.ANNULE },
-      include: TIRAGE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const tirage = await this.trouverDans(tx, id);
+      await exigerAnneeOuverte(tx, tirage.examen.anneeId);
+      if (tirage.stade !== StadeTirage.PROGRAMME) {
+        throw new BadRequestException(I18nContext.current()!.t('tirage.tirage_tirage_stade_annulation_possible_uniquement_depuis_program', { args: { stade: tirage.stade } }));
+      }
+      const maj = await tx.tirage.update({
+        where: { id },
+        data: { stade: StadeTirage.ANNULE },
+        include: TIRAGE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'TIRAGE_ANNULE',
+          entite: 'Tirage',
+          entiteId: id,
+          details: `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`,
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'TIRAGE_ANNULE',
-        entite: 'Tirage',
-        entiteId: id,
-        details: `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`,
-      },
-    });
-    return maj;
   }
 
   // ----------------------------------------------------- bordereau
@@ -309,11 +334,4 @@ export class TirageService {
  *  la casse en comparaison. */
 export function empreinteSha256(contenu: string | Buffer): string {
   return crypto.createHash('sha256').update(contenu).digest('hex');
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

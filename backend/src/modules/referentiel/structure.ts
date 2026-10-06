@@ -1,14 +1,20 @@
 /** Départements, filières et promotions — l'ossature académique. */
-import { Body, Controller, Delete, Get, Injectable, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, ConflictException, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
-import { Niveau, Role } from '@prisma/client';
+import { Niveau, Prisma, Role } from '@prisma/client';
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { CrudService, supprimerOuConflit } from '../../common/crud.service';
+import { exigerAnneeOuverte } from '../../common/annee';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
-import { Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { t } from '../../common/i18n';
 
 const GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
+const LECTURE_STRUCTURE = [
+  Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT,
+  Role.CONTROLEUR, Role.ENSEIGNANT,
+] as const;
 
 // --------------------------------------------------------------- Départements
 export class CreateDepartementDto {
@@ -29,12 +35,71 @@ export class DepartementsService extends CrudService {
     });
   }
 
-  /** Un département qui porte encore des enseignants ou des filières se garde. */
-  async remove(id: string) {
-    return supprimerOuConflit(
-      () => super.remove(id),
-      'Ce département ne peut pas être supprimé : des enseignants ou des filières y sont encore rattachés. Réaffectez-les d’abord.',
-    );
+  listePublique() {
+    return this.prisma.departement.findMany({
+      select: { id: true, code: true, nom: true, faculte: true },
+      orderBy: { nom: 'asc' },
+    });
+  }
+
+  private instantaneAudit(departement: any) {
+    return { id: departement.id, code: departement.code, nom: departement.nom, faculte: departement.faculte };
+  }
+
+  async creer(dto: CreateDepartementDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const departement = await tx.departement.create({ data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null,
+        action: 'DEPARTEMENT_CREE',
+        entite: 'Departement',
+        entiteId: departement.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(departement), champsModifies: Object.keys(dto) }),
+      } });
+      return departement;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  async modifier(id: string, dto: UpdateDepartementDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.departement.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Département' }));
+      const apres = await tx.departement.update({ where: { id }, data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null,
+        action: 'DEPARTEMENT_MODIFIE',
+        entite: 'Departement',
+        entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
+      } });
+      return apres;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  /** Un département qui porte encore des données métier ne peut pas s'effacer. */
+  async remove(id: string, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const departement = await tx.departement.findUnique({
+        where: { id },
+        select: {
+          id: true, code: true, nom: true,
+          _count: { select: {
+            membres: true, enseignants: true, filieres: true, matieres: true,
+            documents: true, equipementsPatrimoine: true, reclamations: true, elections: true,
+          } },
+        },
+      });
+      if (!departement) throw new NotFoundException(t('common.notFound'));
+      if (Object.values(departement._count).some((count) => count > 0)) {
+        throw new ConflictException(t('referentiel.departement_referenced_delete'));
+      }
+      await supprimerOuConflit(() => tx.departement.delete({ where: { id } }), 'referentiel.departement_referenced_delete');
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'DEPARTEMENT_SUPPRIME', entite: 'Departement', entiteId: id,
+        details: JSON.stringify({ avant: { id, code: departement.code, nom: departement.nom }, apres: null }),
+      } });
+      return { id };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }
 
@@ -44,24 +109,29 @@ export class DepartementsService extends CrudService {
 export class DepartementsController {
   constructor(private readonly service: DepartementsService) {}
 
-  @Public()
+  @Roles(...LECTURE_STRUCTURE)
   @Get() findAll(@Query() query: QueryDto) {
     return this.service.findAll(query);
   }
+  @Public()
+  @Get('public') listePublique() {
+    return this.service.listePublique();
+  }
+  @Roles(...LECTURE_STRUCTURE)
   @Get(':id') findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
   @Roles(...GESTION)
-  @Post() create(@Body() dto: CreateDepartementDto) {
-    return this.service.create(dto);
+  @Post() create(@Body() dto: CreateDepartementDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
   @Roles(...GESTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateDepartementDto) {
-    return this.service.update(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateDepartementDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }
 
@@ -88,12 +158,58 @@ export class FilieresService extends CrudService {
     });
   }
 
-  /** Une filière qui porte encore des promotions se garde. */
-  async remove(id: string) {
-    return supprimerOuConflit(
-      () => super.remove(id),
-      'Cette filière ne peut pas être supprimée : des promotions y sont encore rattachées. Supprimez ou réaffectez-les d’abord.',
-    );
+  private instantaneAudit(filiere: any) {
+    return { id: filiere.id, code: filiere.code, nom: filiere.nom, departementId: filiere.departementId };
+  }
+
+  async creer(dto: CreateFiliereDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const filiere = await tx.filiere.create({ data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null,
+        action: 'FILIERE_CREEE',
+        entite: 'Filiere',
+        entiteId: filiere.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(filiere), champsModifies: Object.keys(dto) }),
+      } });
+      return filiere;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  async modifier(id: string, dto: UpdateFiliereDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.filiere.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Filière' }));
+      const apres = await tx.filiere.update({ where: { id }, data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null,
+        action: 'FILIERE_MODIFIEE',
+        entite: 'Filiere',
+        entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
+      } });
+      return apres;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  /** Une filière qui porte encore des promotions ne peut pas s'effacer. */
+  async remove(id: string, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const filiere = await tx.filiere.findUnique({
+        where: { id },
+        select: { id: true, code: true, nom: true, departementId: true, _count: { select: { promotions: true } } },
+      });
+      if (!filiere) throw new NotFoundException(t('common.notFound'));
+      if (filiere._count.promotions > 0) {
+        throw new ConflictException(t('referentiel.filiere_referenced_delete'));
+      }
+      await supprimerOuConflit(() => tx.filiere.delete({ where: { id } }), 'referentiel.filiere_referenced_delete');
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'FILIERE_SUPPRIMEE', entite: 'Filiere', entiteId: id,
+        details: JSON.stringify({ avant: { id, code: filiere.code, nom: filiere.nom, departementId: filiere.departementId }, apres: null }),
+      } });
+      return { id };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 }
 
@@ -103,26 +219,28 @@ export class FilieresService extends CrudService {
 export class FilieresController {
   constructor(private readonly service: FilieresService) {}
 
+  @Roles(...LECTURE_STRUCTURE)
   @Get() findAll(@Query() query: FiliereQueryDto) {
     return this.service.findAll(
       query,
       query.departementId ? { departementId: query.departementId } : {},
     );
   }
+  @Roles(...LECTURE_STRUCTURE)
   @Get(':id') findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
   @Roles(...GESTION)
-  @Post() create(@Body() dto: CreateFiliereDto) {
-    return this.service.create(dto);
+  @Post() create(@Body() dto: CreateFiliereDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
   @Roles(...GESTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateFiliereDto) {
-    return this.service.update(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateFiliereDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }
 
@@ -153,12 +271,85 @@ export class PromotionsService extends CrudService {
     });
   }
 
+  async creer(dto: CreatePromotionDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, dto.anneeId);
+      const promotion = await tx.promotion.create({
+        data: dto,
+        include: { filiere: { include: { departement: true } }, annee: true },
+      });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'PROMOTION_CREEE', entite: 'Promotion', entiteId: promotion.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(promotion) }),
+      } });
+      return promotion;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  async modifier(id: string, dto: UpdatePromotionDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const actuelle: any = await tx.promotion.findUnique({
+        where: { id }, include: { filiere: { include: { departement: true } }, annee: true },
+      });
+      if (!actuelle) throw new NotFoundException(t('common.notFound'));
+      await exigerAnneeOuverte(tx, actuelle.anneeId);
+      if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
+      if (dto.anneeId !== undefined || dto.filiereId !== undefined) {
+        const dependances = await tx.promotion.findUnique({
+          where: { id },
+          select: { _count: { select: {
+            affectations: true, inscriptions: true, frais: true, evaluations: true,
+            deliberations: true, attestations: true, examens: true, elections: true,
+          } } },
+        });
+        if (Object.values(dependances?._count ?? {}).some((count) => count > 0)) {
+          throw new ConflictException(t('referentiel.promotion_referenced_delete'));
+        }
+      }
+      const apres = await tx.promotion.update({
+        where: { id }, data: dto,
+        include: { filiere: { include: { departement: true } }, annee: true },
+      });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'PROMOTION_MODIFIEE', entite: 'Promotion', entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(actuelle), apres: this.instantaneAudit(apres) }),
+      } });
+      return apres;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
   /** Une promotion qui porte encore inscriptions, affectations ou frais se garde. */
-  async remove(id: string) {
-    return supprimerOuConflit(
-      () => super.remove(id),
-      'Cette promotion ne peut pas être supprimée : des données y sont rattachées (inscriptions, affectations, frais…). Traitez-les d’abord.',
-    );
+  async remove(id: string, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const actuelle: any = await tx.promotion.findUnique({
+        where: { id }, include: { filiere: { include: { departement: true } }, annee: true },
+      });
+      if (!actuelle) throw new NotFoundException(t('common.notFound'));
+      await exigerAnneeOuverte(tx, actuelle.anneeId);
+      const dependances = await tx.promotion.findUnique({
+        where: { id },
+        select: { _count: { select: {
+          affectations: true, inscriptions: true, frais: true, evaluations: true,
+          deliberations: true, attestations: true, examens: true, elections: true,
+        } } },
+      });
+      if (Object.values(dependances?._count ?? {}).some((count) => count > 0)) {
+        throw new ConflictException(t('referentiel.promotion_referenced_delete'));
+      }
+      await tx.promotion.delete({ where: { id } });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'PROMOTION_SUPPRIMEE', entite: 'Promotion', entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(actuelle), apres: null }),
+      } });
+      return { id };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  private instantaneAudit(promotion: any) {
+    return {
+      id: promotion.id, nom: promotion.nom, niveau: promotion.niveau,
+      effectif: promotion.effectif, filiereId: promotion.filiereId, anneeId: promotion.anneeId,
+    };
   }
 }
 
@@ -168,6 +359,7 @@ export class PromotionsService extends CrudService {
 export class PromotionsController {
   constructor(private readonly service: PromotionsService) {}
 
+  @Roles(...LECTURE_STRUCTURE)
   @Get() findAll(@Query() query: PromotionQueryDto) {
     return this.service.findAll(query, {
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
@@ -175,19 +367,20 @@ export class PromotionsController {
       ...(query.niveau ? { niveau: query.niveau } : {}),
     });
   }
+  @Roles(...LECTURE_STRUCTURE)
   @Get(':id') findOne(@Param('id') id: string) {
     return this.service.findOne(id);
   }
   @Roles(...GESTION)
-  @Post() create(@Body() dto: CreatePromotionDto) {
-    return this.service.create(dto);
+  @Post() create(@Body() dto: CreatePromotionDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
   @Roles(...GESTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdatePromotionDto) {
-    return this.service.update(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdatePromotionDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }

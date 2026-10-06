@@ -2,32 +2,24 @@
   <q-page class="acces">
     <!-- L'enseigne : le panneau que l'on voit avant d'entrer -->
     <section class="enseigne">
-      <div class="enseigne__bandes" aria-hidden="true">
-        <span class="bande bande--rouge" />
-        <span class="bande bande--jaune" />
-        <span class="bande bande--vert" />
-      </div>
-
-      <p class="pochoir enseigne__sur-titre">Espace étudiant</p>
-      <h1 class="lettrage enseigne__marque">UniPrésence</h1>
+      <p class="pochoir enseigne__sur-titre">{{ $t('portailConnexion.banner.overTitle') }}</p>
+      <h1 class="lettrage enseigne__marque">{{ $t('common.app.name') }}</h1>
       <p class="enseigne__phrase">
-        Le portail étudiant : votre inscription, vos paiements, vos résultats
-        et vos attestations — sans mot de passe, juste votre numéro de
-        téléphone enregistré à la scolarité.
+        {{ $t('portailConnexion.banner.tagline') }}
       </p>
 
       <dl class="enseigne__faits">
         <div>
-          <dt class="pochoir">Sans mot de passe</dt>
-          <dd>Un code reçu par SMS à chaque connexion, valable quelques minutes</dd>
+          <dt class="pochoir">{{ $t('portailConnexion.banner.facts.noPassword.title') }}</dt>
+          <dd>{{ $t('portailConnexion.banner.facts.noPassword.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Confidentiel</dt>
-          <dd>Vos résultats ne sont jamais montrés à un autre étudiant</dd>
+          <dt class="pochoir">{{ $t('portailConnexion.banner.facts.confidential.title') }}</dt>
+          <dd>{{ $t('portailConnexion.banner.facts.confidential.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Vérifiable</dt>
-          <dd>Vos attestations portent un QR code contrôlable par n'importe qui</dd>
+          <dt class="pochoir">{{ $t('portailConnexion.banner.facts.verifiable.title') }}</dt>
+          <dd>{{ $t('portailConnexion.banner.facts.verifiable.text') }}</dd>
         </div>
       </dl>
     </section>
@@ -35,15 +27,15 @@
     <!-- La plaque d'accès -->
     <section class="acces__plaque">
       <h2 class="lettrage acces__titre">
-        {{ codeDemande ? 'Code de vérification' : 'Portail étudiant' }}
+        {{ codeDemande ? $t('portailConnexion.panel.titleCode') : $t('portailConnexion.panel.titlePortal') }}
       </h2>
 
       <!-- Étape 1 : le numéro -->
       <q-form v-if="!codeDemande" class="acces__form" @submit.prevent="demanderCode">
         <p class="acces__intro">
-          Réservé aux étudiants inscrits. Vous êtes membre du personnel ?
+          {{ $t('portailConnexion.step1.intro') }}
           <router-link to="/connexion" class="acces__lien-lien">
-            Connectez-vous avec votre e-mail
+            {{ $t('portailConnexion.step1.introLink') }}
           </router-link>.
         </p>
 
@@ -51,16 +43,16 @@
           v-model="telephone"
           type="tel"
           inputmode="tel"
-          label="Numéro de téléphone"
+          :label="$t('portailConnexion.step1.phoneLabel')"
           outlined
           autofocus
           autocomplete="tel"
-          :rules="[(v) => !!v || 'Saisissez votre numéro de téléphone']"
+          :rules="[(v) => !!v || $t('portailConnexion.step1.phoneRule')]"
         >
           <template #prepend><q-icon name="phone_android" /></template>
         </q-input>
         <p class="pochoir acces__aide">
-          Le numéro porté sur votre fiche d'inscription (ex. 622 000 001)
+          {{ $t('portailConnexion.step1.phoneHint') }}
         </p>
 
         <q-banner v-if="erreur" class="acces__erreur" role="alert" aria-live="assertive">
@@ -75,7 +67,7 @@
           size="lg"
           unelevated
           no-caps
-          label="Recevoir un code par SMS"
+          :label="$t('portailConnexion.step1.submit')"
           :loading="envoi"
         />
       </q-form>
@@ -84,8 +76,9 @@
       <q-form v-else class="acces__form" @submit.prevent="entrer">
         <q-banner class="note--info" role="status" aria-live="polite">
           <template #avatar><q-icon name="sms" /></template>
-          Si ce numéro figure au registre, un code à 6 chiffres vient d'être
-          envoyé au <strong class="chiffres">{{ telephone }}</strong>.
+          <i18n-t keypath="portailConnexion.step2.smsSent" tag="span">
+            <template #telephone><strong class="chiffres">{{ telephone }}</strong></template>
+          </i18n-t>
         </q-banner>
 
         <q-input
@@ -93,17 +86,17 @@
           mask="######"
           inputmode="numeric"
           autocomplete="one-time-code"
-          label="Code reçu par SMS"
+          :label="$t('portailConnexion.step2.codeLabel')"
           outlined
           autofocus
           :error="!!erreur"
           :error-message="erreur"
-          :rules="[(v) => !!v || 'Saisissez le code à 6 chiffres reçu par SMS']"
+          :rules="[(v) => !!v || $t('portailConnexion.step2.codeRule')]"
         >
           <template #prepend><q-icon name="dialpad" /></template>
         </q-input>
         <p class="pochoir acces__aide">
-          Le code ne se réutilise pas et expire après quelques minutes
+          {{ $t('portailConnexion.step2.codeHint') }}
         </p>
 
         <q-btn
@@ -113,40 +106,40 @@
           size="lg"
           unelevated
           no-caps
-          label="Entrer dans mon espace"
+          :label="$t('portailConnexion.step2.submit')"
           :loading="auth.chargement"
         />
 
         <div class="acces__retour">
-          <q-btn flat dense no-caps icon="chevron_left" label="Changer de numéro" @click="reinitialiser" />
-          <q-btn flat dense no-caps icon="refresh" label="Renvoyer le code" :loading="envoi" @click="demanderCode" />
+          <q-btn flat dense no-caps icon="chevron_left" :label="$t('portailConnexion.step2.changeNumber')" @click="reinitialiser" />
+          <q-btn flat dense no-caps icon="refresh" :label="$t('portailConnexion.step2.resendCode')" :loading="envoi" @click="demanderCode" />
         </div>
       </q-form>
 
       <q-separator class="acces__separateur" />
 
       <!-- Services ouverts sans compte : personne ne doit rester bloqué ici. -->
-      <nav class="acces__services" aria-label="Autres accès">
-        <p class="pochoir acces__services-titre">Autres accès</p>
+      <nav class="acces__services" :aria-label="$t('portailConnexion.otherAccess.ariaLabel')">
+        <p class="pochoir acces__services-titre">{{ $t('portailConnexion.otherAccess.title') }}</p>
         <ul class="acces__liens">
           <li>
             <router-link to="/connexion" class="acces__lien-lien">
-              Connexion du personnel (e-mail + mot de passe) →
+              {{ $t('portailConnexion.otherAccess.staffLogin') }}
             </router-link>
           </li>
           <li>
             <router-link to="/s-inscrire" class="acces__lien-lien">
-              Pas encore étudiant ? Se préinscrire en ligne →
+              {{ $t('portailConnexion.otherAccess.preregister') }}
             </router-link>
           </li>
           <li>
             <router-link to="/bibliotheque" class="acces__lien-lien">
-              Bibliothèque numérique →
+              {{ $t('portailConnexion.otherAccess.library') }}
             </router-link>
           </li>
           <li>
             <router-link to="/verification" class="acces__lien-lien">
-              Vérifier une attestation →
+              {{ $t('portailConnexion.otherAccess.verifyAttestation') }}
             </router-link>
           </li>
         </ul>
@@ -158,13 +151,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useQuasar } from 'quasar';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const telephone = ref('');
 const code = ref('');
@@ -174,7 +170,7 @@ const codeDemande = ref(false);
 
 function messageErreur(e: any): string {
   const donnees = e?.response?.data?.message;
-  return Array.isArray(donnees) ? donnees.join(' · ') : donnees ?? 'Impossible de terminer, réessayez.';
+  return Array.isArray(donnees) ? donnees.join(' · ') : donnees ?? t('portailConnexion.messages.genericError');
 }
 
 function reinitialiser() {
@@ -185,7 +181,7 @@ function reinitialiser() {
 
 async function demanderCode() {
   if (!telephone.value.trim()) {
-    erreur.value = 'Saisissez votre numéro de téléphone';
+    erreur.value = t('portailConnexion.step1.phoneRule');
     return;
   }
   const renvoi = codeDemande.value;
@@ -199,7 +195,7 @@ async function demanderCode() {
     code.value = '';
     codeDemande.value = true;
     if (renvoi) {
-      $q.notify({ type: 'positive', message: 'Un nouveau code vient d’être envoyé par SMS.' });
+      $q.notify({ type: 'positive', message: t('portailConnexion.messages.codeResent') });
     }
   } catch (e: any) {
     erreur.value = messageErreur(e);
@@ -212,10 +208,14 @@ async function entrer() {
   erreur.value = '';
   try {
     const utilisateur = await auth.connexionOtp(telephone.value, code.value);
-    if (utilisateur) await router.push('/portail');
+    if (!utilisateur) return;
+    // La garde de routes renseigne `suite` avec la page demandée : un lien
+    // profond vers une rubrique précis perdait ici sa destination.
+    const suite = route.query.suite as string | undefined;
+    await router.push(suite ?? '/portail');
   } catch (e: any) {
     code.value = '';
-    erreur.value = messageErreur(e) || 'Code incorrect ou expiré — demandez un nouveau code.';
+    erreur.value = messageErreur(e) || t('portailConnexion.messages.invalidCode');
   }
 }
 </script>
@@ -242,7 +242,7 @@ async function entrer() {
 }
 
 .enseigne__sur-titre {
-  color: rgba(250, 250, 247, 0.6);
+  color: var(--up-encre-tertiaire);
   margin: 0;
 }
 
@@ -255,7 +255,7 @@ async function entrer() {
   font-size: 1.05rem;
   line-height: 1.55;
   max-width: 46ch;
-  color: rgba(250, 250, 247, 0.88);
+  color: var(--up-encre-douce);
   margin: 0;
 }
 
@@ -263,10 +263,10 @@ async function entrer() {
   display: grid;
   gap: var(--up-3);
   margin: 0;
-  border-top: 2px solid rgba(250, 250, 247, 0.35);
+  border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: rgba(250, 250, 247, 0.66); }
+  dt { color: var(--up-encre-tertiaire); }
   dd { margin: 3px 0 0; font-size: 0.92rem; }
 }
 
@@ -285,7 +285,7 @@ async function entrer() {
   font-size: 1.7rem;
   margin: 0 0 var(--up-3);
   padding-bottom: var(--up-2);
-  border-bottom: 3px solid var(--up-encre);
+  border-bottom: var(--up-filet);
 }
 
 .acces__intro {
@@ -303,9 +303,10 @@ async function entrer() {
 .acces__bouton { min-height: 56px; }
 
 .acces__erreur {
-  background: $rouge;
-  color: #fff;
-  border: 2px solid var(--up-encre);
+  background: $rouge-fond;
+  color: #{$rouge};
+  border: 0;
+  border-radius: var(--up-rayon);
 }
 
 .acces__aide {

@@ -1,0 +1,200 @@
+{
+  "date": "2026-10-06T15:24:11.941Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "RESERVATION_CREEE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PATRIMOINE_REPARATION_DECLAREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "FORMATION_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Réservation, patrimoine et formation réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile"
+}

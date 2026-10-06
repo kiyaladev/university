@@ -1,0 +1,16 @@
+{
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "No student record linked to this account",
+  "reclamation_introuvable": "Complaint not found",
+  "numero_de_reclamation_temporairement_indisponible_reessayez": "Complaint number temporarily unavailable, please try again.",
+  "le_message_est_vide": "The message is empty.",
+  "limite_messages_atteinte": "This complaint has reached its message limit.",
+  "utilisateur_introuvable": "User not found",
+  "une_note_de_cloture_est_requise": "A closing note is required.",
+  "cette_reclamation_est_close_escalader_n_a_plus_de_sens": "This complaint is closed: escalation no longer makes sense.",
+  "une_note_est_obligatoire_pour_clore_resoudre_fermer_ou_rejet": "A note is required to close (resolve, close, or reject) a complaint.",
+  "l_escalade_automatique_n_est_possible_qu_apres_delaiheures_h": "Automatic escalation is only possible after {delaiHeures} h without response",
+  "l_escalade_automatique_n_est_possible_qu_apres_delaiheures": "Automatic escalation is only possible after {delaiHeures} hours without a response.",
+  "transition_de_statut_non_autorisee": "This status transition is not allowed from the current state.",
+  "reclamation_close_assignation_impossible": "A closed complaint cannot be reassigned.",
+  "ecriture_concurrente_reessayez": "This complaint was just changed. Reload it and try again."
+}

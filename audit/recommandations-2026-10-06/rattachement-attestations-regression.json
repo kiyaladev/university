@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-06T11:26:45.218Z",
+  "database": "university_recommandations_20261006",
+  "passed": false,
+  "observations": {
+    "mismatchedStudentInscription": 201,
+    "nonexistentInscription": 500,
+    "concurrentEmissions": [
+      201,
+      409,
+      409,
+      409
+    ],
+    "activeSchoolCertificates": 2,
+    "promotionDerivedFromInscription": false,
+    "typeChangeToExistingCertificate": 200,
+    "immutableOwnerRejectedByDto": 200
+  },
+  "productionUntouched": true
+}

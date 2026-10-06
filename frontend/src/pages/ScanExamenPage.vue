@@ -2,10 +2,9 @@
   <q-page class="scan-page q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Scan examens</div>
+        <h1 class="page-titre">{{ $t('scanExamen.title') }}</h1>
         <div class="page-sous-titre">
-          Scannez le QR de la carte étudiante — ou saisissez le matricule — pour
-          valider la présence à l'épreuve en cours.
+          {{ $t('scanExamen.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -13,7 +12,7 @@
           flat
           no-caps
           icon="arrow_back"
-          label="Retour aux examens"
+          :label="$t('scanExamen.actions.backToExamens')"
           @click="router.push({ name: 'examens' })"
         />
       </div>
@@ -22,17 +21,16 @@
     <!-- Aucun examen ouvert : on dit pourquoi et on donne la sortie -->
     <div v-if="!chargementExamens && !examens.length" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="event_busy" size="38px" color="grey-5" />
-      <div class="q-mt-sm text-weight-medium">Aucun examen en cours</div>
+      <div class="q-mt-sm text-weight-medium">{{ $t('scanExamen.emptyState.title') }}</div>
       <div class="text-caption q-mt-xs">
-        Le scan des cartes n'est possible qu'une fois l'épreuve démarrée depuis la
-        page Examens.
+        {{ $t('scanExamen.emptyState.description') }}
       </div>
       <q-btn
         unelevated
         color="primary"
         no-caps
         icon="quiz"
-        label="Voir les examens planifiés"
+        :label="$t('scanExamen.actions.seePlannedExams')"
         class="q-mt-md"
         @click="router.push({ name: 'examens' })"
       />
@@ -42,13 +40,13 @@
       <q-card flat bordered class="ratio-carte q-mb-md">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-caption text-grey-7">Présents / inscrits</div>
+            <div class="text-caption text-grey-7">{{ $t('scanExamen.stats.presentsOverEnrolled') }}</div>
             <div class="lettrage chiffres text-h3 ratio-chiffre">
               {{ examenCourant?.nbPresents ?? 0 }} / {{ examenCourant?.nbInscrits ?? '—' }}
             </div>
             <div class="text-caption text-grey-7">
-              Taux {{ pourcentLisible(tauxPresence) }}
-              · {{ examenCourant?.nbInscrits ? `${nbRestant} restant(s)` : 'aucun inscrit' }}
+              {{ $t('scanExamen.stats.rate', { rate: pourcentLisible(tauxPresence) }) }}
+              · {{ examenCourant?.nbInscrits ? $t('scanExamen.stats.remaining', { count: nbRestant }) : $t('scanExamen.stats.noEnrolled') }}
             </div>
           </div>
           <div class="col-auto">
@@ -77,7 +75,7 @@
               dense
               emit-value
               map-options
-              label="Examen en cours *"
+              :label="$t('scanExamen.form.currentExam')"
               @update:model-value="(v) => selectionnerExamen(String(v ?? ''))"
             />
           </div>
@@ -87,27 +85,32 @@
               dense
               no-caps
               icon="local_printshop"
-              label="Tirage de cet examen"
-              aria-label="Voir le tirage de cet examen"
+              :label="$t('scanExamen.actions.seeDraw')"
+              :aria-label="$t('scanExamen.actions.seeDrawTooltip')"
               @click="router.push({ name: 'tirage', query: { examenId: examenCourant.id } })"
             />
           </div>
         </q-card-section>
 
         <q-card-section v-if="examenCourant" class="q-pt-none text-caption text-grey-7">
-          {{ examenCourant.codeExamen }} ·
-          {{ examenCourant.matiere?.intitule ?? '—' }} ·
-          {{ examenCourant.promotion?.nom ?? '—' }} ·
-          salle {{ examenCourant.salle?.code ?? '—' }} ·
-          {{ examenCourant.heureDebut }}–{{ examenCourant.heureFin }}
+          {{
+            $t('scanExamen.summary.slots', {
+              code: examenCourant.codeExamen,
+              subject: examenCourant.matiere?.intitule ?? '—',
+              promotion: examenCourant.promotion?.nom ?? '—',
+              room: examenCourant.salle?.code ?? '—',
+              start: examenCourant.heureDebut,
+              end: examenCourant.heureFin,
+            })
+          }}
         </q-card-section>
 
         <q-card-section class="row q-col-gutter-md items-end">
           <div class="col-12 col-md">
             <qr-scanner
           v-model="reference"
-          label="Carte étudiante (QR ou matricule)"
-          hint="Scannez la carte du candidat ou saisissez son matricule"
+          :label="$t('scanExamen.form.cardLabel')"
+          :hint="$t('scanExamen.form.cardHint')"
         />
           </div>
           <div class="col-12 col-md-auto">
@@ -116,7 +119,7 @@
               color="primary"
               no-caps
               icon="check"
-              label="Confirmer la présence"
+              :label="$t('scanExamen.actions.confirmPresence')"
               :disable="!reference || !examenCourant"
               :loading="envoiScan"
               @click="confirmer"
@@ -125,25 +128,25 @@
         </q-card-section>
 
         <q-card-section v-if="dernierResultat" class="q-pt-none">
-          <q-banner :class="dernierResultat.valide ? 'bg-positive text-white' : 'bg-negative text-white'">
+          <q-banner :class="dernierResultat.dejaEnregistre ? 'bg-warning text-dark' : dernierResultat.valide ? 'bg-positive text-white' : 'bg-negative text-white'">
             <template #avatar>
-              <q-icon :name="dernierResultat.valide ? 'check_circle' : 'cancel'" size="md" />
+              <q-icon :name="dernierResultat.dejaEnregistre ? 'info' : dernierResultat.valide ? 'check_circle' : 'cancel'" size="md" />
             </template>
             <div class="text-weight-bold">
-              {{ dernierResultat.valide ? 'Présence validée' : 'Scan rejeté' }}
+              {{ dernierResultat.dejaEnregistre ? $t('scanExamen.result.alreadyRecorded') : dernierResultat.valide ? $t('scanExamen.result.validated') : $t('scanExamen.result.rejected') }}
               <span v-if="dernierResultat.matriculeSaisi"> · {{ dernierResultat.matriculeSaisi }}</span>
             </div>
             <div v-if="dernierResultat.valide">
               {{ dernierResultat.prenomPorteur }} {{ dernierResultat.nomPorteur }}
             </div>
             <div v-else>
-              Motif : {{ dernierResultat.motifRejet ?? 'carte inconnue' }}
+              {{ $t('scanExamen.result.reason', { reason: dernierResultat.motifRejet ?? $t('scanExamen.result.unknownCard') }) }}
             </div>
           </q-banner>
         </q-card-section>
       </q-card>
 
-      <q-card v-if="dernierResultat?.valide" flat bordered class="carte-identite q-mb-md">
+      <q-card v-if="dernierResultat?.valide && !dernierResultat.dejaEnregistre" flat bordered class="carte-identite q-mb-md">
         <q-card-section class="text-center">
           <q-avatar size="120px" color="primary" text-color="white" class="q-mb-md">
             <q-icon name="person" size="80px" />
@@ -166,6 +169,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -174,6 +178,7 @@ import { LIBELLE_TYPE_EXAMEN, dateLisible, pourcentLisible } from '../utils/libe
 import type { Examen, ScanExamen } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -225,10 +230,10 @@ async function chargerExamens() {
         examens.value = [ex, ...examens.value];
         $q.notify({
           type: 'warning',
-          message: "Cet examen n'est pas démarré : les scans seront refusés tant qu'il n'est pas lancé.",
+          message: t('scanExamen.messages.examNotStarted'),
         });
       } catch {
-        $q.notify({ type: 'negative', message: 'Examen introuvable' });
+        $q.notify({ type: 'negative', message: t('scanExamen.messages.examNotFound') });
       }
     }
 
@@ -236,7 +241,7 @@ async function chargerExamens() {
     if (cible) await selectionnerExamen(cible);
   } catch (e: any) {
     examens.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des examens impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('scanExamen.messages.loadExamsFailed') });
   } finally {
     chargementExamens.value = false;
   }
@@ -254,7 +259,7 @@ async function selectionnerExamen(id: string) {
     examenCourant.value = data;
   } catch {
     examenCourant.value = null;
-    $q.notify({ type: 'negative', message: 'Examen introuvable' });
+    $q.notify({ type: 'negative', message: t('scanExamen.messages.examNotFound') });
   }
 }
 
@@ -283,7 +288,7 @@ async function confirmer() {
     reference.value = '';
     await rafraichirCompteurs();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Scan impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('scanExamen.messages.scanFailed') });
   } finally {
     envoiScan.value = false;
   }

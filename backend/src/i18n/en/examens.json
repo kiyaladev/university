@@ -1,0 +1,9 @@
+{
+  "examen_introuvable": "Examination not found",
+  "examen_deja_termine": "Examination already completed",
+  "examen_annule_demarrage_impossible": "Examination cancelled: cannot start",
+  "seul_un_examen_en_cours_peut_etre_termine": "Only an examination in progress can be completed",
+  "reference_vide": "Empty reference",
+  "scan_exige_examen_en_cours": "Scanning is only available while an examination is in progress",
+  "transition_statut_invalide": "Invalid status transition: use the start, finish, or cancel actions"
+}

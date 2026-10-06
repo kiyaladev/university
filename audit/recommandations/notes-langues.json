@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-02T13:15:56.215Z",
+  "environnement": "QA locale isolée",
+  "evaluationsDisponibles": 49,
+  "colonnesEtActions": [
+    "FR",
+    "EN"
+  ],
+  "erreursJavaScript": [],
+  "erreursApi": [],
+  "aucuneEcriture": true
+}

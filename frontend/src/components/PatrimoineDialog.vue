@@ -3,25 +3,23 @@
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section>
         <div class="text-h6">
-          {{ equipement ? 'Modifier l’équipement' : 'Nouvel équipement' }}
+          {{ equipement ? $t('patrimoine.equipmentDialog.title.edit') : $t('patrimoine.equipmentDialog.title.new') }}
         </div>
         <div class="text-caption text-grey-7">
-          {{ equipement
-            ? 'Mettez à jour la fiche : numéro de série, affectation, valeur. Les réparations déjà tracées restent attachées.'
-            : 'L’équipement entre à l’inventaire. La durée d’obsolescence sert au signalement Rectorat.' }}
+          {{ equipement ? $t('patrimoine.equipmentDialog.subtitle.edit') : $t('patrimoine.equipmentDialog.subtitle.new') }}
         </div>
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Identification</span>
+        <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-input
               v-model="form.libelle"
               outlined
               dense
-              label="Libellé *"
-              hint="Ex. : Vidéoprojecteur Epson S41"
+              :label="$t('patrimoine.categories.dialog.labelLabel')"
+              :hint="$t('patrimoine.equipmentDialog.fields.labelHint')"
               autofocus
             />
           </div>
@@ -30,8 +28,8 @@
               v-model="form.numeroSerie"
               outlined
               dense
-              label="Numéro de série *"
-              hint="Inscrit sur la plaque constructeur"
+              :label="$t('patrimoine.equipmentDialog.fields.serial')"
+              :hint="$t('patrimoine.equipmentDialog.fields.serialHint')"
             />
           </div>
         </div>
@@ -41,14 +39,14 @@
               v-model="form.numeroInventaire"
               outlined
               dense
-              label="N° d’inventaire *"
-              hint="PAT-AAAA-NNNNN — laissez vide pour générer"
+              :label="$t('patrimoine.equipmentDialog.fields.inventoryNumber')"
+              :hint="$t('patrimoine.equipmentDialog.fields.inventoryHint')"
             />
           </div>
           <div class="col-12 col-sm-6">
             <autocomplete-async
               v-model="form.categorieId"
-              label="Catégorie *"
+              :label="$t('patrimoine.equipmentDialog.fields.category')"
               endpoint="/patrimoine/categories"
               :label-fn="(c) => `${c.libelle} (${c.code})`"
               :clearable="false"
@@ -56,12 +54,12 @@
           </div>
         </div>
 
-        <span class="section-titre">Affectation</span>
+        <span class="section-titre">{{ $t('patrimoine.equipmentDialog.sections.assignment') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <autocomplete-async
               v-model="form.departementId"
-              label="Département"
+              :label="$t('common.fields.department')"
               endpoint="/departements"
               :label-fn="(d) => d.nom"
               :clearable="true"
@@ -70,7 +68,7 @@
           <div class="col-12 col-sm-6">
             <autocomplete-async
               v-model="form.salleId"
-              label="Salle"
+              :label="$t('common.fields.classroom')"
               endpoint="/salles"
               :label-fn="(s) => `${s.code} — ${s.nom}`"
               :clearable="true"
@@ -78,10 +76,10 @@
           </div>
         </div>
 
-        <span class="section-titre">Acquisition & obsolescence</span>
+        <span class="section-titre">{{ $t('patrimoine.equipmentDialog.sections.acquisition') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-4">
-            <champ-date v-model="form.dateAcquisition" label="Date d'acquisition" />
+            <champ-date v-model="form.dateAcquisition" :label="$t('patrimoine.equipmentDialog.fields.acquisitionDate')" />
           </div>
           <div class="col-12 col-sm-4">
             <q-input
@@ -90,8 +88,8 @@
               min="0"
               outlined
               dense
-              label="Valeur (GNF)"
-              hint="Coût d'achat"
+              :label="$t('patrimoine.equipmentDialog.fields.value')"
+              :hint="$t('patrimoine.equipmentDialog.fields.valueHint')"
             />
           </div>
           <div class="col-12 col-sm-4">
@@ -101,23 +99,23 @@
               min="1"
               outlined
               dense
-              label="Obsolescence (mois)"
-              hint="60 par défaut"
+              :label="$t('patrimoine.equipmentDialog.fields.obsolescence')"
+              :hint="$t('patrimoine.equipmentDialog.fields.obsolescenceHint')"
             />
           </div>
         </div>
 
         <div class="row items-center q-mt-md">
-          <q-toggle v-model="form.actif" label="Équipement en service" />
+          <q-toggle v-model="form.actif" :label="$t('patrimoine.equipmentDialog.fields.active')" />
         </div>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           :disable="form.libelle.trim().length < 2 || !form.numeroSerie.trim() || !form.categorieId"
           @click="enregistrer"
@@ -129,6 +127,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
@@ -139,6 +138,7 @@ const props = defineProps<{ modelValue: boolean; equipement?: EquipementPatrimoi
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t: $t } = useI18n();
 
 const dialogOuvert = computed({
   get: () => props.modelValue,
@@ -209,10 +209,10 @@ async function enregistrer() {
     };
     if (props.equipement) {
       await api.put(`/patrimoine/equipements/${props.equipement.id}`, payload);
-      $q.notify({ type: 'positive', message: 'Équipement mis à jour' });
+      $q.notify({ type: 'positive', message: $t('patrimoine.equipmentDialog.messages.updated') });
     } else {
       await api.post('/patrimoine/equipements', payload);
-      $q.notify({ type: 'positive', message: 'Équipement enregistré à l’inventaire' });
+      $q.notify({ type: 'positive', message: $t('patrimoine.equipmentDialog.messages.created') });
     }
     dialogOuvert.value = false;
     emit('enregistre');

@@ -6,13 +6,19 @@
   "lang": "fr",
   "dir": "ltr",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "start_url": "./index.html",
   "scope": "./",
-  "background_color": "#E4E6DE",
-  "theme_color": "#10251E",
-  "categories": ["education", "productivity"],
+  "background_color": "#F5F5F7",
+  "theme_color": "#F5F5F7",
+  "categories": [
+    "education",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "icons/icon-128x128.png",
@@ -58,7 +64,12 @@
       "short_name": "Tournée",
       "description": "Ouvrir la feuille de contrôle des séances du jour",
       "url": "./index.html#/controle",
-      "icons": [{ "src": "icons/icon-192x192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }

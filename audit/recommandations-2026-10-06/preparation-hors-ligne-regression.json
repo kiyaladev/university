@@ -1,0 +1,12 @@
+{
+  "constat": "Bouton de préparation présent seulement sur DashboardPage, route synthese-presences sans rôle CONTROLEUR",
+  "correction": "Bouton ajouté à la tournée ControlePage avec lectures QA et cache lié au compte",
+  "qaBuildPending": false,
+  "typecheckPending": false,
+  "browserReplayPending": false,
+  "candidateBuildPending": false,
+  "browserProof": "preparation-hors-ligne-qa.json",
+  "qaAndCandidateApisVerified": true,
+  "demoMediaAbsent": true,
+  "typecheckPassed": true
+}

@@ -1,0 +1,20 @@
+{
+  "evaluation_introuvable": "Évaluation introuvable",
+  "matiere_introuvable": "Matière introuvable",
+  "annee_academique_introuvable": "Année académique introuvable",
+  "promotion_introuvable": "Promotion introuvable",
+  "deliberation_introuvable": "Délibération introuvable",
+  "aucune_ligne_pour_cet_etudiant_a_cette_deliberation": "Aucune ligne pour cet étudiant à cette délibération",
+  "l_evaluation_existante_intitule_est_deja_cloturee": "L'évaluation \" {existante.intitule} \" est déjà clôturée.",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "une_deliberation_de_session_normale_existe_deja_pour_cette_p": "Une délibération de session normale existe déjà pour cette promotion et cette année.",
+  "une_deliberation_de_rattrapage_existe_deja_pour_cette_promot": "Une délibération de rattrapage existe déjà pour cette promotion et cette année.",
+  "deliberation_validee_par_le_jury_tout_recalcul_est_bloque": "Délibération validée par le jury : tout recalcul est bloqué.",
+  "cette_deliberation_est_deja_validee": "Cette délibération est déjà validée.",
+  "la_deliberation_de_la_session_normale_doit_d_abord_exister": "La délibération de la session normale doit d'abord exister.",
+  "l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_": "L'évaluation « {existante.intitule} » est clôturée : ses notes sont figées et elle ne peut plus être modifiée.",
+  "l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_": "L'évaluation « {evaluation.intitule} » est clôturée : la saisie des notes est fermée.",
+  "l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig": "L’évaluation « {intitule} » est clôturée : ses notes sont figées et elle ne peut plus être modifiée.",
+  "impossible_de_supprimer_existante_intitule_des_notes_y_sont_de": "Impossible de supprimer « {intitule} » : {nombre} notes y sont déjà enregistrées.",
+  "l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes": "L’évaluation « {intitule} » est clôturée : la saisie des notes est fermée."
+}

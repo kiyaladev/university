@@ -1,0 +1,14 @@
+{
+  "attestation_introuvable": "Attestation introuvable",
+  "inscription_introuvable": "Inscription de rattachement introuvable.",
+  "rattachement_incoherent": "L’inscription doit correspondre à l’étudiant, à l’année et à la promotion de l’attestation.",
+  "annee_academique_introuvable": "Année académique introuvable",
+  "etudiant_introuvable": "Étudiant introuvable",
+  "rien_a_modifier_renseignez_un_type_ou_un_motif": "Rien à modifier : renseignez un type ou un motif.",
+  "cette_attestation_est_deja_revoquee": "Cette attestation est déjà révoquée.",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "numero_d_attestation_temporairement_indisponible_reessayez": "Numéro d'attestation temporairement indisponible, réessayez.",
+  "la_suppression_d_attestations_est_interdite_ces_documents_so": "La suppression d'attestations est interdite : ces documents sont conservés pour leur valeur probante (annales, opposabilité aux tiers). Révoquez l'attestation au lieu de la supprimer.",
+  "une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi": "L’attestation {numero} a déjà été émise pour cet étudiant.",
+  "cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi": "Cette attestation a été révoquée et ne peut plus être modifiée."
+}

@@ -1,5 +1,4 @@
 import { ExecutionContext, Injectable } from '@nestjs/common';
-import { createHash } from 'node:crypto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 /**
@@ -13,11 +12,9 @@ import { ThrottlerGuard } from '@nestjs/throttler';
  * `req.ip` est calculé par Express à partir de `trust proxy` : c'est l'adresse
  * ajoutée par nginx, celle de la vraie socket, que le client ne contrôle pas.
  *
- * Une session identifiée compte pour elle-même. Sans cela, une faculté entière
- * derrière un même NAT — le cas normal dans une université guinéenne — partage
- * un seul compteur, et le vingtième contrôleur à ouvrir l'application se fait
- * refuser à cause des dix-neuf autres. Le jeton n'est jamais lu ni déchiffré :
- * seule son empreinte sert de clé de comptage.
+   * Une session authentifiée compte pour elle-même. L'identité vient de
+   * `req.user`, déjà validée par JwtAuthGuard, jamais d'un Bearer fourni par le
+   * client : les routes publiques restent ainsi comptées par adresse réelle.
  */
 @Injectable()
 export class DebitGuard extends ThrottlerGuard {
@@ -39,11 +36,9 @@ export class DebitGuard extends ThrottlerGuard {
   }
 
   protected getTracker(req: Record<string, any>): Promise<string> {
-    const jeton = String(req.headers?.authorization ?? '');
-    if (jeton.startsWith('Bearer ')) {
-      return Promise.resolve(
-        's:' + createHash('sha256').update(jeton.slice(7)).digest('base64url').slice(0, 22),
-      );
+    const userId = req.user?.id;
+    if (typeof userId === 'string' && userId.length > 0) {
+      return Promise.resolve('u:' + userId);
     }
     return Promise.resolve('ip:' + (req.ip ?? req.socket?.remoteAddress ?? 'inconnu'));
   }

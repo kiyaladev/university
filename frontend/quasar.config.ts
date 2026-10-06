@@ -1,16 +1,24 @@
 // Configuration Quasar — UniPrésence
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 import { defineConfig } from '#q-app/wrappers';
+import { rmSync } from 'node:fs';
+import { join } from 'node:path';
 
-export default defineConfig(() => {
+export default defineConfig((ctx) => {
+  const inclureMediasDemo = ctx.dev || Boolean(process.env.QA_BUILD_DIR && process.env.INCLUDE_DEMO_MEDIA === 'true');
+  if (ctx.prod && !process.env.API_URL) throw new Error('API_URL est obligatoire pour une compilation de production. Utilisez QA_BUILD_DIR pour isoler une recette.');
   return {
-    boot: ['axios'],
+    boot: ['axios', 'i18n', 'accessibilite'],
 
     css: ['app.scss'],
 
     extras: ['roboto-font', 'material-icons', 'material-icons-outlined'],
 
     build: {
+      afterBuild({ quasarConf }) {
+        if (!inclureMediasDemo) rmSync(join(quasarConf.build.distDir, 'media', 'demonstration'), { recursive: true, force: true });
+      },
+      ...(process.env.QA_BUILD_DIR ? { distDir: process.env.QA_BUILD_DIR } : {}),
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20',
@@ -28,6 +36,7 @@ export default defineConfig(() => {
       // moment du build : API_URL=https://… quasar build
       env: {
         API_URL: process.env.API_URL || 'http://localhost:5031/api',
+        SHOW_DEMO_ACCOUNTS: ctx.dev && process.env.SHOW_DEMO_ACCOUNTS === 'true',
       },
     },
 
@@ -42,19 +51,19 @@ export default defineConfig(() => {
       lang: 'fr',
 
       config: {
-        // Peintures du panneau. Ces valeurs surchargent les variables Sass à
+        // Palette Apple. Ces valeurs surchargent les variables Sass à
         // l'exécution : elles doivent rester identiques à quasar.variables.scss,
         // sans quoi deux palettes se disputent l'interface.
         brand: {
-          primary: '#10251E', // encre — l'action ; les trois peintures disent l'état
-          secondary: '#0F7A45', // vert — séance assurée
-          accent: '#EFB700', // jaune — retard
-          positive: '#0F7A45',
-          negative: '#C4122E', // rouge — absence
-          warning: '#EFB700',
-          info: '#33463F',
-          dark: '#12291F',
-          'dark-page': '#0D1F18',
+          primary: '#007A4D', // le vert du drapeau — la seule couleur d'action
+          secondary: '#1D1D1F', // encre — titres et actions neutres
+          accent: '#007A4D', // le vert des liens
+          positive: '#007A4D',
+          negative: '#CE1126', // rouge du drapeau
+          warning: '#8A6300', // l'ocre qui porte le texte : le jaune n'en porte pas
+          info: '#6E6E73',
+          dark: '#1D1D1F',
+          'dark-page': '#000000',
         },
         notify: { position: 'top-right', timeout: 3000 },
       },
@@ -72,6 +81,7 @@ export default defineConfig(() => {
       swFilename: 'sw.js',
 
       extendGenerateSWOptions(cfg) {
+        if (!inclureMediasDemo) cfg.globIgnores = [...(cfg.globIgnores ?? []), '**/media/demonstration/**'];
         // La coque (HTML, JS, CSS, fontes, icônes) est précachée : c'est elle
         // qui permet d'ouvrir la tournée dans un amphi sans couverture.
         cfg.skipWaiting = false;
@@ -85,10 +95,32 @@ export default defineConfig(() => {
             // Une réponse en cache vaut mieux qu'un écran vide en salle, mais
             // elle ne doit jamais primer sur la donnée fraîche.
             urlPattern: ({ url, request }: any) =>
-              request.method === 'GET' && url.pathname.startsWith('/api/'),
+              request.method === 'GET' && url.pathname.startsWith('/api/') && !url.searchParams.has('token'),
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'unipresence-api',
+              cacheName: 'unipresence-api-v2',
+              plugins: [{
+                // Le cache HTTP ignore Authorization : une clé propre à la
+                // session empêche de lire le résultat du compte précédent.
+                cacheKeyWillBeUsed: async ({ request }: any) => {
+                  const authorization = request.headers.get('Authorization') || 'anonymous';
+                  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(authorization));
+                  const key = Array.from(new Uint8Array(hash)).map(byte => byte.toString(16).padStart(2, '0')).join('');
+                  const url = new URL(request.url);
+                  url.searchParams.set('__session', key);
+                  return url.toString();
+                },
+                cachedResponseWillBeUsed: async ({ request, cachedResponse }: any) => {
+                  const authorization = request.headers.get('Authorization');
+                  if (authorization) {
+                    try {
+                      const payload = JSON.parse(atob(authorization.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+                      if (!payload.exp || payload.exp * 1000 <= Date.now()) return null;
+                    } catch { return null; }
+                  }
+                  return cachedResponse;
+                },
+              }],
               networkTimeoutSeconds: 4,
               expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 },
               cacheableResponse: { statuses: [200] },

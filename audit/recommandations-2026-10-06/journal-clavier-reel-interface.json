@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-06T15:30:49.181Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 320,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 320,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 320,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 320,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true,
+      "keyboardSearch": true,
+      "keyboardDetails": true,
+      "focusContainedBothDirections": true,
+      "escapeCloses": true,
+      "focusRestored": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Journal réel QA au clavier ADMIN/DIRECTION FR/EN 320/375/1440 px ; ne remplace pas une recette lecteur d’écran"
+}

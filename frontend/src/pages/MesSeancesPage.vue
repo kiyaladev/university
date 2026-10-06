@@ -2,19 +2,19 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Mes séances</div>
+        <h1 class="page-titre">{{ $t('mesSeances.title') }}</h1>
         <div class="page-sous-titre">
-          Suivi de mes cours et des contrôles de présence me concernant
+          {{ $t('mesSeances.subtitle') }}
         </div>
       </div>
       <div class="col-auto row q-gutter-sm items-center">
-        <champ-date v-model="dateDebut" label="Du" style="width: 152px" />
-        <champ-date v-model="dateFin" label="Au" style="width: 152px" />
+        <champ-date v-model="dateDebut" :label="$t('mesSeances.filters.from')" style="width: 152px" />
+        <champ-date v-model="dateFin" :label="$t('mesSeances.filters.to')" style="width: 152px" />
         <q-btn
           flat
           no-caps
           icon="assignment_turned_in"
-          label="Mes justificatifs"
+          :label="$t('mesSeances.actions.myJustificatifs')"
           to="/justificatifs"
         />
         <q-btn
@@ -22,7 +22,7 @@
           color="primary"
           icon="print"
           no-caps
-          label="Imprimer ma fiche d’assiduité"
+          :label="$t('mesSeances.actions.printAttendance')"
           :disable="!auth.utilisateur?.enseignantId"
           @click="imprimer"
         />
@@ -63,7 +63,7 @@
         </article>
       </li>
       <li v-if="!chargement && !fiche?.seances?.length" class="seance-relevee__vide pochoir">
-        Aucune séance sur cette période. Élargissez les dates pour remonter plus loin.
+        {{ $t('mesSeances.emptyState.seances') }}
       </li>
     </ol>
 
@@ -77,8 +77,8 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 25 }"
-      no-data-label="Aucune séance sur cette période. Élargissez les dates pour remonter plus loin."
-      loading-label="Chargement de vos séances…"
+      :no-data-label="$t('mesSeances.emptyState.seances')"
+      :loading-label="$t('mesSeances.table.loadingLabel')"
     >
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -109,6 +110,7 @@ import {
 } from '../utils/libelles';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
@@ -120,35 +122,45 @@ const chargement = ref(false);
 const kpis = computed(() => {
   const s = fiche.value?.synthese;
   return [
-    { libelle: 'Séances programmées', valeur: s?.planifiees ?? 0, couleur: 'primary' },
-    { libelle: 'Séances assurées', valeur: s?.assurees ?? 0, couleur: 'positive' },
-    { libelle: 'Absences', valeur: s?.absent ?? 0, couleur: 'negative' },
-    { libelle: 'Heures réalisées', valeur: heuresLisibles(s?.heuresRealisees), couleur: 'secondary' },
+    { libelle: t('mesSeances.kpis.planned'), valeur: s?.planifiees ?? 0, couleur: 'primary' },
+    { libelle: t('mesSeances.kpis.ensured'), valeur: s?.assurees ?? 0, couleur: 'positive' },
+    { libelle: t('mesSeances.kpis.absences'), valeur: s?.absent ?? 0, couleur: 'negative' },
+    {
+      libelle: t('mesSeances.kpis.hoursDone'),
+      valeur: heuresLisibles(s?.heuresRealisees),
+      couleur: 'secondary',
+    },
   ];
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'date', label: 'Date', field: (r: any) => dateLisible(r.date), align: 'left', sortable: true },
-  { name: 'horaire', label: 'Horaire', field: 'horaire', align: 'left' },
-  { name: 'matiere', label: 'Matière', field: 'matiere', align: 'left' },
-  { name: 'promotion', label: 'Promotion', field: 'promotion', align: 'left' },
-  { name: 'salle', label: 'Salle', field: 'salle', align: 'left' },
-  { name: 'statut', label: 'Constat', field: 'statut', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  {
+    name: 'date',
+    label: t('mesSeances.table.columns.date'),
+    field: (r: any) => dateLisible(r.date),
+    align: 'left',
+    sortable: true,
+  },
+  { name: 'horaire', label: t('mesSeances.table.columns.horaire'), field: 'horaire', align: 'left' },
+  { name: 'matiere', label: t('mesSeances.table.columns.matiere'), field: 'matiere', align: 'left' },
+  { name: 'promotion', label: t('mesSeances.table.columns.promotion'), field: 'promotion', align: 'left' },
+  { name: 'salle', label: t('mesSeances.table.columns.salle'), field: 'salle', align: 'left' },
+  { name: 'statut', label: t('mesSeances.table.columns.statut'), field: 'statut', align: 'left' },
   {
     name: 'duree',
-    label: 'Durée',
+    label: t('mesSeances.table.columns.duree'),
     field: (r: any) => dureeLisible(r.dureeMinutes),
     align: 'left',
   },
-  { name: 'theme', label: 'Thème déroulé', field: 'thematiqueTraitee', align: 'left' },
-];
+  { name: 'theme', label: t('mesSeances.table.columns.theme'), field: 'thematiqueTraitee', align: 'left' },
+]);
 
 function imprimer() {
   const enseignantId = auth.utilisateur?.enseignantId;
   if (!enseignantId) {
     $q.notify({
       type: 'warning',
-      message: 'Votre compte n’est rattaché à aucun dossier d’enseignant : la fiche est indisponible.',
+      message: t('mesSeances.messages.noTeacherFile'),
     });
     return;
   }

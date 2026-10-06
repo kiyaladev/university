@@ -1,20 +1,19 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 520px; max-width: 95vw">
-      <q-card-section class="text-h6">Générer les séances</q-card-section>
+      <q-card-section class="text-h6">{{ $t('emploiDuTemps.actions.generateSessions') }}</q-card-section>
 
       <q-card-section>
         <p class="text-body2">
-          Les séances sont créées à partir des créneaux de l’emploi du temps, jour par jour.
-          Les séances déjà existantes sont conservées telles quelles.
+          {{ $t('emploiDuTemps.generationDialog.description') }}
         </p>
 
         <div class="row q-col-gutter-md">
           <div class="col-6">
-            <champ-date v-model="dateDebut" label="Du" />
+            <champ-date v-model="dateDebut" :label="$t('common.actions.from')" />
           </div>
           <div class="col-6">
-            <champ-date v-model="dateFin" label="Au" />
+            <champ-date v-model="dateFin" :label="$t('common.actions.to')" />
           </div>
         </div>
 
@@ -25,7 +24,7 @@
           dense
           emit-value
           map-options
-          label="Année académique"
+          :label="$t('affectations.filters.year')"
           class="q-mt-md"
         />
 
@@ -34,25 +33,24 @@
           outlined
           dense
           class="q-mt-md"
-          label="Jours fériés à exclure"
-          hint="Dates séparées par des virgules — ex. 2026-04-07, 2026-05-01"
+          :label="$t('emploiDuTemps.generationDialog.excludedDays')"
+          :hint="$t('emploiDuTemps.generationDialog.excludedDaysHint')"
         />
 
         <q-banner v-if="resultat" class="note--valide q-mt-md">
           <template #avatar><q-icon name="check_circle" /></template>
-          {{ resultat.creees }} séance(s) créée(s) sur {{ resultat.candidates }} créneaux traités
-          ({{ resultat.ignorees }} déjà présente(s)).
+          {{ $t('emploiDuTemps.generationDialog.result', { created: resultat.creees, candidates: resultat.candidates, skipped: resultat.ignorees }) }}
         </q-banner>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat no-caps label="Fermer" v-close-popup />
+        <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
           icon="auto_awesome_motion"
-          label="Générer les séances"
+          :label="$t('emploiDuTemps.actions.generateSessions')"
           :disable="!anneeId"
           :loading="chargement"
           @click="generer"
@@ -66,6 +64,7 @@
 import ChampDate from './ChampDate.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { aujourdhui, decalerJours } from '../utils/libelles';
 import type { AnneeAcademique } from '../types';
@@ -74,6 +73,7 @@ defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; genere: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const annees = ref<AnneeAcademique[]>([]);
 const anneeId = ref<string>('');
 const dateDebut = ref(aujourdhui());
@@ -90,7 +90,7 @@ async function generer() {
   // Sans année académique, le serveur refuse : on le dit ici plutôt que de
   // faire remonter une erreur de validation.
   if (!anneeId.value) {
-    $q.notify({ type: 'warning', message: 'Choisissez l’année académique à générer.' });
+    $q.notify({ type: 'warning', message: t('emploiDuTemps.generationDialog.yearRequired') });
     return;
   }
   chargement.value = true;

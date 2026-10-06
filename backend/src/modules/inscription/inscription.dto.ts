@@ -96,6 +96,7 @@ export class CreatePaiementDto {
   @IsOptional() @IsString() nomComplet?: string;
   @IsOptional() @IsString() motif?: string;
   @IsOptional() @IsUUID() inscriptionId?: string;
+  @IsOptional() @IsUUID() anneeId?: string;
   @IsOptional() @IsUUID() etudiantId?: string;
 }
 

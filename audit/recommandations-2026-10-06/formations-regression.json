@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-06T10:38:42.751Z",
+  "database": "university_recommandations_20261006",
+  "passed": false,
+  "failures": [
+    "double publication acceptée",
+    "double clôture acceptée",
+    "nom ou contenu libre recopié dans le journal"
+  ],
+  "observations": {
+    "publicationStatuses": [
+      201,
+      201
+    ],
+    "confirmationStatuses": [
+      201,
+      409
+    ],
+    "closureStatuses": [
+      201,
+      201
+    ],
+    "confirmationAuditCount": 1,
+    "finalConfirmedCount": 1,
+    "paidAmount": 5000,
+    "revenue": 5000,
+    "freeTextAbsent": false,
+    "protectedCertificateRead": true
+  },
+  "productionUntouched": true,
+  "operatorCalled": false,
+  "educationalCompletionAcceptancePending": true
+}

@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-06T11:01:42.594Z",
+  "database": "university_recommandations_20261006",
+  "passed": false,
+  "failures": [
+    "empreinte contournée par la route mettre-sous-pli",
+    "double impression acceptée",
+    "empreinte non SHA-256 acceptée"
+  ],
+  "observations": {
+    "startStatuses": [
+      201,
+      400
+    ],
+    "endStatuses": [
+      201,
+      400
+    ],
+    "validScans": 1,
+    "rejectedScans": 1,
+    "uniqueScanAuditCount": 1,
+    "scannerIdentityImposed": true,
+    "printStatuses": [
+      201,
+      201
+    ],
+    "bypassStatus": 201,
+    "invalidHashStatus": 201,
+    "finalPrintingStage": "RECUPERE",
+    "protectedReceiptRead": true
+  },
+  "productionUntouched": true,
+  "physicalPrintingAndIdentityCheckPending": true
+}

@@ -8,18 +8,16 @@
         dense
         no-caps
         icon="login"
-        label="Se connecter"
+        :label="$t('bibliothequePublique.nav.login')"
         to="/connexion"
       />
     </div>
     <div class="row justify-center">
       <div class="col-12 col-md-10 col-lg-9">
         <div class="text-center q-mt-lg q-mb-lg">
-          <div class="lettrage page-titre">Bibliothèque numérique</div>
+          <h1 class="lettrage page-titre">{{ $t('bibliothequePublique.title') }}</h1>
           <div class="page-sous-titre biblio-intro">
-            Mémoires, thèses, articles et supports de cours de l'université :
-            le dépôt institutionnel accessible à tous, pour le prestige de
-            l'établissement et son éligibilité aux programmes AUF / UNESCO.
+            {{ $t('bibliothequePublique.subtitle') }}
           </div>
         </div>
 
@@ -30,7 +28,7 @@
             outlined
             clearable
             debounce="350"
-            placeholder="Rechercher dans tout le fonds (intitulé, mots-clés, contenu…)"
+            :placeholder="$t('bibliothequePublique.search.placeholder')"
             class="biblio-recherche"
           >
             <template #prepend><q-icon name="search" /></template>
@@ -55,7 +53,7 @@
               clearable
               emit-value
               map-options
-              label="Type de document"
+              :label="$t('bibliothequePublique.filters.type')"
             />
           </div>
           <div class="col-12 col-sm-3">
@@ -67,7 +65,7 @@
               clearable
               emit-value
               map-options
-              label="Département"
+              :label="$t('bibliothequePublique.filters.department')"
               :loading="chargementDepartements"
             />
           </div>
@@ -78,7 +76,7 @@
               dense
               outlined
               clearable
-              label="Année d'édition"
+              :label="$t('bibliothequePublique.filters.editionYear')"
               :min="1900"
               :max="2100"
             />
@@ -103,25 +101,24 @@
         >
           <q-icon :name="filtrageActif ? 'search_off' : 'library_books'" size="38px" color="grey-5" />
           <div v-if="filtrageActif" class="q-mt-sm">
-            <div>Aucun document ne correspond à votre recherche.</div>
+            <div>{{ $t('bibliothequePublique.emptyState.filteredTitle') }}</div>
             <div class="text-caption q-mt-xs">
-              Essayez un mot-clé plus court, ou élargissez le type et le département.
+              {{ $t('bibliothequePublique.emptyState.filteredHint') }}
             </div>
             <q-btn
               flat
               no-caps
               color="primary"
               icon="refresh"
-              label="Effacer la recherche"
+              :label="$t('bibliothequePublique.emptyState.clearSearch')"
               class="q-mt-sm"
               @click="reinitialiser"
             />
           </div>
           <div v-else class="q-mt-sm">
-            <div>Le fonds ne contient encore aucun document publié.</div>
+            <div>{{ $t('bibliothequePublique.emptyState.noDocsTitle') }}</div>
             <div class="text-caption q-mt-xs">
-              Les mémoires, thèses et supports de cours apparaîtront ici dès leur
-              mise en ligne par la bibliothèque.
+              {{ $t('bibliothequePublique.emptyState.noDocsHint') }}
             </div>
           </div>
         </div>
@@ -138,7 +135,7 @@
                   :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type"
                 />
                 <span class="doc-annee text-caption text-grey-7">
-                  année {{ anneeDocument(doc) }}
+                  {{ $t('bibliothequePublique.card.year', { year: anneeDocument(doc) }) }}
                 </span>
                 <span
                   v-if="Array.isArray(doc.motsClefs) && doc.motsClefs.length"
@@ -154,7 +151,7 @@
                 <span
                   v-if="doc.telechargements > 0"
                   class="text-caption text-grey-7"
-                  :title="`${doc.telechargements} téléchargement(s)`"
+                  :title="$t('bibliothequePublique.card.downloadsTitle', { count: doc.telechargements })"
                 >
                   <q-icon name="download" size="15px" class="q-mr-xs" />{{ doc.telechargements }}
                 </span>
@@ -181,8 +178,8 @@
                     color="primary"
                     no-caps
                     icon="download"
-                    label="Télécharger"
-                    :title="doc.tailleKo ? `${(doc.tailleKo / 1024).toFixed(1)} Mo` : undefined"
+                    :label="$t('bibliothequePublique.card.download')"
+                    :title="doc.tailleKo ? $t('bibliothequePublique.card.sizeMo', { size: (doc.tailleKo / 1024).toFixed(1) }) : undefined"
                     @click="telecharger(doc)"
                   />
                 </div>
@@ -229,7 +226,7 @@
                 dense
                 no-caps
                 icon="download"
-                label="Télécharger"
+                :label="$t('bibliothequePublique.table.download')"
                 @click="telecharger(p.row)"
               />
             </q-td>
@@ -247,8 +244,7 @@
         />
 
         <div class="text-center text-caption text-grey-7 q-pb-lg">
-          La consultation et le téléchargement sont libres et gratuits. La
-          numérisation des fonds papier fait l'objet d'un marché distinct.
+          {{ $t('bibliothequePublique.footer') }}
         </div>
       </div>
     </div>
@@ -265,6 +261,7 @@
  * via <mark> pour donner du contexte au visiteur.
  */
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ViewToggle from '../components/ViewToggle.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -273,6 +270,8 @@ import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { Departement, DocumentDepot } from '../types';
 
 interface OptionSimple { label: string; value: string }
+
+const { t } = useI18n();
 
 const documents = ref<DocumentDepot[]>([]);
 const departements = ref<Departement[]>([]);
@@ -314,14 +313,14 @@ const optionsDepartements = computed<OptionSimple[]>(() =>
   departements.value.map((d) => ({ label: d.nom, value: d.id })),
 );
 
-const colonnesTableau = [
-  { name: 'titre', label: 'Document', field: 'titre', align: 'left' as const },
-  { name: 'departement', label: 'Département', field: 'departement', align: 'left' as const },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' as const },
-  { name: 'annee', label: 'Année', field: 'anneeEdition', align: 'center' as const },
-  { name: 'telechargements', label: 'Téléchargements', field: 'telechargements', align: 'right' as const },
+const colonnesTableau = computed(() => [
+  { name: 'titre', label: t('bibliothequePublique.table.columns.document'), field: 'titre', align: 'left' as const },
+  { name: 'departement', label: t('bibliothequePublique.table.columns.department'), field: 'departement', align: 'left' as const },
+  { name: 'type', label: t('bibliothequePublique.table.columns.type'), field: 'type', align: 'left' as const },
+  { name: 'annee', label: t('bibliothequePublique.table.columns.year'), field: 'anneeEdition', align: 'center' as const },
+  { name: 'telechargements', label: t('bibliothequePublique.table.columns.downloads'), field: 'telechargements', align: 'right' as const },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
-];
+]);
 
 function anneeDocument(doc: DocumentDepot): number {
   return doc.anneeEdition ?? new Date(doc.createdAt).getFullYear();
@@ -395,7 +394,7 @@ async function telecharger(doc: DocumentDepot) {
 onMounted(async () => {
   chargementDepartements.value = true;
   try {
-    const { data } = await api.get('/departements?all=1', { silencieux: true });
+    const { data } = await api.get('/departements/public', { silencieux: true });
     departements.value = Array.isArray(data) ? data : (data.data ?? []);
   } finally {
     chargementDepartements.value = false;
@@ -429,11 +428,11 @@ onMounted(async () => {
   border: var(--up-filet-fin);
   white-space: pre-wrap;
 }
-/* Le surlignage reprend le jaune signal du panneau, qui porte toujours de
-   l'encre et jamais du blanc. */
+/* Le surlignage se pose en jaune très dilué. Ce bloc est du CSS simple : la
+   variable Sass `$jaune` qui s'y trouvait n'y était jamais résolue, et le
+   surlignage n'avait donc aucun fond. */
 .doc-extrait :deep(mark) {
-  background: $jaune;
-  color: var(--up-encre);
+  background: #FFF6C2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

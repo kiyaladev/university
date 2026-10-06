@@ -1,6 +1,5 @@
-import { IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Type } from 'class-transformer';
-import { StatutPaiement, TypeRecette } from '@prisma/client';
+import { IsDateString, IsEnum, IsIn, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ModePaiement, StatutPaiement, TypeRecette } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 
 export class CreateRecetteDto {
@@ -28,7 +27,7 @@ export class UpdateRecetteDto {
 
 export class EncaisserRecetteDto {
   /** Mode d'encaissement ; l'API crée un Paiement REUSSI rattaché. */
-  @IsOptional() @IsString() mode?: 'ESPECES' | 'VIREMENT' | 'MOBILE_MONEY';
+  @IsOptional() @IsEnum(ModePaiement) mode?: ModePaiement;
   @IsOptional() @IsString() operateur?: string;
   @IsOptional() @IsString() nomComplet?: string;
   @IsOptional() @IsString() telephone?: string;
@@ -39,5 +38,5 @@ export class RecetteQueryDto extends QueryDto {
   @IsOptional() @IsDateString() dateDebut?: string;
   @IsOptional() @IsDateString() dateFin?: string;
   @IsOptional() @IsString() client?: string;
-  @IsOptional() @IsEnum(StatutPaiement) paiementStatut?: StatutPaiement;
+  @IsOptional() @IsIn([...Object.values(StatutPaiement), 'A_ENCAISSER']) paiementStatut?: StatutPaiement | 'A_ENCAISSER';
 }

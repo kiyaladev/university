@@ -30,9 +30,13 @@ import {
   TypeDemandeDocument,
   ModePaiement,
 } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { CrudService } from '../../common/crud.service';
+import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MobileMoneyService } from '../inscription/mobile-money.service';
+import { prochainNumeroTx } from '../../common/numero';
 
 const PREFIX_DEMANDE = 'DOC-';
 
@@ -63,7 +67,7 @@ export const DEMANDE_INCLUDE = {
 export class DocumentsDemandeService extends CrudService {
   private readonly logger = new Logger(DocumentsDemandeService.name);
 
-  constructor(prisma: PrismaService) {
+  constructor(prisma: PrismaService, private readonly mobileMoney: MobileMoneyService = new MobileMoneyService()) {
     super(prisma, 'demandeDocument', {
       orderBy: { creeLe: 'desc' },
       include: DEMANDE_INCLUDE,
@@ -81,16 +85,7 @@ export class DocumentsDemandeService extends CrudService {
     tx: Prisma.TransactionClient,
     annee: string,
   ): Promise<string> {
-    const prefixe = `${PREFIX_DEMANDE}${annee}-`;
-    const existantes = await tx.demandeDocument.findMany({
-      where: { numero: { startsWith: prefixe } },
-      select: { numero: true },
-    });
-    const max = existantes.reduce((m, r) => {
-      const n = Number(r.numero.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+    return prochainNumeroTx(tx, 'demandeDocument', 'numero', `${PREFIX_DEMANDE}${annee}-`, 5);
   }
 
   /** Numéro séquentiel "PAY-AAAA-NNNNN" pour le paiement lié. */
@@ -98,16 +93,7 @@ export class DocumentsDemandeService extends CrudService {
     tx: Prisma.TransactionClient,
     annee: string,
   ): Promise<string> {
-    const prefixe = `PAY-${annee}-`;
-    const existantes = await tx.paiement.findMany({
-      where: { reference: { startsWith: prefixe } },
-      select: { reference: true },
-    });
-    const max = existantes.reduce((m, p) => {
-      const n = Number(p.reference.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+    return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
   }
 
   // ---------------------------------------------------------- lecture
@@ -125,8 +111,8 @@ export class DocumentsDemandeService extends CrudService {
     user: AuthUser,
   ) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.DemandeDocumentWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -156,12 +142,12 @@ export class DocumentsDemandeService extends CrudService {
         where,
         include: DEMANDE_INCLUDE,
         orderBy: { creeLe: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.demandeDocument.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   /** Vue propre à l'étudiant connecté : strictement ses demandes. */
@@ -176,7 +162,7 @@ export class DocumentsDemandeService extends CrudService {
     user: AuthUser,
   ) {
     if (!user.etudiantId) {
-      throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+      throw new NotFoundException(t('documents-demande.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
     return this.liste({ ...query, etudiantId: user.etudiantId }, user);
   }
@@ -187,11 +173,17 @@ export class DocumentsDemandeService extends CrudService {
    * l'existence d'un identifiant qui n'est pas le sien.
    */
   async findOnePour(id: string, user: AuthUser) {
-    const demande = await this.findOne(id);
     const estStaff =
       user.role === 'ADMIN' || user.role === 'SCOLARITE' || user.role === 'DIRECTION';
-    if (!estStaff && demande.etudiantId !== user.etudiantId) {
-      throw new NotFoundException('Demande introuvable');
+    const demande = await this.prisma.demandeDocument.findFirst({
+      where: {
+        id,
+        ...(!estStaff ? { etudiantId: user.etudiantId ?? '__aucun__' } : {}),
+      },
+      include: DEMANDE_INCLUDE,
+    });
+    if (!demande) {
+      throw new NotFoundException(t('documents-demande.demande_introuvable'));
     }
     return demande;
   }
@@ -252,7 +244,7 @@ export class DocumentsDemandeService extends CrudService {
   /** Lecture d'un tarif par identifiant. */
   async findTarif(id: string) {
     const tarif = await this.prisma.tarifDemande.findUnique({ where: { id } });
-    if (!tarif) throw new NotFoundException('Tarif introuvable');
+    if (!tarif) throw new NotFoundException(t('documents-demande.tarif_introuvable'));
     return tarif;
   }
 
@@ -261,12 +253,34 @@ export class DocumentsDemandeService extends CrudService {
     return this.prisma.tarifDemande.findUnique({ where: { type } });
   }
 
-  /** Création d'un tarif (ADMIN). */
-  async creerTarif(dto: { type: TypeDemandeDocument; montant: number; delaiHeures: number }) {
+  /**
+   * Création d'un tarif (ADMIN). Le tarif commande le prix d'un document :
+   * sa création et son entrée de journal partagent la transaction.
+   */
+  async creerTarif(
+    dto: { type: TypeDemandeDocument; montant: number; delaiHeures: number },
+    user: AuthUser,
+  ) {
     for (let tentative = 0; tentative < 5; tentative++) {
       try {
-        return await this.prisma.tarifDemande.create({
-          data: { type: dto.type, montant: dto.montant, delaiHeures: dto.delaiHeures },
+        return await this.prisma.$transaction(async (tx) => {
+          const tarif = await tx.tarifDemande.create({
+            data: { type: dto.type, montant: dto.montant, delaiHeures: dto.delaiHeures },
+          });
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'TARIF_DEMANDE_CREE',
+              entite: 'TarifDemande',
+              entiteId: tarif.id,
+              details: JSON.stringify({
+                avant: null,
+                apres: this.instantaneTarif(tarif),
+                champsModifies: ['type', 'montant', 'delaiHeures'],
+              }),
+            },
+          });
+          return tarif;
         });
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -277,18 +291,42 @@ export class DocumentsDemandeService extends CrudService {
         throw e;
       }
     }
-    throw new ConflictException('Création temporairement indisponible, réessayez.');
+    throw new ConflictException(t('documents-demande.creation_temporairement_indisponible_reessayez'));
   }
 
-  /** Mise à jour d'un tarif (ADMIN). */
-  async modifierTarif(id: string, dto: { montant?: number; delaiHeures?: number }) {
-    await this.findTarif(id);
-    return this.prisma.tarifDemande.update({
-      where: { id },
-      data: {
+  /**
+   * Mise à jour d'un tarif (ADMIN). Un tarif déjà encaissé ne rejoue pas les
+   * demandes passées : seule la trace avant/après permet de dire ce qu'un
+   * guichetier a réellement facturé, d'où le relevé des deux montants.
+   */
+  async modifierTarif(
+    id: string,
+    dto: { montant?: number; delaiHeures?: number },
+    user: AuthUser,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.tarifDemande.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('documents-demande.tarif_introuvable'));
+
+      const data = {
         ...(dto.montant != null ? { montant: dto.montant } : {}),
         ...(dto.delaiHeures != null ? { delaiHeures: dto.delaiHeures } : {}),
-      },
+      };
+      const apres = await tx.tarifDemande.update({ where: { id }, data });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'TARIF_DEMANDE_MODIFIE',
+          entite: 'TarifDemande',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneTarif(avant),
+            apres: this.instantaneTarif(apres),
+            champsModifies: Object.keys(data),
+          }),
+        },
+      });
+      return apres;
     });
   }
 
@@ -304,8 +342,11 @@ export class DocumentsDemandeService extends CrudService {
     user: AuthUser,
   ) {
     if (!user.etudiantId) {
-      throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+      throw new NotFoundException(t('documents-demande.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
+    if (dto.inscriptionId && !await this.prisma.inscription.findFirst({
+      where: { id: dto.inscriptionId, etudiantId: user.etudiantId }, select: { id: true },
+    })) throw new NotFoundException();
     const tarif = await this.tarifPour(dto.type);
     const frais = tarif?.montant ?? 0;
     const devise = tarif?.devise ?? 'GNF';
@@ -313,9 +354,9 @@ export class DocumentsDemandeService extends CrudService {
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
-        const demande = await this.prisma.$transaction(async (tx) => {
+        return await this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
-          return tx.demandeDocument.create({
+          const demande = await tx.demandeDocument.create({
             data: {
               numero,
               type: dto.type,
@@ -332,24 +373,27 @@ export class DocumentsDemandeService extends CrudService {
             },
             include: DEMANDE_INCLUDE,
           });
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'DEMANDE_DOC_OUVERTE',
+              entite: 'DemandeDocument',
+              entiteId: demande.id,
+              details: JSON.stringify({
+                avant: null,
+                apres: this.instantaneDemande(demande),
+                champsModifies: ['type', 'statut', 'frais', 'devise'],
+              }),
+            },
+          });
+          return demande;
         });
-
-        await this.prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'DEMANDE_DOC_OUVERTE',
-            entite: 'DemandeDocument',
-            entiteId: demande.id,
-            details: `${demande.numero} — ${demande.type} (frais ${frais} ${devise})`,
-          },
-        });
-        return demande;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Numéro de demande temporairement indisponible, réessayez.');
+    throw new ConflictException(t('documents-demande.numero_de_demande_temporairement_indisponible_reessayez'));
   }
 
   // ---------------------------------------------------------- paiement
@@ -364,14 +408,19 @@ export class DocumentsDemandeService extends CrudService {
     dto: { mode: ModePaiement; simuler?: boolean; operateur?: string; telephone?: string },
     user: AuthUser,
   ) {
+    if (dto.simuler && process.env.NODE_ENV === 'production') {
+      throw new BadRequestException(t('documents-demande.simulationPaiementDesactiveeProduction'));
+    }
+    if (dto.mode === ModePaiement.MOBILE_MONEY && !dto.simuler &&
+      (!dto.operateur?.trim() || !/^\+?[\d\s().-]{6,20}$/.test(dto.telephone?.trim() ?? ''))) {
+      throw new BadRequestException(t('common.mobileMoneyDetailsRequired'));
+    }
     const demande = await this.findOnePour(id, user);
     if (demande.etudiantId !== user.etudiantId) {
-      throw new BadRequestException('Seul le demandeur peut payer sa propre demande.');
+      throw new BadRequestException(t('documents-demande.seul_le_demandeur_peut_payer_sa_propre_demande'));
     }
     if (demande.frais <= 0) {
-      throw new BadRequestException(
-        'Cette demande est sans frais : inutile de payer, elle est déjà en traitement.',
-      );
+      throw new BadRequestException(t('documents-demande.cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_'));
     }
     if (demande.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
       throw new BadRequestException(
@@ -379,18 +428,35 @@ export class DocumentsDemandeService extends CrudService {
       );
     }
     if (demande.paiementId) {
-      throw new BadRequestException(
-        'Un paiement a déjà été initié pour cette demande : attendez la confirmation ou contactez la scolarité.',
-      );
+      throw new BadRequestException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
     }
 
     const annee = this.anneeNumero();
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const paiement = await this.prisma.$transaction(async (tx) => {
+          const avant = await tx.demandeDocument.findUnique({ where: { id: demande.id } });
+          if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+          if (avant.etudiantId !== user.etudiantId) {
+            throw new BadRequestException(t('documents-demande.seul_le_demandeur_peut_payer_sa_propre_demande'));
+          }
+          if (avant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT || avant.paiementId) {
+            throw new ConflictException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
+          }
           const reference = await this.prochainNumeroPaiement(tx, annee);
-          return tx.paiement.create({
+          const paiementId = randomUUID();
+          const inscription = demande.inscriptionId
+            ? await tx.inscription.findUnique({
+                where: { id: demande.inscriptionId },
+                select: { id: true, anneeId: true },
+              })
+            : null;
+          if (demande.inscriptionId && !inscription) {
+            throw new NotFoundException(t('documents-demande.demande_introuvable'));
+          }
+          const cree = await tx.paiement.create({
             data: {
+              id: paiementId,
               reference,
               montant: demande.frais,
               devise: demande.devise,
@@ -399,16 +465,37 @@ export class DocumentsDemandeService extends CrudService {
               telephone: dto.telephone ?? null,
               motif: `Demande ${demande.numero} (${demande.type})`,
               statut: StatutPaiement.EN_ATTENTE,
+              ...(inscription ? { inscriptionId: inscription.id, anneeId: inscription.anneeId } : {}),
               etudiantId: demande.etudiantId,
               creeParId: user.id,
-              demandeDocument: { connect: { id: demande.id } },
             },
           });
-        });
-
-        await this.prisma.demandeDocument.update({
-          where: { id: demande.id },
-          data: { paiementId: paiement.id },
+          // Le rattachement du paiement à la demande part avec lui : plus de
+          // paiement orphelin si la seconde écriture échoue.
+          const rattachement = await tx.demandeDocument.updateMany({
+            where: { id: demande.id, statut: StatutDemande.EN_ATTENTE_PAIEMENT, paiementId: null },
+            data: { paiementId },
+          });
+          if (rattachement.count !== 1) {
+            throw new ConflictException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
+          }
+          const apres = await tx.demandeDocument.findUnique({ where: { id: demande.id } });
+          if (!apres) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'DEMANDE_DOC_PAIEMENT_INITIE',
+              entite: 'Paiement',
+              entiteId: cree.id,
+              details: JSON.stringify({
+                avant: this.instantaneDemande(avant),
+                apres: this.instantaneDemande(apres),
+                paiement: this.instantanePaiement(cree),
+                champsModifies: ['paiementId'],
+              }),
+            },
+          });
+          return cree;
         });
 
         // Mode pilote : la simulation force la confirmation automatique.
@@ -417,99 +504,109 @@ export class DocumentsDemandeService extends CrudService {
           return this.findOne(demande.id);
         }
 
-        // Mobile Money : tentative de transmission à l'opérateur.
+        // Mobile Money : tentative de transmission à l'opérateur. L'appel
+        // réseau sort de la transaction : il ne doit jamais la retenir.
         if (dto.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
-          await this.tenterTransmissionMobileMoney(paiement);
+          await this.tenterTransmissionMobileMoney(paiement, user.id);
         }
 
-        await this.prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'DEMANDE_DOC_PAIEMENT_INITIE',
-            entite: 'Paiement',
-            entiteId: paiement.id,
-            details: `${paiement.reference} — ${paiement.montant} ${paiement.devise} (${paiement.mode}) pour ${demande.numero}`,
-          },
-        });
         return this.findOne(demande.id);
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Référence de paiement temporairement indisponible, réessayez.');
+    throw new ConflictException(t('documents-demande.reference_de_paiement_temporairement_indisponible_reessayez'));
   }
 
-  /** Confirmation manuelle d'un paiement (ADMIN, SCOLARITE) — agent au guichet. */
+  /**
+   * Confirmation manuelle d'un paiement (ADMIN, SCOLARITE) — agent au guichet.
+   * L'encaissement et le basculement de la demande sont un seul fait : les deux
+   * écritures et leur journal sont validés ensemble, sinon un encaissement
+   * sans basculement (ou l'inverse) resterait sans trace exploitable.
+   */
   async confirmerPaiement(
     id: string,
     dto: { paiementId?: string },
     user: AuthUser,
   ) {
-    const demande = await this.findOne(id);
-    if (demande.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
-      throw new BadRequestException(
-        'Cette demande n\'est plus en attente de paiement : elle est déjà traitée.',
-      );
-    }
-    if (!demande.paiementId) {
-      throw new BadRequestException(
-        'Aucun paiement associé à cette demande : l\'étudiant doit d\'abord initier le paiement.',
-      );
-    }
-    if (dto.paiementId && dto.paiementId !== demande.paiementId) {
-      throw new BadRequestException('Identifiant de paiement incohérent.');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const demandeAvant = await tx.demandeDocument.findUnique({ where: { id } });
+      if (!demandeAvant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+      if (demandeAvant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
+        throw new BadRequestException(
+          'Cette demande n\'est plus en attente de paiement : elle est déjà traitée.',
+        );
+      }
+      if (!demandeAvant.paiementId) {
+        throw new BadRequestException(
+          'Aucun paiement associé à cette demande : l\'étudiant doit d\'abord initier le paiement.',
+        );
+      }
+      if (dto.paiementId && dto.paiementId !== demandeAvant.paiementId) {
+        throw new BadRequestException(t('documents-demande.identifiant_de_paiement_incoherent'));
+      }
 
-    const paiement = await this.prisma.paiement.update({
-      where: { id: demande.paiementId },
-      data: { statut: StatutPaiement.REUSSI, completeLe: new Date() },
+      const paiementAvant = await tx.paiement.findUnique({ where: { id: demandeAvant.paiementId } });
+      const paiement = await tx.paiement.update({
+        where: { id: demandeAvant.paiementId },
+        data: { statut: StatutPaiement.REUSSI, completeLe: new Date() },
+      });
+      const demandeApres = await tx.demandeDocument.update({
+        where: { id },
+        data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
+        include: DEMANDE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DEMANDE_DOC_PAIEMENT_CONFIRME',
+          entite: 'Paiement',
+          entiteId: paiement.id,
+          details: JSON.stringify({
+            avant: this.instantaneDemande(demandeAvant),
+            apres: this.instantaneDemande(demandeApres),
+            paiementAvant: paiementAvant ? this.instantanePaiement(paiementAvant) : null,
+            paiementApres: this.instantanePaiement(paiement),
+            champsModifies: ['statut', 'traiteParId'],
+          }),
+        },
+      });
+      return demandeApres;
     });
-
-    await this.prisma.demandeDocument.update({
-      where: { id },
-      data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'DEMANDE_DOC_PAIEMENT_CONFIRME',
-        entite: 'Paiement',
-        entiteId: paiement.id,
-        details: `${paiement.reference} → REUSSI pour ${demande.numero}`,
-      },
-    });
-    return this.findOne(id);
   }
 
   // ---------------------------------------------------------- traitement
 
   /** Lancement explicite du traitement (ADMIN, SCOLARITE). */
   async lancerTraitement(id: string, user: AuthUser) {
-    const demande = await this.findOne(id);
-    if (demande.statut !== StatutDemande.PAYEE && demande.statut !== StatutDemande.EN_TRAITEMENT) {
-      throw new BadRequestException(
-        'Cette demande n\'est pas encore prête à être traitée : paiement en attente ou déjà terminée.',
-      );
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.demandeDocument.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+      if (avant.statut !== StatutDemande.PAYEE && avant.statut !== StatutDemande.EN_TRAITEMENT) {
+        throw new BadRequestException(t('documents-demande.cette_demande_n_est_pas_encore_prete_a_etre_traitee'));
+      }
 
-    const miseAJour = await this.prisma.demandeDocument.update({
-      where: { id },
-      data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
-      include: DEMANDE_INCLUDE,
+      const apres = await tx.demandeDocument.update({
+        where: { id },
+        data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
+        include: DEMANDE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DEMANDE_DOC_TRAITEMENT',
+          entite: 'DemandeDocument',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            champsModifies: ['statut', 'traiteParId'],
+          }),
+        },
+      });
+      return apres;
     });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'DEMANDE_DOC_TRAITEMENT',
-        entite: 'DemandeDocument',
-        entiteId: id,
-        details: `${miseAJour.numero} — traitement lancé`,
-      },
-    });
-    return miseAJour;
   }
 
   /**
@@ -529,21 +626,40 @@ export class DocumentsDemandeService extends CrudService {
       );
     }
     if (demande.statut === StatutDemande.PRETE || demande.statut === StatutDemande.REMISE) {
-      throw new BadRequestException('Cette demande est déjà prête ou remise.');
+      throw new BadRequestException(t('documents-demande.cette_demande_est_deja_prete_ou_remise'));
     }
 
     const message =
       dto.message?.trim() ||
       `Votre document ${demande.numero} (${this.libelleType(demande.type)}) est prêt : retirez-le au guichet de la scolarité.`;
 
-    const miseAJour = await this.prisma.demandeDocument.update({
-      where: { id },
-      data: {
-        statut: StatutDemande.PRETE,
-        notification: message,
-        traiteParId: user.id,
-      },
-      include: DEMANDE_INCLUDE,
+    const miseAJour = await this.prisma.$transaction(async (tx) => {
+      const avant = await tx.demandeDocument.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+      const apres = await tx.demandeDocument.update({
+        where: { id },
+        data: {
+          statut: StatutDemande.PRETE,
+          notification: message,
+          traiteParId: user.id,
+        },
+        include: DEMANDE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DEMANDE_DOC_PRETE',
+          entite: 'DemandeDocument',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            champsModifies: ['statut', 'traiteParId', 'notification'],
+            sms: 'meilleur-effort hors transaction',
+          }),
+        },
+      });
+      return apres;
     });
 
     // Notification SMS — best effort, sans bloquer le flux en cas d'échec.
@@ -575,15 +691,6 @@ export class DocumentsDemandeService extends CrudService {
       }
     }
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'DEMANDE_DOC_PRETE',
-        entite: 'DemandeDocument',
-        entiteId: id,
-        details: `${miseAJour.numero} — prêt, notification envoyée`,
-      },
-    });
     return miseAJour;
   }
 
@@ -593,72 +700,92 @@ export class DocumentsDemandeService extends CrudService {
     dto: { noteRemise?: string },
     user: AuthUser,
   ) {
-    const demande = await this.findOne(id);
-    if (demande.statut !== StatutDemande.PRETE) {
-      throw new BadRequestException(
-        'Cette demande n\'est pas marquée comme prête.',
-      );
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.demandeDocument.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+      if (avant.statut !== StatutDemande.PRETE) {
+        throw new BadRequestException(t('documents-demande.cette_demande_n_est_pas_marquee_comme_prete'));
+      }
 
-    const data: Prisma.DemandeDocumentUpdateInput = {
-      statut: StatutDemande.REMISE,
-      remiseLe: new Date(),
-      traitePar: { connect: { id: user.id } },
-    };
-    if (dto.noteRemise?.trim()) {
-      const note = dto.noteRemise.trim();
-      data.notes = demande.notes ? `${demande.notes}\n[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] REMISE — ${note}` : `REMISE — ${note}`;
-    }
+      const data: Prisma.DemandeDocumentUpdateInput = {
+        statut: StatutDemande.REMISE,
+        remiseLe: new Date(),
+        traitePar: { connect: { id: user.id } },
+      };
+      if (dto.noteRemise?.trim()) {
+        const note = dto.noteRemise.trim();
+        data.notes = avant.notes
+          ? `${avant.notes}\n[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] REMISE — ${note}`
+          : `REMISE — ${note}`;
+      }
 
-    const miseAJour = await this.prisma.demandeDocument.update({
-      where: { id },
-      data,
-      include: DEMANDE_INCLUDE,
+      const apres = await tx.demandeDocument.update({
+        where: { id },
+        data,
+        include: DEMANDE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DEMANDE_DOC_REMISE',
+          entite: 'DemandeDocument',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            champsModifies: dto.noteRemise?.trim()
+              ? ['statut', 'remiseLe', 'traiteParId', 'notes']
+              : ['statut', 'remiseLe', 'traiteParId'],
+            noteRemiseFournie: Boolean(dto.noteRemise?.trim()),
+          }),
+        },
+      });
+      return apres;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'DEMANDE_DOC_REMISE',
-        entite: 'DemandeDocument',
-        entiteId: id,
-        details: `${miseAJour.numero} — remise`,
-      },
-    });
-    return miseAJour;
   }
 
   /** Rejet avec motif obligatoire. */
   async rejeter(id: string, dto: { motif: string }, user: AuthUser) {
-    const demande = await this.findOne(id);
     if (!dto.motif?.trim()) {
-      throw new BadRequestException('Le motif de rejet est obligatoire.');
+      throw new BadRequestException(t('documents-demande.le_motif_de_rejet_est_obligatoire'));
     }
-    if (demande.statut === StatutDemande.REMISE) {
-      throw new BadRequestException('Cette demande a déjà été remise.');
-    }
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.demandeDocument.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
+      if (avant.statut === StatutDemande.REMISE) {
+        throw new BadRequestException(t('documents-demande.cette_demande_a_deja_ete_remise'));
+      }
 
-    const data: Prisma.DemandeDocumentUpdateInput = {
-      statut: StatutDemande.REJETEE,
-      notes: demande.notes
-        ? `${demande.notes}\n[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] REJET — ${dto.motif.trim()}`
-        : `REJET — ${dto.motif.trim()}`,
-    };
+      const data: Prisma.DemandeDocumentUpdateInput = {
+        statut: StatutDemande.REJETEE,
+        notes: avant.notes
+          ? `${avant.notes}\n[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] REJET — ${dto.motif.trim()}`
+          : `REJET — ${dto.motif.trim()}`,
+      };
 
-    const miseAJour = await this.prisma.demandeDocument.update({
-      where: { id },
-      data,
-      include: DEMANDE_INCLUDE,
+      const apres = await tx.demandeDocument.update({
+        where: { id },
+        data,
+        include: DEMANDE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DEMANDE_DOC_REJETEE',
+          entite: 'DemandeDocument',
+          entiteId: id,
+          // Le motif reste dans les notes de la demande : le journal n'en garde
+          // que la présence, un motif de rejet peut citer un justificatif.
+          details: JSON.stringify({
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            champsModifies: ['statut', 'notes'],
+            motifFourni: true,
+          }),
+        },
+      });
+      return apres;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'DEMANDE_DOC_REJETEE',
-        entite: 'DemandeDocument',
-        entiteId: id,
-        details: `${miseAJour.numero} — rejet : ${dto.motif.slice(0, 120)}`,
-      },
-    });
-    return miseAJour;
   }
 
   // ---------------------------------------------------------- impression
@@ -681,6 +808,47 @@ export class DocumentsDemandeService extends CrudService {
   // ---------------------------------------------------------- helpers
 
   /**
+   * État d'une demande utile à l'audit. Volontairement minimal : ni `motif`,
+   * ni `notification`, ni `notes` — ces textes libres sont écrits par
+   * l'étudiant ou par le guichet et peuvent citer le contenu du dossier —
+   * ni les coordonnées du demandeur, ni les identifiants techniques du
+   * paiement, qui ne changent pas l'état métier.
+   */
+  private instantaneDemande(demande: any) {
+    return {
+      numero: demande.numero,
+      type: demande.type,
+      statut: demande.statut,
+      frais: demande.frais,
+      devise: demande.devise,
+      traiteParId: demande.traiteParId ?? null,
+      remiseLe: demande.remiseLe ?? null,
+    };
+  }
+
+  /** Écriture comptable : ni téléphone du payeur, ni jeton de l'opérateur. */
+  private instantanePaiement(paiement: any) {
+    return {
+      reference: paiement.reference,
+      montant: paiement.montant,
+      devise: paiement.devise,
+      mode: paiement.mode,
+      statut: paiement.statut,
+    };
+  }
+
+  /** Grille tarifaire : montants et délai, seuls champs paramétrables. */
+  private instantaneTarif(tarif: any) {
+    return {
+      id: tarif.id,
+      type: tarif.type,
+      montant: tarif.montant,
+      devise: tarif.devise,
+      delaiHeures: tarif.delaiHeures,
+    };
+  }
+
+  /**
    * Tentative de transmission Mobile Money. La passerelle est facultative —
    * en son absence, le paiement reste EN_ATTENTE et sera confirmé au guichet.
    */
@@ -692,44 +860,73 @@ export class DocumentsDemandeService extends CrudService {
     operateur: string | null;
     telephone: string | null;
     motif: string | null;
-  }) {
+  }, userId: string) {
     const url = process.env.MOBILE_MONEY_URL?.replace(/\/+$/, '');
     if (!url || !paiement.telephone) return;
-    const cle = process.env.MOBILE_MONEY_API_KEY;
+    await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_TENTATIVE');
+    let transactionId: string | null = null;
     try {
-      const reponse = await fetch(`${url}/paiements`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(cle ? { Authorization: `Bearer ${cle}` } : {}),
-        },
-        body: JSON.stringify({
+      const reponse = await this.mobileMoney.demanderPaiement({
           reference: paiement.reference,
           montant: paiement.montant,
           devise: paiement.devise,
           operateur: paiement.operateur ?? 'AUTRE',
           telephone: paiement.telephone,
-          motif: paiement.motif ?? null,
-        }),
-        signal: AbortSignal.timeout(10_000),
+          motif: paiement.motif ?? undefined,
       });
-      if (!reponse.ok) {
-        this.logger.warn(
-          `Mobile Money ${paiement.reference} refusé : ${reponse.status} — le paiement reste en attente.`,
-        );
-      } else {
-        const corps: any = await reponse.json().catch(() => ({}));
-        if (corps?.transactionId) {
-          await this.prisma.paiement.update({
+      transactionId = reponse.transactionId;
+    } catch {
+      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_ECHEC');
+      this.logger.warn(`Demande Mobile Money ${paiement.reference} non transmise; le paiement reste en attente.`);
+      return;
+    }
+
+    if (!transactionId) {
+      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_REPONSE_INVALIDE');
+      return;
+    }
+
+    try {
+      await this.prisma.$transaction(async (tx) => {
+          const avant = await tx.paiement.findUnique({ where: { id: paiement.id } });
+          if (!avant) return;
+          const apres = await tx.paiement.update({
             where: { id: paiement.id },
-            data: { transactionId: corps.transactionId },
+            data: { transactionId },
           });
-        }
-      }
-    } catch (e: any) {
-      this.logger.warn(
-        `Mobile Money ${paiement.reference} injoignable : ${e?.message ?? e} — le paiement reste en attente.`,
-      );
+          await tx.auditLog.create({
+            data: {
+              userId,
+              action: 'PAIEMENT_TRANSACTION_LIEE',
+              entite: 'Paiement',
+              entiteId: paiement.id,
+              details: JSON.stringify({
+                avant: this.instantanePaiement(avant),
+                apres: this.instantanePaiement(apres),
+                champsModifies: ['transactionId'],
+              }),
+            },
+          });
+      });
+    } catch {
+      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_TRANSACTION_LIAISON_ECHEC');
+      this.logger.error(`Mobile Money accepté pour ${paiement.reference}, mais sa référence n'a pas pu être liée localement.`);
+    }
+  }
+
+  private async journalTransmissionMobileMoney(userId: string, paiementId: string, action: string) {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action,
+          entite: 'Paiement',
+          entiteId: paiementId,
+          details: JSON.stringify({ statut: 'EN_ATTENTE' }),
+        },
+      });
+    } catch {
+      this.logger.warn(`Journal Mobile Money indisponible pour le paiement ${paiementId}.`);
     }
   }
 

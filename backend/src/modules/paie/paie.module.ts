@@ -13,10 +13,6 @@ import { PaieService } from './paie.service';
 @Module({
   imports: [
     ParametresModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
   ],
   controllers: [PaieController],
   providers: [PaieService],

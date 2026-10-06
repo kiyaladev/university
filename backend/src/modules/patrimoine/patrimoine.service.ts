@@ -28,6 +28,9 @@ import * as QRCode from 'qrcode';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { t } from '../../common/i18n';
+import { I18nContext } from 'nestjs-i18n';
+import { echapper } from '../../common/utils';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
@@ -84,26 +87,52 @@ export class PatrimoineService {
     return this.categoriesService.findOne(id);
   }
 
+  /**
+   * Les écritures du module passent par le client transactionnel plutôt que
+   * par le CrudService : la mutation et son entrée de journal sont validées
+   * ensemble, ce que le CrudService (hors transaction) ne permet pas.
+   */
   async creerCategorie(dto: CreateCategorieDto, user: AuthUser) {
-    const cat = await this.categoriesService.create({
-      code: dto.code.trim(),
-      libelle: dto.libelle.trim(),
-      ...(dto.dureeAmortissement ? { dureeAmortissement: dto.dureeAmortissement } : {}),
+    return this.prisma.$transaction(async (tx) => {
+      const categorie = await tx.categoriePatrimoine.create({
+        data: {
+          code: dto.code.trim(),
+          libelle: dto.libelle.trim(),
+          ...(dto.dureeAmortissement ? { dureeAmortissement: dto.dureeAmortissement } : {}),
+        },
+        include: CATEGORIE_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_CREEE', 'CategoriePatrimoine', categorie.id, {
+        avant: null,
+        apres: this.instantaneCategorie(categorie),
+        champsModifies: ['code', 'libelle', 'dureeAmortissement'],
+      });
+      return categorie;
     });
-    await this.audit(user, 'PATRIMOINE_CATEGORIE_CREEE', cat.id, dto.libelle);
-    return cat;
   }
 
   async modifierCategorie(id: string, dto: UpdateCategorieDto, user: AuthUser) {
-    const cat = await this.categoriesService.update(id, {
-      ...(dto.code !== undefined ? { code: dto.code.trim() } : {}),
-      ...(dto.libelle !== undefined ? { libelle: dto.libelle.trim() } : {}),
-      ...(dto.dureeAmortissement !== undefined
-        ? { dureeAmortissement: dto.dureeAmortissement }
-        : {}),
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await this.categorieCourante(tx, id);
+      const data = {
+        ...(dto.code !== undefined ? { code: dto.code.trim() } : {}),
+        ...(dto.libelle !== undefined ? { libelle: dto.libelle.trim() } : {}),
+        ...(dto.dureeAmortissement !== undefined
+          ? { dureeAmortissement: dto.dureeAmortissement }
+          : {}),
+      };
+      const apres = await tx.categoriePatrimoine.update({
+        where: { id },
+        data,
+        include: CATEGORIE_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_MODIFIEE', 'CategoriePatrimoine', id, {
+        avant: this.instantaneCategorie(avant),
+        apres: this.instantaneCategorie(apres),
+        champsModifies: Object.keys(data),
+      });
+      return apres;
     });
-    await this.audit(user, 'PATRIMOINE_CATEGORIE_MODIFIEE', id, cat.libelle);
-    return cat;
   }
 
   /**
@@ -112,14 +141,18 @@ export class PatrimoineService {
    * orphelin de catégorie perdrait son libellé.
    */
   async supprimerCategorie(id: string, user: AuthUser) {
-    const cat = await this.categoriesService.findOne(id);
-    if (cat._count && (cat._count as any).equipements > 0) {
-      throw new ConflictException(
-        `Catégorie « ${cat.libelle} » : ${(cat._count as any).equipements} équipement(s) y sont rattachés. Réaffectez-les avant de supprimer.`,
-      );
-    }
-    await this.categoriesService.remove(id);
-    await this.audit(user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', id, cat.libelle);
+    await this.prisma.$transaction(async (tx) => {
+      const cat = await this.categorieCourante(tx, id);
+      if (cat._count && (cat._count as any).equipements > 0) {
+        throw new ConflictException(I18nContext.current()!.t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', { args: { 'cat.libelle': cat.libelle, '(cat._count as any).equipements': (cat._count as any).equipements } }));
+      }
+      await tx.categoriePatrimoine.delete({ where: { id } });
+      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', 'CategoriePatrimoine', id, {
+        avant: this.instantaneCategorie(cat),
+        apres: null,
+        champsModifies: ['code', 'libelle', 'dureeAmortissement'],
+      });
+    });
     return { id };
   }
 
@@ -132,8 +165,8 @@ export class PatrimoineService {
    */
   async listeEquipements(query: EquipementQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.EquipementPatrimoineWhereInput = {
       ...(query.categorieId ? { categorieId: query.categorieId } : {}),
@@ -159,11 +192,11 @@ export class PatrimoineService {
         where,
         include: EQUIPEMENT_INCLUDE,
         orderBy: { updatedAt: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.equipementPatrimoine.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async detailEquipement(id: string) {
@@ -182,29 +215,31 @@ export class PatrimoineService {
     for (let tentative = 0; tentative < 10; tentative++) {
       const qrCode = `${QR_PREFIX}${randomBytes(12).toString('base64url')}`;
       try {
-        const equipement = await this.prisma.equipementPatrimoine.create({
-          data: {
-            numeroSerie,
-            libelle: dto.libelle.trim(),
-            categorieId: dto.categorieId,
-            departementId: dto.departementId ?? null,
-            salleId: dto.salleId ?? null,
-            dateAcquisition: dto.dateAcquisition ? new Date(dto.dateAcquisition) : null,
-            valeurAcquisition: dto.valeurAcquisition ?? null,
-            numeroInventaire,
-            qrCode,
-            obsolescenceMois: dto.obsolescenceMois ?? 60,
-            actif: dto.actif !== undefined ? dto.actif === 'true' || dto.actif === '1' : true,
-          },
-          include: EQUIPEMENT_INCLUDE,
+        return await this.prisma.$transaction(async (tx) => {
+          const equipement = await tx.equipementPatrimoine.create({
+            data: {
+              numeroSerie,
+              libelle: dto.libelle.trim(),
+              categorieId: dto.categorieId,
+              departementId: dto.departementId ?? null,
+              salleId: dto.salleId ?? null,
+              dateAcquisition: dto.dateAcquisition ? new Date(dto.dateAcquisition) : null,
+              valeurAcquisition: dto.valeurAcquisition ?? null,
+              numeroInventaire,
+              qrCode,
+              obsolescenceMois: dto.obsolescenceMois ?? 60,
+              actif: dto.actif !== undefined ? dto.actif === 'true' || dto.actif === '1' : true,
+            },
+            include: EQUIPEMENT_INCLUDE,
+          });
+          // Le jeton QR n'est pas recopié : l'inventaire se lit par son numéro.
+          await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_CREE', 'EquipementPatrimoine', equipement.id, {
+            avant: null,
+            apres: this.instantaneEquipement(equipement),
+            champsModifies: ['numeroSerie', 'numeroInventaire', 'libelle', 'categorieId', 'actif'],
+          });
+          return equipement;
         });
-        await this.audit(
-          user,
-          'PATRIMOINE_EQUIPEMENT_CREE',
-          equipement.id,
-          `${equipement.numeroInventaire} — ${equipement.libelle}`,
-        );
-        return equipement;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           // Conflit d'unicité : on réessaie avec un nouveau qrCode.
@@ -224,16 +259,13 @@ export class PatrimoineService {
         throw e;
       }
     }
-    throw new ConflictException(
-      'Impossible de générer un identifiant QR unique, réessayez',
-    );
+    throw new ConflictException(I18nContext.current()!.t('patrimoine.impossible_de_generer_un_identifiant_qr_unique_reessayez'));
   }
 
   async modifierEquipement(id: string, dto: UpdateEquipementDto, user: AuthUser) {
-    const equipement = await this.trouverEquipement(id);
-    const maj = await this.prisma.equipementPatrimoine.update({
-      where: { id },
-      data: {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await this.equipementCourant(tx, id);
+      const data = {
         ...(dto.numeroSerie !== undefined ? { numeroSerie: dto.numeroSerie.trim() } : {}),
         ...(dto.libelle !== undefined ? { libelle: dto.libelle.trim() } : {}),
         ...(dto.categorieId !== undefined ? { categorieId: dto.categorieId } : {}),
@@ -254,17 +286,19 @@ export class PatrimoineService {
         ...(dto.actif !== undefined
           ? { actif: dto.actif === 'true' || dto.actif === '1' }
           : {}),
-      },
-      include: EQUIPEMENT_INCLUDE,
+      };
+      const maj = await tx.equipementPatrimoine.update({
+        where: { id },
+        data,
+        include: EQUIPEMENT_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_MODIFIE', 'EquipementPatrimoine', id, {
+        avant: this.instantaneEquipement(avant),
+        apres: this.instantaneEquipement(maj),
+        champsModifies: Object.keys(data),
+      });
+      return maj;
     });
-    void equipement;
-    await this.audit(
-      user,
-      'PATRIMOINE_EQUIPEMENT_MODIFIE',
-      id,
-      `${maj.numeroInventaire} — ${maj.libelle}`,
-    );
-    return maj;
   }
 
   /**
@@ -273,51 +307,53 @@ export class PatrimoineService {
    * désactiver (actif=false) à la place.
    */
   async supprimerEquipement(id: string, user: AuthUser) {
-    const equipement = await this.trouverEquipement(id);
-    const reparations = await this.prisma.reparationMateriel.count({ where: { equipementId: id } });
-    if (reparations > 0) {
-      throw new ConflictException(
-        `${equipement.numeroInventaire} : ${reparations} réparation(s) consignée(s). Désactivez l'équipement plutôt que de le supprimer.`,
-      );
-    }
-    await this.prisma.equipementPatrimoine.delete({ where: { id } });
-    await this.audit(
-      user,
-      'PATRIMOINE_EQUIPEMENT_SUPPRIME',
-      id,
-      `${equipement.numeroInventaire} — ${equipement.libelle}`,
-    );
+    await this.prisma.$transaction(async (tx) => {
+      const equipement = await this.equipementCourant(tx, id);
+      const reparations = await tx.reparationMateriel.count({ where: { equipementId: id } });
+      if (reparations > 0) {
+        throw new ConflictException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire, reparations } }));
+      }
+      await tx.equipementPatrimoine.delete({ where: { id } });
+      await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_SUPPRIME', 'EquipementPatrimoine', id, {
+        avant: this.instantaneEquipement(equipement),
+        apres: null,
+        nbReparations: 0,
+      });
+    });
     return { id };
   }
 
   /**
    * Régénération du QR d'équipement : utile si l'étiquette est devenue
    * illisible ou compromise. Le nouveau token est aléatoire et remplace
-   * l'ancien.
+   * l'ancien — ni l'ancien ni le nouveau ne sont journalisés, seule la
+   * régénération est tracée, avec son auteur.
    */
   async regenererQr(id: string, user: AuthUser) {
-    const equipement = await this.trouverEquipement(id);
     for (let tentative = 0; tentative < 10; tentative++) {
       const qrCode = `${QR_PREFIX}${randomBytes(12).toString('base64url')}`;
       try {
-        const maj = await this.prisma.equipementPatrimoine.update({
-          where: { id },
-          data: { qrCode },
-          include: EQUIPEMENT_INCLUDE,
+        return await this.prisma.$transaction(async (tx) => {
+          const equipement = await this.equipementCourant(tx, id);
+          const maj = await tx.equipementPatrimoine.update({
+            where: { id },
+            data: { qrCode },
+            include: EQUIPEMENT_INCLUDE,
+          });
+          await this.journaliser(tx, user, 'PATRIMOINE_QR_REGENERE', 'EquipementPatrimoine', id, {
+            avant: this.instantaneEquipement(equipement),
+            apres: this.instantaneEquipement(maj),
+            champsModifies: ['qrCode'],
+            jetonsConserves: false,
+          });
+          return maj;
         });
-        await this.audit(
-          user,
-          'PATRIMOINE_QR_REGENERE',
-          id,
-          `${equipement.numeroInventaire} — ${qrCode}`,
-        );
-        return maj;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Impossible de générer un QR unique, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('patrimoine.impossible_de_generer_un_qr_unique_reessayez'));
   }
 
   /**
@@ -327,14 +363,17 @@ export class PatrimoineService {
   async parQr(qrCode: string) {
     const equipement = await this.prisma.equipementPatrimoine.findUnique({
       where: { qrCode },
-      include: {
+      select: {
+        id: true,
+        libelle: true,
+        actif: true,
         categorie: { select: { id: true, code: true, libelle: true } },
-        departement: { select: { id: true, code: true, nom: true } },
+        departement: { select: { nom: true } },
         salle: { select: { id: true, code: true, nom: true } },
       },
     });
-    if (!equipement) {
-      throw new NotFoundException('Équipement introuvable pour ce QR');
+    if (!equipement || !equipement.actif) {
+      throw new NotFoundException(t('patrimoine.equipement_introuvable_pour_ce_qr'));
     }
     return equipement;
   }
@@ -345,93 +384,102 @@ export class PatrimoineService {
    * Déclaration d'une réparation : la première intervention crée la fiche
    * et bascule l'équipement en « en réparation ». Si une fiche est déjà
    * ouverte (DECLARE ou EN_COURS), on refuse pour éviter le double
-   * comptage.
+   * comptage. Le contrôle, l'ouverture de la fiche, le basculement de
+   * l'équipement et le journal forment un seul écrit : deux déclarations
+   * simultanées ne peuvent pas laisser deux fiches ouvertes, ni une fiche
+   * sans trace.
    */
   async declarerReparation(
     equipementId: string,
     dto: DeclarationReparationDto,
     user: AuthUser,
   ) {
-    const equipement = await this.trouverEquipement(equipementId);
-    const ouverte = await this.prisma.reparationMateriel.findFirst({
-      where: {
-        equipementId,
-        statut: { in: [StatutReparation.DECLARE, StatutReparation.EN_COURS] },
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const equipement = await this.equipementCourant(tx, equipementId);
+      const ouverte = await tx.reparationMateriel.findFirst({
+        where: {
+          equipementId,
+          statut: { in: [StatutReparation.DECLARE, StatutReparation.EN_COURS] },
+        },
+      });
+      if (ouverte) {
+        throw new ConflictException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_a_deja_une_reparation_en_cours_o', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire, 'ouverte.statut': ouverte.statut } }));
+      }
+      const reparation = await tx.reparationMateriel.create({
+        data: {
+          equipementId,
+          description: dto.description.trim(),
+          prestataire: dto.prestataire?.trim() ?? null,
+          cout: dto.cout ?? 0,
+          statut: StatutReparation.EN_COURS,
+          dateResolution: dto.dateResolution ? new Date(dto.dateResolution) : null,
+          declareParId: user.id,
+        },
+        include: REPARATION_INCLUDE,
+      });
+      const equipementApres = await tx.equipementPatrimoine.update({
+        where: { id: equipementId },
+        data: { enReparation: true },
+        include: EQUIPEMENT_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'PATRIMOINE_REPARATION_DECLAREE', 'ReparationMateriel', reparation.id, {
+        avant: null,
+        apres: this.instantaneReparation(reparation),
+        equipementAvant: this.instantaneEquipement(equipement),
+        equipementApres: this.instantaneEquipement(equipementApres),
+        champsModifies: ['statut', 'enReparation'],
+      });
+      return reparation;
     });
-    if (ouverte) {
-      throw new ConflictException(
-        `${equipement.numeroInventaire} a déjà une réparation en cours (${ouverte.statut}).`,
-      );
-    }
-    const reparation = await this.prisma.reparationMateriel.create({
-      data: {
-        equipementId,
-        description: dto.description.trim(),
-        prestataire: dto.prestataire?.trim() ?? null,
-        cout: dto.cout ?? 0,
-        statut: StatutReparation.EN_COURS,
-        dateResolution: dto.dateResolution ? new Date(dto.dateResolution) : null,
-        declareParId: user.id,
-      },
-      include: REPARATION_INCLUDE,
-    });
-    await this.prisma.equipementPatrimoine.update({
-      where: { id: equipementId },
-      data: { enReparation: true },
-    });
-    await this.audit(
-      user,
-      'PATRIMOINE_REPARATION_DECLAREE',
-      reparation.id,
-      `${equipement.numeroInventaire} — ${dto.description.slice(0, 120)}`,
-    );
-    return reparation;
   }
 
   /**
    * Résolution : la dernière fiche ouverte passe TERMINE, sa note est
-   * consignée, l'équipement reprend son état normal.
+   * consignée, l'équipement reprend son état normal. Clôture de la fiche et
+   * libération de l'équipement partagent la transaction et leur journal.
    */
   async resoudreReparation(
     equipementId: string,
     dto: ResolutionReparationDto,
     user: AuthUser,
   ) {
-    const equipement = await this.trouverEquipement(equipementId);
-    const ouverte = await this.prisma.reparationMateriel.findFirst({
-      where: {
-        equipementId,
-        statut: { in: [StatutReparation.DECLARE, StatutReparation.EN_COURS] },
-      },
-      orderBy: { dateDeclaration: 'desc' },
+    return this.prisma.$transaction(async (tx) => {
+      const equipement = await this.equipementCourant(tx, equipementId);
+      const ouverte = await tx.reparationMateriel.findFirst({
+        where: {
+          equipementId,
+          statut: { in: [StatutReparation.DECLARE, StatutReparation.EN_COURS] },
+        },
+        orderBy: { dateDeclaration: 'desc' },
+      });
+      if (!ouverte) {
+        throw new BadRequestException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_n_a_pas_de_reparation_en_cours', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire } }));
+      }
+      const reparation = await tx.reparationMateriel.update({
+        where: { id: ouverte.id },
+        data: {
+          statut: StatutReparation.TERMINE,
+          dateResolution: ouverte.dateResolution ?? new Date(),
+          resoluParId: user.id,
+          notes: dto.noteResolution?.trim() ?? ouverte.notes ?? null,
+        },
+        include: REPARATION_INCLUDE,
+      });
+      const equipementApres = await tx.equipementPatrimoine.update({
+        where: { id: equipementId },
+        data: { enReparation: false },
+        include: EQUIPEMENT_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'PATRIMOINE_REPARATION_RESOLUE', 'ReparationMateriel', ouverte.id, {
+        avant: this.instantaneReparation(ouverte),
+        apres: this.instantaneReparation(reparation),
+        equipementAvant: this.instantaneEquipement(equipement),
+        equipementApres: this.instantaneEquipement(equipementApres),
+        champsModifies: ['statut', 'dateResolution', 'resoluParId', 'enReparation'],
+        noteResolutionFournie: Boolean(dto.noteResolution?.trim()),
+      });
+      return reparation;
     });
-    if (!ouverte) {
-      throw new BadRequestException(
-        `${equipement.numeroInventaire} n'a pas de réparation en cours.`,
-      );
-    }
-    const reparation = await this.prisma.reparationMateriel.update({
-      where: { id: ouverte.id },
-      data: {
-        statut: StatutReparation.TERMINE,
-        dateResolution: ouverte.dateResolution ?? new Date(),
-        resoluParId: user.id,
-        notes: dto.noteResolution?.trim() ?? ouverte.notes ?? null,
-      },
-      include: REPARATION_INCLUDE,
-    });
-    await this.prisma.equipementPatrimoine.update({
-      where: { id: equipementId },
-      data: { enReparation: false },
-    });
-    await this.audit(
-      user,
-      'PATRIMOINE_REPARATION_RESOLUE',
-      ouverte.id,
-      `${equipement.numeroInventaire}`,
-    );
-    return reparation;
   }
 
   async reparations(equipementId: string) {
@@ -460,6 +508,7 @@ export class PatrimoineService {
         resoluPar: { select: { id: true, nom: true, prenom: true } },
       },
       orderBy: { dateDeclaration: 'desc' },
+      take: 1000,
     });
   }
 
@@ -484,70 +533,86 @@ export class PatrimoineService {
    * (les acquisitions de l'année).
    */
   async dashboard(anneeId?: string) {
-    const equipements = await this.prisma.equipementPatrimoine.findMany({
-      where: { actif: true },
-      include: {
-        categorie: { select: { id: true, code: true, libelle: true } },
-        departement: { select: { id: true, code: true, nom: true } },
-      },
-    });
-
-    const maintenant = new Date();
-    const filtres = anneeId
-      ? equipements.filter((e) => {
-          if (!e.dateAcquisition) return true;
-          return e.dateAcquisition.getUTCFullYear() === maintenant.getUTCFullYear() || true;
+    const annee = anneeId
+      ? await this.prisma.anneeAcademique.findUnique({
+          where: { id: anneeId },
+          select: { dateDebut: true, dateFin: true },
         })
-      : equipements;
+      : null;
+    if (anneeId && !annee) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Année académique' }));
 
-    const total = equipements.length;
-    const valeur = equipements.reduce((acc, e) => acc + (e.valeurAcquisition ?? 0), 0);
+    const where: Prisma.EquipementPatrimoineWhereInput = {
+      actif: true,
+      ...(annee ? { dateAcquisition: { gte: annee.dateDebut, lte: annee.dateFin } } : {}),
+    };
+    const [totaux, categories, departements, enReparation, obsoletes] = await Promise.all([
+      this.prisma.equipementPatrimoine.aggregate({
+        where,
+        _count: { _all: true },
+        _sum: { valeurAcquisition: true },
+      }),
+      this.prisma.equipementPatrimoine.groupBy({
+        by: ['categorieId'], where, _count: { _all: true }, _sum: { valeurAcquisition: true },
+      }),
+      this.prisma.equipementPatrimoine.groupBy({
+        by: ['departementId'], where: { ...where, departementId: { not: null } },
+        _count: { _all: true }, _sum: { valeurAcquisition: true },
+      }),
+      this.prisma.equipementPatrimoine.count({ where: { ...where, enReparation: true } }),
+      this.obsolescenceActuelle(where),
+    ]);
+    // Recharger uniquement les libellés des groupes présents, jamais toutes
+    // les lignes d'équipement du parc.
+    const [categoriesNommees, departementsNommes] = await Promise.all([
+      categories.length ? this.prisma.categoriePatrimoine.findMany({
+        where: { id: { in: categories.map((g) => g.categorieId) } },
+        select: { id: true, code: true, libelle: true },
+      }) : Promise.resolve([]),
+      departements.length ? this.prisma.departement.findMany({
+        where: { id: { in: departements.map((g) => g.departementId!).filter(Boolean) } },
+        select: { id: true, code: true, nom: true },
+      }) : Promise.resolve([]),
+    ]);
+    const categoriesParId = new Map<string, { id: string; code: string; libelle: string }>(
+      categoriesNommees.map((c: any) => [c.id, c] as const),
+    );
+    const departementsParId = new Map<string, { id: string; code: string; nom: string }>(
+      departementsNommes.map((d: any) => [d.id, d] as const),
+    );
+    const parCategorie = categories.flatMap((g) => {
+      const c = categoriesParId.get(g.categorieId);
+      return c ? [{ code: c.code, libelle: c.libelle, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
+    }).sort((a, b) => b.nombre - a.nombre);
+    const parDepartement = departements.flatMap((g) => {
+      const d = g.departementId ? departementsParId.get(g.departementId) : undefined;
+      return d ? [{ code: d.code, nom: d.nom, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
+    }).sort((a, b) => b.nombre - a.nombre);
 
-    const parCategorieMap = new Map<string, { code: string; libelle: string; nombre: number; valeur: number }>();
-    const parDepartementMap = new Map<string, { code: string; nom: string; nombre: number; valeur: number }>();
-    let enReparation = 0;
-    let obsoletes = 0;
-
-    for (const e of equipements) {
-      const cKey = e.categorie.id;
-      const cEntry = parCategorieMap.get(cKey) ?? {
-        code: e.categorie.code,
-        libelle: e.categorie.libelle,
-        nombre: 0,
-        valeur: 0,
-      };
-      cEntry.nombre += 1;
-      cEntry.valeur += e.valeurAcquisition ?? 0;
-      parCategorieMap.set(cKey, cEntry);
-
-      if (e.departementId && e.departement) {
-        const dKey = e.departementId;
-        const dEntry = parDepartementMap.get(dKey) ?? {
-          code: e.departement.code,
-          nom: e.departement.nom,
-          nombre: 0,
-          valeur: 0,
-        };
-        dEntry.nombre += 1;
-        dEntry.valeur += e.valeurAcquisition ?? 0;
-        parDepartementMap.set(dKey, dEntry);
-      }
-
-      if (e.enReparation) enReparation += 1;
-      if (estObsolete(e.dateAcquisition, e.obsolescenceMois ?? 60, maintenant)) {
-        obsoletes += 1;
-      }
-    }
-
-    void filtres;
     return {
-      total,
-      valeur: Math.round(valeur),
+      total: totaux._count._all,
+      valeur: Math.round(totaux._sum.valeurAcquisition ?? 0),
       enReparation,
       obsoletes,
-      parCategorie: [...parCategorieMap.values()].sort((a, b) => b.nombre - a.nombre),
-      parDepartement: [...parDepartementMap.values()].sort((a, b) => b.nombre - a.nombre),
+      parCategorie,
+      parDepartement,
     };
+  }
+
+  private async obsolescenceActuelle(where: Prisma.EquipementPatrimoineWhereInput): Promise<number> {
+    const parAnnee = where.dateAcquisition as Prisma.DateTimeFilter | undefined;
+    const bornes = parAnnee?.gte && parAnnee.lte
+      ? Prisma.sql`AND "dateAcquisition" >= ${parAnnee.gte} AND "dateAcquisition" <= ${parAnnee.lte}`
+      : Prisma.empty;
+    const lignes = await this.prisma.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
+      SELECT COUNT(*)::bigint AS count
+      FROM "EquipementPatrimoine"
+      WHERE "actif" = true
+        AND "dateAcquisition" IS NOT NULL
+        AND date_trunc('month', "dateAcquisition")
+          + make_interval(months => COALESCE("obsolescenceMois", 60)) <= date_trunc('month', NOW())
+        ${bornes}
+    `);
+    return Number(lignes[0]?.count ?? 0);
   }
 
   // ============================================================ Étiquette A4
@@ -559,11 +624,9 @@ export class PatrimoineService {
    */
   async imprimerEtiquette(id: string, token: string | undefined, baseUrl: string): Promise<string> {
     try {
-      this.jwt.verify(token ?? '', {
-        secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      });
+      this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('patrimoine.jeton_invalide_ou_expire'));
     }
 
     const equipement = await this.trouverEquipement(id);
@@ -631,41 +694,104 @@ export class PatrimoineService {
       where: { id },
       include: EQUIPEMENT_INCLUDE,
     });
-    if (!equipement) throw new NotFoundException('Équipement introuvable');
+    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
     return equipement;
   }
 
-  private async audit(user: AuthUser, action: string, entiteId: string, details?: string) {
-    await this.prisma.auditLog.create({
+  /** Même lecture que `trouverEquipement`, mais sur le client d'une transaction. */
+  private async equipementCourant(tx: Prisma.TransactionClient, id: string) {
+    // Sérialiser toutes les mutations d'un même matériel avant de lire
+    // ses réparations : une transaction seule ne protège pas ce contrôle.
+    await tx.$queryRaw`SELECT "id" FROM "EquipementPatrimoine" WHERE "id" = ${id} FOR UPDATE`;
+    const equipement = await tx.equipementPatrimoine.findUnique({
+      where: { id },
+      include: EQUIPEMENT_INCLUDE,
+    });
+    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
+    return equipement;
+  }
+
+  private async categorieCourante(tx: Prisma.TransactionClient, id: string) {
+    const categorie = await tx.categoriePatrimoine.findUnique({
+      where: { id },
+      include: CATEGORIE_INCLUDE,
+    });
+    if (!categorie) {
+      throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Catégorie' }));
+    }
+    return categorie;
+  }
+
+  /**
+   * Instantanés d'audit. Aucun jeton QR, aucune observation libre, aucune
+   * donnée biométrique : ce sont les champs d'inventaire et d'état qui
+   * permettent de reconstituer l'histoire d'un équipement, pas son
+   * étiquette ni les commentaires de l'agent.
+   */
+  private instantaneCategorie(categorie: any) {
+    return {
+      id: categorie.id,
+      code: categorie.code,
+      libelle: categorie.libelle,
+      dureeAmortissement: categorie.dureeAmortissement ?? null,
+    };
+  }
+
+  private instantaneEquipement(equipement: any) {
+    return {
+      id: equipement.id,
+      numeroInventaire: equipement.numeroInventaire,
+      numeroSerie: equipement.numeroSerie,
+      libelle: equipement.libelle,
+      categorieId: equipement.categorieId,
+      departementId: equipement.departementId ?? null,
+      salleId: equipement.salleId ?? null,
+      dateAcquisition: equipement.dateAcquisition ?? null,
+      valeurAcquisition: equipement.valeurAcquisition ?? null,
+      actif: equipement.actif,
+      enReparation: equipement.enReparation,
+      obsolescenceMois: equipement.obsolescenceMois ?? null,
+    };
+  }
+
+  /** Description, notes et nom libre du prestataire restent dans la fiche. */
+  private instantaneReparation(reparation: any) {
+    return {
+      id: reparation.id,
+      equipementId: reparation.equipementId,
+      statut: reparation.statut,
+      cout: reparation.cout,
+      dateDeclaration: reparation.dateDeclaration ?? null,
+      dateResolution: reparation.dateResolution ?? null,
+      declareParId: reparation.declareParId ?? null,
+      resoluParId: reparation.resoluParId ?? null,
+      prestataireFourni: Boolean(reparation.prestataire),
+    };
+  }
+
+  /**
+   * Écrit la trace avant/après. `details` est sérialisé ici : toutes les
+   * entrées du module partagent le même format, lisible tel quel par l'écran
+   * « Journal ».
+   */
+  private journaliser(
+    tx: Prisma.TransactionClient | PrismaService,
+    user: AuthUser,
+    action: string,
+    entite: string,
+    entiteId: string,
+    details: unknown,
+  ) {
+    return tx.auditLog.create({
       data: {
         userId: user.id,
         action,
-        entite: 'Patrimoine',
+        entite,
         entiteId,
-        details,
+        details: JSON.stringify(details),
       },
     });
   }
-}
-
-function estObsolete(
-  dateAcquisition: Date | null,
-  obsolescenceMois: number,
-  maintenant: Date,
-): boolean {
-  if (!dateAcquisition) return false;
-  const ageMois =
-    (maintenant.getFullYear() - dateAcquisition.getFullYear()) * 12 +
-    (maintenant.getMonth() - dateAcquisition.getMonth());
-  return ageMois >= obsolescenceMois;
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 // Référence pour le typage Prisma — le préfixe est utilisé pour la séquence

@@ -1,0 +1,18 @@
+{
+  "required": "The {field} field is required",
+  "invalidEmail": "Invalid email address",
+  "invalidPhone": "Invalid phone number",
+  "minLength": "The {field} field must be at least {min} characters long",
+  "maxLength": "The {field} field must not exceed {max} characters",
+  "min": "The minimum allowed value is {min}",
+  "max": "The maximum allowed value is {max}",
+  "mustBeString": "The {field} field must be a string",
+  "mustBeNumber": "The {field} field must be a number",
+  "mustBeInt": "The {field} field must be an integer",
+  "mustBeBoolean": "The {field} field must be a boolean",
+  "mustBeArray": "The {field} field must be an array",
+  "mustBeEnum": "Value not allowed for {field}",
+  "invalidFormat": "The {field} field format is invalid",
+  "invalidDate": "Invalid date for field {field}",
+  "mustMatch": "The {field} field does not match the expected format"
+}

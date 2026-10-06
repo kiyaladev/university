@@ -1,4 +1,4 @@
-import { IsBooleanString, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 /** Paramètres de liste communs à tous les référentiels. */
@@ -13,11 +13,12 @@ export class QueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  pageSize?: number = 50;
+  @Max(1000)
+  pageSize?: number;
 
-  /** `all=1` : renvoie toutes les lignes (listes déroulantes). */
+  /** `all=1` : raccourci borné à 1 000 lignes pour les listes déroulantes. */
   @IsOptional()
-  @IsBooleanString()
+  @IsIn(['true', 'false', '1', '0'])
   all?: string;
 
   @IsOptional()

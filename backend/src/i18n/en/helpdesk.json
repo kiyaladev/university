@@ -1,0 +1,8 @@
+{
+  "equipement_inconnu_ou_desactive": "Unknown or disabled equipment",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "ticket_introuvable": "Ticket not found",
+  "numero_de_ticket_temporairement_indisponible_reessayez": "Ticket number temporarily unavailable, please try again.",
+  "l_equipement_vise_est_inconnu_ou_desactive": "Target equipment is unknown or disabled",
+  "seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_": "Only open or in-progress tickets can change status: a resolved or closed ticket is closed."
+}

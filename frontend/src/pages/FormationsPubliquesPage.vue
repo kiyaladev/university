@@ -7,39 +7,30 @@
       dense
       no-caps
       icon="login"
-      label="Se connecter"
+      :label="$t('formationsPubliques.connexion')"
       to="/connexion"
       class="vitrine__connexion"
     />
     <!-- L'enseigne du hub : ce que voit l'acheteur avant la vitrine -->
     <section class="vitrine__enseigne">
-      <div class="vitrine__bandes" aria-hidden="true">
-        <span class="bande bande--rouge" />
-        <span class="bande bande--jaune" />
-        <span class="bande bande--vert" />
-      </div>
-
-      <p class="pochoir vitrine__sur-titre">Formation continue & certifications</p>
-      <h1 class="lettrage vitrine__marque">Compétences pour demain</h1>
+      <p class="pochoir vitrine__sur-titre">{{ $t('formationsPubliques.hero.overline') }}</p>
+      <h1 class="lettrage vitrine__marque">{{ $t('formationsPubliques.hero.title') }}</h1>
       <p class="vitrine__phrase">
-        L'université ouvre ses cours du soir et ses certifications aux
-        professionnels et au grand public. Choisissez votre formation, déposez
-        votre demande sans compte, réglez par Mobile Money — et recevez votre
-        attestation de formation.
+        {{ $t('formationsPubliques.hero.text') }}
       </p>
 
       <dl class="vitrine__faits">
         <div>
-          <dt class="pochoir">Sans compte</dt>
-          <dd>Nom, téléphone, e-mail — le dossier se dépose en deux minutes</dd>
+          <dt class="pochoir">{{ $t('formationsPubliques.hero.facts.noAccount.title') }}</dt>
+          <dd>{{ $t('formationsPubliques.hero.facts.noAccount.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Paiement Mobile Money</dt>
-          <dd>Orange Money, MTN MoMo, Telecel — confirmation au guichet</dd>
+          <dt class="pochoir">{{ $t('formationsPubliques.hero.facts.mobileMoney.title') }}</dt>
+          <dd>{{ $t('formationsPubliques.hero.facts.mobileMoney.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Attestation de formation</dt>
-          <dd>Document A4 signé, remis à la fin du parcours</dd>
+          <dt class="pochoir">{{ $t('formationsPubliques.hero.facts.attestation.title') }}</dt>
+          <dd>{{ $t('formationsPubliques.hero.facts.attestation.text') }}</dd>
         </div>
       </dl>
     </section>
@@ -47,32 +38,32 @@
     <!-- La vitrine -->
     <section class="vitrine__catalogue">
       <div class="vitrine__catalogue-tete">
-        <h2 class="lettrage vitrine__titre">Formations ouvertes</h2>
-        <p class="pochoir vitrine__compte">{{ formations.length }} formation(s) en vente</p>
+        <h2 class="lettrage vitrine__titre">{{ $t('formationsPubliques.catalogue.title') }}</h2>
+        <p class="pochoir vitrine__compte">{{ $t('formationsPubliques.catalogue.count', { count: formations.length }) }}</p>
       </div>
 
       <q-banner v-if="chargement" class="note--info">
         <template #avatar><q-spinner size="20px" /></template>
-        Chargement de la vitrine…
+        {{ $t('formationsPubliques.catalogue.loading') }}
       </q-banner>
 
       <q-banner v-if="!chargement && !formations.length" class="note--info">
         <template #avatar><q-icon name="storefront" /></template>
-        Aucune formation n'est en vente pour le moment — repassez bientôt.
+        {{ $t('formationsPubliques.catalogue.empty') }}
       </q-banner>
 
       <div class="vitrine__grille">
         <article v-for="f in formations" :key="f.id" class="plaque carte-formation">
           <div class="carte-formation__tete">
             <span v-if="f.categorie" class="pochoir carte-formation__categorie">{{ f.categorie }}</span>
-            <span v-else class="pochoir carte-formation__categorie">Formation</span>
+            <span v-else class="pochoir carte-formation__categorie">{{ $t('formationsPubliques.catalogue.card.categorieDefaut') }}</span>
             <!-- `placesRestantes` vaut null/undefined quand la capacité est libre. -->
             <span
               v-if="f.placesRestantes != null"
               class="pochoir carte-formation__places"
               :class="{ 'carte-formation__places--dernieres': f.placesRestantes <= 5 }"
             >
-              {{ f.placesRestantes === 0 ? 'Complet' : `${f.placesRestantes} places restantes` }}
+              {{ f.placesRestantes === 0 ? $t('formationsPubliques.catalogue.card.complet') : $t('formationsPubliques.catalogue.card.placesRestantes', { n: f.placesRestantes }) }}
             </span>
           </div>
 
@@ -81,21 +72,21 @@
 
           <dl class="carte-formation__details">
             <div v-if="f.dureeHeures">
-              <dt class="pochoir">Durée</dt>
-              <dd class="chiffres">{{ f.dureeHeures }} h</dd>
+              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.duree') }}</dt>
+              <dd class="chiffres">{{ $t('formationsPubliques.catalogue.card.dureeValeur', { n: f.dureeHeures }) }}</dd>
             </div>
             <div v-if="f.dateDebut || f.dateFin">
-              <dt class="pochoir">Dates</dt>
+              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.dates') }}</dt>
               <dd class="chiffres">{{ periodeLisible(f) }}</dd>
             </div>
             <div v-if="f.lieu">
-              <dt class="pochoir">Lieu</dt>
+              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.lieu') }}</dt>
               <dd>{{ f.lieu }}</dd>
             </div>
           </dl>
 
           <div class="carte-formation__prix">
-            <span class="pochoir carte-formation__prix-libelle">Investissement</span>
+            <span class="pochoir carte-formation__prix-libelle">{{ $t('formationsPubliques.catalogue.card.investissement') }}</span>
             <span class="lettrage chiffres carte-formation__montant">
               {{ montantLisible(f.prix) }}
               <small class="carte-formation__devise">{{ f.devise }}</small>
@@ -108,7 +99,7 @@
             size="lg"
             unelevated
             no-caps
-            :label="f.prix > 0 ? 'S\'inscrire — payer par Mobile Money' : 'S\'inscrire gratuitement'"
+            :label="f.prix > 0 ? $t('formationsPubliques.catalogue.card.inscrirePayant') : $t('formationsPubliques.catalogue.card.inscrireGratuit')"
             :disable="f.placesRestantes === 0"
             @click="ouvrirInscription(f)"
           />
@@ -121,72 +112,70 @@
       <q-card style="width: 560px; max-width: 95vw">
         <!-- Étape 1 : identité -->
         <q-card-section v-if="etape === 1">
-          <div class="text-h6">S'inscrire à la formation</div>
+          <div class="text-h6">{{ $t('formationsPubliques.dialog.step1.title') }}</div>
           <div class="text-caption text-grey-7 q-mt-xs">
-            <strong>{{ selection?.titre }}</strong> —
+            <strong>{{ selection?.titre }}</strong> {{ $t('rectoratPage.subtitleFallback') }}
             {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
           </div>
         </q-card-section>
         <q-card-section v-if="etape === 1">
-          <span class="section-titre">Identité</span>
+          <span class="section-titre">{{ $t('formationsPubliques.dialog.step1.identite') }}</span>
           <q-input
             v-model="form.nomComplet"
             outlined
             dense
-            label="Nom et prénom *"
-            hint="Tel qu'il figurera sur votre attestation"
+            :label="$t('formationsPubliques.dialog.step1.nomComplet.label')"
+            :hint="$t('formationsPubliques.dialog.step1.nomComplet.hint')"
             autofocus
           />
           <q-input
             v-model="form.telephone"
             outlined
             dense
-            label="Téléphone (Mobile Money) *"
-            hint="Le numéro qui paiera les frais de la formation"
+            :label="$t('formationsPubliques.dialog.step1.telephone.label')"
+            :hint="$t('formationsPubliques.dialog.step1.telephone.hint')"
           />
           <q-input
             v-model="form.email"
             outlined
             dense
             type="email"
-            label="Adresse e-mail (facultatif)"
+            :label="$t('formationsPubliques.dialog.step1.email.label')"
           />
           <q-input
             v-model="form.matricule"
             outlined
             dense
-            label="Numéro étudiant (matricule INE, facultatif)"
-            hint="Déjà étudiant ? Indiquez votre matricule pour rattacher la formation à votre dossier"
+            :label="$t('formationsPubliques.dialog.step1.matricule.label')"
+            :hint="$t('formationsPubliques.dialog.step1.matricule.hint')"
           />
         </q-card-section>
 
         <!-- Étape 2 : récapitulatif -->
         <q-card-section v-if="etape === 2">
-          <div class="text-h6">Récapitulatif de la demande</div>
+          <div class="text-h6">{{ $t('formationsPubliques.dialog.step2.title') }}</div>
           <div class="plaque recapitulatif">
             <div class="recapitulatif__ligne">
-              <span class="pochoir">Formation</span>
+              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.formation') }}</span>
               <span class="recapitulatif__valeur">{{ selection?.titre }}</span>
             </div>
             <div class="recapitulatif__ligne">
-              <span class="pochoir">Participant(e)</span>
+              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.participant') }}</span>
               <span class="recapitulatif__valeur">{{ form.nomComplet }}</span>
             </div>
             <div class="recapitulatif__ligne">
-              <span class="pochoir">Téléphone</span>
+              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.telephone') }}</span>
               <span class="recapitulatif__valeur chiffres">{{ form.telephone }}</span>
             </div>
             <div class="recapitulatif__ligne">
-              <span class="pochoir">Montant à régler</span>
+              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.montantARegler') }}</span>
               <span class="lettrage chiffres recapitulatif__montant">
                 {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
               </span>
             </div>
           </div>
           <p class="recapitulatif__note">
-            En déposant cette demande, vous vous engagez à régler les frais de
-            la formation par Mobile Money. La confirmation du paiement se fait
-            au guichet de la scolarité.
+            {{ $t('formationsPubliques.dialog.step2.note') }}
           </p>
           <q-banner v-if="messageErreur" class="note--erreur">
             <template #avatar><q-icon name="error" /></template>
@@ -198,67 +187,68 @@
         <q-card-section v-if="etape === 3 && resultat">
           <div class="recapitulatif__succes">
             <div class="recapitulatif__tampon" aria-hidden="true">
-              <span class="pochoir">Demande</span>
-              <span class="lettrage">Déposée</span>
+              <span class="pochoir">{{ $t('formationsPubliques.dialog.step3.demande') }}</span>
+              <span class="lettrage">{{ $t('formationsPubliques.dialog.step3.deposee') }}</span>
             </div>
-            <p class="pochoir recapitulatif__ref">N° de dossier</p>
+            <p class="pochoir recapitulatif__ref">{{ $t('formationsPubliques.dialog.step3.numeroDossier') }}</p>
             <p class="lettrage chiffres recapitulatif__numero">{{ resultat.numero }}</p>
           </div>
 
           <div class="plaque recapitulatif__paiement">
-            <div class="text-caption">À régler par Mobile Money</div>
+            <div class="text-caption">{{ $t('formationsPubliques.dialog.step3.aReglerMobileMoney') }}</div>
             <div class="lettrage chiffres recapitulatif__somme">
               {{ montantLisible(resultat.montant) }} {{ resultat.devise }}
             </div>
             <p class="recapitulatif__paiement-texte">
-              Rendez-vous au guichet de la scolarité pour régler ce montant
-              ({{ resultat.numero }} en motivation). Dès réception du paiement,
-              votre inscription passe <strong>confirmée</strong> et votre place
-              est réservée.
+              <i18n-t keypath="formationsPubliques.dialog.step3.paiementTexte" tag="span">
+                <template #numero>{{ resultat.numero }}</template>
+                <template #confirmee><strong>{{ $t('formationsPubliques.dialog.step3.confirmee') }}</strong></template>
+              </i18n-t>
             </p>
           </div>
 
           <q-banner class="note--info">
             <template #avatar><q-icon name="hourglass_top" /></template>
-            Statut actuel de votre demande : <strong>en attente de paiement</strong>
-            — vous recevrez votre attestation de formation en fin de parcours.
+            <i18n-t keypath="formationsPubliques.dialog.step3.statutInfo" tag="span">
+              <template #statut><strong>{{ $t('formationsPubliques.dialog.step3.enAttentePaiement') }}</strong></template>
+            </i18n-t>
           </q-banner>
         </q-card-section>
 
         <q-card-actions align="right">
           <template v-if="etape === 1">
-            <q-btn flat no-caps label="Fermer" v-close-popup />
+            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step1.fermer')" v-close-popup />
             <q-btn
               color="primary"
               unelevated
               no-caps
-              label="Voir le récapitulatif"
+              :label="$t('formationsPubliques.dialog.step1.voirRecap')"
               :disable="!identiteValide"
               @click="etape = 2"
             >
               <q-tooltip v-if="!identiteValide">
-                Renseignez d'abord votre nom et votre téléphone
+                {{ $t('formationsPubliques.dialog.step1.renseignerAbord') }}
               </q-tooltip>
             </q-btn>
           </template>
           <template v-else-if="etape === 2">
-            <q-btn flat no-caps label="Retour" @click="etape = 1" />
+            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step2.retour')" @click="etape = 1" />
             <q-btn
               color="primary"
               unelevated
               no-caps
-              label="Déposer ma demande d'inscription"
+              :label="$t('formationsPubliques.dialog.step2.deposer')"
               :loading="depotEnCours"
               @click="deposer"
             />
           </template>
           <template v-else>
-            <q-btn flat no-caps label="Fermer" v-close-popup @click="fermer" />
+            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step3.fermer')" v-close-popup @click="fermer" />
             <q-btn
               color="primary"
               unelevated
               no-caps
-              label="Inscrire un autre participant"
+              :label="$t('formationsPubliques.dialog.step3.inscrireAutre')"
               @click="inscrireUnAutre"
             />
           </template>
@@ -275,12 +265,15 @@
  * formations publiées. Tout passe par `formationsService`.
  */
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   formationsService,
   type FormationVitrine,
   type ResultatDepotInscription,
 } from '../services/formations';
 import { dateLisible, montantLisible } from '../utils/libelles';
+
+const { t } = useI18n();
 
 const formations = ref<FormationVitrine[]>([]);
 const chargement = ref(true);
@@ -342,7 +335,7 @@ function inscrireUnAutre() {
 async function deposer() {
   messageErreur.value = '';
   if (!identiteValide.value) {
-    messageErreur.value = 'Le nom complet et le téléphone sont obligatoires';
+    messageErreur.value = t('formationsPubliques.messages.identiteObligatoire');
     return;
   }
   depotEnCours.value = true;
@@ -356,7 +349,7 @@ async function deposer() {
     resultat.value = data;
     etape.value = 3;
   } catch (e: any) {
-    messageErreur.value = e?.response?.data?.message ?? 'Dépôt impossible, réessayez';
+    messageErreur.value = e?.response?.data?.message ?? t('formationsPubliques.messages.depotImpossible');
   } finally {
     depotEnCours.value = false;
   }
@@ -393,7 +386,7 @@ onMounted(charger);
 }
 
 .vitrine__sur-titre {
-  color: rgba(250, 250, 247, 0.6);
+  color: var(--up-encre-tertiaire);
   margin: 0;
 }
 
@@ -406,7 +399,7 @@ onMounted(charger);
   font-size: 1.05rem;
   line-height: 1.55;
   max-width: 52ch;
-  color: rgba(250, 250, 247, 0.88);
+  color: var(--up-encre-douce);
   margin: 0;
 }
 
@@ -414,10 +407,10 @@ onMounted(charger);
   display: grid;
   gap: var(--up-3);
   margin: 0;
-  border-top: 2px solid rgba(250, 250, 247, 0.35);
+  border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: rgba(250, 250, 247, 0.66); }
+  dt { color: var(--up-encre-tertiaire); }
   dd { margin: 3px 0 0; font-size: 0.92rem; }
 }
 
@@ -435,7 +428,7 @@ onMounted(charger);
   align-items: baseline;
   justify-content: space-between;
   gap: var(--up-3);
-  border-bottom: 3px solid var(--up-encre);
+  border-bottom: var(--up-filet);
   padding-bottom: var(--up-3);
 }
 
@@ -476,15 +469,17 @@ onMounted(charger);
 }
 
 .carte-formation__places {
-  border: 2px solid $vert;
-  color: $vert;
-  padding: 2px 6px;
+  border: 0;
+  background: $vert-fond;
+  color: #{$vert};
+  border-radius: var(--up-pilule);
+  padding: 2px 10px;
   white-space: nowrap;
 }
 
 .carte-formation__places--dernieres {
-  border-color: $jaune-fonce;
-  color: $jaune-fonce;
+  background: $jaune-fond;
+  color: $jaune-texte;
 }
 
 .carte-formation__titre {
@@ -535,7 +530,7 @@ onMounted(charger);
 
 .carte-formation__devise {
   font-size: 0.7em;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
 }
 
 .carte-formation__cta { min-height: 52px; margin-top: auto; }
@@ -583,10 +578,10 @@ onMounted(charger);
   display: inline-flex;
   align-items: center;
   gap: var(--up-2);
-  border: 2px solid $vert;
-  color: $vert;
+  background: $vert-fond;
+  color: #{$vert};
+  border-radius: var(--up-pilule);
   padding: var(--up-2) var(--up-3);
-  transform: rotate(-3deg);
 }
 
 .recapitulatif__ref {

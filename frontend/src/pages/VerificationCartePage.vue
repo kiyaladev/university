@@ -2,38 +2,36 @@
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
-        <q-btn flat dense no-caps icon="fact_check" label="Vérifier une attestation" to="/verification" />
-        <q-btn flat dense no-caps icon="login" label="Se connecter" to="/connexion" />
+        <q-btn flat dense no-caps icon="fact_check" :label="$t('verificationCarte.actions.verifyAttestation')" to="/verification" />
+        <q-btn flat dense no-caps icon="login" :label="$t('verificationCarte.actions.login')" to="/connexion" />
       </div>
       <div class="text-center q-my-lg">
-        <div class="lettrage page-titre">Vérification de carte étudiante</div>
+        <h1 class="lettrage page-titre">{{ $t('verificationCarte.title') }}</h1>
         <div class="page-sous-titre verification-intro">
-          Cette page publique atteste de l'authenticité d'une carte étudiante
-          numérique délivrée par l'établissement : la carte existe, est intacte
-          et n'a pas été révoquée. Chaque consultation est journalisée.
+          {{ $t('verificationCarte.subtitle') }}
         </div>
       </div>
 
       <!-- Formulaire de saisie / scan -->
       <div class="plaque q-pa-md q-mb-lg">
-        <span class="section-titre">Saisir l'identifiant et le code du QR</span>
+        <span class="section-titre">{{ $t('verificationCarte.form.sectionTitle') }}</span>
         <q-input
           v-model="identifiant"
           dense
           outlined
           clearable
-          label="Identifiant de la carte"
-          hint="UUID inscrit sous le QR"
+          :label="$t('verificationCarte.form.identifierLabel')"
+          :hint="$t('verificationCarte.form.identifierHint')"
         />
         <qr-scanner
           v-model="codeQr"
-          label="Code QR de la carte"
-          hint="Scannez le QR de la carte ou saisissez le code"
+          :label="$t('verificationCarte.form.qrLabel')"
+          :hint="$t('verificationCarte.form.qrHint')"
         />
         <div class="text-caption text-grey-7 q-mt-xs">
-          Le QR scanné (ou collé) est une URL : ses paramètres
-          <code>carte</code> et <code>k</code> remplissent le formulaire
-          automatiquement.
+          {{ $t('verificationCarte.form.qrExplanationPrefix') }}
+          <code>carte</code> {{ $t('verificationCarte.form.qrExplanationAnd') }} <code>k</code>
+          {{ $t('verificationCarte.form.qrExplanationSuffix') }}
         </div>
         <div class="row justify-end q-mt-md">
           <q-btn
@@ -41,7 +39,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            label="Vérifier"
+            :label="$t('verificationCarte.form.verify')"
             :disable="!identifiant.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -61,41 +59,41 @@
             :color="resultat.valide ? 'positive' : 'negative'"
           />
           <div class="lettrage resultat-titre">
-            {{ resultat.valide ? 'Carte authentique' : 'Carte non valable' }}
+            {{ resultat.valide ? $t('verificationCarte.result.valid') : $t('verificationCarte.result.invalid') }}
           </div>
 
           <div v-if="resultat.valide && resultat.carte" class="q-mt-md text-left">
             <p class="q-mb-sm">
-              La carte <strong>{{ resultat.carte.identifiant }}</strong> existe bien
-              dans le registre de l'établissement. Mentions vérifiées :
+              {{ $t('verificationCarte.result.introPrefix') }}
+              <strong>{{ resultat.carte.identifiant }}</strong>
+              {{ $t('verificationCarte.result.introSuffix') }}
             </p>
             <table class="table-verification">
               <tbody>
                 <tr>
-                  <td class="ta-intitule">Étudiant</td>
+                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.student') }}</td>
                   <td>{{ resultat.carte.etudiant ?? '—' }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Numéro de carte</td>
+                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.cardNumber') }}</td>
                   <td><code>{{ resultat.carte.identifiant }}</code></td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Statut</td>
-                  <td>Émise — non révoquée, validité en cours</td>
+                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.status') }}</td>
+                  <td>{{ $t('verificationCarte.result.table.statusValue') }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Émise le</td>
+                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.issuedOn') }}</td>
                   <td>{{ dateFr(resultat.carte.dateEmission) }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">Valable jusqu'au</td>
+                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.validUntil') }}</td>
                   <td>{{ dateFr(resultat.carte.dateValidite) }}</td>
                 </tr>
               </tbody>
             </table>
             <div class="text-caption text-grey-7 q-mt-md">
-              Vérifié le {{ dateHeureFr(new Date()) }} — cette consultation a été
-              enregistrée dans le journal de la carte.
+              {{ $t('verificationCarte.result.verifiedAt', { date: dateHeureFr(new Date()) }) }}
             </div>
           </div>
 
@@ -104,8 +102,7 @@
       </div>
 
       <div class="text-center q-mt-xl text-caption text-grey-7">
-        La vérification est gratuite et ne requiert aucun compte. Une carte
-        révoquée ou un identifiant inconnu ne prouve rien — méfiance.
+        {{ $t('verificationCarte.footer') }}
       </div>
     </div>
   </q-page>
@@ -114,6 +111,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import QrScanner from '../components/QrScanner.vue';
 
@@ -136,6 +134,7 @@ interface ResultatVerification {
 }
 
 const route = useRoute();
+const { t } = useI18n();
 
 const identifiant = ref('');
 const codeQr = ref('');
@@ -181,8 +180,7 @@ async function verifier() {
   } catch {
     resultat.value = {
       valide: false,
-      raison:
-        "La vérification n'a pas pu aboutir : le service est momentanément indisponible. Réessayez dans un instant.",
+      raison: t('verificationCarte.messages.verificationFailed'),
     };
   } finally {
     verificationEnCours.value = false;
@@ -220,7 +218,7 @@ function dateHeureFr(v: Date): string {
 }
 
 .plaque-verite--valide {
-  border-color: #2e7d32 !important;
+  border-color: #027a0b !important;
 }
 
 .plaque-verite--invalide {
@@ -242,10 +240,9 @@ function dateHeureFr(v: Date): string {
 
 .ta-intitule {
   width: 150px;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 590;
   font-size: 11px !important;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
   background: rgba(16, 37, 30, 0.06);
 }
 </style>

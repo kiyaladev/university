@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Matches, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StadeTirage } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
@@ -8,14 +8,14 @@ export class CreateTirageDto {
   @IsDateString() dateTirage: string;
   @IsInt() @Min(1) nbExemplaires: number;
   /** Empreinte SHA-256 du fichier source à imprimer. */
-  @IsString() empreinteSource: string;
+  @IsString() @Matches(/^[a-fA-F0-9]{64}$/) empreinteSource: string;
   @IsOptional() @IsString() circuitImpression?: string;
   @IsOptional() @IsString() notes?: string;
 }
 
 export class ImprimerTirageDto {
   /** Empreinte à re-vérifier avant impression ; doit matcher `empreinteSource`. */
-  @IsString() empreinteSource: string;
+  @IsString() @Matches(/^[a-fA-F0-9]{64}$/) empreinteSource: string;
   /** Empreintes par exemplaire "hash1,hash2,..." ; nul autorise la transition. */
   @IsOptional() @IsString() empreinteExemplaires?: string;
 }

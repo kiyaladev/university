@@ -5,14 +5,16 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { I18nContext } from 'nestjs-i18n';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import type { Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import type { Request, Response } from 'express';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import {
   CreateTirageDto,
   ImprimerTirageDto,
@@ -20,6 +22,7 @@ import {
   UpdateStadeTirageDto,
 } from './tirage.dto';
 import { TirageService } from './tirage.service';
+import { jetonImprimable, verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Tirage des épreuves')
 @ApiBearerAuth()
@@ -103,20 +106,15 @@ export class TirageController {
    * Bordereau A4 — ouvert dans un nouvel onglet (pas d'en-tête Authorization).
    * Le jeton est vérifié à la main avant l'appel au service.
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get(':id/imprimer-bordereau')
   async imprimerBordereau(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    try {
-      this.jwt.verify(token ?? '', {
-        secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      });
-    } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
-    }
+    // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
+    verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimerBordereau(id));
   }
 }

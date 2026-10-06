@@ -14,9 +14,10 @@ export type ModeVue = 'tableau' | 'cartes';
 const PREFIXE = 'unipresence_vue_';
 
 export function useVuePreferee(cle: string): Ref<ModeVue> {
-  const memorise = localStorage.getItem(PREFIXE + cle) as ModeVue | null;
-  const mode = ref<ModeVue>(memorise ?? (Screen.lt.md ? 'cartes' : 'tableau'));
+  let memorise: string | null = null;
+  try { memorise = localStorage.getItem(PREFIXE + cle); } catch { /* préférence indisponible */ }
+  const mode = ref<ModeVue>(memorise === 'tableau' || memorise === 'cartes' ? memorise : Screen.lt.md ? 'cartes' : 'tableau');
 
-  watch(mode, (v) => localStorage.setItem(PREFIXE + cle, v));
+  watch(mode, (v) => { try { localStorage.setItem(PREFIXE + cle, v); } catch { /* choix conservé pour cette visite */ } });
   return mode;
 }

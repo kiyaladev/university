@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-02T10:23:08.812Z",
+  "checks": [
+    {
+      "role": "ADMIN",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "ADMIN",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    }
+  ]
+}

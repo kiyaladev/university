@@ -5,6 +5,7 @@
  * via le menu de la carte). C'est volontairement simple mais lisible.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 interface Card {
   id: string | number;
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<{
 });
 
 const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.cartes.length, 0));
+const { t } = useI18n();
 </script>
 
 <template>
@@ -50,13 +52,18 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
             flat
             bordered
             class="kanban__carte"
-            @click="carte.onClick?.()"
           >
             <q-card-section class="kanban__carte-corps">
               <div v-if="carte.badge" class="kanban__carte-badge">
                 <q-badge :color="carte.couleur ?? 'primary'" :label="carte.badge" />
               </div>
-              <div class="kanban__carte-titre" :class="{ 'kanban__carte-titre--cliquable': selectionnable }">{{ carte.titre }}</div>
+              <button
+                v-if="selectionnable && carte.onClick"
+                type="button"
+                class="kanban__carte-titre kanban__carte-titre--cliquable"
+                @click="carte.onClick?.()"
+              >{{ carte.titre }}</button>
+              <div v-else class="kanban__carte-titre">{{ carte.titre }}</div>
               <div v-if="carte.sousTitre" class="kanban__carte-sous-titre">{{ carte.sousTitre }}</div>
               <div v-if="carte.meta" class="kanban__carte-meta">{{ carte.meta }}</div>
               <div v-if="carte.actions?.length" class="kanban__carte-actions">
@@ -77,12 +84,12 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
           </q-card>
           <div v-if="!col.cartes.length" class="kanban__vide">
             <q-icon name="inbox" size="32px" color="grey-5" />
-            <div>Aucune carte</div>
+            <div>{{ t('layout.kanban.empty') }}</div>
           </div>
         </div>
       </div>
     </div>
-    <div class="kanban__pied">{{ totalCartes }} élément(s)</div>
+    <div class="kanban__pied">{{ t('layout.kanban.count', { n: totalCartes }) }}</div>
   </div>
 </template>
 
@@ -99,10 +106,13 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
 }
 .kanban__colonne {
   flex: 0 0 280px;
-  background: var(--up-plaque, #fafaf7);
-  border-top: 3px solid;
-  border-radius: 4px;
-  padding: 8px;
+  background: var(--up-plaque);
+  /* La couleur de la colonne se dit par un filet en tête, fin comme partout
+     ailleurs — la barre de 3 px faisait un onglet collé sur le flanc.
+     Ce bloc est du CSS simple : pas de commentaire `//` ici. */
+  border-top: 2px solid;
+  border-radius: var(--up-rayon);
+  padding: 12px;
   display: grid;
   gap: 8px;
 }
@@ -110,7 +120,7 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 700;
+  font-weight: 590;
 }
 .kanban__cartes {
   display: grid;
@@ -133,6 +143,12 @@ const totalCartes = computed(() => props.colonnes.reduce((acc, c) => acc + c.car
 }
 .kanban__carte-titre--cliquable {
   cursor: pointer;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 .kanban__carte-sous-titre {
   font-size: 12px;

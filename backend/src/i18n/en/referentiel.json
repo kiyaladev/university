@@ -1,0 +1,8 @@
+{
+  "salle_referenced_delete": "This room cannot be deleted: sessions or reservations are still attached to it. Please deactivate it instead of deleting.",
+  "departement_referenced_delete": "This department cannot be deleted: teachers or programmes are still attached. Please reassign them first.",
+  "filiere_referenced_delete": "This programme cannot be deleted: academic years are still attached. Please delete or reassign them first.",
+  "promotion_referenced_delete": "This academic year cannot be deleted: data is still attached (enrollments, assignments, fees…). Please handle them first.",
+  "annee_referenced_delete": "This academic year cannot be deleted: data is still attached (programmes, enrollments, sessions…). Please close it instead of deleting.",
+  "annee_dates_incoherentes": "The end date of an academic year must be after its start date."
+}

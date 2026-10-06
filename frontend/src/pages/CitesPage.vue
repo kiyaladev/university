@@ -2,10 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Cités universitaires</div>
+        <h1 class="page-titre">{{ $t('cites.title') }}</h1>
         <div class="page-sous-titre">
-          Attribution transparente des chambres — critères sociaux et mérite, pilotée avec le
-          rectorat (Centre des Œuvres Universitaires)
+          {{ $t('cites.subtitle') }}
         </div>
       </div>
       <div class="col-auto" v-if="peutGerer">
@@ -21,9 +20,9 @@
     </div>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="residences" icon="apartment" label="Résidences" no-caps />
-      <q-tab name="chambres" icon="meeting_room" label="Chambres" no-caps />
-      <q-tab name="attributions" icon="how_to_reg" label="Attributions" no-caps />
+      <q-tab name="residences" icon="apartment" :label="$t('cites.tabs.residences')" no-caps />
+      <q-tab name="chambres" icon="meeting_room" :label="$t('cites.tabs.chambres')" no-caps />
+      <q-tab name="attributions" icon="how_to_reg" :label="$t('cites.tabs.attributions')" no-caps />
     </q-tabs>
 
     <!-- ============================================================== -->
@@ -33,7 +32,7 @@
       <filter-bar
         v-model="filtresResidences"
         :chips="chipsResidences"
-        placeholder="Rechercher (code, nom, ville, responsable…)"
+        :placeholder="$t('cites.residences.filters.placeholder')"
         @reinitialiser="reinitialiserResidences"
       >
         <template #avances>
@@ -43,27 +42,27 @@
             min="0"
             dense
             outlined
-            label="Capacité min"
+            :label="$t('cites.residences.filters.capaciteMin')"
             clearable
           />
           <q-select
             v-model="filtresResidences.actif"
             :options="[
-              { label: 'Toutes', value: null },
-              { label: 'Actives', value: 'true' },
-              { label: 'Inactives', value: 'false' },
+              { label: $t('cites.residences.filters.etatToutes'), value: null },
+              { label: $t('cites.residences.filters.etatActives'), value: 'true' },
+              { label: $t('cites.residences.filters.etatInactives'), value: 'false' },
             ]"
             emit-value
             map-options
             dense
             outlined
-            label="État"
+            :label="$t('cites.residences.filters.etat')"
           />
           <q-input
             v-model="filtresResidences.ville"
             dense
             outlined
-            label="Ville"
+            :label="$t('cites.residences.filters.ville')"
             clearable
           />
         </template>
@@ -83,12 +82,12 @@
         row-key="id"
         :loading="chargementResidences"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargementResidences || residencesFiltrees.length > 0"
       >
         <template #body-cell-statut="p">
           <q-td :props="p">
             <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
-              {{ p.row.actif ? 'Active' : 'Inactive' }}
+              {{ p.row.actif ? $t('cites.common.status.active') : $t('cites.common.status.inactive') }}
             </q-badge>
           </q-td>
         </template>
@@ -99,25 +98,25 @@
               dense
               round
               icon="meeting_room"
-              aria-label="Voir les chambres de cette résidence"
+              :aria-label="$t('cites.residences.table.aria.voirChambres')"
               @click="voirChambresDe(p.row)"
             >
-              <q-tooltip>Voir ses chambres</q-tooltip>
+              <q-tooltip>{{ $t('cites.residences.table.tooltip.voirChambres') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="peutGererResidences" flat dense round icon="edit" aria-label="Modifier la résidence" @click="ouvrirResidence(p.row)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn v-if="peutGererResidences" flat dense round icon="edit" :aria-label="$t('cites.residences.table.aria.modifier')" @click="ouvrirResidence(p.row)">
+              <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer la résidence" @click="supprimerResidence(p.row)">
-              <q-tooltip>Supprimer</q-tooltip>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('cites.residences.table.aria.supprimer')" @click="supprimerResidence(p.row)">
+              <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="apartment" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucune résidence pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('cites.residences.emptyState.title') }}</div>
             <div class="text-caption q-mt-xs">
-              Une résidence porte les chambres ; les chambres portent les attributions.
+              {{ $t('cites.residences.emptyState.hint') }}
             </div>
             <q-btn
               v-if="peutGererResidences"
@@ -125,7 +124,7 @@
               no-caps
               color="primary"
               icon="add"
-              label="Nouvelle résidence"
+              :label="$t('cites.actions.newResidence')"
               class="q-mt-sm"
               @click="ouvrirResidence(null)"
             />
@@ -146,7 +145,7 @@
                 <div class="text-subtitle1 text-weight-medium">{{ r.nom }}</div>
               </div>
               <q-badge :color="r.actif ? 'positive' : 'grey-7'">
-                {{ r.actif ? 'Active' : 'Inactive' }}
+                {{ r.actif ? $t('cites.common.status.active') : $t('cites.common.status.inactive') }}
               </q-badge>
             </q-card-section>
             <q-card-section class="q-pt-none q-gutter-y-xs">
@@ -156,45 +155,45 @@
               </div>
               <div class="row items-center">
                 <q-icon name="bed" size="16px" class="q-mr-sm text-grey-6" />
-                <span class="text-caption">Capacité : {{ nombreLisible(r.capacite) }} lits</span>
+                <span class="text-caption">{{ $t('cites.residences.card.capacite', { n: nombreLisible(r.capacite) }) }}</span>
               </div>
               <div class="row items-center q-gutter-xs">
                 <q-icon name="meeting_room" size="16px" class="q-mr-sm text-grey-6" />
                 <q-chip dense size="sm" color="positive" text-color="white">
-                  {{ compteLibres(r) }} libres
+                  {{ $t('cites.residences.card.libres', { n: compteLibres(r) }) }}
                 </q-chip>
                 <q-chip dense size="sm" color="amber-8" text-color="white">
-                  {{ compteReservees(r) }} réservées
+                  {{ $t('cites.residences.card.reservees', { n: compteReservees(r) }) }}
                 </q-chip>
                 <q-chip dense size="sm" color="blue-grey-5" text-color="white">
-                  {{ compteOccupees(r) }} occupées
+                  {{ $t('cites.residences.card.occupees', { n: compteOccupees(r) }) }}
                 </q-chip>
               </div>
             </q-card-section>
             <q-separator />
             <q-card-actions class="text-caption text-grey-7 q-px-md">
               <q-icon name="person_outline" size="16px" class="q-mr-xs" />
-              {{ r.responsable ?? 'Aucun responsable renseigné' }}
+              {{ r.responsable ?? $t('cites.residences.card.noResponsable') }}
               <q-space />
-              <q-btn v-if="peutGererResidences" flat dense round size="sm" icon="edit" aria-label="Modifier la résidence" @click="ouvrirResidence(r)">
-                <q-tooltip>Modifier</q-tooltip>
+              <q-btn v-if="peutGererResidences" flat dense round size="sm" icon="edit" :aria-label="$t('cites.residences.table.aria.modifier')" @click="ouvrirResidence(r)">
+                <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" aria-label="Supprimer la résidence" @click="supprimerResidence(r)">
-                <q-tooltip>Supprimer</q-tooltip>
+              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" :aria-label="$t('cites.residences.table.aria.supprimer')" @click="supprimerResidence(r)">
+                <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
         </div>
         <div v-if="!chargementResidences && !residencesFiltrees.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="apartment" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune résidence pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('cites.residences.emptyState.title') }}</div>
           <q-btn
             v-if="peutGererResidences"
             flat
             no-caps
             color="primary"
             icon="add"
-            label="Nouvelle résidence"
+            :label="$t('cites.actions.newResidence')"
             class="q-mt-sm"
             @click="ouvrirResidence(null)"
           />
@@ -209,7 +208,7 @@
       <filter-bar
         v-model="filtresChambres"
         :chips="chipsChambres"
-        placeholder="Rechercher (code de chambre…)"
+        :placeholder="$t('cites.chambres.filters.placeholder')"
         @reinitialiser="reinitialiserChambres"
       >
         <template #avances>
@@ -217,7 +216,7 @@
             v-model="filtresChambres.residenceId"
             endpoint="/residences"
             :label-fn="(r) => `${r.code} — ${r.nom}`"
-            label="Résidence"
+            :label="$t('cites.chambres.filters.residence')"
           />
           <q-select
             v-model="filtresChambres.categorie"
@@ -227,7 +226,7 @@
             dense
             outlined
             clearable
-            label="Catégorie"
+            :label="$t('cites.chambres.filters.categorie')"
           />
           <q-select
             v-model="filtresChambres.statut"
@@ -237,7 +236,7 @@
             dense
             outlined
             clearable
-            label="Statut"
+            :label="$t('cites.chambres.filters.statut')"
           />
         </template>
         <template #actions>
@@ -266,7 +265,7 @@
         row-key="id"
         :loading="chargementChambres"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargementChambres || chambres.length > 0"
       >
         <template #body-cell-categorie="p">
           <q-td :props="p">{{ LIBELLE_CATEGORIE_CHAMBRE[p.row.categorie] ?? p.row.categorie }}</q-td>
@@ -291,25 +290,25 @@
               dense
               round
               icon="how_to_reg"
-              aria-label="Voir les attributions de cette chambre"
+              :aria-label="$t('cites.chambres.table.aria.voirAttributions')"
               @click="voirAttributionsDe(p.row)"
             >
-              <q-tooltip>Qui l'occupe ? (attributions)</q-tooltip>
+              <q-tooltip>{{ $t('cites.chambres.table.tooltip.voirAttributions') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="peutGererChambres" flat dense round icon="edit" aria-label="Modifier la chambre" @click="ouvrirChambre(p.row)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn v-if="peutGererChambres" flat dense round icon="edit" :aria-label="$t('cites.chambres.table.aria.modifier')" @click="ouvrirChambre(p.row)">
+              <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer la chambre" @click="supprimerChambre(p.row)">
-              <q-tooltip>Supprimer</q-tooltip>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('cites.chambres.table.aria.supprimer')" @click="supprimerChambre(p.row)">
+              <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="meeting_room" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucune chambre pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('cites.chambres.emptyState.title') }}</div>
             <div class="text-caption q-mt-xs">
-              Chaque chambre appartient à une résidence et porte son loyer.
+              {{ $t('cites.chambres.emptyState.hint') }}
             </div>
             <q-btn
               v-if="peutGererChambres"
@@ -317,7 +316,7 @@
               no-caps
               color="primary"
               icon="add"
-              label="Nouvelle chambre"
+              :label="$t('cites.actions.newChambre')"
               class="q-mt-sm"
               @click="ouvrirChambre(null)"
             />
@@ -352,7 +351,7 @@
               </div>
               <div class="row items-center">
                 <q-icon name="bed" size="16px" class="q-mr-sm text-grey-6" />
-                <span class="text-caption">{{ c.lits }} lit{{ c.lits > 1 ? 's' : '' }}</span>
+                <span class="text-caption">{{ c.lits }} {{ c.lits > 1 ? $t('cites.chambres.card.litPlural') : $t('cites.chambres.card.litSingular') }}</span>
               </div>
             </q-card-section>
             <q-separator />
@@ -360,25 +359,25 @@
               <q-icon name="payments" size="16px" class="q-mr-xs" />
               <span class="chiffres text-weight-medium">{{ montantLisible(c.loyer) }} {{ c.devise }}</span>
               <q-space />
-              <q-btn v-if="peutGererChambres" flat dense round size="sm" icon="edit" aria-label="Modifier la chambre" @click="ouvrirChambre(c)">
-                <q-tooltip>Modifier</q-tooltip>
+              <q-btn v-if="peutGererChambres" flat dense round size="sm" icon="edit" :aria-label="$t('cites.chambres.table.aria.modifier')" @click="ouvrirChambre(c)">
+                <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" aria-label="Supprimer la chambre" @click="supprimerChambre(c)">
-                <q-tooltip>Supprimer</q-tooltip>
+              <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" :aria-label="$t('cites.chambres.table.aria.supprimer')" @click="supprimerChambre(c)">
+                <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
         </div>
         <div v-if="!chargementChambres && !chambres.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="meeting_room" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune chambre pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('cites.chambres.emptyState.title') }}</div>
           <q-btn
             v-if="peutGererChambres"
             flat
             no-caps
             color="primary"
             icon="add"
-            label="Nouvelle chambre"
+            :label="$t('cites.actions.newChambre')"
             class="q-mt-sm"
             @click="ouvrirChambre(null)"
           />
@@ -405,7 +404,7 @@
             dense
             outlined
             clearable
-            label="Année"
+            :label="$t('cites.attributions.filters.annee')"
           />
           <q-select
             v-model="filtresAttributions.statut"
@@ -415,19 +414,19 @@
             dense
             outlined
             clearable
-            label="Statut"
+            :label="$t('cites.attributions.filters.statut')"
           />
           <autocomplete-async
             v-model="filtresAttributions.residenceId"
             endpoint="/residences"
             :label-fn="(r) => `${r.code} — ${r.nom}`"
-            label="Résidence"
+            :label="$t('cites.attributions.filters.residence')"
           />
           <q-input
             v-model="filtresAttributions.etudiant"
             dense
             outlined
-            label="Recherche étudiant (matricule, nom)"
+            :label="$t('cites.attributions.filters.etudiant')"
             clearable
             @keydown.enter="requeterAttributions"
           />
@@ -458,7 +457,7 @@
         row-key="id"
         :loading="chargementAttributions"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargementAttributions || attributions.length > 0"
       >
         <template #body-cell-createdAt="p">
           <q-td :props="p">{{ dateLisible(p.row.createdAt) }}</q-td>
@@ -485,7 +484,7 @@
             >
               {{ p.row.critereScore }}
             </q-badge>
-            <span v-else class="text-grey-6">—</span>
+            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
           </q-td>
         </template>
         <template #body-cell-statut="p">
@@ -497,23 +496,23 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn v-if="p.row.statut === 'EN_ATTENTE' && peutDecider" flat dense round color="primary" icon="gavel" aria-label="Décider de l'attribution" @click="ouvrirDecision(p.row)">
-              <q-tooltip>Décider</q-tooltip>
+            <q-btn v-if="p.row.statut === 'EN_ATTENTE' && peutDecider" flat dense round color="primary" icon="gavel" :aria-label="$t('cites.attributions.table.aria.decider')" @click="ouvrirDecision(p.row)">
+              <q-tooltip>{{ $t('cites.attributions.table.tooltip.decider') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin" flat dense round color="negative" icon="undo" aria-label="Retirer l'attribution" @click="retirerAttribution(p.row)">
-              <q-tooltip>Retirer</q-tooltip>
+            <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin" flat dense round color="negative" icon="undo" :aria-label="$t('cites.attributions.table.aria.retirer')" @click="retirerAttribution(p.row)">
+              <q-tooltip>{{ $t('cites.attributions.table.tooltip.retirer') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="p.row.etudiant" flat dense round icon="person" aria-label="Voir l'étudiant attributaire" @click="voirEtudiant(p.row)">
-              <q-tooltip>Voir l'étudiant</q-tooltip>
+            <q-btn v-if="p.row.etudiant" flat dense round icon="person" :aria-label="$t('cites.attributions.table.aria.voirEtudiant')" @click="voirEtudiant(p.row)">
+              <q-tooltip>{{ $t('cites.attributions.table.tooltip.voirEtudiant') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="how_to_reg" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucune attribution pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('cites.attributions.emptyState.title') }}</div>
             <div class="text-caption q-mt-xs">
-              Une demande naît « en attente », puis le jury l'accorde ou la refuse.
+              {{ $t('cites.attributions.emptyState.hint') }}
             </div>
             <q-btn
               v-if="peutCreerAttribution"
@@ -521,7 +520,7 @@
               no-caps
               color="primary"
               icon="how_to_reg"
-              label="Nouvelle attribution"
+              :label="$t('cites.actions.newAttribution')"
               class="q-mt-sm"
               @click="ouvrirCourant"
             />
@@ -551,16 +550,19 @@
               <div class="row items-center">
                 <q-icon name="meeting_room" size="16px" class="q-mr-sm text-grey-6" />
                 <span class="text-caption">
-                  Chambre <strong>{{ a.chambre?.code }}</strong> — {{ a.chambre?.residence?.nom ?? '—' }}
+                  <i18n-t keypath="cites.attributions.card.chambreLabel" tag="span">
+                    <template #code><strong>{{ a.chambre?.code }}</strong></template>
+                    <template #residence>{{ a.chambre?.residence?.nom ?? '—' }}</template>
+                  </i18n-t>
                 </span>
               </div>
               <div class="row items-center">
                 <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
-                <span class="text-caption">Demandé le {{ dateLisible(a.createdAt) }}</span>
+                <span class="text-caption">{{ $t('cites.attributions.card.demandeLe', { date: dateLisible(a.createdAt) }) }}</span>
               </div>
               <div class="row items-center">
                 <q-icon name="workspace_premium" size="16px" class="q-mr-sm text-grey-6" />
-                <span class="text-caption">Score :</span>
+                <span class="text-caption">{{ $t('cites.attributions.card.score') }}</span>
                 <q-badge
                   v-if="a.critereScore !== null && a.critereScore !== undefined"
                   dense
@@ -570,33 +572,33 @@
                 >
                   {{ a.critereScore }}
                 </q-badge>
-                <span v-else class="text-grey-6 q-ml-xs">—</span>
+                <span v-else class="text-grey-6 q-ml-xs">{{ $t('rectoratPage.subtitleFallback') }}</span>
               </div>
             </q-card-section>
             <q-separator />
             <q-card-actions class="q-px-md">
-              <q-btn v-if="a.statut === 'EN_ATTENTE' && peutDecider" flat dense no-caps color="primary" icon="gavel" label="Décider" @click="ouvrirDecision(a)">
-                <q-tooltip>Accorder ou refuser</q-tooltip>
+              <q-btn v-if="a.statut === 'EN_ATTENTE' && peutDecider" flat dense no-caps color="primary" icon="gavel" :label="$t('cites.attributions.card.decider')" @click="ouvrirDecision(a)">
+                <q-tooltip>{{ $t('cites.attributions.card.deciderTooltip') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(a.statut) && auth.estAdmin" flat dense no-caps color="negative" icon="undo" label="Retirer" @click="retirerAttribution(a)">
-                <q-tooltip>Retirer l'attribution</q-tooltip>
+              <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(a.statut) && auth.estAdmin" flat dense no-caps color="negative" icon="undo" :label="$t('cites.attributions.card.retirer')" @click="retirerAttribution(a)">
+                <q-tooltip>{{ $t('cites.attributions.card.retirerTooltip') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="a.etudiant" flat dense no-caps icon="person" label="Étudiant" @click="voirEtudiant(a)">
-                <q-tooltip>Voir la fiche de l'étudiant</q-tooltip>
+              <q-btn v-if="a.etudiant" flat dense no-caps icon="person" :label="$t('cites.attributions.card.etudiant')" @click="voirEtudiant(a)">
+                <q-tooltip>{{ $t('cites.attributions.card.etudiantTooltip') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
         </div>
         <div v-if="!chargementAttributions && !attributions.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="how_to_reg" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucune attribution pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('cites.attributions.emptyState.title') }}</div>
           <q-btn
             v-if="peutCreerAttribution"
             flat
             no-caps
             color="primary"
             icon="how_to_reg"
-            label="Nouvelle attribution"
+            :label="$t('cites.actions.newAttribution')"
             class="q-mt-sm"
             @click="ouvrirCourant"
           />
@@ -620,23 +622,25 @@
     <!-- Dialog de décision du jury -->
     <q-dialog v-model="decisionDialog">
       <q-card style="width: 540px; max-width: 95vw">
-        <q-card-section class="text-h6">Décision du jury</q-card-section>
+        <q-card-section class="text-h6">{{ $t('cites.attributions.dialogs.decision.title') }}</q-card-section>
         <q-card-section v-if="decision" class="q-pt-none text-caption text-grey-7">
           {{ decision.etudiant?.nom }} {{ decision.etudiant?.prenom }}
-          <span v-if="decision.etudiant?.matricule"> — {{ decision.etudiant.matricule }}</span>
+          <span v-if="decision.etudiant?.matricule"> {{ $t('rectoratPage.subtitleFallback') }} {{ decision.etudiant.matricule }}</span>
           <br />
-          Chambre <strong>{{ decision.chambre?.code }}</strong>
-          ({{ decision.chambre?.residence?.nom }})
+          <i18n-t keypath="cites.attributions.dialogs.decision.chambreLabel" tag="span">
+            <template #code><strong>{{ decision.chambre?.code }}</strong></template>
+            <template #residence>{{ decision.chambre?.residence?.nom }}</template>
+          </i18n-t>
           <template v-if="decision.critereScore !== null && decision.critereScore !== undefined">
-            · score <strong>{{ decision.critereScore }}</strong>
+            · {{ $t('cites.attributions.dialogs.decision.scoreLabel', { score: decision.critereScore }) }}
           </template>
         </q-card-section>
         <q-card-section>
           <q-option-group
             v-model="decisionStatut"
             :options="[
-              { label: 'Accorder la chambre', value: 'ACCORDEE', color: 'positive' },
-              { label: 'Refuser la demande', value: 'REFUSEE', color: 'negative' },
+              { label: $t('cites.attributions.dialogs.decision.optionAccorder'), value: 'ACCORDEE', color: 'positive' },
+              { label: $t('cites.attributions.dialogs.decision.optionRefuser'), value: 'REFUSEE', color: 'negative' },
             ]"
             inline
             class="q-mb-md"
@@ -644,10 +648,14 @@
           <q-banner dense class="note--info q-mb-md">
             <template #avatar><q-icon name="info" /></template>
             <span v-if="decisionStatut === 'ACCORDEE'">
-              La chambre passera <strong>OCCUPÉE</strong> et l'étudiant sera notifié.
+              <i18n-t keypath="cites.attributions.dialogs.decision.infoAccorder" tag="span">
+                <template #statut><strong>{{ $t('cites.attributions.dialogs.decision.statutOccupee') }}</strong></template>
+              </i18n-t>
             </span>
             <span v-else>
-              La chambre redeviendra <strong>LIBRE</strong> et la demande sera classée.
+              <i18n-t keypath="cites.attributions.dialogs.decision.infoRefuser" tag="span">
+                <template #statut><strong>{{ $t('cites.attributions.dialogs.decision.statutLibre') }}</strong></template>
+              </i18n-t>
             </span>
           </q-banner>
           <q-input
@@ -655,18 +663,18 @@
             outlined
             dense
             type="textarea"
-            label="Motif (optionnel)"
+            :label="$t('cites.attributions.dialogs.decision.motifLabel')"
             :autogrow="true"
             rows="2"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('cites.attributions.dialogs.decision.cancel')" v-close-popup />
           <q-btn
             unelevated
             :color="decisionStatut === 'ACCORDEE' ? 'positive' : 'negative'"
             :icon="decisionStatut === 'ACCORDEE' ? 'check' : 'close'"
-            :label="decisionStatut === 'ACCORDEE' ? 'Accorder' : 'Refuser'"
+            :label="decisionStatut === 'ACCORDEE' ? $t('cites.attributions.dialogs.decision.accorder') : $t('cites.attributions.dialogs.decision.refuser')"
             :loading="decisionEnCours"
             @click="decider"
           />
@@ -679,6 +687,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -700,6 +709,7 @@ import type { AnneeAcademique, AttributionLogement, Chambre, Residence, ChipFilt
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const onglet = ref<'residences' | 'chambres' | 'attributions'>('residences');
 
@@ -756,18 +766,22 @@ type Chip = ChipFiltre;
 
 function chipRecherche(f: Record<string, any>): Chip[] {
   return f.recherche
-    ? [{ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true }]
+    ? [{ label: t('cites.chips.recherche', { q: f.recherche }), value: f.recherche, icone: 'search', defaut: true }]
     : [];
 }
 
 const chipsResidences = computed<Chip[]>(() => {
   const f = filtresResidences.value;
   const cs = chipRecherche(f);
-  if (f.capaciteMin) cs.push({ label: `≥ ${f.capaciteMin} lits`, value: f.capaciteMin, icone: 'bed' });
+  if (f.capaciteMin) cs.push({ label: t('cites.residences.chips.capaciteMin', { n: f.capaciteMin }), value: f.capaciteMin, icone: 'bed' });
   if (f.actif) {
-    cs.push({ label: f.actif === 'true' ? 'Actives' : 'Inactives', value: f.actif, icone: 'toggle_on', cle: 'actif'});
+    cs.push({
+      label: f.actif === 'true' ? t('cites.residences.filters.etatActives') : t('cites.residences.filters.etatInactives'),
+      value: f.actif,
+      icone: 'toggle_on', cle: 'actif',
+    });
   }
-  if (f.ville) cs.push({ label: `Ville : ${f.ville}`, value: f.ville, icone: 'place' });
+  if (f.ville) cs.push({ label: t('cites.residences.chips.ville', { ville: f.ville }), value: f.ville, icone: 'place' });
   return cs;
 });
 
@@ -776,7 +790,7 @@ const chipsChambres = computed<Chip[]>(() => {
   const cs = chipRecherche(f);
   if (f.residenceId) {
     const r = residences.value.find((x) => x.id === f.residenceId);
-    cs.push({ label: `Résidence : ${r?.code ?? '…'}`, value: f.residenceId, icone: 'apartment' });
+    cs.push({ label: t('cites.chambres.chips.residence', { code: r?.code ?? '…' }), value: f.residenceId, icone: 'apartment' });
   }
   if (f.categorie) {
     cs.push({
@@ -798,7 +812,7 @@ const chipsAttributions = computed<Chip[]>(() => {
   const cs: Chip[] = [];
   if (f.anneeId) {
     const a = annees.value.find((x) => x.id === f.anneeId);
-    cs.push({ label: a?.libelle ?? 'Année', value: f.anneeId, icone: 'event', cle: 'anneeId'});
+    cs.push({ label: a?.libelle ?? t('cites.attributions.chips.anneeFallback'), value: f.anneeId, icone: 'event', cle: 'anneeId'});
   }
   if (f.statut) {
     cs.push({
@@ -808,9 +822,9 @@ const chipsAttributions = computed<Chip[]>(() => {
   }
   if (f.residenceId) {
     const r = residences.value.find((x) => x.id === f.residenceId);
-    cs.push({ label: `Résidence : ${r?.code ?? '…'}`, value: f.residenceId, icone: 'apartment' });
+    cs.push({ label: t('cites.attributions.chips.residence', { code: r?.code ?? '…' }), value: f.residenceId, icone: 'apartment' });
   }
-  if (f.etudiant) cs.push({ label: `Étudiant : ${f.etudiant}`, value: f.etudiant, icone: 'person' });
+  if (f.etudiant) cs.push({ label: t('cites.attributions.chips.etudiant', { etudiant: f.etudiant }), value: f.etudiant, icone: 'person' });
   return cs;
 });
 
@@ -825,34 +839,34 @@ watch(filtresAttributions, () => {
 }, { deep: true });
 
 // ------------------------------------------------------------- colonnes
-const colonnesResidences: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: 'Nom', field: 'nom', align: 'left', sortable: true },
-  { name: 'ville', label: 'Ville', field: 'ville', align: 'left' },
-  { name: 'capacite', label: 'Capacité', field: 'capacite', align: 'right', sortable: true },
-  { name: 'responsable', label: 'Responsable', field: 'responsable', align: 'left' },
-  { name: 'statut', label: 'État', field: 'actif', align: 'left' },
+const colonnesResidences = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('cites.residences.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('cites.residences.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'ville', label: t('cites.residences.table.columns.ville'), field: 'ville', align: 'left' },
+  { name: 'capacite', label: t('cites.residences.table.columns.capacite'), field: 'capacite', align: 'right', sortable: true },
+  { name: 'responsable', label: t('cites.residences.table.columns.responsable'), field: 'responsable', align: 'left' },
+  { name: 'statut', label: t('cites.residences.table.columns.statut'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesChambres: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'residence', label: 'Résidence', field: 'residence', align: 'left' },
-  { name: 'categorie', label: 'Catégorie', field: 'categorie', align: 'left', sortable: true },
-  { name: 'lits', label: 'Lits', field: 'lits', align: 'center' },
-  { name: 'loyer', label: 'Loyer', field: 'loyer', align: 'right', sortable: true },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
+const colonnesChambres = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('cites.chambres.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'residence', label: t('cites.chambres.table.columns.residence'), field: 'residence', align: 'left' },
+  { name: 'categorie', label: t('cites.chambres.table.columns.categorie'), field: 'categorie', align: 'left', sortable: true },
+  { name: 'lits', label: t('cites.chambres.table.columns.lits'), field: 'lits', align: 'center' },
+  { name: 'loyer', label: t('cites.chambres.table.columns.loyer'), field: 'loyer', align: 'right', sortable: true },
+  { name: 'statut', label: t('cites.chambres.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesAttributions: QTableColumn[] = [
-  { name: 'createdAt', label: 'Demandé le', field: 'createdAt', align: 'left', sortable: true },
-  { name: 'etudiant', label: 'Étudiant', field: 'id', align: 'left' },
-  { name: 'chambre', label: 'Chambre', field: 'id', align: 'left' },
-  { name: 'score', label: 'Score', field: 'critereScore', align: 'center' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+const colonnesAttributions = computed<QTableColumn[]>(() => [
+  { name: 'createdAt', label: t('cites.attributions.table.columns.demandeLe'), field: 'createdAt', align: 'left', sortable: true },
+  { name: 'etudiant', label: t('cites.attributions.table.columns.etudiant'), field: 'id', align: 'left' },
+  { name: 'chambre', label: t('cites.attributions.table.columns.chambre'), field: 'id', align: 'left' },
+  { name: 'score', label: t('cites.attributions.table.columns.score'), field: 'critereScore', align: 'center' },
+  { name: 'statut', label: t('cites.attributions.table.columns.statut'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 // ---------------------------------------------------------------- droits
 const peutGererResidences = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
@@ -867,9 +881,9 @@ const peutGerer = computed(() =>
 );
 
 const boutonOnglet = computed(() =>
-  onglet.value === 'residences' ? 'Nouvelle résidence'
-    : onglet.value === 'chambres' ? 'Nouvelle chambre'
-      : 'Nouvelle attribution',
+  onglet.value === 'residences' ? t('cites.actions.newResidence')
+    : onglet.value === 'chambres' ? t('cites.actions.newChambre')
+      : t('cites.actions.newAttribution'),
 );
 
 function ouvrirCourant() {
@@ -893,13 +907,13 @@ function ouvrirResidence(r: Residence | null) {
 
 function supprimerResidence(r: Residence) {
   $q.dialog({
-    title: 'Supprimer la résidence',
-    message: `Supprimer définitivement ${r.nom} (${r.code}) ?`,
+    title: t('cites.residences.dialogs.delete.title'),
+    message: t('cites.residences.dialogs.delete.message', { nom: r.nom, code: r.code }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('cites.residences.dialogs.delete.confirm') },
   }).onOk(async () => {
     await api.delete(`/residences/${r.id}`);
-    $q.notify({ type: 'positive', message: 'Résidence supprimée' });
+    $q.notify({ type: 'positive', message: t('cites.residences.dialogs.deleted') });
     await chargerResidences();
   });
 }
@@ -940,13 +954,13 @@ function ouvrirChambre(c: Chambre | null) {
 
 function supprimerChambre(c: Chambre) {
   $q.dialog({
-    title: 'Supprimer la chambre',
-    message: `Supprimer définitivement la chambre ${c.code} ?`,
+    title: t('cites.chambres.dialogs.delete.title'),
+    message: t('cites.chambres.dialogs.delete.message', { code: c.code }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('cites.chambres.dialogs.delete.confirm') },
   }).onOk(async () => {
     await api.delete(`/chambres/${c.id}`);
-    $q.notify({ type: 'positive', message: 'Chambre supprimée' });
+    $q.notify({ type: 'positive', message: t('cites.chambres.dialogs.deleted') });
     await chargerChambres();
   });
 }
@@ -1039,8 +1053,8 @@ async function decider() {
     $q.notify({
       type: decisionStatut.value === 'ACCORDEE' ? 'positive' : 'info',
       message: decisionStatut.value === 'ACCORDEE'
-        ? 'Attribution accordée — chambre occupée'
-        : 'Demande refusée',
+        ? t('cites.attributions.dialogs.accorded')
+        : t('cites.attributions.dialogs.refused'),
     });
     decisionDialog.value = false;
     await Promise.all([chargerAttributions(), chargerChambres(), chargerResidences()]);
@@ -1052,14 +1066,18 @@ async function decider() {
 function retirerAttribution(a: AttributionLogement) {
   const etudiant = `${a.etudiant?.nom} ${a.etudiant?.prenom}`;
   $q.dialog({
-    title: 'Retirer l’attribution',
-    message: `Retirer l’attribution de ${etudiant} pour la chambre ${a.chambre?.code} (${a.chambre?.residence?.nom}) ?`,
-    prompt: { model: '', type: 'text', label: 'Motif du retrait (facultatif)' },
+    title: t('cites.attributions.dialogs.retirer.title'),
+    message: t('cites.attributions.dialogs.retirer.message', {
+      etudiant,
+      code: a.chambre?.code,
+      residence: a.chambre?.residence?.nom,
+    }),
+    prompt: { model: '', type: 'text', label: t('cites.attributions.dialogs.retirer.motifLabel') },
     cancel: true,
-    ok: { color: 'negative', label: 'Retirer', unelevated: true },
+    ok: { color: 'negative', label: t('cites.attributions.dialogs.retirer.confirm'), unelevated: true },
   }).onOk(async (motif: string) => {
     await api.put(`/attributions-logement/${a.id}/retirer`, { motif: motif || undefined });
-    $q.notify({ type: 'positive', message: 'Attribution retirée' });
+    $q.notify({ type: 'positive', message: t('cites.attributions.dialogs.withdrawn') });
     await Promise.all([chargerAttributions(), chargerChambres(), chargerResidences()]);
   });
 }
@@ -1068,14 +1086,20 @@ function voirEtudiant(a: AttributionLogement) {
   const e = a.etudiant;
   if (!e) return;
   const chambre = a.chambre
-    ? `\nChambre : ${a.chambre.code} (${a.chambre.residence?.nom ?? '—'})`
+    ? t('cites.attributions.dialogs.etudiantDetail.chambreLine', {
+        code: a.chambre.code,
+        residence: a.chambre.residence?.nom ?? '—',
+      })
     : '';
   $q.dialog({
     title: `${e.prenom} ${e.nom}`,
-    message:
-      `Matricule : ${e.matricule}\nTéléphone : ${e.telephone ?? '—'}\n`
-      + `E-mail : ${e.email ?? '—'}${chambre}`,
-    ok: { label: 'Fermer', flat: true },
+    message: t('cites.attributions.dialogs.etudiantDetail.message', {
+      matricule: e.matricule,
+      telephone: e.telephone ?? '—',
+      email: e.email ?? '—',
+      chambre,
+    }),
+    ok: { label: t('cites.attributions.dialogs.etudiantDetail.close'), flat: true },
   });
 }
 
@@ -1096,7 +1120,7 @@ function voirAttributionsDe(c: Chambre) {
   onglet.value = 'attributions';
   $q.notify({
     type: 'info',
-    message: `Attributions de la résidence — repérez la chambre ${c.code}`,
+    message: t('cites.attributions.notify.attributionsOfResidence', { code: c.code }),
   });
 }
 

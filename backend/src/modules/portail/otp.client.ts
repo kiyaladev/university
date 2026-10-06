@@ -1,14 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { t } from '../../common/i18n';
 
 /**
  * Client minimal vers la passerelle OTP/SMS locale (`/opt/apps/otp-gateway`,
  * port 5027) — `fetch` natif de Node, aucune dépendance ajoutée. Tous les
  * appels portent la clé d'API dans `x-api-key`, avec un délai maximal de 8 s.
  *
- * La passerelle n'expose qu'un seul point d'émission (`/api/otp/send`) : il
- * génère un code et met un SMS en file. Le gabarit transmis peut donc être
- * soit le gabarit OTP (la passerelle y injecte `{code}`), soit un message
- * « nu » pour les diffusions de masse — le chemin de mise en file est le même.
+ * `/api/otp/send` génère un code ; `/api/sms/send` met un message libre en
+ * file sans créer d'OTP. Ces deux opérations ont des contrats distincts.
  */
 
 export interface ReponseEnvoiOtp {
@@ -69,7 +68,7 @@ export class OtpClient {
       const donnees = (await reponse.json().catch(() => ({}))) as T & { error?: string };
       if (!reponse.ok) {
         this.journal.warn(
-          `Passerelle ${chemin} : HTTP ${reponse.status} (${donnees?.error ?? reponse.statusText})`,
+          `Passerelle ${chemin} : HTTP ${reponse.status}`,
         );
         return null;
       }
@@ -79,11 +78,7 @@ export class OtpClient {
         erreur instanceof Error && erreur.name === 'AbortError'
           ? 'délai dépassé (8 s)'
           : 'injoignable';
-      this.journal.warn(
-        `Passerelle ${chemin} ${motif} : ${
-          erreur instanceof Error ? erreur.message : String(erreur)
-        }`,
-      );
+      this.journal.warn(`Passerelle ${chemin} ${motif}`);
       return null;
     } finally {
       clearTimeout(minuteur);
@@ -104,16 +99,38 @@ export class OtpClient {
     else if (this.gabaritOtp) corps.template = this.gabaritOtp;
 
     const reponse = await this.poster<ReponseEnvoiOtp>('/api/otp/send', corps);
-    if (!reponse) return { ok: false, raison: 'Passerelle SMS injoignable' };
+    if (!reponse) return { ok: false, raison: t('sms.gatewayUnavailable') };
+    if (typeof reponse.ok !== 'boolean' || (reponse.ok && !Number.isSafeInteger(reponse.requestId))) {
+      return { ok: false, raison: t('sms.gatewayInvalidResponse') };
+    }
+    return reponse;
+  }
+
+  async envoyerSms(telephone: string, message: string): Promise<ReponseEnvoiOtp> {
+    const reponse = await this.poster<ReponseEnvoiOtp>('/api/sms/send', {
+      phone: numerique(telephone), message,
+    });
+    if (!reponse) return { ok: false, raison: t('sms.gatewayUnavailable') };
+    if (typeof reponse.ok !== 'boolean' || (reponse.ok && !Number.isSafeInteger(reponse.requestId))) {
+      return { ok: false, raison: t('sms.gatewayInvalidResponse') };
+    }
     return reponse;
   }
 
   async verifier(telephone: string, code: string): Promise<ReponseVerificationOtp> {
-    const reponse = await this.poster<ReponseVerificationOtp>('/api/otp/verify', {
+    const reponse = await this.poster<{ valid?: boolean; reason?: string; remainingAttempts?: number }>(
+      '/api/otp/verify', {
       phone: numerique(telephone),
       code,
     });
-    if (!reponse) return { valid: false, raison: 'passerelle_injoignable', tentativesRestantes: 0 };
-    return reponse;
+    if (!reponse || typeof reponse.valid !== 'boolean') {
+      return { valid: false, raison: 'passerelle_injoignable', tentativesRestantes: 0 };
+    }
+    return {
+      valid: reponse.valid,
+      ...(typeof reponse.reason === 'string' ? { raison: reponse.reason } : {}),
+      ...(Number.isSafeInteger(reponse.remainingAttempts) && reponse.remainingAttempts! >= 0
+        ? { tentativesRestantes: reponse.remainingAttempts } : {}),
+    };
   }
 }

@@ -2,14 +2,14 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 560px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ chambre ? `Chambre ${chambre.code}` : 'Nouvelle chambre' }}
+        {{ chambre ? $t('cites.chambres.dialogs.form.titleEdit', { code: chambre.code }) : $t('cites.chambres.dialogs.form.titleNew') }}
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Identification</span>
+        <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-5">
-            <q-input v-model="form.code" outlined dense label="Code *" placeholder="R1-101" />
+            <q-input v-model="form.code" outlined dense :label="$t('matieres.dialog.codeLabel')" placeholder="R1-101" />
           </div>
           <div class="col-12 col-sm-7">
             <q-select
@@ -19,7 +19,7 @@
               dense
               emit-value
               map-options
-              label="Résidence *"
+              :label="$t('cites.chambres.dialogs.form.residenceLabel')"
             />
           </div>
         </div>
@@ -31,11 +31,11 @@
               :options="optionsCategories"
               outlined
               dense
-              label="Catégorie *"
+              :label="$t('cites.chambres.dialogs.form.categoryLabel')"
             />
           </div>
           <div class="col-12 col-sm-3">
-            <q-input v-model.number="form.lits" type="number" min="1" outlined dense label="Lits" />
+            <q-input v-model.number="form.lits" type="number" min="1" outlined dense :label="$t('cites.chambres.table.columns.lits')" />
           </div>
           <div class="col-12 col-sm-3">
             <q-select
@@ -43,12 +43,12 @@
               :options="optionsStatuts"
               outlined
               dense
-              label="Statut *"
+              :label="$t('cites.chambres.dialogs.form.statusLabel')"
             />
           </div>
         </div>
 
-        <span class="section-titre">Loyer</span>
+        <span class="section-titre">{{ $t('cites.chambres.table.columns.loyer') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-input
@@ -58,7 +58,7 @@
               step="0.01"
               outlined
               dense
-              label="Loyer par mois"
+              :label="$t('cites.chambres.dialogs.form.monthlyRent')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -66,16 +66,16 @@
               v-model="form.devise"
               outlined
               dense
-              label="Devise"
-              hint="Facturation future via Mobile Money (module paiement)"
+              :label="$t('cites.chambres.dialogs.form.currency')"
+              :hint="$t('cites.chambres.dialogs.form.currencyHint')"
             />
           </div>
         </div>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn color="primary" unelevated label="Enregistrer" :loading="enregistrement" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -84,6 +84,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { LIBELLE_CATEGORIE_CHAMBRE, LIBELLE_STATUT_CHAMBRE } from '../utils/libelles';
 import type { Chambre, Residence } from '../types';
@@ -96,6 +97,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const form = ref({
@@ -141,7 +143,7 @@ async function enregistrer() {
     const payload = { ...form.value };
     if (props.chambre) await api.put(`/chambres/${props.chambre.id}`, payload);
     else await api.post('/chambres', payload);
-    $q.notify({ type: 'positive', message: 'Chambre enregistrée' });
+    $q.notify({ type: 'positive', message: t('cites.chambres.dialogs.form.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

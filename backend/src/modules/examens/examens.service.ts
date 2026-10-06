@@ -18,24 +18,31 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, StatutExamen } from '@prisma/client';
+import { Prisma, Role, StatutExamen } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import { Paginated } from '../../common/dto';
+import { Paginated, QueryDto } from '../../common/dto';
+import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { CreateExamenDto, ExamenQueryDto, ScanExamenDto } from './examens.dto';
 
 const EXAMEN_INCLUDE = {
   matiere: true,
   promotion: { include: { filiere: true } },
   annee: true,
-  salle: true,
+  salle: { select: { id: true, code: true, nom: true } },
   creePar: { select: { id: true, nom: true, prenom: true } },
   surveillant: { select: { id: true, nom: true, prenom: true } },
   _count: { select: { scans: true, tirages: true } },
 } satisfies Prisma.ExamenInclude;
 
 const SCAN_INCLUDE = {
-  inscription: { include: { etudiant: true } },
+  inscription: {
+    select: {
+      id: true,
+      etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
+    },
+  },
   scanneur: { select: { id: true, nom: true, prenom: true } },
   examen: {
     select: {
@@ -55,12 +62,21 @@ const MOTIF_REJET_CARTE_AUTRE = 'Carte autre';
 export class ExamensService {
   constructor(private prisma: PrismaService) {}
 
+  listerSurveillants() {
+    return this.prisma.user.findMany({
+      where: { actif: true, role: { in: [Role.CONTROLEUR, Role.ENSEIGNANT] } },
+      select: { id: true, nom: true, prenom: true, role: true },
+      orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
+      take: 1000,
+    });
+  }
+
   // ------------------------------------------------------- lecture
 
-  async liste(query: ExamenQueryDto): Promise<Paginated<any>> {
+  async liste(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.ExamenWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -69,6 +85,7 @@ export class ExamensService {
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.salleId ? { salleId: query.salleId } : {}),
+      ...(user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT ? { surveillantId: user.id } : {}),
     };
     if (query.dateDebut || query.dateFin) {
       where.dateExamen = {};
@@ -81,34 +98,38 @@ export class ExamensService {
         where,
         include: EXAMEN_INCLUDE,
         orderBy: { dateExamen: 'asc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.examen.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
-  async trouver(id: string) {
+  async trouver(id: string, user?: AuthUser) {
     const examen = await this.prisma.examen.findUnique({
       where: { id },
       include: EXAMEN_INCLUDE,
     });
-    if (!examen) throw new NotFoundException('Examen introuvable');
+    if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+    if (user && (user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT) && examen.surveillantId !== user.id) {
+      throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+    }
     return examen;
   }
 
-  async stats(id: string) {
-    await this.trouver(id);
+  async stats(id: string, user: AuthUser) {
+    await this.trouver(id, user);
     const [examen, valide, rejete] = await Promise.all([
       this.prisma.examen.findUnique({
         where: { id },
         select: { nbInscrits: true, nbPresents: true, statut: true, codeExamen: true },
       }),
-      this.prisma.scanExamen.count({ where: { examenId: id, valide: true } }),
+      this.prisma.scanExamen.count({ where: { examenId: id, valide: true, inscriptionId: { not: null } } }),
       this.prisma.scanExamen.count({ where: { examenId: id, valide: false } }),
     ]);
     return {
       ...examen,
+      nbPresents: valide,
       totalScans: valide + rejete,
       scansValides: valide,
       scansRejetes: rejete,
@@ -121,53 +142,71 @@ export class ExamensService {
   // ---------------------------------------------------- création
 
   async creer(dto: CreateExamenDto, user: AuthUser) {
-    const examen = await this.prisma.examen.create({
-      data: {
-        intitule: dto.intitule,
-        type: dto.type,
-        matiereId: dto.matiereId,
-        promotionId: dto.promotionId,
-        anneeId: dto.anneeId,
-        dateExamen: new Date(dto.dateExamen),
-        heureDebut: dto.heureDebut,
-        heureFin: dto.heureFin,
-        salleId: dto.salleId ?? null,
-        nbInscrits: dto.nbInscrits ?? 0,
-        codeExamen: dto.codeExamen,
-        surveillantId: dto.surveillantId ?? null,
-        creeParId: user.id,
-      },
-      include: EXAMEN_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, dto.anneeId);
+      await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
+      const examen = await tx.examen.create({
+        data: {
+          intitule: dto.intitule,
+          type: dto.type,
+          matiereId: dto.matiereId,
+          promotionId: dto.promotionId,
+          anneeId: dto.anneeId,
+          dateExamen: new Date(dto.dateExamen),
+          heureDebut: dto.heureDebut,
+          heureFin: dto.heureFin,
+          salleId: dto.salleId ?? null,
+          nbInscrits: dto.nbInscrits ?? 0,
+          codeExamen: dto.codeExamen,
+          surveillantId: dto.surveillantId ?? null,
+          creeParId: user.id,
+        },
+        include: EXAMEN_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'EXAMEN_CREE',
+          entite: 'Examen',
+          entiteId: examen.id,
+          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(examen) }),
+        },
+      });
+      return examen;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EXAMEN_CREE',
-        entite: 'Examen',
-        entiteId: examen.id,
-        details: `${examen.codeExamen} — ${examen.intitule}`,
-      },
-    });
-    return examen;
   }
 
   async changerStatut(id: string, statut: StatutExamen, user: AuthUser) {
-    const examen = await this.trouver(id);
-    const maj = await this.prisma.examen.update({
-      where: { id },
-      data: { statut },
-      include: EXAMEN_INCLUDE,
+    await this.trouver(id);
+    return this.prisma.$transaction(async (tx) => {
+      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      await exigerAnneeOuverte(tx, examen.anneeId);
+      // Les transitions de démarrage et de clôture ont chacune leur endpoint,
+      // avec leurs contrôles et compteurs. Cette route ne sert qu'à annuler
+      // un examen encore planifié.
+      if (statut !== StatutExamen.ANNULE || examen.statut !== StatutExamen.PLANIFIE) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
+      }
+      const transition = await tx.examen.updateMany({
+        where: { id, statut: StatutExamen.PLANIFIE },
+        data: { statut: StatutExamen.ANNULE },
+      });
+      if (transition.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
+      }
+      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'EXAMEN_STATUT',
+          entite: 'Examen',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EXAMEN_STATUT',
-        entite: 'Examen',
-        entiteId: id,
-        details: `${examen.codeExamen} → ${statut}`,
-      },
-    });
-    return maj;
   }
 
   // ------------------------------------------------ cycle de vie
@@ -179,73 +218,104 @@ export class ExamensService {
    *   - remet `nbPresents` à 0 (reprise propre d'une session).
    */
   async demarrer(id: string, user: AuthUser) {
-    const examen = await this.trouver(id);
-    if (examen.statut === StatutExamen.TERMINE) {
-      throw new BadRequestException("Examen déjà terminé");
-    }
-    if (examen.statut === StatutExamen.ANNULE) {
-      throw new BadRequestException('Examen annulé : démarrage impossible');
-    }
-
-    const nbInscrits = await this.prisma.inscription.count({
-      where: {
-        promotionId: examen.promotionId,
-        anneeId: examen.anneeId,
-        statut: 'VALIDEE',
-      },
+    await this.trouver(id, user);
+    return this.prisma.$transaction(async (tx) => {
+      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      await exigerAnneeOuverte(tx, examen.anneeId);
+      if (examen.statut === StatutExamen.ANNULE) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.examen_annule_demarrage_impossible'));
+      }
+      if (examen.statut !== StatutExamen.PLANIFIE) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
+      }
+      const nbInscrits = await tx.inscription.count({
+        where: { promotionId: examen.promotionId, anneeId: examen.anneeId, statut: 'VALIDEE' },
+      });
+      const transition = await tx.examen.updateMany({
+        where: { id, statut: StatutExamen.PLANIFIE },
+        data: { statut: StatutExamen.EN_COURS, nbInscrits, nbPresents: 0 },
+      });
+      if (transition.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
+      }
+      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'EXAMEN_DEMARRE',
+          entite: 'Examen',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
+        },
+      });
+      return maj;
     });
-
-    const maj = await this.prisma.examen.update({
-      where: { id },
-      data: { statut: StatutExamen.EN_COURS, nbInscrits, nbPresents: 0 },
-      include: EXAMEN_INCLUDE,
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EXAMEN_DEMARRE',
-        entite: 'Examen',
-        entiteId: id,
-        details: `${examen.codeExamen} — ${nbInscrits} inscrit(s)`,
-      },
-    });
-    return maj;
   }
 
   /** EN_COURS → TERMINE. Ne recalcule rien : `nbPresents` reflète l'existant. */
   async terminer(id: string, user: AuthUser) {
-    const examen = await this.trouver(id);
-    if (examen.statut !== StatutExamen.EN_COURS) {
-      throw new BadRequestException('Seul un examen EN_COURS peut être terminé');
-    }
-    const maj = await this.prisma.examen.update({
-      where: { id },
-      data: { statut: StatutExamen.TERMINE },
-      include: EXAMEN_INCLUDE,
+    await this.trouver(id);
+    return this.prisma.$transaction(async (tx) => {
+      const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      await exigerAnneeOuverte(tx, examen.anneeId);
+      if (examen.statut !== StatutExamen.EN_COURS) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
+      }
+      const transition = await tx.examen.updateMany({
+        where: { id, statut: StatutExamen.EN_COURS },
+        data: { statut: StatutExamen.TERMINE },
+      });
+      if (transition.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
+      }
+      const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'EXAMEN_TERMINE',
+          entite: 'Examen',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EXAMEN_TERMINE',
-        entite: 'Examen',
-        entiteId: id,
-        details: `${examen.codeExamen} — ${examen.nbPresents}/${examen.nbInscrits} présent(s)`,
-      },
-    });
-    return maj;
+  }
+
+  private instantaneAudit(examen: any) {
+    return {
+      id: examen.id,
+      codeExamen: examen.codeExamen,
+      intitule: examen.intitule,
+      statut: examen.statut,
+      anneeId: examen.anneeId,
+      promotionId: examen.promotionId,
+      nbInscrits: examen.nbInscrits,
+      nbPresents: examen.nbPresents,
+    };
   }
 
   // ------------------------------------------------ scans anti-fantômes
 
-  async listeScans(id: string) {
-    await this.trouver(id);
-    const scans = await this.prisma.scanExamen.findMany({
-      where: { examenId: id },
-      include: SCAN_INCLUDE,
-      orderBy: { heureScan: 'desc' },
-    });
-    return scans;
+  async listeScans(id: string, query: QueryDto, user: AuthUser): Promise<Paginated<any>> {
+    await this.trouver(id, user);
+    const page = Number(query.page ?? 1);
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const where = { examenId: id };
+    const [data, total] = await Promise.all([
+      this.prisma.scanExamen.findMany({
+        where,
+        include: SCAN_INCLUDE,
+        orderBy: { heureScan: 'desc' },
+        skip: all ? 0 : (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.scanExamen.count({ where }),
+    ]);
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   /**
@@ -264,20 +334,19 @@ export class ExamensService {
    * service (anti-fantômes), pas une condition d'échec HTTP.
    */
   async scanner(dto: ScanExamenDto, ip: string | undefined, user: AuthUser) {
-    const examen = await this.trouver(dto.examenId);
+    const examen = await this.trouver(dto.examenId, user);
+    await exigerAnneeOuverte(this.prisma, examen.anneeId);
     const reference = dto.reference.trim();
-    if (!reference) throw new BadRequestException('Référence vide');
+    if (!reference) throw new BadRequestException(I18nContext.current()!.t('examens.reference_vide'));
 
-    if (examen.statut === StatutExamen.ANNULE || examen.statut === StatutExamen.TERMINE) {
-      throw new BadRequestException(
-        `Examen ${examen.statut} : aucun scan n'est accepté`,
-      );
+    if (examen.statut !== StatutExamen.EN_COURS) {
+      throw new BadRequestException(I18nContext.current()!.t('examens.scan_exige_examen_en_cours'));
     }
 
     const candidat = await this.trouverEtudiantParReference(reference);
 
     if (!candidat) {
-      return this.consignerRejet(dto, examen.codeExamen, reference, ip, user, MOTIF_REJET_CARTE_AUTRE);
+      return this.consignerRejet(dto, examen.anneeId, examen.codeExamen, reference, ip, user, MOTIF_REJET_CARTE_AUTRE);
     }
 
     const inscription = await this.prisma.inscription.findFirst({
@@ -293,6 +362,7 @@ export class ExamensService {
     if (!inscription) {
       return this.consignerRejet(
         dto,
+        examen.anneeId,
         examen.codeExamen,
         reference,
         ip,
@@ -302,23 +372,22 @@ export class ExamensService {
       );
     }
 
-    const existant = await this.prisma.scanExamen.findFirst({
-      where: { examenId: examen.id, inscriptionId: inscription.id },
-    });
-    if (existant) {
-      return { ...existant, dejaEnregistre: true };
-    }
-
     const scan = await this.prisma.$transaction(async (tx) => {
+      await this.verifierExamenDansTransaction(tx, examen.id, examen.anneeId, user);
+      const dejaScanne = await tx.scanExamen.findFirst({
+        where: { examenId: examen.id, inscriptionId: inscription.id },
+        include: SCAN_INCLUDE,
+      });
+      if (dejaScanne) return { ...dejaScanne, dejaEnregistre: true };
       const created = await tx.scanExamen.create({
         data: {
           examenId: examen.id,
           inscriptionId: inscription.id,
-          matriculeSaisi: reference,
+          matriculeSaisi: candidat.matricule,
           nomPorteur: candidat.nom,
           prenomPorteur: candidat.prenom,
           valide: true,
-          scanneurId: dto.scanneurId ?? user.id,
+          scanneurId: user.id,
           ipAppareil: ip ?? null,
         },
         include: SCAN_INCLUDE,
@@ -337,7 +406,7 @@ export class ExamensService {
           action: 'EXAMEN_SCAN_VALIDE',
           entite: 'ScanExamen',
           entiteId: created.id,
-          details: `${examen.codeExamen} — ${candidat.matricule} ${candidat.nom} ${candidat.prenom} (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
+          details: `${examen.codeExamen} — présence enregistrée (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
         },
       });
 
@@ -345,6 +414,36 @@ export class ExamensService {
     });
 
     return scan;
+  }
+
+  /** Verrouille l’examen pendant l’écriture pour fermer le scan/démarrage/clôture concurrents. */
+  private async verifierExamenDansTransaction(
+    tx: Prisma.TransactionClient,
+    examenId: string,
+    anneeId: string,
+    user: AuthUser,
+  ) {
+    // Garder le même ordre de verrouillage que les autres mutations : année,
+    // puis examen, pour éviter un interblocage pendant la clôture d'année.
+    await exigerAnneeOuverte(tx, anneeId);
+    const examen = typeof (tx as any).$queryRaw === 'function'
+      ? ((await (tx as any).$queryRaw`
+          SELECT "anneeId", "statut", "surveillantId"
+          FROM "Examen" WHERE "id" = ${examenId} FOR UPDATE
+        `)[0] as { anneeId: string; statut: StatutExamen; surveillantId: string | null } | undefined)
+      : await tx.examen.findUnique({
+          where: { id: examenId },
+          select: { anneeId: true, statut: true, surveillantId: true },
+        });
+    if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+    if (examen.anneeId !== anneeId) throw new BadRequestException(I18nContext.current()!.t('examens.examen_introuvable'));
+    if ((user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT) && examen.surveillantId !== user.id) {
+      throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+    }
+    if (examen.statut !== StatutExamen.EN_COURS) {
+      throw new BadRequestException(I18nContext.current()!.t('examens.scan_exige_examen_en_cours'));
+    }
+    return examen;
   }
 
   // ------------------------------------------------------- helpers
@@ -365,6 +464,7 @@ export class ExamensService {
 
   private async consignerRejet(
     dto: ScanExamenDto,
+    anneeId: string,
     codeExamen: string,
     reference: string,
     ip: string | undefined,
@@ -372,32 +472,33 @@ export class ExamensService {
     motif: string,
     candidat?: { matricule: string; nom: string; prenom: string } | null,
   ) {
-    const scan = await this.prisma.scanExamen.create({
-      data: {
-        examenId: dto.examenId,
-        inscriptionId: null,
-        matriculeSaisi: reference,
-        nomPorteur: candidat?.nom ?? null,
-        prenomPorteur: candidat?.prenom ?? null,
-        valide: false,
-        motifRejet: motif,
-        scanneurId: dto.scanneurId ?? user.id,
-        ipAppareil: ip ?? null,
-      },
-      include: SCAN_INCLUDE,
-    });
+    return this.prisma.$transaction(async (tx) => {
+      await this.verifierExamenDansTransaction(tx, dto.examenId, anneeId, user);
+      const scan = await tx.scanExamen.create({
+        data: {
+          examenId: dto.examenId,
+          inscriptionId: null,
+          matriculeSaisi: candidat?.matricule ?? (/^UP-RESTO-/i.test(reference) ? '[QR masqué]' : reference),
+          nomPorteur: candidat?.nom ?? null,
+          prenomPorteur: candidat?.prenom ?? null,
+          valide: false,
+          motifRejet: motif,
+          scanneurId: user.id,
+          ipAppareil: ip ?? null,
+        },
+        include: SCAN_INCLUDE,
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'EXAMEN_SCAN_REJETE',
-        entite: 'ScanExamen',
-        entiteId: scan.id,
-        details: `${codeExamen} — ${motif} — réf scannée « ${reference} »${
-          candidat ? ` (carte de ${candidat.matricule} ${candidat.nom} ${candidat.prenom})` : ''
-        }`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'EXAMEN_SCAN_REJETE',
+          entite: 'ScanExamen',
+          entiteId: scan.id,
+          details: `${codeExamen} — scan refusé`,
+        },
+      });
+      return scan;
     });
-    return scan;
   }
 }

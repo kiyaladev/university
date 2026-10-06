@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { API_URL } from '../boot/axios';
+import { useI18n } from 'vue-i18n';
+
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -18,9 +19,11 @@ import {
   messageErreurElection,
 } from '../services/elections';
 import type { CandidatElection, Election, ResultatElection, StatutElection, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const onglet = ref<StatutElection>('BROUILLON');
 
@@ -35,23 +38,23 @@ const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 /** L'administrateur est aussi un électeur : il retrouve l'urne depuis ici. */
 const peutVoter = computed(() => auth.aRole(['ADMIN']));
 
-const ONGLETS: Array<{ statut: StatutElection; label: string; icone: string }> = [
-  { statut: 'BROUILLON', label: 'Brouillons', icone: 'edit_note' },
-  { statut: 'OUVERTE', label: 'Ouvertes', icone: 'how_to_vote' },
-  { statut: 'CLOSE', label: 'Closes', icone: 'lock' },
-  { statut: 'PROCLAMEE', label: 'Proclamées', icone: 'emoji_events' },
-  { statut: 'ANNULEE', label: 'Annulées', icone: 'block' },
-];
+const ONGLETS = computed<Array<{ statut: StatutElection; label: string; icone: string }>>(() => [
+  { statut: 'BROUILLON', label: t('elections.tabs.draft'), icone: 'edit_note' },
+  { statut: 'OUVERTE', label: t('elections.tabs.open'), icone: 'how_to_vote' },
+  { statut: 'CLOSE', label: t('elections.tabs.closed'), icone: 'lock' },
+  { statut: 'PROCLAMEE', label: t('elections.tabs.proclaimed'), icone: 'emoji_events' },
+  { statut: 'ANNULEE', label: t('elections.tabs.cancelled'), icone: 'block' },
+]);
 
-const colonnes: QTableColumn[] = [
-  { name: 'titre', label: 'Titre', field: 'titre', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'periode', label: 'Période', field: 'dateOuverture', align: 'left' },
-  { name: 'sieges', label: 'Sièges', field: 'nbSieges', align: 'center' },
-  { name: 'candidats', label: 'Candidats', field: '_count', align: 'center' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'titre', label: t('elections.table.columns.title'), field: 'titre', align: 'left' },
+  { name: 'type', label: t('elections.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'periode', label: t('elections.table.columns.period'), field: 'dateOuverture', align: 'left' },
+  { name: 'sieges', label: t('elections.table.columns.seats'), field: 'nbSieges', align: 'center' },
+  { name: 'candidats', label: t('elections.table.columns.candidates'), field: '_count', align: 'center' },
+  { name: 'statut', label: t('elections.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'actions', label: t('elections.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 const dialogEdition = ref(false);
 const electionEnEdition = ref<Election | null>(null);
@@ -71,7 +74,7 @@ const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('elections.chips.search', { query: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -79,7 +82,9 @@ const chips = computed(() => {
   }
   if (filtres.value.type) {
     cs.push({
-      label: `Type : ${LIBELLE_TYPE_ELECTION[filtres.value.type] ?? filtres.value.type}`,
+      label: t('elections.chips.type', {
+        type: LIBELLE_TYPE_ELECTION[filtres.value.type] ?? filtres.value.type,
+      }),
       value: filtres.value.type,
       icone: 'category',
     });
@@ -108,18 +113,26 @@ function supprimerCandidat(c: CandidatElection) {
   const election = electionCandidats.value;
   if (!election) return;
   $q.dialog({
-    title: 'Retirer ce candidat',
-    message: `Retirer ${c.prenom} ${c.nom} de la liste des candidats ?`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { label: 'Retirer', color: 'negative', unelevated: true, noCaps: true },
+    title: t('elections.dialogs.removeCandidate.title'),
+    message: t('elections.dialogs.removeCandidate.message', { name: `${c.prenom} ${c.nom}` }),
+    cancel: { label: t('elections.dialogs.removeCandidate.cancel'), flat: true, noCaps: true },
+    ok: {
+      label: t('elections.dialogs.removeCandidate.confirm'),
+      color: 'negative',
+      unelevated: true,
+      noCaps: true,
+    },
     persistent: true,
   }).onOk(async () => {
     try {
       await electionsService.supprimerCandidat(election.id, c.id);
       candidatsListe.value = candidatsListe.value.filter((x) => x.id !== c.id);
-      $q.notify({ type: 'positive', message: 'Candidat retiré.' });
+      $q.notify({ type: 'positive', message: t('elections.messages.candidateRemoved') });
     } catch (e) {
-      $q.notify({ type: 'negative', message: messageErreurElection(e, 'Suppression impossible.') });
+      $q.notify({
+        type: 'negative',
+        message: messageErreurElection(e, t('elections.messages.candidateRemoveError')),
+      });
     }
   });
 }
@@ -133,7 +146,10 @@ async function ouvrirResultats(e: Election) {
     const { data } = await electionsService.resultats(e.id);
     resultats.value = data;
   } catch (err) {
-    $q.notify({ type: 'negative', message: messageErreurElection(err, 'Résultats indisponibles.') });
+    $q.notify({
+      type: 'negative',
+      message: messageErreurElection(err, t('elections.messages.resultsError')),
+    });
   } finally {
     chargementResultats.value = false;
   }
@@ -141,50 +157,51 @@ async function ouvrirResultats(e: Election) {
 
 type ActionTransition = 'ouvrir' | 'clore' | 'proclamer';
 
-const TRANSITIONS: Record<
-  ActionTransition,
-  { titre: string; message: string; bouton: string; couleur: string; succes: string }
-> = {
-  ouvrir: {
-    titre: 'Ouvrir le scrutin',
-    message:
-      'Le scrutin devient accessible aux électeurs et la liste des candidats se fige. Continuer ?',
-    bouton: 'Ouvrir',
-    couleur: 'primary',
-    succes: 'Scrutin ouvert.',
-  },
-  clore: {
-    titre: 'Clore le scrutin',
-    message: 'Plus aucun bulletin ne sera accepté après la clôture. Continuer ?',
-    bouton: 'Clore',
-    couleur: 'primary',
-    succes: 'Scrutin clos.',
-  },
-  proclamer: {
-    titre: 'Proclamer les résultats',
-    message:
-      'Cette action est irréversible : les résultats deviennent officiels, figés et visibles des électeurs. Continuer ?',
-    bouton: 'Proclamer',
-    couleur: 'amber-8',
-    succes: 'Résultats proclamés.',
-  },
-};
+function transitionInfo(action: ActionTransition): {
+  titre: string;
+  message: string;
+  bouton: string;
+  couleur: string;
+  succes: string;
+} {
+  const cles: Record<ActionTransition, 'open' | 'close' | 'proclaim'> = {
+    ouvrir: 'open',
+    clore: 'close',
+    proclamer: 'proclaim',
+  };
+  const couleurs: Record<ActionTransition, string> = {
+    ouvrir: 'primary',
+    clore: 'primary',
+    proclamer: 'amber-8',
+  };
+  const cle = cles[action];
+  return {
+    titre: t(`elections.dialogs.transitions.${cle}.title`),
+    message: t(`elections.dialogs.transitions.${cle}.message`),
+    bouton: t(`elections.dialogs.transitions.${cle}.button`),
+    couleur: couleurs[action],
+    succes: t(`elections.dialogs.transitions.${cle}.success`),
+  };
+}
 
 function transition(id: string, action: ActionTransition) {
-  const t = TRANSITIONS[action];
+  const info = transitionInfo(action);
   $q.dialog({
-    title: t.titre,
-    message: t.message,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { label: t.bouton, color: t.couleur, unelevated: true, noCaps: true },
+    title: info.titre,
+    message: info.message,
+    cancel: { label: t('elections.dialogs.removeCandidate.cancel'), flat: true, noCaps: true },
+    ok: { label: info.bouton, color: info.couleur, unelevated: true, noCaps: true },
     persistent: true,
   }).onOk(async () => {
     try {
       await electionsService.transition(id, action);
-      $q.notify({ type: 'positive', message: t.succes });
+      $q.notify({ type: 'positive', message: info.succes });
       await charger();
     } catch (e) {
-      $q.notify({ type: 'negative', message: messageErreurElection(e, 'Transition impossible.') });
+      $q.notify({
+        type: 'negative',
+        message: messageErreurElection(e, t('elections.messages.transitionError')),
+      });
     }
   });
 }
@@ -202,7 +219,10 @@ async function charger() {
     elections.value = data.data;
     pagination.value.total = data.total;
   } catch (e) {
-    $q.notify({ type: 'negative', message: messageErreurElection(e, 'Chargement impossible.') });
+    $q.notify({
+      type: 'negative',
+      message: messageErreurElection(e, t('elections.messages.loadError')),
+    });
   } finally {
     chargement.value = false;
   }
@@ -218,15 +238,9 @@ function reinitialiser() {
   recharger();
 }
 
-/** Bulletin papier A4 : le jeton passe en URL, l'onglet neuf n'a pas d'en-tête. */
+/** Bulletin papier A4, dans un onglet neuf. */
 function imprimerBulletin(e: Election) {
-  const url = `${API_URL}/elections/${e.id}/imprimer-bulletin?token=${auth.token}`;
-  if (!window.open(url, '_blank')) {
-    $q.notify({
-      type: 'warning',
-      message: 'Autorisez les fenêtres contextuelles pour ouvrir le bulletin.',
-    });
-  }
+  void ouvrirImpression(`/elections/${e.id}/imprimer-bulletin`);
 }
 
 function nbCandidats(e: Election): number {
@@ -242,10 +256,9 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Élections</div>
+        <h1 class="page-titre">{{ $t('elections.title') }}</h1>
         <div class="page-sous-titre">
-          Scrutins des délégués et représentants : déclaration des candidats, ouverture du vote,
-          clôture puis proclamation officielle des résultats.
+          {{ $t('elections.subtitle') }}
         </div>
       </div>
       <div class="col-auto row q-gutter-sm items-center">
@@ -254,10 +267,10 @@ onMounted(charger);
           flat
           no-caps
           icon="how_to_vote"
-          label="Voter"
+          :label="$t('elections.actions.vote')"
           to="/elections/vote"
         >
-          <q-tooltip>Accéder à l’urne en tant qu’électeur</q-tooltip>
+          <q-tooltip>{{ $t('elections.actions.voteTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
           v-if="peutEditer"
@@ -265,7 +278,7 @@ onMounted(charger);
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle élection"
+          :label="$t('elections.actions.new')"
           @click="ouvrirEdition()"
         />
       </div>
@@ -285,7 +298,7 @@ onMounted(charger);
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (titre, description)…"
+      :placeholder="$t('elections.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -297,14 +310,13 @@ onMounted(charger);
           clearable
           emit-value
           map-options
-          label="Type de scrutin"
+          :label="$t('elections.filters.type')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="elections"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m: string) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -320,13 +332,13 @@ onMounted(charger);
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || elections.length > 0"
     >
       <template #no-data>
         <div class="etat-vide">
           <q-icon name="how_to_vote" size="36px" color="grey-7" />
           <span class="pochoir">
-            Aucune élection {{ LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }} pour ces critères.
+            {{ $t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }) }}
           </span>
         </div>
       </template>
@@ -352,14 +364,15 @@ onMounted(charger);
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn
+            v-if="p.row.statut === 'CLOSE' || p.row.statut === 'PROCLAMEE'"
             flat
             round
             dense
             icon="print"
-            aria-label="Imprimer un bulletin"
+            :aria-label="$t('elections.table.actions.printBallot')"
             @click="imprimerBulletin(p.row)"
           >
-            <q-tooltip>Imprimer un bulletin</q-tooltip>
+            <q-tooltip>{{ $t('elections.table.actions.printBallot') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut === 'BROUILLON'"
@@ -367,10 +380,10 @@ onMounted(charger);
             round
             dense
             icon="edit"
-            aria-label="Modifier l’élection"
+            :aria-label="$t('elections.table.actions.editAria')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('elections.table.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut === 'BROUILLON'"
@@ -379,10 +392,10 @@ onMounted(charger);
             dense
             icon="how_to_vote"
             color="positive"
-            aria-label="Ouvrir le scrutin"
+            :aria-label="$t('elections.dialogs.transitions.open.title')"
             @click="transition(p.row.id, 'ouvrir')"
           >
-            <q-tooltip>Ouvrir le scrutin</q-tooltip>
+            <q-tooltip>{{ $t('elections.dialogs.transitions.open.title') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut === 'OUVERTE'"
@@ -390,10 +403,10 @@ onMounted(charger);
             round
             dense
             icon="lock"
-            aria-label="Clore le scrutin"
+            :aria-label="$t('elections.dialogs.transitions.close.title')"
             @click="transition(p.row.id, 'clore')"
           >
-            <q-tooltip>Clore le scrutin</q-tooltip>
+            <q-tooltip>{{ $t('elections.dialogs.transitions.close.title') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut === 'CLOSE'"
@@ -402,30 +415,30 @@ onMounted(charger);
             dense
             icon="emoji_events"
             color="amber-8"
-            aria-label="Proclamer les résultats"
+            :aria-label="$t('elections.dialogs.transitions.proclaim.title')"
             @click="transition(p.row.id, 'proclamer')"
           >
-            <q-tooltip>Proclamer les résultats</q-tooltip>
+            <q-tooltip>{{ $t('elections.dialogs.transitions.proclaim.title') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             round
             dense
             icon="groups"
-            aria-label="Voir les candidats"
+            :aria-label="$t('elections.table.actions.candidatesAria')"
             @click="ouvrirCandidats(p.row)"
           >
-            <q-tooltip>Candidats</q-tooltip>
+            <q-tooltip>{{ $t('elections.table.actions.candidatesTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             round
             dense
             icon="bar_chart"
-            aria-label="Voir les résultats"
+            :aria-label="$t('elections.table.actions.resultsAria')"
             @click="ouvrirResultats(p.row)"
           >
-            <q-tooltip>Résultats</q-tooltip>
+            <q-tooltip>{{ $t('elections.table.actions.resultsTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -434,7 +447,7 @@ onMounted(charger);
     <template v-else>
       <div v-if="chargement && !elections.length" class="etat-vide">
         <q-spinner color="primary" size="28px" />
-        <span class="pochoir">Chargement des élections…</span>
+        <span class="pochoir">{{ $t('elections.emptyState.loading') }}</span>
       </div>
       <div v-else-if="elections.length" class="row q-col-gutter-md">
         <div v-for="e in elections" :key="e.id" class="col-12 col-sm-6 col-md-4">
@@ -450,31 +463,33 @@ onMounted(charger);
               </div>
               <div class="text-h6 q-mt-sm">{{ e.titre }}</div>
               <div class="text-caption text-grey-7">
-                Du {{ dateHeureElection(e.dateOuverture) }}<br>
-                au {{ dateHeureElection(e.dateCloture) }}
+                {{ $t('elections.cardView.from') }} {{ dateHeureElection(e.dateOuverture) }}<br>
+                {{ $t('elections.cardView.to') }} {{ dateHeureElection(e.dateCloture) }}
               </div>
               <div class="row q-mt-sm items-center">
                 <q-icon name="how_to_vote" size="16px" class="q-mr-xs" />
                 <span class="text-caption">
-                  {{ e.nbSieges }} siège{{ e.nbSieges > 1 ? 's' : '' }}
+                  {{ e.nbSieges }}
+                  {{ e.nbSieges > 1 ? $t('elections.cardView.seatsPlural') : $t('elections.cardView.seatSingular') }}
                 </span>
                 <q-space />
                 <q-icon name="groups" size="16px" class="q-mr-xs" />
                 <span class="text-caption">
-                  {{ nbCandidats(e) }} candidat{{ nbCandidats(e) > 1 ? 's' : '' }}
+                  {{ nbCandidats(e) }}
+                  {{ nbCandidats(e) > 1 ? $t('elections.cardView.candidatesPlural') : $t('elections.cardView.candidateSingular') }}
                 </span>
               </div>
             </q-card-section>
             <q-separator />
             <q-card-actions align="right" class="q-gutter-x-xs">
-              <q-btn flat dense no-caps icon="print" label="Bulletin" @click="imprimerBulletin(e)" />
+              <q-btn flat dense no-caps icon="print" :label="$t('elections.cardView.actions.ballot')" @click="imprimerBulletin(e)" />
               <q-btn
                 v-if="peutEditer && e.statut === 'BROUILLON'"
                 flat
                 dense
                 no-caps
                 icon="edit"
-                label="Modifier"
+                :label="$t('elections.cardView.actions.edit')"
                 @click="ouvrirEdition(e)"
               />
               <q-btn
@@ -484,7 +499,7 @@ onMounted(charger);
                 color="positive"
                 icon="how_to_vote"
                 no-caps
-                label="Ouvrir"
+                :label="$t('elections.cardView.actions.open')"
                 @click="transition(e.id, 'ouvrir')"
               />
               <q-btn
@@ -493,7 +508,7 @@ onMounted(charger);
                 dense
                 icon="lock"
                 no-caps
-                label="Clore"
+                :label="$t('elections.cardView.actions.close')"
                 @click="transition(e.id, 'clore')"
               />
               <q-btn
@@ -503,11 +518,11 @@ onMounted(charger);
                 color="amber-8"
                 icon="emoji_events"
                 no-caps
-                label="Proclamer"
+                :label="$t('elections.cardView.actions.proclaim')"
                 @click="transition(e.id, 'proclamer')"
               />
-              <q-btn flat dense icon="groups" no-caps label="Candidats" @click="ouvrirCandidats(e)" />
-              <q-btn flat dense icon="bar_chart" no-caps label="Résultats" @click="ouvrirResultats(e)" />
+              <q-btn flat dense icon="groups" no-caps :label="$t('elections.cardView.actions.candidates')" @click="ouvrirCandidats(e)" />
+              <q-btn v-if="e.statut === 'CLOSE' || e.statut === 'PROCLAMEE'" flat dense icon="bar_chart" no-caps :label="$t('elections.cardView.actions.results')" @click="ouvrirResultats(e)" />
             </q-card-actions>
           </q-card>
         </div>
@@ -515,7 +530,7 @@ onMounted(charger);
       <div v-else-if="!chargement" class="etat-vide">
         <q-icon name="how_to_vote" size="36px" color="grey-7" />
         <span class="pochoir">
-          Aucune élection {{ LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }} pour ces critères.
+          {{ $t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }) }}
         </span>
       </div>
     </template>
@@ -535,22 +550,20 @@ onMounted(charger);
     <q-dialog v-model="dialogCandidats">
       <q-card style="min-width: 640px; max-width: 95vw">
         <q-card-section class="row items-center">
-          <div class="text-h6">Candidats — {{ electionCandidats?.titre }}</div>
+          <div class="text-h6">{{ $t('elections.dialogs.candidates.title', { title: electionCandidats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogCandidats = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('elections.dialogs.candidates.close')" @click="dialogCandidats = false" />
         </q-card-section>
         <q-card-section>
           <q-banner v-if="electionCandidats?.statut !== 'BROUILLON'" class="note--alerte q-mb-md">
             <template #avatar><q-icon name="lock" /></template>
-            Le scrutin est
-            {{ LIBELLE_STATUT_ELECTION[electionCandidats?.statut ?? 'BROUILLON'].toLowerCase() }} :
-            la liste des candidats n’est plus modifiable.
+            {{ $t('elections.dialogs.candidates.lockedBanner', { status: LIBELLE_STATUT_ELECTION[electionCandidats?.statut ?? 'BROUILLON'].toLowerCase() }) }}
           </q-banner>
 
           <div v-if="!candidatsListe.length" class="etat-vide">
             <q-icon name="groups" size="36px" color="grey-7" />
             <span class="pochoir">
-              Aucun candidat déclaré. Un scrutin sans candidat ne peut pas être ouvert.
+              {{ $t('elections.dialogs.candidates.emptyState') }}
             </span>
           </div>
 
@@ -565,9 +578,9 @@ onMounted(charger);
               <q-item-section>
                 <q-item-label><strong>{{ c.prenom }} {{ c.nom }}</strong></q-item-label>
                 <q-item-label caption>
-                  N° {{ c.ordre }} sur le bulletin
-                  <span v-if="c.etudiant"> · étudiant {{ c.etudiant.matricule }}</span>
-                  <span v-if="c.enseignant"> · enseignant {{ c.enseignant.matricule }}</span>
+                  {{ $t('elections.dialogs.candidates.ballotNumber', { n: c.ordre }) }}
+                  <span v-if="c.etudiant">{{ $t('elections.dialogs.candidates.studentSuffix', { matricule: c.etudiant.matricule }) }}</span>
+                  <span v-if="c.enseignant">{{ $t('elections.dialogs.candidates.teacherSuffix', { matricule: c.enseignant.matricule }) }}</span>
                 </q-item-label>
               </q-item-section>
               <q-item-section v-if="electionCandidats?.statut === 'BROUILLON' && peutEditer" side>
@@ -577,23 +590,23 @@ onMounted(charger);
                   dense
                   icon="delete"
                   color="negative"
-                  :aria-label="`Retirer ${c.prenom} ${c.nom}`"
+                  :aria-label="$t('elections.dialogs.removeCandidate.removeAria', { name: `${c.prenom} ${c.nom}` })"
                   @click="supprimerCandidat(c)"
                 >
-                  <q-tooltip>Retirer ce candidat</q-tooltip>
+                  <q-tooltip>{{ $t('elections.dialogs.candidates.removeTooltip') }}</q-tooltip>
                 </q-btn>
               </q-item-section>
             </q-item>
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Fermer" @click="dialogCandidats = false" />
+          <q-btn flat no-caps :label="$t('elections.dialogs.candidates.close')" @click="dialogCandidats = false" />
           <q-btn
             v-if="electionCandidats?.statut === 'BROUILLON' && peutEditer"
             unelevated
             color="primary"
             icon="add"
-            label="Ajouter un candidat"
+            :label="$t('elections.dialogs.candidates.add')"
             no-caps
             @click="ouvrirCandidat()"
           />
@@ -616,37 +629,37 @@ onMounted(charger);
     <q-dialog v-model="dialogResultats">
       <q-card style="min-width: 560px; max-width: 95vw">
         <q-card-section class="row items-center">
-          <div class="text-h6">Résultats — {{ electionResultats?.titre }}</div>
+          <div class="text-h6">{{ $t('elections.dialogs.results.title', { title: electionResultats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogResultats = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('elections.dialogs.results.close')" @click="dialogResultats = false" />
         </q-card-section>
 
         <q-card-section v-if="chargementResultats" class="etat-vide">
           <q-spinner color="primary" size="28px" />
-          <span class="pochoir">Dépouillement en cours…</span>
+          <span class="pochoir">{{ $t('elections.dialogs.results.loading') }}</span>
         </q-card-section>
 
         <q-card-section v-else-if="!resultats" class="etat-vide">
           <q-icon name="bar_chart" size="36px" color="grey-7" />
-          <span class="pochoir">Résultats indisponibles pour ce scrutin.</span>
+          <span class="pochoir">{{ $t('elections.dialogs.results.unavailable') }}</span>
         </q-card-section>
 
         <q-card-section v-else>
           <q-banner v-if="electionResultats?.statut !== 'PROCLAMEE'" class="note--alerte q-mb-md">
             <template #avatar><q-icon name="visibility_off" /></template>
-            Résultats provisoires : ils ne deviennent officiels qu’à la proclamation.
+            {{ $t('elections.dialogs.results.provisionalBanner') }}
           </q-banner>
           <div class="row q-col-gutter-md q-mb-md">
             <div class="col-4">
-              <div class="text-caption text-grey-7">Bulletins</div>
+              <div class="text-caption text-grey-7">{{ $t('elections.dialogs.results.ballots') }}</div>
               <div class="text-h6 chiffres">{{ resultats.participation.nbBulletins }}</div>
             </div>
             <div class="col-4">
-              <div class="text-caption text-grey-7">Voix exprimées</div>
+              <div class="text-caption text-grey-7">{{ $t('elections.dialogs.results.votesExpressed') }}</div>
               <div class="text-h6 chiffres">{{ resultats.participation.voixTotales }}</div>
             </div>
             <div class="col-4">
-              <div class="text-caption text-grey-7">Sièges à pourvoir</div>
+              <div class="text-caption text-grey-7">{{ $t('elections.dialogs.results.seatsToFill') }}</div>
               <div class="text-h6 chiffres">{{ resultats.participation.siegesPourvoir }}</div>
             </div>
           </div>
@@ -662,10 +675,10 @@ onMounted(charger);
                 <q-item-label>
                   <strong>{{ c.prenom }} {{ c.nom }}</strong>
                   <q-chip v-if="c.elu" dense square color="amber-8" text-color="white" class="q-ml-sm">
-                    Élu
+                    {{ $t('elections.dialogs.results.elected') }}
                   </q-chip>
                 </q-item-label>
-                <q-item-label caption class="chiffres">{{ c.voix }} voix</q-item-label>
+                <q-item-label caption class="chiffres">{{ c.voix }} {{ $t('elections.dialogs.results.votesSuffix') }}</q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
@@ -679,10 +692,10 @@ onMounted(charger);
 // Pas d'arrondi : une élection est une plaque du panneau comme les autres.
 .election-carte { height: 100%; }
 
-.badge--ok { background: #e3f5e9; color: #17683a; }
-.badge--ko { background: #fdeaea; color: #a52020; }
-.badge--neutre { background: #eef0f4; color: #455a64; }
-.badge--attention { background: #fff4e0; color: #8a5300; }
+.badge--ok { background: #f1fbf2; color: #027a0b; }
+.badge--ko { background: #fff1f2; color: #c10000; }
+.badge--neutre { background: #f5f5f7; color: #6e6e73; }
+.badge--attention { background: #fff6ef; color: #b64400; }
 .badge--primaire { background: #e8eef5; color: #0d47a1; }
 
 </style>

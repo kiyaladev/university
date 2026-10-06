@@ -2,7 +2,7 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 660px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ travail ? 'Modifier le travail encadré' : 'Nouveau travail encadré' }}
+        {{ $t(travail ? 'stages.workDialog.editTitle' : 'stages.workDialog.newTitle') }}
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
@@ -15,11 +15,11 @@
               dense
               emit-value
               map-options
-              label="Type *"
+              :label="$t('stages.workDialog.type')"
             />
           </div>
           <div class="col-12 col-sm-8">
-            <q-input v-model="form.intitule" outlined dense label="Intitulé du travail *" />
+            <q-input v-model="form.intitule" outlined dense :label="$t('stages.workDialog.title')" />
           </div>
         </div>
 
@@ -29,7 +29,7 @@
           dense
           type="textarea"
           rows="2"
-          label="Description"
+          :label="$t('common.fields.description')"
         />
 
         <div class="row q-col-gutter-md">
@@ -43,7 +43,7 @@
               map-options
               use-input
               input-debounce="300"
-              label="Étudiant *"
+              :label="$t('stages.workDialog.student')"
               :disable="!peutChoisirEtudiant"
               @filter="filtrerEtudiants"
             />
@@ -59,8 +59,8 @@
               use-input
               input-debounce="300"
               clearable
-              label="Encadrant"
-              hint="Attribuer l'encadrement à un enseignant"
+              :label="$t('stages.detail.fields.supervisor')"
+              :hint="$t('stages.workDialog.supervisorHint')"
               @filter="filtrerEncadrants"
             />
           </div>
@@ -68,22 +68,22 @@
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.entreprise" outlined dense label="Entreprise" />
+            <q-input v-model="form.entreprise" outlined dense :label="$t('stages.detail.fields.company')" />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.tuteurEntreprise" outlined dense label="Tuteur en entreprise" />
+            <q-input v-model="form.tuteurEntreprise" outlined dense :label="$t('stages.workDialog.companyTutor')" />
           </div>
         </div>
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-4">
-            <q-input v-model="form.lieu" outlined dense label="Lieu" />
+            <q-input v-model="form.lieu" outlined dense :label="$t('common.fields.location')" />
           </div>
           <div class="col-12 col-sm-4">
-            <champ-date v-model="form.dateDebut" label="Début" />
+            <champ-date v-model="form.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
           </div>
           <div class="col-12 col-sm-4">
-            <champ-date v-model="form.dateFin" label="Fin" />
+            <champ-date v-model="form.dateFin" :label="$t('common.messages.end')" />
           </div>
         </div>
 
@@ -95,17 +95,17 @@
           dense
           emit-value
           map-options
-          label="Statut initial"
-          hint="PROPOSE par défaut ; la suite évolue par les actions du dossier"
+          :label="$t('stages.workDialog.initialStatus')"
+          :hint="$t('stages.workDialog.initialStatusHint')"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           @click="enregistrer"
         />
@@ -118,6 +118,7 @@
 import ChampDate from './ChampDate.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import type { Enseignant, Etudiant, TravailEncadre } from '../types';
@@ -129,6 +130,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const enregistrement = ref(false);
 
@@ -146,15 +148,15 @@ const form = ref({
   statut: 'PROPOSE',
 });
 
-const optionsTypes = [
-  { label: 'Mémoire', value: 'MEMOIRE' },
-  { label: 'Stage', value: 'STAGE' },
-  { label: 'Rapport', value: 'RAPPORT' },
-];
-const optionsStatutsInitiaux = [
-  { label: 'Proposé', value: 'PROPOSE' },
-  { label: 'Validé', value: 'VALIDE' },
-];
+const optionsTypes = computed(() => [
+  { label: t('stages.types.memoire'), value: 'MEMOIRE' },
+  { label: t('stages.types.stage'), value: 'STAGE' },
+  { label: t('stages.types.rapport'), value: 'RAPPORT' },
+]);
+const optionsStatutsInitiaux = computed(() => [
+  { label: t('stages.kanban.columns.proposed'), value: 'PROPOSE' },
+  { label: t('stages.kanban.columns.validated'), value: 'VALIDE' },
+]);
 
 const optionsEtudiants = ref<{ label: string; value: string }[]>([]);
 const optionsEncadrants = ref<{ label: string; value: string }[]>([]);
@@ -219,7 +221,7 @@ function filtrerEncadrants(saisie: string, maj: (fn: () => void) => void) {
 
 async function enregistrer() {
   if (!form.value.intitule.trim() || !form.value.etudiantId) {
-    $q.notify({ type: 'warning', message: 'Intitulé et étudiant sont requis' });
+    $q.notify({ type: 'warning', message: t('stages.workDialog.required') });
     return;
   }
   enregistrement.value = true;
@@ -241,7 +243,7 @@ async function enregistrer() {
     if (props.travail) await api.put(`/travaux-encadres/${props.travail.id}`, payload);
     else await api.post('/travaux-encadres', payload);
 
-    $q.notify({ type: 'positive', message: props.travail ? 'Travail modifié' : 'Travail créé' });
+    $q.notify({ type: 'positive', message: t(props.travail ? 'stages.workDialog.updated' : 'stages.workDialog.created') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

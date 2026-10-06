@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-06T13:15:43.121Z",
+  "productionUntouched": true,
+  "university_recommandations_20261006": {
+    "appliedMigrations": 21,
+    "businessTables": 65,
+    "recipientDepartmentColumnPresent": true
+  },
+  "university_recommandations_restore_20261006": {
+    "appliedMigrations": 21,
+    "businessTables": 65,
+    "recipientDepartmentColumnPresent": true
+  }
+}

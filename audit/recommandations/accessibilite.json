@@ -1,0 +1,2205 @@
+{
+  "date": "2026-10-03T13:17:37.677Z",
+  "axeVersion": "4.13.0",
+  "reference": "https://www.w3.org/TR/WCAG22/",
+  "results": [
+    {
+      "role": "CONTROLEUR",
+      "path": "/connexion",
+      "width": 1280,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/controle",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_4bf1b08f-1897-475a-80b4-39a3fd48204d"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_4bf1b08f-1897-475a-80b4-39a3fd48204d\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/emploi-du-temps",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_4bf1b08f-1897-475a-80b4-39a3fd48204d"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_4bf1b08f-1897-475a-80b4-39a3fd48204d\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/controle",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/emploi-du-temps",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/controle",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "CONTROLEUR",
+      "path": "/emploi-du-temps",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/scolarite",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_c2736b46-1b6b-4212-849a-a709fee8c222"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_c2736b46-1b6b-4212-849a-a709fee8c222\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                ".q-item.q-item--clickable[href$=\"#/inscriptions\"]:nth-child(1) > .q-item__section--main.q-item__section.column > .q-item__label:nth-child(1)"
+              ],
+              "html": "<div class=\"q-item__label\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(29, 29, 31)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 15.46,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                ".q-item.q-item--clickable[href$=\"#/inscriptions\"]:nth-child(1) > .q-item__section--main.q-item__section.column > .q-item__label--caption.text-caption.q-item__label"
+              ],
+              "html": "<div class=\"q-item__label q-item__label--caption text-caption\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 6.39,
+                "fontSize": "12px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/inscriptions",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_c2736b46-1b6b-4212-849a-a709fee8c222"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_c2736b46-1b6b-4212-849a-a709fee8c222\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "th:nth-child(7)"
+              ],
+              "html": "<th class=\"text-right\">[texte de test masqué]</th>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 6.96,
+                "fontSize": "12px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "th:nth-child(8)"
+              ],
+              "html": "<th class=\"text-left\">[texte de test masqué]</th>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 6.96,
+                "fontSize": "12px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left:nth-child(1)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(2) > div:nth-child(1)"
+              ],
+              "html": "<div data-v-e8ce9c22=\"\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(2) > .text-caption.text-grey-7"
+              ],
+              "html": "<div data-v-e8ce9c22=\"\" class=\"text-caption text-grey-7\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 6.26,
+                "fontSize": "12px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(3) > .q-chip--outline.q-chip.q-chip--colored > .q-chip__content.no-wrap.q-anchor--skip"
+              ],
+              "html": "<div class=\"q-chip__content col row no-wrap items-center q-anchor--skip\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 122, 77)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 4.86,
+                "fontSize": "12px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(3) > .text-caption.text-grey-7"
+              ],
+              "html": "<div data-v-e8ce9c22=\"\" class=\"text-caption text-grey-7\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 6.26,
+                "fontSize": "12px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(4) > .champ--attente-paiement.champ.badge-statut"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"champ badge-statut champ--attente-paiement\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(29, 29, 31)",
+                "background": "rgb(252, 209, 22)",
+                "contrastRatio": 11.44,
+                "fontSize": "12px",
+                "fontWeight": "590"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-weight-medium.text-right.q-td:nth-child(5)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-right text-right text-weight-medium\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .chiffres.text-right.q-td:nth-child(6) > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 5.07,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(4) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(4) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(5) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(5) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(6) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(6) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(7) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(7) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(8) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(8) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(9) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(9) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(10) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(10) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(11) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(11) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(12) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(12) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(13) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(13) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(14) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(14) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(15) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(15) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(16) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(16) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(17) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(17) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(18) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(18) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(19) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(19) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(20) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(20) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(21) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(21) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(22) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(22) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(23) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(23) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(24) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(24) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(25) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(25) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(26) > .chiffres.text-weight-medium.text-right > .text-negative"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"text-negative\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(206, 17, 38)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 5.63,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(26) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(27) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(27) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(28) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(28) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(29) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(29) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(30) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(30) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(31) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(31) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(32) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(32) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(33) > .chiffres.text-weight-medium.text-right > span"
+              ],
+              "html": "<span data-v-e8ce9c22=\"\" class=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(33) > .text-left.q-td:nth-child(8)"
+              ],
+              "html": "<td data-v-e8ce9c22=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/paiements",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_c2736b46-1b6b-4212-849a-a709fee8c222"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_c2736b46-1b6b-4212-849a-a709fee8c222\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "th:nth-child(7)"
+              ],
+              "html": "<th class=\"text-left\">[texte de test masqué]</th>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 6.96,
+                "fontSize": "12px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "th:nth-child(8)"
+              ],
+              "html": "<th class=\"text-left\">[texte de test masqué]</th>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 6.96,
+                "fontSize": "12px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tbody > tr:nth-child(1) > .text-left:nth-child(1)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .q-td.text-left:nth-child(2) > div:nth-child(1)"
+              ],
+              "html": "<div data-v-1980370c=\"\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .q-td.text-left:nth-child(2) > .text-caption.text-grey-7"
+              ],
+              "html": "<div data-v-1980370c=\"\" class=\"text-caption text-grey-7\">[texte de test masqué]<span data-v-1980370c=\"\">[texte de test masqué]</span></div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 6.26,
+                "fontSize": "12px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .q-td.text-left:nth-child(2) > .text-caption.text-grey-7 > span[data-v-1980370c=\"\"]"
+              ],
+              "html": "<span data-v-1980370c=\"\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(89, 89, 95)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 6.26,
+                "fontSize": "12px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tbody > tr:nth-child(1) > .text-left:nth-child(3)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .text-weight-medium.text-right.q-td"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-right text-right text-weight-medium\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .q-td.text-left:nth-child(5) > .champ--payee.champ.badge-statut"
+              ],
+              "html": "<span data-v-1980370c=\"\" class=\"champ badge-statut champ--payee\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(255, 255, 255)",
+                "background": "rgb(0, 122, 77)",
+                "contrastRatio": 5.4,
+                "fontSize": "12px",
+                "fontWeight": "590"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tbody > tr:nth-child(1) > .text-left:nth-child(6)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(1) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(2) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(4) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(5) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(6) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(7) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(8) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(9) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(10) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(11) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(12) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(13) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(14) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(15) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(16) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(17) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(18) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(19) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(20) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(21) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(22) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(23) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(24) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(25) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(26) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(27) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(28) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(29) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(30) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(31) > .text-left:nth-child(6)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(31) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(32) > .text-left:nth-child(6)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(32) > .q-td.text-left:nth-child(8)"
+              ],
+              "html": "<td data-v-1980370c=\"\" class=\"q-td text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 21,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/scolarite",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/inscriptions",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/paiements",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/scolarite",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/inscriptions",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "SCOLARITE",
+      "path": "/paiements",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "ADMIN",
+      "path": "/audit",
+      "width": 1440,
+      "theme": "light",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": [
+            {
+              "target": [
+                "#f_2fff3135-aa97-4e20-a942-62b3fff920cd"
+              ],
+              "html": "<input class=\"q-field__native q-placeholder\" tabindex=\"0\" aria-label=\"Rechercher un module\" id=\"f_2fff3135-aa97-4e20-a942-62b3fff920cd\" type=\"search\" value=\"\">",
+              "contraste": {
+                "found": true,
+                "foreground": "rgba(0, 0, 0, 0.87)",
+                "background": "rgb(245, 245, 247)",
+                "contrastRatio": 14.99,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "a[href$=\"#/rectorat\"] > .q-item__section--main.q-item__section.column"
+              ],
+              "html": "<div data-v-332beb82=\"\" class=\"q-item__section column q-item__section--main justify-center\">[texte de test masqué]</div>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(29, 29, 31)",
+                "background": "rgb(255, 255, 255)",
+                "contrastRatio": 16.83,
+                "fontSize": "14px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > td:nth-child(1)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > td:nth-child(2)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > td:nth-child(3)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > td:nth-child(4)"
+              ],
+              "html": "<td class=\"text-left\">[texte de test masqué]</td>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 0, 0)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 18.91,
+                "fontSize": "15px",
+                "fontWeight": "400"
+              },
+              "checks": []
+            },
+            {
+              "target": [
+                "tr:nth-child(3) > .q-td[data-v-c0c81968=\"\"] > .q-btn--rectangle.q-btn--actionable.q-btn--flat > .q-btn__content.text-center.q-anchor--skip > .block"
+              ],
+              "html": "<span class=\"block\">[texte de test masqué]</span>",
+              "contraste": {
+                "found": true,
+                "foreground": "rgb(0, 122, 77)",
+                "background": "rgb(243, 243, 243)",
+                "contrastRatio": 4.86,
+                "fontSize": "14px",
+                "fontWeight": "500"
+              },
+              "checks": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "role": "ADMIN",
+      "path": "/audit",
+      "width": 375,
+      "theme": "light",
+      "violations": [],
+      "incomplete": []
+    },
+    {
+      "role": "ADMIN",
+      "path": "/audit",
+      "width": 375,
+      "theme": "dark",
+      "violations": [],
+      "incomplete": []
+    }
+  ]
+}

@@ -2,9 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Utilisateurs</div>
+        <h1 class="page-titre">{{ $t('utilisateurs.title') }}</h1>
         <div class="page-sous-titre">
-          Comptes de connexion et rôles : contrôleurs, scolarité, direction, enseignants
+          {{ $t('utilisateurs.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -13,7 +13,7 @@
           color="primary"
           no-caps
           icon="person_add"
-          label="Nouvel utilisateur"
+          :label="$t('utilisateurs.actions.new')"
           @click="ouvrir(null)"
         />
       </div>
@@ -22,7 +22,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (nom, prénom, e-mail)…"
+      :placeholder="$t('utilisateurs.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -34,7 +34,7 @@
           clearable
           emit-value
           map-options
-          label="Rôle"
+          :label="$t('utilisateurs.filters.role')"
         />
         <q-select
           v-model="filtres.departementId"
@@ -44,14 +44,13 @@
           clearable
           emit-value
           map-options
-          label="Département"
+          :label="$t('utilisateurs.filters.department')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="utilisateurs"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -78,7 +77,7 @@
             color="primary"
             no-caps
             icon="person_add"
-            label="Créer le premier compte"
+            :label="$t('utilisateurs.actions.createFirst')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -86,7 +85,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('utilisateurs.actions.resetFilters')"
             @click="reinitialiser"
           />
         </div>
@@ -96,7 +95,9 @@
         <q-td :props="p">
           <div>
             {{ p.row.nom }} {{ p.row.prenom }}
-            <q-badge v-if="estMoi(p.row)" color="secondary" class="q-ml-xs">vous</q-badge>
+            <q-badge v-if="estMoi(p.row)" color="secondary" class="q-ml-xs">{{
+              $t('utilisateurs.table.you')
+            }}</q-badge>
           </div>
           <div class="text-caption text-grey-7">{{ p.row.email }}</div>
         </q-td>
@@ -114,7 +115,11 @@
             :name="p.row.actif ? 'check_circle' : 'block'"
             :color="p.row.actif ? 'positive' : 'grey-7'"
           />
-          <q-tooltip>{{ p.row.actif ? 'Compte actif' : 'Compte désactivé' }}</q-tooltip>
+          <q-tooltip>{{
+            p.row.actif
+              ? $t('utilisateurs.table.activeAccount')
+              : $t('utilisateurs.table.disabledAccount')
+          }}</q-tooltip>
         </q-td>
       </template>
 
@@ -126,20 +131,20 @@
             dense
             round
             icon="person"
-            aria-label="Ouvrir la fiche enseignant"
+            :aria-label="$t('utilisateurs.actions.openTeacherRecordAria')"
             @click="voirFicheEnseignant(p.row)"
           >
-            <q-tooltip>Sa fiche enseignant</q-tooltip>
+            <q-tooltip>{{ $t('utilisateurs.table.teacherRecordTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="edit"
-            aria-label="Modifier l’utilisateur"
+            :aria-label="$t('utilisateurs.actions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('utilisateurs.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -148,11 +153,15 @@
             color="negative"
             icon="delete"
             :disable="estMoi(p.row)"
-            aria-label="Supprimer l’utilisateur"
+            :aria-label="$t('utilisateurs.actions.deleteAria')"
             @click="supprimer(p.row)"
           >
             <q-tooltip>
-              {{ estMoi(p.row) ? 'Vous ne pouvez pas supprimer votre propre compte' : 'Supprimer' }}
+              {{
+                estMoi(p.row)
+                  ? $t('utilisateurs.table.cannotDeleteSelf')
+                  : $t('utilisateurs.actions.delete')
+              }}
             </q-tooltip>
           </q-btn>
         </q-td>
@@ -172,12 +181,14 @@
           </div>
           <div class="text-subtitle1 text-weight-medium">
             {{ u.nom }} {{ u.prenom }}
-            <q-badge v-if="estMoi(u)" color="secondary" class="q-ml-xs">vous</q-badge>
+            <q-badge v-if="estMoi(u)" color="secondary" class="q-ml-xs">{{
+              $t('utilisateurs.table.you')
+            }}</q-badge>
           </div>
           <div class="text-caption text-grey-7">{{ u.email }}</div>
           <div class="text-caption text-grey-7">{{ u.telephone || '—' }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ u.departementId ? nomDepartement(u) : 'Sans département de rattachement' }}
+            {{ u.departementId ? nomDepartement(u) : $t('utilisateurs.table.noDepartment') }}
           </div>
         </q-card-section>
         <q-separator />
@@ -188,17 +199,24 @@
             dense
             no-caps
             icon="person"
-            label="Sa fiche"
+            :label="$t('utilisateurs.actions.teacherRecord')"
             @click="voirFicheEnseignant(u)"
           />
-          <q-btn flat dense no-caps icon="edit" label="Modifier" @click="ouvrir(u)" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="edit"
+            :label="$t('utilisateurs.actions.edit')"
+            @click="ouvrir(u)"
+          />
           <q-btn
             flat
             dense
             no-caps
             color="negative"
             icon="delete"
-            label="Supprimer"
+            :label="$t('utilisateurs.actions.delete')"
             :disable="estMoi(u)"
             @click="supprimer(u)"
           />
@@ -213,7 +231,7 @@
           color="primary"
           no-caps
           icon="person_add"
-          label="Créer le premier compte"
+          :label="$t('utilisateurs.actions.createFirst')"
           @click="ouvrir(null)"
         />
         <q-btn
@@ -221,7 +239,7 @@
           flat
           no-caps
           icon="refresh"
-          label="Réinitialiser les filtres"
+          :label="$t('utilisateurs.actions.resetFilters')"
           @click="reinitialiser"
         />
       </div>
@@ -240,19 +258,19 @@
     <q-dialog v-model="dialogOuvert">
       <q-card style="width: 520px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ utilisateurEdite ? 'Modifier l’utilisateur' : 'Nouvel utilisateur' }}
+          {{ utilisateurEdite ? $t('utilisateurs.dialog.editTitle') : $t('utilisateurs.dialog.newTitle') }}
         </q-card-section>
         <q-card-section>
-          <span class="section-titre">Identité et accès</span>
+          <span class="section-titre">{{ $t('utilisateurs.dialog.sectionIdentity') }}</span>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-6">
               <q-input
                 v-model="form.nom"
                 outlined
                 dense
-                label="Nom *"
+                :label="$t('utilisateurs.dialog.lastName')"
                 :error="erreurs.nom"
-                error-message="Le nom est obligatoire"
+                :error-message="$t('utilisateurs.dialog.lastNameRequired')"
               />
             </div>
             <div class="col-12 col-sm-6">
@@ -260,9 +278,9 @@
                 v-model="form.prenom"
                 outlined
                 dense
-                label="Prénom *"
+                :label="$t('utilisateurs.dialog.firstName')"
                 :error="erreurs.prenom"
-                error-message="Le prénom est obligatoire"
+                :error-message="$t('utilisateurs.dialog.firstNameRequired')"
               />
             </div>
           </div>
@@ -271,10 +289,10 @@
             outlined
             dense
             type="email"
-            label="E-mail *"
-            hint="Sert d’identifiant de connexion"
+            :label="$t('utilisateurs.dialog.email')"
+            :hint="$t('utilisateurs.dialog.emailHint')"
             :error="erreurs.email"
-            error-message="Saisissez une adresse e-mail valide"
+            :error-message="$t('utilisateurs.dialog.emailInvalid')"
           />
           <q-input
             v-model="form.password"
@@ -282,13 +300,17 @@
             dense
             type="password"
             autocomplete="new-password"
-            :label="utilisateurEdite ? 'Nouveau mot de passe (facultatif)' : 'Mot de passe *'"
-            hint="6 caractères minimum"
+            :label="
+              utilisateurEdite
+                ? $t('utilisateurs.dialog.passwordNew')
+                : $t('utilisateurs.dialog.passwordNewAccount')
+            "
+            :hint="$t('utilisateurs.dialog.passwordHint')"
             :error="erreurs.password"
-            error-message="Le mot de passe doit faire au moins 6 caractères"
+            :error-message="$t('utilisateurs.dialog.passwordInvalid')"
           />
 
-          <span class="section-titre">Rôle et périmètre</span>
+          <span class="section-titre">{{ $t('utilisateurs.dialog.sectionRole') }}</span>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-6">
               <q-select
@@ -298,11 +320,11 @@
                 dense
                 emit-value
                 map-options
-                label="Rôle *"
+                :label="$t('utilisateurs.dialog.role')"
               />
             </div>
             <div class="col-12 col-sm-6">
-              <q-input v-model="form.telephone" outlined dense label="Téléphone" />
+              <q-input v-model="form.telephone" outlined dense :label="$t('utilisateurs.dialog.phone')" />
             </div>
           </div>
           <q-select
@@ -313,7 +335,7 @@
             clearable
             emit-value
             map-options
-            label="Département de rattachement"
+            :label="$t('utilisateurs.dialog.department')"
           />
           <q-select
             v-if="form.role === 'ENSEIGNANT'"
@@ -326,26 +348,26 @@
             map-options
             use-input
             input-debounce="0"
-            label="Fiche enseignant associée"
-            hint="Nécessaire pour que l’enseignant voie ses séances"
+            :label="$t('utilisateurs.dialog.teacherRecord')"
+            :hint="$t('utilisateurs.dialog.teacherRecordHint')"
             @filter="filtrerEnseignants"
           />
           <q-toggle
             v-model="form.actif"
-            label="Compte actif"
+            :label="$t('utilisateurs.dialog.active')"
             :disable="!!utilisateurEdite && estMoi(utilisateurEdite)"
           />
           <div v-if="!!utilisateurEdite && estMoi(utilisateurEdite)" class="text-caption text-grey-7">
-            Vous ne pouvez pas désactiver votre propre compte.
+            {{ $t('utilisateurs.dialog.cannotDisableSelf') }}
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('utilisateurs.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('utilisateurs.actions.save')"
             :loading="enregistrement"
             @click="enregistrer"
           />
@@ -358,6 +380,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -370,6 +393,7 @@ import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '../
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const utilisateurs = ref<Utilisateur[]>([]);
 const departements = ref<Departement[]>([]);
@@ -418,14 +442,14 @@ const filtresActifs = computed(() =>
   Boolean(filtres.value.recherche || filtres.value.role || filtres.value.departementId),
 );
 const messageVide = computed(() =>
-  filtresActifs.value ? 'Aucun compte pour ces critères.' : 'Aucun compte enregistré.',
+  filtresActifs.value ? t('utilisateurs.emptyState.filtered') : t('utilisateurs.emptyState.none'),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('utilisateurs.chips.search', { search: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -433,7 +457,7 @@ const chips = computed(() => {
   }
   if (filtres.value.role) {
     cs.push({
-      label: `Rôle : ${LIBELLE_ROLE[filtres.value.role as Role]}`,
+      label: t('utilisateurs.chips.role', { role: LIBELLE_ROLE[filtres.value.role as Role] }),
       value: filtres.value.role,
       icone: 'badge',
     });
@@ -441,7 +465,7 @@ const chips = computed(() => {
   if (filtres.value.departementId) {
     const d = departements.value.find((x) => x.id === filtres.value.departementId);
     cs.push({
-      label: `Département : ${d?.nom ?? '?'}`,
+      label: t('utilisateurs.chips.department', { department: d?.nom ?? '?' }),
       value: filtres.value.departementId,
       icone: 'apartment',
     });
@@ -449,19 +473,24 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'nom', label: 'Nom & prénom', field: 'nom', align: 'left', sortable: true },
-  { name: 'role', label: 'Rôle', field: 'role', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'nom', label: t('utilisateurs.table.columns.name'), field: 'nom', align: 'left', sortable: true },
+  { name: 'role', label: t('utilisateurs.table.columns.role'), field: 'role', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: 'Département',
+    label: t('utilisateurs.table.columns.department'),
     field: (r: Utilisateur) => nomDepartement(r),
     align: 'left',
   },
-  { name: 'telephone', label: 'Téléphone', field: (r: Utilisateur) => r.telephone || '—', align: 'left' },
-  { name: 'actif', label: 'Actif', field: 'actif', align: 'center' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  {
+    name: 'telephone',
+    label: t('utilisateurs.table.columns.phone'),
+    field: (r: Utilisateur) => r.telephone || '—',
+    align: 'left',
+  },
+  { name: 'actif', label: t('utilisateurs.table.columns.active'), field: 'actif', align: 'center' },
+  { name: 'actions', label: t('utilisateurs.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function ouvrir(u: Utilisateur | null) {
   utilisateurEdite.value = u;
@@ -508,7 +537,7 @@ async function enregistrer() {
       : form.value.password.length > 0 && form.value.password.length < 6,
   };
   if (Object.values(erreurs.value).some(Boolean)) {
-    $q.notify({ type: 'warning', message: 'Complétez les champs obligatoires' });
+    $q.notify({ type: 'warning', message: t('utilisateurs.messages.fillRequired') });
     return;
   }
 
@@ -526,13 +555,13 @@ async function enregistrer() {
     if (utilisateurEdite.value) await api.put(`/utilisateurs/${utilisateurEdite.value.id}`, payload);
     else await api.post('/utilisateurs', payload);
 
-    $q.notify({ type: 'positive', message: 'Utilisateur enregistré' });
+    $q.notify({ type: 'positive', message: t('utilisateurs.messages.saved') });
     dialogOuvert.value = false;
     await Promise.all([charger(), chargerEnseignants()]);
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement impossible',
+      message: e?.response?.data?.message ?? t('utilisateurs.messages.saveFailed'),
     });
   } finally {
     enregistrement.value = false;
@@ -542,19 +571,19 @@ async function enregistrer() {
 function supprimer(u: Utilisateur) {
   if (estMoi(u)) return;
   $q.dialog({
-    title: 'Supprimer le compte',
-    message: `Supprimer le compte de ${u.prenom} ${u.nom} (${u.email}) ? Il ne pourra plus se connecter.`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('utilisateurs.confirmDelete.title'),
+    message: t('utilisateurs.confirmDelete.message', { name: `${u.prenom} ${u.nom}`, email: u.email }),
+    cancel: { label: t('utilisateurs.actions.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('utilisateurs.actions.delete'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/utilisateurs/${u.id}`);
-      $q.notify({ type: 'positive', message: 'Compte supprimé' });
+      $q.notify({ type: 'positive', message: t('utilisateurs.messages.deleted') });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Suppression impossible',
+        message: e?.response?.data?.message ?? t('utilisateurs.messages.deleteFailed'),
       });
     }
   });
@@ -580,7 +609,7 @@ async function charger(tout = false) {
     utilisateurs.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des comptes impossible',
+      message: e?.response?.data?.message ?? t('utilisateurs.messages.loadFailed'),
     });
   } finally {
     chargement.value = false;

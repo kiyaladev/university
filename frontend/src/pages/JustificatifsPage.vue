@@ -2,9 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Justificatifs d’absence</div>
+        <h1 class="page-titre">{{ $t('justificatifs.title') }}</h1>
         <div class="page-sous-titre">
-          Une absence justifiée et validée devient une « absence excusée » dans les statistiques
+          {{ $t('justificatifs.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -14,7 +14,7 @@
           color="primary"
           no-caps
           icon="post_add"
-          label="Enregistrer un justificatif"
+          :label="$t('justificatifs.actions.record')"
           @click="ouvrirDepot"
         />
       </div>
@@ -23,8 +23,7 @@
     <!-- Un enseignant ne dépose pas lui-même : il doit savoir par où passer. -->
     <q-banner v-if="!peutDeposer" class="note--info q-mb-md">
       <template #avatar><q-icon name="info" /></template>
-      Un justificatif s’enregistre auprès de la scolarité, sur présentation de la pièce.
-      Vous retrouvez ici l’état de vos demandes.
+      {{ $t('justificatifs.banner.info') }}
     </q-banner>
 
     <q-card flat bordered class="carte q-mb-md">
@@ -38,7 +37,7 @@
             clearable
             emit-value
             map-options
-            label="Statut"
+            :label="$t('justificatifs.filters.status')"
           />
         </div>
         <div class="col-6 col-md-3">
@@ -50,14 +49,14 @@
             clearable
             emit-value
             map-options
-            label="Motif"
+            :label="$t('justificatifs.filters.reason')"
           />
         </div>
         <div class="col-6 col-md-3">
-          <champ-date v-model="filtres.dateDebut" label="Séances du" />
+          <champ-date v-model="filtres.dateDebut" :label="$t('justificatifs.filters.sessionsFrom')" />
         </div>
         <div class="col-6 col-md-3">
-          <champ-date v-model="filtres.dateFin" label="au" />
+          <champ-date v-model="filtres.dateFin" :label="$t('justificatifs.filters.sessionsTo')" />
         </div>
       </q-card-section>
     </q-card>
@@ -71,7 +70,7 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 20, sortBy: 'date', descending: true }"
-      loading-label="Chargement des justificatifs…"
+      :loading-label="$t('justificatifs.table.loadingLabel')"
       :no-data-label="messageVide"
     >
       <template #body-cell-statut="p">
@@ -89,10 +88,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Voir le justificatif"
+            :aria-label="$t('justificatifs.table.actions.viewAria')"
             @click="detail = p.row"
           >
-            <q-tooltip>Détail</q-tooltip>
+            <q-tooltip>{{ $t('justificatifs.table.actions.viewTooltip') }}</q-tooltip>
           </q-btn>
           <template v-if="p.row.statut === 'EN_ATTENTE' && peutArbitrer">
             <q-btn
@@ -101,10 +100,10 @@
               round
               color="positive"
               icon="check"
-              aria-label="Valider ce justificatif"
+              :aria-label="$t('justificatifs.table.actions.validateAria')"
               @click="traiter(p.row, 'VALIDE')"
             >
-              <q-tooltip>Valider — la séance passera en absence excusée</q-tooltip>
+              <q-tooltip>{{ $t('justificatifs.table.actions.validateTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               flat
@@ -112,10 +111,10 @@
               round
               color="negative"
               icon="close"
-              aria-label="Rejeter ce justificatif"
+              :aria-label="$t('justificatifs.table.actions.rejectAria')"
               @click="traiter(p.row, 'REJETE')"
             >
-              <q-tooltip>Rejeter — l’absence reste constatée</q-tooltip>
+              <q-tooltip>{{ $t('justificatifs.table.actions.rejectTooltip') }}</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -126,9 +125,9 @@
     <q-dialog v-model="dialogDepot">
       <q-card style="width: 520px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6">Enregistrer un justificatif</div>
+          <div class="text-h6">{{ $t('justificatifs.depositDialog.title') }}</div>
           <div class="page-sous-titre">
-            Saisi par l’administration, sur présentation de la pièce par l’enseignant.
+            {{ $t('justificatifs.depositDialog.subtitle') }}
           </div>
         </q-card-section>
         <q-card-section class="q-gutter-md">
@@ -140,7 +139,7 @@
             emit-value
             map-options
             use-input
-            label="Enseignant *"
+            :label="$t('justificatifs.depositDialog.teacher')"
             @filter="filtrerEnseignants"
             @update:model-value="chargerSeancesJustifiables"
           />
@@ -151,9 +150,9 @@
             dense
             emit-value
             map-options
-            label="Séance concernée *"
+            :label="$t('justificatifs.depositDialog.session')"
             :disable="!enseignantChoisi"
-            hint="Séances non assurées des 90 derniers jours"
+            :hint="$t('justificatifs.depositDialog.sessionHint')"
           />
           <q-select
             v-model="form.type"
@@ -162,7 +161,7 @@
             dense
             emit-value
             map-options
-            label="Motif *"
+            :label="$t('justificatifs.depositDialog.reason')"
           />
           <q-input
             v-model="form.motif"
@@ -170,13 +169,13 @@
             dense
             type="textarea"
             rows="3"
-            label="Explication *"
+            :label="$t('justificatifs.depositDialog.explanation')"
           />
           <q-file
             v-model="fichier"
             outlined
             dense
-            label="Pièce justificative (image ou PDF)"
+            :label="$t('justificatifs.depositDialog.file')"
             accept="image/*,.pdf"
             @update:model-value="lireFichier"
           >
@@ -184,13 +183,13 @@
           </q-file>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('justificatifs.depositDialog.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
             icon="post_add"
-            label="Déposer le justificatif"
+            :label="$t('justificatifs.depositDialog.submit')"
             :loading="enregistrement"
             @click="deposer"
           />
@@ -201,31 +200,31 @@
     <!-- Détail -->
     <q-dialog :model-value="!!detail" @update:model-value="detail = null">
       <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section class="text-h6">Justificatif</q-card-section>
+        <q-card-section class="text-h6">{{ $t('justificatifs.detailDialog.title') }}</q-card-section>
         <q-card-section v-if="detail">
           <q-list dense>
             <q-item>
-              <q-item-section>Enseignant</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.teacher') }}</q-item-section>
               <q-item-section side>
                 {{ detail.enseignant?.nom }} {{ detail.enseignant?.prenom }}
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>Séance</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.session') }}</q-item-section>
               <q-item-section side>
                 {{ dateLisible(detail.seance?.date) }} · {{ detail.seance?.heureDebut }}–{{ detail.seance?.heureFin }}
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>Motif</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.reason') }}</q-item-section>
               <q-item-section side>{{ libelleMotif(detail.type) }}</q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>Explication</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.explanation') }}</q-item-section>
               <q-item-section side class="text-right">{{ detail.motif }}</q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>Statut</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.status') }}</q-item-section>
               <q-item-section side>
                 <span class="champ champ-justificatif" :class="`champ--${champStatut(detail.statut)}`">
                   <span class="pochoir">{{ libelleStatut(detail.statut) }}</span>
@@ -233,11 +232,11 @@
               </q-item-section>
             </q-item>
             <q-item v-if="detail.commentaire">
-              <q-item-section>Commentaire de décision</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.decisionComment') }}</q-item-section>
               <q-item-section side class="text-right">{{ detail.commentaire }}</q-item-section>
             </q-item>
             <q-item v-if="detail.traitePar">
-              <q-item-section>Arbitré par</q-item-section>
+              <q-item-section>{{ $t('justificatifs.detailDialog.arbitratedBy') }}</q-item-section>
               <q-item-section side>
                 {{ detail.traitePar.prenom }} {{ detail.traitePar.nom }}
                 <span v-if="detail.traiteLe" class="chiffres">
@@ -246,14 +245,14 @@
               </q-item-section>
             </q-item>
           </q-list>
-          <div v-if="detail.piece" class="q-mt-md">
+          <div v-if="detail.piece && peutDeposer" class="q-mt-md">
             <img
               v-if="detail.piece.startsWith('data:image')"
               :src="detail.piece"
               class="full-width"
-              alt="Pièce justificative fournie par l’enseignant"
+              :alt="$t('justificatifs.detailDialog.fileAlt')"
             />
-            <q-btn v-else flat icon="download" no-caps label="Ouvrir la pièce jointe" :href="detail.piece" target="_blank" />
+            <q-btn v-else flat icon="download" no-caps :label="$t('justificatifs.detailDialog.openAttachment')" :href="detail.piece" target="_blank" />
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -262,10 +261,10 @@
             flat
             no-caps
             icon="event_note"
-            label="Voir la séance au registre"
+            :label="$t('justificatifs.detailDialog.viewSession')"
             :to="lienSeance(detail)"
           />
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('justificatifs.detailDialog.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -276,6 +275,7 @@
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -289,6 +289,7 @@ import {
 import type { Enseignant, Justificatif, Seance } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const route = useRoute();
 const auth = useAuthStore();
 
@@ -331,8 +332,8 @@ const peutDeposer = computed(() =>
 
 const messageVide = computed(() =>
   filtres.value.statut || filtres.value.type
-    ? 'Aucun justificatif ne correspond à ces filtres sur la période.'
-    : 'Aucun justificatif déposé sur cette période.',
+    ? t('justificatifs.table.emptyFiltered')
+    : t('justificatifs.table.emptyDefault'),
 );
 
 /** Un justificatif se lit avec sa séance : le registre s'ouvre sur son jour. */
@@ -351,10 +352,10 @@ const optionsSeances = computed(() =>
   })),
 );
 
-const colonnes: QTableColumn[] = [
+const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: 'Séance',
+    label: t('justificatifs.table.columns.session'),
     field: (r: Justificatif) =>
       `${dateLisible(r.seance?.date)} ${r.seance?.heureDebut ?? ''}`,
     align: 'left',
@@ -362,54 +363,54 @@ const colonnes: QTableColumn[] = [
   },
   {
     name: 'enseignant',
-    label: 'Enseignant',
+    label: t('justificatifs.table.columns.teacher'),
     field: (r: Justificatif) => `${r.enseignant?.nom ?? ''} ${r.enseignant?.prenom ?? ''}`,
     align: 'left',
   },
   {
     name: 'matiere',
-    label: 'Matière',
+    label: t('justificatifs.table.columns.subject'),
     field: (r: Justificatif) => r.seance?.affectation?.matiere?.intitule ?? '—',
     align: 'left',
   },
   {
     name: 'type',
-    label: 'Motif',
+    label: t('justificatifs.table.columns.reason'),
     field: (r: Justificatif) => libelleMotif(r.type),
     align: 'left',
     sortable: true,
   },
-  { name: 'explication', label: 'Explication', field: 'motif', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+  { name: 'explication', label: t('justificatifs.table.columns.explanation'), field: 'motif', align: 'left' },
+  { name: 'statut', label: t('justificatifs.table.columns.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const champStatut = (s: string) => CHAMP_STATUT_JUSTIFICATIF[s] ?? 'attente';
 const libelleStatut = (s: string) => LIBELLE_STATUT_JUSTIFICATIF[s] ?? s;
-const libelleMotif = (t?: string | null) =>
-  TYPES_JUSTIFICATIF.find((x) => x.value === t)?.label ?? t ?? '—';
+const libelleMotif = (type?: string | null) =>
+  TYPES_JUSTIFICATIF.find((x) => x.value === type)?.label ?? type ?? '—';
 
 /** Le message dit la conséquence : valider excuse l'absence dans les relevés. */
 function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
   const valide = statut === 'VALIDE';
   $q.dialog({
-    title: valide ? 'Valider le justificatif' : 'Rejeter le justificatif',
+    title: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
     message: valide
-      ? 'La séance passera en « absence excusée » dans les statistiques. Commentaire (facultatif) :'
-      : 'L’absence restera constatée telle quelle. Motif du rejet (facultatif) :',
+      ? t('justificatifs.dialogs.validateMessage')
+      : t('justificatifs.dialogs.rejectMessage'),
     prompt: { model: '', type: 'text' },
     ok: {
-      label: valide ? 'Valider le justificatif' : 'Rejeter le justificatif',
+      label: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
       color: valide ? 'positive' : 'negative',
       unelevated: true,
       noCaps: true,
     },
-    cancel: { label: 'Ne rien faire', flat: true, noCaps: true },
+    cancel: { label: t('justificatifs.dialogs.doNothing'), flat: true, noCaps: true },
   }).onOk(async (commentaire: string) => {
     await api.put(`/justificatifs/${j.id}/traiter`, { statut, commentaire });
     $q.notify({
       type: 'positive',
-      message: valide ? 'Justificatif validé — absence excusée' : 'Justificatif rejeté',
+      message: valide ? t('justificatifs.messages.validated') : t('justificatifs.messages.rejected'),
     });
     await charger();
   });
@@ -467,14 +468,14 @@ async function deposer() {
   if (!enseignantChoisi.value || !form.value.seanceId || !form.value.motif.trim()) {
     $q.notify({
       type: 'warning',
-      message: 'Enseignant, séance concernée et explication sont obligatoires.',
+      message: t('justificatifs.messages.missingFields'),
     });
     return;
   }
   enregistrement.value = true;
   try {
     await api.post('/justificatifs', { ...form.value, enseignantId: enseignantChoisi.value });
-    $q.notify({ type: 'positive', message: 'Justificatif déposé' });
+    $q.notify({ type: 'positive', message: t('justificatifs.messages.deposited') });
     dialogDepot.value = false;
     await charger();
   } finally {
@@ -514,6 +515,6 @@ onMounted(charger);
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
 }
 </style>

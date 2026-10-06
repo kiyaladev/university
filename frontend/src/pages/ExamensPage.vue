@@ -2,10 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Examens</div>
+        <h1 class="page-titre">{{ $t('examens.title') }}</h1>
         <div class="page-sous-titre">
-          Planification des épreuves et scan des cartes étudiantes à l'entrée de la salle.
-          Chaque examen ouvre sur son tirage et sur son poste de scan.
+          {{ $t('examens.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -15,7 +14,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Planifier un examen"
+          :label="$t('examens.actions.schedule')"
           @click="dialogOuvert = true"
         />
       </div>
@@ -25,7 +24,7 @@
           color="secondary"
           no-caps
           icon="qr_code_scanner"
-          label="Poste de scan"
+          :label="$t('examens.actions.scanStation')"
           @click="allerScan(null)"
         />
       </div>
@@ -36,7 +35,7 @@
           color="secondary"
           no-caps
           icon="local_printshop"
-          label="Tirage des épreuves"
+          :label="$t('examens.actions.draw')"
           @click="allerTirage(null)"
         />
       </div>
@@ -44,7 +43,7 @@
 
     <filter-bar
       v-model="filtres"
-      placeholder="Rechercher (code examen, intitulé, matière…)"
+      :placeholder="$t('examens.filters.searchPlaceholder')"
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
@@ -52,7 +51,6 @@
         <view-toggle
           cle="examens"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -65,28 +63,28 @@
           clearable
           emit-value
           map-options
-          label="Type d'épreuve"
+          :label="$t('examens.filters.type')"
         />
         <autocomplete-async
           v-model="filtres.matiereId"
           endpoint="/matieres"
-          label="Matière"
+          :label="$t('examens.filters.subject')"
           :label-fn="(m) => `${m.code} — ${m.intitule}`"
         />
         <autocomplete-async
           v-model="filtres.promotionId"
           endpoint="/referentiel/promotions"
-          label="Promotion"
+          :label="$t('examens.filters.promotion')"
           :label-fn="(p) => `${p.nom} — ${p.niveau}`"
         />
         <autocomplete-async
           v-model="filtres.anneeId"
           endpoint="/referentiel/annees"
-          label="Année académique"
+          :label="$t('examens.filters.academicYear')"
           :label-fn="(a) => a.libelle"
         />
-        <champ-date v-model="filtres.dateDebut" label="Épreuves du" />
-        <champ-date v-model="filtres.dateFin" label="au" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('examens.filters.dateFrom')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('examens.filters.dateTo')" />
       </template>
     </filter-bar>
 
@@ -119,7 +117,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Planifier un examen"
+            :label="$t('examens.actions.schedule')"
             class="q-mt-sm"
             @click="dialogOuvert = true"
           />
@@ -157,10 +155,10 @@
             round
             icon="visibility"
             color="primary"
-            aria-label="Ouvrir la fiche de l'examen"
+            :aria-label="$t('examens.table.tooltips.openSheetAria')"
             @click.stop="ouvrirFiche(p.row)"
           >
-            <q-tooltip>Fiche de l'examen</q-tooltip>
+            <q-tooltip>{{ $t('examens.table.tooltips.openSheet') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'PLANIFIE' && peutDemarrer"
@@ -169,10 +167,10 @@
             round
             icon="play_arrow"
             color="positive"
-            aria-label="Démarrer l'examen"
+            :aria-label="$t('examens.table.tooltips.start')"
             @click.stop="demarrer(p.row)"
           >
-            <q-tooltip>Démarrer l'examen</q-tooltip>
+            <q-tooltip>{{ $t('examens.table.tooltips.start') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'EN_COURS' && peutTerminer"
@@ -181,20 +179,20 @@
             round
             icon="stop"
             color="negative"
-            aria-label="Terminer l'examen"
+            :aria-label="$t('examens.table.tooltips.finish')"
             @click.stop="terminer(p.row)"
           >
-            <q-tooltip>Terminer l'examen</q-tooltip>
+            <q-tooltip>{{ $t('examens.table.tooltips.finish') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="qr_code_scanner"
-            aria-label="Ouvrir le poste de scan de cet examen"
+            :aria-label="$t('examens.table.tooltips.scanCardsAria')"
             @click.stop="allerScan(p.row)"
           >
-            <q-tooltip>Scanner les cartes de cet examen</q-tooltip>
+            <q-tooltip>{{ $t('examens.table.tooltips.scanCards') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutVoirTirage"
@@ -202,10 +200,10 @@
             dense
             round
             icon="local_printshop"
-            aria-label="Voir le tirage de cet examen"
+            :aria-label="$t('examens.table.tooltips.drawAria')"
             @click.stop="allerTirage(p.row)"
           >
-            <q-tooltip>Tirage des épreuves de cet examen</q-tooltip>
+            <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -246,7 +244,7 @@
               no-caps
               icon="play_arrow"
               color="positive"
-              label="Démarrer"
+              :label="$t('examens.actions.start')"
               @click.stop="demarrer(e)"
             />
             <q-btn
@@ -256,7 +254,7 @@
               no-caps
               icon="stop"
               color="negative"
-              label="Terminer"
+              :label="$t('examens.actions.finish')"
               @click.stop="terminer(e)"
             />
             <q-btn
@@ -265,10 +263,10 @@
               dense
               no-caps
               icon="local_printshop"
-              label="Tirage"
+              :label="$t('examens.actions.drawShort')"
               @click.stop="allerTirage(e)"
             />
-            <q-btn flat dense no-caps icon="qr_code_scanner" label="Scanner" @click.stop="allerScan(e)" />
+            <q-btn flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
           </q-card-actions>
         </q-card>
       </div>
@@ -282,7 +280,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Planifier un examen"
+            :label="$t('examens.actions.schedule')"
             class="q-mt-sm"
             @click="dialogOuvert = true"
           />
@@ -319,26 +317,26 @@
             <q-badge :color="couleurStatut(examenFiche.statut)" :label="libelleStatut(examenFiche.statut)" />
           </div>
           <div class="col-auto">
-            <q-btn flat round dense icon="close" aria-label="Fermer la fiche" v-close-popup />
+            <q-btn flat round dense icon="close" :aria-label="$t('examens.sheet.closeAria')" v-close-popup />
           </div>
         </q-card-section>
 
         <q-card-section v-if="examenFiche" class="q-pt-none">
           <div class="row q-col-gutter-md text-caption">
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">Date</div>
+              <div class="text-grey-7">{{ $t('examens.sheet.date') }}</div>
               <div class="text-weight-medium">{{ dateLisible(examenFiche.dateExamen) }}</div>
             </div>
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">Horaire</div>
+              <div class="text-grey-7">{{ $t('examens.sheet.schedule') }}</div>
               <div class="text-weight-medium">{{ examenFiche.heureDebut }}–{{ examenFiche.heureFin }}</div>
             </div>
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">Salle</div>
+              <div class="text-grey-7">{{ $t('examens.sheet.room') }}</div>
               <div class="text-weight-medium">{{ examenFiche.salle?.code ?? '—' }}</div>
             </div>
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">Présents / inscrits</div>
+              <div class="text-grey-7">{{ $t('examens.sheet.presentsOverEnrolled') }}</div>
               <div class="text-weight-medium chiffres">
                 {{ examenFiche.nbPresents }} / {{ examenFiche.nbInscrits }}
               </div>
@@ -350,7 +348,7 @@
 
         <!-- Suite de la chaîne : tirage puis scan -->
         <q-card-section class="row q-gutter-sm items-center">
-          <span class="section-titre">Suite de la chaîne</span>
+          <span class="section-titre">{{ $t('examens.sheet.chainContinuation') }}</span>
           <q-space />
           <q-btn
             v-if="peutVoirTirage"
@@ -358,7 +356,7 @@
             no-caps
             color="secondary"
             icon="local_printshop"
-            label="Tirage des épreuves"
+            :label="$t('examens.actions.draw')"
             @click="allerTirage(examenFiche)"
           />
           <q-btn
@@ -366,7 +364,7 @@
             no-caps
             color="secondary"
             icon="qr_code_scanner"
-            label="Scanner les cartes"
+            :label="$t('examens.actions.scanCards')"
             @click="allerScan(examenFiche)"
           />
         </q-card-section>
@@ -374,7 +372,7 @@
         <q-separator />
 
         <q-card-section>
-          <span class="section-titre">Journal des scans</span>
+          <span class="section-titre">{{ $t('examens.sheet.scanJournal') }}</span>
           <q-table
             flat
             dense
@@ -387,12 +385,12 @@
             <template #no-data>
               <div class="etat-vide">
                 <q-icon name="qr_code_scanner" size="28px" color="grey-5" />
-                <div class="q-mt-sm">Aucune carte scannée pour cet examen.</div>
+                <div class="q-mt-sm">{{ $t('examens.sheet.noScans') }}</div>
               </div>
             </template>
             <template #body-cell-valide="p">
               <q-td :props="p">
-                <q-badge :color="p.row.valide ? 'positive' : 'negative'" :label="p.row.valide ? 'Validé' : 'Rejeté'" />
+                <q-badge :color="p.row.valide ? 'positive' : 'negative'" :label="p.row.valide ? $t('examens.sheet.validated') : $t('examens.sheet.rejected')" />
                 <div v-if="p.row.motifRejet" class="text-caption text-grey-7">{{ p.row.motifRejet }}</div>
               </q-td>
             </template>
@@ -400,7 +398,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('examens.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -410,6 +408,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -430,6 +429,7 @@ import {
 import type { Examen, ScanExamen, StatutExamen, ChipFiltre } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 
@@ -476,11 +476,16 @@ const optionsTypes = (['PARTIEL', 'FINAL', 'RATTRAPAGE', 'CONTROLE_CONTINU'] as 
 const chipsFiltres = computed(() => {
   const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    chips.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+    chips.push({
+      label: t('examens.filters.searchChip', { query: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (filtres.value.type) {
     chips.push({
-      label: `Type : ${LIBELLE_TYPE_EXAMEN[filtres.value.type] ?? filtres.value.type}`,
+      label: t('examens.filters.typeChip', { type: LIBELLE_TYPE_EXAMEN[filtres.value.type] ?? filtres.value.type }),
       value: filtres.value.type,
       icone: 'category',
     });
@@ -505,30 +510,30 @@ const examensFiltres = computed(() => {
 
 const messageVide = computed(() =>
   filtres.value.recherche
-    ? 'Aucun examen ne correspond à cette recherche.'
-    : `Aucun examen « ${libelleStatut(onglet.value).toLowerCase()} » sur cette période.`,
+    ? t('examens.emptyState.noResults')
+    : t('examens.emptyState.noneForStatus', { status: libelleStatut(onglet.value).toLowerCase() }),
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'codeExamen', label: 'Code', field: 'codeExamen', align: 'left', sortable: true },
-  { name: 'intitule', label: 'Intitulé', field: 'intitule', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'creneau', label: 'Date & heure', field: 'dateExamen', align: 'left', sortable: true },
-  { name: 'matiere', label: 'Matière', field: (r: Examen) => r.matiere?.intitule ?? '—', align: 'left' },
-  { name: 'promotion', label: 'Promotion', field: (r: Examen) => r.promotion?.nom ?? '—', align: 'left' },
-  { name: 'salle', label: 'Salle', field: (r: Examen) => r.salle?.code ?? '—', align: 'left' },
-  { name: 'presence', label: 'Présents', field: 'nbPresents', align: 'right' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'codeExamen', label: t('examens.table.columns.code'), field: 'codeExamen', align: 'left', sortable: true },
+  { name: 'intitule', label: t('examens.table.columns.title'), field: 'intitule', align: 'left' },
+  { name: 'type', label: t('examens.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'creneau', label: t('examens.table.columns.slot'), field: 'dateExamen', align: 'left', sortable: true },
+  { name: 'matiere', label: t('examens.table.columns.subject'), field: (r: Examen) => r.matiere?.intitule ?? '—', align: 'left' },
+  { name: 'promotion', label: t('examens.table.columns.promotion'), field: (r: Examen) => r.promotion?.nom ?? '—', align: 'left' },
+  { name: 'salle', label: t('examens.table.columns.room'), field: (r: Examen) => r.salle?.code ?? '—', align: 'left' },
+  { name: 'presence', label: t('examens.table.columns.present'), field: 'nbPresents', align: 'right' },
+  { name: 'statut', label: t('examens.table.columns.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesScans: QTableColumn[] = [
-  { name: 'heure', label: 'Heure', field: (r: ScanExamen) => dateHeureLisible(r.heureScan), align: 'left' },
-  { name: 'porteur', label: 'Porteur', field: (r: ScanExamen) => `${r.prenomPorteur ?? ''} ${r.nomPorteur ?? ''}`.trim() || '—', align: 'left' },
-  { name: 'matricule', label: 'Matricule saisi', field: (r: ScanExamen) => r.matriculeSaisi ?? '—', align: 'left' },
-  { name: 'valide', label: 'Résultat', field: 'valide', align: 'left' },
-  { name: 'scanneur', label: 'Opérateur', field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
-];
+const colonnesScans = computed<QTableColumn[]>(() => [
+  { name: 'heure', label: t('examens.scansTable.columns.time'), field: (r: ScanExamen) => dateHeureLisible(r.heureScan), align: 'left' },
+  { name: 'porteur', label: t('examens.scansTable.columns.holder'), field: (r: ScanExamen) => `${r.prenomPorteur ?? ''} ${r.nomPorteur ?? ''}`.trim() || '—', align: 'left' },
+  { name: 'matricule', label: t('examens.scansTable.columns.registrationNumber'), field: (r: ScanExamen) => r.matriculeSaisi ?? '—', align: 'left' },
+  { name: 'valide', label: t('examens.scansTable.columns.result'), field: 'valide', align: 'left' },
+  { name: 'scanneur', label: t('examens.scansTable.columns.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
+]);
 
 function couleurStatut(s: string) {
   switch (s) {
@@ -574,7 +579,7 @@ async function charger() {
   } catch (e: any) {
     examens.value = [];
     total.value = 0;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des examens impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('examens.messages.loadFailed') });
   } finally {
     chargement.value = false;
   }
@@ -619,37 +624,37 @@ function allerScan(e: Examen | null) {
 
 function demarrer(e: Examen) {
   $q.dialog({
-    title: "Démarrer l'examen",
-    message: `Démarrer ${e.codeExamen} — ${e.intitule} ? Le nombre d'inscrits sera recalculé depuis les inscriptions validées de la promotion, et le poste de scan s'ouvrira à cet examen.`,
+    title: t('examens.confirm.startTitle'),
+    message: t('examens.confirm.startMessage', { code: e.codeExamen, title: e.intitule }),
     cancel: true,
-    ok: { color: 'positive', label: 'Démarrer', unelevated: true, noCaps: true },
+    ok: { color: 'positive', label: t('examens.confirm.startAction'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/examens/${e.id}/demarrer`);
-      $q.notify({ type: 'positive', message: 'Examen démarré' });
+      $q.notify({ type: 'positive', message: t('examens.messages.started') });
       // Le changement d'onglet déclenche lui-même le rechargement.
       if (onglet.value === 'EN_COURS') await charger();
       else onglet.value = 'EN_COURS';
     } catch (err: any) {
-      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? 'Démarrage impossible' });
+      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? t('examens.messages.startFailed') });
     }
   });
 }
 
 function terminer(e: Examen) {
   $q.dialog({
-    title: "Terminer l'examen",
-    message: `Clôturer ${e.codeExamen} — ${e.intitule} ? Le nombre de présents est figé : plus aucune carte ne pourra être scannée pour cette épreuve. Cette opération est définitive.`,
+    title: t('examens.confirm.finishTitle'),
+    message: t('examens.confirm.finishMessage', { code: e.codeExamen, title: e.intitule }),
     cancel: true,
-    ok: { color: 'negative', label: 'Terminer définitivement', unelevated: true, noCaps: true },
+    ok: { color: 'negative', label: t('examens.confirm.finishAction'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/examens/${e.id}/terminer`);
-      $q.notify({ type: 'positive', message: 'Examen terminé' });
+      $q.notify({ type: 'positive', message: t('examens.messages.finished') });
       if (onglet.value === 'TERMINE') await charger();
       else onglet.value = 'TERMINE';
     } catch (err: any) {
-      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? 'Opération impossible' });
+      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? t('examens.messages.finishFailed') });
     }
   });
 }

@@ -1,10 +1,11 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
   IsEnum,
   IsIn,
   IsInt,
+  MaxLength,
   IsOptional,
   IsString,
   IsUUID,
@@ -50,6 +51,7 @@ export class RechargerPortefeuilleDto {
   telephone?: string;
 
   @IsOptional()
+  @Transform(({ obj, key }) => obj[key])
   @IsBoolean()
   simuler?: boolean;
 }
@@ -71,6 +73,7 @@ export class SimulerRechargeDto {
  */
 export class ValiderRepasDto {
   @IsString()
+  @MaxLength(64)
   reference: string;
 
   @IsEnum(TypeRepas)

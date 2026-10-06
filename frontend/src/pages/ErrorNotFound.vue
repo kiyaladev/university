@@ -5,18 +5,12 @@
     QLayout parent, et porte donc elle-même son cadre et sa navigation.
   -->
   <main class="introuvable">
-    <div class="introuvable__bandes" aria-hidden="true">
-      <span class="bande bande--rouge" />
-      <span class="bande bande--jaune" />
-      <span class="bande bande--vert" />
-    </div>
-
-    <p class="pochoir introuvable__code">Erreur 404</p>
-    <h1 class="lettrage introuvable__titre">Page introuvable</h1>
+    <p class="pochoir introuvable__code">{{ $t('errorNotFound.code') }}</p>
+    <h1 class="lettrage introuvable__titre">{{ $t('errorNotFound.title') }}</h1>
     <p class="introuvable__texte">
-      L’adresse <strong class="introuvable__adresse">{{ adresse }}</strong> ne
-      correspond à aucune page d’UniPrésence. Le lien est peut-être périmé, ou
-      la rubrique a changé de nom.
+      <i18n-t keypath="errorNotFound.text" tag="span">
+        <template #adresse><strong class="introuvable__adresse">{{ adresse }}</strong></template>
+      </i18n-t>
     </p>
 
     <div class="introuvable__actions">
@@ -26,7 +20,7 @@
         no-caps
         size="lg"
         :icon="auth.connecte ? 'home' : 'login'"
-        :label="auth.connecte ? 'Retour à mon accueil' : 'Se connecter'"
+        :label="auth.connecte ? $t('errorNotFound.actions.backHome') : $t('errorNotFound.actions.login')"
         @click="retour"
       />
       <q-btn
@@ -35,20 +29,20 @@
         no-caps
         size="lg"
         icon="phone_android"
-        label="Portail étudiant"
+        :label="$t('errorNotFound.actions.studentPortal')"
         to="/portail-connexion"
       />
-      <q-btn v-else flat no-caps size="lg" icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+      <q-btn v-else flat no-caps size="lg" icon="logout" :label="$t('errorNotFound.actions.logout')" @click="seDeconnecter" />
     </div>
 
-    <nav class="introuvable__services" aria-label="Pages accessibles sans compte">
-      <p class="pochoir introuvable__services-titre">Sans compte</p>
+    <nav class="introuvable__services" :aria-label="$t('errorNotFound.services.ariaLabel')">
+      <p class="pochoir introuvable__services-titre">{{ $t('errorNotFound.services.title') }}</p>
       <ul class="introuvable__liens">
-        <li><router-link to="/s-inscrire" class="introuvable__lien">Se préinscrire en ligne →</router-link></li>
-        <li><router-link to="/formations" class="introuvable__lien">Formation continue →</router-link></li>
-        <li><router-link to="/bibliotheque" class="introuvable__lien">Bibliothèque numérique →</router-link></li>
-        <li><router-link to="/verification" class="introuvable__lien">Vérifier une attestation →</router-link></li>
-        <li><router-link to="/verification-carte" class="introuvable__lien">Vérifier une carte étudiante →</router-link></li>
+        <li><router-link to="/s-inscrire" class="introuvable__lien">{{ $t('errorNotFound.services.preinscription') }}</router-link></li>
+        <li><router-link to="/formations" class="introuvable__lien">{{ $t('errorNotFound.services.formationContinue') }}</router-link></li>
+        <li><router-link to="/bibliotheque" class="introuvable__lien">{{ $t('errorNotFound.services.bibliotheque') }}</router-link></li>
+        <li><router-link to="/verification" class="introuvable__lien">{{ $t('errorNotFound.services.verification') }}</router-link></li>
+        <li><router-link to="/verification-carte" class="introuvable__lien">{{ $t('errorNotFound.services.verificationCarte') }}</router-link></li>
       </ul>
     </nav>
   </main>
@@ -78,6 +72,7 @@ function seDeconnecter() {
 </script>
 
 <style scoped lang="scss">
+@use '../css/mixins' as *;
 .introuvable {
   min-height: 100vh;
   background: var(--up-chaux);
@@ -91,17 +86,8 @@ function seDeconnecter() {
   margin-inline: auto;
 }
 
-// Les bandes du panneau : hors enseigne, la page les peint elle-même.
-.introuvable__bandes {
-  display: flex;
-  height: 14px;
-  max-width: 220px;
-
-  .bande { flex: 1; }
-  .bande--rouge { background: $rouge; }
-  .bande--jaune { background: $jaune; }
-  .bande--vert { background: $vert; }
-}
+// Hors enseigne, la page pose elle-même le filet du drapeau.
+.introuvable::before { @include filetDrapeau; }
 
 .introuvable__code {
   margin: 0;

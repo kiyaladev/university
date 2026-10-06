@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-02T11:06:21.723Z",
+  "checks": [
+    {
+      "type": "AUDIO",
+      "source": "/media/demonstration/audio.mp3",
+      "duration": 3,
+      "result": "OK"
+    },
+    {
+      "type": "VIDEO",
+      "source": "/media/demonstration/video.mp4",
+      "duration": 3,
+      "result": "OK"
+    },
+    {
+      "type": "VIDEO",
+      "source": "/media/demonstration/video.mp4",
+      "duration": 3,
+      "result": "OK"
+    }
+  ],
+  "vignette": "OK",
+  "networkErrors": []
+}

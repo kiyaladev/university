@@ -1,0 +1,17 @@
+{
+  "resultsHeader": "Results — {promotion}",
+  "resultsBody": "{name}: average {average}",
+  "resultsAdmis": "PASSED",
+  "resultsAjourne": "FAILED",
+  "resultsRank": " (rank {rank})",
+  "unknownFailure": "Unknown failure",
+  "purpose": {
+    "results": "RESULTS",
+    "notice": "NOTICE",
+    "sms": "SMS",
+    "portal": "portal"
+  },
+  "gatewayUnavailable": "SMS gateway unavailable",
+  "gatewayInvalidResponse": "Invalid SMS gateway response",
+  "sendOrLogFailure": "Unable to send or record the SMS attempt"
+}

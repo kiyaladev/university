@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-02T09:42:44.729Z",
+  "environment": "QA locale isolée",
+  "tables": 66,
+  "counts": {
+    "user": {
+      "source": 10,
+      "restored": 10
+    },
+    "enseignant": {
+      "source": 10,
+      "restored": 10
+    },
+    "etudiant": {
+      "source": 33,
+      "restored": 33
+    },
+    "inscription": {
+      "source": 33,
+      "restored": 33
+    },
+    "seance": {
+      "source": 106,
+      "restored": 106
+    },
+    "controle": {
+      "source": 66,
+      "restored": 66
+    }
+  },
+  "auditRestored": 18,
+  "auditNote": "Le journal source continue de croître pendant la recette ; comparaison des données métier stables."
+}

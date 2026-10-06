@@ -2,9 +2,9 @@
   <q-page class="edt">
     <header class="edt__entete">
       <div>
-        <h1 class="page-titre">Emploi du temps</h1>
+        <h1 class="page-titre">{{ $t('emploiDuTemps.title') }}</h1>
         <p class="page-sous-titre">
-          La semaine type — c’est elle qui produit les séances à contrôler
+          {{ $t('emploiDuTemps.subtitle') }}
         </p>
       </div>
 
@@ -14,7 +14,7 @@
           outline
           no-caps
           icon="auto_awesome_motion"
-          label="Générer les séances"
+          :label="$t('emploiDuTemps.actions.generateSessions')"
           @click="dialogGeneration = true"
         />
         <q-btn
@@ -22,10 +22,10 @@
           flat
           no-caps
           icon="event_note"
-          label="Séances de la semaine"
+          :label="$t('emploiDuTemps.actions.weekSessions')"
           :to="lienSeancesSemaine"
         >
-          <q-tooltip>Ce que la semaine affichée a produit au registre</q-tooltip>
+          <q-tooltip>{{ $t('emploiDuTemps.actions.weekSessionsTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
           v-if="auth.peutTenirEmploiDuTemps"
@@ -33,7 +33,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouveau créneau"
+          :label="$t('emploiDuTemps.actions.newSlot')"
           @click="ouvrir(null)"
         />
       </div>
@@ -41,24 +41,24 @@
 
     <!-- Semaine affichée : la grille montre ce qui vaut cette semaine-là -->
     <div class="edt__semaine">
-      <q-btn flat dense round icon="chevron_left" @click="decalerSemaine(-1)">
-        <q-tooltip>Semaine précédente</q-tooltip>
+      <q-btn flat dense round icon="chevron_left" :aria-label="$t('emploiDuTemps.week.previous')" @click="decalerSemaine(-1)">
+        <q-tooltip>{{ $t('emploiDuTemps.week.previous') }}</q-tooltip>
       </q-btn>
       <button
         type="button"
         class="plaque edt__semaine-plaque"
-        aria-label="Revenir à la semaine en cours"
+        :aria-label="$t('emploiDuTemps.week.backToCurrentAria')"
         @click="semaineDu = lundiDe(new Date())"
       >
-        <span class="pochoir">Semaine du</span>
+        <span class="pochoir">{{ $t('emploiDuTemps.week.of') }}</span>
         <span class="lettrage chiffres edt__semaine-dates">{{ libelleSemaine }}</span>
-        <q-tooltip>Revenir à la semaine en cours</q-tooltip>
+        <q-tooltip>{{ $t('emploiDuTemps.week.backToCurrentTooltip') }}</q-tooltip>
       </button>
-      <q-btn flat dense round icon="chevron_right" @click="decalerSemaine(1)">
-        <q-tooltip>Semaine suivante</q-tooltip>
+      <q-btn flat dense round icon="chevron_right" :aria-label="$t('emploiDuTemps.week.next')" @click="decalerSemaine(1)">
+        <q-tooltip>{{ $t('emploiDuTemps.week.next') }}</q-tooltip>
       </q-btn>
       <span class="pochoir edt__semaine-note">
-        Les créneaux limités à une période n’apparaissent que dans la leur.
+        {{ $t('emploiDuTemps.week.note') }}
       </span>
     </div>
 
@@ -72,7 +72,7 @@
         clearable
         emit-value
         map-options
-        label="Promotion"
+        :label="$t('emploiDuTemps.filters.promotion')"
       />
       <q-select
         v-model="filtres.enseignantId"
@@ -83,7 +83,7 @@
         emit-value
         map-options
         use-input
-        label="Enseignant"
+        :label="$t('emploiDuTemps.filters.teacher')"
         @filter="filtrerEnseignants"
       />
       <q-select
@@ -94,34 +94,34 @@
         clearable
         emit-value
         map-options
-        label="Salle"
+        :label="$t('emploiDuTemps.filters.room')"
       />
       <q-btn
         round
         color="primary"
         icon="refresh"
-        aria-label="Recharger l’emploi du temps"
+        :aria-label="$t('emploiDuTemps.filters.reloadAria')"
         :loading="chargement"
         @click="charger"
       >
-        <q-tooltip>Recharger</q-tooltip>
+        <q-tooltip>{{ $t('emploiDuTemps.filters.reloadTooltip') }}</q-tooltip>
       </q-btn>
     </div>
 
     <!-- Relevé de la semaine affichée -->
     <section class="plaque edt__releve">
       <div class="edt__releve-cellule">
-        <p class="pochoir">Créneaux</p>
+        <p class="pochoir">{{ $t('emploiDuTemps.summary.slots') }}</p>
         <p class="lettrage chiffres edt__releve-valeur">{{ totalCreneaux }}</p>
       </div>
       <div class="edt__releve-cellule">
-        <p class="pochoir">Heures par semaine</p>
+        <p class="pochoir">{{ $t('emploiDuTemps.summary.hoursPerWeek') }}</p>
         <p class="lettrage avec-unite chiffres edt__releve-valeur">
           {{ heuresLisibles(totalHeures) }}
         </p>
       </div>
       <div class="edt__releve-cellule">
-        <p class="pochoir">Journée la plus chargée</p>
+        <p class="pochoir">{{ $t('emploiDuTemps.summary.busiestDay') }}</p>
         <p class="lettrage edt__releve-valeur">{{ jourLePlusCharge }}</p>
       </div>
     </section>
@@ -146,12 +146,12 @@
     <!-- Semaine sans le moindre créneau : on dit pourquoi, et par où sortir -->
     <div v-if="!chargement && !totalCreneaux" class="edt__etat-vide">
       <q-icon name="calendar_month" size="42px" />
-      <span class="lettrage edt__etat-vide-titre">Semaine vide</span>
+      <span class="lettrage edt__etat-vide-titre">{{ $t('emploiDuTemps.emptyState.title') }}</span>
       <span class="pochoir edt__etat-vide-mention">
         {{
           filtresActifs
-            ? 'Aucun créneau ne correspond aux filtres posés sur cette semaine.'
-            : 'Aucun créneau n’est déclaré sur cette semaine. La semaine type produit les séances à contrôler : c’est ici qu’elle se pose.'
+            ? $t('emploiDuTemps.emptyState.filtered')
+            : $t('emploiDuTemps.emptyState.default')
         }}
       </span>
       <div class="edt__etat-vide-actions">
@@ -160,7 +160,7 @@
           outline
           no-caps
           icon="filter_alt_off"
-          label="Retirer les filtres"
+          :label="$t('emploiDuTemps.emptyState.removeFilters')"
           @click="reinitialiserFiltres"
         />
         <q-btn
@@ -169,7 +169,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Poser un créneau"
+          :label="$t('emploiDuTemps.emptyState.addSlot')"
           @click="ouvrir(null)"
         />
       </div>
@@ -188,7 +188,7 @@
         <div class="grille__tete">
           <span class="lettrage grille__tete-nom">{{ j.libelle }}</span>
           <span class="pochoir pochoir--brut grille__tete-charge chiffres">
-            {{ j.creneaux.length }} créneaux · {{ heuresLisibles(heuresDuJour(j)) }}
+            {{ $t('emploiDuTemps.week.dayHeader', { count: j.creneaux.length, hours: heuresLisibles(heuresDuJour(j)) }) }}
           </span>
         </div>
 
@@ -260,7 +260,7 @@
         </button>
       </li>
       <li v-if="!creneauxDuJourActif.length" class="edt__vide pochoir">
-        Aucun cours ce jour-là.
+        {{ $t('emploiDuTemps.list.empty') }}
       </li>
     </ol>
 
@@ -277,6 +277,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import CreneauDialog from '../components/CreneauDialog.vue';
@@ -285,6 +286,7 @@ import { LIBELLE_TYPE_COURS, decalerJours, heuresLisibles } from '../utils/libel
 import type { Creneau, Enseignant, Promotion, Salle } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 /** Amplitude d'une journée universitaire, et échelle de la grille. */
@@ -341,17 +343,24 @@ function decalerSemaine(semaines: number) {
 /** « du 01/01 au 31/01 » — ce qu'il faut lire sur le bloc, rien de plus. */
 function libellePeriode(c: Creneau) {
   const jjmm = (v: string) => `${v.slice(8, 10)}/${v.slice(5, 7)}`;
-  if (c.dateDebut && c.dateFin) return `du ${jjmm(c.dateDebut)} au ${jjmm(c.dateFin)}`;
-  if (c.dateDebut) return `dès le ${jjmm(c.dateDebut)}`;
-  if (c.dateFin) return `jusqu’au ${jjmm(c.dateFin)}`;
+  if (c.dateDebut && c.dateFin) {
+    return t('emploiDuTemps.period.fromTo', { from: jjmm(c.dateDebut), to: jjmm(c.dateFin) });
+  }
+  if (c.dateDebut) return t('emploiDuTemps.period.from', { from: jjmm(c.dateDebut) });
+  if (c.dateFin) return t('emploiDuTemps.period.until', { to: jjmm(c.dateFin) });
   return '';
 }
 
 const ecranEtroit = computed(() => $q.screen.lt.md);
 
-const optionsPromotions = computed(() =>
-  promotions.value.map((p) => ({ label: p.nom, value: p.id })),
-);
+const optionsPromotions = computed(() => {
+  if (auth.role === 'ETUDIANT') {
+    const visibles = new Map(semaine.value.flatMap(jour => jour.creneaux.flatMap(c =>
+      c.affectation?.promotion ? [[c.affectation.promotion.id, c.affectation.promotion] as const] : [])));
+    return [...visibles.entries()].map(([id, p]) => ({ label: p.nom, value: id }));
+  }
+  return promotions.value.map(p => ({ label: p.nom, value: p.id }));
+});
 const optionsSalles = computed(() =>
   salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
 );
@@ -484,7 +493,7 @@ onMounted(async () => {
   try {
     const [s, p, e] = await Promise.all([
       api.get('/salles', { params: { all: '1' } }),
-      api.get('/promotions', { params: { all: '1' } }),
+      auth.role === 'ETUDIANT' ? Promise.resolve({ data: { data: [] } }) : api.get('/promotions', { params: { all: '1' } }),
       api.get('/enseignants', { params: { all: '1' } }),
     ]);
     salles.value = s.data.data;
@@ -585,7 +594,7 @@ onMounted(async () => {
 .grille__coin {
   height: 54px;
   border-bottom: var(--up-filet);
-  background: var(--up-encre);
+  background: var(--up-chaux);
 }
 
 .grille__heure {
@@ -605,11 +614,14 @@ onMounted(async () => {
   &:last-child { border-right: 0; }
 }
 
+// L'en-tête de colonne était un bandeau d'encre : sept aplats sombres en haut
+// d'une grille, c'est le contraire d'une semaine qu'on lit d'un coup d'œil.
+// Il devient un intitulé gris posé sur la surface, comme `.entete-jour`.
 .grille__tete {
   height: 54px;
   padding: var(--up-2);
-  background: var(--up-encre);
-  color: $blanc-craie;
+  background: var(--up-chaux);
+  color: var(--up-encre);
   border-bottom: var(--up-filet);
   display: flex;
   flex-direction: column;
@@ -618,7 +630,7 @@ onMounted(async () => {
 
 .grille__tete-nom { font-size: 1rem; }
 
-.grille__tete-charge { color: rgba(250, 250, 247, 0.76); }
+.grille__tete-charge { color: var(--up-encre-douce); }
 
 .grille__colonne { position: relative; }
 
@@ -646,7 +658,7 @@ onMounted(async () => {
   transition: filter var(--up-transition);
 
   &:hover { filter: brightness(0.96); }
-  &:focus-visible { outline: 3px solid $vert; outline-offset: -4px; }
+  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -4px; }
 }
 
 .creneau--inactif {
@@ -673,7 +685,7 @@ onMounted(async () => {
 .creneau__promotion {
   color: var(--up-encre-douce);
   font-size: 9.5px;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
 }
 
 .creneau__pied {
@@ -686,12 +698,15 @@ onMounted(async () => {
 
 .creneau__periode {
   color: var(--up-jaune-fonce);
-  letter-spacing: 0.04em;
+  letter-spacing: -0.01em;
 }
 
 .creneau__type {
-  border: 1px solid var(--up-encre);
-  padding: 0 3px;
+  border: 0;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-rayon-sm);
+  color: var(--up-encre-douce);
+  padding: 1px 6px;
 }
 
 // ----------------------------------------------------------------- mobile
@@ -706,7 +721,7 @@ onMounted(async () => {
   flex: 1 0 auto;
   background: var(--up-plaque);
   color: var(--up-encre);
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
   padding: 8px 12px;
   min-height: 52px;
   cursor: pointer;
@@ -718,8 +733,9 @@ onMounted(async () => {
   & + & { border-left-width: 0; }
 
   &--actif {
-    background: var(--up-encre);
-    color: var(--up-craie);
+    background: var(--up-plaque);
+    color: var(--up-encre);
+    box-shadow: var(--up-ombre-1);
   }
 }
 
@@ -745,14 +761,14 @@ onMounted(async () => {
   font: inherit;
   color: var(--up-encre);
 
-  &:focus-visible { outline: 3px solid $vert; outline-offset: -4px; }
+  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -4px; }
   &:disabled { cursor: default; }
 }
 
 .creneau-ligne__heure {
   flex-direction: column;
-  background: var(--up-encre);
-  color: #fff;
+  background: var(--up-chaux);
+  color: var(--up-encre);
   gap: 2px;
 }
 

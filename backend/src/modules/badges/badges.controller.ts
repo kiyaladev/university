@@ -11,11 +11,13 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { BadgesService } from './badges.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   AnnulerBadgeDto,
   BadgeQueryDto,
@@ -46,6 +48,7 @@ export class BadgesController {
    * badge à l'entrée n'a pas de compte — c'est le jeton qui fait foi.
    */
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('verifier')
   verifier(@Query() query: VerifierBadgePubliqueDto, @Ip() ip: string) {
     return this.service.verifier(query, ip);
@@ -99,16 +102,15 @@ export class BadgesController {
     return this.service.rallonger(id, dto, user);
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get(':id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, token, base);
+    const html = await this.service.imprimer(id, jetonImprimable(req), base);
     res.type('html').send(html);
   }
 }

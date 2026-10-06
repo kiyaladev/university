@@ -14,9 +14,10 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { EquipementsService, TicketsService } from './helpdesk.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,
@@ -44,6 +45,7 @@ export class EquipementsController {
    * hauteur d'homme, son code ne cache rien que l'étiquette elle-même.
    */
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('par-code/:codeQr')
   parCode(@Param('codeQr') codeQr: string) {
     return this.service.parCode(codeQr);
@@ -54,16 +56,15 @@ export class EquipementsController {
    * Authorization n'y arrive pas, le jeton passe en paramètre d'URL et est
    * vérifié à la main (même motif que l'impression des attestations).
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer-qr')
   async imprimerQr(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimerQr(id, token, base);
+    const html = await this.service.imprimerQr(id, jetonImprimable(req), base);
     res.type('html').send(html);
   }
 

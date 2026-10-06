@@ -1,0 +1,15 @@
+{
+  "activeAllocationRequiresOccupied": "Retirez l’attribution active avant de libérer cette chambre ou de la mettre en maintenance",
+  "existingAllocationConflict": "Une chambre est déjà accordée à cet étudiant pour cette année, ou cette chambre est déjà attribuée",
+  "chambre_introuvable": "Chambre introuvable",
+  "la_chambre_est_deja_occupee": "La chambre est déjà occupée.",
+  "la_chambre_est_en_maintenance_aucune_demande_possible": "La chambre est en maintenance, aucune demande possible.",
+  "la_chambre_est_deja_reservee_pour_un_autre_etudiant": "La chambre est déjà réservée pour un autre étudiant.",
+  "cette_demande_a_deja_ete_traitee": "Cette demande a déjà été traitée.",
+  "cette_attribution_n_est_plus_reversible": "Cette attribution n'est plus réversible.",
+  "cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi": "Cette chambre ne peut pas passer en OCCUPEE : aucune attribution n'est accordée pour elle.",
+  "cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou": "Cet étudiant a déjà une chambre accordée pour l'année en cours.",
+  "une_chambre_ne_peut_pas_etre_creee_occupee_elle_doit_d_abord": "Une chambre ne peut pas être créée OCCUPEE : elle doit d'abord faire l'objet d'une attribution accordée par le jury.",
+  "impossible_de_supprimer_la_residence_residence_nom_nb_chambr": "Impossible de supprimer la résidence {residence.nom} : {nb} chambre(s) y sont rattachées. Réaffectez-les d'abord.",
+  "impossible_de_supprimer_la_chambre_chambre_code_nb_attributi": "Impossible de supprimer la chambre {chambre.code} : {nb} attribution(s) y sont rattachées."
+}

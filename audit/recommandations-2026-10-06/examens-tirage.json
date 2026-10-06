@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-06T11:03:34.967Z",
+  "database": "university_recommandations_20261006",
+  "passed": true,
+  "failures": [],
+  "observations": {
+    "startStatuses": [
+      201,
+      400
+    ],
+    "endStatuses": [
+      201,
+      400
+    ],
+    "validScans": 1,
+    "rejectedScans": 1,
+    "uniqueScanAuditCount": 1,
+    "scannerIdentityImposed": true,
+    "printStatuses": [
+      201,
+      400
+    ],
+    "bypassStatus": 400,
+    "invalidHashStatus": 400,
+    "finalPrintingStage": "RECUPERE",
+    "protectedReceiptRead": true
+  },
+  "productionUntouched": true,
+  "physicalPrintingAndIdentityCheckPending": true
+}

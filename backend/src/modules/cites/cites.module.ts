@@ -17,10 +17,6 @@ import { AttributionsService, ChambresService, ResidencesService } from './cites
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
   ],
   controllers: [ResidencesController, ChambresController, AttributionsController],
   providers: [ResidencesService, ChambresService, AttributionsService],

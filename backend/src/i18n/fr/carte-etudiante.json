@@ -1,0 +1,12 @@
+{
+  "carte_introuvable": "Carte introuvable",
+  "etudiant_introuvable": "Étudiant introuvable",
+  "cette_carte_est_deja_revoquee": "Cette carte est déjà révoquée.",
+  "cette_carte_est_revoquee_nip_non_autorise": "Cette carte est révoquée : NIP non autorisé.",
+  "vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte": "Vous ne pouvez définir que le NIP de votre propre carte.",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "aucun_profil_etudiant_n_est_lie_a_votre_compte": "Aucun profil étudiant n'est lié à votre compte.",
+  "aucune_carte_n_a_encore_ete_emise_pour_votre_profil": "Aucune carte n'a encore été émise pour votre profil.",
+  "cette_carte_a_ete_revoquee_elle_ne_peut_plus_etre_modifiee": "Cette carte a été révoquée : elle ne peut plus être modifiée.",
+  "cet_etudiant_possede_deja_une_carte_existante_qrtoken_revoqu": "Cet étudiant possède déjà une carte. Révoquez-la d'abord pour en émettre une nouvelle."
+}

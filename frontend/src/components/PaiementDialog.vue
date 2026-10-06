@@ -1,27 +1,27 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 680px; max-width: 95vw">
-      <q-card-section class="text-h6">Nouveau paiement</q-card-section>
+      <q-card-section class="text-h6">{{ $t('paiements.actions.new') }}</q-card-section>
 
       <q-card-section>
         <q-option-group
           v-model="typePaiement"
           :options="[
-            { label: 'À partir d’un dossier d’inscription', value: 'inscription' },
-            { label: 'Paiement libre', value: 'libre' },
+            { label: $t('paiements.dialog.type.enrollment'), value: 'inscription' },
+            { label: $t('paiements.dialog.type.free'), value: 'libre' },
           ]"
           color="primary"
           dense
         />
 
         <template v-if="typePaiement === 'inscription'">
-          <span class="section-titre">Dossier d’inscription</span>
+          <span class="section-titre">{{ $t('paiements.filters.enrollment') }}</span>
           <autocomplete-async
             v-model="form.inscriptionId"
             endpoint="/inscriptions"
             :label-fn="(i) => `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''} (${LIBELLE_STATUT_INSCRIPTION[i.statut] ?? i.statut})`"
-            label="Dossier *"
-            placeholder="Tapez n° de dossier ou nom d'étudiant…"
+            :label="$t('paiements.dialog.fields.enrollment')"
+            :placeholder="$t('paiements.dialog.fields.enrollmentPlaceholder')"
             @update:model-value="remplirDossier"
           />
           <div v-if="dossierChoisi" class="row q-col-gutter-md">
@@ -31,7 +31,7 @@
                 outlined
                 dense
                 readonly
-                label="Étudiant"
+                :label="$t('common.fields.student')"
               />
             </div>
             <div class="col-12 col-sm-4">
@@ -40,7 +40,7 @@
                 outlined
                 dense
                 readonly
-                label="Frais d’inscription"
+                :label="$t('etudiants.dialogInscriptions.columns.amount')"
               />
             </div>
             <div class="col-12 col-sm-4">
@@ -49,24 +49,24 @@
                 outlined
                 dense
                 readonly
-                label="Reste à payer"
+                :label="$t('inscriptions.cards.balance')"
               />
             </div>
           </div>
         </template>
 
         <template v-else>
-          <span class="section-titre">Bénéficiaire</span>
+          <span class="section-titre">{{ $t('paiements.dialog.fields.beneficiary') }}</span>
           <autocomplete-async
             v-model="form.etudiantId"
             endpoint="/etudiants"
             :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-            label="Étudiant *"
-            placeholder="Tapez nom, prénom ou matricule…"
+            :label="$t('paiements.dialog.fields.student')"
+            :placeholder="$t('paiements.dialog.fields.studentPlaceholder')"
           />
         </template>
 
-        <span class="section-titre">Règlement</span>
+        <span class="section-titre">{{ $t('paiements.dialog.fields.payment') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-select
@@ -76,7 +76,7 @@
               dense
               emit-value
               map-options
-              label="Mode de paiement *"
+              :label="$t('paiements.dialog.fields.mode')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -86,12 +86,12 @@
               min="1"
               outlined
               dense
-              label="Montant (GNF) *"
+              :label="$t('paiements.dialog.fields.amount')"
               :error="montantExcessif"
-              :error-message="`Le reste à payer n’est que de ${montantLisible(resteAPayer)} GNF`"
+              :error-message="$t('paiements.dialog.fields.excessiveAmount', { amount: montantLisible(resteAPayer) })"
               :hint="
                 resteAPayer !== null
-                  ? 'Reste dû proposé — modifiable pour un versement partiel'
+                  ? $t('paiements.dialog.fields.balanceHint')
                   : undefined
               "
             />
@@ -108,7 +108,7 @@
                 dense
                 emit-value
                 map-options
-                label="Opérateur *"
+                :label="$t('paiements.dialog.fields.operator')"
               />
             </div>
             <div class="col-12 col-sm-6">
@@ -116,8 +116,8 @@
                 v-model="form.telephone"
                 outlined
                 dense
-                label="Numéro Mobile Money *"
-                placeholder="622 00 00 00"
+                :label="$t('paiements.dialog.fields.mobileMoneyPhone')"
+                :placeholder="$t('inscriptionPublique.form.step1.telephone.placeholder')"
               />
             </div>
           </div>
@@ -127,8 +127,8 @@
             v-model="form.nomComplet"
             outlined
             dense
-            label="Nom complet du donneur d’ordre"
-            hint="Affiché au guichet ou sur le relevé bancaire"
+            :label="$t('paiements.dialog.fields.payerName')"
+            :hint="$t('paiements.dialog.fields.payerNameHint')"
           />
         </template>
 
@@ -136,20 +136,20 @@
           v-model="form.motif"
           outlined
           dense
-          label="Motif"
-          placeholder="Frais d’inscription L1…"
+          :label="$t('common.fields.motif')"
+          :placeholder="$t('paiements.dialog.fields.reasonPlaceholder')"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           v-if="peutSimulerReussi"
           color="positive"
           outline
           no-caps
           icon="check"
-          label="Simuler comme REUSSI"
+          :label="$t('paiements.dialog.simulateSuccess')"
           :loading="enregistrementSimu"
           :disable="!montantValide || !form.mode || !telephoneOuNom"
           @click="enregistrerEnSimulantReussi"
@@ -158,7 +158,7 @@
           color="primary"
           unelevated
           no-caps
-          label="Enregistrer le paiement"
+          :label="$t('paiements.dialog.save')"
           :loading="enregistrement"
           :disable="!montantValide || !form.mode || !telephoneOuNom"
           @click="enregistrer"

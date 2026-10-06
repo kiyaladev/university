@@ -1,0 +1,274 @@
+{
+  "date": "2026-10-06T15:35:33.301Z",
+  "objectifComplet": false,
+  "source": "audit/historique/2026-10-03/RECOMMANDATIONS.md, exigences 1 à 13 ; RECOMMANDATIONS.md pour priorités courantes",
+  "items": [
+    {
+      "numeroInitial": 1,
+      "exigence": "Sauvegarde distante",
+      "etat": "externe",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/courrier-migration-qa-restauration.json",
+        "date": "2026-10-06T13:15:43.121Z",
+        "result": null
+      },
+      "reste": "Destination SSH, copie et restauration distantes"
+    },
+    {
+      "numeroInitial": 2,
+      "exigence": "Connexion et comptes",
+      "etat": "externe",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/preflight-deploiement.json",
+        "date": "2026-10-06T15:04:14.812Z",
+        "result": false
+      },
+      "reste": "Administrateur réel et rotation des comptes seed"
+    },
+    {
+      "numeroInitial": 3,
+      "exigence": "Biométrie",
+      "etat": "externe",
+      "preuveCourante": null,
+      "reste": "Matériel de recette, consentement et politique RH de conservation"
+    },
+    {
+      "numeroInitial": 4,
+      "exigence": "File hors ligne",
+      "etat": "terrain",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/pointages-partiels-hors-ligne-qa.json",
+        "date": "2026-10-06T14:55:38.859Z",
+        "result": "valide"
+      },
+      "reste": "Appareil réel, lecture humaine et preuves terrain"
+    },
+    {
+      "numeroInitial": 5,
+      "exigence": "Journal audit",
+      "etat": "partiel",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/journal-couverture-interface.json",
+        "date": "2026-10-06T15:30:02.338648+00:00",
+        "result": "partiel"
+      },
+      "reste": "SMS avec fournisseur de recette et autres mutations sensibles non couvertes par ces parcours ; validation humaine."
+    },
+    {
+      "numeroInitial": 6,
+      "exigence": "Relevé PDF",
+      "etat": "terrain",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/releve-pdf-http.json",
+        "date": "2026-10-06T14:43:33.038Z",
+        "result": "valide"
+      },
+      "reste": "Validation humaine et impression physique"
+    },
+    {
+      "numeroInitial": 7,
+      "exigence": "Paie vacataires",
+      "etat": "metier",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/paie-http.json",
+        "date": "2026-10-06T15:35:33.301Z",
+        "result": "valide"
+      },
+      "reste": "Validation comptable des règles observées (125 minutes → 2 heures, retenue zéro), arrondis, retenues et rapprochement sur données métier.",
+      "preuveHistorique": {
+        "file": "audit/recommandations/cycles-metier.json",
+        "date": "2026-10-02T10:56:36.128Z",
+        "scope": "Cycle local ancien : deux heures, montant au taux, recalcul idempotent, paiement exécuté",
+        "currentRun": false,
+        "checks": [
+          {
+            "name": "Paie : deux heures de service fait",
+            "result": "OK"
+          },
+          {
+            "name": "Paie : montant calculé au taux du vacataire",
+            "result": "OK"
+          },
+          {
+            "name": "Recalcul idempotent de la paie",
+            "result": "OK"
+          },
+          {
+            "name": "Paie exécutée",
+            "result": "OK"
+          }
+        ]
+      }
+    },
+    {
+      "numeroInitial": 8,
+      "exigence": "Préparation tournée",
+      "etat": "terrain",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/pointage-formulaire-hors-ligne-qa.json",
+        "date": "2026-10-06T14:57:13.636Z",
+        "result": "valide"
+      },
+      "reste": "Téléphone terrain, caméra/GPS et validation humaine"
+    },
+    {
+      "numeroInitial": 9,
+      "exigence": "Import existant",
+      "etat": "externe",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/imports-creneaux-http.json",
+        "date": "2026-10-06T14:34:26.177Z",
+        "result": "valide"
+      },
+      "reste": "Fichiers historiques de établissement"
+    },
+    {
+      "numeroInitial": 10,
+      "exigence": "Multi établissement",
+      "etat": "decision",
+      "preuveCourante": null,
+      "reste": "Choix architecture puis implémentation et isolation sur deux universités"
+    },
+    {
+      "numeroInitial": 11,
+      "exigence": "Clôture et correction",
+      "etat": "decision",
+      "preuveCourante": null,
+      "reste": "Décisions sur mutations indirectes et corrections historiques"
+    },
+    {
+      "numeroInitial": 12,
+      "exigence": "Indicateurs contrôleurs",
+      "etat": "terrain",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/tournees-couverture-http.json",
+        "date": "2026-10-06T14:59:08.396Z",
+        "result": "valide"
+      },
+      "reste": "Affectations et tournées réelles par équipe"
+    },
+    {
+      "numeroInitial": 13,
+      "exigence": "Tests risques",
+      "etat": "terrain",
+      "preuveCourante": {
+        "file": "audit/recommandations-2026-10-06/validation.json",
+        "date": "2026-10-06T15:10:16.705107+00:00",
+        "result": null
+      },
+      "reste": "933 tests backend passent dans 109 suites ; validation humaine et appareils restent à qualifier"
+    }
+  ],
+  "publicationPending": true,
+  "scopeNote": "Treize exigences initiales et huit priorités courantes conservées. Preuve historique de paie distinguée des recettes actuelles ; les preuves QA ne prouvent ni les critères externes/humains ni la publication.",
+  "prioritesCourantes": [
+    {
+      "priorite": "P0",
+      "exigence": "Sauvegarde hors serveur",
+      "critereDeFin": "Destination SSH fournie, copie contrôlée et restauration distante exécutée",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/preflight-deploiement.json",
+        "audit/recommandations-2026-10-06/courrier-migration-qa-restauration.json"
+      ],
+      "reste": [
+        "Destination SSH et accès",
+        "Copie et restauration hors serveur vérifiées"
+      ]
+    },
+    {
+      "priorite": "P0",
+      "exigence": "Comptes réels",
+      "critereDeFin": "Administrateur identifié, accès conservé et mots de passe seed remplacés ou comptes désactivés",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/preflight-deploiement.json"
+      ],
+      "reste": [
+        "Identité ADMIN réelle",
+        "Rotation ou désactivation des comptes seed"
+      ]
+    },
+    {
+      "priorite": "P0",
+      "exigence": "Alignement du déploiement",
+      "critereDeFin": "Vingt et une migrations appliquées après les préconditions, API/PWA publiées ensemble et parcours rejoués",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/candidat-publication.json",
+        "audit/recommandations-2026-10-06/preflight-deploiement.json"
+      ],
+      "reste": [
+        "Préconditions P0 satisfaites",
+        "Application des migrations, publication alignée et recette publiée"
+      ]
+    },
+    {
+      "priorite": "P1",
+      "exigence": "Qualification métier",
+      "critereDeFin": "Cycles complets, refus, reprises et impressions vérifiés avec agents et données QA",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/validation.json",
+        "audit/recommandations-2026-10-06/journal-couverture-interface.json"
+      ],
+      "reste": [
+        "Agents métier et données QA représentatives",
+        "Validation humaine des cycles, refus, reprises et impressions"
+      ]
+    },
+    {
+      "priorite": "P1",
+      "exigence": "SMS/OTP, Mobile Money, biométrie",
+      "critereDeFin": "Essais avec fournisseurs et matériel de recette, incluant échecs et doublons",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/restaurant.json",
+        "audit/recommandations-2026-10-06/formations.json"
+      ],
+      "reste": [
+        "Environnements SMS/OTP et Mobile Money de recette",
+        "Lecteur biométrique et essais échecs/doublons"
+      ]
+    },
+    {
+      "priorite": "P1",
+      "exigence": "Terrain et accessibilité",
+      "critereDeFin": "Tournée sur téléphone réel, lecteur d’écran et contrôles manuels",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/accessibilite-validee.json",
+        "audit/recommandations-2026-10-06/journal-clavier-reel-interface.json",
+        "audit/recommandations-2026-10-06/pointage-formulaire-hors-ligne-qa.json"
+      ],
+      "reste": [
+        "Téléphone réel, caméra/GPS",
+        "Lecteur d’écran et contrôles humains"
+      ]
+    },
+    {
+      "priorite": "P2",
+      "exigence": "Archivage",
+      "critereDeFin": "Politique de correction décidée ; mutations indirectes alignées et testées",
+      "acheve": false,
+      "preuvesLocales": [
+        "audit/recommandations-2026-10-06/rectorat.json"
+      ],
+      "reste": [
+        "Politique de correction décidée",
+        "Alignement des mutations indirectes et tests"
+      ]
+    },
+    {
+      "priorite": "P2",
+      "exigence": "Multi-établissement",
+      "critereDeFin": "Architecture choisie, isolation implémentée et vérifiée avec deux universités",
+      "acheve": false,
+      "preuvesLocales": [],
+      "reste": [
+        "Choix architecture multi-établissement",
+        "Implémentation et isolation vérifiée avec deux universités"
+      ]
+    }
+  ]
+}

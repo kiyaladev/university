@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-03T14:55:58+02:00",
+  "portee": "Mise à jour des constats de production après rechargement du processus API pour activer le garde Swagger ; vérification des routes publiques, et état des migrations actives et QA. Aucune migration ni modification de compte en production.",
+  "api": {
+    "santePublique": 200,
+    "swaggerSansJeton": 401,
+    "swaggerJsonSansJeton": 401,
+    "constat": "Après le rechargement de university-api (NODE_ENV=production, port 5081), /api/health répond 200 et les deux routes de documentation répondent 401 sans jeton."
+  },
+  "base": {
+    "migrationsAttendues": 20,
+    "migrationsAppliquees": 12,
+    "migrationsEnAttente": [
+      "20261002190000_reclamation_anonyme_owner",
+      "20261002193000_seance_controleur_assigne",
+      "20261002220000_restrict_annee_academique_delete",
+      "20261002230000_paiement_annee_academique",
+      "20261002233000_unique_active_annee",
+      "20261002234000_restrict_academic_archive_delete",
+      "20261003080000_restrict_election_archive_delete",
+      "20261003150000_unique_scan_examen"
+    ],
+    "colonneControleurAssigne": "présente sur la base QA restaurée après migration",
+      "preuve": "bunx prisma migrate status, vérifié le 2026-10-03 ; 20 migrations détectées, 8 en attente sur la base active university. Recontrôle en lecture seule le 3 octobre : même état 12/20, mêmes huit migrations en attente, connexion à PostgreSQL local 127.0.0.1:5432.",
+    "verificationQA": "Les 8 migrations en attente ont été appliquées à la restauration du dump courant ; status 20/20, index unique présent, zéro doublon."
+  },
+  "preconditionsMigration": {
+    "anneesActives": 1,
+    "anneesActivesNonCloturees": 1,
+    "verification": "La copie restaurée contient une année active, zéro paiement sans année après migration et toutes les migrations passent. La base active n’a pas été migrée."
+  },
+  "sauvegarde": {
+    "crontabUniPresence": "15 3 * * * /opt/apps/university/scripts/backup-db.sh >> /var/log/university-backup.log 2>&1",
+    "crontabRelueLe": "2026-10-03T00:34:45+02:00",
+    "scriptPlanifie": "Script courant /opt/apps/university/scripts/backup-db.sh, tâche mise à jour le 2026-10-03",
+    "baseIndiqueeParLeScriptPlanifie": "university, nom extrait de DATABASE_URL",
+    "baseConfigureePourLeDepotEtLeProcessusActuel": "university",
+    "preuveEcartBase": "Les deux URL DATABASE_URL ont été comparées sans lire ni afficher les identifiants ; pg_restore --list confirme dbname: unipresence pour l’archive du 2 octobre.",
+    "scriptCourant": "/opt/apps/university/scripts/backup-db.sh",
+    "derniereArchiveObservee": "/opt/apps/university/backups/university-20261003-063825-100267593.dump",
+    "lignesTableDataArchive": 17,
+    "destinationDistanteConfiguree": false,
+    "limite": "La tâche quotidienne cible maintenant la base active et une restauration locale a été validée. Le contrôle du 3 octobre n'a trouvé aucune destination dans l'environnement ni dans backend/.env. Aucune copie hors serveur n'est configurée ; les migrations de production restent à planifier après l'ajout de cette destination.",
+    "verificationArchive": "SHA-256 valide ; 66 tables ; 310 Ko ; modes 0600 pour dump et checksum, 0700 pour dossier",
+    "restaurationQA": "university_restore_20261003 ; 10 enseignants, 107 séances, 67 contrôles ; accès CONNECT PUBLIC révoqué",
+    "migrationsQA": "20/20 migrations appliquées ; une année active, zéro paiement sans année et index unique des scans présent"
+  },
+  "comptesDemonstration": {
+    "dateVerification": "2026-10-03T00:55:02+02:00",
+    "comptesActifs": 10,
+    "comptesAvecMotDePasseSeedPublic": 10,
+    "methode": "Comparaison bcrypt en lecture seule des comptes actifs avec les deux mots de passe publics du seed ; aucun email ni hash affiché.",
+    "action": "Faire tourner les mots de passe avec les responsables avant d’activer le garde qui refuse les comptes seed."
+  },
+  "etatDepotAu2026-10-03": {
+    "repertoiresMigration": 20,
+    "nouveauxDepuisLaCapture": [
+      "20261002220000_restrict_annee_academique_delete",
+      "20261002230000_paiement_annee_academique",
+      "20261002233000_unique_active_annee",
+      "20261002234000_restrict_academic_archive_delete",
+      "20261003080000_restrict_election_archive_delete"
+    ],
+    "note": "La base active reste à 12/20 migrations ; les 8 migrations sont en attente sur la base active. La copie QA restaurée a reçu les huit et passe à 20/20 ; l’index d’unicité des scans est présent et aucun doublon n’a été trouvé."
+  },
+  "prochainesEtapes": [
+    "Configurer et tester une destination hors serveur, puis vérifier la nouvelle tâche cron après son prochain passage.",
+    "Planifier l’application des 8 migrations en production après sauvegarde hors serveur, vérification des préconditions et fenêtre de maintenance.",
+    "Remplacer les mots de passe des dix comptes seed actifs avant d’activer le garde qui refuse les comptes seed.",
+    "Vérifier après rotation des comptes qu’un jeton ADMIN ouvre Swagger et qu’un rôle ordinaire le refuse.",
+    "Rejouer le contrôle de schéma sur la base de production avant d’utiliser l’affectation des contrôleurs."
+  ]
+}

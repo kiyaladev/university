@@ -50,16 +50,3 @@ export class PreuveEmpreinteDto {
   @IsString() signature: string;
   @IsOptional() @IsUUID() appareilId?: string;
 }
-
-export class OuvrirDemandeDto {
-  @IsString() seanceId: string;
-}
-
-export class VerifierPasskeyDto {
-  @IsObject() reponse: Record<string, any>;
-}
-
-export class EnregistrerPasskeyDto {
-  @IsObject() reponse: Record<string, any>;
-  @IsOptional() @IsString() appareil?: string;
-}

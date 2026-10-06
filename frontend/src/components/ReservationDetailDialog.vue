@@ -19,45 +19,45 @@
 
       <q-card-section v-if="reservation" class="q-pt-none">
         <div class="detail-grille">
-          <span class="pochoir">Créneau</span>
+          <span class="pochoir">{{ $t('reservations.table.columns.slot') }}</span>
           <span class="lettrage chiffres">
             {{ reservation.dateJour.slice(8, 10) }}/{{ reservation.dateJour.slice(5, 7) }}/{{
               reservation.dateJour.slice(0, 4)
             }}
             · {{ reservation.heureDebut }}–{{ reservation.heureFin }}
           </span>
-          <span class="pochoir">Organisme</span>
+          <span class="pochoir">{{ $t('reservations.table.columns.organization') }}</span>
           <span>{{ reservation.organisme || '—' }}</span>
-          <span class="pochoir">Responsable</span>
+          <span class="pochoir">{{ $t('cites.residences.table.columns.responsable') }}</span>
           <span>{{ reservation.responsable || '—' }}</span>
-          <span class="pochoir">Demandeur</span>
+          <span class="pochoir">{{ $t('reservations.detailDialog.requester') }}</span>
           <span>
             {{ nomComplet(reservation.demandeur) || '—' }}
-            <span v-if="estProprietaire" class="detail-moi">(vous)</span>
+            <span v-if="estProprietaire" class="detail-moi">({{ $t('reservations.detailDialog.you') }})</span>
           </span>
-          <span class="pochoir">Refus</span>
+          <span class="pochoir">{{ $t('reservations.detailDialog.refusal') }}</span>
           <span v-if="reservation.refuseParId">
             {{ nomComplet(reservation.refusePar) }}{{ reservation.refuseMotif ? ` — ${reservation.refuseMotif}` : '' }}
           </span>
           <span v-else>—</span>
-          <span class="pochoir">Demande du</span>
+          <span class="pochoir">{{ $t('reservations.detailDialog.requestedOn') }}</span>
           <span>{{ dateHeureLisible(reservation.creeLe) }}</span>
         </div>
 
         <!-- L'emploi du temps se lit, il ne se décide pas ici : sans action
              possible, la réservation est déjà réglée. -->
         <p v-if="!peutModifier && !peutDecider" class="note--info q-mt-sm">
-          <q-icon name="info" size="18px" /> Aucune action possible sur cette réservation.
+          <q-icon name="info" size="18px" /> {{ $t('reservations.detailDialog.noAction') }}
         </p>
 
         <!-- Décision de l'administration : confirmer ou refuser proprement. -->
         <div v-if="peutDecider" class="q-mt-md">
-          <span class="section-titre">Décision</span>
+          <span class="section-titre">{{ $t('bulletins.table.columns.decision') }}</span>
           <q-input
             v-model="decisionMotif"
             outlined
             dense
-            label="Motif (recommandé pour un refus)"
+            :label="$t('reservations.detailDialog.refusalReason')"
           />
           <div class="row q-gutter-sm q-mt-sm">
             <q-btn
@@ -65,7 +65,7 @@
               color="positive"
               no-caps
               icon="check"
-              label="Confirmer"
+              :label="$t('common.actions.confirm')"
               :loading="enCours === 'confirmer'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
               @click="decider('CONFIRMEE')"
@@ -75,7 +75,7 @@
               color="negative"
               no-caps
               icon="close"
-              label="Refuser"
+              :label="$t('common.actions.refuse')"
               :loading="enCours === 'refuser'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
               @click="decider('REFUSEE')"
@@ -85,7 +85,7 @@
 
         <!-- Modification de la demande : tant qu'elle n'est pas statuée. -->
         <div v-if="peutModifier" class="detail-section q-mt-md">
-          <span class="section-titre">Modifier la demande</span>
+          <span class="section-titre">{{ $t('reservations.detailDialog.editRequest') }}</span>
           <q-select
             v-model="form.salleId"
             :options="optionsSalles"
@@ -93,29 +93,29 @@
             dense
             emit-value
             map-options
-            label="Salle"
+            :label="$t('common.fields.classroom')"
           />
           <div class="row q-col-gutter-md">
             <div class="col-6">
-              <champ-date v-model="form.dateJour" label="Date" />
+              <champ-date v-model="form.dateJour" :label="$t('common.fields.date')" />
             </div>
             <div class="col-6">
-              <q-input v-model="form.heureDebut" outlined dense mask="##:##" label="Début" />
+              <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('structure.dialogs.annee.debut')" />
             </div>
             <div class="col-6">
-              <q-input v-model="form.heureFin" outlined dense mask="##:##" label="Fin" />
+              <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.messages.end')" />
             </div>
           </div>
-          <q-input v-model="form.motif" outlined dense label="Motif" />
-          <q-input v-model="form.organisme" outlined dense label="Organisme" />
-          <q-input v-model="form.responsable" outlined dense label="Responsable" />
+          <q-input v-model="form.motif" outlined dense :label="$t('common.fields.motif')" />
+          <q-input v-model="form.organisme" outlined dense :label="$t('reservations.table.columns.organization')" />
+          <q-input v-model="form.responsable" outlined dense :label="$t('cites.residences.table.columns.responsable')" />
           <div class="row q-gutter-sm q-mt-sm">
             <q-btn
               unelevated
               color="primary"
               no-caps
               icon="save"
-              label="Enregistrer"
+              :label="$t('common.actions.register')"
               :loading="enCours === 'modifier'"
               @click="modifier"
             />
@@ -123,7 +123,7 @@
               flat
               no-caps
               icon="delete"
-              label="Annuler la réservation"
+              :label="$t('reservations.detailDialog.cancelReservation')"
               :loading="enCours === 'annuler'"
               @click="annuler"
             />
@@ -137,7 +137,7 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Fermer" v-close-popup />
+        <q-btn flat :label="$t('common.actions.close')" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -146,6 +146,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import ChampDate from './ChampDate.vue';
@@ -168,6 +169,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; change: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 const enCours = ref('');
@@ -232,11 +234,11 @@ async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
     });
     $q.notify({
       type: statut === 'CONFIRMEE' ? 'positive' : 'warning',
-      message: statut === 'CONFIRMEE' ? 'Réservation confirmée' : 'Réservation refusée',
+      message: t(statut === 'CONFIRMEE' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
     });
     emit('change');
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Décision impossible';
+    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.decisionFailed');
   } finally {
     enCours.value = '';
   }
@@ -251,10 +253,10 @@ async function modifier() {
       organisme: form.value.organisme || undefined,
       responsable: form.value.responsable || undefined,
     });
-    $q.notify({ type: 'positive', message: 'Réservation mise à jour' });
+    $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Modification impossible';
+    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.updateFailed');
   } finally {
     enCours.value = '';
   }
@@ -262,20 +264,20 @@ async function modifier() {
 
 async function annuler() {
   $q.dialog({
-    title: 'Annuler la réservation ?',
-    message: 'Le créneau redevient disponible immédiatement.',
+    title: t('reservations.detailDialog.cancelTitle'),
+    message: t('reservations.detailDialog.cancelMessage'),
     cancel: true,
-    ok: { label: 'Annuler la réservation', color: 'negative' },
+    ok: { label: t('reservations.detailDialog.cancelReservation'), color: 'negative' },
   }).onOk(async () => {
     enCours.value = 'annuler';
     erreur.value = '';
     try {
       await api.delete(`/reservations/${props.reservation!.id}`);
-      $q.notify({ type: 'positive', message: 'Réservation annulée' });
+      $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
       emit('change');
       emit('update:modelValue', false);
     } catch (e: any) {
-      erreur.value = e.response?.data?.message ?? 'Annulation impossible';
+      erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.cancelFailed');
     } finally {
       enCours.value = '';
     }
@@ -295,14 +297,14 @@ async function annuler() {
 }
 
 .detail-badge {
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   text-transform: none;
-  font-weight: 700;
+  font-weight: 590;
 
-  &--en_attente { background: $jaune; color: $encre; }
-  &--confirmee { background: $vert; }
+  &--en_attente { background: $jaune-fond; color: $jaune-texte; }
+  &--confirmee { background: $vert-fond; color: #{$vert}; }
   &--refusee,
-  &--annulee { background: $rouge; }
+  &--annulee { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .detail-moi { color: var(--up-encre-douce); font-size: 0.8rem; }

@@ -2,19 +2,19 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 560px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ mode === 'jury' ? 'Constat du jury' : 'Planifier la soutenance' }}
+        {{ $t(mode === 'jury' ? 'stages.dialogs.defense.juryTitle' : 'stages.dialogs.defense.scheduleTitle') }}
       </q-card-section>
       <q-card-section v-if="mode === 'jury'" class="page-sous-titre">
-        Note et mention après la tenue de la soutenance de « {{ travail?.intitule }} ».
+        {{ $t('stages.dialogs.defense.juryHint', { title: travail?.intitule }) }}
       </q-card-section>
 
       <q-card-section v-if="mode !== 'jury'" class="q-gutter-md">
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-7">
-            <champ-date v-model="form.date" label="Date de la soutenance *" />
+            <champ-date v-model="form.date" :label="$t('stages.dialogs.defense.date')" />
           </div>
           <div class="col-12 col-sm-5">
-            <q-input v-model="form.heure" type="time" outlined dense label="Heure *" />
+            <q-input v-model="form.heure" type="time" outlined dense :label="$t('stages.dialogs.defense.time')" />
           </div>
         </div>
 
@@ -26,7 +26,7 @@
           emit-value
           map-options
           clearable
-          label="Salle"
+          :label="$t('common.fields.classroom')"
           @filter="filtrerSalles"
         />
 
@@ -42,7 +42,7 @@
               use-input
               input-debounce="300"
               clearable
-              label="Président du jury"
+              :label="$t('stages.dialogs.defense.chair')"
               @filter="filtrerEncadrants"
             />
           </div>
@@ -51,8 +51,8 @@
               v-model="form.assesseurs"
               outlined
               dense
-              label="Assesseurs"
-              hint="« Pr. X ; Dr. Y »"
+              :label="$t('stages.dialogs.defense.assessors')"
+              :hint="$t('stages.dialogs.defense.assessorsHint')"
             />
           </div>
         </div>
@@ -69,21 +69,21 @@
               step="0.5"
               outlined
               dense
-              label="Note sur 20"
+              :label="$t('stages.dialogs.defense.grade')"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.mention" outlined dense label="Mention" hint="Félicitations, Très bien…" />
+            <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" hint="Félicitations, Très bien…" />
           </div>
         </div>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          :label="mode === 'jury' ? 'Enregistrer le constat' : 'Enregistrer la soutenance'"
+          :label="$t(mode === 'jury' ? 'stages.dialogs.defense.saveJury' : 'stages.dialogs.defense.saveDefense')"
           :loading="enregistrement"
           @click="enregistrer"
         />
@@ -96,6 +96,7 @@
 import ChampDate from './ChampDate.vue';
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { Enseignant, Salle, Soutenance, TravailEncadre } from '../types';
 
@@ -112,6 +113,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const form = ref({
@@ -186,10 +188,10 @@ async function enregistrer() {
         note: form.value.note ?? undefined,
         mention: form.value.mention || undefined,
       });
-      $q.notify({ type: 'positive', message: 'Constat du jury enregistré' });
+      $q.notify({ type: 'positive', message: t('stages.dialogs.defense.jurySaved') });
     } else {
       if (!form.value.date) {
-        $q.notify({ type: 'warning', message: 'La date de soutenance est requise' });
+        $q.notify({ type: 'warning', message: t('stages.dialogs.defense.dateRequired') });
         return;
       }
       await api.post('/soutenances', {
@@ -199,7 +201,7 @@ async function enregistrer() {
         presidentId: form.value.presidentId || undefined,
         assesseurs: form.value.assesseurs || undefined,
       });
-      $q.notify({ type: 'positive', message: 'Soutenance enregistrée — travail soutenu' });
+      $q.notify({ type: 'positive', message: t('stages.dialogs.defense.saved') });
     }
     emit('enregistre');
     emit('update:modelValue', false);

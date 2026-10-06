@@ -1,0 +1,80 @@
+{
+  "environnement": "Base PostgreSQL isolée locale, données de démonstration",
+  "verifications": [
+    {
+      "cas": "Enseignant : contrôles limités à son compte (11 sur 66 avant pointages QA)",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Enseignant : contrôle hors périmètre refusé 404",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Enseignant : filtre URL ne remplace pas son périmètre",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Enseignant : séance hors périmètre refusée 404",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : contrôles refusés 403",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : paiements administratifs refusés 403",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : liste des fiches limitée à sa fiche",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : inscriptions limitées à son dossier",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : inscription tierce refusée 404",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Étudiant : filtre URL ne remplace pas son identité",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Pointage QR + PIN enregistré : RETARD, 98 minutes",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Séance mise à jour CONTROLEE, contrôle persisté",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Synchronisation : une réussite, un échec isolé",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Paiement Mobile Money simulé : EN_ATTENTE puis REUSSI",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Mots de passe, PIN hachés et gabarits retirés des réponses /enseignants, /seances et /controles testées",
+      "resultat": "réussi"
+    },
+    {
+      "cas": "Mauvaise connexion : réponse JSON 401",
+      "resultat": "réussi"
+    }
+  ],
+  "limites": [
+    "Aucun paiement réel",
+    "Pas de passerelle SMS ou lecteur biométrique matériel",
+    "Synchronisation vérifiée par API, stockage et reconnexion PWA non vérifiés ici"
+  ],
+  "anomalies_restantes": [
+    {
+      "cas": "Vote enseignant",
+      "resultat": "403 : conflit entre interface et LectureSeuleGuard"
+    }
+  ]
+}

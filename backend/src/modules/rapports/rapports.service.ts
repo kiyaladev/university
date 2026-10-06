@@ -1,39 +1,68 @@
 /** Exploitation statistique du contrôle : tableaux de bord, taux d'assiduité,
  *  suivi du volume horaire réalisé et état de paiement des vacataires. */
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, StatutPresence, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { dureeMinutes, isoDate, pct, round2, toDateOnly } from '../../common/utils';
 import { RapportQueryDto } from './rapports.dto';
 
-type SeanceComplete = Prisma.SeanceGetPayload<{
-  include: {
-    controle: true;
-    salle: true;
-    justificatif: true;
-    affectation: {
-      include: {
-        enseignant: { include: { departement: true } };
-        matiere: true;
-        promotion: { include: { filiere: true } };
-      };
-    };
-  };
-}>;
+const CONTROLE_RAPPORT_SELECT = {
+  id: true,
+  controleurId: true,
+  statut: true,
+  heureArrivee: true,
+  heureFinReelle: true,
+  dureeMinutes: true,
+  effectifPresent: true,
+  thematiqueTraitee: true,
+  observation: true,
+  methode: true,
+  attestation: true,
+  attestationValide: true,
+  signatureBase64: true,
+};
+const { signatureBase64: _signatureBase64, ...CONTROLE_RAPPORT_SELECT_SANS_SIGNATURE } =
+  CONTROLE_RAPPORT_SELECT;
+const { signatureBase64: _signatureSelectee, observation: _observationSelectee, ...CONTROLE_RAPPORT_SELECT_RESTREINT } =
+  CONTROLE_RAPPORT_SELECT;
 
 const SEANCE_STATS_INCLUDE = {
-  controle: true,
-  salle: true,
-  justificatif: true,
+  controle: { select: CONTROLE_RAPPORT_SELECT },
+  controleurAssigne: { select: { id: true, nom: true, prenom: true } },
+  salle: { select: { id: true, code: true, nom: true, batiment: true, capacite: true } },
+  justificatif: { select: { statut: true } },
   affectation: {
     include: {
-      enseignant: { include: { departement: true } },
-      matiere: true,
-      promotion: { include: { filiere: true } },
+      enseignant: {
+        select: {
+          id: true,
+          matricule: true,
+          nom: true,
+          prenom: true,
+          grade: true,
+          statut: true,
+          tauxHoraire: true,
+          departement: { select: { id: true, nom: true } },
+        },
+      },
+      matiere: { select: { code: true, intitule: true } },
+      promotion: { select: { nom: true } },
     },
   },
 } satisfies Prisma.SeanceInclude;
+
+const SEANCE_STATS_INCLUDE_SANS_SIGNATURE = {
+  ...SEANCE_STATS_INCLUDE,
+  controle: { select: CONTROLE_RAPPORT_SELECT_SANS_SIGNATURE },
+} satisfies Prisma.SeanceInclude;
+
+const SEANCE_STATS_INCLUDE_RESTREINT = {
+  ...SEANCE_STATS_INCLUDE,
+  controle: { select: CONTROLE_RAPPORT_SELECT_RESTREINT },
+} satisfies Prisma.SeanceInclude;
+
+type SeanceComplete = Prisma.SeanceGetPayload<{ include: typeof SEANCE_STATS_INCLUDE }>;
 
 interface Compteurs {
   planifiees: number;
@@ -60,6 +89,10 @@ const nouveauxCompteurs = (): Compteurs => ({
   minutesPrevues: 0,
   minutesRealisees: 0,
 });
+
+const PERIODE_RAPPORT_DEFAUT_JOURS = 30;
+const PERIODE_RAPPORT_MAX_JOURS = 366;
+const JOUR_MS = 24 * 60 * 60 * 1000;
 
 function cumuler(c: Compteurs, s: SeanceComplete) {
   c.planifiees += 1;
@@ -113,9 +146,21 @@ export class RapportsService {
   constructor(private prisma: PrismaService) {}
 
   private where(query: RapportQueryDto, user?: AuthUser): Prisma.SeanceWhereInput {
-    const date: Prisma.DateTimeFilter = {};
-    if (query.dateDebut) date.gte = toDateOnly(query.dateDebut);
-    if (query.dateFin) date.lte = toDateOnly(query.dateFin);
+    const jour = query.date && !query.dateDebut && !query.dateFin
+      ? toDateOnly(query.date)
+      : undefined;
+    const fin = jour ?? toDateOnly(query.dateFin ?? isoDate(new Date()));
+    const debut = jour ?? (query.dateDebut
+      ? toDateOnly(query.dateDebut)
+      : new Date(fin.getTime() - (PERIODE_RAPPORT_DEFAUT_JOURS - 1) * JOUR_MS));
+    const jours = Math.floor((fin.getTime() - debut.getTime()) / JOUR_MS) + 1;
+    if (jours < 1) {
+      throw new BadRequestException('La date de début doit précéder ou égaler la date de fin.');
+    }
+    if (jours > PERIODE_RAPPORT_MAX_JOURS) {
+      throw new BadRequestException(`La période d’un rapport ne peut dépasser ${PERIODE_RAPPORT_MAX_JOURS} jours.`);
+    }
+    const date: Prisma.DateTimeFilter = { gte: debut, lte: fin };
 
     const affectation: Record<string, any> = {};
     if (query.anneeId) affectation.anneeId = query.anneeId;
@@ -133,10 +178,14 @@ export class RapportsService {
     };
   }
 
-  private seances(query: RapportQueryDto, user?: AuthUser) {
+  private seances(query: RapportQueryDto, user?: AuthUser, inclureSignatures = false, inclureObservations = false) {
     return this.prisma.seance.findMany({
       where: this.where(query, user),
-      include: SEANCE_STATS_INCLUDE,
+      include: inclureSignatures
+        ? SEANCE_STATS_INCLUDE
+        : inclureObservations
+          ? SEANCE_STATS_INCLUDE_SANS_SIGNATURE
+          : SEANCE_STATS_INCLUDE_RESTREINT,
       orderBy: [{ date: 'asc' }, { heureDebut: 'asc' }],
     }) as Promise<SeanceComplete[]>;
   }
@@ -152,7 +201,10 @@ export class RapportsService {
     const [seancesPeriode, seancesJour, justificatifsEnAttente] = await Promise.all([
       this.seances({ ...query, dateDebut: debutPeriode, dateFin: finPeriode }),
       this.seances({ ...query, dateDebut: aujourdhui, dateFin: aujourdhui }),
-      this.prisma.justificatif.count({ where: { statut: 'EN_ATTENTE' } }),
+      this.prisma.justificatif.count({ where: { statut: 'EN_ATTENTE',
+        ...(query.enseignantId ? { enseignantId: query.enseignantId } : {}),
+        ...(query.departementId ? { enseignant: { departementId: query.departementId } } : {}),
+      } }),
     ]);
 
     const global = nouveauxCompteurs();
@@ -395,12 +447,65 @@ export class RapportsService {
     };
   }
 
+  /**
+   * Mesure la couverture des tournées à partir des séances explicitement
+   * attribuées. Une séance contrôlée par un collègue compte comme visitée,
+   * mais reste distinguée de celle réalisée par le contrôleur attendu.
+   */
+  async couvertureControleurs(query: RapportQueryDto) {
+    const seances = await this.seances(query);
+    const aujourdhui = isoDate(new Date());
+    const groupes = new Map<string, { controleur: { id: string; nom: string; prenom: string }; seances: SeanceComplete[] }>();
+    const nonAffectees: SeanceComplete[] = [];
+
+    for (const seance of seances) {
+      const controleur = seance.controleurAssigne;
+      if (!controleur) {
+        nonAffectees.push(seance);
+        continue;
+      }
+      if (!groupes.has(controleur.id)) groupes.set(controleur.id, { controleur, seances: [] });
+      groupes.get(controleur.id)!.seances.push(seance);
+    }
+
+    const resume = (liste: SeanceComplete[]) => {
+      const passees = liste.filter((s) => isoDate(s.date) <= aujourdhui);
+      const visitees = passees.filter((s) => s.controle);
+      const parAssigne = visitees.filter((s) => s.controle?.controleurId === s.controleurAssigne?.id);
+      return {
+        seancesPlanifiees: liste.length,
+        seancesPassees: passees.length,
+        visitees: visitees.length,
+        nonVisitees: passees.length - visitees.length,
+        realiseesParAssigne: parAssigne.length,
+        realiseesParUnAutre: visitees.length - parAssigne.length,
+        tauxCouverture: pct(visitees.length, passees.length),
+        tauxParAssigne: pct(parAssigne.length, passees.length),
+      };
+    };
+
+    return {
+      periode: { debut: query.dateDebut, fin: query.dateFin },
+      nonAffectees: resume(nonAffectees),
+      lignes: [...groupes.values()].map(({ controleur, seances: liste }) => ({
+        controleurId: controleur.id,
+        nom: `${controleur.prenom} ${controleur.nom}`,
+        ...resume(liste),
+      })).sort((a, b) => a.nom.localeCompare(b.nom)),
+    };
+  }
+
   // ------------------------------------------------------------------ registre
 
   /** Registre de contrôle : la transcription fidèle du cahier du contrôleur. */
-  async registre(query: RapportQueryDto) {
+  async registre(query: RapportQueryDto, inclureSignatures = false, inclureObservations = false) {
     const jour = query.date ?? query.dateDebut ?? isoDate(new Date());
-    const seances = await this.seances({ ...query, dateDebut: jour, dateFin: query.dateFin ?? jour });
+    const seances = await this.seances(
+      { ...query, dateDebut: jour, dateFin: query.dateFin ?? jour },
+      undefined,
+      inclureSignatures,
+      inclureObservations,
+    );
 
     const lignes = seances.map((s) => ({
       seanceId: s.id,
@@ -418,12 +523,12 @@ export class RapportsService {
       dureeMinutes: s.controle?.dureeMinutes ?? 0,
       effectifPresent: s.controle?.effectifPresent ?? null,
       thematiqueTraitee: s.controle?.thematiqueTraitee ?? s.thematique ?? '',
-      observation: s.controle?.observation ?? '',
+      observation: inclureObservations ? s.controle?.observation ?? '' : '',
       methode: s.controle?.methode ?? null,
       attestation: s.controle?.attestation ?? null,
       attestationValide: s.controle?.attestationValide ?? false,
-      signatureBase64: s.controle?.signatureBase64 ?? null,
       justificatif: s.justificatif?.statut ?? null,
+      ...(inclureSignatures ? { signatureBase64: s.controle?.signatureBase64 ?? null } : {}),
     }));
 
     const c = nouveauxCompteurs();
@@ -433,17 +538,44 @@ export class RapportsService {
   }
 
   /** Fiche individuelle d'un enseignant sur une période. */
-  async ficheEnseignant(enseignantId: string, query: RapportQueryDto) {
+  async ficheEnseignant(enseignantId: string, query: RapportQueryDto, inclureObservations = false) {
     const enseignant = await this.prisma.enseignant.findUnique({
       where: { id: enseignantId },
-      include: { departement: true },
+      select: {
+        id: true,
+        matricule: true,
+        nom: true,
+        prenom: true,
+        grade: true,
+        statut: true,
+        departementId: true,
+        departement: { select: { id: true, code: true, nom: true } },
+      },
     });
-    const seances = await this.seances({ ...query, enseignantId });
+    const seances = await this.seances({ ...query, enseignantId }, undefined, false, inclureObservations);
     const c = nouveauxCompteurs();
     seances.forEach((s) => cumuler(c, s));
+    const identiteEnseignant = enseignant
+      ? {
+          id: enseignant.id,
+          matricule: enseignant.matricule,
+          nom: enseignant.nom,
+          prenom: enseignant.prenom,
+          grade: enseignant.grade,
+          statut: enseignant.statut,
+          departementId: enseignant.departementId,
+          departement: enseignant.departement
+            ? {
+                id: enseignant.departement.id,
+                code: enseignant.departement.code,
+                nom: enseignant.departement.nom,
+              }
+            : null,
+        }
+      : null;
 
     return {
-      enseignant,
+      enseignant: identiteEnseignant,
       periode: { debut: query.dateDebut, fin: query.dateFin },
       synthese: synthese(c),
       seances: seances.map((s) => ({
@@ -456,7 +588,7 @@ export class RapportsService {
         statut: s.controle?.statut ?? 'NON_CONTROLE',
         dureeMinutes: s.controle?.dureeMinutes ?? 0,
         thematiqueTraitee: s.controle?.thematiqueTraitee ?? '',
-        observation: s.controle?.observation ?? '',
+        observation: inclureObservations ? (s.controle?.observation ?? '') : '',
       })),
     };
   }

@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Journal avant/après des équipements de campus et des tickets helpdesk",
+  "module": "backend/src/modules/helpdesk",
+  "operations": [
+    "creer équipement",
+    "modifier équipement",
+    "supprimer équipement",
+    "declarer ticket",
+    "changerStatut"
+  ],
+  "projections": {
+    "equipement": ["id", "libelle", "emplacement", "actif", "createdAt"],
+    "ticket": ["id", "numero", "categorie", "priorite", "statut", "equipementId", "utilisateurId", "traiteParId", "traiteLe", "clicheLe", "descriptionFournie", "declarantNomFourni", "contactDeclarantFourni"]
+  },
+  "protections": [
+    "Le QR/jeton n'est pas chargé dans la projection d'audit.",
+    "Description, nom, e-mail, téléphone, pièce jointe et autres textes libres ne sont pas recopiés ; leur présence est indiquée par des booléens.",
+    "Les mutations d'équipement, ticket et leur journal sont atomiques.",
+    "Les anciennes traces TICKET_OUVERT en texte libre restent masquées ; la projection structurée créée maintenant s'affiche dans le détail du journal.",
+    "Les lectures ne génèrent aucune trace supplémentaire."
+  ],
+  "verification": {
+    "helpdesk": "2 suites, 29 tests verts ; service couvert à 98,2 % en instructions, 99,0 % en lignes et 100 % en fonctions.",
+    "integration": "5 suites, 100 tests verts pour helpdesk, controle et réclamations (29 helpdesk, 44 controle, 27 réclamations) ; le test TICKET_OUVERT structuré est inclus.",
+  "backend": "95 suites, 738 tests verts.",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi après le dernier test d'intégration.",
+    "build": "npx nest build réussi après le dernier test d'intégration.",
+    "limite": "Le smoke test navigateur n'a pas chargé un ticket fraîchement créé en base ; le parser/masque du détail structuré est couvert par un test de service."
+  },
+  "reste": [
+    "Vérifier une nouvelle entrée TICKET_OUVERT dans l'interface avec une donnée QA réellement créée.",
+    "La course entre le pré-contrôle de statut et l'ouverture de la transaction reste possible ; aucune règle de transition n'a été changée.",
+    "Le texte libre des anciennes entrées d'audit demeure masqué, comme prévu."
+  ],
+  "production": "Aucune modification de production ni migration de base effectuée."
+}

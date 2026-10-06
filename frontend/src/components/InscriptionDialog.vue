@@ -1,26 +1,26 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 620px; max-width: 95vw">
-      <q-card-section class="text-h6">Nouvelle inscription (guichet)</q-card-section>
+      <q-card-section class="text-h6">{{ $t('inscriptions.createDialog.title') }}</q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Étudiant</span>
+        <span class="section-titre">{{ $t('common.fields.student') }}</span>
         <autocomplete-async
           v-model="form.etudiantId"
           endpoint="/etudiants"
-          :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ' (inactif)'}`"
-          label="Étudiant *"
-          placeholder="Tapez nom, prénom ou matricule…"
+          :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
+          :label="$t('inscriptions.createDialog.student')"
+          :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
         />
 
-        <span class="section-titre">Parcours</span>
+        <span class="section-titre">{{ $t('verification.result.table.parcours') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <autocomplete-async
               v-model="form.anneeId"
               endpoint="/annees"
               :label-fn="(a) => a.libelle"
-              label="Année académique *"
+              :label="$t('affectations.dialog.fields.year')"
               @update:model-value="onAnneeChange"
             />
           </div>
@@ -29,18 +29,18 @@
               v-model="form.promotionId"
               endpoint="/promotions"
               :label-fn="(p) => p.nom"
-              label="Promotion *"
+              :label="$t('affectations.dialog.fields.promotion')"
               :disable="!form.anneeId"
               @update:model-value="chargerTarif"
             />
           </div>
         </div>
 
-        <span class="section-titre">Frais</span>
+        <span class="section-titre">{{ $t('demandeDocuments.detail.fees') }}</span>
         <div v-if="tarifOfficiel !== null" class="plaque acces-tarif q-mb-sm">
-          <div class="text-caption acces-tarif__libelle">Tarif officiel</div>
+          <div class="text-caption acces-tarif__libelle">{{ $t('inscriptions.createDialog.officialFee') }}</div>
           <div class="lettrage chiffres acces-tarif__montant">
-            {{ montantLisible(tarifOfficiel) }} GNF
+            {{ montantLisible(tarifOfficiel) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
           </div>
         </div>
         <q-input
@@ -48,9 +48,9 @@
           type="number"
           outlined
           dense
-          label="Montant des frais (GNF)"
+          :label="$t('inscriptions.createDialog.amount')"
           :disable="tarifOfficiel !== null"
-          :hint="tarifOfficiel !== null ? 'Tarif officiel appliqué automatiquement' : 'Aucun tarif paramétré : saisissez le montant'"
+          :hint="$t(tarifOfficiel !== null ? 'inscriptions.createDialog.officialFeeApplied' : 'inscriptions.createDialog.noFee')"
         >
           <template #append>
             <q-icon
@@ -58,19 +58,19 @@
               name="verified"
               color="positive"
             >
-              <q-tooltip>Tarif officiel appliqué automatiquement</q-tooltip>
+              <q-tooltip>{{ $t('inscriptions.createDialog.officialFeeApplied') }}</q-tooltip>
             </q-icon>
           </template>
         </q-input>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
-          label="Enregistrer l’inscription"
+          :label="$t('inscriptions.createDialog.save')"
           :loading="enregistrement"
           :disable="!form.etudiantId || !form.promotionId || form.montantFrais === null"
           @click="enregistrer"
@@ -83,6 +83,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { montantLisible } from '../utils/libelles';
@@ -91,6 +92,7 @@ const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const tarifOfficiel = ref<number | null>(null);
 
@@ -159,7 +161,7 @@ async function enregistrer() {
       promotionId: form.value.promotionId,
       montantFrais: form.value.montantFrais === null ? undefined : form.value.montantFrais,
     });
-    $q.notify({ type: 'positive', message: 'Inscription créée — en attente de paiement' });
+    $q.notify({ type: 'positive', message: t('inscriptions.createDialog.created') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {
@@ -175,9 +177,8 @@ async function enregistrer() {
   gap: var(--up-1);
 }
 .acces-tarif__libelle {
-  text-transform: uppercase;
   color: var(--up-encre-douce);
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
 }
 .acces-tarif__montant {
   font-size: 1.3rem;

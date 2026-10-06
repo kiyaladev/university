@@ -15,7 +15,8 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ModePaiement, Prisma, StatutInscription, StatutPaiement } from '@prisma/client';
+import { ModePaiement, Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
@@ -30,11 +31,15 @@ import {
   prochainNumeroPaiement,
 } from './etudiants.service';
 import { MobileMoneyService } from './mobile-money.service';
+import { echapper } from '../../common/utils';
+import { t } from '../../common/i18n';
+import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AnnulerPaiementDto,
   CreateFraisDto,
   CreateInscriptionDto,
   CreatePaiementDto,
+  FraisQueryDto,
   InscriptionPubliqueDto,
   InscriptionQueryDto,
   PaiementQueryDto,
@@ -57,12 +62,28 @@ export const INSCRIPTION_INCLUDE = {
   annee: { select: { id: true, libelle: true } },
   promotion: { include: { filiere: true } },
   valideePar: { select: { id: true, nom: true, prenom: true } },
-  paiements: { orderBy: { horodatage: 'desc' } },
+  paiements: {
+    orderBy: { horodatage: 'desc' },
+    select: {
+      id: true,
+      reference: true,
+      montant: true,
+      devise: true,
+      mode: true,
+      operateur: true,
+      statut: true,
+      horodatage: true,
+      completeLe: true,
+      annuleLe: true,
+    },
+  },
 } satisfies Prisma.InscriptionInclude;
 
 export const PAIEMENT_INCLUDE = {
   etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
-  inscription: { select: { id: true, numero: true, statut: true, montantFrais: true } },
+  inscription: { select: { id: true, numero: true, anneeId: true, statut: true, montantFrais: true } },
+  inscriptionFormation: { select: { id: true, numero: true, formationId: true, statut: true } },
+  annee: { select: { id: true, libelle: true } },
   creePar: { select: { id: true, nom: true, prenom: true } },
   annulePar: { select: { id: true, nom: true, prenom: true } },
 } satisfies Prisma.PaiementInclude;
@@ -80,6 +101,38 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   ANNULEE: 'Annulée',
 };
 
+/** Instantanés limités aux données de gestion, sans coordonnées ou motif libre. */
+function instantaneInscription(inscription: any) {
+  if (!inscription) return null;
+  return {
+    id: inscription.id,
+    numero: inscription.numero,
+    etudiantId: inscription.etudiantId,
+    anneeId: inscription.anneeId,
+    promotionId: inscription.promotionId,
+    statut: inscription.statut,
+    montantFrais: inscription.montantFrais,
+  };
+}
+
+function instantanePaiement(paiement: any) {
+  if (!paiement) return null;
+  return {
+    id: paiement.id,
+    reference: paiement.reference,
+    anneeId: paiement.anneeId ?? paiement.inscription?.anneeId ?? null,
+    inscriptionId: paiement.inscriptionId,
+    etudiantId: paiement.etudiantId,
+    montant: paiement.montant,
+    devise: paiement.devise,
+    mode: paiement.mode,
+    operateur: paiement.operateur,
+    statut: paiement.statut,
+    completeLe: paiement.completeLe,
+    annuleLe: paiement.annuleLe,
+  };
+}
+
 @Injectable()
 export class InscriptionService {
   private readonly logger = new Logger(InscriptionService.name);
@@ -96,7 +149,10 @@ export class InscriptionService {
   private async anneeRetenue(anneeId?: string) {
     if (anneeId) {
       const annee = await this.prisma.anneeAcademique.findUnique({ where: { id: anneeId } });
-      if (!annee) throw new BadRequestException('Année académique introuvable');
+      if (!annee) throw new BadRequestException(I18nContext.current()!.t('inscription.annee_academique_introuvable'));
+      if (annee.cloturee) {
+        throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
+      }
       return annee;
     }
     return (
@@ -118,8 +174,13 @@ export class InscriptionService {
 
   /** Promotions d'une année, avec le tarif officiel quand il existe. */
   async promotionsOuvertes(anneeId: string) {
-    const annee = await this.prisma.anneeAcademique.findUnique({ where: { id: anneeId } });
-    if (!annee) throw new NotFoundException('Année académique introuvable');
+    const annee = await this.prisma.anneeAcademique.findUnique({
+      where: { id: anneeId },
+      select: { id: true, cloturee: true },
+    });
+    if (!annee || annee.cloturee) {
+      throw new NotFoundException(t('inscription.annee_academique_introuvable'));
+    }
     const [promotions, frais] = await Promise.all([
       this.prisma.promotion.findMany({
         where: { anneeId },
@@ -143,12 +204,14 @@ export class InscriptionService {
     }));
   }
 
-  async listeInscriptions(query: InscriptionQueryDto): Promise<Paginated<any>> {
+  async listeInscriptions(query: InscriptionQueryDto, user?: AuthUser): Promise<Paginated<any>> {
+    if (user?.role === Role.ETUDIANT) query = { ...query, etudiantId: user.etudiantId ?? '__aucun__' };
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.InscriptionWhereInput = {
+      ...(user?.role === Role.CHEF_DEPARTEMENT ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } : {}),
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -176,19 +239,27 @@ export class InscriptionService {
         where,
         include: INSCRIPTION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.inscription.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
-  async trouverInscription(id: string) {
-    const inscription = await this.prisma.inscription.findUnique({
-      where: { id },
-      include: INSCRIPTION_INCLUDE,
-    });
-    if (!inscription) throw new NotFoundException('Inscription introuvable');
+  async trouverInscription(id: string, user?: AuthUser) {
+    const where: Prisma.InscriptionWhereInput = {
+      id,
+      ...(user?.role === Role.ETUDIANT
+        ? { etudiantId: user.etudiantId ?? '__aucun__' }
+        : {}),
+      ...(user?.role === Role.CHEF_DEPARTEMENT
+        ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } }
+        : {}),
+    };
+    const inscription = user
+      ? await this.prisma.inscription.findFirst({ where, include: INSCRIPTION_INCLUDE })
+      : await this.prisma.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
+    if (!inscription) throw new NotFoundException(t('inscription.inscription_introuvable'));
     return inscription;
   }
 
@@ -202,15 +273,15 @@ export class InscriptionService {
   async depotPublic(dto: InscriptionPubliqueDto, ip?: string) {
     const annee = await this.anneeRetenue(dto.anneeId);
     if (!annee) {
-      throw new BadRequestException("Aucune année académique n'est ouverte aux inscriptions");
+      throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
     }
 
     const promotion = await this.prisma.promotion.findUnique({
       where: { id: dto.promotionId },
     });
-    if (!promotion) throw new BadRequestException('Promotion introuvable');
+    if (!promotion) throw new BadRequestException(I18nContext.current()!.t('inscription.promotion_introuvable'));
     if (promotion.anneeId !== annee.id) {
-      throw new BadRequestException("La promotion choisie n'appartient pas à l'année retenue");
+      throw new BadRequestException(I18nContext.current()!.t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
     }
 
     const frais = await this.prisma.frais.findUnique({
@@ -224,6 +295,7 @@ export class InscriptionService {
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const resultat = await this.prisma.$transaction(async (tx) => {
+          await exigerAnneeOuverte(tx, annee.id);
           let etudiant = dto.email
             ? await tx.etudiant.findUnique({
                 where: { email: dto.email },
@@ -252,7 +324,7 @@ export class InscriptionService {
                 action: 'ETUDIANT_CREE',
                 entite: 'Etudiant',
                 entiteId: etudiant.id,
-                details: `${dto.nom} ${dto.prenom} (préinscription en ligne)`,
+                details: 'Fiche étudiante créée par préinscription en ligne',
                 ip: ip ?? null,
               },
             });
@@ -263,9 +335,7 @@ export class InscriptionService {
             select: { numero: true },
           });
           if (deja) {
-            throw new ConflictException(
-              `Un dossier ${deja.numero} existe déjà pour ${dto.prenom} ${dto.nom} sur ${annee.libelle}`,
-            );
+            throw new ConflictException(I18nContext.current()!.t('inscription.un_dossier_deja_numero_existe_deja_pour_dto_prenom_dto_nom_s', { args: { 'deja.numero': deja.numero, 'dto.prenom': dto.prenom, 'dto.nom': dto.nom, 'annee.libelle': annee.libelle } }));
           }
 
           const inscription = await tx.inscription.create({
@@ -284,7 +354,7 @@ export class InscriptionService {
               action: 'INSCRIPTION_CREE',
               entite: 'Inscription',
               entiteId: inscription.id,
-              details: `${inscription.numero} — ${dto.nom} ${dto.prenom} · ${promotion.nom} (${annee.libelle})`,
+              details: `${inscription.numero} — préinscription enregistrée · ${promotion.nom} (${annee.libelle})`,
               ip: ip ?? null,
             },
           });
@@ -311,7 +381,7 @@ export class InscriptionService {
         throw e;
       }
     }
-    throw new ConflictException('Numéro de dossier temporairement indisponible, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
   }
 
   /** Inscription au guichet (agent comptable / scolarité). */
@@ -320,15 +390,15 @@ export class InscriptionService {
       where: { id: dto.etudiantId },
       select: { id: true, nom: true, prenom: true },
     });
-    if (!etudiant) throw new NotFoundException('Étudiant introuvable');
+    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('inscription.etudiant_introuvable'));
 
     const annee = await this.anneeRetenue(dto.anneeId);
-    if (!annee) throw new BadRequestException("Aucune année académique n'est active");
+    if (!annee) throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_active'));
 
     const promotion = await this.prisma.promotion.findUnique({ where: { id: dto.promotionId } });
-    if (!promotion) throw new BadRequestException('Promotion introuvable');
+    if (!promotion) throw new BadRequestException(I18nContext.current()!.t('inscription.promotion_introuvable'));
     if (promotion.anneeId !== annee.id) {
-      throw new BadRequestException("La promotion choisie n'appartient pas à l'année retenue");
+      throw new BadRequestException(I18nContext.current()!.t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
     }
 
     const existante = await this.prisma.inscription.findUnique({
@@ -336,9 +406,7 @@ export class InscriptionService {
       select: { numero: true, statut: true },
     });
     if (existante && existante.statut !== StatutInscription.ANNULEE) {
-      throw new ConflictException(
-        `Un dossier ${existante.numero} existe déjà pour ${etudiant.prenom} ${etudiant.nom} sur ${annee.libelle}`,
-      );
+      throw new ConflictException(I18nContext.current()!.t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', { args: { 'existante.numero': existante.numero, 'etudiant.prenom': etudiant.prenom, 'etudiant.nom': etudiant.nom, 'annee.libelle': annee.libelle } }));
     }
 
     const frais = await this.prisma.frais.findUnique({
@@ -349,6 +417,7 @@ export class InscriptionService {
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         return await this.prisma.$transaction(async (tx) => {
+          await exigerAnneeOuverte(tx, annee.id);
           const cree = await tx.inscription.create({
             data: {
               numero: await prochainNumeroInscription(tx, anneeNumero(annee.libelle)),
@@ -366,7 +435,7 @@ export class InscriptionService {
               action: 'INSCRIPTION_CREE',
               entite: 'Inscription',
               entiteId: cree.id,
-              details: `${cree.numero} — ${etudiant.nom} ${etudiant.prenom} · ${promotion.nom} (au guichet)`,
+              details: JSON.stringify({ avant: null, apres: instantaneInscription(cree) }),
             },
           });
           return cree;
@@ -376,7 +445,7 @@ export class InscriptionService {
         throw e;
       }
     }
-    throw new ConflictException('Numéro de dossier temporairement indisponible, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
   }
 
   // ---------------------------------------------------------- cycle de vie
@@ -385,74 +454,76 @@ export class InscriptionService {
   async validerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut === StatutInscription.ANNULEE) {
-      throw new BadRequestException('Ce dossier est annulé, impossible de le valider');
+      throw new BadRequestException(I18nContext.current()!.t('inscription.ce_dossier_est_annule_impossible_de_le_valider'));
     }
     if (
       inscription.statut !== StatutInscription.PAYEE &&
       inscription.statut !== StatutInscription.VALIDEE
     ) {
-      throw new BadRequestException(
-        `${inscription.numero} : frais non réglés (statut ${LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut}), encaissez le paiement avant de valider`,
-      );
+      throw new BadRequestException(I18nContext.current()!.t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', { args: { 'inscription.numero': inscription.numero, 'LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut': LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut } }));
     }
     if (inscription.statut === StatutInscription.VALIDEE) return inscription;
 
-    const maj = await this.prisma.inscription.update({
-      where: { id },
-      data: {
-        statut: StatutInscription.VALIDEE,
-        dateInscription: new Date(),
-        valideeParId: user.id,
-        valideeLe: new Date(),
-      },
-      include: INSCRIPTION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, inscription.anneeId);
+      const maj = await tx.inscription.update({
+        where: { id },
+        data: {
+          statut: StatutInscription.VALIDEE,
+          dateInscription: new Date(),
+          valideeParId: user.id,
+          valideeLe: new Date(),
+        },
+        include: INSCRIPTION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'INSCRIPTION_VALIDEE',
+          entite: 'Inscription',
+          entiteId: id,
+          details: JSON.stringify({ avant: instantaneInscription(inscription), apres: instantaneInscription(maj) }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'INSCRIPTION_VALIDEE',
-        entite: 'Inscription',
-        entiteId: id,
-        details: `${maj.numero} — ${maj.etudiant.nom} ${maj.etudiant.prenom}`,
-      },
-    });
-    return maj;
   }
 
   /** Annulation par la direction ; une inscription validée se garde. */
   async annulerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut === StatutInscription.ANNULEE) {
-      throw new BadRequestException('Ce dossier est déjà annulé');
+      throw new BadRequestException(I18nContext.current()!.t('inscription.ce_dossier_est_deja_annule'));
     }
     if (inscription.statut === StatutInscription.VALIDEE) {
-      throw new BadRequestException(
-        `${inscription.numero} est validé : son annulation doit passer par la direction, le dossier reste tracé`,
-      );
+      throw new BadRequestException(I18nContext.current()!.t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', { args: { 'inscription.numero': inscription.numero } }));
     }
-    const maj = await this.prisma.inscription.update({
-      where: { id },
-      data: { statut: StatutInscription.ANNULEE },
-      include: INSCRIPTION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, inscription.anneeId);
+      const maj = await tx.inscription.update({
+        where: { id },
+        data: { statut: StatutInscription.ANNULEE },
+        include: INSCRIPTION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'INSCRIPTION_ANNULEE',
+          entite: 'Inscription',
+          entiteId: id,
+          details: JSON.stringify({ avant: instantaneInscription(inscription), apres: instantaneInscription(maj) }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'INSCRIPTION_ANNULEE',
-        entite: 'Inscription',
-        entiteId: id,
-        details: `${maj.numero} — ${maj.etudiant.nom} ${maj.etudiant.prenom}`,
-      },
-    });
-    return maj;
   }
 
   // ------------------------------------------------------------- paiements
 
   async listePaiements(query: PaiementQueryDto): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.PaiementWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -483,11 +554,11 @@ export class InscriptionService {
         where,
         include: PAIEMENT_INCLUDE,
         orderBy: { horodatage: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.paiement.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouverPaiement(id: string) {
@@ -495,7 +566,7 @@ export class InscriptionService {
       where: { id },
       include: PAIEMENT_INCLUDE,
     });
-    if (!paiement) throw new NotFoundException('Paiement introuvable');
+    if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
     return paiement;
   }
 
@@ -505,33 +576,36 @@ export class InscriptionService {
    * pilote, sans URL) et reste EN_ATTENTE jusqu'à la confirmation.
    */
   async creerPaiement(dto: CreatePaiementDto, user: AuthUser) {
-    let inscription: {
-      id: string;
-      montantFrais: number;
-      etudiantId: string;
-      annee: { libelle: string } | null;
-    } | null = null;
-    if (dto.inscriptionId) {
-      inscription = await this.prisma.inscription.findUnique({
-        where: { id: dto.inscriptionId },
-        select: { id: true, montantFrais: true, etudiantId: true, annee: { select: { libelle: true } } },
-      });
-      if (!inscription) throw new NotFoundException('Inscription introuvable');
-    }
-
-    const anneeCourante = await this.prisma.anneeAcademique.findFirst({
-      where: { active: true, cloturee: false },
-    });
-    const numeroAnnee = inscription
-      ? anneeNumero(inscription.annee?.libelle)
-      : anneeNumero(anneeCourante?.libelle);
-
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const paiement = await this.prisma.$transaction(async (tx) => {
-          return tx.paiement.create({
+          const inscription = dto.inscriptionId
+            ? await tx.inscription.findUnique({
+                where: { id: dto.inscriptionId },
+                select: { id: true, etudiantId: true, anneeId: true },
+              })
+            : null;
+          if (dto.inscriptionId && !inscription) {
+            throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+          }
+          if (inscription && dto.anneeId && dto.anneeId !== inscription.anneeId) {
+            throw new BadRequestException(I18nContext.current()!.t('common.academicYearMismatch'));
+          }
+          const anneeId = dto.anneeId ?? inscription?.anneeId
+            ?? (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id;
+          if (!anneeId) {
+            throw new BadRequestException(I18nContext.current()!.t('common.academicYearRequired'));
+          }
+          const annee = await tx.anneeAcademique.findUnique({
+            where: { id: anneeId },
+            select: { id: true, libelle: true },
+          });
+          if (!annee) throw new BadRequestException(I18nContext.current()!.t('common.academicYearNotFound'));
+          await exigerAnneeOuverte(tx, annee.id);
+
+          const cree = await tx.paiement.create({
             data: {
-              reference: await prochainNumeroPaiement(tx, numeroAnnee),
+              reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
               montant: dto.montant,
               devise: dto.devise ?? 'GNF',
               mode: dto.mode,
@@ -540,16 +614,32 @@ export class InscriptionService {
               nomComplet: dto.nomComplet ?? null,
               motif: dto.motif ?? null,
               inscriptionId: dto.inscriptionId ?? null,
+              anneeId: annee.id,
               etudiantId: dto.etudiantId ?? inscription?.etudiantId ?? null,
               creeParId: user.id,
             },
             include: PAIEMENT_INCLUDE,
           });
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'PAIEMENT_CREE',
+              entite: 'Paiement',
+              entiteId: cree.id,
+              details: JSON.stringify({ avant: null, apres: instantanePaiement(cree) }),
+            },
+          });
+          return cree;
         });
 
         if (paiement.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
+          const passerelleActive = !!process.env.MOBILE_MONEY_URL;
+          if (passerelleActive) {
+            await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_TENTATIVE');
+          }
+          let demande: Awaited<ReturnType<MobileMoneyService['demanderPaiement']>> | null = null;
           try {
-            const demande = await this.mobileMoney.demanderPaiement({
+            demande = await this.mobileMoney.demanderPaiement({
               reference: paiement.reference,
               montant: paiement.montant,
               devise: paiement.devise,
@@ -557,46 +647,72 @@ export class InscriptionService {
               telephone: paiement.telephone,
               motif: paiement.motif ?? undefined,
             });
-            if (demande.transactionId) {
-              const rattache = await this.prisma.paiement.update({
-                where: { id: paiement.id },
-                data: { transactionId: demande.transactionId },
-                include: PAIEMENT_INCLUDE,
-              });
-              await this.prisma.auditLog.create({
-                data: {
-                  userId: user.id,
-                  action: 'PAIEMENT_CREE',
-                  entite: 'Paiement',
-                  entiteId: paiement.id,
-                  details: `${rattache.reference} — ${rattache.montant} ${rattache.devise} (${rattache.mode}, transaction ${rattache.transactionId})`,
-                },
+          } catch {
+            if (passerelleActive) {
+              await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_ECHEC');
+            }
+            this.logger.warn(`Demande Mobile Money ${paiement.reference} non transmise; le paiement reste en attente.`);
+          }
+
+          if (demande?.transactionId) {
+            try {
+              const rattache = await this.prisma.$transaction(async (tx) => {
+                const avant = await tx.paiement.findUnique({ where: { id: paiement.id }, include: PAIEMENT_INCLUDE });
+                const maj = await tx.paiement.update({
+                  where: { id: paiement.id },
+                  data: { transactionId: demande.transactionId },
+                  include: PAIEMENT_INCLUDE,
+                });
+                await tx.auditLog.create({
+                  data: {
+                    userId: user.id,
+                    action: 'PAIEMENT_TRANSACTION_LIEE',
+                    entite: 'Paiement',
+                    entiteId: paiement.id,
+                    details: JSON.stringify({
+                      avant: instantanePaiement(avant),
+                      apres: instantanePaiement(maj),
+                      champsModifies: ['transactionId'],
+                    }),
+                  },
+                });
+                return maj;
               });
               return rattache;
+            } catch {
+              if (passerelleActive) {
+                await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_TRANSACTION_LIAISON_ECHEC');
+              }
+              this.logger.error(`Mobile Money accepté pour ${paiement.reference}, mais sa référence n'a pas pu être liée localement.`);
             }
-          } catch (e: any) {
-            this.logger.warn(
-              `Demande Mobile Money ${paiement.reference} non transmise : ${e?.message ?? e}`,
-            );
+          } else if (passerelleActive && demande?.mode === 'operateur') {
+            await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_REPONSE_INVALIDE');
           }
         }
 
-        await this.prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'PAIEMENT_CREE',
-            entite: 'Paiement',
-            entiteId: paiement.id,
-            details: `${paiement.reference} — ${paiement.montant} ${paiement.devise} (${paiement.mode})`,
-          },
-        });
         return paiement;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Référence de paiement temporairement indisponible, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('inscription.reference_de_paiement_temporairement_indisponible_reessayez'));
+  }
+
+  private async journalMobileMoney(userId: string, paiementId: string, action: string) {
+    try {
+      await this.prisma.auditLog.create({
+        data: {
+          userId,
+          action,
+          entite: 'Paiement',
+          entiteId: paiementId,
+          details: JSON.stringify({ statut: 'EN_ATTENTE' }),
+        },
+      });
+    } catch {
+      this.logger.warn(`Journal Mobile Money indisponible pour le paiement ${paiementId}.`);
+    }
   }
 
   /**
@@ -605,29 +721,37 @@ export class InscriptionService {
    * réussis du dossier atteint les frais, l'inscription passe en PAYEE.
    */
   async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
-    const paiement = await this.trouverPaiement(id);
-    if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
-      throw new BadRequestException('Ce paiement est clos, il ne peut plus être confirmé');
-    }
-    if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
-      throw new BadRequestException('Ce paiement est déjà réussi, impossible de le faire échouer');
-    }
-    if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') {
-      return paiement;
-    }
-
     const reussi = dto.statut === 'REUSSI';
-    const maj = await this.prisma.$transaction(async (tx) => {
-      const p = await tx.paiement.update({
-        where: { id },
+    return this.prisma.$transaction(async (tx) => {
+      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+      if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
+      if (paiement.inscriptionFormation) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_formation_confirme_par_action_de_formation'));
+      }
+      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
+      if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
+        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
+      }
+      if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
+        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_reussi_impossible_de_le_faire_echouer'));
+      }
+      if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') return paiement;
+
+      const transition = await tx.paiement.updateMany({
+        where: { id, statut: paiement.statut },
         data: {
           statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
           completeLe: reussi ? new Date() : null,
         },
-        include: PAIEMENT_INCLUDE,
       });
+      if (transition.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
+      }
+      const p = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+      if (!p) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
 
-      if (reussi && p.inscriptionId) {
+      let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
+      if (reussi && p?.inscriptionId) {
         const cumul = await tx.paiement.aggregate({
           where: { inscriptionId: p.inscriptionId, statut: StatutPaiement.REUSSI },
           _sum: { montant: true },
@@ -643,56 +767,71 @@ export class InscriptionService {
           dossier.statut !== StatutInscription.PAYEE &&
           (cumul._sum.montant ?? 0) >= dossier.montantFrais
         ) {
-          await tx.inscription.update({
-            where: { id: p.inscriptionId },
+          const changement = await tx.inscription.updateMany({
+            where: { id: p.inscriptionId, statut: dossier.statut },
             data: { statut: StatutInscription.PAYEE },
           });
+          if (changement.count === 1) {
+            inscriptionAudit = {
+              avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: dossier.montantFrais },
+              apres: { id: p.inscriptionId, statut: StatutInscription.PAYEE, montantFrais: dossier.montantFrais },
+            };
+          }
         }
       }
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'PAIEMENT_SIMULE',
+          entite: 'Paiement',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: instantanePaiement(paiement),
+            apres: instantanePaiement(p),
+            inscription: inscriptionAudit,
+          }),
+        },
+      });
       return p;
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'PAIEMENT_SIMULE',
-        entite: 'Paiement',
-        entiteId: id,
-        details: `${maj.reference} → ${dto.statut} (confirmation pilote)`,
-      },
-    });
-    return maj;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   /** Annulation d'un paiement en attente ou échoué — un encaissement se garde. */
   async annulerPaiement(id: string, dto: AnnulerPaiementDto, user: AuthUser) {
-    const paiement = await this.trouverPaiement(id);
-    if (paiement.statut === StatutPaiement.REUSSI) {
-      throw new BadRequestException('Paiement déjà encaissé : il ne peut plus être annulé');
-    }
-    if (paiement.statut === StatutPaiement.ANNULE) {
-      throw new BadRequestException('Ce paiement est déjà annulé');
-    }
-    const maj = await this.prisma.paiement.update({
-      where: { id },
-      data: {
-        statut: StatutPaiement.ANNULE,
-        annuleLe: new Date(),
-        annuleParId: user.id,
-        motifAnnulation: dto.motif,
-      },
-      include: PAIEMENT_INCLUDE,
-    });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'PAIEMENT_ANNULE',
-        entite: 'Paiement',
-        entiteId: id,
-        details: `${maj.reference} — motif : ${dto.motif}`,
-      },
-    });
-    return maj;
+    return this.prisma.$transaction(async (tx) => {
+      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+      if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
+      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
+      if (paiement.statut === StatutPaiement.REUSSI) {
+        throw new BadRequestException(I18nContext.current()!.t('inscription.paiement_deja_encaisse_il_ne_peut_plus_etre_annule'));
+      }
+      if (paiement.statut === StatutPaiement.ANNULE) {
+        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_annule'));
+      }
+      const transition = await tx.paiement.updateMany({
+        where: { id, statut: paiement.statut },
+        data: {
+          statut: StatutPaiement.ANNULE,
+          annuleLe: new Date(),
+          annuleParId: user.id,
+          motifAnnulation: dto.motif,
+        },
+      });
+      if (transition.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_annule'));
+      }
+      const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'PAIEMENT_ANNULE',
+          entite: 'Paiement',
+          entiteId: id,
+          details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
+        },
+      });
+      return maj;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   // ---------------------------------------------------------- impression
@@ -789,6 +928,30 @@ export class FraisService extends CrudService {
     });
   }
 
+  /** Tarif public : renvoie uniquement ce qu’exigent les formulaires d’inscription. */
+  async tarifsPublics(query: FraisQueryDto, filtres: Prisma.FraisWhereInput = {}) {
+    const page = Number(query.page ?? 1);
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const where: Prisma.FraisWhereInput = {
+      AND: [{ annee: { cloturee: false } }, filtres],
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.frais.findMany({
+        where,
+        select: { id: true, montant: true, devise: true },
+        orderBy: [{ anneeId: 'desc' }, { promotionId: 'asc' }],
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      }),
+      this.prisma.frais.count({ where }),
+    ]);
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+  }
+
+  private instantane(frais: { id: string; anneeId: string; promotionId: string; montant: number; devise: string }) {
+    return { id: frais.id, anneeId: frais.anneeId, promotionId: frais.promotionId, montant: frais.montant, devise: frais.devise };
+  }
+
   /** Les dossiers EN_ATTENTE_PAIEMENT suivent le tarif officiel (instantané). */
   private async propager(
     tx: Prisma.TransactionClient,
@@ -803,36 +966,43 @@ export class FraisService extends CrudService {
   }
 
   async creerFrais(dto: CreateFraisDto, user: AuthUser) {
+    await exigerAnneeOuverte(this.prisma, dto.anneeId);
     const existant = await this.prisma.frais.findUnique({
       where: { anneeId_promotionId: { anneeId: dto.anneeId, promotionId: dto.promotionId } },
       select: { id: true },
     });
     if (existant) {
-      throw new ConflictException('Un tarif existe déjà pour cette promotion et cette année : modifiez-le');
+      throw new ConflictException(I18nContext.current()!.t('inscription.un_tarif_existe_deja_pour_cette_promotion_et_cette_annee_mod'));
     }
     const frais = await this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, dto.anneeId);
+      await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
       const f = await tx.frais.create({
         data: { anneeId: dto.anneeId, promotionId: dto.promotionId, montant: dto.montant, devise: dto.devise ?? 'GNF' },
         include: FRAIS_INCLUDE,
       });
       await this.propager(tx, f.promotionId, f.anneeId, f.montant);
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FRAIS_CREE',
+          entite: 'Frais',
+          entiteId: f.id,
+          details: JSON.stringify({ avant: null, apres: this.instantane(f) }),
+        },
+      });
       return f;
-    });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FRAIS_CREE',
-        entite: 'Frais',
-        entiteId: frais.id,
-        details: `${frais.montant} ${frais.devise} — ${frais.promotion.nom} (${frais.annee.libelle})`,
-      },
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     return frais;
   }
 
   async modifierFrais(id: string, dto: UpdateFraisDto, user: AuthUser) {
-    await this.findOne(id);
-    const frais = await this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
+      const avant: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
+      if (!avant) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      await exigerAnneeOuverte(tx, avant.anneeId);
+      if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
+      await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
       const f = await tx.frais.update({
         where: { id },
         data: { ...dto },
@@ -841,42 +1011,36 @@ export class FraisService extends CrudService {
       if (dto.montant !== undefined) {
         await this.propager(tx, f.promotionId, f.anneeId, f.montant);
       }
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FRAIS_MODIFIE',
+          entite: 'Frais',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantane(avant), apres: this.instantane(f) }),
+        },
+      });
       return f;
-    });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FRAIS_MODIFIE',
-        entite: 'Frais',
-        entiteId: id,
-        details: `${frais.montant} ${frais.devise} — ${frais.promotion.nom} (${frais.annee.libelle})`,
-      },
-    });
-    return frais;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
   async supprimerFrais(id: string, user: AuthUser) {
-    const actuel: any = await this.findOne(id);
     await this.prisma.$transaction(async (tx) => {
+      const actuel: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
+      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      await exigerAnneeOuverte(tx, actuel.anneeId);
       await tx.frais.delete({ where: { id } });
       await this.propager(tx, actuel.promotionId, actuel.anneeId, 0);
-    });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FRAIS_SUPPRIME',
-        entite: 'Frais',
-        entiteId: id,
-        details: `${actuel.promotion.nom} (${actuel.annee.libelle})`,
-      },
-    });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FRAIS_SUPPRIME',
+          entite: 'Frais',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantane(actuel), apres: null }),
+        },
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     return { id };
   }
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

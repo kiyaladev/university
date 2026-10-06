@@ -28,7 +28,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
 <template>
   <div class="barre-pagination">
     <span class="pochoir chiffres barre-pagination__compte" aria-live="polite">
-      {{ debut }}–{{ fin }} sur {{ total }}
+      {{ debut }}–{{ fin }} {{ $t('common.actions.of') }} {{ total }}
     </span>
     <q-space />
     <q-pagination
@@ -46,8 +46,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
       map-options
       dense
       outlined
-      label="Par page"
-      aria-label="Nombre de lignes par page"
+      :label="$t('common.pagination.rowsPerPage')"
       class="barre-pagination__taille"
       @update:model-value="(v) => emit('update:pageSize', v)"
     />
@@ -56,8 +55,8 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
       flat
       dense
       icon="select_all"
-      label="Charger tout"
-      aria-label="Charger la totalité des lignes, sans pagination"
+      :label="$t('common.pagination.loadAll')"
+      :aria-label="$t('common.pagination.loadAllAria')"
       no-caps
       @click="emit('tous')"
     />
@@ -67,6 +66,7 @@ const fin = computed(() => Math.min(props.page * props.pageSize, props.total));
 <style scoped>
 .barre-pagination {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 6px 0;

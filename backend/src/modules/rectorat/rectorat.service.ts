@@ -51,8 +51,11 @@ import {
   StatutReclamation,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { exigerAnneeOuverte } from '../../common/annee';
 import { AuthUser } from '../../common/decorators';
-import { isoDate, round2 } from '../../common/utils';
+import { echapper, isoDate, round2 } from '../../common/utils';
+import { t } from '../../common/i18n';
+import { I18nContext } from 'nestjs-i18n';
 
 @Injectable()
 export class RectoratService {
@@ -246,7 +249,7 @@ export class RectoratService {
    */
   async genererBilan(anneeId: string, user: AuthUser) {
     const annee = await this.prisma.anneeAcademique.findUnique({ where: { id: anneeId } });
-    if (!annee) throw new NotFoundException('Année académique introuvable');
+    if (!annee) throw new NotFoundException(I18nContext.current()!.t('rectorat.annee_academique_introuvable'));
 
     const chiffres = await this.chiffres(anneeId);
     const [parCategorie, parDepartement, enReparation, obsoletes] = await Promise.all([
@@ -268,29 +271,31 @@ export class RectoratService {
       version: '1',
     };
 
-    const snapshot = await this.prisma.statistiqueMesrs.create({
-      data: {
-        anneeId,
-        donnees: donnees as any,
-        genereParId: user.id,
-      },
-      include: {
-        annee: { select: { id: true, libelle: true } },
-        generePar: { select: { id: true, nom: true, prenom: true } },
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, anneeId);
+      const snapshot = await tx.statistiqueMesrs.create({
+        data: {
+          anneeId,
+          donnees: donnees as any,
+          genereParId: user.id,
+        },
+        include: {
+          annee: { select: { id: true, libelle: true } },
+          generePar: { select: { id: true, nom: true, prenom: true } },
+        },
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'BILAN_MESRS_GENERE',
-        entite: 'StatistiqueMesrs',
-        entiteId: snapshot.id,
-        details: `Bilan MESRS ${annee.libelle} — effectif ${chiffres.effectifTotal}, taux ${chiffres.tauxReussite}%`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'BILAN_MESRS_GENERE',
+          entite: 'StatistiqueMesrs',
+          entiteId: snapshot.id,
+          details: `Bilan MESRS ${annee.libelle} — effectif ${chiffres.effectifTotal}, taux ${chiffres.tauxReussite}%`,
+        },
+      });
+      return snapshot;
     });
-
-    return snapshot;
   }
 
   /** Snapshot par identifiant, pour l'impression A4. */
@@ -302,7 +307,7 @@ export class RectoratService {
         generePar: { select: { id: true, nom: true, prenom: true } },
       },
     });
-    if (!snapshot) throw new NotFoundException('Bilan MESRS introuvable');
+    if (!snapshot) throw new NotFoundException(I18nContext.current()!.t('rectorat.bilan_mesrs_introuvable'));
     return snapshot;
   }
 
@@ -313,57 +318,59 @@ export class RectoratService {
    * On construit la date pivot en SQL via Prisma pour ne charger qu'une page.
    */
   private async obsolescents(): Promise<number> {
-    const equipements = await this.prisma.equipementPatrimoine.findMany({
-      where: { actif: true, dateAcquisition: { not: null } },
-      select: { dateAcquisition: true, obsolescenceMois: true },
-    });
-    const maintenant = new Date();
-    return equipements.filter((e) => estObsolete(e.dateAcquisition, e.obsolescenceMois ?? 60, maintenant)).length;
+    const lignes = await this.prisma.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
+      SELECT COUNT(*)::bigint AS count
+      FROM "EquipementPatrimoine"
+      WHERE "actif" = true
+        AND "dateAcquisition" IS NOT NULL
+        AND date_trunc('month', "dateAcquisition")
+          + make_interval(months => COALESCE("obsolescenceMois", 60)) <= date_trunc('month', NOW())
+    `);
+    return Number(lignes[0]?.count ?? 0);
   }
 
   /** Regroupement par catégorie pour le snapshot MESRS. */
   private async patrimoineParCategorie() {
-    const equipements = await this.prisma.equipementPatrimoine.findMany({
-      where: { actif: true },
-      select: { valeurAcquisition: true, categorie: { select: { id: true, libelle: true, code: true } } },
+    const groupes = await this.prisma.equipementPatrimoine.groupBy({
+      by: ['categorieId'], where: { actif: true },
+      _count: { _all: true }, _sum: { valeurAcquisition: true },
     });
-    const map = new Map<string, { code: string; libelle: string; nombre: number; valeur: number }>();
-    for (const e of equipements) {
-      const key = e.categorie.id;
-      const entry = map.get(key) ?? {
-        code: e.categorie.code,
-        libelle: e.categorie.libelle,
-        nombre: 0,
-        valeur: 0,
-      };
-      entry.nombre += 1;
-      entry.valeur += e.valeurAcquisition ?? 0;
-      map.set(key, entry);
-    }
-    return [...map.values()].map((v) => ({ ...v, valeur: round2(v.valeur) }));
+    const categories = groupes.length ? await this.prisma.categoriePatrimoine.findMany({
+      where: { id: { in: groupes.map((g) => g.categorieId) } },
+      select: { id: true, libelle: true, code: true },
+    }) : [];
+    const parId = new Map(categories.map((c) => [c.id, c]));
+    return groupes.flatMap((g) => {
+      const categorie = parId.get(g.categorieId);
+      return categorie ? [{
+        code: categorie.code,
+        libelle: categorie.libelle,
+        nombre: g._count._all,
+        valeur: round2(g._sum.valeurAcquisition ?? 0),
+      }] : [];
+    });
   }
 
   /** Regroupement par département. */
   private async patrimoineParDepartement() {
-    const equipements = await this.prisma.equipementPatrimoine.findMany({
-      where: { actif: true },
-      select: { valeurAcquisition: true, departementId: true, departement: { select: { id: true, code: true, nom: true } } },
+    const groupes = await this.prisma.equipementPatrimoine.groupBy({
+      by: ['departementId'], where: { actif: true, departementId: { not: null } },
+      _count: { _all: true }, _sum: { valeurAcquisition: true },
     });
-    const map = new Map<string, { code: string; nom: string; nombre: number; valeur: number }>();
-    for (const e of equipements) {
-      if (!e.departementId || !e.departement) continue;
-      const key = e.departementId;
-      const entry = map.get(key) ?? {
-        code: e.departement.code,
-        nom: e.departement.nom,
-        nombre: 0,
-        valeur: 0,
-      };
-      entry.nombre += 1;
-      entry.valeur += e.valeurAcquisition ?? 0;
-      map.set(key, entry);
-    }
-    return [...map.values()].map((v) => ({ ...v, valeur: round2(v.valeur) }));
+    const departements = groupes.length ? await this.prisma.departement.findMany({
+      where: { id: { in: groupes.map((g) => g.departementId!).filter(Boolean) } },
+      select: { id: true, code: true, nom: true },
+    }) : [];
+    const parId = new Map(departements.map((d) => [d.id, d]));
+    return groupes.flatMap((g) => {
+      const departement = g.departementId ? parId.get(g.departementId) : undefined;
+      return departement ? [{
+        code: departement.code,
+        nom: departement.nom,
+        nombre: g._count._all,
+        valeur: round2(g._sum.valeurAcquisition ?? 0),
+      }] : [];
+    });
   }
 
   // ---------------------------------------------------------- impression
@@ -376,11 +383,9 @@ export class RectoratService {
    */
   async imprimerBilan(id: string, token: string | undefined, baseUrl: string): Promise<string> {
     try {
-      this.jwt.verify(token ?? '', {
-        secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      });
+      this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('rectorat.jeton_invalide_ou_expire'));
     }
 
     const snapshot = await this.trouverBilan(id);
@@ -562,14 +567,6 @@ const MOIS_LIBELLES = [
 ];
 
 const MOIS_COURANT_LABEL = `${MOIS_LIBELLES[new Date().getMonth() + 1]} ${new Date().getFullYear()}`;
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 function montant(v?: number | null): string {
   return (v ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: 0 });

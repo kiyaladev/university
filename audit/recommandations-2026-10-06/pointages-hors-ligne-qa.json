@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-06T14:54:23.506Z",
+  "statut": "valide",
+  "api": "http://127.0.0.1:15041/api",
+  "simulatedApi": false,
+  "actualPrepareButtonVerified": true,
+  "actualOfflineFormVerified": true,
+  "encryptedPointageAndPinRemoved": true,
+  "uuid": "e1c8e67a-8562-4fa2-89bd-bcd7c8ee1466",
+  "singlePersistedSessionAndAudit": true,
+  "singleOfflineControlPersisted": true,
+  "productionUntouched": true,
+  "physicalDevicePending": true,
+  "scope": "Séance par formulaire puis pointage ABSENT via store chiffré, API QA réelle"
+}

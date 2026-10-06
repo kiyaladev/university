@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-06T15:11:06.049Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Réclamation anonyme réelle, auteur absent de audit, interface ADMIN/DIRECTION FR/EN bureau/mobile"
+}

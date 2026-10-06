@@ -1,0 +1,18 @@
+{
+  "controle_introuvable": "Attendance record not found",
+  "qr_de_salle_inconnu": "Unknown room QR code",
+  "qrNeCorrespondPasALaSalle": "The scanned QR code does not match the scheduled room for this session.",
+  "positionHorsRayon": "You are {distance} m from the room (allowed radius: {rayon} m).",
+  "qrRegenerated": "QR code regenerated",
+  "seance_introuvable": "Class session not found",
+  "cette_seance_a_ete_annulee": "This session was cancelled",
+  "annee_academique_cloturee_pointage_interdit": "This academic year is closed: no new check-in can be added.",
+  "annee_academique_cloturee_suppression_interdite": "This academic year is closed: a historical check-in cannot be deleted.",
+  "le_scan_du_qr_de_la_salle_est_obligatoire": "Scanning the room QR code is mandatory",
+  "la_position_gps_est_obligatoire_pour_ce_pointage": "GPS location is mandatory for this attendance record",
+  "seul_l_auteur_du_controle_ou_la_direction_peut_le_corriger": "Only the author of the record or the administration can correct it",
+  "la_signature_manuscrite_de_l_enseignant_est_obligatoire": "Teacher's handwritten signature is mandatory",
+  "le_nombre_d_etudiants_presents_est_obligatoire": "Number of students present is mandatory",
+  "cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l": "This session has already been checked by another agent; only the administration can correct it",
+  "l_enseignant_doit_attester_sa_presence_devant_vous_signature": "Teacher must attest their presence before you: signature, personal code, or fingerprint"
+}

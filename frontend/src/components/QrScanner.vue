@@ -9,7 +9,7 @@
         color="white"
         text-color="dark"
         icon="close"
-        aria-label="Arrêter la caméra"
+        :aria-label="t('pointage.qr.stop')"
         @click="arreter"
       />
     </div>
@@ -20,8 +20,8 @@
           :model-value="modelValue"
           outlined
           dense
-          :label="label"
-          :hint="hint"
+          :label="label || t('pointage.qr.label')"
+          :hint="hint ?? t('pointage.qr.hint')"
           @update:model-value="(v) => emit('update:modelValue', String(v ?? ''))"
         >
           <template #prepend><q-icon name="qr_code_2" /></template>
@@ -32,11 +32,11 @@
           color="secondary"
           icon="photo_camera"
           :disable="!scannerDisponible"
-          :aria-label="scannerDisponible ? 'Scanner avec la caméra' : 'Caméra indisponible sur cet appareil'"
+          :aria-label="scannerDisponible ? t('pointage.qr.scan') : t('pointage.qr.unavailable')"
           @click="demarrer"
         >
           <q-tooltip>
-            {{ scannerDisponible ? 'Scanner avec la caméra' : 'Caméra indisponible sur cet appareil' }}
+            {{ scannerDisponible ? t('pointage.qr.scan') : t('pointage.qr.unavailable') }}
           </q-tooltip>
         </q-btn>
       </div>
@@ -48,6 +48,8 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 /**
  * Lecture d'un QR. Utilise l'API BarcodeDetector du navigateur quand elle
@@ -57,10 +59,7 @@ import { onBeforeUnmount, ref } from 'vue';
  * salle, carte étudiante, badge, plateau resto, attestation) : `label` et
  * `hint` disent lequel, au lieu de parler de salle partout.
  */
-withDefaults(defineProps<{ modelValue?: string; label?: string; hint?: string }>(), {
-  label: 'Code QR de la salle',
-  hint: 'Scannez l’affiche de la salle ou saisissez le code',
-});
+defineProps<{ modelValue?: string; label?: string; hint?: string }>();
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 
 const video = ref<HTMLVideoElement | null>(null);
@@ -100,7 +99,7 @@ async function demarrer() {
     }, 400);
   } catch {
     erreur.value =
-      'Accès à la caméra refusé ou indisponible — saisissez le code à la main dans le champ ci-dessus.';
+      t('pointage.qr.denied');
     camera.value = false;
   }
 }

@@ -2,9 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Matières</div>
+        <h1 class="page-titre">{{ $t('matieres.title') }}</h1>
         <div class="page-sous-titre">
-          Programme d’enseignement et volumes horaires de référence
+          {{ $t('matieres.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -14,7 +14,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle matière"
+          :label="$t('matieres.actions.new')"
           @click="ouvrir(null)"
         />
       </div>
@@ -23,7 +23,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (code, intitulé)…"
+      :placeholder="$t('matieres.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -35,14 +35,13 @@
           clearable
           emit-value
           map-options
-          label="Département"
+          :label="$t('matieres.filters.department')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="matieres"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -69,7 +68,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Créer la première matière"
+            :label="$t('matieres.emptyState.create')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -77,7 +76,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('matieres.emptyState.reset')"
             @click="reinitialiser"
           />
         </div>
@@ -90,10 +89,10 @@
             dense
             round
             icon="assignment_ind"
-            aria-label="Voir les charges d’enseignement de la matière"
+            :aria-label="$t('matieres.actionsColumn.whoTeachesAria')"
             @click="voirCharges(p.row)"
           >
-            <q-tooltip>Qui l’enseigne</q-tooltip>
+            <q-tooltip>{{ $t('matieres.actionsColumn.whoTeachesTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.peutPlanifier"
@@ -101,10 +100,10 @@
             dense
             round
             icon="edit"
-            aria-label="Modifier la matière"
+            :aria-label="$t('matieres.actionsColumn.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('matieres.actionsColumn.editTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.estAdmin"
@@ -113,10 +112,10 @@
             round
             color="negative"
             icon="delete"
-            aria-label="Supprimer la matière"
+            :aria-label="$t('matieres.actionsColumn.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>Supprimer</q-tooltip>
+            <q-tooltip>{{ $t('matieres.actionsColumn.deleteTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -128,12 +127,12 @@
           <div class="row items-center q-mb-xs">
             <q-chip dense outline color="primary">{{ m.code }}</q-chip>
             <q-space />
-            <div class="text-caption text-grey-7">{{ m.credits }} crédits</div>
+            <div class="text-caption text-grey-7">{{ $t('matieres.card.credits', { count: m.credits }) }}</div>
           </div>
           <div class="text-subtitle1 text-weight-medium">{{ m.intitule }}</div>
-          <div class="text-caption text-grey-7">{{ m.departement?.nom ?? 'Sans département' }}</div>
+          <div class="text-caption text-grey-7">{{ m.departement?.nom ?? $t('matieres.card.noDepartment') }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            Volume horaire <span class="chiffres">{{ m.volumeHoraireTotal }} h</span>
+            {{ $t('matieres.table.columns.volume') }} <span class="chiffres">{{ m.volumeHoraireTotal }} h</span>
           </div>
         </q-card-section>
         <q-separator />
@@ -143,7 +142,7 @@
             dense
             no-caps
             icon="assignment_ind"
-            label="Qui l’enseigne"
+            :label="$t('matieres.actionsColumn.whoTeachesTooltip')"
             @click="voirCharges(m)"
           />
           <q-btn
@@ -152,7 +151,7 @@
             dense
             no-caps
             icon="edit"
-            label="Modifier"
+            :label="$t('matieres.actionsColumn.editTooltip')"
             @click="ouvrir(m)"
           />
         </q-card-actions>
@@ -166,7 +165,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Créer la première matière"
+          :label="$t('matieres.emptyState.create')"
           @click="ouvrir(null)"
         />
         <q-btn
@@ -174,7 +173,7 @@
           flat
           no-caps
           icon="refresh"
-          label="Réinitialiser les filtres"
+          :label="$t('matieres.emptyState.reset')"
           @click="reinitialiser"
         />
       </div>
@@ -194,20 +193,20 @@
     <q-dialog v-model="dialogOuvert">
       <q-card style="width: 480px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ matiereEditee ? 'Modifier la matière' : 'Nouvelle matière' }}
+          {{ matiereEditee ? $t('matieres.dialog.editTitle') : $t('matieres.dialog.newTitle') }}
         </q-card-section>
         <q-card-section>
-          <span class="section-titre">Programme</span>
+          <span class="section-titre">{{ $t('matieres.dialog.sectionTitle') }}</span>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-5">
               <q-input
                 v-model="form.code"
                 outlined
                 dense
-                label="Code *"
-                hint="ex. INF-201"
+                :label="$t('matieres.dialog.codeLabel')"
+                :hint="$t('matieres.dialog.codeHint')"
                 :error="erreurs.code"
-                error-message="Le code est obligatoire"
+                :error-message="$t('matieres.dialog.codeError')"
               />
             </div>
             <div class="col-12 col-sm-7">
@@ -219,7 +218,7 @@
                 clearable
                 emit-value
                 map-options
-                label="Département"
+                :label="$t('matieres.dialog.departmentLabel')"
               />
             </div>
           </div>
@@ -227,9 +226,9 @@
             v-model="form.intitule"
             outlined
             dense
-            label="Intitulé *"
+            :label="$t('matieres.dialog.intituleLabel')"
             :error="erreurs.intitule"
-            error-message="L’intitulé est obligatoire"
+            :error-message="$t('matieres.dialog.intituleError')"
           />
           <div class="row q-col-gutter-md">
             <div class="col-6">
@@ -239,8 +238,8 @@
                 min="0"
                 outlined
                 dense
-                label="Volume horaire (h)"
-                hint="Pré-remplit les charges d’enseignement"
+                :label="$t('matieres.dialog.volumeLabel')"
+                :hint="$t('matieres.dialog.volumeHint')"
               />
             </div>
             <div class="col-6">
@@ -250,18 +249,18 @@
                 min="0"
                 outlined
                 dense
-                label="Crédits"
+                :label="$t('matieres.dialog.creditsLabel')"
               />
             </div>
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('matieres.dialog.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('matieres.dialog.save')"
             :loading="enregistrement"
             @click="enregistrer"
           />
@@ -275,6 +274,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -285,6 +285,7 @@ import type { Departement, Matiere, ChipFiltre } from '../types';
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const matieres = ref<Matiere[]>([]);
 const departements = ref<Departement[]>([]);
@@ -317,7 +318,7 @@ const filtresActifs = computed(() =>
   Boolean(filtres.value.recherche || filtres.value.departementId),
 );
 const messageVide = computed(() =>
-  filtresActifs.value ? 'Aucune matière pour ces critères.' : 'Aucune matière enregistrée.',
+  filtresActifs.value ? t('matieres.emptyState.filtered') : t('matieres.emptyState.empty'),
 );
 
 const chips = computed(() => {
@@ -333,7 +334,7 @@ const chips = computed(() => {
   if (filtres.value.departementId) {
     const d = departements.value.find((x) => x.id === filtres.value.departementId);
     cs.push({
-      label: `Département : ${d?.nom ?? '?'}`,
+      label: t('matieres.filters.departmentChip', { value: d?.nom ?? '?' }),
       value: filtres.value.departementId,
       icone: 'apartment',
     });
@@ -341,25 +342,25 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'intitule', label: 'Intitulé', field: 'intitule', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('matieres.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'intitule', label: t('matieres.table.columns.intitule'), field: 'intitule', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: 'Département',
+    label: t('matieres.table.columns.department'),
     field: (r: Matiere) => r.departement?.nom ?? '—',
     align: 'left',
   },
   {
     name: 'volume',
-    label: 'Volume horaire',
+    label: t('matieres.table.columns.volume'),
     field: (r: Matiere) => `${r.volumeHoraireTotal} h`,
     align: 'right',
     sortable: true,
   },
-  { name: 'credits', label: 'Crédits', field: 'credits', align: 'right' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'credits', label: t('matieres.table.columns.credits'), field: 'credits', align: 'right' },
+  { name: 'actions', label: t('matieres.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function ouvrir(m: Matiere | null) {
   matiereEditee.value = m;
@@ -390,7 +391,7 @@ async function enregistrer() {
     intitule: !form.value.intitule.trim(),
   };
   if (erreurs.value.code || erreurs.value.intitule) {
-    $q.notify({ type: 'warning', message: 'Complétez les champs obligatoires' });
+    $q.notify({ type: 'warning', message: t('matieres.messages.requiredFields') });
     return;
   }
 
@@ -399,13 +400,13 @@ async function enregistrer() {
     const payload = { ...form.value, departementId: form.value.departementId || undefined };
     if (matiereEditee.value) await api.put(`/matieres/${matiereEditee.value.id}`, payload);
     else await api.post('/matieres', payload);
-    $q.notify({ type: 'positive', message: 'Matière enregistrée' });
+    $q.notify({ type: 'positive', message: t('matieres.messages.saved') });
     dialogOuvert.value = false;
     await charger();
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement impossible',
+      message: e?.response?.data?.message ?? t('matieres.messages.saveError'),
     });
   } finally {
     enregistrement.value = false;
@@ -414,19 +415,19 @@ async function enregistrer() {
 
 function supprimer(m: Matiere) {
   $q.dialog({
-    title: 'Supprimer la matière',
-    message: `Supprimer « ${m.intitule} » ? Les charges d’enseignement qui la portent seront également supprimées.`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('matieres.deleteDialog.title'),
+    message: t('matieres.deleteDialog.message', { intitule: m.intitule }),
+    cancel: { label: t('matieres.deleteDialog.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('matieres.deleteDialog.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/matieres/${m.id}`);
-      $q.notify({ type: 'positive', message: 'Matière supprimée' });
+      $q.notify({ type: 'positive', message: t('matieres.messages.deleted') });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Suppression impossible',
+        message: e?.response?.data?.message ?? t('matieres.messages.deleteError'),
       });
     }
   });
@@ -451,7 +452,7 @@ async function charger(tout = false) {
     matieres.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des matières impossible',
+      message: e?.response?.data?.message ?? t('matieres.messages.loadError'),
     });
   } finally {
     chargement.value = false;

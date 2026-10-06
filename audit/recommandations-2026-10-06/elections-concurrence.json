@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-06T14:22:56.303360+00:00",
+  "statut": "valide",
+  "tests": 35,
+  "suites": 3,
+  "corrections": [
+    "Verrou de ligne commun aux six mutations de scrutin et au dépôt de bulletin",
+    "État, fenêtre temporelle et candidats relus dans la transaction du vote",
+    "Contrôle de cohérence des dates fusionnées à la modification"
+  ],
+  "limites": [
+    "Règle existante conservée : tout utilisateur connecté peut voter ; promotion/département ne constituent pas une restriction électorale",
+    "Validation humaine des règles électorales et impression physique en attente"
+  ],
+  "compilation": "réussie",
+  "httpProof": "elections.json",
+  "qaReloadPending": false,
+  "fullBackendTests": 927,
+  "fullBackendSuites": 109
+}

@@ -317,6 +317,7 @@ model User {
 
   appareils            Appareil[]
   controlesEffectues   Controle[]     @relation("ControleAgent")
+  seancesAssignees     Seance[]       @relation("SeanceControleurAssigne")
   justificatifsTraites Justificatif[] @relation("JustificatifTraitant")
   auditLogs            AuditLog[]
 
@@ -356,6 +357,7 @@ model User {
   tiragesImprimes       Tirage[]             @relation("TirageImprimeur")
   recettesCrees         RecetteExterne[]     @relation("RecetteCreePar")
   reclamationsAssignees Reclamation[]        @relation("ReclamationAssignee")
+  reclamationsCrees    Reclamation[]         @relation("ReclamationCreateur")
   messagesReclamation   MessageReclamation[] @relation("MessageReclamationAuteur")
   demandesTraitees      DemandeDocument[]    @relation("DemandeDocumentTraitee")
   electionsCrees        Election[]           @relation("ElectionCreePar")
@@ -380,6 +382,7 @@ model AnneeAcademique {
   affectations         Affectation[]
   seances              Seance[]
   inscriptions         Inscription[]
+  paiements            Paiement[]
   evaluations          Evaluation[]
   deliberations        Deliberation[]
   attestations         Attestation[]
@@ -400,6 +403,7 @@ model Departement {
   updatedAt DateTime @updatedAt
 
   membres               User[]                 @relation("MembresDepartement")
+  courriers             Courrier[]
   enseignants           Enseignant[]
   filieres              Filiere[]
   matieres              Matiere[]
@@ -414,7 +418,7 @@ model Filiere {
   code          String      @unique
   nom           String
   departementId String
-  departement   Departement @relation(fields: [departementId], references: [id], onDelete: Cascade)
+  departement   Departement @relation(fields: [departementId], references: [id], onDelete: Restrict)
   createdAt     DateTime    @default(now())
 
   promotions Promotion[]
@@ -426,10 +430,10 @@ model Promotion {
   niveau    Niveau
   effectif  Int     @default(0)
   filiereId String
-  filiere   Filiere @relation(fields: [filiereId], references: [id], onDelete: Cascade)
+  filiere   Filiere @relation(fields: [filiereId], references: [id], onDelete: Restrict)
 
   anneeId String
-  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
   createdAt DateTime @default(now())
 
@@ -555,9 +559,9 @@ model Affectation {
   matiereId    String
   matiere      Matiere         @relation(fields: [matiereId], references: [id], onDelete: Cascade)
   promotionId  String
-  promotion    Promotion       @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion    Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   anneeId      String
-  annee        AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee        AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
   volumeHorairePrevu Int      @default(0) // heures contractuelles à réaliser
   createdAt          DateTime @default(now())
@@ -609,7 +613,7 @@ model Seance {
   creneau   Creneau? @relation(fields: [creneauId], references: [id], onDelete: SetNull)
 
   anneeId String
-  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
   date       DateTime  @db.Date
   heureDebut String // prévue "08:00"
@@ -622,6 +626,9 @@ model Seance {
   statut     StatutSeance @default(PLANIFIEE)
   thematique String? // intitulé prévu de la séance
 
+  controleurAssigneId String?
+  controleurAssigne   User? @relation("SeanceControleurAssigne", fields: [controleurAssigneId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -631,6 +638,7 @@ model Seance {
 
   @@unique([affectationId, date, heureDebut])
   @@index([date, statut])
+  @@index([controleurAssigneId, date])
 }
 
 /// Le pointage : ce que le contrôleur consignait auparavant dans son registre.
@@ -803,9 +811,9 @@ model Inscription {
   etudiantId  String
   etudiant    Etudiant        @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
   anneeId     String
-  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
-  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
 
   statut          StatutInscription @default(BROUILLON)
   montantFrais    Float             @default(0) // instantané du montant à payer
@@ -834,9 +842,9 @@ model Inscription {
 model Frais {
   id          String          @id @default(uuid())
   anneeId     String
-  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
-  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   montant     Float           @default(0)
   devise      String          @default("GNF")
   createdAt   DateTime        @default(now())
@@ -861,6 +869,8 @@ model Paiement {
 
   inscriptionId String?
   inscription   Inscription? @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  anneeId       String?
+  annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   etudiantId    String?
   etudiant      Etudiant?    @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
 
@@ -901,9 +911,9 @@ model Evaluation {
   matiereId   String
   matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Cascade)
   anneeId     String
-  annee       AnneeAcademique  @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee       AnneeAcademique  @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
-  promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   semestre    Int              @default(1)
   date        DateTime?
   statut      StatutEvaluation @default(OUVERTE)
@@ -938,9 +948,9 @@ model Note {
 model Deliberation {
   id           String              @id @default(uuid())
   anneeId      String
-  annee        AnneeAcademique     @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee        AnneeAcademique     @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId  String
-  promotion    Promotion           @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion    Promotion           @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   session      SessionDeliberation @default(NORMALE)
   statut       StatutDeliberation  @default(BROUILLON)
   tauxReussite Float?
@@ -992,7 +1002,7 @@ model Attestation {
   qrToken String            @unique
 
   anneeId       String?
-  annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: SetNull)
+  annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId   String?
   promotion     Promotion?       @relation(fields: [promotionId], references: [id], onDelete: SetNull)
   inscriptionId String?
@@ -1055,7 +1065,7 @@ model FeuillePaie {
   updatedAt DateTime @updatedAt
 
   lignes            LignePaie[]
-  anneeAcademique   AnneeAcademique? @relation(fields: [anneeAcademiqueId], references: [id])
+  anneeAcademique   AnneeAcademique? @relation(fields: [anneeAcademiqueId], references: [id], onDelete: Restrict)
   anneeAcademiqueId String?
 
   @@index([statut])
@@ -1149,7 +1159,7 @@ model AttributionLogement {
   etudiantId String
   etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
   anneeId    String?
-  annee      AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: SetNull)
+  annee      AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
   statut        StatutAttributionLogement @default(EN_ATTENTE)
   critereScore  Int? // somme des critères sociaux/mérite
@@ -1468,7 +1478,7 @@ model InscriptionFormation {
 model StatistiqueMesrs {
   id          String          @id @default(uuid())
   anneeId     String
-  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   /// JSON des chiffres : { effectifTotal, effectifL1, ..., tauxReussiteL1,
   /// masseSalariale, ..., parDepartement: { deptId: {...}} }
   donnees     Json
@@ -1571,6 +1581,8 @@ model Courrier {
   objet           String
   expediteur      String? // pour les entrants
   destinataire    String? // pour les sortants
+  departementId   String?
+  departement     Departement? @relation(fields: [departementId], references: [id], onDelete: Restrict)
   dateReception   DateTime?      @db.Date
   dateEnvoi       DateTime?      @db.Date
   fichier         String? // data-url du PDF scanné
@@ -1590,6 +1602,7 @@ model Courrier {
   circuits CircuitCourrier[]
 
   @@index([type, statut])
+  @@index([departementId])
 }
 
 /// Étape de validation d'un courrier (paraphe).
@@ -1632,9 +1645,9 @@ model Examen {
   matiereId     String
   matiere       Matiere         @relation(fields: [matiereId], references: [id], onDelete: Cascade)
   promotionId   String
-  promotion     Promotion       @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion     Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   anneeId       String
-  annee         AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Cascade)
+  annee         AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   dateExamen    DateTime
   heureDebut    String
   heureFin      String
@@ -1679,6 +1692,7 @@ model ScanExamen {
   scanneur       User?        @relation("ScanExamenOperateur", fields: [scanneurId], references: [id], onDelete: SetNull)
   ipAppareil     String?
 
+  @@unique([examenId, inscriptionId])
   @@index([examenId, heureScan])
 }
 
@@ -1782,6 +1796,8 @@ model Reclamation {
   anonyme             Boolean             @default(false)
   etudiantId          String?
   etudiant            Etudiant?           @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  createurId          String?
+  createur            User?               @relation("ReclamationCreateur", fields: [createurId], references: [id], onDelete: SetNull)
   nomAuteur           String? // stocké si anonyme
   emailAuteur         String?
   priorite            PrioriteReclamation @default(NORMALE)
@@ -1801,6 +1817,7 @@ model Reclamation {
 
   @@index([statut, priorite])
   @@index([etudiantId])
+  @@index([createurId])
 }
 
 model MessageReclamation {
@@ -1899,9 +1916,9 @@ model Election {
   type          TypeElection
   // Périmètre : promotionId / départementId / null (=toute l'université)
   promotionId   String?
-  promotion     Promotion?     @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  promotion     Promotion?     @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   departementId String?
-  departement   Departement?   @relation(fields: [departementId], references: [id], onDelete: Cascade)
+  departement   Departement?   @relation(fields: [departementId], references: [id], onDelete: Restrict)
   description   String?
   dateOuverture DateTime
   dateCloture   DateTime

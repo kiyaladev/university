@@ -1,0 +1,12 @@
+{
+  "carte_introuvable": "Card not found",
+  "etudiant_introuvable": "Student not found",
+  "cette_carte_est_deja_revoquee": "This card is already revoked.",
+  "cette_carte_est_revoquee_nip_non_autorise": "This card is revoked: PIN not allowed.",
+  "vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte": "You can only set the PIN of your own card.",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "aucun_profil_etudiant_n_est_lie_a_votre_compte": "No student profile is linked to your account.",
+  "aucune_carte_n_a_encore_ete_emise_pour_votre_profil": "No card has been issued for your profile yet.",
+  "cette_carte_a_ete_revoquee_elle_ne_peut_plus_etre_modifiee": "This card has been revoked and can no longer be modified.",
+  "cet_etudiant_possede_deja_une_carte_existante_qrtoken_revoqu": "This student already has a card. Revoke it first to issue a new one."
+}

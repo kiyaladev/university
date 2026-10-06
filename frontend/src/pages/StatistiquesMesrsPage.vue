@@ -2,13 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Statistiques MESRS</div>
+        <h1 class="page-titre">{{ $t('statistiquesMesrs.title') }}</h1>
         <div class="page-sous-titre">
-          L'archive de ce qui a été déclaré au Ministère. Chaque snapshot fige
-          les chiffres à sa date de génération et ne bouge plus — c'est la
-          mémoire de la déclaration, pas la situation du jour. Les chiffres
-          d'aujourd'hui sont sur le Tableau de bord Rectorat, qui produit
-          justement ces snapshots.
+          {{ $t('statistiquesMesrs.subtitle') }}
         </div>
       </div>
       <div class="col-auto row q-gutter-sm">
@@ -20,8 +16,8 @@
           clearable
           emit-value
           map-options
-          label="Année"
-          hint="Vide : toutes les années"
+          :label="$t('statistiquesMesrs.filters.annee.label')"
+          :hint="$t('statistiquesMesrs.filters.annee.hint')"
           style="min-width: 180px"
           @update:model-value="charger"
         />
@@ -30,12 +26,12 @@
           color="primary"
           no-caps
           icon="file_download"
-          :label="`Exporter ${snapshots.length} snapshot(s) en CSV`"
+          :label="$t('statistiquesMesrs.actions.export', { count: snapshots.length })"
           :disable="!snapshots.length"
           @click="exporterCsv"
         >
           <q-tooltip>
-            Tableur (Excel / LibreOffice) — {{ anneeLibelle ?? 'toutes les années' }}
+            {{ $t('statistiquesMesrs.actions.exportTooltip', { annee: anneeLibelle ?? $t('statistiquesMesrs.allYears') }) }}
           </q-tooltip>
         </q-btn>
       </div>
@@ -43,26 +39,24 @@
 
     <liens-croises
       :liens="[
-        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'Les mêmes indicateurs à l’instant présent — et le bouton qui génère un snapshot' },
-        { to: '/rapports', libelle: 'Rapports & états', icone: 'insights', aide: 'Les états ligne à ligne derrière ces agrégats' },
-        { to: '/statistiques', libelle: 'Statistiques', icone: 'query_stats', aide: 'Le suivi du contrôle des séances au jour le jour' },
+        { to: '/rectorat', libelle: $t('statistiquesMesrs.links.rectorat.label'), icone: 'dashboard', aide: $t('statistiquesMesrs.links.rectorat.hint') },
+        { to: '/rapports', libelle: $t('statistiquesMesrs.links.rapports.label'), icone: 'insights', aide: $t('statistiquesMesrs.links.rapports.hint') },
+        { to: '/statistiques', libelle: $t('statistiquesMesrs.links.statistiques.label'), icone: 'query_stats', aide: $t('statistiquesMesrs.links.statistiques.hint') },
       ]"
     />
 
     <div v-if="!snapshots.length && !chargement" class="plaque etat-vide">
       <q-icon name="analytics" size="42px" />
-      <div class="text-h6 q-mt-sm">Aucun snapshot archivé</div>
+      <div class="text-h6 q-mt-sm">{{ $t('statistiquesMesrs.emptyState.title') }}</div>
       <div class="text-caption">
-        Un snapshot MESRS se crée depuis le Tableau de bord Rectorat : il y fige
-        les effectifs, le taux de réussite et la masse salariale de l'année
-        choisie. Tant qu'aucun n'a été généré, cette archive reste vide.
+        {{ $t('statistiquesMesrs.emptyState.text') }}
       </div>
       <q-btn
         unelevated
         color="primary"
         no-caps
         icon="dashboard"
-        label="Générer un bilan depuis le Rectorat"
+        :label="$t('statistiquesMesrs.actions.generateFromRectorat')"
         to="/rectorat"
         class="q-mt-sm"
       />
@@ -74,7 +68,7 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ dernier?.effectifTotal ?? 0 }}</div>
-            <div class="pochoir text-grey-7">Effectif déclaré</div>
+            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.effectif') }}</div>
             <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
           </q-card-section>
         </q-card>
@@ -83,7 +77,7 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ pourcentLisible(dernier?.tauxReussite) }}</div>
-            <div class="pochoir text-grey-7">Taux de réussite déclaré</div>
+            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.tauxReussite') }}</div>
             <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
           </q-card-section>
         </q-card>
@@ -92,9 +86,9 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">
-              {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">GNF</span>
+              {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
             </div>
-            <div class="pochoir text-grey-7">Masse salariale déclarée</div>
+            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.masseSalariale') }}</div>
             <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
           </q-card-section>
         </q-card>
@@ -103,9 +97,9 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ snapshots.length }}</div>
-            <div class="pochoir text-grey-7">Snapshots archivés</div>
+            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.snapshotsArchived') }}</div>
             <div class="text-caption text-grey-6">
-              {{ anneeLibelle ?? 'toutes les années' }}
+              {{ anneeLibelle ?? $t('statistiquesMesrs.allYears') }}
             </div>
           </q-card-section>
         </q-card>
@@ -115,10 +109,9 @@
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row items-center">
         <div class="col">
-          <div class="text-subtitle2">Évolution des déclarations</div>
+          <div class="text-subtitle2">{{ $t('statistiquesMesrs.chart.title') }}</div>
           <div class="text-caption text-grey-7">
-            Effectif, taux de réussite et masse salariale — un point par snapshot,
-            du plus ancien au plus récent
+            {{ $t('statistiquesMesrs.chart.subtitle') }}
           </div>
         </div>
       </q-card-section>
@@ -136,11 +129,11 @@
     <q-card flat bordered class="carte">
       <q-card-section class="row items-center">
         <div class="col">
-          <div class="text-subtitle2">Snapshots archivés</div>
+          <div class="text-subtitle2">{{ $t('statistiquesMesrs.table.title') }}</div>
           <div class="text-caption text-grey-7">
-            {{ snapshots.length }} enregistrement(s) —
-            <span v-if="anneeLibelle">filtré sur {{ anneeLibelle }}</span>
-            <span v-else>toutes les années</span>
+            {{ $t('statistiquesMesrs.table.countLabel', { count: snapshots.length }) }}
+            <span v-if="anneeLibelle">{{ $t('statistiquesMesrs.table.filteredOn', { annee: anneeLibelle }) }}</span>
+            <span v-else>{{ $t('statistiquesMesrs.allYears') }}</span>
           </div>
         </div>
       </q-card-section>
@@ -184,10 +177,10 @@
               dense
               round
               icon="print"
-              :aria-label="`Imprimer le bilan MESRS du ${dateHeureLisible(p.row.genereLe)}`"
+              :aria-label="$t('statistiquesMesrs.table.printAria', { date: dateHeureLisible(p.row.genereLe) })"
               @click="imprimer(p.row)"
             >
-              <q-tooltip>Imprimer le bilan (A4)</q-tooltip>
+              <q-tooltip>{{ $t('statistiquesMesrs.table.printTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -199,9 +192,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import LiensCroises from '../components/LiensCroises.vue';
@@ -212,17 +207,19 @@ import {
   pourcentLisible,
 } from '../utils/libelles';
 import type { AnneeAcademique, StatistiqueMesrs } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 /**
  * Mêmes peintures que le Tableau de bord Rectorat pour les mêmes indicateurs :
  * effectif en encre, réussite en vert, argent en ocre. Un lecteur qui passe
  * d'un écran à l'autre retrouve ses repères.
  */
-const PEINTURE_EFFECTIF = '#10251E';
-const PEINTURE_REUSSITE = '#0F7A45';
-const PEINTURE_ARGENT = '#C98A00';
+const PEINTURE_EFFECTIF = '#1D1D1F';
+const PEINTURE_REUSSITE = '#007A4D';
+const PEINTURE_ARGENT = '#8A6300';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 
 const annees = ref<AnneeAcademique[]>([]);
@@ -252,43 +249,48 @@ const dernierSnapshot = computed(() => ordonnes.value[ordonnes.value.length - 1]
 const dernier = computed(() => dernierSnapshot.value?.donnees ?? null);
 const legendeDernier = computed(() =>
   dernierSnapshot.value
-    ? `Dernier snapshot du ${dateHeureLisible(dernierSnapshot.value.genereLe)}`
+    ? t('statistiquesMesrs.stats.lastSnapshot', { date: dateHeureLisible(dernierSnapshot.value.genereLe) })
     : '—',
 );
 
 /** Alternative textuelle du graphique, pour qui ne voit pas les courbes. */
 const resumeEvolution = computed(() =>
   ordonnes.value.length
-    ? `Évolution des déclarations MESRS sur ${ordonnes.value.length} snapshot(s) : ${ordonnes.value
-        .map(
-          (s) =>
-            `${dateLisibleCourt(s.genereLe)} — effectif ${s.donnees?.effectifTotal ?? 0}, ` +
-            `réussite ${pourcentLisible(s.donnees?.tauxReussite)}, ` +
-            `masse salariale ${montantLisible(s.donnees?.masseSalariale)} GNF`,
-        )
-        .join(' ; ')}.`
-    : 'Aucun snapshot à représenter.',
+    ? t('statistiquesMesrs.chart.summary', {
+        count: ordonnes.value.length,
+        details: ordonnes.value
+          .map((s) =>
+            t('statistiquesMesrs.chart.summaryEntry', {
+              date: dateLisibleCourt(s.genereLe),
+              effectif: s.donnees?.effectifTotal ?? 0,
+              reussite: pourcentLisible(s.donnees?.tauxReussite),
+              masse: montantLisible(s.donnees?.masseSalariale),
+            }),
+          )
+          .join(' ; '),
+      })
+    : t('statistiquesMesrs.chart.summaryEmpty'),
 );
 
 function dateLisibleCourt(iso: string): string {
   return dateHeureLisible(iso).slice(0, 16);
 }
 
-const colonnes: QTableColumn[] = [
-  { name: 'genereLe', label: 'Généré le', field: 'genereLe', align: 'left', sortable: true },
-  { name: 'annee', label: 'Année', field: 'annee', align: 'left' },
-  { name: 'effectif', label: 'Effectif', field: 'effectif', align: 'right' },
-  { name: 'taux', label: 'Taux', field: 'taux', align: 'right' },
-  { name: 'masse', label: 'Masse salariale (GNF)', field: 'masse', align: 'right' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'genereLe', label: t('statistiquesMesrs.table.columns.genereLe'), field: 'genereLe', align: 'left', sortable: true },
+  { name: 'annee', label: t('statistiquesMesrs.table.columns.annee'), field: 'annee', align: 'left' },
+  { name: 'effectif', label: t('statistiquesMesrs.table.columns.effectif'), field: 'effectif', align: 'right' },
+  { name: 'taux', label: t('statistiquesMesrs.table.columns.taux'), field: 'taux', align: 'right' },
+  { name: 'masse', label: t('statistiquesMesrs.table.columns.masse'), field: 'masse', align: 'right' },
   {
     name: 'generePar',
-    label: 'Par',
+    label: t('statistiquesMesrs.table.columns.generePar'),
     field: (r: StatistiqueMesrs) =>
       r.generePar ? `${r.generePar.prenom} ${r.generePar.nom}` : '—',
     align: 'left',
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const configEvolution = computed<ChartConfiguration | null>(() => {
   if (!ordonnes.value.length) return null;
@@ -300,7 +302,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
       labels,
       datasets: [
         {
-          label: 'Effectif',
+          label: t('statistiquesMesrs.chart.datasets.effectif'),
           data: ordre.map((s) => s.donnees?.effectifTotal ?? 0),
           borderColor: PEINTURE_EFFECTIF,
           backgroundColor: 'rgba(16, 37, 30, 0.16)',
@@ -310,7 +312,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           pointRadius: 3,
         },
         {
-          label: 'Taux de réussite (%)',
+          label: t('statistiquesMesrs.chart.datasets.tauxReussite'),
           data: ordre.map((s) => s.donnees?.tauxReussite ?? 0),
           borderColor: PEINTURE_REUSSITE,
           borderWidth: 2,
@@ -320,7 +322,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           pointRadius: 3,
         },
         {
-          label: 'Masse salariale (GNF)',
+          label: t('statistiquesMesrs.chart.datasets.masseSalariale'),
           data: ordre.map((s) => s.donnees?.masseSalariale ?? 0),
           borderColor: PEINTURE_ARGENT,
           backgroundColor: 'rgba(201, 138, 0, 0.12)',
@@ -339,7 +341,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           position: 'left',
           beginAtZero: true,
           ticks: { precision: 0 },
-          title: { display: true, text: 'Effectif' },
+          title: { display: true, text: t('statistiquesMesrs.chart.axis.effectif') },
         },
         yTaux: {
           type: 'linear',
@@ -347,7 +349,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           beginAtZero: true,
           max: 100,
           grid: { drawOnChartArea: false },
-          title: { display: true, text: 'Taux %' },
+          title: { display: true, text: t('statistiquesMesrs.chart.axis.taux') },
         },
         yMasse: {
           type: 'linear',
@@ -355,7 +357,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           beginAtZero: true,
           grid: { drawOnChartArea: false },
           ticks: { callback: (v) => nombreLisible(Number(v), 0) },
-          title: { display: true, text: 'GNF' },
+          title: { display: true, text: t('statistiquesMesrs.chart.axis.gnf') },
         },
       },
     },
@@ -365,19 +367,19 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
 function exporterCsv() {
   const lignes = [
     [
-      'Date',
-      'Année',
-      'Effectif',
-      'Taux réussite',
-      'Masse salariale',
-      'Mois masse',
-      'Enseignants',
-      'Vacataires',
-      'Réclamations',
-      'Incidents 24h',
-      'Équipements obsolètes',
-      'En réparation',
-      'Généré par',
+      t('statistiquesMesrs.csv.headers.date'),
+      t('statistiquesMesrs.csv.headers.annee'),
+      t('statistiquesMesrs.csv.headers.effectif'),
+      t('statistiquesMesrs.csv.headers.tauxReussite'),
+      t('statistiquesMesrs.csv.headers.masseSalariale'),
+      t('statistiquesMesrs.csv.headers.moisMasse'),
+      t('statistiquesMesrs.csv.headers.enseignants'),
+      t('statistiquesMesrs.csv.headers.vacataires'),
+      t('statistiquesMesrs.csv.headers.reclamations'),
+      t('statistiquesMesrs.csv.headers.incidents24h'),
+      t('statistiquesMesrs.csv.headers.equipementsObsoletes'),
+      t('statistiquesMesrs.csv.headers.enReparation'),
+      t('statistiquesMesrs.csv.headers.generePar'),
     ],
   ];
   for (const s of ordonnes.value) {
@@ -420,10 +422,7 @@ function echapperCsv(v: string): string {
 }
 
 function imprimer(s: StatistiqueMesrs) {
-  window.open(
-    `${API_URL}/rectorat/bilan-mesrs/${s.id}/imprimer?token=${auth.token}`,
-    '_blank',
-  );
+  void ouvrirImpression(`/rectorat/bilan-mesrs/${s.id}/imprimer`);
 }
 
 async function charger() {
@@ -436,7 +435,7 @@ async function charger() {
     snapshots.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des snapshots MESRS impossible.',
+      message: e?.response?.data?.message ?? t('statistiquesMesrs.messages.loadError'),
     });
   } finally {
     chargement.value = false;
@@ -448,7 +447,7 @@ onMounted(async () => {
     const { data } = await api.get('/annees', { params: { all: '1' } });
     annees.value = Array.isArray(data) ? data : data.data ?? [];
   } catch {
-    $q.notify({ type: 'warning', message: 'Années académiques indisponibles : le filtre restera vide.' });
+    $q.notify({ type: 'warning', message: t('statistiquesMesrs.messages.anneesUnavailable') });
   }
   await charger();
 });
@@ -459,7 +458,7 @@ onMounted(async () => {
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 </style>

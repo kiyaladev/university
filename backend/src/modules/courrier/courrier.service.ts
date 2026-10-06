@@ -17,11 +17,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, StatutCourrier } from '@prisma/client';
+import { Prisma, Role, StatutCourrier } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
-import { toDateOnly } from '../../common/utils';
+import { echapper, toDateOnly } from '../../common/utils';
 import {
   CloturerCourrierDto,
   CourrierQueryDto,
@@ -31,6 +32,7 @@ import {
 } from './courrier.dto';
 
 const COURRIER_INCLUDE = {
+  departement: { select: { id: true, code: true, nom: true } },
   circuits: {
     include: {
       valideur: { select: { id: true, nom: true, prenom: true, role: true } },
@@ -48,18 +50,92 @@ const CIRCUIT_PAR_DEFAUT = [
   { ordre: 3, roleValideur: 'Archives' },
 ];
 
+const ETIQUETTES_PAR_ROLE: Partial<Record<Role, string[]>> = {
+  [Role.ADMIN]: ['Administration'],
+  [Role.DIRECTION]: ['Direction', 'Recteur'],
+  [Role.SCOLARITE]: ['Secrétariat', 'Secrétariat général', 'Scolarité', 'Archives'],
+  [Role.CHEF_DEPARTEMENT]: ['Chef département', 'Chef de département'],
+};
+
 @Injectable()
 export class CourrierService {
   constructor(private prisma: PrismaService) {}
 
+  private estResponsable(user: AuthUser) {
+    return user.role === Role.ADMIN || user.role === Role.DIRECTION;
+  }
+
+  private peutConsulter(courrier: { departementId?: string | null; enregistreParId: string | null; circuits: Array<{ roleValideur: string | null }> }, user: AuthUser) {
+    if (user.role === Role.CHEF_DEPARTEMENT && (!user.departementId || courrier.departementId !== user.departementId)) return false;
+    if (this.estResponsable(user) || courrier.enregistreParId === user.id) return true;
+    const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
+    return courrier.circuits.some((etape) => etiquettes.includes(etape.roleValideur ?? ''));
+  }
+
+  private exigerAcces(courrier: Parameters<CourrierService['peutConsulter']>[0], user: AuthUser) {
+    if (!this.peutConsulter(courrier, user)) {
+      throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+    }
+  }
+
+  /**
+   * Projection minimale journalisée avant/après. Un courrier concentre des
+   * données sensibles — pièce jointe (data-URL du PDF scanné), objet,
+   * expediteur/destinataire, notes et commentaires libres, hash de paraphe :
+   * le journal n'en retient que l'identification, la situation et l'avancement
+   * du circuit. La présence d'un fichier ou d'un paraphe est notée par un
+   * booléen, jamais par son contenu.
+   */
+  private instantaneAudit(courrier: any) {
+    return {
+      id: courrier.id,
+      numero: courrier.numero,
+      type: courrier.type,
+      statut: courrier.statut,
+      dateReception: courrier.dateReception ?? null,
+      dateEnvoi: courrier.dateEnvoi ?? null,
+      fichierJoint: Boolean(courrier.fichier),
+      parapheFourni: Boolean(courrier.paraphe),
+      enregistreParId: courrier.enregistreParId ?? null,
+      departementId: courrier.departementId ?? null,
+      traiteParId: courrier.traiteParId ?? null,
+      circuit: [...(courrier.circuits ?? [])]
+        .sort((a: any, b: any) => a.ordre - b.ordre)
+        .map((etape: any) => ({
+          id: etape.id,
+          ordre: etape.ordre,
+          roleValideur: etape.roleValideur ?? null,
+          statut: etape.statut,
+          valideurId: etape.valideurId ?? null,
+          parapheFourni: Boolean(etape.paraphe),
+          parapheLe: etape.parapheLe ?? null,
+          commentaireFourni: Boolean(etape.commentaire),
+        })),
+    };
+  }
+
+  private filtreVisible(user: AuthUser): Prisma.CourrierWhereInput {
+    if (this.estResponsable(user)) return {};
+    const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
+    return {
+      ...(user.role === Role.CHEF_DEPARTEMENT ? { departementId: user.departementId ?? '__aucun_departement__' } : {}),
+      OR: [
+        { enregistreParId: user.id },
+        ...(etiquettes.length ? [{ circuits: { some: { roleValideur: { in: etiquettes } } } }] : []),
+      ],
+    };
+  }
+
   // ------------------------------------------------------- lecture
 
-  async liste(query: CourrierQueryDto): Promise<Paginated<any>> {
+  async liste(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
+    const scope = this.filtreVisible(user);
     const where: Prisma.CourrierWhereInput = {
+      ...scope,
       ...(query.type ? { type: query.type } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.enregistreParId ? { enregistreParId: query.enregistreParId } : {}),
@@ -68,9 +144,19 @@ export class CourrierService {
     if (query.dateDebut) plage.gte = toDateOnly(query.dateDebut);
     if (query.dateFin) plage.lte = toDateOnly(query.dateFin);
     if (Object.keys(plage).length) {
-      where.OR = [
-        { dateReception: plage },
-        { dateEnvoi: plage },
+      const plageCreation: Prisma.DateTimeFilter = {
+        ...(query.dateDebut ? { gte: toDateOnly(query.dateDebut) } : {}),
+        // createdAt porte une heure : inclure toute la dernière journée.
+        ...(query.dateFin ? { lt: new Date(toDateOnly(query.dateFin).getTime() + 86_400_000) } : {}),
+      };
+      where.AND = [
+        {
+          OR: [
+            { dateReception: plage },
+            { dateEnvoi: plage },
+            { dateReception: null, dateEnvoi: null, createdAt: plageCreation },
+          ],
+        },
       ];
     }
 
@@ -79,19 +165,20 @@ export class CourrierService {
         where,
         include: COURRIER_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.courrier.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
-  async trouver(id: string) {
-    const courrier = await this.prisma.courrier.findUnique({
-      where: { id },
+  async trouver(id: string, user: AuthUser) {
+    const courrier = await this.prisma.courrier.findFirst({
+      where: { id, ...this.filtreVisible(user) },
       include: COURRIER_INCLUDE,
     });
-    if (!courrier) throw new NotFoundException('Courrier introuvable');
+    if (!courrier) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+    this.exigerAcces(courrier, user);
     return courrier;
   }
 
@@ -124,8 +211,15 @@ export class CourrierService {
   // ----------------------------------------------- création + circuit
 
   async creer(dto: CreateCourrierDto, user: AuthUser) {
+    const departementId = user.role === Role.CHEF_DEPARTEMENT ? user.departementId : dto.departementId;
+    if (user.role === Role.CHEF_DEPARTEMENT && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
+      throw new ForbiddenException(I18nContext.current()!.t('courrier.department_scope_required'));
+    }
     const etapes = dto.circuit?.length ? dto.circuit : CIRCUIT_PAR_DEFAUT;
     return this.prisma.$transaction(async (tx) => {
+      if (departementId && !await tx.departement.findUnique({ where: { id: departementId }, select: { id: true } })) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.department_invalid'));
+      }
       const courrier = await tx.courrier.create({
         data: {
           numero: dto.numero,
@@ -133,6 +227,7 @@ export class CourrierService {
           objet: dto.objet,
           expediteur: dto.expediteur ?? null,
           destinataire: dto.destinataire ?? null,
+          departementId: departementId ?? null,
           dateReception: dto.dateReception ? toDateOnly(dto.dateReception) : null,
           dateEnvoi: dto.dateEnvoi ? toDateOnly(dto.dateEnvoi) : null,
           fichier: dto.fichier ?? null,
@@ -164,7 +259,10 @@ export class CourrierService {
           action: 'COURRIER_CREE',
           entite: 'Courrier',
           entiteId: courrier.id,
-          details: `${courrier.numero} — ${courrier.type} — ${courrier.objet}`,
+          details: JSON.stringify({
+            avant: null,
+            apres: this.instantaneAudit(courrier),
+          }),
         },
       });
       return courrier;
@@ -172,38 +270,63 @@ export class CourrierService {
   }
 
   async modifier(id: string, dto: UpdateCourrierDto, user: AuthUser) {
-    const actuel = await this.trouver(id);
-    const maj = await this.prisma.courrier.update({
-      where: { id },
-      data: {
-        objet: dto.objet ?? actuel.objet,
-        expediteur: dto.expediteur ?? actuel.expediteur,
-        destinataire: dto.destinataire ?? actuel.destinataire,
-        dateReception: dto.dateReception
-          ? toDateOnly(dto.dateReception)
-          : actuel.dateReception,
-        dateEnvoi: dto.dateEnvoi ? toDateOnly(dto.dateEnvoi) : actuel.dateEnvoi,
-        fichier: dto.fichier ?? actuel.fichier,
-        typeMime: dto.typeMime ?? actuel.typeMime,
-        tailleKo: dto.tailleKo ?? actuel.tailleKo,
-        numeroReference: dto.numeroReference ?? actuel.numeroReference,
-        paraphe: dto.paraphe ?? actuel.paraphe,
-        notes: dto.notes ?? actuel.notes,
-        statut: dto.statut ?? actuel.statut,
-      },
-      include: COURRIER_INCLUDE,
-    });
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouiller(tx, id);
+      const actuel = await tx.courrier.findFirst({
+        where: { id, ...this.filtreVisible(user) },
+        include: COURRIER_INCLUDE,
+      });
+      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      this.exigerAcces(actuel, user);
+      if (actuel.statut === StatutCourrier.ARCHIVE) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.archive_readonly'));
+      }
+      if (dto.statut !== undefined && dto.statut !== actuel.statut) {
+        throw new ForbiddenException(I18nContext.current()!.t('courrier.status_workflow_required'));
+      }
+      if (dto.departementId !== undefined && dto.departementId !== actuel.departementId) {
+        if (actuel.circuits.some(e => e.statut === StatutCourrier.TRAITE)) {
+          throw new BadRequestException(I18nContext.current()!.t('courrier.department_routing_started'));
+        }
+        if (!dto.departementId || !await tx.departement.findUnique({ where: { id: dto.departementId }, select: { id: true } })) {
+          throw new BadRequestException(I18nContext.current()!.t('courrier.department_invalid'));
+        }
+      }
+      const maj = await tx.courrier.update({
+        where: { id, statut: actuel.statut },
+        data: {
+          ...(dto.departementId !== undefined ? { departementId: dto.departementId } : {}),
+          ...(dto.objet !== undefined ? { objet: dto.objet } : {}),
+          ...(dto.expediteur !== undefined ? { expediteur: dto.expediteur } : {}),
+          ...(dto.destinataire !== undefined ? { destinataire: dto.destinataire } : {}),
+          ...(dto.dateReception !== undefined ? { dateReception: dto.dateReception ? toDateOnly(dto.dateReception) : null } : {}),
+          ...(dto.dateEnvoi !== undefined ? { dateEnvoi: dto.dateEnvoi ? toDateOnly(dto.dateEnvoi) : null } : {}),
+          ...(dto.fichier !== undefined ? { fichier: dto.fichier } : {}),
+          ...(dto.typeMime !== undefined ? { typeMime: dto.typeMime } : {}),
+          ...(dto.tailleKo !== undefined ? { tailleKo: dto.tailleKo } : {}),
+          ...(dto.numeroReference !== undefined ? { numeroReference: dto.numeroReference } : {}),
+          ...(dto.paraphe !== undefined ? { paraphe: dto.paraphe } : {}),
+          ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
+          ...(dto.statut !== undefined ? { statut: dto.statut } : {}),
+        },
+        include: COURRIER_INCLUDE,
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'COURRIER_MODIFIE',
-        entite: 'Courrier',
-        entiteId: id,
-        details: `${maj.numero}`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'COURRIER_MODIFIE',
+          entite: 'Courrier',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(actuel),
+            apres: this.instantaneAudit(maj),
+            champsModifies: Object.keys(dto),
+          }),
+        },
+      });
+      return maj;
     });
-    return maj;
   }
 
   // ------------------------------------------------- circuit / paraphe
@@ -216,7 +339,7 @@ export class CourrierService {
    *     seulement si une nouvelle étape reste en EN_CIRCUIT, sinon TRAITE.
    */
   async parapher(id: string, circuitId: string, dto: ParapherCourrierDto, user: AuthUser) {
-    const courrier = await this.trouver(id);
+    const courrier = await this.trouver(id, user);
     if (courrier.statut !== StatutCourrier.EN_CIRCUIT) {
       throw new BadRequestException(
         `Courrier ${courrier.statut} : seul un courrier EN_CIRCUIT peut être paraphé`,
@@ -226,19 +349,45 @@ export class CourrierService {
       where: { id: circuitId },
     });
     if (!etape || etape.courrierId !== id) {
-      throw new NotFoundException('Étape de circuit introuvable pour ce courrier');
+      throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
     }
 
-    // Le valideur autorisé : ici on ne contraint pas par rôle, on trace qui a
-    // fait quoi. Tout utilisateur connecté peut parapher une étape ouverte
-    // (le `Role` du valideur reste une information documentaire sur l'étape).
+    const rolesEtape: Record<string, Role[]> = {
+      'Secrétariat': [Role.SCOLARITE],
+      'Secrétariat général': [Role.SCOLARITE],
+      'Scolarité': [Role.SCOLARITE],
+      'Archives': [Role.SCOLARITE],
+      'Chef département': [Role.CHEF_DEPARTEMENT],
+      'Chef de département': [Role.CHEF_DEPARTEMENT],
+      'Direction': [Role.DIRECTION],
+      'Recteur': [Role.DIRECTION],
+      'Administration': [Role.ADMIN],
+    };
+    if (!this.estResponsable(user) && !rolesEtape[etape.roleValideur ?? '']?.includes(user.role)) {
+      throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
+    }
+
+    // L'étape peut être signée une seule fois ; le rôle correspondant a déjà
+    // été vérifié avant toute écriture.
     if (etape.statut !== StatutCourrier.EN_CIRCUIT) {
-      throw new BadRequestException("Cette étape a déjà été traitée");
+      throw new BadRequestException(I18nContext.current()!.t('courrier.cette_etape_a_deja_ete_traitee'));
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.circuitCourrier.update({
-        where: { id: circuitId },
+      await this.verrouiller(tx, id);
+      const avant = await tx.courrier.findUnique({ where: { id }, include: COURRIER_INCLUDE });
+      if (!avant) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      this.exigerAcces(avant, user);
+      if (avant.statut !== StatutCourrier.EN_CIRCUIT) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.status_workflow_required'));
+      }
+      const courante = avant.circuits.find(e => e.id === circuitId);
+      if (!courante) throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
+      if (avant.circuits.some(e => e.ordre < courante.ordre && e.statut !== StatutCourrier.TRAITE)) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.previous_step_required'));
+      }
+      const signature = await tx.circuitCourrier.updateMany({
+        where: { id: circuitId, courrierId: id, statut: StatutCourrier.EN_CIRCUIT },
         data: {
           valideurId: user.id,
           statut: StatutCourrier.TRAITE,
@@ -247,6 +396,9 @@ export class CourrierService {
           commentaire: dto.commentaire ?? null,
         },
       });
+      if (signature.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.cette_etape_a_deja_ete_traitee'));
+      }
 
       // S'il reste des étapes non traitées, le courrier reste EN_CIRCUIT.
       // Sinon il passe TRAITE.
@@ -254,31 +406,45 @@ export class CourrierService {
         where: { courrierId: id, statut: StatutCourrier.EN_CIRCUIT },
       });
 
-      if (restantes === 0) {
-        return tx.courrier.update({
-          where: { id },
-          data: {
-            statut: StatutCourrier.TRAITE,
-            traiteParId: user.id,
-          },
-          include: COURRIER_INCLUDE,
-        });
-      }
-      return tx.courrier.findUnique({
-        where: { id },
-        include: COURRIER_INCLUDE,
+      const apres = restantes === 0
+        ? await tx.courrier.update({
+            where: { id },
+            data: {
+              statut: StatutCourrier.TRAITE,
+              traiteParId: user.id,
+            },
+            include: COURRIER_INCLUDE,
+          })
+        : await tx.courrier.findUnique({
+            where: { id },
+            include: COURRIER_INCLUDE,
+          });
+
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'COURRIER_PARAPHE',
+          entite: 'Courrier',
+          entiteId: id,
+          details: JSON.stringify({
+            etape: {
+              id: etape.id,
+              ordre: etape.ordre,
+              roleValideur: etape.roleValideur ?? null,
+            },
+            parapheFourni: Boolean(dto.paraphe),
+            commentaireFourni: Boolean(dto.commentaire),
+            avant: this.instantaneAudit(avant),
+            apres: apres ? this.instantaneAudit(apres) : null,
+            champsModifies: restantes === 0
+              ? ['circuit', 'statut', 'traiteParId']
+              : ['circuit'],
+          }),
+        },
       });
+      return apres;
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'COURRIER_PARAPHE',
-        entite: 'Courrier',
-        entiteId: id,
-        details: `Étape ${etape.ordre} (${etape.roleValideur}) — ${updated?.statut ?? ''}`,
-      },
-    });
     return updated;
   }
 
@@ -291,23 +457,21 @@ export class CourrierService {
    */
   async cloturer(id: string, dto: CloturerCourrierDto, user: AuthUser) {
     if (user.role !== 'ADMIN') {
-      throw new ForbiddenException(
-        "Seul un administrateur peut clôturer un courrier (transition vers les archives)",
-      );
+      throw new ForbiddenException(I18nContext.current()!.t('courrier.seul_un_administrateur_peut_cloturer_un_courrier_transition_'));
     }
-    const courrier = await this.trouver(id);
-    const autorisees: StatutCourrier[] = [
-      StatutCourrier.EN_CIRCUIT,
-      StatutCourrier.TRAITE,
-      StatutCourrier.CLASSE,
-    ];
-    if (!autorisees.includes(courrier.statut)) {
-      throw new BadRequestException(
-        `Courrier ${courrier.statut} : la clôture exige EN_CIRCUIT, TRAITE ou CLASSE`,
-      );
-    }
-
     const updated = await this.prisma.$transaction(async (tx) => {
+      await this.verrouiller(tx, id);
+      const courrier = await tx.courrier.findUnique({ where: { id }, include: COURRIER_INCLUDE });
+      if (!courrier) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      const autorisees: StatutCourrier[] = [
+        StatutCourrier.EN_CIRCUIT,
+        StatutCourrier.TRAITE,
+        StatutCourrier.CLASSE,
+      ];
+      if (!autorisees.includes(courrier.statut)) {
+        throw new BadRequestException(I18nContext.current()!.t('courrier.courrier_courrier_statut_la_cloture_exige_en_circuit_traite_', { args: { 'courrier.statut': courrier.statut } }));
+      }
+
       // Forcer toutes les étapes encore en EN_CIRCUIT vers TRAITE (le courrier
       // est archivé même si une étape n'a pas été signée individuellement).
       await tx.circuitCourrier.updateMany({
@@ -325,8 +489,8 @@ export class CourrierService {
             ? StatutCourrier.CLASSE
             : StatutCourrier.TRAITE;
 
-      return tx.courrier.update({
-        where: { id },
+      const apres = await tx.courrier.update({
+        where: { id, statut: courrier.statut },
         data: {
           statut: statutSuivant,
           ...(statutSuivant === StatutCourrier.TRAITE ? { traiteParId: user.id } : {}),
@@ -334,28 +498,47 @@ export class CourrierService {
         },
         include: COURRIER_INCLUDE,
       });
+
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'COURRIER_CLOTURE',
+          entite: 'Courrier',
+          entiteId: id,
+          details: JSON.stringify({
+            transition: `${courrier.statut}→${apres.statut}`,
+            etapesForcees: true,
+            notesModifiees: Boolean(dto.notes),
+            avant: this.instantaneAudit(courrier),
+            apres: this.instantaneAudit(apres),
+            champsModifies: [
+              'circuit',
+              'statut',
+              ...(statutSuivant === StatutCourrier.TRAITE ? ['traiteParId'] : []),
+              ...(dto.notes ? ['notes'] : []),
+            ],
+          }),
+        },
+      });
+      return apres;
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'COURRIER_CLOTURE',
-        entite: 'Courrier',
-        entiteId: id,
-        details: `${updated.numero} → ${updated.statut}`,
-      },
-    });
     return updated;
   }
 
   // ------------------------------------------------------ impression
 
+  /** Paraphes, corrections et clôtures partagent le même verrou parent. */
+  private verrouiller(tx: Prisma.TransactionClient, id: string) {
+    return tx.$queryRaw`SELECT "id" FROM "Courrier" WHERE "id" = ${id} FOR UPDATE`;
+  }
+
   /**
    * Feuille A4 du courrier. Pas d'en-tête Authorization (window.open) : le jeton
    * est vérifié manuellement dans le contrôleur avant l'appel à ce service.
    */
-  async imprimer(id: string): Promise<string> {
-    const c = await this.trouver(id);
+  async imprimer(id: string, user: AuthUser): Promise<string> {
+    const c = await this.trouver(id, user);
 
     const circuits = c.circuits
       .map(
@@ -424,11 +607,4 @@ export class CourrierService {
   <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
 </body></html>`;
   }
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

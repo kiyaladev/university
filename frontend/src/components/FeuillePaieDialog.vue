@@ -3,9 +3,9 @@
     <q-card style="width: 480px; max-width: 95vw">
       <!-- Création : mois + année, le libellé et la période suivent. -->
       <template v-if="!creee">
-        <q-card-section class="text-h6">Nouvelle feuille de paie</q-card-section>
+        <q-card-section class="text-h6">{{ $t('paiePage.createDialog.title') }}</q-card-section>
         <q-card-section>
-          <div class="section-titre">Période</div>
+          <div class="section-titre">{{ $t('common.fields.period') }}</div>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-6">
               <q-select
@@ -13,7 +13,7 @@
                 :options="optionsMois"
                 outlined
                 dense
-                label="Mois *"
+                :label="$t('paiePage.createDialog.month')"
               />
             </div>
             <div class="col-12 col-sm-6">
@@ -22,23 +22,21 @@
                 :options="optionsAnnees"
                 outlined
                 dense
-                label="Année *"
+                :label="$t('paiePage.createDialog.year')"
               />
             </div>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            La feuille « {{ libelle }} » couvre du 1er au dernier jour du mois, et
-            se remplit ensuite d'un clic : les heures contrôlées depuis UniPrésence
-            sont agrégées ligne par ligne.
+            {{ $t('paiePage.createDialog.periodHint', { label: libelle }) }}
           </div>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
-            label="Créer la feuille"
+            :label="$t('paiePage.createDialog.create')"
             :loading="enregistrement"
             :disable="!form.mois || !form.annee"
             @click="creer"
@@ -56,18 +54,17 @@
             </span>
           </div>
           <div class="q-pt-sm">
-            <div class="text-caption text-grey-7">Période</div>
+            <div class="text-caption text-grey-7">{{ $t('common.fields.period') }}</div>
             <div class="text-body1">
-              {{ dateLisible(creee.dateDebut) }} — {{ dateLisible(creee.dateFin) }}
+              {{ dateLisible(creee.dateDebut) }} – {{ dateLisible(creee.dateFin) }}
             </div>
           </div>
           <div>
-            <div class="text-caption text-grey-7">Montant total</div>
-            <div class="text-h6">{{ montantLisible(creee.montantTotal) }} GNF</div>
+            <div class="text-caption text-grey-7">{{ $t('paiePage.card.totalAmount') }}</div>
+            <div class="text-h6">{{ montantLisible(creee.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
           </div>
           <div class="text-caption text-grey-7">
-            La feuille est en brouillon : recalculez-la pour agréger les heures
-            contrôlées, puis faites-la valider par la direction.
+            {{ $t('paiePage.createDialog.draftHint') }}
           </div>
         </q-card-section>
 
@@ -77,10 +74,10 @@
             unelevated
             icon="calculate"
             no-caps
-            label="Recalculer maintenant"
+            :label="$t('paiePage.createDialog.recalculateNow')"
             @click="emit('calculer', creee)"
           />
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </template>
     </q-card>
@@ -90,24 +87,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { LIBELLE_STATUT_PAIE, dateLisible, montantLisible } from '../utils/libelles';
 import type { FeuillePaie } from '../types';
-
-const MOIS = [
-  'Janvier',
-  'Février',
-  'Mars',
-  'Avril',
-  'Mai',
-  'Juin',
-  'Juillet',
-  'Août',
-  'Septembre',
-  'Octobre',
-  'Novembre',
-  'Décembre',
-];
 
 const props = defineProps<{
   modelValue: boolean;
@@ -121,12 +104,15 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const creee = ref<FeuillePaie | null>(null);
 
 const form = ref({ mois: null as number | null, annee: null as number | null });
 
-const optionsMois = MOIS.map((label, i) => ({ label, value: i + 1 }));
+const optionsMois = computed(() =>
+  Array.from({ length: 12 }, (_, i) => ({ label: t(`common.months.${i + 1}`), value: i + 1 })),
+);
 
 /** Années présentes, les deux précédentes et l'année courante. */
 const optionsAnnees = computed(() => {
@@ -144,7 +130,7 @@ const optionsAnnees = computed(() => {
 
 const libelle = computed(() => {
   if (!form.value.mois) return '…';
-  return `${MOIS[form.value.mois - 1]} ${form.value.annee ?? '…'}`;
+  return `${t(`common.months.${form.value.mois}`)} ${form.value.annee ?? '…'}`;
 });
 
 watch(
@@ -161,10 +147,10 @@ async function creer() {
   try {
     const { data } = await api.post('/feuilles-paie', form.value);
     creee.value = data;
-    $q.notify({ type: 'positive', message: `Feuille « ${data.libelle} » créée` });
+    $q.notify({ type: 'positive', message: t('paiePage.createDialog.created', { label: data.libelle }) });
     emit('cree', data);
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Création impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.createDialog.createFailed') });
   } finally {
     enregistrement.value = false;
   }

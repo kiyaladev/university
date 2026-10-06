@@ -10,6 +10,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutAttestation } from '@prisma/client';
+import { echapper } from '../../common/utils';
 
 export interface CarteImprimable {
   id: string;
@@ -27,14 +28,6 @@ export interface CarteImprimable {
     dateNaissance?: Date | string | null;
     lieuNaissance?: string | null;
   } | null;
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function dateFr(v: Date | string | null | undefined): string {

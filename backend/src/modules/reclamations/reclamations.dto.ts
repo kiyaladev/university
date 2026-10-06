@@ -71,7 +71,7 @@ export class PosterMessageDto {
   /** Pièce jointe (data-URL ou chemin interne), facultative. */
   @IsOptional()
   @IsString()
-  @MaxLength(2_000_000)
+  @MaxLength(500_000)
   @Matches(/^(data:[a-z0-9.-]+\/[a-z0-9.+-]+;base64,|https?:\/\/|[\w./-]+\.\w{2,5}$)/i, {
     message: 'Pièce jointe invalide',
   })

@@ -1,0 +1,20 @@
+{
+  "election_introuvable": "Élection introuvable",
+  "resultats_apres_cloture": "Les résultats ne sont accessibles qu’après la clôture du scrutin.",
+  "candidat_introuvable_sur_cette_election": "Candidat introuvable sur cette élection",
+  "le_scrutin_est_clos": "Le scrutin est clos.",
+  "bulletin_vide_selectionnez_au_moins_un_candidat": "Bulletin vide : sélectionnez au moins un candidat.",
+  "le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois": "Le même candidat ne peut pas être choisi deux fois.",
+  "vous_avez_deja_depose_un_bulletin_pour_cette_election": "Vous avez déjà déposé un bulletin pour cette élection.",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "la_cloture_doit_suivre_l_ouverture": "La clôture doit suivre l'ouverture.",
+  "le_scrutin_n_est_pas_ouvert": "Le scrutin n'est pas ouvert.",
+  "l_ouverture_du_scrutin_n_est_pas_encore_effective": "L'ouverture du scrutin n'est pas encore effective.",
+  "au_moins_un_candidat_n_appartient_pas_a_cette_election": "Au moins un candidat n'appartient pas à cette élection.",
+  "une_election_publiee_ne_se_modifie_plus_creez_en_une_nouvell": "Une élection publiée ne se modifie plus : créez-en une nouvelle.",
+  "declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin": "Déclarez au moins un candidat avant d'ouvrir le scrutin.",
+  "l_election_est_election_statut_seule_une_ouverte_peut_etre_c": "L'élection est {election.statut} : seule une OUVERTE peut être close.",
+  "l_election_est_election_statut_seule_une_close_peut_etre_pro": "L'élection est {election.statut} : seule une CLOSE peut être proclamée.",
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scruti": "Les candidats ne se déclarent qu'avant l'ouverture du scrutin.",
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Les candidats ne peuvent se déclarer qu’avant l’ouverture du scrutin."
+}

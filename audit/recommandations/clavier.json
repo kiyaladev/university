@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-03T07:38:41.789Z",
+  "checks": [
+    "Connexion réalisable au clavier",
+    "Dialogue : focus contenu, fermeture Échap, retour au déclencheur",
+    "Cinq rubriques ; dépliage au clavier",
+    "Recomposition à 320 px"
+  ]
+}

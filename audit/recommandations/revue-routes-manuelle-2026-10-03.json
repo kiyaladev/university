@@ -1,0 +1,466 @@
+{
+  "date": "2026-10-03",
+  "etat": "Les 50 candidats heuristiques sont classés. Les 190 routes GET ont été relues par familles sur les 32 modules ; les constats confirmés de cette passe sont corrigés et couverts par des tests.",
+  "methode": "Relecture des gardes de contrôleur, des services et des clauses Prisma des routes ayant un périmètre propriétaire ou métier ; chaque correction est couverte par un test de requête filtrée.",
+  "corrige": [
+    {
+      "route": "GET /documents/:id",
+      "risque": "Les métadonnées d’un document privé étaient chargées avant le contrôle de visibilité.",
+      "mesure": "La lecture filtre `public: true` dans `where` pour les utilisateurs hors fonds complet ; le personnel autorisé conserve le fonds complet.",
+      "preuve": "backend/src/modules/bibliotheque/access.spec.ts"
+    },
+    {
+      "route": "GET /travaux-encadres/:id",
+      "risque": "Le dossier et les fiches étudiant/encadrant complètes étaient chargés avant de vérifier le propriétaire ; celles-ci contiennent coordonnées et secrets biométriques.",
+      "mesure": "La requête filtre l’identifiant étudiant ou encadrant avant d’inclure les relations ; celles-ci ne sélectionnent maintenant que l’identité utile. Les identifiants tiers et absents répondent tous deux NotFound.",
+      "preuve": "backend/src/modules/stages/stages.service.spec.ts"
+    },
+    {
+      "route": "GET /enseignants/:id",
+      "risque": "Le chef de département chargeait une fiche hors département avant de la masquer.",
+      "mesure": "La requête filtre département et identifiant et conserve la projection minimale.",
+      "preuve": "backend/src/modules/referentiel/enseignants.spec.ts"
+    },
+    {
+      "route": "GET /matieres/:id",
+      "risque": "Le chef de département chargeait une matière hors périmètre avant le contrôle.",
+      "mesure": "La requête filtre département et identifiant ; les lignes absentes et hors périmètre donnent NotFound.",
+      "preuve": "backend/src/modules/referentiel/matieres.access.spec.ts"
+    },
+    {
+      "route": "GET /elections",
+      "risque": "La liste des scrutins proclamés renvoyait les identifiants internes et matricules associés aux candidatures à tout utilisateur non gestionnaire autorisé à consulter les résultats.",
+      "mesure": "Les non-gestionnaires restent limités aux scrutins proclamés et ne reçoivent que la projection publique des candidats ; les gestionnaires conservent les relations complètes.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/:id",
+      "risque": "Le détail complet et les candidatures d’un brouillon étaient chargés avant le contrôle du statut visible à l’électeur.",
+      "mesure": "Les non-gestionnaires interrogent seulement les élections proclamées ou ouvertes dans leur fenêtre de vote et ne reçoivent qu’une projection publique des candidats ; le personnel gestionnaire conserve le détail complet.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/actives",
+      "risque": "La liste des scrutins ouverts renvoyait les identifiants internes et matricules associés aux candidatures.",
+      "mesure": "La requête sélectionne seulement le nom, prénom, photo, programme et ordre utiles au vote.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/:id/resultats",
+      "risque": "La relation complète des candidatures était chargée avant le contrôle de clôture.",
+      "mesure": "Le service vérifie d’abord un instantané étroit de l’élection ; aucun candidat ni vote n’est lu avant la clôture. Après clôture, les résultats chargent les noms et voix sans matricules ni relations de personne.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /tickets/:id",
+      "risque": "Le ticket tiers était chargé avant le contrôle du déclarant.",
+      "mesure": "La requête Prisma borne maintenant le ticket à son propriétaire pour les rôles ordinaires.",
+      "preuve": "backend/src/modules/helpdesk/helpdesk.access.spec.ts"
+    },
+    {
+      "route": "GET /inscriptions/:id et GET /inscriptions/:id/attestation-inscription",
+      "risque": "Les dossiers complets d’un autre étudiant ou d’un autre département étaient chargés avant le contrôle propriétaire/département.",
+      "mesure": "La requête directe filtre maintenant l’étudiant ou le département dans `where` avant d’inclure paiements et identité ; une cible absente ou hors périmètre répond NotFound.",
+      "preuve": "backend/src/modules/inscription/inscription.service.spec.ts et DocumentScope sur le certificat"
+    },
+    {
+      "route": "GET /soutenances",
+      "risque": "Le calendrier renvoyait les fiches complètes de l’étudiant, de l’encadrant et du président, y compris téléphone, adresse, compte et champs biométriques.",
+      "mesure": "Le calendrier utilise les mêmes projections minimales que le dossier de stage ; chaque personne liée ne renvoie que son nom et ses identifiants d’affichage nécessaires.",
+      "preuve": "backend/src/modules/stages/stages.service.spec.ts"
+    },
+    {
+      "route": "GET /travaux-encadres/:id/fiche",
+      "risque": "La fiche A4 chargeait les fiches étudiantes et enseignantes complètes avant de ne rendre qu’une partie de leurs champs.",
+      "mesure": "La requête de document sélectionne uniquement le matricule et le nom de l’étudiant, le nom et le grade de l’encadrant, et les champs de soutenance imprimés.",
+      "preuve": "backend/src/modules/stages/fiche.service.spec.ts"
+    },
+    {
+      "route": "GET /feuilles-paie et GET /feuilles-paie/:id",
+      "risque": "Les lignes de paie incluaient la fiche complète de l’enseignant, y compris coordonnées et champs biométriques sans rapport avec la paie.",
+      "mesure": "La réponse ne sélectionne que l’identifiant, matricule, nom, prénom et statut nécessaires à l’écran et aux documents de paie.",
+      "preuve": "backend/src/modules/paie/paie.service.spec.ts"
+    },
+    {
+      "route": "GET /controles et GET /controles/:id",
+      "risque": "Les rôles terrain recevaient les signatures, coordonnées, observations libres et scores biométriques du contrôle, ainsi que les fiches enseignant complètes dans les relations.",
+      "mesure": "La requête Prisma applique une projection réduite aux rôles terrain et réduit les relations enseignant, matière et promotion pour tous les rôles.",
+      "preuve": "backend/src/modules/controle/controle.service.spec.ts"
+    },
+    {
+      "route": "GET /rapports/fiche-enseignant/:id et GET /rapports/ma-fiche",
+      "risque": "La fiche de présence renvoyait et chargeait la fiche enseignant complète, avec coordonnées, rémunération et secrets biométriques inutiles au relevé.",
+      "mesure": "La requête ne sélectionne que l’identité, le grade, le statut et le département nécessaires ; aucun secret ni taux horaire n’est retourné.",
+      "preuve": "backend/src/modules/rapports/rapports.service.spec.ts"
+    },
+    {
+      "route": "GET /utilisateurs et GET /utilisateurs/:id",
+      "risque": "La suppression du hash password laissait fuiter les compteurs et dates de verrouillage ; la fiche complète était chargée pour chaque compte.",
+      "mesure": "Listes et accès directs utilisent une sélection d’identité minimale ; les réponses excluent les secrets et champs de sécurité, et une réinitialisation admin coupe les sessions existantes.",
+      "preuve": "backend/src/modules/referentiel/users.spec.ts"
+    },
+    {
+      "route": "GET /formations/:id/inscriptions",
+      "risque": "Le registre chargé pour les gestionnaires incluait toute la relation paiement, notamment le téléphone, le nom du payeur, l’identifiant de transaction et les motifs libres.",
+      "mesure": "Le paiement est projeté sur l’identifiant, la référence, le montant, la devise et le statut affichés ou requis par le traitement.",
+      "preuve": "backend/src/modules/formations/formations.service.spec.ts"
+    },
+    {
+      "route": "GET /recettes et GET /recettes/:id",
+      "risque": "Les recettes incluaient toute la fiche paiement, avec téléphone, nom du payeur, identifiant opérateur et motif libres inutiles à la liste de régie.",
+      "mesure": "La relation imbriquée sélectionne seulement identifiant, référence, montant, devise et statut du paiement.",
+      "preuve": "backend/src/modules/recettes/recettes.service.spec.ts"
+    },
+    {
+      "route": "GET /seances, GET /seances/journee et GET /seances/:id",
+      "risque": "Les vues de gestion incluaient toute la fiche enseignant associée à chaque séance, dont coordonnées, rémunération et champs biométriques.",
+      "mesure": "La relation ne sélectionne que l’identifiant, le nom, le prénom et le département requis ; les lectures terrain conservent aussi leur projection sans pièce médicale, signature ou géolocalisation.",
+      "preuve": "backend/src/modules/planification/seances.service.spec.ts"
+    },
+    {
+      "route": "GET /attestations et GET /attestations/:id",
+      "risque": "Le registre chargeait toute l’inscription associée et les fiches complètes de promotion et filière pour chaque ligne.",
+      "mesure": "Le registre et les réponses de gestion ne chargent plus que le numéro d’inscription, le libellé de l’année et les noms de promotion/filière nécessaires à l’écran et au document.",
+      "preuve": "backend/src/modules/attestations/attestations.service.spec.ts"
+    },
+    {
+      "route": "GET /courrier/:id",
+      "risque": "Le détail chargeait le courrier et son circuit avant de vérifier si l’utilisateur était auteur, responsable ou valideur concerné.",
+      "mesure": "La lecture directe ajoute maintenant au `where` l’identifiant et le périmètre auteur/circuit. Les responsables gardent leur accès complet ; l’absence et le dossier hors périmètre répondent NotFound.",
+      "preuve": "backend/src/modules/courrier/courrier.service.spec.ts"
+    },
+    {
+      "route": "GET /etudiants et GET /etudiants/:id",
+      "risque": "Le chef était limité aux étudiants de son département mais recevait leur fiche complète, y compris adresse, date de naissance et historique de paiements imbriqué.",
+      "mesure": "Liste et accès direct du chef utilisent maintenant une sélection bornée au tableau départemental : identité et contacts affichés, compte lié, effectif d’inscriptions et promotion récente. Les enseignants gardent leur sélection sans contacts ; les étudiants restent limités à leur propre fiche.",
+      "preuve": "backend/src/modules/inscription/etudiants.service.spec.ts"
+    },
+    {
+      "route": "GET /portail/resultats",
+      "risque": "Le filtre étudiant/année/délibération validée était correct et la réponse déjà remappée, mais la requête chargeait les relations année et promotion complètes.",
+      "mesure": "La projection Prisma ne charge que la ligne de résultat, session, libellé de promotion et libellé d’année ; le filtre reste attaché à l’identifiant étudiant de la session et aux délibérations validées.",
+      "preuve": "backend/src/modules/portail/portail.service.spec.ts"
+    }
+  ],
+  "alertesClassees": [
+    {
+      "routes": [
+        "GET /parametres/pointage"
+      ],
+      "decision": "La route exige un rôle métier et ne renvoie que `ATTESTATION_OBLIGATOIRE`, sans seuils internes."
+    },
+    {
+      "routes": [
+        "GET /equipements",
+        "GET /equipements/:id"
+      ],
+      "decision": "L’inventaire est disponible aux utilisateurs connectés ; la projection détail omet le code QR de résolution."
+    },
+    {
+      "routes": [
+        "GET /annees",
+        "GET /annees/active",
+        "GET /annees/:id"
+      ],
+      "decision": "Lecture de références calendaires sans données personnelles ; l’authentification reste imposée par le garde global."
+    },
+    {
+      "routes": [
+        "GET /departements",
+        "GET /departements/:id",
+        "GET /filieres",
+        "GET /filieres/:id",
+        "GET /promotions",
+        "GET /promotions/:id"
+      ],
+      "decision": "Lecture réservée aux rôles internes et aux rôles académiques ; aucun rôle étudiant. Ces références restent globales dans l’installation mono-établissement actuelle."
+    },
+    {
+      "routes": [
+        "GET /attestations/:id",
+        "GET /attestations/:id/verifications",
+        "GET /badges/:id",
+        "GET /documents/plagiat/:id",
+        "GET /cartes-etudiantes/:id",
+        "GET /residences/:id",
+        "GET /chambres/:id",
+        "GET /attributions-logement/:id",
+        "GET /feuilles-paie/:id",
+        "GET /patrimoine/equipements/:id",
+        "GET /patrimoine/equipements/:id/reparations",
+        "GET /utilisateurs/:id",
+        "GET /resto/portefeuille/:etudiantId",
+        "GET /tirage/:id"
+      ],
+      "decision": "Ces détails de dossiers internes sont limités dans les contrôleurs aux rôles de gestion concernés (ADMIN, SCOLARITE, DIRECTION, ou enseignant/direction pour le plagiat). L’accès transversal est nécessaire aux tâches de registre, paie, régie, logement, restauration, examens et administration ; aucun rôle étudiant ou compte sans rôle correspondant n’y accède."
+    },
+    {
+      "routes": [
+        "POST /auth/login",
+        "GET /auth/me",
+        "GET /portail/me",
+        "GET /elections/:id/mon-vote"
+      ],
+      "decision": "Ces réponses sont rattachées au compte courant : login et profil filtrent le User par son identité, ne renvoient que les champs d’identité, rôle, département et identifiant enseignant utiles, et excluent compteurs de verrouillage et profil enseignant complet ; dossier étudiant filtré par etudiantId, et état de vote filtré par electeurId (avec compatibilité pour les anciens bulletins de l’étudiant)."
+    },
+    {
+      "routes": [
+        "GET /documents-demande/tarifs"
+      ],
+      "decision": "Catalogue de prix sans dossier étudiant ni historique de paiement ; lecture disponible aux utilisateurs authentifiés pour préparer une demande."
+    },
+    {
+      "routes": [
+        "GET /enseignants",
+        "GET /matieres",
+        "GET /salles",
+        "GET /salles/:id"
+      ],
+      "decision": "Les listes de référentiel appliquent le périmètre départemental au chef de département et réduisent les projections pour les rôles académiques ; les coordonnées et jetons QR de salle restent réservés à ADMIN/SCOLARITE."
+    },
+    {
+      "routes": [
+        "GET /travaux-encadres"
+      ],
+      "decision": "Le service refuse les rôles hors périmètre, filtre les étudiants sur leur etudiantId et les enseignants sur leur enseignantId ; les pilotes du module ont la vue complète. Les fiches étudiant et enseignant imbriquées ne renvoient que les noms et identifiants utiles, jamais coordonnées, QR ou biométrie."
+    },
+    {
+      "routes": [
+        "GET /tickets"
+      ],
+      "decision": "Le registre filtre les rôles ordinaires sur utilisateurId ; seuls ADMIN, SCOLARITE et DIRECTION peuvent consulter le registre complet."
+    },
+    {
+      "routes": [
+        "GET /vod/recherche",
+        "GET /vod",
+        "GET /vod/:id"
+      ],
+      "decision": "Les trois lectures passent par lectureWhere : l’étudiant ne voit que les cours en ligne publics ou liés à son inscription, l’enseignant ses cours propres/affectés et les cours publics en ligne, et les gestionnaires leur fonds autorisé."
+    },
+    {
+      "routes": [
+        "GET /attestations/verifier",
+        "GET /badges/verifier",
+        "GET /cartes-etudiantes/verifier"
+      ],
+      "decision": "Vérifications publiques limitées en débit et renvoyant les champs utiles à l’authenticité ; listes et détails internes sont protégés par rôle. Les lectures de cartes excluent le hash NIP, et les réponses publiques omettent les coordonnées, jetons QR et identifiants internes."
+    },
+    {
+      "routes": [
+        "GET /courrier",
+        "GET /courrier/dashboard"
+      ],
+      "decision": "La liste filtre auteur et étapes du circuit avant lecture ; le tableau de bord global est réservé à ADMIN et DIRECTION."
+    },
+    {
+      "routes": [
+        "GET /documents-demande/mes",
+        "GET /documents-demande/dashboard"
+      ],
+      "decision": "La vue `mes` force l’identifiant étudiant issu de la session avant liste et comptage ; le tableau de bord agrège seulement les volumes et recettes et reste réservé à ADMIN, SCOLARITE et DIRECTION."
+    },
+    {
+      "routes": [
+        "GET /parametres"
+      ],
+      "decision": "Lecture réservée à ADMIN ; les valeurs sont les règles de présence configurables et le nom de l’établissement, sans identifiant ni secret fournisseur."
+    },
+    {
+      "routes": [
+        "GET /inscription-publique/annees",
+        "GET /inscription-publique/annees/:anneeId/promotions",
+        "GET /frais"
+      ],
+      "decision": "Les routes publiques ne présentent que les années non clôturées, les promotions d’une année ouverte et les tarifs publics, sans données d’étudiants."
+    },
+    {
+      "routes": [
+        "GET /paiements"
+      ],
+      "decision": "Liste nominative limitée à ADMIN, SCOLARITE et DIRECTION ; relations étudiant et inscription projetées sur identité d’affichage, référence et statut/montant requis."
+    },
+    {
+      "routes": [
+        "GET /notifications",
+        "GET /notifications/stats",
+        "GET /notifications/deliberations",
+        "GET /notifications/destinataires/estimes",
+        "GET /notifications/stats/repartition"
+      ],
+      "decision": "Historique nominatif et téléphone limités à ADMIN, DIRECTION et SCOLARITE ; compteurs et estimations renvoient des agrégats ; les délibérations sont remappées sur les libellés et nombres affichés."
+    },
+    {
+      "route": "GET /resto/carte/:reference",
+      "risque": "Une route QR publique pourrait révéler ou modifier un portefeuille à partir d’une référence devinée.",
+      "mesure": "Le service vérifie manuellement un JWT de poste de guichet actif et son rôle avant la recherche étudiant ; les réponses ne contiennent que matricule, nom, prénom, indicateur de carte et solde, jamais le jeton QR ni le téléphone. La route est limitée à 60 requêtes/minute et renvoie Cache-Control: no-store. Les lectures concurrentes conservent le premier QR ; le portefeuille est trouvé ou créé avec un upsert atomique.",
+      "preuve": "backend/src/modules/resto/resto.read.spec.ts, backend/src/modules/resto/resto.concurrency.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts"
+    },
+    {
+      "routes": [
+        "GET /creneaux",
+        "GET /creneaux/:id",
+        "GET /creneaux/emploi-du-temps"
+      ],
+      "decision": "La liste, le calendrier et le détail appliquent le périmètre enseignant ou départemental dans la requête Prisma avant lecture. Un étudiant ne voit que les créneaux de son inscription validée dans l’année active, avec une projection réduite aux champs de l’emploi du temps. Les mutations restent réservées au personnel planificateur et aux contrôleurs.",
+      "preuve": "backend/src/modules/planification/creneaux.service.spec.ts"
+    },
+    {
+      "route": "GET /attestation/enseignants/:id/moyens",
+      "risque": "Un contrôleur pouvait sonder l’existence d’un PIN et d’une empreinte pour tout enseignant, sans séance affectée ni journal d’accès.",
+      "mesure": "La lecture exige maintenant une séance non annulée du jour, affectée à l’enseignant et au contrôleur (ou à son département) ; seuls les enseignants actifs sont recherchés et la consultation est journalisée sans donnée biométrique.",
+      "preuve": "backend/src/modules/attestation/attestation.service.spec.ts"
+    },
+    {
+      "routes": ["GET /documents", "GET /documents/populaires", "GET /documents/recherche"],
+      "risque": "Les réponses publiques incluaient matricules, identifiants internes d’étudiants/enseignants et informations du déposant, inutiles à la vitrine publique.",
+      "mesure": "Les projections publiques retirent les relations étudiant et déposant, les matricules et clés personnelles ; elles ne gardent que le nom de l’enseignant et le nom du département affichables.",
+      "preuve": "backend/src/modules/bibliotheque/access.spec.ts"
+    },
+    {
+      "route": "GET /affectations",
+      "risque": "Les branches enseignant, chef et contrôleur perdaient les filtres d’année, promotion et matière, et le contrôleur supprimait également la recherche.",
+      "mesure": "Les filtres facultatifs et la recherche sont combinés au périmètre obligatoire du demandeur.",
+      "preuve": "backend/src/modules/referentiel/affectations.spec.ts"
+    },
+    {
+      "route": "GET /affectations/:id",
+      "risque": "Un enseignant recevait 403 pour une affectation d’un tiers et pouvait ainsi confirmer son existence.",
+      "mesure": "Les identifiants absents et hors périmètre répondent tous deux 404.",
+      "preuve": "backend/src/modules/referentiel/affectations.spec.ts"
+    },
+    {
+      "route": "GET /patrimoine/dashboard?anneeId=…",
+      "risque": "Le filtre d’année était inopérant et les agrégats présentaient l’inventaire toutes années confondues.",
+      "mesure": "L’année est résolue et les acquisitions sont filtrées par ses dates de début et de fin ; un identifiant inconnu répond 404.",
+      "preuve": "backend/src/modules/patrimoine/patrimoine.service.spec.ts"
+    },
+    {
+      "route": "GET /reservations/calendrier",
+      "risque": "Une période sans borne pouvait demander plusieurs millions de jours, et réserver de la mémoire pour le calendrier complet.",
+      "mesure": "La plage est limitée à 93 jours avant toute requête Prisma ; une plage plus longue répond 400. Les séances chargées sont aussi filtrées selon l’enseignant ou le département du demandeur.",
+      "preuve": "backend/src/modules/reservations/reservations.service.spec.ts"
+    },
+    {
+      "routes": ["GET /rapports/registre", "GET /rapports/export/registre"],
+      "risque": "Le champ observation libre du contrôleur était renvoyé aux chefs et contrôleurs.",
+      "mesure": "La requête Prisma et le résultat excluent l’observation pour ces rôles ; ADMIN, DIRECTION et SCOLARITE conservent l’accès.",
+      "preuve": "backend/src/modules/rapports/rapports.service.spec.ts et backend/src/modules/rapports/export.service.spec.ts"
+    },
+    {
+      "routes": ["GET /rapports/*", "GET /impression/{registre,fiche-enseignant,etat-paiement}", "GET /export/*"],
+      "risque": "Sans période fournie, les rapports chargeaient toutes les séances ; une plage explicite pouvait couvrir un historique arbitrairement long.",
+      "mesure": "Les rapports utilisent une période par défaut de 30 jours, valident l’ordre des bornes et refusent une plage de plus de 366 jours avant la requête Prisma.",
+      "preuve": "backend/src/modules/rapports/rapports.service.spec.ts"
+    },
+    {
+      "route": "GET /justificatifs",
+      "risque": "La relation enseignant renvoyait contacts et données de paie ou biométriques aux agents de gestion.",
+      "mesure": "La projection de l’enseignant est limitée à l’identité d’affichage et au département.",
+      "preuve": "backend/src/modules/justificatifs/justificatifs.service.spec.ts"
+    },
+    {
+      "route": "GET /controles/audit",
+      "risque": "La borne dateFin à minuit omettait presque toute la dernière journée.",
+      "mesure": "La date de fin est inclusive jusqu’à 23:59:59.999.",
+      "preuve": "backend/src/modules/controle/controle.service.spec.ts"
+    },
+    {
+      "route": "GET /cartes-etudiantes",
+      "risque": "Le DTO TypeScript seul ne déclenchait pas la validation et pageSize/all permettaient une lecture arbitrairement large.",
+      "mesure": "Un DTO class-validator valide l’identifiant et le service impose une pagination plafonnée à 1 000 lignes.",
+      "preuve": "backend/src/modules/carte-etudiante/carte-etudiante.service.spec.ts"
+    },
+    {
+      "routes": ["GET paginés avec le paramètre all=1"],
+      "risque": "Le raccourci de liste déroulante retirait skip/take et pouvait charger le registre complet en une requête.",
+      "mesure": "Le mode all reste disponible mais limite chaque requête à 1 000 lignes maximum ; total et pageSize indiquent si la suite doit être paginée. pageSize est aussi borné côté service et validé côté DTO.",
+      "preuve": "backend/src/common/crud.service.spec.ts"
+    },
+    {
+      "route": "GET /formations/dashboard",
+      "risque": "Le tableau de bord chargeait chaque paiement réussi en mémoire pour recalculer les totaux.",
+      "mesure": "Les totaux par formation sont calculés par agrégation SQL groupée.",
+      "preuve": "backend/src/modules/formations/formations.service.spec.ts"
+    },
+    {
+      "route": "GET /formations/:id/inscriptions",
+      "risque": "Le registre chargeait sans pagination toutes les inscriptions et leurs paiements pour une formation.",
+      "mesure": "Pagination Prisma, total séparé et plafond de 1 000 lignes par page ; `all=1` reste borné.",
+      "preuve": "backend/src/modules/formations/formations.service.spec.ts"
+    },
+    {
+      "routes": ["GET /documents", "GET /documents/populaires", "GET /documents/recherche", "GET /documents/:id"],
+      "risque": "Les lectures de métadonnées matérialisaient le data-url du fichier (jusqu’à 8 Mo) et parfois le texte intégral avant de retirer ces colonnes en mémoire.",
+      "mesure": "Les colonnes `fichier` et `contenuTexte` sont omises dans les listes, détails et réhydratations FTS ; seule la route de téléchargement charge `fichier`.",
+      "preuve": "backend/src/modules/bibliotheque/access.spec.ts"
+    },
+    {
+      "route": "GET /vod/:id/stats",
+      "risque": "Un enseignant distinguait une VOD absente d’une VOD existante appartenant à un autre auteur (404/403).",
+      "mesure": "La lecture filtre l’identifiant et le créateur dans la même requête ; les deux situations répondent NotFound.",
+      "preuve": "backend/src/modules/vod/vod.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/:id",
+      "risque": "Le nombre de bulletins d’un scrutin ouvert était visible avant la clôture.",
+      "mesure": "La projection électeur conserve le nombre de candidats mais omet le compteur de votes jusqu’à la route résultats après clôture.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/:id/resultats",
+      "risque": "Un identifiant absent et un scrutin non clôturé avaient des réponses différentes, révélant l’existence d’un scrutin invisible.",
+      "mesure": "Un scrutin absent ou non clôturé répond désormais NotFound avec le même message.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /elections/actives",
+      "risque": "La liste des scrutins ouverts chargeait sans plafond tous les candidats associés.",
+      "mesure": "La liste conserve son tri par clôture et limite la lecture à 1 000 scrutins.",
+      "preuve": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "route": "GET /examens/:id/scans",
+      "risque": "Le registre de scans, alimenté aussi par des scans rejetés, était renvoyé sans pagination.",
+      "mesure": "Pagination du registre avec plafond de 1 000 lignes et total distinct.",
+      "preuve": "backend/src/modules/examens/examens.service.spec.ts"
+    },
+    {
+      "route": "GET /patrimoine/dashboard",
+      "risque": "Le tableau de bord chargeait chaque équipement actif et calculait ses indicateurs en mémoire.",
+      "mesure": "Totaux, réparations et répartitions par catégorie/département sont agrégés en base ; seuls les libellés des groupes résultants sont chargés.",
+      "preuve": "backend/src/modules/patrimoine/patrimoine.service.spec.ts"
+    },
+    {
+      "route": "GET /rectorat/dashboard",
+      "risque": "Le calcul des équipements obsolètes lisait toutes les acquisitions actives pour filtrer ensuite en mémoire.",
+      "mesure": "Le compte d’obsolescence est calculé en SQL ; les bilans par catégorie et département utilisent `groupBy`.",
+      "preuve": "backend/src/modules/rectorat/rectorat.service.ts et backend/src/modules/rectorat/rectorat.service.spec.ts"
+    },
+    {
+      "route": "GET /creneaux/emploi-du-temps",
+      "risque": "L’emploi du temps lisait tous les créneaux sans semaine de référence, puis filtrait les périodes en mémoire.",
+      "mesure": "Le calendrier cible une semaine (celle demandée ou la semaine courante), filtre les périodes en base et plafonne à 2 000 créneaux.",
+      "preuve": "backend/src/modules/planification/creneaux.service.spec.ts"
+    },
+    {
+      "routes": ["GET /rapports/fiche-enseignant/:id", "GET /rapports/ma-fiche"],
+      "risque": "Les fiches de présence renvoyaient les observations libres du contrôleur aux rôles chef de département et enseignant.",
+      "mesure": "Les observations sont exclues de la requête et de la réponse sauf pour ADMIN, DIRECTION et SCOLARITE.",
+      "preuve": "backend/src/modules/rapports/rapports.service.spec.ts"
+    },
+    {
+      "routes": ["GET /justificatifs", "GET /seances", "GET /seances/journee"],
+      "risque": "Les listes de gestion pouvaient matérialiser des centaines de pièces médicales encodées dans leurs réponses.",
+      "mesure": "Les pièces de justificatif sont plafonnées à 500 Ko à l’entrée et omises des listes ; le détail dédié conserve le téléchargement. Les séances excluent aussi la pièce des relations imbriquées.",
+      "preuve": "backend/src/modules/justificatifs/justificatifs.service.spec.ts et backend/src/modules/planification/seances.service.spec.ts"
+    },
+    {
+      "routes": ["GET /reclamations", "GET /reclamations/:id", "POST /reclamations/:id/messages"],
+      "risque": "La liste chargeait tous les messages et pièces jointes des fils ; les fils pouvaient croître sans borne ni limite de débit.",
+      "mesure": "La liste ne charge que le compteur, le détail garde les 20 messages les plus récents, les pièces jointes sont plafonnées à 500 Ko, un fil à 100 messages et le dépôt à 30 requêtes par minute.",
+      "preuve": "backend/src/modules/reclamations/reclamations.service.spec.ts"
+    }
+  ],
+  "reste": "Les 190 lectures GET inventoriées ont été relues par familles de modules ; les constats confirmés sont corrigés et testés, et les modules sans GET sont consignés. Les POST publics d’inscription à une formation et de préinscription peuvent rattacher une demande à un dossier étudiant par identifiant ou email sans preuve de possession ; une règle de vérification d’identité est à définir avant correction. Le périmètre d’un chef lorsqu’enseignant et promotion appartiennent à deux départements attend la décision produit ; la future implémentation multi-établissement reste aussi à faire."
+}

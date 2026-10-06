@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-03T07:37:29.509Z",
+  "results": [
+    {
+      "role": "ADMIN",
+      "quickCount": 4,
+      "uniqueLinks": 51,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "DIRECTION",
+      "quickCount": 4,
+      "uniqueLinks": 41,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "SCOLARITE",
+      "quickCount": 4,
+      "uniqueLinks": 41,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "CONTROLEUR",
+      "quickCount": 2,
+      "uniqueLinks": 10,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "ENSEIGNANT",
+      "quickCount": 3,
+      "uniqueLinks": 10,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "CHEF_DEPARTEMENT",
+      "quickCount": 4,
+      "uniqueLinks": 16,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    },
+    {
+      "role": "ETUDIANT",
+      "quickCount": 3,
+      "uniqueLinks": 7,
+      "accordion": "OK",
+      "search": "OK",
+      "mobile": "OK"
+    }
+  ]
+}

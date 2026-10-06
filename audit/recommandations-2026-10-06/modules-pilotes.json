@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-06T10:20:22.701Z",
+  "database": "university_recommandations_20261006",
+  "checks": [
+    "proposition étudiante : propriétaire imposé, état et encadrant administratifs écartés",
+    "validation sans encadrant, réaffectation étudiante et soutenance sans rapport refusées",
+    "rapport persisté, booléen strict, soutenance unique, note bornée et réservée au jury, fiche propriétaire",
+    "QR minimal, déclaration enseignant, refus tiers, prise en charge et résolution persistées, terminal protégé, équipement désactivé refusé",
+    "journal réel pour chaque étape ; textes des dossiers, tickets et mentions absents",
+    "bibliothèque : dépôt privé, refus visiteur/étudiant/enseignant et non-déposant, publication, octets téléchargés, compteur exact, retrait et suppression audités sans contenu",
+    "patrimoine : QR public réduit, rôles, deux déclarations concurrentes départagées, une fiche, résolution et état matériel atomiques, conservation historique, ancien QR révoqué, journal sans texte",
+    "courrier : étapes dans l’ordre, paraphe unique concurrent, rôles des étapes, changement de statut par PUT refusé, classement/archivage ADMIN, archive figée, impression protégée, journal sans texte",
+    "logements : demande au guichet, décision direction, une chambre par étudiant/année, état occupé protégé, retrait libérant la chambre, historique conservé, accès étudiant au registre refusé"
+  ],
+  "observations": {
+    "patrimoine": {
+      "declarationStatuses": [
+        201,
+        409
+      ],
+      "resolutionStatuses": [
+        201,
+        400
+      ],
+      "repairCount": 1,
+      "repairStatus": "TERMINE",
+      "equipmentInRepair": false,
+      "resolutionAuditCount": 1,
+      "publicQrFinancialFieldsAbsent": true,
+      "repairFreeTextAndQrAbsentFromAudit": true
+    },
+    "courrier": {
+      "signatureStatuses": [
+        201,
+        400
+      ],
+      "signatureAuditCount": 3,
+      "closureAuditCount": 2,
+      "finalStatus": "ARCHIVE",
+      "freeTextAbsentFromAudit": true
+    },
+    "logements": {
+      "secondRoomRefused": true,
+      "maintenanceDecisionRefused": true,
+      "manualVacancyRefused": true,
+      "allocationCountBeforeDeparture": 1,
+      "roomsReleasedAfterWithdrawal": true,
+      "historicalDeletionRefused": true,
+      "concurrentDecisionStatuses": [
+        200,
+        409
+      ],
+      "finalAllocations": 1
+    }
+  },
+  "productionUntouched": true
+}

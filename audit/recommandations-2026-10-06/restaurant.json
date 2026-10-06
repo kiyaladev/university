@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-06T10:19:22.738Z",
+  "database": "university_recommandations_20261006",
+  "observations": {
+    "debitStatuses": [
+      201,
+      409
+    ],
+    "refundStatuses": [
+      201,
+      400
+    ],
+    "confirmationStatuses": [
+      201,
+      400
+    ],
+    "finalBalance": 15000,
+    "pendingResponseBalance": 15000,
+    "providerCalled": false
+  },
+  "checks": [
+    "crédit espèces persisté",
+    "débits concurrents sans découvert",
+    "remboursement unique",
+    "demande portail en attente sans crédit",
+    "confirmation manuelle réservée à la caisse et crédit unique",
+    "booléen de simulation strict",
+    "accès guichet et registre réservés"
+  ],
+  "productionUntouched": true,
+  "externalMobileMoneyAcceptancePending": true
+}

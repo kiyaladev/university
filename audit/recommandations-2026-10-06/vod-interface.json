@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-06T10:35:13.550Z",
+  "viewport": 375,
+  "checks": [
+    "dialogue contenu à 375 px",
+    "création privée avec booléen false persisté",
+    "modification publique et publication depuis la carte",
+    "actions auteur absentes pour un autre enseignant",
+    "archivage persisté et actions terminales absentes"
+  ],
+  "errors": [],
+  "mediaPlayed": false,
+  "productionUntouched": true
+}

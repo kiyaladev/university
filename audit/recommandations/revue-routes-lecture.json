@@ -1,0 +1,503 @@
+{
+  "date": "2026-10-03",
+  "inventaire": {
+    "fichiersControleurs": 43,
+    "classesControleur": 59,
+    "routes": 391,
+    "lecturesGET": 190,
+    "signauxSansUtilisateurNiGardeDocumentaire": 7,
+    "routesARevoirManuellement": 50,
+    "lecturesSansRolesExplicites": 27,
+    "lecturesAvecIdentifiantSansSignalDePerimetre": 22,
+    "signauxSensiblesNonResolusApresRevue": null,
+    "signalRevu": "Le scanner amélioré relève 50 routes heuristiques, dont 7 lectures sans contexte utilisateur explicite, 27 sans métadonnée de rôle explicite et 22 avec identifiant sans signal de périmètre. Ce sont des signaux, pas des vulnérabilités confirmées ; les 50 sont classées dans revue-routes-manuelle-2026-10-03.json. Les 190 GET ont été relus par famille sur les 32 modules ; les défauts confirmés sont corrigés et consignés dans le relevé manuel. Les choix de périmètre métier et la recette en production restent ouverts.",
+    "outil": "backend/scripts/inventaire-routes.cjs",
+    "preuve": "audit/recommandations/inventaire-routes.json"
+  },
+  "revalidationLocaleRecente": "Le 3 octobre 2026 au matin, la suite backend passait 595 tests dans 85 suites ; après les journaux Élections/VOD, le masquage des votes historiques et la purge biométrique transactionnelle, la suite complète a été rejouée et passe 738 tests dans 95 suites, avec --forceExit car un worker ne s’arrête pas proprement. Build backend et typage frontend réussis. Les tests récents couvrent la pagination des listes de formation et de scans, l’omission des colonnes fichier/texte lourd, les agrégations patrimoine, les observations libres, les pièces médicales, l’emploi du temps limité à la semaine, les oracles d’existence et les résultats électoraux après clôture.",
+  "verification": "Le 3 octobre 2026, la suite complète passait 595 tests dans 85 suites au point de revalidation du matin, puis 738 tests dans 95 suites après les journaux Élections/VOD, le masquage des votes historiques et la purge biométrique transactionnelle (rejeu avec --forceExit, un worker ne s’arrêtant pas proprement) ; compilation backend et typage frontend réussis. Les tests ciblés des périodes de rapports passent 20 tests dans 3 suites ; les nouvelles bornes du mode all passent 69 tests dans 7 suites. Les six constats confirmés de la revue OpenCode sont corrigés : un Bearer arbitraire ne modifie plus le tracker des routes publiques ; l’accès au gabarit biométrique exige une séance du jour, son contrôleur affecté et écrit l’audit ; les lectures terrain des séances omettent signature, géolocalisation, texte libre et pièce médicale ; le chef de département ne reçoit pas la pièce médicale ; les lectures de contrôles et QR sont bornées par le département du compte ; le détail étudiant des demandes filtre le propriétaire au niveau Prisma. Le détail Helpdesk applique aussi le propriétaire dans la requête de lecture. Les API de vote, de résultats et de liste publique des élections excluent les identifiants internes et matricules des candidats ; les votes avant clôture ne sont plus comptés pour les électeurs et un scrutin absent ou non clôturé répond 404 sur la route résultats. Les listes de scrutins actifs, examens et formations sont bornées. Les métadonnées bibliothèque ne chargent plus les fichiers base64 ni le texte FTS ; les agrégations patrimoine sont calculées en base ; les observations libres des fiches sont réservées aux rôles de gestion ; les pièces médicales sont omises des listes. Login et /auth/me limitent leur réponse aux champs utiles ; les lectures de compte excluent l’état de verrouillage et les changements administratifs de mot de passe révoquent les sessions. Les correctifs récents bornent les rapports à 366 jours, les listes all à 1 000, les fils de réclamation et le calendrier de réservations, calculent les agrégats de formations en SQL et conservent les filtres d’année du patrimoine. Les 190 routes GET ont été relues par familles sur 32 modules ; les deux politiques métier encore ouvertes sont le rattachement public au dossier étudiant et le périmètre inter-départements du chef.",
+  "verificationRendusHTML": "Trois tests ajoutés ensuite couvrent les rendus A4 registre, fiche enseignant et état de paiement, les états sans données et l’échappement des valeurs libres ; voir rendus-html-impression.json.",
+  "correctionsEtPerimetresVerifies": [
+    {
+      "module": "Examens",
+      "regles": [
+        "enseignants et contrôleurs limités aux examens où ils sont surveillants affectés",
+        "journal des scans réservé à ADMIN/SCOLARITE/DIRECTION",
+        "projection étudiant limitée à id, matricule, nom et prénom",
+        "identité du scanneur prise de la session authentifiée"
+      ],
+      "tests": "backend/src/modules/examens/examens.service.spec.ts"
+    },
+    {
+      "module": "Réservations",
+      "regles": [
+        "liste limitée aux demandes propres pour enseignants et contrôleurs",
+        "lecture directe limitée au propriétaire ou à la gestion",
+        "calendrier conserve les créneaux occupés mais masque les détails des tiers",
+        "plage de calendrier plafonnée à 93 jours avant les requêtes pour empêcher les réponses démesurées"
+      ],
+      "tests": "backend/src/modules/reservations/reservations.service.spec.ts"
+    },
+    {
+      "module": "Attestations",
+      "regles": [
+        "gabarit biométrique envoyé au contrôleur uniquement pour une séance du jour associée à l’enseignant",
+        "indicateurs d’attestation du contrôleur bornés à sa séance du jour et journalisés ; enseignants inactifs exclus",
+        "indicateurs d’attestation du chef limités à son département",
+        "gabarit déchiffré dans une projection minimale"
+      ],
+      "tests": "backend/src/modules/attestation/attestation.service.spec.ts"
+    },
+    {
+      "module": "QR de salle",
+      "regles": [
+        "jeton QR et coordonnées de salle absents de la réponse",
+        "aucun historique transmis",
+        "séances du chef filtrées par département",
+        "affectation et contrôle projetés au minimum"
+      ],
+      "tests": "backend/src/modules/controle/controle.service.spec.ts"
+    },
+    {
+      "module": "Scolarité",
+      "regles": [
+        "évaluations, feuille de notes et délibérations protégées par DocumentScope départemental aux accès directs",
+        "listes, saisie et impressions filtrées en service"
+      ],
+      "tests": "backend/src/modules/scolarite/scolarite.service.spec.ts et tests des gardes de document"
+    },
+    {
+      "module": "Courrier et créneaux",
+      "preuves": "audit/recommandations/perimetres-courrier-creneaux.json"
+    },
+    {
+      "module": "Annuaire enseignant",
+      "regles": [
+        "projection sans coordonnées, rémunération ni compte pour étudiants, enseignants et contrôleurs",
+        "projection identique sur les accès directs"
+      ],
+      "tests": "backend/src/modules/referentiel/enseignants.spec.ts"
+    },
+    {
+      "module": "Registre étudiant",
+      "regles": [
+        "étudiant limité à sa fiche",
+        "enseignant limité aux étudiants encadrés avec projection minimale",
+        "chef limité à son département y compris en accès direct",
+        "projection départementale réduite pour liste et accès direct : champs de tableau uniquement, sans adresse, date de naissance ni paiements historiques"
+      ],
+      "tests": "backend/src/modules/inscription/etudiants.service.spec.ts : 7 tests passent, dont la projection chef de département"
+    },
+    {
+      "module": "Inscriptions et paiements",
+      "regles": [
+        "liste d’inscriptions limitée aux étudiants eux-mêmes ou au département du chef de département ; les autres rôles autorisés sont des gestionnaires",
+        "détail et attestation d’inscription filtrent l’étudiant ou le département au niveau Prisma avant de charger identité et paiements",
+        "registre de paiements réservé à ADMIN, SCOLARITE et DIRECTION ; tarifs d’inscription publics sans données personnelles"
+      ],
+      "tests": "backend/src/modules/inscription/inscription.service.spec.ts, backend/src/modules/inscription/frais-public.spec.ts, backend/src/modules/inscription/paiement-orphelin.spec.ts"
+    },
+    {
+      "module": "Demandes de documents",
+      "regles": [
+        "registre et tableau de bord lisibles par ADMIN, SCOLARITE et DIRECTION",
+        "actions de traitement réservées à ADMIN et SCOLARITE",
+        "fiches individuelles limitées au propriétaire étudiant ou aux rôles de gestion autorisés"
+      ],
+      "tests": "backend/src/modules/documents-demande/documents-demande.controller.spec.ts"
+    },
+    {
+      "module": "Patrimoine — QR public",
+      "regles": [
+        "projection publique limitée à l’identification et à l’emplacement fonctionnel",
+        "numéro de série, valeur d’acquisition, QR et compteurs internes exclus",
+        "équipement désactivé ou introuvable masqué par une réponse 404"
+      ],
+      "tests": "backend/src/modules/patrimoine/patrimoine.service.spec.ts"
+    },
+    {
+      "module": "Travaux encadrés",
+      "regles": [
+        "liste accessible uniquement à ADMIN, DIRECTION, SCOLARITE, ENSEIGNANT et ETUDIANT",
+        "étudiant limité à ses travaux et enseignant aux travaux qu’il encadre",
+        "étudiant, encadrant et président projetés sans coordonnées, taux horaire ni champs biométriques dans la liste, le détail et le calendrier de soutenances",
+        "fiche imprimable limitée au propriétaire ou aux rôles de pilotage"
+      ],
+      "tests": "backend/src/modules/stages/stages.service.spec.ts et DocumentScopeGuard"
+    },
+    {
+      "module": "VOD",
+      "regles": [
+        "étudiant limité aux ressources publiques et aux cours de ses inscriptions",
+        "liste, recherche et accès direct appliquent le même périmètre",
+        "statistiques de visionnage réservées à ADMIN ou à l’enseignant propriétaire"
+      ],
+      "tests": "backend/src/modules/vod/vod.service.spec.ts"
+    },
+    {
+      "module": "Impressions et exports",
+      "regles": [
+        "les 16 routes imprimables inventoriées passent par ProtectedDocument et exigent une identité JWT courante",
+        "les rôles sont restreints sur chaque route protégée",
+        "les fiches étudiant, enseignant et département déclarent leur propriétaire avec DocumentScope",
+        "les quatre exports CSV émettent les seules colonnes documentées ; la signature biométrique reste exclue du registre CSV"
+      ],
+      "tests": "backend/src/common/guards.spec.ts, backend/src/common/document-scope.guard.spec.ts et audit/recommandations/inventaire-routes.json, backend/src/modules/rapports/export.service.spec.ts",
+      "limite": "Le mapping des quatre CSV est testé. Les rendus HTML imprimables et les requêtes métier réelles de tous les rapports restent à vérifier avec des données de recette."
+    },
+    {
+      "module": "Élections",
+      "regles": [
+        "les non-gestionnaires ne listent que les scrutins proclamés, indépendamment du statut demandé en filtre",
+        "le détail non gestionnaire ne révèle que les scrutins ouverts dans leur fenêtre de dates ou proclamés",
+        "les totaux et voix par candidat ne sont accessibles qu’après la clôture"
+      ],
+      "tests": "backend/src/modules/elections/elections.service.spec.ts",
+      "preuveInterface": "frontend/src/pages/ElectionsPage.vue : action résultats masquée avant clôture"
+    },
+    {
+      "module": "Restauration",
+      "regles": [
+        "portefeuilles, opérations et historiques réservés aux rôles de gestion",
+        "portefeuille portail attaché à l’étudiant de la session",
+        "lecture guichet protégée par jeton imprimable avec vérification de rôle",
+        "lecture de carte limite les données renvoyées au résumé utile sans QR ni téléphone",
+        "lecture de carte et validation de repas limitées à 60 requêtes par minute",
+        "référence de carte limitée à 64 caractères par validation DTO et service"
+      ],
+      "tests": "backend/src/modules/resto/resto.read.spec.ts, backend/src/modules/resto/resto.concurrency.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts",
+      "preuve": "Revue de RestoController et RestoService ; jeton manuel et rôle actif, réponse sans cache, débit borné, génération QR sans invalidation concurrente et upsert idempotent du portefeuille."
+    },
+    {
+      "module": "Portail étudiant — liaison OTP",
+      "regles": [
+        "après OTP valide, un compte lié doit être actif, de rôle ETUDIANT et rattaché à la même fiche",
+        "un compte trouvé par collision d’adresse ne peut pas être privilégié, inactif ou lié à un autre étudiant",
+        "aucun jeton n’est émis si le compte réutilisé échoue à ces vérifications",
+        "la création et le rattachement du compte sont transactionnels",
+        "un code absent et un code incorrect produisent la même erreur publique"
+      ],
+      "tests": "backend/src/modules/portail/portail.service.spec.ts"
+    },
+    {
+      "module": "Notifications",
+      "regles": [
+        "historique SMS, statistiques, délibérations et estimation destinataires réservés à ADMIN/DIRECTION/SCOLARITE"
+      ],
+      "preuve": "Revue manuelle de NotificationsController ; aucune modification supplémentaire."
+    },
+    {
+      "module": "Paie",
+      "regles": [
+        "listes et détails nominatifs limités à ADMIN/DIRECTION/SCOLARITE",
+        "les relations d’enseignant dans les lignes de paie excluent coordonnées et champs biométriques",
+        "impression protégée par jeton et rôle"
+      ],
+      "preuve": "Revue manuelle de PaieController et PaieService ; aucune modification supplémentaire."
+    },
+    {
+      "module": "Rectorat",
+      "regles": [
+        "tableau, agrégats et bilans limités à ADMIN/DIRECTION",
+        "impression du bilan protégée"
+      ],
+      "preuve": "Revue manuelle de RectoratController et RectoratService ; aucune modification supplémentaire."
+    },
+    {
+      "module": "Bibliothèque publique",
+      "regles": [
+        "liste, recherche et téléchargement anonymes limités aux documents publiés",
+        "matricules et identifiants personnels d’étudiants/enseignants ainsi que le déposant exclus des projections publiques",
+        "document privé sans fichier renvoie le même NotFound qu’un document privé avec fichier, sans révéler son existence"
+      ],
+      "tests": "backend/src/modules/bibliotheque/access.spec.ts ; 12 tests passent après ajout de la régression"
+    },
+    {
+      "module": "Formations publiques",
+      "regles": [
+        "la liste et le détail public partagent une projection explicite des champs de vitrine",
+        "les champs internes et horodatages de gestion ne sortent plus du détail public"
+      ],
+      "tests": "backend/src/modules/formations/formations.service.spec.ts"
+    },
+    {
+      "module": "Registre des inscriptions aux formations",
+      "regles": [
+        "le registre est réservé aux rôles de gestion ; la relation paiement ne charge que référence, montant, devise et statut",
+        "les coordonnées du payeur, transaction opérateur et motifs libres ne sont pas chargés dans la relation imbriquée"
+      ],
+      "tests": "backend/src/modules/formations/formations.service.spec.ts"
+    },
+    {
+      "module": "Régie des recettes externes",
+      "regles": [
+        "les listes et détails de recettes ne chargent que référence, montant, devise et statut du paiement lié",
+        "le téléphone, le nom du payeur, la transaction opérateur et le motif libre restent hors de la réponse imbriquée"
+      ],
+      "tests": "backend/src/modules/recettes/recettes.service.spec.ts"
+    },
+    {
+      "module": "Préinscription publique",
+      "regles": [
+        "la route des promotions refuse une année inconnue ou clôturée",
+        "la projection renvoyée expose uniquement la filière et le tarif public utiles"
+      ],
+      "tests": "backend/src/modules/inscription/inscription.service.spec.ts"
+    },
+    {
+      "module": "Support IT — QR équipement public",
+      "regles": [
+        "la résolution du QR ne renvoie que id, libellé et emplacement au formulaire",
+        "codes QR absents de la réponse publique",
+        "codes inconnus et équipements désactivés renvoient le même NotFound",
+        "références de plus de 64 caractères refusées avant l’accès à la base",
+        "résolution limitée à 30 requêtes par minute"
+      ],
+      "tests": "backend/src/modules/helpdesk/helpdesk.access.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts"
+    },
+    {
+      "module": "Carte étudiante — NIP",
+      "regles": [
+        "hash du NIP omis des lectures administratives, du portail étudiant et des réponses de carte",
+        "hash sélectionné uniquement pour la comparaison serveur lors de la vérification du NIP",
+        "message de carte déjà émise sans divulgation du jeton QR"
+      ],
+      "tests": "backend/src/modules/carte-etudiante/carte-etudiante.service.spec.ts"
+    },
+    {
+      "module": "Badges — vérification QR publique",
+      "regles": [
+        "vérification publique sélectionne uniquement les champs nécessaires au statut et à la réponse affichée",
+        "téléphone, courriel, pièce d’identité et jeton QR absents de la réponse",
+        "vérification publique limitée à 30 requêtes/minute et entrées bornées à 64 caractères",
+        "liste et détail administratif limités aux rôles ADMIN et SCOLARITE ; impression protégée par JWT et rôle"
+      ],
+      "tests": "backend/src/modules/badges/badges.service.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts ; ProtectedDocument recensé dans audit/recommandations/inventaire-routes.json"
+    },
+    {
+      "module": "Vérifications publiques des attestations",
+      "regles": [
+        "scan public borné à 30 requêtes/minute, avec paramètres limités à 64 caractères",
+        "réponse confirme document, identité utile et statut sans rendre les accès aux journaux publics",
+        "liste et détail protégés par rôle ; impression protégée par JWT et propriétaire étudiant"
+      ],
+      "tests": "backend/src/modules/attestations/attestations.service.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts"
+    },
+    {
+      "module": "Vérification publique des cartes étudiantes",
+      "regles": [
+        "route publique de scan limitée à 30 requêtes/minute et paramètres bornés à 64 caractères",
+        "vérification du NIP interne réservée aux rôles professionnels et limitée à 20 requêtes/minute",
+        "hash NIP exclu des lectures de cartes et des messages de doublon"
+      ],
+      "tests": "backend/src/modules/carte-etudiante/carte-etudiante.service.spec.ts et backend/src/common/public-verification-rate-limit.spec.ts"
+    },
+    {
+      "module": "Réclamations",
+      "regles": [
+        "étudiant limité à sa propre liste et ses propres fiches ; absence et dossier tiers renvoient le même NotFound",
+        "une réclamation anonyme reste accessible à son créateur via une référence interne omise de toutes les réponses",
+        "les messages de suivi d’un fil anonyme conservent l’anonymat ; la création est réservée aux étudiants et aux rôles de gestion",
+        "bloc-notes interne omis côté Prisma sur les lectures étudiantes",
+        "tableau de bord et registre réservés à ADMIN, DIRECTION et SCOLARITE ; agents assignables projetés sans coordonnées",
+        "transition d’état contrôlée côté service ; réouverture d’un état terminal et réassignation après clôture refusées",
+        "assignation limitée aux comptes actifs des rôles de gestion autorisés"
+      ],
+      "tests": "backend/src/modules/reclamations/reclamations.service.spec.ts"
+    },
+    {
+      "module": "Justificatifs",
+      "regles": [
+        "enseignant limité à ses justificatifs en liste et en accès direct, sans pièce jointe sensible dans la projection",
+        "chef de département limité aux justificatifs et séances de son propre département pour lecture, dépôt et traitement"
+      ],
+      "tests": "backend/src/modules/justificatifs/justificatifs.service.spec.ts"
+    },
+    {
+      "module": "Salles et données imbriquées",
+      "regles": [
+        "QR et coordonnées GPS réservés à ADMIN/SCOLARITE, y compris les détails et les impressions d’affiche",
+        "les lectures opérationnelles et relations imbriquées n’exposent que les champs utiles ; calendrier des réservations utilise une projection explicite",
+        "l’impression d’affiche QR est auditée et réservée à ADMIN/SCOLARITE"
+      ],
+      "tests": "backend/src/modules/referentiel/salles.spec.ts et backend/src/modules/reservations/reservations.service.spec.ts"
+    },
+    {
+      "module": "Impressions et périmètre documentaire",
+      "regles": [
+        "un rôle absent du mapping de périmètre est refusé par défaut",
+        "une fiche enseignant limitée par son identifiant ne peut viser que l’identité enseignant de la session",
+        "l’attestation d’inscription et la fiche enseignant réservent leurs accès aux rôles et départements autorisés"
+      ],
+      "tests": "backend/src/common/document-scope.guard.spec.ts ; contrôleurs rapports et inscription"
+    },
+    {
+      "module": "Fiche de présence enseignant",
+      "regles": [
+        "les routes de fiche d’un enseignant ne chargent et ne renvoient plus ses coordonnées, son taux horaire ni ses secrets biométriques",
+        "le périmètre étudiant, chef de département et gestion reste appliqué au niveau du contrôleur/document"
+      ],
+      "tests": "backend/src/modules/rapports/rapports.service.spec.ts et DocumentScopeGuard"
+    },
+    {
+      "module": "Rapports d’assiduité et de paie",
+      "regles": [
+        "relations enseignant limitées aux champs utilisés par les rapports, sans coordonnées ni données biométriques",
+        "justificatifs limités à leur statut ; signatures exclues des requêtes ordinaires et chargées uniquement sur demande interne explicite"
+      ],
+      "tests": "backend/src/modules/rapports/rapports.service.spec.ts"
+    },
+    {
+      "module": "Authentification — profil courant et connexion",
+      "regles": [
+        "GET /auth/me utilise exclusivement l’identité issue du JWT courant",
+        "POST /auth/login ne renvoie que les champs utiles et exclut mot de passe, compteurs de verrouillage et champs sensibles des relations",
+        "JWT revalidé contre le compte actif et révoqué après changement de mot de passe"
+      ],
+      "preuve": "Revue de AuthController, AuthService.login, AuthService.profil et JwtStrategy ; tests AuthService et JwtStrategy"
+    },
+    {
+      "module": "Administration des comptes",
+      "regles": [
+        "liste et détail récupèrent seulement les champs du profil administratif, sans hash, compteurs ou état de verrouillage",
+        "un changement admin de mot de passe révoque les anciens jetons et réinitialise l’état de verrouillage"
+      ],
+      "tests": "backend/src/modules/referentiel/users.spec.ts et tests JwtStrategy"
+    },
+    {
+      "module": "Cités et logements",
+      "regles": [
+        "toutes les lectures de résidences, chambres et attributions sont réservées à ADMIN, SCOLARITE ou DIRECTION",
+        "les listes et accès directs aux attributions exposent seulement l’identité utile de l’étudiant",
+        "la structure des résidences et chambres est limitée aux rôles d’administration"
+      ],
+      "preuve": "Revue de CitesController et CitesService"
+    },
+    {
+      "module": "Recettes externes",
+      "regles": [
+        "tableau de bord réservé à ADMIN/DIRECTION",
+        "registre et détails nominatif/financier réservés à ADMIN/DIRECTION/SCOLARITE",
+        "encaissement réservé à ADMIN/SCOLARITE avec vérification de paiement déjà rattaché"
+      ],
+      "preuve": "Revue de RecettesController et RecettesService"
+    },
+    {
+      "module": "Tirage des épreuves",
+      "regles": [
+        "listes et accès directs réservés à ADMIN/SCOLARITE",
+        "détail limité aux informations d’examen, de tirage et au nom de l’imprimeur",
+        "impression du bordereau protégée par jeton JWT et rôle"
+      ],
+      "preuve": "Revue de TirageController et TirageService"
+    },
+    {
+      "module": "Limitation de débit",
+      "regles": [
+        "le tracker utilise req.user après vérification JWT pour les utilisateurs connectés",
+        "les routes publiques utilisent req.ip et ignorent les Bearer choisis par le client"
+      ],
+      "tests": "backend/src/common/debit.guard.spec.ts ; ordre global des gardes vérifié dans backend/src/app.module.ts"
+    },
+    {
+      "module": "Gabarit biométrique",
+      "regles": [
+        "l’accès exige une séance active du jour liée à l’enseignant",
+        "un contrôleur doit être affecté à la séance ou l’avoir déjà contrôlée",
+        "chaque lecture est journalisée avec l’acteur, l’enseignant et la séance"
+      ],
+      "tests": "backend/src/modules/attestation/attestation.service.spec.ts"
+    },
+    {
+      "module": "Registre des séances",
+      "regles": [
+        "les rôles de terrain ne reçoivent pas les signatures, géolocalisations, textes libres ni pièces médicales imbriquées",
+        "les relations enseignant sont projetées sans coordonnées, taux horaire ni champs biométriques pour les gestionnaires comme pour le terrain",
+        "les rôles d’administration conservent les détails requis par le parcours de suivi"
+      ],
+      "tests": "backend/src/modules/planification/seances.service.spec.ts"
+    },
+    {
+      "module": "Contrôles et QR de salle",
+      "regles": [
+        "listes et accès directs des contrôles imposent le département du contrôleur côté Prisma",
+        "le scan QR utilise le même axe départemental pour le chef et le contrôleur, indépendamment des filtres URL",
+        "les rôles terrain reçoivent une projection Prisma sans signature, coordonnées GPS, observation libre ni score biométrique ; les relations enseignant, matière et promotion sont minimisées"
+      ],
+      "tests": "backend/src/modules/controle/controle.service.spec.ts"
+    },
+    {
+      "module": "Demandes de documents",
+      "regles": [
+        "le détail étudiant utilise une requête bornée par etudiantId, avec 404 identique pour une fiche absente ou tierce",
+        "les rôles staff autorisés sont déclarés explicitement sur la route"
+      ],
+      "tests": "backend/src/modules/documents-demande/documents-demande.service.spec.ts et documents-demande.controller.spec.ts"
+    },
+    {
+      "module": "Attestations, cartes étudiantes et badges",
+      "regles": [
+        "vérification publique limitée en débit, sans exposition de jetons QR",
+        "cartes excluant le hash NIP des réponses",
+        "listes internes et détails réservés aux rôles métier",
+        "registre d’attestations limité aux projections utiles de l’inscription, de l’année et de la promotion"
+      ],
+      "tests": "backend/src/modules/attestations/attestations.service.spec.ts, backend/src/modules/carte-etudiante/carte-etudiante.service.spec.ts, backend/src/modules/badges/badges.service.spec.ts"
+    },
+    {
+      "module": "Courrier",
+      "regles": [
+        "liste bornée côté Prisma aux courriers enregistrés par l’utilisateur ou aux étapes de son rôle",
+        "détail direct applique le même périmètre avant chargement",
+        "tableau de bord limité à ADMIN et DIRECTION"
+      ],
+      "tests": "backend/src/modules/courrier/courrier.service.spec.ts"
+    },
+    {
+      "module": "Portail étudiant — résultats",
+      "regles": [
+        "filtre par etudiantId de la session et délibération validée",
+        "projection limitée aux notes et libellés rendus, sans relations complètes d’année/promotion"
+      ],
+      "tests": "backend/src/modules/portail/portail.service.spec.ts"
+    },
+    {
+      "module": "Créneaux et emploi du temps",
+      "regles": [
+        "listes et calendrier filtrent les enseignants sur leurs affectations et les chefs/contrôleurs sur leur département",
+        "l’étudiant ne voit que les créneaux de sa promotion validée dans l’année active, avec une projection minimale enseignant/matière/promotion/salle",
+        "le détail direct applique le même filtre dans la requête Prisma avant de charger le créneau",
+        "une ressource absente et une ressource hors périmètre répondent toutes deux NotFound ; l’absence de session authentifiée est refusée",
+        "les mutations ne sont pas accessibles au rôle étudiant"
+      ],
+      "tests": "backend/src/modules/planification/creneaux.service.spec.ts"
+    },
+    {
+      "module": "Notifications SMS",
+      "regles": [
+        "historique nominatif réservé à ADMIN, DIRECTION et SCOLARITE",
+        "compteurs et estimation renvoient des agrégats sans identité",
+        "délibérations disponibles transformées en projection d’affichage"
+      ],
+      "preuve": "Revue des rôles NotificationsController et des méthodes NotificationsService"
+    },
+    {
+      "module": "Élections — détail électeur",
+      "regles": [
+        "les électeurs ne voient pas le nombre de bulletins avant clôture",
+        "les résultats d’un scrutin non clôturé renvoient le même 404 qu’un identifiant absent",
+        "la liste des scrutins actifs est plafonnée à 1 000 entrées"
+      ],
+      "tests": "backend/src/modules/elections/elections.service.spec.ts"
+    },
+    {
+      "module": "Authentification et imports",
+      "regles": [
+        "GET /auth/me est borné au compte issu du JWT et ne renvoie pas l’état de verrouillage",
+        "le module imports ne déclare aucune route GET ; ses deux routes de prévisualisation et d’application sont des POST réservés à ADMIN et SCOLARITE"
+      ],
+      "preuve": "backend/src/modules/auth/auth.service.spec.ts et backend/src/modules/imports/imports.controller.ts"
+    }
+  ],
+  "limite": "Les 190 routes GET sont inventoriées sur 391 routes dans 59 contrôleurs et ont été relues par familles de modules ; les constats confirmés de cette passe sont corrigés et testés. Le périmètre inter-départements du chef attend une décision produit. Les templates HTML ont une couverture unitaire, mais les requêtes métier réelles, impressions avec données de recette et cycles restent à qualifier par module, comme documenté dans MATURITE_MODULES.md."
+}

@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-06T12:57:39.394Z",
+  "passed": true,
+  "viewport": 375,
+  "observations": {
+    "beneficiaryAccessAllowedOtherStudentRejected": true,
+    "editPreservesBeneficiaryAndPreloadsReadableLabel": true,
+    "removalRevokesStudentAccess": true,
+    "reassignmentRestoresStudentAccess": true,
+    "frenchAndEnglishPrivateAffiliationLabels": true,
+    "teacherDoesNotQueryRestrictedEnrollmentRegistry": true
+  },
+  "errors": [],
+  "apiFailures": [],
+  "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+  "affiliationScope": "une inscription bénéficiaire, pas une promotion entière",
+  "mediaPlaybackAndPedagogicalValidationPending": true,
+  "productionUntouched": true
+}

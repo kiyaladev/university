@@ -1,0 +1,248 @@
+{
+  "date": "2026-10-06T15:27:03.583Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "TRAVAIL_ENCADRE_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_CREE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": true,
+      "reducedDownloadEvent": false,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "DOCUMENT_DEPOT_TELECHARGE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventVerified": true,
+      "beforeAfter": false,
+      "reducedDownloadEvent": true,
+      "privateFieldsAbsent": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Travail encadré et dépôt document réels avant/après, téléchargement authentifié réduit sans contenu, interface ADMIN/DIRECTION FR/EN bureau/mobile"
+}

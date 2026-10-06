@@ -14,9 +14,10 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { ElectionsService } from './elections.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateCandidatDto,
   CreateElectionDto,
@@ -47,8 +48,8 @@ export class ElectionsController {
   constructor(private readonly service: ElectionsService) {}
 
   @Get()
-  liste(@Query() query: ElectionQueryDto) {
-    return this.service.liste(query);
+  liste(@Query() query: ElectionQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
   }
 
   @Get('actives')
@@ -62,8 +63,8 @@ export class ElectionsController {
   }
 
   @Get(':id')
-  trouver(@Param('id') id: string) {
-    return this.service.trouver(id);
+  trouver(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.trouverPour(id, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
@@ -134,16 +135,16 @@ export class ElectionsController {
     return this.service.voter(dto, user, ip);
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ENSEIGNANT, Role.CONTROLEUR, Role.ETUDIANT)
   @Get(':id/imprimer-bulletin')
   async imprimerBulletin(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
+    @CurrentUser() user: AuthUser,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimerBulletin(id, token, base);
+    const html = await this.service.imprimerBulletin(id, jetonImprimable(req), base, user);
     res.type('html').send(html);
   }
 }

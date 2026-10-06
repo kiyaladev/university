@@ -14,13 +14,17 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import { Prisma, Role, StatutTicket } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import * as QRCode from 'qrcode';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
+import { prochainNumeroTx } from '../../common/numero';
+import { echapper } from '../../common/utils';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,
@@ -41,12 +45,101 @@ const TICKET_INCLUDE = {
 /** Rôles qui voient tout le registre tickets ; les autres ne voient que les leurs. */
 const ROLE_GESTION: Role[] = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION];
 
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+/**
+ * Colonnes lues pour l'état « avant » d'un équipement : le code QR imprimé
+ * n'est jamais chargé par le chemin du journal, il ne peut donc pas s'y
+ * glisser. Même projection que celle renvoyée à l'écran.
+ */
+const EQUIPEMENT_AUDIT = {
+  id: true,
+  libelle: true,
+  emplacement: true,
+  actif: true,
+  createdAt: true,
+} satisfies Prisma.EquipementCampusSelect;
+
+/**
+ * Colonnes lues pour l'état « avant » d'un ticket. Les champs de texte libre
+ * et de coordonnées y figurent pour produire de simples indicateurs de
+ * présence : leurs valeurs ne quittent jamais le service.
+ */
+const TICKET_AUDIT = {
+  id: true,
+  numero: true,
+  categorie: true,
+  priorite: true,
+  statut: true,
+  equipementId: true,
+  utilisateurId: true,
+  traiteParId: true,
+  traiteLe: true,
+  clicheLe: true,
+  description: true,
+  declarantNom: true,
+  declarantEmail: true,
+  declarantTelephone: true,
+} satisfies Prisma.TicketSupportSelect;
+
+/**
+ * Trace d'audit écrite par la transaction qui porte la mutation : un
+ * équipement créé sans trace, ou une trace sans équipement, n'est plus
+ * possible.
+ *
+ * `details` porte le format avant/après commun au module — c'est lui que
+ * l'écran « Journal » sait lire.
+ */
+function journaliser(
+  tx: Prisma.TransactionClient,
+  user: AuthUser,
+  action: string,
+  entite: string,
+  entiteId: string,
+  details: Record<string, unknown>,
+) {
+  return tx.auditLog.create({
+    data: {
+      userId: user.id,
+      action,
+      entite,
+      entiteId,
+      details: JSON.stringify(details),
+    },
+  });
+}
+
+/** Inventaire projeté : ni code QR, ni jeton, aucune donnée personnelle. */
+function instantaneEquipement(equipement: any) {
+  return {
+    id: equipement.id,
+    libelle: equipement.libelle,
+    emplacement: equipement.emplacement ?? null,
+    actif: equipement.actif,
+    createdAt: equipement.createdAt ?? null,
+  };
+}
+
+/**
+ * Ticket projeté : catégorie, priorité, statut, affectation et horodatages de
+ * traitement. Le texte du ticket, la réponse, les pièces jointes et
+ * l'identité de contact du déclarant restent hors journal — leur présence
+ * seule est notée.
+ */
+function instantaneTicket(ticket: any) {
+  return {
+    id: ticket.id,
+    numero: ticket.numero,
+    categorie: ticket.categorie,
+    priorite: ticket.priorite,
+    statut: ticket.statut,
+    equipementId: ticket.equipementId ?? null,
+    utilisateurId: ticket.utilisateurId ?? null,
+    traiteParId: ticket.traiteParId ?? null,
+    traiteLe: ticket.traiteLe ?? null,
+    clicheLe: ticket.clicheLe ?? null,
+    descriptionFournie: Boolean(ticket.description),
+    declarantNomFourni: Boolean(ticket.declarantNom),
+    contactDeclarantFourni: Boolean(ticket.declarantEmail || ticket.declarantTelephone),
+  };
 }
 
 @Injectable()
@@ -58,7 +151,16 @@ export class EquipementsService extends CrudService {
   ) {
     super(prisma, 'equipementCampus', {
       orderBy: { libelle: 'asc' },
-      include: { _count: { select: { tickets: true } } },
+      // Le code imprimé dans le QR est un identifiant de résolution public :
+      // l'inventaire ne doit pas le recopier dans chaque réponse authentifiée.
+      select: {
+        id: true,
+        libelle: true,
+        emplacement: true,
+        actif: true,
+        createdAt: true,
+        _count: { select: { tickets: true } },
+      },
       searchFields: ['libelle', 'emplacement'],
       label: 'Équipement',
     });
@@ -72,51 +174,90 @@ export class EquipementsService extends CrudService {
   }
 
   /**
-   * Résolution du QR scanné : renvoie l'équipement si le code existe et est
-   * actif. Le code est unique et imprimé au public — un QR forgé ne désigne
-   * rien, une étiquette photocopiée ne détourne pas le flux vers un imposteur.
+   * Résolution publique du QR : ne renvoie que l'identité fonctionnelle
+   * nécessaire au formulaire de signalement, sans recopier le code secret.
    */
   async parCode(codeQr: string) {
-    const equipement = await this.prisma.equipementCampus.findUnique({
-      where: { codeQr },
-    });
+    const equipement = codeQr.length > 64
+      ? null
+      : await this.prisma.equipementCampus.findUnique({
+          where: { codeQr },
+          select: { id: true, libelle: true, emplacement: true, actif: true },
+        });
     if (!equipement || !equipement.actif) {
-      throw new NotFoundException('Équipement inconnu ou désactivé');
+      throw new NotFoundException(I18nContext.current()!.t('helpdesk.equipement_inconnu_ou_desactive'));
     }
-    return equipement;
+    return {
+      id: equipement.id,
+      libelle: equipement.libelle,
+      emplacement: equipement.emplacement,
+    };
   }
 
+  /**
+   * Les écritures de l'inventaire passent par le client transactionnel plutôt
+   * que par le CrudService : la mutation et son entrée de journal sont
+   * validées ensemble, ce que le CrudService (hors transaction) ne permet pas.
+   * La projection renvoyée est inchangée — le code QR imprimé en est absent.
+   */
   async creer(dto: CreateEquipementDto, user: AuthUser) {
-    const equipement = await this.create({
-      libelle: dto.libelle,
-      emplacement: dto.emplacement || null,
-      actif: dto.actif ?? true,
-      codeQr: `UP-IT-${randomBytes(12).toString('base64url')}`,
+    return this.prisma.$transaction(async (tx) => {
+      const equipement = await tx.equipementCampus.create({
+        data: {
+          libelle: dto.libelle,
+          emplacement: dto.emplacement || null,
+          actif: dto.actif ?? true,
+          codeQr: `UP-IT-${randomBytes(12).toString('base64url')}`,
+        },
+        select: EQUIPEMENT_AUDIT,
+      });
+      await journaliser(tx, user, 'EQUIPEMENT_CREATION', 'Equipement', equipement.id, {
+        avant: null,
+        apres: instantaneEquipement(equipement),
+      });
+      return equipement;
     });
-    await this.tracer(user, 'EQUIPEMENT_CREATION', equipement.id, equipement.libelle);
-    return equipement;
   }
 
+  /**
+   * Activation, désactivation, déplacement ou renommage : la trace conserve
+   * l'état précédant l'écriture et les champs réellement touchés, ce qui
+   * rend la bascule d'activité lisible sans le code QR.
+   */
   async modifier(id: string, dto: UpdateEquipementDto, user: AuthUser) {
-    const equipement = await this.update(id, {
-      ...(dto.libelle != null ? { libelle: dto.libelle } : {}),
-      ...(dto.emplacement != null ? { emplacement: dto.emplacement || null } : {}),
-      ...(dto.actif != null ? { actif: dto.actif } : {}),
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.equipementCampus.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
+      if (!avant) {
+        throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Équipement' }));
+      }
+
+      const data = {
+        ...(dto.libelle != null ? { libelle: dto.libelle } : {}),
+        ...(dto.emplacement != null ? { emplacement: dto.emplacement || null } : {}),
+        ...(dto.actif != null ? { actif: dto.actif } : {}),
+      };
+      const apres = await tx.equipementCampus.update({ where: { id }, data, select: EQUIPEMENT_AUDIT });
+      await journaliser(tx, user, 'EQUIPEMENT_MODIFICATION', 'Equipement', id, {
+        avant: instantaneEquipement(avant),
+        apres: instantaneEquipement(apres),
+        champsModifies: Object.keys(data),
+      });
+      return apres;
     });
-    await this.tracer(user, 'EQUIPEMENT_MODIFICATION', equipement.id, equipement.libelle);
-    return equipement;
   }
 
   async supprimer(id: string, user: AuthUser) {
-    const equipement = await this.findOne(id);
-    await this.remove(id);
-    await this.tracer(user, 'EQUIPEMENT_SUPPRESSION', id, equipement.libelle);
-    return { id, libelle: equipement.libelle };
-  }
-
-  private async tracer(user: AuthUser, action: string, entiteId: string, details?: string) {
-    await this.prisma.auditLog.create({
-      data: { userId: user.id, action, entite: 'Equipement', entiteId, details },
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.equipementCampus.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
+      if (!avant) {
+        throw new NotFoundException(I18nContext.current()!.t('helpdesk.equipement_inconnu_ou_desactive'));
+      }
+      await tx.equipementCampus.delete({ where: { id } });
+      await journaliser(tx, user, 'EQUIPEMENT_SUPPRESSION', 'Equipement', id, {
+        avant: instantaneEquipement(avant),
+        apres: null,
+      });
+      return { id, libelle: avant.libelle };
     });
   }
 
@@ -129,10 +270,16 @@ export class EquipementsService extends CrudService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('helpdesk.jeton_invalide_ou_expire'));
     }
 
-    const equipement = await this.findOne(id);
+    // `findOne` intentionally omits codeQr from authenticated API responses;
+    // printing is the one internal path that needs the stored code itself.
+    const equipement = await this.prisma.equipementCampus.findUnique({
+      where: { id },
+      select: { id: true, libelle: true, emplacement: true, codeQr: true },
+    });
+    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
     const urlSignalement = `${baseUrl.replace(/\/+$/, '')}/#/helpdesk?equipement=${encodeURIComponent(equipement.codeQr)}`;
     const qr = await QRCode.toDataURL(urlSignalement, {
       width: 320,
@@ -196,8 +343,8 @@ export class TicketsService extends CrudService {
 
   async liste(query: TicketQueryDto, user: AuthUser) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.TicketSupportWhereInput = {
       ...(this.visibiliteReduite(user) ? { utilisateurId: user.id } : {}),
@@ -222,18 +369,22 @@ export class TicketsService extends CrudService {
         where,
         include: TICKET_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.ticketSupport.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async findTicket(id: string, user: AuthUser) {
-    const ticket = await this.findOne(id);
-    if (this.visibiliteReduite(user) && ticket.utilisateurId !== user.id) {
-      throw new NotFoundException('Ticket introuvable');
-    }
+    const ticket = await this.prisma.ticketSupport.findFirst({
+      where: {
+        id,
+        ...(this.visibiliteReduite(user) ? { utilisateurId: user.id } : {}),
+      },
+      include: TICKET_INCLUDE,
+    });
+    if (!ticket) throw new NotFoundException(t('helpdesk.ticket_introuvable'));
     return ticket;
   }
 
@@ -243,16 +394,7 @@ export class TicketsService extends CrudService {
    * @unique départage et la création recommence avec le suivant.
    */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    const prefixe = `${PREFIX_TICKET}${annee}-`;
-    const existants = await tx.ticketSupport.findMany({
-      where: { numero: { startsWith: prefixe } },
-      select: { numero: true },
-    });
-    const max = existants.reduce((m, t) => {
-      const n = Number(t.numero.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(4, '0')}`;
+    return prochainNumeroTx(tx, 'ticketSupport', 'numero', `${PREFIX_TICKET}${annee}-`, 4);
   }
 
   /** Déclaration rapide : n'importe quel utilisateur connecté. */
@@ -262,16 +404,16 @@ export class TicketsService extends CrudService {
         where: { id: dto.equipementId },
       });
       if (!equipement || !equipement.actif) {
-        throw new BadRequestException("L'équipement visé est inconnu ou désactivé");
+        throw new BadRequestException(I18nContext.current()!.t('helpdesk.l_equipement_vise_est_inconnu_ou_desactive'));
       }
     }
 
     const annee = String(new Date().getFullYear());
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
-        const ticket = await this.prisma.$transaction(async (tx) => {
+        return await this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
-          return tx.ticketSupport.create({
+          const ticket = await tx.ticketSupport.create({
             data: {
               numero,
               equipementId: dto.equipementId ?? null,
@@ -285,57 +427,62 @@ export class TicketsService extends CrudService {
             },
             include: TICKET_INCLUDE,
           });
+          // La trace est dans la transaction de la création : la reprise sur
+          // conflit de numéro annule aussi la trace de la tentative avortée,
+          // et un ticket créé ne peut pas rester sans entrée de journal.
+          await journaliser(tx, user, 'TICKET_OUVERT', 'TicketSupport', ticket.id, {
+            avant: null,
+            apres: instantaneTicket(ticket),
+          });
+          return ticket;
         });
-
-        await this.prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'TICKET_OUVERT',
-            entite: 'TicketSupport',
-            entiteId: ticket.id,
-            details: `${ticket.numero} — ${ticket.categorie} : ${ticket.description.slice(0, 120)}`,
-          },
-        });
-        return ticket;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Numéro de ticket temporairement indisponible, réessayez.');
+    throw new ConflictException(I18nContext.current()!.t('helpdesk.numero_de_ticket_temporairement_indisponible_reessayez'));
   }
 
-  /** Prise en charge : seuls les tickets OUVERT ou EN_COURS changent de statut. */
+  /**
+   * Prise en charge : seuls les tickets OUVERT ou EN_COURS changent de statut.
+   *
+   * La transition porte le statut, l'agent affecté et l'horodatage (prise en
+   * charge ou clôture) ; les trois sont écrits avec la trace dans la même
+   * transaction, et l'état « avant » est relu dans cette transaction pour que
+   * la trace décrive l'état réellement remplacé.
+   */
   async changerStatut(id: string, dto: TraiterTicketDto, user: AuthUser) {
     const ticket = await this.findOne(id);
     if (ticket.statut !== StatutTicket.OUVERT && ticket.statut !== StatutTicket.EN_COURS) {
-      throw new BadRequestException(
-        'Seuls les tickets ouverts ou en cours changent de statut : un ticket résolu ou clôturé est clos.',
-      );
+      throw new BadRequestException(I18nContext.current()!.t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
     }
 
-    const miseAJour = await this.prisma.ticketSupport.update({
-      where: { id },
-      data: {
-        statut: dto.statut,
-        traiteParId: user.id,
-        ...(dto.statut === StatutTicket.CLOTURE
-          ? { clicheLe: new Date() }
-          : { traiteLe: new Date() }),
-      },
-      include: TICKET_INCLUDE,
-    });
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "TicketSupport" WHERE id = ${id} FOR UPDATE`;
+      const avant = await tx.ticketSupport.findUnique({ where: { id }, select: TICKET_AUDIT });
+      if (!avant) throw new NotFoundException();
+      if (avant.statut !== StatutTicket.OUVERT && avant.statut !== StatutTicket.EN_COURS) {
+        throw new BadRequestException(I18nContext.current()!.t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
+      }
+      const cloture = dto.statut === StatutTicket.CLOTURE;
+      const apres = await tx.ticketSupport.update({
+        where: { id },
+        data: {
+          statut: dto.statut,
+          traiteParId: user.id,
+          ...(cloture ? { clicheLe: new Date() } : { traiteLe: new Date() }),
+        },
+        include: TICKET_INCLUDE,
+      });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: `TICKET_${dto.statut}`,
-        entite: 'TicketSupport',
-        entiteId: id,
-        details: `${miseAJour.numero} — ${dto.statut}`,
-      },
+      await journaliser(tx, user, `TICKET_${dto.statut}`, 'TicketSupport', id, {
+        avant: avant ? instantaneTicket(avant) : null,
+        apres: instantaneTicket(apres),
+        champsModifies: ['statut', 'traiteParId', cloture ? 'clicheLe' : 'traiteLe'],
+      });
+      return apres;
     });
-    return miseAJour;
   }
 
   /** Petit agrégat pour la DSI : volumes et taux de traitement dans les 24h. */

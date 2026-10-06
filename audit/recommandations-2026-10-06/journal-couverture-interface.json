@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-06T15:30:02.338648+00:00",
+  "statut": "partiel",
+  "realEventConfigurations": 112,
+  "proofs": [
+    {
+      "file": "journal-reel-interface.json",
+      "date": "2026-10-06T15:00:56.731Z",
+      "checks": 8,
+      "scope": "Événements réels Salle, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": []
+    },
+    {
+      "file": "journal-reclamation-interface.json",
+      "date": "2026-10-06T15:11:06.049Z",
+      "checks": 8,
+      "scope": "Réclamation anonyme réelle, auteur absent de audit, interface ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": []
+    },
+    {
+      "file": "journal-campus-interface.json",
+      "date": "2026-10-06T15:14:31.913Z",
+      "checks": 16,
+      "scope": "VOD et courrier réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": [
+        "COURRIER_CREE",
+        "VOD_CREE"
+      ]
+    },
+    {
+      "file": "journal-services-interface.json",
+      "date": "2026-10-06T15:19:49.348Z",
+      "checks": 16,
+      "scope": "Ticket helpdesk et élection réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": [
+        "ELECTION_CREEE",
+        "TICKET_OUVERT"
+      ]
+    },
+    {
+      "file": "journal-gestion-interface.json",
+      "date": "2026-10-06T15:24:11.941Z",
+      "checks": 24,
+      "scope": "Réservation, patrimoine et formation réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": [
+        "FORMATION_CREE",
+        "PATRIMOINE_REPARATION_DECLAREE",
+        "RESERVATION_CREEE"
+      ]
+    },
+    {
+      "file": "journal-documents-stages-interface.json",
+      "date": "2026-10-06T15:27:03.583Z",
+      "checks": 24,
+      "scope": "Travail encadré et dépôt document réels avant/après, téléchargement authentifié réduit sans contenu, interface ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": [
+        "DOCUMENT_DEPOT_CREE",
+        "DOCUMENT_DEPOT_TELECHARGE",
+        "TRAVAIL_ENCADRE_CREE"
+      ]
+    },
+    {
+      "file": "journal-plagiat-interface.json",
+      "date": "2026-10-06T15:29:04.550Z",
+      "checks": 16,
+      "scope": "Détection automatique de dépôts identiques et arbitrage plagiat réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile",
+      "actions": [
+        "PLAGIAT_CONFIRME",
+        "PLAGIAT_SUSPICION_OUVERTE"
+      ]
+    }
+  ],
+  "historicalVotePrivacyProof": "journal-votes-historiques-interface.json",
+  "remaining": "SMS avec fournisseur de recette et autres mutations sensibles non couvertes par ces parcours ; validation humaine.",
+  "productionUntouched": true
+}

@@ -1,130 +1,255 @@
+@use 'sass:list';
 @use './mixins' as *;
 
-// UniPrésence — matière du monde « panneau peint ».
-// Tout ce qui suit décrit une surface peinte : filets tracés à la règle, aplats
-// francs, angles vifs, aucune ombre portée. Les cartes flottantes, les bordures
-// latérales colorées et les dégradés n'appartiennent pas à ce monde.
-
-// Les fontes du panneau (Archivo, Anton) sont chargées depuis App.vue.
-// Les mixins partagés sont chargés avant les règles globales de l’application.
+// UniPrésence — matière Apple.
+//
+// Tout ce qui suit décrit une surface calme : du blanc, un gris #f5f5f7, un
+// filet d'un cheveu, une ombre qu'on devine plus qu'on ne la voit. Les aplats
+// saturés, les filets de 2px, les capitales criées et les angles vifs
+// appartiennent au monde précédent et n'ont plus cours.
+//
+// Trois règles tiennent tout le fichier :
+//   1. La couleur dit un état, jamais une décoration. Une page entière peut
+//      n'avoir aucune couleur — c'est le cas normal, pas un manque.
+//   2. Le tracking suit le corps (§15 du guide Apple) : négatif et serré sur
+//      les grands titres, proche de zéro sur le texte courant. Jamais une
+//      valeur unique pour toutes les tailles.
+//   3. L'air est la structure. Ce qui séparait par un filet épais se sépare
+//      désormais par du vide ; le filet ne reste que là où le vide ne suffit pas.
 
 :root {
   --up-encre: #{$encre};
   --up-encre-douce: #{$encre-douce};
-  --up-chaux: #{$chaux};
-  --up-plaque: #{$chaux-claire};
-  --up-craie: #{$blanc-craie};
+  --up-encre-tertiaire: #{$encre-tertiaire};
 
-  // Le bandeau de tête reste peint à l'encre dans les deux thèmes : son
-  // lettrage a donc besoin d'une craie qui, elle, ne bascule pas en mode
-  // sombre — et des deux nuances de craie affaiblie qui en découlent.
-  --up-craie-fixe: #{$blanc-craie};
-  --up-sur-bandeau: rgba(250, 250, 247, 0.74);
-  --up-filet-bandeau: 1px solid rgba(250, 250, 247, 0.34);
+  // Fonds : la page est grise, les surfaces posées dessus sont blanches. C'est
+  // l'inverse du réflexe habituel, et c'est ce qui fait respirer une page Apple.
+  --up-chaux: #{$gris-fond};
+  --up-plaque: #{$blanc};
+  --up-craie: #{$blanc};
+  --up-gris-inerte: #{$gris-inerte};
 
-  // La période d'un créneau se peint en jaune : une mention de validité,
-  // pas un état de séance.
-  --up-jaune-fonce: #{$jaune-fonce};
+  --up-vert-action: #{$vert-action};
+  --up-vert-lien: #{$vert-lien};
 
-  --up-filet: 2px solid #{$encre};
-  --up-filet-fin: 1px solid rgba(16, 37, 30, 0.38);
+  /**
+   * Rôles nommés. Une poignée d'écrans écrivaient déjà `var(--up-primary)` et
+   * `var(--up-vert)` — sauf que ces variables n'avaient jamais été déclarées.
+   * Là où un repli était fourni elles tombaient dessus sans qu'on le remarque ;
+   * là où il n'y en avait pas (la pastille compacte du calendrier), la
+   * déclaration était simplement invalide : fond absent, texte blanc, pastille
+   * invisible. Les voici définies une fois, et elles basculent avec le thème.
+   */
+  --up-primary: #{$vert-action};
+  --up-secondary: #{$encre};
+  --up-vert: #{$vert};
+  --up-rouge: #{$rouge};
+  --up-jaune: #{$jaune};
 
-  // Matière du panneau : grain de brosse et usure d'émail, dessinés une fois.
-  --up-matiere: url('/matiere/email-panneau.svg');
+  // Les quatre fonds dilués, exposés en CSS pour les blocs `<style scoped>` en
+  // CSS simple, où une variable Sass ne serait jamais résolue.
+  --up-vert-fond: #{$vert-fond};
+  --up-jaune-fond: #{$jaune-fond};
+  --up-rouge-fond: #{$rouge-fond};
 
-  // Rythme d'espacement unique, du serré au respiré.
+  // La chrome (en-tête, pied) est claire dans les deux thèmes ? Non : elle est
+  // translucide et prend la couleur de ce qui passe dessous. Ces trois variables
+  // décrivent donc le texte *sur* la chrome, et basculent avec le thème.
+  --up-craie-fixe: #{$encre};
+  --up-sur-bandeau: #{$encre-douce};
+  --up-filet-bandeau: 1px solid rgba(0, 0, 0, 0.08);
+
+  // L'ocre qui porte le texte des mentions « retard » : le jaune du drapeau
+  // ne peut pas en porter, il tombe à 1,4:1 sur blanc.
+  --up-jaune-texte: #{$jaune-texte};
+  --up-jaune-fonce: #{$jaune-texte};
+
+  // Le filet d'un cheveu. Il ne structure pas — il termine.
+  --up-filet: 1px solid #{$gris-filet};
+  --up-filet-fin: 1px solid rgba(0, 0, 0, 0.06);
+
+  // Rythme d'espacement : plus large qu'avant à chaque cran. L'aération est le
+  // premier symptôme du monde qu'on vise.
   --up-1: 4px;
   --up-2: 8px;
-  --up-3: 14px;
-  --up-4: 22px;
-  --up-5: 34px;
-  --up-6: 52px;
+  --up-3: 16px;
+  --up-4: 24px;
+  --up-5: 40px;
+  --up-6: 64px;
 
-  --up-transition: 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  // Formes.
+  --up-rayon-sm: 8px;
+  --up-rayon: 12px;
+  --up-rayon-lg: 18px;
+  --up-rayon-xl: 28px;
+  --up-pilule: 980px;
+
+  // Ombres. Apple ne pose pas d'ombre pour décoller une carte du fond : il pose
+  // une ombre pour dire qu'une chose flotte *par-dessus* le contenu. D'où trois
+  // niveaux seulement, et le premier presque invisible.
+  --up-ombre-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --up-ombre-2: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --up-ombre-3: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  // Mouvement. §4 du guide : ressort critiquement amorti par défaut, réponse
+  // 0.3–0.4 s, aucun dépassement. Cette courbe est l'approximation CSS la plus
+  // proche d'un ressort amorti — départ franc, arrivée qui se pose.
+  --up-transition: 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  --up-transition-rapide: 180ms cubic-bezier(0.32, 0.72, 0, 1);
+  // Le seul endroit où l'on autorise un léger dépassement : ce qui a été lancé
+  // au doigt (§4 — « add bounce only when the gesture carried momentum »).
+  --up-transition-elan: 420ms cubic-bezier(0.16, 1.06, 0.3, 1);
+}
+
+// ------------------------------------------------------------- thème sombre
+// Le noir d'Apple est le vrai noir, pas un gris-vert. Les surfaces montent en
+// gris (#1d1d1f) au lieu de descendre : en sombre, ce qui est plus clair est
+// plus proche.
+body.body--dark {
+  --up-encre: #F5F5F7;
+  --up-encre-douce: #A1A1A6;
+  --up-encre-tertiaire: #A1A1A6;
+
+  --up-chaux: #000000;
+  --up-plaque: #1D1D1F;
+  --up-craie: #1D1D1F;
+  --up-gris-inerte: #333336;
+
+  --up-vert-action: #{$vert-nuit};
+  --up-vert-lien: #{$vert-nuit};
+
+  --up-primary: #{$vert-nuit};
+  --up-secondary: #F5F5F7;
+  --up-vert: #35C88A;
+  --up-rouge: #F2637A;
+  --up-jaune: #F5CE3C;
+
+  --up-vert-fond: rgba(0, 148, 96, 0.20);
+  --up-jaune-fond: rgba(252, 209, 22, 0.16);
+  --up-rouge-fond: rgba(206, 17, 38, 0.22);
+
+  --up-craie-fixe: #F5F5F7;
+  --up-sur-bandeau: #86868B;
+  --up-filet-bandeau: 1px solid rgba(255, 255, 255, 0.12);
+
+  --up-filet: 1px solid #424245;
+  --up-filet-fin: 1px solid rgba(255, 255, 255, 0.08);
+
+  --up-ombre-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --up-ombre-2: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --up-ombre-3: 0 12px 40px rgba(0, 0, 0, 0.6);
+
+  background: #000000;
+  color: #F5F5F7;
+}
+
+// --------------------------------------------------------------- fondations
+
+html {
+  // §15 : l'espacement suit le texte. Une racine en pourcentage laisse le
+  // réglage de taille du système agrandir la mise en page avec la police.
+  font: 100% / 1.5 $typography-font-family;
 }
 
 body {
-  font-family: 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
-  font-variation-settings: 'wdth' 100;
+  font-family: $typography-font-family;
   background: var(--up-chaux);
   color: var(--up-encre);
   font-size: 15px;
+  line-height: 1.47059; // l'interligne du corps de texte d'Apple
+  letter-spacing: -0.012em; // §15 : tracking légèrement négatif dès le corps
   -webkit-font-smoothing: antialiased;
-}
-
-body.body--dark {
-  --up-encre: #{$blanc-craie};
-  --up-encre-douce: #b9c6bf;
-  --up-chaux: #0d1f18;
-  --up-plaque: #14322791;
-  --up-craie: #12291f;
-  --up-filet: 2px solid #{$blanc-craie};
-  --up-filet-fin: 1px solid rgba(250, 250, 247, 0.24);
-
-  background: #0d1f18;
-  color: $blanc-craie;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
 }
 
 // --------------------------------------------------------------- lettrage
+//
+// Un seul geste typographique : du poids et du serrage, jamais des capitales.
+// Le nom `.lettrage` vient du monde précédent et reste employé dans une
+// trentaine d'écrans — il désigne maintenant le titre Apple, tracé serré.
 
-// Le lettrage du panneau : large, en capitales, tracé d'un seul geste.
 .lettrage {
-  font-family: 'Anton', 'Archivo Variable', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.01em;
-  // Assez d'interligne pour que les accents français (É, Û) ne soient jamais
-  // rognés par un conteneur serré.
-  line-height: 1.06;
-  font-weight: 400;
+  font-family: $typography-font-family;
+  font-weight: 600;
+  text-transform: none;
+  // §15 : plus le corps grandit, plus les lettres doivent se rapprocher.
+  letter-spacing: -0.021em;
+  line-height: 1.16;
+  font-optical-sizing: auto;
 }
 
-// Mentions peintes au pochoir : petites capitales serrées.
+// La mention discrète. Elle était une capitale au pochoir ; elle est désormais
+// une légende sobre — même rôle d'ouverture de bloc, sans crier.
 .pochoir {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: -0.003em; // §15 : proche de zéro aux petits corps
+  line-height: 1.33337;
+  color: var(--up-encre-douce);
+}
+
+// Là où une mention doit vraiment se distinguer sans grossir — un intitulé de
+// colonne, une rubrique d'index — la capitale reste permise, et prend alors le
+// tracking *positif* que réclament les petites capitales.
+.pochoir--rubrique {
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  line-height: 1.2;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  font-size: 11px;
 }
 
 .chiffres {
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
 }
 
-// Mention au pochoir qui contient des heures ou des durées : « 2h00 » ne se
-// crie pas en capitales.
 .pochoir--brut {
   text-transform: none;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.003em;
 }
 
-// Un chiffre porteur d'unité garde son unité en minuscule : « 85,3 h », jamais
-// « 85,3 H ». Le lettrage crie les mots, pas les grandeurs.
 .lettrage.avec-unite { text-transform: none; }
 
-// Les titres de fiches et de dialogues portent le lettrage du panneau.
+// Échelle de titres. Le corps, le poids et l'interligne bougent ensemble
+// (§15 : « build hierarchy from weight + size + leading as a set »).
 .text-h6 {
   @extend .lettrage;
-  font-size: 1.22rem;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  letter-spacing: -0.019em;
 }
 
 .page-titre {
   @extend .lettrage;
-  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+  margin: 0;
+  font-size: clamp(1.75rem, 1.2rem + 2.2vw, 2.75rem);
+  line-height: 1.07;
+  letter-spacing: -0.024em; // plus le titre est grand, plus le tracking serre
   color: var(--up-encre);
 }
 
 .page-sous-titre {
-  font-size: 0.86rem;
+  font-size: 1.0625rem; // 17px — le corps de texte d'Apple
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
   color: var(--up-encre-douce);
-  max-width: 72ch;
+  max-width: 66ch;
+}
+
+// Le soulignement distingue les liens dans le texte sans dépendre de la couleur.
+a:not(.q-btn):not(.q-item):not(.q-tab) {
+  color: var(--up-vert-lien);
+  text-decoration: underline;
+
+  &:hover { text-decoration: underline; }
 }
 
 /**
  * Panneau vide : « rien à afficher » se dit partout de la même façon — une
  * colonne centrée, l'icône, la phrase, puis l'action qui sort de l'impasse.
- * Cette règle vivait recopiée, et divergente, dans une vingtaine d'écrans.
  * `grid-column` la fait tenir toute la largeur d'une grille de cartes.
  */
 .etat-vide {
@@ -133,330 +258,603 @@ body.body--dark {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--up-2);
-  padding: var(--up-5) var(--up-3);
+  gap: var(--up-3);
+  padding: var(--up-6) var(--up-4);
   text-align: center;
   color: var(--up-encre-douce);
 
+  // Seule l'icône d'illustration se met en retrait. Viser toutes les `.q-icon`
+  // descendantes teignait aussi celle du bouton d'action placé sous la phrase :
+  // une icône grise sur un aplat vert, à 1,30:1. Un sélecteur d'enfant direct
+  // laisse les boutons porter leur propre couleur.
+  > .q-icon { color: var(--up-encre-tertiaire); }
+
   .text-caption {
     max-width: 56ch;
+    font-size: 0.9375rem;
   }
 }
 
 // ---------------------------------------------------------------- surfaces
 
-// Matière peinte : le grain de brosse et l'usure viennent d'un fichier dessiné
-// pour ça (public/matiere/email-panneau.svg), pas d'un dégradé CSS.
-// Deux passages du même fichier à deux échelles : le grain fin de la brosse et
-// l'usure large de l'émail. Aucun pseudo-élément, aucun positionnement forcé —
-// un `position: relative` glissé ici casserait l'en-tête fixe de Quasar.
+// Le grain de brosse du panneau peint n'a plus d'objet : une surface Apple est
+// unie. Le mixin reste défini — il est appelé ailleurs — mais ne peint rien.
 @mixin grain($intensite: soft-light) {
-  background-image: var(--up-matiere), var(--up-matiere);
-  background-size: 320px 320px, 780px 780px;
-  background-blend-mode: $intensite, overlay;
+  background-image: none;
 }
 
-// Toute carte de l'application est une plaque du panneau.
+// Toute carte de l'application est une surface blanche posée sur le gris.
 .carte { background: var(--up-plaque); }
 
-// La plaque : l'unité du panneau. Bordure tracée, jamais d'ombre.
+// La plaque : l'unité de surface. Elle ne se cerne plus d'un filet épais, elle
+// se détache par sa clarté et par un rayon.
 .plaque {
   background: var(--up-plaque);
   border: var(--up-filet);
-  border-radius: 0;
+  border-radius: var(--up-rayon-lg);
+  overflow: hidden;
 }
 
-// Champ peint : un aplat qui porte un statut ou une action. Le liséré clair en
-// retrait est la double règle des plaques émaillées.
+// Champ d'état. C'était un aplat de peinture saturé, blanc sur couleur ; c'est
+// maintenant une surface à peine teintée qui porte sa couleur dans le texte.
+// Un tableau de cinquante lignes ne doit pas ressembler à un drapeau.
 .champ {
-  @include grain(soft-light);
-  color: #fff;
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  font-weight: 590;
+  letter-spacing: -0.01em;
+  color: var(--up-encre);
+  background: var(--up-gris-inerte);
 }
 
-.champ--present { background: $vert; }
-.champ--retard { background: $jaune; color: $encre; }
-.champ--absent { background: $rouge; }
+.champ--present { background: $vert-fond; color: #{$vert}; }
+.champ--retard { background: $jaune-fond; color: $jaune-texte; }
+.champ--absent { background: $rouge-fond; color: #{$rouge}; }
 // Variantes : une nuance de la même famille. Remplacé reste un cours assuré,
 // départ anticipé reste un manquement d'horaire, excusé reste une absence.
-.champ--remplace { background: $vert-clair; }
-.champ--depart { background: $jaune-fonce; }
-.champ--excuse { background: $rouge-clair; }
+.champ--remplace { background: $vert-fond; color: $vert-clair; }
+.champ--depart { background: $jaune-fond; color: $jaune-texte; }
+.champ--excuse { background: $rouge-fond; color: $rouge-clair; }
 .champ--attente {
   background: transparent;
-  color: var(--up-encre-douce);
-  border-left: var(--up-filet);
+  color: var(--up-encre-tertiaire);
+  border-left: var(--up-filet-fin);
 }
 
-// Le champ se peint : geste unique du monde, réutilisé à chaque confirmation.
+body.body--dark {
+  .champ { background: rgba(255, 255, 255, 0.08); }
+  .champ--present, .champ--remplace { background: var(--up-vert-fond); color: #35C88A; }
+  .champ--retard, .champ--depart { background: var(--up-jaune-fond); color: #F5CE3C; }
+  .champ--absent, .champ--excuse { background: var(--up-rouge-fond); color: #F2637A; }
+  .champ--attente { background: transparent; color: var(--up-encre-tertiaire); }
+  .champ--attente-paiement { color: #F5CE3C !important; }
+}
+
+// Le champ apparaît : §12 — « materialize, don't just fade ». La surface arrive
+// en montant très légèrement d'échelle, elle ne se dévoile plus au balayage.
 @keyframes peindre {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 .se-peint {
-  animation: peindre 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: peindre 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+// §14 : mouvement réduit ne veut pas dire aucun retour — un fondu court remplace
+// le déplacement, et le dépassement disparaît partout.
 @media (prefers-reduced-motion: reduce) {
-  .se-peint { animation: none; }
+  .se-peint { animation: peindre 160ms ease both; transform: none; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 // ------------------------------------------------------- composants Quasar
 
 .q-card {
-  border-radius: 0;
-  box-shadow: none !important;
+  border-radius: var(--up-rayon-lg);
+  box-shadow: var(--up-ombre-1) !important;
   background: var(--up-plaque);
+  border: var(--up-filet);
 }
 
 .q-card--bordered {
   border: var(--up-filet);
 }
 
-// Boutons : blocs peints avec l'arête plus sombre du panneau.
+// Boutons : la pilule d'Apple. Un seul bouton plein par écran — celui qui fait
+// avancer ; les autres sont en texte vert.
 .q-btn {
-  border-radius: 0;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  border-radius: var(--up-pilule);
+  font-weight: 500;
+  letter-spacing: -0.01em;
   text-transform: none;
   box-shadow: none !important;
+  padding: 0 18px;
+  min-height: 36px;
 }
 
-// Pas de relief simulé : la peinture ne s'enfonce pas. L'appui se lit à
-// l'assombrissement du champ, comme une plaque qu'on touche au soleil.
-.q-btn--unelevated,
-.q-btn--standard {
-  transition: filter 120ms ease-out;
+// §1 : le retour vit sur l'appui, pas sur le relâchement, et il est immédiat.
+.q-btn--actionable {
+  transition: transform 140ms cubic-bezier(0.32, 0.72, 0, 1),
+    background-color var(--up-transition-rapide),
+    opacity var(--up-transition-rapide);
 
-  &.q-btn--actionable:active { filter: brightness(0.88); }
+  &:active { transform: scale(0.97); }
+}
+
+.q-btn--unelevated.bg-primary,
+.q-btn--standard.bg-primary,
+.q-btn.text-white.bg-primary {
+  &:hover { background: $vert-survol !important; }
 }
 
 .q-btn--outline {
-  &::before { border-width: 2px; border-radius: 0; }
+  &::before { border-width: 1px; border-radius: var(--up-pilule); border-color: currentColor; }
 }
 
 .q-btn--flat,
 .q-btn--round { border-bottom: 0; }
 
-// Champs de saisie : le blanc de la craie sur le panneau peint, cerné d'un filet.
-.q-field--outlined .q-field__control {
-  border-radius: 0;
-  background: var(--up-craie);
+// Un bouton plat est un lien : vert, sans fond, il ne s'assombrit qu'à peine.
+.q-btn--flat:not(.q-btn--round):not([class*='text-']) {
+  color: var(--up-vert-lien);
+}
 
-  &::before { border: 2px solid rgba(16, 37, 30, 0.34); }
-  &::after { border-radius: 0; }
+// Champs de saisie : une surface douce, sans bordure au repos ; le vert ne se
+// montre qu'au moment où le champ a le focus.
+.q-field--outlined .q-field__control {
+  border-radius: var(--up-rayon);
+  background: var(--up-chaux);
+
+  &::before { border: 1px solid transparent; border-radius: var(--up-rayon); }
+  &::after { border-radius: var(--up-rayon); }
 }
 
 body.body--dark .q-field--outlined .q-field__control {
   background: rgba(255, 255, 255, 0.06);
-  &::before { border-color: rgba(250, 250, 247, 0.38); }
+  &::before { border-color: transparent; }
 }
 
-.q-field--outlined.q-field--focused .q-field__control::before {
-  border: 2px solid $encre;
+.q-field--outlined.q-field--focused .q-field__control {
+  background: var(--up-plaque);
+
+  &::before {
+    border: 1px solid #{$vert-action};
+    box-shadow: 0 0 0 3px rgba(0, 122, 77, 0.25);
+  }
 }
 
 .q-field--outlined.q-field--error .q-field__control::before {
-  border: 2px solid $rouge;
+  border: 1px solid #{$rouge};
+  box-shadow: 0 0 0 3px rgba(206, 17, 38, 0.20);
 }
 
+// L'intitulé d'un champ ne crie pas : c'est une phrase, en gris.
 .q-field__label {
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: -0.012em;
+  text-transform: none;
+  color: var(--up-encre-douce);
 }
 
-.q-field--float .q-field__label { text-transform: uppercase; }
+.q-field--float .q-field__label {
+  text-transform: none;
+  font-size: 12px;
+  letter-spacing: -0.003em;
+}
 
-// Un bouton inerte doit se voir inerte : plus de peinture, plus d'appel.
+// Un bouton inerte doit se voir inerte, sans devenir un trou gris : Apple
+// baisse l'opacité de l'action, il ne la repeint pas.
 .q-btn.disabled,
 .q-btn[disabled] {
-  opacity: 1 !important;
-  background: #cdd0c8 !important;
-  color: rgba(16, 37, 30, 0.55) !important;
-  border-bottom-color: rgba(16, 37, 30, 0.18) !important;
+  opacity: 0.36 !important;
+  box-shadow: none !important;
 }
 
-// Étiquettes : plaquettes peintes, pas des pastilles.
+// Étiquettes : des pastilles douces, jamais des plaquettes criées.
 .q-chip {
-  border-radius: 0;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  font-size: 11px;
-  text-transform: uppercase;
-  padding: 4px 8px;
+  border-radius: var(--up-pilule);
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  font-size: 12px;
+  text-transform: none;
+  padding: 4px 12px;
   min-height: 24px;
+  background: var(--up-gris-inerte);
+  color: var(--up-encre);
 }
 
-// Tableaux : registre réglé. Filet épais en tête, filets fins entre les lignes.
-.q-table__container { border-radius: 0; box-shadow: none; }
+/**
+ * Une quarantaine d'écrans posent des pastilles colorées à texte blanc
+ * (`color="positive" text-color="white"`). Un registre de cinquante lignes en
+ * devenait bariolé : cinquante aplats saturés se disputant l'œil. La couleur
+ * reste — c'est elle qui dit l'état — mais elle passe dans le texte, sur un
+ * fond très dilué. Une seule règle rattrape tous ces écrans à la fois ; le
+ * `!important` est nécessaire pour battre les classes utilitaires de Quasar.
+ */
+$TEINTES: (
+  'positive': ($vert-fond, $vert),
+  'negative': ($rouge-fond, $rouge),
+  'warning':  ($jaune-fond, $jaune-texte),
+  'primary':  ($vert-fond, $vert-action),
+  'accent':   ($vert-fond, $vert-lien),
+  'info':     ($gris-inerte, $encre-douce),
+  'secondary':($gris-inerte, $encre),
+);
+
+@each $nom, $paire in $TEINTES {
+  .q-chip.bg-#{$nom},
+  .q-badge.bg-#{$nom} {
+    background: list.nth($paire, 1) !important;
+    color: list.nth($paire, 2) !important;
+
+    .q-icon { color: inherit; }
+  }
+}
+
+// Un badge de comptage reste une pastille pleine et minuscule : dilué, il ne
+// se verrait plus. Seul celui-là garde son aplat.
+.q-badge--floating,
+.q-item .q-badge.bg-negative {
+  background: #{$rouge} !important;
+  color: #fff !important;
+}
+
+body.body--dark {
+  @each $nom, $teinte in ('positive': rgba(0, 148, 96, 0.20), 'negative': rgba(206, 17, 38, 0.22),
+                          'warning': rgba(252, 209, 22, 0.16), 'primary': rgba(0, 148, 96, 0.20),
+                          'accent': rgba(0, 148, 96, 0.20)) {
+    .q-chip.bg-#{$nom},
+    .q-badge.bg-#{$nom} { background: $teinte !important; }
+  }
+
+  .text-primary, .text-positive { color: #35C88A !important; }
+  .text-negative { color: #F2637A !important; }
+
+  .q-chip.bg-positive, .q-badge.bg-positive { color: #35C88A !important; }
+  .q-chip.bg-negative, .q-badge.bg-negative { color: #F2637A !important; }
+  .q-chip.bg-warning, .q-badge.bg-warning { color: #F5CE3C !important; }
+  .q-chip.bg-primary, .q-chip.bg-accent,
+  .q-badge.bg-primary, .q-badge.bg-accent { color: #{$vert-nuit} !important; }
+  .q-chip.bg-info, .q-chip.bg-secondary,
+  .q-badge.bg-info, .q-badge.bg-secondary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--up-encre) !important;
+  }
+}
+
+// Tableaux : un registre aéré. Aucun bandeau d'encre en tête — l'intitulé de
+// colonne est gris, et c'est la ligne du dessous qui le sépare.
+.q-table__container {
+  border-radius: var(--up-rayon-lg);
+  box-shadow: none;
+  border: var(--up-filet);
+  background: var(--up-plaque);
+}
 
 .q-table thead tr {
-  background: var(--up-encre);
+  background: transparent;
 
   th {
-    color: $blanc-craie;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    border-bottom: 0;
+    color: var(--up-encre-douce);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: -0.003em;
+    text-transform: none;
+    border-bottom: var(--up-filet);
+    padding-top: var(--up-3);
+    padding-bottom: var(--up-3);
   }
 }
 
 .q-table tbody td {
   border-bottom: var(--up-filet-fin);
-  font-size: 14px;
+  font-size: 15px;
+  letter-spacing: -0.012em;
+  padding-top: var(--up-3);
+  padding-bottom: var(--up-3);
 }
 
-.q-table tbody tr:hover { background: rgba(16, 37, 30, 0.06); }
+.q-table tbody tr:last-child td { border-bottom: 0; }
 
-.q-table__bottom { border-top: var(--up-filet); font-size: 12px; }
+.q-table tbody tr {
+  transition: background-color var(--up-transition-rapide);
+  &:hover { background: rgba(0, 0, 0, 0.025); }
+}
+
+body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+.q-table__bottom {
+  border-top: var(--up-filet-fin);
+  font-size: 12px;
+  color: var(--up-encre-douce);
+}
 
 // Un registre large se fait défiler, il ne se laisse pas rogner.
 .q-table__middle { overflow-x: auto; }
 
-// Onglets : languettes peintes séparées par des filets.
+// Onglets : le segmented control d'Apple — une gouttière grise, une pastille
+// blanche qui glisse sous l'onglet actif.
 .q-tabs {
-  border: var(--up-filet);
-  background: var(--up-plaque);
+  border: 0;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-rayon);
+  padding: 3px;
+  min-height: 34px;
 }
 
 .q-tab {
-  border-radius: 0;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  border-radius: var(--up-rayon-sm);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  min-height: 30px;
+  text-transform: none;
+  transition: background-color var(--up-transition-rapide), color var(--up-transition-rapide);
 
-  & + .q-tab { border-left: var(--up-filet-fin); }
+  & + .q-tab { border-left: 0; }
 
   &--active {
-    background: var(--up-encre);
-    color: $blanc-craie;
+    background: var(--up-plaque);
+    color: var(--up-encre);
+    box-shadow: var(--up-ombre-1);
   }
 }
 
 .q-tab__indicator { display: none; }
 
 // Un panneau d'onglets n'est qu'un contenant : il ne pose pas de marge à la
-// place de ce qu'il contient. Les écrans y mettent des plaques et des tableaux
-// qui portent déjà leur propre air ; le remplissage par défaut les décalait de
-// leurs voisins et cassait l'alignement des colonnes.
+// place de ce qu'il contient.
 .q-tab-panel { padding: 0; }
 
-.q-dialog__inner > .q-card { border: var(--up-filet); }
+/**
+ * Le raccourci de période — « Aujourd'hui / 7 jours / 30 jours ». Deux écrans
+ * (registre des séances, statistiques) en tenaient chacun leur copie, et les
+ * deux copies avaient divergé : l'une peignait l'option choisie à l'encre,
+ * l'autre non. Une seule règle globale, la même que `.q-tabs` : gouttière grise
+ * portée par le conteneur, pastille blanche sur l'option choisie.
+ */
+.raccourci {
+  appearance: none;
+  background: transparent;
+  color: var(--up-encre-douce);
+  border: 0;
+  border-radius: var(--up-rayon-sm);
+  padding: 6px 14px;
+  min-height: 30px;
+  font: inherit;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background-color var(--up-transition-rapide), color var(--up-transition-rapide);
 
-.q-drawer { background: var(--up-plaque); }
+  & + & { border-left-width: 0; }
 
-.q-item {
-  border-radius: 0;
+  &:hover { background: rgba(0, 0, 0, 0.04); color: var(--up-encre); }
 
-  &.q-router-link--exact-active {
-    background: var(--up-encre);
-    color: $blanc-craie;
+  &--actif,
+  &--actif:hover {
+    background: var(--up-plaque);
+    color: var(--up-encre);
+    box-shadow: var(--up-ombre-1);
   }
 }
 
-.q-separator { background: rgba(16, 37, 30, 0.22); }
+body.body--dark .raccourci:hover { background: rgba(255, 255, 255, 0.06); }
 
-// Les notes du panneau : plaque de craie cernée, jamais un fond pastel.
-.q-banner {
-  border-radius: 0;
-  border: 2px solid var(--up-encre);
-  background: var(--up-craie);
-  color: var(--up-encre);
-  font-size: 0.9rem;
+@media (max-width: 599px) {
+  .raccourci { min-height: 38px; }
 }
 
-body.body--dark .q-banner { background: rgba(255, 255, 255, 0.05); }
+// Un dialogue est une feuille qui arrive par-dessus : rayon large, ombre
+// profonde, aucun filet épais.
+.q-dialog__inner > .q-card {
+  border: 0;
+  border-radius: var(--up-rayon-xl);
+  box-shadow: var(--up-ombre-3) !important;
+}
 
-// Les notes portent leur peinture sur le filet et le texte, jamais en fond pastel.
-.q-banner.note--valide { border-color: $vert; color: $vert; }
-.q-banner.note--info { border-color: $encre; color: $encre; }
-// Une alerte se peint en jaune : en vert clair, elle disait le contraire d'elle-même.
-.q-banner.note--alerte { border-color: $jaune-fonce; color: $jaune-fonce; }
-.q-banner.note--erreur { border-color: $rouge; color: $rouge; }
+// §12 : le voile qui met au point. Il assombrit sans noircir.
+.q-dialog__backdrop {
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: saturate(140%) blur(3px);
+}
 
-.q-linear-progress { border-radius: 0; }
+.q-drawer {
+  background: var(--up-plaque);
+}
 
-// Languettes du panneau : le style vient de .q-tabs, la classe nomme l'intention.
-.onglets-panneau { background: var(--up-plaque); }
+// Un élément de liste est une pastille, et l'élément courant se remplit d'un
+// gris — pas d'un aplat d'encre qui coupe l'index en deux.
+.q-item {
+  border-radius: var(--up-rayon-sm);
+  margin: 1px var(--up-2);
+  min-height: 40px;
+  font-size: 14px;
+  letter-spacing: -0.012em;
+  transition: background-color var(--up-transition-rapide);
 
-// Ligne de détail d'un registre : à peine teintée, jamais grise.
-.ligne-detail { background: rgba(16, 37, 30, 0.05); }
+  &.q-router-link--exact-active {
+    background: var(--up-gris-inerte);
+    color: var(--up-encre);
+    font-weight: 590;
 
-// En-tête de colonne d'un panneau (jour de l'emploi du temps).
+    .q-icon { color: var(--up-vert-action); }
+  }
+}
+
+.q-separator { background: #{$gris-filet}; }
+body.body--dark .q-separator { background: #424245; }
+
+/**
+ * `secondary` est un rôle *neutre* dans cette palette : c'est l'encre, la
+ * couleur du texte. Or `$secondary` est un hexadécimal figé (#1D1D1F), donc
+ * une trentaine de `color="secondary"` — boutons contour, chips, avatars —
+ * devenaient de l'encre sur du noir en thème sombre : invisibles, mesurés à
+ * 1,00:1 sur l'export des rapports. Le rôle bascule ici avec le thème, une
+ * fois pour tous les écrans.
+ */
+body.body--dark {
+  .text-secondary { color: var(--up-encre) !important; }
+
+  .bg-secondary {
+    background: #F5F5F7 !important;
+    color: #1D1D1F !important;
+  }
+
+  .q-btn--outline.text-secondary::before { border-color: currentColor; }
+}
+
+// Les notes : une surface douce et teintée, l'icône et le texte portent la
+// couleur. Ni filet de 2px, ni fond saturé.
+.q-banner {
+  border-radius: var(--up-rayon);
+  border: 0;
+  background: var(--up-gris-inerte);
+  color: var(--up-encre);
+  font-size: 0.9375rem;
+  letter-spacing: -0.012em;
+}
+
+.q-banner.note--valide { background: $vert-fond; color: #{$vert}; }
+.q-banner.note--info { background: var(--up-gris-inerte); color: var(--up-encre); }
+.q-banner.note--alerte { background: $jaune-fond; color: $jaune-texte; }
+.q-banner.note--erreur { background: $rouge-fond; color: #{$rouge}; }
+
+body.body--dark {
+  .q-banner.note--valide { background: var(--up-vert-fond); color: #35C88A; }
+  .q-banner.note--info { background: rgba(255, 255, 255, 0.1); color: var(--up-encre); }
+  .q-banner.note--alerte { background: var(--up-jaune-fond); color: #F5CE3C; }
+  .q-banner.note--erreur { background: var(--up-rouge-fond); color: #F2637A; }
+}
+
+.q-linear-progress {
+  border-radius: var(--up-pilule);
+  overflow: hidden;
+}
+
+// Languettes : le style vient de .q-tabs, la classe nomme l'intention.
+.onglets-panneau { background: var(--up-gris-inerte); }
+
+// Ligne de détail d'un registre : à peine teintée.
+.ligne-detail { background: var(--up-chaux); }
+
+// En-tête de colonne d'un panneau (jour de l'emploi du temps). Le bandeau
+// d'encre devient un intitulé gris posé sur la surface.
 .entete-jour {
-  background: var(--up-encre);
-  color: $blanc-craie;
+  background: var(--up-chaux);
+  color: var(--up-encre);
+  border-bottom: var(--up-filet);
 
   .text-grey-6,
   .text-grey-7,
-  .text-caption { color: rgba(250, 250, 247, 0.76) !important; }
+  .text-caption { color: var(--up-encre-douce) !important; }
+}
+
+// Le menu déroulant est une petite feuille : §7 — il s'ouvre depuis ce qui l'a
+// appelé, il ne surgit pas du centre de l'écran.
+.q-menu {
+  border-radius: var(--up-rayon);
+  box-shadow: var(--up-ombre-2), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+  background: var(--up-plaque);
+}
+
+// La notification : une petite feuille qui arrive par-dessus, arrondie et
+// ombrée. Les aplats saturés pleine largeur de Quasar criaient une erreur de
+// réseau aussi fort qu'une suppression de dossier.
+.q-notification {
+  border-radius: var(--up-rayon);
+  box-shadow: var(--up-ombre-2);
+  font-size: 14px;
+  letter-spacing: -0.012em;
+  padding: 10px 14px;
+  min-height: 0;
+  // Quasar peint la notification avec `bg-negative` & consorts, qui portent
+  // `!important` : il faut le même poids pour reprendre la main.
+  background: rgba(29, 29, 31, 0.92) !important;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  color: #F5F5F7 !important;
+
+  // L'espèce se lit à l'icône, qui seule porte la couleur.
+  &--negative .q-notification__icon { color: #F2637A !important; }
+  &--positive .q-notification__icon { color: #35C88A !important; }
+  &--warning .q-notification__icon { color: #F5CE3C !important; }
+  &--info .q-notification__icon { color: #{$vert-nuit} !important; }
+}
+
+.q-notification__actions .q-btn { color: #{$vert-nuit}; }
+
+.q-tooltip {
+  border-radius: var(--up-rayon-sm);
+  background: rgba(29, 29, 31, 0.92);
+  backdrop-filter: blur(12px);
+  font-size: 12px;
+  letter-spacing: -0.003em;
+  padding: 6px 10px;
 }
 
 // ------------------------------------------------------------ formulaires
-
-// Un formulaire du panneau se lit comme un imprimé administratif : des blocs
-// séparés au filet, un intitulé de bloc au pochoir, et de l'air entre les
-// champs. Rien n'est collé à rien.
-.q-dialog .q-card {
-  --up-forme: 1;
-}
+//
+// Un formulaire respire : les champs sont espacés, les blocs le sont davantage,
+// et rien n'est cerné. La séparation se fait par le vide, pas par le trait.
 
 .q-card__section + .q-card__section { padding-top: var(--up-4); }
 
-// Les champs d'un même bloc respirent, et le bloc respire davantage.
 .q-dialog .q-card__section > .q-input,
 .q-dialog .q-card__section > .q-select,
 .q-dialog .q-card__section > .q-file,
 .q-dialog .q-card__section > .q-toggle,
 .q-dialog .q-card__section > .row {
-  margin-bottom: var(--up-4);
+  margin-bottom: var(--up-3);
 
   &:last-child { margin-bottom: 0; }
 }
 
-// Deux champs côte à côte gardent une gouttière franche.
 .q-dialog .q-card__section > .row.q-col-gutter-md {
   margin-left: calc(-1 * var(--up-3));
   & > * { padding-left: var(--up-3); }
 }
 
-// L'aide sous un champ ne colle pas au champ suivant.
 .q-field__bottom {
   padding-top: 6px;
-  font-size: 11.5px;
-  letter-spacing: 0.01em;
+  font-size: 12px;
+  letter-spacing: -0.003em;
   color: var(--up-encre-douce);
 }
 
-// Intitulé de bloc : la mention au pochoir qui ouvre une section de formulaire.
+// Intitulé de bloc : la légende qui ouvre une section de formulaire.
 .section-titre {
   @extend .pochoir;
   color: var(--up-encre-douce);
   display: block;
+  font-weight: 590;
   margin-bottom: var(--up-2);
-  padding-bottom: var(--up-2);
-  border-bottom: var(--up-filet-fin);
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
-// Pied de dialogue : les actions se détachent du formulaire par un filet plein.
+// Pied de dialogue : les actions se posent dans le vide, sans filet plein.
 .q-card__actions {
-  padding: var(--up-3);
+  padding: var(--up-3) var(--up-4) var(--up-4);
   gap: var(--up-2);
-  border-top: var(--up-filet);
+  border-top: 0;
 }
 
 .q-dialog .q-card > .q-card__section:first-child {
-  padding-bottom: var(--up-3);
-  border-bottom: var(--up-filet);
+  padding-bottom: var(--up-2);
+  border-bottom: 0;
 }
 
 // Sur téléphone, un dialogue de formulaire occupe l'écran : les champs y sont
@@ -469,26 +867,64 @@ body.body--dark .q-banner { background: rgba(255, 255, 255, 0.05); }
 
 // ------------------------------------------------------------- accessoires
 
-// Plaque de salle : le numéro peint au pochoir sur la porte.
+// Plaque de salle : le numéro, en pastille grise.
 .plaque-salle {
   @extend .pochoir;
   display: inline-block;
-  border: 2px solid var(--up-encre);
-  padding: 2px 6px;
+  border: 0;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-rayon-sm);
+  padding: 2px 8px;
   color: var(--up-encre);
+  font-variant-numeric: tabular-nums;
 }
 
-// Bandeau de tournée : le haut du panneau, où l'on lit l'état de la journée.
+// Le bandeau. Deux emplois, deux matières — c'est la même classe parce que
+// c'est la même idée (« le haut de quelque chose »), mais une chrome
+// translucide posée au milieu d'une page devient illisible : elle n'a rien à
+// laisser passer derrière elle.
+//
+//   · en tête de fenêtre (`.q-header`) → chrome translucide (§12), le contenu
+//     défile dessous ;
+//   · dans le corps d'une page → une surface franche, comme n'importe quelle
+//     autre plaque.
 .bandeau {
-  background: var(--up-encre);
-  color: $blanc-craie;
-  @include grain(overlay);
+  background: var(--up-plaque);
+  color: var(--up-encre);
+  border: var(--up-filet);
+  border-radius: var(--up-rayon-lg);
+}
+
+.q-header.bandeau,
+.q-footer.bandeau {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 0;
+  border-radius: 0;
+  border-bottom: var(--up-filet-bandeau);
+}
+
+body.body--dark .q-header.bandeau,
+body.body--dark .q-footer.bandeau {
+  background: rgba(29, 29, 31, 0.72);
+}
+
+// §14 : quand la transparence est refusée, la surface devient franche et le
+// flou tombe — sinon la lisibilité s'effondre.
+@media (prefers-reduced-transparency: reduce) {
+  .q-header.bandeau,
+  .q-footer.bandeau {
+    background: var(--up-plaque);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .signature-pad {
   border: var(--up-filet);
-  border-radius: 0;
-  background: $blanc-craie;
+  border-radius: var(--up-rayon);
+  background: var(--up-plaque);
   touch-action: none;
   width: 100%;
   height: 170px;
@@ -501,8 +937,8 @@ body.body--dark .q-banner { background: rgba(255, 255, 255, 0.05); }
   z-index: 3000;
 }
 
-// Un seul registre de texte secondaire : l'encre douce du panneau. Le gris
-// Quasar tombait sous le seuil de contraste en plein jour.
+// Un seul registre de texte secondaire. Les gris de Quasar tombaient sous le
+// seuil de contraste ; celui d'Apple est réglé pour le tenir.
 .text-grey-5,
 .text-grey-6,
 .text-grey-7,
@@ -513,40 +949,43 @@ body.body--dark .q-banner { background: rgba(255, 255, 255, 0.05); }
 
 .text-caption {
   font-size: 12px;
-  letter-spacing: 0.02em;
+  line-height: 1.33337;
+  letter-spacing: -0.003em;
 }
 
 // Cibles tactiles : le contrôleur travaille debout, à une main.
 @media (max-width: 599px) {
-  .q-btn { min-height: 48px; }
-  .q-item { min-height: 52px; }
+  .q-btn { min-height: 44px; }
+  .q-item { min-height: 48px; }
 
   .q-field--dense .q-field__control,
-  .q-field .q-field__control { min-height: 48px; }
+  .q-field .q-field__control { min-height: 44px; }
 }
 
-// Un registre plus large que l'écran se fait défiler, et cela se voit.
 .q-table__container { max-width: 100%; }
 
-// La barre de défilement est l'affordance : une réglette d'encre sur son rail,
-// visible quelle que soit la couleur des lignes — un voile dégradé disparaissait
-// sur les lignes claires.
+// La barre de défilement d'un registre large : fine, grise, elle s'efface dans
+// la surface au lieu de la barrer.
 .q-table__middle {
   overflow-x: auto;
-  scrollbar-width: auto;
-  scrollbar-color: #{$encre} rgba(16, 37, 30, 0.12);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
 
-  &::-webkit-scrollbar { height: 11px; }
-  &::-webkit-scrollbar-track { background: rgba(16, 37, 30, 0.12); }
+  &::-webkit-scrollbar { height: 8px; }
+  &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb {
-    background: var(--up-encre);
-    border-radius: 0;
+    background: rgba(0, 0, 0, 0.24);
+    border-radius: var(--up-pilule);
   }
 }
 
+body.body--dark .q-table__middle {
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+  &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.24); }
+}
+
 // Sur téléphone, une cellule tient sur une ligne et s'élide proprement quand
-// elle déborde : ni coupure au milieu d'un mot, ni registre qui s'élargit. Le
-// texte complet reste accessible en faisant défiler ou en ouvrant la fiche.
+// elle déborde : ni coupure au milieu d'un mot, ni registre qui s'élargit.
 @media (max-width: 767px) {
   .q-table thead th { white-space: nowrap; }
 
@@ -557,3 +996,7 @@ body.body--dark .q-banner { background: rgba(255, 255, 255, 0.05); }
     text-overflow: ellipsis;
   }
 }
+
+
+.q-item__label--caption { color: var(--up-encre-douce); }
+.q-notification__caption { opacity: 1; color: #F5F5F7; }

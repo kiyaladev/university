@@ -1,32 +1,20 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Paiements</div>
-        <div class="page-sous-titre">
-          Encaissements Mobile Money, espèces et virements : l'agent comptable
-          confirme les transactions de l'opérateur, chaque opération est tracée.
-        </div>
-      </div>
-      <div class="col-auto">
-        <q-btn
-          v-if="peutCreer"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          label="Nouveau paiement"
-          @click="dialogPaiement = true"
-        />
-      </div>
-    </div>
+    <page-header :title="$t('paiements.title')" :subtitle="$t('paiements.subtitle')">
+      <template #actions>
+        <q-btn v-if="peutCreer" unelevated color="primary" no-caps icon="add"
+          :label="$t('paiements.actions.new')" @click="dialogPaiement = true" />
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="finances" />
 
     <!-- Arrivée depuis un dossier ou une fiche étudiant : le ciblage est annoncé. -->
     <q-banner v-if="libelleCible" dense class="note--info q-mb-md">
       <template #avatar><q-icon name="filter_alt" /></template>
       {{ libelleCible }}
       <template #action>
-        <q-btn flat dense no-caps label="Voir tous les paiements" @click="retirerCible" />
+        <q-btn flat dense no-caps :label="$t('paiements.actions.viewAll')" @click="retirerCible" />
       </template>
     </q-banner>
 
@@ -36,9 +24,9 @@
           <q-card-section class="row items-center">
             <q-icon name="check_circle" color="positive" size="32px" class="q-mr-md" />
             <div>
-              <div class="pochoir text-grey-7">Total encaissé</div>
+              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.totalCollected') }}</div>
               <div class="lettrage chiffres paiements-kpi__valeur">
-                {{ montantLisible(kpis.totalEncaisse) }} GNF
+                {{ montantLisible(kpis.totalEncaisse) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
               </div>
             </div>
           </q-card-section>
@@ -49,7 +37,7 @@
           <q-card-section class="row items-center">
             <q-icon name="hourglass_top" color="warning" size="32px" class="q-mr-md" />
             <div>
-              <div class="pochoir text-grey-7">En attente</div>
+              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.pending') }}</div>
               <div class="lettrage chiffres paiements-kpi__valeur">
                 {{ kpis.enAttente }}
               </div>
@@ -62,7 +50,7 @@
           <q-card-section class="row items-center">
             <q-icon name="cancel" color="negative" size="32px" class="q-mr-md" />
             <div>
-              <div class="pochoir text-grey-7">Échoués</div>
+              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.failed') }}</div>
               <div class="lettrage chiffres paiements-kpi__valeur">
                 {{ kpis.echoues }}
               </div>
@@ -74,15 +62,19 @@
 
     <!-- Le registre est paginé côté serveur : ces totaux portent sur ce qui est affiché. -->
     <div class="text-caption text-grey-7 q-mb-md">
-      Calculé sur les {{ paiements.length }} paiement{{ paiements.length > 1 ? 's' : '' }}
-      affiché{{ paiements.length > 1 ? 's' : '' }} sur {{ total }} —
-      « Charger tout » pour porter le calcul sur l’ensemble du registre.
+      {{
+        $t('paiements.summary', {
+          count: paiements.length,
+          total,
+          plural: paiements.length > 1 ? 's' : '',
+        })
+      }}
     </div>
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (référence, nom étudiant)…"
+      :placeholder="$t('paiements.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -94,7 +86,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('paiements.filters.status')"
         />
         <q-select
           v-model="filtres.mode"
@@ -104,7 +96,7 @@
           clearable
           emit-value
           map-options
-          label="Mode"
+          :label="$t('paiements.filters.mode')"
         />
         <q-select
           v-model="filtres.operateur"
@@ -114,38 +106,37 @@
           clearable
           emit-value
           map-options
-          label="Opérateur"
+          :label="$t('paiements.filters.operator')"
         />
         <q-input
           v-model="filtres.motif"
           outlined
           dense
           clearable
-          label="Motif"
-          placeholder="Frais d'inscription…"
+          :label="$t('paiements.filters.reason')"
+          :placeholder="$t('paiements.filters.reasonPlaceholder')"
         />
         <autocomplete-async
           v-model="filtres.inscriptionId"
           endpoint="/inscriptions"
           :label-fn="(i) => `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''}`"
-          label="Dossier d’inscription"
+          :label="$t('paiements.filters.enrollment')"
           clearable
         />
         <autocomplete-async
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-          label="Étudiant"
+          :label="$t('paiements.filters.student')"
           clearable
         />
-        <champ-date v-model="filtres.dateDebut" label="Depuis" />
-        <champ-date v-model="filtres.dateFin" label="Jusqu'à" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('paiements.filters.from')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('paiements.filters.to')" />
       </template>
       <template #actions>
         <view-toggle
           cle="paiements"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
         />
       </template>
@@ -161,6 +152,7 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 0 }"
+      :hide-bottom="chargement || paiementsFiltres.length > 0"
     >
       <template #no-data>
         <div class="paiements-vide">
@@ -172,7 +164,7 @@
               outline
               no-caps
               icon="refresh"
-              label="Réinitialiser les filtres"
+              :label="$t('paiements.actions.resetFilters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -181,7 +173,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouveau paiement"
+              :label="$t('paiements.actions.new')"
               @click="dialogPaiement = true"
             />
           </div>
@@ -233,10 +225,10 @@
             round
             icon="info"
             color="primary"
-            aria-label="Détails de la transaction"
+            :aria-label="$t('paiements.table.actions.details')"
             @click="ouvrirDetail(p.row)"
           >
-            <q-tooltip>Détails de la transaction</q-tooltip>
+            <q-tooltip>{{ $t('paiements.table.actions.details') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.inscription || p.row.inscriptionId"
@@ -244,10 +236,10 @@
             dense
             round
             icon="how_to_reg"
-            aria-label="Voir le dossier d'inscription"
+            :aria-label="$t('paiements.table.actions.viewEnrollmentAria')"
             @click="voirInscription(p.row)"
           >
-            <q-tooltip>Dossier d’inscription</q-tooltip>
+            <q-tooltip>{{ $t('paiements.table.actions.viewEnrollmentTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.etudiant"
@@ -255,10 +247,10 @@
             dense
             round
             icon="person"
-            aria-label="Voir la fiche de l'étudiant"
+            :aria-label="$t('paiements.table.actions.viewStudentAria')"
             @click="voirEtudiant(p.row)"
           >
-            <q-tooltip>Fiche de l’étudiant</q-tooltip>
+            <q-tooltip>{{ $t('paiements.table.actions.viewStudentTooltip') }}</q-tooltip>
           </q-btn>
           <template v-if="peutSimuler(p.row)">
             <q-btn
@@ -267,10 +259,10 @@
               round
               color="positive"
               icon="check"
-              aria-label="Confirmer le paiement comme réussi"
+              :aria-label="$t('paiements.table.actions.confirmAria')"
               @click="simuler(p.row, 'REUSSI')"
             >
-              <q-tooltip>Confirmer le paiement (réussi)</q-tooltip>
+              <q-tooltip>{{ $t('paiements.table.actions.confirmTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               flat
@@ -278,10 +270,10 @@
               round
               color="negative"
               icon="close"
-              aria-label="Marquer le paiement échoué"
+              :aria-label="$t('paiements.table.actions.markFailedAria')"
               @click="simuler(p.row, 'ECHOUE')"
             >
-              <q-tooltip>Marquer échoué</q-tooltip>
+              <q-tooltip>{{ $t('paiements.table.actions.markFailedTooltip') }}</q-tooltip>
             </q-btn>
           </template>
           <q-btn
@@ -291,16 +283,16 @@
             round
             color="negative"
             icon="block"
-            aria-label="Annuler le paiement"
+            :aria-label="$t('paiements.table.actions.cancel')"
             @click="ouvrirAnnulation(p.row)"
           >
-            <q-tooltip>Annuler le paiement</q-tooltip>
+            <q-tooltip>{{ $t('paiements.table.actions.cancel') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
-    <q-linear-progress
+    <q-linear-progress :aria-label="$t('common.messages.loading')"
       v-if="modeVue === 'cartes' && chargement"
       indeterminate
       color="primary"
@@ -332,7 +324,7 @@
           </div>
           <div class="row q-mt-sm q-col-gutter-sm">
             <div class="col-6">
-              <div class="text-caption text-grey-7">Mode</div>
+              <div class="text-caption text-grey-7">{{ $t('paiements.cards.mode') }}</div>
               <div class="text-weight-medium">
                 {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }}
               </div>
@@ -341,7 +333,7 @@
               </div>
             </div>
             <div class="col-6 text-right">
-              <div class="text-caption text-grey-7">Montant</div>
+              <div class="text-caption text-grey-7">{{ $t('paiements.cards.amount') }}</div>
               <div class="text-weight-medium lettrage chiffres">
                 {{ montantLisible(p.montant) }} {{ p.devise }}
               </div>
@@ -351,7 +343,7 @@
             {{ dateHeureLisible(p.horodatage) }}
           </div>
           <div v-if="p.transactionId" class="text-caption text-grey-7">
-            Transaction : {{ p.transactionId }}
+            {{ $t('paiements.cards.transaction', { id: p.transactionId }) }}
           </div>
         </q-card-section>
         <q-separator />
@@ -362,7 +354,7 @@
             color="primary"
             icon="info"
             no-caps
-            label="Détails"
+            :label="$t('paiements.cards.details')"
             @click="ouvrirDetail(p)"
           />
           <q-btn
@@ -372,7 +364,7 @@
             color="positive"
             icon="check"
             no-caps
-            label="Réussi"
+            :label="$t('paiements.cards.success')"
             @click="simuler(p, 'REUSSI')"
           />
           <q-btn
@@ -382,7 +374,7 @@
             color="negative"
             icon="close"
             no-caps
-            label="Échoué"
+            :label="$t('paiements.cards.failed')"
             @click="simuler(p, 'ECHOUE')"
           />
           <q-btn
@@ -392,7 +384,7 @@
             color="negative"
             icon="block"
             no-caps
-            label="Annuler"
+            :label="$t('paiements.cards.cancel')"
             @click="ouvrirAnnulation(p)"
           />
           <q-btn
@@ -401,7 +393,7 @@
             dense
             icon="how_to_reg"
             no-caps
-            label="Dossier"
+            :label="$t('paiements.cards.enrollment')"
             @click="voirInscription(p)"
           />
           <q-btn
@@ -410,7 +402,7 @@
             dense
             icon="person"
             no-caps
-            label="Étudiant"
+            :label="$t('paiements.cards.student')"
             @click="voirEtudiant(p)"
           />
         </q-card-actions>
@@ -424,7 +416,7 @@
             outline
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('paiements.actions.resetFilters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -433,7 +425,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Nouveau paiement"
+            :label="$t('paiements.actions.new')"
             @click="dialogPaiement = true"
           />
         </div>
@@ -465,7 +457,7 @@
           <q-list separator dense>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Étudiant / dossier</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.studentFile') }}</q-item-label>
                 <q-item-label>
                   {{ detail?.etudiant ? `${detail.etudiant.nom} ${detail.etudiant.prenom}` : '—' }}
                   {{ detail?.inscription?.numero ? ` · ${detail.inscription.numero}` : '' }}
@@ -474,19 +466,19 @@
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Montant</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.amount') }}</q-item-label>
                 <q-item-label>{{ montantLisible(detail?.montant) }} {{ detail?.devise }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Transaction (opérateur)</q-item-label>
-                <q-item-label>{{ detail?.transactionId ?? 'aucune — simulation pilote' }}</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.transaction') }}</q-item-label>
+                <q-item-label>{{ detail?.transactionId ?? $t('paiements.detail.transactionNone') }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Opérateur / téléphone</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.operatorPhone') }}</q-item-label>
                 <q-item-label>
                   {{ detail?.operateur ? LIBELLE_OPERATEUR_MM[detail.operateur] ?? detail.operateur : '—' }}
                   · {{ detail?.telephone ?? '—' }}
@@ -495,30 +487,30 @@
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Motif</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.reason') }}</q-item-label>
                 <q-item-label>{{ detail?.motif ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Horodatage</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.timestamp') }}</q-item-label>
                 <q-item-label>{{ detail ? dateHeureLisible(detail.horodatage) : '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Causerie</q-item-label>
+                <q-item-label caption>{{ $t('paiements.detail.createdBy') }}</q-item-label>
                 <q-item-label>
-                  {{ detail?.creePar ? `${detail.creePar.prenom} ${detail.creePar.nom}` : 'registre' }}
-                  {{ detail?.completeLe ? ` · complété le ${dateHeureLisible(detail.completeLe)}` : '' }}
-                  {{ detail?.motifAnnulation ? ` · annulé : ${detail.motifAnnulation}` : '' }}
+                  {{ detail?.creePar ? `${detail.creePar.prenom} ${detail.creePar.nom}` : $t('paiements.detail.createdByFallback') }}
+                  {{ detail?.completeLe ? $t('paiements.detail.completedOn', { date: dateHeureLisible(detail.completeLe) }) : '' }}
+                  {{ detail?.motifAnnulation ? $t('paiements.detail.cancelReason', { reason: detail.motifAnnulation }) : '' }}
                 </q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('paiements.dialogs.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -527,10 +519,10 @@
     <q-dialog v-model="dialogAnnulation">
       <q-card style="width: 460px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6">Annuler {{ paiementAnnuler?.reference }}</div>
+          <div class="text-h6">{{ $t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference }) }}</div>
           <div class="text-caption text-grey-7">
-            {{ paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : '' }} —
-            le paiement reste tracé au registre.
+            {{ paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : '' }} {{ $t('rectoratPage.subtitleFallback') }}
+            {{ $t('paiements.dialogs.cancelSubtitle') }}
           </div>
         </q-card-section>
         <q-card-section>
@@ -540,18 +532,18 @@
             dense
             type="textarea"
             rows="3"
-            label="Motif d'annulation *"
+            :label="$t('paiements.dialogs.cancelReasonLabel')"
             autofocus
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('paiements.dialogs.close')" v-close-popup />
           <q-btn
             color="negative"
             unelevated
             no-caps
             icon="block"
-            label="Annuler le paiement"
+            :label="$t('paiements.dialogs.cancelConfirm')"
             :disable="motifAnnulation.trim().length < 3"
             :loading="annulationEnCours"
             @click="confirmerAnnulation"
@@ -563,8 +555,11 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -588,6 +583,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const paiements = ref<Paiement[]>([]);
 const chargement = ref(false);
@@ -628,17 +624,17 @@ const optionsOperateurs = computed(() =>
   Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({ value, label })),
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'reference', label: 'Référence', field: 'reference', align: 'left', sortable: true },
-  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
-  { name: 'mode', label: 'Mode / Opérateur', field: 'mode', align: 'left' },
-  { name: 'montant', label: 'Montant', field: 'montant', align: 'right', sortable: true },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
-  { name: 'motif', label: 'Motif', field: 'motif', align: 'left' },
-  { name: 'transactionId', label: 'Transaction', field: 'transactionId', align: 'left' },
-  { name: 'horodatage', label: 'Date', field: 'horodatage', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'reference', label: t('paiements.table.columns.reference'), field: 'reference', align: 'left', sortable: true },
+  { name: 'etudiant', label: t('paiements.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'mode', label: t('paiements.table.columns.mode'), field: 'mode', align: 'left' },
+  { name: 'montant', label: t('paiements.table.columns.amount'), field: 'montant', align: 'right', sortable: true },
+  { name: 'statut', label: t('paiements.table.columns.status'), field: 'statut', align: 'left', sortable: true },
+  { name: 'motif', label: t('paiements.table.columns.reason'), field: 'motif', align: 'left' },
+  { name: 'transactionId', label: t('paiements.table.columns.transaction'), field: 'transactionId', align: 'left' },
+  { name: 'horodatage', label: t('paiements.table.columns.date'), field: 'horodatage', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const classeStatut = (s: string) =>
   ({
@@ -653,15 +649,17 @@ const classeStatut = (s: string) =>
 const libelleCible = computed(() => {
   if (dossierCible.value) {
     const d = dossierCible.value;
-    const qui = d.etudiant ? ` — ${d.etudiant.prenom} ${d.etudiant.nom}` : '';
-    return `Paiements du dossier ${d.numero}${qui}.`;
+    const qui = d.etudiant
+      ? t('paiements.context.enrollmentWho', { prenom: d.etudiant.prenom, nom: d.etudiant.nom })
+      : '';
+    return t('paiements.context.enrollment', { numero: d.numero, who: qui });
   }
   if (filtres.value.inscriptionId && !dossierCible.value) {
-    return 'Paiements d’un dossier d’inscription.';
+    return t('paiements.context.enrollmentGeneric');
   }
   if (etudiantCible.value) {
     const e = etudiantCible.value;
-    return `Paiements de ${e.prenom} ${e.nom} (${e.matricule}), tous dossiers confondus.`;
+    return t('paiements.context.student', { prenom: e.prenom, nom: e.nom, matricule: e.matricule });
   }
   return '';
 });
@@ -672,16 +670,14 @@ const filtresActifs = computed(() =>
 );
 
 const messageVide = computed(() =>
-  filtresActifs.value
-    ? 'Aucun paiement ne correspond à ces critères.'
-    : 'Aucun paiement enregistré : encaissez depuis un dossier d’inscription ou créez un paiement libre.',
+  filtresActifs.value ? t('paiements.emptyState.filtered') : t('paiements.emptyState.default'),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('paiements.chips.search', { query: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -689,56 +685,66 @@ const chips = computed(() => {
   }
   if (filtres.value.statut) {
     cs.push({
-      label: `Statut : ${LIBELLE_STATUT_PAIEMENT[filtres.value.statut as StatutPaiement] ?? filtres.value.statut}`,
+      label: t('paiements.chips.status', {
+        status: LIBELLE_STATUT_PAIEMENT[filtres.value.statut as StatutPaiement] ?? filtres.value.statut,
+      }),
       value: filtres.value.statut,
       icone: 'flag',
     });
   }
   if (filtres.value.mode) {
     cs.push({
-      label: `Mode : ${LIBELLE_MODE_PAIEMENT[filtres.value.mode as ModePaiement] ?? filtres.value.mode}`,
+      label: t('paiements.chips.mode', {
+        mode: LIBELLE_MODE_PAIEMENT[filtres.value.mode as ModePaiement] ?? filtres.value.mode,
+      }),
       value: filtres.value.mode,
       icone: 'payments',
     });
   }
   if (filtres.value.operateur) {
     cs.push({
-      label: `Op. : ${LIBELLE_OPERATEUR_MM[filtres.value.operateur] ?? filtres.value.operateur}`,
+      label: t('paiements.chips.operator', {
+        operator: LIBELLE_OPERATEUR_MM[filtres.value.operateur] ?? filtres.value.operateur,
+      }),
       value: filtres.value.operateur,
       icone: 'cell_tower',
     });
   }
   if (filtres.value.motif) {
     cs.push({
-      label: `Motif : ${filtres.value.motif}`,
+      label: t('paiements.chips.reason', { reason: filtres.value.motif }),
       value: filtres.value.motif,
       icone: 'description',
     });
   }
   if (filtres.value.inscriptionId) {
     cs.push({
-      label: `Dossier : ${dossierCible.value?.numero ?? 'sélectionné'}`,
+      label: t('paiements.chips.enrollment', {
+        numero: dossierCible.value?.numero ?? t('paiements.chips.enrollmentSelected'),
+      }),
       value: filtres.value.inscriptionId,
       icone: 'how_to_reg',
     });
   }
   if (filtres.value.etudiantId) {
     cs.push({
-      label: `Étudiant : ${etudiantCible.value?.matricule ?? 'sélectionné'}`,
+      label: t('paiements.chips.student', {
+        matricule: etudiantCible.value?.matricule ?? t('paiements.chips.studentSelected'),
+      }),
       value: filtres.value.etudiantId,
       icone: 'person',
     });
   }
   if (filtres.value.dateDebut) {
     cs.push({
-      label: `Depuis : ${dateLisible(filtres.value.dateDebut)}`,
+      label: t('paiements.chips.from', { date: dateLisible(filtres.value.dateDebut) }),
       value: filtres.value.dateDebut,
       icone: 'event',
     });
   }
   if (filtres.value.dateFin) {
     cs.push({
-      label: `Jusqu'à : ${dateLisible(filtres.value.dateFin)}`,
+      label: t('paiements.chips.to', { date: dateLisible(filtres.value.dateFin) }),
       value: filtres.value.dateFin,
       icone: 'event',
     });
@@ -808,15 +814,29 @@ function voirEtudiant(p: Paiement) {
 
 function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
   $q.dialog({
-    title: statut === 'REUSSI' ? 'Confirmer le paiement' : 'Marquer le paiement échoué',
-    message: `${p.reference} pour ${montantLisible(p.montant)} ${p.devise} — répercuter la réponse de l'opérateur (${statut === 'REUSSI' ? 'paiement reçu' : 'transaction rejetée'}) ?`,
-    ok: { color: statut === 'REUSSI' ? 'positive' : 'negative', label: 'Confirmer', unelevated: true },
+    title:
+      statut === 'REUSSI'
+        ? t('paiements.confirmDialog.title')
+        : t('paiements.confirmDialog.titleFailed'),
+    message: t('paiements.confirmDialog.message', {
+      reference: p.reference,
+      amount: `${montantLisible(p.montant)} ${p.devise}`,
+      outcome:
+        statut === 'REUSSI'
+          ? t('paiements.confirmDialog.outcomeSuccess')
+          : t('paiements.confirmDialog.outcomeFailed'),
+    }),
+    ok: {
+      color: statut === 'REUSSI' ? 'positive' : 'negative',
+      label: t('paiements.confirmDialog.confirmLabel'),
+      unelevated: true,
+    },
     cancel: true,
   }).onOk(async () => {
     await api.post(`/paiements/${p.id}/simuler`, { statut });
     $q.notify({
       type: 'positive',
-      message: statut === 'REUSSI' ? 'Paiement confirmé' : 'Paiement marqué échoué',
+      message: statut === 'REUSSI' ? t('paiements.messages.confirmed') : t('paiements.messages.markedFailed'),
     });
     await charger();
   });
@@ -834,7 +854,7 @@ async function confirmerAnnulation() {
     await api.post(`/paiements/${paiementAnnuler.value!.id}/annuler`, {
       motif: motifAnnulation.value,
     });
-    $q.notify({ type: 'warning', message: 'Paiement annulé' });
+    $q.notify({ type: 'warning', message: t('paiements.messages.cancelled') });
     dialogAnnulation.value = false;
     await charger();
   } finally {
@@ -988,13 +1008,12 @@ onMounted(async () => {
   display: inline-flex;
   padding: 3px 12px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
-.champ--brouillon { background: #cfd4d9; color: #33463f; }
-.champ--attente-paiement { background: #e8a317; color: #10251e; }
-.champ--payee { background: #1e7a4c; }
-.champ--annulee { background: #c2321e; }
+.champ--brouillon { background: #e8e8ed; color: #33463f; }
+.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
+.champ--payee { background: #007a4d; color: #fff; }
+.champ--annulee { background: #ce1126; color: #fff; }
 </style>

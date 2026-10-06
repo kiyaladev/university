@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-02T12:58:22.989Z",
+  "checks": [
+    "Sélecteur FR/EN",
+    "Menu traduit",
+    "Pagination Quasar",
+    "Langue HTML",
+    "Préférence après rechargement",
+    "Retour en français",
+    "Aucune erreur de traduction"
+  ]
+}

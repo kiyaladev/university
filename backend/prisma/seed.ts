@@ -5,6 +5,9 @@
  *   bun run seed        (ou : npx ts-node prisma/seed.ts)
  */
 import {
+  CandidatElection,
+  Deliberation,
+  EquipementPatrimoine,
   AttestationMode,
   MethodeVerification,
   ModePaiement,
@@ -52,6 +55,7 @@ const heure = (m: number) =>
   `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') throw new Error('Le seed de démonstration est interdit en production.');
   console.log('→ Nettoyage…');
   // Modules récents : suppression en cascade pour idempotence
   await prisma.vueVOD.deleteMany();
@@ -1014,9 +1018,9 @@ async function main() {
 
   // ---- 10. VOD ----
   await Promise.all([
-    prisma.coursVOD.create({ data: { titre: 'Introduction à l\u2019algorithmique', description: 'CM 1: définitions, complexité, structures de contrôle', matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, enseignantId: enseignant1?.id, type: 'VIDEO', url: 'https://vod.university.gn/info101-cm1.mp4', thumbnailUrl: 'https://vod.university.gn/info101-cm1.jpg', dureeSecondes: 5400, transcription: 'Algorithme, complexité temporelle...', public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), nbVues: 87, nbComplets: 42, creeParId: adminUser.id } }),
-    prisma.coursVOD.create({ data: { titre: 'Bases de données relationnelles', description: 'CM 3: algèbre relationnelle, SQL, jointures', matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, enseignantId: enseignant2?.id, type: 'VIDEO', url: 'https://vod.university.gn/info201-cm3.mp4', dureeSecondes: 7200, public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), nbVues: 52, nbComplets: 21, creeParId: adminUser.id } }),
-    prisma.coursVOD.create({ data: { titre: 'Microéconomie — CM 5', description: 'Offre et demande, équilibre', matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, type: 'AUDIO', url: 'https://vod.university.gn/eco101-cm5.mp3', dureeSecondes: 4800, public: true, statut: 'EN_LIGNE', nbVues: 24, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({ data: { titre: 'Introduction à l\u2019algorithmique', description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, enseignantId: enseignant1?.id, type: 'VIDEO', url: '/media/demonstration/video.mp4', thumbnailUrl: '/media/demonstration/vignette.svg', dureeSecondes: 3, transcription: 'Support de démonstration local, aucun cours réel.', public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), nbVues: 87, nbComplets: 42, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({ data: { titre: 'Bases de données relationnelles', description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, enseignantId: enseignant2?.id, type: 'VIDEO', url: '/media/demonstration/video.mp4', dureeSecondes: 3, public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), nbVues: 52, nbComplets: 21, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({ data: { titre: 'Microéconomie — CM 5', description: 'Démonstration : placeholder audio silencieux local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, type: 'AUDIO', url: '/media/demonstration/audio.mp3', dureeSecondes: 3, public: true, statut: 'EN_LIGNE', nbVues: 24, creeParId: adminUser.id } }),
   ]);
 
   // ---- 11. Scolarité : Évaluations + Notes + Délibérations ( ----
@@ -1426,7 +1430,7 @@ async function main() {
   }
 
   // ---------- 6. Délibérations multiples (NORMALE + RATTRAPAGE) par promo ----------
-  const deliberationsCreees = [];
+  const deliberationsCreees: { delib: Deliberation; promo: (typeof allPromotionsList)[number] }[] = [];
   for (const promo of allPromotionsList) {
     for (const session of ['NORMALE', 'RATTRAPAGE']) {
       const insList = (inscriptionsByPromo.get(promo.id) ?? []).filter((i) => i.statut === 'VALIDEE');
@@ -1628,7 +1632,7 @@ async function main() {
   const catVideoproj = await prisma.categoriePatrimoine.findFirst({ where: { code: 'VIDEOPROJ' } });
   const catOrdi = await prisma.categoriePatrimoine.findFirst({ where: { code: 'ORDI' } });
   const catChaise = await prisma.categoriePatrimoine.findFirst({ where: { code: 'CHAISE' } });
-  const equipementsPlus = [];
+  const equipementsPlus: EquipementPatrimoine[] = [];
   for (let i = 0; i < 15; i++) {
     const cat = piocher([catVideoproj, catOrdi, catChaise].filter((c) => c !== null))!;
     const salle = piocher(allSallesList);
@@ -1903,7 +1907,7 @@ async function main() {
     });
     // Candidats
     const etuList = (inscriptionsByPromo.get(promo.id) ?? []).map((i) => i.etudiantId).slice(0, 4);
-    const cands = [];
+    const cands: CandidatElection[] = [];
     let ec = 0;
     for (const etuId of etuList) {
       const etu = await prisma.etudiant.findUnique({ where: { id: etuId } });
@@ -1958,7 +1962,7 @@ async function main() {
     });
     const etuList = (inscriptionsByPromo.get(promo.id) ?? []).map((i) => i.etudiantId).slice(0, 4);
     let ec = 0;
-    const cands = [];
+    const cands: CandidatElection[] = [];
     for (const etuId of etuList) {
       const etu = await prisma.etudiant.findUnique({ where: { id: etuId } });
       if (!etu) continue;
@@ -1999,7 +2003,7 @@ async function main() {
   }
 
   // ---------- 22. +5 Formations + inscriptions ----------
-  const formationsList = [
+  const formationsList: [string, string, number, number, number][] = [
     ['Excel Avancé', 'Bureautique', 100000, 30, 24],
     ['Comptabilité OHADA', 'Finance', 150000, 25, 40],
     ['Anglais professionnel', 'Langues', 120000, 20, 48],
@@ -2157,10 +2161,7 @@ async function main() {
 
   console.log(`✔ ${etudiants.length} étudiants, ${inscriptions.length} inscriptions, ${paiements.length} paiements (Module 1)`);
 
-  console.log('\nComptes de démonstration (mot de passe : Passer@2026)');
-  console.table(
-    [...comptes.map(([email, , , role]) => ({ email, role })), { email: compteEnseignant.email, role: Role.ENSEIGNANT }],
-  );
+  console.log('\nComptes fictifs de recette créés (accès local uniquement).');
 }
 
 main()

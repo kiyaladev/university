@@ -7,7 +7,16 @@
  */
 import { chromium } from 'playwright';
 
-const BASE = `${process.argv[2] ?? 'http://localhost:5029'}/#`;
+const FRONTEND_URL = process.argv[2] ?? 'http://localhost:5029';
+const frontend = new URL(FRONTEND_URL);
+const hostLocal = ['localhost', '127.0.0.1', '::1'].includes(frontend.hostname);
+if (!hostLocal && process.env.QA_ALLOW_REMOTE !== 'true') {
+  throw new Error('Ce scénario écrit dans les dossiers QA : une cible distante exige QA_ALLOW_REMOTE=true. Ne jamais le lancer sur la production.');
+}
+if (!hostLocal && !process.env.API_URL) {
+  throw new Error('Pour une recette distante, définissez API_URL vers l’API QA correspondante.');
+}
+const BASE = `${FRONTEND_URL.replace(/\/$/, '')}/#`;
 const MOT_DE_PASSE = 'Passer@2026';
 const erreurs = [];
 
@@ -124,7 +133,7 @@ await visiter('/mes-seances', 'mes séances');
 // Déclarée globalement, elle bridait l'application entière à 10 requêtes par
 // quart d'heure — le genre de régression qu'on ne voit qu'en production.
 {
-  const API = 'https://presence-api.naimba.com/api';
+  const API = process.env.API_URL ?? 'http://localhost:5031/api';
   const { token } = await (
     await fetch(`${API}/auth/login`, {
       method: 'POST',

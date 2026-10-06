@@ -1,0 +1,11 @@
+{
+  "impossible_de_generer_un_qr_unique_reessayez": "Unable to generate a unique QR code, please try again",
+  "equipement_introuvable_pour_ce_qr": "No equipment linked to this QR code",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "equipement_introuvable": "Equipment not found",
+  "impossible_de_generer_un_identifiant_qr_unique_reessayez": "Unable to generate a unique QR identifier, please try again",
+  "equipement_numeroinventaire_n_a_pas_de_reparation_en_cours": "{equipement.numeroInventaire} has no repair in progress.",
+  "categorie_cat_libelle_cat_count_as_any_equipements_equipemen": "Category \"{cat.libelle}\": {(cat._count as any).equipements} piece(s) of equipment are still attached. Please reassign them before deleting.",
+  "equipement_numeroinventaire_reparations_reparation_s_consign": "{equipement.numeroInventaire}: {reparations} repair(s) logged. Please deactivate the equipment rather than deleting it.",
+  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} already has a repair in progress ({ouverte.statut})."
+}

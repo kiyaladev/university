@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-06T11:20:19.487Z",
+  "passed": false,
+  "database": "university_recommandations_20261006",
+  "observations": {
+    "cardRevocations": [
+      201,
+      201,
+      201,
+      201
+    ],
+    "cardRevocationAudits": 4,
+    "badgeCancellations": [
+      201,
+      201,
+      201,
+      201
+    ],
+    "badgeCancellationAudits": 4,
+    "attestationRevocations": [
+      201,
+      201,
+      201,
+      201
+    ],
+    "attestationRevocationAudits": 4,
+    "validCardNipAccepted": true,
+    "wrongNipRejected": true,
+    "expiredCardNipRejected": true,
+    "expiredQrRejectedAndAuditFailure": true,
+    "anonymousPrintRejected": true,
+    "adminPrintAllowed": true,
+    "revokedAttestationRejectedWithoutPrivateReason": true,
+    "cancelledBadgeCannotBeModifiedOrExtended": true,
+    "badgePublicIdentityMinimized": true
+  },
+  "productionUntouched": true,
+  "completeIdentityCycleAndPhysicalPrintPending": true
+}

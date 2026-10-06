@@ -1,5 +1,6 @@
 /** Contrats de saisie du module Stages & Mémoires. */
 import { PartialType } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
@@ -34,7 +35,13 @@ export class CreateTravailDto {
   @IsOptional() @IsEnum(StatutEncadrement) statut?: StatutEncadrement;
 }
 
-export class UpdateTravailDto extends PartialType(CreateTravailDto) {}
+export class UpdateTravailDto extends PartialType(CreateTravailDto) {
+  /** Constat du dépôt utilisé par l'écran avant l'enregistrement du jury. */
+  @IsOptional()
+  @Transform(({ obj, key }) => obj[key])
+  @IsBoolean()
+  rapportRendu?: boolean;
+}
 
 /** Cible de la machine à états : une seule valeur, appliquée depuis l'état courant. */
 export class TransitionDto {
@@ -68,4 +75,3 @@ export class NoteSoutenanceDto {
   @IsOptional() @IsNumber() @Min(0) @Max(20) note?: number;
   @IsOptional() @IsString() mention?: string;
 }
-

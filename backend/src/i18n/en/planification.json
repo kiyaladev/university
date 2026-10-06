@@ -1,0 +1,16 @@
+{
+  "affectation_introuvable": "Assignment not found",
+  "une_seance_deja_controlee_ne_peut_pas_etre_annulee": "A session already checked cannot be cancelled",
+  "periode_invalide": "Invalid period",
+  "periode_trop_longue_maximum_400_jours": "Period too long (maximum 400 days)",
+  "aucun_creneau_actif_a_generer_pour_cette_annee": "No active slot to generate for this year",
+  "l_heure_de_fin_doit_suivre_l_heure_de_debut": "End time must be after start time",
+  "la_fin_de_la_periode_doit_suivre_son_debut": "End of the period must be after its start",
+  "conflit_d_emploi_du_temps_jour_collision_heuredebut_collision": "Timetable conflict on {jour}, from {debut} to {fin}.",
+  "cle_seance_hors_ligne_deja_utilisee": "This offline session reference is already used for different session data.",
+  "annee_academique_cloturee_ecriture_interdite": "This academic year is closed: sessions cannot be created or changed.",
+  "controleurAffectationRequired": "Choose a controller or send null to remove the assignment.",
+  "controleurAffectationInvalid": "The controller was not found, is inactive, or does not have the required role.",
+  "tourneePeriodInvalid": "The end date must be on or after the start date.",
+  "tourneePeriodTooLong": "The assignment period cannot exceed 400 days."
+}

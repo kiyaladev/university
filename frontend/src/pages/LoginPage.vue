@@ -2,39 +2,31 @@
   <q-page class="acces">
     <!-- L'enseigne : le panneau que l'on voit avant d'entrer -->
     <section class="enseigne">
-      <div class="enseigne__bandes" aria-hidden="true">
-        <span class="bande bande--rouge" />
-        <span class="bande bande--jaune" />
-        <span class="bande bande--vert" />
-      </div>
-
-      <p class="pochoir enseigne__sur-titre">Personnel de l’université</p>
-      <h1 class="lettrage enseigne__marque">UniPrésence</h1>
+      <p class="pochoir enseigne__sur-titre">{{ $t('loginPage.signage.overline') }}</p>
+      <h1 class="lettrage enseigne__marque">{{ $t('loginPage.signage.brand') }}</h1>
       <p class="enseigne__phrase">
-        Le registre du contrôleur, salle par salle : il relève la séance, fait
-        signer ou poser le doigt à l’enseignant, et l’heure est consignée.
+        {{ $t('loginPage.signage.tagline') }}
       </p>
 
       <dl class="enseigne__faits">
         <div>
-          <dt class="pochoir">Sur le terrain</dt>
-          <dd>Pointage hors ligne, synchronisé au retour du réseau</dd>
+          <dt class="pochoir">{{ $t('loginPage.signage.facts.offline.label') }}</dt>
+          <dd>{{ $t('loginPage.signage.facts.offline.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Opposable</dt>
-          <dd>Horodatage serveur, moyen d’attestation consigné, corrections tracées</dd>
+          <dt class="pochoir">{{ $t('loginPage.signage.facts.opposable.label') }}</dt>
+          <dd>{{ $t('loginPage.signage.facts.opposable.text') }}</dd>
         </div>
       </dl>
     </section>
 
     <!-- La plaque d'accès -->
     <section class="acces__plaque">
-      <h2 class="lettrage acces__titre">Connexion</h2>
+      <h2 class="lettrage acces__titre">{{ $t('loginPage.access.title') }}</h2>
       <p class="acces__intro">
-        Réservée au personnel de l’université — contrôleurs, scolarité,
-        enseignants, direction. Vous êtes étudiant ?
+        {{ $t('loginPage.access.intro') }}
         <router-link to="/portail-connexion" class="acces__lien-lien">
-          Entrez par le portail étudiant
+          {{ $t('loginPage.access.studentPortalLink') }}
         </router-link>.
       </p>
 
@@ -42,11 +34,11 @@
         <q-input
           v-model="email"
           type="email"
-          label="Adresse e-mail"
+          :label="$t('loginPage.form.emailLabel')"
           outlined
           autofocus
           autocomplete="username"
-          :rules="[(v) => !!v || 'Saisissez votre adresse e-mail']"
+          :rules="[(v) => !!v || $t('loginPage.form.emailRequired')]"
         >
           <template #prepend><q-icon name="mail" /></template>
         </q-input>
@@ -54,10 +46,10 @@
         <q-input
           v-model="motDePasse"
           :type="voirMotDePasse ? 'text' : 'password'"
-          label="Mot de passe"
+          :label="$t('loginPage.form.passwordLabel')"
           outlined
           autocomplete="current-password"
-          :rules="[(v) => !!v || 'Saisissez votre mot de passe']"
+          :rules="[(v) => !!v || $t('loginPage.form.passwordRequired')]"
         >
           <template #prepend><q-icon name="lock" /></template>
           <template #append>
@@ -66,7 +58,7 @@
               dense
               round
               :icon="voirMotDePasse ? 'visibility_off' : 'visibility'"
-              :aria-label="voirMotDePasse ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+              :aria-label="voirMotDePasse ? $t('loginPage.form.hidePassword') : $t('loginPage.form.showPassword')"
               @click="voirMotDePasse = !voirMotDePasse"
             />
           </template>
@@ -84,64 +76,45 @@
           size="lg"
           unelevated
           no-caps
-          label="Se connecter"
+          :label="$t('loginPage.form.submit')"
           :loading="auth.chargement"
         />
       </q-form>
 
-      <q-expansion-item
-        v-if="afficherDemo"
-        dense
-        icon="badge"
-        label="Comptes de démonstration"
-        class="acces__demo"
-      >
-        <q-list separator dense>
-          <q-item v-for="c in comptesDemo" :key="c.email" clickable @click="prefill(c.email)">
-            <q-item-section>
-              <q-item-label class="text-weight-medium">{{ c.libelle }}</q-item-label>
-              <q-item-label caption>{{ c.email }}</q-item-label>
-            </q-item-section>
-            <q-item-section side><q-icon name="east" /></q-item-section>
-          </q-item>
-        </q-list>
-        <p class="pochoir acces__mot-demo">Mot de passe commun : Passer@2026</p>
-      </q-expansion-item>
-
       <q-separator class="acces__separateur" />
 
       <!-- Services ouverts sans compte : un visiteur ne doit pas rester bloqué ici. -->
-      <nav class="acces__services" aria-label="Services accessibles sans compte">
-        <p class="pochoir acces__services-titre">Sans compte</p>
+      <nav class="acces__services" :aria-label="$t('loginPage.services.ariaLabel')">
+        <p class="pochoir acces__services-titre">{{ $t('loginPage.services.title') }}</p>
         <ul class="acces__liens">
           <li>
             <router-link to="/portail-connexion" class="acces__lien-lien">
-              Portail étudiant (connexion par SMS) →
+              {{ $t('loginPage.services.links.portailSms') }}
             </router-link>
           </li>
           <li>
             <router-link to="/s-inscrire" class="acces__lien-lien">
-              Se préinscrire en ligne →
+              {{ $t('loginPage.services.links.preinscription') }}
             </router-link>
           </li>
-          <li>
+          <li v-if="services.autorise('/formations')">
             <router-link to="/formations" class="acces__lien-lien">
-              Formation continue →
+              {{ $t('loginPage.services.links.formationContinue') }}
             </router-link>
           </li>
-          <li>
+          <li v-if="services.autorise('/bibliotheque')">
             <router-link to="/bibliotheque" class="acces__lien-lien">
-              Bibliothèque numérique →
+              {{ $t('loginPage.services.links.bibliotheque') }}
             </router-link>
           </li>
           <li>
             <router-link to="/verification" class="acces__lien-lien">
-              Vérifier une attestation →
+              {{ $t('loginPage.services.links.verifierAttestation') }}
             </router-link>
           </li>
-          <li>
+          <li v-if="services.autorise('/verification-carte')">
             <router-link to="/verification-carte" class="acces__lien-lien">
-              Vérifier une carte étudiante →
+              {{ $t('loginPage.services.links.verifierCarte') }}
             </router-link>
           </li>
         </ul>
@@ -152,41 +125,29 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useServicesActifsStore } from '../stores/servicesActifs';
+const services = useServicesActifsStore();
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
+import { accueilParRole } from '../utils/accueil';
 import { useAuthStore } from '../stores/auth';
 import type { Role } from '../types';
 
 const auth = useAuthStore();
 const router = useRouter();
 const route = useRoute();
+const { t } = useI18n();
 
 const email = ref('');
 const motDePasse = ref('');
 const voirMotDePasse = ref(false);
 const erreur = ref('');
 
-/** Les comptes de démonstration n'apparaissent qu'en mode dev. */
-const afficherDemo = import.meta.env.DEV;
-
-const comptesDemo = [
-  { libelle: 'Contrôleur pédagogique', email: 'controleur1@unipresence.gn' },
-  { libelle: 'Direction des études', email: 'direction@unipresence.gn' },
-  { libelle: 'Scolarité', email: 'scolarite@unipresence.gn' },
-  { libelle: 'Chef de département', email: 'chef.info@unipresence.gn' },
-  { libelle: 'Enseignant', email: 'enseignant@unipresence.gn' },
-  { libelle: 'Administrateur', email: 'admin@unipresence.gn' },
-];
-
-function prefill(adresse: string) {
-  email.value = adresse;
-  motDePasse.value = 'Passer@2026';
-}
-
 /** Le back renvoie parfois un tableau de messages de validation. */
 function messageErreur(e: any): string {
   const message = e?.response?.data?.message;
   if (Array.isArray(message)) return message.join(' · ');
-  return message ?? 'Adresse e-mail ou mot de passe incorrect.';
+  return message ?? t('loginPage.errors.default');
 }
 
 async function connexion() {
@@ -196,12 +157,7 @@ async function connexion() {
     const suite = route.query.suite as string | undefined;
     if (suite) return router.push(suite);
     // Chaque rôle atterrit sur sa page d'entrée : tournée, séances, portail.
-    const routeParRole: Partial<Record<Role, string>> = {
-      CONTROLEUR: '/controle',
-      ENSEIGNANT: '/mes-seances',
-      ETUDIANT: '/portail',
-    };
-    return router.push(routeParRole[utilisateur.role] ?? '/');
+    return router.push(accueilParRole(utilisateur.role));
   } catch (e: any) {
     erreur.value = messageErreur(e);
   }
@@ -230,7 +186,7 @@ async function connexion() {
 }
 
 .enseigne__sur-titre {
-  color: rgba(250, 250, 247, 0.6);
+  color: var(--up-encre-tertiaire);
   margin: 0;
 }
 
@@ -243,7 +199,7 @@ async function connexion() {
   font-size: 1.05rem;
   line-height: 1.55;
   max-width: 46ch;
-  color: rgba(250, 250, 247, 0.88);
+  color: var(--up-encre-douce);
   margin: 0;
 }
 
@@ -251,10 +207,10 @@ async function connexion() {
   display: grid;
   gap: var(--up-3);
   margin: 0;
-  border-top: 2px solid rgba(250, 250, 247, 0.35);
+  border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: rgba(250, 250, 247, 0.66); }
+  dt { color: var(--up-encre-tertiaire); }
   dd { margin: 3px 0 0; font-size: 0.92rem; }
 }
 
@@ -270,10 +226,11 @@ async function connexion() {
 }
 
 .acces__titre {
-  font-size: 1.7rem;
-  margin: 0 0 var(--up-3);
-  padding-bottom: var(--up-2);
-  border-bottom: 3px solid var(--up-encre);
+  font-size: 2rem;
+  letter-spacing: -0.022em;
+  margin: 0 0 var(--up-2);
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .acces__intro {
@@ -290,20 +247,13 @@ async function connexion() {
 
 .acces__bouton { min-height: 56px; }
 
+// L'erreur se teinte. Un aplat rouge pleine largeur au moment d'une faute de
+// frappe est une punition, pas une information.
 .acces__erreur {
-  background: $rouge;
-  color: #fff;
-  border: 2px solid var(--up-encre);
-}
-
-.acces__demo {
-  margin-top: var(--up-4);
-  border-top: var(--up-filet-fin);
-}
-
-.acces__mot-demo {
-  color: var(--up-encre-douce);
-  padding: 0 var(--up-3) var(--up-3);
+  background: $rouge-fond;
+  color: #{$rouge};
+  border: 0;
+  border-radius: var(--up-rayon);
 }
 
 .acces__separateur { margin: var(--up-4) 0 var(--up-3); }
@@ -324,7 +274,7 @@ async function connexion() {
 
 .acces__lien-lien {
   color: var(--up-encre-douce);
-  text-decoration: none;
+  text-decoration: underline;
 
   &:hover,
   &:focus-visible { color: var(--up-encre); text-decoration: underline; }

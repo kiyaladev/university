@@ -2,21 +2,20 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Support IT</div>
+        <h1 class="page-titre">{{ $t('helpdesk.title') }}</h1>
         <div class="page-sous-titre">
-          Un QR sur chaque équipement : l'enseignant scanne, décrit le problème
-          en deux clics, la DSI est prévenue sans attendre la rumeur.
+          {{ $t('helpdesk.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
-        <q-btn unelevated color="primary" no-caps icon="warning" label="Déclarer un incident" @click="declarerOuvert = true" />
+        <q-btn unelevated color="primary" no-caps icon="warning" :label="$t('helpdesk.actions.declareIncident')" @click="declarerOuvert = true" />
       </div>
     </div>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="mes-tickets" icon="assignment_outlined" label="Tickets / Déclarer" no-caps />
-      <q-tab v-if="dsi" name="gestion" icon="support_agent" label="Gestion DSI" no-caps />
-      <q-tab v-if="dsi" name="equipements" icon="qr_code_2" label="Équipements & QR" no-caps />
+      <q-tab name="mes-tickets" icon="assignment_outlined" :label="$t('helpdesk.tabs.myTickets')" no-caps />
+      <q-tab v-if="dsi" name="gestion" icon="support_agent" :label="$t('helpdesk.tabs.management')" no-caps />
+      <q-tab v-if="dsi" name="equipements" icon="qr_code_2" :label="$t('helpdesk.tabs.equipment')" no-caps />
     </q-tabs>
 
     <!-- ============================================================== -->
@@ -27,11 +26,10 @@
         <div class="col-12 col-lg-4">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div class="text-h6">Déclarer en deux clics</div>
+              <div class="text-h6">{{ $t('helpdesk.declareCard.title') }}</div>
               <div class="page-sous-titre q-mb-md">
-                Arrivé par le QR d'un équipement ? Le formulaire s'ouvre déjà prêt —
-                il ne reste qu'à choisir la catégorie et décrire la panne.
-                <span v-if="dsi">L'ADMIN voit tous les tickets ici.</span>
+                {{ $t('helpdesk.declareCard.description') }}
+                <span v-if="dsi">{{ $t('helpdesk.declareCard.adminNote') }}</span>
               </div>
               <div class="row q-col-gutter-sm">
                 <div v-for="c in categoriesApercu" :key="c.value" class="col-6">
@@ -49,10 +47,10 @@
                 </div>
               </div>
               <div class="row q-mt-md">
-                <q-btn unelevated color="primary" no-caps icon="add" label="Autre problème" class="full-width" @click="ouvrirDeclaration()" />
+                <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.otherProblem')" class="full-width" @click="ouvrirDeclaration()" />
               </div>
               <div class="row q-mt-md">
-                <q-btn outline color="primary" no-caps icon="qr_code_scanner" label="Scanner QR équipement" class="full-width" @click="scanEquipement = true" />
+                <q-btn outline color="primary" no-caps icon="qr_code_scanner" :label="$t('helpdesk.actions.scanEquipment')" class="full-width" @click="scanEquipement = true" />
               </div>
             </q-card-section>
           </q-card>
@@ -71,18 +69,17 @@
           >
             <template #top-left>
               <div class="text-subtitle1 text-weight-medium">
-                {{ dsi ? 'Toutes les déclarations' : 'Mes déclarations' }}
+                {{ dsi ? $t('helpdesk.myTicketsTable.titleAll') : $t('helpdesk.myTicketsTable.titleMine') }}
               </div>
             </template>
             <template #no-data>
               <div class="full-width text-center text-grey-7 q-pa-lg">
                 <q-icon name="assignment_turned_in" size="38px" color="grey-5" />
                 <div class="q-mt-sm">
-                  {{ dsi ? 'Aucun ticket déclaré.' : 'Vous n’avez déclaré aucun incident.' }}
+                  {{ dsi ? $t('helpdesk.myTicketsTable.emptyAll') : $t('helpdesk.myTicketsTable.emptyMine') }}
                 </div>
                 <div class="text-caption q-mt-xs">
-                  Choisissez une catégorie à gauche, ou scannez le QR de
-                  l'équipement en panne.
+                  {{ $t('helpdesk.myTicketsTable.emptyHint') }}
                 </div>
               </div>
             </template>
@@ -120,14 +117,17 @@
         </div>
       </div>
       <q-banner v-if="dsi" class="note--info q-mb-md">
-        Taux de résolution le jour même : <strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong>
-        ({{ stats?.resolus24h ?? 0 }} résolu{{ (stats?.resolus24h ?? 0) > 1 ? 's' : '' }} au cours des 24 dernières heures)
+        <i18n-t keypath="helpdesk.stats.resolutionRate" tag="span">
+          <template #taux><strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong></template>
+          <template #resolus>{{ stats?.resolus24h ?? 0 }}</template>
+          <template #pluriel>{{ (stats?.resolus24h ?? 0) > 1 ? 's' : '' }}</template>
+        </i18n-t>
       </q-banner>
 
       <filter-bar
         v-model="filtres"
         :chips="chipsTickets"
-        placeholder="Rechercher (N°, description…)"
+        :placeholder="$t('helpdesk.filters.searchTickets')"
         @reinitialiser="filtres = { recherche: '' }"
       >
         <template #avances>
@@ -139,7 +139,7 @@
             clearable
             emit-value
             map-options
-            label="Statut"
+            :label="$t('helpdesk.filters.status')"
           />
           <q-select
             v-model="filtres.categorie"
@@ -149,7 +149,7 @@
             clearable
             emit-value
             map-options
-            label="Catégorie"
+            :label="$t('helpdesk.filters.category')"
           />
           <q-select
             v-model="filtres.priorite"
@@ -159,13 +159,13 @@
             clearable
             emit-value
             map-options
-            label="Priorité"
+            :label="$t('helpdesk.filters.priority')"
           />
           <autocomplete-async
             v-model="filtres.equipementId"
             endpoint="/equipements"
             :label-fn="(e) => `${e.libelle}${e.emplacement ? ' — ' + e.emplacement : ''}`"
-            label="Équipement"
+            :label="$t('helpdesk.filters.equipment')"
           />
         </template>
         <template #actions>
@@ -197,7 +197,7 @@
         row-key="id"
         :loading="chargementGestion"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargementGestion || tickets.length > 0"
       >
         <template #body-cell-priorite="p">
           <q-td :props="p">
@@ -216,37 +216,36 @@
         <template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="support_agent" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucun ticket pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('helpdesk.gestionTable.emptyTitle') }}</div>
             <div class="text-caption q-mt-xs">
-              Le registre se remplit par les déclarations : élargissez les
-              filtres pour retrouver les tickets clôturés.
+              {{ $t('helpdesk.gestionTable.emptyHint') }}
             </div>
           </div>
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" aria-label="Visualiser le ticket" @click="ticketDetail = p.row">
-              <q-tooltip>Visualiser</q-tooltip>
+            <q-btn flat dense round icon="visibility" :aria-label="$t('helpdesk.gestionTable.viewTicket')" @click="ticketDetail = p.row">
+              <q-tooltip>{{ $t('helpdesk.gestionTable.viewTicketTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'OUVERT' || p.row.statut === 'EN_COURS'"
               flat dense round icon="autorenew"
-              aria-label="Changer le statut du ticket"
+              :aria-label="$t('helpdesk.gestionTable.changeStatus')"
             >
-              <q-tooltip>Changer le statut</q-tooltip>
+              <q-tooltip>{{ $t('helpdesk.gestionTable.changeStatusTooltip') }}</q-tooltip>
               <q-menu>
                 <q-list dense style="min-width: 220px">
                   <q-item clickable v-close-popup @click="changerStatut(p.row, 'EN_COURS')">
                     <q-item-section avatar><q-icon name="handyman" size="18px" /></q-item-section>
-                    <q-item-section>Passer « en cours »</q-item-section>
+                    <q-item-section>{{ $t('helpdesk.gestionTable.statutMenu.enCours') }}</q-item-section>
                   </q-item>
                   <q-item clickable v-close-popup @click="changerStatut(p.row, 'RESOLU')">
                     <q-item-section avatar><q-icon name="check_circle" size="18px" color="positive" /></q-item-section>
-                    <q-item-section>Résolu</q-item-section>
+                    <q-item-section>{{ $t('helpdesk.gestionTable.statutMenu.resolu') }}</q-item-section>
                   </q-item>
                   <q-item clickable v-close-popup @click="changerStatut(p.row, 'CLOTURE')">
                     <q-item-section avatar><q-icon name="archive" size="18px" /></q-item-section>
-                    <q-item-section>Clôturer</q-item-section>
+                    <q-item-section>{{ $t('helpdesk.gestionTable.statutMenu.cloturer') }}</q-item-section>
                   </q-item>
                 </q-list>
               </q-menu>
@@ -279,7 +278,7 @@
                 <q-icon name="devices" size="16px" class="q-mr-sm text-grey-6" />
                 <span class="text-caption">
                   {{ t.equipement.libelle }}
-                  <span v-if="t.equipement.emplacement" class="text-grey-7">— {{ t.equipement.emplacement }}</span>
+                  <span v-if="t.equipement.emplacement" class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }} {{ t.equipement.emplacement }}</span>
                 </span>
               </div>
               <div v-if="t.utilisateur || t.declarantNom" class="row items-center">
@@ -295,22 +294,22 @@
             </q-card-section>
             <q-separator />
             <q-card-actions class="q-px-md">
-              <q-btn flat dense no-caps icon="visibility" label="Détail" @click="ticketDetail = t" />
+              <q-btn flat dense no-caps icon="visibility" :label="$t('helpdesk.gestionTable.detail')" @click="ticketDetail = t" />
               <q-space />
               <q-btn
                 v-if="t.statut === 'OUVERT' || t.statut === 'EN_COURS'"
-                flat dense no-caps color="primary" icon="forward" label="Statut"
+                flat dense no-caps color="primary" icon="forward" :label="$t('helpdesk.gestionTable.statutButton')"
               >
                 <q-menu>
                   <q-list dense style="min-width: 200px">
                     <q-item clickable v-close-popup @click="changerStatut(t, 'EN_COURS')">
-                      <q-item-section>En cours</q-item-section>
+                      <q-item-section>{{ $t('helpdesk.gestionTable.cardMenu.enCours') }}</q-item-section>
                     </q-item>
                     <q-item clickable v-close-popup @click="changerStatut(t, 'RESOLU')">
-                      <q-item-section>Résolu</q-item-section>
+                      <q-item-section>{{ $t('helpdesk.gestionTable.cardMenu.resolu') }}</q-item-section>
                     </q-item>
                     <q-item clickable v-close-popup @click="changerStatut(t, 'CLOTURE')">
-                      <q-item-section>Clôturer</q-item-section>
+                      <q-item-section>{{ $t('helpdesk.gestionTable.cardMenu.cloturer') }}</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -320,9 +319,9 @@
         </div>
         <div v-if="!chargementGestion && !tickets.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="support_agent" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun ticket pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('helpdesk.gestionTable.emptyTitle') }}</div>
           <div class="text-caption q-mt-xs">
-            Élargissez les filtres pour retrouver les tickets clôturés.
+            {{ $t('helpdesk.gestionTable.emptyHintShort') }}
           </div>
         </div>
       </div>
@@ -335,34 +334,33 @@
       <div class="row items-center q-mb-md">
         <div class="col">
           <div class="page-sous-titre">
-            Chaque étiquette porte un QR unique : les pannes arrivent à la DSI
-            avec le nom exact de l'équipement, sans usurpation possible.
+            {{ $t('helpdesk.equipmentTab.subtitle') }}
           </div>
         </div>
         <div class="col-auto">
-          <q-btn unelevated color="primary" no-caps icon="add" label="Nouvel équipement" @click="ouvrirEquipement(null)" />
+          <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
         </div>
       </div>
 
       <filter-bar
         v-model="filtresEquip"
         :chips="chipsEquipements"
-        placeholder="Rechercher (libellé, emplacement, code QR…)"
+        :placeholder="$t('helpdesk.filters.searchEquipment')"
         @reinitialiser="filtresEquip = { recherche: '' }"
       >
         <template #avances>
           <q-select
             v-model="filtresEquip.actif"
             :options="[
-              { label: 'Tous', value: null },
-              { label: 'En service', value: 'true' },
-              { label: 'Inactifs', value: 'false' },
+              { label: $t('helpdesk.filters.stateAll'), value: null },
+              { label: $t('helpdesk.filters.stateActive'), value: 'true' },
+              { label: $t('helpdesk.filters.stateInactive'), value: 'false' },
             ]"
             dense
             outlined
             emit-value
             map-options
-            label="État"
+            :label="$t('helpdesk.filters.state')"
           />
         </template>
         <template #actions>
@@ -388,7 +386,7 @@
         <template #body-cell-actif="p">
           <q-td :props="p">
             <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
-              {{ p.row.actif ? 'en service' : 'désactivé' }}
+              {{ p.row.actif ? $t('helpdesk.equipmentTab.active') : $t('helpdesk.equipmentTab.inactive') }}
             </q-badge>
           </q-td>
         </template>
@@ -397,38 +395,37 @@
             <span class="text-caption ellipsis" style="max-width: 200px; display: inline-block; vertical-align: middle">
               {{ p.row.codeQr }}
             </span>
-            <q-btn flat dense round size="sm" icon="content_copy" aria-label="Copier le code QR" @click="copier(p.row.codeQr)">
-              <q-tooltip>Copier le code</q-tooltip>
+            <q-btn flat dense round size="sm" icon="content_copy" :aria-label="$t('helpdesk.equipmentTab.copyCode')" @click="copier(p.row.codeQr)">
+              <q-tooltip>{{ $t('helpdesk.equipmentTab.copyCodeTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="print" aria-label="Imprimer l'étiquette QR" @click="imprimerQr(p.row)">
-              <q-tooltip>Imprimer l'étiquette QR</q-tooltip>
+            <q-btn flat dense round icon="print" :aria-label="$t('helpdesk.equipmentTab.printLabel')" @click="imprimerQr(p.row)">
+              <q-tooltip>{{ $t('helpdesk.equipmentTab.printLabel') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="edit" aria-label="Modifier l'équipement" @click="ouvrirEquipement(p.row)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn flat dense round icon="edit" :aria-label="$t('helpdesk.equipmentTab.editEquipment')" @click="ouvrirEquipement(p.row)">
+              <q-tooltip>{{ $t('helpdesk.actions.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer l'équipement" @click="supprimerEquipement(p.row)">
-              <q-tooltip>Supprimer</q-tooltip>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('helpdesk.equipmentTab.deleteEquipment')" @click="supprimerEquipement(p.row)">
+              <q-tooltip>{{ $t('helpdesk.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="qr_code_2" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucun équipement pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('helpdesk.equipmentTab.emptyTitle') }}</div>
             <div class="text-caption q-mt-xs">
-              Déclarez le parc pour que chaque panne arrive avec le nom exact du
-              matériel.
+              {{ $t('helpdesk.equipmentTab.emptyHint') }}
             </div>
             <q-btn
               flat
               no-caps
               color="primary"
               icon="add"
-              label="Nouvel équipement"
+              :label="$t('helpdesk.actions.newEquipment')"
               class="q-mt-sm"
               @click="ouvrirEquipement(null)"
             />
@@ -446,7 +443,7 @@
                 <div v-if="e.emplacement" class="text-caption text-grey-7">{{ e.emplacement }}</div>
               </div>
               <q-badge :color="e.actif ? 'positive' : 'grey-7'">
-                {{ e.actif ? 'En service' : 'Désactivé' }}
+                {{ e.actif ? $t('helpdesk.equipmentTab.activeCapitalized') : $t('helpdesk.equipmentTab.inactiveCapitalized') }}
               </q-badge>
             </q-card-section>
             <q-card-section class="text-center">
@@ -455,29 +452,29 @@
                 :data-equipement="e.id"
                 class="qr-canvas"
                 style="width: 160px; height: 160px"
-                :aria-label="`QR de l'équipement ${e.libelle}`"
+                :aria-label="$t('helpdesk.equipmentTab.qrAriaLabel', { libelle: e.libelle })"
                 role="img"
               />
               <div class="text-caption text-grey-7 q-mt-xs">
-                {{ e._count?.tickets ?? 0 }} ticket(s) associé(s)
+                {{ $t('helpdesk.gestionTable.ticketsCount', { count: e._count?.tickets ?? 0 }) }}
               </div>
             </q-card-section>
             <q-card-actions class="q-px-md">
-              <q-btn flat dense no-caps icon="print" label="Imprimer" @click="imprimerQr(e)" />
+              <q-btn flat dense no-caps icon="print" :label="$t('helpdesk.actions.print')" @click="imprimerQr(e)" />
               <q-space />
-              <q-btn flat dense no-caps icon="edit" label="Modifier" @click="ouvrirEquipement(e)" />
+              <q-btn flat dense no-caps icon="edit" :label="$t('helpdesk.actions.edit')" @click="ouvrirEquipement(e)" />
             </q-card-actions>
           </q-card>
         </div>
         <div v-if="!chargementEquipements && !equipements.length" class="col-12 text-center text-grey-7 q-pa-lg">
           <q-icon name="qr_code_2" size="42px" color="grey-5" />
-          <div class="q-mt-sm">Aucun équipement pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('helpdesk.equipmentTab.emptyTitle') }}</div>
           <q-btn
             flat
             no-caps
             color="primary"
             icon="add"
-            label="Nouvel équipement"
+            :label="$t('helpdesk.actions.newEquipment')"
             class="q-mt-sm"
             @click="ouvrirEquipement(null)"
           />
@@ -489,7 +486,7 @@
     <q-dialog :model-value="!!ticketDetail" @update:model-value="ticketDetail = null">
       <q-card style="width: 560px; max-width: 95vw">
         <q-card-section v-if="ticketDetail" class="text-h6">
-          Ticket {{ ticketDetail.numero }}
+          {{ $t('helpdesk.ticketDetailDialog.title', { numero: ticketDetail.numero }) }}
         </q-card-section>
         <q-card-section v-if="ticketDetail" class="q-gutter-md">
           <div class="row q-gutter-x-md items-center">
@@ -503,19 +500,19 @@
           </div>
 
           <div>
-            <span class="section-titre">Signalement</span>
+            <span class="section-titre">{{ $t('helpdesk.ticketDetailDialog.signalement') }}</span>
             <div class="text-body1">{{ libelleCategorie(ticketDetail.categorie) }}</div>
             <div class="q-mt-sm" style="white-space: pre-wrap">{{ ticketDetail.description }}</div>
           </div>
 
           <div class="row q-col-gutter-md">
             <div class="col-6">
-              <span class="section-titre">Équipement</span>
+              <span class="section-titre">{{ $t('helpdesk.ticketDetailDialog.equipment') }}</span>
               <div>{{ ticketDetail.equipement?.libelle ?? '—' }}</div>
               <div class="text-caption text-grey-7">{{ ticketDetail.equipement?.emplacement ?? '' }}</div>
             </div>
             <div class="col-6">
-              <span class="section-titre">Déclarant</span>
+              <span class="section-titre">{{ $t('helpdesk.ticketDetailDialog.declarant') }}</span>
               <div>
                 {{
                   ticketDetail.utilisateur
@@ -527,12 +524,12 @@
           </div>
 
           <div>
-            <span class="section-titre">Historique</span>
+            <span class="section-titre">{{ $t('helpdesk.ticketDetailDialog.history') }}</span>
             <q-list dense>
               <q-item>
                 <q-item-section avatar><q-icon name="radio_button_unchecked" size="18px" /></q-item-section>
                 <q-item-section>
-                  <q-item-label class="pochoir">Ouvert</q-item-label>
+                  <q-item-label class="pochoir">{{ $t('helpdesk.ticketDetailDialog.opened') }}</q-item-label>
                   <q-item-label caption>{{ dateHeureLisible(ticketDetail.createdAt) }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -542,7 +539,7 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="pochoir">
-                    {{ ticketDetail.statut === 'EN_COURS' ? 'Prise en charge' : 'Résolu' }}
+                    {{ ticketDetail.statut === 'EN_COURS' ? $t('helpdesk.ticketDetailDialog.inProgress') : $t('helpdesk.ticketDetailDialog.resolved') }}
                   </q-item-label>
                   <q-item-label caption>
                     {{ dateHeureLisible(ticketDetail.traiteLe) }} · {{ nomCourt(ticketDetail.traitePar) }}
@@ -552,7 +549,7 @@
               <q-item v-if="ticketDetail.clicheLe">
                 <q-item-section avatar><q-icon name="archive" size="18px" /></q-item-section>
                 <q-item-section>
-                  <q-item-label class="pochoir">Clôturé</q-item-label>
+                  <q-item-label class="pochoir">{{ $t('helpdesk.ticketDetailDialog.closed') }}</q-item-label>
                   <q-item-label caption>{{ dateHeureLisible(ticketDetail.clicheLe) }}</q-item-label>
                 </q-item-section>
               </q-item>
@@ -560,7 +557,7 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('helpdesk.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -577,19 +574,19 @@
     <!-- Scanner QR -->
     <q-dialog v-model="scanEquipement">
       <q-card style="width: 480px; max-width: 95vw">
-        <q-card-section class="text-h6">Scanner le QR d'un équipement</q-card-section>
+        <q-card-section class="text-h6">{{ $t('helpdesk.scanDialog.title') }}</q-card-section>
         <q-card-section>
           <qr-scanner
             v-model="codeScanne"
-            label="Code QR de l'équipement"
-            hint="Scannez l'étiquette de l'équipement ou saisissez son code"
+            :label="$t('helpdesk.scanDialog.label')"
+            :hint="$t('helpdesk.scanDialog.hint')"
           />
           <p class="text-caption text-grey-7 q-mt-md">
-            Pointez la caméra sur l'étiquette QR de l'équipement pour pré-remplir la déclaration.
+            {{ $t('helpdesk.scanDialog.instructions') }}
           </p>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('helpdesk.actions.cancel')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -600,8 +597,9 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -617,8 +615,10 @@ import {
   dateHeureLisible,
 } from '../utils/libelles';
 import type { CategorieIncident, EquipementCampus, StatutTicket, TicketSupport, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
@@ -701,7 +701,7 @@ const chipsTickets = computed(() => {
     cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite'});
   }
   if (f.equipementId) {
-    cs.push({ label: 'Équipement filtré', value: f.equipementId, icone: 'devices', cle: 'equipementId'});
+    cs.push({ label: t('helpdesk.filters.equipmentFiltered'), value: f.equipementId, icone: 'devices', cle: 'equipementId'});
   }
   return cs;
 });
@@ -714,19 +714,19 @@ const chipsEquipements = computed(() => {
   }
   if (f.actif) {
     cs.push({
-      label: f.actif === 'true' ? 'En service' : 'Inactifs',
+      label: f.actif === 'true' ? t('helpdesk.filters.stateActive') : t('helpdesk.filters.stateInactive'),
       value: f.actif,
       icone: 'toggle_on', cle: 'actif'});
   }
   return cs;
 });
 
-const statutPlaques = [
-  { cle: 'OUVERT', libelle: 'Ouverts' },
-  { cle: 'EN_COURS', libelle: 'En cours' },
-  { cle: 'RESOLU', libelle: 'Résolus' },
-  { cle: 'CLOTURE', libelle: 'Clôturés' },
-];
+const statutPlaques = computed(() => [
+  { cle: 'OUVERT', libelle: t('helpdesk.stats.labels.OUVERT') },
+  { cle: 'EN_COURS', libelle: t('helpdesk.stats.labels.EN_COURS') },
+  { cle: 'RESOLU', libelle: t('helpdesk.stats.labels.RESOLU') },
+  { cle: 'CLOTURE', libelle: t('helpdesk.stats.labels.CLOTURE') },
+]);
 
 function libelleStatut(s: string): string {
   return LIBELLE_STATUT_TICKET[s] ?? s;
@@ -742,75 +742,75 @@ function nomCourt(u: { nom?: string; prenom?: string } | null | undefined): stri
   return nom || '—';
 }
 
-const colonnesMes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
+const colonnesMes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('helpdesk.table.columns.number'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'categorie',
-    label: 'Catégorie',
+    label: t('helpdesk.table.columns.category'),
     field: (r: TicketSupport) => libelleCategorie(r.categorie),
     align: 'left',
   },
   {
     name: 'equipement',
-    label: 'Équipement',
+    label: t('helpdesk.table.columns.equipment'),
     field: (r: TicketSupport) => r.equipement?.libelle ?? '—',
     align: 'left',
   },
-  { name: 'description', label: 'Description', field: 'description', align: 'left' },
-  { name: 'priorite', label: 'Priorité', field: 'priorite', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+  { name: 'description', label: t('helpdesk.table.columns.description'), field: 'description', align: 'left' },
+  { name: 'priorite', label: t('helpdesk.table.columns.priority'), field: 'priorite', align: 'left' },
+  { name: 'statut', label: t('helpdesk.table.columns.status'), field: 'statut', align: 'left' },
   {
     name: 'createdAt',
-    label: 'Date',
+    label: t('helpdesk.table.columns.date'),
     field: (r: TicketSupport) => dateHeureLisible(r.createdAt),
     align: 'left',
   },
-];
+]);
 
-const colonnesGestion: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
+const colonnesGestion = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('helpdesk.table.columns.number'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'categorie',
-    label: 'Catégorie',
+    label: t('helpdesk.table.columns.category'),
     field: (r: TicketSupport) => libelleCategorie(r.categorie),
     align: 'left',
   },
   {
     name: 'equipement',
-    label: 'Équipement',
+    label: t('helpdesk.table.columns.equipment'),
     field: (r: TicketSupport) => r.equipement?.libelle ?? '—',
     align: 'left',
   },
   {
     name: 'declarant',
-    label: 'Déclarant',
+    label: t('helpdesk.table.columns.declarant'),
     field: (r: TicketSupport) => nomCourt(r.utilisateur ?? null) || (r.declarantNom ?? '—'),
     align: 'left',
   },
-  { name: 'priorite', label: 'Priorité', field: 'priorite', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+  { name: 'priorite', label: t('helpdesk.table.columns.priority'), field: 'priorite', align: 'left' },
+  { name: 'statut', label: t('helpdesk.table.columns.status'), field: 'statut', align: 'left' },
   {
     name: 'createdAt',
-    label: 'Date',
+    label: t('helpdesk.table.columns.date'),
     field: (r: TicketSupport) => dateHeureLisible(r.createdAt),
     align: 'left',
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesEquipements: QTableColumn[] = [
-  { name: 'libelle', label: 'Libellé', field: 'libelle', align: 'left', sortable: true },
-  { name: 'emplacement', label: 'Emplacement', field: 'emplacement', align: 'left' },
-  { name: 'codeQr', label: 'Code QR', field: 'codeQr', align: 'left' },
-  { name: 'actif', label: 'État', field: 'actif', align: 'left' },
+const colonnesEquipements = computed<QTableColumn[]>(() => [
+  { name: 'libelle', label: t('helpdesk.table.columns.label'), field: 'libelle', align: 'left', sortable: true },
+  { name: 'emplacement', label: t('helpdesk.table.columns.location'), field: 'emplacement', align: 'left' },
+  { name: 'codeQr', label: t('helpdesk.table.columns.qrCode'), field: 'codeQr', align: 'left' },
+  { name: 'actif', label: t('helpdesk.table.columns.state'), field: 'actif', align: 'left' },
   {
     name: 'tickets',
-    label: 'Tickets',
+    label: t('helpdesk.table.columns.tickets'),
     field: (r: EquipementCampus) => r._count?.tickets ?? 0,
     align: 'left',
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ouvrirDeclaration(cat?: CategorieIncident) {
   categorieInitiale.value = (cat ?? '') as CategorieIncident | '';
@@ -920,10 +920,10 @@ async function dessinerTousLesQr() {
   }
 }
 
-async function changerStatut(t: TicketSupport, statut: StatutTicket) {
+async function changerStatut(ticket: TicketSupport, statut: StatutTicket) {
   try {
-    await api.post(`/tickets/${t.id}/statut`, { statut });
-    $q.notify({ type: 'positive', message: `Ticket ${t.numero} : ${libelleStatut(statut).toLowerCase()}` });
+    await api.post(`/tickets/${ticket.id}/statut`, { statut });
+    $q.notify({ type: 'positive', message: t('helpdesk.messages.ticketStatusChanged', { numero: ticket.numero, statut: libelleStatut(statut).toLowerCase() }) });
     await Promise.all([chargerMes(), requeterGestion(), chargerStats()]);
   } catch {
     /* le boot axios affiche déjà le motif */
@@ -932,12 +932,11 @@ async function changerStatut(t: TicketSupport, statut: StatutTicket) {
 
 function copier(texte: string) {
   void navigator.clipboard?.writeText(texte);
-  $q.notify({ type: 'info', message: 'Code copié' });
+  $q.notify({ type: 'info', message: t('helpdesk.messages.codeCopied') });
 }
 
 function imprimerQr(e: EquipementCampus) {
-  const url = `${API_URL}/equipements/${e.id}/imprimer-qr?token=${encodeURIComponent(auth.token)}`;
-  window.open(url, '_blank');
+  void ouvrirImpression(`/equipements/${e.id}/imprimer-qr`);
 }
 
 function ouvrirEquipement(e: EquipementCampus | null) {
@@ -947,12 +946,12 @@ function ouvrirEquipement(e: EquipementCampus | null) {
 
 function supprimerEquipement(e: EquipementCampus) {
   $q.dialog({
-    title: 'Supprimer l\'équipement',
-    message: `${e.libelle} sera retiré du parc. Les tickets déjà déclarés restent dans le registre (ils perdent le rattachement). Continuer ?`,
+    title: t('helpdesk.deleteEquipmentDialog.title'),
+    message: t('helpdesk.deleteEquipmentDialog.message', { libelle: e.libelle }),
     cancel: true,
   }).onOk(async () => {
     await api.delete(`/equipements/${e.id}`);
-    $q.notify({ type: 'positive', message: 'Équipement supprimé' });
+    $q.notify({ type: 'positive', message: t('helpdesk.messages.equipmentDeleted') });
     await chargerEquipements();
   });
 }
@@ -963,7 +962,7 @@ async function resoudreScanCode(brut: string) {
     const { data } = await api.get(`/equipements/par-code/${encodeURIComponent(brut)}`);
     equipementScanne.value = data;
     declarerOuvert.value = true;
-    $q.notify({ type: 'info', message: `Équipement reconnu : ${data.libelle}` });
+    $q.notify({ type: 'info', message: t('helpdesk.messages.equipmentRecognized', { libelle: data.libelle }) });
   } catch {
     /* code inconnu ou équipement désactivé : la page reste utilisable */
   }
@@ -995,28 +994,28 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$chaux-claire: #F2F3EE;
-$blanc-craie: #FAFAF7;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$chaux-claire: #FFFFFF;
+$blanc-craie: #FFFFFF;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .tuile-cat {
-  border: 2px solid rgba(16, 37, 30, 0.34);
+  border: var(--up-filet);
   padding: 10px 6px;
   min-height: 68px;
   background: var(--up-craie);
   color: var(--up-encre);
   font-size: 11px;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.01em;
   line-height: 1.25;
 }
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .ticket-champ {
@@ -1024,23 +1023,22 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
 
-  &.ticket-champ--OUVERT { background: $jaune-fonce; }
-  &.ticket-champ--EN_COURS { background: $encre; }
-  &.ticket-champ--RESOLU { background: $vert; }
-  &.ticket-champ--CLOTURE { background: #6b7280; }
+  &.ticket-champ--OUVERT { background: $jaune-fond; color: $jaune-texte; }
+  &.ticket-champ--EN_COURS { background: $vert-fond; color: $vert-lien; }
+  &.ticket-champ--RESOLU { background: $vert-fond; color: #{$vert}; }
+  &.ticket-champ--CLOTURE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
 
   &.prio-champ--BASSE {
-    background: $chaux-claire;
-    color: $encre;
-    border: 2px solid rgba(16, 37, 30, 0.45);
+    background: var(--up-gris-inerte);
+    color: var(--up-encre);
+    border: var(--up-filet);
     box-shadow: none;
   }
-  &.prio-champ--NORMALE { background: #EFB700; color: $encre; }
-  &.prio-champ--HAUTE { background: $rouge; }
+  &.prio-champ--NORMALE { background: $jaune-fond; color: $jaune-texte; }
+  &.prio-champ--HAUTE { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .qr-canvas {

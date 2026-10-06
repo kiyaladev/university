@@ -13,10 +13,6 @@ import { OtpClient } from './otp.client';
  */
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
   ],
   controllers: [PortailController, NotificationsController],
   providers: [PortailService, NotificationsService, SmsService, OtpClient],

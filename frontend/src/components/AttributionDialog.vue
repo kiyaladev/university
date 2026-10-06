@@ -1,9 +1,9 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 600px; max-width: 95vw">
-      <q-card-section class="text-h6">Nouvelle attribution</q-card-section>
+      <q-card-section class="text-h6">{{ $t('cites.actions.newAttribution') }}</q-card-section>
       <q-card-section class="q-pt-none text-caption text-grey-7">
-        La demande est posée sur pièce (score social/mérite) ; seule la direction la tranche.
+        {{ $t('cites.attributions.dialog.note') }}
       </q-card-section>
 
       <q-card-section>
@@ -16,7 +16,7 @@
               dense
               emit-value
               map-options
-              label="Chambre *"
+              :label="$t('cites.attributions.dialog.roomLabel')"
               @update:model-value="chambreChoisie"
             />
           </div>
@@ -28,12 +28,12 @@
               dense
               emit-value
               map-options
-              label="Année académique"
+              :label="$t('affectations.filters.year')"
             />
           </div>
         </div>
 
-        <span class="section-titre">Étudiant</span>
+        <span class="section-titre">{{ $t('common.fields.student') }}</span>
         <q-select
           v-model="form.etudiantId"
           :options="optionsEtudiants"
@@ -44,14 +44,14 @@
           emit-value
           map-options
           input-debounce="300"
-          label="Rechercher un étudiant (matricule, nom, prénom)"
+          :label="$t('cites.attributions.dialog.studentSearch')"
           @filter="filtrerEtudiants"
         />
         <p v-if="rechercheImpossible" class="text-caption text-negative q-mt-xs">
-          Le registre des étudiants n’est pas encore en ligne — module en construction.
+          {{ $t('cites.attributions.dialog.studentsUnavailable') }}
         </p>
 
-        <span class="section-titre">Critères sociaux / mérite</span>
+        <span class="section-titre">{{ $t('cites.attributions.dialog.criteriaTitle') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-4">
             <q-input
@@ -61,7 +61,7 @@
               max="100"
               outlined
               dense
-              label="Score (0-100)"
+              :label="$t('cites.attributions.dialog.scoreLabel')"
             />
           </div>
           <div class="col-12 col-sm-8">
@@ -70,9 +70,9 @@
               outlined
               dense
               type="textarea"
-              label="Justificatif"
+              :label="$t('justificatifs.detailDialog.title')"
               :autogrow="true"
-              hint="Pièce sociale ou de mérite (bourse, orphelinat, classement…)"
+              :hint="$t('cites.attributions.dialog.proofHint')"
               rows="2"
             />
           </div>
@@ -80,8 +80,8 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn color="primary" unelevated label="Enregistrer" :loading="enregistrement" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { LIBELLE_STATUT_CHAMBRE } from '../utils/libelles';
 import type { AnneeAcademique, Chambre, Etudiant } from '../types';
@@ -109,6 +110,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const optionsEtudiants = ref<{ label: string; value: string }[]>([]);
 const rechercheImpossible = ref(false);
@@ -151,7 +153,7 @@ watch(
 function chambreChoisie(id: string | null) {
   const c = props.chambres.find((x) => x.id === id);
   if (c) {
-    $q.notify({ type: 'info', message: `Loyer mensuel : ${c.loyer} ${c.devise}`, icon: 'payments' });
+    $q.notify({ type: 'info', message: t('cites.attributions.dialog.rentNotice', { loyer: c.loyer, devise: c.devise }), icon: 'payments' });
   }
 }
 
@@ -186,7 +188,7 @@ async function enregistrer() {
       justificatif: form.value.justificatif || undefined,
     };
     await api.post('/attributions-logement', payload);
-    $q.notify({ type: 'positive', message: 'Demande enregistrée — chambre réservée' });
+    $q.notify({ type: 'positive', message: t('cites.attributions.dialog.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

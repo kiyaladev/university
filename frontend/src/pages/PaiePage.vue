@@ -1,32 +1,28 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Paie des vacataires</div>
-        <div class="page-sous-titre">
-          Le chemin d'une feuille mensuelle : elle agrège les heures constatées
-          lors des contrôles, la direction la valide — les montants sont alors
-          figés —, puis l'administration la marque payée.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('paiePage.title')" :subtitle="$t('paiePage.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutCreer"
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle feuille"
+          :label="$t('paiePage.actions.newSheet')"
           @click="dialogCreation = true"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="finances" />
 
     <liens-croises
       :liens="[
-        { to: '/rapports', libelle: 'Rapports & états', icone: 'insights', aide: 'L’état de paiement détaillé, enseignant par enseignant' },
-        { to: '/affectations', libelle: 'Charges d’enseignement', icone: 'assignment_ind', aide: 'Les taux horaires et volumes contractuels utilisés au calcul' },
-        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'La masse salariale consolidée sur 12 mois' },
+        { to: '/rapports', libelle: $t('paiePage.links.reports.label'), icone: 'insights', aide: $t('paiePage.links.reports.help') },
+        { to: '/affectations', libelle: $t('paiePage.links.teachingLoads.label'), icone: 'assignment_ind', aide: $t('paiePage.links.teachingLoads.help') },
+        { to: '/rectorat', libelle: $t('paiePage.links.dashboard.label'), icone: 'dashboard', aide: $t('paiePage.links.dashboard.help') },
       ]"
     />
 
@@ -48,11 +44,11 @@
           round
           color="primary"
           icon="refresh"
-          aria-label="Recharger les feuilles de paie"
+          :aria-label="$t('paiePage.ariaLabels.reload')"
           :loading="chargement"
           @click="charger"
         >
-          <q-tooltip>Recharger</q-tooltip>
+          <q-tooltip>{{ $t('paiePage.tooltips.reload') }}</q-tooltip>
         </q-btn>
       </template>
       <template #avances>
@@ -64,7 +60,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('paiePage.filters.statut')"
         />
         <q-select
           v-model="filtres.annee"
@@ -74,16 +70,16 @@
           clearable
           emit-value
           map-options
-          label="Année"
+          :label="$t('paiePage.filters.annee')"
         />
       </template>
     </filter-bar>
 
     <div class="text-caption text-grey-7 q-mb-sm">
-      {{ pagination.total }} feuille(s) —
-      {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : 'tous statuts' }},
-      {{ filtres.annee ?? 'toutes années' }} · total affiché
-      {{ montantLisible(totalMontant) }} GNF
+      {{ $t('paiePage.summary.sheetsCount', { count: pagination.total }) }} {{ $t('rectoratPage.subtitleFallback') }}
+      {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : $t('paiePage.summary.allStatuses') }},
+      {{ filtres.annee ?? $t('paiePage.summary.allYears') }} · {{ $t('paiePage.summary.totalShown') }}
+      {{ montantLisible(totalMontant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
     </div>
 
     <!-- Vue tableau -->
@@ -124,10 +120,10 @@
             round
             icon="visibility"
             color="primary"
-            :aria-label="`Détail des lignes de ${p.row.libelle}`"
+            :aria-label="$t('paiePage.ariaLabels.detail', { libelle: p.row.libelle })"
             @click.stop="ouvrirDetail(null, p.row)"
           >
-            <q-tooltip>Détail des lignes</q-tooltip>
+            <q-tooltip>{{ $t('paiePage.tooltips.detail') }}</q-tooltip>
           </q-btn>
           <template v-if="peutCalculer(p.row)">
             <q-btn
@@ -135,10 +131,10 @@
               dense
               round
               icon="refresh"
-              :aria-label="`Recalculer ${p.row.libelle}`"
+              :aria-label="$t('paiePage.ariaLabels.recalculate', { libelle: p.row.libelle })"
               @click.stop="recalculer(p.row)"
             >
-              <q-tooltip>Recalculer les heures contrôlées</q-tooltip>
+              <q-tooltip>{{ $t('paiePage.tooltips.recalculate') }}</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutValider(p.row)">
@@ -148,10 +144,10 @@
               round
               color="positive"
               icon="verified"
-              :aria-label="`Valider ${p.row.libelle}`"
+              :aria-label="$t('paiePage.ariaLabels.validate', { libelle: p.row.libelle })"
               @click.stop="valider(p.row)"
             >
-              <q-tooltip>Valider et figer les montants</q-tooltip>
+              <q-tooltip>{{ $t('paiePage.tooltips.validate') }}</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutPayer(p.row)">
@@ -161,10 +157,10 @@
               round
               color="primary"
               icon="payments"
-              :aria-label="`Marquer ${p.row.libelle} payée`"
+              :aria-label="$t('paiePage.ariaLabels.markPaid', { libelle: p.row.libelle })"
               @click.stop="payer(p.row)"
             >
-              <q-tooltip>Marquer payée</q-tooltip>
+              <q-tooltip>{{ $t('paiePage.tooltips.markPaid') }}</q-tooltip>
             </q-btn>
           </template>
           <q-btn
@@ -173,10 +169,10 @@
             dense
             round
             icon="print"
-            :aria-label="`Imprimer ${p.row.libelle}`"
+            :aria-label="$t('paiePage.ariaLabels.print', { libelle: p.row.libelle })"
             @click.stop="imprimer(p.row)"
           >
-            <q-tooltip>Imprimer la feuille (A4)</q-tooltip>
+            <q-tooltip>{{ $t('paiePage.tooltips.print') }}</q-tooltip>
           </q-btn>
           <template v-if="peutSupprimer(p.row)">
             <q-btn
@@ -185,10 +181,10 @@
               round
               color="negative"
               icon="delete"
-              :aria-label="`Supprimer ${p.row.libelle}`"
+              :aria-label="$t('paiePage.ariaLabels.delete', { libelle: p.row.libelle })"
               @click.stop="supprimer(p.row)"
             >
-              <q-tooltip>Supprimer</q-tooltip>
+              <q-tooltip>{{ $t('paiePage.tooltips.delete') }}</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -196,11 +192,10 @@
       <template #no-data>
         <div class="etat-vide">
           <q-icon name="payments" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">Aucune feuille de paie</div>
+          <div class="text-subtitle2 q-mt-sm">{{ $t('paiePage.emptyState.title') }}</div>
           <div class="text-caption">
-            Une feuille couvre un mois : elle rassemble les heures contrôlées de
-            la période et les convertit en montants au taux de chaque enseignant.
-            {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+            {{ $t('paiePage.emptyState.description') }}
+            {{ aDesFiltres ? $t('paiePage.emptyState.filtered') : '' }}
           </div>
           <q-btn
             v-if="aDesFiltres"
@@ -209,7 +204,7 @@
             no-caps
             color="primary"
             icon="filter_alt_off"
-            label="Retirer les filtres"
+            :label="$t('paiePage.actions.clearFilters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -218,7 +213,7 @@
             no-caps
             color="primary"
             icon="add"
-            label="Créer la première feuille"
+            :label="$t('paiePage.actions.createFirst')"
             @click="dialogCreation = true"
           />
         </div>
@@ -238,7 +233,7 @@
               <div class="col">
                 <div class="text-h6">{{ f.libelle }}</div>
                 <div class="text-caption text-grey-7">
-                  {{ dateLisible(f.dateDebut) }} — {{ dateLisible(f.dateFin) }}
+                  {{ dateLisible(f.dateDebut) }} {{ $t('rectoratPage.subtitleFallback') }} {{ dateLisible(f.dateFin) }}
                 </div>
               </div>
               <span class="champ badge-statut" :class="classeStatut(f.statut)">
@@ -249,24 +244,24 @@
           <q-card-section>
             <div class="row items-end justify-between">
               <div>
-                <div class="text-caption text-grey-7">Montant total</div>
-                <div class="text-h6">{{ montantLisible(f.montantTotal) }} GNF</div>
+                <div class="text-caption text-grey-7">{{ $t('paiePage.card.totalAmount') }}</div>
+                <div class="text-h6">{{ montantLisible(f.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
               </div>
               <div class="text-caption text-grey-7 text-right">
-                {{ f.lignes?.length ?? 0 }} ligne(s)<br />
+                {{ $t('paiePage.card.lignesCount', { count: f.lignes?.length ?? 0 }) }}<br />
                 {{ f.creePar ? `${f.creePar.prenom} ${f.creePar.nom}` : '' }}
               </div>
             </div>
           </q-card-section>
           <q-card-actions align="right">
             <template v-if="peutCalculer(f)">
-              <q-btn flat dense no-caps icon="refresh" label="Recalculer" @click.stop="recalculer(f)" />
+              <q-btn flat dense no-caps icon="refresh" :label="$t('paiePage.actions.recalculate')" @click.stop="recalculer(f)" />
             </template>
             <template v-if="peutValider(f)">
-              <q-btn flat dense no-caps color="positive" icon="verified" label="Valider" @click.stop="valider(f)" />
+              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('paiePage.actions.validate')" @click.stop="valider(f)" />
             </template>
             <template v-if="peutPayer(f)">
-              <q-btn flat dense no-caps icon="payments" label="Marquer payée" @click.stop="payer(f)" />
+              <q-btn flat dense no-caps icon="payments" :label="$t('paiePage.actions.markPaid')" @click.stop="payer(f)" />
             </template>
             <q-btn
               v-if="peutImprimer"
@@ -274,7 +269,7 @@
               dense
               no-caps
               icon="print"
-              label="Imprimer"
+              :label="$t('paiePage.actions.print')"
               @click.stop="imprimer(f)"
             />
             <template v-if="peutSupprimer(f)">
@@ -284,7 +279,7 @@
                 round
                 color="negative"
                 icon="delete"
-                :aria-label="`Supprimer ${f.libelle}`"
+                :aria-label="$t('paiePage.ariaLabels.delete', { libelle: f.libelle })"
                 @click.stop="supprimer(f)"
               />
             </template>
@@ -294,11 +289,10 @@
       <div v-if="!feuilles.length && !chargement" class="col-12">
         <div class="etat-vide">
           <q-icon name="payments" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">Aucune feuille de paie</div>
+          <div class="text-subtitle2 q-mt-sm">{{ $t('paiePage.emptyState.title') }}</div>
           <div class="text-caption">
-            Une feuille couvre un mois : elle rassemble les heures contrôlées de
-            la période et les convertit en montants au taux de chaque enseignant.
-            {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+            {{ $t('paiePage.emptyState.description') }}
+            {{ aDesFiltres ? $t('paiePage.emptyState.filtered') : '' }}
           </div>
           <q-btn
             v-if="aDesFiltres"
@@ -307,7 +301,7 @@
             no-caps
             color="primary"
             icon="filter_alt_off"
-            label="Retirer les filtres"
+            :label="$t('paiePage.actions.clearFilters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -316,7 +310,7 @@
             no-caps
             color="primary"
             icon="add"
-            label="Créer la première feuille"
+            :label="$t('paiePage.actions.createFirst')"
             @click="dialogCreation = true"
           />
         </div>
@@ -371,20 +365,19 @@
             </template>
             <template #no-data>
               <div class="etat-vide">
-                <div class="text-subtitle2">Feuille sans ligne</div>
+                <div class="text-subtitle2">{{ $t('paiePage.detail.lineEmptyTitle') }}</div>
                 <div class="text-caption">
-                  Aucune heure contrôlée n'a été trouvée sur la période. Lancez un
-                  recalcul, ou vérifiez que les séances du mois ont bien été pointées.
+                  {{ $t('paiePage.detail.lineEmptyMessage') }}
                 </div>
               </div>
             </template>
             <template #bottom>
               <div class="detail-total">
                 <div class="text-weight-medium">
-                  Total — {{ detail?.lignes?.length ?? 0 }} enseignant(s)
+                  {{ $t('paiePage.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
                 </div>
-                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} réalisées</div>
-                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} GNF</div>
+                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} {{ $t('paiePage.detail.completed') }}</div>
+                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
               </div>
             </template>
           </q-table>
@@ -396,10 +389,10 @@
             flat
             no-caps
             icon="print"
-            label="Imprimer la feuille (A4)"
+            :label="$t('paiePage.actions.printSheet')"
             @click="detail && imprimer(detail)"
           />
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('paiePage.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -414,9 +407,13 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -430,9 +427,11 @@ import {
   montantLisible,
 } from '../utils/libelles';
 import type { FeuillePaie } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const modeVue = ref<'tableau' | 'cartes'>('tableau');
 const feuilles = ref<FeuillePaie[]>([]);
@@ -459,10 +458,16 @@ const optionsStatuts = ['BROUILLON', 'VALIDEE', 'PAYEE'].map((v) => ({
 const chipsFiltres = computed(() => {
   const chips: Array<{ label: string; value: any }> = [];
   if (filtres.value.statut) {
-    chips.push({ label: `Statut : ${LIBELLE_STATUT_PAIE[filtres.value.statut]}`, value: filtres.value.statut });
+    chips.push({
+      label: t('paiePage.filters.statutChip', { value: LIBELLE_STATUT_PAIE[filtres.value.statut] }),
+      value: filtres.value.statut,
+    });
   }
   if (filtres.value.annee) {
-    chips.push({ label: `Année : ${filtres.value.annee}`, value: filtres.value.annee });
+    chips.push({
+      label: t('paiePage.filters.anneeChip', { value: filtres.value.annee }),
+      value: filtres.value.annee,
+    });
   }
   return chips;
 });
@@ -493,69 +498,69 @@ const heuresTotal = computed(() =>
   (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0),
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'libelle', label: 'Feuille', field: 'libelle', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'libelle', label: t('paiePage.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
   {
     name: 'periode',
-    label: 'Période',
+    label: t('paiePage.table.columns.periode'),
     field: (r: FeuillePaie) => `${dateLisible(r.dateDebut)} — ${dateLisible(r.dateFin)}`,
     align: 'left',
   },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
-  { name: 'lignes', label: 'Lignes', field: 'lignes', align: 'right' },
+  { name: 'statut', label: t('paiePage.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'lignes', label: t('paiePage.table.columns.lignes'), field: 'lignes', align: 'right' },
   {
     name: 'montantTotal',
-    label: 'Montant total (GNF)',
+    label: t('paiePage.table.columns.montantTotal'),
     field: 'montantTotal',
     align: 'right',
     sortable: true,
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 // Toutes les grandeurs monétaires passent par le même formateur, et les heures
 // par le même : sans quoi une colonne dit « 12000 » quand la voisine dit
 // « 12 000 ».
-const colonnesLignes: QTableColumn[] = [
-  { name: 'enseignant', label: 'Enseignant', field: 'enseignant', align: 'left' },
+const colonnesLignes = computed<QTableColumn[]>(() => [
+  { name: 'enseignant', label: t('paiePage.table.lignesColumns.enseignant'), field: 'enseignant', align: 'left' },
   {
     name: 'taux',
-    label: 'Taux horaire (GNF)',
+    label: t('paiePage.table.lignesColumns.taux'),
     field: (r: any) => montantLisible(r.tauxHoraire),
     align: 'right',
   },
   {
     name: 'heures',
-    label: 'Heures réalisées',
+    label: t('paiePage.table.lignesColumns.heures'),
     field: (r: any) => heuresLisibles(r.heuresReelles),
     align: 'right',
   },
   {
     name: 'volume',
-    label: 'Volume prévu',
+    label: t('paiePage.table.lignesColumns.volume'),
     field: (r: any) => heuresLisibles(r.volumePrevu),
     align: 'right',
   },
   {
     name: 'brut',
-    label: 'Brut (GNF)',
+    label: t('paiePage.table.lignesColumns.brut'),
     field: (r: any) => montantLisible(r.montantBrut),
     align: 'right',
   },
   {
     name: 'retenue',
-    label: 'Retenue (GNF)',
+    label: t('paiePage.table.lignesColumns.retenue'),
     field: (r: any) => montantLisible(r.retenue),
     align: 'right',
   },
   {
     name: 'montant',
-    label: 'Net (GNF)',
+    label: t('paiePage.table.lignesColumns.montant'),
     field: (r: any) => montantLisible(r.montantNet),
     align: 'right',
   },
-  { name: 'commentaire', label: 'Commentaire', field: 'commentaire', align: 'left' },
-];
+  { name: 'commentaire', label: t('paiePage.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },
+]);
 
 async function charger() {
   chargement.value = true;
@@ -573,7 +578,7 @@ async function charger() {
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des feuilles de paie impossible.',
+      message: e?.response?.data?.message ?? t('paiePage.messages.loadError'),
     });
   } finally {
     chargement.value = false;
@@ -599,76 +604,76 @@ async function avecNouvelleFeuille(f: FeuillePaie) {
 /** Recalcul idempotent des heures contrôlées de la période. */
 function recalculer(f: FeuillePaie) {
   $q.dialog({
-    title: 'Recalculer',
-    message: `Agréger les heures contrôlées d'UniPrésence sur la feuille « ${f.libelle} » ? Les lignes seront recréées (les commentaires sont conservés).`,
+    title: t('paiePage.dialogs.recalculate.title'),
+    message: t('paiePage.dialogs.recalculate.message', { libelle: f.libelle }),
     cancel: true,
-    ok: { label: 'Recalculer', color: 'primary', unelevated: true },
+    ok: { label: t('paiePage.dialogs.recalculate.ok'), color: 'primary', unelevated: true },
   }).onOk(async () => {
     try {
       const { data } = await api.post(`/feuilles-paie/${f.id}/calculer`);
-      $q.notify({ type: 'positive', message: 'Feuille recalculée' });
+      $q.notify({ type: 'positive', message: t('paiePage.messages.recalculated') });
       detail.value = data;
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Recalcul impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.recalculateError') });
     }
   });
 }
 
 function valider(f: FeuillePaie) {
   $q.dialog({
-    title: 'Valider la feuille',
-    message: `Valider « ${f.libelle} » pour ${montantLisible(f.montantTotal)} GNF ? Les montants seront figés : plus aucun recalcul possible.`,
+    title: t('paiePage.dialogs.validate.title'),
+    message: t('paiePage.dialogs.validate.message', { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
     cancel: true,
-    ok: { label: 'Valider', color: 'positive', unelevated: true },
+    ok: { label: t('paiePage.dialogs.validate.ok'), color: 'positive', unelevated: true },
   }).onOk(async () => {
     try {
       const { data } = await api.post(`/feuilles-paie/${f.id}/valider`);
-      $q.notify({ type: 'positive', message: 'Feuille validée' });
+      $q.notify({ type: 'positive', message: t('paiePage.messages.validated') });
       detail.value = data;
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Validation impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.validateError') });
     }
   });
 }
 
 function payer(f: FeuillePaie) {
   $q.dialog({
-    title: 'Marquer payée',
-    message: `Marquer « ${f.libelle} » comme payée (${montantLisible(f.montantTotal)} GNF) ?`,
+    title: t('paiePage.dialogs.markPaid.title'),
+    message: t('paiePage.dialogs.markPaid.message', { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
     cancel: true,
-    ok: { label: 'Marquer payée', color: 'primary', unelevated: true },
+    ok: { label: t('paiePage.dialogs.markPaid.ok'), color: 'primary', unelevated: true },
   }).onOk(async () => {
     try {
       const { data } = await api.post(`/feuilles-paie/${f.id}/payer`);
-      $q.notify({ type: 'positive', message: 'Feuille payée' });
+      $q.notify({ type: 'positive', message: t('paiePage.messages.paid') });
       detail.value = data;
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Opération impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.payError') });
     }
   });
 }
 
 function imprimer(f: FeuillePaie) {
-  window.open(`${API_URL}/feuilles-paie/${f.id}/imprimer?token=${auth.token}`, '_blank');
+  void ouvrirImpression(`/feuilles-paie/${f.id}/imprimer`);
 }
 
 function supprimer(f: FeuillePaie) {
   $q.dialog({
-    title: 'Supprimer',
-    message: `Supprimer définitivement la feuille « ${f.libelle} » ?`,
+    title: t('paiePage.dialogs.delete.title'),
+    message: t('paiePage.dialogs.delete.message', { libelle: f.libelle }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('paiePage.dialogs.delete.ok') },
   }).onOk(async () => {
     try {
       await api.delete(`/feuilles-paie/${f.id}`);
-      $q.notify({ type: 'positive', message: 'Feuille supprimée' });
+      $q.notify({ type: 'positive', message: t('paiePage.messages.deleted') });
       if (detail.value?.id === f.id) dialogDetail.value = false;
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Suppression impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.deleteError') });
     }
   });
 }

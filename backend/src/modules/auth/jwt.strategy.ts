@@ -1,16 +1,25 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { t } from '../../common/i18n';
+import { motDePasseDemo } from '../../common/demo-accounts';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    config: ConfigService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET ?? 'change-me-in-production',
+      // Lu via ConfigService, et non `process.env` : la stratégie est
+      // construite par injection, donc le `.env` est déjà chargé, mais la
+      // clé reste ainsi définie à un seul endroit (JwtConfigModule).
+      secretOrKey: config.get<string>('JWT_SECRET') ?? 'change-me-in-production',
     });
   }
 
@@ -24,7 +33,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
 
     if (!user || !user.actif) {
-      throw new UnauthorizedException('Compte inexistant ou désactivé');
+      throw new UnauthorizedException(t('auth.compte_inexistant_ou_desactive'));
+    }
+    if (process.env.NODE_ENV === 'production' && await motDePasseDemo(user.password)) {
+      throw new UnauthorizedException(t('auth.compte_inexistant_ou_desactive'));
     }
 
     // Révocation sans liste noire : un jeton émis avant le dernier changement
@@ -32,7 +44,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     // l'arrondi de `iat`, qui est en secondes alors que la date est en ms.
     if (payload.iat && user.motDePasseModifieLe) {
       if (payload.iat * 1000 < user.motDePasseModifieLe.getTime() - 1000) {
-        throw new UnauthorizedException('Session expirée, reconnectez-vous');
+        throw new UnauthorizedException(t('auth.session_expiree_reconnectez_vous'));
       }
     }
 

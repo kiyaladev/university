@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-06T14:30:27.346Z",
+  "statut": "valide",
+  "observations": [
+    "Lectures non gestion sans QR ni GPS",
+    "Affiches et rotation réservées ADMIN/SCOLARITE",
+    "SVG protégé contenant le jeton courant",
+    "Rotation persistée et nouvelle affiche sans ancien jeton",
+    "Salle inactive absente de l’affiche",
+    "Trois impressions auditées sans jeton"
+  ],
+  "productionUntouched": true,
+  "physicalPrintAndScanPending": true
+}

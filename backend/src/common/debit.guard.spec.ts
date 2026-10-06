@@ -19,21 +19,21 @@ describe('DebitGuard', () => {
     await expect(garde.tracker(req)).resolves.toBe('ip:41.82.10.7');
   });
 
-  it('compte chaque session identifiée pour elle-même', async () => {
+  it('compte chaque utilisateur authentifié pour lui-même', async () => {
     const commun = { ip: '41.82.10.7' };
-    const a = await garde.tracker({ ...commun, headers: { authorization: 'Bearer jeton-a' } });
-    const b = await garde.tracker({ ...commun, headers: { authorization: 'Bearer jeton-b' } });
+    const a = await garde.tracker({ ...commun, user: { id: 'user-a' } });
+    const b = await garde.tracker({ ...commun, user: { id: 'user-b' } });
 
     // Deux contrôleurs derrière le même NAT ne doivent pas se gêner.
-    expect(a).not.toBe(b);
-    expect(a).not.toContain('jeton-a');
+    expect(a).toBe('u:user-a');
+    expect(b).toBe('u:user-b');
   });
 
-  it('regroupe les requêtes d’une même session', async () => {
-    const req = { ip: '41.82.10.7', headers: { authorization: 'Bearer jeton-a' } };
-    const autre = { ip: '10.0.0.9', headers: { authorization: 'Bearer jeton-a' } };
-    // Même session depuis un autre réseau : c'est toujours la même personne.
+  it('ignore un jeton Bearer arbitraire et compte la route publique par IP', async () => {
+    const req = { ip: '41.82.10.7', headers: { authorization: 'Bearer aleatoire-a' } };
+    const autre = { ip: '41.82.10.7', headers: { authorization: 'Bearer aleatoire-b' } };
     await expect(garde.tracker(req)).resolves.toBe(await garde.tracker(autre));
+    await expect(garde.tracker(req)).resolves.toBe('ip:41.82.10.7');
   });
 
   it('ignore une adresse usurpée dans l’en-tête', async () => {

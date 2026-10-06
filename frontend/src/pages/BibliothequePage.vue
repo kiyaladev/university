@@ -2,22 +2,18 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Bibliothèque numérique</div>
-        <div class="page-sous-titre">
-          Gestion du dépôt institutionnel : mémoires, thèses, articles et
-          supports de cours — le fonds qui porte les subventions AUF / UNESCO.
-          Vous voyez ici le fonds <strong>complet</strong>, publié ou non.
-        </div>
+        <h1 class="page-titre">{{ $t('bibliotheque.title') }}</h1>
+        <div class="page-sous-titre">{{ $t('bibliotheque.subtitle') }}</div>
       </div>
       <div class="col-auto row q-gutter-xs">
         <q-btn
           flat
           no-caps
           icon="public"
-          label="Voir la vitrine publique"
+          :label="$t('bibliotheque.actions.viewShowcase')"
           to="/bibliotheque"
         >
-          <q-tooltip>Page consultée par les visiteurs — documents publiés uniquement</q-tooltip>
+          <q-tooltip>{{ $t('bibliotheque.actions.viewShowcaseTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
           v-if="auth.estAdmin"
@@ -25,7 +21,7 @@
           color="negative"
           no-caps
           icon="policy"
-          label="Nouvelle analyse anti-plagiat"
+          :label="$t('bibliotheque.actions.recalculatePlagiarism')"
           :loading="recalculEnCours"
           @click="lancerRecalcul"
         />
@@ -35,7 +31,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Déposer un document"
+          :label="$t('bibliotheque.actions.depositDocument')"
           @click="ouvrir(null)"
         />
       </div>
@@ -58,7 +54,7 @@
           option-label="titre"
           emit-value
           map-options
-          placeholder="Recherche globale (titre, auteur, contenu, mots-clés…)"
+          :placeholder="$t('bibliotheque.search.placeholder')"
           :loading="chargementSuggestions"
           @filter="rechercherSuggestions"
           @update:model-value="surSelectionSuggestion"
@@ -68,7 +64,7 @@
           <template #no-option>
             <q-item>
               <q-item-section class="text-grey">
-                {{ rechercheTexte ? 'Aucun résultat' : 'Tapez pour rechercher' }}
+                {{ rechercheTexte ? $t('bibliotheque.search.noResults') : $t('bibliotheque.search.typeToSearch') }}
               </q-item-section>
             </q-item>
           </template>
@@ -110,14 +106,14 @@
           clearable
           emit-value
           map-options
-          label="Type"
+          :label="$t('bibliotheque.filters.type')"
         />
         <autocomplete-async
           v-model="filtres.departementId"
           endpoint="/departements"
           :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
-          label="Département"
-          placeholder="Tapez le nom ou le code…"
+          :label="$t('bibliotheque.filters.department')"
+          :placeholder="$t('bibliotheque.filters.departmentPlaceholder')"
         />
         <q-input
           v-model.number="filtres.anneeEdition"
@@ -125,7 +121,7 @@
           dense
           outlined
           clearable
-          label="Année d'édition"
+          :label="$t('bibliotheque.filters.editionYear')"
         />
         <q-select
           v-model="filtres.public"
@@ -135,7 +131,7 @@
           clearable
           emit-value
           map-options
-          label="Publication"
+          :label="$t('bibliotheque.filters.publication')"
         />
       </template>
       <template #actions>
@@ -154,10 +150,9 @@
 
     <div v-else-if="!documents.length" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="library_books" size="38px" color="grey-5" />
-      <div class="q-mt-sm">Aucun document ne correspond à ces critères.</div>
+      <div class="q-mt-sm">{{ $t('bibliotheque.emptyState.title') }}</div>
       <div class="text-caption q-mt-xs">
-        Le fonds se remplit par dépôt : un mémoire, une thèse ou un support de
-        cours, avec son fichier PDF.
+        {{ $t('bibliotheque.emptyState.hint') }}
       </div>
       <q-btn
         v-if="peutDeposer"
@@ -165,7 +160,7 @@
         no-caps
         color="primary"
         icon="add"
-        label="Déposer un document"
+        :label="$t('bibliotheque.actions.depositDocument')"
         class="q-mt-sm"
         @click="ouvrir(null)"
       />
@@ -207,7 +202,7 @@
       <template #body-cell-taille="p">
         <q-td :props="p" class="text-right">
           <span v-if="p.row.tailleKo">{{ (p.row.tailleKo / 1024).toFixed(1) }} Mo</span>
-          <span v-else>—</span>
+          <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
       <template #body-cell-publie="p">
@@ -217,7 +212,7 @@
             :color="p.row.public ? 'positive' : 'orange'"
             size="20px"
           >
-            <q-tooltip>{{ p.row.public ? 'Publié' : 'Non publié' }}</q-tooltip>
+            <q-tooltip>{{ p.row.public ? $t('bibliotheque.status.published') : $t('bibliotheque.status.unpublished') }}</q-tooltip>
           </q-icon>
         </q-td>
       </template>
@@ -232,44 +227,44 @@
             <q-icon :name="iconePlagiat(p.row.indicePlagiat)" size="14px" class="q-mr-xs" />
             {{ p.row.indicePlagiat }}
             <q-tooltip v-if="p.row.indicePlagiat > 50" class="bg-negative text-white">
-              Risque élevé — vérifier les suspicions
+              {{ $t('bibliotheque.riskHighTooltip') }}
             </q-tooltip>
           </q-badge>
-          <span v-else class="text-grey-6 text-caption">—</span>
+          <span v-else class="text-grey-6 text-caption">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn v-if="p.row.fichier" flat dense round icon="download" aria-label="Télécharger le document" @click="telecharger(p.row)">
-            <q-tooltip>Télécharger</q-tooltip>
+          <q-btn v-if="p.row.fichier" flat dense round icon="download" :aria-label="$t('bibliotheque.actionsColumn.downloadAria')" @click="telecharger(p.row)">
+            <q-tooltip>{{ $t('bibliotheque.actionsColumn.downloadTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="visibility" aria-label="Aperçu du contenu" @click="ouvrirApercu(p.row)">
-            <q-tooltip>Aperçu contenu</q-tooltip>
+          <q-btn flat dense round icon="visibility" :aria-label="$t('bibliotheque.actionsColumn.previewAria')" @click="ouvrirApercu(p.row)">
+            <q-tooltip>{{ $t('bibliotheque.actionsColumn.previewTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="peutGerer" flat dense round icon="edit" aria-label="Modifier le document" @click="ouvrir(p.row)">
-            <q-tooltip>Modifier</q-tooltip>
+          <q-btn v-if="peutGerer" flat dense round icon="edit" :aria-label="$t('bibliotheque.actionsColumn.editAria')" @click="ouvrir(p.row)">
+            <q-tooltip>{{ $t('bibliotheque.actionsColumn.editTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGerer"
             flat dense round
             :icon="p.row.public ? 'visibility_off' : 'visibility'"
             :color="p.row.public ? 'orange' : 'primary'"
-            :aria-label="p.row.public ? 'Retirer de la vitrine publique' : 'Publier sur la vitrine publique'"
+            :aria-label="p.row.public ? $t('bibliotheque.actionsColumn.unpublishAria') : $t('bibliotheque.actionsColumn.publishAria')"
             @click="basculerPublic(p.row)"
           >
-            <q-tooltip>{{ p.row.public ? 'Dépublier' : 'Publier' }}</q-tooltip>
+            <q-tooltip>{{ p.row.public ? $t('bibliotheque.actionsColumn.unpublishTooltip') : $t('bibliotheque.actionsColumn.publishTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutVoirPlagiat && (p.row.indicePlagiat ?? 0) > 0"
             flat dense round icon="policy"
             :color="couleurPlagiat(p.row.indicePlagiat ?? 0)"
-            aria-label="Voir le score de plagiat"
+            :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
             @click="voirScore(p.row)"
           >
-            <q-tooltip>Voir le score de plagiat</q-tooltip>
+            <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer le document" @click="supprimer(p.row)">
-            <q-tooltip>Supprimer</q-tooltip>
+          <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('bibliotheque.actionsColumn.deleteAria')" @click="supprimer(p.row)">
+            <q-tooltip>{{ $t('bibliotheque.actionsColumn.deleteTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -282,15 +277,15 @@
             <q-chip dense outline color="primary" class="q-ma-none" :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type" />
             <q-space />
             <q-icon v-if="!doc.public" name="visibility_off" color="orange" size="20px">
-              <q-tooltip>Non publié</q-tooltip>
+              <q-tooltip>{{ $t('bibliotheque.card.unpublished') }}</q-tooltip>
             </q-icon>
             <q-icon v-if="!doc.fichier" name="description" color="grey" size="20px">
-              <q-tooltip>Déposé sans fichier</q-tooltip>
+              <q-tooltip>{{ $t('bibliotheque.card.depositedWithoutFile') }}</q-tooltip>
             </q-icon>
           </div>
 
           <div class="doc-titre q-mt-sm">{{ doc.titre }}</div>
-          <div class="doc-auteurs">{{ doc.auteurs ?? 'Aucun auteur renseigné' }}</div>
+          <div class="doc-auteurs">{{ doc.auteurs ?? $t('bibliotheque.card.noAuthor') }}</div>
 
           <div v-if="doc.motsClefs?.length" class="text-caption text-grey-7 q-mt-xs">
             <q-icon name="sell" size="13px" class="q-mr-xs" />
@@ -304,7 +299,7 @@
           <q-banner v-if="(doc.indicePlagiat ?? 0) > 50" dense class="bg-red-1 text-red-10 q-mt-sm q-pa-sm">
             <template #avatar><q-icon name="policy" color="negative" /></template>
             <div class="text-caption text-weight-medium">
-              Risque : indice de plagiat {{ doc.indicePlagiat }}
+              {{ $t('bibliotheque.card.plagiarismRisk', { score: doc.indicePlagiat }) }}
             </div>
           </q-banner>
 
@@ -313,42 +308,42 @@
             <div class="col">
               <div>{{ doc.departement?.nom ?? '—' }}</div>
               <div>
-                {{ `année ${anneeDocument(doc)}` }}
+                {{ $t('bibliotheque.card.year', { year: anneeDocument(doc) }) }}
                 <template v-if="doc.tailleKo">· {{ (doc.tailleKo / 1024).toFixed(1) }} Mo</template>
               </div>
             </div>
-            <div class="col-auto" :title="`${doc.telechargements} téléchargement(s)`">
+            <div class="col-auto" :title="$t('bibliotheque.card.downloads', { count: doc.telechargements })">
               <q-icon name="download" size="16px" class="q-mr-xs" />{{ doc.telechargements }}
             </div>
           </div>
 
           <div class="row q-mt-sm q-col-gutter-xs justify-end">
-            <q-btn v-if="doc.fichier" flat dense outline color="primary" icon="download" label="Télécharger" no-caps @click="telecharger(doc)" />
-            <q-btn flat dense outline icon="visibility" label="Aperçu" no-caps @click="ouvrirApercu(doc)" />
-            <q-btn v-if="peutGerer" flat dense round icon="edit" aria-label="Modifier le document" @click="ouvrir(doc)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn v-if="doc.fichier" flat dense outline color="primary" icon="download" :label="$t('bibliotheque.actionsColumn.download')" no-caps @click="telecharger(doc)" />
+            <q-btn flat dense outline icon="visibility" :label="$t('bibliotheque.actionsColumn.preview')" no-caps @click="ouvrirApercu(doc)" />
+            <q-btn v-if="peutGerer" flat dense round icon="edit" :aria-label="$t('bibliotheque.actionsColumn.editAria')" @click="ouvrir(doc)">
+              <q-tooltip>{{ $t('bibliotheque.actionsColumn.editTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutGerer"
               flat dense round
               :icon="doc.public ? 'visibility_off' : 'visibility'"
               :color="doc.public ? 'orange' : 'primary'"
-              :aria-label="doc.public ? 'Retirer de la vitrine publique' : 'Publier sur la vitrine publique'"
+              :aria-label="doc.public ? $t('bibliotheque.actionsColumn.unpublishAria') : $t('bibliotheque.actionsColumn.publishAria')"
               @click="basculerPublic(doc)"
             >
-              <q-tooltip>{{ doc.public ? 'Dépublier' : 'Publier' }}</q-tooltip>
+              <q-tooltip>{{ doc.public ? $t('bibliotheque.actionsColumn.unpublishTooltip') : $t('bibliotheque.actionsColumn.publishTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutVoirPlagiat && (doc.indicePlagiat ?? 0) > 0"
               flat dense round icon="policy"
               :color="couleurPlagiat(doc.indicePlagiat ?? 0)"
-              aria-label="Voir le score de plagiat"
+              :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
               @click="voirScore(doc)"
             >
-              <q-tooltip>Voir le score de plagiat</q-tooltip>
+              <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" aria-label="Supprimer le document" @click="supprimer(doc)">
-              <q-tooltip>Supprimer</q-tooltip>
+            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('bibliotheque.actionsColumn.deleteAria')" @click="supprimer(doc)">
+              <q-tooltip>{{ $t('bibliotheque.actionsColumn.deleteTooltip') }}</q-tooltip>
             </q-btn>
           </div>
         </q-card>
@@ -376,10 +371,10 @@
       <q-card>
         <q-card-section class="row items-center q-pb-none">
           <div class="col">
-            <div class="text-h6">Aperçu du contenu</div>
+            <div class="text-h6">{{ $t('bibliotheque.preview.title') }}</div>
             <div class="text-caption text-grey-7">{{ apercuDoc?.titre }}</div>
           </div>
-          <q-btn flat round dense icon="close" v-close-popup />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
         </q-card-section>
         <q-separator class="q-my-sm" />
         <q-card-section class="apercu-contenu">
@@ -388,7 +383,7 @@
           </div>
           <div v-else-if="!apercuTexte" class="text-center text-grey-7 q-py-xl">
             <q-icon name="description" size="38px" color="grey-5" />
-            <div class="q-mt-sm">Aucun texte extrait pour ce document.</div>
+            <div class="q-mt-sm">{{ $t('bibliotheque.preview.empty') }}</div>
           </div>
           <pre v-else class="apercu-texte" v-html="surligner(apercuTexte)" />
         </q-card-section>
@@ -401,6 +396,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
 import DocumentDialog from '../components/DocumentDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
@@ -414,6 +410,7 @@ import type { DocumentDepot, ChipFiltre } from '../types';
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const documents = ref<DocumentDepot[]>([]);
 const chargement = ref(false);
@@ -451,10 +448,10 @@ const peutGerer = computed(() => peutDeposer.value);
 const peutVoirPlagiat = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({ value, label }));
-const statutsPublics = [
-  { value: '1', label: 'Publiés' },
-  { value: '0', label: 'Non publiés' },
-];
+const statutsPublics = computed(() => [
+  { value: '1', label: t('bibliotheque.filters.published') },
+  { value: '0', label: t('bibliotheque.filters.unpublished') },
+]);
 
 /** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
 const chips = computed(() => {
@@ -463,30 +460,30 @@ const chips = computed(() => {
   if (f.type) {
     cs.push({ label: LIBELLE_TYPE_DOCUMENT[f.type] ?? f.type, value: f.type, icone: 'category', cle: 'type'});
   }
-  if (f.departementId) cs.push({ label: 'Département filtré', value: f.departementId, icone: 'account_tree', cle: 'departementId'});
-  if (f.anneeEdition) cs.push({ label: `Année ${f.anneeEdition}`, value: f.anneeEdition, icone: 'event' });
+  if (f.departementId) cs.push({ label: t('bibliotheque.filters.departmentFiltered'), value: f.departementId, icone: 'account_tree', cle: 'departementId'});
+  if (f.anneeEdition) cs.push({ label: t('bibliotheque.filters.yearChip', { year: f.anneeEdition }), value: f.anneeEdition, icone: 'event' });
   if (f.public) {
     cs.push({
-      label: f.public === '1' ? 'Publiés' : 'Non publiés',
+      label: f.public === '1' ? t('bibliotheque.filters.published') : t('bibliotheque.filters.unpublished'),
       value: f.public,
       icone: f.public === '1' ? 'visibility' : 'visibility_off', cle: 'public'});
   }
   if (rechercheTexte.value) {
-    cs.push({ label: `« ${rechercheTexte.value} »`, value: rechercheTexte.value, icone: 'search' });
+    cs.push({ label: t('bibliotheque.filters.searchChip', { value: rechercheTexte.value }), value: rechercheTexte.value, icone: 'search' });
   }
   return cs;
 });
 
-const colonnes: QTableColumn<DocumentDepot>[] = [
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'titre', label: 'Document', field: 'titre', align: 'left' },
-  { name: 'departement', label: 'Département', field: 'departement', align: 'left' },
-  { name: 'annee', label: 'Année', field: 'anneeEdition', align: 'center' },
-  { name: 'taille', label: 'Taille', field: 'tailleKo', align: 'right' },
-  { name: 'publie', label: 'État', field: 'public', align: 'center' },
-  { name: 'plagiat', label: 'Plagiat', field: 'indicePlagiat', align: 'center' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'type', label: t('bibliotheque.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'titre', label: t('bibliotheque.table.columns.document'), field: 'titre', align: 'left' },
+  { name: 'departement', label: t('bibliotheque.table.columns.department'), field: 'departement', align: 'left' },
+  { name: 'annee', label: t('bibliotheque.table.columns.year'), field: 'anneeEdition', align: 'center' },
+  { name: 'taille', label: t('bibliotheque.table.columns.size'), field: 'tailleKo', align: 'right' },
+  { name: 'publie', label: t('bibliotheque.table.columns.state'), field: 'public', align: 'center' },
+  { name: 'plagiat', label: t('bibliotheque.table.columns.plagiarism'), field: 'indicePlagiat', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function anneeDocument(doc: DocumentDepot): number {
   return doc.anneeEdition ?? new Date(doc.createdAt).getFullYear();
@@ -621,33 +618,33 @@ function voirScore(doc: DocumentDepot) {
 
 function basculerPublic(doc: DocumentDepot) {
   $q.dialog({
-    title: doc.public ? 'Dépublier' : 'Publier',
+    title: doc.public ? t('bibliotheque.dialogs.publish.unpublishTitle') : t('bibliotheque.dialogs.publish.publishTitle'),
     message: doc.public
-      ? `Retirer « ${doc.titre} » de la page publique ?`
-      : `Rendre « ${doc.titre} » visible sur la page publique ?`,
+      ? t('bibliotheque.dialogs.publish.unpublishMessage', { titre: doc.titre })
+      : t('bibliotheque.dialogs.publish.publishMessage', { titre: doc.titre }),
     cancel: true,
-    ok: { color: 'primary', label: doc.public ? 'Dépublier' : 'Publier' },
+    ok: { color: 'primary', label: doc.public ? t('bibliotheque.dialogs.publish.unpublishOk') : t('bibliotheque.dialogs.publish.publishOk') },
   }).onOk(async () => {
     await bibliothequeService.modifier(doc.id, { public: !doc.public });
     doc.public = !doc.public;
     $q.notify({
       type: 'positive',
       message: doc.public
-        ? 'Document publié — visible sur la vitrine'
-        : 'Document retiré de la vitrine publique',
+        ? t('bibliotheque.messages.published')
+        : t('bibliotheque.messages.unpublished'),
     });
   });
 }
 
 function supprimer(doc: DocumentDepot) {
   $q.dialog({
-    title: 'Supprimer',
-    message: `Supprimer « ${doc.titre} » ? Le fichier joint sera perdu.`,
+    title: t('bibliotheque.dialogs.delete.title'),
+    message: t('bibliotheque.dialogs.delete.message', { titre: doc.titre }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('bibliotheque.dialogs.delete.ok') },
   }).onOk(async () => {
     await bibliothequeService.supprimer(doc.id);
-    $q.notify({ type: 'warning', message: 'Document supprimé du fonds' });
+    $q.notify({ type: 'warning', message: t('bibliotheque.messages.deleted') });
     await charger(true);
   });
 }
@@ -659,12 +656,10 @@ function ouvrir(doc: DocumentDepot | null) {
 
 async function lancerRecalcul() {
   $q.dialog({
-    title: 'Recalculer les suspicions de plagiat',
-    message:
-      'Cette opération balaye tous les documents et compare leurs empreintes. ' +
-      'Elle peut prendre plusieurs minutes : un compte rendu sera affiché à la fin.',
+    title: t('bibliotheque.dialogs.recalculate.title'),
+    message: t('bibliotheque.dialogs.recalculate.message'),
     cancel: true,
-    ok: { color: 'negative', label: 'Lancer l’analyse', unelevated: true },
+    ok: { color: 'negative', label: t('bibliotheque.dialogs.recalculate.ok'), unelevated: true },
   }).onOk(async () => {
     recalculEnCours.value = true;
     try {
@@ -672,12 +667,13 @@ async function lancerRecalcul() {
       const total = (data?.total ?? data?.suspicionsCreees ?? data?.data?.total) as number | undefined;
       const docAnalyses = (data?.documentsAnalyses ?? data?.data?.documentsAnalyses) as number | undefined;
       dernierRecap.value = {
-        titre: 'Analyse terminée',
-        message:
-          `${docAnalyses ?? '?'} document(s) analysés — `
-          + `${total ?? '?'} suspicion(s) détectée(s).`,
+        titre: t('bibliotheque.messages.analysisSummaryTitle'),
+        message: t('bibliotheque.messages.analysisSummaryLine', {
+          analysed: docAnalyses ?? '?',
+          suspicions: total ?? '?',
+        }),
       };
-      $q.notify({ type: 'positive', message: 'Analyse anti-plagiat terminée' });
+      $q.notify({ type: 'positive', message: t('bibliotheque.messages.analysisDone') });
       await charger(true);
     } finally {
       recalculEnCours.value = false;
@@ -716,11 +712,11 @@ onMounted(() => charger(true));
   border: var(--up-filet-fin);
   white-space: pre-wrap;
 }
-/* Le surlignage reprend le jaune signal du panneau, qui porte toujours de
-   l'encre et jamais du blanc. */
+/* Le surlignage se pose en jaune très dilué. Ce bloc est du CSS simple : la
+   variable Sass `$jaune` qui s'y trouvait n'y était jamais résolue, et le
+   surlignage n'avait donc aucun fond. */
 .doc-extrait :deep(mark) {
-  background: $jaune;
-  color: var(--up-encre);
+  background: #FFF6C2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);
@@ -737,7 +733,7 @@ onMounted(() => charger(true));
   margin: 0;
 }
 .apercu-texte :deep(mark) {
-  background: #fff3a0;
+  background: #FFF6C2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-03",
+  "portee": "Vérifier le rendu unitaire des trois états imprimables HTML et l’échappement des données libres.",
+  "verification": {
+    "registre": "Structure A4, tableau, noms, matières et thèmes échappés ; aucune injection HTML dans les valeurs de test.",
+    "ficheEnseignant": "Période échappée et message de tableau vide vérifiés.",
+    "etatPaiement": "Données, période et montants totaux rendus ; valeurs de texte échappées.",
+    "tests": "3 tests réussis dans impression.service.spec.ts."
+  },
+  "limite": "Les templates et projections simulées sont vérifiés ; les requêtes métier réelles et l’impression avec des dossiers de recette restent à valider avec un compte QA."
+}

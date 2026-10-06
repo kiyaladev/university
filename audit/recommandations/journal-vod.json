@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Journal transactionnel des métadonnées VOD",
+  "module": "backend/src/modules/vod/vod.service.ts",
+  "operations": ["creer", "modifier", "publier", "archiver"],
+  "projection": [
+    "identifiants techniques",
+    "statut et visibilité",
+    "dates ISO",
+    "durée et taille du média",
+    "présence du titre, de la description, de la transcription et des médias"
+  ],
+  "protections": [
+    "Le titre, la description, la transcription, l'URL signée, la vignette, les relations nominatives et le motif libre d'archivage ne sont pas recopiés.",
+    "Les vues, l'identité et l'IP des spectateurs ainsi que les compteurs restent hors AuditLog.",
+    "Les quatre mutations et leur projection d'audit sont dans la même transaction.",
+    "Les droits, règles d'accès, compteurs et transitions métier restent inchangés."
+  ],
+  "verification": {
+    "vod": "23 tests verts : 8 existants et 15 dédiés à la minimisation et à l'atomicité.",
+    "backend": "95 suites, 738 tests verts.",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi.",
+    "build": "npx nest build réussi."
+  },
+  "limites": [
+    "Les contrôles d'édition et de statut restent préalables à la transaction ; une écriture concurrente peut encore gagner entre contrôle et mutation.",
+    "Aucune recette UI avec une nouvelle entrée VOD réelle n'a été faite en base QA."
+  ],
+  "production": "Aucune migration ni modification de production."
+}

@@ -38,6 +38,7 @@ export class CreateCourrierDto {
 
   @IsOptional() @IsString() expediteur?: string;
   @IsOptional() @IsString() destinataire?: string;
+  @IsOptional() @IsUUID() departementId?: string;
 
   @IsOptional() @IsDateString() dateReception?: string;
   @IsOptional() @IsDateString() dateEnvoi?: string;
@@ -56,6 +57,7 @@ export class CreateCourrierDto {
 }
 
 export class UpdateCourrierDto {
+  @IsOptional() @IsUUID() departementId?: string;
   @IsOptional() @IsString() objet?: string;
   @IsOptional() @IsString() expediteur?: string;
   @IsOptional() @IsString() destinataire?: string;

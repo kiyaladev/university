@@ -1,0 +1,16 @@
+{
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "Aucun dossier étudiant rattaché à ce compte",
+  "reclamation_introuvable": "Réclamation introuvable",
+  "numero_de_reclamation_temporairement_indisponible_reessayez": "Numéro de réclamation temporairement indisponible, réessayez.",
+  "le_message_est_vide": "Le message est vide.",
+  "limite_messages_atteinte": "Cette réclamation a atteint sa limite de messages.",
+  "utilisateur_introuvable": "Utilisateur introuvable",
+  "une_note_de_cloture_est_requise": "Une note de clôture est requise.",
+  "cette_reclamation_est_close_escalader_n_a_plus_de_sens": "Cette réclamation est close : escalader n'a plus de sens.",
+  "une_note_est_obligatoire_pour_clore_resoudre_fermer_ou_rejet": "Une note est obligatoire pour clore (résoudre, fermer ou rejeter) une réclamation.",
+  "l_escalade_automatique_n_est_possible_qu_apres_delaiheures_h": "L'escalade automatique n'est possible qu'après {delaiHeures} h sans réponse",
+  "l_escalade_automatique_n_est_possible_qu_apres_delaiheures": "L’escalade automatique n’est possible qu’après {delaiHeures} h sans réponse.",
+  "transition_de_statut_non_autorisee": "Cette transition n'est pas autorisée depuis l'état actuel.",
+  "reclamation_close_assignation_impossible": "Une réclamation close ne peut pas être réassignée.",
+  "ecriture_concurrente_reessayez": "Cette réclamation vient d'être modifiée. Rechargez-la puis réessayez."
+}

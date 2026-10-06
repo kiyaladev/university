@@ -1,0 +1,14 @@
+{
+  "deliberation_introuvable": "Délibération introuvable",
+  "aucun_compte_etudiant_pour_ce_numero": "Aucun compte étudiant pour ce numéro.",
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "Aucun dossier étudiant rattaché à ce compte",
+  "gateway_unavailable": "Le service de vérification est momentanément indisponible, réessayez dans un instant.",
+  "no_active_code": "Aucun code en attente pour ce numéro : demandez-en un nouveau.",
+  "too_many_attempts": "Trop de tentatives : demandez un nouveau code.",
+  "invalid_or_expired_code": "Code incorrect ou expiré.",
+  "diffusion_needs_targets_and_message": "Précisez au moins un numéro (ou « tous les inscrits ») et un message.",
+  "no_reachable_student": "Aucun étudiant joignable (aucun numéro valide sur les fiches d'inscription).",
+  "no_reachable_student_results": "Aucun étudiant joignable : la délibération ne compte aucun admis ou ajourné avec un numéro valide.",
+  "results_only_validated": "Seuls des résultats validés par le jury peuvent être diffusés aux étudiants.",
+  "aucune_annee_academique_active_impossible_de_cibler_les_insc": "Aucune année académique active : impossible de cibler les inscrits."
+}

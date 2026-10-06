@@ -4,9 +4,11 @@
  * en sous-formulaires.
  */
 import { Type } from 'class-transformer';
+import { StatutReparation } from '@prisma/client';
 import {
   IsBooleanString,
   IsDateString,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
@@ -125,4 +127,10 @@ export class ResolutionReparationDto {
   @IsOptional()
   @IsString()
   noteResolution?: string;
+}
+
+export class ReparationQueryDto {
+  @IsOptional()
+  @IsEnum(StatutReparation)
+  statut?: StatutReparation;
 }

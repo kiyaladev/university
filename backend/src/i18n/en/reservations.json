@@ -1,0 +1,13 @@
+{
+  "les_reservations_sont_possibles_entre_07h00_et_22h00": "Reservations are allowed between 07:00 and 22:00",
+  "seul_le_demandeur_ou_l_administrateur_peut_modifier": "Only the requester or an administrator can modify this reservation",
+  "une_reservation_deja_statuee_ne_peut_plus_etre_modifiee": "A reservation already decided can no longer be modified",
+  "seul_le_demandeur_ou_l_administrateur_peut_annuler": "Only the requester or an administrator can cancel this reservation",
+  "cette_reservation_a_deja_ete_statuee": "This reservation has already been decided",
+  "reservation_introuvable": "Reservation not found",
+  "periode_invalide": "Invalid period",
+  "periode_trop_longue": "The selected period cannot exceed 93 days",
+  "l_heure_de_fin_doit_suivre_l_heure_de_debut": "End time must be after start time",
+  "cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_": "This room is already booked from {debut} to {fin}.",
+  "ecriture_concurrente_reessayez": "A concurrent reservation was just saved. Reload the calendar and try again."
+}

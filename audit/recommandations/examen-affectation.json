@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-02T12:58:21.794Z",
+  "environnement": "QA locale isolée",
+  "status": 200,
+  "options": 3,
+  "rolesAutorises": [
+    "ENSEIGNANT",
+    "CONTROLEUR"
+  ],
+  "erreursJavaScript": []
+}

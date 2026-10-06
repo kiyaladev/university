@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-06T13:48:17.136549+00:00",
+  "targetedTests": 7,
+  "targetedSuites": 2,
+  "passed": true,
+  "newConcurrencyTests": 2,
+  "backendBuildPassed": true,
+  "scope": "relecture du statut après verrou de délibération, année verrouillée avant le jury",
+  "httpRattrapageCyclePending": false,
+  "qaApiReloadPending": false,
+  "productionUntouched": true,
+  "fullSuiteRetryPending": false,
+  "initialFullSuite": {
+    "passedTests": 918,
+    "failedTests": 1,
+    "totalTests": 919,
+    "timeoutTest": "referentiel/users.audit.spec.ts : création de compte, 5000 ms",
+    "proof": "backend-tests-timeout-jury.log"
+  },
+  "httpRattrapageRequirements": [
+    "candidats AJOURNE de la session normale uniquement",
+    "exclusion des ADMIS et DEFAILLANT",
+    "rattrapage inclus dans les moyennes pondérées selon la règle existante",
+    "rang et taux de réussite rapprochés des lignes persistées",
+    "validation concurrente unique et recalcul refusé après validation",
+    "droits par rôle/département et bulletin protégé"
+  ],
+  "fullSuite": {
+    "passed": true,
+    "tests": 919,
+    "suites": 108,
+    "testTimeoutMs": 60000,
+    "proof": "backend-tests.log"
+  },
+  "httpProof": "rattrapage.json"
+}

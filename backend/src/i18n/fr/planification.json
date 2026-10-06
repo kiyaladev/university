@@ -1,0 +1,16 @@
+{
+  "affectation_introuvable": "Affectation introuvable",
+  "une_seance_deja_controlee_ne_peut_pas_etre_annulee": "Une séance déjà contrôlée ne peut pas être annulée",
+  "periode_invalide": "Période invalide",
+  "periode_trop_longue_maximum_400_jours": "Période trop longue (maximum 400 jours)",
+  "aucun_creneau_actif_a_generer_pour_cette_annee": "Aucun créneau actif à générer pour cette année",
+  "l_heure_de_fin_doit_suivre_l_heure_de_debut": "L'heure de fin doit suivre l'heure de début",
+  "la_fin_de_la_periode_doit_suivre_son_debut": "La fin de la période doit suivre son début",
+  "conflit_d_emploi_du_temps_jour_collision_heuredebut_collision": "Conflit d’emploi du temps le {jour}, de {debut} à {fin}.",
+  "cle_seance_hors_ligne_deja_utilisee": "Cette référence de séance hors ligne est déjà utilisée pour d’autres données.",
+  "annee_academique_cloturee_ecriture_interdite": "Cette année académique est clôturée : aucune séance ne peut y être créée ou modifiée.",
+  "controleurAffectationRequired": "Choisissez un contrôleur ou envoyez null pour retirer l’affectation.",
+  "controleurAffectationInvalid": "Le contrôleur est introuvable, inactif ou n’a pas le rôle requis.",
+  "tourneePeriodInvalid": "La date de fin doit être égale ou postérieure à la date de début.",
+  "tourneePeriodTooLong": "La période d’affectation ne peut pas dépasser 400 jours."
+}

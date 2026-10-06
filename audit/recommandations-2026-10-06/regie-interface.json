@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-06T11:51:12.356Z",
+  "passed": true,
+  "viewport": 375,
+  "observations": {
+    "dateAmountCurrencyFieldsReadable": true,
+    "issuanceStatus": 201,
+    "collectionStatus": 201,
+    "successfulPaymentAmount": 1250,
+    "paidCardHidesCollectionAction": true
+  },
+  "errors": [],
+  "apiFailures": [],
+  "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+  "actualCashMovementPending": true,
+  "productionUntouched": true
+}

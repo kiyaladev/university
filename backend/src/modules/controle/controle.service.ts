@@ -1,3 +1,4 @@
+import { AuditQueryDto } from './controle.dto';
 /**
  * Cœur du dispositif : le pointage d'une séance par le contrôleur.
  * Reprend exactement les informations du registre papier (enseignant, matière
@@ -25,23 +26,171 @@ import { distanceMetres, dureeMinutes, toDateOnly, toMinutes } from '../../commo
 import { ParametresService } from '../parametres/parametres.module';
 import { AttestationService } from '../attestation/attestation.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
+import { t } from '../../common/i18n';
+import { exigerAnneeOuverte } from '../../common/annee';
+
+const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
+  'PAIE_CREEE',
+  'PAIE_RECALCULEE',
+  'PAIE_VALIDEE',
+  'PAIE_PAYEE',
+  'PAIE_SUPPRIMEE',
+  'RESERVATION_CREEE',
+  'DEMANDE_DOC_REJETEE',
+  'TICKET_OUVERT',
+  'ETUDIANT_CREE',
+  'INSCRIPTION_CREE',
+  'EXAMEN_SCAN_VALIDE',
+  'EXAMEN_SCAN_REJETE',
+  'PATRIMOINE_REPARATION_DECLAREE',
+]);
+// Ces actions ont maintenant un format structuré produit par des projections
+// minimales. Les anciennes entrées restent masquées car leur texte libre ne
+// se parse pas comme un état avant/après.
+const AUDIT_DETAILS_STRUCTURES_AUTORISES = new Set([
+  'RESERVATION_CREEE',
+  'DEMANDE_DOC_REJETEE',
+  'TICKET_OUVERT',
+  'PATRIMOINE_REPARATION_DECLAREE',
+  'PLAGIAT_CONFIRME',
+  'PLAGIAT_ACQUITTE',
+  'PLAGIAT_SUSPICION_OUVERTE',
+  'PLAGIAT_SUSPICION_REEVALUEE',
+  'PLAGIAT_INDICE_MAJ',
+]);
+
+function retirerTexteLibreAudit(valeur: unknown): unknown {
+  if (Array.isArray(valeur)) return valeur.map(retirerTexteLibreAudit);
+  if (!valeur || typeof valeur !== 'object') return valeur;
+  return Object.fromEntries(Object.entries(valeur)
+    .filter(([cle]) => !['motif', 'retireeMotif', 'commentaire'].includes(cle))
+    .map(([cle, contenu]) => [
+      cle,
+      cle === 'champsModifies' && Array.isArray(contenu)
+        ? contenu.filter((champ) => !['motif', 'retireeMotif', 'commentaire'].includes(String(champ)))
+        : retirerTexteLibreAudit(contenu),
+    ]));
+}
+
+function detailsAuditNettoyes(action: string, details: unknown): unknown {
+  if (typeof details !== 'string') return details;
+  if (action === 'SMS_DIFFUSION_DEMANDEE') {
+    try {
+      const detail = JSON.parse(details);
+      const nombreDestinataires = detail?.nombreDestinataires;
+      const messagesPresents = detail?.messagesPresents;
+      if (
+        !detail || typeof detail !== 'object' || Array.isArray(detail)
+        || typeof detail.lotId !== 'string'
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(detail.lotId)
+        || detail.canal !== 'SMS'
+        || detail.statutInitial !== 'EN_ATTENTE'
+        || !Number.isInteger(nombreDestinataires) || nombreDestinataires < 0 || nombreDestinataires > 50
+        || !Number.isInteger(messagesPresents) || messagesPresents < 0 || messagesPresents > nombreDestinataires
+      ) return '[détails masqués]';
+      // Allowlist the batch summary; never expose extra fields added by callers.
+      return JSON.stringify({
+        lotId: detail.lotId,
+        canal: detail.canal,
+        statutInitial: detail.statutInitial,
+        nombreDestinataires,
+        messagesPresents,
+      });
+    } catch {
+      return '[détails masqués]';
+    }
+  }
+  const reclamation = action.startsWith('RECLAMATION_');
+  if (AUDIT_DETAILS_LIBRES_A_MASQUER.has(action) || action.startsWith('PLAGIAT_') || reclamation) {
+    if (!AUDIT_DETAILS_STRUCTURES_AUTORISES.has(action) && !reclamation) return '[détails masqués]';
+    try {
+      const structures = JSON.parse(details);
+      if (!structures || typeof structures !== 'object' || !('avant' in structures) || !('apres' in structures)) {
+        return '[détails masqués]';
+      }
+      return JSON.stringify(retirerTexteLibreAudit(structures));
+    } catch {
+      return '[détails masqués]';
+    }
+  }
+  if (!['ATTESTATION_EMISE', 'ATTESTATION_MODIFICATION', 'ATTESTATION_REVOCATION', 'ATTRIBUTION_RETIREE'].includes(action)) {
+    return details;
+  }
+  try {
+    return JSON.stringify(retirerTexteLibreAudit(JSON.parse(details)));
+  } catch {
+    return '[détails masqués]';
+  }
+}
 
 const CONTROLE_INCLUDE = {
   controleur: { select: { id: true, nom: true, prenom: true, role: true } },
   enseignantRemplacant: { select: { id: true, nom: true, prenom: true } },
   seance: {
     include: {
-      salle: true,
+      salle: { select: { id: true, code: true, nom: true } },
       affectation: {
-        include: {
-          enseignant: { include: { departement: true } },
-          matiere: true,
-          promotion: { include: { filiere: true } },
+        select: {
+          enseignant: {
+            select: {
+              id: true,
+              nom: true,
+              prenom: true,
+              departement: { select: { id: true, code: true, nom: true } },
+            },
+          },
+          matiere: { select: { id: true, code: true, intitule: true } },
+          promotion: { select: { id: true, nom: true, niveau: true } },
         },
       },
     },
   },
 };
+
+const CONTROLE_SELECT_RESTREINT = {
+  id: true,
+  seanceId: true,
+  controleurId: true,
+  statut: true,
+  methode: true,
+  horodatage: true,
+  heureArrivee: true,
+  heureFinReelle: true,
+  dureeMinutes: true,
+  effectifPresent: true,
+  thematiqueTraitee: true,
+  attestation: true,
+  attestationValide: true,
+  qrSalleValide: true,
+  horsLigne: true,
+  controleur: { select: { id: true, nom: true, prenom: true, role: true } },
+  enseignantRemplacant: { select: { id: true, nom: true, prenom: true } },
+  seance: {
+    select: {
+      id: true,
+      date: true,
+      heureDebut: true,
+      heureFin: true,
+      type: true,
+      statut: true,
+      salle: { select: { id: true, code: true, nom: true } },
+      affectation: {
+        select: {
+          enseignant: {
+            select: {
+              id: true,
+              nom: true,
+              prenom: true,
+              departement: { select: { id: true, code: true, nom: true } },
+            },
+          },
+          matiere: { select: { id: true, code: true, intitule: true } },
+          promotion: { select: { id: true, nom: true, niveau: true } },
+        },
+      },
+    },
+  },
+} satisfies Prisma.ControleSelect;
 
 @Injectable()
 export class ControleService {
@@ -51,12 +200,21 @@ export class ControleService {
     private attestation: AttestationService,
   ) {}
 
+  private peutVoirDetails(user?: AuthUser) {
+    return !user || new Set<Role>([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]).has(user.role);
+  }
+
   // ------------------------------------------------------------- consultation
 
-  async liste(query: ControleQueryDto) {
+  async liste(query: ControleQueryDto, user: AuthUser) {
+    const enseignantId = user.role === Role.ENSEIGNANT ? user.enseignantId ?? '__aucun__' : query.enseignantId;
+    const departementId = user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+      ? user.departementId ?? '__aucun__'
+      : query.departementId;
+    const controleurId = user.role === Role.CONTROLEUR && !user.departementId ? user.id : query.controleurId;
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const dateFilter: Prisma.DateTimeFilter = {};
     if (query.dateDebut) dateFilter.gte = toDateOnly(query.dateDebut);
@@ -65,16 +223,16 @@ export class ControleService {
     const where: Prisma.ControleWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.methode ? { methode: query.methode } : {}),
-      ...(query.controleurId ? { controleurId: query.controleurId } : {}),
+      ...(controleurId ? { controleurId } : {}),
       seance: {
         ...(Object.keys(dateFilter).length ? { date: dateFilter } : {}),
         ...(query.salleId ? { salleId: query.salleId } : {}),
-        ...(query.enseignantId || query.departementId
+        ...(enseignantId || departementId
           ? {
               affectation: {
-                ...(query.enseignantId ? { enseignantId: query.enseignantId } : {}),
-                ...(query.departementId
-                  ? { enseignant: { departementId: query.departementId } }
+                ...(enseignantId ? { enseignantId } : {}),
+                ...(departementId
+                  ? { enseignant: { departementId } }
                   : {}),
               },
             }
@@ -82,40 +240,80 @@ export class ControleService {
       },
     };
 
+    const options = {
+      where,
+      orderBy: [{ horodatage: 'desc' as const }],
+      ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+    };
+    const requete = this.peutVoirDetails(user)
+      ? this.prisma.controle.findMany({ ...options, include: CONTROLE_INCLUDE })
+      : this.prisma.controle.findMany({ ...options, select: CONTROLE_SELECT_RESTREINT });
     const [data, total] = await Promise.all([
-      this.prisma.controle.findMany({
-        where,
-        include: CONTROLE_INCLUDE,
-        orderBy: [{ horodatage: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
-      }),
+      requete,
       this.prisma.controle.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
-  async findOne(id: string) {
-    const controle = await this.prisma.controle.findUnique({
-      where: { id },
-      include: CONTROLE_INCLUDE,
-    });
-    if (!controle) throw new NotFoundException('Contrôle introuvable');
+  async findOne(id: string, user?: AuthUser) {
+    const where: Prisma.ControleWhereInput = {
+      id,
+      ...(user?.role === Role.ENSEIGNANT
+        ? { seance: { affectation: { enseignantId: user.enseignantId ?? '__aucun__' } } }
+        : user?.role === Role.CHEF_DEPARTEMENT || (user?.role === Role.CONTROLEUR && user.departementId)
+          ? { seance: { affectation: { enseignant: { departementId: user.departementId ?? '__aucun__' } } } }
+          : user?.role === Role.CONTROLEUR
+            ? { controleurId: user.id }
+            : {}),
+    };
+    const controle = this.peutVoirDetails(user)
+      ? await this.prisma.controle.findFirst({ where, include: CONTROLE_INCLUDE })
+      : await this.prisma.controle.findFirst({ where, select: CONTROLE_SELECT_RESTREINT });
+    if (!controle) throw new NotFoundException(t('controle.controle_introuvable'));
     return controle;
   }
 
   /** Résout un QR de salle : utilisé par l'écran de scan du contrôleur. */
-  async parQrSalle(token: string, date?: string) {
-    const salle = await this.prisma.salle.findUnique({ where: { qrToken: token } });
-    if (!salle) throw new NotFoundException('QR de salle inconnu');
+  async parQrSalle(token: string, user: AuthUser) {
+    const salle = await this.prisma.salle.findUnique({
+      where: { qrToken: token },
+      select: { id: true, code: true, nom: true, actif: true },
+    });
+    if (!salle) throw new NotFoundException(t('controle.qr_de_salle_inconnu'));
 
-    const jour = toDateOnly(date ?? new Date());
+    const jour = toDateOnly(new Date());
     const seances = await this.prisma.seance.findMany({
-      where: { salleId: salle.id, date: jour },
-      include: {
-        controle: true,
+      where: {
+        salleId: salle.id,
+        date: jour,
+        ...(user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+          ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
+          : {}),
+        ...(user.role === Role.CONTROLEUR && !user.departementId
+          ? {
+              OR: [
+                { controleurAssigneId: user.id },
+                { controle: { is: { controleurId: user.id } } },
+              ],
+            }
+          : {}),
+      },
+      select: {
+        id: true,
+        date: true,
+        heureDebut: true,
+        heureFin: true,
+        type: true,
+        statut: true,
+        salle: { select: { id: true, code: true, nom: true } },
+        controle: { select: { id: true } },
         affectation: {
-          include: { enseignant: true, matiere: true, promotion: true },
+          select: {
+            enseignant: { select: { id: true, nom: true, prenom: true } },
+            matiere: { select: { id: true, code: true, intitule: true } },
+            promotion: { select: { id: true, nom: true, niveau: true } },
+          },
         },
       },
       orderBy: { heureDebut: 'asc' },
@@ -151,11 +349,25 @@ export class ControleService {
   private async construireDonnees(dto: PointageDto, user: AuthUser) {
     const seance = await this.prisma.seance.findUnique({
       where: { id: dto.seanceId },
-      include: { salle: true, affectation: true },
+      include: {
+        salle: {
+          select: {
+            id: true, code: true, nom: true, qrToken: true,
+            latitude: true, longitude: true, rayonMetres: true,
+          },
+        },
+        affectation: { include: { enseignant: { select: { id: true, departementId: true } } } },
+      },
     });
-    if (!seance) throw new NotFoundException('Séance introuvable');
+    if (!seance) throw new NotFoundException(t('controle.seance_introuvable'));
+    if (
+      user.role === Role.CHEF_DEPARTEMENT &&
+      seance.affectation.enseignant.departementId !== user.departementId
+    ) {
+      throw new NotFoundException(t('controle.seance_introuvable'));
+    }
     if (seance.statut === StatutSeance.ANNULEE) {
-      throw new BadRequestException('Cette séance a été annulée');
+      throw new BadRequestException(t('controle.cette_seance_a_ete_annulee'));
     }
 
     // --- Preuve 1 : QR affiché dans la salle
@@ -164,12 +376,10 @@ export class ControleService {
     if (dto.qrToken) {
       qrValide = !!seance.salle && seance.salle.qrToken === dto.qrToken;
       if (!qrValide) {
-        throw new BadRequestException(
-          "Le QR scanné ne correspond pas à la salle prévue pour cette séance",
-        );
+        throw new BadRequestException(t('controle.qrNeCorrespondPasALaSalle'));
       }
     } else if (qrObligatoire && !dto.horsLigne) {
-      throw new BadRequestException('Le scan du QR de la salle est obligatoire');
+      throw new BadRequestException(t('controle.le_scan_du_qr_de_la_salle_est_obligatoire'));
     }
 
     // --- Preuve 2 : géolocalisation du contrôleur
@@ -184,7 +394,7 @@ export class ControleService {
       const geolocObligatoire = await this.parametres.booleen('GEOLOC_OBLIGATOIRE', false);
       if (geolocObligatoire && distance > (seance.salle.rayonMetres ?? 80)) {
         throw new BadRequestException(
-          `Vous êtes à ${distance} m de la salle (rayon autorisé : ${seance.salle.rayonMetres} m)`,
+          t('controle.positionHorsRayon', { distance, rayon: seance.salle.rayonMetres }),
         );
       }
     } else if (
@@ -192,7 +402,7 @@ export class ControleService {
       !dto.horsLigne &&
       seance.salle?.latitude != null
     ) {
-      throw new BadRequestException('La position GPS est obligatoire pour ce pointage');
+      throw new BadRequestException(t('controle.la_position_gps_est_obligatoire_pour_ce_pointage'));
     }
 
     const statut =
@@ -214,9 +424,7 @@ export class ControleService {
       !attestation.valide &&
       (await this.parametres.booleen('ATTESTATION_OBLIGATOIRE', true))
     ) {
-      throw new BadRequestException(
-        "L'enseignant doit attester sa présence devant vous : signature, code personnel ou empreinte",
-      );
+      throw new BadRequestException(t('controle.l_enseignant_doit_attester_sa_presence_devant_vous_signature'));
     }
 
     if (
@@ -224,14 +432,14 @@ export class ControleService {
       !dto.signatureBase64 &&
       (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))
     ) {
-      throw new BadRequestException("La signature manuscrite de l'enseignant est obligatoire");
+      throw new BadRequestException(t('controle.la_signature_manuscrite_de_l_enseignant_est_obligatoire'));
     }
     if (
       present &&
       dto.effectifPresent == null &&
       (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))
     ) {
-      throw new BadRequestException("Le nombre d'étudiants présents est obligatoire");
+      throw new BadRequestException(t('controle.le_nombre_d_etudiants_presents_est_obligatoire'));
     }
 
     // --- Durée effective : réelle si connue, sinon durée planifiée
@@ -282,48 +490,56 @@ export class ControleService {
   async pointer(dto: PointageDto, user: AuthUser, ip?: string) {
     const { seance, donnees, presente } = await this.construireDonnees(dto, user);
 
-    const existant = await this.prisma.controle.findUnique({ where: { seanceId: seance.id } });
-    if (existant && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
-      if (existant.controleurId !== user.id) {
-        throw new ForbiddenException(
-          'Cette séance a déjà été contrôlée par un autre agent ; seule la direction peut corriger',
-        );
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, seance.anneeId);
+      const existant = await tx.controle.findUnique({ where: { seanceId: seance.id } });
+      if (existant && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
+        if (existant.controleurId !== user.id) {
+          throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
+        }
       }
-    }
 
-    const controle = await this.prisma.controle.upsert({
-      where: { seanceId: seance.id },
-      create: donnees,
-      update: { ...donnees, controleurId: existant?.controleurId ?? user.id },
-      include: CONTROLE_INCLUDE,
+      const controle = await tx.controle.upsert({
+        where: { seanceId: seance.id },
+        create: donnees,
+        update: { ...donnees, controleurId: existant?.controleurId ?? user.id },
+        select: CONTROLE_SELECT_RESTREINT,
+      });
+
+      await tx.seance.update({
+        where: { id: seance.id },
+        data: { statut: presente ? StatutSeance.CONTROLEE : StatutSeance.NON_TENUE },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
+          entite: 'Controle',
+          entiteId: controle.id,
+          details: JSON.stringify({
+            seanceId: seance.id,
+            avant: existant ? this.etatAudit(existant) : null,
+            apres: this.etatAudit(controle),
+          }),
+          ip,
+        },
+      });
+      return controle;
     });
-
-    await this.prisma.seance.update({
-      where: { id: seance.id },
-      data: { statut: presente ? StatutSeance.CONTROLEE : StatutSeance.NON_TENUE },
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
-        entite: 'Controle',
-        entiteId: controle.id,
-        details: `Séance ${seance.id} — ${donnees.statut} (${donnees.dureeMinutes} min)`,
-        ip,
-      },
-    });
-
-    return controle;
   }
 
   async modifier(id: string, dto: UpdatePointageDto, user: AuthUser, ip?: string) {
-    const existant = await this.findOne(id);
+    // `findOne` porte le périmètre enseignant / chef de département ; sans
+    // l'utilisateur, la correction d'un pointage appartenait à n'importe quel
+    // enseignant ou contrôleur. Le garde-fou `controleurId` ci-dessous
+    // suffisait aujourd'hui par accident, pas par conception.
+    const existant = await this.findOne(id, user);
     if (
       existant.controleurId !== user.id &&
       ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)
     ) {
-      throw new ForbiddenException('Seul l’auteur du contrôle ou la direction peut le corriger');
+      throw new ForbiddenException(t('controle.seul_l_auteur_du_controle_ou_la_direction_peut_le_corriger'));
     }
     return this.pointer({ ...dto, seanceId: existant.seanceId } as PointageDto, user, ip);
   }
@@ -357,29 +573,58 @@ export class ControleService {
   }
 
   async supprimer(id: string, user: AuthUser) {
-    const controle = await this.findOne(id);
-    await this.prisma.controle.delete({ where: { id } });
-    await this.prisma.seance.update({
-      where: { id: controle.seanceId },
-      data: { statut: StatutSeance.PLANIFIEE },
+    const controle = await this.prisma.controle.findUnique({ where: { id }, include: CONTROLE_INCLUDE });
+    if (!controle) throw new NotFoundException(t('controle.controle_introuvable'));
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, controle.seance.anneeId);
+      await tx.controle.delete({ where: { id } });
+      await tx.seance.update({
+        where: { id: controle.seanceId },
+        data: { statut: StatutSeance.PLANIFIEE },
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'POINTAGE_SUPPRESSION',
+          entite: 'Controle',
+          entiteId: id,
+          details: JSON.stringify({ seanceId: controle.seanceId, avant: this.etatAudit(controle), apres: null }),
+        },
+      });
+      return { id };
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'POINTAGE_SUPPRESSION',
-        entite: 'Controle',
-        entiteId: id,
-        details: `Séance ${controle.seanceId}`,
-      },
-    });
-    return { id };
+  }
+
+  private etatAudit(controle: any) {
+    return Object.fromEntries(['statut', 'heureArrivee', 'heureFinReelle', 'dureeMinutes',
+      'effectifPresent', 'thematiqueTraitee', 'methode', 'horsLigne', 'horodatage']
+      .map(champ => [champ, controle[champ] ?? null]));
   }
 
   /** Journal d'audit (traçabilité des corrections). */
-  async audit(query: QueryDto & { entite?: string }) {
+  async audit(query: AuditQueryDto) {
     const page = Number(query.page ?? 1);
     const pageSize = Number(query.pageSize ?? 50);
-    const where = query.entite ? { entite: query.entite } : {};
+    const where = {
+      ...(query.entite ? { entite: query.entite } : {}),
+      // Les anciennes lignes VOTE_DEPOSE relient le compte de l'électeur au
+      // scrutin. Elles restent conservées en base pour l'historique, mais ne
+      // sont jamais exposées dans le journal visible, même avec ce filtre.
+      ...(query.action === 'VOTE_DEPOSE'
+        ? { action: '__ACTION_DE_VOTE_NON_AFFICHABLE__' }
+        : query.action
+          ? { action: query.action }
+          : { action: { not: 'VOTE_DEPOSE' } }),
+      ...(query.userId ? { userId: query.userId } : {}),
+      ...(query.acteur ? { user: { OR: [
+        { nom: { contains: query.acteur, mode: 'insensitive' as const } },
+        { prenom: { contains: query.acteur, mode: 'insensitive' as const } },
+      ] } } : {}),
+      ...(query.dateDebut || query.dateFin ? { createdAt: {
+        ...(query.dateDebut ? { gte: toDateOnly(query.dateDebut) } : {}),
+        ...(query.dateFin ? { lte: new Date(toDateOnly(query.dateFin).getTime() + 86_400_000 - 1) } : {}),
+      } } : {}),
+    };
     const [data, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
@@ -390,6 +635,27 @@ export class ControleService {
       }),
       this.prisma.auditLog.count({ where }),
     ]);
-    return { data, total, page, pageSize };
+    const nettoye = data.filter((ligne: any) => ligne.action !== 'VOTE_DEPOSE').map((ligne: any) => {
+      // L'adresse IP reste réservée à l'exploitation serveur et ne sert pas
+      // aux filtres ou aux détails visibles de l'écran Journal.
+      const { ip: _ip, ...ligneExposee } = ligne;
+      if (ligne.action === 'PATRIMOINE_QR_REGENERE') {
+        return { ...ligneExposee, details: t('controle.qrRegenerated') };
+      }
+      if (typeof ligne.details !== 'string') return ligneExposee;
+      if (ligne.action === 'POINTAGE_CORRECTION') {
+        try {
+          const details = JSON.parse(ligne.details);
+          for (const instantane of [details.avant, details.apres]) {
+            if (instantane && typeof instantane === 'object') delete instantane.observation;
+          }
+          return { ...ligneExposee, details: JSON.stringify(details) };
+        } catch {
+          return { ...ligneExposee, details: '[détails masqués]' };
+        }
+      }
+      return { ...ligneExposee, details: detailsAuditNettoyes(ligne.action, ligne.details) };
+    });
+    return { data: nettoye, total, page, pageSize };
   }
 }

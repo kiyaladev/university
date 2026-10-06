@@ -2,12 +2,13 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Tableau de bord Rectorat</div>
+        <h1 class="page-titre">{{ $t('rectoratPage.title') }}</h1>
         <div class="page-sous-titre">
-          L'état de l'université en une page, à l'instant présent : effectifs,
-          réussite, masse salariale, incidents. Chaque chiffre renvoie à l'écran
-          qui le produit. Année académique
-          <strong>{{ chiffres?.annee?.libelle ?? '—' }}</strong>.
+          <i18n-t keypath="rectoratPage.subtitle" tag="span">
+            <template #annee>
+              <strong>{{ chiffres?.annee?.libelle ?? $t('rectoratPage.subtitleFallback') }}</strong>
+            </template>
+          </i18n-t>
         </div>
       </div>
       <div class="col-auto row q-gutter-sm">
@@ -18,7 +19,7 @@
           outlined
           emit-value
           map-options
-          label="Année"
+          :label="$t('rectoratPage.filters.year')"
           style="min-width: 180px"
           @update:model-value="charger"
         />
@@ -27,14 +28,13 @@
           color="primary"
           no-caps
           icon="assessment"
-          label="Générer le bilan MESRS"
+          :label="$t('rectoratPage.actions.generateReport')"
           :loading="generation"
           :disable="!anneeId"
           @click="genererBilan"
         >
           <q-tooltip>
-            Fige les chiffres ci-dessous dans un snapshot archivé, consultable
-            dans Statistiques MESRS.
+            {{ $t('rectoratPage.actions.generateReportTooltip') }}
           </q-tooltip>
         </q-btn>
       </div>
@@ -42,9 +42,9 @@
 
     <liens-croises
       :liens="[
-        { to: '/statistiques-mesrs', libelle: 'Statistiques MESRS', icone: 'analytics', aide: 'Les snapshots figés déjà transmis au Ministère' },
-        { to: '/rapports', libelle: 'Rapports & états', icone: 'insights', aide: 'Les états ligne à ligne, exportables' },
-        { to: '/statistiques', libelle: 'Statistiques', icone: 'query_stats', aide: 'Le suivi du contrôle des séances au jour le jour' },
+        { to: '/statistiques-mesrs', libelle: $t('rectoratPage.links.statisticsMesrs'), icone: 'analytics', aide: $t('rectoratPage.links.statisticsMesrsHelp') },
+        { to: '/rapports', libelle: $t('rectoratPage.links.reports'), icone: 'insights', aide: $t('rectoratPage.links.reportsHelp') },
+        { to: '/statistiques', libelle: $t('rectoratPage.links.statistics'), icone: 'query_stats', aide: $t('rectoratPage.links.statisticsHelp') },
       ]"
     />
 
@@ -53,13 +53,13 @@
         <q-card flat bordered class="carte full-height column">
           <q-card-section class="text-center col">
             <div class="stat-chiffre chiffres">{{ chiffres?.effectifTotal ?? 0 }}</div>
-            <div class="pochoir text-grey-7">Effectif total</div>
+            <div class="pochoir text-grey-7">{{ $t('rectoratPage.kpis.totalHeadcount') }}</div>
             <div class="text-caption text-grey-6">
-              {{ (chiffres?.effectifParPromotion ?? []).length }} promotion(s) · inscriptions non annulées
+              {{ $t('rectoratPage.kpis.totalHeadcountDetail', { count: (chiffres?.effectifParPromotion ?? []).length }) }}
             </div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="groups" label="Voir les étudiants" to="/etudiants" />
+            <q-btn flat dense no-caps color="primary" icon="groups" :label="$t('rectoratPage.kpis.viewStudents')" to="/etudiants" />
           </q-card-actions>
         </q-card>
       </div>
@@ -67,11 +67,11 @@
         <q-card flat bordered class="carte full-height column">
           <q-card-section class="text-center col">
             <div class="stat-chiffre chiffres">{{ pourcentLisible(chiffres?.tauxReussite) }}</div>
-            <div class="pochoir text-grey-7">Taux de réussite global</div>
-            <div class="text-caption text-grey-6">Session normale · délibérations validées</div>
+            <div class="pochoir text-grey-7">{{ $t('rectoratPage.kpis.successRate') }}</div>
+            <div class="text-caption text-grey-6">{{ $t('rectoratPage.kpis.successRateDetail') }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="how_to_vote" label="Voir les délibérations" to="/deliberations" />
+            <q-btn flat dense no-caps color="primary" icon="how_to_vote" :label="$t('rectoratPage.kpis.viewDeliberations')" to="/deliberations" />
           </q-card-actions>
         </q-card>
       </div>
@@ -79,13 +79,13 @@
         <q-card flat bordered class="carte full-height column">
           <q-card-section class="text-center col">
             <div class="stat-chiffre chiffres">
-              {{ montantLisible(chiffres?.masseSalariale) }} <span class="text-h6">GNF</span>
+              {{ montantLisible(chiffres?.masseSalariale) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
             </div>
-            <div class="pochoir text-grey-7">Masse salariale</div>
+            <div class="pochoir text-grey-7">{{ $t('rectoratPage.kpis.payroll') }}</div>
             <div class="text-caption text-grey-6">{{ chiffres?.masseSalarialeMois ?? '—' }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="payments" label="Voir la paie" to="/paie" />
+            <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectoratPage.kpis.viewPayroll')" to="/paie" />
           </q-card-actions>
         </q-card>
       </div>
@@ -95,11 +95,11 @@
             <div class="stat-chiffre chiffres">
               {{ chiffres?.nbReclamationsEnCours ?? 0 }}
             </div>
-            <div class="pochoir text-grey-7">Réclamations en attente</div>
-            <div class="text-caption text-grey-6">Tous motifs · non clôturées</div>
+            <div class="pochoir text-grey-7">{{ $t('rectoratPage.kpis.pendingComplaints') }}</div>
+            <div class="text-caption text-grey-6">{{ $t('rectoratPage.kpis.pendingComplaintsDetail') }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="list_alt" label="Voir les réclamations" to="/reclamations" />
+            <q-btn flat dense no-caps color="primary" icon="list_alt" :label="$t('rectoratPage.kpis.viewComplaints')" to="/reclamations" />
           </q-card-actions>
         </q-card>
       </div>
@@ -110,10 +110,10 @@
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center">
             <div class="col">
-              <div class="text-subtitle2">Effectif par promotion</div>
-              <div class="text-caption text-grey-7">Inscriptions non annulées · 24 premières promotions</div>
+              <div class="text-subtitle2">{{ $t('rectoratPage.headcountChart.title') }}</div>
+              <div class="text-caption text-grey-7">{{ $t('rectoratPage.headcountChart.subtitle') }}</div>
             </div>
-            <q-btn flat dense no-caps color="primary" icon="how_to_reg" label="Inscriptions" to="/inscriptions" />
+            <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('rectoratPage.headcountChart.enrollments')" to="/inscriptions" />
           </q-card-section>
           <q-card-section>
             <chart-canvas
@@ -125,12 +125,11 @@
             />
             <div v-else class="etat-vide">
               <q-icon name="groups" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">Aucune inscription sur cette année</div>
+              <div class="text-subtitle2 q-mt-sm">{{ $t('rectoratPage.headcountChart.emptyTitle') }}</div>
               <div class="text-caption">
-                L'effectif se lit sur les inscriptions non annulées. Changez d'année,
-                ou ouvrez les inscriptions pour en enregistrer.
+                {{ $t('rectoratPage.headcountChart.emptyDescription') }}
               </div>
-              <q-btn flat dense no-caps color="primary" icon="how_to_reg" label="Ouvrir les inscriptions" to="/inscriptions" />
+              <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('rectoratPage.headcountChart.openEnrollments')" to="/inscriptions" />
             </div>
           </q-card-section>
         </q-card>
@@ -140,10 +139,10 @@
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center">
             <div class="col">
-              <div class="text-subtitle2">Masse salariale mensuelle</div>
-              <div class="text-caption text-grey-7">12 derniers mois — feuilles validées ou payées</div>
+              <div class="text-subtitle2">{{ $t('rectoratPage.payrollChart.title') }}</div>
+              <div class="text-caption text-grey-7">{{ $t('rectoratPage.payrollChart.subtitle') }}</div>
             </div>
-            <q-btn flat dense no-caps color="primary" icon="payments" label="Paie" to="/paie" />
+            <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectoratPage.payrollChart.payroll')" to="/paie" />
           </q-card-section>
           <q-card-section>
             <chart-canvas
@@ -155,12 +154,11 @@
             />
             <div v-else class="etat-vide">
               <q-icon name="payments" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">Aucune feuille de paie validée</div>
+              <div class="text-subtitle2 q-mt-sm">{{ $t('rectoratPage.payrollChart.emptyTitle') }}</div>
               <div class="text-caption">
-                La courbe agrège les feuilles mensuelles une fois validées par la
-                direction. Tant qu'aucune ne l'est, la masse salariale reste à zéro.
+                {{ $t('rectoratPage.payrollChart.emptyDescription') }}
               </div>
-              <q-btn flat dense no-caps color="primary" icon="payments" label="Ouvrir la paie" to="/paie" />
+              <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectoratPage.payrollChart.openPayroll')" to="/paie" />
             </div>
           </q-card-section>
         </q-card>
@@ -168,7 +166,7 @@
 
       <div class="col-12 col-md-7">
         <q-card flat bordered class="carte">
-          <q-card-section class="text-subtitle2">Personnel & incidents</q-card-section>
+          <q-card-section class="text-subtitle2">{{ $t('rectoratPage.staffIncidents.title') }}</q-card-section>
           <q-card-section>
             <div class="row q-col-gutter-md">
               <div class="col-12 col-sm-6">
@@ -177,10 +175,14 @@
                     <q-avatar color="primary" text-color="white" icon="school" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ chiffres?.nbEnseignants ?? 0 }} enseignants</q-item-label>
+                    <q-item-label>{{ $t('rectoratPage.staffIncidents.teachers', { count: chiffres?.nbEnseignants ?? 0 }) }}</q-item-label>
                     <q-item-label caption>
-                      {{ chiffres?.nbVacataires ?? 0 }} vacataire(s) ·
-                      {{ (chiffres?.nbEnseignants ?? 0) - (chiffres?.nbVacataires ?? 0) }} permanent(s)
+                      {{
+                        $t('rectoratPage.staffIncidents.teachersDetail', {
+                          vacataires: chiffres?.nbVacataires ?? 0,
+                          permanents: (chiffres?.nbEnseignants ?? 0) - (chiffres?.nbVacataires ?? 0),
+                        })
+                      }}
                     </q-item-label>
                   </q-item-section>
                   <q-item-section side><q-icon name="chevron_right" /></q-item-section>
@@ -193,10 +195,10 @@
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>
-                      {{ chiffres?.nbIncidentsHelpdesk24h ?? 0 }} incident(s) helpdesk
+                      {{ $t('rectoratPage.staffIncidents.helpdeskIncidents', { count: chiffres?.nbIncidentsHelpdesk24h ?? 0 }) }}
                     </q-item-label>
                     <q-item-label caption>
-                      sur les dernières 24 h — tous statuts confondus
+                      {{ $t('rectoratPage.staffIncidents.helpdeskIncidentsDetail') }}
                     </q-item-label>
                   </q-item-section>
                   <q-item-section side><q-icon name="chevron_right" /></q-item-section>
@@ -211,9 +213,9 @@
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center">
             <div class="col">
-              <div class="text-subtitle2">Patrimoine — obsolescences</div>
+              <div class="text-subtitle2">{{ $t('rectoratPage.assets.title') }}</div>
               <div class="text-caption text-grey-7">
-                Équipements dont l'âge dépasse la durée d'obsolescence prévue
+                {{ $t('rectoratPage.assets.subtitle') }}
               </div>
             </div>
             <q-btn
@@ -222,23 +224,27 @@
               no-caps
               color="primary"
               icon="inventory_2"
-              label="Patrimoine & matériel"
+              :label="$t('rectoratPage.assets.link')"
               to="/patrimoine"
             />
           </q-card-section>
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ dashboard?.obsoletes ?? 0 }}</div>
-            <div class="pochoir text-grey-7">équipements obsolètes</div>
+            <div class="pochoir text-grey-7">{{ $t('rectoratPage.assets.obsoleteEquipment') }}</div>
             <div class="text-caption text-grey-6 q-mt-sm">
-              {{ dashboard?.total ?? 0 }} équipements actifs ·
-              {{ dashboard?.enReparation ?? 0 }} en réparation
+              {{
+                $t('rectoratPage.assets.detail', {
+                  total: dashboard?.total ?? 0,
+                  enReparation: dashboard?.enReparation ?? 0,
+                })
+              }}
             </div>
           </q-card-section>
         </q-card>
       </div>
     </div>
 
-    <q-inner-loading :showing="chargement" label="Chargement du tableau de bord…" />
+    <q-inner-loading :showing="chargement" :label="$t('rectoratPage.loading')" />
   </q-page>
 </template>
 
@@ -247,6 +253,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import LiensCroises from '../components/LiensCroises.vue';
@@ -258,11 +265,12 @@ import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRe
  * dans Statistiques MESRS — sans quoi la lecture d'un écran à l'autre ment.
  * Effectif = encre (une masse, pas un état), réussite = vert, argent = ocre.
  */
-const PEINTURE_EFFECTIF = '#10251E';
-const PEINTURE_ARGENT = '#C98A00';
+const PEINTURE_EFFECTIF = '#1D1D1F';
+const PEINTURE_ARGENT = '#8A6300';
 
 const $q = useQuasar();
 const router = useRouter();
+const { t } = useI18n();
 
 const annees = ref<AnneeAcademique[]>([]);
 const anneeId = ref<string | null>(null);
@@ -279,17 +287,15 @@ const promotions = computed(() => (chiffres.value?.effectifParPromotion ?? []).s
 const aDesPromotions = computed(() => promotions.value.length > 0);
 
 /** Alternative textuelle du graphique : ce qu'un lecteur d'écran doit entendre. */
-const resumePromotions = computed(
-  () =>
-    `Effectif par promotion : ${promotions.value
-      .map((p) => `${p.nom} ${p.effectif}`)
-      .join(', ')}.`,
+const resumePromotions = computed(() =>
+  t('rectoratPage.headcountChart.ariaSummary', {
+    details: promotions.value.map((p) => `${p.nom} ${p.effectif}`).join(', '),
+  }),
 );
-const resumeMasse = computed(
-  () =>
-    `Masse salariale des 12 derniers mois, en francs guinéens : ${evolutionMasse.value
-      .map((m) => `${m.mois} ${montantLisible(m.total)}`)
-      .join(', ')}.`,
+const resumeMasse = computed(() =>
+  t('rectoratPage.payrollChart.ariaSummary', {
+    details: evolutionMasse.value.map((m) => `${m.mois} ${montantLisible(m.total)}`).join(', '),
+  }),
 );
 
 const configPromotions = computed<ChartConfiguration>(() => ({
@@ -298,7 +304,7 @@ const configPromotions = computed<ChartConfiguration>(() => ({
     labels: promotions.value.map((p) => p.nom),
     datasets: [
       {
-        label: 'Effectif',
+        label: t('rectoratPage.headcountChart.datasetLabel'),
         data: promotions.value.map((p) => p.effectif),
         backgroundColor: PEINTURE_EFFECTIF,
         borderColor: PEINTURE_EFFECTIF,
@@ -327,7 +333,7 @@ const configMasse = computed<ChartConfiguration | null>(() => {
       labels: evolutionMasse.value.map((m) => m.mois),
       datasets: [
         {
-          label: 'Masse salariale (GNF)',
+          label: t('rectoratPage.payrollChart.datasetLabel'),
           data: evolutionMasse.value.map((m) => m.total),
           borderColor: PEINTURE_ARGENT,
           backgroundColor: 'rgba(201, 138, 0, 0.16)',
@@ -368,7 +374,7 @@ async function charger() {
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement du tableau de bord impossible.',
+      message: e?.response?.data?.message ?? t('rectoratPage.messages.dashboardLoadFailed'),
     });
   } finally {
     chargement.value = false;
@@ -419,10 +425,10 @@ async function genererBilan() {
     $q.notify({
       type: 'positive',
       icon: 'assessment',
-      message: `Bilan MESRS ${chiffres.value?.annee?.libelle ?? ''} généré et archivé.`,
+      message: t('rectoratPage.messages.reportGenerated', { annee: chiffres.value?.annee?.libelle ?? '' }),
       actions: [
         {
-          label: 'Voir les snapshots',
+          label: t('rectoratPage.messages.viewSnapshots'),
           color: 'white',
           noCaps: true,
           handler: () => void router.push('/statistiques-mesrs'),
@@ -433,7 +439,7 @@ async function genererBilan() {
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Génération du bilan impossible.',
+      message: e?.response?.data?.message ?? t('rectoratPage.messages.reportGenerationFailed'),
     });
   } finally {
     generation.value = false;
@@ -450,7 +456,7 @@ onMounted(async () => {
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Années académiques indisponibles.',
+      message: e?.response?.data?.message ?? t('rectoratPage.messages.yearsUnavailable'),
     });
   }
   await charger();
@@ -463,7 +469,7 @@ onMounted(async () => {
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 </style>

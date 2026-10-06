@@ -4,32 +4,34 @@ import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { QueryDto } from '../../common/dto';
 import { ControleService } from './controle.service';
-import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
+import { AuditQueryDto, ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 
 const CONTROLEURS = [Role.CONTROLEUR, Role.ADMIN, Role.DIRECTION, Role.CHEF_DEPARTEMENT] as const;
 
 @ApiTags('Contrôle de présence')
 @ApiBearerAuth()
 @Controller('controles')
+@Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
 export class ControleController {
   constructor(private readonly service: ControleService) {}
 
-  @Get() liste(@Query() query: ControleQueryDto) {
-    return this.service.liste(query);
+  @Get() liste(@Query() query: ControleQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
   }
 
   /** Scan du QR affiché dans la salle : renvoie la salle et ses séances du jour. */
-  @Get('salle/:token') parQr(@Param('token') token: string, @Query('date') date?: string) {
-    return this.service.parQrSalle(token, date);
+  @Roles(...CONTROLEURS, Role.SCOLARITE)
+  @Get('salle/:token') parQr(@Param('token') token: string, @CurrentUser() user: AuthUser) {
+    return this.service.parQrSalle(token, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Get('audit') audit(@Query() query: QueryDto & { entite?: string }) {
+  @Get('audit') audit(@Query() query: AuditQueryDto) {
     return this.service.audit(query);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.findOne(id, user);
   }
 
   /** Pointage d'une séance en salle. */

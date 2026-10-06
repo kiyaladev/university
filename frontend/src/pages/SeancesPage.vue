@@ -2,9 +2,9 @@
   <q-page class="registre">
     <header class="registre__entete">
       <div>
-        <h1 class="page-titre">Séances</h1>
+        <h1 class="page-titre">{{ $t('seances.title') }}</h1>
         <p class="page-sous-titre">
-          Le registre des séances programmées et de ce qui y a été constaté
+          {{ $t('seances.subtitle') }}
         </p>
       </div>
 
@@ -14,8 +14,16 @@
           outline
           no-caps
           icon="auto_awesome_motion"
-          label="Générer depuis l’emploi du temps"
+          :label="$t('seances.actions.generateFromSchedule')"
           @click="dialogGeneration = true"
+        />
+        <q-btn
+          v-if="peutAffecterControleur"
+          outline
+          no-caps
+          icon="route"
+          :label="$t('seances.actions.assignRound')"
+          @click="ouvrirAffectationGroupee"
         />
         <q-btn
           v-if="auth.peutPointer || auth.peutPlanifier"
@@ -23,10 +31,10 @@
           color="primary"
           no-caps
           icon="add_box"
-          :label="auth.peutPointer ? 'Séance non programmée' : 'Séance ponctuelle'"
+          :label="auth.peutPointer ? $t('seances.actions.newUnscheduled') : $t('seances.actions.newAdHoc')"
           @click="ouvrirSeance(null)"
         />
-        <q-btn outline no-caps icon="print" label="Imprimer" @click="imprimer" />
+        <q-btn outline no-caps icon="print" :label="$t('seances.actions.print')" @click="imprimer" />
       </div>
     </header>
 
@@ -35,18 +43,18 @@
       <div class="registre__raccourcis">
         <button
           v-for="r in raccourcis"
-          :key="r.label"
+          :key="r.id"
           type="button"
           class="pochoir raccourci"
-          :class="{ 'raccourci--actif': raccourciActif === r.label }"
+          :class="{ 'raccourci--actif': raccourciActif === r.id }"
           @click="appliquer(r)"
         >
           {{ r.label }}
         </button>
       </div>
 
-      <champ-date v-model="filtres.dateDebut" label="Du" style="width: 148px" />
-      <champ-date v-model="filtres.dateFin" label="Au" style="width: 148px" />
+      <champ-date v-model="filtres.dateDebut" :label="$t('seances.period.from')" style="width: 148px" />
+      <champ-date v-model="filtres.dateFin" :label="$t('seances.period.to')" style="width: 148px" />
 
       <q-btn
         flat
@@ -56,21 +64,21 @@
         :label="etiquetteFiltres"
         @click="filtresOuverts = !filtresOuverts"
       />
-      <bascule-vue v-model="vue" />
+      <bascule-vue cle="seances" v-model:mode="vue" />
       <q-btn
         round
         color="primary"
         icon="refresh"
-        aria-label="Recharger le registre"
+        :aria-label="$t('seances.actions.reloadAria')"
         :loading="chargement"
         @click="charger"
       >
-        <q-tooltip>Recharger</q-tooltip>
+        <q-tooltip>{{ $t('seances.actions.reload') }}</q-tooltip>
       </q-btn>
     </div>
 
     <div v-if="filtresOuverts" class="registre__filtres">
-      <q-input v-model="recherche" outlined dense clearable label="Rechercher">
+      <q-input v-model="recherche" outlined dense clearable :label="$t('seances.filters.search')">
         <template #prepend><q-icon name="search" /></template>
       </q-input>
       <q-select
@@ -82,7 +90,7 @@
         emit-value
         map-options
         use-input
-        label="Enseignant"
+        :label="$t('seances.filters.teacher')"
         @filter="filtrerEnseignants"
       />
       <q-select
@@ -93,7 +101,7 @@
         clearable
         emit-value
         map-options
-        label="Salle"
+        :label="$t('seances.filters.room')"
       />
       <q-select
         v-model="filtres.statut"
@@ -103,27 +111,27 @@
         clearable
         emit-value
         map-options
-        label="État de la séance"
+        :label="$t('seances.filters.status')"
       />
-      <q-toggle v-model="seulementAPointer" label="Uniquement les séances non contrôlées" />
+      <q-toggle v-model="seulementAPointer" :label="$t('seances.filters.onlyUnchecked')" />
     </div>
 
     <!-- Relevé de la période affichée -->
     <section class="plaque registre__releve">
       <div class="registre__releve-cellule">
-        <p class="pochoir">Séances</p>
+        <p class="pochoir">{{ $t('seances.summary.sessions') }}</p>
         <p class="lettrage chiffres registre__releve-valeur">{{ seancesFiltrees.length }}</p>
       </div>
       <div class="registre__releve-cellule">
-        <p class="pochoir">Contrôlées</p>
-        <p class="lettrage chiffres registre__releve-valeur text-positive">{{ compte.controlees }}</p>
+        <p class="pochoir">{{ $t('seances.summary.checked') }}</p>
+        <p class="lettrage chiffres registre__releve-valeur">{{ compte.controlees }}</p>
       </div>
       <div class="registre__releve-cellule">
-        <p class="pochoir">Absences</p>
-        <p class="lettrage chiffres registre__releve-valeur text-negative">{{ compte.absences }}</p>
+        <p class="pochoir">{{ $t('seances.summary.absences') }}</p>
+        <p class="lettrage chiffres registre__releve-valeur">{{ compte.absences }}</p>
       </div>
       <div class="registre__releve-cellule">
-        <p class="pochoir">Sans contrôle</p>
+        <p class="pochoir">{{ $t('seances.summary.unchecked') }}</p>
         <p class="lettrage chiffres registre__releve-valeur">{{ compte.sansControle }}</p>
       </div>
     </section>
@@ -132,13 +140,9 @@
 
     <div v-if="!chargement && !seancesFiltrees.length" class="registre__vide">
       <q-icon name="event_busy" size="42px" />
-      <span class="lettrage registre__vide-titre">Aucune séance</span>
+      <span class="lettrage registre__vide-titre">{{ $t('seances.emptyState.title') }}</span>
       <span class="pochoir">
-        {{
-          filtresActifs
-            ? 'Aucune séance ne correspond aux filtres posés sur cette période.'
-            : 'Aucune séance n’est programmée sur cette période.'
-        }}
+        {{ filtresActifs ? $t('seances.emptyState.filtered') : $t('seances.emptyState.default') }}
       </span>
       <div class="registre__vide-actions">
         <q-btn
@@ -146,7 +150,7 @@
           outline
           no-caps
           icon="filter_alt_off"
-          label="Retirer les filtres"
+          :label="$t('seances.emptyState.removeFilters')"
           @click="reinitialiserFiltres"
         />
         <q-btn
@@ -154,7 +158,7 @@
           outline
           no-caps
           icon="date_range"
-          label="Élargir à 30 jours"
+          :label="$t('seances.emptyState.expand30')"
           @click="elargirA30Jours"
         />
         <q-btn
@@ -163,7 +167,7 @@
           color="primary"
           no-caps
           icon="auto_awesome_motion"
-          label="Générer depuis l’emploi du temps"
+          :label="$t('seances.actions.generateFromSchedule')"
           @click="dialogGeneration = true"
         />
       </div>
@@ -198,10 +202,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Voir le détail de la séance"
+            :aria-label="$t('seances.table.actions.viewDetail')"
             @click="detail = p.row"
           >
-            <q-tooltip>Détail</q-tooltip>
+            <q-tooltip>{{ $t('seances.table.actions.detail') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.peutPointer && p.row.statut !== 'ANNULEE'"
@@ -210,7 +214,7 @@
             no-caps
             color="primary"
             :icon="p.row.controle ? 'edit' : 'how_to_reg'"
-            :label="p.row.controle ? 'Corriger' : 'Pointer'"
+            :label="p.row.controle ? $t('seances.table.actions.correct') : $t('seances.table.actions.check')"
             @click="ouvrirPointage(p.row)"
           />
         </q-td>
@@ -222,8 +226,14 @@
       <header class="journee__tete">
         <h2 class="lettrage journee__date">{{ jour.libelle }}</h2>
         <span class="pochoir pochoir--brut journee__compte chiffres">
-          {{ jour.seances.length }} séance{{ jour.seances.length > 1 ? 's' : '' }} ·
-          {{ jour.controlees }} contrôlée{{ jour.controlees > 1 ? 's' : '' }}
+          {{
+            $t('seances.day.count', {
+              count: jour.seances.length,
+              pluralSessions: jour.seances.length > 1 ? 's' : '',
+              checked: jour.controlees,
+              pluralChecked: jour.controlees > 1 ? 's' : '',
+            })
+          }}
         </span>
       </header>
 
@@ -250,14 +260,14 @@
               <p v-if="s.controle" class="pochoir pochoir--brut ligne__constat chiffres">
                 {{ s.controle.heureArrivee ?? '—' }} → {{ s.controle.heureFinReelle ?? '—' }}
                 · {{ dureeLisible(s.controle.dureeMinutes) }}
-                <span v-if="s.controle.effectifPresent"> · {{ s.controle.effectifPresent }} étud.</span>
+                <span v-if="s.controle.effectifPresent"> · {{ s.controle.effectifPresent }} {{ $t('seances.card.studentsSuffix') }}</span>
                 · {{ s.controle.controleur?.prenom }} {{ s.controle.controleur?.nom }}
               </p>
             </div>
 
             <div class="ligne__etat">
               <champ-statut :statut="s.controle?.statut ?? 'NON_CONTROLE'" />
-              <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">annulée</q-badge>
+              <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">{{ $t('seances.card.cancelledBadge') }}</q-badge>
 
               <div class="ligne__boutons">
                 <q-btn
@@ -265,10 +275,10 @@
                   dense
                   round
                   icon="visibility"
-                  aria-label="Voir le détail de la séance"
+                  :aria-label="$t('seances.table.actions.viewDetail')"
                   @click="detail = s"
                 >
-                  <q-tooltip>Détail</q-tooltip>
+                  <q-tooltip>{{ $t('seances.table.actions.detail') }}</q-tooltip>
                 </q-btn>
                 <q-btn
                   v-if="auth.peutPointer && s.statut !== 'ANNULEE'"
@@ -277,7 +287,7 @@
                   no-caps
                   color="primary"
                   :icon="s.controle ? 'edit' : 'how_to_reg'"
-                  :label="s.controle ? 'Corriger' : 'Pointer'"
+                  :label="s.controle ? $t('seances.table.actions.correct') : $t('seances.table.actions.check')"
                   @click="ouvrirPointage(s)"
                 />
                 <q-btn
@@ -287,10 +297,10 @@
                   round
                   color="negative"
                   icon="event_busy"
-                  aria-label="Annuler la séance"
+                  :aria-label="$t('seances.card.cancelSession')"
                   @click="annuler(s)"
                 >
-                  <q-tooltip>Annuler la séance</q-tooltip>
+                  <q-tooltip>{{ $t('seances.card.cancelSession') }}</q-tooltip>
                 </q-btn>
               </div>
             </div>
@@ -311,36 +321,47 @@
     <!-- Détail du contrôle consigné -->
     <q-dialog :model-value="!!detail" @update:model-value="detail = null">
       <q-card style="width: 560px; max-width: 95vw">
-        <q-card-section class="text-h6">Détail de la séance</q-card-section>
+        <q-card-section class="text-h6">{{ $t('seances.detail.title') }}</q-card-section>
         <q-card-section v-if="detail">
           <!-- Fiche à deux colonnes : le libellé tient sa colonne, la valeur la
                sienne. En dessous de 600 px les deux se superposent proprement
                au lieu de se marcher dessus. -->
           <dl class="fiche-detail">
-            <dt class="pochoir">Enseignant</dt>
+            <dt class="pochoir">{{ $t('seances.detail.teacher') }}</dt>
             <dd>
               {{ detail.affectation?.enseignant?.nom }} {{ detail.affectation?.enseignant?.prenom }}
             </dd>
 
-            <dt class="pochoir">Matière · promotion</dt>
+            <dt class="pochoir">{{ $t('seances.detail.subjectPromotion') }}</dt>
             <dd>
-              {{ detail.affectation?.matiere?.intitule }} — {{ detail.affectation?.promotion?.nom }}
+              {{ detail.affectation?.matiere?.intitule }} {{ $t('rectoratPage.subtitleFallback') }} {{ detail.affectation?.promotion?.nom }}
             </dd>
 
-            <dt class="pochoir">Type de cours</dt>
+            <dt class="pochoir">{{ $t('seances.detail.courseType') }}</dt>
             <dd>{{ LIBELLE_TYPE_COURS[detail.type] ?? detail.type }}</dd>
 
-            <dt class="pochoir">Horaire prévu</dt>
+            <dt class="pochoir">{{ $t('seances.detail.plannedSchedule') }}</dt>
             <dd class="chiffres">{{ detail.heureDebut }} – {{ detail.heureFin }}</dd>
 
-            <dt class="pochoir">Salle</dt>
+            <dt class="pochoir">{{ $t('seances.detail.room') }}</dt>
             <dd>
               <span v-if="detail.salle" class="plaque-salle">{{ detail.salle.code }}</span>
-              <span v-else>—</span>
+              <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
+            </dd>
+
+            <dt class="pochoir">{{ $t('seances.detail.assignedController') }}</dt>
+            <dd class="row items-center q-gutter-sm">
+              <span>{{ detail.controleurAssigne ? `${detail.controleurAssigne.prenom} ${detail.controleurAssigne.nom}` : $t('seances.detail.noAssignedController') }}</span>
+              <q-btn
+                v-if="peutAffecterControleur"
+                flat dense no-caps icon="assignment_ind"
+                :label="$t('seances.detail.assignController')"
+                @click="ouvrirAffectationControleur(detail)"
+              />
             </dd>
 
             <template v-if="detail.justificatif">
-              <dt class="pochoir">Justificatif d’absence</dt>
+              <dt class="pochoir">{{ $t('seances.detail.absenceJustification') }}</dt>
               <dd>
                 {{ LIBELLE_STATUT_JUSTIFICATIF[detail.justificatif.statut] ?? detail.justificatif.statut }}
                 <q-btn
@@ -349,40 +370,40 @@
                   no-caps
                   size="sm"
                   icon="open_in_new"
-                  label="Ouvrir le dossier"
+                  :label="$t('seances.detail.openFile')"
                   :to="{ name: 'justificatifs', query: { statut: detail.justificatif.statut } }"
                 />
               </dd>
             </template>
 
             <template v-if="detail.controle">
-              <dt class="pochoir fiche-detail__coupure">Constat</dt>
+              <dt class="pochoir fiche-detail__coupure">{{ $t('seances.detail.actualCourse') }}</dt>
               <dd class="fiche-detail__coupure">
                 <champ-statut :statut="detail.controle.statut" dense />
               </dd>
 
-              <dt class="pochoir">Déroulement réel</dt>
+              <dt class="pochoir">{{ $t('seances.detail.actualSchedule') }}</dt>
               <dd class="chiffres">
                 {{ detail.controle.heureArrivee ?? '—' }} → {{ detail.controle.heureFinReelle ?? '—' }}
                 ({{ dureeLisible(detail.controle.dureeMinutes) }})
               </dd>
 
-              <dt class="pochoir">Étudiants présents</dt>
+              <dt class="pochoir">{{ $t('seances.detail.studentsPresent') }}</dt>
               <dd class="chiffres">{{ detail.controle.effectifPresent ?? '—' }}</dd>
 
-              <dt class="pochoir">Thème déroulé</dt>
+              <dt class="pochoir">{{ $t('seances.detail.topicCovered') }}</dt>
               <dd>{{ detail.controle.thematiqueTraitee ?? '—' }}</dd>
 
-              <dt class="pochoir">Observation</dt>
+              <dt class="pochoir">{{ $t('seances.detail.observation') }}</dt>
               <dd>{{ detail.controle.observation ?? '—' }}</dd>
 
-              <dt class="pochoir">Contrôlé par</dt>
+              <dt class="pochoir">{{ $t('seances.detail.checkedBy') }}</dt>
               <dd>
                 {{ detail.controle.controleur?.prenom }} {{ detail.controle.controleur?.nom }}
                 · <span class="chiffres">{{ dateHeureLisible(detail.controle.horodatage) }}</span>
               </dd>
 
-              <dt class="pochoir">Attestation</dt>
+              <dt class="pochoir">{{ $t('seances.detail.attestation') }}</dt>
               <dd>
                 {{ LIBELLE_ATTESTATION[detail.controle.attestation ?? 'AUCUNE'] }}
                 <span v-if="detail.controle.empreinteScore" class="chiffres">
@@ -391,7 +412,7 @@
               </dd>
 
               <template v-if="detail.controle.signatureBase64">
-                <dt class="pochoir">Signature</dt>
+                <dt class="pochoir">{{ $t('seances.detail.signature') }}</dt>
                 <dd><img :src="detail.controle.signatureBase64" class="signature-detail" /></dd>
               </template>
             </template>
@@ -406,7 +427,7 @@
             dense
             no-caps
             icon="person_pin"
-            label="Ses autres séances"
+            :label="$t('seances.detail.otherSessions')"
             @click="filtrerDepuisDetail('enseignantId', detail.affectation.enseignantId)"
           />
           <q-btn
@@ -415,20 +436,94 @@
             dense
             no-caps
             icon="meeting_room"
-            :label="`Séances en ${detail.salle.code}`"
+            :label="$t('seances.detail.sessionsInRoom', { code: detail.salle.code })"
             @click="filtrerDepuisDetail('salleId', detail.salle.id)"
           />
         </q-card-actions>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('seances.detail.close')" v-close-popup />
           <q-btn
             v-if="auth.peutPointer && detail && detail.statut !== 'ANNULEE'"
             unelevated
             color="primary"
             no-caps
-            :label="detail?.controle ? 'Corriger le pointage' : 'Pointer cette séance'"
+            :label="detail?.controle ? $t('seances.detail.correctCheck') : $t('seances.detail.checkThisSession')"
             @click="depuisDetail()"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="dialogAffectationControleur" persistent>
+      <q-card style="width: 480px; max-width: 95vw">
+        <q-card-section>
+          <div class="text-h6">{{ $t('seances.detail.assignControllerTitle') }}</div>
+          <div class="text-caption text-grey-7">{{ $t('seances.detail.assignControllerHelp') }}</div>
+        </q-card-section>
+        <q-card-section>
+          <q-select
+            v-model="controleurChoisi"
+            :options="optionsControleurs"
+            outlined dense clearable emit-value map-options
+            :label="$t('seances.detail.assignedController')"
+            :loading="chargementControleurs"
+          />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="sauvegardeAffectation" @click="dialogAffectationControleur = false" />
+          <q-btn color="primary" unelevated no-caps :label="$t('common.actions.save')" :loading="sauvegardeAffectation" @click="enregistrerAffectationControleur" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <q-dialog v-model="dialogTournee" persistent>
+      <q-card style="width: 560px; max-width: 95vw">
+        <q-card-section>
+          <div class="text-h6">{{ $t('seances.tournee.title') }}</div>
+          <div class="text-caption text-grey-7">{{ $t('seances.tournee.help') }}</div>
+        </q-card-section>
+        <q-card-section class="q-pt-none">
+          <div class="row q-col-gutter-md q-mb-md">
+            <div class="col-6"><champ-date v-model="tournee.dateDebut" :label="$t('seances.period.from')" @update:model-value="tourneeApercu = null" /></div>
+            <div class="col-6"><champ-date v-model="tournee.dateFin" :label="$t('seances.period.to')" @update:model-value="tourneeApercu = null" /></div>
+          </div>
+          <q-select
+            v-model="tournee.departementId" :options="optionsDepartements"
+            outlined dense clearable emit-value map-options
+            :label="$t('seances.tournee.departmentOptional')"
+            @update:model-value="tourneeApercu = null"
+          />
+          <q-select
+            v-model="tournee.controleurId" :options="optionsControleurs"
+            outlined dense emit-value map-options
+            :label="$t('seances.detail.assignedController')"
+            @update:model-value="tourneeApercu = null"
+            class="q-mt-md"
+          />
+          <q-banner v-if="tourneeApercu" rounded class="bg-blue-1 text-blue-10 q-mt-md">
+            {{ $t('seances.tournee.preview', {
+              affectables: tourneeApercu.seancesAffectables,
+              closed: tourneeApercu.ignoreesAnneeCloturee,
+            }) }}
+          </q-banner>
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="chargementTournee || sauvegardeTournee" @click="dialogTournee = false" />
+          <q-btn
+            v-if="!tourneeApercu"
+            outline color="primary" no-caps icon="manage_search"
+            :loading="chargementTournee"
+            :label="$t('seances.tournee.previewAction')"
+            @click="previsualiserTournee"
+          />
+          <q-btn
+            v-else
+            color="primary" unelevated no-caps icon="assignment_ind"
+            :loading="sauvegardeTournee"
+            :disable="tourneeApercu.seancesAffectables === 0"
+            :label="$t('seances.tournee.assignAction', { count: tourneeApercu.seancesAffectables })"
+            @click="affecterTournee"
           />
         </q-card-actions>
       </q-card>
@@ -439,15 +534,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import SeanceDialog from '../components/SeanceDialog.vue';
 import GenerationDialog from '../components/GenerationDialog.vue';
 import PointageDialog from '../components/PointageDialog.vue';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '../components/ChampDate.vue';
-import BasculeVue from '../components/BasculeVue.vue';
+import BasculeVue from '../components/ViewToggle.vue';
 import { useVuePreferee } from '../composables/vuePreferee';
 import {
   LIBELLE_ATTESTATION,
@@ -461,17 +558,20 @@ import {
   dureeLisible,
 } from '../utils/libelles';
 import type { Enseignant, Salle, Seance } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const route = useRoute();
 const auth = useAuthStore();
+const peutAffecterControleur = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const vue = useVuePreferee('seances');
+const { t } = useI18n();
 
 /** Les mêmes séances, mises en colonnes : c'est la vue qui compare et qui trie. */
-const colonnes: QTableColumn[] = [
+const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: 'Date',
+    label: t('seances.table.columns.date'),
     field: (r: Seance) => r.date,
     format: (v: string) => dateLisible(v),
     align: 'left',
@@ -479,14 +579,14 @@ const colonnes: QTableColumn[] = [
   },
   {
     name: 'heure',
-    label: 'Horaire',
+    label: t('seances.table.columns.schedule'),
     field: (r: Seance) => `${r.heureDebut}–${r.heureFin}`,
     align: 'left',
     sortable: true,
   },
   {
     name: 'enseignant',
-    label: 'Enseignant',
+    label: t('seances.table.columns.teacher'),
     field: (r: Seance) =>
       `${r.affectation?.enseignant?.nom ?? ''} ${r.affectation?.enseignant?.prenom ?? ''}`.trim(),
     align: 'left',
@@ -494,28 +594,28 @@ const colonnes: QTableColumn[] = [
   },
   {
     name: 'matiere',
-    label: 'Matière',
+    label: t('seances.table.columns.subject'),
     field: (r: Seance) => r.affectation?.matiere?.intitule ?? '—',
     align: 'left',
     sortable: true,
   },
   {
     name: 'promotion',
-    label: 'Promotion',
+    label: t('seances.table.columns.promotion'),
     field: (r: Seance) => r.affectation?.promotion?.nom ?? '—',
     align: 'left',
   },
-  { name: 'salle', label: 'Salle', field: (r: Seance) => r.salle?.code ?? '—', align: 'left' },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
+  { name: 'salle', label: t('seances.table.columns.room'), field: (r: Seance) => r.salle?.code ?? '—', align: 'left' },
+  { name: 'type', label: t('seances.table.columns.type'), field: 'type', align: 'left' },
   {
     name: 'duree',
-    label: 'Durée constatée',
+    label: t('seances.table.columns.durationObserved'),
     field: (r: Seance) => (r.controle ? dureeLisible(r.controle.dureeMinutes) : '—'),
     align: 'right',
   },
-  { name: 'etat', label: 'État', field: (r: Seance) => r.controle?.statut ?? '', align: 'left', sortable: true },
+  { name: 'etat', label: t('seances.table.columns.status'), field: (r: Seance) => r.controle?.statut ?? '', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 // Sur téléphone le tableau reste consultable : trois colonnes tiennent dans
 // 390 px sans déborder, et la ligne entière ouvre le détail — d'où l'on peut
@@ -523,7 +623,7 @@ const colonnes: QTableColumn[] = [
 const colonnesVisibles = computed(() =>
   $q.screen.lt.md
     ? ['heure', 'enseignant', 'etat']
-    : colonnes.map((c) => String(c.name)),
+    : colonnes.value.map((c) => String(c.name)),
 );
 
 const seances = ref<Seance[]>([]);
@@ -540,7 +640,24 @@ const dialogGeneration = ref(false);
 const dialogPointage = ref(false);
 const seanceEditee = ref<Seance | null>(null);
 const seanceSelectionnee = ref<Seance | null>(null);
-const raccourciActif = ref('7 jours');
+const seanceAffectee = ref<Seance | null>(null);
+const dialogAffectationControleur = ref(false);
+const chargementControleurs = ref(false);
+const sauvegardeAffectation = ref(false);
+const controleurChoisi = ref<string | null>(null);
+const optionsControleurs = ref<{ label: string; value: string }[]>([]);
+const dialogTournee = ref(false);
+const chargementTournee = ref(false);
+const sauvegardeTournee = ref(false);
+const optionsDepartements = ref<{ label: string; value: string }[]>([]);
+const tourneeApercu = ref<{ seancesAffectables: number; ignoreesAnneeCloturee: number } | null>(null);
+const tournee = ref({
+  dateDebut: decalerJours(aujourdhui(), -6),
+  dateFin: aujourdhui(),
+  departementId: null as string | null,
+  controleurId: '',
+});
+const raccourciActif = ref('sevenDays');
 
 const filtres = ref({
   dateDebut: decalerJours(aujourdhui(), -6),
@@ -550,12 +667,12 @@ const filtres = ref({
   salleId: null as string | null,
 });
 
-const raccourcis = [
-  { label: "Aujourd'hui", debut: 0, fin: 0 },
-  { label: '7 jours', debut: -6, fin: 0 },
-  { label: '30 jours', debut: -29, fin: 0 },
-  { label: 'À venir', debut: 1, fin: 14 },
-];
+const raccourcis = computed(() => [
+  { id: 'today', label: t('seances.period.shortcuts.today'), debut: 0, fin: 0 },
+  { id: 'sevenDays', label: t('seances.period.shortcuts.sevenDays'), debut: -6, fin: 0 },
+  { id: 'thirtyDays', label: t('seances.period.shortcuts.thirtyDays'), debut: -29, fin: 0 },
+  { id: 'upcoming', label: t('seances.period.shortcuts.upcoming'), debut: 1, fin: 14 },
+]);
 
 /** Les états de séance viennent du référentiel partagé, jamais d'une liste locale. */
 const optionsStatuts = Object.entries(LIBELLE_STATUT_SEANCE).map(([value, label]) => ({
@@ -569,13 +686,15 @@ const optionsSalles = computed(() =>
 
 const etiquetteFiltres = computed(() => {
   const actifs = [
-    filtres.value.enseignantId && 'enseignant',
-    filtres.value.salleId && 'salle',
-    filtres.value.statut && 'état',
-    recherche.value && 'recherche',
-    seulementAPointer.value && 'non contrôlées',
+    filtres.value.enseignantId && t('seances.filters.activeTeacher'),
+    filtres.value.salleId && t('seances.filters.activeRoom'),
+    filtres.value.statut && t('seances.filters.activeStatus'),
+    recherche.value && t('seances.filters.activeSearch'),
+    seulementAPointer.value && t('seances.filters.activeUnchecked'),
   ].filter(Boolean);
-  return actifs.length ? `Filtres : ${actifs.join(', ')}` : 'Filtrer';
+  return actifs.length
+    ? t('seances.filters.labelActive', { list: actifs.join(', ') })
+    : t('seances.filters.label');
 });
 
 const filtresActifs = computed(
@@ -589,7 +708,7 @@ const filtresActifs = computed(
 
 /** Le vide le plus courant vient d'une fenêtre trop courte : on l'élargit. */
 function elargirA30Jours() {
-  const trente = raccourcis.find((r) => r.label === '30 jours');
+  const trente = raccourcis.value.find((r) => r.id === 'thirtyDays');
   if (trente) appliquer(trente);
 }
 
@@ -651,8 +770,8 @@ const journees = computed(() => {
     }));
 });
 
-function appliquer(r: (typeof raccourcis)[number]) {
-  raccourciActif.value = r.label;
+function appliquer(r: (typeof raccourcis.value)[number]) {
+  raccourciActif.value = r.id;
   filtres.value = {
     ...filtres.value,
     dateDebut: decalerJours(aujourdhui(), r.debut),
@@ -668,6 +787,109 @@ function ouvrirSeance(s: Seance | null) {
 function ouvrirPointage(s: Seance) {
   seanceSelectionnee.value = s;
   dialogPointage.value = true;
+}
+
+async function ouvrirAffectationControleur(seance: Seance) {
+  seanceAffectee.value = seance;
+  controleurChoisi.value = seance.controleurAssigneId ?? null;
+  dialogAffectationControleur.value = true;
+  chargementControleurs.value = true;
+  try {
+    const { data } = await api.get('/seances/controleurs');
+    optionsControleurs.value = data.map((u: { id: string; nom: string; prenom: string }) => ({
+      value: u.id,
+      label: `${u.prenom} ${u.nom}`,
+    }));
+  } catch {
+    $q.notify({ type: 'negative', message: t('seances.detail.controllersLoadError') });
+  } finally {
+    chargementControleurs.value = false;
+  }
+}
+
+async function ouvrirAffectationGroupee() {
+  tournee.value = {
+    dateDebut: filtres.value.dateDebut,
+    dateFin: filtres.value.dateFin,
+    departementId: null,
+    controleurId: '',
+  };
+  tourneeApercu.value = null;
+  dialogTournee.value = true;
+  chargementTournee.value = true;
+  try {
+    const [controleurs, departements] = await Promise.all([
+      api.get('/seances/controleurs'),
+      api.get('/departements', { params: { all: '1' } }),
+    ]);
+    optionsControleurs.value = controleurs.data.map((u: { id: string; nom: string; prenom: string }) => ({
+      value: u.id, label: `${u.prenom} ${u.nom}`,
+    }));
+    optionsDepartements.value = departements.data.data.map((d: { id: string; nom: string }) => ({ value: d.id, label: d.nom }));
+    if (!tournee.value.controleurId) tournee.value.controleurId = optionsControleurs.value[0]?.value ?? '';
+  } catch {
+    $q.notify({ type: 'negative', message: t('seances.tournee.loadError') });
+  } finally {
+    chargementTournee.value = false;
+  }
+}
+
+async function previsualiserTournee() {
+  if (!tournee.value.controleurId) {
+    $q.notify({ type: 'warning', message: t('seances.tournee.controllerRequired') });
+    return;
+  }
+  chargementTournee.value = true;
+  try {
+    const { data } = await api.get('/seances/tournee-apercu', { params: {
+      dateDebut: tournee.value.dateDebut,
+      dateFin: tournee.value.dateFin,
+      controleurId: tournee.value.controleurId,
+      departementId: tournee.value.departementId || undefined,
+    } });
+    tourneeApercu.value = data;
+  } catch {
+    $q.notify({ type: 'negative', message: t('seances.tournee.previewError') });
+  } finally {
+    chargementTournee.value = false;
+  }
+}
+
+async function affecterTournee() {
+  if (!tourneeApercu.value || !tournee.value.controleurId) return;
+  sauvegardeTournee.value = true;
+  try {
+    const { data } = await api.post('/seances/tournee', {
+      dateDebut: tournee.value.dateDebut,
+      dateFin: tournee.value.dateFin,
+      controleurId: tournee.value.controleurId,
+      departementId: tournee.value.departementId || undefined,
+    });
+    dialogTournee.value = false;
+    await charger();
+    $q.notify({ type: 'positive', message: t('seances.tournee.assigned', { count: data.seancesAffectees }) });
+  } catch {
+    tourneeApercu.value = null;
+    $q.notify({ type: 'negative', message: t('seances.tournee.assignError') });
+  } finally {
+    sauvegardeTournee.value = false;
+  }
+}
+
+async function enregistrerAffectationControleur() {
+  if (!seanceAffectee.value) return;
+  sauvegardeAffectation.value = true;
+  try {
+    await api.put(`/seances/${seanceAffectee.value.id}/controleur`, { controleurId: controleurChoisi.value });
+    dialogAffectationControleur.value = false;
+    detail.value = null;
+    await charger();
+    $q.notify({ type: 'positive', message: t('seances.detail.controllerAssigned') });
+  } catch {
+    $q.notify({ type: 'negative', message: t('seances.detail.controllerAssignError') });
+  } finally {
+    sauvegardeAffectation.value = false;
+  }
 }
 
 /** Rebondir depuis une séance vers la même lecture, élargie à un enseignant
@@ -693,26 +915,25 @@ async function apresCreation(creee: Seance) {
 
 function annuler(s: Seance) {
   $q.dialog({
-    title: 'Annuler la séance',
+    title: t('seances.dialogs.cancelTitle'),
     message:
-      `Séance du ${dateLisible(s.date)} à ${s.heureDebut}. ` +
-      'Motif de l’annulation (grève, jour férié, indisponibilité…)',
+      t('seances.dialogs.cancelMessagePrefix', { date: dateLisible(s.date), heure: s.heureDebut }) +
+      t('seances.dialogs.cancelMessageSuffix'),
     prompt: { model: '', type: 'text' },
-    ok: { label: 'Annuler la séance', color: 'negative', unelevated: true, noCaps: true },
-    cancel: { label: 'Ne rien faire', flat: true, noCaps: true },
+    ok: { label: t('seances.dialogs.cancelConfirm'), color: 'negative', unelevated: true, noCaps: true },
+    cancel: { label: t('seances.dialogs.cancelDismiss'), flat: true, noCaps: true },
   }).onOk(async (motif: string) => {
     await api.post(`/seances/${s.id}/annuler`, { motif });
-    $q.notify({ type: 'positive', message: 'Séance annulée' });
+    $q.notify({ type: 'positive', message: t('seances.messages.cancelled') });
     await charger();
   });
 }
 
 function imprimer() {
-  window.open(
-    `${API_URL}/impression/registre?dateDebut=${filtres.value.dateDebut}` +
-      `&dateFin=${filtres.value.dateFin}&token=${auth.token}`,
-    '_blank',
-  );
+  void ouvrirImpression('/impression/registre', {
+    dateDebut: filtres.value.dateDebut,
+    dateFin: filtres.value.dateFin,
+  });
 }
 
 function filtrerEnseignants(saisie: string, maj: (fn: () => void) => void) {
@@ -863,23 +1084,14 @@ onMounted(async () => {
   border-bottom: var(--up-filet);
 }
 
-.registre__raccourcis { display: flex; }
-
-.raccourci {
-  appearance: none;
-  background: var(--up-plaque);
-  color: var(--up-encre);
-  border: 2px solid var(--up-encre);
-  padding: 8px 12px;
-  min-height: 44px;
-  cursor: pointer;
-
-  & + & { border-left-width: 0; }
-
-  &--actif {
-    background: var(--up-encre);
-    color: var(--up-craie);
-  }
+// La gouttière du segmented control ; le reste vient de la règle globale
+// `.raccourci` d'app.scss, partagée avec l'écran des statistiques.
+.registre__raccourcis {
+  display: flex;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-rayon);
+  padding: 3px;
+  gap: 2px;
 }
 
 .registre__filtres {
@@ -918,7 +1130,7 @@ onMounted(async () => {
   gap: var(--up-3);
   padding-bottom: var(--up-2);
   margin-bottom: var(--up-2);
-  border-bottom: 3px solid var(--up-encre);
+  border-bottom: var(--up-filet);
   flex-wrap: wrap;
 }
 
@@ -949,8 +1161,8 @@ onMounted(async () => {
 
 .ligne__heure {
   flex-direction: column;
-  background: var(--up-encre);
-  color: #fff;
+  background: var(--up-chaux);
+  color: var(--up-encre);
   gap: 2px;
   padding: var(--up-2);
 }

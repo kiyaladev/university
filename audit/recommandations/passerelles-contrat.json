@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-03",
+  "portee": "Contrat HTTP local des passerelles SMS/OTP et Mobile Money ; aucun SMS ni encaissement opérateur réel.",
+  "otpSms": {
+    "suite": "backend/src/modules/portail/otp.client.spec.ts",
+    "resultat": "Suite dédiée incluse dans les 29 tests passerelles réussis.",
+    "verifications": [
+      "normalisation des numéros sans ajout d’indicatif régional supposé",
+      "OTP envoyé sur /api/otp/send et SMS ordinaire sur /api/sms/send",
+      "vérification du code et interprétation des motifs/essais restants du fournisseur",
+      "réponses malformées, rejet fournisseur et erreur réseau sans exposer les secrets dans les journaux",
+      "notification marquée en file d’attente après acceptation, sans prétendre à une livraison réelle"
+    ]
+  },
+  "mobileMoney": {
+    "suite": "backend/src/modules/inscription/mobile-money.service.spec.ts",
+    "resultat": "Suite dédiée incluse dans les 29 tests passerelles réussis.",
+    "verifications": [
+      "requête authentifiée et référence de transaction conservée",
+      "variantes transactionId/reference/id acceptées si elles portent une référence valide",
+      "réponses ambiguës, référence vide, JSON invalide et rejet fournisseur refusés",
+      "numéro de téléphone et corps d’erreur fournisseur absents des journaux",
+      "mode pilote sans requête réseau quand aucun fournisseur n’est configuré"
+    ]
+  },
+  "execution": "bun test src/modules/portail/otp.client.spec.ts src/modules/inscription/mobile-money.service.spec.ts",
+  "resultatExecution": "2 suites, 29 tests réussis après l'ajout de l'audit de lot, du rollback, des lots mixtes et de la limite de concurrence"
+}

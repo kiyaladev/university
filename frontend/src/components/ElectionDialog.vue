@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { api } from '../boot/axios';
 import { OPTIONS_TYPE_ELECTION } from '../services/elections';
 import type { Departement, Election, Promotion, TypeElection } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const props = defineProps<{
   modelValue: boolean;
@@ -52,11 +54,11 @@ watch(
 );
 
 const enEdition = computed(() => Boolean(props.election?.id));
-const titre = computed(() => (enEdition.value ? 'Modifier l\'élection' : 'Nouvelle élection'));
+const titre = computed(() => (enEdition.value ? t('elections.dialogs.electionForm.titleEdit') : t('elections.dialogs.electionForm.titleNew')));
 
 async function soumettre() {
   if (!formulaire.value.titre || !formulaire.value.dateOuverture || !formulaire.value.dateCloture) {
-    $q.notify({ type: 'warning', message: 'Titre, ouverture et clôture sont obligatoires.' });
+    $q.notify({ type: 'warning', message: t('elections.dialogs.electionForm.required') });
     return;
   }
   enregistrement.value = true;
@@ -75,11 +77,11 @@ async function soumettre() {
     if (formulaire.value.description) payload.description = formulaire.value.description;
     if (formulaire.value.bulletin) payload.bulletin = formulaire.value.bulletin;
     const { data } = await api[methode](url, payload);
-    $q.notify({ type: 'positive', message: enEdition.value ? 'Élection mise à jour.' : 'Élection créée.' });
+    $q.notify({ type: 'positive', message: enEdition.value ? t('elections.dialogs.electionForm.saved') : t('elections.dialogs.electionForm.created') });
     emit('enregistre', data);
     emit('update:modelValue', false);
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Enregistrement impossible.' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('elections.dialogs.electionForm.saveError') });
   } finally {
     enregistrement.value = false;
   }
@@ -96,17 +98,17 @@ function fermer() {
       <q-card-section class="row items-center">
         <div class="text-h6">{{ titre }}</div>
         <q-space />
-        <q-btn flat round dense icon="close" @click="fermer" />
+        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
-        <q-input v-model="formulaire.titre" label="Titre" outlined dense />
+        <q-input v-model="formulaire.titre" :label="$t('common.fields.title')" outlined dense />
         <q-select
           v-model="formulaire.type"
           :options="OPTIONS_TYPE"
           emit-value
           map-options
-          label="Type"
+          :label="$t('common.fields.type')"
           outlined
           dense
         />
@@ -115,14 +117,14 @@ function fermer() {
             v-model="formulaire.promotionId"
             endpoint="/promotions"
             :label-fn="(p: Promotion) => `${p.nom} (${p.filiere?.code ?? ''})`"
-            label="Promotion (optionnel)"
+            :label="$t('elections.dialogs.electionForm.promotion')"
             class="col"
           />
           <autocomplete-async
             v-model="formulaire.departementId"
             endpoint="/departements"
             :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"
-            label="Département (optionnel)"
+            :label="$t('elections.dialogs.electionForm.department')"
             class="col"
           />
         </div>
@@ -130,7 +132,7 @@ function fermer() {
           <q-input
             v-model="formulaire.dateOuverture"
             type="datetime-local"
-            label="Ouverture"
+            :label="$t('elections.dialogs.electionForm.opening')"
             outlined
             dense
             class="col"
@@ -138,7 +140,7 @@ function fermer() {
           <q-input
             v-model="formulaire.dateCloture"
             type="datetime-local"
-            label="Clôture"
+            :label="$t('elections.dialogs.electionForm.closing')"
             outlined
             dense
             class="col"
@@ -147,13 +149,13 @@ function fermer() {
         <q-input
           v-model.number="formulaire.nbSieges"
           type="number"
-          label="Nombre de sièges à pourvoir"
+          :label="$t('elections.dialogs.electionForm.seats')"
           outlined
           dense
         />
         <q-input
           v-model="formulaire.description"
-          label="Description"
+          :label="$t('common.fields.description')"
           outlined
           dense
           type="textarea"
@@ -162,8 +164,8 @@ function fermer() {
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="enEdition ? 'Enregistrer' : 'Créer'" @click="soumettre" />
+        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
+        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="enEdition ? $t('elections.dialogs.electionForm.save') : $t('elections.dialogs.electionForm.create')" @click="soumettre" />
       </q-card-actions>
     </q-card>
   </q-dialog>

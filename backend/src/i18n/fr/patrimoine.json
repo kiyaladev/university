@@ -1,0 +1,11 @@
+{
+  "impossible_de_generer_un_qr_unique_reessayez": "Impossible de générer un QR unique, réessayez",
+  "equipement_introuvable_pour_ce_qr": "Équipement introuvable pour ce QR",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "equipement_introuvable": "Équipement introuvable",
+  "impossible_de_generer_un_identifiant_qr_unique_reessayez": "Impossible de générer un identifiant QR unique, réessayez",
+  "equipement_numeroinventaire_n_a_pas_de_reparation_en_cours": "{equipement.numeroInventaire} n'a pas de réparation en cours.",
+  "categorie_cat_libelle_cat_count_as_any_equipements_equipemen": "Catégorie « {cat.libelle} » : {(cat._count as any).equipements} équipement(s) y sont rattachés. Réaffectez-les avant de supprimer.",
+  "equipement_numeroinventaire_reparations_reparation_s_consign": "{equipement.numeroInventaire} : {reparations} réparation(s) consignée(s). Désactivez l'équipement plutôt que de le supprimer.",
+  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} a déjà une réparation en cours ({ouverte.statut})."
+}

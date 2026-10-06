@@ -1,0 +1,10 @@
+{
+  "badge_introuvable": "Badge not found",
+  "impossible_de_generer_un_numero_de_badge": "Unable to generate a badge number.",
+  "un_badge_annule_ne_se_modifie_plus": "A cancelled badge can no longer be modified.",
+  "ce_badge_est_deja_annule": "This badge is already cancelled.",
+  "un_badge_annule_ne_se_rallonge_pas_creez_en_un_nouveau": "A cancelled badge cannot be extended: please create a new one.",
+  "la_nouvelle_date_doit_etre_dans_le_futur": "The new date must be in the future.",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "ecriture_concurrente_reessayez": "This badge was just changed. Reload it and try again."
+}

@@ -8,12 +8,14 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { CoursVOD } from '../types';
 
 const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
 const vod = ref<CoursVOD | null>(null);
 const chargement = ref(false);
@@ -47,7 +49,7 @@ async function charger() {
     vod.value = data;
     dureeMax.value = data.dureeSecondes ?? 0;
   } catch {
-    $q.notify({ type: 'negative', message: 'Ressource introuvable.' });
+    $q.notify({ type: 'negative', message: t('vodLecteur.notify.ressourceIntrouvable') });
     retour();
   } finally {
     chargement.value = false;
@@ -144,18 +146,18 @@ onBeforeUnmount(() => { void signalerVue(false); });
 
 <template>
   <q-page class="q-pa-md lecteur-page">
-    <q-btn flat icon="arrow_back" label="Retour au catalogue" no-caps @click="retour" />
+    <q-btn flat icon="arrow_back" :label="$t('vodLecteur.retourCatalogue')" no-caps @click="retour" />
 
     <q-card v-if="chargement" class="q-pa-md q-mt-md">
-      <q-spinner /> Chargement…
+      <q-spinner /> {{ $t('vodLecteur.chargement') }}
     </q-card>
 
     <q-card v-else-if="vod" class="lecteur-carte q-mt-md">
       <q-card-section>
-        <div class="text-h6">{{ vod.titre }}</div>
+        <h1 class="text-h6 q-my-none">{{ vod.titre }}</h1>
         <div class="text-caption text-grey-7">
           {{ vod.enseignant ? `${vod.enseignant.prenom} ${vod.enseignant.nom}` : '' }}
-          <span v-if="vod.matiere"> · {{ vod.matiere.code }} — {{ vod.matiere.intitule }}</span>
+          <span v-if="vod.matiere"> · {{ vod.matiere.code }} {{ $t('rectoratPage.subtitleFallback') }} {{ vod.matiere.intitule }}</span>
         </div>
       </q-card-section>
 
@@ -164,7 +166,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           v-if="typeMedia === 'video'"
           ref="mediaRef"
           :src="vod.url"
-          :aria-label="`Vidéo : ${vod.titre}`"
+          :aria-label="$t('vodLecteur.media.videoAriaLabel', { titre: vod.titre })"
           controls
           preload="metadata"
           class="lecteur-video"
@@ -178,7 +180,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           v-else
           ref="mediaRef"
           :src="vod.url"
-          :aria-label="`Audio : ${vod.titre}`"
+          :aria-label="$t('vodLecteur.media.audioAriaLabel', { titre: vod.titre })"
           controls
           preload="metadata"
           class="lecteur-audio"
@@ -199,7 +201,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           :aria-valuenow="Math.round(progression)"
           aria-valuemin="0"
           aria-valuemax="100"
-          aria-label="Progression de la lecture"
+          :aria-label="$t('vodLecteur.progressionAriaLabel')"
         />
         <div class="row items-center q-col-gutter-md">
           <q-btn
@@ -208,10 +210,10 @@ onBeforeUnmount(() => { void signalerVue(false); });
             :icon="enLecture ? 'pause' : 'play_arrow'"
             round
             size="lg"
-            :aria-label="enLecture ? 'Mettre en pause' : 'Lancer la lecture'"
+            :aria-label="enLecture ? $t('vodLecteur.mettreEnPause') : $t('vodLecteur.lancerLecture')"
             @click="basculerLecture"
           >
-            <q-tooltip>{{ enLecture ? 'Pause' : 'Lecture' }}</q-tooltip>
+            <q-tooltip>{{ enLecture ? $t('vodLecteur.pause') : $t('vodLecteur.lecture') }}</q-tooltip>
           </q-btn>
           <span class="text-caption">
             {{ formaterDuree(dureeActuelle) }} / {{ formaterDuree(dureeMax) }}
@@ -222,7 +224,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
             :options="[0.5, 1, 1.25, 1.5, 2]"
             dense
             outlined
-            label="Vitesse"
+            :label="$t('vodLecteur.vitesse')"
             style="min-width: 110px"
             @update:model-value="changerVitesse"
           />
@@ -231,10 +233,10 @@ onBeforeUnmount(() => { void signalerVue(false); });
             icon="fullscreen"
             round
             dense
-            :aria-label="pleinEcran ? 'Quitter le plein écran' : 'Passer en plein écran'"
+            :aria-label="pleinEcran ? $t('vodLecteur.pleinEcran.quitter') : $t('vodLecteur.pleinEcran.entrer')"
             @click="basculerPleinEcran"
           >
-            <q-tooltip>{{ pleinEcran ? 'Quitter le plein écran' : 'Plein écran' }}</q-tooltip>
+            <q-tooltip>{{ pleinEcran ? $t('vodLecteur.pleinEcran.quitter') : $t('vodLecteur.pleinEcran.court') }}</q-tooltip>
           </q-btn>
         </div>
       </q-card-section>
@@ -246,16 +248,16 @@ onBeforeUnmount(() => { void signalerVue(false); });
 
     <q-card v-else class="lecteur-carte q-mt-md q-pa-lg text-center text-grey-7">
       <q-icon name="videocam_off" size="38px" color="grey-5" />
-      <div class="q-mt-sm">Cette ressource n'est pas disponible.</div>
+      <div class="q-mt-sm">{{ $t('vodLecteur.introuvable.message') }}</div>
       <div class="text-caption q-mt-xs">
-        Elle a peut-être été archivée ou n'est pas ouverte à votre profil.
+        {{ $t('vodLecteur.introuvable.detail') }}
       </div>
       <q-btn
         flat
         no-caps
         color="primary"
         icon="arrow_back"
-        label="Retour au catalogue"
+        :label="$t('vodLecteur.retourCatalogue')"
         class="q-mt-sm"
         @click="retour"
       />

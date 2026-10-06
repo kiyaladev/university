@@ -8,11 +8,13 @@
  */
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StatutBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,10 +29,27 @@ import {
   UpdateBadgeDto,
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
+import { prochainNumeroTx } from '../../common/numero';
 
 const BADGE_INCLUDE = {
   creePar: { select: { id: true, nom: true, prenom: true } },
 } as const;
+
+/** Champs strictement nécessaires à la vérification QR publique d'un badge. */
+export const BADGE_VERIFICATION_SELECT = {
+  id: true,
+  qrToken: true,
+  statut: true,
+  dateValidite: true,
+  numero: true,
+  type: true,
+  prenom: true,
+  nom: true,
+  fonction: true,
+  organisation: true,
+  zonesAccess: true,
+  dateDelivrance: true,
+} satisfies Prisma.BadgeAccesSelect;
 
 const PREFIXE = 'BADGE-';
 
@@ -49,20 +68,34 @@ export class BadgesService {
     tx: Prisma.TransactionClient,
     annee: string,
   ): Promise<string> {
-    const prefixe = `${PREFIXE}${annee}-`;
-    const existantes = await tx.badgeAcces.findMany({
-      where: { numero: { startsWith: prefixe } },
-      select: { numero: true },
-    });
-    const max = existantes.reduce((m, b) => {
-      const n = Number(b.numero.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+    return prochainNumeroTx(tx, 'badgeAcces', 'numero', `${PREFIXE}${annee}-`, 5);
   }
 
   private nouveauQrToken(): string {
     return `UP-BADGE-${randomBytes(12).toString('base64url')}`;
+  }
+
+  /** Projection d'audit sans identité, coordonnées, pièce, photo, QR ni motif libre. */
+  private instantaneAudit(badge: {
+    id: string;
+    numero: string;
+    type: string;
+    statut: StatutBadge;
+    dateValidite: Date;
+    zonesAccess: string | null;
+    qrToken: string;
+    photoUrl: string | null;
+  }) {
+    return {
+      id: badge.id,
+      numero: badge.numero,
+      type: badge.type,
+      statut: badge.statut,
+      dateValidite: badge.dateValidite,
+      zonesAccess: badge.zonesAccess,
+      qrConfigure: Boolean(badge.qrToken),
+      photoPresente: Boolean(badge.photoUrl),
+    };
   }
 
   private evaluerStatut(b: { dateValidite: Date | string; statut: StatutBadge }): StatutBadge {
@@ -76,8 +109,8 @@ export class BadgesService {
 
   async liste(query: BadgeQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.BadgeAccesWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -99,21 +132,18 @@ export class BadgesService {
         where,
         include: BADGE_INCLUDE,
         orderBy: { dateDelivrance: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.badgeAcces.count({ where }),
     ]);
 
-    // Le statut stocké se périme tout seul : sans réévaluation, un badge dont
-    // la date de validité est passée continue de s'afficher « ACTIF » dans la
-    // liste alors que son détail (et le vigile qui scanne) le voit « EXPIRE ».
-    // Projection en sortie seulement : une lecture de liste n'écrit pas en base
-    // — c'est `trouver` / `modifier` qui régularisent la ligne.
+    // Le statut stocké se périme tout seul : la liste expose donc le statut
+    // effectif calculé depuis la date, sans écrire en base lors d'une lecture.
     // Réserve connue : le filtre `?statut=` porte toujours sur la valeur
     // stockée, un badge périmé remonte donc encore dans le filtre « ACTIF ».
     const lignes = data.map((b) => ({ ...b, statut: this.evaluerStatut(b) }));
 
-    return { data: lignes, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data: lignes, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouver(id: string) {
@@ -121,17 +151,9 @@ export class BadgesService {
       where: { id },
       include: BADGE_INCLUDE,
     });
-    if (!badge) throw new NotFoundException('Badge introuvable');
-    // Auto-promotion du statut si la date de validité est dépassée.
-    const evalue = this.evaluerStatut(badge);
-    if (evalue !== badge.statut) {
-      return this.prisma.badgeAcces.update({
-        where: { id },
-        data: { statut: evalue },
-        include: BADGE_INCLUDE,
-      });
-    }
-    return badge;
+    if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+    // Projection seulement : une lecture ne modifie pas le badge sans audit.
+    return { ...badge, statut: this.evaluerStatut(badge) };
   }
 
   // ---------------------------------------------------------------- édition
@@ -144,7 +166,7 @@ export class BadgesService {
       try {
         badge = await this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
-          return tx.badgeAcces.create({
+          const badge = await tx.badgeAcces.create({
             data: {
               numero,
               type: dto.type,
@@ -165,6 +187,20 @@ export class BadgesService {
             },
             include: BADGE_INCLUDE,
           });
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'BADGE_ACCES_EMIS',
+              entite: 'BadgeAcces',
+              entiteId: badge.id,
+              details: JSON.stringify({
+                avant: null,
+                apres: this.instantaneAudit(badge),
+                champsModifies: ['type', 'statut', 'dateValidite', 'zonesAccess', 'qrToken', 'photoUrl'],
+              }),
+            },
+          });
+          return badge;
         });
         break;
       } catch (e: any) {
@@ -172,29 +208,20 @@ export class BadgesService {
         throw e;
       }
     }
-    if (!badge) throw new BadRequestException("Impossible de générer un numéro de badge.");
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'BADGE_ACCES_EMIS',
-        entite: 'BadgeAcces',
-        entiteId: badge.id,
-        details: `${badge.numero} — ${badge.type} (${badge.prenom} ${badge.nom})`,
-      },
-    });
+    if (!badge) throw new BadRequestException(I18nContext.current()!.t('badges.impossible_de_generer_un_numero_de_badge'));
 
     return badge;
   }
 
   async modifier(id: string, dto: UpdateBadgeDto, user: AuthUser) {
-    const badge = await this.trouver(id);
-    if (badge.statut === StatutBadge.ANNULE) {
-      throw new BadRequestException("Un badge annulé ne se modifie plus.");
-    }
-    const miseAJour = await this.prisma.badgeAcces.update({
-      where: { id },
-      data: {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
+      const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
+      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
+        throw new BadRequestException(I18nContext.current()!.t('badges.un_badge_annule_ne_se_modifie_plus'));
+      }
+      const data: Prisma.BadgeAccesUpdateInput = {
         ...(dto.type !== undefined ? { type: dto.type } : {}),
         ...(dto.nom !== undefined ? { nom: dto.nom } : {}),
         ...(dto.prenom !== undefined ? { prenom: dto.prenom } : {}),
@@ -208,77 +235,95 @@ export class BadgesService {
         ...(dto.zonesAccess !== undefined ? { zonesAccess: dto.zonesAccess } : {}),
         ...(dto.photoUrl !== undefined ? { photoUrl: dto.photoUrl } : {}),
         ...(dto.motif !== undefined ? { motif: dto.motif } : {}),
-      },
-      include: BADGE_INCLUDE,
-    });
-
-    // Si on a rallongé la validité et que le badge était EXPIRE, on le réactive.
-    const evalue = this.evaluerStatut(miseAJour);
-    if (evalue !== miseAJour.statut) {
-      const final = await this.prisma.badgeAcces.update({
-        where: { id },
-        data: { statut: evalue },
-        include: BADGE_INCLUDE,
+      };
+      const maj = await tx.badgeAcces.update({ where: { id }, data, include: BADGE_INCLUDE });
+      const statut = this.evaluerStatut(maj);
+      const final = statut !== maj.statut
+        ? await tx.badgeAcces.update({ where: { id }, data: { statut }, include: BADGE_INCLUDE })
+        : maj;
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'BADGE_ACCES_MODIFIE',
+          entite: 'BadgeAcces',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(badge),
+            apres: this.instantaneAudit(final),
+            champsModifies: [...Object.keys(data), ...(statut !== badge.statut ? ['statut'] : [])],
+          }),
+        },
       });
-      await this.journal(user.id, 'BADGE_ACCES_MODIFIE', id);
       return final;
-    }
-
-    await this.journal(user.id, 'BADGE_ACCES_MODIFIE', id);
-    return miseAJour;
+    });
   }
 
   async annuler(id: string, dto: AnnulerBadgeDto, user: AuthUser) {
-    const badge = await this.trouver(id);
-    if (badge.statut === StatutBadge.ANNULE) {
-      throw new BadRequestException('Ce badge est déjà annulé.');
-    }
-    const miseAJour = await this.prisma.badgeAcces.update({
-      where: { id },
-      data: {
-        statut: StatutBadge.ANNULE,
-        motif: dto.motif,
-      },
-      include: BADGE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
+      const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
+      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
+        throw new BadRequestException(I18nContext.current()!.t('badges.ce_badge_est_deja_annule'));
+      }
+      const miseAJour = await tx.badgeAcces.update({
+        where: { id },
+        data: { statut: StatutBadge.ANNULE, motif: dto.motif },
+        include: BADGE_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'BADGE_ACCES_ANNULE',
+          entite: 'BadgeAcces',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(badge),
+            apres: this.instantaneAudit(miseAJour),
+            motifFourni: Boolean(dto.motif),
+            champsModifies: ['statut', 'motif'],
+          }),
+        },
+      });
+      return miseAJour;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'BADGE_ACCES_ANNULE',
-        entite: 'BadgeAcces',
-        entiteId: id,
-        details: dto.motif,
-      },
-    });
-    return miseAJour;
   }
 
   async rallonger(id: string, dto: RallongerBadgeDto, user: AuthUser) {
-    const badge = await this.trouver(id);
-    if (badge.statut === StatutBadge.ANNULE) {
-      throw new BadRequestException("Un badge annulé ne se rallonge pas : créez-en un nouveau.");
-    }
     if (new Date(dto.dateValidite) <= new Date()) {
-      throw new BadRequestException('La nouvelle date doit être dans le futur.');
+      throw new BadRequestException(I18nContext.current()!.t('badges.la_nouvelle_date_doit_etre_dans_le_futur'));
     }
-    const miseAJour = await this.prisma.badgeAcces.update({
-      where: { id },
-      data: {
-        dateValidite: new Date(dto.dateValidite),
-        statut: StatutBadge.ACTIF,
-      },
-      include: BADGE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
+      const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
+      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
+        throw new BadRequestException(I18nContext.current()!.t('badges.un_badge_annule_ne_se_rallonge_pas_creez_en_un_nouveau'));
+      }
+      const ecriture = await tx.badgeAcces.updateMany({
+        where: { id, statut: badge.statut },
+        data: { dateValidite: new Date(dto.dateValidite), statut: StatutBadge.ACTIF },
+      });
+      if (ecriture.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('badges.ecriture_concurrente_reessayez'));
+      }
+      const miseAJour = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
+      if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'BADGE_ACCES_RALLONGE',
+          entite: 'BadgeAcces',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(badge),
+            apres: this.instantaneAudit(miseAJour),
+            champsModifies: ['dateValidite', 'statut'],
+          }),
+        },
+      });
+      return miseAJour;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'BADGE_ACCES_RALLONGE',
-        entite: 'BadgeAcces',
-        entiteId: id,
-        details: `Nouvelle validité : ${new Date(dto.dateValidite).toLocaleDateString('fr-FR')}`,
-      },
-    });
-    return miseAJour;
   }
 
   // ----------------------------------------------------------- impression
@@ -298,7 +343,10 @@ export class BadgesService {
     const id = String(dto.badge ?? '').trim();
     const jeton = String(dto.k ?? '').trim();
 
-    const badge = await this.prisma.badgeAcces.findUnique({ where: { id } });
+    const badge = await this.prisma.badgeAcces.findUnique({
+      where: { id },
+      select: BADGE_VERIFICATION_SELECT,
+    });
 
     if (!badge) {
       await this.prisma.auditLog.create({
@@ -339,7 +387,7 @@ export class BadgesService {
     if (statutEffectif === StatutBadge.ANNULE) {
       return {
         valide: false,
-        raison: `Ce badge a été annulé${badge.motif ? ` (motif : ${badge.motif})` : ''}. Il n'ouvre plus aucun accès.`,
+        raison: "Ce badge a été annulé. Il n'ouvre plus aucun accès.",
       };
     }
     if (statutEffectif === StatutBadge.EXPIRE) {
@@ -369,7 +417,7 @@ export class BadgesService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('badges.jeton_invalide_ou_expire'));
     }
     const badge = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, badge.id, badge.qrToken);
@@ -382,15 +430,4 @@ export class BadgesService {
 
   // ---------------------------------------------------------------- journal
 
-  private async journal(userId: string, action: string, entiteId: string, details?: string) {
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        entite: 'BadgeAcces',
-        entiteId,
-        ...(details ? { details } : {}),
-      },
-    });
-  }
 }

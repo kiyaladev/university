@@ -1,51 +1,68 @@
-import { Controller, Get, Param, Query, Res, UnauthorizedException } from '@nestjs/common';
+import { Role } from '@prisma/client';
+import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
 import { Module } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import type { Response } from 'express';
-import { AuthUser, CurrentUser, Public } from '../../common/decorators';
+import type { Request, Response } from 'express';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
+import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 import { ParametresModule } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { ImpressionService } from './impression.service';
 import { ExportService } from './export.service';
-import { RapportQueryDto } from './rapports.dto';
+import { RapportQueryDto, perimetrePresence } from './rapports.dto';
+import { CouvertureControleursController } from './couverture-controleurs.controller';
+import { ReleveHebdomadaireController } from './releve-pdf.controller';
+import { RelevePdfService } from './releve-pdf.service';
 
 @ApiTags('Rapports')
 @ApiBearerAuth()
 @Controller('rapports')
+@Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
 export class RapportsController {
   constructor(private readonly service: RapportsService) {}
 
-  @Get('dashboard') dashboard(@Query() query: RapportQueryDto) {
-    return this.service.dashboard(query);
+  @Get('dashboard') dashboard(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.dashboard(perimetrePresence(query, user));
   }
 
-  @Get('presence-enseignants') presence(@Query() query: RapportQueryDto) {
-    return this.service.presenceEnseignants(query);
+  @Get('presence-enseignants') presence(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.presenceEnseignants(perimetrePresence(query, user));
   }
 
   /** Statistiques par salle : le terrain du contrôleur. */
-  @Get('salles') salles(@Query() query: RapportQueryDto) {
-    return this.service.parSalle(query);
+  @Get('salles') salles(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.parSalle(perimetrePresence(query, user));
   }
 
-  @Get('volume-horaire') volume(@Query() query: RapportQueryDto) {
-    return this.service.volumeHoraire(query);
+  @Get('volume-horaire') volume(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.volumeHoraire(perimetrePresence(query, user));
   }
 
-  @Get('etat-paiement') paiement(@Query() query: RapportQueryDto) {
+  @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
+  @Get('etat-paiement') paiement(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.etatPaiement(query);
   }
 
-  @Get('registre') registre(@Query() query: RapportQueryDto) {
-    return this.service.registre(query);
+  @Get('registre') registre(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    const inclureObservations = user.role === Role.ADMIN
+      || user.role === Role.DIRECTION
+      || user.role === Role.SCOLARITE;
+    return this.service.registre(perimetrePresence(query, user), false, inclureObservations);
   }
 
-  @Get('fiche-enseignant/:id') fiche(@Param('id') id: string, @Query() query: RapportQueryDto) {
-    return this.service.ficheEnseignant(id, query);
+  @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.ENSEIGNANT)
+  @DocumentScope('enseignant', { [Role.ENSEIGNANT]: 'id', [Role.CHEF_DEPARTEMENT]: 'departementId' })
+  @Get('fiche-enseignant/:id') fiche(@Param('id') id: string, @Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+    const inclureObservations = user.role === Role.ADMIN
+      || user.role === Role.DIRECTION
+      || user.role === Role.SCOLARITE;
+    return this.service.ficheEnseignant(id, perimetrePresence(query, user), inclureObservations);
   }
 
   /** Fiche de l'enseignant connecté. */
+  @Roles(Role.ENSEIGNANT)
   @Get('ma-fiche') maFiche(@CurrentUser() user: AuthUser, @Query() query: RapportQueryDto) {
     return this.service.ficheEnseignant(user.enseignantId ?? '—', query);
   }
@@ -64,49 +81,49 @@ export class ImpressionController {
     private readonly jwt: JwtService,
   ) {}
 
-  private verifier(token?: string) {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
-    }
-  }
-
   private async envoyer(res: Response, html: Promise<string>) {
     res.type('html').send(await html);
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('registre')
-  async registre(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
-    await this.envoyer(res, this.impression.registre(query));
+  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
+    await this.envoyer(res, this.impression.registre(perimetrePresence(query, user)));
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.ENSEIGNANT)
+  @DocumentScope('enseignant', { [Role.ENSEIGNANT]: 'id', [Role.CHEF_DEPARTEMENT]: 'departementId' })
   @Get('fiche-enseignant/:id')
   async fiche(
     @Res() res: Response,
     @Param('id') id: string,
-    @Query() query: RapportQueryDto & { token?: string },
+    @Req() req: Request, @Query() query: RapportQueryDto & { token?: string },
+    @CurrentUser() user: AuthUser,
   ) {
-    this.verifier(query.token);
-    await this.envoyer(res, this.impression.ficheEnseignant(id, query));
+    verifierJetonImprimable(this.jwt, req);
+    await this.envoyer(res, this.impression.ficheEnseignant(id, perimetrePresence(query, user)));
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
+  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.etatPaiement(query));
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get('qr-salles')
-  async qr(@Res() res: Response, @Query() query: { token?: string; salleId?: string }) {
-    this.verifier(query.token);
-    await this.envoyer(res, this.impression.affichesQr(query.salleId));
+  async qr(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() query: { token?: string; salleId?: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    verifierJetonImprimable(this.jwt, req);
+    await this.envoyer(res, this.impression.affichesQr(user, query.salleId));
   }
+
 }
 
 /** Exports CSV (tableur) — même principe d'authentification par jeton en URL. */
@@ -118,14 +135,6 @@ export class ExportController {
     private readonly jwt: JwtService,
   ) {}
 
-  private verifier(token?: string) {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
-    }
-  }
-
   private async envoyer(res: Response, nom: string, csv: Promise<string>) {
     res
       .type('text/csv; charset=utf-8')
@@ -133,49 +142,48 @@ export class ExportController {
       .send(await csv);
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('presence-enseignants')
-  async presence(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
+  async presence(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(
       res,
       `assiduite-${query.dateDebut ?? ''}_${query.dateFin ?? ''}`,
-      this.exports.presenceEnseignants(query),
+      this.exports.presenceEnseignants(perimetrePresence(query, user)),
     );
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('volume-horaire')
-  async volume(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
-    await this.envoyer(res, 'volume-horaire', this.exports.volumeHoraire(query));
+  async volume(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
+    await this.envoyer(res, 'volume-horaire', this.exports.volumeHoraire(perimetrePresence(query, user)));
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
+  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'etat-paiement', this.exports.etatPaiement(query));
   }
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('registre')
-  async registre(@Res() res: Response, @Query() query: RapportQueryDto & { token?: string }) {
-    this.verifier(query.token);
-    await this.envoyer(res, `registre-${query.dateDebut ?? query.date ?? ''}`, this.exports.registre(query));
+  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+    verifierJetonImprimable(this.jwt, req);
+    const inclureObservations = user.role === Role.ADMIN
+      || user.role === Role.DIRECTION
+      || user.role === Role.SCOLARITE;
+    await this.envoyer(res, `registre-${query.dateDebut ?? query.date ?? ''}`, this.exports.registre(perimetrePresence(query, user), inclureObservations));
   }
 }
 
 @Module({
   imports: [
     ParametresModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
   ],
-  controllers: [RapportsController, ImpressionController, ExportController],
-  providers: [RapportsService, ImpressionService, ExportService],
+  controllers: [RapportsController, ImpressionController, ExportController, ReleveHebdomadaireController, CouvertureControleursController],
+  providers: [RapportsService, ImpressionService, ExportService, RelevePdfService],
   exports: [RapportsService],
 })
 export class RapportsModule {}

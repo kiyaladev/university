@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsBooleanString,
@@ -37,7 +37,7 @@ export class CreateCoursVODDto {
 
   @IsOptional() @IsString() @MaxLength(200_000) transcription?: string;
 
-  @IsOptional() @IsBoolean() public?: boolean;
+  @IsOptional() @Transform(({ obj, key }) => obj[key]) @IsBoolean() public?: boolean;
   @IsOptional() @IsUUID() inscriptionId?: string;
 }
 
@@ -50,7 +50,7 @@ export class ArchiverVODDto {
 export class EnregistrerVueDto {
   @Type(() => Number) @IsInt() @Min(0) positionSecondes: number;
   @Type(() => Number) @IsInt() @Min(0) dureeSecondes: number;
-  @IsOptional() @IsBoolean() termine?: boolean;
+  @IsOptional() @Transform(({ obj, key }) => obj[key]) @IsBoolean() termine?: boolean;
 }
 
 export class VodQueryDto extends QueryDto {

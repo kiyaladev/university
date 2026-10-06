@@ -1,0 +1,13 @@
+{
+  "enseignant_introuvable": "Enseignant introuvable",
+  "seule_l_administration_peut_revoquer_un_appareil": "Seule l'administration peut révoquer un appareil",
+  "signature_de_la_passerelle_biometrique_invalide": "Signature de la passerelle biométrique invalide",
+  "resultat_biometrique_perime_recommencez_la_lecture": "Résultat biométrique périmé — recommencez la lecture",
+  "aucune_empreinte_enrolee_pour_cet_enseignant": "Aucune empreinte enrôlée pour cet enseignant",
+  "aucune_empreinte_n_est_enrolee_pour_cet_enseignant": "Aucune empreinte n'est enrôlée pour cet enseignant",
+  "aucun_code_personnel_n_a_ete_defini_pour_cet_enseignant": "Aucun code personnel n'a été défini pour cet enseignant",
+  "code_personnel_incorrect": "Code personnel incorrect",
+  "seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u": "Seule la scolarité peut définir les moyens d’attestation d’un enseignant",
+  "appareil_inconnu_ou_revoque_sa_lecture_d_empreinte_n_est_pas": "Appareil inconnu ou révoqué : sa lecture d’empreinte n’est pas recevable",
+  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "L'enseignant doit consentir avant tout enrôlement d'empreinte. Le code personnel et la signature restent disponibles."
+}

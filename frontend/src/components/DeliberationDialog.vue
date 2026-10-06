@@ -1,7 +1,7 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 640px; max-width: 95vw">
-      <q-card-section class="text-h6">Nouvelle délibération</q-card-section>
+      <q-card-section class="text-h6">{{ $t('deliberations.actions.newDeliberation') }}</q-card-section>
 
       <q-card-section>
         <q-select
@@ -11,7 +11,7 @@
           dense
           emit-value
           map-options
-          label="Année académique *"
+          :label="$t('affectations.dialog.fields.year')"
           @update:model-value="resetPromotion"
         />
         <q-select
@@ -21,26 +21,25 @@
           dense
           emit-value
           map-options
-          label="Promotion *"
+          :label="$t('affectations.dialog.fields.promotion')"
           class="q-mt-sm"
         />
         <semestre-select
           v-model="form.session"
           type="session"
-          label="Session *"
+          :label="$t('deliberations.createDialog.session')"
           class="q-mt-sm"
-          hint="Rattrapage : seuls les AJOURNÉ de la session normale sont repositionnés"
+          :hint="$t('deliberations.createDialog.sessionHint')"
         />
 
         <q-banner class="note--valide q-mt-md" dense>
           <template #avatar><q-icon name="gavel" /></template>
-          La délibération est créée en brouillon : les moyennes sont calculées
-          automatiquement, puis le jury (direction) les valide.
+          {{ $t('deliberations.createDialog.draftHint') }}
         </q-banner>
 
         <q-separator class="q-my-md" />
 
-        <span class="section-titre">Aperçu du bulletin type</span>
+        <span class="section-titre">{{ $t('deliberations.createDialog.previewTitle') }}</span>
         <q-card flat bordered class="apercu-bulletin">
           <q-card-section class="apercu-bulletin__entete">
             <div>
@@ -48,11 +47,11 @@
                 {{ apercu.etudiant.prenom }} {{ apercu.etudiant.nom }}
               </div>
               <div class="apercu-bulletin__meta">
-                Matricule {{ apercu.etudiant.matricule }} ·
+                {{ $t('common.fields.matricule') }} {{ apercu.etudiant.matricule }} ·
                 {{ apercu.promotion }} · {{ apercu.annee }}
               </div>
             </div>
-            <q-badge color="grey-6" label="ADMIS / AJOURNÉ" />
+            <q-badge color="grey-6" :label="$t('deliberations.createDialog.previewDecision')" />
           </q-card-section>
           <q-card-section class="apercu-bulletin__corps">
             <div class="apercu-bulletin__ligne" v-for="m in apercu.lignes" :key="m.code">
@@ -65,19 +64,19 @@
           </q-card-section>
           <q-card-section class="apercu-bulletin__pied">
             <span class="text-caption text-grey-7">
-              Les notes et la décision sont renseignées après calcul.
+              {{ $t('deliberations.createDialog.previewHint') }}
             </span>
           </q-card-section>
         </q-card>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat no-caps label="Annuler" v-close-popup />
+        <q-btn flat no-caps :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
-          label="Créer"
+          :label="$t('common.actions.create')"
           :loading="enregistrement"
           :disable="!form.anneeId || !form.promotionId"
           @click="creer"
@@ -90,6 +89,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import SemestreSelect from './SemestreSelect.vue';
 import type {
@@ -108,6 +108,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const form = ref({
@@ -142,15 +143,15 @@ const apercu = computed(() => {
     }));
   if (!lignes.length) {
     lignes.push(
-      { intitule: 'Matière 1', code: 'MAT1', credits: 3 },
-      { intitule: 'Matière 2', code: 'MAT2', credits: 4 },
-      { intitule: 'Matière 3', code: 'MAT3', credits: 3 },
+      { intitule: t('deliberations.createDialog.sampleSubject', { number: 1 }), code: 'MAT1', credits: 3 },
+      { intitule: t('deliberations.createDialog.sampleSubject', { number: 2 }), code: 'MAT2', credits: 4 },
+      { intitule: t('deliberations.createDialog.sampleSubject', { number: 3 }), code: 'MAT3', credits: 3 },
     );
   }
   return {
-    etudiant: { matricule: '———', nom: 'Étudiant', prenom: 'Exemple' },
-    promotion: p?.nom ?? 'Promotion sélectionnée',
-    annee: a?.libelle ?? 'Année sélectionnée',
+    etudiant: { matricule: '———', nom: t('deliberations.createDialog.sampleStudent'), prenom: t('deliberations.createDialog.sampleName') },
+    promotion: p?.nom ?? t('deliberations.createDialog.selectedPromotion'),
+    annee: a?.libelle ?? t('deliberations.createDialog.selectedYear'),
     lignes,
   };
 });
@@ -179,13 +180,13 @@ async function creer() {
       promotionId: form.value.promotionId,
       session: form.value.session,
     });
-    $q.notify({ type: 'positive', message: 'Délibération créée, moyennes calculées' });
+    $q.notify({ type: 'positive', message: t('deliberations.createDialog.created') });
     emit('enregistre');
     emit('update:modelValue', false);
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Création impossible — une délibération existe peut-être déjà pour cette promotion et cette session.',
+      message: e?.response?.data?.message ?? t('deliberations.createDialog.createFailed'),
     });
   } finally {
     enregistrement.value = false;
@@ -203,7 +204,7 @@ async function creer() {
   align-items: center;
 }
 .apercu-bulletin__nom {
-  font-weight: 700;
+  font-weight: 590;
 }
 .apercu-bulletin__meta {
   font-size: 12px;
@@ -220,7 +221,7 @@ async function creer() {
   }
 }
 .apercu-bulletin__moyenne {
-  font-weight: 700;
+  font-weight: 590;
   font-size: 16px;
   color: var(--up-encre-douce);
 }

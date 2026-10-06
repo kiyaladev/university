@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-06T10:22:37.864Z",
+  "database": "university_recommandations_20261006",
+  "passed": false,
+  "failures": [
+    "double publication acceptée",
+    "chaîne de fin de lecture acceptée",
+    "chaîne de confidentialité acceptée",
+    "double archivage accepté",
+    "archive modifiable",
+    "traces de transition dupliquées"
+  ],
+  "observations": {
+    "publicationStatuses": [
+      201,
+      201
+    ],
+    "archiveStatuses": [
+      201,
+      201
+    ],
+    "publicationAuditCount": 2,
+    "archiveAuditCount": 2,
+    "stringBooleanStatuses": [
+      201,
+      201
+    ],
+    "archivedEditStatus": 200,
+    "viewsBeforeMalformedRequest": 4,
+    "completeViewsBeforeMalformedRequest": 1,
+    "concurrentViewCounts": [
+      3,
+      4
+    ],
+    "latestPositionBeforeConcurrentViews": 95,
+    "privateForeignResourceAbsent": true,
+    "journalContentAbsent": true
+  },
+  "productionUntouched": true,
+  "mediaDownloaded": false,
+  "realMediaAndHumanAcceptancePending": true
+}

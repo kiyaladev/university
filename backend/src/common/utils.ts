@@ -1,5 +1,12 @@
 /** Utilitaires partagés : heures "HH:mm", dates ISO, distance géographique. */
 
+export const SIGNATURE_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
+
+/** Une image de signature ne peut contenir ni URL externe ni attribut HTML. */
+export function signaturePng(value?: string | null): string | null {
+  return value && value.length <= 1_000_000 && SIGNATURE_PNG.test(value) ? value : null;
+}
+
 /**
  * Base d'URL publique du FRONT (et non de l'API) pour les QR et liens
  * imprimés : le formulaire d'impression est servi par l'API mais l'utilisateur
@@ -107,4 +114,25 @@ export function round2(n: number): number {
 /** Pourcentage sûr (0 si dénominateur nul). */
 export function pct(num: number, den: number): number {
   return den > 0 ? round2((num / den) * 100) : 0;
+}
+
+/**
+ * Échappement HTML pour les documents imprimables.
+ *
+ * Seize copies de cette fonction coexistaient dans les modules, et sept
+ * n'échappaient pas le guillemet — donc la rupture d'attribut : un jour où
+ * une valeur atterrissait dans `class="badge ${x}"`, c'était une XSS
+ * stockée. Une seule implémentation, complète, évite que la prochaine
+ * divergence ne réapparaisse.
+ *
+ * `&` est remplacé en premier : l'apostrophe produite par les remplacements
+ * suivants ne doit pas être ré-échappée.
+ */
+export function echapper(v: unknown): string {
+  return String(v ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }

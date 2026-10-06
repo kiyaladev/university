@@ -12,13 +12,24 @@ import {
   IsString,
   IsUUID,
   Matches,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 import { PreuveEmpreinteDto } from '../attestation/attestation.dto';
+import { SIGNATURE_PNG } from '../../common/utils';
 
 const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+export class AuditQueryDto extends QueryDto {
+  @IsOptional() @IsString() entite?: string;
+  @IsOptional() @IsString() action?: string;
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsString() acteur?: string;
+  @IsOptional() @IsDateString() dateDebut?: string;
+  @IsOptional() @IsDateString() dateFin?: string;
+}
 
 /** Ce que le contrôleur consigne en salle — l'équivalent numérique du registre. */
 export class PointageDto {
@@ -45,7 +56,8 @@ export class PointageDto {
   // --- Attestation donnée par l'enseignant sur l'appareil du contrôleur,
   //     en salle (une seule de ces preuves suffit)
   /** Signature manuscrite tracée sur l'écran du contrôleur. */
-  @IsOptional() @IsString() signatureBase64?: string;
+  @IsOptional() @IsString() @MaxLength(1_000_000) @Matches(SIGNATURE_PNG)
+  signatureBase64?: string;
 
   /** Code personnel de l'enseignant saisi sur l'écran du contrôleur. */
   @IsOptional() @Matches(/^\d{4,6}$/, { message: 'Le code personnel comporte 4 à 6 chiffres' })

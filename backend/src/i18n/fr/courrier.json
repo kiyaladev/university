@@ -1,0 +1,14 @@
+{
+  "archive_readonly": "Un courrier archivé ne peut plus être modifié",
+  "status_workflow_required": "Le statut évolue par le circuit de paraphe ou la clôture administrative",
+  "previous_step_required": "Les étapes précédentes doivent être traitées avant ce paraphe",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "courrier_introuvable": "Courrier introuvable",
+  "etape_de_circuit_introuvable_pour_ce_courrier": "Étape de circuit introuvable pour ce courrier",
+  "cette_etape_a_deja_ete_traitee": "Cette étape a déjà été traitée",
+  "seul_un_administrateur_peut_cloturer_un_courrier_transition_": "Seul un administrateur peut clôturer un courrier (transition vers les archives)",
+  "courrier_courrier_statut_la_cloture_exige_en_circuit_traite_": "Courrier {courrier.statut} : la clôture exige EN_CIRCUIT, TRAITE ou CLASSE",
+  "department_scope_required": "Un chef doit être rattaché au département destinataire du courrier.",
+  "department_invalid": "Département destinataire introuvable.",
+  "department_routing_started": "Le département destinataire ne peut plus changer après un premier paraphe."
+}

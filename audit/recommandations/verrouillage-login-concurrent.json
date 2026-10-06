@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-03",
+  "module": "backend/src/modules/auth",
+  "garanties": [
+    "Chaque échec utilise l’incrément atomique Prisma de tentativesEchouees dans une transaction.",
+    "Le seuil de verrouillage est calculé sur la valeur effectivement renvoyée par la base ; le verrou et AuditLog sont écrits ensemble.",
+    "Un échec déjà en vol sous le seuil ne réécrit pas verrouilleJusqua et ne peut donc pas effacer le verrou posé par une autre requête.",
+    "La remise à zéro après connexion réussie et la trace LOGIN sont atomiques ; le jeton n’est émis qu’après validation de la transaction.",
+    "Les messages, le seuil, la durée et les réponses publiques sont conservés ; l’adresse IP reste réservée aux traces serveur et n’est pas renvoyée au client."
+  ],
+  "verification": {
+    "testsAuth": "24 tests passent, dont échec simultané, franchissement du seuil avec lecture périmée, maintien du verrou concurrent et rollback du journal.",
+    "testRegression": "L’ancienne logique basée sur echecs + 1 fait échouer les six tests ciblés d’atomicité/concurrence.",
+    "backendComplet": "95 suites, 738 tests passent avec npm test -- --runInBand --forceExit.",
+    "typecheck": "npx tsc --noEmit -p tsconfig.json réussi.",
+    "build": "npm run build réussi."
+  },
+  "limites": [
+    "Les tests concurrentiels utilisent un faux Prisma qui simule une ligne partagée et l’incrément atomique ; aucun test concurrent d’intégration PostgreSQL n’a été exécuté.",
+    "La livraison des changements au processus public attend toujours le redéploiement planifié."
+  ]
+}

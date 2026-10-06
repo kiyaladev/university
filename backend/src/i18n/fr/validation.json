@@ -1,0 +1,18 @@
+{
+  "required": "Le champ {field} est requis",
+  "invalidEmail": "Adresse e-mail invalide",
+  "invalidPhone": "Numéro de téléphone invalide",
+  "minLength": "Le champ {field} doit contenir au moins {min} caractères",
+  "maxLength": "Le champ {field} ne peut pas dépasser {max} caractères",
+  "min": "La valeur minimale autorisée est {min}",
+  "max": "La valeur maximale autorisée est {max}",
+  "mustBeString": "Le champ {field} doit être une chaîne de caractères",
+  "mustBeNumber": "Le champ {field} doit être un nombre",
+  "mustBeInt": "Le champ {field} doit être un entier",
+  "mustBeBoolean": "Le champ {field} doit être un booléen",
+  "mustBeArray": "Le champ {field} doit être une liste",
+  "mustBeEnum": "Valeur non autorisée pour {field}",
+  "invalidFormat": "Le format du champ {field} est invalide",
+  "invalidDate": "Date invalide pour le champ {field}",
+  "mustMatch": "Le champ {field} ne correspond pas au format attendu"
+}

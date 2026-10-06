@@ -2,31 +2,29 @@
   <q-page class="notifications">
     <header class="notifications__entete">
       <div>
-        <h1 class="page-titre">Notifications SMS</h1>
+        <h1 class="page-titre">{{ $t('notificationsPage.header.title') }}</h1>
         <p class="page-sous-titre">
-          Le seul canal qui atteint un étudiant sans connexion : avis généraux et
-          résultats de délibération. Chaque envoi est consigné, avec son motif,
-          son destinataire et son sort.
+          {{ $t('notificationsPage.header.subtitle') }}
         </p>
       </div>
       <q-chip v-if="stats" square color="warning" text-color="dark" icon="sms">
-        En file : {{ stats.EN_ATTENTE }}
+        {{ $t('notificationsPage.header.queued', { n: stats.EN_ATTENTE }) }}
         <q-tooltip>
-          Envoyées {{ stats.ENVOYEE }} · Échouées {{ stats.ECHOUE }}
+          {{ $t('notificationsPage.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
         </q-tooltip>
       </q-chip>
     </header>
 
     <liens-croises
       :liens="[
-        { to: '/deliberations', libelle: 'Délibérations', icone: 'how_to_vote', aide: 'La source des résultats diffusés par SMS' },
-        { to: '/etudiants', libelle: 'Étudiants', icone: 'groups', aide: 'Les numéros de téléphone utilisés pour la diffusion' },
+        { to: '/deliberations', libelle: $t('notificationsPage.links.deliberations.label'), icone: 'how_to_vote', aide: $t('notificationsPage.links.deliberations.help') },
+        { to: '/etudiants', libelle: $t('notificationsPage.links.etudiants.label'), icone: 'groups', aide: $t('notificationsPage.links.etudiants.help') },
       ]"
     />
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="diffusion" icon="campaign" label="Diffusion" no-caps />
-      <q-tab name="historique" icon="history" label="Historique" no-caps />
+      <q-tab name="diffusion" icon="campaign" :label="$t('notificationsPage.tabs.diffusion')" no-caps />
+      <q-tab name="historique" icon="history" :label="$t('notificationsPage.tabs.historique')" no-caps />
     </q-tabs>
 
     <!-- ============================================================== -->
@@ -37,7 +35,7 @@
         <!-- Diffusion manuelle -->
         <q-form ref="formRef" @submit.prevent="confirmerEnvoi">
           <section class="plaque notif-bloc">
-            <h2 class="pochoir section-titre">Avis général</h2>
+            <h2 class="pochoir section-titre">{{ $t('notificationsPage.broadcast.generalNotice.title') }}</h2>
 
             <q-select
               v-model="motif"
@@ -46,10 +44,10 @@
               dense
               emit-value
               map-options
-              label="Motif"
+              :label="$t('notificationsPage.broadcast.generalNotice.motifLabel')"
             />
 
-            <p class="pochoir notif-bloc__titre">Destinataires</p>
+            <p class="pochoir notif-bloc__titre">{{ $t('notificationsPage.broadcast.generalNotice.recipientsLabel') }}</p>
             <q-option-group
               v-model="destination"
               :options="optionsDestinataires"
@@ -63,7 +61,7 @@
               type="textarea"
               outlined
               dense
-              label="Numéros, un par ligne (ou séparés par une virgule)"
+              :label="$t('notificationsPage.broadcast.generalNotice.numbersLabel')"
               :rules="[
                 (v) =>
                   v
@@ -71,7 +69,7 @@
                         .split(/[\s,;]+/)
                         .filter(Boolean)
                         .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
-                      || 'Certains numéros semblent invalides'
+                      || t('notificationsPage.broadcast.generalNotice.numbersInvalid')
                     : true,
               ]"
             />
@@ -80,24 +78,24 @@
               v-model="message"
               type="textarea"
               outlined
-              label="Message"
+              :label="$t('notificationsPage.broadcast.generalNotice.messageLabel')"
               maxlength="160"
               counter
-              :rules="[(v) => !!v || 'Le message est requis']"
+              :rules="[(v) => !!v || t('notificationsPage.broadcast.generalNotice.messageRequired')]"
             >
-              <template #hint>Un SMS tient en 160 caractères</template>
+              <template #hint>{{ $t('notificationsPage.broadcast.generalNotice.messageHint') }}</template>
             </q-input>
 
             <q-banner dense class="note--info">
               <template #avatar><q-icon name="info" /></template>
               <div v-if="destination === 'tous'">
-                Nombre de destinataires estimé : <strong>{{ nbInscrits }}</strong>
+                {{ $t('notificationsPage.broadcast.generalNotice.recipientsEstimated', { n: nbInscrits }) }}
               </div>
               <div v-else-if="destination === 'numeros'">
-                {{ numerosComptes }} numéro(s) saisi(s)
+                {{ $t('notificationsPage.broadcast.generalNotice.numbersEntered', { n: numerosComptes }) }}
               </div>
               <div v-else>
-                Diffusion des résultats de la délibération sélectionnée
+                {{ $t('notificationsPage.broadcast.generalNotice.deliberationBroadcast') }}
               </div>
             </q-banner>
 
@@ -107,7 +105,7 @@
                 color="primary"
                 no-caps
                 icon="science"
-                label="Tester l'envoi"
+                :label="$t('notificationsPage.broadcast.generalNotice.testSend')"
                 :loading="testEnvoi"
                 @click="testerEnvoi"
               />
@@ -116,7 +114,7 @@
                 color="primary"
                 no-caps
                 icon="send"
-                label="Envoyer"
+                :label="$t('notificationsPage.broadcast.generalNotice.send')"
                 :loading="envoi"
                 :disable="!formulaireValide"
                 @click="confirmerEnvoi"
@@ -127,12 +125,9 @@
 
         <!-- Résultats de délibération -->
         <section class="plaque notif-bloc">
-          <h2 class="section-titre">Résultats de délibération</h2>
+          <h2 class="section-titre">{{ $t('notificationsPage.broadcast.deliberationResults.title') }}</h2>
           <p class="notif-bloc__aide">
-            Chaque étudiant ADMIS ou AJOURNÉ inscrit dans la délibération
-            reçoit sa moyenne et sa décision par SMS, sur le numéro de sa
-            fiche. Seules les délibérations validées par le jury peuvent
-            être diffusées.
+            {{ $t('notificationsPage.broadcast.deliberationResults.help') }}
           </p>
           <q-select
             v-model="deliberationId"
@@ -141,7 +136,7 @@
             dense
             emit-value
             map-options
-            label="Délibération validée"
+            :label="$t('notificationsPage.broadcast.deliberationResults.selectLabel')"
             :loading="chargementDeliberations"
           />
           <q-btn
@@ -149,7 +144,7 @@
             color="secondary"
             no-caps
             icon="fact_check"
-            label="Diffuser les résultats"
+            :label="$t('notificationsPage.broadcast.deliberationResults.submit')"
             :loading="envoiResultats"
             :disable="!deliberationId"
             @click="diffuserResultats"
@@ -160,15 +155,15 @@
       <!-- Résumé du dernier envoi -->
       <div v-if="resume" class="plaque notif-resume" :class="{ 'notif-resume--partiel': resume.echouees }">
         <div class="notif-resume__cellule">
-          <p class="pochoir">Destinataires</p>
+          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.recipients') }}</p>
           <p class="lettrage chiffres">{{ resume.total }}</p>
         </div>
         <div class="notif-resume__cellule text-positive">
-          <p class="pochoir">Envoyés</p>
+          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.sent') }}</p>
           <p class="lettrage chiffres">{{ resume.envoyees }}</p>
         </div>
         <div class="notif-resume__cellule" :class="resume.echouees ? 'text-negative' : 'text-positive'">
-          <p class="pochoir">Échoués</p>
+          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.failed') }}</p>
           <p class="lettrage chiffres">{{ resume.echouees }}</p>
         </div>
       </div>
@@ -180,7 +175,7 @@
     <q-tab-panel v-if="onglet === 'historique'" name="historique" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresHistorique"
-        placeholder="Rechercher (téléphone, nom, message…)"
+        :placeholder="$t('notificationsPage.history.searchPlaceholder')"
         :recherche="true"
         @reinitialiser="filtresHistorique = { recherche: '' }"
       >
@@ -193,25 +188,25 @@
             clearable
             emit-value
             map-options
-            label="Statut"
+            :label="$t('notificationsPage.history.statutLabel')"
           />
-          <champ-date v-model="filtresHistorique.dateDebut" label="Du" />
-          <champ-date v-model="filtresHistorique.dateFin" label="Au" />
+          <champ-date v-model="filtresHistorique.dateDebut" :label="$t('notificationsPage.history.dateFrom')" />
+          <champ-date v-model="filtresHistorique.dateFin" :label="$t('notificationsPage.history.dateTo')" />
         </template>
       </filter-bar>
 
       <div class="text-caption text-grey-7 q-mb-sm">
-        {{ pagination.total }} envoi(s) — {{ legendePeriode }}.
+        {{ $t('notificationsPage.history.countLabel', { n: pagination.total, periode: legendePeriode }) }}
       </div>
 
       <!-- Graphique de répartition -->
       <q-card v-if="chartConfig" flat bordered class="carte q-mb-md">
         <q-card-section>
           <div class="text-subtitle1 text-weight-medium">
-            Répartition des 30 derniers jours
+            {{ $t('notificationsPage.history.chart.title') }}
           </div>
           <div class="text-caption text-grey-7 q-mb-sm">
-            Tous les envois consignés, quel que soit le filtre du registre ci-dessous
+            {{ $t('notificationsPage.history.chart.subtitle') }}
           </div>
           <chart-canvas
             :config="chartConfig"
@@ -231,7 +226,7 @@
         row-key="id"
         :loading="chargement"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargement || lignes.length > 0"
       >
         <template #body-cell-statut="p">
           <q-td :props="p">
@@ -279,11 +274,11 @@
               round
               color="primary"
               icon="refresh"
-              :aria-label="`Renvoyer le SMS au ${p.row.telephone}`"
+              :aria-label="t('notificationsPage.history.table.resendAria', { telephone: p.row.telephone })"
               :loading="renvoiEnCours === p.row.id"
               @click="renvoyer(p.row)"
             >
-              <q-tooltip>Renvoyer ce message</q-tooltip>
+              <q-tooltip>{{ $t('notificationsPage.history.table.resendTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -291,12 +286,12 @@
         <template #no-data>
           <div class="etat-vide">
             <q-icon name="sms" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">Aucun envoi consigné</div>
+            <div class="text-subtitle2 q-mt-sm">{{ $t('notificationsPage.history.emptyState.title') }}</div>
             <div class="text-caption">
-              Le registre garde la trace de chaque SMS parti d'UniPrésence.
+              {{ $t('notificationsPage.history.emptyState.detail') }}
               {{ aDesFiltresHistorique
-                ? 'Aucun ne correspond aux filtres en cours.'
-                : 'Diffusez un avis depuis l’onglet Diffusion pour commencer.' }}
+                ? $t('notificationsPage.history.emptyState.noneMatchFilters')
+                : $t('notificationsPage.history.emptyState.startBroadcast') }}
             </div>
             <q-btn
               v-if="aDesFiltresHistorique"
@@ -305,7 +300,7 @@
               no-caps
               color="primary"
               icon="filter_alt_off"
-              label="Retirer les filtres"
+              :label="$t('notificationsPage.history.emptyState.clearFilters')"
               @click="reinitialiserHistorique"
             />
             <q-btn
@@ -315,7 +310,7 @@
               no-caps
               color="primary"
               icon="campaign"
-              label="Aller à la diffusion"
+              :label="$t('notificationsPage.history.emptyState.goToBroadcast')"
               @click="onglet = 'diffusion'"
             />
           </div>
@@ -337,6 +332,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import type { ChartConfiguration } from 'chart.js';
 import { api } from '../boot/axios';
 import {
@@ -357,12 +353,13 @@ import LiensCroises from '../components/LiensCroises.vue';
  * Peintures des états d'envoi, identiques aux pastilles du registre :
  * attente en jaune, envoyé en vert, échec en rouge.
  */
-const PEINTURE_ATTENTE = '#EFB700';
-const PEINTURE_ENVOYE = '#0F7A45';
-const PEINTURE_ECHEC = '#C4122E';
+const PEINTURE_ATTENTE = '#FCD116';
+const PEINTURE_ENVOYE = '#007A4D';
+const PEINTURE_ECHEC = '#CE1126';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const onglet = ref('diffusion');
 
@@ -380,20 +377,20 @@ const formulaireValide = computed(() => {
 });
 
 // ----------------------------------------------------------------- diffusion
-const motifs = [
-  { label: 'Avis', value: 'AVIS' },
-  { label: 'Résultats', value: 'RESULTATS' },
-  { label: 'Inscription', value: 'INSCRIPTION' },
-  { label: 'Paiement', value: 'PAIEMENT' },
-  { label: 'Convocation', value: 'CONVOCATION' },
-  { label: 'Autre', value: 'AUTRE' },
-];
+const motifs = computed(() => [
+  { label: t('notificationsPage.broadcast.motifs.avis'), value: 'AVIS' },
+  { label: t('notificationsPage.broadcast.motifs.resultats'), value: 'RESULTATS' },
+  { label: t('notificationsPage.broadcast.motifs.inscription'), value: 'INSCRIPTION' },
+  { label: t('notificationsPage.broadcast.motifs.paiement'), value: 'PAIEMENT' },
+  { label: t('notificationsPage.broadcast.motifs.convocation'), value: 'CONVOCATION' },
+  { label: t('notificationsPage.broadcast.motifs.autre'), value: 'AUTRE' },
+]);
 
-const optionsDestinataires = [
-  { label: 'Tous les étudiants inscrits (année en cours)', value: 'tous' },
-  { label: 'Numéros saisis manuellement', value: 'numeros' },
-  { label: 'Résultats de délibération', value: 'resultatsDeliberation' },
-];
+const optionsDestinataires = computed(() => [
+  { label: t('notificationsPage.broadcast.recipientOptions.tous'), value: 'tous' },
+  { label: t('notificationsPage.broadcast.recipientOptions.numeros'), value: 'numeros' },
+  { label: t('notificationsPage.broadcast.recipientOptions.resultatsDeliberation'), value: 'resultatsDeliberation' },
+]);
 
 const motif = ref('AVIS');
 const destination = ref<'tous' | 'numeros' | 'resultatsDeliberation'>('tous');
@@ -439,10 +436,10 @@ async function confirmerEnvoi() {
       ? numerosComptes.value
       : 0;
   $q.dialog({
-    title: "Confirmer l'envoi",
-    message: `Vous allez envoyer un SMS à ${nbDestinaires} destinataire(s). Continuer ?`,
+    title: t('notificationsPage.messages.confirmSendTitle'),
+    message: t('notificationsPage.messages.confirmSendMessage', { n: nbDestinaires }),
     cancel: true,
-    ok: { color: 'primary', label: 'Envoyer', unelevated: true },
+    ok: { color: 'primary', label: t('notificationsPage.messages.confirmSendOk'), unelevated: true },
   }).onOk(() => envoyer());
 }
 
@@ -451,7 +448,7 @@ async function envoyer() {
   try {
     const numeros = destination.value === 'numeros' ? decouperNumeros(numerosSaisis.value) : [];
     if (destination.value === 'numeros' && !numeros.length) {
-      $q.notify({ type: 'warning', message: 'Saisissez au moins un numéro.' });
+      $q.notify({ type: 'warning', message: t('notificationsPage.messages.enterAtLeastOneNumber') });
       return;
     }
     const { data } = await api.post('/notifications', {
@@ -464,12 +461,17 @@ async function envoyer() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
-      message: `${data.envoyees} SMS envoyé(s)${data.echouees ? `, ${data.echouees} échoué(s)` : ''}.`,
+      message: t('notificationsPage.messages.sentSummary', {
+        envoyees: data.envoyees,
+        echoueesSuffix: data.echouees
+          ? t('notificationsPage.messages.sentSummaryFailedSuffix', { n: data.echouees })
+          : '',
+      }),
     });
     await chargerHistorique();
     await chargerStats();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Envoi impossible.' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.sendFailed') });
   } finally {
     envoi.value = false;
   }
@@ -477,7 +479,7 @@ async function envoyer() {
 
 async function testerEnvoi() {
   if (!message.value.trim()) {
-    $q.notify({ type: 'warning', message: 'Saisissez un message avant de tester.' });
+    $q.notify({ type: 'warning', message: t('notificationsPage.messages.enterMessageBeforeTest') });
     return;
   }
   testEnvoi.value = true;
@@ -492,10 +494,10 @@ async function testerEnvoi() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: 'info',
-      message: `Test envoyé à ${data.total} numéro(s) : ${data.envoyees} reçu(s).`,
+      message: t('notificationsPage.messages.testSentSummary', { total: data.total, envoyees: data.envoyees }),
     });
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Test impossible.' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.testFailed') });
   } finally {
     testEnvoi.value = false;
   }
@@ -536,12 +538,15 @@ async function diffuserResultats() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
-      message: `Résultats diffusés : ${data.envoyees} envoyé(s), ${data.echouees} échoué(s).`,
+      message: t('notificationsPage.messages.resultsBroadcastSummary', {
+        envoyees: data.envoyees,
+        echouees: data.echouees,
+      }),
     });
     await chargerHistorique();
     await chargerStats();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Diffusion impossible.' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.broadcastFailed') });
   } finally {
     envoiResultats.value = false;
   }
@@ -564,10 +569,10 @@ const couleurStatut: Record<string, string> = {
   ECHOUE: 'negative',
 };
 
-const colonnes: QTableColumn[] = [
+const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: 'Date',
+    label: t('notificationsPage.history.table.columns.date'),
     field: (r: Notification) => r.createdAt,
     format: (v: string) => dateHeureLisible(v),
     align: 'left',
@@ -575,21 +580,21 @@ const colonnes: QTableColumn[] = [
   },
   {
     name: 'destinataire',
-    label: 'Destinataire',
+    label: t('notificationsPage.history.table.columns.destinataire'),
     field: (r: Notification) => `${r.destinataireNom ?? ''} ${r.telephone}`,
     align: 'left',
   },
-  { name: 'motif', label: 'Motif', field: (r: Notification) => r.motif ?? '—', align: 'left' },
-  { name: 'statut', label: 'Statut', field: (r: Notification) => r.statut, align: 'left' },
+  { name: 'motif', label: t('notificationsPage.history.table.columns.motif'), field: (r: Notification) => r.motif ?? '—', align: 'left' },
+  { name: 'statut', label: t('notificationsPage.history.table.columns.statut'), field: (r: Notification) => r.statut, align: 'left' },
   {
     name: 'message',
-    label: 'Message',
+    label: t('notificationsPage.history.table.columns.message'),
     field: (r: Notification) => r.message,
     align: 'left',
   },
   {
     name: 'envoyePar',
-    label: 'Émis par',
+    label: t('notificationsPage.history.table.columns.envoyePar'),
     field: (r: Notification) => r.envoyePar?.prenom ?? '',
     align: 'left',
   },
@@ -599,7 +604,7 @@ const colonnes: QTableColumn[] = [
     field: 'id',
     align: 'right',
   },
-];
+]);
 
 const aDesFiltresHistorique = computed(() => {
   const f = filtresHistorique.value;
@@ -608,10 +613,15 @@ const aDesFiltresHistorique = computed(() => {
 
 const legendePeriode = computed(() => {
   const f = filtresHistorique.value;
-  if (f.dateDebut && f.dateFin) return `du ${dateLisible(f.dateDebut)} au ${dateLisible(f.dateFin)}`;
-  if (f.dateDebut) return `depuis le ${dateLisible(f.dateDebut)}`;
-  if (f.dateFin) return `jusqu'au ${dateLisible(f.dateFin)}`;
-  return 'tout l’historique';
+  if (f.dateDebut && f.dateFin) {
+    return t('notificationsPage.history.period.range', {
+      debut: dateLisible(f.dateDebut),
+      fin: dateLisible(f.dateFin),
+    });
+  }
+  if (f.dateDebut) return t('notificationsPage.history.period.since', { debut: dateLisible(f.dateDebut) });
+  if (f.dateFin) return t('notificationsPage.history.period.until', { fin: dateLisible(f.dateFin) });
+  return t('notificationsPage.history.period.all');
 });
 
 async function chargerHistorique() {
@@ -635,7 +645,7 @@ async function chargerHistorique() {
     pagination.value.total = 0;
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement de l’historique impossible.',
+      message: e?.response?.data?.message ?? t('notificationsPage.messages.historyLoadFailed'),
     });
   } finally {
     chargement.value = false;
@@ -671,14 +681,14 @@ async function renvoyer(n: Notification) {
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
       message: data.echouees
-        ? `Renvoi au ${n.telephone} : échec à nouveau.`
-        : `Message renvoyé au ${n.telephone}.`,
+        ? t('notificationsPage.messages.resendFailedAgain', { telephone: n.telephone })
+        : t('notificationsPage.messages.resendSuccess', { telephone: n.telephone }),
     });
     await chargerHistorique();
     await chargerStats();
     await chargerRepartition();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Renvoi impossible.' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.resendFailed') });
   } finally {
     renvoiEnCours.value = null;
   }
@@ -711,7 +721,7 @@ async function chargerRepartition() {
 
 /** Alternative textuelle du graphique, pour qui ne voit pas les barres. */
 const resumeRepartition = computed(() => {
-  const t = repartition30j.value.reduce(
+  const totaux = repartition30j.value.reduce(
     (acc, r) => ({
       attente: acc.attente + r.EN_ATTENTE,
       envoyes: acc.envoyes + r.ENVOYEE,
@@ -719,10 +729,11 @@ const resumeRepartition = computed(() => {
     }),
     { attente: 0, envoyes: 0, echoues: 0 },
   );
-  return (
-    `Répartition des envois sur 30 jours : ${t.envoyes} envoyé(s), ` +
-    `${t.echoues} échoué(s), ${t.attente} en file.`
-  );
+  return t('notificationsPage.history.chart.summaryAria', {
+    envoyes: totaux.envoyes,
+    echoues: totaux.echoues,
+    attente: totaux.attente,
+  });
 });
 
 const chartConfig = computed<ChartConfiguration | null>(() => {
@@ -732,9 +743,9 @@ const chartConfig = computed<ChartConfiguration | null>(() => {
     data: {
       labels: repartition30j.value.map((r) => r.date.slice(5)),
       datasets: [
-        { label: 'En file', data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
-        { label: 'Envoyés', data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
-        { label: 'Échoués', data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
+        { label: t('notificationsPage.history.chart.series.enFile'), data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
+        { label: t('notificationsPage.history.chart.series.envoyes'), data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
+        { label: t('notificationsPage.history.chart.series.echoues'), data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
       ],
     },
     options: {

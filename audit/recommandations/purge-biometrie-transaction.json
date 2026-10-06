@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Atomicité de la purge planifiée des gabarits biométriques",
+  "module": "backend/src/modules/attestation/attestation.service.ts",
+  "operation": "purgerEmpreintesPerimees",
+  "mesure": "La sélection des profils expirés, l'effacement des champs biométriques et la création des traces de purge partagent une transaction Prisma. Une panne d'écriture du journal annule aussi l'effacement.",
+  "confidentialite": "Les gabarits, doigts, consentements et identités ne sont pas recopiés dans AuditLog. La durée et le déclencheur de purge restent inchangés ; la politique de conservation attend validation RH.",
+  "verification": {
+    "cibles": "2 tests dédiés : commit cohérent et rollback si AuditLog échoue.",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi.",
+    "build": "npx nest build réussi."
+  },
+  "production": "Aucune suppression ni modification de production effectuée."
+}

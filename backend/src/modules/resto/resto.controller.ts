@@ -1,9 +1,11 @@
-import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
 import { RestoService } from './resto.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -99,24 +101,19 @@ export class RestoController {
   // à la main — pattern identique à `attestations/:id/imprimer`.
 
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 60 } })
   @Get('carte/:reference')
+  @Header('Cache-Control', 'no-store')
   carte(@Param('reference') reference: string, @Req() req: Request) {
-    return this.service.carteInfo(reference, jetonDe(req));
+    return this.service.carteInfo(reference, jetonImprimable(req));
   }
 
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 60 } })
   @Post('valider')
   valider(@Body() dto: ValiderRepasDto, @Req() req: Request) {
-    return this.service.validerRepas(dto, jetonDe(req));
+    return this.service.validerRepas(dto, jetonImprimable(req));
   }
-}
-
-/** Le jeton du poste de guichet : en-tête Authorization puis paramètre `token`. */
-function jetonDe(req: Request): string | undefined {
-  const enTete = req.headers.authorization;
-  if (enTete?.startsWith('Bearer ')) return enTete.slice(7);
-  const token = req.query.token;
-  return typeof token === 'string' ? token : undefined;
 }
 
 /**

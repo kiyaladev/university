@@ -1,0 +1,9 @@
+{
+  "examen_introuvable": "Examen introuvable",
+  "examen_deja_termine": "Examen déjà terminé",
+  "examen_annule_demarrage_impossible": "Examen annulé : démarrage impossible",
+  "seul_un_examen_en_cours_peut_etre_termine": "Seul un examen EN_COURS peut être terminé",
+  "reference_vide": "Référence vide",
+  "scan_exige_examen_en_cours": "Le scan est possible uniquement pendant un examen en cours",
+  "transition_statut_invalide": "Transition de statut invalide : utilisez les actions démarrer, terminer ou annuler"
+}

@@ -1,16 +1,29 @@
 import { Controller, Get, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ApiTags } from '@nestjs/swagger';
+import {
+  AcceptLanguageResolver,
+  HeaderResolver,
+  I18nJsonLoader,
+  I18nModule,
+  QueryResolver,
+} from 'nestjs-i18n';
+import * as path from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard, LectureSeuleGuard, RolesGuard } from './common/guards';
 import { DebitGuard } from './common/debit.guard';
+import { DocumentScopeGuard } from './common/document-scope.guard';
+import { PrismaExceptionFilter } from './common/prisma-exception.filter';
+import { JwtConfigModule } from './common/jwt-config.module';
+import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
 import { Public } from './common/decorators';
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferentielModule } from './modules/referentiel/referentiel.module';
 import { PlanificationModule } from './modules/planification/planification.module';
+import { ImportsModule } from './modules/imports/imports.module';
 import { ControleModule } from './modules/controle/controle.module';
 import { AttestationModule } from './modules/attestation/attestation.module';
 import { JustificatifsModule } from './modules/justificatifs/justificatifs.module';
@@ -40,6 +53,7 @@ import { ElectionsModule } from './modules/elections/elections.module';
 import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.module';
 import { BadgesModule } from './modules/badges/badges.module';
 import { VodModule } from './modules/vod/vod.module';
+import { ServicesActifsModule, ServicesActifsGuard } from './modules/services-actifs/services-actifs.module';
 
 @ApiTags('Santé')
 @Controller()
@@ -53,7 +67,10 @@ export class HealthController {
 
 @Module({
   imports: [
+    ServicesActifsModule,
     ConfigModule.forRoot({ isGlobal: true }),
+    // Secret et durée de vie des jetons, résolus après le chargement du .env.
+    JwtConfigModule,
     ScheduleModule.forRoot(),
     // Attention : toute définition nommée s'applique à TOUTES les routes. Un
     // strict 10/quart d'heure déclaré ici pour la connexion briderait
@@ -63,10 +80,23 @@ export class HealthController {
       { name: 'courant', ttl: 60_000, limit: 1200 },
       { name: 'connexion', ttl: 900_000, limit: 100_000 },
     ]),
+    I18nModule.forRoot({
+      fallbackLanguage: 'fr',
+      loaderOptions: {
+        path: path.join(__dirname, 'i18n/'),
+      },
+      loader: I18nJsonLoader,
+      resolvers: [
+        new HeaderResolver(['x-lang']),
+        new AcceptLanguageResolver(),
+        new QueryResolver(['lang', 'l']),
+      ],
+    }),
     PrismaModule,
     AuthModule,
     ReferentielModule,
     PlanificationModule,
+    ImportsModule,
     ControleModule,
     AttestationModule,
     JustificatifsModule,
@@ -99,14 +129,20 @@ export class HealthController {
   ],
   controllers: [HealthController],
   providers: [
-    // Le débit se juge avant l'identité : une requête refusée pour excès n'a
-    // pas à coûter une lecture en base.
-    { provide: APP_GUARD, useClass: DebitGuard },
+    { provide: APP_INTERCEPTOR, useClass: SensitiveDataInterceptor },
     // Toutes les routes sont protégées par défaut : @Public() ouvre l'exception,
     // @Roles() restreint plus finement, et l'enseignant reste en lecture seule.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    // Après authentification : un jeton arbitraire ne peut pas créer un nouveau
+    // compteur, et les sessions valides restent isolées derrière un NAT.
+    { provide: APP_GUARD, useClass: DebitGuard },
     { provide: APP_GUARD, useClass: LectureSeuleGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useExisting: ServicesActifsGuard },
+    { provide: APP_GUARD, useClass: DocumentScopeGuard },
+    // P2025/P2002 deviennent des 404/409 explicites partout, y compris dans
+    // les services qui n'écrivent pas via CrudService.
+    { provide: APP_FILTER, useClass: PrismaExceptionFilter },
   ],
 })
 export class AppModule {}

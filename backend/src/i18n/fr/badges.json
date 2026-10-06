@@ -1,0 +1,10 @@
+{
+  "badge_introuvable": "Badge introuvable",
+  "impossible_de_generer_un_numero_de_badge": "Impossible de générer un numéro de badge.",
+  "un_badge_annule_ne_se_modifie_plus": "Un badge annulé ne se modifie plus.",
+  "ce_badge_est_deja_annule": "Ce badge est déjà annulé.",
+  "un_badge_annule_ne_se_rallonge_pas_creez_en_un_nouveau": "Un badge annulé ne se rallonge pas : créez-en un nouveau.",
+  "la_nouvelle_date_doit_etre_dans_le_futur": "La nouvelle date doit être dans le futur.",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "ecriture_concurrente_reessayez": "Ce badge vient d'être modifié. Rechargez-le puis réessayez."
+}

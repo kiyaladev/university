@@ -2,11 +2,11 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 520px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ creneau ? 'Modifier le créneau' : 'Nouveau créneau hebdomadaire' }}
+        {{ t(creneau ? 'emploiDuTemps.slotDialog.titleEdit' : 'emploiDuTemps.slotDialog.titleNew') }}
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Quel cours</span>
+        <span class="section-titre">{{ t('emploiDuTemps.slotDialog.courseSection') }}</span>
         <q-select
           v-model="form.affectationId"
           :options="optionsAffectations"
@@ -16,8 +16,8 @@
           map-options
           use-input
           input-debounce="200"
-          label="Charge d'enseignement"
-          hint="Enseignant · matière · promotion"
+          :label="t('emploiDuTemps.slotDialog.assignmentLabel')"
+          :hint="t('emploiDuTemps.slotDialog.assignmentHint')"
           @filter="filtrer"
         />
 
@@ -30,21 +30,21 @@
               dense
               emit-value
               map-options
-              label="Jour"
+              :label="t('emploiDuTemps.slotDialog.dayLabel')"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-select v-model="form.type" :options="TYPES_COURS" outlined dense label="Type" />
+            <q-select v-model="form.type" :options="TYPES_COURS" outlined dense :label="$t('common.fields.type')" />
           </div>
         </div>
 
-        <span class="section-titre">Horaire et salle</span>
+        <span class="section-titre">{{ t('emploiDuTemps.slotDialog.scheduleSection') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-6">
-            <q-input v-model="form.heureDebut" outlined dense mask="##:##" label="Début" />
+            <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('structure.dialogs.annee.debut')" />
           </div>
           <div class="col-6">
-            <q-input v-model="form.heureFin" outlined dense mask="##:##" label="Fin" />
+            <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.messages.end')" />
           </div>
         </div>
 
@@ -56,21 +56,19 @@
           clearable
           emit-value
           map-options
-          label="Salle"
+          :label="$t('common.fields.classroom')"
         />
 
-        <span class="section-titre">Période</span>
+        <span class="section-titre">{{ $t('common.fields.period') }}</span>
         <p class="periode__aide">
-          Laissez vide pour toute l’année. Sinon : « chaque
-          {{ JOURS[form.jourSemaine]?.toLowerCase() }} de {{ form.heureDebut }} à
-          {{ form.heureFin }}, du … au … ».
+          {{ t('emploiDuTemps.slotDialog.periodHint', { day: t(`common.days.${form.jourSemaine}`).toLowerCase(), from: t('common.pagination.from'), start: form.heureDebut, to: t('common.pagination.to'), end: form.heureFin }) }}
         </p>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <champ-date v-model="form.dateDebut" label="À partir du" />
+            <champ-date v-model="form.dateDebut" :label="t('emploiDuTemps.slotDialog.dateFrom')" />
           </div>
           <div class="col-12 col-sm-6">
-            <champ-date v-model="form.dateFin" label="Jusqu’au" />
+            <champ-date v-model="form.dateFin" :label="t('emploiDuTemps.slotDialog.dateUntil')" />
           </div>
         </div>
         <div v-if="form.dateDebut || form.dateFin" class="row q-gutter-xs q-mb-sm">
@@ -84,11 +82,11 @@
             {{ r.label }}
           </button>
           <button type="button" class="pochoir raccourci-periode" @click="viderPeriode">
-            toute l’année
+            {{ t('emploiDuTemps.slotDialog.allYear') }}
           </button>
         </div>
 
-        <q-toggle v-model="form.actif" label="Créneau actif" />
+        <q-toggle v-model="form.actif" :label="t('emploiDuTemps.slotDialog.active')" />
 
         <q-banner v-if="erreur" dense class="note--erreur">
           <template #avatar><q-icon name="warning" /></template>
@@ -97,8 +95,8 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn color="primary" unelevated label="Enregistrer" :loading="enregistrement" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -107,8 +105,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
-import { JOURS, TYPES_COURS } from '../utils/libelles';
+import { TYPES_COURS } from '../utils/libelles';
 import ChampDate from './ChampDate.vue';
 import type { Affectation, Creneau, Salle } from '../types';
 
@@ -116,12 +115,16 @@ const props = defineProps<{ modelValue: boolean; creneau?: Creneau | null; salle
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const erreur = ref('');
 const affectations = ref<Affectation[]>([]);
 const optionsAffectations = ref<{ label: string; value: string }[]>([]);
 
-const optionsJours = JOURS.slice(1).map((j, i) => ({ label: j, value: i + 1 }));
+const optionsJours = computed(() => Array.from({ length: 7 }, (_, i) => ({
+  label: t(`common.days.${i + 1}`),
+  value: i + 1,
+})));
 
 const form = ref({
   affectationId: '',
@@ -136,11 +139,11 @@ const form = ref({
 });
 
 /** Les découpages courants d'une année : semestre, mois en cours, un mois. */
-const raccourcisPeriode = [
-  { label: 'ce mois', mois: 0 },
-  { label: 'mois prochain', mois: 1 },
-  { label: '3 mois', mois: 3 },
-];
+const raccourcisPeriode = computed(() => [
+  { label: t('emploiDuTemps.slotDialog.thisMonth'), mois: 0 },
+  { label: t('emploiDuTemps.slotDialog.nextMonth'), mois: 1 },
+  { label: t('emploiDuTemps.slotDialog.threeMonths'), mois: 3 },
+]);
 
 function appliquerPeriode(r: { mois: number }) {
   const base = form.value.dateDebut ? new Date(form.value.dateDebut) : new Date();
@@ -215,12 +218,12 @@ async function enregistrer() {
     };
     if (props.creneau) await api.put(`/creneaux/${props.creneau.id}`, charge);
     else await api.post('/creneaux', charge);
-    $q.notify({ type: 'positive', message: 'Créneau enregistré' });
+    $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } catch (e: any) {
     // Les conflits d'emploi du temps sont renvoyés en 400 par l'API.
-    erreur.value = e.response?.data?.message ?? 'Enregistrement impossible';
+    erreur.value = e.response?.data?.message ?? t('emploiDuTemps.slotDialog.saveFailed');
   } finally {
     enregistrement.value = false;
   }
@@ -241,6 +244,6 @@ async function enregistrer() {
   padding: 3px var(--up-2);
   cursor: pointer;
 
-  &:hover { background: var(--up-encre); color: var(--up-craie); }
+  &:hover { background: var(--up-gris-inerte); color: var(--up-encre); }
 }
 </style>

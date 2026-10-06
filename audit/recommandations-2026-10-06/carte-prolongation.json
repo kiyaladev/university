@@ -1,0 +1,28 @@
+{
+  "date": "2026-10-06T13:37:15.962Z",
+  "passed": true,
+  "viewport": 375,
+  "dialogWidth": 327,
+  "expiredCardInitiallyRejected": true,
+  "schoolExtensionPersisted": true,
+  "identityQrPinAndIssueDatePreserved": true,
+  "sameQrAndPinUsableAfterExtension": true,
+  "ownerPrintAndOtherStudentRefusal": true,
+  "editPreloadsUpdatedValidity": true,
+  "unauthorizedRolesRejected": true,
+  "revocationAndExtensionStatuses": [
+    201,
+    400
+  ],
+  "revokedCardCannotBeExtendedOrReissued": true,
+  "revokedEditHiddenOnMobile": true,
+  "auditWithoutPinOrQr": true,
+  "errors": [],
+  "apiFailures": [],
+  "scope": "prolongation de la carte existante, sans remplacement de QR",
+  "replacementAndHistoryPolicyPending": true,
+  "physicalPrintAndScanPending": true,
+  "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+  "httpLoginRouteQualified": false,
+  "productionUntouched": true
+}

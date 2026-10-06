@@ -6,13 +6,13 @@
 
     <div v-else-if="!suspicion" class="plaque q-pa-lg text-center text-grey-7">
       <q-icon name="error" size="38px" color="negative" />
-      <div class="q-mt-sm">Suspicion introuvable ou supprimée.</div>
+      <div class="q-mt-sm">{{ $t('plagiatDetail.notFound.message') }}</div>
       <q-btn
         flat
         no-caps
         color="primary"
         icon="arrow_back"
-        label="Retour à la file d'arbitrage"
+        :label="$t('plagiatDetail.notFound.backToQueue')"
         :to="{ name: 'plagiat' }"
         class="q-mt-md"
       />
@@ -24,16 +24,16 @@
         dense
         no-caps
         icon="arrow_back"
-        label="Liste des suspicions"
+        :label="$t('plagiatDetail.actions.backToList')"
         :to="{ name: 'plagiat' }"
         class="q-mb-md"
       />
 
       <div class="row items-center q-col-gutter-md q-mb-md">
         <div class="col">
-          <div class="page-titre">Détail suspicion</div>
+          <h1 class="page-titre">{{ $t('plagiatDetail.title') }}</h1>
           <div class="page-sous-titre">
-            Comparaison automatique par empreinte + similarité Jaccard.
+            {{ $t('plagiatDetail.subtitle') }}
           </div>
         </div>
         <div class="col-auto">
@@ -46,13 +46,13 @@
       <q-card flat bordered class="carte q-mb-md">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-caption text-grey-7 text-uppercase">Score de similarité</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatDetail.score.label') }}</div>
             <div class="plagiat-detail__score" :class="`text-${couleurScore(suspicion.score)}`">
               {{ Math.round(suspicion.score) }}<span class="plagiat-detail__score-unite">%</span>
             </div>
           </div>
           <div class="col-auto text-right">
-            <div class="text-caption text-grey-7">Détecté le</div>
+            <div class="text-caption text-grey-7">{{ $t('plagiatDetail.score.detectedOn') }}</div>
             <div class="text-weight-medium">{{ new Date(suspicion.detecteLe).toLocaleString('fr-FR') }}</div>
           </div>
         </q-card-section>
@@ -64,7 +64,7 @@
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
-                <div class="text-caption text-grey-7 text-uppercase">Document A</div>
+                <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatDetail.documents.documentA') }}</div>
                 <div class="text-h6 q-mt-xs">{{ suspicion.documentA?.titre ?? '—' }}</div>
               </div>
               <q-chip dense color="primary" outline :label="libelleType(suspicion.documentA?.type)" />
@@ -82,7 +82,7 @@
                 <q-item>
                   <q-item-section avatar><q-icon name="storage" /></q-item-section>
                   <q-item-section>
-                    {{ suspicion.documentA?.tailleKo ? (suspicion.documentA.tailleKo / 1024).toFixed(1) + ' Mo' : '—' }}
+                    {{ suspicion.documentA?.tailleKo ? $t('plagiatDetail.documents.sizeInMo', { size: (suspicion.documentA.tailleKo / 1024).toFixed(1) }) : '—' }}
                   </q-item-section>
                 </q-item>
                 <q-item>
@@ -98,7 +98,7 @@
                 dense
                 no-caps
                 icon="library_books"
-                label="Voir la fiche du document"
+                :label="$t('plagiatDetail.actions.viewDocument')"
                 :to="{ name: 'bibliotheque', query: { documentId: suspicion.documentAId } }"
               />
             </q-card-actions>
@@ -108,7 +108,7 @@
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
-                <div class="text-caption text-grey-7 text-uppercase">Document B</div>
+                <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatDetail.documents.documentB') }}</div>
                 <div class="text-h6 q-mt-xs">{{ suspicion.documentB?.titre ?? '—' }}</div>
               </div>
               <q-chip dense color="primary" outline :label="libelleType(suspicion.documentB?.type)" />
@@ -126,7 +126,7 @@
                 <q-item>
                   <q-item-section avatar><q-icon name="storage" /></q-item-section>
                   <q-item-section>
-                    {{ suspicion.documentB?.tailleKo ? (suspicion.documentB.tailleKo / 1024).toFixed(1) + ' Mo' : '—' }}
+                    {{ suspicion.documentB?.tailleKo ? $t('plagiatDetail.documents.sizeInMo', { size: (suspicion.documentB.tailleKo / 1024).toFixed(1) }) : '—' }}
                   </q-item-section>
                 </q-item>
                 <q-item>
@@ -142,7 +142,7 @@
                 dense
                 no-caps
                 icon="library_books"
-                label="Voir la fiche du document"
+                :label="$t('plagiatDetail.actions.viewDocument')"
                 :to="{ name: 'bibliotheque', query: { documentId: suspicion.documentBId } }"
               />
             </q-card-actions>
@@ -153,26 +153,26 @@
       <!-- Diff simplifié -->
       <q-card flat bordered class="carte q-mb-md">
         <q-card-section>
-          <div class="text-h6 q-mb-sm">Diff simplifié (similarité Jaccard)</div>
+          <div class="text-h6 q-mb-sm">{{ $t('plagiatDetail.diff.title') }}</div>
           <p class="text-caption text-grey-7 q-mb-sm">
-            Les blocs communs aux deux documents sont surlignés.
+            {{ $t('plagiatDetail.diff.description') }}
           </p>
           <div v-if="chargementTexte" class="row justify-center q-py-lg">
             <q-spinner color="primary" size="32px" />
           </div>
           <div v-else class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
-              <div class="text-caption text-grey-7 q-mb-xs">Document A</div>
+              <div class="text-caption text-grey-7 q-mb-xs">{{ $t('plagiatDetail.diff.documentA') }}</div>
               <pre class="diff-texte" v-html="surlignerCommun(texteA)" />
             </div>
             <div class="col-12 col-md-6">
-              <div class="text-caption text-grey-7 q-mb-xs">Document B</div>
+              <div class="text-caption text-grey-7 q-mb-xs">{{ $t('plagiatDetail.diff.documentB') }}</div>
               <pre class="diff-texte" v-html="surlignerCommun(texteB)" />
             </div>
           </div>
           <div v-if="!chargementTexte && !texteA && !texteB" class="text-center text-grey-7 q-pa-md">
             <q-icon name="description" size="32px" color="grey-5" />
-            <div class="q-mt-sm">Aucun texte extrait à comparer.</div>
+            <div class="q-mt-sm">{{ $t('plagiatDetail.diff.noText') }}</div>
           </div>
         </q-card-section>
       </q-card>
@@ -182,18 +182,18 @@
         <div class="col-12 col-md-7">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div class="text-h6 q-mb-sm">Décision</div>
+              <div class="text-h6 q-mb-sm">{{ $t('plagiatDetail.decision.title') }}</div>
 
               <q-banner v-if="suspicion.statut !== 'EN_ATTENTE'" dense class="bg-grey-3 q-mb-md">
                 <template #avatar><q-icon name="lock" /></template>
-                Décision déjà prise — la suspicion n'est plus modifiable.
+                {{ $t('plagiatDetail.decision.alreadyTaken') }}
               </q-banner>
 
               <q-option-group
                 v-model="decisionStatut"
                 :options="[
-                  { label: 'Acquitter la suspicion', value: 'ACQUITTE', color: 'positive' },
-                  { label: 'Confirmer le plagiat', value: 'CONFIRME', color: 'negative' },
+                  { label: $t('plagiatDetail.decision.acquit'), value: 'ACQUITTE', color: 'positive' },
+                  { label: $t('plagiatDetail.decision.confirm'), value: 'CONFIRME', color: 'negative' },
                 ]"
                 inline
                 :disable="!peutDecider || suspicion.statut !== 'EN_ATTENTE'"
@@ -202,7 +202,7 @@
 
               <q-banner v-if="decisionStatut === 'CONFIRME'" dense class="bg-red-1 text-red-10 q-mb-md">
                 <template #avatar><q-icon name="warning" color="negative" /></template>
-                Confirmer ouvre une procédure disciplinaire — le motif sera inscrit au journal.
+                {{ $t('plagiatDetail.decision.confirmWarning') }}
               </q-banner>
 
               <q-input
@@ -211,9 +211,9 @@
                 dense
                 type="textarea"
                 autogrow
-                label="Motif / commentaire"
+                :label="$t('plagiatDetail.decision.motifLabel')"
                 :disable="!peutDecider || suspicion.statut !== 'EN_ATTENTE'"
-                :rules="decisionStatut === 'CONFIRME' ? [(v: string) => (v && v.trim().length > 0) || 'Motif obligatoire'] : []"
+                :rules="decisionStatut === 'CONFIRME' ? [(v: string) => (v && v.trim().length > 0) || $t('plagiatDetail.decision.motifRequired')] : []"
               />
 
               <div class="row justify-end q-mt-md">
@@ -223,7 +223,7 @@
                   no-caps
                   :color="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
                   :icon="decisionStatut === 'ACQUITTE' ? 'thumb_down' : 'gavel'"
-                  :label="decisionStatut === 'ACQUITTE' ? 'Acquitter' : 'Confirmer le plagiat'"
+                  :label="decisionStatut === 'ACQUITTE' ? $t('plagiatDetail.decision.acquitAction') : $t('plagiatDetail.decision.confirmAction')"
                   :loading="decisionEnCours"
                   @click="validerDecision"
                 />
@@ -236,27 +236,34 @@
         <div class="col-12 col-md-5">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div class="text-h6 q-mb-sm">Journal</div>
+              <div class="text-h6 q-mb-sm">{{ $t('plagiatDetail.journal.title') }}</div>
 
               <q-timeline color="primary" dense>
                 <q-timeline-entry
-                  :title="`Détection automatique`"
+                  :title="$t('plagiatDetail.journal.autoDetection')"
                   :subtitle="new Date(suspicion.detecteLe).toLocaleString('fr-FR')"
                   icon="policy"
                 >
-                  Suspicion créée par le moteur anti-plagiat (score {{ Math.round(suspicion.score) }} %).
+                  {{ $t('plagiatDetail.journal.createdByEngine', { score: Math.round(suspicion.score) }) }}
                 </q-timeline-entry>
 
                 <q-timeline-entry
                   v-if="suspicion.acquitteLe"
                   :color="suspicion.statut === 'ACQUITTE' ? 'positive' : 'negative'"
                   :icon="suspicion.statut === 'ACQUITTE' ? 'thumb_down' : 'gavel'"
-                  :title="suspicion.statut === 'ACQUITTE' ? 'Acquittement' : 'Confirmation de plagiat'"
+                  :title="suspicion.statut === 'ACQUITTE' ? $t('plagiatDetail.journal.acquittal') : $t('plagiatDetail.journal.confirmation')"
                   :subtitle="new Date(suspicion.acquitteLe).toLocaleString('fr-FR')"
                 >
-                  <div v-if="suspicion.acquittePar" class="text-caption q-mb-xs">
-                    Par <strong>{{ suspicion.acquittePar.prenom }} {{ suspicion.acquittePar.nom }}</strong>
-                  </div>
+                  <i18n-t
+                    v-if="suspicion.acquittePar"
+                    keypath="plagiatDetail.journal.by"
+                    tag="div"
+                    class="text-caption q-mb-xs"
+                  >
+                    <template #name>
+                      <strong>{{ suspicion.acquittePar.prenom }} {{ suspicion.acquittePar.nom }}</strong>
+                    </template>
+                  </i18n-t>
                   <div v-if="suspicion.commentaire" class="text-caption text-grey-7">
                     « {{ suspicion.commentaire }} »
                   </div>
@@ -264,7 +271,7 @@
               </q-timeline>
 
               <div v-if="!suspicion.acquitteLe" class="text-caption text-grey-7 text-center q-pa-md">
-                Aucune décision enregistrée pour l'instant.
+                {{ $t('plagiatDetail.journal.noDecisionYet') }}
               </div>
             </q-card-section>
           </q-card>
@@ -276,6 +283,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { api } from '../boot/axios';
@@ -286,6 +294,7 @@ import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '../types';
 const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
+const { t } = useI18n();
 
 const suspicion = ref<SuspicionPlagiat | null>(null);
 const chargement = ref(false);
@@ -313,7 +322,8 @@ const couleurScore = (score: number) => {
   return 'positive';
 };
 
-const libelleType = (t?: TypeDocument) => LIBELLE_TYPE_DOCUMENT[t ?? 'AUTRE'] ?? 'Autre';
+const libelleType = (type?: TypeDocument) =>
+  LIBELLE_TYPE_DOCUMENT[type ?? 'AUTRE'] ?? t('plagiatDetail.documents.otherType');
 
 const dateComplete = (iso?: string) => (iso ? new Date(iso).toLocaleString('fr-FR') : '—');
 
@@ -327,7 +337,10 @@ async function charger() {
     decisionMotif.value = data?.commentaire ?? '';
   } catch (e: any) {
     suspicion.value = null;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Suspicion introuvable' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? t('plagiatDetail.messages.notFound'),
+    });
   } finally {
     chargement.value = false;
   }
@@ -385,7 +398,7 @@ function surlignerCommun(texte: string): string {
 async function validerDecision() {
   if (!suspicion.value) return;
   if (decisionStatut.value === 'CONFIRME' && !decisionMotif.value.trim()) {
-    $q.notify({ type: 'warning', message: 'Le motif est obligatoire pour une confirmation' });
+    $q.notify({ type: 'warning', message: t('plagiatDetail.messages.motifRequiredForConfirm') });
     return;
   }
   decisionEnCours.value = true;
@@ -401,11 +414,14 @@ async function validerDecision() {
     $q.notify({
       type: 'positive',
       message: decisionStatut.value === 'ACQUITTE'
-        ? 'Suspicion acquittée'
-        : 'Plagiat confirmé — procédure ouverte',
+        ? t('plagiatDetail.messages.acquitted')
+        : t('plagiatDetail.messages.confirmed'),
     });
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Décision impossible' });
+    $q.notify({
+      type: 'negative',
+      message: e?.response?.data?.message ?? t('plagiatDetail.messages.decisionFailed'),
+    });
   } finally {
     decisionEnCours.value = false;
   }

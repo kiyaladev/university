@@ -1,0 +1,17 @@
+{
+  "resultsHeader": "Résultats — {promotion}",
+  "resultsBody": "{name} : moyenne {average}",
+  "resultsAdmis": "ADMIS",
+  "resultsAjourne": "AJOURNÉ",
+  "resultsRank": " (rang {rank})",
+  "unknownFailure": "Échec inconnu",
+  "purpose": {
+    "results": "RESULTATS",
+    "notice": "AVIS",
+    "sms": "SMS",
+    "portal": "portail"
+  },
+  "gatewayUnavailable": "Passerelle SMS injoignable",
+  "gatewayInvalidResponse": "Réponse de la passerelle SMS invalide",
+  "sendOrLogFailure": "Échec de l'envoi ou de son enregistrement"
+}

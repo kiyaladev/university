@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Injectable, Module, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Injectable, Module, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
+import { t } from '../../common/i18n';
 
 /** Règles de contrôle paramétrables par l'établissement. */
 export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: string }> = {
@@ -35,7 +36,7 @@ export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: st
   ATTESTATION_OBLIGATOIRE: {
     valeur: 'true',
     description:
-      "Exiger que l'enseignant atteste sa présence (signature, code personnel, empreinte ou téléphone)",
+      "Exiger que l'enseignant atteste sa présence (signature, code personnel ou lecteur d’empreintes)",
   },
   SIGNATURE_OBLIGATOIRE: {
     valeur: 'false',
@@ -82,7 +83,12 @@ export class ParametresService {
       cle,
       valeur,
       description: PARAMETRES_DEFAUT[cle]?.description ?? null,
-    }));
+    })).filter(p => !p.cle.startsWith('SERVICE_ACTIF_'));
+  }
+
+  /** Paramètre unique nécessaire au dialogue de pointage ; ne divulgue pas les seuils internes. */
+  async reglesPointage() {
+    return [{ cle: 'ATTESTATION_OBLIGATOIRE', valeur: await this.valeur('ATTESTATION_OBLIGATOIRE') }];
   }
 
   async valeur(cle: string, defaut = ''): Promise<string> {
@@ -99,10 +105,23 @@ export class ParametresService {
     return (await this.valeur(cle, String(defaut))).toLowerCase() === 'true';
   }
 
-  async enregistrer(dto: UpdateParametresDto) {
-    await this.prisma.$transaction(
-      dto.parametres.map((p) =>
-        this.prisma.parametre.upsert({
+  private instantaneAudit(cle: string, valeur: string | null) {
+    // Valeurs des paramètres connus utiles à expliquer les décisions métier ;
+    // les clés ajoutées hors catalogue ne révèlent que leur état de présence.
+    if (Object.prototype.hasOwnProperty.call(PARAMETRES_DEFAUT, cle)) {
+      return { valeur };
+    }
+    return { configure: valeur !== null };
+  }
+
+  async enregistrer(dto: UpdateParametresDto, user?: AuthUser) {
+    if (dto.parametres.some(p => p.cle.startsWith('SERVICE_ACTIF_'))) {
+      throw new BadRequestException(t('common.servicesConfigurationEndpoint'));
+    }
+    await this.prisma.$transaction(async (tx) => {
+      for (const p of dto.parametres) {
+        const avant = await tx.parametre.findUnique({ where: { cle: p.cle } });
+        const apres = await tx.parametre.upsert({
           where: { cle: p.cle },
           create: {
             cle: p.cle,
@@ -110,9 +129,21 @@ export class ParametresService {
             description: p.description ?? PARAMETRES_DEFAUT[p.cle]?.description,
           },
           update: { valeur: p.valeur },
-        }),
-      ),
-    );
+        });
+        await tx.auditLog.create({ data: {
+          userId: user?.id ?? null,
+          action: 'PARAMETRE_MODIFIE',
+          entite: 'Parametre',
+          entiteId: p.cle,
+          details: JSON.stringify({
+            cle: p.cle,
+            avant: this.instantaneAudit(p.cle, avant?.valeur ?? PARAMETRES_DEFAUT[p.cle]?.valeur ?? null),
+            apres: this.instantaneAudit(p.cle, apres.valeur),
+            descriptionModifiee: !avant && Boolean(p.description ?? PARAMETRES_DEFAUT[p.cle]?.description),
+          }),
+        } });
+      }
+    });
     return this.liste();
   }
 }
@@ -123,13 +154,19 @@ export class ParametresService {
 export class ParametresController {
   constructor(private readonly service: ParametresService) {}
 
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
+  @Get('pointage') reglesPointage() {
+    return this.service.reglesPointage();
+  }
+
+  @Roles(Role.ADMIN)
   @Get() liste() {
     return this.service.liste();
   }
 
   @Roles(Role.ADMIN)
-  @Put() enregistrer(@Body() dto: UpdateParametresDto) {
-    return this.service.enregistrer(dto);
+  @Put() enregistrer(@Body() dto: UpdateParametresDto, @CurrentUser() user: AuthUser) {
+    return this.service.enregistrer(dto, user);
   }
 }
 

@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-02T11:20:56.103Z",
+  "checks": [
+    {
+      "language": "fr-FR",
+      "previousSignature": "refused",
+      "newSignature": "accepted",
+      "clear": "blocks save",
+      "translation": "OK",
+      "mobile": "OK"
+    },
+    {
+      "language": "en-US",
+      "previousSignature": "refused",
+      "newSignature": "accepted",
+      "clear": "blocks save",
+      "translation": "OK",
+      "mobile": "OK"
+    }
+  ]
+}

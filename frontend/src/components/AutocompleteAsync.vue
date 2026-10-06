@@ -9,7 +9,8 @@
  * { search, all } et renvoie soit `{ data: [...] }` soit un tableau direct ;
  * on s'adapte.
  */
-import { ref, watch, computed } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 
 interface Option {
@@ -52,17 +53,31 @@ const emit = defineEmits<{
 }>();
 
 const options = ref<Option[]>([]);
+const { t: $t } = useI18n();
 const loading = ref(false);
 const recherche = ref('');
 const valeurCourante = ref<any>(props.modelValue ?? null);
 let timer: any = null;
+/**
+ * Numéro de la demande en cours. Deux recherches peuvent se chevaucher : sans
+ * ce garde-fou, une réponse lente arrivée après une réponse rapide écrasait la
+ * liste et l'utilisateur voyait des résultats qui ne correspondent plus à ce
+ * qu'il a tapé.
+ */
+let requeteCourante = 0;
+
+onBeforeUnmount(() => {
+  if (timer) clearTimeout(timer);
+});
 
 async function charger(rechercheLibre?: string) {
+  const mien = ++requeteCourante;
   loading.value = true;
   try {
     const params: any = { all: 1 };
     if (rechercheLibre) params.search = rechercheLibre;
     const { data } = await api.get(props.endpoint, { params });
+    if (mien !== requeteCourante) return;
     const liste: any[] = Array.isArray(data) ? data : (data?.data ?? []);
     options.value = liste.map((item) => ({
       label: props.labelFn(item) || item?.[props.valueField] || '?',
@@ -70,17 +85,18 @@ async function charger(rechercheLibre?: string) {
       raw: item,
     }));
   } catch {
+    if (mien !== requeteCourante) return;
     options.value = [];
   } finally {
-    loading.value = false;
+    if (mien === requeteCourante) loading.value = false;
   }
 }
 
 function ouvrirFiltre(val: string, miseAJour: (cb: () => void) => void) {
+  recherche.value = val;
   if (timer) clearTimeout(timer);
-  timer = setTimeout(() => {
-    if (props.serverSearch) charger(val);
-    else charger();
+  timer = setTimeout(async () => {
+    await (props.serverSearch ? charger(val) : charger());
     miseAJour(() => {});
   }, 300);
 }
@@ -101,20 +117,16 @@ watch(() => props.modelValue, async (v) => {
       }
     } catch { /* silencieux : si l'item n'existe plus on l'ignore */ }
   }
+}, { immediate: true });
+
+watch(valeurCourante, (v) => {
+  if (v !== props.modelValue) emit('update:modelValue', v ?? null, options.value.find((o) => o.value === v)?.raw);
 });
-
-watch(options, () => {
-  if (props.modelValue && !options.value.find((o) => o.value === props.modelValue)) {
-    // L'option n'existe plus : on ne la retire pas visuellement
-  }
-}, { deep: false });
-
-const valeurAffichee = computed(() => props.modelValue ?? null);
 </script>
 
 <template>
   <q-select
-    :model-value="valeurAffichee"
+    v-model="valeurCourante"
     :options="options"
     :label="label"
     :placeholder="placeholder"
@@ -128,21 +140,11 @@ const valeurAffichee = computed(() => props.modelValue ?? null);
     map-options
     input-debounce="0"
     @filter="ouvrirFiltre"
-    @update:model-value="(v) => emit('update:modelValue', v ?? null, options.find((o) => o.value === v)?.raw)"
-    @focus="charger(recherche)"
-    @clear="() => emit('update:modelValue', null, undefined)"
   >
     <template #no-option>
       <q-item>
         <q-item-section class="text-grey">
-          {{ loading ? 'Chargement…' : 'Aucun résultat' }}
-        </q-item-section>
-      </q-item>
-    </template>
-    <template #option="scope">
-      <q-item v-bind="scope.itemProps">
-        <q-item-section>
-          <q-item-label>{{ scope.opt.label }}</q-item-label>
+          {{ loading ? $t('common.messages.loading') : $t('common.messages.noResult') }}
         </q-item-section>
       </q-item>
     </template>

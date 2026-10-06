@@ -43,11 +43,13 @@ import {
   StatutSeance,
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { I18nContext } from 'nestjs-i18n';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { round2, isoDate } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
 import { CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
+import { echapper } from '../../common/utils';
 
 /** « Janvier 2026 » — les mois sont écrits en toutes lettres sur les états. */
 export const MOIS_LIBELLES = [
@@ -75,7 +77,11 @@ const STATUTS_PAYES: StatutPresence[] = [
 
 const FEUILLE_INCLUDE = {
   lignes: {
-    include: { enseignant: true },
+    include: {
+      enseignant: {
+        select: { id: true, matricule: true, nom: true, prenom: true, statut: true },
+      },
+    },
     orderBy: [{ enseignant: { nom: 'asc' } }, { enseignant: { prenom: 'asc' } }],
   },
 } satisfies Prisma.FeuillePaieInclude;
@@ -91,8 +97,8 @@ export class PaieService {
 
   async liste(query: FeuilleQueryDto): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.FeuillePaieWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -108,12 +114,12 @@ export class PaieService {
         where,
         include: FEUILLE_INCLUDE,
         orderBy: [{ annee: 'desc' }, { mois: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.feuillePaie.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   private async trouver(id: string) {
@@ -121,12 +127,37 @@ export class PaieService {
       where: { id },
       include: FEUILLE_INCLUDE,
     });
-    if (!feuille) throw new NotFoundException('Feuille de paie introuvable');
+    if (!feuille) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
     return feuille;
   }
 
   async detail(id: string) {
     return this.trouver(id);
+  }
+
+  private instantane(feuille: { statut: StatutPaie; montantTotal: number }, lignes: Array<{
+    enseignantId: string; tauxHoraire: number; heuresReelles: number; volumePrevu: number;
+    montantBrut: number; retenue: number; montantNet: number;
+  }>) {
+    return {
+      statut: feuille.statut,
+      montantTotal: feuille.montantTotal,
+      lignes: lignes.map(({ enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet }) => ({
+        enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet,
+      })),
+    };
+  }
+
+  private enregistrerModification(tx: Prisma.TransactionClient, userId: string, action: string, entiteId: string, avant: unknown, apres: unknown) {
+    return tx.auditLog.create({
+      data: {
+        userId,
+        action,
+        entite: 'FeuillePaie',
+        entiteId,
+        details: JSON.stringify({ avant, apres }),
+      },
+    });
   }
 
   // ----------------------------------------------------- cycle de vie
@@ -139,19 +170,23 @@ export class PaieService {
       select: { id: true },
     });
     if (existe) {
-      throw new ConflictException(`Une feuille « ${libelle} » existe déjà`);
+      throw new ConflictException(I18nContext.current()!.t('paie.une_feuille_libelle_existe_deja', { args: { libelle: libelle } }));
     }
 
-    return this.prisma.feuillePaie.create({
-      data: {
-        libelle,
-        mois: dto.mois,
-        annee: dto.annee,
-        dateDebut: new Date(Date.UTC(dto.annee, dto.mois - 1, 1)),
-        dateFin: new Date(Date.UTC(dto.annee, dto.mois, 0)),
-        creeParId: user.id,
-      },
-      include: FEUILLE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const feuille = await tx.feuillePaie.create({
+        data: {
+          libelle,
+          mois: dto.mois,
+          annee: dto.annee,
+          dateDebut: new Date(Date.UTC(dto.annee, dto.mois - 1, 1)),
+          dateFin: new Date(Date.UTC(dto.annee, dto.mois, 0)),
+          creeParId: user.id,
+        },
+        include: FEUILLE_INCLUDE,
+      });
+      await this.enregistrerModification(tx, user.id, 'PAIE_CREEE', feuille.id, null, this.instantane(feuille, []));
+      return feuille;
     });
   }
 
@@ -164,14 +199,13 @@ export class PaieService {
   async calculer(id: string, tous: boolean, user: AuthUser) {
     const feuille = await this.trouver(id);
     if (feuille.statut !== StatutPaie.BROUILLON) {
-      throw new BadRequestException(
-        `Feuille ${feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée'} : les montants sont figés, impossible de recalculer`,
-      );
+      throw new BadRequestException(I18nContext.current()!.t('paie.feuille_feuille_statut_statutpaie_validee_validee_payee_les_', { args: { 'feuille.statut': feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée' } }));
     }
 
     const statutEnseignant = tous ? undefined : StatutEnseignant.VACATAIRE;
 
-    return this.prisma.$transaction(async (tx) => {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
       const [seances, affectations] = await Promise.all([
         tx.seance.findMany({
           where: {
@@ -206,7 +240,10 @@ export class PaieService {
       // d'un nouveau calcul.
       const precedentes = await tx.lignePaie.findMany({
         where: { feuilleId: id },
-        select: { enseignantId: true, commentaire: true },
+        select: {
+          enseignantId: true, commentaire: true, tauxHoraire: true, heuresReelles: true,
+          volumePrevu: true, montantBrut: true, retenue: true, montantNet: true,
+        },
       });
       const commentaires = new Map(
         precedentes
@@ -259,55 +296,95 @@ export class PaieService {
         });
       }
 
-      return tx.feuillePaie.update({
-        where: { id: feuille.id },
+      const ecriture = await tx.feuillePaie.updateMany({
+        where: { id: feuille.id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
         data: { montantTotal: round2(lignes.reduce((t, l) => t + l.montantNet, 0)) },
-        include: FEUILLE_INCLUDE,
       });
-    });
+      if (ecriture.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('paie.ecriture_concurrente_reessayez'));
+      }
+      const miseAJour = await tx.feuillePaie.findUnique({ where: { id: feuille.id }, include: FEUILLE_INCLUDE });
+      if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      await this.enregistrerModification(
+        tx,
+        user.id,
+        'PAIE_RECALCULEE',
+        feuille.id,
+        this.instantane(feuille, precedentes),
+        this.instantane(miseAJour, lignes),
+      );
+      return miseAJour;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (error: any) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+        throw new ConflictException(I18nContext.current()!.t('paie.ecriture_concurrente_reessayez'));
+      }
+      throw error;
+    }
   }
 
   /** BROUILLON → VALIDEE : les montants sont figés, plus aucun recalcul. */
   async valider(id: string, user: AuthUser) {
-    const feuille = await this.trouver(id);
-    if (feuille.statut !== StatutPaie.BROUILLON) {
-      throw new BadRequestException('Seule une feuille en brouillon peut être validée');
-    }
-    if (!feuille.lignes.length) {
-      throw new BadRequestException('Calculez la feuille avant de la valider');
-    }
-    return this.prisma.feuillePaie.update({
-      where: { id },
-      data: {
-        statut: StatutPaie.VALIDEE,
-        valideeParId: user.id,
-        valideeLe: new Date(),
-      },
-      include: FEUILLE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const feuille = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
+      if (!feuille) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      if (feuille.statut !== StatutPaie.BROUILLON) {
+        throw new BadRequestException(I18nContext.current()!.t('paie.seule_une_feuille_en_brouillon_peut_etre_validee'));
+      }
+      if (!feuille.lignes.length) {
+        throw new BadRequestException(I18nContext.current()!.t('paie.calculez_la_feuille_avant_de_la_valider'));
+      }
+      const ecriture = await tx.feuillePaie.updateMany({
+        where: { id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
+        data: {
+          statut: StatutPaie.VALIDEE,
+          valideeParId: user.id,
+          valideeLe: new Date(),
+        },
+      });
+      if (ecriture.count !== 1) throw new ConflictException(I18nContext.current()!.t('paie.ecriture_concurrente_reessayez'));
+      const miseAJour = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
+      if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      await this.enregistrerModification(tx, user.id, 'PAIE_VALIDEE', id, this.instantane(feuille, feuille.lignes), this.instantane(miseAJour, miseAJour.lignes));
+      return miseAJour;
     });
   }
 
   /** VALIDEE → PAYEE : le mandat est exécuté, trace du paiement. */
   async payer(id: string, user: AuthUser) {
-    const feuille = await this.trouver(id);
-    if (feuille.statut !== StatutPaie.VALIDEE) {
-      throw new BadRequestException('Seule une feuille validée peut être payée');
-    }
-    return this.prisma.feuillePaie.update({
-      where: { id },
-      data: { statut: StatutPaie.PAYEE, payeeLe: new Date() },
-      include: FEUILLE_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const feuille = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
+      if (!feuille) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      if (feuille.statut !== StatutPaie.VALIDEE) {
+        throw new BadRequestException(I18nContext.current()!.t('paie.seule_une_feuille_validee_peut_etre_payee'));
+      }
+      const ecriture = await tx.feuillePaie.updateMany({
+        where: { id, statut: StatutPaie.VALIDEE, updatedAt: feuille.updatedAt },
+        data: { statut: StatutPaie.PAYEE, payeeLe: new Date() },
+      });
+      if (ecriture.count !== 1) throw new ConflictException(I18nContext.current()!.t('paie.ecriture_concurrente_reessayez'));
+      const miseAJour = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
+      if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      await this.enregistrerModification(tx, user.id, 'PAIE_PAYEE', id, this.instantane(feuille, feuille.lignes), this.instantane(miseAJour, miseAJour.lignes));
+      return miseAJour;
     });
   }
 
   /** Suppression : réservée à l'administration, sur une feuille non figée. */
-  async supprimer(id: string) {
-    const feuille = await this.trouver(id);
-    if (feuille.statut !== StatutPaie.BROUILLON) {
-      throw new BadRequestException('Seule une feuille en brouillon peut être supprimée');
-    }
-    await this.prisma.feuillePaie.delete({ where: { id } });
-    return { id };
+  async supprimer(id: string, user: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const feuille = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
+      if (!feuille) throw new NotFoundException(I18nContext.current()!.t('paie.feuille_de_paie_introuvable'));
+      if (feuille.statut !== StatutPaie.BROUILLON) {
+        throw new BadRequestException(I18nContext.current()!.t('paie.seule_une_feuille_en_brouillon_peut_etre_supprimee'));
+      }
+      const suppression = await tx.feuillePaie.deleteMany({
+        where: { id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
+      });
+      if (suppression.count !== 1) throw new ConflictException(I18nContext.current()!.t('paie.ecriture_concurrente_reessayez'));
+      await this.enregistrerModification(tx, user.id, 'PAIE_SUPPRIMEE', id, this.instantane(feuille, feuille.lignes), null);
+      return { id };
+    });
   }
 
   // ---------------------------------------------------------- impression
@@ -398,10 +475,3 @@ const LIBELLE_STATUT_PAIE: Record<string, string> = {
   VALIDEE: 'Validée',
   PAYEE: 'Payée',
 };
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}

@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-02T11:58:10.910Z",
+  "environment": "QA locale isolée",
+  "checks": [
+    "Deux pointages conservés hors ligne",
+    "Aucun PIN conservé",
+    "Session et tournée disponibles après rechargement hors ligne",
+    "File persistée après rechargement",
+    "Conflit créé par un autre agent",
+    "Pointage accepté retiré, conflit conservé",
+    "Pointage synchronisé avec le bon auteur",
+    "Marqueur hors ligne transmis",
+    "Aucune erreur JavaScript",
+    "PIN supprimé des deux anciens formats",
+    "Ancienne file sans propriétaire conservée sans réattribution"
+  ]
+}

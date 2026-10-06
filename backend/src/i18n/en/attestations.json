@@ -1,0 +1,14 @@
+{
+  "attestation_introuvable": "Certificate not found",
+  "inscription_introuvable": "Linked enrollment not found.",
+  "rattachement_incoherent": "The enrollment must match the certificate’s student, academic year and class.",
+  "annee_academique_introuvable": "Academic year not found",
+  "etudiant_introuvable": "Student not found",
+  "rien_a_modifier_renseignez_un_type_ou_un_motif": "Nothing to update: provide a type or reason.",
+  "cette_attestation_est_deja_revoquee": "This certificate is already revoked.",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "numero_d_attestation_temporairement_indisponible_reessayez": "Certificate number temporarily unavailable, please try again.",
+  "la_suppression_d_attestations_est_interdite_ces_documents_so": "Editing certificates is prohibited: they are preserved for evidentiary value (archives, third-party opposability). Revoke the incorrect certificate instead of deleting it.",
+  "une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi": "Certificate {numero} has already been issued for this student.",
+  "cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi": "This certificate has been revoked and can no longer be changed."
+}

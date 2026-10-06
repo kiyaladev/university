@@ -1,0 +1,8 @@
+{
+  "ressource_vod_introuvable": "Ressource VOD introuvable",
+  "cette_ressource_est_deja_archivee": "Cette ressource est déjà archivée.",
+  "aucun_profil_etudiant_n_est_lie_a_votre_compte": "Aucun profil étudiant n'est lié à votre compte.",
+  "cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_": "Cette ressource est déjà {vod.statut} : seul un BROUILLON ou un HORS_LIGNE peut être remis en ligne.",
+  "cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors": "Cette ressource est déjà « {statut} » : seul un brouillon ou une ressource hors ligne peut être publié.",
+  "seance_inscription_annee_incoherente": "La séance et l’inscription d’un même cours VOD doivent appartenir à la même année académique."
+}

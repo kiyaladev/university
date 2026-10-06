@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Journal transactionnel des changements de configuration électorale",
+  "module": "backend/src/modules/elections/elections.service.ts",
+  "operations": [
+    "creer",
+    "modifier",
+    "ouvrir",
+    "clore",
+    "proclamer",
+    "ajouterCandidat",
+    "supprimerCandidat"
+  ],
+  "projection": {
+    "election": ["id", "type", "statut", "nbSieges", "promotionId", "departementId", "dates ISO", "présence des textes"],
+    "candidat": ["id", "electionId", "ordre", "présence d'un lien de personne, sans identifiant"]
+  },
+  "protections": [
+    "Le titre, la description, le design du bulletin, les noms, les programmes et les photos ne sont pas recopiés au journal.",
+    "Aucun vote, votant, bulletin, jeton, choix ou total de participation n'est écrit dans AuditLog.",
+    "Les anciens événements VOTE_DEPOSE sont masqués dans la réponse de l'API Journal et exclus de son total.",
+    "Les modifications, transitions et déclarations/retraits de candidat sont écrites dans la transaction métier."
+  ],
+  "verification": {
+    "elections": "27 tests verts : 9 existants et 18 dédiés au journal.",
+    "masquage_historique": "Test dédié de l'API Journal ; aucune donnée d'électeur, jeton ou ligne VOTE_DEPOSE n'est renvoyée.",
+    "backend": "95 suites, 738 tests verts.",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi.",
+    "build": "npx nest build réussi."
+  },
+  "limites": [
+    "Aucun backfill ni effacement des événements historiques en base.",
+    "Les mises à jour d'état d'élection ne sont pas conditionnelles ; des administrateurs concurrents peuvent encore se remplacer mutuellement."
+  ],
+  "production": "Aucune migration ni modification de production."
+}

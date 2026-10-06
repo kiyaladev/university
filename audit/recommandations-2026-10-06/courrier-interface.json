@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-06T13:17:14.984Z",
+  "viewport": 375,
+  "departmentSelectionPersisted": true,
+  "headOwnDepartmentDerivedWithoutRegistryRequest": true,
+  "sessionQaReused": true,
+  "headFixtureLoginHTTPStatus": 201,
+  "adminHttpLoginRouteQualified": false,
+  "checks": [
+    "enregistrement depuis le dialogue sans date facultative",
+    "département choisi au clic et persisté",
+    "une seule étape proposée au paraphe",
+    "dialogue de paraphe contenu à 375 px",
+    "paraphe persisté, étapes suivantes en attente",
+    "chef : département automatique et registre non demandé"
+  ],
+  "errors": [],
+  "apiFailures": []
+}

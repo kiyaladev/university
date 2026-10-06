@@ -2,55 +2,60 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">{{ existant ? 'Modifier la recette' : 'Émettre une recette' }}</div>
+        <div class="text-h6">{{ $t(existant ? 'recettes.formDialog.editTitle' : 'recettes.formDialog.newTitle') }}</div>
         <div class="text-caption text-grey-7">
-          Le numéro suit le pattern REC-AAAA-NNNNN — utilisé sur la facture ou le reçu.
+          {{ $t('recettes.formDialog.numberHint') }}
         </div>
       </q-card-section>
       <q-card-section class="q-gutter-md">
+        <q-banner v-if="champsComptablesFiges" dense rounded class="bg-amber-1 text-brown-9">
+          {{ $t('recettes.formDialog.accountingLocked') }}
+        </q-banner>
         <div class="row q-col-gutter-md">
-          <div class="col-6">
-            <q-input v-model="form.numero" :disable="!!existant" outlined dense label="Numéro (REC-AAAA-XXXXX)" />
+          <div class="col-12 col-sm-6">
+            <q-input v-model="form.numero" :disable="!!existant" outlined dense :label="$t('recettes.formDialog.number')" />
           </div>
-          <div class="col-6">
+          <div class="col-12 col-sm-6">
             <q-select
               v-model="form.type"
               :options="optionsTypes"
+              :disable="champsComptablesFiges"
               outlined
               dense
               emit-value
               map-options
-              label="Type"
+              :label="$t('common.fields.type')"
             />
           </div>
         </div>
-        <q-input v-model="form.libelle" outlined dense label="Libellé *" />
-        <q-input v-model="form.description" outlined dense type="textarea" rows="2" label="Description" />
+        <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" />
+        <q-input v-model="form.description" outlined dense type="textarea" rows="2" :label="$t('common.fields.description')" />
         <div class="row q-col-gutter-md">
-          <div class="col-4">
-            <champ-date v-model="form.date" label="Date *" />
+          <div class="col-12 col-sm-4">
+            <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('recettes.formDialog.date')" />
           </div>
-          <div class="col-4">
-            <q-input v-model.number="form.montant" type="number" min="0" outlined dense label="Montant *" />
+          <div class="col-12 col-sm-4">
+            <q-input v-model.number="form.montant" :disable="champsComptablesFiges" type="number" min="0" outlined dense :label="$t('recettes.formDialog.amount')" />
           </div>
-          <div class="col-4">
-            <q-input v-model="form.devise" outlined dense label="Devise" />
+          <div class="col-12 col-sm-4">
+            <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('recettes.formDialog.currency')" />
           </div>
         </div>
-        <q-input v-model="form.client" outlined dense label="Client" />
-        <q-input v-model="form.factureNum" outlined dense label="N° de facture" />
+        <q-input v-model="form.client" outlined dense :label="$t('recettes.table.columns.client')" />
+        <q-input v-model="form.factureNum" outlined dense :label="$t('recettes.formDialog.invoiceNumber')" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn unelevated color="primary" :label="existant ? 'Enregistrer' : 'Émettre'" :loading="envoi" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn unelevated color="primary" :label="$t(existant ? 'common.actions.save' : 'recettes.actions.issueRecette')" :loading="envoi" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
 import { LIBELLE_TYPE_RECETTE, aujourdhui } from '../utils/libelles';
@@ -65,11 +70,12 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 
-const optionsTypes = (['ANALYSE_LABO', 'LOCATION_AMPHI', 'PRESTATION_FORMATION', 'PRESTATION_CONSEIL', 'AUTRE'] as const).map((value) => ({
+const optionsTypes = computed(() => Object.entries(LIBELLE_TYPE_RECETTE).map(([value, label]) => ({
   value,
-  label: LIBELLE_TYPE_RECETTE[value],
-}));
+  label,
+})));
 
 const form = ref({
   numero: '',
@@ -84,6 +90,7 @@ const form = ref({
 });
 
 const envoi = ref(false);
+const champsComptablesFiges = computed(() => !!props.existant?.paiementId);
 
 watch(
   () => props.modelValue,
@@ -117,23 +124,38 @@ watch(
 );
 
 async function enregistrer() {
-  if (!form.value.numero || !form.value.libelle || !form.value.montant || !form.value.date) {
-    $q.notify({ type: 'warning', message: 'Champs obligatoires manquants' });
+  const montant = Number(form.value.montant);
+  if ((!props.existant && !form.value.numero) || !form.value.libelle || !Number.isFinite(montant) || montant < 0 || !form.value.date) {
+    $q.notify({ type: 'warning', message: t('recettes.formDialog.required') });
     return;
   }
   envoi.value = true;
   try {
+    const payload = {
+      type: form.value.type,
+      libelle: form.value.libelle.trim(),
+      description: form.value.description.trim() || null,
+      montant,
+      devise: form.value.devise.trim() || 'GNF',
+      date: form.value.date,
+      client: form.value.client.trim() || null,
+      factureNum: form.value.factureNum.trim() || null,
+    };
     if (props.existant) {
-      await api.put(`/recettes/${props.existant.id}`, form.value);
-      $q.notify({ type: 'positive', message: 'Recette modifiée' });
+      await api.put(`/recettes/${props.existant.id}`, payload);
+      $q.notify({ type: 'positive', message: t('recettes.formDialog.updated') });
     } else {
-      await api.post('/recettes', form.value);
-      $q.notify({ type: 'positive', message: 'Recette émise' });
+      await api.post('/recettes', { numero: form.value.numero.trim(), ...payload });
+      $q.notify({ type: 'positive', message: t('recettes.formDialog.created') });
     }
     emit('update:modelValue', false);
     emit('cree');
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Enregistrement impossible' });
+    const details = e?.response?.data?.message ?? e?.response?.data?.messages;
+    $q.notify({
+      type: 'negative',
+      message: Array.isArray(details) ? details.join('\n') : details ?? t('recettes.formDialog.saveFailed'),
+    });
   } finally {
     envoi.value = false;
   }

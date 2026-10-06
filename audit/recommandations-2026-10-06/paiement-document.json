@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-06T09:20:17.678Z",
+  "environnement": "API et base QA réelles, aucun opérateur externe",
+  "checks": [
+    "numéro vide refusé dans le navigateur",
+    "demande Mobile Money sans simulation envoyée",
+    "paiement persisté EN_ATTENTE",
+    "document non traité avant confirmation",
+    "aucune erreur JavaScript"
+  ]
+}

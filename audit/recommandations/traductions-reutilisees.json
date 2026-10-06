@@ -1,0 +1,760 @@
+{
+  "date": "2026-10-02T11:19:04.602Z",
+  "files": [
+    {
+      "file": "components/AttestationDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.cancel",
+        "affectations.filters.promotion",
+        "affectations.filters.year",
+        "bibliotheque.table.columns.document",
+        "common.fields.student",
+        "attestations.actions.issue"
+      ]
+    },
+    {
+      "file": "components/AttributionDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "justificatifs.detailDialog.title",
+        "common.fields.student",
+        "affectations.filters.year",
+        "cites.actions.newAttribution"
+      ]
+    },
+    {
+      "file": "components/BadgeDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.cancel",
+        "badges.dialogs.cancel.reasonLabel",
+        "verificationCarte.result.table.validUntil",
+        "common.fields.phone",
+        "badges.table.columns.organization",
+        "common.fields.lastName",
+        "common.fields.firstName"
+      ]
+    },
+    {
+      "file": "components/BulletinCard.vue",
+      "changes": 3,
+      "keys": [
+        "bulletins.table.ariaLabels.imprimerBulletin",
+        "bulletins.table.columns.rang",
+        "common.fields.matricule"
+      ]
+    },
+    {
+      "file": "components/CalendarGrid.vue",
+      "changes": 1,
+      "keys": [
+        "reservations.actions.today"
+      ]
+    },
+    {
+      "file": "components/CandidatDialog.vue",
+      "changes": 4,
+      "keys": [
+        "common.actions.cancel",
+        "matieres.dialog.sectionTitle",
+        "common.fields.lastName",
+        "common.fields.firstName"
+      ]
+    },
+    {
+      "file": "components/CarteDialog.vue",
+      "changes": 3,
+      "keys": [
+        "common.actions.cancel",
+        "common.fields.student"
+      ]
+    },
+    {
+      "file": "components/ChambreDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "cites.chambres.table.columns.loyer",
+        "cites.chambres.table.columns.lits",
+        "matieres.dialog.codeLabel",
+        "salles.dialog.identificationSection"
+      ]
+    },
+    {
+      "file": "components/CourrierCircuitDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.fields.notes",
+        "notificationsPage.history.table.columns.destinataire",
+        "courrierPage.table.columns.objet",
+        "common.fields.type",
+        "courrierPage.actions.register"
+      ]
+    },
+    {
+      "file": "components/CourrierDetailDialog.vue",
+      "changes": 10,
+      "keys": [
+        "common.actions.validate",
+        "common.actions.cancel",
+        "common.fields.comment",
+        "common.actions.close",
+        "courrierPage.actionsColumn.closeTooltip",
+        "common.actions.print",
+        "common.fields.notes",
+        "common.actions.actions",
+        "common.fields.status",
+        "common.fields.role"
+      ]
+    },
+    {
+      "file": "components/CreneauDialog.vue",
+      "changes": 9,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.pagination.to",
+        "common.pagination.from",
+        "common.fields.period",
+        "common.fields.classroom",
+        "common.messages.end",
+        "structure.dialogs.annee.debut",
+        "common.fields.type"
+      ]
+    },
+    {
+      "file": "components/DeliberationDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.create",
+        "common.actions.cancel",
+        "rectoratPage.subtitleFallback",
+        "common.fields.matricule",
+        "affectations.dialog.fields.promotion",
+        "affectations.dialog.fields.year",
+        "deliberations.actions.newDeliberation"
+      ]
+    },
+    {
+      "file": "components/DemandeDocumentDialog.vue",
+      "changes": 5,
+      "keys": [
+        "common.actions.submit",
+        "common.actions.cancel",
+        "demandeDocuments.detail.enrollment",
+        "common.fields.motif",
+        "common.fields.type"
+      ]
+    },
+    {
+      "file": "components/DocumentDialog.vue",
+      "changes": 8,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.actions.add",
+        "common.fields.student",
+        "stages.detail.fields.supervisor",
+        "bibliotheque.filters.departmentPlaceholder",
+        "common.fields.department",
+        "bibliotheque.filters.editionYear"
+      ]
+    },
+    {
+      "file": "components/ElectionDialog.vue",
+      "changes": 4,
+      "keys": [
+        "common.actions.cancel",
+        "common.fields.description",
+        "common.fields.type",
+        "common.fields.title"
+      ]
+    },
+    {
+      "file": "components/EnseignantDialog.vue",
+      "changes": 10,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "paiePage.table.lignesColumns.taux",
+        "common.fields.department",
+        "enseignants.table.columns.grade",
+        "common.fields.phone",
+        "etudiants.table.columns.email",
+        "inscriptionPublique.form.step1.prenom.label",
+        "inscriptionPublique.form.step1.nom.label",
+        "badges.table.columns.identity"
+      ]
+    },
+    {
+      "file": "components/EquipementDialog.vue",
+      "changes": 5,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "helpdesk.table.columns.location",
+        "patrimoine.categories.dialog.labelLabel",
+        "salles.dialog.identificationSection"
+      ]
+    },
+    {
+      "file": "components/EtudiantDialog.vue",
+      "changes": 16,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "utilisateurs.dialog.passwordNewAccount",
+        "inscriptions.studentDialog.portalAccount",
+        "affectations.filters.promotion",
+        "common.fields.matricule",
+        "common.fields.address",
+        "common.fields.email",
+        "inscriptionPublique.form.step1.telephone.placeholder",
+        "common.fields.phone",
+        "inscriptionPublique.form.step1.lieuNaissance.label",
+        "inscriptionPublique.form.step1.dateNaissance.label",
+        "inscriptionPublique.form.step1.sexe.label",
+        "inscriptionPublique.form.step1.prenom.label",
+        "inscriptionPublique.form.step1.nom.label",
+        "badges.table.columns.identity"
+      ]
+    },
+    {
+      "file": "components/EvaluationDialog.vue",
+      "changes": 5,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "affectations.dialog.fields.promotion",
+        "affectations.dialog.fields.year",
+        "matieres.dialog.intituleLabel"
+      ]
+    },
+    {
+      "file": "components/ExamenDialog.vue",
+      "changes": 9,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.fields.classroom",
+        "affectations.dialog.fields.year",
+        "affectations.dialog.fields.promotion",
+        "affectations.dialog.fields.subject",
+        "common.fields.type",
+        "evaluations.table.columns.title",
+        "examens.actions.schedule"
+      ]
+    },
+    {
+      "file": "components/FeuillePaieDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.close",
+        "statistiquesMesrs.chart.axis.gnf",
+        "paiePage.card.totalAmount",
+        "rectoratPage.subtitleFallback",
+        "common.fields.period",
+        "common.actions.cancel"
+      ]
+    },
+    {
+      "file": "components/FilterBar.vue",
+      "changes": 1,
+      "keys": [
+        "common.actions.reset"
+      ]
+    },
+    {
+      "file": "components/FormationDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.fields.status",
+        "common.messages.end",
+        "structure.dialogs.annee.debut",
+        "cites.chambres.filters.categorie",
+        "common.fields.description"
+      ]
+    },
+    {
+      "file": "components/GenerationDialog.vue",
+      "changes": 6,
+      "keys": [
+        "emploiDuTemps.actions.generateSessions",
+        "common.actions.close",
+        "affectations.filters.year",
+        "common.actions.to",
+        "common.actions.from"
+      ]
+    },
+    {
+      "file": "components/InscriptionDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.cancel",
+        "statistiquesMesrs.chart.axis.gnf",
+        "demandeDocuments.detail.fees",
+        "affectations.dialog.fields.promotion",
+        "affectations.dialog.fields.year",
+        "verification.result.table.parcours",
+        "common.fields.student"
+      ]
+    },
+    {
+      "file": "components/NotesSaisieMasse.vue",
+      "changes": 4,
+      "keys": [
+        "bibliotheque.table.columns.state",
+        "common.actions.pickPresent",
+        "common.fields.student",
+        "common.fields.matricule"
+      ]
+    },
+    {
+      "file": "components/PaginationBar.vue",
+      "changes": 1,
+      "keys": [
+        "common.actions.of"
+      ]
+    },
+    {
+      "file": "components/PaiementDialog.vue",
+      "changes": 8,
+      "keys": [
+        "common.actions.cancel",
+        "common.fields.motif",
+        "inscriptionPublique.form.step1.telephone.placeholder",
+        "inscriptions.cards.balance",
+        "etudiants.dialogInscriptions.columns.amount",
+        "common.fields.student",
+        "paiements.filters.enrollment",
+        "paiements.actions.new"
+      ]
+    },
+    {
+      "file": "components/PatrimoineDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.fields.classroom",
+        "common.fields.department",
+        "patrimoine.categories.dialog.labelLabel",
+        "salles.dialog.identificationSection"
+      ]
+    },
+    {
+      "file": "components/PlagiatCard.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.confirm",
+        "plagiatDetail.decision.acquitAction",
+        "common.actions.detail",
+        "plagiatDetail.score.detectedOn",
+        "plagiatDetail.diff.documentB",
+        "plagiatDetail.diff.documentA"
+      ]
+    },
+    {
+      "file": "components/RecetteDialog.vue",
+      "changes": 5,
+      "keys": [
+        "common.actions.cancel",
+        "recettes.table.columns.client",
+        "common.fields.description",
+        "patrimoine.categories.dialog.labelLabel",
+        "common.fields.type"
+      ]
+    },
+    {
+      "file": "components/RechargeDialog.vue",
+      "changes": 4,
+      "keys": [
+        "common.actions.reload",
+        "common.actions.cancel",
+        "examens.scansTable.columns.operator",
+        "common.fields.student"
+      ]
+    },
+    {
+      "file": "components/ReclamationDetailDialog.vue",
+      "changes": 8,
+      "keys": [
+        "common.actions.close",
+        "reclamations.actions.escalate",
+        "common.fields.description",
+        "deliberations.table.columns.creeLe",
+        "reclamations.filters.assigneA",
+        "common.fields.priority",
+        "common.fields.type",
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "components/ReclamationDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.send",
+        "common.actions.cancel",
+        "common.fields.department",
+        "common.fields.priority",
+        "mesReclamations.actions.new"
+      ]
+    },
+    {
+      "file": "components/ReparationDialog.vue",
+      "changes": 1,
+      "keys": [
+        "common.actions.cancel"
+      ]
+    },
+    {
+      "file": "components/ReservationDetailDialog.vue",
+      "changes": 17,
+      "keys": [
+        "common.actions.close",
+        "common.actions.register",
+        "cites.residences.table.columns.responsable",
+        "reservations.table.columns.organization",
+        "common.fields.motif",
+        "common.messages.end",
+        "structure.dialogs.annee.debut",
+        "common.fields.date",
+        "common.fields.classroom",
+        "common.actions.refuse",
+        "common.actions.confirm",
+        "bulletins.table.columns.decision",
+        "rectoratPage.subtitleFallback",
+        "reservations.table.columns.slot"
+      ]
+    },
+    {
+      "file": "components/ReservationDialog.vue",
+      "changes": 4,
+      "keys": [
+        "common.actions.cancel",
+        "rectoratPage.subtitleFallback",
+        "reservations.table.columns.organization",
+        "reservations.actions.reserve"
+      ]
+    },
+    {
+      "file": "components/ResidenceDialog.vue",
+      "changes": 8,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "cites.residences.table.columns.responsable",
+        "common.fields.address",
+        "common.fields.city",
+        "inscriptionPublique.form.step1.nom.label",
+        "matieres.dialog.codeLabel",
+        "badges.table.columns.identity"
+      ]
+    },
+    {
+      "file": "components/SeanceDialog.vue",
+      "changes": 7,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.fields.classroom",
+        "common.fields.endTime",
+        "common.fields.startTime",
+        "common.fields.type",
+        "common.fields.date"
+      ]
+    },
+    {
+      "file": "components/SoutenanceDialog.vue",
+      "changes": 3,
+      "keys": [
+        "common.actions.cancel",
+        "bulletins.table.columns.mention",
+        "common.fields.classroom"
+      ]
+    },
+    {
+      "file": "components/TicketDialog.vue",
+      "changes": 5,
+      "keys": [
+        "common.actions.send",
+        "common.actions.cancel",
+        "common.fields.priority",
+        "helpdesk.actions.declareIncident"
+      ]
+    },
+    {
+      "file": "components/TirageDialog.vue",
+      "changes": 3,
+      "keys": [
+        "common.actions.cancel",
+        "common.fields.notes",
+        "tirage.actions.schedule"
+      ]
+    },
+    {
+      "file": "components/TravailDialog.vue",
+      "changes": 8,
+      "keys": [
+        "common.actions.register",
+        "common.actions.cancel",
+        "common.messages.end",
+        "structure.dialogs.annee.debut",
+        "common.fields.location",
+        "stages.detail.fields.company",
+        "stages.detail.fields.supervisor",
+        "common.fields.description"
+      ]
+    },
+    {
+      "file": "components/VodDialog.vue",
+      "changes": 6,
+      "keys": [
+        "common.actions.cancel",
+        "common.fields.description",
+        "common.fields.teacher",
+        "common.fields.subject",
+        "vodPage.filters.resourceType",
+        "common.fields.title"
+      ]
+    },
+    {
+      "file": "layouts/AuthLayout.vue",
+      "changes": 1,
+      "keys": [
+        "common.app.name"
+      ]
+    },
+    {
+      "file": "layouts/MainLayout.vue",
+      "changes": 1,
+      "keys": [
+        "common.app.name"
+      ]
+    },
+    {
+      "file": "pages/AffectationsPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/AttestationsPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/BibliothequePage.vue",
+      "changes": 2,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/CitesPage.vue",
+      "changes": 3,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/DeliberationsPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/DemandeDocumentsPage.vue",
+      "changes": 3,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/EtudiantsPage.vue",
+      "changes": 4,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf",
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/EvaluationsPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/FormationsAdminPage.vue",
+      "changes": 3,
+      "keys": [
+        "rectoratPage.subtitleFallback",
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/FormationsPubliquesPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/HelpdeskPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/NotesPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/PaiePage.vue",
+      "changes": 5,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf",
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/PaiementsPage.vue",
+      "changes": 2,
+      "keys": [
+        "rectoratPage.subtitleFallback",
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/PatrimoinePage.vue",
+      "changes": 4,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf",
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/PlagiatPage.vue",
+      "changes": 2,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/PortailConnexionPage.vue",
+      "changes": 1,
+      "keys": [
+        "common.app.name"
+      ]
+    },
+    {
+      "file": "pages/PortailPage.vue",
+      "changes": 1,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/RapportsPage.vue",
+      "changes": 1,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/RecettesPage.vue",
+      "changes": 3,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/ReclamationsPage.vue",
+      "changes": 2,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/RectoratPage.vue",
+      "changes": 1,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/RestoPage.vue",
+      "changes": 4,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/SeancesPage.vue",
+      "changes": 2,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/StagesPage.vue",
+      "changes": 4,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/StatistiquesMesrsPage.vue",
+      "changes": 1,
+      "keys": [
+        "statistiquesMesrs.chart.axis.gnf"
+      ]
+    },
+    {
+      "file": "pages/StructurePage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/TiragePage.vue",
+      "changes": 2,
+      "keys": [
+        "reservations.chips.roomFallback",
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/VodLecteurPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    },
+    {
+      "file": "pages/VodPage.vue",
+      "changes": 1,
+      "keys": [
+        "rectoratPage.subtitleFallback"
+      ]
+    }
+  ]
+}

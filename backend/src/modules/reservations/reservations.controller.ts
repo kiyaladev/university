@@ -26,20 +26,21 @@ const DEMANDEURS = [
 @ApiTags('Réservations de salles')
 @ApiBearerAuth()
 @Controller('reservations')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ENSEIGNANT, Role.CONTROLEUR)
 export class ReservationsController {
   constructor(private readonly service: ReservationsService) {}
 
-  @Get() findAll(@Query() query: ReservationQueryDto) {
-    return this.service.liste(query);
+  @Get() findAll(@Query() query: ReservationQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
   }
 
   /** Vue semaine : réservations + séances de l'emploi du temps sur la grille. */
-  @Get('calendrier') calendrier(@Query() query: CalendrierQueryDto) {
-    return this.service.calendrier(query);
+  @Get('calendrier') calendrier(@Query() query: CalendrierQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.calendrier(query, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.consulter(id, user);
   }
 
   @Roles(...DEMANDEURS)

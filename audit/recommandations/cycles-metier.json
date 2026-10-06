@@ -1,0 +1,182 @@
+{
+  "date": "2026-10-02T10:56:36.128Z",
+  "environment": "QA locale",
+  "checks": [
+    {
+      "name": "Inscription initiale en attente de paiement",
+      "result": "OK"
+    },
+    {
+      "name": "PUT /inscriptions/026d6123-04ce-44b6-9d6f-5a90cdb70cae/valider",
+      "result": "OK"
+    },
+    {
+      "name": "Paiement enregistré dans le dossier",
+      "result": "OK"
+    },
+    {
+      "name": "Validation par scolarité",
+      "result": "OK"
+    },
+    {
+      "name": "PUT /inscriptions/026d6123-04ce-44b6-9d6f-5a90cdb70cae/valider",
+      "result": "OK"
+    },
+    {
+      "name": "Certificat du propriétaire produit",
+      "result": "OK"
+    },
+    {
+      "name": "GET /inscriptions/026d6123-04ce-44b6-9d6f-5a90cdb70cae/attestation-inscription",
+      "result": "OK"
+    },
+    {
+      "name": "POST /documents-demande",
+      "result": "OK"
+    },
+    {
+      "name": "Demande tarifée en attente",
+      "result": "OK"
+    },
+    {
+      "name": "POST /documents-demande/7916a1e0-73d0-492c-a57c-684d796a709f/remettre",
+      "result": "OK"
+    },
+    {
+      "name": "Paiement confirmé et traitement démarré",
+      "result": "OK"
+    },
+    {
+      "name": "Document prêt",
+      "result": "OK"
+    },
+    {
+      "name": "Document remis",
+      "result": "OK"
+    },
+    {
+      "name": "GET /documents-demande/7916a1e0-73d0-492c-a57c-684d796a709f",
+      "result": "OK"
+    },
+    {
+      "name": "GET /evaluations/13883f56-b524-4b71-a9ac-3260617695c4",
+      "result": "OK"
+    },
+    {
+      "name": "GET /notes/evaluation/13883f56-b524-4b71-a9ac-3260617695c4",
+      "result": "OK"
+    },
+    {
+      "name": "PUT /notes/saisie",
+      "result": "OK"
+    },
+    {
+      "name": "Note enregistrée",
+      "result": "OK"
+    },
+    {
+      "name": "PUT /notes/saisie",
+      "result": "OK"
+    },
+    {
+      "name": "Moyenne délibérée",
+      "result": "OK"
+    },
+    {
+      "name": "Décision du jury calculée",
+      "result": "OK"
+    },
+    {
+      "name": "GET /deliberations/5fa8c7b6-3295-4bcf-b0bd-6949a7f0ea9b",
+      "result": "OK"
+    },
+    {
+      "name": "GET /deliberations/5fa8c7b6-3295-4bcf-b0bd-6949a7f0ea9b/imprimer",
+      "result": "OK"
+    },
+    {
+      "name": "POST /deliberations/5fa8c7b6-3295-4bcf-b0bd-6949a7f0ea9b/valider",
+      "result": "OK"
+    },
+    {
+      "name": "POST /deliberations/5fa8c7b6-3295-4bcf-b0bd-6949a7f0ea9b/calculer",
+      "result": "OK"
+    },
+    {
+      "name": "Bulletin individuel généré",
+      "result": "OK"
+    },
+    {
+      "name": "Résultats tiers absents de /evaluations",
+      "result": "OK"
+    },
+    {
+      "name": "Résultats tiers absents de /notes",
+      "result": "OK"
+    },
+    {
+      "name": "Résultats tiers absents de /deliberations",
+      "result": "OK"
+    },
+    {
+      "name": "Réclamation ouverte",
+      "result": "OK"
+    },
+    {
+      "name": "GET /reclamations/3fe190a1-70e0-4c18-87b9-5dae2e6ce16e",
+      "result": "OK"
+    },
+    {
+      "name": "PUT /reclamations/3fe190a1-70e0-4c18-87b9-5dae2e6ce16e/statut",
+      "result": "OK"
+    },
+    {
+      "name": "Réclamation résolue avec clôture",
+      "result": "OK"
+    },
+    {
+      "name": "POST /reclamations/3fe190a1-70e0-4c18-87b9-5dae2e6ce16e/messages",
+      "result": "OK"
+    },
+    {
+      "name": "POST /reservations/d7925595-b814-44c9-b222-04db444305d1/decider",
+      "result": "OK"
+    },
+    {
+      "name": "Réservation confirmée",
+      "result": "OK"
+    },
+    {
+      "name": "Collision salle refusée",
+      "result": "OK"
+    },
+    {
+      "name": "Paie : deux heures de service fait",
+      "result": "OK"
+    },
+    {
+      "name": "Paie : montant calculé au taux du vacataire",
+      "result": "OK"
+    },
+    {
+      "name": "Recalcul idempotent de la paie",
+      "result": "OK"
+    },
+    {
+      "name": "POST /feuilles-paie/77c5ef36-9901-4e91-96a8-49d2686a97ed/calculer",
+      "result": "OK"
+    },
+    {
+      "name": "POST /feuilles-paie/77c5ef36-9901-4e91-96a8-49d2686a97ed/payer",
+      "result": "OK"
+    },
+    {
+      "name": "Paie exécutée",
+      "result": "OK"
+    },
+    {
+      "name": "GET /feuilles-paie/77c5ef36-9901-4e91-96a8-49d2686a97ed",
+      "result": "OK"
+    }
+  ]
+}

@@ -12,12 +12,12 @@
         <p class="pochoir fiche__meta chiffres">
           {{ seance?.heureDebut }} – {{ seance?.heureFin }} ·
           {{ seance?.affectation?.promotion?.nom }} ·
-          {{ seance?.salle?.code ?? 'salle non affectée' }} · {{ seance?.type }}
+          {{ seance?.salle?.code ?? t('pointage.noRoom') }} · {{ seance?.type }}
         </p>
       </header>
 
       <section class="fiche__section">
-        <h3 class="pochoir fiche__legende">Constat du contrôleur</h3>
+        <h3 class="pochoir fiche__legende">{{ t('pointage.finding') }}</h3>
         <div class="constats">
           <button
             v-for="s in statuts"
@@ -42,12 +42,12 @@
               outlined
               dense
               mask="##:##"
-              label="Arrivée constatée"
+              :label="t('pointage.arrival')"
               :disable="absent"
             >
               <template #append>
-                <q-btn flat dense round icon="schedule" @click="form.heureArrivee = maintenantHHmm()">
-                  <q-tooltip>Maintenant</q-tooltip>
+                <q-btn flat dense round icon="schedule" :aria-label="t('pointage.now')" @click="form.heureArrivee = maintenantHHmm()">
+                  <q-tooltip>{{ t('pointage.now') }}</q-tooltip>
                 </q-btn>
               </template>
             </q-input>
@@ -58,12 +58,12 @@
               outlined
               dense
               mask="##:##"
-              label="Fin de séance"
+              :label="t('pointage.end')"
               :disable="absent"
             >
               <template #append>
-                <q-btn flat dense round icon="schedule" @click="form.heureFinReelle = maintenantHHmm()">
-                  <q-tooltip>Maintenant</q-tooltip>
+                <q-btn flat dense round icon="schedule" :aria-label="t('pointage.now')" @click="form.heureFinReelle = maintenantHHmm()">
+                  <q-tooltip>{{ t('pointage.now') }}</q-tooltip>
                 </q-btn>
               </template>
             </q-input>
@@ -72,8 +72,8 @@
 
         <q-banner v-if="!absent" dense class="note--info">
           <template #avatar><q-icon name="timer" /></template>
-          Durée effective retenue : <strong>{{ dureeLisible(dureeCalculee) }}</strong>
-          <span v-if="ecartRetard > 0"> · {{ ecartRetard }} min après l’heure prévue</span>
+          {{ t('pointage.duration') }} <strong>{{ dureeLisible(dureeCalculee) }}</strong>
+          <span v-if="ecartRetard > 0"> · {{ t('pointage.late', { n: ecartRetard }) }}</span>
         </q-banner>
 
         <div class="row q-col-gutter-md">
@@ -83,8 +83,8 @@
               type="number"
               outlined
               dense
-              label="Étudiants présents"
-              :hint="`Effectif de la promotion : ${seance?.affectation?.promotion?.effectif ?? '—'}`"
+              :label="t('pointage.students')"
+              :hint="t('pointage.classSize', { n: seance?.affectation?.promotion?.effectif ?? '—' })"
               :disable="absent"
             />
           </div>
@@ -98,7 +98,7 @@
               emit-value
               map-options
               use-input
-              label="Enseignant remplaçant"
+              :label="t('pointage.substitute')"
               @filter="filtrerEnseignants"
             />
           </div>
@@ -108,8 +108,8 @@
           v-model="form.thematiqueTraitee"
           outlined
           dense
-          label="Matière / thème réellement déroulé"
-          :hint="seance?.thematique ? `Prévu : ${seance.thematique}` : ''"
+          :label="t('pointage.topic')"
+          :hint="seance?.thematique ? t('pointage.planned', { topic: seance.thematique }) : ''"
           :disable="absent"
         />
 
@@ -119,7 +119,7 @@
           dense
           type="textarea"
           rows="2"
-          label="Observations"
+          :label="t('pointage.observation')"
         />
 
         <!-- L'enseignant atteste lui-même sa présence : c'est la pièce
@@ -133,7 +133,7 @@
 
         <q-expansion-item
           icon="verified_user"
-          label="Preuves du passage du contrôleur"
+          :label="t('pointage.proofs')"
           :caption="resumePreuves"
         >
           <div class="q-pt-md q-gutter-md">
@@ -147,7 +147,7 @@
                   icon="my_location"
                   no-caps
                   :loading="geolocEnCours"
-                  label="Enregistrer ma position"
+                  :label="t('pointage.location')"
                   @click="capterPosition"
                 />
               </div>
@@ -155,7 +155,7 @@
                 <span v-if="form.latitude">
                   {{ form.latitude.toFixed(5) }}, {{ form.longitude?.toFixed(5) }}
                 </span>
-                <span v-else class="text-grey-6">Position non enregistrée</span>
+                <span v-else class="text-grey-6">{{ t('pointage.noLocation') }}</span>
               </div>
             </div>
           </div>
@@ -166,15 +166,14 @@
         <p v-if="attestationManquante" class="pochoir--brut fiche__blocage">
           <q-icon name="info" size="18px" />
           <span v-if="seance?.controle">
-            Toute correction du constat exige une nouvelle attestation de l’enseignant.
+            {{ t('pointage.correctionProof') }}
           </span>
           <span v-else>
-            L’enseignant atteste sa présence ci-dessus — signature, code PIN ou
-            empreinte — avant l’enregistrement.
+            {{ t('pointage.initialProof') }}
           </span>
         </p>
         <div class="fiche__actions">
-          <q-btn flat no-caps label="Annuler" @click="fermer(false)" />
+          <q-btn flat no-caps :label="t('pointage.cancel')" @click="fermer(false)" />
           <q-btn
             unelevated
             color="primary"
@@ -182,7 +181,7 @@
             icon="how_to_reg"
             class="fiche__valider"
             :disable="attestationManquante"
-            :label="seance?.controle ? 'Corriger le pointage' : 'Valider le pointage'"
+            :label="t(seance?.controle ? 'pointage.correct' : 'pointage.validate')"
             :loading="enregistrement"
             @click="enregistrer"
           />
@@ -194,10 +193,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import { usePointagesStore } from '../stores/pointages';
-import { dureeLisible, maintenantHHmm } from '../utils/libelles';
+import { dureeLisible, maintenantHHmm, LIBELLE_STATUT_PRESENCE } from '../utils/libelles';
 import type { Enseignant, Pointage, Seance, StatutPresence } from '../types';
 import QrScanner from './QrScanner.vue';
 import AttestationEnseignant from './AttestationEnseignant.vue';
@@ -206,15 +206,16 @@ const props = defineProps<{ modelValue: boolean; seance: Seance | null }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const pointages = usePointagesStore();
 
-const statuts = [
-  { value: 'PRESENT', label: 'Présent', icone: 'check_circle', champ: 'present' },
-  { value: 'RETARD', label: 'Retard', icone: 'schedule', champ: 'retard' },
-  { value: 'ABSENT', label: 'Absent', icone: 'cancel', champ: 'absent' },
-  { value: 'REMPLACE', label: 'Remplacé', icone: 'swap_horiz', champ: 'remplace' },
-  { value: 'DEPART_ANTICIPE', label: 'Départ anticipé', icone: 'logout', champ: 'depart' },
-] as const;
+const statuts = computed(() => [
+  { value: 'PRESENT', icone: 'check_circle', champ: 'present' },
+  { value: 'RETARD', icone: 'schedule', champ: 'retard' },
+  { value: 'ABSENT', icone: 'cancel', champ: 'absent' },
+  { value: 'REMPLACE', icone: 'swap_horiz', champ: 'remplace' },
+  { value: 'DEPART_ANTICIPE', icone: 'logout', champ: 'depart' },
+].map(statut => ({ ...statut, label: LIBELLE_STATUT_PRESENCE[statut.value] })));
 
 const vide = (): Pointage & { statut: StatutPresence } => ({
   seanceId: '',
@@ -268,9 +269,9 @@ const ecartRetard = computed(() => {
 
 const resumePreuves = computed(() => {
   const p: string[] = [];
-  if (form.value.qrToken) p.push('QR salle');
-  if (form.value.latitude) p.push('position GPS');
-  return p.length ? p.join(' · ') : 'aucune preuve jointe';
+  if (form.value.qrToken) p.push(t('pointage.roomQr'));
+  if (form.value.latitude) p.push(t('pointage.gps'));
+  return p.length ? p.join(' · ') : t('pointage.noProof');
 });
 
 /** Une attestation est fournie dès qu'un des quatre moyens est renseigné. */
@@ -302,7 +303,7 @@ watch(
 
     // Règle de l'établissement : l'attestation peut être exigée ou facultative.
     try {
-      const { data } = await api.get('/parametres');
+      const { data } = await api.get('/parametres/pointage');
       attestationObligatoire.value =
         data.find((p: any) => p.cle === 'ATTESTATION_OBLIGATOIRE')?.valeur !== 'false';
     } catch {
@@ -318,7 +319,8 @@ watch(
       effectifPresent: c?.effectifPresent ?? undefined,
       thematiqueTraitee: c?.thematiqueTraitee ?? props.seance.thematique ?? '',
       observation: c?.observation ?? '',
-      signatureBase64: c?.signatureBase64 ?? undefined,
+      // Une correction exige une nouvelle attestation, pas la réutilisation de la preuve précédente.
+      signatureBase64: undefined,
       enseignantRemplacantId: c?.enseignantRemplacant?.id,
     };
   },
@@ -338,7 +340,7 @@ function choisirStatut(statut: string) {
 
 function capterPosition() {
   if (!navigator.geolocation) {
-    $q.notify({ type: 'warning', message: 'Géolocalisation indisponible sur cet appareil' });
+    $q.notify({ type: 'warning', message: t('pointage.gpsUnavailable') });
     return;
   }
   geolocEnCours.value = true;
@@ -347,11 +349,11 @@ function capterPosition() {
       form.value.latitude = pos.coords.latitude;
       form.value.longitude = pos.coords.longitude;
       geolocEnCours.value = false;
-      $q.notify({ type: 'positive', message: 'Position enregistrée', icon: 'my_location' });
+      $q.notify({ type: 'positive', message: t('pointage.gpsSaved'), icon: 'my_location' });
     },
     () => {
       geolocEnCours.value = false;
-      $q.notify({ type: 'negative', message: 'Position GPS refusée ou indisponible' });
+      $q.notify({ type: 'negative', message: t('pointage.gpsDenied') });
     },
     { enableHighAccuracy: true, timeout: 10000 },
   );
@@ -383,7 +385,7 @@ async function enregistrer() {
     };
     const enligne = await pointages.envoyer(payload);
     if (enligne) {
-      $q.notify({ type: 'positive', message: 'Pointage enregistré', icon: 'how_to_reg' });
+      $q.notify({ type: 'positive', message: t('pointage.saved'), icon: 'how_to_reg' });
     }
     emit('enregistre');
     fermer(false);
@@ -409,19 +411,19 @@ function fermer(v: boolean) {
 
 .fiche__matiere {
   font-size: 1.4rem;
-  color: #fff;
+  color: var(--up-encre);
   margin: 0;
 }
 
 .fiche__enseignant {
   margin: 4px 0 0;
   font-weight: 600;
-  color: #fff;
+  color: var(--up-encre);
 }
 
 .fiche__meta {
   margin: 6px 0 0;
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--up-encre-douce);
 }
 
 .fiche__section {
@@ -439,9 +441,11 @@ function fermer(v: boolean) {
 .constats {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 2px;
-  background: var(--up-encre);
+  gap: 1px;
+  background: #{$gris-filet};
   border: var(--up-filet);
+  border-radius: var(--up-rayon);
+  overflow: hidden;
 }
 
 .constat {
@@ -466,10 +470,10 @@ function fermer(v: boolean) {
   font: inherit;
   transition: background var(--up-transition), color var(--up-transition);
 
-  &:focus-visible { outline: 3px solid $vert; outline-offset: -5px; }
+  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -5px; }
 
   &--choisi {
-    color: #fff;
+    color: var(--up-encre);
     background-image: repeating-linear-gradient(
       92deg,
       rgba(255, 255, 255, 0.06) 0 2px,
@@ -489,7 +493,7 @@ function fermer(v: boolean) {
   background: var(--up-plaque);
   position: sticky;
   bottom: 0;
-  border-top: 3px solid var(--up-encre);
+  border-top: var(--up-filet);
 }
 
 .fiche__blocage {

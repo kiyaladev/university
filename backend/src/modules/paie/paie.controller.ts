@@ -6,16 +6,19 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { I18nContext } from 'nestjs-i18n';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import type { Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import type { Request, Response } from 'express';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { CalculerFeuilleDto, CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
 import { PaieService } from './paie.service';
+import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Paie des vacataires')
 @ApiBearerAuth()
@@ -71,8 +74,8 @@ export class PaieController {
   /** Suppression d'une feuille en brouillon uniquement. */
   @Roles(Role.ADMIN)
   @Delete(':id')
-  supprimer(@Param('id') id: string) {
-    return this.service.supprimer(id);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 
   /**
@@ -81,20 +84,16 @@ export class PaieController {
    * vérifié ici manuellement (pas de passerelle de garde globale). Le HTML est
    * renvoyé tel quel, aucune enveloppe JSON, `window.print()` au chargement.
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query() query: { token?: string },
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    try {
-      this.jwt.verify(query.token ?? '', {
-        secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      });
-    } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
-    }
+    // Le secret vient du JwtService injecté : plus de clé en dur qui pouvait
+    // diverger de celle de la stratégie JWT.
+    verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimer(id));
   }
 }

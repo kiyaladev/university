@@ -1,10 +1,10 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 620px; max-width: 96vw">
-      <q-card-section class="text-h6">Nouvelle demande de document</q-card-section>
+      <q-card-section class="text-h6">{{ t('demandeDocuments.createDialog.title') }}</q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Type de document *</span>
+        <span class="section-titre">{{ t('demandeDocuments.createDialog.documentType') }}</span>
         <q-select
           v-model="form.type"
           :options="optionsType"
@@ -12,7 +12,7 @@
           dense
           emit-value
           map-options
-          label="Type"
+          :label="$t('common.fields.type')"
         >
           <template #option="scope">
             <q-item v-bind="scope.itemProps">
@@ -20,7 +20,7 @@
                 <q-item-label>{{ scope.opt.label }}</q-item-label>
                 <q-item-label v-if="scope.opt.montant != null" caption>
                   {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? 'GNF' }}
-                  <span v-if="scope.opt.delaiHeures"> · délai {{ scope.opt.delaiHeures }} h</span>
+                  <span v-if="scope.opt.delaiHeures"> · {{ t('demandeDocuments.createDialog.delay', { hours: scope.opt.delaiHeures }) }}</span>
                 </q-item-label>
               </q-item-section>
             </q-item>
@@ -29,18 +29,17 @@
 
         <template v-if="tarifSelectionne">
           <q-banner class="note--info q-mt-sm">
-            Frais : <strong>{{ montantLisible(tarifSelectionne.montant) }} {{ tarifSelectionne.devise }}</strong>
+            {{ t('demandeDocuments.createDialog.fees') }} <strong>{{ montantLisible(tarifSelectionne.montant) }} {{ tarifSelectionne.devise }}</strong>
             <span v-if="tarifSelectionne.delaiHeures">
-              — délai habituel {{ tarifSelectionne.delaiHeures }} h</span
+              — {{ t('demandeDocuments.createDialog.usualDelay', { hours: tarifSelectionne.delaiHeures }) }}</span
             >.
           </q-banner>
         </template>
         <q-banner v-else-if="form.type" class="note--alerte q-mt-sm">
-          Aucun tarif paramétré pour ce type : la demande sera créée sans frais
-          (workflow dégradé). Contactez la scolarité si nécessaire.
+          {{ t('demandeDocuments.createDialog.noFeeConfigured') }}
         </q-banner>
 
-        <span class="section-titre">Motif</span>
+        <span class="section-titre">{{ $t('common.fields.motif') }}</span>
         <q-input
           v-model="form.motif"
           outlined
@@ -49,22 +48,21 @@
           rows="2"
           counter
           :max-length="500"
-          label="Motif de la demande"
-          placeholder="Ex. : besoin pour dossier de bourse"
+          :label="t('demandeDocuments.createDialog.reasonLabel')"
+          :placeholder="t('demandeDocuments.createDialog.reasonPlaceholder')"
         />
 
-        <span class="section-titre">Inscription concernée</span>
+        <span class="section-titre">{{ t('demandeDocuments.createDialog.enrollmentSection') }}</span>
         <autocomplete-async
           v-if="inscriptions.length"
           v-model="form.inscriptionId"
           endpoint="/inscriptions"
           :label-fn="(i) => `${i.numero} — ${i.promotion?.nom ?? ''}`"
-          label="Inscription"
+          :label="$t('demandeDocuments.detail.enrollment')"
           :preload="true"
         />
         <q-banner v-else class="note--info q-mt-sm">
-          Aucune inscription enregistrée : la demande portera uniquement sur
-          votre dossier.
+          {{ t('demandeDocuments.createDialog.noEnrollment') }}
         </q-banner>
       </q-card-section>
 
@@ -74,12 +72,12 @@
       </q-banner>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           icon="send"
-          label="Soumettre"
+          :label="$t('common.actions.submit')"
           :loading="enregistrement"
           :disable="!form.type"
           @click="envoyer"
@@ -92,6 +90,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { LIBELLE_TYPE_DEMANDE, montantLisible } from '../utils/libelles';
@@ -106,6 +105,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const erreur = ref('');
 
@@ -167,11 +167,11 @@ async function envoyer() {
     if (form.value.motif.trim()) body.motif = form.value.motif.trim();
     if (form.value.inscriptionId) body.inscriptionId = form.value.inscriptionId;
     const { data } = await api.post('/documents-demande', body);
-    $q.notify({ type: 'positive', message: `Demande ${data.numero} créée` });
+    $q.notify({ type: 'positive', message: t('demandeDocuments.createDialog.created', { number: data.numero }) });
     emit('creee', data as DemandeDocument);
     emit('update:modelValue', false);
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Création impossible';
+    erreur.value = e.response?.data?.message ?? t('demandeDocuments.createDialog.createFailed');
   } finally {
     enregistrement.value = false;
   }

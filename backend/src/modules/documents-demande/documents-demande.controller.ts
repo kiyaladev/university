@@ -13,8 +13,11 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
+import type { AuthUser } from '../../common/decorators';
 import { DocumentsDemandeService } from './documents-demande.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
+import { echapper } from '../../common/utils';
 import {
   CreerDemandeDto,
   CreerTarifDto,
@@ -29,7 +32,8 @@ import {
   RejeterDemandeDto,
 } from './documents-demande.dto';
 
-/** Rôles autorisés sur le registre — la direction est lisible. */
+/** Le registre est lisible par la direction ; seul le personnel de guichet le traite. */
+const ROLES_LECTURE = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION] as const;
 const ROLES_GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
 
 @ApiTags('Demandes de documents')
@@ -51,13 +55,13 @@ export class DocumentsDemandeController {
 
   // ---------- lecture : registre
 
-  @Roles(...ROLES_GESTION)
+  @Roles(...ROLES_LECTURE)
   @Get()
   liste(@Query() query: DocumentsDemandeQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.liste(query, user);
   }
 
-  @Roles(...ROLES_GESTION)
+  @Roles(...ROLES_LECTURE)
   @Get('dashboard')
   dashboard() {
     return this.service.dashboard();
@@ -72,18 +76,23 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ADMIN)
   @Post('tarifs')
-  creerTarif(@Body() dto: CreerTarifDto) {
-    return this.service.creerTarif(dto);
+  creerTarif(@Body() dto: CreerTarifDto, @CurrentUser() user: AuthUser) {
+    return this.service.creerTarif(dto, user);
   }
 
   @Roles(Role.ADMIN)
   @Put('tarifs/:id')
-  modifierTarif(@Param('id') id: string, @Body() dto: ModifierTarifDto) {
-    return this.service.modifierTarif(id, dto);
+  modifierTarif(
+    @Param('id') id: string,
+    @Body() dto: ModifierTarifDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.modifierTarif(id, dto, user);
   }
 
   // ---------- détail
 
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT)
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findOnePour(id, user);
@@ -161,16 +170,16 @@ export class DocumentsDemandeController {
 
   // ---------- impression : route publique à jeton vérifié manuellement
 
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
+  @DocumentScope('demandeDocument', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     try {
-      await this.jwt.verify(token ?? '');
+      await this.jwt.verify(jetonImprimable(req) ?? '');
     } catch {
       res.status(401).send('Jeton invalide ou expiré');
       return;
@@ -180,13 +189,13 @@ export class DocumentsDemandeController {
   }
 
   private documentHtml(demande: any, _req: Request): string {
-    const numero = demande.numero ?? '';
-    const type = demande.type ?? '';
-    const etudiant = demande.etudiant
+    const numero = echapper(demande.numero);
+    const type = echapper(demande.type);
+    const etudiant = echapper(demande.etudiant
       ? `${demande.etudiant.prenom ?? ''} ${demande.etudiant.nom ?? ''}`.trim()
-      : '—';
-    const matricule = demande.etudiant?.matricule ?? '—';
-    const inscription = demande.inscription?.numero ?? '—';
+      : '—');
+    const matricule = echapper(demande.etudiant?.matricule ?? '—');
+    const inscription = echapper(demande.inscription?.numero ?? '—');
     return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Demande ${numero}</title>
 <style>body{font-family:Helvetica,Arial,sans-serif;margin:24px;color:#10251E}table{border-collapse:collapse;width:100%}
 th,td{border:1px solid #c9ccc4;padding:6px 10px;text-align:left}th{background:#f2f3ee}</style></head>
@@ -194,9 +203,9 @@ th,td{border:1px solid #c9ccc4;padding:6px 10px;text-align:left}th{background:#f
 <table><tbody><tr><th>Type</th><td>${type}</td></tr>
 <tr><th>Étudiant</th><td>${etudiant} (${matricule})</td></tr>
 <tr><th>Inscription</th><td>${inscription}</td></tr>
-<tr><th>Statut</th><td>${demande.statut}</td></tr>
-<tr><th>Frais</th><td>${demande.frais} ${demande.devise}</td></tr>
-<tr><th>Créée le</th><td>${demande.creeLe ?? ''}</td></tr>
+<tr><th>Statut</th><td>${echapper(demande.statut)}</td></tr>
+<tr><th>Frais</th><td>${echapper(demande.frais)} ${echapper(demande.devise)}</td></tr>
+<tr><th>Créée le</th><td>${echapper(demande.creeLe)}</td></tr>
 </tbody></table></body></html>`;
   }
 }

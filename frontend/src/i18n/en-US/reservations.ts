@@ -1,0 +1,85 @@
+/** Namespace `reservations` — Rooms & bookings page. */
+export default {
+  title: 'Rooms & bookings',
+  subtitle:
+    'The calendar of events — defenses, conferences, meetings — over lecture halls and classrooms, overlaid on the timetable.',
+  actions: {
+    reserve: 'Book a room',
+    reloadPeriod: 'Reload the period',
+    reload: 'Reload',
+    today: 'Today',
+    thisMonth: 'This month',
+  },
+  filters: {
+    room: 'Room',
+    roomOption: '{code} — {name} ({capacity} seats)',
+    from: 'From',
+    to: 'To',
+  },
+  legend: {
+    timetable: 'Timetable (read-only)',
+    count: '{count} booking(s) for the period',
+  },
+  calendar: {
+    reserved: 'Room reserved',
+    previousMonth: 'Show previous month',
+    nextMonth: 'Show next month',
+  },
+  table: {
+    columns: {
+      slot: 'Slot',
+      room: 'Room',
+      reason: 'Reason',
+      organization: 'Organization',
+      responsible: 'Responsible',
+      status: 'Status',
+    },
+    viewDetail: 'View booking detail',
+    viewDetailTooltip: 'View detail',
+  },
+  emptyState: {
+    title: 'No bookings for this period.',
+    description:
+      'Widen the dates, or submit a request: it starts as "pending" until the registrar arbitrates.',
+  },
+  chips: {
+    room: 'Room: {code}',
+    roomFallback: '…',
+  },
+  session: {
+    defaultLabel: 'Session',
+  },
+  detailDialog: {
+    requester: 'Requester',
+    you: 'you',
+    refusal: 'Refusal',
+    requestedOn: 'Requested on',
+    noAction: 'No action is available for this booking.',
+    refusalReason: 'Reason (recommended when refusing)',
+    editRequest: 'Edit request',
+    cancelReservation: 'Cancel booking',
+    confirmed: 'Booking confirmed',
+    refused: 'Booking refused',
+    decisionFailed: 'Unable to decide on the booking',
+    updated: 'Booking updated',
+    updateFailed: 'Unable to update the booking',
+    cancelTitle: 'Cancel this booking?',
+    cancelMessage: 'The time slot will become available immediately.',
+    cancelled: 'Booking cancelled',
+    cancelFailed: 'Unable to cancel the booking',
+  },
+  createDialog: {
+    roomLabel: 'Room *',
+    dateLabel: 'Date *',
+    startLabel: 'Start *',
+    endLabel: 'End *',
+    reasonLabel: 'Event purpose *',
+    organizationHint: 'E.g. administration, department, company…',
+    responsibleLabel: 'On-site contact',
+    conflictTitle: 'This room is already booked during this time:',
+    conflictHint: 'You can still submit the request; the administration will decide.',
+    submit: 'Request booking',
+    sent: 'Booking request sent',
+    saveFailed: 'Unable to save the request',
+  },
+};

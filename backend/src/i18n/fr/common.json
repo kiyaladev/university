@@ -1,0 +1,39 @@
+{
+  "academicYearClosed": "Cette année académique est clôturée : aucune nouvelle écriture n’y est autorisée.",
+  "academicYearNotFound": "L’année académique indiquée est introuvable.",
+  "academicPromotionNotFound": "La promotion indiquée est introuvable.",
+  "academicYearRequired": "Une année académique ouverte doit être indiquée.",
+  "academicYearMismatch": "Le paiement et l’inscription doivent appartenir à la même année académique.",
+  "academicPromotionMismatch": "La donnée et la promotion doivent appartenir à la même année académique.",
+  "academicYearReopenRequiresAudit": "La réouverture doit passer par une opération dédiée avec motif et journal d’audit.",
+  "forbidden": "Accès refusé",
+  "unauthorized": "Non autorisé",
+  "badRequest": "Requête invalide",
+  "notFound": "Ressource introuvable",
+  "conflict": "Conflit",
+  "validationFailed": "La validation a échoué",
+  "internalError": "Erreur interne du serveur",
+  "serviceUnavailable": "Ce service est désactivé pour votre établissement.",
+  "yes": "Oui",
+  "no": "Non",
+  "noData": "Aucune donnée",
+  "notFoundRecord": "Ressource introuvable ou déjà supprimée",
+  "duplicateRecord": "Cette valeur existe déjà",
+  "concurrentWrite": "Une écriture concurrente vient d'avoir lieu. Rechargez les données puis réessayez.",
+  "roles": {
+    "notAllowed": "Votre rôle ne permet pas d'effectuer cette action"
+  },
+  "readOnly": {
+    "title": "Compte en consultation seule",
+    "detail": "Votre compte est en consultation seule : le contrôleur consigne les séances, la scolarité gère les moyens d’attestation et les justificatifs."
+  },
+  "crud": {
+    "referencedDelete": "Cette entrée est encore référencée ailleurs : impossible de la supprimer avant d'avoir détaché ses liens.",
+    "itemNotFound": "{label} introuvable",
+    "sortInconnu": "Tri invalide sur « {champ} » (champs acceptés : {autorises})"
+  },
+  "invalidServices": "Configuration des services invalide.",
+  "requiredService": "Un service essentiel ne peut pas être désactivé.",
+  "servicesConfigurationEndpoint": "Modifiez les services depuis leur configuration dédiée.",
+  "mobileMoneyDetailsRequired": "Indiquez un opérateur et un numéro Mobile Money valides."
+}

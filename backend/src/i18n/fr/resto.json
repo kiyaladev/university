@@ -1,0 +1,21 @@
+{
+  "compte_non_rattache_a_une_fiche_etudiante": "Compte non rattaché à une fiche étudiante",
+  "etudiant_introuvable": "Étudiant introuvable",
+  "portefeuille_introuvable": "Portefeuille introuvable",
+  "recharge_introuvable": "Recharge introuvable",
+  "cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech": "Cette recharge est déjà encaissée, impossible de la faire échouer",
+  "cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee": "Cette recharge est close, elle ne peut plus être confirmée",
+  "consommation_introuvable": "Consommation introuvable",
+  "reference_vide_scannez_le_qr_ou_saisissez_le_matricule": "Référence vide : scannez le QR ou saisissez le matricule",
+  "etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie": "Étudiant introuvable — vérifiez la référence scannée ou saisie",
+  "reference_de_paiement_temporairement_indisponible_reessayez": "Référence de paiement temporairement indisponible, réessayez",
+  "jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet": "Jeton invalide ou expiré — reconnectez le poste de guichet",
+  "jeton_invalide": "Jeton invalide",
+  "compte_inexistant_ou_desactive": "Compte inexistant ou désactivé",
+  "session_expiree_reconnectez_vous": "Session expirée, reconnectez-vous",
+  "le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola": "Le poste de guichet est réservé aux comptes contrôleur, scolarité et administration — connectez-vous avec un de ces comptes.",
+  "solde_insuffisant_rechargez_via_le_portail_solde_portefeuill": "Solde insuffisant — rechargez via le portail (solde : {portefeuille.solde} GNF, repas : {dto.montant} GNF)",
+  "cette_consommation_est_deja_consommation_statut_seul_un_repa": "Cette consommation est déjà « {consommation.statut} » : seul un repas validé se rembourse.",
+  "solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_": "Solde insuffisant : {solde} GNF disponibles pour un repas à {montant} GNF. Rechargez via le portail.",
+  "cette_consommation_est_deja_consommation_statut_seul_un_repas_vali": "Cette consommation est déjà « {statut} » : seul un repas validé peut être remboursé."
+}

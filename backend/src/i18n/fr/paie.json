@@ -1,0 +1,11 @@
+{
+  "feuille_de_paie_introuvable": "Feuille de paie introuvable",
+  "seule_une_feuille_en_brouillon_peut_etre_validee": "Seule une feuille en brouillon peut être validée",
+  "calculez_la_feuille_avant_de_la_valider": "Calculez la feuille avant de la valider",
+  "seule_une_feuille_validee_peut_etre_payee": "Seule une feuille validée peut être payée",
+  "seule_une_feuille_en_brouillon_peut_etre_supprimee": "Seule une feuille en brouillon peut être supprimée",
+  "une_feuille_libelle_existe_deja": "Une feuille \" {libelle} \" existe déjà",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "feuille_feuille_statut_statutpaie_validee_validee_payee_les_": "Feuille {feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée'} : les montants sont figés, impossible de recalculer",
+  "ecriture_concurrente_reessayez": "Cette feuille vient d'être modifiée. Rechargez-la puis réessayez."
+}

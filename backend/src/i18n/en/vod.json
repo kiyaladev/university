@@ -1,0 +1,8 @@
+{
+  "ressource_vod_introuvable": "VOD resource not found",
+  "cette_ressource_est_deja_archivee": "This resource is already archived.",
+  "aucun_profil_etudiant_n_est_lie_a_votre_compte": "No student profile is linked to your account.",
+  "cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_": "This resource is already {vod.statut}: only a DRAFT or OFFLINE resource can be republished.",
+  "cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors": "This resource is already “{statut}”: only a draft or an offline resource can be published.",
+  "seance_inscription_annee_incoherente": "A VOD course's session and enrollment must belong to the same academic year."
+}

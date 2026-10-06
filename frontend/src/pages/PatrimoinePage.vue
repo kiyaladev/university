@@ -2,11 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Patrimoine & matériel</div>
+        <h1 class="page-titre">{{ $t('patrimoine.title') }}</h1>
         <div class="page-sous-titre">
-          L'inventaire des équipements de l'université. Chaque pièce porte un QR
-          d'inventaire, une valeur d'acquisition et un carnet de réparations qui
-          la suit de sa mise en service à sa réforme.
+          {{ $t('patrimoine.subtitle') }}
         </div>
       </div>
       <div class="col-auto" v-if="onglet === 'equipements' && auth.peutPlanifier">
@@ -15,7 +13,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvel équipement"
+          :label="$t('patrimoine.actions.newEquipment')"
           @click="ouvrirEquipement(null)"
         />
       </div>
@@ -25,7 +23,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle catégorie"
+          :label="$t('patrimoine.actions.newCategory')"
           @click="ouvrirCategorie(null)"
         />
       </div>
@@ -33,9 +31,9 @@
 
     <liens-croises
       :liens="[
-        { to: '/rectorat', libelle: 'Tableau de bord Rectorat', icone: 'dashboard', aide: 'Les obsolescences ci-dessous, dans la vue d’ensemble de la direction' },
-        { to: '/helpdesk', libelle: 'Support IT', icone: 'support_agent', aide: 'Les incidents déclarés sur ces mêmes équipements' },
-        { to: '/salles', libelle: 'Salles', icone: 'meeting_room', aide: 'Les lieux où le matériel est affecté' },
+        { to: '/rectorat', libelle: $t('patrimoine.links.rectoratLabel'), icone: 'dashboard', aide: $t('patrimoine.links.rectoratHelp') },
+        { to: '/helpdesk', libelle: $t('patrimoine.links.helpdeskLabel'), icone: 'support_agent', aide: $t('patrimoine.links.helpdeskHelp') },
+        { to: '/salles', libelle: $t('patrimoine.links.sallesLabel'), icone: 'meeting_room', aide: $t('patrimoine.links.sallesHelp') },
       ]"
     />
 
@@ -45,9 +43,9 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.total, 0) }}</div>
-            <div class="pochoir text-grey-7">équipements en service</div>
+            <div class="pochoir text-grey-7">{{ $t('patrimoine.summary.inService') }}</div>
             <div class="text-caption text-grey-6">
-              valeur d'acquisition {{ montantLisible(synthese.valeur) }} GNF
+              {{ $t('patrimoine.summary.acquisitionValue', { value: montantLisible(synthese.valeur) }) }}
             </div>
           </q-card-section>
         </q-card>
@@ -56,8 +54,8 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.enReparation, 0) }}</div>
-            <div class="pochoir text-grey-7">en réparation</div>
-            <div class="text-caption text-grey-6">carnet ouvert, pièce indisponible</div>
+            <div class="pochoir text-grey-7">{{ $t('patrimoine.summary.inRepair') }}</div>
+            <div class="text-caption text-grey-6">{{ $t('patrimoine.summary.inRepairCaption') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -65,9 +63,9 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ nombreLisible(synthese.obsoletes, 0) }}</div>
-            <div class="pochoir text-grey-7">obsolètes</div>
+            <div class="pochoir text-grey-7">{{ $t('patrimoine.summary.obsolete') }}</div>
             <div class="text-caption text-grey-6">
-              âge supérieur à la durée d'amortissement de leur catégorie
+              {{ $t('patrimoine.summary.obsoleteCaption') }}
             </div>
           </q-card-section>
         </q-card>
@@ -81,30 +79,30 @@
       narrow-indicator
       class="onglets-panneau q-mb-md"
     >
-      <q-tab name="equipements" icon="inventory_2" label="Équipements" no-caps />
-      <q-tab name="categories" icon="category" label="Catégories" no-caps />
-      <q-tab name="reparations" icon="build" label="Réparations" no-caps />
+      <q-tab name="equipements" icon="inventory_2" :label="$t('patrimoine.tabs.equipments')" no-caps />
+      <q-tab name="categories" icon="category" :label="$t('patrimoine.tabs.categories')" no-caps />
+      <q-tab name="reparations" icon="build" :label="$t('patrimoine.tabs.repairs')" no-caps />
     </q-tabs>
 
     <!-- ============================== Équipements -->
     <template v-if="onglet === 'equipements'">
       <filter-bar
         v-model="filtres"
-        placeholder="Rechercher (libellé, n° série, n° d'inventaire, QR…)"
+        :placeholder="$t('patrimoine.equipments.searchPlaceholder')"
         :recherche="true"
         @reinitialiser="reinitialiserFiltres"
       >
         <template #avances>
           <autocomplete-async
             v-model="filtres.categorieId"
-            label="Catégorie"
+            :label="$t('patrimoine.equipments.filters.category')"
             endpoint="/patrimoine/categories"
             :label-fn="(c) => `${c.libelle} (${c.code})`"
             preload
           />
           <autocomplete-async
             v-model="filtres.departementId"
-            label="Département"
+            :label="$t('patrimoine.equipments.filters.department')"
             endpoint="/departements"
             :label-fn="(d) => d.nom"
             preload
@@ -112,28 +110,28 @@
           <q-select
             v-model="filtres.actif"
             :options="[
-              { label: 'En service', value: 'true' },
-              { label: 'Hors service', value: 'false' },
+              { label: $t('patrimoine.equipments.filters.statusInService'), value: 'true' },
+              { label: $t('patrimoine.equipments.filters.statusOutOfService'), value: 'false' },
             ]"
             dense
             outlined
             emit-value
             map-options
             clearable
-            label="Statut"
+            :label="$t('patrimoine.equipments.filters.status')"
           />
           <q-select
             v-model="filtres.enReparation"
             :options="[
-              { label: 'En réparation', value: 'true' },
-              { label: 'Disponible', value: 'false' },
+              { label: $t('patrimoine.equipments.filters.repairStateInRepair'), value: 'true' },
+              { label: $t('patrimoine.equipments.filters.repairStateAvailable'), value: 'false' },
             ]"
             dense
             outlined
             emit-value
             map-options
             clearable
-            label="État"
+            :label="$t('patrimoine.equipments.filters.repairState')"
           />
         </template>
         <template #actions>
@@ -155,7 +153,7 @@
         row-key="id"
         :loading="chargement"
         :rows-per-page-options="[0]"
-        hide-bottom
+        :hide-bottom="chargement || equipements.length > 0"
       >
         <template #body-cell-libelle="p">
           <q-td :props="p">
@@ -173,9 +171,9 @@
         <template #body-cell-valeur="p">
           <q-td :props="p" class="text-right chiffres">
             <span v-if="p.row.valeurAcquisition != null">
-              {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">GNF</span>
+              {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
             </span>
-            <span v-else class="text-grey-6">—</span>
+            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
           </q-td>
         </template>
         <template #body-cell-etat="p">
@@ -187,10 +185,10 @@
             >
               {{
                 p.row.enReparation
-                  ? 'En réparation'
+                  ? $t('patrimoine.equipments.state.inRepair')
                   : p.row.actif
-                  ? 'En service'
-                  : 'Hors service'
+                  ? $t('patrimoine.equipments.state.inService')
+                  : $t('patrimoine.equipments.state.outOfService')
               }}
             </q-chip>
           </q-td>
@@ -202,20 +200,20 @@
               dense
               round
               icon="visibility"
-              :aria-label="`Détails de ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.equipments.table.actions.detailsAria', { name: p.row.libelle })"
               @click="voirDetails(p.row)"
             >
-              <q-tooltip>Détails et carnet de réparations</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.detailsTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               flat
               dense
               round
               icon="print"
-              :aria-label="`Imprimer l'étiquette de ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.equipments.table.actions.printAria', { name: p.row.libelle })"
               @click="imprimerEtiquette(p.row)"
             >
-              <q-tooltip>Étiquette d'inventaire (A4)</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.printTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.peutPlanifier && !p.row.enReparation"
@@ -223,10 +221,10 @@
               dense
               round
               icon="build"
-              :aria-label="`Déclarer une réparation sur ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.equipments.table.actions.declareRepairAria', { name: p.row.libelle })"
               @click="ouvrirReparation(p.row, 'declarer')"
             >
-              <q-tooltip>Déclarer une réparation</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.declareRepairTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.peutPlanifier"
@@ -234,10 +232,10 @@
               dense
               round
               icon="edit"
-              :aria-label="`Modifier ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.equipments.table.actions.editAria', { name: p.row.libelle })"
               @click="ouvrirEquipement(p.row)"
             >
-              <q-tooltip>Modifier</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.estAdmin"
@@ -246,20 +244,20 @@
               round
               color="negative"
               icon="delete"
-              :aria-label="`Supprimer ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.equipments.table.actions.deleteAria', { name: p.row.libelle })"
               @click="supprimerEquipement(p.row)"
             >
-              <q-tooltip>Supprimer</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.deleteTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="etat-vide">
             <q-icon name="inventory_2" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">Aucun équipement</div>
+            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.equipments.emptyState.title') }}</div>
             <div class="text-caption">
-              L'inventaire recense le matériel de l'université, pièce par pièce.
-              {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+              {{ $t('patrimoine.equipments.emptyState.description') }}
+              {{ aDesFiltres ? $t('patrimoine.equipments.emptyState.noneMatchFilters') : '' }}
             </div>
             <q-btn
               v-if="aDesFiltres"
@@ -268,7 +266,7 @@
               no-caps
               color="primary"
               icon="filter_alt_off"
-              label="Retirer les filtres"
+              :label="$t('patrimoine.equipments.emptyState.removeFilters')"
               @click="reinitialiserFiltres"
             />
             <q-btn
@@ -277,7 +275,7 @@
               no-caps
               color="primary"
               icon="add"
-              label="Enregistrer le premier équipement"
+              :label="$t('patrimoine.equipments.emptyState.createFirst')"
               @click="ouvrirEquipement(null)"
             />
           </div>
@@ -304,10 +302,10 @@
                   {{ e.categorie?.libelle ?? '—' }}
                 </q-chip>
                 <div class="text-caption text-grey-7 q-mt-xs">
-                  {{ e.departement?.nom ?? 'Sans département' }}
+                  {{ e.departement?.nom ?? $t('patrimoine.equipments.filters.noDepartment') }}
                 </div>
                 <div class="text-caption text-grey-7" v-if="e.valeurAcquisition != null">
-                  {{ montantLisible(e.valeurAcquisition) }} GNF
+                  {{ montantLisible(e.valeurAcquisition) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
                 </div>
               </div>
             </q-card-section>
@@ -319,20 +317,20 @@
               >
                 {{
                   e.enReparation
-                    ? 'En réparation'
+                    ? $t('patrimoine.equipments.state.inRepair')
                     : e.actif
-                    ? 'En service'
-                    : 'Hors service'
+                    ? $t('patrimoine.equipments.state.inService')
+                    : $t('patrimoine.equipments.state.outOfService')
                 }}
               </q-chip>
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-              <q-btn flat dense round icon="visibility" @click="voirDetails(e)">
-                <q-tooltip>Détails</q-tooltip>
+              <q-btn flat dense round icon="visibility" :aria-label="$t('patrimoine.equipments.cards.detailsTooltip')" @click="voirDetails(e)">
+                <q-tooltip>{{ $t('patrimoine.equipments.cards.detailsTooltip') }}</q-tooltip>
               </q-btn>
-              <q-btn flat dense round icon="print" @click="imprimerEtiquette(e)">
-                <q-tooltip>Étiquette A4</q-tooltip>
+              <q-btn flat dense round icon="print" :aria-label="$t('patrimoine.equipments.cards.labelTooltip')" @click="imprimerEtiquette(e)">
+                <q-tooltip>{{ $t('patrimoine.equipments.cards.labelTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="auth.peutPlanifier && !e.enReparation"
@@ -340,10 +338,10 @@
                 dense
                 round
                 icon="build"
-                :aria-label="`Déclarer une réparation sur ${e.libelle}`"
+                :aria-label="$t('patrimoine.equipments.table.actions.declareRepairAria', { name: e.libelle })"
                 @click="ouvrirReparation(e, 'declarer')"
               >
-                <q-tooltip>Déclarer une réparation</q-tooltip>
+                <q-tooltip>{{ $t('patrimoine.equipments.table.actions.declareRepairTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="auth.peutPlanifier"
@@ -351,10 +349,10 @@
                 dense
                 round
                 icon="edit"
-                :aria-label="`Modifier ${e.libelle}`"
+                :aria-label="$t('patrimoine.equipments.table.actions.editAria', { name: e.libelle })"
                 @click="ouvrirEquipement(e)"
               >
-                <q-tooltip>Modifier</q-tooltip>
+                <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
@@ -362,10 +360,10 @@
         <div v-if="!equipements.length && !chargement" class="col-12">
           <div class="etat-vide">
             <q-icon name="inventory_2" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">Aucun équipement</div>
+            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.equipments.emptyState.title') }}</div>
             <div class="text-caption">
-              L'inventaire recense le matériel de l'université, pièce par pièce.
-              {{ aDesFiltres ? 'Aucune ne correspond aux filtres en cours.' : '' }}
+              {{ $t('patrimoine.equipments.emptyState.description') }}
+              {{ aDesFiltres ? $t('patrimoine.equipments.emptyState.noneMatchFilters') : '' }}
             </div>
             <q-btn
               v-if="aDesFiltres"
@@ -374,7 +372,7 @@
               no-caps
               color="primary"
               icon="filter_alt_off"
-              label="Retirer les filtres"
+              :label="$t('patrimoine.equipments.emptyState.removeFilters')"
               @click="reinitialiserFiltres"
             />
             <q-btn
@@ -383,7 +381,7 @@
               no-caps
               color="primary"
               icon="add"
-              label="Enregistrer le premier équipement"
+              :label="$t('patrimoine.equipments.emptyState.createFirst')"
               @click="ouvrirEquipement(null)"
             />
           </div>
@@ -425,10 +423,10 @@
               dense
               round
               icon="edit"
-              :aria-label="`Modifier la catégorie ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.categories.table.actions.editAria', { name: p.row.libelle })"
               @click="ouvrirCategorie(p.row)"
             >
-              <q-tooltip>Modifier</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.estAdmin"
@@ -437,21 +435,19 @@
               round
               color="negative"
               icon="delete"
-              :aria-label="`Supprimer la catégorie ${p.row.libelle}`"
+              :aria-label="$t('patrimoine.categories.table.actions.deleteAria', { name: p.row.libelle })"
               @click="supprimerCategorie(p.row)"
             >
-              <q-tooltip>Supprimer</q-tooltip>
+              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.deleteTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
           <div class="etat-vide">
             <q-icon name="category" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">Aucune catégorie</div>
+            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.categories.emptyState.title') }}</div>
             <div class="text-caption">
-              Une catégorie regroupe un type de matériel et porte sa durée
-              d'amortissement : c'est elle qui décide quand un équipement devient
-              obsolète. Sans catégorie, aucun équipement ne peut être enregistré.
+              {{ $t('patrimoine.categories.emptyState.description') }}
             </div>
             <q-btn
               v-if="auth.peutPlanifier"
@@ -459,7 +455,7 @@
               no-caps
               color="primary"
               icon="add"
-              label="Créer la première catégorie"
+              :label="$t('patrimoine.categories.emptyState.createFirst')"
               @click="ouvrirCategorie(null)"
             />
           </div>
@@ -471,9 +467,9 @@
     <template v-if="onglet === 'reparations'">
       <q-card flat bordered class="carte">
         <q-card-section>
-          <div class="text-subtitle2">Réparations en cours</div>
+          <div class="text-subtitle2">{{ $t('patrimoine.repairs.inProgressTitle') }}</div>
           <div class="text-caption text-grey-7">
-            Badge de délai : vert < 7 jours, orange < 30 jours, rouge au-delà
+            {{ $t('patrimoine.repairs.delayCaption') }}
           </div>
         </q-card-section>
         <q-table
@@ -484,7 +480,7 @@
           row-key="id"
           :loading="chargementReparations"
           :pagination="{ rowsPerPage: 20 }"
-          hide-bottom
+          :hide-bottom="chargementReparations || reparationsEnCours.length > 0"
         >
           <template #body-cell-equipement="p">
             <q-td :props="p">
@@ -517,7 +513,7 @@
                 :color="couleurDelai(joursEcarts(p.row.dateDeclaration))"
                 :text-color="couleurDelai(joursEcarts(p.row.dateDeclaration)) === 'warning' ? 'dark' : 'white'"
               >
-                {{ joursEcarts(p.row.dateDeclaration) }} j
+                {{ $t('patrimoine.repairs.table.delayDays', { count: joursEcarts(p.row.dateDeclaration) }) }}
               </q-chip>
             </q-td>
           </template>
@@ -530,20 +526,19 @@
                 round
                 color="positive"
                 icon="check_circle"
-                :aria-label="`Clore la réparation de ${p.row.equipement?.libelle ?? 'l’équipement'}`"
+                :aria-label="$t('patrimoine.repairs.table.resolveAria', { name: p.row.equipement?.libelle ?? $t('patrimoine.repairs.table.fallbackEquipmentName') })"
                 @click="resoudreReparation(p.row)"
               >
-                <q-tooltip>Marquer la réparation résolue</q-tooltip>
+                <q-tooltip>{{ $t('patrimoine.repairs.table.resolveTooltip') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
           <template #no-data>
             <div class="etat-vide">
               <q-icon name="build" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">Aucune réparation en cours</div>
+              <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.repairs.emptyState.title') }}</div>
               <div class="text-caption">
-                Tout le matériel en service est disponible. Une réparation se
-                déclare depuis la fiche d'un équipement, dans l'onglet Équipements.
+                {{ $t('patrimoine.repairs.emptyState.description') }}
               </div>
               <q-btn
                 flat
@@ -551,7 +546,7 @@
                 no-caps
                 color="primary"
                 icon="inventory_2"
-                label="Aller aux équipements"
+                :label="$t('patrimoine.repairs.emptyState.goToEquipments')"
                 @click="onglet = 'equipements'"
               />
             </div>
@@ -569,23 +564,23 @@
     <q-dialog v-model="dialogCategorie">
       <q-card style="width: 460px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ categorieEditee ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}
+          {{ categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle') }}
         </q-card-section>
         <q-card-section>
           <q-input
             v-model="formCategorie.code"
             outlined
             dense
-            label="Code *"
-            hint="Ex. : VIDEO, MICRO, ORDI"
+            :label="$t('patrimoine.categories.dialog.codeLabel')"
+            :hint="$t('patrimoine.categories.dialog.codeHint')"
             class="q-mb-md"
           />
           <q-input
             v-model="formCategorie.libelle"
             outlined
             dense
-            label="Libellé *"
-            hint="Ex. : Vidéoprojecteur"
+            :label="$t('patrimoine.categories.dialog.labelLabel')"
+            :hint="$t('patrimoine.categories.dialog.labelHint')"
             class="q-mb-md"
           />
           <q-input
@@ -594,16 +589,16 @@
             min="1"
             outlined
             dense
-            label="Durée d'amortissement (mois)"
-            hint="Ex. : 60 (5 ans)"
+            :label="$t('patrimoine.categories.dialog.amortizationLabel')"
+            :hint="$t('patrimoine.categories.dialog.amortizationHint')"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" v-close-popup />
+          <q-btn flat :label="$t('patrimoine.categories.dialog.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
-            label="Enregistrer"
+            :label="$t('patrimoine.categories.dialog.save')"
             :loading="enregistrementCategorie"
             :disable="formCategorie.code.length < 2 || formCategorie.libelle.length < 2"
             @click="enregistrerCategorie"
@@ -627,7 +622,7 @@
             <div class="text-h6">{{ equipementDetail?.libelle }}</div>
             <div class="text-caption text-grey-7">{{ equipementDetail?.numeroInventaire }}</div>
           </div>
-          <q-btn flat dense round icon="close" v-close-popup />
+          <q-btn flat dense round icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
         </q-card-section>
         <q-card-section v-if="equipementDetail">
           <div class="row q-col-gutter-md">
@@ -650,7 +645,7 @@
           </div>
         </q-card-section>
         <q-card-section v-if="reparationsDetail.length">
-          <div class="text-subtitle2 q-mb-sm">Carnet de réparations</div>
+          <div class="text-subtitle2 q-mb-sm">{{ $t('patrimoine.detailsDialog.repairsTitle') }}</div>
           <q-list separator>
             <q-item v-for="r in reparationsDetail" :key="r.id">
               <q-item-section>
@@ -658,7 +653,7 @@
                 <q-item-label caption>
                   {{ dateLisible(r.dateDeclaration) }}
                   <template v-if="r.prestataire"> · {{ r.prestataire }}</template>
-                  <template v-if="r.cout"> · {{ montantLisible(r.cout) }} GNF</template>
+                  <template v-if="r.cout"> · {{ montantLisible(r.cout) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</template>
                 </q-item-label>
                 <q-item-label caption v-if="r.notes">
                   <em>{{ r.notes }}</em>
@@ -684,8 +679,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { API_URL } from '../boot/axios';
+
 import { patrimoineService } from '../services/patrimoine';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -696,6 +692,7 @@ import LiensCroises from '../components/LiensCroises.vue';
 import PatrimoineDialog from '../components/PatrimoineDialog.vue';
 import ReparationDialog from '../components/ReparationDialog.vue';
 import { dateLisible, montantLisible, nombreLisible } from '../utils/libelles';
+import { ouvrirImpression } from '../services/impression';
 import type {
   CategoriePatrimoine,
   EquipementPatrimoine,
@@ -706,6 +703,7 @@ import type {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const onglet = ref<'equipements' | 'categories' | 'reparations'>('equipements');
 
@@ -751,48 +749,48 @@ const aDesFiltres = computed(() =>
   ),
 );
 
-const colonnesEquipements: QTableColumn[] = [
-  { name: 'libelle', label: 'Équipement', field: 'libelle', align: 'left' },
-  { name: 'categorie', label: 'Catégorie', field: 'categorie', align: 'left' },
+const colonnesEquipements = computed<QTableColumn[]>(() => [
+  { name: 'libelle', label: t('patrimoine.equipments.table.columns.equipment'), field: 'libelle', align: 'left' },
+  { name: 'categorie', label: t('patrimoine.equipments.table.columns.category'), field: 'categorie', align: 'left' },
   {
     name: 'departement',
-    label: 'Département',
+    label: t('patrimoine.equipments.table.columns.department'),
     field: (r: EquipementPatrimoine) => r.departement?.nom ?? '—',
     align: 'left',
   },
-  { name: 'valeur', label: 'Valeur', field: 'valeur', align: 'right' },
+  { name: 'valeur', label: t('patrimoine.equipments.table.columns.value'), field: 'valeur', align: 'right' },
   {
     name: 'serie',
-    label: 'N° série',
+    label: t('patrimoine.equipments.table.columns.serial'),
     field: 'numeroSerie',
     align: 'left',
   },
-  { name: 'etat', label: 'État', field: 'etat', align: 'left' },
+  { name: 'etat', label: t('patrimoine.equipments.table.columns.state'), field: 'etat', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesCategories: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left' },
-  { name: 'libelle', label: 'Libellé', field: 'libelle', align: 'left' },
+const colonnesCategories = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('patrimoine.categories.table.columns.code'), field: 'code', align: 'left' },
+  { name: 'libelle', label: t('patrimoine.categories.table.columns.label'), field: 'libelle', align: 'left' },
   {
     name: 'dureeAmortissement',
-    label: 'Amortissement (mois)',
+    label: t('patrimoine.categories.table.columns.amortization'),
     field: (r: CategoriePatrimoine) => r.dureeAmortissement ?? '—',
     align: 'right',
   },
-  { name: 'equipements', label: 'Équipements', field: 'equipements', align: 'right' },
-  { name: 'actif', label: 'État', field: 'actif', align: 'left' },
+  { name: 'equipements', label: t('patrimoine.categories.table.columns.equipments'), field: 'equipements', align: 'right' },
+  { name: 'actif', label: t('patrimoine.categories.table.columns.state'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesReparations: QTableColumn[] = [
-  { name: 'equipement', label: 'Équipement', field: 'equipement', align: 'left' },
-  { name: 'description', label: 'Description', field: 'description', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'declarLe', label: 'Déclarée le', field: 'dateDeclaration', align: 'left' },
-  { name: 'delai', label: 'Délai', field: 'delai', align: 'left' },
+const colonnesReparations = computed<QTableColumn[]>(() => [
+  { name: 'equipement', label: t('patrimoine.repairs.table.columns.equipment'), field: 'equipement', align: 'left' },
+  { name: 'description', label: t('patrimoine.repairs.table.columns.description'), field: 'description', align: 'left' },
+  { name: 'statut', label: t('patrimoine.repairs.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'declarLe', label: t('patrimoine.repairs.table.columns.declaredOn'), field: 'dateDeclaration', align: 'left' },
+  { name: 'delai', label: t('patrimoine.repairs.table.columns.delay'), field: 'delai', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 // --- Helpers
 
@@ -821,12 +819,12 @@ function couleurDelai(j: number): string {
 
 function libelleStatutReparation(s: StatutReparation): string {
   return s === 'DECLARE'
-    ? 'Déclarée'
+    ? t('patrimoine.repairs.status.declared')
     : s === 'EN_COURS'
-    ? 'En cours'
+    ? t('patrimoine.repairs.status.inProgress')
     : s === 'TERMINE'
-    ? 'Terminée'
-    : 'Annulée';
+    ? t('patrimoine.repairs.status.done')
+    : t('patrimoine.repairs.status.cancelled');
 }
 
 function reinitialiserFiltres() {
@@ -861,7 +859,7 @@ async function chargerEquipements() {
     pagination.value.total = 0;
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement de l’inventaire impossible.',
+      message: e?.response?.data?.message ?? t('patrimoine.messages.loadInventoryError'),
     });
   } finally {
     chargement.value = false;
@@ -877,7 +875,7 @@ async function chargerCategories() {
     categories.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des catégories impossible.',
+      message: e?.response?.data?.message ?? t('patrimoine.messages.loadCategoriesError'),
     });
   } finally {
     chargementCategories.value = false;
@@ -899,7 +897,7 @@ async function chargerReparations() {
     reparationsEnCours.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des réparations impossible.',
+      message: e?.response?.data?.message ?? t('patrimoine.messages.loadRepairsError'),
     });
   } finally {
     chargementReparations.value = false;
@@ -947,17 +945,17 @@ async function enregistrerCategorie() {
     };
     if (categorieEditee.value) {
       await patrimoineService.modifierCategorie(categorieEditee.value.id, payload);
-      $q.notify({ type: 'positive', message: 'Catégorie mise à jour' });
+      $q.notify({ type: 'positive', message: t('patrimoine.messages.categoryUpdated') });
     } else {
       await patrimoineService.creerCategorie(payload);
-      $q.notify({ type: 'positive', message: 'Catégorie enregistrée' });
+      $q.notify({ type: 'positive', message: t('patrimoine.messages.categorySaved') });
     }
     dialogCategorie.value = false;
     await chargerCategories();
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement de la catégorie impossible',
+      message: e?.response?.data?.message ?? t('patrimoine.messages.categorySaveError'),
     });
   } finally {
     enregistrementCategorie.value = false;
@@ -966,19 +964,19 @@ async function enregistrerCategorie() {
 
 function supprimerCategorie(c: CategoriePatrimoine) {
   $q.dialog({
-    title: 'Supprimer la catégorie ?',
-    message: `« ${c.libelle} » — refusée si des équipements y sont rattachés.`,
+    title: t('patrimoine.categories.confirmDelete.title'),
+    message: t('patrimoine.categories.confirmDelete.message', { name: c.libelle }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('patrimoine.categories.confirmDelete.confirm') },
   }).onOk(async () => {
     try {
       await patrimoineService.supprimerCategorie(c.id);
-      $q.notify({ type: 'positive', message: 'Catégorie supprimée' });
+      $q.notify({ type: 'positive', message: t('patrimoine.messages.categoryDeleted') });
       await chargerCategories();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Suppression impossible',
+        message: e?.response?.data?.message ?? t('patrimoine.messages.deleteError'),
       });
     }
   });
@@ -986,20 +984,20 @@ function supprimerCategorie(c: CategoriePatrimoine) {
 
 function supprimerEquipement(e: EquipementPatrimoine) {
   $q.dialog({
-    title: 'Supprimer l’équipement ?',
-    message: `${e.numeroInventaire} — refusée si une réparation a été consignée.`,
+    title: t('patrimoine.deleteEquipment.title'),
+    message: t('patrimoine.deleteEquipment.message', { code: e.numeroInventaire }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('patrimoine.deleteEquipment.confirm') },
   }).onOk(async () => {
     try {
       await patrimoineService.supprimerEquipement(e.id);
-      $q.notify({ type: 'positive', message: 'Équipement supprimé' });
+      $q.notify({ type: 'positive', message: t('patrimoine.messages.equipmentDeleted') });
       await chargerEquipements();
       await chargerSynthese();
     } catch (err: any) {
       $q.notify({
         type: 'negative',
-        message: err?.response?.data?.message ?? 'Suppression impossible',
+        message: err?.response?.data?.message ?? t('patrimoine.messages.deleteError'),
       });
     }
   });
@@ -1026,17 +1024,14 @@ function resoudreReparation(r: ReparationMateriel) {
     (r.equipement as EquipementPatrimoine | undefined) ??
     equipements.value.find((e) => e.id === r.equipementId);
   if (!eq) {
-    $q.notify({ type: 'warning', message: 'Équipement introuvable, rechargez la page.' });
+    $q.notify({ type: 'warning', message: t('patrimoine.messages.equipmentNotFound') });
     return;
   }
   ouvrirReparation(eq, 'resoudre', r);
 }
 
 function imprimerEtiquette(e: EquipementPatrimoine) {
-  window.open(
-    `${API_URL}/patrimoine/equipements/${e.id}/imprimer?token=${auth.token}`,
-    '_blank',
-  );
+  void ouvrirImpression(`/patrimoine/equipements/${e.id}/imprimer`);
 }
 
 async function voirDetails(e: EquipementPatrimoine) {
@@ -1047,7 +1042,7 @@ async function voirDetails(e: EquipementPatrimoine) {
     const { data } = await patrimoineService.reparationsEquipement(e.id);
     reparationsDetail.value = data;
   } catch {
-    $q.notify({ type: 'warning', message: 'Carnet de réparations indisponible.' });
+    $q.notify({ type: 'warning', message: t('patrimoine.messages.repairsUnavailable') });
   }
 }
 
@@ -1075,7 +1070,7 @@ onMounted(async () => {
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 </style>

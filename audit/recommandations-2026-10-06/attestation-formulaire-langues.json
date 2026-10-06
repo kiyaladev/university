@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-06T12:59:14.449Z",
+  "environnement": "QA locale isolée",
+  "dialogue": "Émission d’attestation FR/EN",
+  "erreursJavaScript": [],
+  "erreursApi": [],
+  "aucuneEcriture": true,
+  "sessionQaReutilisee": true,
+  "sourceSession": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me"
+}

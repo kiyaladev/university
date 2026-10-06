@@ -1,20 +1,14 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Bulletins</div>
-        <div class="page-sous-titre">
-          Relevés individuels après délibération : moyenne générale pondérée par
-          les crédits, rang dans la promotion, décision et mention du jury.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('bulletins.title')" :subtitle="$t('bulletins.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           outline
           color="secondary"
           no-caps
           icon="gavel"
-          label="Délibérations"
+          :label="$t('bulletins.actions.deliberations')"
           @click="router.push({ name: 'deliberations' })"
         />
       </div>
@@ -25,16 +19,19 @@
           color="primary"
           no-caps
           icon="print"
-          :label="`Imprimer les ${nbImprimables} bulletins`"
+          :label="$t('bulletins.actions.imprimerTous', { n: nbImprimables })"
           @click="imprimerTous"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="resultats" />
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher par nom ou matricule…"
+      :placeholder="$t('bulletins.filters.search')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -46,7 +43,7 @@
           clearable
           emit-value
           map-options
-          label="Année académique"
+          :label="$t('bulletins.filters.annee')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -56,12 +53,12 @@
           clearable
           emit-value
           map-options
-          label="Promotion"
+          :label="$t('bulletins.filters.promotion')"
         />
         <semestre-select
           v-model="filtres.session"
           type="session"
-          label="Session"
+          :label="$t('bulletins.filters.session')"
           clearable
         />
         <q-select
@@ -72,14 +69,13 @@
           clearable
           emit-value
           map-options
-          label="Décision du jury"
+          :label="$t('bulletins.filters.decision')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="bulletins"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -89,7 +85,7 @@
     <div v-if="bulletinSelectionne" class="bulletins-apercu">
       <div class="row items-center q-col-gutter-sm q-mb-md">
         <div class="col-auto">
-          <q-btn outline no-caps icon="arrow_back" label="Retour à la liste" @click="fermerApercu" />
+          <q-btn outline no-caps icon="arrow_back" :label="$t('bulletins.apercu.retourListe')" @click="fermerApercu" />
         </div>
         <q-space />
         <div class="col-auto">
@@ -99,29 +95,28 @@
             color="secondary"
             no-caps
             icon="verified_user"
-            label="Émettre l'attestation de réussite"
+            :label="$t('bulletins.apercu.emettreAttestation')"
             @click="allerAttestation(ligneSelectionnee)"
           />
         </div>
       </div>
-      <bulletin-card :bulletin="bulletinSelectionne" :url-impression="urlBulletinCourant" />
+      <bulletin-card :bulletin="bulletinSelectionne" :chemin-impression="cheminBulletinCourant" />
     </div>
 
     <template v-else>
       <!-- Guidage : sans promotion, la liste n'a pas de sens -->
       <div v-if="!filtres.promotionId" class="plaque q-pa-lg text-center text-grey-7">
         <q-icon name="school" size="38px" color="grey-5" />
-        <div class="q-mt-sm text-weight-medium">Choisissez une promotion</div>
+        <div class="q-mt-sm text-weight-medium">{{ $t('bulletins.guidance.choisirPromotion') }}</div>
         <div class="text-caption q-mt-xs">
-          Les bulletins se lisent promotion par promotion. Ouvrez « Filtres avancés »
-          pour sélectionner l'année et la promotion, ou partez d'une délibération.
+          {{ $t('bulletins.guidance.text') }}
         </div>
         <q-btn
           unelevated
           color="primary"
           no-caps
           icon="gavel"
-          label="Voir les délibérations"
+          :label="$t('bulletins.guidance.voirDeliberations')"
           class="q-mt-md"
           @click="router.push({ name: 'deliberations' })"
         />
@@ -130,15 +125,14 @@
       <template v-else>
         <q-banner v-if="!chargement && !aucuneDeliberation" dense class="carte q-mb-md">
           <template #avatar><q-icon name="info" color="primary" /></template>
-          {{ nbImprimables }} étudiant(s) délibéré(s) sur {{ lignesFiltrees.length }} inscrit(s)
-          affiché(s). Seuls les étudiants portés à une délibération ont un bulletin.
+          {{ $t('bulletins.banners.infoImprimables', { nbImprimables, total: lignesFiltrees.length }) }}
         </q-banner>
 
         <q-banner v-if="!chargement && aucuneDeliberation" dense class="carte q-mb-md">
           <template #avatar><q-icon name="warning" color="warning" /></template>
-          Aucune délibération pour ce filtre : les bulletins ne pourront pas être édités.
+          {{ $t('bulletins.banners.aucuneDeliberation') }}
           <template #action>
-            <q-btn flat dense no-caps label="Créer la délibération" @click="router.push({ name: 'deliberations' })" />
+            <q-btn flat dense no-caps :label="$t('bulletins.banners.creerDeliberation')" @click="router.push({ name: 'deliberations' })" />
           </template>
         </q-banner>
 
@@ -157,7 +151,7 @@
           <template #no-data>
             <div class="etat-vide">
               <q-icon name="school" size="32px" color="grey-5" />
-              <div class="q-mt-sm">Aucun étudiant pour ces critères.</div>
+              <div class="q-mt-sm">{{ $t('bulletins.table.emptyState') }}</div>
             </div>
           </template>
 
@@ -176,7 +170,7 @@
                 :color="couleurDecision(p.row.decision)"
                 :label="LIBELLE_DECISION_JURY[p.row.decision] ?? p.row.decision"
               />
-              <span v-else class="text-grey-7">Non délibéré</span>
+              <span v-else class="text-grey-7">{{ $t('bulletins.table.nonDelibere') }}</span>
             </q-td>
           </template>
 
@@ -191,10 +185,10 @@
                 dense
                 round
                 icon="visibility"
-                aria-label="Voir le bulletin"
+                :aria-label="$t('bulletins.table.ariaLabels.voirBulletin')"
                 @click.stop="selectionner(p.row)"
               >
-                <q-tooltip>Voir le bulletin</q-tooltip>
+                <q-tooltip>{{ $t('bulletins.table.tooltips.voirBulletin') }}</q-tooltip>
               </q-btn>
               <q-btn
                 flat
@@ -203,11 +197,11 @@
                 icon="picture_as_pdf"
                 :color="p.row.deliberationId ? 'primary' : 'grey-5'"
                 :disable="!p.row.deliberationId"
-                aria-label="Imprimer le bulletin"
+                :aria-label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
                 @click.stop="imprimerUn(p.row)"
               >
                 <q-tooltip>
-                  {{ p.row.deliberationId ? 'Imprimer le bulletin officiel' : 'Aucune délibération pour cet étudiant' }}
+                  {{ p.row.deliberationId ? $t('bulletins.table.tooltips.imprimerOfficiel') : $t('bulletins.table.tooltips.aucuneDeliberationEtudiant') }}
                 </q-tooltip>
               </q-btn>
               <q-btn
@@ -217,10 +211,10 @@
                 round
                 icon="verified_user"
                 color="secondary"
-                aria-label="Émettre une attestation de réussite"
+                :aria-label="$t('bulletins.table.ariaLabels.emettreAttestation')"
                 @click.stop="allerAttestation(p.row)"
               >
-                <q-tooltip>Émettre l'attestation de réussite</q-tooltip>
+                <q-tooltip>{{ $t('bulletins.table.tooltips.emettreAttestation') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -242,7 +236,7 @@
                   :color="couleurDecision(l.decision)"
                   :label="LIBELLE_DECISION_JURY[l.decision] ?? l.decision"
                 />
-                <q-badge v-else color="grey-6" label="Non délibéré" />
+                <q-badge v-else color="grey-6" :label="$t('bulletins.table.nonDelibere')" />
                 <q-space />
                 <div class="text-caption text-grey-7">{{ l.matricule }}</div>
               </div>
@@ -252,19 +246,19 @@
                   {{ l.moyenne !== null ? l.moyenne.toFixed(2) : '—' }}<span class="text-caption">/20</span>
                 </div>
                 <div class="text-caption text-grey-7">
-                  Rang {{ l.rang ?? '—' }}{{ l.mention ? ` · ${l.mention}` : '' }}
+                  {{ $t('bulletins.cards.rang', { rang: l.rang ?? '—' }) }}{{ l.mention ? ` · ${l.mention}` : '' }}
                 </div>
               </div>
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-              <q-btn flat dense no-caps icon="visibility" label="Bulletin" @click.stop="selectionner(l)" />
+              <q-btn flat dense no-caps icon="visibility" :label="$t('bulletins.cards.bulletin')" @click.stop="selectionner(l)" />
               <q-btn
                 flat
                 dense
                 no-caps
                 icon="picture_as_pdf"
-                label="Imprimer"
+                :label="$t('bulletins.cards.imprimer')"
                 :disable="!l.deliberationId"
                 @click.stop="imprimerUn(l)"
               />
@@ -275,14 +269,14 @@
                 no-caps
                 color="secondary"
                 icon="verified_user"
-                label="Attestation"
+                :label="$t('bulletins.cards.attestation')"
                 @click.stop="allerAttestation(l)"
               />
             </q-card-actions>
           </q-card>
           <div v-if="!lignesPage.length" class="etat-vide plaque">
             <q-icon name="school" size="32px" color="grey-5" />
-            <div class="q-mt-sm">Aucun étudiant pour ces critères.</div>
+            <div class="q-mt-sm">{{ $t('bulletins.table.emptyState') }}</div>
           </div>
         </div>
 
@@ -301,16 +295,20 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { useI18n } from 'vue-i18n';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import BulletinCard from '../components/BulletinCard.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import SemestreSelect from '../components/SemestreSelect.vue';
+import { ouvrirImpression, ouvrirImpressions } from '../services/impression';
 import {
   LIBELLE_DECISION_JURY,
   LIBELLE_SESSION_DELIBERATION,
@@ -355,6 +353,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
@@ -382,26 +381,26 @@ const optionsDecisions = Object.entries(LIBELLE_DECISION_JURY).map(([value, labe
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    cs.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+    cs.push({ label: t('bulletins.chips.search', { value: filtres.value.recherche }), value: filtres.value.recherche, icone: 'search', defaut: true });
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: `Année : ${a?.libelle ?? '?'}`, value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({ label: t('bulletins.chips.annee', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+    cs.push({ label: t('bulletins.chips.promo', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
   }
   if (filtres.value.session) {
     cs.push({
-      label: `Session : ${LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session}`,
+      label: t('bulletins.chips.session', { value: LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session }),
       value: filtres.value.session,
       icone: 'flag',
     });
   }
   if (filtres.value.decision) {
     cs.push({
-      label: `Décision : ${LIBELLE_DECISION_JURY[filtres.value.decision] ?? filtres.value.decision}`,
+      label: t('bulletins.chips.decision', { value: LIBELLE_DECISION_JURY[filtres.value.decision] ?? filtres.value.decision }),
       value: filtres.value.decision,
       icone: 'gavel',
     });
@@ -409,15 +408,15 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'matricule', label: 'Matricule', field: 'matricule', align: 'left', sortable: true },
-  { name: 'etudiant', label: 'Étudiant', field: (r) => `${r.nom} ${r.prenom}`, align: 'left', sortable: true },
-  { name: 'moyenne', label: 'Moyenne', field: 'moyenne', align: 'center', sortable: true },
-  { name: 'decision', label: 'Décision', field: 'decision', align: 'center' },
-  { name: 'mention', label: 'Mention', field: (r) => r.mention ?? '—', align: 'left' },
-  { name: 'rang', label: 'Rang', field: 'rang', align: 'center', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'matricule', label: t('bulletins.table.columns.matricule'), field: 'matricule', align: 'left', sortable: true },
+  { name: 'etudiant', label: t('bulletins.table.columns.etudiant'), field: (r) => `${r.nom} ${r.prenom}`, align: 'left', sortable: true },
+  { name: 'moyenne', label: t('bulletins.table.columns.moyenne'), field: 'moyenne', align: 'center', sortable: true },
+  { name: 'decision', label: t('bulletins.table.columns.decision'), field: 'decision', align: 'center' },
+  { name: 'mention', label: t('bulletins.table.columns.mention'), field: (r) => r.mention ?? '—', align: 'left' },
+  { name: 'rang', label: t('bulletins.table.columns.rang'), field: 'rang', align: 'center', sortable: true },
   { name: 'actions', label: '', field: 'inscriptionId', align: 'right' },
-];
+]);
 
 /** Recherche texte + décision : filtrés ici, la source ne sait pas le faire. */
 const lignesFiltrees = computed(() => {
@@ -436,18 +435,14 @@ const lignesPage = computed(() =>
 const nbImprimables = computed(() => lignesFiltrees.value.filter((l) => l.deliberationId).length);
 const aucuneDeliberation = computed(() => deliberations.value.length === 0);
 
-const urlBulletinCourant = computed(() => {
+const cheminBulletinCourant = computed(() => {
   const l = ligneSelectionnee.value;
   if (!l?.deliberationId) return undefined;
-  return urlToken(`/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`);
+  return `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`;
 });
 
 function couleurDecision(d: string): string {
   return d === 'ADMIS' ? 'positive' : d === 'AJOURNE' ? 'warning' : 'negative';
-}
-
-function urlToken(chemin: string) {
-  return `${API_URL}${chemin}${chemin.includes('?') ? '&' : '?'}token=${auth.token}`;
 }
 
 /**
@@ -520,7 +515,7 @@ async function chargerLignes() {
     page.value = 1;
   } catch (e: any) {
     lignes.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des bulletins impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('bulletins.messages.chargementImpossible') });
   } finally {
     chargement.value = false;
   }
@@ -562,35 +557,34 @@ function fermerApercu() {
 
 function imprimerUn(row: LigneBulletin) {
   if (!row.deliberationId) {
-    $q.notify({ type: 'warning', message: 'Aucune délibération pour cet étudiant.' });
+    $q.notify({ type: 'warning', message: t('bulletins.messages.aucuneDeliberationEtudiant') });
     return;
   }
-  window.open(urlToken(`/deliberations/${row.deliberationId}/releve/${row.inscriptionId}`), '_blank');
+  void ouvrirImpression(`/deliberations/${row.deliberationId}/releve/${row.inscriptionId}`);
 }
 
 function imprimerTous() {
   const imprimables = lignesFiltrees.value.filter((l) => l.deliberationId);
   if (!imprimables.length) {
-    $q.notify({ type: 'warning', message: 'Aucun bulletin disponible : aucune délibération trouvée.' });
+    $q.notify({ type: 'warning', message: t('bulletins.messages.aucunBulletinDisponible') });
     return;
   }
   $q.dialog({
-    title: 'Imprimer toute la promotion',
-    message: `${imprimables.length} bulletin(s) vont s'ouvrir dans autant d'onglets. Autorisez les fenêtres surgissantes si votre navigateur les bloque.`,
+    title: t('bulletins.dialogs.imprimerPromotion.title'),
+    message: t('bulletins.dialogs.imprimerPromotion.message', { n: imprimables.length }),
     cancel: true,
-    ok: { color: 'primary', label: 'Ouvrir les bulletins', unelevated: true, noCaps: true },
+    ok: { color: 'primary', label: t('bulletins.dialogs.imprimerPromotion.ok'), unelevated: true, noCaps: true },
   }).onOk(() => {
-    for (const l of imprimables) {
-      window.open(urlToken(`/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`), '_blank');
-    }
-    $q.notify({ type: 'positive', message: `${imprimables.length} bulletin(s) ouvert(s).` });
+    void ouvrirImpressions(
+      imprimables.map((l) => `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`),
+    );
   });
 }
 
 /** Bulletin → attestation : la page Attestations ouvre l'émission préremplie. */
 function allerAttestation(l: LigneBulletin | null) {
   if (!l?.etudiantId) {
-    $q.notify({ type: 'warning', message: 'Étudiant non identifié pour cette inscription.' });
+    $q.notify({ type: 'warning', message: t('bulletins.messages.etudiantNonIdentifie') });
     return;
   }
   void router.push({

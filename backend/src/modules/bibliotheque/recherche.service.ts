@@ -1,3 +1,4 @@
+import { fondsComplet, projectionPubliqueDocument } from './access';
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -6,8 +7,8 @@ import { RechercheDocumentDto } from './bibliotheque.dto';
 
 const DOCUMENT_INCLUDE = {
   departement: true,
-  enseignant: { include: { departement: true } },
-  etudiant: true,
+  enseignant: { select: { id: true, matricule: true, nom: true, prenom: true, departement: true } },
+  etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
   deposePar: { select: { id: true, nom: true, prenom: true, role: true } },
 } as const;
 
@@ -73,17 +74,22 @@ export class RechercheService {
   async rechercher(query: RechercheDocumentDto, utilisateur: AuthUser | null) {
     const tsquery = construireTsQuery(query.q);
     if (!tsquery) {
-      return { data: [], total: 0, page: query.page ?? 1, pageSize: query.pageSize ?? 50 };
+      return { data: [], total: 0, page: query.page ?? 1, pageSize: Math.max(1, Math.min(1000, Number(query.pageSize ?? 50))) };
     }
 
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? 50)));
     const all = query.all === 'true' || query.all === '1';
     const limit = all ? 1000 : Math.max(1, Math.min(200, pageSize));
     const offset = all ? 0 : (Math.max(1, page) - 1) * pageSize;
 
-    const publicSeulement = !utilisateur;
-    const publicFiltre = query.public ? query.public === 'true' : publicSeulement;
+    // Un appelant anonyme est verrouillé sur les documents publiés : `?public=false`
+    // ne doit jamais pouvoir élargir la sélection côté SQL.
+    const publicFiltre = fondsComplet(utilisateur)
+      ? query.public
+        ? query.public === 'true'
+        : undefined
+      : true;
 
     const conditions: Prisma.Sql[] = [Prisma.sql`recherche @@ to_tsquery('french', ${tsquery})`];
     if (publicFiltre !== undefined) {
@@ -113,19 +119,21 @@ export class RechercheService {
     const total = Number(totalRow[0]?.count ?? 0);
 
     if (!ids.length) {
-      return { data: [], total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+      return { data: [], total, page: all ? 1 : page, pageSize: all ? Math.min(total, limit) : pageSize };
     }
 
     const docs = await this.prisma.documentDepot.findMany({
       where: { id: { in: ids.map((l) => l.id) } },
       include: DOCUMENT_INCLUDE as any,
+      omit: { fichier: true, contenuTexte: true },
     });
     const rangParId = new Map<string, number>(ids.map((l) => [l.id, l.rank]));
     const ordonnes: DocumentAvecRang[] = docs
       .map((d) => {
         const nettoye = sansLourdePayload(d as any) as Record<string, unknown>;
-        nettoye.rang = rangParId.get(d.id) ?? 0;
-        return nettoye as DocumentAvecRang;
+        const projete = fondsComplet(utilisateur) ? nettoye : projectionPubliqueDocument(nettoye);
+        projete.rang = rangParId.get(d.id) ?? 0;
+        return projete as DocumentAvecRang;
       })
       .sort((a, b) => (b.rang ?? 0) - (a.rang ?? 0));
 
@@ -137,7 +145,7 @@ export class RechercheService {
       data: ordonnes,
       total,
       page: all ? 1 : page,
-      pageSize: all ? total : pageSize,
+      pageSize: all ? Math.min(total, limit) : pageSize,
     };
   }
 }

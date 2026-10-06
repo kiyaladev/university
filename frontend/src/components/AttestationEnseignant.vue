@@ -2,30 +2,30 @@
   <q-card flat bordered class="carte">
     <q-card-section class="q-pb-none row items-center entete-attestation">
       <div class="col">
-        <div class="text-subtitle2">Attestation de l’enseignant</div>
+        <div class="text-subtitle2">{{ t('pointage.attestation.title') }}</div>
         <div class="text-caption text-grey-7">
-          Faites signer, composer le code ou poser le doigt — un seul moyen suffit
+          {{ t('pointage.attestation.help') }}
         </div>
       </div>
       <span class="champ etat-attestation" :class="valide ? 'champ--present' : 'champ--attente-vide'">
         <q-icon :name="valide ? 'verified' : 'pending'" size="15px" />
-        <span class="pochoir">{{ valide ? LIBELLE_ATTESTATION[modeRetenu] : 'en attente' }}</span>
+        <span class="pochoir">{{ valide ? LIBELLE_ATTESTATION[modeRetenu] : t('pointage.attestation.pending') }}</span>
       </span>
     </q-card-section>
 
     <q-tabs v-model="onglet" dense align="justify" narrow-indicator class="moyens">
-      <q-tab name="signature" icon="draw" label="Signer" no-caps />
+      <q-tab name="signature" icon="draw" :label="t('pointage.attestation.sign')" no-caps />
       <q-tab
         name="pin"
         icon="dialpad"
-        label="Code"
+        :label="t('pointage.attestation.pin')"
         no-caps
         :disable="!moyens?.codePin || !pointages.enLigne"
       />
       <q-tab
         name="empreinte"
         icon="fingerprint"
-        label="Doigt"
+        :label="t('pointage.attestation.finger')"
         no-caps
         :disable="!moyens?.empreinte"
       />
@@ -37,7 +37,7 @@
       <q-tab-panel name="signature">
         <signature-pad
           :model-value="modele.signatureBase64 ?? null"
-          label="L’enseignant signe ci-dessous, comme sur le registre papier"
+          :label="t('pointage.attestation.signatureHelp')"
           @update:model-value="(v) => maj({ signatureBase64: v ?? undefined })"
         />
       </q-tab-panel>
@@ -46,11 +46,10 @@
       <q-tab-panel name="pin">
         <q-banner v-if="!pointages.enLigne" class="note--alerte q-mb-sm">
           <template #avatar><q-icon name="cloud_off" /></template>
-          Hors ligne, le code ne peut pas être vérifié et ne doit pas être
-          conservé sur l’appareil. Faites signer l’enseignant.
+          {{ t('pointage.attestation.offlinePin') }}
         </q-banner>
         <div class="text-caption text-grey-7 q-mb-sm">
-          Tendez l’appareil à l’enseignant : il saisit lui-même son code personnel.
+          {{ t('pointage.attestation.pinHelp') }}
         </div>
         <q-input
           :model-value="modele.codePinEnseignant ?? ''"
@@ -58,14 +57,14 @@
           inputmode="numeric"
           maxlength="6"
           outlined
-          label="Code personnel (4 à 6 chiffres)"
+          :label="t('pointage.attestation.pinLabel')"
           input-class="saisie-code chiffres"
           @update:model-value="(v) => maj({ codePinEnseignant: String(v ?? '') || undefined })"
         >
           <template #prepend><q-icon name="dialpad" /></template>
         </q-input>
         <div class="text-caption text-grey-6 q-mt-xs">
-          Le code est vérifié par le serveur au moment de l’enregistrement.
+          {{ t('pointage.attestation.pinServer') }}
         </div>
       </q-tab-panel>
 
@@ -73,26 +72,25 @@
       <q-tab-panel name="empreinte">
         <div v-if="passerelle.etat === 'absente'" class="text-center q-pa-md">
           <q-icon name="usb_off" size="40px" color="grey-7" />
-          <div class="text-body2 q-mt-sm">Aucun lecteur d’empreintes détecté</div>
+          <div class="text-body2 q-mt-sm">{{ t('pointage.attestation.noReader') }}</div>
           <div class="text-caption text-grey-7">
-            Démarrez la passerelle biométrique sur cet appareil, puis réessayez.
+            {{ t('pointage.attestation.readerHelp') }}
           </div>
           <q-input
             v-model="adressePasserelle"
             dense
             outlined
             class="q-mt-md"
-            label="Adresse de la passerelle"
+            :label="t('pointage.attestation.gateway')"
             @blur="enregistrerAdresse"
           />
-          <q-btn flat no-caps icon="refresh" label="Rechercher le lecteur" class="q-mt-sm" @click="sonderPasserelle" />
+          <q-btn flat no-caps icon="refresh" :label="t('pointage.attestation.findReader')" class="q-mt-sm" @click="sonderPasserelle" />
         </div>
 
         <div v-else class="text-center q-pa-sm">
           <q-banner v-if="lecteurSimule" class="note--alerte q-mb-sm text-left">
             <template #avatar><q-icon name="science" /></template>
-            Lecteur simulé : cette lecture sert à essayer l’application, elle
-            n’atteste la présence de personne.
+            {{ t('pointage.attestation.simulated') }}
           </q-banner>
 
           <q-icon
@@ -103,10 +101,10 @@
           />
           <div class="text-body2 q-mt-sm">
             <template v-if="modele.empreinte">
-              Empreinte reconnue — score {{ modele.empreinte.score }}/100
+              {{ t('pointage.attestation.recognised', { score: modele.empreinte.score }) }}
             </template>
             <template v-else>
-              L’enseignant pose son {{ moyens?.empreinteDoigt ?? 'doigt' }} sur le lecteur
+              {{ t('pointage.attestation.placeFinger', { finger: doigt }) }}
             </template>
           </div>
           <q-btn
@@ -116,7 +114,7 @@
             unelevated
             no-caps
             :icon="modele.empreinte ? 'refresh' : 'fingerprint'"
-            :label="modele.empreinte ? 'Relire l’empreinte' : 'Lire l’empreinte'"
+            :label="t(modele.empreinte ? 'pointage.attestation.reread' : 'pointage.attestation.read')"
             :loading="lectureEnCours"
             @click="lireEmpreinte"
           />
@@ -132,6 +130,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { usePointagesStore } from '../stores/pointages';
 import SignaturePad from './SignaturePad.vue';
@@ -143,6 +142,7 @@ const SEUIL_INDICATIF = 40;
 import type { MoyensAttestation, Pointage, Seance } from '../types';
 
 const pointages = usePointagesStore();
+const { t, te } = useI18n();
 const lecteurSimule = ref(false);
 
 /** Recueille l'attestation de l'enseignant selon le moyen dont il dispose. */
@@ -164,7 +164,7 @@ const erreurEmpreinte = ref('');
 const enseignantId = computed(() => props.seance?.affectation?.enseignant?.id ?? '');
 const nomEnseignant = computed(() => {
   const e = props.seance?.affectation?.enseignant;
-  return e ? `${e.nom} ${e.prenom}` : 'L’enseignant';
+  return e ? `${e.nom} ${e.prenom}` : t('pointage.attestation.teacher');
 });
 
 /** Moyen effectivement retenu, du plus fort au plus faible (même ordre que l'API). */
@@ -176,6 +176,12 @@ const modeRetenu = computed(() => {
 });
 
 const valide = computed(() => modeRetenu.value !== 'AUCUNE');
+const doigt = computed(() => {
+  const valeur = moyens.value?.empreinteDoigt;
+  if (!valeur) return t('pointage.attestation.genericFinger');
+  const cle = `pointage.attestation.fingerNames.${valeur.toLowerCase()}`;
+  return te(cle) ? t(cle) : valeur;
+});
 
 function maj(champs: Partial<Pointage>) {
   emit('update:modelValue', { ...props.modelValue, ...champs });
@@ -204,6 +210,7 @@ async function lireEmpreinte() {
     // Le gabarit enrôlé ne quitte le serveur que pour la comparaison locale.
     const { data: gabarit } = await api.get(
       `/attestation/enseignants/${enseignantId.value}/gabarit`,
+      { params: { seanceId: props.seance?.id } },
     );
 
     const lecture = await verifierEmpreinte(enseignantId.value, gabarit.template);
@@ -212,7 +219,7 @@ async function lireEmpreinte() {
     // prévenir tôt quand le doigt n'a manifestement pas été reconnu.
     if (lecture.score < SEUIL_INDICATIF) {
       erreurEmpreinte.value =
-        `Doigt non reconnu (score ${lecture.score}) — réessayez ou utilisez un autre moyen`;
+        t('pointage.attestation.notRecognised', { score: lecture.score });
       maj({ empreinte: undefined });
       return;
     }
@@ -226,7 +233,7 @@ async function lireEmpreinte() {
       },
     });
   } catch (e: any) {
-    erreurEmpreinte.value = e?.message ?? 'Lecteur inaccessible';
+    erreurEmpreinte.value = e?.message ?? t('pointage.attestation.unavailable');
   } finally {
     lectureEnCours.value = false;
   }
@@ -241,7 +248,9 @@ watch(
     moyens.value = null;
     if (!id || !enseignantId.value) return;
 
-    const { data } = await api.get(`/attestation/enseignants/${enseignantId.value}/moyens`);
+    const { data } = await api.get(`/attestation/enseignants/${enseignantId.value}/moyens`, {
+      params: { seanceId: id },
+    });
     moyens.value = data;
 
     // On propose d'emblée le moyen le plus fort dont dispose l'enseignant.
@@ -284,7 +293,7 @@ watch(
   gap: 5px;
   padding: 4px 8px;
   min-height: 26px;
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
   flex: 0 0 auto;
 }
 
@@ -301,15 +310,14 @@ watch(
 
 .moyens :deep(.q-tab__label) {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 }
 
 :deep(.saisie-code) {
   font-size: 1.5rem;
   letter-spacing: 0.28em;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .lecture-en-cours {

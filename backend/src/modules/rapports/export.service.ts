@@ -7,11 +7,19 @@ import { RapportQueryDto } from './rapports.dto';
 const SEPARATEUR = ';';
 const BOM = '﻿';
 
-function cellule(valeur: unknown): string {
+export function cellule(valeur: unknown): string {
   if (valeur === null || valeur === undefined) return '';
   const texte = String(valeur);
   // Les décimales sont écrites à la française pour rester numériques dans Excel.
-  const normalise = typeof valeur === 'number' ? texte.replace('.', ',') : texte;
+  let normalise = typeof valeur === 'number' ? texte.replace('.', ',') : texte;
+
+  // Neutralisation d'injection de formule. Un nom d'enseignant ou un intitulé de
+  // séance est saisi librement : `=HYPERLINK("http://…","x")` dans une cellule
+  // s'exécute à l'ouverture dans Excel ou LibreOffice, dans le contexte de la
+  // personne qui exporte. On préfixe d'une apostrophe, ce qu'Excel stocke comme
+  // un caractère littéral et non comme une formule.
+  if (/^[=+\-@\t\r]/.test(normalise)) normalise = `'${normalise}`;
+
   return /[";\n]/.test(normalise) ? `"${normalise.replace(/"/g, '""')}"` : normalise;
 }
 
@@ -129,8 +137,8 @@ export class ExportService {
     );
   }
 
-  async registre(query: RapportQueryDto) {
-    const r = await this.rapports.registre(query);
+  async registre(query: RapportQueryDto, inclureObservations = false) {
+    const r = await this.rapports.registre(query, false, inclureObservations);
     return versCsv(
       [
         'Date',

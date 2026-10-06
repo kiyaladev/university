@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-06T10:51:39.381Z",
+  "database": "university_recommandations_20261006",
+  "passed": true,
+  "failures": [],
+  "observations": {
+    "publicationStatuses": [
+      201,
+      400
+    ],
+    "confirmationStatuses": [
+      201,
+      409
+    ],
+    "closureStatuses": [
+      201,
+      400
+    ],
+    "confirmationAuditCount": 1,
+    "finalConfirmedCount": 1,
+    "paidAmount": 5000,
+    "revenue": 5000,
+    "freeTextAbsent": true,
+    "protectedCertificateRead": true
+  },
+  "productionUntouched": true,
+  "operatorCalled": false,
+  "educationalCompletionAcceptancePending": true
+}

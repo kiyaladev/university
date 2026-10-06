@@ -2,10 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Tirage des épreuves</div>
+        <h1 class="page-titre">{{ $t('tirage.title') }}</h1>
         <div class="page-sous-titre">
-          Entre l'examen planifié et la salle : l'empreinte SHA-256 du sujet est
-          revérifiée à l'impression pour bloquer toute substitution de fichier.
+          {{ $t('tirage.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -15,7 +14,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Programmer un tirage"
+          :label="$t('tirage.actions.schedule')"
           @click="dialogCreationOuvert = true"
         />
       </div>
@@ -25,7 +24,7 @@
           color="secondary"
           no-caps
           icon="quiz"
-          label="Examens"
+          :label="$t('tirage.actions.exams')"
           @click="router.push({ name: 'examens' })"
         />
       </div>
@@ -33,16 +32,16 @@
 
     <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
       <template #avatar><q-icon name="filter_alt" color="primary" /></template>
-      Tirages de l'examen <strong>{{ examenFiltre.codeExamen }}</strong> —
+      {{ $t('tirage.banner.prefix') }} <strong>{{ examenFiltre.codeExamen }}</strong> {{ $t('rectoratPage.subtitleFallback') }}
       {{ examenFiltre.intitule }}.
       <template #action>
-        <q-btn flat dense no-caps label="Voir tous les tirages" @click="retirerFiltreExamen" />
+        <q-btn flat dense no-caps :label="$t('tirage.actions.viewAll')" @click="retirerFiltreExamen" />
       </template>
     </q-banner>
 
     <filter-bar
       v-model="filtres"
-      placeholder="Rechercher (code examen, intitulé…)"
+      :placeholder="$t('tirage.search.placeholder')"
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
@@ -58,7 +57,7 @@
         <autocomplete-async
           v-model="filtres.examenId"
           endpoint="/examens"
-          label="Examen"
+          :label="$t('tirage.filters.examen')"
           :label-fn="(e) => `${e.codeExamen} — ${e.intitule}`"
           clearable
         />
@@ -70,7 +69,7 @@
           clearable
           emit-value
           map-options
-          label="Stade"
+          :label="$t('tirage.filters.stade')"
         />
       </template>
     </filter-bar>
@@ -93,14 +92,14 @@
       <template #no-data>
         <div class="etat-vide">
           <q-icon name="local_printshop" size="32px" color="grey-5" />
-          <div class="q-mt-sm">Aucun tirage pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('tirage.emptyState.message') }}</div>
           <q-btn
             v-if="peutCreer"
             unelevated
             color="primary"
             no-caps
             icon="add"
-            label="Programmer un tirage"
+            :label="$t('tirage.actions.schedule')"
             class="q-mt-sm"
             @click="dialogCreationOuvert = true"
           />
@@ -115,7 +114,7 @@
       </template>
       <template #body-cell-empreinte="p">
         <q-td :props="p">
-          <code class="empreinte-courte">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</code>
+          <code class="empreinte-courte">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}{{ $t('reservations.chips.roomFallback') }}</code>
           <q-tooltip>{{ p.row.empreinteSource }}</q-tooltip>
         </q-td>
       </template>
@@ -131,20 +130,20 @@
             dense
             round
             icon="print"
-            aria-label="Imprimer le bordereau du tirage"
+            :aria-label="$t('tirage.ariaLabels.imprimerBordereau')"
             @click.stop="voirBordereau(p.row)"
           >
-            <q-tooltip>Bordereau</q-tooltip>
+            <q-tooltip>{{ $t('tirage.tooltips.bordereau') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="quiz"
-            aria-label="Voir l'examen de ce tirage"
+            :aria-label="$t('tirage.ariaLabels.voirExamen')"
             @click.stop="allerExamen(p.row)"
           >
-            <q-tooltip>Voir l'examen</q-tooltip>
+            <q-tooltip>{{ $t('tirage.tooltips.voirExamen') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="transitionSuivante(p.row.stade) && peutCreer"
@@ -162,10 +161,10 @@
             round
             color="negative"
             icon="block"
-            aria-label="Annuler le tirage"
+            :aria-label="$t('tirage.ariaLabels.annulerTirage')"
             @click.stop="annuler(p.row)"
           >
-            <q-tooltip>Annuler le tirage</q-tooltip>
+            <q-tooltip>{{ $t('tirage.tooltips.annulerTirage') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -187,9 +186,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -199,11 +200,15 @@ import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import TirageDialog from '../components/TirageDialog.vue';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '../utils/libelles';
 import type { Examen, StadeTirage, Tirage, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+// Alias `translate` (not `t`) because several handlers below already use `t`
+// as the local parameter name for a Tirage row.
+const { t: translate } = useI18n();
 
 const modeVue = ref<'kanban' | 'tableau'>('kanban');
 const tirages = ref<Tirage[]>([]);
@@ -234,17 +239,26 @@ const optionsStades = ORDRES.map((value) => ({ value, label: LIBELLE_STADE_TIRAG
 const chipsFiltres = computed(() => {
   const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    chips.push({ label: `« ${filtres.value.recherche} »`, value: filtres.value.recherche, icone: 'search', defaut: true });
+    chips.push({
+      label: translate('tirage.chips.search', { value: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (filtres.value.stade) {
     chips.push({
-      label: `Stade : ${LIBELLE_STADE_TIRAGE[filtres.value.stade] ?? filtres.value.stade}`,
+      label: translate('tirage.chips.stade', { value: LIBELLE_STADE_TIRAGE[filtres.value.stade] ?? filtres.value.stade }),
       value: filtres.value.stade,
       icone: 'flag',
     });
   }
   if (examenFiltre.value) {
-    chips.push({ label: `Examen : ${examenFiltre.value.codeExamen}`, value: examenFiltre.value.id, icone: 'quiz' });
+    chips.push({
+      label: translate('tirage.chips.examen', { value: examenFiltre.value.codeExamen }),
+      value: examenFiltre.value.id,
+      icone: 'quiz',
+    });
   }
   return chips;
 });
@@ -264,12 +278,12 @@ const tiragesFiltres = computed(() => {
 });
 
 const colonnesTableau = computed<QTableColumn[]>(() => [
-  { name: 'examen', label: 'Examen', field: 'examen', align: 'left' },
-  { name: 'date', label: 'Date du tirage', field: (r: Tirage) => dateHeureLisible(r.dateTirage), align: 'left' },
-  { name: 'exemplaires', label: 'Exemplaires', field: 'nbExemplaires', align: 'right' },
-  { name: 'empreinte', label: 'Empreinte SHA-256', field: 'empreinteSource', align: 'left' },
-  { name: 'imprimeur', label: 'Imprimeur', field: (r: Tirage) => (r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—'), align: 'left' },
-  { name: 'stade', label: 'Stade', field: 'stade', align: 'left' },
+  { name: 'examen', label: translate('tirage.table.columns.examen'), field: 'examen', align: 'left' },
+  { name: 'date', label: translate('tirage.table.columns.date'), field: (r: Tirage) => dateHeureLisible(r.dateTirage), align: 'left' },
+  { name: 'exemplaires', label: translate('tirage.table.columns.exemplaires'), field: 'nbExemplaires', align: 'right' },
+  { name: 'empreinte', label: translate('tirage.table.columns.empreinte'), field: 'empreinteSource', align: 'left' },
+  { name: 'imprimeur', label: translate('tirage.table.columns.imprimeur'), field: (r: Tirage) => (r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—'), align: 'left' },
+  { name: 'stade', label: translate('tirage.table.columns.stade'), field: 'stade', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -341,7 +355,7 @@ function labelSuivant(stade: string) {
 
 function actionsPourCarte(t: Tirage) {
   const acts: Array<{ label: string; icone: string; couleur: string; onClick: () => void }> = [
-    { label: 'Bordereau', icone: 'print', couleur: 'primary', onClick: () => voirBordereau(t) },
+    { label: translate('tirage.actions.bordereau'), icone: 'print', couleur: 'primary', onClick: () => voirBordereau(t) },
   ];
   if (transitionSuivante(t.stade) && peutCreer.value) {
     acts.push({
@@ -352,7 +366,7 @@ function actionsPourCarte(t: Tirage) {
     });
   }
   if (t.stade === 'PROGRAMME' && peutCreer.value) {
-    acts.push({ label: 'Annuler', icone: 'block', couleur: 'negative', onClick: () => annuler(t) });
+    acts.push({ label: translate('tirage.actions.cancel'), icone: 'block', couleur: 'negative', onClick: () => annuler(t) });
   }
   return acts;
 }
@@ -373,7 +387,7 @@ async function charger() {
   } catch (e: any) {
     tirages.value = [];
     total.value = 0;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des tirages impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.loadError') });
   } finally {
     chargement.value = false;
   }
@@ -404,20 +418,16 @@ function allerExamen(t: Tirage) {
 
 function voirBordereau(t: Tirage | null) {
   if (!t) return;
-  window.open(`${API_URL}/tirage/${t.id}/imprimer-bordereau?token=${auth.token}`, '_blank');
+  void ouvrirImpression(`/tirage/${t.id}/imprimer-bordereau`);
 }
 
 /** Libellés des étapes : chaque passage est tracé et ne se rejoue pas. */
-const MESSAGES_TRANSITION: Record<string, string> = {
-  IMPRIME:
-    "Confirmez l'empreinte SHA-256 du fichier source. Si elle ne correspond pas à celle enregistrée à la programmation, l'impression sera refusée.",
-  MIS_SOUS_PLI:
-    'Les exemplaires sont déclarés mis sous pli et scellés. Cette étape est enregistrée au journal et ne peut pas être annulée.',
-  DISTRIBUE:
-    'Les plis sont déclarés remis au centre d’examen. Cette étape est enregistrée au journal et ne peut pas être annulée.',
-  RECUPERE:
-    'Les copies sont déclarées récupérées : le tirage est clos. Cette étape est définitive.',
-};
+const MESSAGES_TRANSITION = computed<Record<string, string>>(() => ({
+  IMPRIME: translate('tirage.transitions.IMPRIME'),
+  MIS_SOUS_PLI: translate('tirage.transitions.MIS_SOUS_PLI'),
+  DISTRIBUE: translate('tirage.transitions.DISTRIBUE'),
+  RECUPERE: translate('tirage.transitions.RECUPERE'),
+}));
 
 async function avancer(t: Tirage) {
   const stade = transitionSuivante(t.stade);
@@ -430,40 +440,40 @@ async function avancer(t: Tirage) {
     'recuperer';
 
   const validerEtAvancer = async (empreinteSaisie?: string) => {
-    let payload: Record<string, unknown> = {};
+    let payload: Record<string, unknown> = { stade };
     if (stade === 'IMPRIME') {
       if (!empreinteSaisie) {
-        $q.notify({ type: 'negative', message: 'Empreinte requise pour imprimer' });
+        $q.notify({ type: 'negative', message: translate('tirage.messages.fingerprintRequired') });
         return;
       }
       payload = {
-        empreinteSource: empreinteSaisie,
+        empreinteSource: empreinteSaisie.trim().toLowerCase(),
         empreinteExemplaires: t.empreinteExemplaires ?? undefined,
       };
     }
     try {
       await api.post(`/tirage/${t.id}/${routeSuivant}`, payload);
-      $q.notify({ type: 'positive', message: `Stade → ${libelleStade(stade)}` });
+      $q.notify({ type: 'positive', message: translate('tirage.messages.stageChanged', { stade: libelleStade(stade) }) });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Transition impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.transitionError') });
     }
   };
 
   if (stade === 'IMPRIME') {
     $q.dialog({
-      title: "Confirmer l'impression",
-      message: MESSAGES_TRANSITION.IMPRIME,
+      title: translate('tirage.actions.confirmPrint'),
+      message: MESSAGES_TRANSITION.value.IMPRIME,
       prompt: { model: t.empreinteSource, type: 'text' },
       cancel: true,
-      ok: { color: 'primary', label: 'Imprimer', unelevated: true, noCaps: true },
+      ok: { color: 'primary', label: translate('tirage.actions.print'), unelevated: true, noCaps: true },
     }).onOk((value: string) => validerEtAvancer(value));
     return;
   }
 
   $q.dialog({
-    title: `Passer au stade « ${libelleStade(stade)} »`,
-    message: MESSAGES_TRANSITION[stade] ?? '',
+    title: translate('tirage.dialogs.advance.title', { stade: libelleStade(stade) }),
+    message: MESSAGES_TRANSITION.value[stade] ?? '',
     cancel: true,
     ok: { color: 'primary', label: libelleStade(stade), unelevated: true, noCaps: true },
   }).onOk(() => validerEtAvancer());
@@ -471,17 +481,19 @@ async function avancer(t: Tirage) {
 
 function annuler(t: Tirage) {
   $q.dialog({
-    title: 'Annuler le tirage',
-    message: `Annuler définitivement le tirage de ${t.examen?.codeExamen ?? 'cet examen'} ? Les exemplaires programmés ne seront pas imprimés.`,
-    cancel: { flat: true, label: 'Revenir', noCaps: true },
-    ok: { color: 'negative', label: 'Annuler le tirage', unelevated: true, noCaps: true },
+    title: translate('tirage.dialogs.cancel.title'),
+    message: translate('tirage.dialogs.cancel.message', {
+      examen: t.examen?.codeExamen ?? translate('tirage.dialogs.cancel.thisExam'),
+    }),
+    cancel: { flat: true, label: translate('tirage.actions.back'), noCaps: true },
+    ok: { color: 'negative', label: translate('tirage.actions.cancelDraw'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/tirage/${t.id}/annuler`);
-      $q.notify({ type: 'positive', message: 'Tirage annulé' });
+      $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Annulation impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.cancelError') });
     }
   });
 }

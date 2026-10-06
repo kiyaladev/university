@@ -1,0 +1,9 @@
+{
+  "tirage_introuvable": "Drawing not found",
+  "examen_introuvable": "Examination not found",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr": "Source fingerprint does not match the recorded one — printing refused",
+  "transition_impossible_depuis_tirage_stade_vers_dto_stade": "Transition impossible from {tirage.stade} to {dto.stade}",
+  "tirage_tirage_stade_annulation_possible_uniquement_depuis_pr": "Drawing {tirage.stade}: cancellation only possible from SCHEDULED",
+  "tirage_tirage_stade_annulation_possible_uniquement_depuis_program": "Print job “{stade}”: cancellation is only possible while scheduled."
+}

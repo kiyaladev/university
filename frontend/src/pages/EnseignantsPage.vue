@@ -2,8 +2,8 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Enseignants</div>
-        <div class="page-sous-titre">Corps enseignant suivi par le dispositif de contrôle</div>
+        <h1 class="page-titre">{{ $t('enseignants.header.title') }}</h1>
+        <div class="page-sous-titre">{{ $t('enseignants.header.subtitle') }}</div>
       </div>
       <div class="col-auto">
         <q-btn
@@ -12,7 +12,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvel enseignant"
+          :label="$t('enseignants.header.newTeacher')"
           @click="ouvrir(null)"
         />
       </div>
@@ -21,7 +21,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (matricule, nom, e-mail)…"
+      :placeholder="$t('enseignants.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -33,7 +33,7 @@
           clearable
           emit-value
           map-options
-          label="Département"
+          :label="$t('enseignants.filters.departementLabel')"
         />
         <q-select
           v-model="filtres.statut"
@@ -43,14 +43,13 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('enseignants.filters.statutLabel')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="enseignants"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -77,7 +76,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Créer le premier enseignant"
+            :label="$t('enseignants.emptyState.createFirst')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -85,7 +84,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('enseignants.emptyState.clearFilters')"
             @click="reinitialiser"
           />
         </div>
@@ -103,7 +102,7 @@
           <q-chip dense :color="couleurStatut(p.row.statut)" text-color="white">
             {{ LIBELLE_STATUT_ENSEIGNANT[p.row.statut] ?? p.row.statut }}
           </q-chip>
-          <q-badge v-if="!p.row.actif" color="grey-7" class="q-ml-xs">inactif</q-badge>
+          <q-badge v-if="!p.row.actif" color="grey-7" class="q-ml-xs">{{ $t('enseignants.table.inactive') }}</q-badge>
         </q-td>
       </template>
 
@@ -114,7 +113,7 @@
             :color="p.row.user ? 'positive' : 'grey-5'"
           />
           <q-tooltip>
-            {{ p.row.user ? `Compte : ${p.row.user.email}` : 'Aucun compte de connexion' }}
+            {{ p.row.user ? t('enseignants.table.accountTooltip', { email: p.row.user.email }) : $t('enseignants.table.noAccount') }}
           </q-tooltip>
         </q-td>
       </template>
@@ -126,10 +125,10 @@
             dense
             round
             icon="assignment_ind"
-            aria-label="Voir les charges d’enseignement"
+            :aria-label="$t('enseignants.table.actionsAria.charges')"
             @click="voirCharges(p.row)"
           >
-            <q-tooltip>Ses charges d’enseignement</q-tooltip>
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.charges') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -137,20 +136,20 @@
             round
             color="primary"
             icon="verified_user"
-            aria-label="Moyens d’attestation de présence"
+            :aria-label="$t('enseignants.table.actionsAria.moyens')"
             @click="ouvrirMoyens(p.row)"
           >
-            <q-tooltip>Moyens d’attestation de présence</q-tooltip>
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.moyens') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="assessment"
-            aria-label="Imprimer la fiche d’assiduité"
+            :aria-label="$t('enseignants.table.actionsAria.fiche')"
             @click="imprimerFiche(p.row)"
           >
-            <q-tooltip>Fiche d’assiduité (90 derniers jours)</q-tooltip>
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.fiche') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.peutPlanifier"
@@ -158,10 +157,10 @@
             dense
             round
             icon="edit"
-            aria-label="Modifier l’enseignant"
+            :aria-label="$t('enseignants.table.actionsAria.modifier')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.modifier') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="auth.estAdmin"
@@ -170,10 +169,10 @@
             round
             color="negative"
             icon="delete"
-            aria-label="Supprimer l’enseignant"
+            :aria-label="$t('enseignants.table.actionsAria.supprimer')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>Supprimer</q-tooltip>
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.supprimer') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -186,13 +185,13 @@
             <q-chip dense :color="couleurStatut(e.statut)" text-color="white">
               {{ LIBELLE_STATUT_ENSEIGNANT[e.statut] ?? e.statut }}
             </q-chip>
-            <q-badge v-if="!e.actif" color="grey-7">inactif</q-badge>
+            <q-badge v-if="!e.actif" color="grey-7">{{ $t('enseignants.table.inactive') }}</q-badge>
             <q-space />
             <div class="text-caption text-grey-7">{{ e.matricule }}</div>
           </div>
           <div class="text-subtitle1 text-weight-medium">{{ e.nom }} {{ e.prenom }}</div>
-          <div class="text-caption text-grey-7">{{ e.grade || 'Grade non renseigné' }}</div>
-          <div class="text-caption text-grey-7">{{ e.departement?.nom ?? 'Sans département' }}</div>
+          <div class="text-caption text-grey-7">{{ e.grade || $t('enseignants.cards.gradeNonRenseigne') }}</div>
+          <div class="text-caption text-grey-7">{{ e.departement?.nom ?? $t('enseignants.cards.sansDepartement') }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
             <q-icon name="call" size="14px" /> {{ e.telephone || '—' }}
             <span class="q-ml-sm">
@@ -201,7 +200,7 @@
                 :color="e.user ? 'positive' : 'grey-5'"
                 size="14px"
               />
-              {{ e.user ? 'Compte actif' : 'Sans compte' }}
+              {{ e.user ? $t('enseignants.cards.compteActif') : $t('enseignants.cards.sansCompte') }}
             </span>
           </div>
         </q-card-section>
@@ -212,7 +211,7 @@
             dense
             no-caps
             icon="assignment_ind"
-            label="Ses charges"
+            :label="$t('enseignants.cards.charges')"
             @click="voirCharges(e)"
           />
           <q-btn
@@ -221,7 +220,7 @@
             no-caps
             color="primary"
             icon="verified_user"
-            label="Attestation"
+            :label="$t('enseignants.cards.attestation')"
             @click="ouvrirMoyens(e)"
           />
           <q-btn
@@ -230,7 +229,7 @@
             dense
             no-caps
             icon="edit"
-            label="Modifier"
+            :label="$t('enseignants.cards.modifier')"
             @click="ouvrir(e)"
           />
         </q-card-actions>
@@ -244,7 +243,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Créer le premier enseignant"
+          :label="$t('enseignants.emptyState.createFirst')"
           @click="ouvrir(null)"
         />
         <q-btn
@@ -252,7 +251,7 @@
           flat
           no-caps
           icon="refresh"
-          label="Réinitialiser les filtres"
+          :label="$t('enseignants.emptyState.clearFilters')"
           @click="reinitialiser"
         />
       </div>
@@ -279,10 +278,9 @@
     <q-dialog v-model="dialogMoyens">
       <q-card style="width: 520px; max-width: 95vw">
         <q-card-section>
-          <div class="text-h6">Moyens d’attestation</div>
+          <div class="text-h6">{{ $t('enseignants.moyensDialog.title') }}</div>
           <div class="text-caption text-grey-7">
-            {{ enseignantMoyens?.nom }} {{ enseignantMoyens?.prenom }} — comment il confirme
-            sa présence en salle
+            {{ $t('enseignants.moyensDialog.subtitle', { nom: enseignantMoyens?.nom, prenom: enseignantMoyens?.prenom }) }}
           </div>
         </q-card-section>
 
@@ -292,9 +290,9 @@
           <q-item>
             <q-item-section avatar><q-icon name="dialpad" color="secondary" /></q-item-section>
             <q-item-section>
-              <q-item-label>Code personnel</q-item-label>
+              <q-item-label>{{ $t('enseignants.moyensDialog.codePersonnel.label') }}</q-item-label>
               <q-item-label caption>
-                {{ moyens?.codePin ? 'Défini' : 'Aucun code défini' }}
+                {{ moyens?.codePin ? $t('enseignants.moyensDialog.codePersonnel.defined') : $t('enseignants.moyensDialog.codePersonnel.undefined') }}
               </q-item-label>
             </q-item-section>
             <q-item-section side>
@@ -302,7 +300,7 @@
                 flat
                 dense
                 no-caps
-                :label="moyens?.codePin ? 'Réinitialiser' : 'Générer un code'"
+                :label="moyens?.codePin ? $t('enseignants.moyensDialog.codePersonnel.reset') : $t('enseignants.moyensDialog.codePersonnel.generate')"
                 @click="reinitialiserPin"
               />
             </q-item-section>
@@ -311,14 +309,14 @@
           <q-item>
             <q-item-section avatar><q-icon name="fingerprint" color="accent" /></q-item-section>
             <q-item-section>
-              <q-item-label>Empreinte digitale</q-item-label>
+              <q-item-label>{{ $t('enseignants.moyensDialog.empreinte.label') }}</q-item-label>
               <q-item-label caption>
                 {{
                   moyens?.empreinte
-                    ? `Enrôlée (${moyens.empreinteDoigt})`
+                    ? t('enseignants.moyensDialog.empreinte.enrolled', { doigt: moyens.empreinteDoigt })
                     : passerellePrete
-                      ? 'Non enrôlée — lecteur prêt'
-                      : 'Non enrôlée — aucun lecteur détecté sur cet appareil'
+                      ? $t('enseignants.moyensDialog.empreinte.notEnrolledReady')
+                      : $t('enseignants.moyensDialog.empreinte.notEnrolledNoReader')
                 }}
               </q-item-label>
             </q-item-section>
@@ -327,13 +325,13 @@
                 flat
                 dense
                 no-caps
-                :label="moyens?.empreinte ? 'Réenrôler' : 'Enrôler'"
+                :label="moyens?.empreinte ? $t('enseignants.moyensDialog.empreinte.reenroll') : $t('enseignants.moyensDialog.empreinte.enroll')"
                 :disable="!passerellePrete"
                 :loading="enrolementEnCours"
                 @click="enrolerEmpreinte"
               >
                 <q-tooltip v-if="!passerellePrete">
-                  Branchez le lecteur d’empreintes sur ce poste pour enrôler.
+                  {{ $t('enseignants.moyensDialog.empreinte.pluginTooltip') }}
                 </q-tooltip>
               </q-btn>
             </q-item-section>
@@ -342,12 +340,12 @@
 
         <q-banner v-if="codeGenere" class="note--valide q-ma-md">
           <template #avatar><q-icon name="key" /></template>
-          Nouveau code : <strong class="text-h6">{{ codeGenere }}</strong><br />
-          <span class="text-caption">Communiquez-le à l’enseignant, il ne sera plus affiché.</span>
+          {{ $t('enseignants.moyensDialog.newCodeLabel') }} <strong class="text-h6">{{ codeGenere }}</strong><br />
+          <span class="text-caption">{{ $t('enseignants.moyensDialog.newCodeHint') }}</span>
         </q-banner>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('enseignants.moyensDialog.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -358,6 +356,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
@@ -380,6 +379,7 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const enseignants = ref<Enseignant[]>([]);
@@ -416,8 +416,8 @@ const filtresActifs = computed(() =>
 );
 const messageVide = computed(() =>
   filtresActifs.value
-    ? 'Aucun enseignant pour ces critères.'
-    : 'Aucun enseignant enregistré.',
+    ? t('enseignants.emptyState.filtered')
+    : t('enseignants.emptyState.none'),
 );
 
 const couleurStatut = (s: string) =>
@@ -427,7 +427,7 @@ const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('enseignants.filters.chips.search', { q: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -436,37 +436,43 @@ const chips = computed(() => {
   if (filtres.value.departementId) {
     const d = departements.value.find((x) => x.id === filtres.value.departementId);
     cs.push({
-      label: `Département : ${d?.nom ?? '?'}`,
+      label: t('enseignants.filters.chips.departement', { nom: d?.nom ?? '?' }),
       value: filtres.value.departementId,
       icone: 'apartment',
     });
   }
   if (filtres.value.statut) {
-    cs.push({ label: `Statut : ${LIBELLE_STATUT_ENSEIGNANT[filtres.value.statut] ?? filtres.value.statut}`, value: filtres.value.statut, icone: 'badge' });
+    cs.push({
+      label: t('enseignants.filters.chips.statut', {
+        statut: LIBELLE_STATUT_ENSEIGNANT[filtres.value.statut] ?? filtres.value.statut,
+      }),
+      value: filtres.value.statut,
+      icone: 'badge',
+    });
   }
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'nom', label: 'Nom & prénom', field: 'nom', align: 'left', sortable: true },
-  { name: 'grade', label: 'Grade', field: (r: Enseignant) => r.grade || '—', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'nom', label: t('enseignants.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'grade', label: t('enseignants.table.columns.grade'), field: (r: Enseignant) => r.grade || '—', align: 'left' },
+  { name: 'statut', label: t('enseignants.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: 'Département',
+    label: t('enseignants.table.columns.departement'),
     field: (r: Enseignant) => r.departement?.nom ?? '—',
     align: 'left',
   },
   {
     name: 'taux',
-    label: 'Taux horaire',
+    label: t('enseignants.table.columns.taux'),
     field: (r: Enseignant) => (r.tauxHoraire ? montantLisible(r.tauxHoraire) : '—'),
     align: 'right',
   },
-  { name: 'telephone', label: 'Téléphone', field: (r: Enseignant) => r.telephone || '—', align: 'left' },
-  { name: 'compte', label: 'Compte', field: 'id', align: 'center' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'telephone', label: t('enseignants.table.columns.telephone'), field: (r: Enseignant) => r.telephone || '—', align: 'left' },
+  { name: 'compte', label: t('enseignants.table.columns.compte'), field: 'id', align: 'center' },
+  { name: 'actions', label: t('enseignants.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function ouvrir(e: Enseignant | null) {
   enseignantEdite.value = e;
@@ -493,7 +499,7 @@ async function ouvrirMoyens(e: Enseignant) {
   } catch (err: any) {
     $q.notify({
       type: 'negative',
-      message: err?.response?.data?.message ?? 'Moyens d’attestation illisibles',
+      message: err?.response?.data?.message ?? t('enseignants.messages.moyensUnreadable'),
     });
     dialogMoyens.value = false;
     return;
@@ -516,10 +522,10 @@ async function ouvrirMoyens(e: Enseignant) {
 
 function reinitialiserPin() {
   $q.dialog({
-    title: 'Réinitialiser le code personnel',
-    message: 'Un nouveau code sera généré et affiché une seule fois. Continuer ?',
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'primary', label: 'Générer', unelevated: true, noCaps: true },
+    title: t('enseignants.messages.resetPinTitle'),
+    message: t('enseignants.messages.resetPinMessage'),
+    cancel: { label: t('enseignants.messages.cancel'), flat: true, noCaps: true },
+    ok: { color: 'primary', label: t('enseignants.messages.generate'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       const { data } = await api.post(
@@ -530,7 +536,7 @@ function reinitialiserPin() {
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Génération du code impossible',
+        message: e?.response?.data?.message ?? t('enseignants.messages.pinGenerationFailed'),
       });
     }
   });
@@ -544,16 +550,11 @@ function reinitialiserPin() {
 function recueillirConsentement(): Promise<boolean> {
   return new Promise((resolve) => {
     $q.dialog({
-      title: 'Consentement de l’enseignant',
-      html: true,
-      message: `<p>À lire à l’enseignant avant la lecture :</p>
-        <p><em>« Votre empreinte sera enregistrée sous forme de gabarit chiffré,
-        jamais sous forme d’image, et servira uniquement à attester votre
-        présence en cours. Vous pouvez refuser : le code personnel et la
-        signature manuscrite restent à votre disposition. Vous pouvez demander
-        son effacement à tout moment. »</em></p>`,
-      cancel: { label: 'L’enseignant refuse', flat: true, noCaps: true },
-      ok: { label: 'L’enseignant accepte', color: 'primary', unelevated: true, noCaps: true },
+      title: t('enseignants.messages.consentTitle'),
+      html: false,
+      message: t('enseignants.messages.consentMessage'),
+      cancel: { label: t('enseignants.messages.consentRefuse'), flat: true, noCaps: true },
+      ok: { label: t('enseignants.messages.consentAccept'), color: 'primary', unelevated: true, noCaps: true },
       persistent: true,
     })
       .onOk(() => resolve(true))
@@ -565,7 +566,7 @@ async function enrolerEmpreinte() {
   if (!(await recueillirConsentement())) {
     $q.notify({
       type: 'info',
-      message: 'Enrôlement abandonné — le code personnel reste disponible',
+      message: t('enseignants.messages.enrolementAborted'),
       icon: 'pin',
     });
     return;
@@ -581,7 +582,7 @@ async function enrolerEmpreinte() {
       signal: AbortSignal.timeout(30000),
     });
     const capture = await reponse.json();
-    if (!reponse.ok) throw new Error(capture.erreur ?? 'Lecture impossible');
+    if (!reponse.ok) throw new Error(capture.erreur ?? t('enseignants.messages.enrolementReadFailed'));
 
     await api.put(`/attestation/enseignants/${id}/empreinte`, {
       template: capture.template,
@@ -592,10 +593,10 @@ async function enrolerEmpreinte() {
       consentement: true,
     });
 
-    $q.notify({ type: 'positive', message: `Empreinte enrôlée (qualité ${capture.qualite})` });
+    $q.notify({ type: 'positive', message: t('enseignants.messages.enrolementSuccess', { qualite: capture.qualite }) });
     moyens.value = { ...moyens.value!, empreinte: true, empreinteDoigt: 'index droit' };
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.message ?? 'Enrôlement impossible' });
+    $q.notify({ type: 'negative', message: e?.message ?? t('enseignants.messages.enrolementFailed') });
   } finally {
     enrolementEnCours.value = false;
   }
@@ -608,19 +609,19 @@ function imprimerFiche(e: Enseignant) {
 
 function supprimer(e: Enseignant) {
   $q.dialog({
-    title: 'Supprimer l’enseignant',
-    message: `Supprimer définitivement ${e.nom} ${e.prenom} ainsi que ses affectations et séances ?`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('enseignants.messages.deleteTitle'),
+    message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
+    cancel: { label: t('enseignants.messages.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('enseignants.messages.delete'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/enseignants/${e.id}`);
-      $q.notify({ type: 'positive', message: 'Enseignant supprimé' });
+      $q.notify({ type: 'positive', message: t('enseignants.messages.deleteSuccess') });
       await charger();
     } catch (err: any) {
       $q.notify({
         type: 'negative',
-        message: err?.response?.data?.message ?? 'Suppression impossible',
+        message: err?.response?.data?.message ?? t('enseignants.messages.deleteFailed'),
       });
     }
   });
@@ -646,7 +647,7 @@ async function charger(tout = false) {
     enseignants.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des enseignants impossible',
+      message: e?.response?.data?.message ?? t('enseignants.messages.loadFailed'),
     });
   } finally {
     chargement.value = false;

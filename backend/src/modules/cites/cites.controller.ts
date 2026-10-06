@@ -34,6 +34,7 @@ import {
 @ApiTags('Cités universitaires')
 @ApiBearerAuth()
 @Controller('residences')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
 export class ResidencesController {
   constructor(private readonly service: ResidencesService) {}
 
@@ -46,24 +47,25 @@ export class ResidencesController {
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Post() create(@Body() dto: CreateResidenceDto) {
-    return this.service.create(dto);
+  @Post() create(@Body() dto: CreateResidenceDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateResidenceDto) {
-    return this.service.update(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateResidenceDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }
 
 @ApiTags('Cités universitaires')
 @ApiBearerAuth()
 @Controller('chambres')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
 export class ChambresController {
   constructor(private readonly service: ChambresService) {}
 
@@ -81,24 +83,25 @@ export class ChambresController {
 
   /** La structure du parc (chambres, loyers) relève de la direction. */
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Post() create(@Body() dto: CreateChambreDto) {
-    return this.service.creer(dto);
+  @Post() create(@Body() dto: CreateChambreDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateChambreDto) {
-    return this.service.modifier(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateChambreDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }
 
 @ApiTags('Cités universitaires')
 @ApiBearerAuth()
 @Controller('attributions-logement')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
 export class AttributionsController {
   constructor(private readonly service: AttributionsService) {}
 
@@ -112,8 +115,8 @@ export class AttributionsController {
 
   /** La demande est posée par la scolarité ou la direction, sur pièce. */
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Post() creer(@Body() dto: CreateAttributionDto) {
-    return this.service.creer(dto);
+  @Post() creer(@Body() dto: CreateAttributionDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
 
   /** Seul le jury (direction) tranche — jamais la demande elle-même. */

@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-03",
+  "portee": "Vérifications locales des imports CSV/XLSX ; les fichiers métier historiques réels restent à qualifier.",
+  "resultats": {
+    "testsBackend": "19 tests ciblés réussis dans 2 suites : alias d’en-têtes français, sélection d’en-tête après une ligne de titre, avertissement de colonnes inconnues, jours/heures/types/dates/nombres français, détection de doublon existant sans tenir compte de la casse et erreurs isolées par ligne.",
+    "testNavigateurXlsx": "Réussi dans Chromium : classeur avec titre préliminaire, en-têtes camelCase du modèle, valeurs date/heure Excel, conversion CSV, décodage UTF-8 et Windows-1252, et rejet d’un ZIP64 invalide.",
+    "limites": [
+      "Aucun fichier d’import métier historique n’a encore été utilisé pour une recette représentative.",
+      "Les heures ECTS et volumes qui requièrent des fractions ne sont pas convertis en nombres décimaux : le schéma actuel les stocke en entiers.",
+      "Le parcours ne dépasse pas la limite de 2 000 lignes et borne à huit tâches concurrentes les validations de références."
+    ]
+  }
+}

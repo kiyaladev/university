@@ -61,9 +61,11 @@ function preparer(options: { enseignant?: any; seuil?: number; appareil?: any } 
           : options.appareil,
       ),
       update: jest.fn().mockResolvedValue({}),
-      create: jest.fn(({ data }: any) => Promise.resolve({ id: 'appareil-neuf', ...data })),
+      create: jest.fn(({ data }: any) => Promise.resolve({ id: 'appareil-neuf', actif: true, ...data })),
     },
+    seance: { findFirst: jest.fn().mockResolvedValue(null) },
   } as any;
+  prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) => operation(prisma));
 
   const parametres = {
     nombre: jest.fn(async (_cle: string, defaut: number) => options.seuil ?? defaut),
@@ -109,9 +111,28 @@ describe('Attestation — code personnel', () => {
   });
 
   it('laisse l’administration réinitialiser un code', async () => {
-    const { service } = preparer();
+    const { service, prisma } = preparer();
     const res = await service.reinitialiserCodePin('ens-1', ADMIN);
     expect(res.code).toMatch(/^\d{6}$/);
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: {
+      userId: ADMIN.id, action: 'PIN_REINITIALISE', entite: 'Enseignant', entiteId: 'ens-1',
+    } });
+    expect(JSON.stringify(prisma.auditLog.create.mock.calls[0][0].data)).not.toContain(res.code);
+  });
+
+  it('journalise la suppression du code dans la transaction sans valeur secrète', async () => {
+    const { service, prisma } = preparer({ enseignant: { codePin: await bcrypt.hash('1234', 10) } });
+
+    await service.supprimerCodePin('ens-1', ADMIN);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.enseignant.update).toHaveBeenCalledWith({
+      where: { id: 'ens-1' }, data: { codePin: null, codePinDefiniLe: null },
+    });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: {
+      userId: ADMIN.id, action: 'PIN_SUPPRIME', entite: 'Enseignant', entiteId: 'ens-1',
+    } });
+    expect(JSON.stringify(prisma.auditLog.create.mock.calls[0][0].data)).not.toContain('1234');
   });
 });
 
@@ -165,6 +186,158 @@ describe('Attestation — enrôlement de l’empreinte', () => {
       empreinteConsentementLe: null,
       empreinteConsentementPar: null,
     });
+  });
+});
+
+describe('Attestation — purge biométrique', () => {
+  function preparerPurge(echecJournal = false) {
+    const base: any = {
+      id: 'ens-purge',
+      empreinteTemplate: 'gabarit-chiffre-confidentiel',
+      empreinteDoigt: 'INDEX',
+      empreinteEnroleeLe: new Date('2025-01-01T00:00:00.000Z'),
+      empreinteConsentementLe: new Date('2025-01-01T00:00:00.000Z'),
+      empreinteConsentementPar: 'u-admin',
+    };
+    const audit: any[] = [];
+    const tx = {
+      enseignant: {
+        findMany: jest.fn().mockResolvedValue([{ id: base.id }]),
+        updateMany: jest.fn(async () => {
+          base.empreinteTemplate = null;
+          base.empreinteDoigt = null;
+          base.empreinteEnroleeLe = null;
+          base.empreinteConsentementLe = null;
+          base.empreinteConsentementPar = null;
+          return { count: 1 };
+        }),
+      },
+      auditLog: {
+        createMany: jest.fn(async ({ data }: any) => {
+          if (echecJournal) throw new Error('journal indisponible');
+          audit.push(...data);
+          return { count: data.length };
+        }),
+      },
+    };
+    const prisma: any = {
+      $transaction: jest.fn(async (operation: any) => {
+        const avant = { ...base };
+        const auditAvant = [...audit];
+        try {
+          return await operation(tx);
+        } catch (error) {
+          Object.assign(base, avant);
+          audit.splice(0, audit.length, ...auditAvant);
+          throw error;
+        }
+      }),
+    };
+    const parametres: any = { nombre: jest.fn(async (_cle: string, defaut: number) => defaut) };
+    return { service: new AttestationService(prisma, parametres), prisma, tx, base, audit };
+  }
+
+  it('purge les champs biométriques et journalise la purge dans une transaction', async () => {
+    const { service, prisma, tx, base, audit } = preparerPurge();
+
+    await expect(service.purgerEmpreintesPerimees()).resolves.toEqual({ purges: 1 });
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.enseignant.updateMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: { in: ['ens-purge'] } },
+    }));
+    expect(audit).toEqual([expect.objectContaining({
+      action: 'EMPREINTE_PURGEE',
+      entite: 'Enseignant',
+      entiteId: 'ens-purge',
+    })]);
+    expect(base.empreinteTemplate).toBeNull();
+    expect(JSON.stringify(audit)).not.toContain('gabarit-chiffre-confidentiel');
+  });
+
+  it('annule la purge si le journal ne peut pas être écrit', async () => {
+    const { service, base, audit } = preparerPurge(true);
+
+    await expect(service.purgerEmpreintesPerimees()).rejects.toThrow('journal indisponible');
+
+    expect(base.empreinteTemplate).toBe('gabarit-chiffre-confidentiel');
+    expect(audit).toEqual([]);
+  });
+});
+
+describe('Accès au gabarit biométrique', () => {
+  it('limite les moyens d’attestation d’un chef à son département', async () => {
+    const { service } = preparer({ enseignant: { id: 'ens-3', departementId: 'dept-2' } });
+    const chef: AuthUser = { ...ADMIN, role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1' };
+    await expect(service.moyens('ens-3', chef)).rejects.toThrow();
+  });
+
+  it('ne révèle pas les moyens au contrôleur sans séance du jour', async () => {
+    const { service, prisma } = preparer({ enseignant: { codePin: 'hash', empreinteTemplate: 'chiffre' } });
+    const controleur: AuthUser = { ...ADMIN, id: 'ctrl-1', role: Role.CONTROLEUR };
+
+    await expect(service.moyens('ens-1', controleur)).rejects.toThrow();
+    expect(prisma.seance.findFirst).not.toHaveBeenCalled();
+    expect(prisma.enseignant.findUnique).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('limite les moyens du contrôleur à sa séance et journalise la consultation', async () => {
+    const { service, prisma } = preparer({ enseignant: { codePin: 'hash', empreinteTemplate: 'chiffre', empreinteDoigt: 'POUCE' } });
+    const controleur: AuthUser = { ...ADMIN, id: 'ctrl-1', role: Role.CONTROLEUR };
+    prisma.seance.findFirst.mockResolvedValue({
+      id: 'seance-1', controleurAssigneId: 'ctrl-1', controle: null,
+      affectation: { enseignant: { departementId: 'dept-2' } },
+    });
+
+    await expect(service.moyens('ens-1', controleur, 'seance-1')).resolves.toEqual({
+      codePin: true, empreinte: true, empreinteDoigt: 'POUCE',
+    });
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'seance-1', affectation: { enseignantId: 'ens-1' } }),
+    }));
+    expect(prisma.enseignant.findUnique).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ens-1', actif: true },
+    }));
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
+      userId: 'ctrl-1', action: 'MOYENS_ATTESTATION_CONSULTES', entiteId: 'ens-1',
+      details: JSON.stringify({ seanceId: 'seance-1', role: Role.CONTROLEUR }),
+    }) });
+  });
+
+  it('refuse tout rôle sans séance du jour pour cet enseignant', async () => {
+    const { service, prisma } = preparer();
+    await expect(service.gabarit('ens-1', 'seance-etrangere', ADMIN)).rejects.toThrow();
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({ id: 'seance-etrangere', affectation: { enseignantId: 'ens-1' } }),
+    }));
+    expect(prisma.enseignant.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('refuse une séance absente avant toute requête Prisma', async () => {
+    const { service, prisma } = preparer();
+    await expect(service.gabarit('ens-1', undefined as any, ADMIN)).rejects.toThrow();
+    expect(prisma.seance.findFirst).not.toHaveBeenCalled();
+  });
+
+  it('réserve le gabarit au contrôleur affecté et journalise chaque lecture', async () => {
+    const { service, prisma } = preparer({ enseignant: { empreinteTemplate: GABARIT } });
+    const controleur: AuthUser = { ...ADMIN, id: 'u-controleur', role: Role.CONTROLEUR };
+    prisma.seance.findFirst.mockResolvedValue({
+      id: 'seance-1', controleurAssigneId: 'autre', controle: { controleurId: 'autre' },
+    });
+    await expect(service.gabarit('ens-1', 'seance-1', controleur)).rejects.toThrow();
+    expect(prisma.enseignant.findUnique).not.toHaveBeenCalled();
+
+    prisma.seance.findFirst.mockResolvedValue({
+      id: 'seance-1', controleurAssigneId: 'u-controleur', controle: null,
+    });
+    await expect(service.gabarit('ens-1', 'seance-1', controleur)).resolves.toMatchObject({ template: GABARIT });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        userId: 'u-controleur', action: 'GABARIT_BIOMETRIQUE_CONSULTE', entiteId: 'ens-1',
+      }),
+    }));
   });
 });
 
@@ -333,7 +506,7 @@ describe('Attestation — lecture signée par un appareil', () => {
           appareilId: 'appareil-1',
         },
       }),
-    ).rejects.toThrow(/révoqué/);
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('refuse un résultat rejoué au nom d’un autre appareil', async () => {
@@ -361,5 +534,50 @@ describe('Attestation — lecture signée par un appareil', () => {
     expect(prisma.appareil.create).toHaveBeenCalled();
     // La clé du serveur global ne doit jamais servir de clé d'appareil.
     expect(res.secret).not.toBe(SECRET);
+  });
+});
+
+describe('Attestation — journal des appareils', () => {
+  it('crée un appareil et son journal dans la même transaction sans tracer le secret', async () => {
+    const { service, prisma } = preparer();
+    const resultat = await service.enrolerAppareil('Tablette terrain', ADMIN);
+    const audit = prisma.auditLog.create.mock.calls[0][0].data;
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(audit).toMatchObject({
+      userId: ADMIN.id,
+      action: 'APPAREIL_ENROLE',
+      entite: 'Appareil',
+      entiteId: resultat.appareilId,
+    });
+    expect(audit.details).not.toContain(resultat.secret);
+    expect(JSON.parse(audit.details)).toMatchObject({
+      avant: null,
+      apres: { libelle: 'Tablette terrain', actif: true },
+    });
+  });
+
+  it('révoque un appareil et journalise son état avant/après dans la même transaction', async () => {
+    const { service, prisma } = preparer();
+    const avant = { id: 'appareil-1', libelle: 'Tablette terrain', actif: true };
+    const apres = { ...avant, actif: false, revoqueLe: new Date() };
+    prisma.appareil.findUnique.mockResolvedValue(avant);
+    prisma.appareil.update.mockResolvedValue(apres);
+
+    await service.revoquerAppareil('appareil-1', ADMIN);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    const audit = prisma.auditLog.create.mock.calls[0][0].data;
+    expect(audit).toMatchObject({
+      userId: ADMIN.id,
+      action: 'APPAREIL_REVOQUE',
+      entite: 'Appareil',
+      entiteId: 'appareil-1',
+    });
+    expect(JSON.parse(audit.details)).toEqual({
+      avant: { libelle: 'Tablette terrain', actif: true },
+      apres: { libelle: 'Tablette terrain', actif: false },
+      champsModifies: ['actif'],
+    });
   });
 });

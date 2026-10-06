@@ -7,21 +7,26 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Ip,
+  NotFoundException,
   Param,
   Post,
   Put,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { I18nContext } from 'nestjs-i18n';
 import { Role } from '@prisma/client';
+import { JwtStrategy } from '../auth/jwt.strategy';
 import { JwtService } from '@nestjs/jwt';
 import { Throttle } from '@nestjs/throttler';
-import type { Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import type { Request, Response } from 'express';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import {
   AnnulerPaiementDto,
   CreateEtudiantDto,
@@ -39,6 +44,7 @@ import {
 } from './inscription.dto';
 import { EtudiantsService } from './etudiants.service';
 import { FraisService, InscriptionService } from './inscription.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Inscription publique')
 @Controller('inscription-publique')
@@ -75,26 +81,29 @@ export class InscriptionPubliqueController {
 @ApiTags('Étudiants')
 @ApiBearerAuth()
 @Controller('etudiants')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ETUDIANT, Role.ENSEIGNANT)
 export class EtudiantsController {
   constructor(private readonly service: EtudiantsService) {}
 
   @Get()
-  liste(@Query() query: EtudiantQueryDto) {
+  liste(@Query() query: EtudiantQueryDto, @CurrentUser() user: AuthUser) {
     const actif =
       query.actif === 'false' || query.actif === '0' ? false : query.actif ? true : undefined;
-    return this.service.findAll(query, {
+    return this.service.listePour(query, {
+      ...(user.role === Role.ETUDIANT ? { id: user.etudiantId ?? "__aucun__" } : {}),
       ...(actif !== undefined ? { actif } : {}),
       // Un étudiant appartient à une promotion par ses inscriptions : le lien
       // n'est pas porté par la fiche, on filtre donc sur la relation.
       ...(query.promotionId
         ? { inscriptions: { some: { promotionId: query.promotionId } } }
         : {}),
-    });
+    }, user);
   }
 
   @Get(':id')
-  detail(@Param('id') id: string) {
-    return this.service.findOne(id);
+  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    if (user.role === Role.ETUDIANT && id !== user.etudiantId) throw new NotFoundException();
+    return this.service.detailPour(id, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
@@ -126,7 +135,7 @@ export class FraisController {
   @Public()
   @Get()
   liste(@Query() query: FraisQueryDto) {
-    return this.service.findAll(query, {
+    return this.service.tarifsPublics(query, {
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
     });
@@ -161,6 +170,7 @@ export class FraisController {
 export class PaiementsController {
   constructor(private readonly service: InscriptionService) {}
 
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get()
   liste(@Query() query: PaiementQueryDto) {
     return this.service.listePaiements(query);
@@ -200,15 +210,17 @@ export class PaiementsController {
 @ApiTags('Inscriptions')
 @ApiBearerAuth()
 @Controller('inscriptions')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ETUDIANT)
 export class InscriptionsController {
   constructor(
     private readonly service: InscriptionService,
     private readonly jwt: JwtService,
+    private readonly identite: JwtStrategy,
   ) {}
 
   @Get()
-  liste(@Query() query: InscriptionQueryDto) {
-    return this.service.listeInscriptions(query);
+  liste(@Query() query: InscriptionQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listeInscriptions(query, user);
   }
 
   /** Dossier ouvert au guichet (étudiant déjà fiché). */
@@ -236,31 +248,41 @@ export class InscriptionsController {
    * d'URL (pas d'en-tête Authorization possible) et est vérifié ici même,
    * comme /feuilles-paie/:id/imprimer.
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ETUDIANT)
+  @DocumentScope('inscription', {
+    [Role.ETUDIANT]: 'etudiantId',
+    [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId',
+  })
   @Get(':id/attestation-inscription')
   async attestation(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
+    @Req() req: Request,
     @Res() res: Response,
   ) {
+    let user: AuthUser;
     try {
-      this.jwt.verify(token ?? '', {
-        secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      });
+      // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
+      const payload = this.jwt.verify(jetonImprimable(req) ?? '');
+      user = await this.identite.validate(payload);
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('inscription.jeton_invalide_ou_expire'));
     }
+    const rolesAutorises: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.ETUDIANT];
+    if (!rolesAutorises.includes(user.role)) {
+      throw new ForbiddenException();
+    }
+    await this.service.trouverInscription(id, user);
     res.type('html').send(await this.service.attestationInscription(id));
   }
 
   /**
    * Détail d'un dossier. Déclarée en dernier pour que le segment `:id` ne
-   * capture pas les routes littérales déclarées au-dessus. Mêmes droits que
-   * la liste (tout utilisateur authentifié) : sans elle, le préchargement du
+   * capture pas les routes littérales déclarées au-dessus. Même périmètre que
+   * la liste (l’étudiant reste limité à son propre dossier) : sans elle, le préchargement du
    * libellé par identifiant côté client échouait en silence.
    */
   @Get(':id')
-  detail(@Param('id') id: string) {
-    return this.service.trouverInscription(id);
+  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.trouverInscription(id, user);
   }
 }

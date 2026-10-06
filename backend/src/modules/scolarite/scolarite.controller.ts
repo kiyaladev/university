@@ -12,15 +12,18 @@ import {
   Post,
   Put,
   Query,
+  Req,
   Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
 import { DecisionJury, Role, StatutDeliberation } from '@prisma/client';
-import type { Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import type { Request, Response } from 'express';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { QueryDto } from '../../common/dto';
+import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 import { ParametresService } from '../parametres/parametres.module';
 import { noteLisible } from './calcul.service';
 import {
@@ -33,56 +36,63 @@ import {
   UpdateEvaluationDto,
 } from './scolarite.dto';
 import { ScolariteService } from './scolarite.service';
+import { echapper } from '../../common/utils';
 
 const SAISIE = [Role.SCOLARITE, Role.ADMIN] as const;
 const JURY = [Role.ADMIN, Role.DIRECTION] as const;
+/** Lecture des notes et des décisions de jury : jamais ouverte à l'étudiant. */
+const NOTES = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT] as const;
 
 // --------------------------------------------------------------- Évaluations
 
 @ApiTags('Évaluations')
 @ApiBearerAuth()
 @Controller('evaluations')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT)
 export class EvaluationsController {
   constructor(private readonly service: ScolariteService) {}
 
   @Get()
-  lister(@Query() query: EvaluationQueryDto) {
-    return this.service.listerEvaluations(query);
+  lister(@Query() query: EvaluationQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listerEvaluations(query, user);
   }
 
   @Get(':id')
+  @DocumentScope('evaluation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   detail(@Param('id') id: string) {
     return this.service.findEvaluation(id);
   }
 
   /** Les inscrits de la promotion, pour la feuille de notes. */
+  @Roles(...NOTES)
   @Get(':id/etudiants')
+  @DocumentScope('evaluation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   feuille(@Param('id') id: string) {
     return this.service.feuilleEvaluation(id);
   }
 
   @Roles(...SAISIE)
   @Post()
-  creer(@Body() dto: CreateEvaluationDto) {
-    return this.service.creerEvaluation(dto);
+  creer(@Body() dto: CreateEvaluationDto, @CurrentUser() user: AuthUser) {
+    return this.service.creerEvaluation(dto, user);
   }
 
   @Roles(...SAISIE)
   @Put(':id')
-  modifier(@Param('id') id: string, @Body() dto: UpdateEvaluationDto) {
-    return this.service.modifierEvaluation(id, dto);
+  modifier(@Param('id') id: string, @Body() dto: UpdateEvaluationDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifierEvaluation(id, dto, user);
   }
 
   @Roles(...SAISIE)
   @Delete(':id')
-  supprimer(@Param('id') id: string) {
-    return this.service.supprimerEvaluation(id);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimerEvaluation(id, user);
   }
 
   @Roles(...SAISIE)
   @Post(':id/cloturer')
-  cloturer(@Param('id') id: string) {
-    return this.service.cloturerEvaluation(id);
+  cloturer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.cloturerEvaluation(id, user);
   }
 }
 
@@ -94,13 +104,16 @@ export class EvaluationsController {
 export class NotesController {
   constructor(private readonly service: ScolariteService) {}
 
+  @Roles(...NOTES)
   @Get()
-  lister(@Query() query: NoteQueryDto) {
-    return this.service.listerNotes(query);
+  lister(@Query() query: NoteQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listerNotes(query, user);
   }
 
   /** Feuille complète de saisie (avec les cases « présent » cochables). */
+  @Roles(...NOTES)
   @Get('evaluation/:id')
+  @DocumentScope('evaluation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   feuille(@Param('id') id: string) {
     return this.service.feuilleEvaluation(id);
   }
@@ -154,13 +167,6 @@ const LIBELLE_SESSION: Record<string, string> = {
   RATTRAPAGE: 'Session de rattrapage',
 };
 
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 function decisionBadge(decision: string): string {
   return `<span class="badge ${decision}">${LIBELLE_DECISION[decision] ?? decision}</span>`;
 }
@@ -175,12 +181,15 @@ export class DeliberationsController {
     private readonly parametres: ParametresService,
   ) {}
 
+  @Roles(...NOTES)
   @Get()
-  lister(@Query() query: DeliberationQueryDto) {
-    return this.service.listerDeliberations(query);
+  lister(@Query() query: DeliberationQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listerDeliberations(query, user);
   }
 
+  @Roles(...NOTES)
   @Get(':id')
+  @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   detail(@Param('id') id: string) {
     return this.service.detailDeliberation(id);
   }
@@ -193,8 +202,8 @@ export class DeliberationsController {
 
   @Roles(...SAISIE)
   @Post(':id/calculer')
-  calculer(@Param('id') id: string) {
-    return this.service.calculerDeliberation(id);
+  calculer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.calculerDeliberation(id, undefined, user);
   }
 
   /** Le jury fige les résultats : plus aucun recalcul. */
@@ -205,14 +214,6 @@ export class DeliberationsController {
   }
 
   // ------------------------------------------------------------ Impression
-
-  private verifierToken(token?: string) {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
-    }
-  }
 
   private async page(titre: string, sousTitre: string, contenu: string) {
     const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
@@ -239,14 +240,15 @@ export class DeliberationsController {
   }
 
   /** Procès-verbal de délibération (PV du jury). */
-  @Public()
+  @ProtectedDocument(...NOTES)
   @Get(':id/imprimer')
+  @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   async imprimer(
     @Param('id') id: string,
-    @Query() query: QueryDto & { token?: string },
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.verifierToken(query.token);
+    verifierJetonImprimable(this.jwt, req);
     const { promotion, annee, session, statut, tauxReussite, lignes, creePar, valideePar } =
       await this.service.pourImpression(id);
 
@@ -305,15 +307,16 @@ export class DeliberationsController {
   }
 
   /** Bulletin individuel de notes (relevé), une page A4 par étudiant. */
-  @Public()
+  @ProtectedDocument(...NOTES)
   @Get(':id/releve/:inscriptionId')
+  @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
   async releve(
     @Param('id') id: string,
     @Param('inscriptionId') inscriptionId: string,
-    @Query() query: QueryDto & { token?: string },
+    @Req() req: Request,
     @Res() res: Response,
   ) {
-    this.verifierToken(query.token);
+    verifierJetonImprimable(this.jwt, req);
     const { delib, ligne, matieres } = await this.service.bulletin(id, inscriptionId);
     const etudiant = ligne?.inscription?.etudiant;
 

@@ -41,11 +41,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
+import { prochainNumeroTx } from '../../common/numero';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -88,8 +90,8 @@ export class RestoService {
 
   async listePortefeuilles(query: PortefeuillesQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.PortefeuilleRestoWhereInput = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -111,18 +113,18 @@ export class RestoService {
         where,
         include: PORTEFEUILLE_INCLUDE,
         orderBy: [{ updatedAt: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.portefeuilleResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   /** Portefeuille de l'étudiant connecté (portail) : créé si absent, jamais null. */
   async monPortefeuille(user: AuthUser) {
     if (!user.etudiantId) {
-      throw new ForbiddenException("Compte non rattaché à une fiche étudiante");
+      throw new ForbiddenException(I18nContext.current()!.t('resto.compte_non_rattache_a_une_fiche_etudiante'));
     }
     const portefeuille = await this.portefeuilleOuCree(null, user.etudiantId);
     return this.prisma.portefeuilleResto.findUnique({
@@ -141,7 +143,7 @@ export class RestoService {
       where: { id: etudiantId },
       select: { id: true, matricule: true, nom: true, prenom: true, telephone: true },
     });
-    if (!etudiant) throw new NotFoundException('Étudiant introuvable');
+    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable'));
 
     const portefeuille = await this.prisma.portefeuilleResto.findUnique({
       where: { etudiantId },
@@ -178,7 +180,7 @@ export class RestoService {
       etudiantId = direct.etudiantId;
     } else {
       const etu = await this.prisma.etudiant.findUnique({ where: { id } });
-      if (!etu) throw new NotFoundException('Portefeuille introuvable');
+      if (!etu) throw new NotFoundException(I18nContext.current()!.t('resto.portefeuille_introuvable'));
       etudiantId = etu.id;
     }
     const portefeuille = await this.portefeuilleOuCree(null, etudiantId);
@@ -215,7 +217,7 @@ export class RestoService {
       where: { id },
       include: { paiement: true, portefeuille: { select: { id: true } } },
     });
-    if (!recharge) throw new NotFoundException('Recharge introuvable');
+    if (!recharge) throw new NotFoundException(I18nContext.current()!.t('resto.recharge_introuvable'));
 
     if (recharge.statut === StatutPaiement.REUSSI && dto.statut === StatutPaiement.REUSSI) {
       return this.prisma.recharge.findUnique({
@@ -224,24 +226,38 @@ export class RestoService {
       });
     }
     if (recharge.statut === StatutPaiement.REUSSI) {
-      throw new BadRequestException('Cette recharge est déjà encaissée, impossible de la faire échouer');
+      throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech'));
     }
     if (recharge.statut === StatutPaiement.ANNULE || recharge.statut === StatutPaiement.REMBOURSE) {
-      throw new BadRequestException('Cette recharge est close, elle ne peut plus être confirmée');
+      throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
     }
 
     const reussi = dto.statut === StatutPaiement.REUSSI;
     await this.prisma.$transaction(async (tx) => {
-      if (reussi) {
-        await tx.portefeuilleResto.update({
-          where: { id: recharge.portefeuilleId },
-          data: { solde: { increment: recharge.montant } },
-        });
-      }
-      await tx.recharge.update({
-        where: { id },
+      // Claim the current state with a conditional write before applying any
+      // balance side effect. Concurrent confirmations can only win once.
+      const prise = await tx.recharge.updateMany({
+        where: { id, statut: recharge.statut },
         data: { statut: dto.statut },
       });
+      if (prise.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
+      }
+      let soldeAvant: number | null = null;
+      let soldeApres: number | null = null;
+      if (reussi) {
+        const portefeuilleAvant = await tx.portefeuilleResto.findUnique({
+          where: { id: recharge.portefeuilleId },
+          select: { solde: true },
+        });
+        soldeAvant = portefeuilleAvant?.solde ?? null;
+        const portefeuilleApres = await tx.portefeuilleResto.update({
+          where: { id: recharge.portefeuilleId },
+          data: { solde: { increment: recharge.montant } },
+          select: { solde: true },
+        });
+        soldeApres = portefeuilleApres.solde;
+      }
       if (recharge.paiementId) {
         await tx.paiement.update({
           where: { id: recharge.paiementId },
@@ -251,16 +267,21 @@ export class RestoService {
           },
         });
       }
-    });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE',
-        entite: 'Recharge',
-        entiteId: id,
-        details: `${recharge.montant} GNF → ${dto.statut} (confirmation pilote)`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE',
+          entite: 'Recharge',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: { statut: recharge.statut, solde: soldeAvant },
+            apres: { statut: dto.statut, solde: soldeApres },
+            montant: recharge.montant,
+            champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
+          }),
+        },
+      });
     });
 
     return this.prisma.recharge.findUnique({
@@ -272,7 +293,7 @@ export class RestoService {
   /** Recharger depuis le portail : Mobile Money, jamais crédité directement. */
   async rechargerDepuisPortail(dto: RechargerPortailDto, user: AuthUser) {
     if (!user.etudiantId) {
-      throw new ForbiddenException("Compte non rattaché à une fiche étudiante");
+      throw new ForbiddenException(I18nContext.current()!.t('resto.compte_non_rattache_a_une_fiche_etudiante'));
     }
     const portefeuille = await this.portefeuilleOuCree(null, user.etudiantId);
     const mode = dto.mode ?? ModePaiement.MOBILE_MONEY;
@@ -325,10 +346,12 @@ export class RestoService {
       // Les anciens dossiers n'ont pas de QR : etudiantParReference le génère
       // à la volée avant d'entrer ici.
       const portefeuille = await this.portefeuilleOuCree(tx, etudiant.id);
-      if (portefeuille.solde < dto.montant) {
-        throw new ConflictException(
-          `Solde insuffisant — rechargez via le portail (solde : ${portefeuille.solde} GNF, repas : ${dto.montant} GNF)`,
-        );
+      const debit = await tx.portefeuilleResto.updateMany({
+        where: { id: portefeuille.id, solde: { gte: dto.montant } },
+        data: { solde: { decrement: dto.montant } },
+      });
+      if (debit.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('resto.solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_', { args: { solde: portefeuille.solde, montant: dto.montant } }));
       }
 
       const consommation = await tx.consommationResto.create({
@@ -345,21 +368,23 @@ export class RestoService {
         },
       });
 
-      const maj = await tx.portefeuilleResto.update({
-        where: { id: portefeuille.id },
-        data: { solde: { decrement: dto.montant } },
+      const maj = await tx.portefeuilleResto.findUnique({ where: { id: portefeuille.id }, select: { solde: true } });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'REPAS_VALIDE',
+          entite: 'ConsommationResto',
+          entiteId: consommation.id,
+          details: JSON.stringify({
+            repas: dto.repas,
+            montant: dto.montant,
+            avant: { solde: portefeuille.solde },
+            apres: { solde: maj!.solde },
+            champsModifies: ['solde'],
+          }),
+        },
       });
-      return { consommation, solde: maj.solde };
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'REPAS_VALIDE',
-        entite: 'ConsommationResto',
-        entiteId: consommation.id,
-        details: `${dto.repas} ${dto.montant} GNF — ${etudiant.matricule} ${etudiant.nom} ${etudiant.prenom} (nouveau solde ${solde})`,
-      },
+      return { consommation, solde: maj!.solde };
     });
 
     return {
@@ -374,8 +399,8 @@ export class RestoService {
   /** Recharges (toutes, annulées comprises) : le miroir comptable des repas. */
   async listeRecharges(query: RechargesQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.RechargeWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -391,18 +416,18 @@ export class RestoService {
           portefeuille: { include: PORTEFEUILLE_INCLUDE },
         },
         orderBy: [{ rechargeLe: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.recharge.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async listeConsommations(query: ConsommationsQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.ConsommationRestoWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -416,12 +441,12 @@ export class RestoService {
         where,
         include: { portefeuille: { include: PORTEFEUILLE_INCLUDE } },
         orderBy: [{ consommeLe: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.consommationResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   /**
@@ -434,33 +459,40 @@ export class RestoService {
       where: { id },
       include: { portefeuille: true },
     });
-    if (!consommation) throw new NotFoundException('Consommation introuvable');
+    if (!consommation) throw new NotFoundException(I18nContext.current()!.t('resto.consommation_introuvable'));
     if (consommation.statut !== StatutConsommation.VALIDEE) {
-      throw new BadRequestException(
-        `Cette consommation est déjà « ${consommation.statut} » : seul un repas validé se rembourse.`,
-      );
+      throw new BadRequestException(I18nContext.current()!.t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { args: { statut: consommation.statut } }));
     }
 
     const { maj, solde } = await this.prisma.$transaction(async (tx) => {
-      const maj = await tx.consommationResto.update({
-        where: { id },
+      const annulation = await tx.consommationResto.updateMany({
+        where: { id, statut: StatutConsommation.VALIDEE },
         data: { statut: StatutConsommation.ANNULEE },
       });
+      if (annulation.count !== 1) {
+        throw new BadRequestException(I18nContext.current()!.t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { args: { statut: consommation.statut } }));
+      }
+      const maj = await tx.consommationResto.findUnique({ where: { id } });
       const portefeuille = await tx.portefeuilleResto.update({
         where: { id: consommation.portefeuilleId },
         data: { solde: { increment: consommation.montant } },
       });
-      return { maj, solde: portefeuille.solde };
-    });
-
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'REPAS_ANNULE',
-        entite: 'ConsommationResto',
-        entiteId: id,
-        details: `Remboursement ${consommation.montant} GNF — ${consommation.etudiant}${dto.motif ? ` — motif : ${dto.motif}` : ''}`,
-      },
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'REPAS_ANNULE',
+          entite: 'ConsommationResto',
+          entiteId: id,
+          details: JSON.stringify({
+            montant: consommation.montant,
+            motifFourni: Boolean(dto.motif),
+            avant: { statut: consommation.statut, solde: consommation.portefeuille.solde },
+            apres: { statut: maj!.statut, solde: portefeuille.solde },
+            champsModifies: ['statut', 'solde'],
+          }),
+        },
+      });
+      return { maj: maj!, solde: portefeuille.solde };
     });
 
     return { consommation: maj, solde };
@@ -474,7 +506,9 @@ export class RestoService {
    */
   private async etudiantParReference(reference: string) {
     const ref = reference.trim();
-    if (!ref) throw new BadRequestException('Référence vide : scannez le QR ou saisissez le matricule');
+    if (!ref || ref.length > 64) {
+      throw new BadRequestException(I18nContext.current()!.t('resto.reference_vide_scannez_le_qr_ou_saisissez_le_matricule'));
+    }
 
     const parQr = ref.startsWith('UP-RESTO-') ? await this.prisma.etudiant.findUnique({ where: { qrRestoToken: ref } }) : null;
     const etudiant =
@@ -483,7 +517,7 @@ export class RestoService {
       (await this.prisma.etudiant.findFirst({ where: { telephone: ref } }));
 
     if (!etudiant) {
-      throw new NotFoundException('Étudiant introuvable — vérifiez la référence scannée ou saisie');
+      throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
     }
     return this.assurerQrToken(null, etudiant);
   }
@@ -498,10 +532,20 @@ export class RestoService {
   ): Promise<Etudiant> {
     if (etudiant.qrRestoToken) return etudiant;
     const client = tx ?? this.prisma;
-    return client.etudiant.update({
-      where: { id: etudiant.id },
-      data: { qrRestoToken: nouveauQrRestoToken() },
+    const qrRestoToken = nouveauQrRestoToken();
+    const resultat = await client.etudiant.updateMany({
+      where: { id: etudiant.id, qrRestoToken: null },
+      data: { qrRestoToken },
     });
+    if (resultat.count === 1) return { ...etudiant, qrRestoToken };
+
+    // Deux premières lectures peuvent arriver ensemble : relire le jeton
+    // gagné par l'autre requête au lieu de le remplacer et d'invalider son QR.
+    const courant = await client.etudiant.findUnique({ where: { id: etudiant.id } });
+    if (!courant) {
+      throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
+    }
+    return courant;
   }
 
   /** Portefeuille unique par étudiant : créé idempotent, jamais de doublon. */
@@ -510,9 +554,11 @@ export class RestoService {
     etudiantId: string,
   ) {
     const base = tx ?? this.prisma;
-    const existant = await base.portefeuilleResto.findUnique({ where: { etudiantId } });
-    if (existant) return existant;
-    return base.portefeuilleResto.create({ data: { etudiantId, solde: 0 } });
+    return base.portefeuilleResto.upsert({
+      where: { etudiantId },
+      create: { etudiantId, solde: 0 },
+      update: {},
+    });
   }
 
   /**
@@ -562,14 +608,39 @@ export class RestoService {
             },
           });
 
-          let solde = 0;
+          const portefeuilleAvant = await tx.portefeuilleResto.findUniqueOrThrow({
+            where: { id: args.portefeuilleId },
+            select: { solde: true },
+          });
+          const soldeAvant = portefeuilleAvant.solde;
+          let solde = soldeAvant;
           if (args.statutImmediat) {
             const maj = await tx.portefeuilleResto.update({
               where: { id: args.portefeuilleId },
               data: { solde: { increment: args.montant } },
+              select: { solde: true },
             });
             solde = maj.solde;
           }
+
+          await tx.auditLog.create({
+            data: {
+              userId: args.user.id,
+              action: 'RECHARGE_CREEE',
+              entite: 'Recharge',
+              entiteId: recharge.id,
+              details: JSON.stringify({
+                reference: paiement.reference,
+                montant: args.montant,
+                statut: recharge.statut,
+                avant: { solde: soldeAvant },
+                apres: { solde: args.statutImmediat ? solde : soldeAvant },
+                champsModifies: args.statutImmediat
+                  ? ['paiement', 'recharge', 'solde']
+                  : ['paiement', 'recharge'],
+              }),
+            },
+          });
 
           return { recharge, paiement, solde };
         });
@@ -578,7 +649,7 @@ export class RestoService {
         throw e;
       }
     }
-    throw new ConflictException('Référence de paiement temporairement indisponible, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('resto.reference_de_paiement_temporairement_indisponible_reessayez'));
   }
 
   /** Année des références "PAY-R-<aaaa>-…" : l'année scolaire active, sinon l'année civile. */
@@ -603,9 +674,9 @@ export class RestoService {
     try {
       payload = (await this.jwt.verifyAsync(token ?? '')) as any;
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré — reconnectez le poste de guichet');
+      throw new UnauthorizedException(I18nContext.current()!.t('resto.jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet'));
     }
-    if (!payload?.sub) throw new UnauthorizedException('Jeton invalide');
+    if (!payload?.sub) throw new UnauthorizedException(I18nContext.current()!.t('resto.jeton_invalide'));
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -615,17 +686,15 @@ export class RestoService {
       },
     });
     if (!user || !user.actif) {
-      throw new UnauthorizedException('Compte inexistant ou désactivé');
+      throw new UnauthorizedException(I18nContext.current()!.t('resto.compte_inexistant_ou_desactive'));
     }
     if (payload.iat && user.motDePasseModifieLe) {
       if (payload.iat * 1000 < user.motDePasseModifieLe.getTime() - 1000) {
-        throw new UnauthorizedException('Session expirée, reconnectez-vous');
+        throw new UnauthorizedException(I18nContext.current()!.t('resto.session_expiree_reconnectez_vous'));
       }
     }
     if (!GUICHET.includes(user.role)) {
-      throw new ForbiddenException(
-        "Le poste de guichet est réservé aux comptes contrôleur, scolarité et administration — connectez-vous avec un de ces comptes.",
-      );
+      throw new ForbiddenException(I18nContext.current()!.t('resto.le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola'));
     }
     return {
       id: user.id,
@@ -645,23 +714,10 @@ function nouveauQrRestoToken(): string {
   return `UP-RESTO-${randomBytes(12).toString('base64url')}`;
 }
 
-/** Numéro séquentiel "PRÉFIXE-NNNNN" lu dans la base (pas de table de séquence). */
-async function prochainNumero(delegate: any, champ: string, prefixe: string, largeur: number): Promise<string> {
-  const existantes = await delegate.findMany({
-    where: { [champ]: { startsWith: prefixe } },
-    select: { [champ]: true },
-  });
-  const max = existantes.reduce((m: number, e: any) => {
-    const n = Number(e[champ].slice(prefixe.length));
-    return Number.isFinite(n) ? Math.max(m, n) : m;
-  }, 0);
-  return `${prefixe}${String(max + 1).padStart(largeur, '0')}`;
-}
-
 /** "PAY-R-2026-00001" — référence des paiements du portefeuille resto. */
 async function prochainNumeroPaiement(
   tx: Prisma.TransactionClient,
   annee: string,
 ): Promise<string> {
-  return prochainNumero(tx.paiement, 'reference', `PAY-R-${annee}-`, 5);
+  return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-R-${annee}-`, 5);
 }

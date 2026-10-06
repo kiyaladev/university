@@ -1,0 +1,14 @@
+{
+  "inspectedAt": "2026-10-02T09:23:22.160Z",
+  "mode": "lecture seule",
+  "process": "university-api",
+  "configuredDatabaseMatchesProcess": true,
+  "activeAccounts": 10,
+  "activeAccountsWithPublicSeedPassword": 10,
+  "biometrics": {
+    "total": 4,
+    "clear": 0,
+    "unreadable": 0
+  },
+  "productionWrites": 0
+}

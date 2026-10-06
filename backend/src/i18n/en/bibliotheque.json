@@ -1,0 +1,9 @@
+{
+  "ce_document_est_depose_sans_fichier_metadonnees_seules": "This document is deposited without a file (metadata only)",
+  "document_introuvable": "Document not found",
+  "suspicion_introuvable": "Suspicion not found",
+  "decision_de_plagiat_invalide": "Invalid plagiarism decision",
+  "seul_le_deposant_initial_peut_modifier_ce_document_sauf_admi": "Only the original depositor can edit this document (except administrator)",
+  "seul_le_deposant_initial_peut_supprimer_ce_document_sauf_adm": "Only the original depositor can delete this document (except administrator)",
+  "le_fichier_joint_depasse_la_limite_de_8_mo_data_url_base64_d": "The attached file exceeds the 8 MB limit (base64 data-url of {mo} MB). Please compress the PDF or reduce its resolution before re-uploading."
+}

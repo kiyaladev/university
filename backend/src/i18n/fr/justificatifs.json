@@ -1,0 +1,8 @@
+{
+  "seance_introuvable": "Séance introuvable",
+  "cette_seance_ne_vous_est_pas_affectee": "Cette séance ne vous est pas affectée",
+  "un_justificatif_existe_deja_pour_cette_seance": "Un justificatif existe déjà pour cette séance",
+  "enseignant_ne_correspond_pas_a_la_seance": "L’enseignant choisi ne correspond pas à la séance",
+  "decision_finale_requise": "Choisissez une validation ou un rejet.",
+  "deja_traite": "Ce justificatif a déjà été traité ; sa décision et sa preuve doivent être conservées."
+}

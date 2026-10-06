@@ -2,17 +2,17 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 600px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ evaluation ? 'Modifier l’évaluation' : 'Nouvelle évaluation' }}
+        {{ $t(evaluation ? 'evaluations.dialogForm.editTitle' : 'evaluations.dialogForm.newTitle') }}
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Épreuve</span>
+        <span class="section-titre">{{ $t('evaluations.dialogForm.assessment') }}</span>
         <q-input
           v-model="form.intitule"
           outlined
           dense
-          label="Intitulé *"
-          hint="Ex. : CC de programmation, Examen final…"
+          :label="$t('matieres.dialog.intituleLabel')"
+          :hint="$t('evaluations.dialogForm.titleHint')"
         />
 
         <div class="row q-col-gutter-md">
@@ -24,7 +24,7 @@
               dense
               emit-value
               map-options
-              label="Type d’épreuve *"
+              :label="$t('evaluations.dialogForm.type')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -33,8 +33,8 @@
               :options="optionsCoefficients"
               outlined
               dense
-              label="Coefficient *"
-              hint="Pondération au sein de la matière"
+              :label="$t('evaluations.dialogForm.coefficient')"
+              :hint="$t('evaluations.dialogForm.coefficientHint')"
             />
           </div>
         </div>
@@ -46,15 +46,15 @@
               :options="[1, 2]"
               outlined
               dense
-              label="Semestre *"
+              :label="$t('evaluations.dialogForm.semester')"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <champ-date v-model="form.date" label="Date de l’épreuve" />
+            <champ-date v-model="form.date" :label="$t('evaluations.dialogForm.date')" />
           </div>
         </div>
 
-        <span class="section-titre">Contexte</span>
+        <span class="section-titre">{{ $t('evaluations.dialogForm.context') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-select
@@ -64,7 +64,7 @@
               dense
               emit-value
               map-options
-              label="Année académique *"
+              :label="$t('affectations.dialog.fields.year')"
               @update:model-value="resetAnneeChangee"
             />
           </div>
@@ -77,7 +77,7 @@
               emit-value
               map-options
               clearable
-              label="Promotion *"
+              :label="$t('affectations.dialog.fields.promotion')"
             />
           </div>
         </div>
@@ -89,16 +89,16 @@
           dense
           emit-value
           map-options
-          label="Matière (UE) *"
+          :label="$t('evaluations.dialogForm.subject')"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           :disable="!formulaireValide"
           @click="enregistrer"
@@ -111,6 +111,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
 import { LIBELLE_TYPE_EVALUATION } from '../utils/libelles';
@@ -126,6 +127,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const form = ref({
@@ -200,7 +202,7 @@ async function enregistrer() {
     };
     if (props.evaluation) await api.put(`/evaluations/${props.evaluation.id}`, payload);
     else await api.post('/evaluations', payload);
-    $q.notify({ type: 'positive', message: 'Évaluation enregistrée' });
+    $q.notify({ type: 'positive', message: t('evaluations.dialogForm.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

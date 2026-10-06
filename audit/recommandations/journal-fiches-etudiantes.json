@@ -1,0 +1,15 @@
+{
+  "date": "2026-10-03",
+  "portee": "Tracer les modifications et désactivations de fiches étudiantes avec leur état avant/après, sans recopier les coordonnées ni les secrets du compte.",
+  "implementation": {
+    "modification": "La mise à jour et son entrée AuditLog sont exécutées dans la même transaction. L’audit conserve matricule, nom, prénom, sexe et état actif, ainsi que les noms des champs modifiés.",
+    "desactivation": "La désactivation et l’état avant/après sont consignés atomiquement.",
+    "donneesExclues": ["email", "telephone", "dateNaissance", "adresse", "qrRestoToken", "motDePasse"]
+  },
+  "verification": {
+    "testsCibles": "Deux tests vérifient la trace avant/après et la transaction, ainsi que l’absence de coordonnées et de secrets.",
+    "suiteCible": "5 tests réussis dans etudiants.service.spec.ts.",
+    "buildBackend": "Réussi."
+  },
+  "limite": "Les champs exclus restent identifiables par leur nom dans champsModifies lorsqu’ils changent, mais leurs valeurs ne sont pas copiées dans le journal."
+}

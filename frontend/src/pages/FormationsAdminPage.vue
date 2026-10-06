@@ -2,19 +2,14 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Formation continue</div>
-        <div class="page-sous-titre">
-          Gestion du hub : les formations se publient sur la vitrine, se
-          remplissent et se confirment au guichet (mode pilote). La scolarité
-          remet ensuite l'attestation de formation. Vous voyez ici le catalogue
-          <strong>complet</strong>, brouillons compris.
-        </div>
+        <h1 class="page-titre">{{ $t('formationsAdmin.title') }}</h1>
+        <div class="page-sous-titre">{{ $t('formationsAdmin.subtitle') }}</div>
       </div>
       <div class="col-auto row q-gutter-xs">
-        <q-btn flat no-caps icon="public" label="Voir la vitrine publique" to="/formations">
-          <q-tooltip>Page consultée par les candidats — formations publiées uniquement</q-tooltip>
+        <q-btn flat no-caps icon="public" :label="$t('formationsAdmin.actions.seeShowcase')" to="/formations">
+          <q-tooltip>{{ $t('formationsAdmin.actions.seeShowcaseTooltip') }}</q-tooltip>
         </q-btn>
-        <q-btn unelevated color="primary" no-caps icon="add" label="Nouvelle formation" @click="ouvrirNouvelle" />
+        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
       </div>
     </div>
 
@@ -23,7 +18,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (titre, catégorie, lieu…)"
+      :placeholder="$t('formationsAdmin.filters.searchPlaceholder')"
       @reinitialiser="reinitialiserFiltres"
     >
       <template #avances>
@@ -35,7 +30,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('formationsAdmin.filters.status')"
         />
       </template>
       <template #actions>
@@ -53,15 +48,15 @@
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ stats.nbFormes }}</div>
-            <div class="pochoir text-grey-7">Formés (inscriptions confirmées)</div>
+            <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.trained') }}</div>
           </q-card-section>
         </q-card>
       </div>
       <div class="col-12 col-md-3">
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">GNF</span></div>
-            <div class="pochoir text-grey-7">Recette encaissée</div>
+            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span></div>
+            <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.revenue') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -69,7 +64,7 @@
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ stats.tauxRemplissage }} %</div>
-            <div class="pochoir text-grey-7">Taux de remplissage</div>
+            <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.fillRate') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -77,7 +72,7 @@
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">{{ stats.total }}</div>
-            <div class="pochoir text-grey-7">Formations</div>
+            <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.total') }}</div>
           </q-card-section>
         </q-card>
       </div>
@@ -93,22 +88,21 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || formations.length > 0"
     >
       <template #no-data>
         <div class="full-width text-center text-grey-7 q-pa-lg">
           <q-icon name="workspace_premium" size="38px" color="grey-5" />
-          <div class="q-mt-sm">Aucune formation pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('formationsAdmin.emptyState.title') }}</div>
           <div class="text-caption q-mt-xs">
-            Une formation naît en brouillon, puis se publie pour apparaître sur
-            la vitrine publique.
+            {{ $t('formationsAdmin.emptyState.description') }}
           </div>
           <q-btn
             flat
             no-caps
             color="primary"
             icon="add"
-            label="Nouvelle formation"
+            :label="$t('formationsAdmin.actions.newFormation')"
             class="q-mt-sm"
             @click="ouvrirNouvelle"
           />
@@ -128,64 +122,64 @@
           </q-td>
           <q-td key="prix" :props="p" class="text-right chiffres">
             <span v-if="p.row.prix > 0">{{ montantLisible(p.row.prix) }} {{ p.row.devise }}</span>
-            <span v-else class="text-grey-6">Gratuite</span>
+            <span v-else class="text-grey-6">{{ $t('formationsAdmin.table.free') }}</span>
           </q-td>
           <q-td key="duree" :props="p" class="text-center chiffres">
             {{ p.row.dureeHeures ? `${p.row.dureeHeures} h` : '—' }}
             <div class="text-caption text-grey-7">{{ datesLisible(p.row) }}</div>
           </q-td>
           <q-td key="capacite" :props="p" class="text-center chiffres">
-            {{ p.row.capacite ?? 'Libre' }}
+            {{ p.row.capacite ?? $t('formationsAdmin.table.unlimited') }}
             <span v-if="p.row.capacite" class="text-caption text-grey-7">
-              · {{ p.row._count?.inscriptions ?? 0 }} demandes
+              · {{ $t('formationsAdmin.table.requestsCount', { count: p.row._count?.inscriptions ?? 0 }) }}
             </span>
           </q-td>
           <q-td key="inscrits" :props="p" class="text-center chiffres">
             <template v-if="ligneDashboard(p.row.id)">
               <div>{{ ligneDashboard(p.row.id)?.nbInscrits }}</div>
               <div class="text-caption text-grey-7">
-                {{ ligneDashboard(p.row.id)?.nbPayes }} payé(s)
+                {{ $t('formationsAdmin.table.paidCount', { count: ligneDashboard(p.row.id)?.nbPayes }) }}
               </div>
             </template>
-            <span v-else class="text-grey-6">—</span>
+            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
           </q-td>
           <q-td key="recette" :props="p" class="text-right chiffres">
             <template v-if="ligneDashboard(p.row.id)">
               {{ montantLisible(ligneDashboard(p.row.id)?.recette ?? 0) }}
               <span class="text-caption text-grey-7">{{ p.row.devise }}</span>
             </template>
-            <span v-else class="text-grey-6">—</span>
+            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
           </q-td>
           <q-td key="actions" :props="p" class="text-right">
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
               flat dense round color="secondary" icon="publish"
-              aria-label="Publier la formation"
+              :aria-label="$t('formationsAdmin.table.aria.publish')"
               @click="publier(p.row)"
             >
-              <q-tooltip>Publier la formation</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'PUBLIEE'"
               flat dense round color="warning" icon="lock"
-              aria-label="Clôturer la formation"
+              :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(p.row)"
             >
-              <q-tooltip>Clôturer</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.close') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="edit" aria-label="Modifier la formation" @click="ouvrirModification(p.row)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(p.row)">
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="group" aria-label="Voir le registre des inscriptions" @click="basculerRegistre(p)">
-              <q-tooltip>Inscriptions</q-tooltip>
+            <q-btn flat dense round icon="group" :aria-label="$t('formationsAdmin.table.aria.registrations')" @click="basculerRegistre(p)">
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.registrations') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
               flat dense round color="negative" icon="delete_outline"
-              aria-label="Supprimer le brouillon"
+              :aria-label="$t('formationsAdmin.table.aria.delete')"
               @click="supprimer(p.row)"
             >
-              <q-tooltip>Supprimer le brouillon</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </q-tr>
@@ -193,9 +187,9 @@
         <tr v-if="p.expand" :key="`${p.row.id}-registre`" class="ligne-detail">
           <td colspan="8" class="q-pa-md">
             <div class="row items-center q-mb-sm">
-              <div class="pochoir">Registre — {{ p.row.titre }}</div>
+              <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: p.row.titre }) }}</div>
               <q-space />
-              <q-btn flat dense no-caps color="primary" label="Recharger" icon="refresh" @click="chargerRegistre(p.row, true)" />
+              <q-btn flat dense no-caps color="primary" :label="$t('formationsAdmin.actions.reload')" icon="refresh" @click="chargerRegistre(p.row, true)" />
             </div>
             <q-table
               flat
@@ -246,26 +240,26 @@
                   <q-btn
                     v-if="r.row.statut === 'EN_ATTENTE'"
                     flat dense round color="secondary" icon="check_circle"
-                    aria-label="Confirmer le paiement"
+                    :aria-label="$t('formationsAdmin.registry.aria.confirmPayment')"
                     @click="confirmer(r.row)"
                   >
-                    <q-tooltip>Confirmer le paiement</q-tooltip>
+                    <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.confirmPayment') }}</q-tooltip>
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut !== 'ANNULEE'"
                     flat dense round color="negative" icon="block"
-                    aria-label="Annuler la demande"
+                    :aria-label="$t('formationsAdmin.registry.aria.cancelRequest')"
                     @click="annuler(r.row)"
                   >
-                    <q-tooltip>Annuler la demande</q-tooltip>
+                    <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.cancelRequest') }}</q-tooltip>
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut === 'CONFIRMEE'"
                     flat dense round icon="print"
-                    aria-label="Imprimer l'attestation de formation"
+                    :aria-label="$t('formationsAdmin.registry.aria.printCertificate')"
                     @click="imprimerCertificat(r.row)"
                   >
-                    <q-tooltip>Attestation de formation</q-tooltip>
+                    <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.printCertificate') }}</q-tooltip>
                   </q-btn>
                 </q-td>
               </template>
@@ -305,43 +299,43 @@
             </div>
           </q-card-section>
           <q-card-actions class="q-px-md">
-            <q-btn flat dense no-caps icon="group" label="Inscriptions" @click="basculerRegistreCarte(f)" />
+            <q-btn flat dense no-caps icon="group" :label="$t('formationsAdmin.actions.registrations')" @click="basculerRegistreCarte(f)" />
             <q-space />
-            <q-btn flat dense round icon="edit" aria-label="Modifier la formation" @click="ouvrirModification(f)">
-              <q-tooltip>Modifier</q-tooltip>
+            <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(f)">
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
               flat dense round color="secondary" icon="publish"
-              aria-label="Publier la formation"
+              :aria-label="$t('formationsAdmin.table.aria.publish')"
               @click="publier(f)"
             >
-              <q-tooltip>Publier</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.publishShort') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'PUBLIEE'"
               flat dense round color="warning" icon="lock"
-              aria-label="Clôturer la formation"
+              :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(f)"
             >
-              <q-tooltip>Clôturer</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.close') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
               flat dense round color="negative" icon="delete_outline"
-              aria-label="Supprimer le brouillon"
+              :aria-label="$t('formationsAdmin.table.aria.delete')"
               @click="supprimer(f)"
             >
-              <q-tooltip>Supprimer</q-tooltip>
+              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.deleteShort') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
           <q-slide-transition>
             <div v-if="registreOuvert[f.id]" class="q-px-md q-pb-md">
               <q-separator class="q-mb-sm" />
               <div class="row items-center q-mb-sm">
-                <div class="pochoir">Registre — {{ f.titre }}</div>
+                <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: f.titre }) }}</div>
                 <q-space />
-                <q-btn flat dense no-caps color="primary" label="Recharger" icon="refresh" @click="chargerRegistre(f, true)" />
+                <q-btn flat dense no-caps color="primary" :label="$t('formationsAdmin.actions.reload')" icon="refresh" @click="chargerRegistre(f, true)" />
               </div>
               <q-table
                 flat
@@ -390,26 +384,26 @@
                     <q-btn
                       v-if="r.row.statut === 'EN_ATTENTE'"
                       flat dense round color="secondary" icon="check_circle"
-                      aria-label="Confirmer le paiement"
+                      :aria-label="$t('formationsAdmin.registry.aria.confirmPayment')"
                       @click="confirmer(r.row)"
                     >
-                      <q-tooltip>Confirmer le paiement</q-tooltip>
+                      <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.confirmPayment') }}</q-tooltip>
                     </q-btn>
                     <q-btn
                       v-if="r.row.statut !== 'ANNULEE'"
                       flat dense round color="negative" icon="block"
-                      aria-label="Annuler la demande"
+                      :aria-label="$t('formationsAdmin.registry.aria.cancelRequest')"
                       @click="annuler(r.row)"
                     >
-                      <q-tooltip>Annuler la demande</q-tooltip>
+                      <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.cancelRequest') }}</q-tooltip>
                     </q-btn>
                     <q-btn
                       v-if="r.row.statut === 'CONFIRMEE'"
                       flat dense round icon="print"
-                      aria-label="Imprimer l'attestation de formation"
+                      :aria-label="$t('formationsAdmin.registry.aria.printCertificate')"
                       @click="imprimerCertificat(r.row)"
                     >
-                      <q-tooltip>Attestation de formation</q-tooltip>
+                      <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.printCertificate') }}</q-tooltip>
                     </q-btn>
                   </q-td>
                 </template>
@@ -420,17 +414,16 @@
       </div>
       <div v-if="!chargement && !formations.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="workspace_premium" size="42px" color="grey-5" />
-        <div class="q-mt-sm">Aucune formation pour ces critères.</div>
+        <div class="q-mt-sm">{{ $t('formationsAdmin.emptyState.title') }}</div>
         <div class="text-caption q-mt-xs">
-          Une formation naît en brouillon, puis se publie pour apparaître sur la
-          vitrine publique.
+          {{ $t('formationsAdmin.emptyState.description') }}
         </div>
         <q-btn
           flat
           no-caps
           color="primary"
           icon="add"
-          label="Nouvelle formation"
+          :label="$t('formationsAdmin.actions.newFormation')"
           class="q-mt-sm"
           @click="ouvrirNouvelle"
         />
@@ -453,8 +446,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { formationsService, type FormationDashboard } from '../services/formations';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -469,15 +464,17 @@ import {
   montantLisible,
 } from '../utils/libelles';
 import type { Etudiant, Formation, InscriptionFormation, Paiement, StatutFormation, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 interface InscriptionFormationDetail extends InscriptionFormation {
   formation?: Formation | null;
   etudiant?: Etudiant | null;
-  paiement?: Paiement | null;
+  paiement?: Pick<Paiement, 'id' | 'reference' | 'montant' | 'devise' | 'statut'> | null;
 }
 
 const auth = useAuthStore();
 const $q = useQuasar();
+const { t } = useI18n();
 
 const formations = ref<Formation[]>([]);
 const dashboard = ref<FormationDashboard | null>(null);
@@ -497,7 +494,7 @@ const chips = computed(() => {
   const f = filtres.value;
   const cs: ChipFiltre[] = [];
   if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+    cs.push({ label: t('formationsAdmin.filters.searchChip', { query: f.recherche }), value: f.recherche, icone: 'search', defaut: true });
   }
   if (f.statut) {
     cs.push({
@@ -508,29 +505,29 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'titre', label: 'Formation', field: 'titre', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
-  { name: 'prix', label: 'Prix', field: 'prix', align: 'right' },
-  { name: 'duree', label: 'Durée', field: 'dureeHeures', align: 'center' },
-  { name: 'capacite', label: 'Places', field: 'capacite', align: 'center' },
-  { name: 'inscrits', label: 'Inscrits', field: 'inscrits', align: 'center' },
-  { name: 'recette', label: 'Recette', field: 'recette', align: 'right' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'titre', label: t('formationsAdmin.table.columns.formation'), field: 'titre', align: 'left' },
+  { name: 'statut', label: t('formationsAdmin.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'prix', label: t('formationsAdmin.table.columns.price'), field: 'prix', align: 'right' },
+  { name: 'duree', label: t('formationsAdmin.table.columns.duration'), field: 'dureeHeures', align: 'center' },
+  { name: 'capacite', label: t('formationsAdmin.table.columns.capacity'), field: 'capacite', align: 'center' },
+  { name: 'inscrits', label: t('formationsAdmin.table.columns.registered'), field: 'inscrits', align: 'center' },
+  { name: 'recette', label: t('formationsAdmin.table.columns.revenue'), field: 'recette', align: 'right' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ligneDashboard(formationId: string) {
   return dashboard.value?.parFormation.find((p) => p.id === formationId);
 }
 
-const colonnesRegistre: QTableColumn[] = [
-  { name: 'numero', label: 'N° dossier', field: 'numero', align: 'left' },
-  { name: 'inscrit', label: 'Inscrit(e)', field: 'inscrit', align: 'left' },
-  { name: 'statut', label: 'Demande', field: 'statut', align: 'center' },
-  { name: 'paiement', label: 'Montant', field: 'paiement', align: 'right' },
-  { name: 'paiementStatut', label: 'Paiement', field: 'paiementStatut', align: 'center' },
+const colonnesRegistre = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('formationsAdmin.registry.columns.fileNumber'), field: 'numero', align: 'left' },
+  { name: 'inscrit', label: t('formationsAdmin.registry.columns.registrant'), field: 'inscrit', align: 'left' },
+  { name: 'statut', label: t('formationsAdmin.registry.columns.request'), field: 'statut', align: 'center' },
+  { name: 'paiement', label: t('formationsAdmin.registry.columns.amount'), field: 'paiement', align: 'right' },
+  { name: 'paiementStatut', label: t('formationsAdmin.registry.columns.payment'), field: 'paiementStatut', align: 'center' },
   { name: 'actionsRegistre', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const registres = ref<Record<string, InscriptionFormationDetail[]>>({});
 const registreCharge = ref<Record<string, boolean>>({});
@@ -591,8 +588,8 @@ function placesRestantes(f: Formation): number {
 }
 
 function placesRestantesStr(f: Formation): string {
-  if (!f.capacite) return 'Places illimitées';
-  return `${placesRestantes(f)} / ${f.capacite} places`;
+  if (!f.capacite) return t('formationsAdmin.card.unlimitedSeats');
+  return t('formationsAdmin.card.remainingSeats', { count: placesRestantes(f), capacity: f.capacite });
 }
 
 const dialogFormation = ref(false);
@@ -614,77 +611,74 @@ function reinitialiserFiltres() {
 
 function publier(f: Formation) {
   $q.dialog({
-    title: 'Publier cette formation ?',
-    message: `« ${f.titre} » entre en vitrine publique : les demandes et les paiements Mobile Money deviendront possibles.`,
+    title: t('formationsAdmin.dialogs.publish.title'),
+    message: t('formationsAdmin.dialogs.publish.message', { title: f.titre }),
     cancel: true,
-    ok: { color: 'secondary', label: 'Publier' },
+    ok: { color: 'secondary', label: t('formationsAdmin.dialogs.publish.confirm') },
   }).onOk(async () => {
     await formationsService.publier(f.id);
-    $q.notify({ type: 'positive', message: 'Formation publiée — en vente sur la vitrine' });
+    $q.notify({ type: 'positive', message: t('formationsAdmin.messages.published') });
     await Promise.all([chargerDashboard(), requeter()]);
   });
 }
 
 function cloturer(f: Formation) {
   $q.dialog({
-    title: 'Clôturer cette formation ?',
-    message:
-      `La vitrine cessera d'offrir « ${f.titre} » ; les demandes en attente ` +
-      'ne pourront plus être confirmées. Le circuit de la promotion devient officiel.',
+    title: t('formationsAdmin.dialogs.close.title'),
+    message: t('formationsAdmin.dialogs.close.message', { title: f.titre }),
     cancel: true,
-    ok: { color: 'warning', label: 'Clôturer' },
+    ok: { color: 'warning', label: t('formationsAdmin.dialogs.close.confirm') },
   }).onOk(async () => {
     await formationsService.cloturer(f.id);
-    $q.notify({ type: 'warning', message: 'Formation close — plus aucune nouvelle demande' });
+    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.closed') });
     await Promise.all([chargerDashboard(), requeter()]);
   });
 }
 
 function supprimer(f: Formation) {
   $q.dialog({
-    title: 'Supprimer ce brouillon ?',
-    message: `« ${f.titre} » ne s'est jamais vendu : sa suppression ne laisse aucune trace client.`,
+    title: t('formationsAdmin.dialogs.delete.title'),
+    message: t('formationsAdmin.dialogs.delete.message', { title: f.titre }),
     cancel: true,
-    ok: { color: 'negative', label: 'Supprimer' },
+    ok: { color: 'negative', label: t('formationsAdmin.dialogs.delete.confirm') },
   }).onOk(async () => {
     await formationsService.supprimer(f.id);
-    $q.notify({ type: 'warning', message: 'Brouillon supprimé' });
+    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.draftDeleted') });
     await Promise.all([chargerDashboard(), requeter()]);
   });
 }
 
 function confirmer(i: InscriptionFormationDetail) {
   $q.dialog({
-    title: 'Confirmer le paiement ?',
-    message:
-      `Confirmation pilote : l'opérateur Mobile Money a encaissé — ${i.paiement?.reference ?? 'le paiement'} ` +
-      `passe REUSSI et la demande ${i.numero} passe CONFIRMEE.`,
+    title: t('formationsAdmin.dialogs.confirmPayment.title'),
+    message: t('formationsAdmin.dialogs.confirmPayment.message', {
+      reference: i.paiement?.reference ?? t('formationsAdmin.dialogs.confirmPayment.paymentFallback'),
+      numero: i.numero,
+    }),
     cancel: true,
-    ok: { color: 'secondary', label: 'Confirmer' },
+    ok: { color: 'secondary', label: t('formationsAdmin.dialogs.confirmPayment.confirm') },
   }).onOk(async () => {
     await formationsService.confirmerInscription(i.id);
-    $q.notify({ type: 'positive', message: `${i.numero} confirmée — place réservée` });
+    $q.notify({ type: 'positive', message: t('formationsAdmin.messages.registrationConfirmed', { numero: i.numero }) });
     await Promise.all([chargerDashboard(), requeter()]);
   });
 }
 
 function annuler(i: InscriptionFormationDetail) {
   $q.dialog({
-    title: 'Annuler cette demande ?',
-    message: `La demande ${i.numero} sera annulée ; sa place est libérée pour la vitrine.`,
-    cancel: 'Non, garder',
-    ok: { color: 'negative', label: 'Annuler la demande' },
+    title: t('formationsAdmin.dialogs.cancelRequest.title'),
+    message: t('formationsAdmin.dialogs.cancelRequest.message', { numero: i.numero }),
+    cancel: t('formationsAdmin.dialogs.cancelRequest.cancel'),
+    ok: { color: 'negative', label: t('formationsAdmin.dialogs.cancelRequest.confirm') },
   }).onOk(async () => {
     await formationsService.annulerInscription(i.id);
-    $q.notify({ type: 'warning', message: `${i.numero} annulée` });
+    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.registrationCancelled', { numero: i.numero }) });
     await Promise.all([chargerDashboard(), requeter()]);
   });
 }
 
 function imprimerCertificat(i: InscriptionFormationDetail) {
-  // Le jeton voyage en paramètre : l'onglet ouvert ne porte pas l'en-tête Authorization.
-  const url = `${API_URL}/formations/${i.id}/certificat?token=${encodeURIComponent(auth.token)}`;
-  window.open(url, '_blank');
+  void ouvrirImpression(`/formations/${i.id}/certificat`);
 }
 
 // Stats — alimentées par /formations/dashboard, plus de N+1.
@@ -760,6 +754,6 @@ onMounted(async () => {
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 </style>

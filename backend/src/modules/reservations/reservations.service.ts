@@ -3,8 +3,11 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutReservationSalle } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -18,8 +21,10 @@ import {
   UpdateReservationDto,
 } from './reservations.dto';
 
+const MAX_JOURS_CALENDRIER = 93;
+
 export const RESERVATION_INCLUDE = {
-  salle: true,
+  salle: { select: { id: true, code: true, nom: true } },
   demandeur: { select: { id: true, nom: true, prenom: true } },
   refusePar: { select: { id: true, nom: true, prenom: true } },
 };
@@ -55,6 +60,15 @@ const SEANCE_CALENDRIER = {
   },
 };
 
+const SALLE_CALENDRIER_SELECT = {
+  id: true,
+  code: true,
+  nom: true,
+  batiment: true,
+  capacite: true,
+  actif: true,
+};
+
 const jjmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
 @Injectable()
@@ -67,6 +81,24 @@ export class ReservationsService extends CrudService {
     });
   }
 
+  /** Une collision de sérialisation est une demande concurrente à rejouer,
+   * pas une erreur serveur. Les quatre mutations de réservation partagent
+   * cette traduction pour éviter d'exposer l'erreur SQL au client. */
+  private async transactionSerializable<T>(
+    operation: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.prisma.$transaction(operation, {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      });
+    } catch (e: any) {
+      if (e?.code === 'P2034') {
+        throw new ConflictException(t('reservations.ecriture_concurrente_reessayez'));
+      }
+      throw e;
+    }
+  }
+
   private where(query: ReservationQueryDto): Prisma.ReservationSalleWhereInput {
     return {
       ...(query.salleId ? { salleId: query.salleId } : {}),
@@ -75,19 +107,33 @@ export class ReservationsService extends CrudService {
     };
   }
 
-  liste(query: ReservationQueryDto) {
-    return this.findAll(query, this.where(query));
+  private gestionnaire(user: AuthUser) {
+    return user.role === Role.ADMIN || user.role === Role.DIRECTION || user.role === Role.SCOLARITE;
+  }
+
+  liste(query: ReservationQueryDto, user: AuthUser) {
+    const where = this.where(query);
+    if (!this.gestionnaire(user)) where.demandeurId = user.id;
+    return this.findAll(query, where);
+  }
+
+  async consulter(id: string, user: AuthUser) {
+    const reservation = await super.findOne(id);
+    if (!this.gestionnaire(user) && reservation.demandeurId !== user.id) {
+      throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+    }
+    return reservation;
   }
 
   /** Journée universitaire : tout événement tient entre 07:00 et 22:00. */
   private verifierHeures(debut: string, fin: string) {
     if (dureeMinutes(debut, fin) <= 0) {
-      throw new BadRequestException("L'heure de fin doit suivre l'heure de début");
+      throw new BadRequestException(I18nContext.current()!.t('reservations.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
     }
     const d = toMinutes(debut)!;
     const f = toMinutes(fin)!;
     if (d < 7 * 60 || f > 22 * 60) {
-      throw new BadRequestException('Les réservations sont possibles entre 07h00 et 22h00');
+      throw new BadRequestException(I18nContext.current()!.t('reservations.les_reservations_sont_possibles_entre_07h00_et_22h00'));
     }
   }
 
@@ -101,12 +147,13 @@ export class ReservationsService extends CrudService {
     heureDebut: string,
     heureFin: string,
     idExclu?: string,
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
   ) {
     this.verifierHeures(heureDebut, heureFin);
     const d = toMinutes(heureDebut)!;
     const f = toMinutes(heureFin)!;
 
-    const concurrentes = await this.prisma.reservationSalle.findMany({
+    const concurrentes = await client.reservationSalle.findMany({
       where: {
         salleId,
         dateJour: toDateOnly(dateJour),
@@ -123,68 +170,127 @@ export class ReservationsService extends CrudService {
 
     if (collision) {
       throw new ConflictException(
-        `Cette salle est déjà réservée de ${collision.heureDebut} à ${collision.heureFin} ` +
-          `le ${jjmm(isoDate(collision.dateJour))} (${LIBELLE_STATUT[collision.statut]}` +
-          `${collision.motif ? ` — ${collision.motif}` : ''})`,
+        I18nContext.current()!.t('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_', { args: { debut: collision.heureDebut, fin: collision.heureFin } }),
       );
     }
   }
 
-  private trace(user: AuthUser, action: string, id: string, details?: string) {
-    return this.prisma.auditLog.create({
+  /**
+   * Projection minimale journalisée avant/après. La réservation ne retient
+   * que l'occupation de la salle et sa situation : ni motif, ni organisme, ni
+   * responsable, ni motif de refus (textes libres), et jamais la salle elle-même
+   * (jeton QR, coordonnées) — seulement son identifiant. La présence d'un
+   * texte libre est notée par un booléen, jamais par son contenu.
+   */
+  private instantaneAudit(reservation: any) {
+    return {
+      id: reservation.id,
+      salleId: reservation.salleId,
+      dateJour: reservation.dateJour ?? null,
+      heureDebut: reservation.heureDebut,
+      heureFin: reservation.heureFin,
+      statut: reservation.statut,
+      demandeurId: reservation.demandeurId ?? null,
+      refuseParId: reservation.refuseParId ?? null,
+      motifFourni: Boolean(reservation.motif),
+      organismeFourni: Boolean(reservation.organisme),
+      responsableFourni: Boolean(reservation.responsable),
+      refuseMotifFourni: Boolean(reservation.refuseMotif),
+    };
+  }
+
+  /** Journal écrit par la transaction qui porte la mutation. */
+  private journaliser(
+    tx: Prisma.TransactionClient,
+    user: AuthUser,
+    action: string,
+    id: string,
+    details: Record<string, unknown>,
+  ) {
+    return tx.auditLog.create({
       data: {
         userId: user.id,
         action,
         entite: 'ReservationSalle',
         entiteId: id,
-        details,
+        details: JSON.stringify(details),
       },
     });
   }
 
   async creer(dto: CreateReservationDto, user: AuthUser) {
-    await this.verifierConflit(dto.salleId, dto.dateJour, dto.heureDebut, dto.heureFin);
     const { dateJour, ...reste } = dto;
-    const creee = await this.create({
-      ...reste,
-      dateJour: toDateOnly(dateJour),
-      demandeurId: user.id,
+    return this.transactionSerializable(async (tx) => {
+      await this.verifierConflit(dto.salleId, dateJour, dto.heureDebut, dto.heureFin, undefined, tx);
+      const creee = await tx.reservationSalle.create({
+        data: {
+          ...reste,
+          dateJour: toDateOnly(dateJour),
+          demandeurId: user.id,
+        },
+        include: RESERVATION_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'RESERVATION_CREEE', creee.id, {
+        avant: null,
+        apres: this.instantaneAudit(creee),
+      });
+      return creee;
     });
-    await this.trace(user, 'RESERVATION_CREEE', creee.id, `${dto.motif} — ${dto.organisme ?? ''}`);
-    return creee;
   }
 
   async modifier(id: string, dto: UpdateReservationDto, user: AuthUser) {
-    const existante: any = await this.findOne(id);
-    if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seul le demandeur ou l’administrateur peut modifier');
-    }
-    if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
-      throw new BadRequestException('Une réservation déjà statuée ne peut plus être modifiée');
-    }
-    await this.verifierConflit(
-      dto.salleId ?? existante.salleId,
-      dto.dateJour ?? isoDate(existante.dateJour),
-      dto.heureDebut ?? existante.heureDebut,
-      dto.heureFin ?? existante.heureFin,
-      id,
-    );
-    const maj = await this.update(id, {
-      ...dto,
-      ...(dto.dateJour !== undefined ? { dateJour: toDateOnly(dto.dateJour) } : {}),
+    return this.transactionSerializable(async (tx) => {
+      const existante: any = await tx.reservationSalle.findUnique({
+        where: { id }, include: RESERVATION_INCLUDE,
+      });
+      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
+        throw new ForbiddenException(I18nContext.current()!.t('reservations.seul_le_demandeur_ou_l_administrateur_peut_modifier'));
+      }
+      if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
+        throw new BadRequestException(I18nContext.current()!.t('reservations.une_reservation_deja_statuee_ne_peut_plus_etre_modifiee'));
+      }
+      await this.verifierConflit(
+        dto.salleId ?? existante.salleId,
+        dto.dateJour ?? isoDate(existante.dateJour),
+        dto.heureDebut ?? existante.heureDebut,
+        dto.heureFin ?? existante.heureFin,
+        id,
+        tx,
+      );
+      const maj = await tx.reservationSalle.update({
+        where: { id },
+        data: {
+          ...dto,
+          ...(dto.dateJour !== undefined ? { dateJour: toDateOnly(dto.dateJour) } : {}),
+        },
+        include: RESERVATION_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'RESERVATION_MODIFIEE', id, {
+        avant: this.instantaneAudit(existante),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(dto),
+      });
+      return maj;
     });
-    await this.trace(user, 'RESERVATION_MODIFIEE', id, dto.motif ?? existante.motif);
-    return maj;
   }
 
   async supprimer(id: string, user: AuthUser) {
-    const existante = await this.findOne(id);
-    if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
-      throw new ForbiddenException('Seul le demandeur ou l’administrateur peut annuler');
-    }
-    const res = await this.remove(id);
-    await this.trace(user, 'RESERVATION_SUPPRIMEE', id, existante.motif);
-    return res;
+    return this.transactionSerializable(async (tx) => {
+      const existante: any = await tx.reservationSalle.findUnique({
+        where: { id }, include: RESERVATION_INCLUDE,
+      });
+      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
+        throw new ForbiddenException(I18nContext.current()!.t('reservations.seul_le_demandeur_ou_l_administrateur_peut_annuler'));
+      }
+      await tx.reservationSalle.delete({ where: { id } });
+      await this.journaliser(tx, user, 'RESERVATION_SUPPRIMEE', id, {
+        avant: this.instantaneAudit(existante),
+        apres: null,
+      });
+      return { id };
+    });
   }
 
   /**
@@ -192,28 +298,46 @@ export class ReservationsService extends CrudService {
    * entre-temps, une autre demande a pu réserver le créneau — 409 alors.
    */
   async decider(id: string, dto: DeciderReservationDto, user: AuthUser) {
-    const existante = await this.findOne(id);
-    if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
-      throw new BadRequestException('Cette réservation a déjà été statuée');
-    }
+    return this.transactionSerializable(async (tx) => {
+      const existante: any = await tx.reservationSalle.findUnique({
+        where: { id }, include: RESERVATION_INCLUDE,
+      });
+      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
+        throw new BadRequestException(I18nContext.current()!.t('reservations.cette_reservation_a_deja_ete_statuee'));
+      }
 
-    const data: Prisma.ReservationSalleUpdateInput = { statut: dto.statut };
-    if (dto.statut === 'CONFIRMEE') {
-      await this.verifierConflit(
-        existante.salleId,
-        isoDate(existante.dateJour),
-        existante.heureDebut,
-        existante.heureFin,
-        id,
-      );
-    } else {
-      data.refusePar = { connect: { id: user.id } };
-      if (dto.motif) data.refuseMotif = dto.motif;
-    }
-
-    const maj = await this.update(id, data);
-    await this.trace(user, `RESERVATION_${dto.statut}`, id, dto.motif ?? existante.motif);
-    return maj;
+      const data: Prisma.ReservationSalleUpdateInput = { statut: dto.statut };
+      if (dto.statut === 'CONFIRMEE') {
+        await this.verifierConflit(
+          existante.salleId,
+          isoDate(existante.dateJour),
+          existante.heureDebut,
+          existante.heureFin,
+          id,
+          tx,
+        );
+      } else {
+        data.refusePar = { connect: { id: user.id } };
+        if (dto.motif) data.refuseMotif = dto.motif;
+      }
+      const maj = await tx.reservationSalle.update({
+        where: { id },
+        data,
+        include: RESERVATION_INCLUDE,
+      });
+      await this.journaliser(tx, user, `RESERVATION_${dto.statut}`, id, {
+        avant: this.instantaneAudit(existante),
+        apres: this.instantaneAudit(maj),
+        champsModifies: [
+          'statut',
+          ...(data.refusePar ? ['refuseParId'] : []),
+          ...(data.refuseMotif ? ['refuseMotif'] : []),
+        ],
+        refuseMotifFourni: Boolean(dto.motif),
+      });
+      return maj;
+    });
   }
 
   /**
@@ -221,14 +345,33 @@ export class ReservationsService extends CrudService {
    * grille, les séances de l'emploi du temps — en lecture seule, pour
    * constater les conflits avant de demander une salle.
    */
-  async calendrier(query: CalendrierQueryDto) {
+  async calendrier(query: CalendrierQueryDto, user: AuthUser) {
     const debut = toDateOnly(query.dateDebut);
     const fin = toDateOnly(query.dateFin);
-    if (fin < debut) throw new BadRequestException('Période invalide');
+    if (fin < debut) throw new BadRequestException(I18nContext.current()!.t('reservations.periode_invalide'));
+    const nombreJours = Math.floor((fin.getTime() - debut.getTime()) / 86_400_000) + 1;
+    if (nombreJours > MAX_JOURS_CALENDRIER) {
+      throw new BadRequestException(I18nContext.current()!.t('reservations.periode_trop_longue'));
+    }
 
     const salles = query.salleId
-      ? this.prisma.salle.findMany({ where: { id: query.salleId } })
-      : this.prisma.salle.findMany({ where: { actif: true }, orderBy: { code: 'asc' } });
+      ? this.prisma.salle.findMany({ where: { id: query.salleId }, select: SALLE_CALENDRIER_SELECT })
+      : this.prisma.salle.findMany({
+          where: { actif: true },
+          select: SALLE_CALENDRIER_SELECT,
+          orderBy: { code: 'asc' },
+        });
+
+    const perimetreSeances = user.role === Role.ENSEIGNANT
+      ? { affectation: { enseignantId: user.enseignantId ?? '__aucun_enseignant__' } }
+      : user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+        ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
+        : user.role === Role.CONTROLEUR
+          ? { OR: [
+              { controleurAssigneId: user.id },
+              { controle: { is: { controleurId: user.id } } },
+            ] }
+          : {};
 
     const [reservations, seances, listeSalles] = await Promise.all([
       this.prisma.reservationSalle.findMany({
@@ -246,6 +389,7 @@ export class ReservationsService extends CrudService {
           salleId: { not: null },
           date: { gte: debut, lte: fin },
           statut: { not: 'ANNULEE' },
+          ...perimetreSeances,
         },
         orderBy: { heureDebut: 'asc' },
       }),
@@ -259,7 +403,12 @@ export class ReservationsService extends CrudService {
     }));
 
     const parDate = new Map(jours.map((j) => [j.date, j]));
-    for (const r of reservations) parDate.get(isoDate(r.dateJour))?.reservations.push(r);
+    for (const r of reservations) {
+      const vue = this.gestionnaire(user) || r.demandeurId === user.id
+        ? r
+        : { ...r, motif: null, organisme: null, responsable: null, demandeurId: null, demandeur: null, refuseParId: null, refusePar: null, refuseMotif: null };
+      parDate.get(isoDate(r.dateJour))?.reservations.push(vue);
+    }
     for (const s of seances) parDate.get(isoDate(s.date))?.seances.push(s);
 
     return { dateDebut: query.dateDebut, dateFin: query.dateFin, salles: listeSalles, jours };

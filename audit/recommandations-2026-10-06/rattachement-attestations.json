@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-06T11:29:39.503Z",
+  "database": "university_recommandations_20261006",
+  "passed": true,
+  "observations": {
+    "mismatchedStudentInscription": 400,
+    "nonexistentInscription": 400,
+    "mismatchedYear": 400,
+    "mismatchedPromotion": 400,
+    "concurrentEmissions": [
+      201,
+      409,
+      409,
+      409
+    ],
+    "activeSchoolCertificates": 1,
+    "promotionDerivedFromInscription": true,
+    "yearDerivedFromInscription": true,
+    "typeChangeToExistingCertificate": 409,
+    "immutableOwnerRejectedByDto": 400,
+    "concurrentTypeChanges": [
+      200,
+      409
+    ],
+    "activeSuccessCertificates": 1,
+    "reissueAfterRevocation": 201,
+    "revokedCertificateStillInvalid": true
+  },
+  "productionUntouched": true
+}

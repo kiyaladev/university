@@ -1,0 +1,20 @@
+{
+  "evaluation_introuvable": "Assessment not found",
+  "matiere_introuvable": "Subject not found",
+  "annee_academique_introuvable": "Academic year not found",
+  "promotion_introuvable": "Programme not found",
+  "deliberation_introuvable": "Deliberation not found",
+  "aucune_ligne_pour_cet_etudiant_a_cette_deliberation": "No record found for this student in this deliberation",
+  "l_evaluation_existante_intitule_est_deja_cloturee": "The \"{existante.intitule}\" assessment is already closed.",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "une_deliberation_de_session_normale_existe_deja_pour_cette_p": "A regular session deliberation already exists for this programme and year.",
+  "une_deliberation_de_rattrapage_existe_deja_pour_cette_promot": "A make-up session deliberation already exists for this programme and year.",
+  "deliberation_validee_par_le_jury_tout_recalcul_est_bloque": "Deliberation validated by the jury: any recalculation is blocked.",
+  "cette_deliberation_est_deja_validee": "This deliberation is already validated.",
+  "la_deliberation_de_la_session_normale_doit_d_abord_exister": "The regular session deliberation must exist first.",
+  "l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_": "The \"{existante.intitule}\" assessment is closed: its grades are frozen and it can no longer be modified.",
+  "l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_": "The \"{evaluation.intitule}\" assessment is closed: grade entry is closed.",
+  "l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig": "Assessment “{intitule}” is closed: its grades are frozen and it cannot be changed.",
+  "impossible_de_supprimer_existante_intitule_des_notes_y_sont_de": "Cannot delete “{intitule}”: {nombre} grades have already been recorded.",
+  "l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes": "Assessment “{intitule}” is closed: grades can no longer be entered."
+}

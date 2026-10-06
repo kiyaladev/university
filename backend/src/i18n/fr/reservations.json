@@ -1,0 +1,13 @@
+{
+  "les_reservations_sont_possibles_entre_07h00_et_22h00": "Les réservations sont possibles entre 07h00 et 22h00",
+  "seul_le_demandeur_ou_l_administrateur_peut_modifier": "Seul le demandeur ou l'administrateur peut modifier",
+  "une_reservation_deja_statuee_ne_peut_plus_etre_modifiee": "Une réservation déjà statuée ne peut plus être modifiée",
+  "seul_le_demandeur_ou_l_administrateur_peut_annuler": "Seul le demandeur ou l'administrateur peut annuler",
+  "cette_reservation_a_deja_ete_statuee": "Cette réservation a déjà été statuée",
+  "reservation_introuvable": "Réservation introuvable",
+  "periode_invalide": "Période invalide",
+  "periode_trop_longue": "La période sélectionnée ne peut pas dépasser 93 jours",
+  "l_heure_de_fin_doit_suivre_l_heure_de_debut": "L'heure de fin doit suivre l'heure de début",
+  "cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_": "Cette salle est déjà réservée de {debut} à {fin}.",
+  "ecriture_concurrente_reessayez": "Une réservation concurrente vient d'être enregistrée. Rechargez le calendrier puis réessayez."
+}

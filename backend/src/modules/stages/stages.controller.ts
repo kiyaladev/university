@@ -19,7 +19,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { FicheService } from './fiche.service';
 import {
   CreateSoutenanceDto,
@@ -30,6 +30,7 @@ import {
   UpdateTravailDto,
 } from './stages.dto';
 import { StagesService, ROLES_PILOTES } from './stages.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 
 /** Encadrant : agit sur les travaux qu'il encadre, pas sur ceux des autres. */
 const ADJUDANTS = [...ROLES_PILOTES, Role.ENSEIGNANT];
@@ -49,15 +50,15 @@ export class TravauxEncadresController {
   }
 
   /** Fiche A4 : ouverte dans un nouvel onglet, le jeton passe par l'URL. */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT, Role.ENSEIGNANT)
+  @DocumentScope('travailEncadre', { [Role.ETUDIANT]: 'etudiantId', [Role.ENSEIGNANT]: 'encadrantId' })
   @Get(':id/fiche')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    const html = await this.fiche.fiche(id, token);
+    const html = await this.fiche.fiche(id, jetonImprimable(req));
     res.type('html').send(html);
   }
 
@@ -88,8 +89,8 @@ export class TravauxEncadresController {
   /** Suppression réservée à l'administration, dossier non engagé (PROPOSE/VALIDE). */
   @Roles(Role.ADMIN)
   @Delete(':id')
-  supprimer(@Param('id') id: string) {
-    return this.service.supprimer(id);
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 
   /** Machine à états : une cible, appliquée depuis l'état courant. */
@@ -128,7 +129,11 @@ export class SoutenancesController {
   /** Constat du jury : note et mention sur une soutenance tenue. */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Put(':id/hota')
-  noter(@Param('id') id: string, @Body() dto: NoteSoutenanceDto) {
-    return this.service.noter(id, dto);
+  noter(
+    @Param('id') id: string,
+    @Body() dto: NoteSoutenanceDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.noter(id, dto, user);
   }
 }

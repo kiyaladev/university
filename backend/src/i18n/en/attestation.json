@@ -1,0 +1,13 @@
+{
+  "enseignant_introuvable": "Teacher not found",
+  "seule_l_administration_peut_revoquer_un_appareil": "Only the administration can revoke a device",
+  "signature_de_la_passerelle_biometrique_invalide": "Invalid signature from the biometric gateway",
+  "resultat_biometrique_perime_recommencez_la_lecture": "Biometric result expired — please retry the scan",
+  "aucune_empreinte_enrolee_pour_cet_enseignant": "No fingerprint registered for this teacher",
+  "aucune_empreinte_n_est_enrolee_pour_cet_enseignant": "No fingerprint is registered for this teacher",
+  "aucun_code_personnel_n_a_ete_defini_pour_cet_enseignant": "No personal code has been set for this teacher",
+  "code_personnel_incorrect": "Incorrect personal code",
+  "seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u": "Only academic services may define the means of attestation for a teacher.",
+  "appareil_inconnu_ou_revoque_sa_lecture_d_empreinte_n_est_pas": "Unknown or revoked device: its fingerprint scan is not admissible.",
+  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "Teacher consent is required before any fingerprint enrolment. Personal code and signature remain available."
+}

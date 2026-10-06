@@ -2,21 +2,20 @@
   <q-dialog v-model="dialogOuvert">
     <q-card style="width: 640px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">{{ formation ? 'Modifier la formation' : 'Nouvelle formation' }}</div>
+        <div class="text-h6">{{ formation ? $t('formationsAdmin.dialog.title.edit') : $t('formationsAdmin.dialog.title.create') }}</div>
         <div class="text-caption text-grey-7">
-          Toute formation naît en brouillon : rien ne se vend avant publication.
-          Dès la première inscription confirmée, le titre et le prix se figent.
+          {{ $t('formationsAdmin.dialog.subtitle') }}
         </div>
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Présentation</span>
+        <span class="section-titre">{{ $t('formationsAdmin.dialog.sections.presentation') }}</span>
         <q-input
           v-model="form.titre"
           outlined
           dense
-          label="Titre de la formation *"
-          hint="Ex. : Certification professionnelle en comptabilité"
+          :label="$t('formationsAdmin.dialog.fields.title')"
+          :hint="$t('formationsAdmin.dialog.fields.titleHint')"
           autofocus
         />
         <q-input
@@ -26,7 +25,7 @@
           type="textarea"
           rows="3"
           autogrow
-          label="Description"
+          :label="$t('common.fields.description')"
         />
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
@@ -34,8 +33,8 @@
               v-model="form.categorie"
               outlined
               dense
-              label="Catégorie"
-              hint="Ex. : Informatique, Gestion, Santé…"
+              :label="$t('cites.chambres.filters.categorie')"
+              :hint="$t('formationsAdmin.dialog.fields.categoryHint')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -43,13 +42,13 @@
               v-model="form.lieu"
               outlined
               dense
-              label="Lieu / district"
-              hint="Campus, salle, faculté…"
+              :label="$t('formationsAdmin.dialog.fields.location')"
+              :hint="$t('formationsAdmin.dialog.fields.locationHint')"
             />
           </div>
         </div>
 
-        <span class="section-titre">Tarif</span>
+        <span class="section-titre">{{ $t('formationsAdmin.dialog.sections.price') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-8">
             <q-input
@@ -58,7 +57,7 @@
               min="0"
               outlined
               dense
-              label="Prix (GNF) *"
+              :label="$t('formationsAdmin.dialog.fields.price')"
             />
           </div>
           <div class="col-12 col-sm-4">
@@ -69,12 +68,12 @@
               dense
               emit-value
               map-options
-              label="Devise"
+              :label="$t('formationsAdmin.dialog.fields.currency')"
             />
           </div>
         </div>
 
-        <span class="section-titre">Déroulement</span>
+        <span class="section-titre">{{ $t('formationsAdmin.dialog.sections.schedule') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-input
@@ -83,14 +82,14 @@
               min="1"
               outlined
               dense
-              label="Durée (heures)"
+              :label="$t('formationsAdmin.dialog.fields.duration')"
             />
           </div>
           <div class="col-12 col-sm-3">
-            <champ-date v-model="form.dateDebut" label="Début" />
+            <champ-date v-model="form.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
           </div>
           <div class="col-12 col-sm-3">
-            <champ-date v-model="form.dateFin" label="Fin" />
+            <champ-date v-model="form.dateFin" :label="$t('common.messages.end')" />
           </div>
         </div>
 
@@ -102,8 +101,8 @@
               min="1"
               outlined
               dense
-              label="Capacité (places)"
-              hint="Vide = accès libre"
+              :label="$t('formationsAdmin.dialog.fields.capacity')"
+              :hint="$t('formationsAdmin.dialog.fields.capacityHint')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -114,7 +113,7 @@
               dense
               emit-value
               map-options
-              label="Statut"
+              :label="$t('common.fields.status')"
               :disable="!!formation"
             />
           </div>
@@ -122,11 +121,11 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           :disable="form.titre.trim().length < 3"
           @click="enregistrer"
@@ -138,6 +137,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
@@ -148,12 +148,15 @@ const props = defineProps<{ modelValue: boolean; formation?: Formation | null }>
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t: $t } = useI18n();
 
 const DEVICES = ['GNF'];
-const optionsStatuts = Object.entries(LIBELLE_STATUT_FORMATION).map(([value, label]) => ({
-  value: value as StatutFormation,
-  label,
-}));
+const optionsStatuts = computed(() =>
+  Object.keys(LIBELLE_STATUT_FORMATION).map((value) => ({
+    value: value as StatutFormation,
+    label: $t(`libelles.statut_formation.${value}`),
+  })),
+);
 
 const dialogOuvert = computed({
   get: () => props.modelValue,
@@ -228,10 +231,10 @@ async function enregistrer() {
     };
     if (props.formation) {
       await api.put(`/formations/${props.formation.id}`, payload);
-      $q.notify({ type: 'positive', message: 'Formation mise à jour' });
+      $q.notify({ type: 'positive', message: $t('formationsAdmin.dialog.messages.updated') });
     } else {
       await api.post('/formations', payload);
-      $q.notify({ type: 'positive', message: 'Formation enregistrée — pensez à la publier' });
+      $q.notify({ type: 'positive', message: $t('formationsAdmin.dialog.messages.created') });
     }
     dialogOuvert.value = false;
     emit('enregistre');

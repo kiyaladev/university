@@ -8,6 +8,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutElection } from '@prisma/client';
+import { echapper } from '../../common/utils';
 
 export interface BulletinCandidat {
   id: string;
@@ -23,14 +24,6 @@ export interface BulletinElection {
   nbSieges: number;
   statut: StatutElection;
   candidats: BulletinCandidat[];
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 const STYLE = `

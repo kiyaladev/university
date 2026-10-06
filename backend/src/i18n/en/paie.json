@@ -1,0 +1,11 @@
+{
+  "feuille_de_paie_introuvable": "Payslip not found",
+  "seule_une_feuille_en_brouillon_peut_etre_validee": "Only a draft payslip can be validated",
+  "calculez_la_feuille_avant_de_la_valider": "Compute the payslip before validating it",
+  "seule_une_feuille_validee_peut_etre_payee": "Only a validated payslip can be paid",
+  "seule_une_feuille_en_brouillon_peut_etre_supprimee": "Only a draft payslip can be deleted",
+  "une_feuille_libelle_existe_deja": "A payslip titled \"{libelle}\" already exists",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "feuille_feuille_statut_statutpaie_validee_validee_payee_les_": "Payslip {feuille.statut}: amounts are frozen, cannot be recalculated",
+  "ecriture_concurrente_reessayez": "This payslip was just changed. Reload it and try again."
+}

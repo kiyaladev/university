@@ -5,21 +5,21 @@
   >
     <q-card style="width: 520px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ equipement ? 'Modifier l’équipement' : 'Nouvel équipement' }}
+        {{ equipement ? $t('helpdesk.equipmentDialog.titleEdit') : $t('helpdesk.equipmentDialog.titleNew') }}
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Identification</span>
-        <q-input v-model="form.libelle" outlined dense label="Libellé *" class="q-mb-md"
-          hint="Ex. : Vidéoprojecteur salle S204, micro d'amphi, poste info — bibliothèque" />
-        <q-input v-model="form.emplacement" outlined dense label="Emplacement"
-          hint="Ex. : Bâtiment A — étage 2, salle 204" class="q-mb-md" />
-        <q-toggle v-model="form.actif" label="Équipement en service" />
+        <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
+        <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" class="q-mb-md"
+          :hint="$t('helpdesk.equipmentDialog.exampleLabel')" />
+        <q-input v-model="form.emplacement" outlined dense :label="$t('helpdesk.table.columns.location')"
+          :hint="$t('helpdesk.equipmentDialog.exampleLocation')" class="q-mb-md" />
+        <q-toggle v-model="form.actif" :label="$t('helpdesk.equipmentDialog.inService')" />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn color="primary" unelevated label="Enregistrer" :loading="enregistrement" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -28,6 +28,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { EquipementCampus } from '../types';
 
@@ -39,6 +40,7 @@ const props = defineProps<{ modelValue: boolean; equipement?: EquipementCampus |
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const form = ref({ libelle: '', emplacement: '', actif: true });
@@ -66,7 +68,7 @@ async function enregistrer() {
     };
     if (props.equipement) await api.put(`/equipements/${props.equipement.id}`, payload);
     else await api.post('/equipements', payload);
-    $q.notify({ type: 'positive', message: 'Équipement enregistré' });
+    $q.notify({ type: 'positive', message: t('helpdesk.equipmentDialog.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

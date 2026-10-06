@@ -26,8 +26,7 @@ import {
  * - Lecture : ouverte à tout utilisateur connecté (énumère aussi les
  *   ressources publiques côté étudiant).
  * - Écriture / publication / archivage : ADMIN et ENSEIGNANT.
- * - Enregistrement de vue : tout le monde (mêmes anonymes qui détiennent
- *   le lien, mais leur IP est tracée).
+ * - Enregistrement de vue : utilisateurs connectés, dans leur périmètre de lecture.
  * - Stats : ADMIN/ENSEIGNANT, avec liste des dernières vues.
  *
  * Routes « /ma-collecte », « /recherche » et « :id/vue » déclarées avant
@@ -48,25 +47,25 @@ export class VodController {
 
   /** Recherche plein texte : titre, description, transcription. */
   @Get('recherche')
-  recherche(@Query('q') q: string) {
+  recherche(@Query('q') q: string, @CurrentUser() user: AuthUser) {
     if (!q || q.length < 2) return [];
-    return this.service.recherche(q);
+    return this.service.recherche(q, user);
   }
 
   @Get()
-  liste(@Query() query: VodQueryDto) {
-    return this.service.liste(query);
+  liste(@Query() query: VodQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
   }
 
   @Get(':id')
-  trouver(@Param('id') id: string) {
-    return this.service.trouver(id);
+  trouver(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.trouverPour(id, user);
   }
 
   @Roles(Role.ADMIN, Role.ENSEIGNANT)
   @Get(':id/stats')
-  stats(@Param('id') id: string) {
-    return this.service.statistiques(id);
+  stats(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.statistiques(id, user);
   }
 
   @Roles(Role.ADMIN, Role.ENSEIGNANT)
@@ -102,10 +101,9 @@ export class VodController {
   }
 
   /**
-   * Enregistrement d'une vue (signaux de progression). La route est ouverte
-   * à tout le monde : la page de lecteur, même déconnectée d'un étudiant,
-   * peut signaler sa progression (compteur global uniquement, pas de ligne
-   * étiquetée par un etudiantId si le visiteur n'est pas connu).
+   * Enregistrement d'une vue pour l'utilisateur connecté autorisé à lire.
+   * Le service impose l'identité étudiante du jeton et recontrôle l'accès
+   * dans la transaction ; aucune identité de lecteur n'est acceptée du corps.
    */
   @Post(':id/vue')
   enregistrerVue(

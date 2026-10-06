@@ -3,17 +3,17 @@
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section class="text-h6 row items-center">
         <q-icon name="library_books" class="q-mr-sm" />
-        {{ document ? 'Modifier le document' : 'Déposer un document' }}
+        {{ document ? $t('bibliotheque.dialog.title.edit') : $t('bibliotheque.dialog.title.deposit') }}
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <span class="section-titre">Fiche du document</span>
+        <span class="section-titre">{{ $t('bibliotheque.dialog.sections.document') }}</span>
         <q-input
           v-model="form.titre"
           outlined
           dense
-          label="Titre *"
-          hint="Ex. « Impact du Téléphone mobile sur la scolarité des étudiantes à Kankan »"
+          :label="$t('bibliotheque.dialog.fields.title')"
+          :hint="$t('bibliotheque.dialog.fields.titleHint')"
         />
 
         <div class="row q-col-gutter-md">
@@ -25,7 +25,7 @@
               dense
               emit-value
               map-options
-              label="Type *"
+              :label="$t('bibliotheque.dialog.fields.type')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -34,8 +34,8 @@
               type="number"
               outlined
               dense
-              label="Année d'édition"
-              hint="Vide : l'année de dépôt est retenue"
+              :label="$t('bibliotheque.filters.editionYear')"
+              :hint="$t('bibliotheque.dialog.fields.editionYearHint')"
               :max="2100"
               :min="1900"
             />
@@ -46,11 +46,11 @@
           v-model="form.auteurs"
           outlined
           dense
-          label="Auteurs"
-          hint="Plusieurs noms séparés par « ; », ex. « Diallo A. ; Barry M. »"
+          :label="$t('bibliotheque.dialog.fields.authors')"
+          :hint="$t('bibliotheque.dialog.fields.authorsHint')"
         />
 
-        <q-input v-model="form.resume" outlined dense type="textarea" autogrow label="Résumé" />
+        <q-input v-model="form.resume" outlined dense type="textarea" autogrow :label="$t('bibliotheque.dialog.fields.abstract')" />
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
@@ -58,8 +58,8 @@
               v-model="form.departementId"
               endpoint="/departements"
               :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
-              label="Département"
-              placeholder="Tapez le nom ou le code…"
+              :label="$t('common.fields.department')"
+              :placeholder="$t('bibliotheque.filters.departmentPlaceholder')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -67,8 +67,8 @@
               v-model="form.enseignantId"
               endpoint="/enseignants"
               :label-fn="(e) => `${e.prenom} ${e.nom}${e.matricule ? ' — ' + e.matricule : ''}`"
-              label="Encadrant"
-              placeholder="Tapez le nom…"
+              :label="$t('stages.detail.fields.supervisor')"
+              :placeholder="$t('bibliotheque.dialog.fields.supervisorPlaceholder')"
             />
           </div>
         </div>
@@ -79,22 +79,22 @@
               v-model="form.etudiantId"
               endpoint="/etudiants"
               :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-              label="Étudiant"
-              placeholder="Tapez le matricule ou le nom…"
+              :label="$t('common.fields.student')"
+              :placeholder="$t('bibliotheque.dialog.fields.studentPlaceholder')"
             />
           </div>
           <div class="col-12 col-sm-6 q-pt-md">
-            <q-toggle v-model="form.public" label="Visible sur la page publique" />
+            <q-toggle v-model="form.public" :label="$t('bibliotheque.dialog.fields.public')" />
           </div>
         </div>
 
-        <span class="section-titre">Mots-clés</span>
+        <span class="section-titre">{{ $t('bibliotheque.dialog.sections.keywords') }}</span>
         <q-input
           v-model="motCleSaisi"
           outlined
           dense
-          label="Ajouter un mot-clé"
-          placeholder="Tapez puis Entrée pour ajouter"
+          :label="$t('bibliotheque.dialog.fields.addKeyword')"
+          :placeholder="$t('bibliotheque.dialog.fields.keywordPlaceholder')"
           @keydown.enter.prevent="ajouterMotCle"
         >
           <template #append>
@@ -104,7 +104,7 @@
               class="cursor-pointer"
               @click="ajouterMotCle"
             >
-              <q-tooltip>Ajouter</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.add') }}</q-tooltip>
             </q-icon>
           </template>
         </q-input>
@@ -122,16 +122,14 @@
           />
         </div>
         <div v-else class="text-caption text-grey-7 q-mt-xs">
-          Aucun mot-clé. Conseillé : « machine learning », « Conakry », « durabilité ».
+          {{ $t('bibliotheque.dialog.fields.noKeywords') }}
         </div>
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <span class="section-titre">Fichier (archivage natif)</span>
+        <span class="section-titre">{{ $t('bibliotheque.dialog.sections.file') }}</span>
         <p class="text-caption text-grey-7 q-mt-xs q-mb-sm">
-          PDF jusqu'à 8 Mo : converti en data-url base64 puis stocké côté serveur,
-          où son contenu texte sera extrait pour la recherche full-text et l'analyse
-          anti-plagiat.
+          {{ $t('bibliotheque.dialog.file.description', { max: maxFichierLisible }) }}
         </p>
         <q-file
           v-model="fichierChoisi"
@@ -139,21 +137,20 @@
           :max-file-size="MAX_FICHIER_OCTETS"
           outlined
           dense
-          label="PDF joint"
-          :hint="`Max ${MAX_FICHIER_OCTETS_LABEL}`"
+          :label="$t('bibliotheque.dialog.file.attachment')"
+          :hint="$t('bibliotheque.dialog.file.maxSize', { max: maxFichierLisible })"
           :disable="conversionFichier || extractionEnCours"
         >
           <template #prepend><q-icon name="attach_file" /></template>
         </q-file>
         <div v-if="document?.tailleKo" class="text-caption text-grey-7 q-mt-xs">
-          Fichier actuel : PDF ({{ (document.tailleKo / 1024).toFixed(1) }} Mo) — en choisir
-          un nouveau le remplace.
+          {{ $t('bibliotheque.dialog.file.current', { size: (document.tailleKo / 1024).toFixed(1) }) }}
         </div>
         <div v-if="conversionFichier" class="row items-center q-mt-sm text-caption text-grey-7">
-          <q-spinner size="16px" class="q-mr-sm" /> Conversion en base64…
+          <q-spinner size="16px" class="q-mr-sm" /> {{ $t('bibliotheque.dialog.file.converting') }}
         </div>
         <div v-else-if="extractionEnCours" class="row items-center q-mt-sm text-caption text-primary">
-          <q-spinner size="16px" class="q-mr-sm" /> Extraction du texte en cours (recherche full-text)…
+          <q-spinner size="16px" class="q-mr-sm" /> {{ $t('bibliotheque.dialog.file.extracting') }}
         </div>
       </q-card-section>
 
@@ -163,10 +160,9 @@
         class="bg-orange-1 text-orange-10 q-mx-md q-mb-md"
       >
         <template #avatar><q-icon name="warning" color="orange" /></template>
-        <div class="text-weight-medium">Doublon potentiel détecté</div>
+        <div class="text-weight-medium">{{ $t('bibliotheque.dialog.plagiarism.title') }}</div>
         <div class="q-mt-xs text-caption">
-          Ce document pourrait être un doublon d'un document existant
-          (score {{ suspicionDetectee.score }} %) — vérifiez avant de publier.
+          {{ $t('bibliotheque.dialog.plagiarism.message', { score: suspicionDetectee.score }) }}
         </div>
         <q-btn
           flat
@@ -174,19 +170,19 @@
           no-caps
           color="orange"
           icon="open_in_new"
-          label="Voir la suspicion"
+          :label="$t('bibliotheque.dialog.plagiarism.view')"
           class="q-mt-xs"
           @click="voirSuspicion"
         />
       </q-banner>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           :disable="conversionFichier || extractionEnCours"
           @click="enregistrer"
@@ -197,7 +193,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
@@ -219,6 +216,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t: $t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 
@@ -232,12 +230,12 @@ const motCleSaisi = ref('');
 
 /** 8 Mo côté frontend — l'extraction PDF côté serveur se fait en parallèle. */
 const MAX_FICHIER_OCTETS = 8 * 1024 * 1024;
-const MAX_FICHIER_OCTETS_LABEL = '8 Mo';
+const maxFichierLisible = computed(() => $t('bibliotheque.dialog.file.maxSizeValue', { count: 8 }));
 
-const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({
+const typesDocument = computed(() => Object.keys(LIBELLE_TYPE_DOCUMENT).map((value) => ({
   value,
-  label,
-}));
+  label: $t(`libelles.type_document.${value}`),
+})));
 
 const form = ref({
   titre: '',
@@ -296,7 +294,7 @@ watch(fichierChoisi, (f) => {
   if (f.size > MAX_FICHIER_OCTETS) {
     $q.notify({
       type: 'negative',
-      message: `Document refusé : il dépasse la limite de ${MAX_FICHIER_OCTETS_LABEL}.`,
+      message: $t('bibliotheque.dialog.file.tooLarge', { max: maxFichierLisible.value }),
     });
     fichierChoisi.value = null;
     return;
@@ -308,7 +306,7 @@ watch(fichierChoisi, (f) => {
     conversionFichier.value = false;
   };
   lecteur.onerror = () => {
-    $q.notify({ type: 'negative', message: "La lecture du fichier a échoué." });
+    $q.notify({ type: 'negative', message: $t('bibliotheque.dialog.file.readFailed') });
     fichierChoisi.value = null;
     conversionFichier.value = false;
   };
@@ -321,7 +319,7 @@ function nettoyable(v: any) {
 
 async function enregistrer() {
   if (!form.value.titre.trim()) {
-    $q.notify({ type: 'warning', message: 'Le titre est obligatoire' });
+    $q.notify({ type: 'warning', message: $t('bibliotheque.dialog.validation.titleRequired') });
     return;
   }
   if (fichierDataUrl.value) extractionEnCours.value = true;
@@ -358,13 +356,13 @@ async function enregistrer() {
     }
 
     if (!suspicionDetectee.value) {
-      $q.notify({ type: 'positive', message: 'Document enregistré' });
+      $q.notify({ type: 'positive', message: $t('bibliotheque.dialog.messages.saved') });
       emit('enregistre');
       emit('update:modelValue', false);
     } else {
       $q.notify({
         type: 'warning',
-        message: 'Document enregistré — vérifiez l’avertissement anti-plagiat',
+        message: $t('bibliotheque.dialog.messages.savedPlagiarismWarning'),
         timeout: 4000,
       });
     }
@@ -390,7 +388,6 @@ function voirSuspicion() {
   margin-bottom: 4px;
   font-weight: 600;
   font-size: 0.85rem;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--up-encre);
 }

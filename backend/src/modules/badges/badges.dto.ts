@@ -46,10 +46,10 @@ export class CreateBadgeDto {
  * l'identifiant et le jeton : le vigile scanne, il ne se connecte pas.
  */
 export class VerifierBadgePubliqueDto {
-  @IsString()
+  @IsString() @MinLength(1) @MaxLength(64)
   badge: string;
 
-  @IsString()
+  @IsString() @MinLength(1) @MaxLength(64)
   k: string;
 }
 

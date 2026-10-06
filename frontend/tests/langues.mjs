@@ -1,0 +1,37 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+const base = process.argv[2] || 'http://127.0.0.1:15034';
+const report = process.argv[3] || '/tmp/university-langues.json';
+if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('Recette réservée à localhost');
+const browser = await chromium.launch();
+try {
+  const context = await browser.newContext({ locale: 'fr-FR' });
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.text().includes('intlify')) errors.push(message.text()); });
+  await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
+  await page.locator('input[type=email]').fill('admin@unipresence.gn');
+  await page.locator('input[type=password]').fill('Passer@2026');
+  await page.locator('button[type=submit]').click();
+  await page.waitForURL(url => !url.hash.startsWith('#/connexion'));
+  await page.goto(base + '/#/audit', { waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: 'Journal d’audit', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Changer de langue', exact: true }).click();
+  await page.getByText('English', { exact: true }).click();
+  await page.getByRole('heading', { name: 'Audit log', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Open menu', exact: true }).waitFor();
+  if (await page.locator('html').getAttribute('lang') !== 'en') throw Error('Langue HTML incorrecte');
+  if (!(await page.locator('.q-table__bottom').innerText()).includes('Records per page')) throw Error('Pagination Quasar non traduite');
+  const sidebar = await page.locator('.q-drawer').innerText();
+  if (!sidebar.includes('Administration') || sidebar.includes('Présences')) throw Error('Menu non traduit');
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.getByRole('heading', { name: 'Audit log', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Change language', exact: true }).click();
+  await page.getByText('Français', { exact: true }).click();
+  await page.getByRole('heading', { name: 'Journal d’audit', exact: true }).waitFor();
+  if (errors.length) throw Error(errors.join('\n'));
+  const result = { date: new Date().toISOString(), checks: ['Sélecteur FR/EN', 'Menu traduit', 'Pagination Quasar', 'Langue HTML', 'Préférence après rechargement', 'Retour en français', 'Aucune erreur de traduction'] };
+  fs.writeFileSync(report, JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result));
+} finally { await browser.close(); }

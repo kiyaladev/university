@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Affichage des événements SMS et téléchargement documentaire dans le Journal",
+  "environnement": "Recette locale isolée sur le build PWA de production servi en HTTP ; endpoints /api/auth/me et /api/controles/audit simulés ; aucune requête de connexion ou donnée métier envoyée au backend.",
+  "checks": [
+    { "role": "ADMIN", "locale": "fr-FR", "width": 1440, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "ADMIN", "locale": "fr-FR", "width": 375, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "ADMIN", "locale": "en-US", "width": 1440, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "ADMIN", "locale": "en-US", "width": 375, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "DIRECTION", "locale": "fr-FR", "width": 1440, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "DIRECTION", "locale": "fr-FR", "width": 375, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "DIRECTION", "locale": "en-US", "width": 1440, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." },
+    { "role": "DIRECTION", "locale": "en-US", "width": 375, "result": "OK", "details": "Libellés SMS/document, détail SMS, résumé, filtre entité et absence de débordement." }
+  ],
+  "donneesFixture": {
+    "action": "SMS_DIFFUSION_DEMANDEE",
+    "nombreDestinataires": 3,
+    "messagesPresents": 2,
+    "telephone": "absent"
+  },
+  "evenementDocument": {
+    "action": "DOCUMENT_DEPOT_TELECHARGE",
+    "libelleFR": "Téléchargement d’un document",
+    "libelleEN": "Document downloaded",
+    "contenuFichier": "absent du détail d’audit"
+  },
+  "validation": {
+    "playwright": "8 contrôles réussis le 3 octobre : ADMIN et DIRECTION, français et anglais, 1440 et 375 px. Les réponses auth et audit sont simulées en local.",
+    "serviceWorker": "Sur le build PWA de production, le Service Worker s’est activé et a pris le contrôle de la page sans erreur navigateur.",
+    "typecheck": "Réussi",
+    "catalogues": "5 453 clés par langue, aucune différence",
+    "pwaBuild": "Réussi dans /tmp/university-pwa-sms-20261003 avec API_URL non production"
+  }
+}

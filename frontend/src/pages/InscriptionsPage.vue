@@ -1,40 +1,36 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Inscriptions</div>
-        <div class="page-sous-titre">
-          Dossiers de l’année : encaisser les frais par Mobile Money ou au
-          guichet, valider les dossiers réglés, imprimer les certificats.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('inscriptions.title')" :subtitle="$t('inscriptions.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutGerer"
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle inscription au guichet"
+          :label="$t('inscriptions.actions.new')"
           @click="dialogInscription = true"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+    <parcours-metier parcours="dossiers" />
 
     <!-- Arrivée depuis la fiche d'un étudiant : le ciblage est annoncé et se lève. -->
     <q-banner v-if="etudiantCible" dense class="note--info q-mb-md">
       <template #avatar><q-icon name="person_search" /></template>
-      Dossiers de <strong>{{ etudiantCible.prenom }} {{ etudiantCible.nom }}</strong>
-      ({{ etudiantCible.matricule }}) — toutes années confondues.
+      {{ $t('inscriptions.banner.dossiersOf') }} <strong>{{ etudiantCible.prenom }} {{ etudiantCible.nom }}</strong>
+      {{ $t('inscriptions.banner.allYears', { matricule: etudiantCible.matricule }) }}
       <template #action>
-        <q-btn flat dense no-caps label="Voir tous les dossiers" @click="retirerEtudiantCible" />
+        <q-btn flat dense no-caps :label="$t('inscriptions.banner.viewAll')" @click="retirerEtudiantCible" />
       </template>
     </q-banner>
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (n° de dossier, nom étudiant)…"
+      :placeholder="$t('inscriptions.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -46,7 +42,7 @@
           clearable
           emit-value
           map-options
-          label="Année académique"
+          :label="$t('inscriptions.filters.academicYear')"
           @update:model-value="filtres.promotionId = null"
         />
         <q-select
@@ -57,7 +53,7 @@
           clearable
           emit-value
           map-options
-          label="Promotion"
+          :label="$t('inscriptions.filters.promotion')"
         />
         <q-select
           v-model="filtres.statut"
@@ -67,16 +63,15 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('inscriptions.filters.status')"
         />
-        <champ-date v-model="filtres.dateDebut" label="Inscrit depuis" />
-        <champ-date v-model="filtres.dateFin" label="jusqu'à" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('inscriptions.filters.enrolledFrom')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('inscriptions.filters.enrolledUntil')" />
       </template>
       <template #actions>
         <view-toggle
           cle="inscriptions"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
         />
       </template>
@@ -93,6 +88,7 @@
       :loading="chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
+      <template #loading><q-linear-progress indeterminate color="primary" :aria-label="$t('common.messages.loading')" /></template>
       <template #no-data>
         <div class="inscriptions-vide">
           <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
@@ -103,7 +99,7 @@
               outline
               no-caps
               icon="refresh"
-              label="Réinitialiser les filtres"
+              :label="$t('inscriptions.actions.resetFilters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -112,7 +108,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouvelle inscription au guichet"
+              :label="$t('inscriptions.actions.new')"
               @click="dialogInscription = true"
             />
           </div>
@@ -178,11 +174,11 @@
             round
             color="primary"
             icon="payments"
-            aria-label="Encaisser un paiement sur ce dossier"
+            :aria-label="$t('inscriptions.table.actions.collectAria')"
             @click="encaisser(p.row)"
           >
             <q-tooltip>
-              Encaisser — reste {{ montantLisible(resteAPayer(p.row)) }} GNF
+              {{ $t('inscriptions.table.actions.collectTooltip', { amount: montantLisible(resteAPayer(p.row)) }) }}
             </q-tooltip>
           </q-btn>
           <q-btn
@@ -190,10 +186,10 @@
             dense
             round
             icon="receipt_long"
-            aria-label="Voir les paiements de ce dossier"
+            :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')"
             @click="voirPaiements(p.row)"
           >
-            <q-tooltip>Paiements du dossier</q-tooltip>
+            <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutValider(p.row)"
@@ -202,10 +198,10 @@
             round
             color="positive"
             icon="verified"
-            aria-label="Valider le dossier"
+            :aria-label="$t('inscriptions.table.actions.validateAria')"
             @click="valider(p.row)"
           >
-            <q-tooltip>Valider le dossier (frais réglés)</q-tooltip>
+            <q-tooltip>{{ $t('inscriptions.table.actions.validateTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutAnnuler(p.row)"
@@ -214,20 +210,20 @@
             round
             color="negative"
             icon="cancel"
-            aria-label="Annuler le dossier"
+            :aria-label="$t('inscriptions.table.actions.cancelAria')"
             @click="annuler(p.row)"
           >
-            <q-tooltip>Annuler le dossier</q-tooltip>
+            <q-tooltip>{{ $t('inscriptions.table.actions.cancelTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="print"
-            aria-label="Imprimer le certificat d'inscription"
+            :aria-label="$t('inscriptions.table.actions.printAria')"
             @click="imprimer(p.row)"
           >
-            <q-tooltip>Certificat d’inscription A4</q-tooltip>
+            <q-tooltip>{{ $t('inscriptions.table.actions.printTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -235,16 +231,16 @@
             round
             color="primary"
             icon="person"
-            aria-label="Voir la fiche de l'étudiant"
+            :aria-label="$t('inscriptions.table.actions.viewStudentAria')"
             @click="voirEtudiant(p.row)"
           >
-            <q-tooltip>Fiche de l’étudiant</q-tooltip>
+            <q-tooltip>{{ $t('inscriptions.table.actions.viewStudentTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
     </q-table>
 
-    <q-linear-progress
+    <q-linear-progress :aria-label="$t('common.messages.loading')"
       v-if="modeVue === 'cartes' && chargement"
       indeterminate
       color="primary"
@@ -275,17 +271,17 @@
           </div>
           <div class="row q-mt-sm q-col-gutter-sm">
             <div class="col-4">
-              <div class="text-caption text-grey-7">Frais</div>
+              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.fees') }}</div>
               <div class="text-weight-medium chiffres">{{ montantLisible(d.montantFrais) }}</div>
             </div>
             <div class="col-4">
-              <div class="text-caption text-grey-7">Payé</div>
+              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.paid') }}</div>
               <div class="text-weight-medium chiffres text-positive">
                 {{ montantLisible(montantPaye(d)) }}
               </div>
             </div>
             <div class="col-4">
-              <div class="text-caption text-grey-7">Reste à payer</div>
+              <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.balance') }}</div>
               <div
                 class="text-weight-medium chiffres"
                 :class="{ 'text-negative': resteAPayer(d) > 0 }"
@@ -307,7 +303,7 @@
             color="primary"
             icon="payments"
             no-caps
-            label="Encaisser"
+            :label="$t('inscriptions.cards.actions.collect')"
             @click="encaisser(d)"
           />
           <q-btn
@@ -315,7 +311,7 @@
             dense
             icon="receipt_long"
             no-caps
-            label="Paiements"
+            :label="$t('inscriptions.cards.actions.payments')"
             @click="voirPaiements(d)"
           />
           <q-btn
@@ -325,7 +321,7 @@
             color="positive"
             icon="verified"
             no-caps
-            label="Valider"
+            :label="$t('inscriptions.cards.actions.validate')"
             @click="valider(d)"
           />
           <q-btn
@@ -335,7 +331,7 @@
             color="negative"
             icon="cancel"
             no-caps
-            label="Annuler"
+            :label="$t('inscriptions.cards.actions.cancel')"
             @click="annuler(d)"
           />
           <q-btn
@@ -344,7 +340,7 @@
             color="primary"
             icon="print"
             no-caps
-            label="Certificat"
+            :label="$t('inscriptions.cards.actions.certificate')"
             @click="imprimer(d)"
           />
           <q-btn
@@ -352,7 +348,7 @@
             dense
             icon="person"
             no-caps
-            label="Étudiant"
+            :label="$t('inscriptions.cards.actions.student')"
             @click="voirEtudiant(d)"
           />
         </q-card-actions>
@@ -366,7 +362,7 @@
             outline
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('inscriptions.actions.resetFilters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -375,7 +371,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Nouvelle inscription au guichet"
+            :label="$t('inscriptions.actions.new')"
             @click="dialogInscription = true"
           />
         </div>
@@ -417,62 +413,62 @@
               {{ etudiantApercu?.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" v-close-popup />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <q-linear-progress v-if="chargementEtudiant" indeterminate color="primary" />
+          <q-linear-progress :aria-label="$t('common.messages.loading')" v-if="chargementEtudiant" indeterminate color="primary" />
           <div v-else-if="!etudiantApercu" class="text-center q-pa-md text-grey-7">
-            Fiche étudiant indisponible.
+            {{ $t('inscriptions.studentDialog.unavailable') }}
           </div>
           <q-list v-else separator dense>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Sexe</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.sex') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.sexe ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Date de naissance</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.birthDate') }}</q-item-label>
                 <q-item-label>{{ dateLisible(etudiantApercu?.dateNaissance) }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Téléphone</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.phone') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.telephone ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>E-mail</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.email') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.email ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Adresse</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.address') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.adresse ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>Compte portail</q-item-label>
+                <q-item-label caption>{{ $t('inscriptions.studentDialog.portalAccount') }}</q-item-label>
                 <q-item-label>
-                  {{ etudiantApercu?.user ? etudiantApercu.user.email : 'aucun' }}
+                  {{ etudiantApercu?.user ? etudiantApercu.user.email : $t('inscriptions.studentDialog.none') }}
                 </q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('inscriptions.studentDialog.close')" v-close-popup />
           <q-btn
             v-if="etudiantApercu"
             flat
             no-caps
             icon="groups"
-            label="Registre"
+            :label="$t('inscriptions.studentDialog.registry')"
             @click="ouvrirRegistreEtudiant"
           />
           <q-btn
@@ -480,7 +476,7 @@
             flat
             no-caps
             icon="payments"
-            label="Ses paiements"
+            :label="$t('inscriptions.studentDialog.hisPayments')"
             @click="voirPaiementsEtudiant"
           />
           <q-btn
@@ -489,7 +485,7 @@
             unelevated
             no-caps
             icon="edit"
-            label="Modifier la fiche"
+            :label="$t('inscriptions.studentDialog.editRecord')"
             @click="ouvrirModificationEtudiant"
           />
         </q-card-actions>
@@ -499,10 +495,13 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { useI18n } from 'vue-i18n';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import InscriptionDialog from '../components/InscriptionDialog.vue';
 import PaiementDialog from '../components/PaiementDialog.vue';
@@ -511,6 +510,7 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
+import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_STATUT_INSCRIPTION,
   dateLisible,
@@ -525,6 +525,7 @@ import type {
   StatutInscription, ChipFiltre } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -570,17 +571,17 @@ const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_INSCRIPTION).map(([value, label]) => ({ value, label })),
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N° dossier', field: 'numero', align: 'left', sortable: true },
-  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
-  { name: 'promotion', label: 'Année / Promotion', field: 'promotion', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left', sortable: true },
-  { name: 'montantFrais', label: 'Frais (GNF)', field: 'montantFrais', align: 'right', sortable: true },
-  { name: 'paye', label: 'Payé (GNF)', field: 'paye', align: 'right' },
-  { name: 'solde', label: 'Reste à payer (GNF)', field: 'solde', align: 'right' },
-  { name: 'dateInscription', label: 'Inscrit le', field: 'dateInscription', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('inscriptions.table.columns.number'), field: 'numero', align: 'left', sortable: true },
+  { name: 'etudiant', label: t('inscriptions.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'promotion', label: t('inscriptions.table.columns.promotion'), field: 'promotion', align: 'left' },
+  { name: 'statut', label: t('inscriptions.table.columns.status'), field: 'statut', align: 'left', sortable: true },
+  { name: 'montantFrais', label: t('inscriptions.table.columns.fees'), field: 'montantFrais', align: 'right', sortable: true },
+  { name: 'paye', label: t('inscriptions.table.columns.paid'), field: 'paye', align: 'right' },
+  { name: 'solde', label: t('inscriptions.table.columns.balance'), field: 'solde', align: 'right' },
+  { name: 'dateInscription', label: t('inscriptions.table.columns.enrolledOn'), field: 'dateInscription', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const classeStatut = (s: string) =>
   ({
@@ -600,18 +601,20 @@ const filtresActifs = computed(
 
 const messageVide = computed(() => {
   if (etudiantCible.value) {
-    return `${etudiantCible.value.prenom} ${etudiantCible.value.nom} n’a aucun dossier d’inscription.`;
+    return t('inscriptions.emptyState.noRecordsForStudent', {
+      name: `${etudiantCible.value.prenom} ${etudiantCible.value.nom}`,
+    });
   }
   return filtresActifs.value
-    ? 'Aucun dossier ne correspond à ces critères.'
-    : 'Aucun dossier d’inscription : ouvrez-en un au guichet.';
+    ? t('inscriptions.emptyState.noMatch')
+    : t('inscriptions.emptyState.none');
 });
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('inscriptions.chips.search', { value: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -619,29 +622,31 @@ const chips = computed(() => {
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: `Année : ${a?.libelle ?? '?'}`, value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({ label: t('inscriptions.chips.year', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+    cs.push({ label: t('inscriptions.chips.promotion', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
   }
   if (filtres.value.statut) {
     cs.push({
-      label: `Statut : ${LIBELLE_STATUT_INSCRIPTION[filtres.value.statut as StatutInscription] ?? filtres.value.statut}`,
+      label: t('inscriptions.chips.status', {
+        value: LIBELLE_STATUT_INSCRIPTION[filtres.value.statut as StatutInscription] ?? filtres.value.statut,
+      }),
       value: filtres.value.statut,
       icone: 'flag',
     });
   }
   if (filtres.value.dateDebut) {
     cs.push({
-      label: `Depuis : ${dateLisible(filtres.value.dateDebut)}`,
+      label: t('inscriptions.chips.since', { value: dateLisible(filtres.value.dateDebut) }),
       value: filtres.value.dateDebut,
       icone: 'event',
     });
   }
   if (filtres.value.dateFin) {
     cs.push({
-      label: `Jusqu'à : ${dateLisible(filtres.value.dateFin)}`,
+      label: t('inscriptions.chips.until', { value: dateLisible(filtres.value.dateFin) }),
       value: filtres.value.dateFin,
       icone: 'event',
     });
@@ -683,35 +688,36 @@ function voirPaiements(dossier: Inscription) {
 
 function valider(dossier: Inscription) {
   $q.dialog({
-    title: 'Valider le dossier',
-    message: `Valider ${dossier.numero} (${dossier.etudiant?.prenom} ${dossier.etudiant?.nom}) ? Les frais sont réglés, le dossier devient définitif.`,
+    title: t('inscriptions.dialogs.validate.title'),
+    message: t('inscriptions.dialogs.validate.message', {
+      numero: dossier.numero,
+      prenom: dossier.etudiant?.prenom,
+      nom: dossier.etudiant?.nom,
+    }),
     cancel: true,
-    ok: { label: 'Valider', color: 'positive', unelevated: true },
+    ok: { label: t('inscriptions.dialogs.validate.confirm'), color: 'positive', unelevated: true },
   }).onOk(async () => {
     await api.put(`/inscriptions/${dossier.id}/valider`);
-    $q.notify({ type: 'positive', message: 'Dossier validé' });
+    $q.notify({ type: 'positive', message: t('inscriptions.messages.validated') });
     await charger();
   });
 }
 
 function annuler(dossier: Inscription) {
   $q.dialog({
-    title: 'Annuler le dossier',
-    message: `Annuler ${dossier.numero} ? Les paiements restent tracés au registre.`,
+    title: t('inscriptions.dialogs.cancel.title'),
+    message: t('inscriptions.dialogs.cancel.message', { numero: dossier.numero }),
     cancel: true,
-    ok: { color: 'negative', label: 'Annuler le dossier' },
+    ok: { color: 'negative', label: t('inscriptions.dialogs.cancel.confirm') },
   }).onOk(async () => {
     await api.put(`/inscriptions/${dossier.id}/annuler`);
-    $q.notify({ type: 'warning', message: 'Dossier annulé' });
+    $q.notify({ type: 'warning', message: t('inscriptions.messages.cancelled') });
     await charger();
   });
 }
 
 function imprimer(dossier: Inscription) {
-  window.open(
-    `${API_URL}/inscriptions/${dossier.id}/attestation-inscription?token=${encodeURIComponent(auth.token)}`,
-    '_blank',
-  );
+  void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
 async function voirEtudiant(dossier: Inscription) {
@@ -874,7 +880,7 @@ async function appliquerEtudiantCible(id: string) {
     filtres.value.anneeId = null;
   } catch {
     etudiantCible.value = null;
-    $q.notify({ type: 'warning', message: 'Étudiant introuvable : filtre ignoré.' });
+    $q.notify({ type: 'warning', message: t('inscriptions.messages.studentNotFound') });
   }
 }
 
@@ -930,14 +936,13 @@ onMounted(async () => {
   display: inline-flex;
   padding: 3px 12px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
-.champ--brouillon { background: #cfd4d9; color: #33463f; }
-.champ--attente-paiement { background: #e8a317; color: #10251e; }
-.champ--payee { background: #1e7a4c; }
-.champ--validee { background: #1565c0; }
-.champ--annulee { background: #c2321e; }
+.champ--brouillon { background: #e8e8ed; color: #33463f; }
+.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
+.champ--payee { background: #007a4d; color: #fff; }
+.champ--validee { background: #0066cc; color: #fff; }
+.champ--annulee { background: #ce1126; color: #fff; }
 </style>

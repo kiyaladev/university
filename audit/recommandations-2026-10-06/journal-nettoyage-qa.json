@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-06T15:32:37.496Z",
+  "scope": "Fixtures et preuves des recettes récentes du journal uniquement",
+  "database": "/university_recommandations_20261006",
+  "readOnly": true,
+  "checks": [
+    {
+      "model": "coursVOD",
+      "remaining": 0
+    },
+    {
+      "model": "courrier",
+      "remaining": 0
+    },
+    {
+      "model": "ticketSupport",
+      "remaining": 0
+    },
+    {
+      "model": "equipementCampus",
+      "remaining": 0
+    },
+    {
+      "model": "election",
+      "remaining": 0
+    },
+    {
+      "model": "reservationSalle",
+      "remaining": 0
+    },
+    {
+      "model": "reparationMateriel",
+      "remaining": 0
+    },
+    {
+      "model": "formation",
+      "remaining": 0
+    },
+    {
+      "model": "travailEncadre",
+      "remaining": 0
+    },
+    {
+      "model": "documentDepot",
+      "remaining": 0
+    },
+    {
+      "model": "salle",
+      "remaining": 0
+    }
+  ],
+  "proofs": [
+    {
+      "file": "journal-reel-interface.json",
+      "checks": 8,
+      "validated": true
+    },
+    {
+      "file": "journal-reclamation-interface.json",
+      "checks": 8,
+      "validated": true
+    },
+    {
+      "file": "journal-campus-interface.json",
+      "checks": 16,
+      "validated": true
+    },
+    {
+      "file": "journal-services-interface.json",
+      "checks": 16,
+      "validated": true
+    },
+    {
+      "file": "journal-gestion-interface.json",
+      "checks": 24,
+      "validated": true
+    },
+    {
+      "file": "journal-documents-stages-interface.json",
+      "checks": 24,
+      "validated": true
+    },
+    {
+      "file": "journal-plagiat-interface.json",
+      "checks": 16,
+      "validated": true
+    }
+  ],
+  "productionUntouched": true,
+  "realEventConfigurations": 112,
+  "statut": "valide"
+}

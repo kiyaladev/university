@@ -2,33 +2,32 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">Programmer un tirage</div>
+        <div class="text-h6">{{ $t('tirage.actions.schedule') }}</div>
         <div class="text-caption text-grey-7">
-          L'empreinte SHA-256 du fichier source sera exigée à l'impression pour bloquer
-          toute substitution.
+          {{ t('tirage.dialogs.schedule.fingerprintPolicy') }}
         </div>
       </q-card-section>
       <q-card-section class="q-gutter-md">
         <autocomplete-async
           v-model="form.examenId"
           endpoint="/examens"
-          label="Examen *"
+          :label="t('tirage.dialogs.schedule.examLabel')"
           :label-fn="(e) => `${e.codeExamen} — ${e.intitule}`"
         />
         <div class="row q-col-gutter-md">
           <div class="col-6">
-            <champ-date v-model="form.dateTirage" label="Date du tirage *" />
+            <champ-date v-model="form.dateTirage" :label="t('tirage.dialogs.schedule.dateLabel')" />
           </div>
           <div class="col-6">
-            <q-input v-model.number="form.nbExemplaires" type="number" min="1" outlined dense label="Nombre d'exemplaires *" />
+            <q-input v-model.number="form.nbExemplaires" type="number" min="1" outlined dense :label="t('tirage.dialogs.schedule.copiesLabel')" />
           </div>
         </div>
         <q-input
           v-model="form.empreinteSource"
           outlined
           dense
-          label="Empreinte SHA-256 du fichier source *"
-          hint="64 caractères hexadécimaux — cette empreinte sera réclamée à l'identique au moment d'imprimer."
+          :label="t('tirage.dialogs.schedule.fingerprintLabel')"
+          :hint="t('tirage.dialogs.schedule.fingerprintHint')"
         >
           <template #append>
             <q-btn
@@ -36,19 +35,19 @@
               dense
               flat
               icon="calculate"
-              aria-label="Calculer l'empreinte depuis le fichier chargé"
+              :aria-label="t('tirage.dialogs.schedule.calculateFingerprint')"
               @click="calculerDepuisFichier"
             />
-            <q-tooltip>Calculer depuis un fichier</q-tooltip>
+            <q-tooltip>{{ t('tirage.dialogs.schedule.calculateFromFile') }}</q-tooltip>
           </template>
         </q-input>
-        <q-file v-model="fichierSource" outlined dense label="Ou charger le fichier pour calculer" accept="application/pdf,.pdf" @update:model-value="calculerDepuisFichier" />
-        <q-input v-model="form.circuitImpression" outlined dense label="Circuit d'impression (ex : Salle 1 → Salle 2 → …)" />
-        <q-input v-model="form.notes" outlined dense type="textarea" rows="2" label="Notes" />
+        <q-file v-model="fichierSource" outlined dense :label="t('tirage.dialogs.schedule.fileLabel')" accept="application/pdf,.pdf" @update:model-value="calculerDepuisFichier" />
+        <q-input v-model="form.circuitImpression" outlined dense :label="t('tirage.dialogs.schedule.printRouteLabel')" />
+        <q-input v-model="form.notes" outlined dense type="textarea" rows="2" :label="$t('common.fields.notes')" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat no-caps label="Annuler" v-close-popup />
-        <q-btn unelevated no-caps color="primary" label="Programmer" :loading="envoi" @click="enregistrer" />
+        <q-btn flat no-caps :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn unelevated no-caps color="primary" :label="t('tirage.dialogs.schedule.submit')" :loading="envoi" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -57,6 +56,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import ChampDate from './ChampDate.vue';
@@ -70,6 +70,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const form = ref({
   examenId: null as string | null,
@@ -95,20 +96,20 @@ async function calculerDepuisFichier() {
 
 async function enregistrer() {
   if (!form.value.examenId || !form.value.dateTirage || !form.value.nbExemplaires || !form.value.empreinteSource) {
-    $q.notify({ type: 'warning', message: 'Examen, date, nombre d’exemplaires et empreinte sont obligatoires' });
+    $q.notify({ type: 'warning', message: t('tirage.dialogs.schedule.required') });
     return;
   }
   if (!/^[0-9a-f]{64}$/i.test(form.value.empreinteSource.trim())) {
     $q.notify({
       type: 'warning',
-      message: 'L’empreinte doit être un SHA-256 (64 caractères hexadécimaux) — chargez le fichier pour la calculer.',
+      message: t('tirage.dialogs.schedule.invalidFingerprint'),
     });
     return;
   }
   envoi.value = true;
   try {
-    await api.post('/tirage', form.value);
-    $q.notify({ type: 'positive', message: 'Tirage programmé' });
+    await api.post('/tirage', { ...form.value, empreinteSource: form.value.empreinteSource.trim().toLowerCase() });
+    $q.notify({ type: 'positive', message: t('tirage.messages.scheduled') });
     emit('update:modelValue', false);
     emit('cree');
     form.value = {
@@ -121,7 +122,7 @@ async function enregistrer() {
     };
     fichierSource.value = null;
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Enregistrement impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('tirage.dialogs.schedule.saveFailed') });
   } finally {
     envoi.value = false;
   }

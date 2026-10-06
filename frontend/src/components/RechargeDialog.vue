@@ -1,16 +1,16 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 560px; max-width: 95vw">
-      <q-card-section class="text-h6">Recharger un portefeuille resto</q-card-section>
+      <q-card-section class="text-h6">{{ $t('resto.rechargeDialog.title') }}</q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Étudiant</span>
+        <span class="section-titre">{{ $t('common.fields.student') }}</span>
         <q-select
           v-model="etudiantId"
           :options="optionsEtudiants"
           option-value="id"
           option-label="libelle"
-          label="Étudiant *"
+          :label="$t('resto.rechargeDialog.student')"
           outlined
           dense
           use-input
@@ -22,11 +22,11 @@
           @filter="filtrerEtudiants"
         >
           <template #no-option>
-            <q-item><q-item-section class="text-grey-7">Aucun portefeuille trouvé</q-item-section></q-item>
+            <q-item><q-item-section class="text-grey-7">{{ $t('resto.rechargeDialog.noWallet') }}</q-item-section></q-item>
           </template>
         </q-select>
 
-        <span class="section-titre q-mt-md">Rechargement</span>
+        <span class="section-titre q-mt-md">{{ $t('resto.rechargeDialog.sectionTitle') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-6">
             <q-input
@@ -36,7 +36,7 @@
               step="500"
               outlined
               dense
-              label="Montant (GNF) *"
+              :label="$t('resto.rechargeDialog.amount')"
               suffix="GNF"
             />
           </div>
@@ -44,7 +44,7 @@
             <q-select
               v-model="form.mode"
               :options="optionsModes"
-              label="Mode *"
+              :label="$t('resto.rechargeDialog.mode')"
               outlined
               dense
             />
@@ -55,33 +55,31 @@
           <q-select
             v-model="form.operateur"
             :options="optionsOperateurs"
-            label="Opérateur"
+            :label="$t('examens.scansTable.columns.operator')"
             outlined
             dense
             class="q-mt-md"
           />
-          <q-toggle v-model="form.simuler" label="Confirmer immédiatement (simulation pilote)" class="q-mt-sm" />
+          <q-toggle v-model="form.simuler" :label="$t('resto.rechargeDialog.confirmImmediately')" class="q-mt-sm" />
           <p class="note-rechargement">
             <q-icon name="info" size="15px" />
             <span>
-              En Mobile Money, la recharge naît « en attente » : elle sera
-              confirmée via le module de paiement (simulation) avant d'être
-              créditée sur le portefeuille.
+              {{ $t('resto.rechargeDialog.mobileMoneyNote') }}
             </span>
           </p>
         </template>
         <p v-else class="note-rechargement note-rechargement--positif">
           <q-icon name="payments" size="15px" />
-          <span>Espèces au guichet : crédit immédiat du portefeuille.</span>
+          <span>{{ $t('resto.rechargeDialog.cashNote') }}</span>
         </p>
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
-          label="Recharger"
+          :label="$t('common.actions.reload')"
           :loading="enregistrement"
           :disable="!valide"
           @click="recharger"
@@ -94,6 +92,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { LIBELLE_MODE_PAIEMENT } from '../utils/libelles';
 
@@ -114,6 +113,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; rechargee: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const chargementEtudiants = ref(false);
 const etudiantId = ref<string | null>(null);
@@ -176,8 +176,8 @@ async function recharger() {
     $q.notify({
       type: data.immediat ? 'positive' : 'info',
       message: data.immediat
-        ? `Portefeuille crédité : ${data.solde.toLocaleString('fr-FR')} GNF`
-        : `Recharge en attente de confirmation (${data.paiement.reference})`,
+        ? t('resto.rechargeDialog.messages.credited', { balance: data.solde.toLocaleString('fr-FR') })
+        : t('resto.rechargeDialog.messages.pending', { reference: data.paiement.reference }),
     });
     emit('rechargee');
     emit('update:modelValue', false);
@@ -239,6 +239,6 @@ async function charger(hard = false) {
 }
 
 .note-rechargement--positif {
-  color: var(--up-vert, #2e7d32);
+  color: var(--up-vert, #027a0b);
 }
 </style>

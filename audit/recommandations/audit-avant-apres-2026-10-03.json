@@ -1,0 +1,371 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Extension des journaux avant/après dans les modules métier et les comptes utilisateurs",
+  "modules": {
+    "utilisateurs": {
+      "operations": [
+        "creer",
+        "modifier",
+        "reinitialiserMotDePasse",
+        "supprimer"
+      ],
+      "projection": [
+        "identifiant technique",
+        "rôle",
+        "état actif",
+        "département",
+        "présence du mot de passe"
+      ],
+      "protections": [
+        "aucun nom, prénom, e-mail, téléphone, hash du mot de passe, compteur de tentatives, verrouillage ou date de changement du mot de passe"
+      ],
+      "transaction": "La mutation, le rattachement éventuel à une fiche enseignant et l'entrée AuditLog partagent la même transaction."
+    },
+    "enseignants": {
+      "operations": [
+        "creer",
+        "modifier",
+        "supprimer",
+        "importer"
+      ],
+      "projection": [
+        "identifiant technique",
+        "statut",
+        "état actif",
+        "département",
+        "présence du compte lié"
+      ],
+      "protections": [
+        "aucun matricule, nom, prénom, e-mail, téléphone, taux horaire, PIN ou gabarit biométrique"
+      ]
+    },
+    "matieres": {
+      "operations": [
+        "creer",
+        "modifier",
+        "supprimer",
+        "importer"
+      ],
+      "projection": [
+        "identifiant technique",
+        "code",
+        "intitulé",
+        "volume horaire",
+        "crédits",
+        "département"
+      ],
+      "perimetre": "Le département d'une matière est vérifié dans la transaction de modification."
+    },
+    "salles": {
+      "operations": [
+        "creer",
+        "modifier",
+        "supprimer",
+        "regenererQr",
+        "importer"
+      ],
+      "projection": [
+        "identifiant technique",
+        "code",
+        "présence du bâtiment",
+        "capacité",
+        "état actif",
+        "présence du QR et des coordonnées"
+      ],
+      "protections": [
+        "aucun nom de salle, jeton QR ni coordonnée GPS"
+      ]
+    },
+    "structure": {
+      "operations": [
+        "créer/modifier/supprimer un département",
+        "créer/modifier/supprimer une filière",
+        "créer/modifier/supprimer une promotion"
+      ],
+      "projection": [
+        "identifiant technique",
+        "code ou nom",
+        "rattachement structurel",
+        "niveau et effectif de promotion"
+      ],
+      "transaction": "Les créations et modifications département/filière partagent AuditLog dans une transaction Serializable ; la promotion vérifie aussi le verrou d'année."
+    },
+    "courrier": {
+      "operations": [
+        "creer",
+        "modifier",
+        "parapher",
+        "cloturer"
+      ],
+      "projection": [
+        "identité technique",
+        "type",
+        "statut",
+        "dates",
+        "présence du fichier",
+        "présence du paraphe",
+        "circuit réduit"
+      ]
+    },
+    "reservations": {
+      "operations": [
+        "creer",
+        "modifier",
+        "supprimer",
+        "decider"
+      ],
+      "projection": [
+        "salleId",
+        "date",
+        "créneau",
+        "statut",
+        "demandeurId",
+        "présence des textes libres"
+      ]
+    },
+    "documents-demande": {
+      "operations": [
+        "creerTarif",
+        "modifierTarif",
+        "creer",
+        "payer",
+        "confirmerPaiement",
+        "lancerTraitement",
+        "marquerPrete",
+        "remettre",
+        "rejeter"
+      ],
+      "projection": [
+        "statut",
+        "type",
+        "montant",
+        "devise",
+        "dates",
+        "identifiants techniques",
+        "état minimal du paiement"
+      ]
+    },
+    "patrimoine": {
+      "operations": [
+        "creer/modifier/supprimer catégorie",
+        "creer/modifier/supprimer équipement",
+        "regenererQr",
+        "declarerReparation",
+        "resoudreReparation"
+      ],
+      "projection": [
+        "inventaire réduit",
+        "état",
+        "valeur",
+        "dates",
+        "réparation réduite"
+      ]
+    },
+    "reclamations": {
+      "operations": [
+        "creer",
+        "posterMessage",
+        "changerStatut",
+        "assigner",
+        "escalader",
+        "cloturer",
+        "cronEscalade"
+      ],
+      "projection": [
+        "qualification",
+        "statut",
+        "affectation par identifiants techniques",
+        "horodatages",
+        "présence des textes libres"
+      ],
+      "anonymat": "Les événements de dépôt anonyme et les réponses d'un étudiant à un fil anonyme ont userId nul et etudiantId nul."
+    },
+    "helpdesk": {
+      "operations": [
+        "creer/modifier/supprimer équipement",
+        "declarer ticket",
+        "changerStatut ticket"
+      ],
+      "projection": [
+        "inventaire minimal",
+        "catégorie",
+        "priorité",
+        "statut",
+        "horodatages",
+        "présence des textes et coordonnées"
+      ]
+    },
+    "sms": {
+      "operations": [
+        "envoyerPlusieurs",
+        "envoyerUn"
+      ],
+      "projection": [
+        "canal SMS",
+        "statut initial EN_ATTENTE",
+        "présence du message",
+        "nombre de destinataires et messages présents dans le lot",
+        "acteur technique"
+      ],
+      "protections": [
+        "un seul événement réduit par lot de 50 ; aucun numéro, nom, message, motif, identifiant étudiant ou corps d'erreur opérateur dans AuditLog"
+      ],
+      "transaction": "Avant tout appel fournisseur, jusqu'à 50 Notification en attente et un AuditLog de lot sont écrits dans la même transaction. Après le retour fournisseur, seul le statut de chaque Notification est actualisé. Si la préparation du lot échoue, aucun de ses SMS ne part ; si l'appel ou l'actualisation échoue, les lignes concernées restent en attente ou en échec sans exposer l'erreur dans AuditLog. Les appels sont limités à dix simultanés."
+    },
+    "stages": {
+      "operations": [
+        "creer",
+        "modifier",
+        "supprimer",
+        "transition",
+        "enregistrerSoutenance",
+        "noter"
+      ],
+      "projection": [
+        "statut",
+        "dates",
+        "identifiants techniques",
+        "présence des champs libres",
+        "note numérique",
+        "présence de la mention et des assesseurs"
+      ],
+      "limites": [
+        "intitulé",
+        "description",
+        "rapport",
+        "entreprise",
+        "tuteur",
+        "lieu",
+        "mention et assesseurs en texte",
+        "hors journal"
+      ]
+    },
+    "plagiat": {
+      "operations": [
+        "ouvrir suspicion",
+        "réévaluer score",
+        "mettre à jour indice",
+        "acquitter",
+        "confirmer"
+      ],
+      "projection": [
+        "identifiants techniques des documents",
+        "statut",
+        "score",
+        "horodatages",
+        "présence du commentaire"
+      ],
+      "automatique": "Les détections automatiques n'attribuent pas leur action à un compte utilisateur ; les recomputations globales conservent une trace de synthèse, pas une trace par document."
+    },
+    "elections": {
+      "operations": [
+        "creer",
+        "modifier",
+        "ouvrir",
+        "clore",
+        "proclamer",
+        "ajouterCandidat",
+        "supprimerCandidat"
+      ],
+      "projection": [
+        "configuration réduite",
+        "statut",
+        "calendrier",
+        "présence des textes",
+        "position du candidat sans identité"
+      ],
+      "vote": "Aucun dépôt, électeur, choix, jeton ou total de participation n'est écrit dans AuditLog ; les anciens événements VOTE_DEPOSE sont masqués de l'API Journal."
+    },
+    "vod": {
+      "operations": [
+        "creer",
+        "modifier",
+        "publier",
+        "archiver"
+      ],
+      "projection": [
+        "statut",
+        "identifiants techniques",
+        "dates",
+        "mesures média",
+        "présence des textes et médias"
+      ],
+      "vues": "Les consultations, identités, IP et compteurs de vues restent hors AuditLog."
+    },
+    "cites": {
+      "operations": [
+        "creer/modifier/supprimer résidence",
+        "creer/modifier/supprimer chambre"
+      ],
+      "projection": [
+        "identifiant technique",
+        "code",
+        "capacité",
+        "état",
+        "loyer",
+        "présence des coordonnées"
+      ],
+      "protections": [
+        "aucun nom, adresse, contact ou identifiant étudiant"
+      ],
+      "transaction": "Les contrôles de références, mutations et entrées AuditLog partagent une transaction Serializable."
+    },
+    "parametres": {
+      "operations": [
+        "modifier paramètres métier"
+      ],
+      "projection": [
+        "clé",
+        "valeur avant/après limitée aux clés cataloguées"
+      ],
+      "protections": [
+        "les paramètres non catalogués ne journalisent pas leurs valeurs ni descriptions"
+      ]
+    },
+    "bibliotheque": {
+      "operations": [
+        "deposer",
+        "modifier",
+        "supprimer",
+        "telecharger (si utilisateur authentifié)"
+      ],
+      "projection": [
+        "type",
+        "publication",
+        "année",
+        "présence/taille du fichier",
+        "nombre de mots-clés",
+        "présence des rattachements"
+      ],
+      "protections": [
+        "aucun titre, texte, fichier, hash, mot-clé, identifiant étudiant ou enseignant ; le téléchargement ne copie ni contenu ni métadonnée libre dans le journal"
+      ],
+      "transaction": "Dépôt, modification, suppression et téléchargement authentifié journalisent dans la transaction qui met à jour l'objet ou le compteur ; le journal du téléchargement contient seulement l'acteur, l'entité et l'identifiant du document. Une modification partielle conserve les métadonnées, le contenu extrait et l'empreinte du fichier.",
+      "preuve": "backend/src/modules/bibliotheque/access.spec.ts (19 tests ciblés ; téléchargement privé audité, fichier et titre absents de la trace, aucun acteur créé pour le téléchargement public anonyme)"
+    }
+  },
+  "protections": [
+    "Pas de pièce jointe ou de contenu documentaire",
+    "Pas de motif, note, commentaire ou notification en texte libre",
+    "Pas de jeton QR, ancien ou nouveau",
+    "Pas de coordonnées, téléphone, nom, e-mail, contenu opérateur ou secret ; des identifiants techniques restent dans certains instantanés pour attribuer propriété et affectation",
+    "Les opérations des fils de réclamation anonymes ne relient pas AuditLog.userId à l'auteur étudiant",
+    "Les mutations documentées et leurs entrées d'audit utilisent la même transaction ; le recalcul global du plagiat produit uniquement une synthèse",
+    "Le journal n'expose aucune ligne historique VOTE_DEPOSE",
+    "L'API Journal ne retourne pas les adresses IP stockées en interne dans AuditLog"
+  ],
+  "verification": {
+    "cibles": "19 suites, 217 tests verts : modules précédents 181, élections 18, VOD 15, masquage des votes historiques 1 et purge biométrique 2. Audit du référentiel : 11 tests verts dans 4 suites. Contrat SMS/OTP : 18 tests ciblés couvrent audit avant envoi, rollback, plafonnement des appels, lots mixtes et lots vides.",
+    "backend": "La suite complète passe maintenant 100 suites/795 tests après l’ajout de l’audit des téléchargements authentifiés ; les tests ciblés SMS, bibliothèque et de projection du Journal ainsi que le build NestJS passent aussi. Les audits couvrent les cités, paramètres, bibliothèque, formations et l’idempotence des scans d’examen.",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi",
+    "build": "npx nest build réussi",
+    "interface_journal": "4 parcours UI verts : ADMIN et DIRECTION, 1440 px et 375 px ; ouverture du détail, recherche par entité et absence de débordement. Des tests de service vérifient le rendu des nouvelles projections TICKET_OUVERT, RECLAMATION et PLAGIAT, tout en masquant les anciennes descriptions et en filtrant les commentaires. Les nouveaux événements n'ont pas été écrits dans la base QA pendant cette recette.",
+    "limite": "Le rejeu complet séquentiel avec --detectOpenHandles passe sans --forceExit et ne signale aucun handle bloquant. Le typage TypeScript et le build NestJS passent ; aucune écriture de production n'a été effectuée."
+  },
+  "reste": [
+    "Revoir les mutations des autres modules sensibles qui ne stockent pas encore d'état avant/après ; les CRUD du référentiel central sont maintenant couverts.",
+    "Vérifier dans l'interface Journal des entrées réellement produites par les modules, en plus du smoke test UI sur les événements déjà présents.",
+    "Revoir les mutations sensibles des autres modules qui ne disposent pas encore d’un instantané avant/après transactionnel. Les courses sur les réservations, le courrier et les réclamations sont désormais couvertes par des transactions et des tests."
+  ],
+  "production": "Aucune migration ni modification de production effectuée."
+}

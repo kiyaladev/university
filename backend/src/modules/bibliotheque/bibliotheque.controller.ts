@@ -1,3 +1,4 @@
+import { JwtStrategy } from '../auth/jwt.strategy';
 import {
   Body,
   Controller,
@@ -11,6 +12,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
@@ -45,6 +47,7 @@ export class BibliothequeController {
     private readonly recherche: RechercheService,
     private readonly plagiat: PlagiatService,
     private readonly jwt: JwtService,
+    private readonly identite: JwtStrategy,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -63,24 +66,7 @@ export class BibliothequeController {
     } catch {
       return null;
     }
-    const utilisateur = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: {
-        enseignant: { select: { id: true } },
-        etudiant: { select: { id: true } },
-      },
-    });
-    if (!utilisateur || !utilisateur.actif) return null;
-    return {
-      id: utilisateur.id,
-      email: utilisateur.email,
-      nom: utilisateur.nom,
-      prenom: utilisateur.prenom,
-      role: utilisateur.role,
-      departementId: utilisateur.departementId,
-      enseignantId: utilisateur.enseignant?.id ?? null,
-      etudiantId: utilisateur.etudiant?.id ?? null,
-    };
+    try { return await this.identite.validate(payload); } catch { return null; }
   }
 
   @Public()
@@ -101,6 +87,7 @@ export class BibliothequeController {
 
   /** Recherche plein texte (PostgreSQL FTS, dictionnaire `french`). */
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('recherche')
   async rechercheFts(
     @Query() query: RechercheDocumentDto,
@@ -150,8 +137,8 @@ export class BibliothequeController {
   }
 
   @Get(':id')
-  details(@Param('id') id: string) {
-    return this.service.findOne(id);
+  details(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.detailPour(id, user);
   }
 
   /**

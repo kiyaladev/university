@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-06T09:05:42.174Z",
+  "lectureSeule": true,
+  "comptes": {
+    "actifs": 10,
+    "demonstration": 10,
+    "administrateursReels": 0
+  },
+  "migrations": {
+    "attendues": 20,
+    "appliquees": 12,
+    "enAttente": [
+      "20261002190000_reclamation_anonyme_owner",
+      "20261002193000_seance_controleur_assigne",
+      "20261002220000_restrict_annee_academique_delete",
+      "20261002230000_paiement_annee_academique",
+      "20261002233000_unique_active_annee",
+      "20261002234000_restrict_academic_archive_delete",
+      "20261003080000_restrict_election_archive_delete",
+      "20261003150000_unique_scan_examen"
+    ]
+  },
+  "sauvegarde": {
+    "destinationSshConfiguree": false,
+    "limite": "Une configuration seule ne prouve pas la copie ni la restauration distantes ; vérifier les preuves avant publication."
+  },
+  "blocages": [
+    "Aucun administrateur actif avec un mot de passe hors démonstration.",
+    "10 comptes actifs conservent un mot de passe de démonstration.",
+    "Destination SSH de sauvegarde hors serveur non configurée.",
+    "8 migrations en attente : planifier leur application après sauvegarde distante et restauration vérifiées."
+  ],
+  "pretPourRevueDeploiement": false
+}

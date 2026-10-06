@@ -3,9 +3,11 @@
  *  modules/rapports/impression.service.ts : c'en est une copie LOCALE, ce
  *  service d'origine n'est jamais modifié. */
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
+import { echapper } from '../../common/utils';
 
 const LIBELLE_TYPE: Record<string, string> = {
   STAGE: 'Stage',
@@ -28,13 +30,6 @@ const COULEUR_STATUT: Record<string, string> = {
   SOUTENU: 'PRESENT',
   ABANDONNE: 'ABSENT',
 };
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 /** Copie locale du gabarit de modules/rapports/impression.service.ts. */
 const STYLE = `
@@ -79,9 +74,20 @@ function dateHeureFr(v: Date | string | null | undefined): string {
 }
 
 const TRAVAIL_FICHE_INCLUDE = {
-  etudiant: true,
-  encadrant: true,
-  soutenance: { include: { salle: true, president: true } },
+  etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
+  encadrant: { select: { id: true, nom: true, prenom: true, grade: true } },
+  soutenance: {
+    select: {
+      id: true,
+      presidentId: true,
+      date: true,
+      assesseurs: true,
+      note: true,
+      mention: true,
+      salle: { select: { id: true, code: true, nom: true } },
+      president: { select: { id: true, nom: true, prenom: true } },
+    },
+  },
 };
 
 @Injectable()
@@ -98,7 +104,7 @@ export class FicheService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('stages.jeton_invalide_ou_expire'));
     }
 
     const travail: any = await this.prisma.travailEncadre.findUnique({
@@ -106,7 +112,7 @@ export class FicheService {
       include: TRAVAIL_FICHE_INCLUDE,
     });
     if (!travail) {
-      throw new NotFoundException('Travail encadré introuvable');
+      throw new NotFoundException(I18nContext.current()!.t('stages.travail_encadre_introuvable'));
     }
 
     const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
@@ -153,7 +159,7 @@ export class FicheService {
 
   <table>
     <tbody>${lignes
-      .map(([k, v]) => `<tr><th style="width:26%">${echapper(k)}</th><td>${v}</td></tr>`)
+      .map(([k, v]) => `<tr><th style="width:26%">${echapper(k)}</th><td>${echapper(v)}</td></tr>`)
       .join('')}
     </tbody>
   </table>

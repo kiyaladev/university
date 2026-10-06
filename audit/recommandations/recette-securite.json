@@ -1,0 +1,130 @@
+{
+  "date": "2026-10-02T10:06:16.166Z",
+  "environment": "QA locale isolée",
+  "checks": [
+    {
+      "name": "Connexion admin",
+      "result": "OK"
+    },
+    {
+      "name": "Connexion enseignant",
+      "result": "OK"
+    },
+    {
+      "name": "Connexion etudiant1",
+      "result": "OK"
+    },
+    {
+      "name": "Connexion chef.info",
+      "result": "OK"
+    },
+    {
+      "name": "Journal autorisé à l’administrateur",
+      "result": "OK"
+    },
+    {
+      "name": "Journal interdit au rôle étudiant",
+      "result": "OK"
+    },
+    {
+      "name": "Journal interdit au rôle enseignant",
+      "result": "OK"
+    },
+    {
+      "name": "Journal interdit au rôle chef",
+      "result": "OK"
+    },
+    {
+      "name": "Filtres journal action/entité/acteur",
+      "result": "OK"
+    },
+    {
+      "name": "Journal limité aux opérations filtrées",
+      "result": "OK"
+    },
+    {
+      "name": "Profil étudiant propre accessible",
+      "result": "OK"
+    },
+    {
+      "name": "Profil étudiant tiers inaccessible",
+      "result": "OK"
+    },
+    {
+      "name": "Attestation inscription propre imprimable",
+      "result": "OK"
+    },
+    {
+      "name": "Attestation inscription tierce inaccessible",
+      "result": "OK"
+    },
+    {
+      "name": "Aucun salaire ni coordonnées privées dans le référentiel étudiant",
+      "result": "OK"
+    },
+    {
+      "name": "Paiement interdit au chef",
+      "result": "OK"
+    },
+    {
+      "name": "Rapports interdits à l’étudiant",
+      "result": "OK"
+    },
+    {
+      "name": "Écriture présence interdite à l’enseignant",
+      "result": "OK"
+    },
+    {
+      "name": "Création scrutin",
+      "result": "OK"
+    },
+    {
+      "name": "Création Candidat A",
+      "result": "OK"
+    },
+    {
+      "name": "Création Candidat B",
+      "result": "OK"
+    },
+    {
+      "name": "Ouverture scrutin",
+      "result": "OK"
+    },
+    {
+      "name": "Deux votes simultanés : un seul accepté",
+      "result": "OK"
+    },
+    {
+      "name": "Un bulletin persisté",
+      "result": "OK"
+    },
+    {
+      "name": "Nouveau dépôt refusé",
+      "result": "OK"
+    },
+    {
+      "name": "Électeur informé de son vote",
+      "result": "OK"
+    },
+    {
+      "name": "Impression sans identité refusée",
+      "result": "OK"
+    },
+    {
+      "name": "Impression par Authorization",
+      "result": "OK"
+    },
+    {
+      "name": "Impression par jeton d’URL",
+      "result": "OK"
+    },
+    {
+      "name": "Impression refusée après désactivation",
+      "result": "OK"
+    },
+    {
+      "name": "Impression refusée après révocation",
+      "result": "OK"
+    }
+  ]
+}

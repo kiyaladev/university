@@ -3,9 +3,11 @@
 import { Injectable } from '@nestjs/common';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { RapportQueryDto } from './rapports.dto';
+import { echapper, signaturePng } from '../../common/utils';
 
 const ATTESTATION_LIBELLE: Record<string, string> = {
   SIGNATURE: 'Signature',
@@ -33,8 +35,9 @@ function attestationHtml(l: {
   signatureBase64?: string | null;
   observation?: string;
 }): string {
-  if (l.signatureBase64) {
-    return `<img src="${l.signatureBase64}" alt="signature" class="signature" />`;
+  const signature = signaturePng(l.signatureBase64);
+  if (signature) {
+    return `<img src="${signature}" alt="signature" class="signature" />`;
   }
   if (!l.attestation || l.attestation === 'AUCUNE') {
     return '<span class="badge NON_CONTROLE">non attestée</span>';
@@ -42,13 +45,6 @@ function attestationHtml(l: {
   return `<span class="badge ${l.attestationValide ? 'PRESENT' : 'NON_CONTROLE'}">${
     ATTESTATION_LIBELLE[l.attestation] ?? l.attestation
   }</span>`;
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }
 
 const STYLE = `
@@ -251,10 +247,20 @@ export class ImpressionService {
   }
 
   /** Affichettes QR à coller dans chaque salle. */
-  async affichesQr(salleId?: string) {
+  async affichesQr(user: AuthUser, salleId?: string) {
     const salles = await this.prisma.salle.findMany({
       where: { actif: true, ...(salleId ? { id: salleId } : {}) },
       orderBy: { code: 'asc' },
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        userId: user.id,
+        action: 'IMPRESSION_QR_SALLES',
+        entite: 'Salle',
+        entiteId: salleId ?? null,
+        details: `${salles.length} affiche(s) QR générée(s)`,
+      },
     });
 
     const blocs = await Promise.all(

@@ -1,0 +1,30 @@
+[
+  {
+    "case": "student own",
+    "status": 200
+  },
+  {
+    "case": "student other",
+    "status": 404
+  },
+  {
+    "case": "admin other",
+    "status": 200
+  },
+  {
+    "case": "no token",
+    "status": 401
+  },
+  {
+    "case": "swagger none",
+    "status": 401
+  },
+  {
+    "case": "swagger forged",
+    "status": 401
+  },
+  {
+    "case": "swagger admin",
+    "status": 200
+  }
+]

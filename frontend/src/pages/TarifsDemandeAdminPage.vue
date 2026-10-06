@@ -1,20 +1,13 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Tarifs des demandes</div>
-        <div class="page-sous-titre">
-          Chaque type de document (attestation de scolarité, relevé de notes,
-          duplicata…) est facturé au tarif paramétré ici. Le montant et le délai
-          annoncés à l'étudiant au moment de sa demande en dépendent.
-        </div>
-      </div>
-      <div v-if="!rolePasBon" class="col-auto q-gutter-sm">
+    <page-header :title="$t('tarifsDemandeAdmin.title')" :subtitle="$t('tarifsDemandeAdmin.subtitle')">
+      <template #actions>
+<div v-if="!rolePasBon" class="col-auto q-gutter-sm">
         <q-btn
           outline
           color="primary"
           icon="description"
-          label="Demandes de documents"
+          :label="$t('tarifsDemandeAdmin.actions.document_requests')"
           no-caps
           :to="{ name: 'demandes-docs' }"
         />
@@ -22,21 +15,23 @@
           unelevated
           color="primary"
           icon="add"
-          label="Nouveau tarif"
+          :label="$t('tarifsDemandeAdmin.actions.new_tariff')"
           no-caps
           :disable="!optionsTypeCreation.length"
           @click="ouvrir(null)"
         >
           <q-tooltip v-if="!optionsTypeCreation.length">
-            Tous les types de document ont déjà un tarif : modifiez-le.
+            {{ $t('tarifsDemandeAdmin.actions.all_types_have_tariff') }}
           </q-tooltip>
         </q-btn>
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="documents" />
 
     <q-banner v-if="rolePasBon" class="note--erreur q-mb-md">
-      Cette page est réservée à l'administrateur. Vous êtes connecté en
-      {{ auth.utilisateur?.role }}.
+      {{ $t('tarifsDemandeAdmin.errors.role_forbidden', { role: auth.utilisateur?.role }) }}
     </q-banner>
 
     <q-table
@@ -49,13 +44,11 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || tarifs.length > 0"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucun tarif enregistré. Tant qu'un type n'a pas de tarif, les demandes
-          des étudiants sont créées sans frais et passent directement en
-          traitement.
+          {{ $t('tarifsDemandeAdmin.table.empty') }}
         </div>
       </template>
       <template #body-cell-type="p">
@@ -73,8 +66,8 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="edit" aria-label="Modifier le tarif" @click="ouvrir(p.row)">
-            <q-tooltip>Modifier</q-tooltip>
+          <q-btn flat dense round icon="edit" :aria-label="$t('tarifsDemandeAdmin.table.edit_aria')" @click="ouvrir(p.row)">
+            <q-tooltip>{{ $t('tarifsDemandeAdmin.table.edit_tooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -84,7 +77,7 @@
       <q-card style="width: 480px; max-width: 95vw">
         <q-form ref="formRef" @submit.prevent="enregistrer">
           <q-card-section class="text-h6">
-            {{ tarifEdite ? 'Modifier le tarif' : 'Nouveau tarif' }}
+            {{ tarifEdite ? $t('tarifsDemandeAdmin.dialog.edit_title') : $t('tarifsDemandeAdmin.dialog.new_title') }}
           </q-card-section>
           <q-card-section>
             <q-select
@@ -95,19 +88,19 @@
               map-options
               outlined
               dense
-              label="Type"
-              hint="Le type est figé après création"
+              :label="$t('tarifsDemandeAdmin.dialog.type_label')"
+              :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
               class="q-mb-md"
-              :rules="[(v) => !!v || 'Type requis']"
+              :rules="[(v) => !!v || $t('tarifsDemandeAdmin.dialog.type_required')]"
             />
             <q-input
               v-else
               :model-value="libelleType(form.type)"
               outlined
               dense
-              label="Type"
+              :label="$t('tarifsDemandeAdmin.dialog.type_label')"
               disable
-              hint="Le type est figé après création"
+              :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
               class="q-mb-md"
             />
             <q-input
@@ -116,10 +109,10 @@
               outlined
               dense
               min="0"
-              label="Montant"
+              :label="$t('tarifsDemandeAdmin.dialog.amount_label')"
               suffix="GNF"
               class="q-mb-md"
-              :rules="[(v) => (v !== null && v !== undefined && v > 0) || 'Montant requis']"
+              :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.amount_required')]"
             />
             <q-input
               v-model.number="form.delaiHeures"
@@ -127,8 +120,8 @@
               outlined
               dense
               min="1"
-              label="Délai habituel (heures)"
-              :rules="[(v) => (v !== null && v !== undefined && v > 0) || 'Délai requis']"
+              :label="$t('tarifsDemandeAdmin.dialog.delay_label')"
+              :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.delay_required')]"
             />
           </q-card-section>
           <q-banner v-if="erreur" dense class="note--erreur q-mx-md q-mb-sm">
@@ -136,12 +129,12 @@
             {{ erreur }}
           </q-banner>
           <q-card-actions align="right">
-            <q-btn flat label="Annuler" no-caps v-close-popup />
+            <q-btn flat :label="$t('tarifsDemandeAdmin.dialog.cancel')" no-caps v-close-popup />
             <q-btn
               color="primary"
               unelevated
               icon="save"
-              label="Enregistrer"
+              :label="$t('tarifsDemandeAdmin.dialog.save')"
               no-caps
               :loading="enregistrement"
               :disable="!formulaireValide"
@@ -155,14 +148,18 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { LIBELLE_TYPE_DEMANDE, montantLisible, optionsDepuis } from '../utils/libelles';
 import type { TarifDemande, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const auth = useAuthStore();
 const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 'ADMIN');
@@ -199,12 +196,12 @@ const formulaireValide = computed(
   () => !!form.value.type && form.value.montant > 0 && form.value.delaiHeures > 0,
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'montant', label: 'Montant', field: 'montant', align: 'right' },
-  { name: 'delaiHeures', label: 'Délai', field: 'delaiHeures', align: 'right' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'type', label: t('tarifsDemandeAdmin.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'montant', label: t('tarifsDemandeAdmin.table.columns.amount'), field: 'montant', align: 'right' },
+  { name: 'delaiHeures', label: t('tarifsDemandeAdmin.table.columns.delay'), field: 'delaiHeures', align: 'right' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 function ouvrir(t: TarifDemande | null) {
   tarifEdite.value = t;
@@ -231,19 +228,19 @@ async function enregistrer() {
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
       });
-      $q.notify({ type: 'positive', message: 'Tarif mis à jour' });
+      $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.updated') });
     } else {
       await api.post('/documents-demande/tarifs', {
         type: form.value.type,
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
       });
-      $q.notify({ type: 'positive', message: 'Tarif créé' });
+      $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.created') });
     }
     dialogOuvert.value = false;
     await charger();
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Enregistrement impossible';
+    erreur.value = e.response?.data?.message ?? t('tarifsDemandeAdmin.errors.save_error');
   } finally {
     enregistrement.value = false;
   }

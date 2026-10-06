@@ -17,17 +17,20 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { PatrimoineService } from './patrimoine.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
   DeclarationReparationDto,
   EquipementQueryDto,
   ResolutionReparationDto,
+  ReparationQueryDto,
   UpdateCategorieDto,
   UpdateEquipementDto,
 } from './patrimoine.dto';
@@ -39,6 +42,7 @@ const ROLES_DIRECTION = [Role.ADMIN, Role.DIRECTION];
 @ApiTags('Patrimoine')
 @ApiBearerAuth()
 @Controller('patrimoine')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
 export class PatrimoineController {
   constructor(private readonly service: PatrimoineService) {}
 
@@ -84,6 +88,7 @@ export class PatrimoineController {
    * son téléphone, on ne veut pas qu'il doive se connecter.
    */
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('equipements/par-qr/:qrCode')
   parQr(@Param('qrCode') qrCode: string) {
     return this.service.parQr(qrCode);
@@ -94,16 +99,15 @@ export class PatrimoineController {
    * n'y arrive pas, le jeton passe en query string et est vérifié à la main
    * (même motif que les attestations et les certifications de formation).
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get('equipements/:id/imprimer')
   async imprimerEtiquette(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.imprimerEtiquette(id, token, base));
+    res.type('html').send(await this.service.imprimerEtiquette(id, jetonImprimable(req), base));
   }
 
   @Get('equipements/:id')
@@ -175,8 +179,8 @@ export class PatrimoineController {
    */
   @Roles(...ROLES_GESTION, ...ROLES_DIRECTION)
   @Get('reparations')
-  listeReparations(@Query('statut') statut?: string) {
-    return this.service.listeReparations({ statut });
+  listeReparations(@Query() query: ReparationQueryDto) {
+    return this.service.listeReparations(query);
   }
 
   // ============================================================ Dashboard

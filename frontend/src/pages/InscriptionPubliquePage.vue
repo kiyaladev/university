@@ -2,38 +2,30 @@
   <q-page class="acces">
     <!-- L'enseigne : ce que voit le candidat avant de déposer son dossier -->
     <section class="enseigne">
-      <div class="enseigne__bandes" aria-hidden="true">
-        <span class="bande bande--rouge" />
-        <span class="bande bande--jaune" />
-        <span class="bande bande--vert" />
-      </div>
-
-      <p class="pochoir enseigne__sur-titre">Inscriptions en ligne</p>
-      <h1 class="lettrage enseigne__marque">Rejoignez l'université</h1>
+      <p class="pochoir enseigne__sur-titre">{{ $t('inscriptionPublique.hero.overline') }}</p>
+      <h1 class="lettrage enseigne__marque">{{ $t('inscriptionPublique.hero.title') }}</h1>
       <p class="enseigne__phrase">
-        Déposez votre dossier sans compte : choisissez votre filière, payez vos
-        frais par Mobile Money (Orange Money, MTN MoMo ou Telecel), et la
-        scolarité valide votre inscription.
+        {{ $t('inscriptionPublique.hero.text') }}
       </p>
 
       <dl class="enseigne__faits">
         <div>
-          <dt class="pochoir">Sans cash</dt>
-          <dd>Paiement Mobile Money au numéro court de l'université</dd>
+          <dt class="pochoir">{{ $t('inscriptionPublique.hero.facts.noCash.title') }}</dt>
+          <dd>{{ $t('inscriptionPublique.hero.facts.noCash.text') }}</dd>
         </div>
         <div>
-          <dt class="pochoir">Suivi du dossier</dt>
-          <dd>Un numéro de dossier vous est remis dès le dépôt</dd>
+          <dt class="pochoir">{{ $t('inscriptionPublique.hero.facts.tracking.title') }}</dt>
+          <dd>{{ $t('inscriptionPublique.hero.facts.tracking.text') }}</dd>
         </div>
       </dl>
     </section>
 
     <!-- La plaque du dossier -->
     <section class="acces__plaque">
-      <h2 class="lettrage acces__titre">Déposer mon dossier</h2>
+      <h2 class="lettrage acces__titre">{{ $t('inscriptionPublique.form.title') }}</h2>
 
       <!-- Indicateur d'étape -->
-      <ol class="acces__etapes" aria-label="Étapes de la préinscription">
+      <ol class="acces__etapes" :aria-label="$t('inscriptionPublique.form.steps.ariaLabel')">
         <li
           v-for="(e, i) in libellesEtapes"
           :key="i"
@@ -51,10 +43,9 @@
 
       <!-- Étape 1 : identité -->
       <q-form v-if="etape === 1" class="acces__form" @submit.prevent="continuerEtape1">
-        <span class="section-titre">Identité du candidat</span>
+        <span class="section-titre">{{ $t('inscriptionPublique.form.step1.sectionTitle') }}</span>
         <p class="pochoir acces__aide">
-          Les champs marqués d'une étoile sont obligatoires. Le reste peut être
-          complété plus tard à la scolarité.
+          {{ $t('inscriptionPublique.form.step1.help') }}
         </p>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
@@ -63,8 +54,8 @@
               outlined
               dense
               autocomplete="family-name"
-              label="Nom *"
-              :rules="[(v) => !!v?.trim() || 'Le nom est obligatoire']"
+              :label="$t('inscriptionPublique.form.step1.nom.label')"
+              :rules="[(v) => !!v?.trim() || $t('inscriptionPublique.form.step1.nom.required')]"
               lazy-rules
             />
           </div>
@@ -74,8 +65,8 @@
               outlined
               dense
               autocomplete="given-name"
-              label="Prénom *"
-              :rules="[(v) => !!v?.trim() || 'Le prénom est obligatoire']"
+              :label="$t('inscriptionPublique.form.step1.prenom.label')"
+              :rules="[(v) => !!v?.trim() || $t('inscriptionPublique.form.step1.prenom.required')]"
               lazy-rules
             />
           </div>
@@ -85,23 +76,23 @@
           <div class="col-12 col-sm-4">
             <q-select
               v-model="form.sexe"
-              :options="OPTIONS_SEXE"
+              :options="optionsSexe"
               emit-value
               map-options
               outlined
               dense
               clearable
-              label="Sexe"
+              :label="$t('inscriptionPublique.form.step1.sexe.label')"
             />
           </div>
           <div class="col-12 col-sm-8">
-            <champ-date v-model="form.dateNaissance" label="Date de naissance" />
+            <champ-date v-model="form.dateNaissance" :label="$t('inscriptionPublique.form.step1.dateNaissance.label')" />
           </div>
         </div>
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.lieuNaissance" outlined dense label="Lieu de naissance" />
+            <q-input v-model="form.lieuNaissance" outlined dense :label="$t('inscriptionPublique.form.step1.lieuNaissance.label')" />
           </div>
           <div class="col-12 col-sm-6">
             <q-input
@@ -111,12 +102,12 @@
               type="tel"
               inputmode="tel"
               autocomplete="tel"
-              label="Téléphone *"
-              placeholder="622 00 00 00"
-              hint="C'est ce numéro qui recevra le code d'accès à votre espace"
+              :label="$t('inscriptionPublique.form.step1.telephone.label')"
+              :placeholder="$t('inscriptionPublique.form.step1.telephone.placeholder')"
+              :hint="$t('inscriptionPublique.form.step1.telephone.hint')"
               :rules="[
-                (v) => !!v?.trim() || 'Le téléphone est obligatoire',
-                (v) => !v || v.replace(/\D/g, '').length >= 8 || 'Le numéro doit comporter au moins 8 chiffres',
+                (v) => !!v?.trim() || $t('inscriptionPublique.form.step1.telephone.required'),
+                (v) => !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
               ]"
               lazy-rules
             />
@@ -131,9 +122,9 @@
               dense
               type="email"
               autocomplete="email"
-              label="Adresse e-mail"
+              :label="$t('inscriptionPublique.form.step1.email.label')"
               :rules="[
-                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Adresse e-mail invalide',
+                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || $t('inscriptionPublique.form.step1.email.invalid'),
               ]"
               lazy-rules
             />
@@ -144,7 +135,7 @@
               outlined
               dense
               autocomplete="street-address"
-              label="Adresse"
+              :label="$t('inscriptionPublique.form.step1.adresse.label')"
             />
           </div>
         </div>
@@ -156,16 +147,16 @@
           size="lg"
           unelevated
           no-caps
-          label="Continuer — choisir ma filière"
+          :label="$t('inscriptionPublique.form.step1.continue')"
         />
       </q-form>
 
       <!-- Étape 2 : promotion -->
       <q-form v-else-if="etape === 2" class="acces__form" @submit.prevent="deposer">
-        <span class="section-titre">Choix de la promotion</span>
+        <span class="section-titre">{{ $t('inscriptionPublique.form.step2.sectionTitle') }}</span>
         <q-banner v-if="chargementAnnees" class="note--info">
           <template #avatar><q-spinner size="20px" /></template>
-          Chargement des filières ouvertes…
+          {{ $t('inscriptionPublique.form.step2.loadingFilieres') }}
         </q-banner>
 
         <template v-else>
@@ -173,7 +164,7 @@
             v-model="form.anneeId"
             endpoint="/inscription-publique/annees"
             :label-fn="(a) => a.libelle"
-            label="Année académique *"
+            :label="$t('inscriptionPublique.form.step2.anneeLabel')"
             :disable="annees.length <= 1"
             @update:model-value="onAnneeChange"
           />
@@ -183,20 +174,20 @@
             :label-fn="labelPromotion"
             :disable="!form.anneeId"
             :preload="false"
-            label="Promotion *"
-            placeholder="Choisissez votre filière et niveau"
+            :label="$t('inscriptionPublique.form.step2.promotionLabel')"
+            :placeholder="$t('inscriptionPublique.form.step2.promotionPlaceholder')"
             @update:model-value="onPromotionChange"
           />
 
           <div v-if="tarifCourant" class="plaque acces__tarif">
-            <div class="text-caption acces__tarif-libelle">Frais d'inscription</div>
+            <div class="text-caption acces__tarif-libelle">{{ $t('inscriptionPublique.form.step2.tarifLabel') }}</div>
             <div class="lettrage chiffres acces__tarif-montant">
               {{ montantLisible(tarifCourant.montant) }} {{ tarifCourant.devise }}
             </div>
           </div>
           <div v-else-if="form.promotionId && chargementTarif" class="text-caption text-grey-7">
             <q-spinner size="16px" class="q-mr-xs" />
-            Consultation du tarif officiel…
+            {{ $t('inscriptionPublique.form.step2.checkingTarif') }}
           </div>
         </template>
 
@@ -206,7 +197,7 @@
         </q-banner>
 
         <p v-if="!chargementAnnees && !form.promotionId" class="pochoir acces__aide">
-          Choisissez votre promotion pour pouvoir déposer votre dossier.
+          {{ $t('inscriptionPublique.form.step2.chooseHelp') }}
         </p>
 
         <div class="row q-col-gutter-sm">
@@ -217,7 +208,7 @@
               size="lg"
               no-caps
               icon="chevron_left"
-              label="Retour"
+              :label="$t('inscriptionPublique.form.step2.back')"
               @click="etape = 1"
             />
           </div>
@@ -229,7 +220,7 @@
               size="lg"
               unelevated
               no-caps
-              label="Déposer mon dossier"
+              :label="$t('inscriptionPublique.form.step2.submit')"
               :loading="depotEnCours"
               :disable="!form.promotionId"
             />
@@ -240,31 +231,29 @@
       <!-- Étape 3 : dossier déposé -->
       <div v-else class="acces__resultat">
         <div class="acces__resultat-tampon" aria-hidden="true">
-          <span class="pochoir">Dossier</span>
-          <span class="lettrage">Remis</span>
+          <span class="pochoir">{{ $t('inscriptionPublique.form.step3.stampFolder') }}</span>
+          <span class="lettrage">{{ $t('inscriptionPublique.form.step3.stampDone') }}</span>
         </div>
 
-        <p class="pochoir acces__resultat-ref">N° de dossier</p>
+        <p class="pochoir acces__resultat-ref">{{ $t('inscriptionPublique.form.step3.numeroLabel') }}</p>
         <p class="lettrage chiffres acces__resultat-numero">{{ resultat?.numero }}</p>
         <p class="pochoir acces__aide">
-          Notez ce numéro : il vous sera demandé à la scolarité et pour tout suivi.
+          {{ $t('inscriptionPublique.form.step3.numeroHelp') }}
         </p>
 
         <div class="plaque acces__resultat-montant">
-          <div class="text-caption acces__resultat-libelle">Frais d'inscription à régler</div>
+          <div class="text-caption acces__resultat-libelle">{{ $t('inscriptionPublique.form.step3.fraisLabel') }}</div>
           <div class="lettrage chiffres acces__resultat-somme">
             {{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}
           </div>
         </div>
 
         <p class="acces__resultat-message">
-          Envoyez
-          <strong class="chiffres">{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong>
-          au <strong class="chiffres">{{ NUMERO_COURT_MM }}</strong> par Mobile Money, en
-          mentionnant la référence <strong>{{ resultat?.numero }}</strong> en motif. Dès
-          réception du paiement, la scolarité validera votre inscription. Vous
-          accéderez ensuite à votre espace avec un code envoyé par SMS au
-          numéro que vous avez indiqué.
+          <i18n-t keypath="inscriptionPublique.form.step3.message" tag="span">
+            <template #montant><strong class="chiffres">{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong></template>
+            <template #numero><strong class="chiffres">{{ NUMERO_COURT_MM }}</strong></template>
+            <template #ref><strong>{{ resultat?.numero }}</strong></template>
+          </i18n-t>
         </p>
 
         <q-banner v-if="resultat?.avertissement" class="note--alerte">
@@ -280,7 +269,7 @@
             unelevated
             no-caps
             icon="print"
-            label="Imprimer ce récépissé"
+            :label="$t('inscriptionPublique.form.step3.print')"
             @click="imprimerRecepisse"
           />
           <q-btn
@@ -289,42 +278,42 @@
             size="lg"
             no-caps
             icon="person_add"
-            label="Préinscrire un autre candidat"
+            :label="$t('inscriptionPublique.form.step3.another')"
             @click="recommencer"
           />
         </div>
 
         <p class="pochoir acces__resultat-lien">
-          Une fois votre inscription validée :
+          {{ $t('inscriptionPublique.form.step3.validatedIntro') }}
           <router-link to="/portail-connexion" class="acces__lien-lien">
-            entrez dans votre espace étudiant →
+            {{ $t('inscriptionPublique.form.step3.enterSpace') }}
           </router-link>
         </p>
       </div>
 
       <q-separator class="acces__separateur" />
 
-      <nav class="acces__services" aria-label="Autres services publics">
-        <p class="pochoir acces__services-titre">Autres services</p>
+      <nav class="acces__services" :aria-label="$t('inscriptionPublique.services.ariaLabel')">
+        <p class="pochoir acces__services-titre">{{ $t('inscriptionPublique.services.title') }}</p>
         <ul class="acces__liens">
           <li>
             <router-link to="/portail-connexion" class="acces__lien-lien">
-              Portail étudiant (connexion par SMS) →
+              {{ $t('inscriptionPublique.services.portal') }}
             </router-link>
           </li>
           <li>
             <router-link to="/formations" class="acces__lien-lien">
-              Formation continue →
+              {{ $t('inscriptionPublique.services.formationContinue') }}
             </router-link>
           </li>
           <li>
             <router-link to="/bibliotheque" class="acces__lien-lien">
-              Bibliothèque numérique →
+              {{ $t('inscriptionPublique.services.bibliotheque') }}
             </router-link>
           </li>
           <li>
             <router-link to="/connexion" class="acces__lien-lien">
-              Connexion du personnel →
+              {{ $t('inscriptionPublique.services.connexionPersonnel') }}
             </router-link>
           </li>
         </ul>
@@ -335,6 +324,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from '../components/ChampDate.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
@@ -368,12 +358,18 @@ interface ResultatDepot {
   avertissement?: string | null;
 }
 
-const libellesEtapes = ['Identité', 'Filière', 'Confirmation'];
+const { t } = useI18n();
 
-const OPTIONS_SEXE = [
-  { value: 'M', label: 'Masculin' },
-  { value: 'F', label: 'Féminin' },
-];
+const libellesEtapes = computed(() => [
+  t('inscriptionPublique.form.steps.identity'),
+  t('inscriptionPublique.form.steps.filiere'),
+  t('inscriptionPublique.form.steps.confirmation'),
+]);
+
+const optionsSexe = computed(() => [
+  { value: 'M', label: t('inscriptionPublique.form.step1.sexe.masculin') },
+  { value: 'F', label: t('inscriptionPublique.form.step1.sexe.feminin') },
+]);
 
 const etape = ref(1);
 const depotEnCours = ref(false);
@@ -404,7 +400,9 @@ const endpointPromotions = computed(() =>
 
 const labelPromotion = (p: PromotionOuverte) =>
   `${p.filiere ? p.filiere.nom + ' — ' : ''}${p.nom}${
-    p.frais ? ` (Frais : ${montantLisible(p.frais.montant)} ${p.frais.devise})` : ''
+    p.frais
+      ? ` (${t('inscriptionPublique.form.step2.fraisLabel', { montant: montantLisible(p.frais.montant), devise: p.frais.devise })})`
+      : ''
   }`;
 
 function persisterBrouillon() {
@@ -515,7 +513,7 @@ async function deposer() {
     oublierBrouillon();
   } catch (e: any) {
     messageDepotErreur.value =
-      e?.response?.data?.message ?? 'Dépôt impossible, votre brouillon est conservé — réessayez.';
+      e?.response?.data?.message ?? t('inscriptionPublique.form.step2.depotError');
   } finally {
     depotEnCours.value = false;
   }
@@ -579,7 +577,7 @@ onMounted(() => {
 }
 
 .enseigne__sur-titre {
-  color: rgba(250, 250, 247, 0.6);
+  color: var(--up-encre-tertiaire);
   margin: 0;
 }
 
@@ -592,7 +590,7 @@ onMounted(() => {
   font-size: 1.05rem;
   line-height: 1.55;
   max-width: 46ch;
-  color: rgba(250, 250, 247, 0.88);
+  color: var(--up-encre-douce);
   margin: 0;
 }
 
@@ -600,10 +598,10 @@ onMounted(() => {
   display: grid;
   gap: var(--up-3);
   margin: 0;
-  border-top: 2px solid rgba(250, 250, 247, 0.35);
+  border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: rgba(250, 250, 247, 0.66); }
+  dt { color: var(--up-encre-tertiaire); }
   dd { margin: 3px 0 0; font-size: 0.92rem; }
 }
 
@@ -619,10 +617,11 @@ onMounted(() => {
 }
 
 .acces__titre {
-  font-size: 1.7rem;
+  font-size: 2rem;
+  letter-spacing: -0.022em;
   margin: 0 0 var(--up-4);
-  padding-bottom: var(--up-2);
-  border-bottom: 3px solid var(--up-encre);
+  padding-bottom: 0;
+  border-bottom: 0;
 }
 
 .acces__etapes {
@@ -642,9 +641,8 @@ onMounted(() => {
   border: var(--up-filet-fin);
   color: var(--up-encre-douce);
   font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-weight: 590;
 }
 
 .acces__etape-num {
@@ -653,17 +651,19 @@ onMounted(() => {
   height: 22px;
   align-items: center;
   justify-content: center;
-  background: var(--up-encre);
-  color: $blanc-craie;
+  background: var(--up-gris-inerte);
+  color: var(--up-encre-douce);
+  border-radius: var(--up-pilule);
 }
 
 .acces__etape--actif {
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
   color: var(--up-encre);
 }
 
 .acces__etape--actif .acces__etape-num {
-  background: var(--up-vert, $vert);
+  background: #{$vert-action};
+  color: #fff;
 }
 
 .acces__etape--fait {
@@ -690,9 +690,8 @@ onMounted(() => {
 }
 
 .acces__tarif-libelle {
-  text-transform: uppercase;
   color: var(--up-encre-douce);
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
 }
 
 .acces__tarif-montant {
@@ -711,10 +710,10 @@ onMounted(() => {
   align-items: center;
   gap: var(--up-2);
   align-self: start;
-  border: 2px solid $vert;
-  color: $vert;
+  background: $vert-fond;
+  color: #{$vert};
+  border-radius: var(--up-pilule);
   padding: var(--up-2) var(--up-3);
-  transform: rotate(-3deg);
 }
 
 .acces__resultat-ref {
@@ -734,9 +733,8 @@ onMounted(() => {
 }
 
 .acces__resultat-libelle {
-  text-transform: uppercase;
   color: var(--up-encre-douce);
-  letter-spacing: 0.06em;
+  letter-spacing: -0.01em;
 }
 
 .acces__resultat-somme {

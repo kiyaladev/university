@@ -1,15 +1,14 @@
+import { AuthModule } from '../auth/auth.module';
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { BibliothequeController } from './bibliotheque.controller';
 import { BibliothequeService } from './bibliotheque.service';
 import { PlagiatService } from './plagiat.service';
 import { RechercheService } from './recherche.service';
 
 /**
- * Dépôt institutionnel & bibliothèque numérique. Le JwtModule est déclaré ici
- * (même motif que modules/rapports) : la liste et le téléchargement restent des
- * routes @Public() mais le jeton est vérifié à la main pour distinguer le
- * staff du visiteur anonyme.
+ * Dépôt institutionnel & bibliothèque numérique. AuthModule fournit le
+ * JwtService utilisé pour distinguer le staff du visiteur anonyme sur les
+ * routes publiques à jeton optionnel.
  *
  * Étendu avec :
  *  - RechercheService (FTS PostgreSQL) ;
@@ -18,10 +17,7 @@ import { RechercheService } from './recherche.service';
  */
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
+    AuthModule,
   ],
   controllers: [BibliothequeController],
   providers: [BibliothequeService, RechercheService, PlagiatService],

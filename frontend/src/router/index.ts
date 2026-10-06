@@ -8,7 +8,11 @@ import {
 import { Notify } from 'quasar';
 import routes from './routes';
 import { useAuthStore } from '../stores/auth';
+import { i18n } from '../boot/i18n';
+import { titreRoute } from '../utils/titreRoute';
+import { accueilParRole } from '../utils/accueil';
 import type { Role } from '../types';
+import { useServicesActifsStore } from '../stores/servicesActifs';
 
 /**
  * L'écran d'accueil dépend du rôle : le personnel arrive sur le tableau de
@@ -17,7 +21,7 @@ import type { Role } from '../types';
  * tableau de bord qui ne parle pas de soi.
  */
 function accueil(role: Role | null) {
-  return role === 'ETUDIANT' ? { name: 'portail' } : { name: 'tableau-de-bord' };
+  return accueilParRole(role);
 }
 
 export default defineRouter(function () {
@@ -36,6 +40,12 @@ export default defineRouter(function () {
   // Garde d'accès : jeton obligatoire, puis contrôle du rôle.
   Router.beforeEach(async (to) => {
     const auth = useAuthStore();
+    const services = useServicesActifsStore();
+    await services.charger();
+    if (!services.autorise(to.path)) {
+      Notify.create({ type: 'warning', message: i18n.global.t('servicesActifs.unavailable') as string });
+      return auth.connecte ? accueil(auth.role) : { name: 'connexion' };
+    }
 
     if (to.meta.public) return true;
     if (!auth.connecte) return { name: 'connexion', query: { suite: to.fullPath } };
@@ -44,16 +54,16 @@ export default defineRouter(function () {
 
     // Le tableau de bord est un registre de contrôle : il n'a rien à dire à un
     // étudiant, qui est renvoyé vers son espace.
-    if (to.name === 'tableau-de-bord' && auth.utilisateur.role === 'ETUDIANT') {
-      return { name: 'portail' };
+    if (to.name === 'tableau-de-bord' && accueilParRole(auth.utilisateur.role) !== '/') {
+      return accueil(auth.utilisateur.role);
     }
 
     if (to.meta.roles && !to.meta.roles.includes(auth.utilisateur.role)) {
       // Un renvoi muet donne l'impression d'un lien cassé : on dit pourquoi.
       Notify.create({
         type: 'warning',
-        message: 'Cette rubrique n’est pas ouverte à votre profil',
-        caption: to.meta.titre,
+        message: i18n.global.t('nav.rubriqueFermee') as unknown as string,
+        caption: titreRoute(to.meta.titre),
       });
       return accueil(auth.utilisateur.role);
     }
@@ -67,7 +77,8 @@ export default defineRouter(function () {
    * « UniPrésence » et ne retrouve rien.
    */
   Router.afterEach((to) => {
-    document.title = to.meta.titre ? `${to.meta.titre} — UniPrésence` : 'UniPrésence';
+    const titre = titreRoute(to.meta.titre);
+    document.title = titre ? `${titre} — UniPrésence` : 'UniPrésence';
   });
 
   return Router;

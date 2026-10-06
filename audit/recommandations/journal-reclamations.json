@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-03",
+  "sujet": "Journal avant/après de la plateforme de réclamations",
+  "module": "backend/src/modules/reclamations",
+  "operations": [
+    "creer",
+    "posterMessage",
+    "changerStatut",
+    "assigner",
+    "escalader",
+    "cloturer",
+    "cronEscalade"
+  ],
+  "avant": [
+    "Sept entrées AuditLog sans état : details en texte libre, écrites après la mutation, hors transaction.",
+    "Le journal recopiait des contenus sensibles : sujet de la réclamation tronqué à 80 caractères, prénom et nom de l'agent affecté.",
+    "Aucun registre des états : impossible de reconstituer une transition de statut ni une escalade."
+  ],
+  "apres": [
+    "Une projection minimale instantaneAudit : identification technique (id, numero), qualification (type, priorite), situation (statut, anonyme, nombreMessages), affectation (etudiantId, departementId, assigneAId, assigneARole) et horodatages (delaiEscaladeHeures, escaladeLe, creeLe, fermeLe).",
+    "champsModifies nomme les champs touchés, y compris ceux dont la valeur reste hors journal.",
+    "Présence et non contenu : sujetFourni, descriptionFournie, noteInterneFournie, nomAuteurFourni, emailAuteurFourni, contenuFourni, pieceJointeFournie.",
+    "Escalade : delaiAtteint et forcee distinguent l'automatisme du forçage manuel par l'ADMIN ; le cron marque origine CRON.",
+    "Prise en charge : priseEnCharge distingue une affectation qui fait passer le dossier en cours d'une simple réassignation.",
+    "Toutes les traces sont écrites par journaliser(tx, ...) dans la transaction de la mutation ; l'ancien tracer() hors transaction est supprimé."
+  ],
+  "transitionsTracees": [
+    "ouverture, réponse, changement de statut, affectation, escalade, clôture, escalade automatique"
+  ],
+  "protections": [
+    "Aucun texte libre : ni sujet, ni description, ni contenu de message, ni commentaire de transition, ni note interne, ni note de clôture.",
+    "Aucun nom, prénom, matricule, nom d'auteur, nom d'agent affecté, téléphone, e-mail ou secret. Les identifiants techniques d'étudiant, département et agent restent dans les instantanés pour reconstituer la propriété et l'affectation.",
+    "Pour une ouverture explicitement anonyme et les réponses d'un étudiant à son fil anonyme, AuditLog.userId reste nul ; le snapshot a etudiantId nul.",
+    "Aucun contenu de pièce jointe, ni data-URL, ni jeton.",
+    "Le bloc-notes interne omis des réponses à un étudiant disparaît aussi du journal (clé absente) plutôt que d'y porter un faux non.",
+    "Les lectures — liste, mesReclamations, findOnePour, dashboard, agents — ne produisent aucune entrée."
+  ],
+  "politiqueMetier": "Inchangée : matrice de transitions, rôles, plafond de 100 messages, règles d'anonymat, délai d'escalade et conditions de clôture sont ceux d'origine.",
+  "verification": {
+    "testsCibles": "reclamations.audit.spec.ts, 16 tests verts ; reclamations.service.spec.ts, 11 tests verts",
+    "couvertureModule": "reclamations.service.ts — 91,5 % des instructions, 76,4 % des branches, 100 % des fonctions",
+    "backend": "95 suites, 738 tests verts après les corrections d’anonymat et du filtrage des détails TICKET_OUVERT, RECLAMATION, PLAGIAT et VOTE_DEPOSE",
+    "typescript": "npx tsc -p tsconfig.json --noEmit réussi",
+    "build": "npx nest build réussi",
+    "limite": "Le rejeu complet utilisait --forceExit ; Jest signale un worker qui ne s'arrête pas proprement après les tests. Aucune migration ni modification de production."
+  },
+  "reste": [
+    "Les lectures de pré-contrôle restent hors transaction : changerStatut, assigner, escalader, cloturer et la limite de messages lisent l'état avant d'ouvrir la transaction. Une course concurrente peut donc produire une trace avant/après incohérente avec la ligne réellement écrite. Corriger cela suppose de déplacer les contrôles dans la transaction, ce qui relève de la politique métier.",
+    "Les traces n'ont pas été relues dans l'interface Journal sur une base réelle ; seul le rendu des clés avant/après par l'écran est couvert par le code existant. Les actions anonymes perdent volontairement le lien à l'identité de compte dans AuditLog."
+  ]
+}

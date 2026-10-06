@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -10,6 +11,7 @@ import * as bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 import { Role, StatutDeliberation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OtpClient, numerique } from './otp.client';
 
@@ -94,21 +96,19 @@ export class PortailService {
     if (!reponse.valid) {
       if (reponse.raison === 'passerelle_injoignable') {
         throw new ServiceUnavailableException(
-          'Le service de vérification est momentanément indisponible, réessayez dans un instant.',
+          t('portail.gateway_unavailable'),
         );
       }
-      const messages: Record<string, string> = {
-        no_active_code: 'Aucun code en attente pour ce numéro : demandez-en un nouveau.',
-        too_many_attempts: 'Trop de tentatives : demandez un nouveau code.',
-      };
-      throw new BadRequestException(messages[reponse.raison ?? ''] ?? 'Code incorrect ou expiré.');
+      // The gateway distinguishes a missing OTP from a wrong one. Collapse
+      // those responses so this public endpoint cannot reveal registry hits.
+      throw new BadRequestException(t('portail.invalid_or_expired_code'));
     }
 
     const etudiant = await this.trouverEtudiantParTelephone(telephone);
     if (!etudiant) {
       // Ne se produit que pour un code valide émis sur un compte supprimé
       // depuis : on reste vague.
-      throw new BadRequestException('Aucun compte étudiant pour ce numéro.');
+      throw new BadRequestException(t('portail.invalid_or_expired_code'));
     }
 
     const utilisateur = await this.assurerCompteEtudiant(etudiant);
@@ -143,37 +143,83 @@ export class PortailService {
    */
   private async assurerCompteEtudiant(etudiant: Etudiant) {
     if (etudiant.userId) {
-      const existant = await this.prisma.user.findUnique({ where: { id: etudiant.userId } });
-      if (existant) return existant;
+      const existant = await this.prisma.user.findUnique({
+        where: { id: etudiant.userId },
+        include: { etudiant: { select: { id: true } } },
+      });
+      if (existant) {
+        this.verifierCompteEtudiant(existant, etudiant.id);
+        return existant;
+      }
     }
 
     const email = `ine-${etudiant.matricule.toLowerCase()}@university.local`;
     try {
-      const cree = await this.prisma.user.create({
-        data: {
-          email,
-          password: await bcrypt.hash(randomUUID(), 10),
-          nom: etudiant.nom,
-          prenom: etudiant.prenom,
-          telephone: etudiant.telephone ?? null,
-          role: Role.ETUDIANT,
-          actif: true,
-        },
+      return await this.prisma.$transaction(async (tx) => {
+        const cree = await tx.user.create({
+          data: {
+            email,
+            password: await bcrypt.hash(randomUUID(), 10),
+            nom: etudiant.nom,
+            prenom: etudiant.prenom,
+            telephone: etudiant.telephone ?? null,
+            role: Role.ETUDIANT,
+            actif: true,
+          },
+        });
+        await tx.etudiant.update({
+          where: { id: etudiant.id },
+          data: { userId: cree.id },
+        });
+        await tx.auditLog.create({
+          data: {
+            userId: null,
+            action: 'COMPTE_ETUDIANT_CREE',
+            entite: 'Etudiant',
+            entiteId: etudiant.id,
+            details: JSON.stringify({ avant: null, apres: { compteLie: true, role: cree.role, actif: cree.actif } }),
+          },
+        });
+        return cree;
       });
-      await this.prisma.etudiant.update({
-        where: { id: etudiant.id },
-        data: { userId: cree.id },
-      });
-      return cree;
     } catch (erreur) {
       // Adresse déjà prise par un compte pré-créé sans rattachement : on le
       // reprend au lieu de forcer un second compte.
       if ((erreur as { code?: string })?.code === 'P2002') {
-        const existant = await this.prisma.user.findUnique({ where: { email } });
+        const existant = await this.prisma.user.findUnique({
+          where: { email },
+          include: { etudiant: { select: { id: true } } },
+        });
         if (existant) {
-          await this.prisma.etudiant.update({
-            where: { id: etudiant.id },
-            data: { userId: existant.id },
+          this.verifierCompteEtudiant(existant, etudiant.id);
+          await this.prisma.$transaction(async (tx) => {
+            const lie = await tx.etudiant.updateMany({
+              where: { id: etudiant.id, userId: null },
+              data: { userId: existant.id },
+            });
+            if (lie.count !== 1) {
+              const fiche = await tx.etudiant.findUnique({
+                where: { id: etudiant.id },
+                include: { user: { select: { id: true, role: true, actif: true } } },
+              });
+              if (!fiche?.user || fiche.user.id !== existant.id) {
+                throw new ForbiddenException(t('portail.aucun_compte_etudiant_pour_ce_numero'));
+              }
+            }
+            if (lie.count === 1) {
+              await tx.auditLog.create({
+                data: {
+                  userId: null,
+                  action: 'COMPTE_ETUDIANT_RATTACHE',
+                  entite: 'Etudiant',
+                  entiteId: etudiant.id,
+                  details: JSON.stringify({
+                    avant: { compteLie: false },
+                    apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
+                  }),
+                },
+              });
+            }
           });
           return existant;
         }
@@ -182,10 +228,20 @@ export class PortailService {
     }
   }
 
+  /** Un OTP étudiant ne doit jamais réutiliser un compte privilégié ou inactif. */
+  private verifierCompteEtudiant(
+    user: { role: Role; actif: boolean; etudiant?: { id: string } | null },
+    etudiantId: string,
+  ) {
+    if (!user.actif || user.role !== Role.ETUDIANT || (user.etudiant && user.etudiant.id !== etudiantId)) {
+      throw new ForbiddenException(t('portail.aucun_compte_etudiant_pour_ce_numero'));
+    }
+  }
+
   /** Profil complet de l'étudiant connecté, strictement borné à sa fiche. */
   async profilPortail(utilisateur: AuthUser) {
     if (!utilisateur.etudiantId) {
-      throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+      throw new NotFoundException(t('portail.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
 
     const etudiant = await this.prisma.etudiant.findUnique({
@@ -198,7 +254,7 @@ export class PortailService {
         paiements: { orderBy: { horodatage: 'desc' } },
       },
     });
-    if (!etudiant) throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+    if (!etudiant) throw new NotFoundException(t('portail.aucun_dossier_etudiant_rattache_a_ce_compte'));
 
     // Inscription courante : celle de l'année académique active, sinon la
     // plus récente.
@@ -301,7 +357,7 @@ export class PortailService {
   /** Moyennes par session de délibération pour l'étudiant connecté. */
   async resultats(utilisateur: AuthUser) {
     if (!utilisateur.etudiantId) {
-      throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+      throw new NotFoundException(t('portail.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
 
     const lignes = await this.prisma.deliberationLigne.findMany({
@@ -309,7 +365,23 @@ export class PortailService {
         inscription: { etudiantId: utilisateur.etudiantId },
         deliberation: { statut: StatutDeliberation.VALIDEE },
       },
-      include: { deliberation: { include: { promotion: true, annee: true } } },
+      select: {
+        id: true,
+        deliberationId: true,
+        moyenne: true,
+        decision: true,
+        mention: true,
+        rang: true,
+        deliberation: {
+          select: {
+            session: true,
+            statut: true,
+            valideeLe: true,
+            promotion: { select: { nom: true } },
+            annee: { select: { libelle: true } },
+          },
+        },
+      },
       orderBy: [{ deliberation: { session: 'asc' } }, { deliberation: { valideeLe: 'desc' } }],
     });
 

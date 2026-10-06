@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Injectable, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role, StatutEnseignant } from '@prisma/client';
 import {
@@ -14,7 +14,16 @@ import {
 import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
-import { Roles } from '../../common/decorators';
+import { Roles, CurrentUser } from '../../common/decorators';
+import type { AuthUser } from '../../common/decorators';
+import { exigerPerimetre } from '../../common/perimetre';
+import { t } from '../../common/i18n';
+
+export const ENSEIGNANT_LECTURE_MINIMALE = {
+  id: true, matricule: true, nom: true, prenom: true, grade: true,
+  statut: true, actif: true, departementId: true,
+  departement: { select: { id: true, nom: true } },
+} as const;
 
 export class CreateEnseignantDto {
   @IsString() matricule: string;
@@ -48,6 +57,110 @@ export class EnseignantsService extends CrudService {
       label: 'Enseignant',
     });
   }
+
+  /** Exclut coordonnées, rémunération, PIN et gabarit biométrique. */
+  private instantaneAudit(enseignant: any) {
+    return {
+      id: enseignant.id,
+      statut: enseignant.statut,
+      actif: enseignant.actif,
+      departementId: enseignant.departementId,
+      compteLie: Boolean(enseignant.userId),
+    };
+  }
+
+  private lecture(user: AuthUser): CrudService {
+    if (([Role.ETUDIANT, Role.ENSEIGNANT, Role.CONTROLEUR, Role.CHEF_DEPARTEMENT] as Role[]).includes(user.role)) {
+      return new CrudService(this.prisma, 'enseignant', {
+        searchFields: ['nom', 'prenom', 'matricule'],
+        orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
+        select: ENSEIGNANT_LECTURE_MINIMALE, label: 'Enseignant',
+      });
+    }
+    return this;
+  }
+
+  listePour(query: EnseignantQueryDto, user: AuthUser) {
+    return this.lecture(user).findAll(query, {
+      ...(user.role === Role.CHEF_DEPARTEMENT
+        ? { departementId: user.departementId ?? '__aucun__' }
+        : query.departementId ? { departementId: query.departementId } : {}),
+      ...(query.statut ? { statut: query.statut } : {}),
+    });
+  }
+
+  async detailPour(id: string, user: AuthUser) {
+    if (user.role === Role.CHEF_DEPARTEMENT) {
+      const enseignant = await this.prisma.enseignant.findFirst({
+        where: { id, departementId: user.departementId ?? '__aucun__' },
+        select: ENSEIGNANT_LECTURE_MINIMALE,
+      });
+      if (!enseignant) throw new NotFoundException(t('common.notFound'));
+      return enseignant;
+    }
+    return this.lecture(user).findOne(id);
+  }
+
+  /**
+   * La lecture était bornée au département du chef de département, l'écriture ne
+   * l'était pas : `PUT /enseignants/:id` touchait n'importe quel enseignant et
+   * acceptait `departementId` dans le corps, ce qui permettait de sortir un
+   * enseignant de son périmètre — ou de le désactiver, ou de changer son
+   * adresse de courriel. L'écriture passe maintenant par le même contrôle.
+   */
+  async creerPour(dto: CreateEnseignantDto, user: AuthUser) {
+    exigerPerimetre(user, dto.departementId);
+    return this.prisma.$transaction(async (tx) => {
+      const cree = await tx.enseignant.create({ data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user.id,
+        action: 'ENSEIGNANT_CREE',
+        entite: 'Enseignant',
+        entiteId: cree.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(cree), champsModifies: Object.keys(dto) }),
+      } });
+      return cree;
+    });
+  }
+
+  async modifierPour(id: string, dto: UpdateEnseignantDto, user: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const cible = await tx.enseignant.findUnique({ where: { id } });
+      if (!cible) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Enseignant' }));
+      // Le périmètre est revérifié dans la transaction, après la lecture de l'état courant.
+      exigerPerimetre(user, cible.departementId);
+      exigerPerimetre(user, dto.departementId ?? cible.departementId);
+      const maj = await tx.enseignant.update({ where: { id }, data: dto, include: this.options.include });
+      await tx.auditLog.create({ data: {
+        userId: user.id,
+        action: 'ENSEIGNANT_MODIFIE',
+        entite: 'Enseignant',
+        entiteId: id,
+        details: JSON.stringify({
+          avant: this.instantaneAudit(cible),
+          apres: this.instantaneAudit(maj),
+          champsModifies: Object.keys(dto),
+        }),
+      } });
+      return maj;
+    });
+  }
+
+  async supprimer(id: string, user: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.enseignant.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Enseignant' }));
+      await tx.enseignant.delete({ where: { id } });
+      await tx.auditLog.create({ data: {
+        userId: user.id,
+        action: 'ENSEIGNANT_SUPPRIME',
+        entite: 'Enseignant',
+        entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
+      } });
+      return { id };
+    });
+  }
 }
 
 @ApiTags('Enseignants')
@@ -56,25 +169,26 @@ export class EnseignantsService extends CrudService {
 export class EnseignantsController {
   constructor(private readonly service: EnseignantsService) {}
 
-  @Get() findAll(@Query() query: EnseignantQueryDto) {
-    return this.service.findAll(query, {
-      ...(query.departementId ? { departementId: query.departementId } : {}),
-      ...(query.statut ? { statut: query.statut } : {}),
-    });
+  @Get() findAll(@Query() query: EnseignantQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listePour(query, user);
   }
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.detailPour(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Post() create(@Body() dto: CreateEnseignantDto) {
-    return this.service.create(dto);
+  @Post() create(@Body() dto: CreateEnseignantDto, @CurrentUser() user: AuthUser) {
+    return this.service.creerPour(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateEnseignantDto) {
-    return this.service.update(id, dto);
+  @Put(':id') update(
+    @Param('id') id: string,
+    @Body() dto: UpdateEnseignantDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.modifierPour(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

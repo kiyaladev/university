@@ -2,15 +2,14 @@
   <q-dialog v-model="dialogOuvert" persistent>
     <q-card style="width: 560px; max-width: 95vw">
       <q-card-section>
-        <div class="text-h6">Émettre une attestation</div>
+        <div class="text-h6">{{ $t('attestations.actions.issue') }}</div>
         <div class="text-caption text-grey-7">
-          Document officiel vérifiable par QR code — la même année, le même
-          type et le même étudiant ne donnent qu'une attestation active.
+          {{ $t('attestations.issueDialog.subtitle') }}
         </div>
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Étudiant</span>
+        <span class="section-titre">{{ $t('common.fields.student') }}</span>
         <q-select
           v-model="form.etudiantId"
           :options="optionsEtudiants"
@@ -22,19 +21,19 @@
           autofocus
           emit-value
           map-options
-          label="Étudiant *"
+          :label="$t('attestations.issueDialog.student')"
           option-label="label"
           option-value="value"
-          hint="Tapez au moins 2 lettres : nom, prénom ou matricule"
+          :hint="$t('attestations.issueDialog.studentHint')"
           :loading="rechercheEtudiants"
           @filter="filtrerEtudiants"
         >
           <template #no-option>
-            <q-item><q-item-section class="text-grey-7">Aucun étudiant trouvé</q-item-section></q-item>
+            <q-item><q-item-section class="text-grey-7">{{ $t('attestations.issueDialog.studentEmpty') }}</q-item-section></q-item>
           </template>
         </q-select>
 
-        <span class="section-titre q-mt-md">Document</span>
+        <span class="section-titre q-mt-md">{{ $t('bibliotheque.table.columns.document') }}</span>
         <q-select
           v-model="form.type"
           :options="optionsTypes"
@@ -42,7 +41,7 @@
           dense
           emit-value
           map-options
-          label="Type d'attestation *"
+          :label="$t('attestations.issueDialog.type')"
         />
         <q-input
           v-model="form.motif"
@@ -50,10 +49,10 @@
           dense
           type="textarea"
           rows="2"
-          label="Motif (bourse, banque, passeport…)"
+          :label="$t('attestations.issueDialog.reason')"
         />
 
-        <span class="section-titre q-mt-md">Rattachement</span>
+        <span class="section-titre q-mt-md">{{ $t('attestations.issueDialog.track') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
             <q-select
@@ -64,8 +63,7 @@
               emit-value
               map-options
               clearable
-              label="Année académique"
-              @update:model-value="chargerInscriptions"
+              :label="$t('affectations.filters.year')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -77,7 +75,7 @@
               emit-value
               map-options
               clearable
-              label="Promotion"
+              :label="$t('affectations.filters.promotion')"
             />
           </div>
         </div>
@@ -90,19 +88,19 @@
           emit-value
           map-options
           clearable
-          label="Inscription liée (facultatif)"
-          hint="Précise le parcours exact de l'étudiant"
+          :label="$t('attestations.issueDialog.enrollment')"
+          :hint="$t('attestations.issueDialog.enrollmentHint')"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
           icon="qr_code_2"
-          label="Émettre"
+          :label="$t('attestations.issueDialog.submit')"
           :disable="!formulaireValide"
           :loading="enregistrement"
           @click="enregistrer"
@@ -114,12 +112,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import { LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
 import type { AnneeAcademique, Etudiant, Inscription, Promotion } from '../types';
 
 const $q = useQuasar();
+const { t: $t } = useI18n();
 const emit = defineEmits<{ enregistre: [] }>();
 
 /**
@@ -149,7 +149,10 @@ const form = ref({
 });
 
 const optionsTypes = computed(() =>
-  Object.entries(LIBELLE_TYPE_ATTESTATION).map(([value, label]) => ({ value, label })),
+  Object.keys(LIBELLE_TYPE_ATTESTATION).map((value) => ({
+    value,
+    label: $t(`libelles.type_attestation.${value}`),
+  })),
 );
 const optionsAnnees = computed(() =>
   annees.value.map((a) => ({ label: `${a.libelle}${a.active ? ' (en cours)' : ''}`, value: a.id })),
@@ -204,23 +207,45 @@ async function filtrerEtudiants(texte: string, maj: (cb: () => void) => void) {
   }
 }
 
-/** L'inscription éventuelle de l'étudiant pour l'année choisie, sans bloquer l'émission. */
+let chargementInscriptions = 0;
+
+/** Le dernier choix de parcours gagne, même si une ancienne réponse arrive après. */
 async function chargerInscriptions() {
+  const chargement = ++chargementInscriptions;
+  const { etudiantId, anneeId, promotionId } = form.value;
   form.value.inscriptionId = null;
   inscriptions.value = [];
-  if (!form.value.etudiantId || !form.value.anneeId) return;
+  if (!etudiantId || !anneeId) return;
   try {
     const { data } = await api.get('/inscriptions', {
-      params: { etudiantId: form.value.etudiantId, anneeId: form.value.anneeId, all: '1' },
+      params: { etudiantId, anneeId, ...(promotionId ? { promotionId } : {}), all: '1' },
     });
+    if (chargement !== chargementInscriptions) return;
     inscriptions.value = Array.isArray(data.data) ? data.data : [];
   } catch {
-    inscriptions.value = [];
+    if (chargement === chargementInscriptions) inscriptions.value = [];
   }
 }
 
 watch(
-  () => form.value.etudiantId,
+  () => form.value.anneeId,
+  () => {
+    if (!form.value.anneeId || (form.value.promotionId && !optionsPromotions.value.some((p) => p.value === form.value.promotionId))) {
+      form.value.promotionId = null;
+    }
+  },
+);
+
+watch(
+  () => form.value.promotionId,
+  (promotionId) => {
+    const promotion = promotions.value.find((p) => p.id === promotionId);
+    if (!form.value.anneeId && promotion) form.value.anneeId = promotion.anneeId;
+  },
+);
+
+watch(
+  () => [form.value.etudiantId, form.value.anneeId, form.value.promotionId],
   () => chargerInscriptions(),
 );
 
@@ -236,7 +261,7 @@ async function enregistrer() {
       inscriptionId: form.value.inscriptionId || undefined,
     };
     await api.post('/attestations', payload);
-    $q.notify({ type: 'positive', message: "Attestation émise — pensez à l'imprimer avec son QR" });
+    $q.notify({ type: 'positive', message: $t('attestations.issueDialog.issued') });
     dialogOuvert.value = false;
     emit('enregistre');
   } finally {
@@ -245,6 +270,8 @@ async function enregistrer() {
 }
 
 watch(dialogOuvert, (ouvert) => {
+  ++chargementInscriptions;
+  inscriptions.value = [];
   if (ouvert) {
     reinitialiser();
     void chargerReferentiels().then(appliquerPrefill);

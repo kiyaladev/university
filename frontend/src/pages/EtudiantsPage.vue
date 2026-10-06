@@ -1,30 +1,26 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Étudiants</div>
-        <div class="page-sous-titre">
-          La base centrale du registre : matricule INE, QR de la carte resto et
-          compteur de dossiers — les autres modules en dépendent.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('etudiants.title')" :subtitle="$t('etudiants.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutGerer"
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Nouvel étudiant"
+          :label="$t('etudiants.actions.new')"
           @click="ouvrir(null)"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+    <parcours-metier parcours="dossiers" />
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (matricule, nom, email)…"
+      :placeholder="$t('etudiants.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -32,7 +28,7 @@
           v-model="filtres.promotionId"
           endpoint="/promotions"
           :label-fn="(p) => p.nom"
-          label="Promotion"
+          :label="$t('etudiants.filters.promotion')"
           clearable
         />
         <q-select
@@ -43,7 +39,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('etudiants.filters.status')"
         />
         <q-select
           v-model="filtres.sexe"
@@ -53,16 +49,15 @@
           clearable
           emit-value
           map-options
-          label="Genre"
+          :label="$t('etudiants.filters.gender')"
         />
-        <champ-date v-model="filtres.dateDebut" label="Inscrit entre (début)" />
-        <champ-date v-model="filtres.dateFin" label="et (fin)" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('etudiants.filters.registeredFrom')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('etudiants.filters.registeredTo')" />
       </template>
       <template #actions>
         <view-toggle
           cle="etudiants"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
         />
       </template>
@@ -78,6 +73,7 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 0 }"
+      :hide-bottom="chargement || etudiants.length > 0"
     >
       <template #no-data>
         <div class="etudiants-vide">
@@ -89,7 +85,7 @@
               outline
               no-caps
               icon="refresh"
-              label="Réinitialiser les filtres"
+              :label="$t('etudiants.actions.resetFilters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -98,7 +94,7 @@
               color="primary"
               no-caps
               icon="add"
-              label="Nouvel étudiant"
+              :label="$t('etudiants.actions.new')"
               @click="ouvrir(null)"
             />
           </div>
@@ -117,7 +113,7 @@
           <q-chip v-if="p.row.sexe" dense outline :color="p.row.sexe === 'F' ? 'pink' : 'primary'">
             {{ p.row.sexe === 'F' ? 'F' : 'M' }}
           </q-chip>
-          <span v-else class="text-grey-7">—</span>
+          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
 
@@ -126,7 +122,7 @@
           <q-chip v-if="dernierePromo(p.row)" dense outline color="primary">
             {{ dernierePromo(p.row) }}
           </q-chip>
-          <span v-else class="text-grey-7">—</span>
+          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
 
@@ -137,7 +133,11 @@
             :color="p.row.user ? 'positive' : 'grey-5'"
           />
           <q-tooltip>
-            {{ p.row.user ? `Compte : ${p.row.user.email}` : 'Aucun compte portail' }}
+            {{
+              p.row.user
+                ? $t('etudiants.table.accountTooltip', { email: p.row.user.email })
+                : $t('etudiants.table.noAccountTooltip')
+            }}
           </q-tooltip>
         </q-td>
       </template>
@@ -151,10 +151,15 @@
             no-caps
             class="chiffres"
             :label="String(p.row._count?.inscriptions ?? 0)"
-            :aria-label="`Voir les ${p.row._count?.inscriptions} inscription(s) de ${p.row.prenom} ${p.row.nom}`"
+            :aria-label="
+              $t('etudiants.table.viewInscriptionsAria', {
+                count: p.row._count?.inscriptions,
+                name: `${p.row.prenom} ${p.row.nom}`,
+              })
+            "
             @click="voirInscriptions(p.row)"
           >
-            <q-tooltip>Voir ses inscriptions</q-tooltip>
+            <q-tooltip>{{ $t('etudiants.table.viewInscriptionsTooltip') }}</q-tooltip>
           </q-btn>
           <span v-else class="chiffres text-grey-7">
             {{ p.row._count?.inscriptions ?? 0 }}
@@ -168,7 +173,7 @@
             :model-value="p.row.actif"
             color="secondary"
             :disable="!peutGererCompte(p.row)"
-            :aria-label="`Étudiant actif : ${p.row.prenom} ${p.row.nom}`"
+            :aria-label="$t('etudiants.table.activeToggleAria', { name: `${p.row.prenom} ${p.row.nom}` })"
             @update:model-value="(v) => basculerActif(p.row, v)"
           />
         </q-td>
@@ -182,10 +187,10 @@
             dense
             round
             icon="edit"
-            aria-label="Modifier la fiche de l'étudiant"
+            :aria-label="$t('etudiants.actions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier la fiche</q-tooltip>
+            <q-tooltip>{{ $t('etudiants.actions.editTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutValiderVoir"
@@ -194,10 +199,10 @@
             round
             color="primary"
             icon="how_to_reg"
-            aria-label="Voir les inscriptions de l'étudiant"
+            :aria-label="$t('etudiants.actions.inscriptionsAria')"
             @click="allerAuxInscriptions(p.row)"
           >
-            <q-tooltip>Ouvrir ses inscriptions</q-tooltip>
+            <q-tooltip>{{ $t('etudiants.actions.inscriptionsTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutVoirPaiements"
@@ -206,10 +211,10 @@
             round
             color="primary"
             icon="payments"
-            aria-label="Voir les paiements de l'étudiant"
+            :aria-label="$t('etudiants.actions.paiementsAria')"
             @click="allerAuxPaiements(p.row)"
           >
-            <q-tooltip>Ouvrir ses paiements</q-tooltip>
+            <q-tooltip>{{ $t('etudiants.actions.paiementsTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutValiderVoir"
@@ -218,10 +223,10 @@
             round
             color="primary"
             icon="fact_check"
-            aria-label="Voir les évaluations de sa promotion"
+            :aria-label="$t('etudiants.actions.evaluationsAria')"
             @click="allerAuxEvaluations(p.row)"
           >
-            <q-tooltip>Évaluations de sa promotion</q-tooltip>
+            <q-tooltip>{{ $t('etudiants.actions.evaluationsTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGerer"
@@ -230,14 +235,14 @@
             round
             color="primary"
             icon="print"
-            aria-label="Imprimer le certificat d'inscription"
+            :aria-label="$t('etudiants.actions.printAria')"
             @click="imprimerAttestation(p.row)"
           >
             <q-tooltip>
               {{
                 derniereInscription(p.row)
-                  ? 'Certificat d’inscription (dernier dossier)'
-                  : 'Aucun dossier d’inscription'
+                  ? $t('etudiants.table.certificateTooltip')
+                  : $t('etudiants.table.noCertificateTooltip')
               }}
             </q-tooltip>
           </q-btn>
@@ -267,10 +272,10 @@
               :color="e.actif ? 'positive' : 'grey-7'"
               :icon="e.actif ? 'check_circle' : 'remove_circle'"
               dense
-              :label="e.actif ? 'Actif' : 'Inactif'"
+              :label="e.actif ? $t('etudiants.cards.active') : $t('etudiants.cards.inactive')"
             />
             <q-chip v-if="e.sexe" dense outline :color="e.sexe === 'F' ? 'pink' : 'primary'">
-              {{ e.sexe === 'F' ? 'Féminin' : 'Masculin' }}
+              {{ e.sexe === 'F' ? $t('etudiants.options.gender.female') : $t('etudiants.options.gender.male') }}
             </q-chip>
             <q-space />
             <div class="text-caption text-grey-7">{{ e.matricule }}</div>
@@ -280,7 +285,7 @@
           </div>
           <div class="text-caption text-grey-7">
             <span v-if="e.telephone">{{ e.telephone }}</span>
-            <span v-else>—</span>
+            <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
           </div>
           <div class="q-mt-sm">
             <q-chip
@@ -291,7 +296,7 @@
               :label="dernierePromo(e)"
               icon="school"
             />
-            <span v-else class="text-caption text-grey-7">Aucune inscription</span>
+            <span v-else class="text-caption text-grey-7">{{ $t('etudiants.cards.noInscription') }}</span>
           </div>
         </q-card-section>
         <q-separator />
@@ -302,7 +307,7 @@
             dense
             icon="edit"
             no-caps
-            label="Modifier"
+            :label="$t('etudiants.actions.edit')"
             @click="ouvrir(e)"
           />
           <q-btn
@@ -312,7 +317,7 @@
             color="primary"
             icon="how_to_reg"
             no-caps
-            label="Inscriptions"
+            :label="$t('etudiants.actions.inscriptions')"
             @click="allerAuxInscriptions(e)"
           />
           <q-btn
@@ -322,7 +327,7 @@
             color="primary"
             icon="payments"
             no-caps
-            label="Paiements"
+            :label="$t('etudiants.actions.paiements')"
             @click="allerAuxPaiements(e)"
           />
           <q-btn
@@ -332,7 +337,7 @@
             color="primary"
             icon="fact_check"
             no-caps
-            label="Évaluations"
+            :label="$t('etudiants.actions.evaluations')"
             @click="allerAuxEvaluations(e)"
           />
           <q-btn
@@ -342,7 +347,7 @@
             color="primary"
             icon="print"
             no-caps
-            label="Certificat"
+            :label="$t('etudiants.actions.print')"
             @click="imprimerAttestation(e)"
           />
         </q-card-actions>
@@ -356,7 +361,7 @@
             outline
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('etudiants.actions.resetFilters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -365,7 +370,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Nouvel étudiant"
+            :label="$t('etudiants.actions.new')"
             @click="ouvrir(null)"
           />
         </div>
@@ -373,8 +378,7 @@
     </div>
 
     <div v-if="filtrageLocalActif && etudiants.length" class="text-caption text-grey-7 q-mt-sm">
-      Promotion, genre et dates sont appliqués à la page affichée : utilisez
-      « Charger tout » pour les appliquer à l’ensemble du registre.
+      {{ $t('etudiants.localFilterNote') }}
     </div>
 
     <pagination-bar
@@ -399,13 +403,13 @@
         <q-card-section class="row items-center">
           <div class="col">
             <div class="text-h6">
-              Inscriptions — {{ etudiantInscriptions?.nom }} {{ etudiantInscriptions?.prenom }}
+              {{ $t('etudiants.dialogInscriptions.title', { name: `${etudiantInscriptions?.nom} ${etudiantInscriptions?.prenom}` }) }}
             </div>
             <div class="text-caption text-grey-7">
               {{ etudiantInscriptions?.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" aria-label="Fermer" v-close-popup />
+          <q-btn flat round dense icon="close" :aria-label="$t('etudiants.dialogInscriptions.closeAria')" v-close-popup />
         </q-card-section>
         <q-card-section class="q-pt-none">
           <q-linear-progress v-if="chargementInscriptions" indeterminate color="primary" class="q-mb-sm" />
@@ -421,7 +425,7 @@
           >
             <template #no-data>
               <div class="text-center q-pa-md text-grey-7">
-                Aucun dossier d’inscription pour cet étudiant.
+                {{ $t('etudiants.dialogInscriptions.emptyState') }}
               </div>
             </template>
             <template #body-cell-statut="p">
@@ -433,7 +437,7 @@
             </template>
             <template #body-cell-montant="p">
               <q-td :props="p" class="text-right text-weight-medium chiffres">
-                {{ montantLisible(p.row.montantFrais) }} GNF
+                {{ montantLisible(p.row.montantFrais) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
               </q-td>
             </template>
             <template #body-cell-actions="p">
@@ -445,34 +449,34 @@
                   round
                   color="primary"
                   icon="payments"
-                  aria-label="Voir les paiements de ce dossier"
+                  :aria-label="$t('etudiants.dialogInscriptions.paiementsAria')"
                   @click="allerAuxPaiementsDuDossier(p.row)"
                 >
-                  <q-tooltip>Paiements de ce dossier</q-tooltip>
+                  <q-tooltip>{{ $t('etudiants.dialogInscriptions.paiementsTooltip') }}</q-tooltip>
                 </q-btn>
                 <q-btn
                   flat
                   dense
                   round
                   icon="print"
-                  aria-label="Imprimer le certificat d'inscription"
+                  :aria-label="$t('etudiants.dialogInscriptions.printAria')"
                   @click="imprimerDossier(p.row)"
                 >
-                  <q-tooltip>Certificat d’inscription</q-tooltip>
+                  <q-tooltip>{{ $t('etudiants.dialogInscriptions.printTooltip') }}</q-tooltip>
                 </q-btn>
               </q-td>
             </template>
           </q-table>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Fermer" v-close-popup />
+          <q-btn flat no-caps :label="$t('etudiants.actions.close')" v-close-popup />
           <q-btn
             v-if="peutValiderVoir && etudiantInscriptions"
             unelevated
             color="primary"
             no-caps
             icon="how_to_reg"
-            label="Ouvrir dans les inscriptions"
+            :label="$t('etudiants.actions.openInInscriptions')"
             @click="allerAuxInscriptions(etudiantInscriptions)"
           />
         </q-card-actions>
@@ -482,10 +486,14 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import EtudiantDialog from '../components/EtudiantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
@@ -499,6 +507,7 @@ import {
   montantLisible,
 } from '../utils/libelles';
 import type { Etudiant, Inscription, Promotion, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 interface EtudiantRegistre extends Etudiant {
   inscriptions?: {
@@ -513,6 +522,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const etudiants = ref<EtudiantRegistre[]>([]);
 const promotions = ref<Promotion[]>([]);
@@ -540,36 +550,36 @@ const peutValiderVoir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECT
 const peutVoirPaiements = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 const peutGererCompte = (e: EtudiantRegistre) => auth.estAdmin || !e.user;
 
-const optionsActif = [
-  { label: 'Actifs', value: 'true' },
-  { label: 'Inactifs', value: 'false' },
-];
-const optionsSexe = [
-  { label: 'Masculin', value: 'M' },
-  { label: 'Féminin', value: 'F' },
-];
+const optionsActif = computed(() => [
+  { label: t('etudiants.options.status.active'), value: 'true' },
+  { label: t('etudiants.options.status.inactive'), value: 'false' },
+]);
+const optionsSexe = computed(() => [
+  { label: t('etudiants.options.gender.male'), value: 'M' },
+  { label: t('etudiants.options.gender.female'), value: 'F' },
+]);
 
-const colonnes: QTableColumn[] = [
-  { name: 'nom', label: 'Nom & prénom', field: 'nom', align: 'left', sortable: true },
-  { name: 'sexe', label: 'Genre', field: 'sexe', align: 'left' },
-  { name: 'promotion', label: 'Dernière promotion', field: 'promotion', align: 'left' },
-  { name: 'telephone', label: 'Téléphone', field: 'telephone', align: 'left' },
-  { name: 'email', label: 'E-mail', field: 'email', align: 'left' },
-  { name: 'comptes', label: 'Compte', field: 'comptes', align: 'center' },
-  { name: 'inscriptions', label: 'Inscriptions', field: 'inscriptions', align: 'right', sortable: true },
-  { name: 'actif', label: 'Actif', field: 'actif', align: 'center' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'nom', label: t('etudiants.table.columns.name'), field: 'nom', align: 'left', sortable: true },
+  { name: 'sexe', label: t('etudiants.table.columns.gender'), field: 'sexe', align: 'left' },
+  { name: 'promotion', label: t('etudiants.table.columns.promotion'), field: 'promotion', align: 'left' },
+  { name: 'telephone', label: t('etudiants.table.columns.phone'), field: 'telephone', align: 'left' },
+  { name: 'email', label: t('etudiants.table.columns.email'), field: 'email', align: 'left' },
+  { name: 'comptes', label: t('etudiants.table.columns.account'), field: 'comptes', align: 'center' },
+  { name: 'inscriptions', label: t('etudiants.table.columns.inscriptions'), field: 'inscriptions', align: 'right', sortable: true },
+  { name: 'actif', label: t('etudiants.table.columns.active'), field: 'actif', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesInscriptions: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left' },
-  { name: 'promotion', label: 'Promotion', field: (r) => r.promotion?.nom ?? '—', align: 'left' },
-  { name: 'annee', label: 'Année', field: (r) => r.annee?.libelle ?? '—', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'montant', label: 'Frais d’inscription', field: 'montantFrais', align: 'right' },
-  { name: 'date', label: 'Créé le', field: (r) => dateLisible(r.createdAt), align: 'left' },
+const colonnesInscriptions = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('etudiants.dialogInscriptions.columns.number'), field: 'numero', align: 'left' },
+  { name: 'promotion', label: t('etudiants.dialogInscriptions.columns.promotion'), field: (r) => r.promotion?.nom ?? '—', align: 'left' },
+  { name: 'annee', label: t('etudiants.dialogInscriptions.columns.year'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
+  { name: 'statut', label: t('etudiants.dialogInscriptions.columns.status'), field: 'statut', align: 'left' },
+  { name: 'montant', label: t('etudiants.dialogInscriptions.columns.amount'), field: 'montantFrais', align: 'right' },
+  { name: 'date', label: t('etudiants.dialogInscriptions.columns.date'), field: (r) => dateLisible(r.createdAt), align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const classeStatutInscription = (s: string) =>
   ({
@@ -589,15 +599,15 @@ const filtresActifs = computed(() =>
 
 const messageVide = computed(() =>
   filtresActifs.value
-    ? 'Aucun étudiant ne correspond à ces critères.'
-    : 'Le registre est vide : commencez par créer une fiche étudiant.',
+    ? t('etudiants.emptyState.filtered')
+    : t('etudiants.emptyState.none'),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('etudiants.chips.search', { search: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -605,31 +615,37 @@ const chips = computed(() => {
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+    cs.push({
+      label: t('etudiants.chips.promotion', { promotion: p?.nom ?? '?' }),
+      value: filtres.value.promotionId,
+      icone: 'school',
+    });
   }
   if (filtres.value.actif) {
     cs.push({
-      label: filtres.value.actif === 'true' ? 'Actifs' : 'Inactifs',
+      label: filtres.value.actif === 'true' ? t('etudiants.options.status.active') : t('etudiants.options.status.inactive'),
       value: filtres.value.actif,
       icone: 'toggle_on', cle: 'actif'});
   }
   if (filtres.value.sexe) {
     cs.push({
-      label: `Genre : ${filtres.value.sexe === 'F' ? 'Féminin' : 'Masculin'}`,
+      label: t('etudiants.chips.gender', {
+        gender: filtres.value.sexe === 'F' ? t('etudiants.options.gender.female') : t('etudiants.options.gender.male'),
+      }),
       value: filtres.value.sexe,
       icone: 'wc',
     });
   }
   if (filtres.value.dateDebut) {
     cs.push({
-      label: `Depuis : ${dateLisible(filtres.value.dateDebut)}`,
+      label: t('etudiants.chips.since', { date: dateLisible(filtres.value.dateDebut) }),
       value: filtres.value.dateDebut,
       icone: 'event',
     });
   }
   if (filtres.value.dateFin) {
     cs.push({
-      label: `Jusqu'à : ${dateLisible(filtres.value.dateFin)}`,
+      label: t('etudiants.chips.until', { date: dateLisible(filtres.value.dateFin) }),
       value: filtres.value.dateFin,
       icone: 'event',
     });
@@ -657,7 +673,7 @@ function basculerActif(e: EtudiantRegistre, v: unknown) {
       e.actif = actif;
       $q.notify({
         type: 'positive',
-        message: actif ? 'Étudiant réactivé' : 'Étudiant désactivé',
+        message: actif ? t('etudiants.messages.reactivated') : t('etudiants.messages.deactivated'),
       });
     } catch {
       /* Notification gérée par l'intercepteur axios */
@@ -668,10 +684,10 @@ function basculerActif(e: EtudiantRegistre, v: unknown) {
     return;
   }
   $q.dialog({
-    title: 'Désactiver l’étudiant',
-    message: `Désactiver ${e.prenom} ${e.nom} (${e.matricule}) ? Sa fiche est conservée, mais l’accès au portail lui est fermé.`,
+    title: t('etudiants.confirmDeactivate.title'),
+    message: t('etudiants.confirmDeactivate.message', { name: `${e.prenom} ${e.nom}`, matricule: e.matricule }),
     cancel: true,
-    ok: { color: 'negative', label: 'Désactiver', unelevated: true, noCaps: true },
+    ok: { color: 'negative', label: t('etudiants.confirmDeactivate.confirm'), unelevated: true, noCaps: true },
   }).onOk(() => void appliquer());
   // Bascule refusée : la case reste pilotée par `actif`, rien à défaire.
 }
@@ -722,7 +738,7 @@ function allerAuxEvaluations(e: EtudiantRegistre) {
   if (!promotionId) {
     $q.notify({
       type: 'warning',
-      message: `${e.prenom} ${e.nom} n’est inscrit dans aucune promotion.`,
+      message: t('etudiants.messages.noPromotion', { name: `${e.prenom} ${e.nom}` }),
     });
     return;
   }
@@ -738,18 +754,16 @@ function imprimerAttestation(e: EtudiantRegistre) {
   if (!dossier) {
     $q.notify({
       type: 'warning',
-      message: `${e.prenom} ${e.nom} n’a aucun dossier d’inscription : rien à imprimer.`,
+      message: t('etudiants.messages.noDossier', { name: `${e.prenom} ${e.nom}` }),
     });
     return;
   }
-  const url = `${API_URL}/inscriptions/${dossier.id}/attestation-inscription?token=${encodeURIComponent(auth.token)}`;
-  window.open(url, '_blank');
+  void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
 /** Certificat d'un dossier précis, depuis la liste des dossiers de l'étudiant. */
 function imprimerDossier(dossier: Inscription) {
-  const url = `${API_URL}/inscriptions/${dossier.id}/attestation-inscription?token=${encodeURIComponent(auth.token)}`;
-  window.open(url, '_blank');
+  void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
 /** Paramètres réellement compris par `GET /etudiants`. */
@@ -891,14 +905,13 @@ onMounted(async () => {
   display: inline-flex;
   padding: 3px 12px;
   font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
-.champ--brouillon { background: #cfd4d9; color: #33463f; }
-.champ--attente-paiement { background: #e8a317; color: #10251e; }
-.champ--payee { background: #1e7a4c; }
-.champ--validee { background: #1565c0; }
-.champ--annulee { background: #c2321e; }
+.champ--brouillon { background: #e8e8ed; color: #33463f; }
+.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
+.champ--payee { background: #007a4d; }
+.champ--validee { background: #0066cc; }
+.champ--annulee { background: #ce1126; }
 </style>

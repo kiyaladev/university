@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-06T11:39:05.811Z",
+  "passed": true,
+  "viewport": 375,
+  "observations": {
+    "mobileDialogFitsViewport": true,
+    "promotionChangeClearsIncompatibleEnrollment": true,
+    "yearChangeClearsPreviousPromotion": true,
+    "yearChangeClearsPreviousEnrollment": true,
+    "latePreviousYearResponseIgnored": true,
+    "clearingYearClearsPromotionAndEnrollment": true,
+    "promotionWithoutYearSelectsItsYear": true,
+    "studentChangeClearsPreviousEnrollment": true,
+    "issuanceStatus": 201,
+    "persistedTrackMatchesLatestChoice": true
+  },
+  "errors": [],
+  "apiFailures": [],
+  "apiAndDatabaseReal": true,
+  "oldResponseDelayedWithoutChangingItsContent": true,
+  "serviceWorkerBlockedForNetworkInterception": true,
+  "productionUntouched": true
+}

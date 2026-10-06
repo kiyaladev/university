@@ -1,0 +1,10 @@
+{
+  "internal": "Une erreur interne est survenue",
+  "unexpected": "Une erreur inattendue est survenue",
+  "notImplemented": "Cette fonctionnalité n'est pas encore disponible",
+  "database": "La base de données a renvoyé une erreur",
+  "externalService": "Un service externe a échoué",
+  "validation": "La validation a échoué",
+  "payloadTooLarge": "La requête dépasse la taille autorisée",
+  "tooManyRequests": "Trop de requêtes : réessayez plus tard"
+}

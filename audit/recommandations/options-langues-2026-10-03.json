@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-03T17:53:49.547Z",
+  "page": "/etudiants",
+  "api": "simulée",
+  "checks": [
+    "statut FR→EN→FR",
+    "genre FR→EN→FR",
+    "libellé des filtres FR/EN",
+    "aucune erreur navigateur"
+  ]
+}

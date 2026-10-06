@@ -1,0 +1,8 @@
+{
+  "seance_introuvable": "Class session not found",
+  "cette_seance_ne_vous_est_pas_affectee": "This session is not assigned to you",
+  "un_justificatif_existe_deja_pour_cette_seance": "A supporting document already exists for this session",
+  "enseignant_ne_correspond_pas_a_la_seance": "The selected teacher does not match this session",
+  "decision_finale_requise": "Choose approval or rejection.",
+  "deja_traite": "This justification has already been processed; its decision and evidence must be retained."
+}

@@ -1,0 +1,19 @@
+{
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "Aucun dossier étudiant rattaché à ce compte",
+  "demande_introuvable": "Demande introuvable",
+  "tarif_introuvable": "Tarif introuvable",
+  "creation_temporairement_indisponible_reessayez": "Création temporairement indisponible, réessayez.",
+  "numero_de_demande_temporairement_indisponible_reessayez": "Numéro de demande temporairement indisponible, réessayez.",
+  "seul_le_demandeur_peut_payer_sa_propre_demande": "Seul le demandeur peut payer sa propre demande.",
+  "reference_de_paiement_temporairement_indisponible_reessayez": "Référence de paiement temporairement indisponible, réessayez.",
+  "simulationPaiementDesactiveeProduction": "La simulation de paiement est désactivée en production.",
+  "identifiant_de_paiement_incoherent": "Identifiant de paiement incohérent.",
+  "cette_demande_est_deja_prete_ou_remise": "Cette demande est déjà prête ou remise.",
+  "le_motif_de_rejet_est_obligatoire": "Le motif de rejet est obligatoire.",
+  "cette_demande_a_deja_ete_remise": "Cette demande a déjà été remise.",
+  "cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_": "Cette demande est sans frais : inutile de payer, elle est déjà en traitement.",
+  "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "Un paiement a déjà été initié pour cette demande : attendez la confirmation ou contactez la scolarité.",
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "Cette demande n'est pas encore prête à être traitée : paiement en attente ou déjà terminée.",
+  "cette_demande_n_est_pas_marquee_comme_prete": "Cette demande n'est pas marquée comme prête.",
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé."
+}

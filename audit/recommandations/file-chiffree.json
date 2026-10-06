@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-02T20:27:07Z",
+  "environnement": "Build PWA QA isolé, API simulée par Playwright, sans données métier",
+  "services": {
+    "chiffrement": "AES-GCM 256",
+    "cle": "CryptoKey non extractible, IndexedDB, une par compte et origine",
+    "stockageDonnees": "localStorage ne contient que le préfixe, le nonce et le texte chiffré"
+  },
+  "tests": {
+    "unitairesNavigateur": [
+      "aller-retour JSON chiffré/déchiffré",
+      "signature absente du stockage lisible",
+      "déchiffrement refusé avec un autre compte",
+      "clé non extractible",
+      "migration du JSON ancien",
+      "texte altéré refusé sans écraser la valeur"
+    ],
+    "integrationPWA": [
+      "chiffrement avant persistance",
+      "PIN retiré avant mise en file",
+      "décryptage après rechargement",
+      "retrait après acceptation simulée par l’API",
+      "migration d’une ancienne file avec suppression du PIN"
+    ]
+  },
+  "validation": {
+    "typecheckFrontend": "réussi",
+    "buildPwaQa": "réussi",
+    "limite": "Le test API est simulé ; l’essai hors ligne sur appareil réel et la résistance à une compromission active de la même origine restent à qualifier."
+  }
+}

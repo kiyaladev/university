@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
-import { API_URL } from '../boot/axios';
+import { useI18n } from 'vue-i18n';
 import {
   CLASSE_STATUT_ELECTION,
   LIBELLE_STATUT_ELECTION,
@@ -13,9 +13,11 @@ import {
 } from '../services/elections';
 import { useAuthStore } from '../stores/auth';
 import type { CandidatElection, Election, ResultatElection } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const { t } = useI18n();
 
 const elections = ref<Election[]>([]);
 const electionActive = ref<Election | null>(null);
@@ -70,7 +72,7 @@ async function charger() {
       resultats.value = null;
     }
   } catch (e) {
-    erreurChargement.value = messageErreurElection(e, 'Impossible de charger les scrutins.');
+    erreurChargement.value = messageErreurElection(e, t('vote.errors.load'));
   } finally {
     chargement.value = false;
   }
@@ -129,8 +131,8 @@ function basculerCandidat(id: string) {
       type: 'warning',
       message:
         electionActive.value.nbSieges === 1
-          ? 'Un seul siège est à pourvoir : décochez d’abord votre choix actuel.'
-          : `Vous pouvez retenir au plus ${electionActive.value.nbSieges} candidats.`,
+          ? t('vote.errors.max_seats_one')
+          : t('vote.errors.max_seats', { n: electionActive.value.nbSieges }),
     });
     return;
   }
@@ -145,15 +147,11 @@ function confirmerVote() {
     .map((c) => `${c.prenom} ${c.nom}`)
     .join(', ');
   $q.dialog({
-    title: 'Déposer mon bulletin',
-    message:
-      `Vous votez pour : <strong>${noms}</strong>.<br><br>` +
-      'Le vote est <strong>définitif</strong> : une fois le bulletin déposé, il ne peut être ' +
-      'ni modifié ni retiré, et vous ne pourrez plus voter sur ce scrutin. ' +
-      'Votre choix est anonyme : seul le fait que vous ayez voté est conservé.',
-    html: true,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { label: 'Déposer mon bulletin', color: 'primary', unelevated: true, noCaps: true },
+    title: t('vote.confirm_dialog.title'),
+    message: t('vote.confirm_dialog.message', { names: noms }),
+    html: false,
+    cancel: { label: t('vote.confirm_dialog.cancel'), flat: true, noCaps: true },
+    ok: { label: t('vote.confirm_dialog.confirm'), color: 'primary', unelevated: true, noCaps: true },
     persistent: true,
   }).onOk(() => {
     void validerVote();
@@ -173,25 +171,19 @@ async function validerVote() {
     aVote.value = true;
     dateVote.value = new Date().toISOString();
     selections.value = [];
-    $q.notify({ type: 'positive', message: 'Bulletin déposé — merci pour votre participation.' });
+    $q.notify({ type: 'positive', message: t('vote.messages.ballot_submitted') });
   } catch (e) {
-    erreurDepot.value = messageErreurElection(e, 'Dépôt du bulletin impossible.');
+    erreurDepot.value = messageErreurElection(e, t('vote.errors.submit'));
     $q.notify({ type: 'negative', message: erreurDepot.value });
   } finally {
     depot.value = false;
   }
 }
 
-/** Bulletin papier A4 : le jeton passe en URL, l'onglet neuf n'a pas d'en-tête. */
+/** Bulletin papier A4, dans un onglet neuf. */
 function imprimerBulletin() {
   if (!electionActive.value) return;
-  const url = `${API_URL}/elections/${electionActive.value.id}/imprimer-bulletin?token=${auth.token}`;
-  if (!window.open(url, '_blank')) {
-    $q.notify({
-      type: 'warning',
-      message: 'Autorisez les fenêtres contextuelles pour ouvrir le bulletin.',
-    });
-  }
+  void ouvrirImpression(`/elections/${electionActive.value.id}/imprimer-bulletin`);
 }
 
 onMounted(charger);
@@ -201,37 +193,35 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Voter</div>
+        <h1 class="page-titre">{{ $t('vote.title') }}</h1>
         <div class="page-sous-titre">
-          Les scrutins ouverts à votre voix, et les résultats des scrutins proclamés.
-          Votre bulletin est anonyme.
+          {{ $t('vote.subtitle') }}
         </div>
       </div>
     </div>
 
     <div v-if="chargement" class="etat-vide">
       <q-spinner color="primary" size="36px" />
-      <span class="pochoir">Chargement des scrutins…</span>
+      <span class="pochoir">{{ $t('vote.loading') }}</span>
     </div>
 
     <q-banner v-else-if="erreurChargement" class="note--erreur q-mb-md">
       <template #avatar><q-icon name="error" /></template>
       {{ erreurChargement }}
       <template #action>
-        <q-btn flat no-caps label="Réessayer" @click="charger" />
+        <q-btn flat no-caps :label="$t('vote.retry')" @click="charger" />
       </template>
     </q-banner>
 
     <div v-else-if="!elections.length" class="etat-vide">
       <q-icon name="how_to_vote" size="46px" color="grey-7" />
-      <span class="lettrage etat-vide__titre">Aucun scrutin en ce moment</span>
+      <span class="lettrage etat-vide__titre">{{ $t('vote.empty_state.title') }}</span>
       <span class="pochoir etat-vide__mention">
-        Aucune élection n’est ouverte et aucun résultat n’a encore été proclamé.
-        Vous serez informé de l’ouverture du prochain scrutin.
+        {{ $t('vote.empty_state.message') }}
       </span>
       <div class="etat-vide__actions">
-        <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" label="Mon espace" to="/portail" />
-        <q-btn flat no-caps icon="refresh" label="Actualiser" @click="charger" />
+        <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" :label="$t('vote.empty_state.my_space')" to="/portail" />
+        <q-btn flat no-caps icon="refresh" :label="$t('vote.empty_state.refresh')" @click="charger" />
       </div>
     </div>
 
@@ -240,9 +230,9 @@ onMounted(charger);
       <div class="col-12 col-md-4">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div class="text-h6">Scrutins</div>
+            <div class="text-h6">{{ $t('vote.list.title') }}</div>
             <div class="text-caption text-grey-7">
-              Choisissez le scrutin à consulter ou auquel participer.
+              {{ $t('vote.list.subtitle') }}
             </div>
           </q-card-section>
           <q-separator />
@@ -260,8 +250,8 @@ onMounted(charger);
                 <q-item-label><strong>{{ e.titre }}</strong></q-item-label>
                 <q-item-label caption>
                   {{ LIBELLE_TYPE_ELECTION[e.type] ?? e.type }} ·
-                  {{ e.nbSieges }} siège{{ e.nbSieges > 1 ? 's' : '' }} ·
-                  clôture le {{ dateElection(e.dateCloture) }}
+                  {{ e.nbSieges }} {{ e.nbSieges > 1 ? $t('vote.list.seats') : $t('vote.list.seat') }} ·
+                  {{ $t('vote.list.closes_on', { date: dateElection(e.dateCloture) }) }}
                 </q-item-label>
                 <q-item-label>
                   <span class="champ champ-statut" :class="CLASSE_STATUT_ELECTION[e.statut]">
@@ -281,8 +271,7 @@ onMounted(charger);
             <div class="text-h6">{{ electionActive.titre }}</div>
             <div class="text-caption text-grey-7">
               {{ LIBELLE_TYPE_ELECTION[electionActive.type] ?? electionActive.type }} ·
-              du {{ dateHeureElection(electionActive.dateOuverture) }}
-              au {{ dateHeureElection(electionActive.dateCloture) }}
+              {{ $t('vote.detail.period', { debut: dateHeureElection(electionActive.dateOuverture), fin: dateHeureElection(electionActive.dateCloture) }) }}
             </div>
           </q-card-section>
 
@@ -297,16 +286,14 @@ onMounted(charger);
             <q-banner class="note--valide">
               <template #avatar><q-icon name="how_to_vote" /></template>
               <div>
-                Votre bulletin a été déposé le <strong>{{ dateHeureElection(dateVote) }}</strong>.
-                Merci pour votre participation.
+                {{ $t('vote.detail.already_voted', { date: dateHeureElection(dateVote) }) }}
               </div>
               <div v-if="scrutinId" class="text-caption q-mt-xs">
-                Référence anonyme de votre bulletin :
-                <strong class="chiffres">{{ scrutinId }}</strong> — elle prouve le dépôt sans
-                révéler votre choix.
+                {{ $t('vote.detail.ballot_reference') }}
+                <strong class="chiffres">{{ scrutinId }}</strong> {{ $t('vote.detail.ballot_reference_hint') }}
               </div>
               <div class="text-caption q-mt-xs">
-                Un seul bulletin est accepté par électeur : vous ne pouvez plus voter sur ce scrutin.
+                {{ $t('vote.detail.one_ballot_only') }}
               </div>
             </q-banner>
           </q-card-section>
@@ -315,8 +302,7 @@ onMounted(charger);
           <q-card-section v-else-if="!scrutinOuvert">
             <q-banner class="note--info">
               <template #avatar><q-icon name="lock" /></template>
-              Ce scrutin est {{ LIBELLE_STATUT_ELECTION[electionActive.statut].toLowerCase() }} :
-              plus aucun bulletin n’est accepté. Les résultats sont affichés ci-dessous.
+              {{ $t('vote.detail.closed_notice', { statut: LIBELLE_STATUT_ELECTION[electionActive.statut].toLowerCase() }) }}
             </q-banner>
           </q-card-section>
 
@@ -325,27 +311,28 @@ onMounted(charger);
             <q-card-section>
               <q-banner class="note--info">
                 <template #avatar><q-icon name="visibility_off" /></template>
-                Votre vote est <strong>anonyme</strong> : votre bulletin n’est jamais rattaché à
-                votre nom. Seul le fait que vous ayez voté est conservé, pour empêcher un second
-                bulletin. Le dépôt est <strong>définitif</strong>.
+                {{ $t('vote.detail.anonymous_notice') }}
               </q-banner>
             </q-card-section>
 
             <q-card-section class="q-pt-none">
               <div class="text-caption text-grey-7 q-mb-sm">
                 <strong>{{ electionActive.nbSieges }}</strong>
-                siège{{ electionActive.nbSieges > 1 ? 's' : '' }} à pourvoir —
-                retenez de 1 à {{ electionActive.nbSieges }} candidat{{ electionActive.nbSieges > 1 ? 's' : '' }}.
+                {{ $t('vote.detail.seats_to_fill', { n: electionActive.nbSieges, plural: electionActive.nbSieges > 1 ? 's' : '' }) }}
                 <span v-if="selections.length">
-                  {{ selections.length }} retenu{{ selections.length > 1 ? 's' : '' }},
-                  {{ restantASelectionner }} restant{{ restantASelectionner > 1 ? 's' : '' }}.
+                  {{ $t('vote.detail.selection_status', {
+                    selected: selections.length,
+                    selectedPlural: selections.length > 1 ? 's' : '',
+                    remaining: restantASelectionner,
+                    remainingPlural: restantASelectionner > 1 ? 's' : '',
+                  }) }}
                 </span>
               </div>
 
               <div v-if="!candidatsAffiches.length" class="etat-vide">
                 <q-icon name="groups" size="36px" color="grey-7" />
                 <span class="pochoir etat-vide__mention">
-                  Aucun candidat n’est déclaré sur ce scrutin : le vote n’est pas encore possible.
+                  {{ $t('vote.detail.no_candidates') }}
                 </span>
               </div>
 
@@ -354,7 +341,7 @@ onMounted(charger);
                   <q-item-section avatar>
                     <q-checkbox
                       :model-value="selections.includes(c.id)"
-                      :aria-label="`Retenir ${c.prenom} ${c.nom}`"
+                      :aria-label="$t('vote.detail.select_candidate', { name: `${c.prenom} ${c.nom}` })"
                       @update:model-value="basculerCandidat(c.id)"
                     />
                   </q-item-section>
@@ -369,7 +356,7 @@ onMounted(charger);
                     <q-item-label v-if="c.programme" caption>{{ c.programme }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <span class="text-caption text-grey-7 chiffres">N° {{ c.ordre }}</span>
+                    <span class="text-caption text-grey-7 chiffres">{{ $t('vote.detail.candidate_number', { n: c.ordre }) }}</span>
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -385,10 +372,10 @@ onMounted(charger);
 
           <q-card-actions align="right">
             <span v-if="scrutinOuvert && !aVote && !peutValider" class="text-caption text-grey-7">
-              Retenez au moins un candidat pour pouvoir déposer votre bulletin.
+              {{ $t('vote.detail.select_at_least_one') }}
             </span>
-            <q-btn flat no-caps icon="print" label="Imprimer un bulletin papier" @click="imprimerBulletin">
-              <q-tooltip>Bulletin vierge à imprimer pour le vote en salle (nouvel onglet)</q-tooltip>
+            <q-btn flat no-caps icon="print" :label="$t('vote.detail.print_ballot')" @click="imprimerBulletin">
+              <q-tooltip>{{ $t('vote.detail.print_ballot_tooltip') }}</q-tooltip>
             </q-btn>
             <q-space />
             <q-btn
@@ -396,7 +383,7 @@ onMounted(charger);
               unelevated
               color="primary"
               icon="how_to_vote"
-              label="Déposer mon bulletin"
+              :label="$t('vote.detail.submit_ballot')"
               no-caps
               :loading="depot"
               :disable="!peutValider"
@@ -408,16 +395,18 @@ onMounted(charger);
         <!-- Résultats -->
         <q-card v-if="electionActive && chargementResultats" flat bordered class="carte q-mt-md q-pa-md">
           <q-spinner color="primary" size="24px" class="q-mr-sm" />
-          <span class="pochoir">Chargement des résultats…</span>
+          <span class="pochoir">{{ $t('vote.results.loading') }}</span>
         </q-card>
 
         <q-card v-else-if="electionActive && resultats" flat bordered class="carte q-mt-md">
           <q-card-section>
-            <div class="text-h6">Résultats</div>
+            <div class="text-h6">{{ $t('vote.results.title') }}</div>
             <div class="text-caption text-grey-7">
-              Bulletins déposés : <strong class="chiffres">{{ resultats.participation.nbBulletins }}</strong> ·
-              voix exprimées : <strong class="chiffres">{{ resultats.participation.voixTotales }}</strong> ·
-              sièges à pourvoir : <strong class="chiffres">{{ resultats.participation.siegesPourvoir }}</strong>
+              {{ $t('vote.results.summary', {
+                ballots: resultats.participation.nbBulletins,
+                votes: resultats.participation.voixTotales,
+                seats: resultats.participation.siegesPourvoir,
+              }) }}
             </div>
           </q-card-section>
           <q-list bordered separator>
@@ -432,10 +421,10 @@ onMounted(charger);
                 <q-item-label>
                   <strong>{{ c.prenom }} {{ c.nom }}</strong>
                   <q-chip v-if="c.elu" dense square color="amber-8" text-color="white" class="q-ml-sm">
-                    Élu
+                    {{ $t('vote.results.elected') }}
                   </q-chip>
                 </q-item-label>
-                <q-item-label caption class="chiffres">{{ c.voix }} voix</q-item-label>
+                <q-item-label caption class="chiffres">{{ $t('vote.results.votes_count', { n: c.voix }) }}</q-item-label>
               </q-item-section>
             </q-item>
           </q-list>
@@ -448,14 +437,14 @@ onMounted(charger);
 <style scoped lang="scss">
 .scrutin--actif {
   background: var(--up-chaux);
-  font-weight: 700;
+  font-weight: 590;
 }
 
 // Champs peints des statuts — mêmes teintes que l'écran de gestion.
-.badge--ok { background: #e3f5e9; color: #17683a; }
-.badge--ko { background: #fdeaea; color: #a52020; }
-.badge--neutre { background: #eef0f4; color: #455a64; }
-.badge--attention { background: #fff4e0; color: #8a5300; }
+.badge--ok { background: #f1fbf2; color: #027a0b; }
+.badge--ko { background: #fff1f2; color: #c10000; }
+.badge--neutre { background: #f5f5f7; color: #6e6e73; }
+.badge--attention { background: #fff6ef; color: #b64400; }
 .badge--primaire { background: #e8eef5; color: #0d47a1; }
 
 .etat-vide__titre { font-size: 1.3rem; color: var(--up-encre); }

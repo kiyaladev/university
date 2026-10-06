@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-06T09:32:35.584Z",
+  "language": "fr-FR",
+  "results": [
+    {
+      "role": "ADMIN",
+      "route": "/etudiants",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/inscriptions",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/paie",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/recettes",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/attestations",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/demandes-docs",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/demandes-docs/tarifs",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/notes",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/evaluations",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/deliberations",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/bulletins",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/cartes-etudiantes",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/badges",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ADMIN",
+      "route": "/parametres",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ETUDIANT",
+      "route": "/demandes-docs/mes",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    },
+    {
+      "role": "ETUDIANT",
+      "route": "/emploi-du-temps",
+      "width": 375,
+      "scrollWidth": 375,
+      "errors": []
+    }
+  ]
+}

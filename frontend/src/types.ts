@@ -218,6 +218,8 @@ export interface Seance {
   affectation?: Affectation;
   salle?: Salle | null;
   controle?: Controle | null;
+  controleurAssigneId?: string | null;
+  controleurAssigne?: { id: string; nom: string; prenom: string } | null;
   justificatif?: Justificatif | null;
 }
 
@@ -631,6 +633,7 @@ export interface ReservationSalle {
   refuseMotif?: string | null;
   creeLe: string;
   salle?: Salle;
+  demandeurId?: string | null;
   demandeur?: { id: string; nom: string; prenom: string } | null;
 }
 
@@ -648,8 +651,8 @@ export interface TravailEncadre {
   dateFin?: string | null;
   statut: StatutEncadrement;
   rapportRendu: boolean;
-  etudiant?: Etudiant;
-  encadrant?: Enseignant | null;
+  etudiant?: Pick<Etudiant, 'id' | 'matricule' | 'nom' | 'prenom'>;
+  encadrant?: Pick<Enseignant, 'id' | 'nom' | 'prenom'> | null;
   soutenance?: Soutenance | null;
   createdAt: string;
 }
@@ -663,8 +666,8 @@ export interface Soutenance {
   assesseurs?: string | null;
   note?: number | null;
   mention?: string | null;
-  salle?: Salle | null;
-  president?: Enseignant | null;
+  salle?: Pick<Salle, 'id' | 'code' | 'nom'> | null;
+  president?: Pick<Enseignant, 'id' | 'nom' | 'prenom'> | null;
 }
 
 export interface EquipementCampus {
@@ -833,6 +836,7 @@ export interface ScanExamen {
   motifRejet?: string | null;
   scanneurId?: string | null;
   ipAppareil?: string | null;
+  dejaEnregistre?: boolean;
   inscription?: (Inscription & { etudiant?: Etudiant }) | null;
   scanneur?: { id: string; nom: string; prenom: string } | null;
   examen?: {
@@ -1165,8 +1169,6 @@ export interface ResultatElection {
     ordre: number;
     voix: number;
     elu: boolean;
-    etudiant?: Pick<Etudiant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
-    enseignant?: Pick<Enseignant, 'id' | 'matricule' | 'nom' | 'prenom'> | null;
   }>;
 }
 

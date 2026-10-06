@@ -1,31 +1,27 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Demandes de documents</div>
-        <div class="page-sous-titre">
-          L'étudiant formule sa demande en ligne, paie les frais au tarif
-          paramétré, la scolarité traite, marque le document comme prêt et le
-          remet au guichet.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="auth.estAdmin"
           outline
           color="primary"
           no-caps
           icon="price_change"
-          label="Tarifs des demandes"
+          :label="$t('demandeDocuments.actions.tarifs')"
           :to="{ name: 'tarifs-demandes' }"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="documents" />
 
     <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
-      Registre restreint aux demandes d'un seul étudiant (lien entrant).
+      {{ $t('demandeDocuments.studentBanner.message') }}
       <template #action>
-        <q-btn flat no-caps label="Voir toutes les demandes" @click="retirerFiltreEtudiant" />
+        <q-btn flat no-caps :label="$t('demandeDocuments.studentBanner.seeAll')" @click="retirerFiltreEtudiant" />
       </template>
     </q-banner>
 
@@ -41,13 +37,13 @@
         </q-card>
       </div>
       <div class="col-12 text-caption text-grey-7">
-        Recettes encaissées : {{ montantLisible(stats?.recettes ?? 0) }} GNF.
+        {{ $t('demandeDocuments.stats.revenues', { amount: montantLisible(stats?.recettes ?? 0) }) }}
       </div>
     </div>
 
     <filter-bar
       v-model="filtres"
-      placeholder="Rechercher (N°, motif, matricule…)"
+      :placeholder="$t('demandeDocuments.filters.searchPlaceholder')"
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
@@ -60,7 +56,7 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('demandeDocuments.filters.status')"
         />
         <q-select
           v-model="filtres.type"
@@ -70,13 +66,13 @@
           clearable
           emit-value
           map-options
-          label="Type"
+          :label="$t('demandeDocuments.filters.type')"
         />
         <autocomplete-async
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-          label="Étudiant"
+          :label="$t('demandeDocuments.filters.student')"
         />
       </template>
       <template #actions>
@@ -108,13 +104,12 @@
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || demandes.length > 0"
       @row-click="(_, row) => selectionner(row)"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucune demande pour ces critères. Les demandes sont créées par les
-          étudiants depuis « Mes demandes de documents ».
+          {{ $t('demandeDocuments.emptyState.message') }}
         </div>
       </template>
       <template #body-cell-type="p">
@@ -126,7 +121,7 @@
             <div>{{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}</div>
             <div class="text-caption text-grey-7">{{ p.row.etudiant.matricule }}</div>
           </template>
-          <span v-else class="text-grey-7">—</span>
+          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
         </q-td>
       </template>
       <template #body-cell-statut="p">
@@ -146,7 +141,7 @@
             size="16px"
             class="q-ml-xs"
           >
-            <q-tooltip>Paiement confirmé</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.table.paymentConfirmed') }}</q-tooltip>
           </q-icon>
           <q-icon
             v-else-if="p.row.paiement?.statut === 'EN_ATTENTE'"
@@ -155,7 +150,7 @@
             size="16px"
             class="q-ml-xs"
           >
-            <q-tooltip>Paiement en attente</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.table.paymentPending') }}</q-tooltip>
           </q-icon>
         </q-td>
       </template>
@@ -168,10 +163,11 @@
             round
             icon="verified"
             color="positive"
+            :aria-label="$t('demandeDocuments.actionsColumn.confirmPayment')"
             :loading="enCours === 'confirmer'"
             @click.stop="confirmerPaiement(p.row)"
           >
-            <q-tooltip>Confirmer le paiement</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.confirmPayment') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
@@ -179,10 +175,11 @@
             dense
             round
             icon="play_arrow"
+            :aria-label="$t('demandeDocuments.actionsColumn.startProcessing')"
             :loading="enCours === 'traitement'"
             @click.stop="lancerTraitement(p.row)"
           >
-            <q-tooltip>Lancer le traitement</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.startProcessing') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
@@ -191,10 +188,11 @@
             round
             icon="check_circle"
             color="positive"
+            :aria-label="$t('demandeDocuments.actionsColumn.markReady')"
             :loading="enCours === 'prete'"
             @click.stop="marquerPrete(p.row)"
           >
-            <q-tooltip>Marquer prête</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.markReady') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'PRETE'"
@@ -203,10 +201,11 @@
             round
             icon="assignment_turned_in"
             color="positive"
+            :aria-label="$t('demandeDocuments.actionsColumn.handOver')"
             :loading="enCours === 'remettre'"
             @click.stop="remettre(p.row)"
           >
-            <q-tooltip>Remettre</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.handOver') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
@@ -215,13 +214,14 @@
             round
             icon="block"
             color="negative"
+            :aria-label="$t('demandeDocuments.actionsColumn.reject')"
             :loading="enCours === 'rejeter'"
             @click.stop="rejeter(p.row)"
           >
-            <q-tooltip>Rejeter</q-tooltip>
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.reject') }}</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="visibility" @click.stop="selectionner(p.row)">
-            <q-tooltip>Détail</q-tooltip>
+          <q-btn flat dense round icon="visibility" :aria-label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(p.row)">
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.detail') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -277,7 +277,7 @@
               no-caps
               icon="verified"
               color="positive"
-              label="Confirmer"
+              :label="$t('demandeDocuments.cardActions.confirm')"
               :loading="enCours === 'confirmer'"
               @click.stop="confirmerPaiement(d)"
             />
@@ -287,7 +287,7 @@
               dense
               no-caps
               icon="play_arrow"
-              label="Traiter"
+              :label="$t('demandeDocuments.cardActions.process')"
               :loading="enCours === 'traitement'"
               @click.stop="lancerTraitement(d)"
             />
@@ -298,7 +298,7 @@
               no-caps
               icon="check_circle"
               color="positive"
-              label="Prête"
+              :label="$t('demandeDocuments.cardActions.ready')"
               :loading="enCours === 'prete'"
               @click.stop="marquerPrete(d)"
             />
@@ -309,7 +309,7 @@
               no-caps
               icon="assignment_turned_in"
               color="positive"
-              label="Remettre"
+              :label="$t('demandeDocuments.actionsColumn.handOver')"
               :loading="enCours === 'remettre'"
               @click.stop="remettre(d)"
             />
@@ -320,19 +320,18 @@
               no-caps
               icon="block"
               color="negative"
-              label="Rejeter"
+              :label="$t('demandeDocuments.actionsColumn.reject')"
               :loading="enCours === 'rejeter'"
               @click.stop="rejeter(d)"
             />
-            <q-btn flat dense no-caps icon="visibility" label="Détail" @click.stop="selectionner(d)" />
+            <q-btn flat dense no-caps icon="visibility" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(d)" />
           </q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="description" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucune demande pour ces critères. Les demandes sont créées par les
-          étudiants depuis « Mes demandes de documents ».
+          {{ $t('demandeDocuments.emptyState.message') }}
         </div>
       </div>
     </div>
@@ -357,7 +356,7 @@
           />
           <div class="demande-meta q-mt-md">
             <div>
-              <span class="pochoir">Étudiant</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.student') }}</span>
               <span v-if="demandeSelectionnee.etudiant">
                 {{ demandeSelectionnee.etudiant.prenom }} {{ demandeSelectionnee.etudiant.nom }} ({{ demandeSelectionnee.etudiant.matricule }})
                 <q-btn
@@ -366,55 +365,55 @@
                   no-caps
                   size="sm"
                   icon="badge"
-                  label="Sa carte"
+                  :label="$t('demandeDocuments.detail.theirCard')"
                   @click="ouvrirCarteEtudiante(demandeSelectionnee)"
                 />
               </span>
-              <span v-else>—</span>
+              <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
             </div>
             <div>
-              <span class="pochoir">Inscription</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.enrollment') }}</span>
               <span>{{ demandeSelectionnee.inscription?.numero ?? '—' }}</span>
             </div>
             <div>
-              <span class="pochoir">Frais</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.fees') }}</span>
               <span class="chiffres">
                 {{ montantLisible(demandeSelectionnee.frais) }} {{ demandeSelectionnee.devise }}
               </span>
             </div>
             <div>
-              <span class="pochoir">Paiement</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.payment') }}</span>
               <span v-if="demandeSelectionnee.paiement">
                 {{ demandeSelectionnee.paiement.reference }} · {{ libellePaiement(demandeSelectionnee.paiement.statut) }}
               </span>
-              <span v-else class="text-grey-7">Non initié</span>
+              <span v-else class="text-grey-7">{{ $t('demandeDocuments.detail.paymentNotStarted') }}</span>
             </div>
             <div>
-              <span class="pochoir">Traitée par</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.processedBy') }}</span>
               <span v-if="demandeSelectionnee.traitePar">
                 {{ demandeSelectionnee.traitePar.prenom }} {{ demandeSelectionnee.traitePar.nom }}
               </span>
-              <span v-else>—</span>
+              <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
             </div>
             <div>
-              <span class="pochoir">Créée le</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.createdOn') }}</span>
               <span>{{ dateHeureLisible(demandeSelectionnee.creeLe) }}</span>
             </div>
             <div v-if="demandeSelectionnee.remiseLe">
-              <span class="pochoir">Remise le</span>
+              <span class="pochoir">{{ $t('demandeDocuments.detail.handedOverOn') }}</span>
               <span>{{ dateHeureLisible(demandeSelectionnee.remiseLe) }}</span>
             </div>
           </div>
           <div v-if="demandeSelectionnee.motif" class="q-mt-md">
-            <span class="section-titre">Motif</span>
+            <span class="section-titre">{{ $t('demandeDocuments.detail.motif') }}</span>
             <div class="demande-motif" style="white-space: pre-wrap">{{ demandeSelectionnee.motif }}</div>
           </div>
           <div v-if="demandeSelectionnee.notes" class="q-mt-md">
-            <span class="section-titre">Notes</span>
+            <span class="section-titre">{{ $t('demandeDocuments.detail.notes') }}</span>
             <div class="demande-notes" style="white-space: pre-wrap">{{ demandeSelectionnee.notes }}</div>
           </div>
           <div v-if="demandeSelectionnee.notification" class="q-mt-md">
-            <span class="section-titre">Notification SMS</span>
+            <span class="section-titre">{{ $t('demandeDocuments.detail.smsNotification') }}</span>
             <div class="demande-notification" style="white-space: pre-wrap">{{ demandeSelectionnee.notification }}</div>
           </div>
           <div class="row q-mt-md q-gutter-sm">
@@ -424,7 +423,7 @@
               color="positive"
               no-caps
               icon="verified"
-              label="Confirmer le paiement"
+              :label="$t('demandeDocuments.actionsColumn.confirmPayment')"
               :loading="enCours === 'confirmer'"
               @click="confirmerPaiement(demandeSelectionnee)"
             />
@@ -434,7 +433,7 @@
               color="primary"
               no-caps
               icon="play_arrow"
-              label="Lancer le traitement"
+              :label="$t('demandeDocuments.actionsColumn.startProcessing')"
               :loading="enCours === 'traitement'"
               @click="lancerTraitement(demandeSelectionnee)"
             />
@@ -444,7 +443,7 @@
               color="positive"
               no-caps
               icon="check_circle"
-              label="Marquer prête"
+              :label="$t('demandeDocuments.actionsColumn.markReady')"
               :loading="enCours === 'prete'"
               @click="marquerPrete(demandeSelectionnee)"
             />
@@ -454,7 +453,7 @@
               color="positive"
               no-caps
               icon="assignment_turned_in"
-              label="Remettre"
+              :label="$t('demandeDocuments.actionsColumn.handOver')"
               :loading="enCours === 'remettre'"
               @click="remettre(demandeSelectionnee)"
             />
@@ -464,14 +463,14 @@
               color="negative"
               no-caps
               icon="block"
-              label="Rejeter"
+              :label="$t('demandeDocuments.actionsColumn.reject')"
               :loading="enCours === 'rejeter'"
               @click="rejeter(demandeSelectionnee)"
             />
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('demandeDocuments.detail.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -479,8 +478,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
@@ -503,14 +505,15 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { t } = useI18n();
 
-const ETAPES_DEMANDE = [
-  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: 'Paiement', icone: 'payments' },
-  { identifiant: 'PAYEE', libelle: 'Payée', icone: 'verified' },
-  { identifiant: 'EN_TRAITEMENT', libelle: 'Traitement', icone: 'build' },
-  { identifiant: 'PRETE', libelle: 'Prête', icone: 'check_circle' },
-  { identifiant: 'REMISE', libelle: 'Remise', icone: 'task_alt' },
-];
+const ETAPES_DEMANDE = computed(() => [
+  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('demandeDocuments.steps.payment'), icone: 'payments' },
+  { identifiant: 'PAYEE', libelle: t('demandeDocuments.steps.paid'), icone: 'verified' },
+  { identifiant: 'EN_TRAITEMENT', libelle: t('demandeDocuments.steps.processing'), icone: 'build' },
+  { identifiant: 'PRETE', libelle: t('demandeDocuments.steps.ready'), icone: 'check_circle' },
+  { identifiant: 'REMISE', libelle: t('demandeDocuments.steps.handedOver'), icone: 'task_alt' },
+]);
 
 const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_DEMANDE);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_DEMANDE);
@@ -532,12 +535,12 @@ const detailOuvert = ref(false);
 const demandeSelectionnee = ref<DemandeDocument | null>(null);
 const enCours = ref('');
 
-const plaques = [
-  { cle: 'EN_ATTENTE_PAIEMENT', libelle: 'À payer', alerte: false },
-  { cle: 'EN_TRAITEMENT', libelle: 'En traitement', alerte: false },
-  { cle: 'PRETE', libelle: 'Prêtes', alerte: false },
-  { cle: 'pretesNonRemises', libelle: 'Prêtes > 7 j', alerte: true },
-];
+const plaques = computed(() => [
+  { cle: 'EN_ATTENTE_PAIEMENT', libelle: t('demandeDocuments.plaques.awaitingPayment'), alerte: false },
+  { cle: 'EN_TRAITEMENT', libelle: t('demandeDocuments.plaques.processing'), alerte: false },
+  { cle: 'PRETE', libelle: t('demandeDocuments.plaques.ready'), alerte: false },
+  { cle: 'pretesNonRemises', libelle: t('demandeDocuments.plaques.readyOverdue'), alerte: true },
+]);
 
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_DEMANDE[s as StatutDemande] ?? s;
@@ -549,21 +552,21 @@ function libellePaiement(s: StatutPaiement | string) {
   return LIBELLE_STATUT_PAIEMENT[s] ?? s;
 }
 
-const colonnes: QTableColumn[] = [
-  { name: 'numero', label: 'N°', field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: 'Type', field: 'type', align: 'left' },
-  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
-  { name: 'frais', label: 'Frais', field: 'frais', align: 'right' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'numero', label: t('demandeDocuments.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('demandeDocuments.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'etudiant', label: t('demandeDocuments.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'frais', label: t('demandeDocuments.table.columns.frais'), field: 'frais', align: 'right' },
+  { name: 'statut', label: t('demandeDocuments.table.columns.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: 'Créée le',
+    label: t('demandeDocuments.table.columns.createdOn'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+  { name: 'actions', label: t('demandeDocuments.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function selectionner(d: DemandeDocument | null) {
   if (!d) return;
@@ -603,11 +606,11 @@ async function requeter() {
     pagination.value.total = data.total;
   } catch (e: any) {
     if (e?.response?.status === 403) {
-      $q.notify({ type: 'warning', message: "Vous n'avez pas accès à cette section." });
+      $q.notify({ type: 'warning', message: t('demandeDocuments.messages.forbidden') });
     } else if (e?.response?.status !== 401) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Chargement impossible',
+        message: e?.response?.data?.message ?? t('demandeDocuments.messages.loadError'),
       });
     }
     demandes.value = [];
@@ -643,14 +646,14 @@ async function confirmerPaiement(d: DemandeDocument | null) {
   enCours.value = 'confirmer';
   try {
     await api.post(`/documents-demande/${d.id}/confirmer-paiement`, {});
-    $q.notify({ type: 'positive', message: 'Paiement confirmé' });
+    $q.notify({ type: 'positive', message: t('demandeDocuments.messages.paymentConfirmed') });
     rafraichir();
     if (demandeSelectionnee.value?.id === d.id) {
       const { data } = await api.get(`/documents-demande/${d.id}`);
       demandeSelectionnee.value = data as DemandeDocument;
     }
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Confirmation impossible' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.confirmError') });
   } finally {
     enCours.value = '';
   }
@@ -661,14 +664,14 @@ async function lancerTraitement(d: DemandeDocument | null) {
   enCours.value = 'traitement';
   try {
     await api.post(`/documents-demande/${d.id}/lancer-traitement`, {});
-    $q.notify({ type: 'positive', message: 'Traitement lancé' });
+    $q.notify({ type: 'positive', message: t('demandeDocuments.messages.processingStarted') });
     rafraichir();
     if (demandeSelectionnee.value?.id === d.id) {
       const { data } = await api.get(`/documents-demande/${d.id}`);
       demandeSelectionnee.value = data as DemandeDocument;
     }
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Lancement impossible' });
+    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.processingError') });
   } finally {
     enCours.value = '';
   }
@@ -677,25 +680,25 @@ async function lancerTraitement(d: DemandeDocument | null) {
 async function marquerPrete(d: DemandeDocument | null) {
   if (!d) return;
   $q.dialog({
-    title: 'Marquer prête',
-    message: 'Un SMS sera envoyé à l\'étudiant. Message personnalisé (optionnel) :',
+    title: t('demandeDocuments.markReadyDialog.title'),
+    message: t('demandeDocuments.markReadyDialog.message'),
     prompt: { model: '', type: 'textarea' },
     cancel: true,
-    ok: { label: 'Marquer prête', color: 'positive' },
+    ok: { label: t('demandeDocuments.markReadyDialog.confirm'), color: 'positive' },
   }).onOk(async (message: string) => {
     enCours.value = 'prete';
     try {
       await api.post(`/documents-demande/${d.id}/prete`, {
         message: message?.trim() || undefined,
       });
-      $q.notify({ type: 'positive', message: 'Demande marquée prête, étudiant notifié' });
+      $q.notify({ type: 'positive', message: t('demandeDocuments.messages.markedReady') });
       rafraichir();
       if (demandeSelectionnee.value?.id === d.id) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Impossible de marquer prête' });
+      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.markReadyError') });
     } finally {
       enCours.value = '';
     }
@@ -705,25 +708,25 @@ async function marquerPrete(d: DemandeDocument | null) {
 async function remettre(d: DemandeDocument | null) {
   if (!d) return;
   $q.dialog({
-    title: 'Confirmer la remise',
-    message: 'Note de remise (optionnel) :',
+    title: t('demandeDocuments.handOverDialog.title'),
+    message: t('demandeDocuments.handOverDialog.message'),
     prompt: { model: '', type: 'text' },
     cancel: true,
-    ok: { label: 'Remettre', color: 'positive' },
+    ok: { label: t('demandeDocuments.handOverDialog.confirm'), color: 'positive' },
   }).onOk(async (noteRemise: string) => {
     enCours.value = 'remettre';
     try {
       await api.post(`/documents-demande/${d.id}/remettre`, {
         noteRemise: noteRemise?.trim() || undefined,
       });
-      $q.notify({ type: 'positive', message: 'Document remis' });
+      $q.notify({ type: 'positive', message: t('demandeDocuments.messages.handedOver') });
       rafraichir();
       if (demandeSelectionnee.value?.id === d.id) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Remise impossible' });
+      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.handOverError') });
     } finally {
       enCours.value = '';
     }
@@ -733,24 +736,24 @@ async function remettre(d: DemandeDocument | null) {
 async function rejeter(d: DemandeDocument | null) {
   if (!d) return;
   $q.dialog({
-    title: 'Rejeter la demande',
-    message: 'Motif du rejet (obligatoire) :',
+    title: t('demandeDocuments.rejectDialog.title'),
+    message: t('demandeDocuments.rejectDialog.message'),
     prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
     cancel: true,
-    ok: { label: 'Rejeter', color: 'negative' },
+    ok: { label: t('demandeDocuments.rejectDialog.confirm'), color: 'negative' },
   }).onOk(async (motif: string) => {
     if (!motif?.trim()) return;
     enCours.value = 'rejeter';
     try {
       await api.post(`/documents-demande/${d.id}/rejeter`, { motif: motif.trim() });
-      $q.notify({ type: 'warning', message: 'Demande rejetée' });
+      $q.notify({ type: 'warning', message: t('demandeDocuments.messages.rejected') });
       rafraichir();
       if (demandeSelectionnee.value?.id === d.id) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? 'Rejet impossible' });
+      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.rejectError') });
     } finally {
       enCours.value = '';
     }
@@ -777,15 +780,15 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .demande-statut {
@@ -793,20 +796,18 @@ $rouge: #C4122E;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
-  &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fonce; }
-  &.statut-PAYEE { background: #1e7a4c; }
-  &.statut-EN_TRAITEMENT { background: $encre; }
-  &.statut-PRETE { background: $vert; }
-  &.statut-REMISE { background: #1565c0; }
-  &.statut-REJETEE { background: $rouge; }
+  &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fond; color: $jaune-texte; }
+  &.statut-PAYEE { background: #007a4d; }
+  &.statut-EN_TRAITEMENT { background: $vert-fond; color: $vert-lien; }
+  &.statut-PRETE { background: $vert-fond; color: #{$vert}; }
+  &.statut-REMISE { background: #0066cc; }
+  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .demande-meta {
@@ -830,7 +831,7 @@ $rouge: #C4122E;
   background: var(--up-craie);
   border: var(--up-filet-fin);
   padding: var(--up-2);
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   font-size: 0.95rem;
 }
 </style>

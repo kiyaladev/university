@@ -1,0 +1,54 @@
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const base = process.argv[2] || 'http://127.0.0.1:15034';
+const report = process.argv[3] || '/tmp/university-clavier.json';
+if (!['localhost', '127.0.0.1'].includes(new URL(base).hostname)) throw Error('Recette locale obligatoire');
+const browser = await chromium.launch();
+const checks = [];
+try {
+  const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1440, height: 950 } });
+  const page = await context.newPage();
+  await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
+  const email = page.locator('input[type=email]');
+  await email.focus();
+  await page.keyboard.type('admin@unipresence.gn');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement.type), 'password');
+  await page.keyboard.type('Passer@2026');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Afficher le mot de passe');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.evaluate(() => document.activeElement.type), 'submit');
+  await page.keyboard.press('Enter');
+  await page.waitForURL(url => !url.hash.startsWith('#/connexion'));
+  checks.push('Connexion réalisable au clavier');
+  await page.goto(base + '/#/audit', { waitUntil: 'networkidle' });
+  const trigger = page.getByRole('button', { name: 'Détails', exact: true }).first();
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('dialog').waitFor();
+  await page.waitForFunction(() => !!document.activeElement.closest('.q-dialog'));
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press('Tab');
+    await page.waitForFunction(() => !!document.activeElement.closest('.q-dialog'), { timeout: 1000 });
+  }
+  await page.keyboard.press('Escape');
+  await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  assert.ok(await trigger.evaluate(element => element === document.activeElement));
+  checks.push('Dialogue : focus contenu, fermeture Échap, retour au déclencheur');
+  const groups = page.locator('.q-drawer .q-expansion-item');
+  assert.equal(await groups.count(), 5);
+  const attendance = groups.filter({ hasText: 'Présences' }).first().locator('.q-expansion-item__container > .q-item').first();
+  await attendance.focus();
+  await page.keyboard.press('Enter');
+  await page.locator('.q-drawer a[href="#/controle"]').waitFor();
+  checks.push('Cinq rubriques ; dépliage au clavier');
+  await page.setViewportSize({ width: 320, height: 950 });
+  await page.waitForTimeout(400);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+  checks.push('Recomposition à 320 px');
+  const result = { date: new Date().toISOString(), checks };
+  fs.writeFileSync(report, JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result));
+} finally { await browser.close(); }

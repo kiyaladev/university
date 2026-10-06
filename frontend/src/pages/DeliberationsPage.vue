@@ -1,21 +1,15 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Délibérations</div>
-        <div class="page-sous-titre">
-          Sessions du jury : moyennes pondérées par les crédits, décisions ADMIS /
-          AJOURNÉ / DÉFAILLANT, puis édition des bulletins.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('deliberations.title')" :subtitle="$t('deliberations.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutSaisir"
           unelevated
           color="primary"
           no-caps
           icon="gavel"
-          label="Nouvelle délibération"
+          :label="$t('deliberations.actions.newDeliberation')"
           @click="dialogOuvert = true"
         />
       </div>
@@ -25,16 +19,19 @@
           color="secondary"
           no-caps
           icon="school"
-          label="Bulletins"
+          :label="$t('deliberations.actions.reportCards')"
           @click="allerBulletins(null)"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="resultats" />
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher une promotion…"
+      :placeholder="$t('deliberations.filters.search')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -46,7 +43,7 @@
           clearable
           emit-value
           map-options
-          label="Année académique"
+          :label="$t('deliberations.filters.anneeAcademique')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -56,12 +53,12 @@
           clearable
           emit-value
           map-options
-          label="Promotion"
+          :label="$t('deliberations.filters.promotion')"
         />
         <semestre-select
           v-model="filtres.session"
           type="session"
-          label="Session"
+          :label="$t('deliberations.filters.session')"
           clearable
         />
         <q-select
@@ -72,14 +69,13 @@
           clearable
           emit-value
           map-options
-          label="Statut"
+          :label="$t('deliberations.filters.statut')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="deliberations"
           :modes="['tableau', 'kanban']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'kanban')"
         />
       </template>
@@ -100,14 +96,14 @@
       <template #no-data>
         <div class="etat-vide">
           <q-icon name="gavel" size="32px" color="grey-5" />
-          <div class="q-mt-sm">Aucune délibération pour ces critères.</div>
+          <div class="q-mt-sm">{{ $t('deliberations.emptyState.message') }}</div>
           <q-btn
             v-if="peutSaisir"
             unelevated
             color="primary"
             no-caps
             icon="gavel"
-            label="Nouvelle délibération"
+            :label="$t('deliberations.actions.newDeliberation')"
             class="q-mt-sm"
             @click="dialogOuvert = true"
           />
@@ -131,7 +127,7 @@
           <template v-if="p.row.tauxReussite !== null && p.row.tauxReussite !== undefined">
             {{ pourcentLisible(p.row.tauxReussite) }}
           </template>
-          <template v-else>—</template>
+          <template v-else>{{ $t('rectoratPage.subtitleFallback') }}</template>
         </q-td>
       </template>
 
@@ -150,10 +146,10 @@
             dense
             round
             icon="visibility"
-            aria-label="Voir le détail de la délibération"
+            :aria-label="$t('deliberations.ariaLabels.detail')"
             @click.stop="ouvrirDetail(p.row)"
           >
-            <q-tooltip>Détail des lignes</q-tooltip>
+            <q-tooltip>{{ $t('deliberations.tooltips.detail') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'BROUILLON' && peutSaisir"
@@ -162,10 +158,10 @@
             round
             icon="replay"
             color="primary"
-            aria-label="Recalculer moyennes et décisions"
+            :aria-label="$t('deliberations.ariaLabels.recalculate')"
             @click.stop="calculer(p.row)"
           >
-            <q-tooltip>Recalculer moyennes et décisions</q-tooltip>
+            <q-tooltip>{{ $t('deliberations.tooltips.recalculate') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'BROUILLON' && estJury"
@@ -174,7 +170,7 @@
             no-caps
             icon="verified_user"
             color="positive"
-            label="Valider le jury"
+            :label="$t('deliberations.actions.validateJury')"
             @click.stop="valider(p.row)"
           />
           <q-btn
@@ -183,20 +179,20 @@
             round
             icon="school"
             color="primary"
-            aria-label="Voir les bulletins de cette délibération"
+            :aria-label="$t('deliberations.ariaLabels.reportCards')"
             @click.stop="allerBulletins(p.row)"
           >
-            <q-tooltip>Bulletins de cette promotion</q-tooltip>
+            <q-tooltip>{{ $t('deliberations.tooltips.reportCards') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="print"
-            aria-label="Imprimer le procès-verbal"
+            :aria-label="$t('deliberations.ariaLabels.printPv')"
             @click.stop="imprimerPv(p.row)"
           >
-            <q-tooltip>Imprimer le PV</q-tooltip>
+            <q-tooltip>{{ $t('deliberations.tooltips.printPv') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -227,7 +223,7 @@
       <q-card style="width: 900px; max-width: 95vw">
         <q-card-section class="row items-center q-col-gutter-md">
           <div class="col">
-            <div class="text-h6">Délibération — {{ detail?.promotion?.nom ?? '—' }}</div>
+            <div class="text-h6">{{ $t('deliberations.detail.title', { promotion: detail?.promotion?.nom ?? '—' }) }}</div>
             <div class="text-caption text-grey-7">
               {{ LIBELLE_SESSION_DELIBERATION[detail?.session ?? 'NORMALE'] }} ·
               {{ detail?.annee?.libelle ?? '—' }} ·
@@ -235,13 +231,13 @@
             </div>
           </div>
           <div class="col-auto">
-            <q-btn outline no-caps icon="school" label="Bulletins" @click="allerBulletins(detail)" />
+            <q-btn outline no-caps icon="school" :label="$t('deliberations.actions.reportCards')" @click="allerBulletins(detail)" />
           </div>
           <div class="col-auto">
-            <q-btn outline no-caps icon="print" label="PV" @click="imprimerPv(detail)" />
+            <q-btn outline no-caps icon="print" :label="$t('deliberations.actions.pv')" @click="imprimerPv(detail)" />
           </div>
           <div class="col-auto">
-            <q-btn flat round dense icon="close" aria-label="Fermer le détail" v-close-popup />
+            <q-btn flat round dense icon="close" :aria-label="$t('deliberations.ariaLabels.close')" v-close-popup />
           </div>
         </q-card-section>
 
@@ -260,7 +256,7 @@
               <div class="etat-vide">
                 <q-icon name="how_to_reg" size="28px" color="grey-5" />
                 <div class="q-mt-sm">
-                  Aucune ligne : lancez le recalcul pour produire les moyennes et les décisions.
+                  {{ $t('deliberations.detail.emptyLines') }}
                 </div>
               </div>
             </template>
@@ -283,10 +279,10 @@
                   dense
                   round
                   icon="print"
-                  aria-label="Imprimer le bulletin individuel"
+                  :aria-label="$t('deliberations.ariaLabels.printBulletin')"
                   @click="imprimerBulletin(p.row)"
                 >
-                  <q-tooltip>Bulletin individuel</q-tooltip>
+                  <q-tooltip>{{ $t('deliberations.tooltips.bulletinIndividuel') }}</q-tooltip>
                 </q-btn>
               </q-td>
             </template>
@@ -294,7 +290,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Fermer" v-close-popup />
+          <q-btn flat :label="$t('deliberations.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -302,10 +298,14 @@
 </template>
 
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
+
 import { useAuthStore } from '../stores/auth';
 import DeliberationDialog from '../components/DeliberationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
@@ -321,10 +321,12 @@ import {
   pourcentLisible,
 } from '../utils/libelles';
 import type { AnneeAcademique, Deliberation, DeliberationLigne, Matiere, Promotion, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 /** La liste renvoie l'effectif agrégé, absent du modèle partagé. */
 interface DeliberationListe extends Deliberation {
@@ -367,7 +369,7 @@ const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('deliberations.chips.search', { value: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -375,22 +377,22 @@ const chips = computed(() => {
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: `Année : ${a?.libelle ?? '?'}`, value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({ label: t('deliberations.chips.annee', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: `Promo : ${p?.nom ?? '?'}`, value: filtres.value.promotionId, icone: 'school' });
+    cs.push({ label: t('deliberations.chips.promo', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
   }
   if (filtres.value.session) {
     cs.push({
-      label: `Session : ${LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session}`,
+      label: t('deliberations.chips.session', { value: LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session }),
       value: filtres.value.session,
       icone: 'flag',
     });
   }
   if (filtres.value.statut) {
     cs.push({
-      label: `Statut : ${LIBELLE_STATUT_DELIBERATION[filtres.value.statut] ?? filtres.value.statut}`,
+      label: t('deliberations.chips.statut', { value: LIBELLE_STATUT_DELIBERATION[filtres.value.statut] ?? filtres.value.statut }),
       value: filtres.value.statut,
       icone: 'verified',
     });
@@ -418,26 +420,26 @@ const deliberationsPage = computed(() =>
   deliberationsFiltrees.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
 );
 
-const colonnes: QTableColumn[] = [
-  { name: 'promotion', label: 'Promotion', field: (r) => r.promotion?.nom ?? '—', align: 'left', sortable: true },
-  { name: 'annee', label: 'Année', field: (r) => r.annee?.libelle ?? '—', align: 'left' },
-  { name: 'session', label: 'Session', field: 'session', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'left' },
-  { name: 'taux', label: 'Taux de réussite', field: 'tauxReussite', align: 'center', sortable: true },
-  { name: 'effectif', label: 'Étudiants', field: (r) => r._count?.lignes ?? 0, align: 'center' },
-  { name: 'creeLe', label: 'Créée le', field: 'creeLe', align: 'left', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'promotion', label: t('deliberations.table.columns.promotion'), field: (r) => r.promotion?.nom ?? '—', align: 'left', sortable: true },
+  { name: 'annee', label: t('deliberations.table.columns.annee'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
+  { name: 'session', label: t('deliberations.table.columns.session'), field: 'session', align: 'left' },
+  { name: 'statut', label: t('deliberations.table.columns.statut'), field: 'statut', align: 'left' },
+  { name: 'taux', label: t('deliberations.table.columns.taux'), field: 'tauxReussite', align: 'center', sortable: true },
+  { name: 'effectif', label: t('deliberations.table.columns.effectif'), field: (r) => r._count?.lignes ?? 0, align: 'center' },
+  { name: 'creeLe', label: t('deliberations.table.columns.creeLe'), field: 'creeLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
-const colonnesDetail: QTableColumn[] = [
-  { name: 'rang', label: 'Rang', field: 'rang', align: 'center' },
-  { name: 'matricule', label: 'Matricule', field: (r) => r.inscription?.etudiant?.matricule ?? '—', align: 'left' },
-  { name: 'etudiant', label: 'Étudiant', field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`.trim() || '—', align: 'left' },
-  { name: 'moyenne', label: 'Moyenne', field: 'moyenne', align: 'center' },
-  { name: 'decision', label: 'Décision', field: 'decision', align: 'center' },
-  { name: 'mention', label: 'Mention', field: (r) => r.mention ?? '—', align: 'left' },
+const colonnesDetail = computed<QTableColumn[]>(() => [
+  { name: 'rang', label: t('deliberations.table.detailColumns.rang'), field: 'rang', align: 'center' },
+  { name: 'matricule', label: t('deliberations.table.detailColumns.matricule'), field: (r) => r.inscription?.etudiant?.matricule ?? '—', align: 'left' },
+  { name: 'etudiant', label: t('deliberations.table.detailColumns.etudiant'), field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`.trim() || '—', align: 'left' },
+  { name: 'moyenne', label: t('deliberations.table.detailColumns.moyenne'), field: 'moyenne', align: 'center' },
+  { name: 'decision', label: t('deliberations.table.detailColumns.decision'), field: 'decision', align: 'center' },
+  { name: 'mention', label: t('deliberations.table.detailColumns.mention'), field: (r) => r.mention ?? '—', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+]);
 
 const detailLignes = computed<DeliberationLigne[]>(() => detail.value?.lignes ?? []);
 
@@ -456,27 +458,27 @@ const colonnesKanban = computed(() => {
     id: d.id,
     titre: d.promotion?.nom ?? '—',
     sousTitre: `${LIBELLE_SESSION_DELIBERATION[d.session]} · ${d.annee?.libelle ?? ''}`,
-    meta: `${d._count?.lignes ?? 0} étudiant(s) · créée le ${dateLisible(d.creeLe)}`,
+    meta: t('deliberations.kanban.cardMeta', { count: d._count?.lignes ?? 0, date: dateLisible(d.creeLe) }),
     badge: LIBELLE_STATUT_DELIBERATION[d.statut] ?? d.statut,
     couleur: d.statut === 'VALIDEE' ? 'positive' : 'warning',
     actions: [
       ...(d.statut === 'BROUILLON' && peutSaisir.value
-        ? [{ label: 'Recalculer', icone: 'replay', couleur: 'primary', onClick: () => calculer(d) }]
+        ? [{ label: t('deliberations.actions.recalculate'), icone: 'replay', couleur: 'primary', onClick: () => calculer(d) }]
         : []),
       ...(d.statut === 'BROUILLON' && estJury.value
-        ? [{ label: 'Valider', icone: 'verified_user', couleur: 'positive', onClick: () => valider(d) }]
+        ? [{ label: t('deliberations.actions.validateJury'), icone: 'verified_user', couleur: 'positive', onClick: () => valider(d) }]
         : []),
-      { label: 'Bulletins', icone: 'school', couleur: 'primary', onClick: () => allerBulletins(d) },
-      { label: 'PV', icone: 'print', couleur: 'primary', onClick: () => imprimerPv(d) },
+      { label: t('deliberations.actions.reportCards'), icone: 'school', couleur: 'primary', onClick: () => allerBulletins(d) },
+      { label: t('deliberations.actions.pv'), icone: 'print', couleur: 'primary', onClick: () => imprimerPv(d) },
     ],
     onClick: () => ouvrirDetail(d),
   });
 
   return [
-    { identifiant: 'PROPOSE', titre: 'Proposées (brouillon)', couleur: '#EFB700', cartes: parColonne.PROPOSE.map(carte) },
-    { identifiant: 'VALIDE', titre: 'Validées (jury)', couleur: '#0F7A45', cartes: parColonne.VALIDE.map(carte) },
-    { identifiant: 'SOUTENU', titre: 'Rattrapages validés', couleur: '#3E9E6C', cartes: parColonne.SOUTENU.map(carte) },
-    { identifiant: 'ABANDONNE', titre: 'Rattrapages en attente', couleur: '#C4122E', cartes: parColonne.ABANDONNE.map(carte) },
+    { identifiant: 'PROPOSE', titre: t('deliberations.kanban.columns.propose'), couleur: '#FCD116', cartes: parColonne.PROPOSE.map(carte) },
+    { identifiant: 'VALIDE', titre: t('deliberations.kanban.columns.valide'), couleur: '#007A4D', cartes: parColonne.VALIDE.map(carte) },
+    { identifiant: 'SOUTENU', titre: t('deliberations.kanban.columns.soutenu'), couleur: '#2E9E70', cartes: parColonne.SOUTENU.map(carte) },
+    { identifiant: 'ABANDONNE', titre: t('deliberations.kanban.columns.abandonne'), couleur: '#CE1126', cartes: parColonne.ABANDONNE.map(carte) },
   ];
 });
 
@@ -489,18 +491,14 @@ function couleurDecision(d: string): string {
   return d === 'ADMIS' ? 'positive' : d === 'AJOURNE' ? 'warning' : 'negative';
 }
 
-function urlToken(chemin: string) {
-  return `${API_URL}${chemin}${chemin.includes('?') ? '&' : '?'}token=${auth.token}`;
-}
-
 function imprimerPv(d: DeliberationListe | null) {
   if (!d) return;
-  window.open(urlToken(`/deliberations/${d.id}/imprimer`), '_blank');
+  void ouvrirImpression(`/deliberations/${d.id}/imprimer`);
 }
 
 function imprimerBulletin(l: DeliberationLigne) {
   if (!detail.value) return;
-  window.open(urlToken(`/deliberations/${detail.value.id}/releve/${l.inscriptionId}`), '_blank');
+  void ouvrirImpression(`/deliberations/${detail.value.id}/releve/${l.inscriptionId}`);
 }
 
 /**
@@ -515,7 +513,7 @@ async function ouvrirDetail(d: DeliberationListe) {
     const { data } = await api.get(`/deliberations/${d.id}`);
     detail.value = data;
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Détail indisponible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.detailError') });
   } finally {
     chargementDetail.value = false;
   }
@@ -523,43 +521,35 @@ async function ouvrirDetail(d: DeliberationListe) {
 
 function calculer(d: DeliberationListe) {
   $q.dialog({
-    title: 'Recalculer la délibération',
-    message:
-      'Les moyennes d’UE (pondérées par les coefficients), la moyenne générale (pondérée par les crédits), les décisions, rangs et taux de réussite seront recalculés sur les notes actuelles.',
+    title: t('deliberations.dialogs.recalculate.title'),
+    message: t('deliberations.dialogs.recalculate.message'),
     cancel: true,
-    ok: { color: 'primary', label: 'Recalculer', unelevated: true, noCaps: true },
+    ok: { color: 'primary', label: t('deliberations.dialogs.recalculate.ok'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/deliberations/${d.id}/calculer`);
-      $q.notify({ type: 'positive', message: 'Délibération recalculée' });
+      $q.notify({ type: 'positive', message: t('deliberations.messages.recalculated') });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Recalcul impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.recalculateError') });
     }
   });
 }
 
 function valider(d: DeliberationListe) {
   $q.dialog({
-    title: 'Valider les résultats du jury',
-    html: true,
-    message: `<p>La décision est prise selon les règles écrites :</p>
-      <ul>
-        <li>moyenne générale = Σ(moyenne UE × crédits) / Σ(crédits) ;</li>
-        <li>ADMIS si moyenne générale ≥ 10 et aucune matière sous 5/20 pour défaut d’absence ;</li>
-        <li>DÉFAILLANT si une matière n’a aucune note à une épreuve clôturée ;</li>
-        <li>AJOURNÉ sinon — en rattrapage, seuls les AJOURNÉ sont repositionnés.</li>
-      </ul>
-      <p><strong>Après validation, tout recalcul sera bloqué et les bulletins deviendront officiels.</strong> Continuer ?</p>`,
-    cancel: { flat: true, label: 'Revenir', noCaps: true },
-    ok: { color: 'positive', label: 'Valider le jury', unelevated: true, noCaps: true },
+    title: t('deliberations.dialogs.validate.title'),
+    html: false,
+    message: t('deliberations.dialogs.validate.message'),
+    cancel: { flat: true, label: t('deliberations.actions.back'), noCaps: true },
+    ok: { color: 'positive', label: t('deliberations.dialogs.validate.ok'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/deliberations/${d.id}/valider`);
-      $q.notify({ type: 'positive', message: 'Délibération validée par le jury' });
+      $q.notify({ type: 'positive', message: t('deliberations.messages.validated') });
       await charger();
     } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Validation impossible' });
+      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.validateError') });
     }
   });
 }
@@ -583,7 +573,7 @@ async function charger() {
     deliberations.value = data.data ?? [];
   } catch (e: any) {
     deliberations.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Chargement des délibérations impossible' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.loadError') });
   } finally {
     chargement.value = false;
   }

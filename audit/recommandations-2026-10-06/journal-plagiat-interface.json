@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-06T15:29:04.550Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_SUSPICION_OUVERTE",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    },
+    {
+      "action": "PLAGIAT_CONFIRME",
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "actualEventAndBeforeAfter": true,
+      "privateFieldsAbsent": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Détection automatique de dépôts identiques et arbitrage plagiat réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile"
+}

@@ -13,8 +13,9 @@
  * la main à la direction en datant escaladeLe. La note de clôture (champ libre
  * concaténé aux notes existantes) consigne la décision finale.
  *
- * L'étudiant reste propriétaire : il voit l'historique complet et peut envoyer
- * des messages tant que la réclamation n'est pas close.
+ * Une réclamation identifiée reste la propriété de l'étudiant : il voit son
+ * historique et peut répondre tant qu'elle n'est pas close. Une référence de
+ * création séparée maintient le fil anonyme sans apparaître dans les réponses.
  */
 import {
   BadRequestException,
@@ -24,9 +25,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, PrioriteReclamation, Role, StatutReclamation, TypeReclamation } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
+import { prochainNumeroTx } from '../../common/numero';
 
 const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
@@ -41,18 +44,51 @@ const STATUTS_CLOS: StatutReclamation[] = [
   StatutReclamation.REJETEE,
 ];
 
+const TRANSITIONS_AUTORISEES: Record<StatutReclamation, StatutReclamation[]> = {
+  OUVERTE: [StatutReclamation.EN_COURS],
+  EN_COURS: [
+    StatutReclamation.EN_ATTENTE_REPONSE,
+    StatutReclamation.RESOLUE,
+    StatutReclamation.FERMEE,
+    StatutReclamation.REJETEE,
+  ],
+  EN_ATTENTE_REPONSE: [
+    StatutReclamation.EN_COURS,
+    StatutReclamation.RESOLUE,
+    StatutReclamation.FERMEE,
+    StatutReclamation.REJETEE,
+  ],
+  RESOLUE: [],
+  FERMEE: [],
+  REJETEE: [],
+};
+
+const ROLES_AGENTS: Role[] = [
+  Role.ADMIN,
+  Role.DIRECTION,
+  Role.SCOLARITE,
+  Role.CHEF_DEPARTEMENT,
+];
+
 export const RECLAMATION_INCLUDE = {
   etudiant: { select: { id: true, matricule: true, nom: true, prenom: true, telephone: true } },
   departement: { select: { id: true, code: true, nom: true } },
   assigneA: { select: { id: true, nom: true, prenom: true, role: true } },
+  _count: { select: { messages: true } },
+} satisfies Prisma.ReclamationInclude;
+
+const RECLAMATION_DETAIL_INCLUDE = {
+  ...RECLAMATION_INCLUDE,
   messages: {
-    orderBy: { creeLe: 'asc' as const },
+    orderBy: { creeLe: 'desc' as const },
+    take: 20,
     include: {
       auteur: { select: { id: true, nom: true, prenom: true, role: true } },
     },
   },
-  _count: { select: { messages: true } },
 } satisfies Prisma.ReclamationInclude;
+
+const MAX_MESSAGES_PAR_RECLAMATION = 100;
 
 @Injectable()
 export class ReclamationsService extends CrudService {
@@ -60,11 +96,36 @@ export class ReclamationsService extends CrudService {
     super(prisma, 'reclamation', {
       orderBy: { creeLe: 'desc' },
       include: RECLAMATION_INCLUDE,
+      omit: { createurId: true },
       label: 'Réclamation',
     });
   }
 
+  /** Les contrôles d'état et leurs écritures doivent partager un instantané sérialisable. */
+  private async transactionSerializable<T>(operation: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    try {
+      return await this.prisma.$transaction(operation, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    } catch (error: any) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
+        throw new ConflictException(I18nContext.current()!.t('reclamations.ecriture_concurrente_reessayez'));
+      }
+      throw error;
+    }
+  }
+
+  private conflitConcurrent() {
+    return new ConflictException(I18nContext.current()!.t('reclamations.ecriture_concurrente_reessayez'));
+  }
+
   /** Rôles autorisés à voir le registre entier (ADMIN, DIRECTION, SCOLARITE). */
+  agents() {
+    return this.prisma.user.findMany({
+      where: { actif: true, role: { in: [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT] } },
+      select: { id: true, nom: true, prenom: true, role: true },
+      orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
+    });
+  }
+
   private voitTout(user: AuthUser): boolean {
     return user.role === Role.ADMIN || user.role === Role.DIRECTION || user.role === Role.SCOLARITE;
   }
@@ -74,11 +135,11 @@ export class ReclamationsService extends CrudService {
    * les commentaires de changement de statut et les notes de clôture, donc les
    * motifs de rejet rédigés « entre nous ». L'étudiant est propriétaire de sa
    * réclamation, pas de la délibération interne : on retire le champ de la
-   * projection dès que le demandeur est un étudiant. `omit` agit côté Prisma,
-   * le champ ne quitte donc jamais la base.
+   * projection dès que le demandeur est un étudiant. La référence interne du
+   * créateur est toujours omise. `omit` agit côté Prisma.
    */
   private omissionPour(user: AuthUser): Prisma.ReclamationOmit | undefined {
-    return user.role === Role.ETUDIANT ? { notes: true } : undefined;
+    return { createurId: true, ...(user.role === Role.ETUDIANT ? { notes: true } : {}) };
   }
 
   /** Numéro séquentiel par année : "REC-2026-00001". */
@@ -86,16 +147,72 @@ export class ReclamationsService extends CrudService {
     tx: Prisma.TransactionClient,
     annee: string,
   ): Promise<string> {
-    const prefixe = `${PREFIX_RECLAMATION}${annee}-`;
-    const existantes = await tx.reclamation.findMany({
-      where: { numero: { startsWith: prefixe } },
-      select: { numero: true },
+    return prochainNumeroTx(tx, 'reclamation', 'numero', `${PREFIX_RECLAMATION}${annee}-`, 5);
+  }
+
+  /**
+   * Projection minimale journalisée avant/après. Une réclamation est un dossier
+   * de doléance : son sujet, sa description, ses messages, les notes internes et
+   * l'identité de son auteur sont des textes libres et des données personnelles
+   * que le journal ne recopie jamais. Il ne retient que la vie du dossier —
+   * identification technique, qualification, situation, affectation et
+   * horodatages — et la *présence* des contenus sensibles sous forme de
+   * booléens. Ni matricule, ni nom, ni téléphone, ni adresse, ni contenu de
+   * pièce jointe ; les clés étrangères techniques (agent, département) restent,
+   * comme dans les autres modules, pour qu'une affectation soit reconstituable.
+   */
+  private instantaneAudit(reclamation: any) {
+    return {
+      id: reclamation.id,
+      numero: reclamation.numero,
+      type: reclamation.type,
+      priorite: reclamation.priorite,
+      statut: reclamation.statut,
+      anonyme: Boolean(reclamation.anonyme),
+      etudiantId: reclamation.etudiantId ?? null,
+      departementId: reclamation.departementId ?? null,
+      assigneAId: reclamation.assigneAId ?? null,
+      assigneARole: reclamation.assigneA?.role ?? null,
+      delaiEscaladeHeures: reclamation.delaiEscaladeHeures ?? null,
+      escaladeLe: reclamation.escaladeLe ?? null,
+      creeLe: reclamation.creeLe ?? null,
+      fermeLe: reclamation.fermeLe ?? null,
+      nombreMessages: reclamation._count?.messages ?? null,
+      // Présence des contenus libres, jamais leur texte. Le bloc-notes interne
+      // est omis des réponses adressées à un étudiant : dans ce cas la clé
+      // disparaît du journal plutôt que d'y porter un « faux » non.
+      sujetFourni: Boolean(reclamation.sujet),
+      descriptionFournie: Boolean(reclamation.description),
+      noteInterneFournie: 'notes' in reclamation ? Boolean(reclamation.notes) : undefined,
+      nomAuteurFourni: Boolean(reclamation.nomAuteur),
+      emailAuteurFourni: Boolean(reclamation.emailAuteur),
+    };
+  }
+
+  /**
+   * Écrit la trace dans la transaction de la mutation. Un journal écrit hors
+   * transaction survivrait à une mutation annulée : on ne conserve donc que
+   * ce qui a été validé par le même commit que l'écriture métier.
+   */
+  private journaliser(
+    tx: Prisma.TransactionClient,
+    user: AuthUser,
+    action: string,
+    entiteId: string,
+    details: Record<string, unknown>,
+    userId: string | null = user.id,
+  ) {
+    return tx.auditLog.create({
+      data: {
+        // Pour une réclamation explicitement anonyme, conserver l'événement
+        // sans relier le journal d'audit au compte qui l'a déposée.
+        userId,
+        action,
+        entite: 'Reclamation',
+        entiteId,
+        details: JSON.stringify(details),
+      },
     });
-    const max = existantes.reduce((m, r) => {
-      const n = Number(r.numero.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(5, '0')}`;
   }
 
   /** Liste paginée du registre, restreinte au propriétaire si l'utilisateur est étudiant. */
@@ -115,11 +232,42 @@ export class ReclamationsService extends CrudService {
     user: AuthUser,
   ) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+
+    const filtreProprietaire: Prisma.ReclamationWhereInput = this.voitTout(user)
+      ? {}
+      : {
+          OR: [
+            { etudiantId: user.etudiantId ?? '__aucun__' },
+            { anonyme: true, createurId: user.id },
+          ],
+        };
+    const filtreRecherche: Prisma.ReclamationWhereInput = query.search
+      ? {
+          OR: [
+            { numero: { contains: query.search, mode: 'insensitive' } },
+            { sujet: { contains: query.search, mode: 'insensitive' } },
+            { description: { contains: query.search, mode: 'insensitive' } },
+            { nomAuteur: { contains: query.search, mode: 'insensitive' } },
+            { emailAuteur: { contains: query.search, mode: 'insensitive' } },
+            {
+              etudiant: {
+                OR: [
+                  { nom: { contains: query.search, mode: 'insensitive' } },
+                  { prenom: { contains: query.search, mode: 'insensitive' } },
+                  { matricule: { contains: query.search, mode: 'insensitive' } },
+                ],
+              },
+            },
+          ],
+        }
+      : {};
 
     const where: Prisma.ReclamationWhereInput = {
-      ...(this.voitTout(user) ? {} : { etudiantId: user.etudiantId ?? '__aucun__' }),
+      ...(query.search
+        ? { AND: [filtreProprietaire, filtreRecherche] }
+        : filtreProprietaire),
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.type ? { type: query.type } : {}),
       ...(query.priorite ? { priorite: query.priorite } : {}),
@@ -127,26 +275,6 @@ export class ReclamationsService extends CrudService {
       ...(query.assigneAId ? { assigneAId: query.assigneAId } : {}),
       ...(query.escalade === 'oui' ? { escaladeLe: { not: null } } : {}),
       ...(query.escalade === 'non' ? { escaladeLe: null } : {}),
-      ...(query.search
-        ? {
-            OR: [
-              { numero: { contains: query.search, mode: 'insensitive' } },
-              { sujet: { contains: query.search, mode: 'insensitive' } },
-              { description: { contains: query.search, mode: 'insensitive' } },
-              { nomAuteur: { contains: query.search, mode: 'insensitive' } },
-              { emailAuteur: { contains: query.search, mode: 'insensitive' } },
-              {
-                etudiant: {
-                  OR: [
-                    { nom: { contains: query.search, mode: 'insensitive' } },
-                    { prenom: { contains: query.search, mode: 'insensitive' } },
-                    { matricule: { contains: query.search, mode: 'insensitive' } },
-                  ],
-                },
-              },
-            ],
-          }
-        : {}),
     };
 
     const [data, total] = await Promise.all([
@@ -155,12 +283,12 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: this.omissionPour(user),
         orderBy: [{ priorite: 'desc' }, { creeLe: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.reclamation.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   /** Variante pour l'étudiant connecté — strictement bornée à ses réclamations. */
@@ -171,7 +299,7 @@ export class ReclamationsService extends CrudService {
     statut?: StatutReclamation;
   }, user: AuthUser) {
     if (!user.etudiantId) {
-      throw new NotFoundException('Aucun dossier étudiant rattaché à ce compte');
+      throw new NotFoundException(I18nContext.current()!.t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
     return this.liste(query, user);
   }
@@ -182,16 +310,21 @@ export class ReclamationsService extends CrudService {
    * que via `findOne` du CRUD générique, qui ne sait pas omettre de champ.
    */
   async findOnePour(id: string, user: AuthUser) {
-    const reclamation = await this.prisma.reclamation.findUnique({
-      where: { id },
-      include: RECLAMATION_INCLUDE,
+    const reclamation = await this.prisma.reclamation.findFirst({
+      where: {
+        id,
+        ...(this.voitTout(user) ? {} : {
+          OR: [
+            { etudiantId: user.etudiantId ?? '__aucun__' },
+            { anonyme: true, createurId: user.id },
+          ],
+        }),
+      },
+      include: RECLAMATION_DETAIL_INCLUDE,
       omit: this.omissionPour(user),
     });
     if (!reclamation) {
-      throw new NotFoundException('Réclamation introuvable');
-    }
-    if (!this.voitTout(user) && reclamation.etudiantId !== user.etudiantId) {
-      throw new NotFoundException('Réclamation introuvable');
+      throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
     }
     return reclamation;
   }
@@ -256,16 +389,23 @@ export class ReclamationsService extends CrudService {
     const annee = String(new Date().getFullYear());
     const anonyme = dto.anonyme === true;
 
-    // Un étudiant identifié ne peut pas être anonyme : on le rattache à sa fiche.
+    if (user.role === Role.ETUDIANT && !user.etudiantId) {
+      throw new NotFoundException(I18nContext.current()!.t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
+    }
+
+    // L'anonymat est un choix de confidentialité : aucune fiche étudiante ni
+    // compte n'est rattaché au dossier anonyme.
     const etudiantId = anonyme || !user.etudiantId ? null : user.etudiantId;
-    const nomAuteur = anonyme ? dto.nomAuteur?.trim() || null : null;
+    const nomAuteur = anonyme
+      ? dto.nomAuteur?.trim() || null
+      : user.etudiantId ? null : `${user.prenom} ${user.nom}`.trim();
     const emailAuteur = anonyme ? dto.emailAuteur?.trim() || null : null;
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
-        const reclamation = await this.prisma.$transaction(async (tx) => {
+        return await this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
-          return tx.reclamation.create({
+          const reclamation = await tx.reclamation.create({
             data: {
               numero,
               type: dto.type,
@@ -273,6 +413,7 @@ export class ReclamationsService extends CrudService {
               description: dto.description.trim(),
               anonyme,
               etudiantId,
+              createurId: user.id,
               nomAuteur,
               emailAuteur,
               priorite: dto.priorite ?? PrioriteReclamation.NORMALE,
@@ -289,18 +430,22 @@ export class ReclamationsService extends CrudService {
               },
             },
             include: RECLAMATION_INCLUDE,
+            omit: { createurId: true },
           });
+          await this.journaliser(tx, user, 'RECLAMATION_OUVERTE', reclamation.id, {
+            avant: null,
+            apres: this.instantaneAudit(reclamation),
+            champsModifies: ['statut', 'priorite', 'anonyme', 'departementId'],
+            premierMessageInclus: true,
+          }, anonyme ? null : user.id);
+          return reclamation;
         });
-
-        await this.tracer(user, 'RECLAMATION_OUVERTE', reclamation.id,
-          `${reclamation.numero} — ${reclamation.type} : ${reclamation.sujet.slice(0, 80)}`);
-        return reclamation;
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
     }
-    throw new ConflictException('Numéro de réclamation temporairement indisponible, réessayez.');
+    throw new ConflictException(I18nContext.current()!.t('reclamations.numero_de_reclamation_temporairement_indisponible_reessayez'));
   }
 
   /**
@@ -312,32 +457,62 @@ export class ReclamationsService extends CrudService {
     dto: { contenu: string; joint?: string },
     user: AuthUser,
   ) {
-    const reclamation = await this.findOnePour(id, user);
-    if (STATUTS_CLOS.includes(reclamation.statut)) {
-      throw new BadRequestException(
-        'Cette réclamation est close : aucun message supplémentaire n\'est accepté.',
-      );
-    }
     const contenu = dto.contenu.trim();
     if (!contenu) {
-      throw new BadRequestException('Le message est vide.');
+      throw new BadRequestException(I18nContext.current()!.t('reclamations.le_message_est_vide'));
     }
+    return this.transactionSerializable(async (tx) => {
+      const reclamation = await tx.reclamation.findFirst({
+        where: {
+          id,
+          ...(this.voitTout(user) ? {} : { OR: [
+            { etudiantId: user.etudiantId ?? '__aucun__' },
+            { anonyme: true, createurId: user.id },
+          ] }),
+        },
+        include: RECLAMATION_INCLUDE,
+        omit: this.omissionPour(user),
+      });
+      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (STATUTS_CLOS.includes(reclamation.statut)) {
+        throw new BadRequestException('Cette réclamation est close : aucun message supplémentaire n\'est accepté.');
+      }
+      const nombreMessages = await tx.messageReclamation.count({ where: { reclamationId: id } });
+      if (nombreMessages >= MAX_MESSAGES_PAR_RECLAMATION) {
+        throw new BadRequestException(I18nContext.current()!.t('reclamations.limite_messages_atteinte'));
+      }
+      const cree = await tx.messageReclamation.create({
+        data: {
+          reclamationId: id,
+          auteurId: reclamation.anonyme && user.role === Role.ETUDIANT ? null : user.id,
+          nomAffichage: reclamation.anonyme && user.role === Role.ETUDIANT
+            ? 'Anonyme'
+            : `${user.prenom} ${user.nom}`.trim(),
+          contenu,
+          joint: dto.joint ?? null,
+        },
+        include: {
+          auteur: { select: { id: true, nom: true, prenom: true, role: true } },
+        },
+      });
 
-    const message = await this.prisma.messageReclamation.create({
-      data: {
-        reclamationId: id,
-        auteurId: user.id,
-        nomAffichage: `${user.prenom} ${user.nom}`.trim(),
-        contenu,
-        joint: dto.joint ?? null,
-      },
-      include: {
-        auteur: { select: { id: true, nom: true, prenom: true, role: true } },
-      },
+      await this.journaliser(tx, user, 'RECLAMATION_MESSAGE', id, {
+        avant: this.instantaneAudit(reclamation),
+        apres: this.instantaneAudit({ ...reclamation, _count: { messages: nombreMessages + 1 } }),
+        champsModifies: ['messages'],
+        // Ni le texte du message ni sa pièce jointe ne sortent d'ici.
+        message: {
+          id: cree.id,
+          auteurId: cree.auteurId ?? null,
+          auteurRole: cree.auteur?.role ?? null,
+          auteurAnonyme: cree.auteurId === null,
+          creeLe: cree.creeLe ?? null,
+          contenuFourni: Boolean(contenu),
+          pieceJointeFournie: Boolean(dto.joint),
+        },
+      }, reclamation.anonyme && user.role === Role.ETUDIANT ? null : user.id);
+      return cree;
     });
-
-    await this.tracer(user, 'RECLAMATION_MESSAGE', id, `message sur ${reclamation.numero}`);
-    return message;
   }
 
   /** Changement de statut (ADMIN, DIRECTION, SCOLARITE). */
@@ -346,55 +521,74 @@ export class ReclamationsService extends CrudService {
     dto: { statut: StatutReclamation; commentaire?: string },
     user: AuthUser,
   ) {
-    const reclamation = await this.findOne(id);
-
     if (STATUTS_CLOS.includes(dto.statut) && !dto.commentaire?.trim()) {
-      throw new BadRequestException(
-        'Une note est obligatoire pour clore (résoudre, fermer ou rejeter) une réclamation.',
-      );
+      throw new BadRequestException(I18nContext.current()!.t('reclamations.une_note_est_obligatoire_pour_clore_resoudre_fermer_ou_rejet'));
     }
 
-    const data: Prisma.ReclamationUpdateInput = { statut: dto.statut };
-    if (dto.commentaire?.trim()) {
-      const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] ${dto.commentaire.trim()}`;
-      data.notes = reclamation.notes
-        ? `${reclamation.notes}\n${stamp}`
-        : stamp;
-    }
-    if (dto.statut === StatutReclamation.RESOLUE || dto.statut === StatutReclamation.FERMEE || dto.statut === StatutReclamation.REJETEE) {
-      data.fermeLe = new Date();
-    }
-
-    const miseAJour = await this.prisma.reclamation.update({
-      where: { id },
-      data,
-      include: RECLAMATION_INCLUDE,
+    return this.transactionSerializable(async (tx) => {
+      const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
+      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (!TRANSITIONS_AUTORISEES[reclamation.statut].includes(dto.statut)) {
+        throw new BadRequestException(I18nContext.current()!.t('reclamations.transition_de_statut_non_autorisee'));
+      }
+      const data: Prisma.ReclamationUpdateInput = { statut: dto.statut };
+      if (dto.commentaire?.trim()) {
+        const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] ${dto.commentaire.trim()}`;
+        data.notes = reclamation.notes ? `${reclamation.notes}\n${stamp}` : stamp;
+      }
+      if (STATUTS_CLOS.includes(dto.statut)) data.fermeLe = new Date();
+      const miseAJour = await tx.reclamation.update({
+        where: { id, statut: reclamation.statut },
+        data,
+        include: RECLAMATION_INCLUDE,
+        omit: { createurId: true },
+      });
+      await this.journaliser(tx, user, `RECLAMATION_${dto.statut}`, id, {
+        avant: this.instantaneAudit(reclamation),
+        apres: this.instantaneAudit(miseAJour),
+        champsModifies: [
+          'statut',
+          ...(dto.commentaire?.trim() ? ['notes'] : []),
+          ...(data.fermeLe ? ['fermeLe'] : []),
+        ],
+        // Le commentaire de transition et le motif de rejet sont des textes
+        // libres : seule leur présence est journalisée.
+        commentaireFourni: Boolean(dto.commentaire?.trim()),
+      });
+      return miseAJour;
     });
-    await this.tracer(user, `RECLAMATION_${dto.statut}`, id, `${reclamation.numero} → ${dto.statut}`);
-    return miseAJour;
   }
 
   /** Assignation d'un agent à la réclamation. */
   async assigner(id: string, dto: { assigneAId: string }, user: AuthUser) {
-    const reclamation = await this.findOne(id);
-    const assigne = await this.prisma.user.findUnique({ where: { id: dto.assigneAId } });
-    if (!assigne) throw new NotFoundException('Utilisateur introuvable');
-
-    const data: Prisma.ReclamationUpdateInput = {
-      assigneA: { connect: { id: dto.assigneAId } },
-      // Prise en charge automatique si la réclamation était encore ouverte.
-      statut: reclamation.statut === StatutReclamation.OUVERTE
-        ? StatutReclamation.EN_COURS
-        : reclamation.statut,
-    };
-    const miseAJour = await this.prisma.reclamation.update({
-      where: { id },
-      data,
-      include: RECLAMATION_INCLUDE,
+    return this.transactionSerializable(async (tx) => {
+      const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
+      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(I18nContext.current()!.t('reclamations.reclamation_close_assignation_impossible'));
+      const assigne = await tx.user.findFirst({ where: { id: dto.assigneAId, actif: true, role: { in: ROLES_AGENTS } }, select: { id: true, nom: true, prenom: true } });
+      if (!assigne) throw new NotFoundException(I18nContext.current()!.t('reclamations.utilisateur_introuvable'));
+      const data: Prisma.ReclamationUpdateInput = {
+        assigneA: { connect: { id: dto.assigneAId } },
+        statut: reclamation.statut === StatutReclamation.OUVERTE ? StatutReclamation.EN_COURS : reclamation.statut,
+      };
+      const miseAJour = await tx.reclamation.update({
+        where: { id, statut: reclamation.statut },
+        data,
+        include: RECLAMATION_INCLUDE,
+        omit: { createurId: true },
+      });
+      await this.journaliser(tx, user, 'RECLAMATION_ASSIGNEE', id, {
+        avant: this.instantaneAudit(reclamation),
+        apres: this.instantaneAudit(miseAJour),
+        champsModifies: ['assigneAId', ...(miseAJour.statut !== reclamation.statut ? ['statut'] : [])],
+        // L'agent pressenti est désigné par son identifiant et son rôle, pas par
+        // son nom : le journal n'a pas à recopier l'identité de l'agent.
+        assigneAId: dto.assigneAId,
+        assigneARole: miseAJour.assigneA?.role ?? null,
+        priseEnCharge: miseAJour.statut !== reclamation.statut,
+      });
+      return miseAJour;
     });
-    await this.tracer(user, 'RECLAMATION_ASSIGNEE', id,
-      `${reclamation.numero} → ${assigne.prenom} ${assigne.nom}`);
-    return miseAJour;
   }
 
   /**
@@ -404,29 +598,35 @@ export class ReclamationsService extends CrudService {
    * forçage manuel pour les urgences vraies).
    */
   async escalader(id: string, user: AuthUser) {
-    const reclamation = await this.findOne(id);
-    if (STATUTS_CLOS.includes(reclamation.statut)) {
-      throw new BadRequestException('Cette réclamation est close : escalader n\'a plus de sens.');
-    }
-    const delaiHeures = reclamation.delaiEscaladeHeures ?? 48;
-    const echeance = new Date(reclamation.creeLe.getTime() + delaiHeures * 3600 * 1000);
-    const depasse = Date.now() >= echeance.getTime();
-
-    if (!depasse && user.role !== Role.ADMIN) {
-      throw new ForbiddenException(
-        `L'escalade automatique n'est possible qu'après ${delaiHeures} h sans réponse ` +
-          `(échéance ${echeance.toISOString().slice(0, 16).replace('T', ' ')}).`,
-      );
-    }
-
-    const miseAJour = await this.prisma.reclamation.update({
-      where: { id },
-      data: { escaladeLe: new Date() },
-      include: RECLAMATION_INCLUDE,
+    return this.transactionSerializable(async (tx) => {
+      const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
+      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(I18nContext.current()!.t('reclamations.cette_reclamation_est_close_escalader_n_a_plus_de_sens'));
+      const delaiHeures = reclamation.delaiEscaladeHeures ?? 48;
+      const echeance = new Date(reclamation.creeLe.getTime() + delaiHeures * 3600 * 1000);
+      const depasse = Date.now() >= echeance.getTime();
+      if (reclamation.escaladeLe) throw this.conflitConcurrent();
+      if (!depasse && user.role !== Role.ADMIN) {
+        throw new ForbiddenException(I18nContext.current()!.t('reclamations.l_escalade_automatique_n_est_possible_qu_apres_delaiheures', { args: { delaiHeures } }));
+      }
+      const miseAJour = await tx.reclamation.update({
+        where: { id, statut: reclamation.statut, escaladeLe: null },
+        data: { escaladeLe: new Date() },
+        include: RECLAMATION_INCLUDE,
+        omit: { createurId: true },
+      });
+      await this.journaliser(tx, user, 'RECLAMATION_ESCALADEE', id, {
+        avant: this.instantaneAudit(reclamation),
+        apres: this.instantaneAudit(miseAJour),
+        champsModifies: ['escaladeLe'],
+        delaiAtteint: depasse,
+        delaiEscaladeHeures: delaiHeures,
+        // Le forçage manuel par l'ADMIN reste visible : c'est la seule
+        // escalade qui ne suit pas le délai configuré.
+        forcee: !depasse,
+      });
+      return miseAJour;
     });
-    await this.tracer(user, 'RECLAMATION_ESCALADEE', id,
-      `${reclamation.numero} — escaladée (${depasse ? 'délai atteint' : 'forcée manuellement'})`);
-    return miseAJour;
   }
 
   /**
@@ -438,29 +638,38 @@ export class ReclamationsService extends CrudService {
     dto: { noteCloture?: string },
     user: AuthUser,
   ) {
-    const reclamation = await this.findOne(id);
-    if (!STATUTS_CLOS.includes(reclamation.statut)) {
-      throw new BadRequestException(
-        'Pour clôturer, passez d\'abord la réclamation à l\'état RESOLUE, FERMEE ou REJETEE.',
-      );
-    }
     const note = dto.noteCloture?.trim();
     if (!note) {
-      throw new BadRequestException('Une note de clôture est requise.');
+      throw new BadRequestException(I18nContext.current()!.t('reclamations.une_note_de_cloture_est_requise'));
     }
 
-    const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] CLÔTURE — ${note}`;
-    const data: Prisma.ReclamationUpdateInput = {
-      notes: reclamation.notes ? `${reclamation.notes}\n${stamp}` : stamp,
-      fermeLe: reclamation.fermeLe ?? new Date(),
-    };
-    const miseAJour = await this.prisma.reclamation.update({
-      where: { id },
-      data,
-      include: RECLAMATION_INCLUDE,
+    return this.transactionSerializable(async (tx) => {
+      const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
+      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (!STATUTS_CLOS.includes(reclamation.statut)) {
+        throw new BadRequestException('Pour clôturer, passez d\'abord la réclamation à l\'état RESOLUE, FERMEE ou REJETEE.');
+      }
+      const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] CLÔTURE — ${note}`;
+      const data: Prisma.ReclamationUpdateInput = {
+        notes: reclamation.notes ? `${reclamation.notes}\n${stamp}` : stamp,
+        fermeLe: reclamation.fermeLe ?? new Date(),
+      };
+      const miseAJour = await tx.reclamation.update({
+        where: { id, statut: reclamation.statut },
+        data,
+        include: RECLAMATION_INCLUDE,
+        omit: { createurId: true },
+      });
+      await this.journaliser(tx, user, 'RECLAMATION_CLOTUREE', id, {
+        avant: this.instantaneAudit(reclamation),
+        apres: this.instantaneAudit(miseAJour),
+        champsModifies: ['notes', ...(reclamation.fermeLe ? [] : ['fermeLe'])],
+        // La note de clôture est la décision finale rédigée : sa présence est
+        // journalisée, jamais son texte.
+        noteClotureFournie: true,
+      });
+      return miseAJour;
     });
-    await this.tracer(user, 'RECLAMATION_CLOTUREE', id, `${reclamation.numero} — note ajoutée`);
-    return miseAJour;
   }
 
   /**
@@ -471,30 +680,44 @@ export class ReclamationsService extends CrudService {
     const maintenant = Date.now();
     const toutes = await this.prisma.reclamation.findMany({
       where: { statut: { in: STATUTS_OUVERTS }, escaladeLe: null },
-      select: { id: true, numero: true, creeLe: true, delaiEscaladeHeures: true },
+      // La projection porte de quoi journaliser l'escalade (situation avant,
+      // horodatage après) sans rien charger des textes ni des coordonnées.
+      select: {
+        id: true, numero: true, creeLe: true, delaiEscaladeHeures: true,
+        type: true, priorite: true, statut: true, anonyme: true, escaladeLe: true,
+      },
     });
     const depassees = toutes.filter(
       (r) => maintenant >= r.creeLe.getTime() + (r.delaiEscaladeHeures ?? 48) * 3600 * 1000,
     );
     if (!depassees.length) return { escaladees: 0, numeros: [] };
 
-    await this.prisma.reclamation.updateMany({
-      where: { id: { in: depassees.map((r) => r.id) } },
-      data: { escaladeLe: new Date() },
+    const escalateLe = new Date();
+    const escaladees: typeof depassees = [];
+    await this.transactionSerializable(async (tx) => {
+      for (const r of depassees) {
+        const resultat = await tx.reclamation.updateMany({
+          where: { id: r.id, statut: { in: STATUTS_OUVERTS }, escaladeLe: null },
+          data: { escaladeLe: escalateLe },
+        });
+        if (resultat.count !== 1) continue;
+        escaladees.push(r);
+        await this.journaliser(tx, user, 'RECLAMATION_ESCALADEE', r.id, {
+          avant: this.instantaneAudit(r),
+          apres: this.instantaneAudit({ ...r, escaladeLe: escalateLe }),
+          champsModifies: ['escaladeLe'],
+          delaiAtteint: true,
+          delaiEscaladeHeures: r.delaiEscaladeHeures ?? 48,
+          forcee: false,
+          // L'escalade automatique est un traitement de fond : elle est
+          // attribuée au compte à l'origine de l'exécution, pas à un agent.
+          origine: 'CRON',
+        });
+      }
     });
-
-    for (const r of depassees) {
-      await this.tracer(user, 'RECLAMATION_ESCALADEE', r.id, `${r.numero} — cron`);
-    }
     return {
-      escaladees: depassees.length,
-      numeros: depassees.map((r) => r.numero),
+      escaladees: escaladees.length,
+      numeros: escaladees.map((r) => r.numero),
     };
-  }
-
-  private async tracer(user: AuthUser, action: string, entiteId: string, details?: string) {
-    await this.prisma.auditLog.create({
-      data: { userId: user.id, action, entite: 'Reclamation', entiteId, details },
-    });
   }
 }

@@ -1,0 +1,39 @@
+{
+  "academicYearClosed": "This academic year is closed: no new writes are allowed.",
+  "academicYearNotFound": "The specified academic year could not be found.",
+  "academicPromotionNotFound": "The specified promotion could not be found.",
+  "academicYearRequired": "An open academic year is required.",
+  "academicYearMismatch": "The payment and enrollment must belong to the same academic year.",
+  "academicPromotionMismatch": "The record and promotion must belong to the same academic year.",
+  "academicYearReopenRequiresAudit": "Reopening must use a dedicated operation with a reason and audit log.",
+  "forbidden": "Access denied",
+  "unauthorized": "Unauthorized",
+  "badRequest": "Invalid request",
+  "notFound": "Resource not found",
+  "conflict": "Conflict",
+  "validationFailed": "Validation failed",
+  "internalError": "Internal server error",
+  "serviceUnavailable": "This service is disabled for your institution.",
+  "yes": "Yes",
+  "no": "No",
+  "noData": "No data",
+  "notFoundRecord": "Record not found or already deleted",
+  "duplicateRecord": "This value already exists",
+  "concurrentWrite": "A concurrent write occurred. Reload the data and try again.",
+  "roles": {
+    "notAllowed": "Your role does not allow this action"
+  },
+  "readOnly": {
+    "title": "Read-only account",
+    "detail": "Your account is read-only: controllers record class sessions, while academic services manage attestations and supporting documents."
+  },
+  "crud": {
+    "referencedDelete": "This entry is still referenced elsewhere: it cannot be deleted until its links are removed.",
+    "itemNotFound": "{label} not found",
+    "sortInconnu": "Invalid sort on \"{champ}\" (allowed fields: {autorises})"
+  },
+  "invalidServices": "Invalid services configuration.",
+  "requiredService": "An essential service cannot be disabled.",
+  "servicesConfigurationEndpoint": "Update services using their dedicated configuration.",
+  "mobileMoneyDetailsRequired": "Enter a valid operator and Mobile Money number."
+}

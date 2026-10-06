@@ -1,0 +1,14 @@
+{
+  "deliberation_introuvable": "Deliberation not found",
+  "aucun_compte_etudiant_pour_ce_numero": "No student account found for this phone number.",
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "No student record linked to this account",
+  "gateway_unavailable": "The verification service is temporarily unavailable, please try again in a moment.",
+  "no_active_code": "No active code for this number: please request a new one.",
+  "too_many_attempts": "Too many attempts: please request a new one.",
+  "invalid_or_expired_code": "Incorrect or expired code.",
+  "diffusion_needs_targets_and_message": "Provide at least one phone number (or \"all enrolled students\") and a message.",
+  "no_reachable_student": "No reachable student (no valid phone number on enrollment records).",
+  "no_reachable_student_results": "No reachable student: the deliberation has no admitted or failed candidate with a valid phone number.",
+  "results_only_validated": "Only jury-validated results may be sent to students.",
+  "aucune_annee_academique_active_impossible_de_cibler_les_insc": "No active academic year: cannot target enrolled students."
+}

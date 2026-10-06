@@ -13,6 +13,12 @@ import {
 } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
+export class CarteEtudianteQueryDto extends QueryDto {
+  @IsOptional()
+  @IsUUID()
+  etudiantId?: string;
+}
+
 export class CreateCarteEtudianteDto {
   @IsUUID()
   etudiantId: string;
@@ -57,10 +63,10 @@ export class VerifierNipDto {
 }
 
 export class VerifierCartePubliqueDto {
-  @IsString()
+  @IsString() @MinLength(1) @MaxLength(64)
   carte: string;
 
-  @IsString()
+  @IsString() @MinLength(1) @MaxLength(64)
   k: string;
 }
 

@@ -36,17 +36,24 @@ const ton = computed(() =>
   min-width: 128px;
 }
 
+// La barre de progression d'Apple : un rail gris en pilule, un remplissage en
+// pilule. Le rail cerné d'encre et l'aplat saturé à l'intérieur appartenaient
+// au panneau peint — sur une liste de dix salles, dix rectangles rouges et
+// verts se disputaient l'œil plus fort que les chiffres eux-mêmes.
 .taux__rail {
   flex: 1;
-  height: 10px;
+  height: 6px;
   min-width: 64px;
-  border: 1px solid var(--up-encre);
-  background: transparent;
+  border: 0;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-pilule);
+  overflow: hidden;
 }
 
 .taux__remplie {
   display: block;
   height: 100%;
+  border-radius: var(--up-pilule);
 
   &--vert { background: $vert; }
   &--jaune { background: $jaune; }

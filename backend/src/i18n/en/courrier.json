@@ -1,0 +1,14 @@
+{
+  "archive_readonly": "An archived letter can no longer be modified",
+  "status_workflow_required": "Status changes require the approval workflow or administrative closure",
+  "previous_step_required": "Previous steps must be completed before this approval",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "courrier_introuvable": "Mail item not found",
+  "etape_de_circuit_introuvable_pour_ce_courrier": "Routing step not found for this mail item",
+  "cette_etape_a_deja_ete_traitee": "This step has already been processed",
+  "seul_un_administrateur_peut_cloturer_un_courrier_transition_": "Only an administrator can close a mail item (transition to archives)",
+  "courrier_courrier_statut_la_cloture_exige_en_circuit_traite_": "Mail {courrier.statut}: closing requires IN_ROUTING, PROCESSED or ARCHIVED",
+  "department_scope_required": "A department head must belong to the recipient department.",
+  "department_invalid": "Recipient department not found.",
+  "department_routing_started": "The recipient department cannot change after the first approval."
+}

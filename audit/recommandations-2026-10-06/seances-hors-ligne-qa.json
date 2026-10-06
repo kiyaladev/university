@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-06T14:45:05.954Z",
+  "statut": "valide",
+  "api": "http://127.0.0.1:15041/api",
+  "simulatedApi": false,
+  "uuid": "ea65f19a-bbb0-48e5-b600-2ce14c7085a2",
+  "singlePersistedSessionAndAudit": true,
+  "productionUntouched": true,
+  "physicalDeviceAndPointagePending": true
+}

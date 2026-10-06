@@ -1,12 +1,14 @@
 <template>
   <div>
     <div class="row items-center justify-between q-mb-xs">
-      <div class="text-caption text-grey-7">{{ label }}</div>
-      <q-btn flat dense size="sm" icon="restart_alt" label="Effacer" @click="effacer" />
+      <div class="text-caption text-grey-7">{{ label || t('pointage.signature.label') }}</div>
+      <q-btn flat dense size="sm" icon="restart_alt" :label="t('pointage.signature.clear')" @click="effacer" />
     </div>
     <canvas
       ref="canvas"
       class="signature-pad"
+      :aria-label="label || t('pointage.signature.label')"
+      role="img"
       @pointerdown="debuter"
       @pointermove="tracer"
       @pointerup="terminer"
@@ -17,11 +19,12 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 
 /** Capture la signature manuscrite de l'enseignant (souris ou tactile). */
 const props = withDefaults(defineProps<{ modelValue?: string | null; label?: string }>(), {
   modelValue: null,
-  label: "Signature de l'enseignant",
 });
 const emit = defineEmits<{ 'update:modelValue': [string | null] }>();
 

@@ -1,213 +1,474 @@
 {
-  "schemaVersion": 2,
-  "generatedAt": "2026-08-13T00:00:00Z",
-  "title": "Design System: UniPrésence",
-  "extensions": {
-    "colorMeta": {
-      "encre": {
-        "role": "neutral",
-        "displayName": "Encre vert-noir",
-        "canonical": "#10251E",
-        "tonalRamp": ["#050C0A", "#0A1613", "#10251E", "#1A3830", "#2A5247", "#4A7B6E", "#84AAA0", "#C4D6D0"]
-      },
-      "encre-douce": {
-        "role": "neutral",
-        "displayName": "Encre douce",
-        "canonical": "#33463F",
-        "tonalRamp": ["#0C1210", "#18211E", "#25322D", "#33463F", "#4C645B", "#708A80", "#A2B5AD", "#D3DDD9"]
-      },
-      "chaux": {
-        "role": "neutral",
-        "displayName": "Mur chaulé",
-        "canonical": "#E4E6DE",
-        "tonalRamp": ["#22241E", "#3A3D35", "#55584E", "#74776C", "#969A8E", "#BABDB2", "#E4E6DE", "#F5F6F2"]
-      },
-      "plaque": {
-        "role": "neutral",
-        "displayName": "Plaque de chaux claire",
-        "canonical": "#F2F3EE",
-        "tonalRamp": ["#26271F", "#3E3F36", "#5A5B51", "#7A7B70", "#9D9E93", "#C2C3B9", "#E1E2DA", "#F2F3EE"]
-      },
-      "craie": {
-        "role": "neutral",
-        "displayName": "Blanc de craie",
-        "canonical": "#FAFAF7",
-        "tonalRamp": ["#2A2A26", "#42423D", "#5D5D57", "#7C7C75", "#9F9F97", "#C4C4BC", "#E4E4DE", "#FAFAF7"]
-      },
-      "outremer": {
-        "role": "primary",
-        "displayName": "Outremer d'action",
-        "canonical": "#1B4FA6",
-        "tonalRamp": ["#061532", "#0B2454", "#113778", "#1B4FA6", "#2C67C9", "#5A8CDD", "#93B6EB", "#CDDCF6"]
-      },
-      "vert-peint": {
-        "role": "secondary",
-        "displayName": "Vert peinture",
-        "canonical": "#1E7A4C",
-        "tonalRamp": ["#06210F", "#0A361F", "#12552F", "#1E7A4C", "#2A9E64", "#4CBF87", "#89D7B0", "#C6EDD8"]
-      },
-      "minium": {
-        "role": "secondary",
-        "displayName": "Minium d'absence",
-        "canonical": "#C2321E",
-        "tonalRamp": ["#2C0A05", "#4A130A", "#701D11", "#982716", "#C2321E", "#DC5B47", "#EA9184", "#F6CBC4"]
-      },
-      "jaune-signal": {
-        "role": "tertiary",
-        "displayName": "Jaune signalétique",
-        "canonical": "#E8A317",
-        "tonalRamp": ["#3A2903", "#5C4106", "#835C09", "#AC780D", "#E8A317", "#F0BC52", "#F6D48F", "#FBEBCB"]
-      },
-      "ocre": {
-        "role": "tertiary",
-        "displayName": "Ocre de remplacement",
-        "canonical": "#B4661E",
-        "tonalRamp": ["#2C1806", "#48280A", "#68390E", "#8C4E14", "#B4661E", "#D68A3E", "#E7B37E", "#F5DCC0"]
-      },
-      "encre-nuit": {
-        "role": "neutral",
-        "displayName": "Encre de nuit",
-        "canonical": "#0D1F18",
-        "tonalRamp": ["#040B08", "#0D1F18", "#153228", "#20493B", "#2F6553", "#4C8A75", "#83B4A2", "#C2DAD1"]
-      }
-    },
-    "typographyMeta": {
-      "display": { "displayName": "Lettrage géant", "purpose": "Le chiffre qui commande la tournée : combien de salles restent à visiter. Un seul par écran." },
-      "headline": { "displayName": "Lettrage de page", "purpose": "Titres de page, jour de la tournée, marque de l'écran d'accès." },
-      "title": { "displayName": "Lettrage de fiche", "purpose": "Titres de fiches et de dialogues ; .text-h6 en hérite." },
-      "body": { "displayName": "Corps de registre", "purpose": "Texte courant, bridé à 72ch pour les paragraphes explicatifs." },
-      "label": { "displayName": "Pochoir", "purpose": "Mentions peintes au pochoir : libellés de champs, en-têtes de registre, étiquettes, plaques de salle." },
-      "chiffres": { "displayName": "Chiffres tabulaires", "purpose": "Toute grandeur, heure ou compteur, pour que les colonnes ne dansent pas." }
-    },
-    "shadows": [
-      { "name": "lisere-email", "value": "inset 0 0 0 1px rgba(255,255,255,0.28)", "purpose": "Seule ombre du système : la double règle claire en retrait des plaques émaillées, portée par .champ. Aucune ombre portée n'existe dans ce monde." }
-    ],
-    "motion": [
-      { "name": "se-peint", "value": "peindre 260ms cubic-bezier(0.16, 1, 0.3, 1) both — clip-path: inset(0 100% 0 0) → inset(0 0 0 0)", "purpose": "Le champ se peint : seul geste animé du monde, au moment où le pointage est accepté. Neutralisé sous prefers-reduced-motion." },
-      { "name": "up-transition", "value": "220ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Transitions d'état (fond, couleur, filtre) des champs et boutons de filtre." },
-      { "name": "appui", "value": "filter 120ms ease-out → brightness(0.88)", "purpose": "L'appui s'assombrit, comme une plaque qu'on touche au soleil. Aucun relief simulé." }
-    ],
-    "breakpoints": [
-      { "name": "telephone", "value": "599px" },
-      { "name": "registre-en-pile", "value": "767px" },
-      { "name": "panneau-deux-colonnes", "value": "1024px" },
-      { "name": "largeur-de-lecture", "value": "1180px" }
-    ],
-    "spacingMeta": {
-      "note": "Rythme unique à six pas : --up-1 4px, --up-2 8px, --up-3 14px, --up-4 22px, --up-5 34px, --up-6 52px."
-    },
-    "strokes": [
-      { "name": "filet", "value": "2px solid #10251E", "purpose": "Sépare les régions, cerne les plaques et les champs." },
-      { "name": "filet-fin", "value": "1px solid rgba(16, 37, 30, 0.38)", "purpose": "Subdivise à l'intérieur d'une région : lignes de registre, liens du tiroir, onglets voisins." },
-      { "name": "seuil", "value": "3px solid #10251E", "purpose": "Deux seuils structurels seulement : bas de l'en-tête, pied collant d'une fiche de pointage." }
+ "schemaVersion": 2,
+ "generatedAt": "2026-08-20T12:00:00Z",
+ "title": "Design System: UniPrésence",
+ "extensions": {
+  "colorMeta": {
+   "encre": {
+    "role": "neutral",
+    "displayName": "Encre",
+    "canonical": "#1D1D1F",
+    "tonalRamp": [
+     "#0F0F10",
+     "#1D1D1F",
+     "#404045",
+     "#636369",
+     "#86868E",
+     "#ABABB0",
+     "#D0D0D3",
+     "#EDEDEE"
     ]
+   },
+   "encre-douce": {
+    "role": "neutral",
+    "displayName": "Encre douce",
+    "canonical": "#6E6E73",
+    "tonalRamp": [
+     "#0F0F10",
+     "#232324",
+     "#414144",
+     "#6E6E73",
+     "#87878C",
+     "#ACACAF",
+     "#D0D0D2",
+     "#EDEDEE"
+    ]
+   },
+   "encre-tertiaire": {
+    "role": "neutral",
+    "displayName": "Encre tertiaire",
+    "canonical": "#86868B",
+    "tonalRamp": [
+     "#0F0F10",
+     "#232324",
+     "#414144",
+     "#646468",
+     "#86868B",
+     "#ACACAF",
+     "#D0D0D2",
+     "#EDEDEE"
+    ]
+   },
+   "gris-fond": {
+    "role": "neutral",
+    "displayName": "Gris de section",
+    "canonical": "#F5F5F7",
+    "tonalRamp": [
+     "#0E0E11",
+     "#202028",
+     "#3B3B4A",
+     "#5B5B71",
+     "#7D7D97",
+     "#A4A4B6",
+     "#CCCCD6",
+     "#F5F5F7"
+    ]
+   },
+   "gris-inerte": {
+    "role": "neutral",
+    "displayName": "Gris inerte",
+    "canonical": "#E8E8ED",
+    "tonalRamp": [
+     "#0D0D11",
+     "#1F1F28",
+     "#3A3A4A",
+     "#5A5A72",
+     "#7B7B98",
+     "#A3A3B7",
+     "#CCCCD7",
+     "#E8E8ED"
+    ]
+   },
+   "gris-filet": {
+    "role": "neutral",
+    "displayName": "Gris du filet",
+    "canonical": "#D2D2D7",
+    "tonalRamp": [
+     "#0E0E10",
+     "#222226",
+     "#3E3E46",
+     "#60606C",
+     "#838391",
+     "#A9A9B2",
+     "#D2D2D7",
+     "#ECECEE"
+    ]
+   },
+   "blanc": {
+    "role": "neutral",
+    "displayName": "Blanc de surface",
+    "canonical": "#FFFFFF",
+    "tonalRamp": [
+     "#0F0F0F",
+     "#242424",
+     "#424242",
+     "#666666",
+     "#8A8A8A",
+     "#ADADAD",
+     "#D1D1D1",
+     "#FFFFFF"
+    ]
+   },
+   "vert-action": {
+    "role": "primary",
+    "displayName": "Vert d'action (drapeau assombri)",
+    "canonical": "#007A4D",
+    "tonalRamp": [
+     "#001F13",
+     "#00472D",
+     "#007A4D",
+     "#00CC81",
+     "#14FFA8",
+     "#5CFFC3",
+     "#A3FFDD",
+     "#DBFFF2"
+    ]
+   },
+   "vert-drapeau": {
+    "role": "primary",
+    "displayName": "Vert du drapeau (décoratif)",
+    "canonical": "#009460",
+    "tonalRamp": [
+     "#001F14",
+     "#00472E",
+     "#009460",
+     "#00CC84",
+     "#14FFAD",
+     "#5CFFC6",
+     "#A3FFDF",
+     "#DBFFF2"
+    ]
+   },
+   "jaune": {
+    "role": "secondary",
+    "displayName": "Jaune du drapeau (jamais du texte)",
+    "canonical": "#FCD116",
+    "tonalRamp": [
+     "#1E1900",
+     "#463901",
+     "#836B02",
+     "#C9A403",
+     "#FCD116",
+     "#FDDF5E",
+     "#FEEDA4",
+     "#FFF8DC"
+    ]
+   },
+   "jaune-texte": {
+    "role": "secondary",
+    "displayName": "Ocre du texte « retard »",
+    "canonical": "#8A6300",
+    "tonalRamp": [
+     "#1F1600",
+     "#473300",
+     "#8A6300",
+     "#CC9200",
+     "#FFBD14",
+     "#FFD15C",
+     "#FFE5A3",
+     "#FFF5DB"
+    ]
+   },
+   "rouge": {
+    "role": "secondary",
+    "displayName": "Rouge du drapeau",
+    "canonical": "#CE1126",
+    "tonalRamp": [
+     "#1C0205",
+     "#42050C",
+     "#7A0A17",
+     "#CE1126",
+     "#ED263C",
+     "#F36878",
+     "#F8AAB3",
+     "#FCDEE1"
+    ]
+   },
+   "noir-page": {
+    "role": "neutral",
+    "displayName": "Noir de page (sombre)",
+    "canonical": "#000000",
+    "tonalRamp": [
+     "#000000",
+     "#242424",
+     "#424242",
+     "#666666",
+     "#8A8A8A",
+     "#ADADAD",
+     "#D1D1D1",
+     "#EDEDED"
+    ]
+   }
   },
-  "components": [
-    {
-      "name": "Plaque de séance",
-      "kind": "card",
-      "refersTo": "plaque",
-      "description": "L'unité du panneau : heure peinte à gauche, identité au centre, champ d'action pleine hauteur à droite.",
-      "html": "<article class=\"ds-plaque-seance\"><div class=\"ds-plaque-heure\"><span class=\"ds-plaque-debut\">08:00</span><span class=\"ds-plaque-fin\">→ 10:00</span></div><div class=\"ds-plaque-corps\"><h2 class=\"ds-plaque-nom\">DIALLO Mariama</h2><p class=\"ds-plaque-matiere\">Algorithmique <span class=\"ds-plaque-type\">CM</span></p><p class=\"ds-plaque-lieu\">Licence 2 Info <span class=\"ds-plaque-salle\">B-204</span></p></div><button class=\"ds-plaque-action\"><span class=\"ds-plaque-appel\">Pointer</span><span class=\"ds-plaque-sous\">salle B-204</span></button></article>",
-      "css": ".ds-plaque-seance { display: grid; grid-template-columns: 88px minmax(0,1fr) 116px; min-height: 104px; overflow: hidden; background: #F2F3EE; border: 2px solid #10251E; border-radius: 0; color: #10251E; font-family: 'Archivo Variable', Archivo, sans-serif; } .ds-plaque-heure { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: #10251E; padding: 8px 4px; } .ds-plaque-debut { font-family: Anton, sans-serif; text-transform: uppercase; font-size: 1.5rem; line-height: 1.06; color: #fff; font-variant-numeric: tabular-nums; } .ds-plaque-fin { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; color: rgba(255,255,255,0.72); font-variant-numeric: tabular-nums; } .ds-plaque-corps { padding: 14px; min-width: 0; } .ds-plaque-nom { font-family: Anton, sans-serif; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.06; font-size: 1.12rem; margin: 0; font-weight: 400; } .ds-plaque-matiere { margin: 3px 0 0; font-size: 0.94rem; } .ds-plaque-type { border: 1px solid #10251E; padding: 1px 4px; margin-left: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; } .ds-plaque-lieu { margin: 6px 0 0; color: #33463F; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; display: flex; align-items: center; gap: 6px; } .ds-plaque-salle { border: 2px solid #10251E; padding: 2px 6px; color: #10251E; } .ds-plaque-action { appearance: none; border: 0; border-left: 2px solid #10251E; background: #1B4FA6; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px; cursor: pointer; font: inherit; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); transition: filter 220ms cubic-bezier(0.16,1,0.3,1); } .ds-plaque-action:hover { filter: brightness(1.08); } .ds-plaque-action:active { filter: brightness(0.88); } .ds-plaque-action:focus-visible { outline: 3px solid #1B4FA6; outline-offset: -6px; } .ds-plaque-appel { font-family: Anton, sans-serif; text-transform: uppercase; font-size: 1rem; line-height: 1.05; } .ds-plaque-sous { font-size: 10px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; opacity: 0.82; }"
-    },
-    {
-      "name": "Champ de statut",
-      "kind": "chip",
-      "refersTo": "champ-present",
-      "description": "Un statut de présence est un aplat de peinture cerné d'un filet, jamais une pastille sur du blanc.",
-      "html": "<span class=\"ds-champ ds-champ--present\">Présent</span> <span class=\"ds-champ ds-champ--retard\">Retard</span> <span class=\"ds-champ ds-champ--absent\">Absent</span> <span class=\"ds-champ ds-champ--attente\">Non contrôlé</span>",
-      "css": ".ds-champ { display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 5px 9px; min-height: 28px; border: 2px solid #10251E; border-radius: 0; color: #fff; font-family: 'Archivo Variable', Archivo, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28); } .ds-champ--present { background: #1E7A4C; } .ds-champ--retard { background: #E8A317; color: #10251E; } .ds-champ--absent { background: #C2321E; } .ds-champ--attente { background: transparent; color: #33463F; border-style: dashed; box-shadow: none; }"
-    },
-    {
-      "name": "Bouton principal",
-      "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Aplat outremer, angle vif, sans ombre ; l'appui assombrit au lieu de s'enfoncer.",
-      "html": "<button class=\"ds-btn-primary\">Ouvrir ma tournée</button>",
-      "css": ".ds-btn-primary { background: #1B4FA6; color: #fff; border: 0; border-radius: 0; min-height: 48px; padding: 0 22px; font-family: 'Archivo Variable', Archivo, sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; text-transform: none; box-shadow: none; cursor: pointer; transition: filter 120ms ease-out; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:active { filter: brightness(0.88); } .ds-btn-primary:focus-visible { outline: 3px solid #10251E; outline-offset: 2px; } .ds-btn-primary:disabled { background: #CDD0C8; color: rgba(16,37,30,0.55); cursor: default; filter: none; }"
-    },
-    {
-      "name": "Champ de saisie",
-      "kind": "input",
-      "refersTo": "input-outlined",
-      "description": "Craie cernée d'un filet, libellé au pochoir ; le focus passe le contour en outremer plein.",
-      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Adresse e-mail</span><input class=\"ds-field-input\" type=\"email\" placeholder=\"nom@unipresence.gn\" /></label>",
-      "css": ".ds-field { display: block; font-family: 'Archivo Variable', Archivo, sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #33463F; } .ds-field-input { width: 100%; min-height: 48px; padding: 0 12px; background: #FAFAF7; color: #10251E; border: 2px solid rgba(16,37,30,0.34); border-radius: 0; font: inherit; font-size: 15px; } .ds-field-input:focus { outline: none; border-color: #1B4FA6; } .ds-field-input[aria-invalid=\"true\"] { border-color: #C2321E; }"
-    },
-    {
-      "name": "Bandeau de tournée",
-      "kind": "custom",
-      "refersTo": "bandeau",
-      "description": "Le haut du panneau : jour en lettrage, puis le seul chiffre qui commande la tournée.",
-      "html": "<header class=\"ds-bandeau\"><h1 class=\"ds-bandeau-jour\">jeudi 13 août</h1><p class=\"ds-bandeau-mention\">Feuille de contrôle · A. CAMARA</p><p class=\"ds-reste\"><span class=\"ds-reste-valeur\">7</span><span class=\"ds-reste-mot\"><span class=\"ds-reste-unite\">salles à visiter</span><span class=\"ds-reste-detail\">5 pointées sur 12 · 2 absences</span></span></p></header>",
-      "css": ".ds-bandeau { background: #10251E; color: #FAFAF7; padding: 22px 14px 0; font-family: 'Archivo Variable', Archivo, sans-serif; } .ds-bandeau-jour { font-family: Anton, sans-serif; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.06; font-weight: 400; font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem); color: #fff; margin: 0; } .ds-bandeau-mention { font-size: 11px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: rgba(255,255,255,0.72); margin: 2px 0 0; } .ds-reste { display: flex; align-items: center; gap: 14px; margin: 14px 0 0; padding: 14px 0 22px; border-top: 2px solid rgba(255,255,255,0.34); } .ds-reste-valeur { font-family: Anton, sans-serif; font-size: clamp(2.6rem, 2rem + 3.6vw, 4rem); line-height: 1; color: #E8A317; font-variant-numeric: tabular-nums; } .ds-reste-mot { display: flex; flex-direction: column; gap: 3px; } .ds-reste-unite { font-family: Anton, sans-serif; text-transform: uppercase; font-size: clamp(1.05rem, 0.9rem + 1vw, 1.4rem); color: #fff; } .ds-reste-detail { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; color: rgba(255,255,255,0.78); font-variant-numeric: tabular-nums; }"
-    },
-    {
-      "name": "Languettes d'onglets",
-      "kind": "nav",
-      "refersTo": "tab-active",
-      "description": "Languettes peintes cernées d'un filet, séparées par un filet fin ; l'onglet actif s'inverse en encre.",
-      "html": "<nav class=\"ds-tabs\"><button class=\"ds-tab ds-tab--active\">Signature</button><button class=\"ds-tab\">Code</button><button class=\"ds-tab\">Empreinte</button></nav>",
-      "css": ".ds-tabs { display: flex; border: 2px solid #10251E; background: #F2F3EE; font-family: 'Archivo Variable', Archivo, sans-serif; } .ds-tab { appearance: none; border: 0; background: transparent; color: #10251E; padding: 10px 14px; min-height: 48px; border-radius: 0; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; transition: background 220ms cubic-bezier(0.16,1,0.3,1), color 220ms cubic-bezier(0.16,1,0.3,1); } .ds-tab + .ds-tab { border-left: 1px solid rgba(16,37,30,0.38); } .ds-tab:hover { background: rgba(16,37,30,0.06); } .ds-tab:focus-visible { outline: 3px solid #1B4FA6; outline-offset: -5px; } .ds-tab--active { background: #10251E; color: #FAFAF7; }"
-    },
-    {
-      "name": "Note du panneau",
-      "kind": "custom",
-      "refersTo": "plaque",
-      "description": "Une note porte sa couleur sur son filet et son texte, sur fond de craie — jamais un fond pastel.",
-      "html": "<div class=\"ds-note ds-note--erreur\">Le pointage exige une attestation de l'enseignant.</div><div class=\"ds-note ds-note--valide\">Pointage enregistré et horodaté.</div>",
-      "css": ".ds-note { display: block; background: #FAFAF7; border: 2px solid #10251E; border-radius: 0; color: #10251E; padding: 14px; font-family: 'Archivo Variable', Archivo, sans-serif; font-size: 0.9rem; } .ds-note + .ds-note { margin-top: 8px; } .ds-note--valide { border-color: #1E7A4C; color: #1E7A4C; } .ds-note--info { border-color: #1B4FA6; color: #1B4FA6; } .ds-note--alerte { border-color: #B4661E; color: #B4661E; } .ds-note--erreur { border-color: #C2321E; color: #C2321E; }"
-    },
-    {
-      "name": "En-tête de registre",
-      "kind": "custom",
-      "refersTo": "table-header",
-      "description": "Registre réglé : filet épais en tête sur fond d'encre, filets fins entre les lignes, aucune ombre.",
-      "html": "<table class=\"ds-registre\"><thead><tr><th>Heure</th><th>Enseignant</th><th>Statut</th></tr></thead><tbody><tr><td>08:00</td><td>DIALLO Mariama</td><td>Présent</td></tr><tr><td>10:00</td><td>BARRY Ousmane</td><td>Retard</td></tr></tbody></table>",
-      "css": ".ds-registre { width: 100%; border-collapse: collapse; background: #F2F3EE; color: #10251E; font-family: 'Archivo Variable', Archivo, sans-serif; border-radius: 0; box-shadow: none; } .ds-registre thead tr { background: #10251E; } .ds-registre th { color: #FAFAF7; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-align: left; padding: 10px 12px; border-bottom: 0; } .ds-registre td { border-bottom: 1px solid rgba(16,37,30,0.38); font-size: 14px; padding: 10px 12px; font-variant-numeric: tabular-nums; } .ds-registre tbody tr:hover { background: rgba(16,37,30,0.06); }"
-    }
+  "typographyMeta": {
+   "display": {
+    "displayName": "Grand chiffre",
+    "purpose": "Le chiffre qui commande la tournée. Un seul par écran. Tracking -0,024em."
+   },
+   "headline": {
+    "displayName": "Titre de page",
+    "purpose": "Titres de page (.page-titre), jour de la tournée, marque de l'écran d'accès."
+   },
+   "title": {
+    "displayName": "Titre de fiche",
+    "purpose": ".text-h6 en hérite : fiches et dialogues. Tracking -0,019em."
+   },
+   "lede": {
+    "displayName": "Accroche",
+    "purpose": "17px, l'interligne et le tracking du corps de texte d'Apple. Bridée à 66ch."
+   },
+   "body": {
+    "displayName": "Corps",
+    "purpose": "Texte courant, 15px, interligne 1,47, tracking -0,012em."
+   },
+   "label": {
+    "displayName": "Légende",
+    "purpose": ".pochoir : mentions et légendes, 12px, casse d'origine. N'est plus une capitale."
+   },
+   "rubrique": {
+    "displayName": "Rubrique",
+    "purpose": ".pochoir--rubrique : le seul reste de capitales, avec tracking positif +0,06em."
+   },
+   "chiffres": {
+    "displayName": "Chiffres alignés",
+    "purpose": "tabular-nums sur toute grandeur, heure ou compteur."
+   }
+  },
+  "shadows": [
+   {
+    "name": "up-ombre-1",
+    "value": "0 1px 2px rgba(0,0,0,.04)",
+    "purpose": "Une carte, une pastille de segmented control. On la devine plus qu'on ne la voit."
+   },
+   {
+    "name": "up-ombre-2",
+    "value": "0 4px 16px rgba(0,0,0,.08)",
+    "purpose": "Un menu, une notification : quelque chose qui vient d'arriver au-dessus."
+   },
+   {
+    "name": "up-ombre-3",
+    "value": "0 12px 40px rgba(0,0,0,.12)",
+    "purpose": "Un dialogue, la seule chose qui bloque le reste."
+   }
   ],
-  "narrative": {
-    "northStar": "Le panneau peint",
-    "overview": "L'application est un panneau d'emploi du temps peint à la main, pas un tableau de bord. Le monde vient des couloirs de faculté où l'horaire est peint sur un mur chaulé, et de la signalétique émaillée des gares routières ouest-africaines : aplats saturés tracés à la règle, filets d'encre épais, angles vifs, aucune ombre portée. Chaque surface est une plaque ; chaque statut est un champ peint sur toute la hauteur de la plaque, jamais une pastille posée sur du blanc.\n\nLa densité est celle d'un registre de terrain : le contrôleur travaille debout, une main occupée, sur un téléphone d'entrée de gamme en plein soleil. Rien ne décore. Une couleur qui apparaît porte un statut de séance ou une action ; un chiffre géant est un chiffre que quelqu'un cherche en levant les yeux. Le seul geste animé du monde est le balayage de 260 ms qui peint le champ au moment où le pointage est accepté.\n\nRefus explicites portés par le code : la carte arrondie à ombre douce, le bandeau coloré en bordure gauche, les fonds pastel de la palette Material, les dégradés CSS comme matière. Là où une texture est nécessaire, elle vient d'un fichier dessiné pour ça (public/matiere/email-panneau.svg, grain de brosse + usure d'émail), posé deux fois à deux échelles.",
-    "keyCharacteristics": [
-      "Angles vifs partout : tous les rayons Quasar sont ramenés à 0.",
-      "Aucune ombre portée : les box-shadow de Quasar sont neutralisés ; la seule ombre du monde est un liséré intérieur clair de 1 px sur les champs peints.",
-      "Filets tracés à la règle : filet épais 2 px d'encre, filet fin 1 px à 38 % pour les subdivisions.",
-      "Lettrage Anton en capitales pour les mots, Archivo à chiffres tabulaires pour les grandeurs.",
-      "Palette de peintures, non de teintes : cinq peintures, une par statut, plus l'encre et la chaux.",
-      "Cibles tactiles minimales de 48 px sous 600 px de large."
-    ],
-    "rules": [
-      { "name": "La règle des deux palettes", "body": "framework.config.brand dans quasar.config.ts surcharge les variables Sass à l'exécution. Les deux listes doivent porter exactement les mêmes hexadécimaux : toute peinture ajoutée ou modifiée dans quasar.variables.scss se réplique dans brand, sinon deux palettes se disputent l'interface.", "section": "colors" },
-      { "name": "La règle du sans-pastel", "body": "Aucune classe utilitaire de teinte Material (bg-red-1, text-blue-2, bg-grey-3) n'entre dans ce monde. Une note porte sa couleur sur son filet et son texte, sur fond de craie : .note--valide, .note--info, .note--alerte, .note--erreur.", "section": "colors" },
-      { "name": "La règle du statut peint", "body": "Un statut se rend en aplat plein sur toute la hauteur de son conteneur (.champ--*), cerné du filet d'encre. Jamais une pastille colorée posée sur du blanc, jamais un point de couleur devant un libellé.", "section": "colors" },
-      { "name": "La règle de l'unité en minuscule", "body": "Le lettrage crie les mots, pas les grandeurs. Un nombre porteur d'unité prend .lettrage.avec-unite pour garder « 85,3 h » et non « 85,3 H ». De même, une mention au pochoir contenant une heure ou une durée prend .pochoir--brut.", "section": "typography" },
-      { "name": "La règle des chiffres alignés", "body": "Toute grandeur, heure ou compteur porte .chiffres (tabular-nums + tnum), pour que les colonnes ne dansent pas d'une ligne à l'autre.", "section": "typography" },
-      { "name": "La règle du français écrit", "body": "Les nombres, heures et pourcentages passent par nombreLisible, heuresLisibles, pourcentLisible de src/utils/libelles.ts ; les dates passent par le composant ChampDate, jamais par un type=\"date\" natif qui affiche MM/JJ/AAAA hors locale française. L'interlignage du lettrage est fixé à 1,06 pour que les accents (É, Û) ne soient jamais rognés.", "section": "typography" },
-      { "name": "La règle du grain sans position", "body": "Le mixin grain($intensite) empile deux passages de --up-matiere à 320 px et 780 px, en modes de fusion. Il ne pose jamais position: relative et n'utilise aucun pseudo-élément : un positionnement forcé ici casse l'en-tête fixe de Quasar. La matière vient du SVG dessiné, jamais d'un dégradé CSS.", "section": "elevation" }
-    ],
-    "dos": [
-      "Do répliquer toute peinture nouvelle ou modifiée à la fois dans quasar.variables.scss et dans framework.config.brand (règle des deux palettes).",
-      "Do rendre un statut en champ peint pleine hauteur cerné d'un filet de 2 px, en réutilisant .champ--present / --retard / --absent / --excuse / --remplace / --depart / --attente.",
-      "Do n'employer que les deux poids de trait du monde — filet 2 px d'encre, filet fin 1 px à 38 % — et réserver le 3 px aux deux seuils structurels existants.",
-      "Do faire porter aux notes leur couleur sur le filet et le texte via .note--valide / --info / --alerte / --erreur, sur fond de craie.",
-      "Do poser .chiffres sur toute grandeur, .lettrage.avec-unite sur un nombre porteur d'unité, .pochoir--brut sur une mention au pochoir contenant une heure.",
-      "Do passer les nombres et durées par nombreLisible / heuresLisibles / pourcentLisible, et les dates par ChampDate.",
-      "Do tenir 48 px de cible tactile minimale sous 600 px, et rendre un registre large en pile de plaques sur téléphone.",
-      "Do vérifier tout nouveau couple couleur/texte contre les contrastes mesurés du monde ; l'ocre sur blanc (4,32:1) ne porte que du grand texte ou du pochoir gras."
-    ],
-    "donts": [
-      "Don't arrondir un angle : aucun border-radius non nul n'appartient à ce monde.",
-      "Don't poser une ombre portée, une élévation Quasar ou un relief simulé ; l'appui s'exprime par assombrissement.",
-      "Don't utiliser une classe utilitaire de teinte Material (bg-*-1, text-*-2, rounded-borders) ni un gris Material comme texte secondaire : l'unique registre secondaire est l'encre douce.",
-      "Don't fabriquer la matière avec un linear-gradient décoratif ; le grain vient de public/matiere/email-panneau.svg via le mixin grain.",
-      "Don't ajouter position: relative (ni un pseudo-élément) dans le mixin grain : cela casse l'en-tête fixe de Quasar.",
-      "Don't signaler un statut par une pastille colorée posée sur du blanc, ni par une bordure latérale colorée sur une carte.",
-      "Don't poser du blanc sur le jaune signalétique : ce champ porte de l'encre.",
-      "Don't étirer le panneau sur toute la largeur d'un grand écran ; il reste plafonné à 1180 px en deux colonnes.",
-      "Don't retirer htmlMinifyOptions.removeComments: false de quasar.config.ts : le contrat de direction en commentaire d'index.html doit survivre au build."
-    ]
+  "motion": [
+   {
+    "name": "up-transition",
+    "value": "300ms cubic-bezier(0.32, 0.72, 0, 1)",
+    "purpose": "Ressort critiquement amorti, réponse 0,3–0,4 s, aucun dépassement (§4)."
+   },
+   {
+    "name": "up-transition-rapide",
+    "value": "180ms cubic-bezier(0.32, 0.72, 0, 1)",
+    "purpose": "Survols et changements d'état immédiats."
+   },
+   {
+    "name": "up-transition-elan",
+    "value": "420ms cubic-bezier(0.16, 1.06, 0.3, 1)",
+    "purpose": "Léger dépassement, réservé à ce qui a été lancé au doigt."
+   },
+   {
+    "name": "se-peint",
+    "value": "peindre 300ms cubic-bezier(0.32, 0.72, 0, 1) both — opacity 0→1, scale(0.96)→scale(1)",
+    "purpose": "Matérialisation d'un champ (§12) : la surface arrive comme une matière, pas comme un fondu. Réduite à 160ms sous prefers-reduced-motion."
+   },
+   {
+    "name": "appui",
+    "value": "transform: scale(0.97) sur 140ms",
+    "purpose": "Retour d'appui déclenché au pointer-down, jamais au relâchement (§1)."
+   }
+  ],
+  "breakpoints": [
+   {
+    "name": "telephone",
+    "value": "599px"
+   },
+   {
+    "name": "registre-en-pile",
+    "value": "767px"
+   },
+   {
+    "name": "deux-colonnes",
+    "value": "1024px"
+   },
+   {
+    "name": "largeur-de-lecture",
+    "value": "1180px"
+   }
+  ],
+  "spacingMeta": {
+   "note": "Rythme unique à six pas : --up-1 4px, --up-2 8px, --up-3 16px, --up-4 24px, --up-5 40px, --up-6 64px."
+  },
+  "strokes": [
+   {
+    "name": "filet",
+    "value": "1px solid #D2D2D7",
+    "purpose": "Le filet d'un cheveu. Il ne structure pas — il termine."
+   },
+   {
+    "name": "filet-fin",
+    "value": "1px solid rgba(0,0,0,.06)",
+    "purpose": "Subdivise à l'intérieur d'une région."
+   },
+   {
+    "name": "anneau-focus",
+    "value": "0 0 0 3px rgba(0,122,77,.25)",
+    "purpose": "Halo vert du champ qui a le focus ; l'anneau des surfaces cliquables est un outline vert de 2px."
+   },
+   {
+    "name": "filet-drapeau",
+    "value": "4px × 72px, rayon pilule, linear-gradient(90deg, #CE1126 0 33.34%, #FCD116 33.34% 66.67%, #009460 66.67%)",
+    "purpose": "La seule décoration du système. Posé en ::before par le mixin filetDrapeau, en tête des écrans publics uniquement."
+   }
+  ],
+  "radii": [
+   {
+    "name": "up-rayon-sm",
+    "value": "8px",
+    "purpose": "Pastille, bloc d’heure."
+   },
+   {
+    "name": "up-rayon",
+    "value": "12px",
+    "purpose": "Champ de saisie, gouttière de segmented control."
+   },
+   {
+    "name": "up-rayon-lg",
+    "value": "18px",
+    "purpose": "Carte, tableau."
+   },
+   {
+    "name": "up-rayon-xl",
+    "value": "28px",
+    "purpose": "Dialogue."
+   },
+   {
+    "name": "up-pilule",
+    "value": "980px",
+    "purpose": "Bouton, étiquette, barre de progression."
+   }
+  ]
+ },
+ "components": [
+  {
+   "name": "Filet du drapeau",
+   "kind": "decoration",
+   "refersTo": "vert-drapeau",
+   "description": "La seule décoration du système : rouge, jaune, vert en un trait de 4 px et 72 px de large, posé en tête des écrans publics. Les trois bandes pleine largeur du panneau peint criaient ; ce filet dit la même chose sans prendre la parole.",
+   "html": "<div class=\"ds-filet\"></div><p class=\"ds-sur\">Personnel de l’université</p><h1 class=\"ds-marque\">UniPrésence</h1>",
+   "css": ".ds-filet{width:72px;height:4px;border-radius:980px;background:linear-gradient(90deg,#CE1126 0 33.34%,#FCD116 33.34% 66.67%,#009460 66.67% 100%)}.ds-sur{margin:24px 0 0;font-size:12px;letter-spacing:-.003em;color:#86868B}.ds-marque{margin:8px 0 0;font-size:3rem;font-weight:600;letter-spacing:-.024em;color:#1D1D1F}"
+  },
+  {
+   "name": "Plaque de séance",
+   "kind": "card",
+   "refersTo": "blanc",
+   "description": "L'unité du registre : bloc d'heure gris à gauche, identité au centre, champ d'action pleine hauteur à droite.",
+   "html": "<article class=\"ds-plaque\"><div class=\"ds-heure\"><span class=\"ds-debut\">08:00</span><span class=\"ds-fin\">→ 10:00</span></div><div class=\"ds-corps\"><h2 class=\"ds-nom\">DIALLO Mariama</h2><p class=\"ds-matiere\">Algorithmique <span class=\"ds-type\">CM</span></p><p class=\"ds-lieu\">Licence 2 Info <span class=\"ds-salle\">B-204</span></p></div><button class=\"ds-action\"><span class=\"ds-appel\">Pointer</span><span class=\"ds-sous\">salle B-204</span></button></article>",
+   "css": ".ds-plaque{display:grid;grid-template-columns:88px minmax(0,1fr) 116px;min-height:104px;overflow:hidden;background:#FFF;border:1px solid #D2D2D7;border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04)}.ds-heure{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:#F5F5F7;color:#1D1D1F}.ds-debut{font-size:1.5rem;font-weight:600;letter-spacing:-.021em;font-variant-numeric:tabular-nums}.ds-fin{font-size:12px;color:#6E6E73;font-variant-numeric:tabular-nums}.ds-corps{padding:16px}.ds-nom{margin:0;font-size:1.0625rem;font-weight:600;letter-spacing:-.021em}.ds-matiere,.ds-lieu{margin:4px 0 0;font-size:15px;letter-spacing:-.012em;color:#6E6E73}.ds-type,.ds-salle{background:#E8E8ED;border-radius:8px;padding:1px 6px;font-size:12px;color:#6E6E73}.ds-action{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:#E8E8ED;color:#1D1D1F;font:inherit;font-weight:590;cursor:pointer}.ds-sous{font-size:12px;color:#6E6E73}"
+  },
+  {
+   "name": "Champ de statut",
+   "kind": "badge",
+   "refersTo": "vert-action",
+   "description": "Pastille douce : fond très dilué, couleur portée par le texte. Le jaune ne porte jamais de mot — « retard » s'écrit en ocre.",
+   "html": "<span class=\"ds-champ ds-champ--present\">Présent</span> <span class=\"ds-champ ds-champ--retard\">Retard</span> <span class=\"ds-champ ds-champ--absent\">Absent</span> <span class=\"ds-champ ds-champ--attente\">Non contrôlé</span>",
+   "css": ".ds-champ{display:inline-flex;align-items:center;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:590;letter-spacing:-.003em}.ds-champ--present{background:#EFF7F2;color:#007A4D}.ds-champ--retard{background:#FFF8E1;color:#8A6300}.ds-champ--absent{background:#FDF0F2;color:#CE1126}.ds-champ--attente{background:transparent;color:#86868B}"
+  },
+  {
+   "name": "Bouton principal",
+   "kind": "button",
+   "refersTo": "vert-action",
+   "description": "La pilule verte du drapeau. Un seul bouton plein par écran ; les actions secondaires sont des boutons plats verts.",
+   "html": "<button class=\"ds-btn\">Pointer la séance</button> <button class=\"ds-btn ds-btn--plat\">Annuler</button> <button class=\"ds-btn\" disabled>Indisponible</button>",
+   "css": ".ds-btn{border:0;border-radius:980px;background:#007A4D;color:#fff;font:inherit;font-weight:500;letter-spacing:-.01em;min-height:36px;padding:0 18px;cursor:pointer;transition:transform 140ms cubic-bezier(.32,.72,0,1),background-color 180ms}.ds-btn:hover{background:#008856}.ds-btn:active{transform:scale(.97)}.ds-btn--plat{background:transparent;color:#007A4D}.ds-btn[disabled]{opacity:.36;cursor:default}"
+  },
+  {
+   "name": "Champ de saisie",
+   "kind": "input",
+   "refersTo": "gris-fond",
+   "description": "Fond gris et aucune bordure au repos ; le bleu et son halo n'apparaissent qu'au focus.",
+   "html": "<label class=\"ds-lab\">Adresse e-mail</label><input class=\"ds-input\" value=\"controleur@universite.gn\"><label class=\"ds-lab\">Mot de passe</label><input class=\"ds-input ds-input--focus\" value=\"••••••••\">",
+   "css": ".ds-lab{display:block;margin:12px 0 4px;font-size:12px;letter-spacing:-.003em;color:#6E6E73}.ds-input{width:100%;box-sizing:border-box;border:1px solid transparent;border-radius:12px;background:#F5F5F7;color:#1D1D1F;font:inherit;font-size:15px;letter-spacing:-.012em;padding:10px 12px}.ds-input--focus{background:#fff;border-color:#007A4D;box-shadow:0 0 0 3px rgba(0,122,77,.25)}"
+  },
+  {
+   "name": "Chrome translucide",
+   "kind": "navigation",
+   "refersTo": "blanc",
+   "description": "L'en-tête de fenêtre : une couche translucide sous laquelle le contenu défile (§12). En corps de page, le même nom `.bandeau` désigne une surface franche.",
+   "html": "<div class=\"ds-chrome\"><span class=\"ds-marque\">UniPrésence</span><span class=\"ds-fil\">/</span><span class=\"ds-page\">Contrôle des séances</span></div>",
+   "css": ".ds-chrome{display:flex;align-items:center;gap:8px;min-height:48px;padding:0 16px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.08)}.ds-marque{font-size:1.0625rem;font-weight:600;letter-spacing:-.021em;color:#1D1D1F}.ds-fil{color:#86868B}.ds-page{font-size:1.0625rem;letter-spacing:-.021em;color:#6E6E73}"
+  },
+  {
+   "name": "Segmented control",
+   "kind": "tabs",
+   "refersTo": "gris-inerte",
+   "description": "Gouttière grise, pastille blanche ombrée sur l'option choisie. Onglets, bascules de vue et raccourcis de période disent tous la même chose de la même façon.",
+   "html": "<div class=\"ds-seg\"><button class=\"ds-seg-opt ds-seg-opt--on\">Aujourd’hui</button><button class=\"ds-seg-opt\">7 jours</button><button class=\"ds-seg-opt\">30 jours</button></div>",
+   "css": ".ds-seg{display:inline-flex;gap:2px;padding:3px;background:#E8E8ED;border-radius:12px}.ds-seg-opt{border:0;background:transparent;color:#6E6E73;font:inherit;font-weight:500;letter-spacing:-.01em;border-radius:8px;min-height:30px;padding:6px 14px;cursor:pointer}.ds-seg-opt--on{background:#fff;color:#1D1D1F;box-shadow:0 1px 2px rgba(0,0,0,.04)}"
+  },
+  {
+   "name": "Note",
+   "kind": "banner",
+   "refersTo": "gris-inerte",
+   "description": "Surface douce et teintée : la couleur va dans le texte, jamais dans un aplat saturé ni sur un filet de 2px.",
+   "html": "<p class=\"ds-note ds-note--valide\">Le pointage a été enregistré.</p><p class=\"ds-note ds-note--alerte\">Deux justificatifs attendent un arbitrage.</p><p class=\"ds-note ds-note--erreur\">La séance ne peut plus être modifiée.</p>",
+   "css": ".ds-note{margin:0 0 8px;border:0;border-radius:12px;padding:10px 14px;font-size:.9375rem;letter-spacing:-.012em}.ds-note--valide{background:#EFF7F2;color:#007A4D}.ds-note--alerte{background:#FFF8E1;color:#8A6300}.ds-note--erreur{background:#FDF0F2;color:#CE1126}"
+  },
+  {
+   "name": "En-tête de registre",
+   "kind": "table",
+   "refersTo": "gris-filet",
+   "description": "Aucun bandeau : les intitulés de colonne sont gris et c'est le filet du dessous qui les sépare du corps.",
+   "html": "<table class=\"ds-tab\"><thead><tr><th>Date</th><th>Horaire</th><th>Enseignant</th></tr></thead><tbody><tr><td>20/08/2026</td><td>08:00–10:00</td><td>BALDÉ Thierno</td></tr><tr><td>20/08/2026</td><td>10:15–12:15</td><td>CONDÉ Sékou</td></tr></tbody></table>",
+   "css": ".ds-tab{width:100%;border-collapse:collapse;background:#fff;border:1px solid #D2D2D7;border-radius:18px;overflow:hidden}.ds-tab th{text-align:left;font-size:12px;font-weight:500;letter-spacing:-.003em;color:#6E6E73;padding:16px;border-bottom:1px solid #D2D2D7}.ds-tab td{padding:16px;font-size:15px;letter-spacing:-.012em;border-bottom:1px solid rgba(0,0,0,.06)}.ds-tab tbody tr:last-child td{border-bottom:0}"
   }
+ ],
+ "narrative": {
+  "northStar": "La sobriété d'Apple, aux couleurs du drapeau",
+  "overview": "L'application se lit sans effort et sans bruit : du blanc, un gris, de l'encre. Les neutres sont relevés sur les variables --sk-* de main.built.css d'apple.com. Les couleurs sont celles du drapeau guinéen — rouge #CE1126, jaune #FCD116, vert #009460 — reprises comme touches : le vert est l'unique couleur d'action, le rouge et le jaune ne disent que des états, et la seule décoration du système est un filet tricolore de 4 px posé en tête des écrans publics. Les teintes officielles sont assombries là où elles doivent porter du texte : le vert d'action descend à #007A4D (5,40:1 avec du blanc), et le jaune — impossible en texte — s'écrit en ocre #8A6300.",
+  "keyCharacteristics": [
+   "Une seule couleur d'action : le vert du drapeau assombri, #007A4D.",
+   "Le jaune ne porte jamais de texte : il marque, il ne parle pas.",
+   "Une seule décoration : le filet tricolore, en tête des écrans publics uniquement.",
+   "Le tracking suit le corps : -0,024em sur un grand titre, -0,012em sur le corps, +0,06em sur les rares petites capitales.",
+   "Fonte système d'abord (SF Pro par -apple-system), Inter Variable en relais ailleurs.",
+   "Rayons gradués : pilule pour un bouton, 12px pour un champ, 18px pour une carte, 28px pour un dialogue.",
+   "Trois ombres seulement, dont la première se devine plus qu'elle ne se voit.",
+   "Chrome translucide (backdrop-filter) sous laquelle le contenu défile.",
+   "Retour sur l'appui et non sur le relâchement ; ressorts critiquement amortis, sans dépassement."
+  ],
+  "rules": [
+   "La règle du filet tricolore : 4 px, 72 px de large, posé en ::before par le mixin filetDrapeau, en tête des écrans publics seulement.",
+   "La règle des deux palettes : quasar.variables.scss et framework.config.brand portent les mêmes hexadécimaux.",
+   "La règle du fond dilué : un état se rend en fond très dilué avec la couleur portée par le texte.",
+   "La règle du jaune muet : #FCD116 ne porte jamais de texte, tout libellé passe par l'ocre #8A6300.",
+   "La règle du vert à deux traitements : aplat plein + blanc pour l'action, fond dilué + texte vert pour l'état.",
+   "La règle du gris terminal : ce qui est clos se rend en gris et encre, pas en vert.",
+   "La règle du tracking par corps : une valeur de letter-spacing unique est fausse quelque part.",
+   "La règle du rôle neutre : `secondary` est l'encre, il doit basculer avec le thème."
+  ],
+  "dos": [
+   "Rendre un état en pastille douce via .champ--present / --retard / --absent / --excuse / --remplace / --depart / --attente.",
+   "Choisir le tracking d'un nouveau niveau typographique en fonction de son corps.",
+   "N'employer qu'un seul poids de trait et laisser l'air faire le reste de la structure.",
+   "Réserver le bouton plein bleu à l'action qui fait avancer, une seule par écran.",
+   "Poser .chiffres sur toute grandeur, .lettrage.avec-unite sur un nombre porteur d'unité.",
+   "Employer var(--up-encre) plutôt que text-secondary pour un texte qui doit rester lisible dans les deux thèmes.",
+   "Tenir 44px de cible tactile sous 600px et rendre un registre large en pile de plaques sur téléphone."
+  ],
+  "donts": [
+   "Poser un aplat saturé sur une surface, ou du texte blanc sur une couleur d'état.",
+   "Colorer plusieurs grands chiffres d'un même relevé : quand tout est coloré, plus rien ne ressort.",
+   "Utiliser une classe utilitaire de teinte Material, ni un gris Material comme texte secondaire.",
+   "Poser un angle vif, ni un filet de 2 ou 3px hors anneau de focus.",
+   "Poser une chrome translucide ailleurs qu'en tête ou en pied de fenêtre.",
+   "Écrire une variable Sass dans un bloc <style scoped> en CSS simple : elle n'y sera jamais résolue.",
+   "Rétablir user-scalable=no dans le meta viewport.",
+   "Étirer le contenu sur toute la largeur d'un grand écran ; il reste plafonné à 1180px.",
+   "Écrire du texte en #FCD116 : le jaune du drapeau ne porte jamais de mot.",
+   "Répéter le filet tricolore ailleurs qu'en tête d'un écran public : une touche répétée n'est plus une touche.",
+   "Rendre un état en aplat plein : il deviendrait un bouton.",
+   "Cibler body--dark avec :deep() dans une feuille scoped — :deep() ne descend que dans le composant, or la classe est sur <body>."
+  ]
+ }
 }

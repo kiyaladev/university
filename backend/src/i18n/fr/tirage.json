@@ -1,0 +1,9 @@
+{
+  "tirage_introuvable": "Tirage introuvable",
+  "examen_introuvable": "Examen introuvable",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr": "Empreinte source fournie ne correspond pas à celle enregistrée — impression refusée",
+  "transition_impossible_depuis_tirage_stade_vers_dto_stade": "Transition impossible depuis {tirage.stade} vers {dto.stade}",
+  "tirage_tirage_stade_annulation_possible_uniquement_depuis_pr": "Tirage {tirage.stade} : annulation possible uniquement depuis PROGRAMME",
+  "tirage_tirage_stade_annulation_possible_uniquement_depuis_program": "Tirage « {stade} » : annulation possible uniquement depuis l’état programmé."
+}

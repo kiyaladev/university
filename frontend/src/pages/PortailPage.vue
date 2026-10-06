@@ -3,25 +3,24 @@
     <!-- Vue réservée aux comptes étudiants : un autre rôle ne voit rien -->
     <div v-if="auth.role !== 'ETUDIANT'" class="plaque portail__autre-role">
       <q-icon name="person_off" size="46px" color="grey-7" />
-      <span class="lettrage portail__autre-titre">Espace étudiant</span>
+      <span class="lettrage portail__autre-titre">{{ $t('portail.otherRole.title') }}</span>
       <p class="portail__autre-texte">
-        Cette vue est réservée aux comptes étudiants, ouverts par connexion
-        par SMS depuis le portail étudiant.
+        {{ $t('portail.otherRole.message') }}
       </p>
       <div class="portail__autre-actions">
-        <q-btn unelevated color="primary" no-caps icon="home" label="Retour à mon accueil" to="/" />
-        <q-btn flat no-caps icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+        <q-btn unelevated color="primary" no-caps icon="home" :label="$t('portail.actions.home')" to="/" />
+        <q-btn flat no-caps icon="logout" :label="$t('portail.actions.logout')" @click="seDeconnecter" />
       </div>
     </div>
 
     <!-- Le dossier n'a pas pu être chargé : on le dit et on propose la suite -->
     <div v-else-if="erreur" class="plaque portail__autre-role">
       <q-icon name="error_outline" size="46px" color="negative" />
-      <span class="lettrage portail__autre-titre">Dossier indisponible</span>
+      <span class="lettrage portail__autre-titre">{{ $t('portail.errorState.title') }}</span>
       <p class="portail__autre-texte">{{ erreur }}</p>
       <div class="portail__autre-actions">
-        <q-btn unelevated color="primary" no-caps icon="refresh" label="Réessayer" @click="charger" />
-        <q-btn flat no-caps icon="logout" label="Se déconnecter" @click="seDeconnecter" />
+        <q-btn unelevated color="primary" no-caps icon="refresh" :label="$t('portail.actions.retry')" @click="charger" />
+        <q-btn flat no-caps icon="logout" :label="$t('portail.actions.logout')" @click="seDeconnecter" />
       </div>
     </div>
 
@@ -29,27 +28,26 @@
       <!-- Bandeau de bienvenue -->
       <header class="bandeau portail__entete">
         <div>
-          <p class="pochoir portail__sur-titre">Mon espace</p>
+          <p class="pochoir portail__sur-titre">{{ $t('portail.header.subtitle') }}</p>
           <h1 class="lettrage portail__bonjour">
-            Bonjour, {{ profil.etudiant.prenom || profil.etudiant.nom }}
+            {{ $t('portail.header.greeting', { prenom: profil.etudiant.prenom || profil.etudiant.nom }) }}
           </h1>
           <p class="pochoir portail__matricule">
-            Matricule {{ profil.etudiant.matricule }}
+            {{ $t('portail.header.matricule', { matricule: profil.etudiant.matricule }) }}
           </p>
         </div>
         <q-btn
           flat
-          color="white"
           no-caps
           icon="logout"
-          label="Se déconnecter"
+          :label="$t('portail.actions.logout')"
           @click="seDeconnecter"
         />
       </header>
 
       <!-- Tout ce que l'étudiant peut faire, au même endroit -->
-      <nav class="plaque portail__services" aria-label="Mes démarches">
-        <h2 class="pochoir section-titre">Mes démarches</h2>
+      <nav class="plaque portail__services" :aria-label="$t('portail.nav.title')">
+        <h2 class="pochoir section-titre">{{ $t('portail.nav.title') }}</h2>
         <ul class="portail__services-liste">
           <li v-for="s in services" :key="s.vers">
             <router-link :to="s.vers" class="portail__service">
@@ -67,10 +65,10 @@
       <div class="portail__grille">
         <!-- Inscription -->
         <section class="plaque carte-portail">
-          <h2 class="pochoir section-titre">Inscription</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.inscription.title') }}</h2>
           <template v-if="profil.inscription">
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Statut</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.statut') }}</span>
               <q-chip
                 :color="couleurInscription[profil.inscription.statut] ?? 'grey-8'"
                 text-color="white"
@@ -80,24 +78,24 @@
               </q-chip>
             </div>
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Promotion</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.promotion') }}</span>
               <span>{{ profil.inscription.promotion.nom }}</span>
             </div>
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Année</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.annee') }}</span>
               <span>{{ profil.inscription.annee.libelle }}</span>
             </div>
             <div v-if="profil.inscription.promotion.filiere" class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Filière</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.filiere') }}</span>
               <span>{{ profil.inscription.promotion.filiere }}</span>
             </div>
           </template>
-          <p v-else class="carte-portail__vide">Aucune inscription enregistrée.</p>
+          <p v-else class="carte-portail__vide">{{ $t('portail.sections.inscription.empty') }}</p>
         </section>
 
         <!-- Frais -->
         <section class="plaque carte-portail">
-          <h2 class="pochoir section-titre">Frais d'inscription</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.frais.title') }}</h2>
           <template v-if="profil.frais">
             <div class="carte-portail__recap">
               <span class="lettrage chiffres carte-portail__montant">
@@ -106,21 +104,21 @@
               </span>
             </div>
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Payé</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.frais.paye') }}</span>
               <span class="chiffres">{{ montantLisible(profil.frais.paye) }} {{ profil.frais.devise }}</span>
             </div>
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">Restant</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.frais.restant') }}</span>
               <span class="chiffres">{{ montantLisible(profil.frais.solde) }} {{ profil.frais.devise }}</span>
             </div>
             <barre-taux :valeur="profil.frais.taux" :seuil-bas="60" :seuil-haut="90" class="carte-portail__jauge" />
           </template>
-          <p v-else class="carte-portail__aucun">Aucun frais pour cette année.</p>
+          <p v-else class="carte-portail__aucun">{{ $t('portail.sections.frais.empty') }}</p>
         </section>
 
         <!-- Paiements récents -->
         <section class="plaque carte-portail">
-          <h2 class="pochoir section-titre">Paiements récents</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.paiements.title') }}</h2>
           <ul v-if="profil.paiements.length" class="carte-portail__liste">
             <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
               <span class="carte-portail__item-texte">
@@ -137,12 +135,12 @@
               </span>
             </li>
           </ul>
-          <p v-else class="carte-portail__aucune">Aucun paiement enregistré.</p>
+          <p v-else class="carte-portail__aucune">{{ $t('portail.sections.paiements.empty') }}</p>
         </section>
 
         <!-- Résultats -->
         <section class="plaque carte-portail carte-portail--resultat">
-          <h2 class="pochoir section-titre">Résultat</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.resultat.title') }}</h2>
           <template v-if="resultats?.finale">
             <div class="carte-portail__resultat-panneau">
               <span
@@ -159,25 +157,24 @@
                 class="carte-portail__resultat-decision"
               >
                 {{ LIBELLE_DECISION_JURY[resultats.finale.decision] }}
-                <q-tooltip v-if="resultats.finale.rang">Rang dans la promotion</q-tooltip>
+                <q-tooltip v-if="resultats.finale.rang">{{ $t('portail.sections.resultat.rankTooltip') }}</q-tooltip>
               </q-chip>
             </div>
             <p class="carte-portail__resultat-details">
               {{ LIBELLE_SESSION_DELIBERATION[resultats.finale.session] }} ·
               {{ resultats.finale.promotion }}
               <span v-if="resultats.finale.mention"> · {{ resultats.finale.mention }}</span>
-              <span v-if="resultats.finale.rang" class="chiffres"> · rang {{ resultats.finale.rang }}</span>
+              <span v-if="resultats.finale.rang" class="chiffres"> · {{ $t('portail.sections.resultat.rank', { rang: resultats.finale.rang }) }}</span>
             </p>
           </template>
           <p v-else class="carte-portail__aucune">
-            Aucun résultat publié pour le moment. Les délibérations validées par
-            le jury apparaîtront ici.
+            {{ $t('portail.sections.resultat.empty') }}
           </p>
         </section>
 
         <!-- Attestations -->
         <section class="plaque carte-portail carte-portail--large">
-          <h2 class="pochoir section-titre">Attestations</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.attestations.title') }}</h2>
           <ul v-if="profil.attestations.length" class="carte-portail__liste">
             <li
               v-for="a in profil.attestations"
@@ -189,7 +186,7 @@
                 <span class="lettrage carte-portail__item-titre">{{ LIBELLE_TYPE_ATTESTATION[a.type] }}</span>
                 <span class="pochoir pochoir--brut chiffres carte-portail__date">
                   {{ a.numero }} · {{ dateLisible(a.emiseLe) }}
-                  <span v-if="a.statut === 'REVOQUEE'" class="text-negative"> · révoquée</span>
+                  <span v-if="a.statut === 'REVOQUEE'" class="text-negative"> · {{ $t('portail.sections.attestations.revoked') }}</span>
                 </span>
               </span>
               <q-btn
@@ -198,42 +195,38 @@
                 dense
                 no-caps
                 icon="visibility"
-                label="Voir"
+                :label="$t('portail.actions.view')"
                 @click="voirAttestation(a)"
               >
-                <q-tooltip>Ouvrir l'impression de l'attestation (nouvel onglet)</q-tooltip>
+                <q-tooltip>{{ $t('portail.sections.attestations.viewTooltip') }}</q-tooltip>
               </q-btn>
             </li>
           </ul>
           <p v-else class="carte-portail__aucune">
-            Aucune attestation émise. Demandez un certificat de scolarité ou un
-            relevé depuis
+            {{ $t('portail.sections.attestations.empty') }}
             <router-link to="/demandes-docs/mes" class="carte-portail__lien">
-              Mes demandes de documents
+              {{ $t('portail.sections.attestations.emptyLink') }}
             </router-link>.
           </p>
           <p class="carte-portail__note">
-            Chaque attestation porte un QR code : n'importe qui peut en vérifier
-            l'authenticité sur la page
+            {{ $t('portail.sections.attestations.note') }}
             <router-link to="/verification" class="carte-portail__lien">
-              Vérification d'attestation
+              {{ $t('portail.sections.attestations.noteLink') }}
             </router-link>.
           </p>
         </section>
 
         <!-- Portefeuille resto — section appendée (module resto) -->
         <section v-if="resto" class="plaque carte-portail carte-portail--large">
-          <h2 class="pochoir section-titre">Portefeuille resto</h2>
+          <h2 class="pochoir section-titre">{{ $t('portail.sections.resto.title') }}</h2>
           <div class="carte-portail__recap">
             <span class="lettrage chiffres carte-portail__montant">
               {{ montantLisible(resto.solde) }}
-              <span class="carte-portail__devise">GNF</span>
+              <span class="carte-portail__devise">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
             </span>
           </div>
           <p class="carte-portail__vide">
-            Le solde sert au restaurant universitaire : scannez votre carte au
-            guichet à chaque repas. Rechargez par Mobile Money et le solde est
-            crédité après confirmation du guichet.
+            {{ $t('portail.sections.resto.description') }}
           </p>
 
           <ul v-if="resto.lignes.length" class="carte-portail__liste">
@@ -252,14 +245,14 @@
               </span>
             </li>
           </ul>
-          <p v-else class="carte-portail__aucune">Aucune activité pour le moment.</p>
+          <p v-else class="carte-portail__aucune">{{ $t('portail.sections.resto.empty') }}</p>
 
           <q-btn
             unelevated
             color="primary"
             no-caps
             icon="add_card"
-            label="Recharger"
+            :label="$t('portail.actions.recharge')"
             @click="dialogResto = true"
           />
           <p v-if="resto.instructions" class="pochoir carte-portail__avertissement">
@@ -271,7 +264,7 @@
       <!-- Dialogue de rechargement du portefeuille resto -->
       <q-dialog v-model="dialogResto">
         <q-card style="width: 400px; max-width: 95vw">
-          <q-card-section class="text-h6">Recharger le portefeuille resto</q-card-section>
+          <q-card-section class="text-h6">{{ $t('portail.dialogResto.title') }}</q-card-section>
           <q-card-section>
             <q-input
               v-model.number="montantResto"
@@ -280,35 +273,33 @@
               step="500"
               outlined
               dense
-              label="Montant (GNF)"
+              :label="$t('portail.dialogResto.montantLabel')"
               suffix="GNF"
-              hint="Minimum 500 GNF"
+              :hint="$t('portail.dialogResto.montantHint')"
               :error="!montantResto || montantResto < 500"
-              error-message="Saisissez un montant d'au moins 500 GNF"
+              :error-message="$t('portail.dialogResto.montantError')"
             />
             <q-select
               v-model="operateurResto"
               :options="optionsOperateursResto"
               emit-value
               map-options
-              label="Opérateur Mobile Money"
+              :label="$t('portail.dialogResto.operateurLabel')"
               outlined
               dense
               class="q-mt-md"
             />
             <p class="pochoir carte-portail__vide q-mt-md">
-              Vous paierez par Mobile Money : une référence vous sera
-              communiquée pour le transfert. Le solde est crédité après
-              confirmation du guichet.
+              {{ $t('portail.dialogResto.note') }}
             </p>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn v-close-popup flat no-caps label="Annuler" />
+            <q-btn v-close-popup flat no-caps :label="$t('portail.actions.cancel')" />
             <q-btn
               color="primary"
               unelevated
               no-caps
-              label="Demander le paiement"
+              :label="$t('portail.dialogResto.submit')"
               :loading="rechargementResto"
               :disable="!montantResto || montantResto < 500"
               @click="rechargerResto"
@@ -320,18 +311,22 @@
 
     <div v-else class="portail__chargement">
       <q-spinner color="primary" size="42px" />
-      <span class="pochoir">Chargement de votre dossier…</span>
+      <span class="pochoir">{{ $t('portail.loading') }}</span>
     </div>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api, API_URL } from '../boot/axios';
+import { useI18n } from 'vue-i18n';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useServicesActifsStore } from '../stores/servicesActifs';
+const modules = useServicesActifsStore();
 import BarreTaux from '../components/BarreTaux.vue';
+import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_DECISION_JURY,
   LIBELLE_MODE_PAIEMENT,
@@ -347,48 +342,50 @@ import {
   montantLisible,
 } from '../utils/libelles';
 
+const { t } = useI18n();
+
 /**
  * Tout ce que l'étudiant peut faire depuis son espace. Chaque cible est une
  * route réelle de router/routes.ts ouverte au rôle ETUDIANT (ou publique).
  */
-const services = [
+const services = computed(() => [
   {
     vers: '/ma-carte',
     icone: 'badge',
-    libelle: 'Ma carte étudiante',
-    aide: 'Carte numérique, QR code et code personnel',
+    libelle: t('portail.services.maCarte.label'),
+    aide: t('portail.services.maCarte.help'),
   },
   {
     vers: '/demandes-docs/mes',
     icone: 'description',
-    libelle: 'Mes demandes de documents',
-    aide: 'Certificats, relevés et attestations à demander',
+    libelle: t('portail.services.demandesDocuments.label'),
+    aide: t('portail.services.demandesDocuments.help'),
   },
   {
     vers: '/reclamations/mes',
     icone: 'support_agent',
-    libelle: 'Mes réclamations',
-    aide: 'Contester une note, signaler une erreur de dossier',
+    libelle: t('portail.services.reclamations.label'),
+    aide: t('portail.services.reclamations.help'),
   },
   {
     vers: '/elections/vote',
     icone: 'how_to_vote',
-    libelle: 'Voter',
-    aide: 'Élections des délégués et résultats proclamés',
+    libelle: t('portail.services.vote.label'),
+    aide: t('portail.services.vote.help'),
   },
   {
     vers: '/bibliotheque',
     icone: 'menu_book',
-    libelle: 'Bibliothèque numérique',
-    aide: 'Mémoires, thèses et supports de cours',
+    libelle: t('portail.services.bibliotheque.label'),
+    aide: t('portail.services.bibliotheque.help'),
   },
   {
     vers: '/formations',
     icone: 'workspace_premium',
-    libelle: 'Formation continue',
-    aide: 'Catalogue des formations ouvertes à l’inscription',
+    libelle: t('portail.services.formations.label'),
+    aide: t('portail.services.formations.help'),
   },
-];
+].filter(service => modules.autorise(service.vers)));
 
 interface PaiementPortail {
   id: string;
@@ -473,17 +470,9 @@ function seDeconnecter() {
   void router.push('/portail-connexion');
 }
 
-/** Ouvre l'impression de l'attestation, comme pour les états imprimables :
- *  jeton en paramètre d'URL (pas d'en-tête possible dans un onglet neuf). */
+/** Attestation de scolarité : ouverte dans un onglet neuf, jeton en en-tête. */
 function voirAttestation(a: AttestationPortail) {
-  const url = `${API_URL}/attestations/${a.id}/imprimer?token=${auth.token}`;
-  const fenetre = window.open(url, '_blank');
-  if (!fenetre) {
-    $q.notify({
-      type: 'warning',
-      message: 'Autorisez les fenêtres contextuelles pour ouvrir l’attestation.',
-    });
-  }
+  void ouvrirImpression(`/attestations/${a.id}/imprimer`);
 }
 
 /**
@@ -504,8 +493,7 @@ async function charger() {
     const message = e?.response?.data?.message;
     erreur.value = Array.isArray(message)
       ? message.join(' · ')
-      : (message ??
-        'Votre dossier n’a pas pu être chargé. Vérifiez votre connexion, puis réessayez.');
+      : (message ?? t('portail.messages.loadError'));
   }
 }
 
@@ -542,7 +530,7 @@ function lignesResto(donnees: any): LigneResto[] {
   const recharges = (donnees.recharges ?? []).map((r: any) => ({
     cle: `r-${r.id}`,
     date: r.rechargeLe,
-    libelle: `Recharge — ${LIBELLE_STATUT_PAIEMENT[r.statut] ?? r.statut}`,
+    libelle: t('portail.sections.resto.rechargeLabel', { statut: LIBELLE_STATUT_PAIEMENT[r.statut] ?? r.statut }),
     montant: r.montant,
     statut: LIBELLE_STATUT_PAIEMENT[r.statut] ?? r.statut,
   }));
@@ -585,7 +573,7 @@ async function rechargerResto() {
     if (resto.value) resto.value.instructions = data.instructions;
     $q.notify({
       type: 'info',
-      message: `Recharge ${data.paiement.reference} en attente — suivez les instructions de paiement`,
+      message: t('portail.messages.rechargeInfo', { reference: data.paiement.reference }),
     });
   } finally {
     rechargementResto.value = false;
@@ -594,7 +582,7 @@ async function rechargerResto() {
 
 onMounted(() => {
   void charger();
-  void chargerResto();
+  if (modules.services.find(s => s.id === 'restauration')?.actif !== false) void chargerResto();
 });
 </script>
 
@@ -611,12 +599,12 @@ onMounted(() => {
   flex-wrap: wrap;
   padding: var(--up-4) var(--up-4);
   margin-bottom: var(--up-4);
-  border: 2px solid var(--up-encre);
+  border: var(--up-filet);
 }
 
 .portail__sur-titre {
   margin: 0 0 4px;
-  color: rgba(250, 250, 247, 0.6);
+  color: var(--up-encre-tertiaire);
 }
 
 .portail__bonjour {
@@ -626,7 +614,7 @@ onMounted(() => {
 
 .portail__matricule {
   margin: 6px 0 0;
-  color: rgba(250, 250, 247, 0.74);
+  color: var(--up-encre-douce);
 }
 
 // ------------------------------------------------------------ démarches
@@ -660,7 +648,7 @@ onMounted(() => {
 
   &:hover,
   &:focus-visible {
-    border: 2px solid var(--up-encre);
+    border: var(--up-filet);
     background: var(--up-craie);
   }
 }
@@ -745,7 +733,7 @@ onMounted(() => {
 }
 
 .carte-portail__montant-petit {
-  font-weight: 700;
+  font-weight: 590;
 }
 
 .carte-portail__date {

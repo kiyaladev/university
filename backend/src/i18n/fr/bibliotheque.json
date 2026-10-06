@@ -1,0 +1,9 @@
+{
+  "ce_document_est_depose_sans_fichier_metadonnees_seules": "Ce document est déposé sans fichier (métadonnées seules)",
+  "document_introuvable": "Document introuvable",
+  "suspicion_introuvable": "Suspicion introuvable",
+  "decision_de_plagiat_invalide": "Décision de plagiat invalide",
+  "seul_le_deposant_initial_peut_modifier_ce_document_sauf_admi": "Seul le déposant initial peut modifier ce document (sauf administrateur)",
+  "seul_le_deposant_initial_peut_supprimer_ce_document_sauf_adm": "Seul le déposant initial peut supprimer ce document (sauf administrateur)",
+  "le_fichier_joint_depasse_la_limite_de_8_mo_data_url_base64_d": "Le fichier joint dépasse la limite de 8 Mo (data-url base64 de {mo} Mo). Compressez le PDF ou réduisez sa résolution avant de le re-déposer."
+}

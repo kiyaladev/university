@@ -7,29 +7,38 @@
     <meta name="description" content="<%= productDescription %>" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="msapplication-tap-highlight" content="no" />
-    <meta name="theme-color" content="#10251E" />
-    <meta
-      name="viewport"
-      content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width"
-    />
+    <meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <!--
+      Le zoom reste permis : §15 du guide Apple demande de respecter le réglage
+      de taille de texte de l'utilisateur, et `user-scalable=no` le lui retire.
+      La mise en mesure suit la police plutôt que de la brider.
+    -->
+    <meta name="viewport" content="initial-scale=1, viewport-fit=cover, width=device-width" />
   </head>
   <body>
     <!--
-      THESIS: la tournée du contrôleur est un panneau, pas un tableau de bord. Une
-      plaque par salle, dans l'ordre des heures ; le statut est un champ peint, pas
-      une pastille posée sur du blanc. Refuse la carte arrondie à ombre douce et le
-      bandeau coloré en bordure gauche que cette catégorie sert par défaut.
-      OWN-WORLD: panneaux d'emploi du temps peints à la main des couloirs de faculté
-      et signalétique émaillée des gares routières ouest-africaines. Chaux (#E4E6DE),
-      encre vert-noir (#10251E), minium (#C2321E), outremer (#1B4FA6), vert peinture
-      (#1E7A4C), jaune signalétique (#E8A317). Filets épais tracés à la règle, angles
-      vifs, aucune ombre portée, capitales larges, chiffres d'heure géants.
-      STORY: le contrôleur descend son panneau salle par salle, pointe d'un pouce,
-      fait signer ou scanner l'enseignant, repart. La direction lit le même panneau.
-      FIRST VIEWPORT: bandeau de tournée (date, restant à pointer), puis la pile de
-      plaques ; champ d'heure peint à gauche, identité au centre, champ d'action ou
-      de statut à droite sur toute la hauteur — la cible du pouce.
-      FORM: panneau peint, direction 3 de la liste ordonnée, seed 3bab42a2.
+      THESIS: la tournée du contrôleur se lit sans effort et sans bruit. Du blanc,
+      un gris, de l'encre ; la couleur ne sert qu'à dire un état — jamais à décorer
+      une surface. Une page entière peut n'avoir aucune couleur, et c'est le cas
+      normal. Refuse l'aplat saturé pleine largeur, le filet épais qui structure,
+      la capitale criée et l'angle vif.
+      OWN-WORLD: la grammaire d'Apple, relevée sur apple.com plutôt que devinée —
+      les variables --sk-* de main.built.css. Encre #1D1D1F, gris secondaire
+      #6E6E73, fond de section #F5F5F7, filet #D2D2D7, inerte #E8E8ED, blanc.
+      Une seule couleur d'action : le bleu #0071E3 (lien #0066CC). Trois teintes
+      d'état, portées par le texte sur un fond très dilué : vert #03A10E, orange
+      #F56300, rouge #E30000. Pilule pour un bouton, 12px pour un champ, 18px pour
+      une carte. Ombres presque invisibles, chrome translucide (backdrop-filter),
+      tracking qui suit le corps : -0.024em sur un grand titre, ~0 sur une légende.
+      STORY: le contrôleur descend sa liste salle par salle, pointe d'un pouce,
+      fait signer ou scanner l'enseignant, repart. La direction lit la même liste.
+      FIRST VIEWPORT: en-tête translucide sous laquelle le contenu défile, titre
+      serré, puis la pile de surfaces blanches sur le gris ; l'heure à gauche,
+      l'identité au centre, l'état ou l'action à droite — la cible du pouce.
+      FORM: sobriété Apple. Springs critiquement amortis (réponse 0,3–0,4 s), retour
+      sur l'appui et non sur le relâchement, mouvement et transparence réduits pris
+      en charge.
       FINISH: unreviewed and undocumented is unfinished; this build ends with the
       finish review, the verdict, and DESIGN.md.
     -->

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { useServicesActifsStore } from '../stores/servicesActifs';
 /**
  * « Voir aussi » : la rangée de renvois d'un tableau de bord vers les écrans
  * qui produisent ses chiffres.
@@ -10,16 +15,25 @@
  *
  * Chaque cible doit être une route déclarée dans `router/routes.ts`.
  */
-defineProps<{
+const props = defineProps<{
   liens: Array<{ to: string; libelle: string; icone?: string; aide?: string }>;
 }>();
+const { t } = useI18n();
+const router = useRouter();
+const route = useRoute();
+const auth = useAuthStore();
+const services = useServicesActifsStore();
+const liensVisibles = computed(() => props.liens.filter(lien => {
+  const meta = router.resolve(lien.to).meta;
+  return router.resolve(lien.to).path !== route.path && services.autorise(lien.to) && (!meta.roles || !!auth.role && meta.roles.includes(auth.role));
+}));
 </script>
 
 <template>
-  <nav class="liens-croises" aria-label="Écrans liés">
-    <span class="pochoir liens-croises__intitule">Voir aussi</span>
+  <nav v-if="liensVisibles.length" class="liens-croises" :aria-label="t('layout.relatedScreensAria')">
+    <span class="pochoir liens-croises__intitule">{{ t('layout.seeAlso') }}</span>
     <q-btn
-      v-for="l in liens"
+      v-for="l in liensVisibles"
       :key="l.to"
       flat
       dense

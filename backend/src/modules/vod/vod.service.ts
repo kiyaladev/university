@@ -7,15 +7,23 @@
  * vie : créé par l'enseignant, publié en vitrine par lui ou la scolarité,
  * retiré de la vitrine puis archivé pour l'historique.
  *
- * Les vues sont journalisées par étudiant : on sait qui a regardé quoi,
- * jusqu'où, et si la lecture a été menée à terme (≥ 90 % de la durée).
+ * Les vues restent dans leur table dédiée, avec les éléments de progression
+ * nécessaires à la reprise du cours. Elles ne sont pas reprises dans AuditLog.
+ *
+ * Les mutations de métadonnées (création, modification, publication,
+ * archivage) écrivent leur entrée de journal d'audit dans la transaction qui
+ * porte l'écriture, avec un instantané projeté minimal : statut,
+ * identifiants techniques, dates et présence des contenus — jamais le titre,
+ * la description, l'URL du média, le nom de l'enseignant, ni qui a regardé.
  */
 import {
   BadRequestException,
   Injectable,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, StatutVOD, TypeRessourceVOD } from '@prisma/client';
+import { Prisma, Role, StatutVOD, TypeRessourceVOD } from '@prisma/client';
+import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import {
@@ -42,18 +50,131 @@ const VOD_INCLUDE = {
 
 const SEUIL_COMPLET = 0.9;
 
+/** Les dates du journal sont des ISO : lisibles dans l'écran Journal, comparables. */
+function isoOuNull(v: Date | string | null | undefined): string | null {
+  if (!v) return null;
+  const d = v instanceof Date ? v : new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Projection minimale d'une ressource VOD pour le journal d'audit.
+ *
+ * Elle retient ce qui permet de reconstituer une décision d'édition ou de
+ * cycle de vie : le statut, les identifiants techniques (matière, séance,
+ * enseignant, inscription, auteur — jamais leur nom), les horodatages, les
+ * mesures du média et la *présence* des contenus.
+ *
+ * Le titre, la description, la transcription, l'URL du média et sa vignette
+ * sont du contenu de cours — et l'URL peut porter un jeton de signature :
+ * aucun n'est recopié, leur présence seule est notée. Les vues et l'identité
+ * de ceux qui regardent n'ont pas leur place ici : elles restent dans leurs
+ * propres tables, jamais dans le journal d'audit.
+ */
+function instantaneVod(vod: any) {
+  if (!vod) return null;
+  return {
+    id: vod.id,
+    type: vod.type ?? null,
+    statut: vod.statut ?? null,
+    public: vod.public ?? null,
+    matiereId: vod.matiereId ?? null,
+    seanceId: vod.seanceId ?? null,
+    enseignantId: vod.enseignantId ?? null,
+    inscriptionId: vod.inscriptionId ?? null,
+    creeParId: vod.creeParId ?? null,
+    dateMiseEnLigne: isoOuNull(vod.dateMiseEnLigne),
+    createdAt: isoOuNull(vod.createdAt),
+    updatedAt: isoOuNull(vod.updatedAt),
+    dureeSecondes: vod.dureeSecondes ?? null,
+    tailleKo: vod.tailleKo ?? null,
+    titreFourni: Boolean(vod.titre),
+    descriptionFournie: Boolean(vod.description),
+    transcriptionFournie: Boolean(vod.transcription),
+    mediaPresent: Boolean(vod.url),
+    vignettePresente: Boolean(vod.thumbnailUrl),
+  };
+}
+
 @Injectable()
 export class VodService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Une ressource liée à la fois à une séance et à une inscription doit
+   * rester dans la même année académique. Les liens restent facultatifs pour
+   * les contenus transversaux ou destinés aux anciens étudiants. */
+  private async verifierAnneeLiee(
+    tx: Prisma.TransactionClient,
+    seanceId: string | null | undefined,
+    inscriptionId: string | null | undefined,
+  ) {
+    if (!seanceId || !inscriptionId) return;
+    const [seance, inscription] = await Promise.all([
+      tx.seance.findUnique({ where: { id: seanceId }, select: { anneeId: true } }),
+      tx.inscription.findUnique({ where: { id: inscriptionId }, select: { anneeId: true } }),
+    ]);
+    if (!seance || !inscription) throw new NotFoundException();
+    if (seance.anneeId !== inscription.anneeId) {
+      throw new BadRequestException(I18nContext.current()!.t('vod.seance_inscription_annee_incoherente'));
+    }
+  }
+
   // ----------------------------------------------------------- consultation
 
-  async liste(query: VodQueryDto) {
+  private lectureWhere(user: AuthUser): Prisma.CoursVODWhereInput {
+    if (([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION] as Role[]).includes(user.role)) return {};
+    if (user.role === Role.ETUDIANT) return {
+      statut: StatutVOD.EN_LIGNE,
+      OR: [{ public: true }, { inscription: { etudiantId: user.etudiantId ?? '__aucun__' } }],
+    };
+    if (user.role === Role.ENSEIGNANT) return { OR: [
+      { creeParId: user.id }, { enseignantId: user.enseignantId ?? '__aucun__' },
+      { public: true, statut: StatutVOD.EN_LIGNE },
+    ] };
+    return { public: true, statut: StatutVOD.EN_LIGNE };
+  }
+
+  async trouverPour(id: string, user: AuthUser) {
+    const vod = await this.prisma.coursVOD.findFirst({ where: { id, AND: [this.lectureWhere(user)] }, include: VOD_INCLUDE });
+    if (!vod) throw new NotFoundException();
+    return vod;
+  }
+
+  private async verifierEdition(id: string, user: AuthUser) {
+    const vod = await this.trouver(id);
+    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException();
+    return vod;
+  }
+
+  /** Les décisions et leur instantané partent du même état verrouillé. */
+  private async verrouiller(tx: Prisma.TransactionClient, id: string) {
+    await tx.$queryRaw`SELECT id FROM "CoursVOD" WHERE id = ${id} FOR UPDATE`;
+    const vod = await tx.coursVOD.findUnique({ where: { id } });
+    if (!vod) throw new NotFoundException();
+    return vod;
+  }
+
+  private verifierAuteur(vod: { creeParId: string | null }, user: AuthUser) {
+    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException();
+  }
+
+  /** La lecture de statistiques ne doit pas révéler l'existence d'une VOD privée. */
+  private async verifierStatistiques(id: string, user: AuthUser) {
+    const vod = await this.prisma.coursVOD.findFirst({
+      where: { id, ...(user.role === Role.ADMIN ? {} : { creeParId: user.id }) },
+      include: VOD_INCLUDE,
+    });
+    if (!vod) throw new NotFoundException();
+    return vod;
+  }
+
+  async liste(query: VodQueryDto, user: AuthUser) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.CoursVODWhereInput = {
+      AND: [this.lectureWhere(user)],
       ...(query.type ? { type: query.type } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.matiereId ? { matiereId: query.matiereId } : {}),
@@ -75,12 +196,12 @@ export class VodService {
         where,
         include: VOD_INCLUDE,
         orderBy: { dateMiseEnLigne: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.coursVOD.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouver(id: string) {
@@ -88,13 +209,13 @@ export class VodService {
       where: { id },
       include: VOD_INCLUDE,
     });
-    if (!vod) throw new NotFoundException('Ressource VOD introuvable');
+    if (!vod) throw new NotFoundException(I18nContext.current()!.t('vod.ressource_vod_introuvable'));
     return vod;
   }
 
   /** Vues & statistiques agrégées (ADMIN/ENSEIGNANT). */
-  async statistiques(id: string) {
-    const vod = await this.trouver(id);
+  async statistiques(id: string, user: AuthUser) {
+    const vod = await this.verifierStatistiques(id, user);
     const [nbVues, nbComplets, dernieres] = await Promise.all([
       this.prisma.vueVOD.count({ where: { vodId: id } }),
       this.prisma.vueVOD.count({ where: { vodId: id, termine: true } }),
@@ -133,13 +254,12 @@ export class VodService {
   /** Catalogue des cours regardés par l'étudiant courant (portail). */
   async maCollecte(user: AuthUser) {
     if (!user.etudiantId) {
-      throw new BadRequestException("Aucun profil étudiant n'est lié à votre compte.");
+      throw new BadRequestException(I18nContext.current()!.t('vod.aucun_profil_etudiant_n_est_lie_a_votre_compte'));
     }
     const inscriptions = await this.prisma.inscription.findMany({
       where: { etudiantId: user.etudiantId },
       select: { id: true },
     });
-    if (!inscriptions.length) return [];
 
     const vods = await this.prisma.coursVOD.findMany({
       where: {
@@ -176,9 +296,10 @@ export class VodService {
   }
 
   /** Recherche plein texte (compatible FTS léger : `contains` sur titre). */
-  async recherche(texte: string) {
+  async recherche(texte: string, user: AuthUser) {
     return this.prisma.coursVOD.findMany({
       where: {
+        AND: [this.lectureWhere(user)],
         statut: StatutVOD.EN_LIGNE,
         OR: [
           { titre: { contains: texte, mode: 'insensitive' } },
@@ -195,110 +316,178 @@ export class VodService {
   // ---------------------------------------------------------------- édition
 
   async creer(dto: CreateCoursVODDto, user: AuthUser) {
-    const vod = await this.prisma.coursVOD.create({
-      data: {
-        titre: dto.titre,
-        description: dto.description ?? null,
-        matiereId: dto.matiereId ?? null,
-        seanceId: dto.seanceId ?? null,
-        enseignantId: dto.enseignantId ?? null,
-        type: dto.type,
-        url: dto.url,
-        thumbnailUrl: dto.thumbnailUrl ?? null,
-        dureeSecondes: dto.dureeSecondes ?? null,
-        tailleKo: dto.tailleKo ?? null,
-        transcription: dto.transcription ?? null,
-        public: dto.public ?? true,
-        inscriptionId: dto.inscriptionId ?? null,
-        creeParId: user.id,
-        statut: StatutVOD.BROUILLON,
-      },
-      include: VOD_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await this.verifierAnneeLiee(tx, dto.seanceId ?? null, dto.inscriptionId ?? null);
+      const vod = await tx.coursVOD.create({
+        data: {
+          titre: dto.titre,
+          description: dto.description ?? null,
+          matiereId: dto.matiereId ?? null,
+          seanceId: dto.seanceId ?? null,
+          enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : dto.enseignantId ?? null,
+          type: dto.type,
+          url: dto.url,
+          thumbnailUrl: dto.thumbnailUrl ?? null,
+          dureeSecondes: dto.dureeSecondes ?? null,
+          tailleKo: dto.tailleKo ?? null,
+          transcription: dto.transcription ?? null,
+          public: dto.public ?? true,
+          inscriptionId: dto.inscriptionId ?? null,
+          creeParId: user.id,
+          statut: StatutVOD.BROUILLON,
+        },
+        include: VOD_INCLUDE,
+      });
+      await this.journaliser(tx, user, 'VOD_CREE', vod.id, null, instantaneVod(vod));
+      return vod;
     });
-    await this.journal(user.id, 'VOD_CREE', vod.id);
-    return vod;
   }
 
   async modifier(id: string, dto: UpdateCoursVODDto, user: AuthUser) {
-    await this.trouver(id);
-    const vod = await this.prisma.coursVOD.update({
-      where: { id },
-      data: {
-        ...(dto.titre !== undefined ? { titre: dto.titre } : {}),
-        ...(dto.description !== undefined ? { description: dto.description } : {}),
-        ...(dto.matiereId !== undefined ? { matiereId: dto.matiereId } : {}),
-        ...(dto.seanceId !== undefined ? { seanceId: dto.seanceId } : {}),
-        ...(dto.enseignantId !== undefined ? { enseignantId: dto.enseignantId } : {}),
-        ...(dto.type !== undefined ? { type: dto.type } : {}),
-        ...(dto.url !== undefined ? { url: dto.url } : {}),
-        ...(dto.thumbnailUrl !== undefined ? { thumbnailUrl: dto.thumbnailUrl } : {}),
-        ...(dto.dureeSecondes !== undefined ? { dureeSecondes: dto.dureeSecondes } : {}),
-        ...(dto.tailleKo !== undefined ? { tailleKo: dto.tailleKo } : {}),
-        ...(dto.transcription !== undefined ? { transcription: dto.transcription } : {}),
-        ...(dto.public !== undefined ? { public: dto.public } : {}),
-        ...(dto.inscriptionId !== undefined ? { inscriptionId: dto.inscriptionId } : {}),
-      },
-      include: VOD_INCLUDE,
+    // Refus rapide, puis contrôle renouvelé sur l'état verrouillé.
+    await this.verifierEdition(id, user);
+    const donnees = {
+      ...(dto.titre !== undefined ? { titre: dto.titre } : {}),
+      ...(dto.description !== undefined ? { description: dto.description } : {}),
+      ...(dto.matiereId !== undefined ? { matiereId: dto.matiereId } : {}),
+      ...(dto.seanceId !== undefined ? { seanceId: dto.seanceId } : {}),
+      ...(dto.enseignantId !== undefined ? { enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : dto.enseignantId } : {}),
+      ...(dto.type !== undefined ? { type: dto.type } : {}),
+      ...(dto.url !== undefined ? { url: dto.url } : {}),
+      ...(dto.thumbnailUrl !== undefined ? { thumbnailUrl: dto.thumbnailUrl } : {}),
+      ...(dto.dureeSecondes !== undefined ? { dureeSecondes: dto.dureeSecondes } : {}),
+      ...(dto.tailleKo !== undefined ? { tailleKo: dto.tailleKo } : {}),
+      ...(dto.transcription !== undefined ? { transcription: dto.transcription } : {}),
+      ...(dto.public !== undefined ? { public: dto.public } : {}),
+      ...(dto.inscriptionId !== undefined ? { inscriptionId: dto.inscriptionId } : {}),
+    };
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await this.verrouiller(tx, id);
+      this.verifierAuteur(avant, user);
+      if (avant.statut === StatutVOD.ARCHIVE) {
+        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_archivee'));
+      }
+      await this.verifierAnneeLiee(
+        tx,
+        dto.seanceId !== undefined ? dto.seanceId : avant.seanceId,
+        dto.inscriptionId !== undefined ? dto.inscriptionId : avant.inscriptionId,
+      );
+      const vod = await tx.coursVOD.update({ where: { id }, data: donnees, include: VOD_INCLUDE });
+      await this.journaliser(
+        tx, user, 'VOD_MODIFIE', id,
+        instantaneVod(avant), instantaneVod(vod), Object.keys(donnees),
+      );
+      return vod;
     });
-    await this.journal(user.id, 'VOD_MODIFIE', id);
-    return vod;
   }
 
   async publier(id: string, user: AuthUser) {
-    const vod = await this.trouver(id);
-    if (vod.statut !== StatutVOD.BROUILLON && vod.statut !== StatutVOD.HORS_LIGNE) {
-      throw new BadRequestException(
-        `Cette ressource est déjà ${vod.statut} : seul un BROUILLON ou un HORS_LIGNE peut être remis en ligne.`,
+    await this.verifierEdition(id, user);
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await this.verrouiller(tx, id);
+      this.verifierAuteur(avant, user);
+      if (avant.statut !== StatutVOD.BROUILLON && avant.statut !== StatutVOD.HORS_LIGNE) {
+        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors', { args: { statut: avant.statut } }));
+      }
+      const miseAJour = await tx.coursVOD.update({
+        where: { id },
+        data: {
+          statut: StatutVOD.EN_LIGNE,
+          dateMiseEnLigne: new Date(),
+        },
+        include: VOD_INCLUDE,
+      });
+      await this.journaliser(
+        tx, user, 'VOD_PUBLIE', id,
+        instantaneVod(avant), instantaneVod(miseAJour), ['statut', 'dateMiseEnLigne'],
       );
-    }
-    const miseAJour = await this.prisma.coursVOD.update({
-      where: { id },
-      data: {
-        statut: StatutVOD.EN_LIGNE,
-        dateMiseEnLigne: new Date(),
-      },
-      include: VOD_INCLUDE,
+      return miseAJour;
     });
-    await this.journal(user.id, 'VOD_PUBLIE', id);
-    return miseAJour;
   }
 
   async archiver(id: string, _dto: ArchiverVODDto, user: AuthUser) {
-    const vod = await this.trouver(id);
-    if (vod.statut === StatutVOD.ARCHIVE) {
-      throw new BadRequestException('Cette ressource est déjà archivée.');
-    }
-    const miseAJour = await this.prisma.coursVOD.update({
-      where: { id },
-      data: { statut: StatutVOD.ARCHIVE },
-      include: VOD_INCLUDE,
+    await this.verifierEdition(id, user);
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await this.verrouiller(tx, id);
+      this.verifierAuteur(avant, user);
+      if (avant.statut === StatutVOD.ARCHIVE) {
+        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_archivee'));
+      }
+      const miseAJour = await tx.coursVOD.update({
+        where: { id },
+        data: { statut: StatutVOD.ARCHIVE },
+        include: VOD_INCLUDE,
+      });
+      await this.journaliser(
+        tx, user, 'VOD_ARCHIVE', id,
+        instantaneVod(avant), instantaneVod(miseAJour), ['statut'],
+      );
+      return miseAJour;
     });
-    await this.journal(user.id, 'VOD_ARCHIVE', id);
-    return miseAJour;
   }
 
   // ---------------------------------------------------------------- journal
 
   /**
+   * Écrit la ligne de journal dans la transaction de la mutation : l'état de
+   * la ressource et sa trace sont committés ensemble, ou pas du tout. Un
+   * journal écrit hors transaction survivrait à une mutation annulée.
+   */
+  private journaliser(
+    tx: Prisma.TransactionClient,
+    user: AuthUser,
+    action: string,
+    entiteId: string,
+    avant: unknown,
+    apres: unknown,
+    champsModifies?: string[],
+  ) {
+    return tx.auditLog.create({
+      data: {
+        userId: user.id,
+        action,
+        entite: 'CoursVOD',
+        entiteId,
+        details: JSON.stringify({
+          avant,
+          apres,
+          // Noms des champs touchés seulement : leurs valeurs restent dans
+          // l'instantané projeté, jamais recopiées.
+          ...(champsModifies?.length ? { champsModifies } : {}),
+        }),
+      },
+    });
+  }
+
+  // ------------------------------------------------------------- visionnage
+
+  /**
    * Enregistrement d'une vue. Les compteurs agrégés (nbVues, nbComplets)
    * sont mis à jour à chaque appel : un nouveau visionnage = +1 vue ;
    * `termine` devient vrai quand la position couvre ≥ 90 % de la durée.
+   *
+   * Cette méthode n'écrit aucune entrée de journal d'audit, et ce n'est pas
+   * un oubli : qui a regardé quoi est une donnée de suivi pédagogique, pas un
+   * acte d'administration à tracer. Elle reste dans ses tables dédiées.
    */
   async enregistrerVue(id: string, dto: EnregistrerVueDto, user: AuthUser, ip?: string) {
-    const vod = await this.trouver(id);
+    await this.trouverPour(id, user);
     const dureeSignalee = Math.max(0, Math.floor(dto.dureeSecondes || 0));
     const positionSignalee = Math.max(0, Math.floor(dto.positionSecondes || 0));
     const termineAuto =
       dureeSignalee > 0 && positionSignalee / dureeSignalee >= SEUIL_COMPLET;
     const termine = dto.termine ?? termineAuto;
 
-    // Si l'utilisateur est connu etudiantId, on persiste une ligne VueVOD ;
-    // sinon (visiteur public) on ne garde que les compteurs agrégés.
-    if (user.etudiantId) {
-      await this.prisma.vueVOD.create({
+    // La ligne et les compteurs évoluent ensemble. Les incréments SQL
+    // empêchent deux visionnages simultanés d'écraser leurs compteurs mutuels.
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouiller(tx, id);
+      const accessible = await tx.coursVOD.findFirst({ where: { id, AND: [this.lectureWhere(user)] } });
+      if (!accessible) throw new NotFoundException();
+      await tx.vueVOD.create({
         data: {
           vodId: id,
-          etudiantId: user.etudiantId,
+          ...(user.etudiantId ? { etudiantId: user.etudiantId } : {}),
           positionSecondes: positionSignalee,
           dureeSecondes: dureeSignalee,
           termine,
@@ -306,46 +495,17 @@ export class VodService {
           dateFin: termine ? new Date() : null,
         },
       });
-    } else {
-      await this.prisma.vueVOD.create({
+
+      const cours = await tx.coursVOD.update({
+        where: { id },
         data: {
-          vodId: id,
-          positionSecondes: positionSignalee,
-          dureeSecondes: dureeSignalee,
-          termine,
-          ipAppareil: ip ?? null,
-          dateFin: termine ? new Date() : null,
+          nbVues: { increment: 1 },
+          ...(termine ? { nbComplets: { increment: 1 } } : {}),
         },
+        select: { nbVues: true },
       });
-    }
 
-    const agregats = await this.prisma.vueVOD.aggregate({
-      where: { vodId: id },
-      _count: { _all: true },
-    });
-    const complests = await this.prisma.vueVOD.count({
-      where: { vodId: id, termine: true },
-    });
-
-    await this.prisma.coursVOD.update({
-      where: { id },
-      data: {
-        nbVues: agregats._count._all,
-        nbComplets: complests,
-      },
-    });
-
-    return { ok: true, termine, nbVues: agregats._count._all };
-  }
-
-  private async journal(userId: string, action: string, entiteId: string) {
-    await this.prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        entite: 'CoursVOD',
-        entiteId,
-      },
+      return { ok: true, termine, nbVues: cours.nbVues };
     });
   }
 }

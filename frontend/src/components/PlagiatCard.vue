@@ -63,7 +63,7 @@ function miniature(doc?: DocumentDepot | null) {
     <q-card-section class="row items-center q-pb-none">
       <div class="col">
         <div class="text-caption text-grey-7 text-uppercase">
-          Suspicion {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
+          {{ $t('plagiatDetail.score.suspicion') }} {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
         </div>
         <div class="plagiat-carte__score" :class="`plagiat-carte__score--${couleurScore}`">
           {{ score }}<span class="plagiat-carte__score-unite">%</span>
@@ -83,7 +83,7 @@ function miniature(doc?: DocumentDepot | null) {
       <div class="row q-col-gutter-md items-stretch">
         <div class="col-12 col-sm-6">
           <div class="plagiat-carte__vignette">
-            <div class="text-caption text-grey-7 text-uppercase">Document A</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatDetail.diff.documentA') }}</div>
             <div class="plagiat-carte__vignette-titre text-weight-medium">
               {{ miniature(suspicion.documentA).titre }}
             </div>
@@ -102,7 +102,7 @@ function miniature(doc?: DocumentDepot | null) {
         </div>
         <div class="col-12 col-sm-6">
           <div class="plagiat-carte__vignette plagiat-carte__vignette--b">
-            <div class="text-caption text-grey-7 text-uppercase">Document B</div>
+            <div class="text-caption text-grey-7 text-uppercase">{{ $t('plagiatDetail.diff.documentB') }}</div>
             <div class="plagiat-carte__vignette-titre text-weight-medium">
               {{ miniature(suspicion.documentB).titre }}
             </div>
@@ -126,13 +126,13 @@ function miniature(doc?: DocumentDepot | null) {
     <q-card-actions class="q-px-md">
       <div class="text-caption text-grey-7">
         <q-icon name="event" size="14px" class="q-mr-xs" />
-        Détecté le {{ new Date(suspicion.detecteLe).toLocaleDateString('fr-FR') }}
+        {{ $t('plagiatDetail.score.detectedOn') }} {{ new Date(suspicion.detecteLe).toLocaleDateString('fr-FR') }}
       </div>
       <q-space />
-      <q-btn v-if="clickable" flat dense no-caps icon="open_in_new" label="Détail" @click.stop="emit('voir', suspicion)" />
+      <q-btn v-if="clickable" flat dense no-caps icon="open_in_new" :label="$t('common.actions.detail')" @click.stop="emit('voir', suspicion)" />
       <template v-if="showActions && suspicion.statut === 'EN_ATTENTE'">
-        <q-btn flat dense no-caps color="positive" icon="thumb_down" label="Acquitter" @click.stop="emit('acquitter', suspicion)" />
-        <q-btn flat dense no-caps color="negative" icon="gavel" label="Confirmer" @click.stop="emit('confirmer', suspicion)" />
+        <q-btn flat dense no-caps color="positive" icon="thumb_down" :label="$t('plagiatDetail.decision.acquitAction')" @click.stop="emit('acquitter', suspicion)" />
+        <q-btn flat dense no-caps color="negative" icon="gavel" :label="$t('common.actions.confirm')" @click.stop="emit('confirmer', suspicion)" />
       </template>
     </q-card-actions>
   </q-card>

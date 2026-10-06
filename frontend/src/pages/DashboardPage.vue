@@ -2,15 +2,14 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Tableau de bord</div>
+        <h1 class="page-titre">{{ $t('dashboard.title') }}</h1>
         <div class="page-sous-titre">
-          Assiduité des enseignants — période du {{ dateLisible(dateDebut) }} au
-          {{ dateLisible(dateFin) }}
+          {{ $t('dashboard.subtitle', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) }) }}
         </div>
       </div>
       <div class="col-auto row q-gutter-sm">
-        <champ-date v-model="dateDebut" label="Du" style="width: 160px" />
-        <champ-date v-model="dateFin" label="Au" style="width: 160px" />
+        <champ-date v-model="dateDebut" :label="$t('dashboard.filters.from')" style="width: 160px" />
+        <champ-date v-model="dateFin" :label="$t('dashboard.filters.to')" style="width: 160px" />
         <q-select
           v-model="departementId"
           :options="optionsDepartements"
@@ -19,18 +18,18 @@
           clearable
           emit-value
           map-options
-          label="Département"
+          :label="$t('dashboard.filters.department')"
           style="min-width: 180px"
         />
         <q-btn
           round
           color="primary"
           icon="refresh"
-          aria-label="Recalculer le tableau de bord"
+          :aria-label="$t('dashboard.actions.refreshAria')"
           :loading="chargement"
           @click="charger"
         >
-          <q-tooltip>Recalculer</q-tooltip>
+          <q-tooltip>{{ $t('dashboard.actions.refreshTooltip') }}</q-tooltip>
         </q-btn>
       </div>
     </div>
@@ -38,36 +37,46 @@
     <!-- Situation du jour : ce que la tournée a déjà couvert -->
     <section class="bandeau jour">
       <div class="jour__etat">
-        <p class="pochoir jour__mention">Journée du {{ dateLisible(d?.jour.date) }}</p>
+        <p class="pochoir jour__mention">{{ $t('dashboard.today.mention', { date: dateLisible(d?.jour.date) }) }}</p>
         <p class="lettrage jour__compte chiffres">
           {{ d?.jour.controlees ?? 0 }}<span class="jour__sur">/{{ d?.jour.planifiees ?? 0 }}</span>
         </p>
-        <p class="pochoir jour__legende">séances contrôlées</p>
+        <p class="pochoir jour__legende">{{ $t('dashboard.today.legend') }}</p>
       </div>
 
-      <div class="jour__jauge" role="img" :aria-label="`Couverture du contrôle : ${pourcentLisible(d?.jour.tauxControle)}`">
+      <div class="jour__jauge" role="img" :aria-label="$t('dashboard.gauge.coverageAria', { percent: pourcentLisible(d?.jour.tauxControle) })">
         <div class="jour__jauge-remplie se-peint" :style="{ width: `${d?.jour.tauxControle ?? 0}%` }" />
-        <span class="pochoir jour__taux chiffres">{{ pourcentLisible(d?.jour.tauxControle) }} de couverture</span>
+        <span class="pochoir jour__taux chiffres">{{ $t('dashboard.gauge.coverageLabel', { percent: pourcentLisible(d?.jour.tauxControle) }) }}</span>
       </div>
 
       <q-btn
         v-if="auth.peutPointer"
         unelevated
         no-caps
-        color="white"
-        text-color="primary"
+        color="primary"
         icon="fact_check"
-        label="Aller à la tournée"
+        :label="$t('dashboard.actions.goToRounds')"
         to="/controle"
       />
+      <q-btn
+        v-if="auth.peutPointer"
+        outline
+        no-caps
+        icon="offline_pin"
+        :label="$t('dashboard.actions.prepareRound')"
+        :loading="preparationEnCours"
+        @click="preparerTournee"
+      />
+      <q-chip v-if="tourneePrepareeLe" dense icon="cloud_done" role="status">
+        {{ $t('dashboard.actions.preparedAt', { time: heurePreparation }) }}
+      </q-chip>
       <q-btn
         v-else
         unelevated
         no-caps
-        color="white"
-        text-color="primary"
+        color="primary"
         icon="event_note"
-        label="Voir le registre des séances"
+        :label="$t('dashboard.actions.viewSessionsRegistry')"
         :to="lienSeancesJour"
       />
     </section>
@@ -79,7 +88,9 @@
           <p class="pochoir releve__libelle">{{ k.libelle }}</p>
           <p class="pochoir pochoir--brut releve__detail">{{ k.detail }}</p>
         </div>
-        <p class="lettrage avec-unite chiffres releve__valeur" :class="`text-${k.couleur}`">{{ k.valeur }}</p>
+        <!-- Le chiffre se lit en encre, et l'encre bascule avec le thème. Une
+             classe `text-secondary` figeait #1D1D1F : invisible en sombre. -->
+        <p class="lettrage avec-unite chiffres releve__valeur">{{ k.valeur }}</p>
       </div>
     </section>
 
@@ -87,12 +98,12 @@
       <div class="col-12 col-md-8">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div class="text-subtitle2">Évolution sur 14 jours</div>
-            <div class="text-caption">Séances assurées, absences et retards</div>
+            <div class="text-subtitle2">{{ $t('dashboard.charts.evolutionTitle') }}</div>
+            <div class="text-caption">{{ $t('dashboard.charts.evolutionSubtitle') }}</div>
           </q-card-section>
           <q-card-section>
             <chart-canvas v-if="d" :config="configEvolution" :hauteur="260" />
-            <p v-else class="pochoir carte__vide">Aucune donnée sur la période.</p>
+            <p v-else class="pochoir carte__vide">{{ $t('dashboard.charts.noData') }}</p>
           </q-card-section>
         </q-card>
       </div>
@@ -100,12 +111,12 @@
       <div class="col-12 col-md-4">
         <q-card flat bordered class="carte">
           <q-card-section>
-            <div class="text-subtitle2">Répartition des constats</div>
-            <div class="text-caption">Sur la période sélectionnée</div>
+            <div class="text-subtitle2">{{ $t('dashboard.charts.distributionTitle') }}</div>
+            <div class="text-caption">{{ $t('dashboard.charts.distributionSubtitle') }}</div>
           </q-card-section>
           <q-card-section>
             <chart-canvas v-if="d" :config="configRepartition" :hauteur="260" />
-            <p v-else class="pochoir carte__vide">Aucune donnée sur la période.</p>
+            <p v-else class="pochoir carte__vide">{{ $t('dashboard.charts.noData') }}</p>
           </q-card-section>
         </q-card>
       </div>
@@ -113,8 +124,8 @@
       <div class="col-12 col-md-6">
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center">
-            <div class="col text-subtitle2">Assiduité par département</div>
-            <div class="text-caption">Cliquez pour filtrer le tableau</div>
+            <div class="col text-subtitle2">{{ $t('dashboard.departments.title') }}</div>
+            <div class="text-caption">{{ $t('dashboard.departments.subtitle') }}</div>
           </q-card-section>
           <q-list separator>
             <!-- « Sans département » n'est pas un identifiant : la ligne se lit
@@ -129,8 +140,7 @@
               <q-item-section>
                 <q-item-label>{{ dep.nom }}</q-item-label>
                 <q-item-label caption>
-                  {{ dep.controlees }} contrôles · {{ dep.absent }} absence(s) ·
-                  {{ heuresLisibles(dep.heuresRealisees) }} réalisées
+                  {{ $t('dashboard.departments.itemDetail', { controlees: dep.controlees, absent: dep.absent, heures: heuresLisibles(dep.heuresRealisees) }) }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side style="width: 140px">
@@ -139,7 +149,7 @@
             </q-item>
             <q-item v-if="!d?.departements?.length">
               <q-item-section class="pochoir carte__vide">
-                Aucune séance rattachée à un département sur la période.
+                {{ $t('dashboard.departments.empty') }}
               </q-item-section>
             </q-item>
           </q-list>
@@ -149,14 +159,14 @@
       <div class="col-12 col-md-6">
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center q-gutter-sm">
-            <div class="col text-subtitle2">Enseignants les plus absents</div>
+            <div class="col text-subtitle2">{{ $t('dashboard.teachers.title') }}</div>
             <q-btn
               v-if="d?.justificatifsEnAttente"
               outline
               dense
               no-caps
               icon="assignment_late"
-              :label="`${d.justificatifsEnAttente} justificatif(s) à arbitrer`"
+              :label="$t('dashboard.teachers.pendingJustifications', { count: d.justificatifsEnAttente })"
               :to="{ name: 'justificatifs', query: { statut: 'EN_ATTENTE' } }"
             />
           </q-card-section>
@@ -170,7 +180,7 @@
               <q-item-section>
                 <q-item-label>{{ e.nom }}</q-item-label>
                 <q-item-label caption>
-                  {{ e.planifiees }} séance(s) programmée(s) · présence {{ pourcentLisible(e.tauxPresence) }}
+                  {{ $t('dashboard.teachers.itemDetail', { count: e.planifiees, percent: pourcentLisible(e.tauxPresence) }) }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -179,16 +189,16 @@
                   dense
                   round
                   icon="event_note"
-                  aria-label="Voir les séances de cet enseignant"
+                  :aria-label="$t('dashboard.teachers.viewSessionsAria')"
                   :to="lienSeancesEnseignant(e.id)"
                 >
-                  <q-tooltip>Voir ses séances sur la période</q-tooltip>
+                  <q-tooltip>{{ $t('dashboard.teachers.viewSessionsTooltip') }}</q-tooltip>
                 </q-btn>
               </q-item-section>
             </q-item>
             <q-item v-if="!d?.enseignantsAbsents?.length">
               <q-item-section class="pochoir carte__vide">
-                Aucune absence constatée sur la période.
+                {{ $t('dashboard.teachers.empty') }}
               </q-item-section>
             </q-item>
           </q-list>
@@ -198,7 +208,7 @@
               flat
               no-caps
               icon="query_stats"
-              label="Statistiques par enseignant"
+              :label="$t('dashboard.actions.teacherStats')"
               :to="lienStatistiques"
             />
           </q-card-actions>
@@ -213,9 +223,12 @@
 <script setup lang="ts">
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useQuasar } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useSeancesStore } from '../stores/seances';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import BarreTaux from '../components/BarreTaux.vue';
 import {
@@ -229,19 +242,22 @@ import {
 import type { Departement } from '../types';
 
 const auth = useAuthStore();
+const seancesHorsLigne = useSeancesStore();
+const $q = useQuasar();
+const { t, locale } = useI18n();
 
 /**
  * Les peintures du panneau, reprises de `css/quasar.variables.scss` : Chart.js
  * ne lit pas les variables Sass, la liste doit donc rester alignée à la main.
  */
-const VERT = '#0F7A45';
-const JAUNE = '#EFB700';
-const ROUGE = '#C4122E';
-const VERT_CLAIR = '#3E9E6C';
-const JAUNE_FONCE = '#C98A00';
-const ROUGE_CLAIR = '#E0574F';
-const ENCRE = '#10251E';
-const ENCRE_DOUCE = '#33463F';
+const VERT = '#007A4D';
+const JAUNE = '#FCD116';
+const ROUGE = '#CE1126';
+const VERT_CLAIR = '#2E9E70';
+const JAUNE_FONCE = '#8A6300';
+const ROUGE_CLAIR = '#E05A6B';
+const ENCRE = '#1D1D1F';
+const ENCRE_DOUCE = '#6E6E73';
 
 /**
  * Une peinture par statut, indexée par la clé d'énumération et non par la
@@ -258,12 +274,43 @@ const PEINTURE_STATUT: Record<string, string> = {
   NON_CONTROLE: ENCRE_DOUCE,
 };
 
+/**
+ * `/rapports/dashboard` renvoie la répartition libellée en clair (« Présent »,
+ * « Départ anticipé ») là où le reste de l'API renvoie la clé d'énumération.
+ * Chercher la peinture sur la seule clé rendait donc *toutes* les parts de la
+ * couronne grises : un camembert d'une seule couleur ne dit plus rien.
+ * On accepte les deux écritures, et on retombe sur le gris seulement pour un
+ * statut réellement inconnu.
+ */
+const PEINTURE_PAR_LIBELLE: Record<string, string> = Object.fromEntries(
+  Object.entries(PEINTURE_STATUT).map(([cle, teinte]) => [
+    (LIBELLE_STATUT_PRESENCE[cle as keyof typeof LIBELLE_STATUT_PRESENCE] ?? cle).toLowerCase(),
+    teinte,
+  ]),
+);
+
+const peinture = (statut: string): string =>
+  PEINTURE_STATUT[statut] ?? PEINTURE_PAR_LIBELLE[String(statut).toLowerCase()] ?? ENCRE_DOUCE;
+
 const dateDebut = ref(decalerJours(aujourdhui(), -29));
 const dateFin = ref(aujourdhui());
 const departementId = ref<string | null>(null);
 const departements = ref<Departement[]>([]);
 const d = ref<any>(null);
 const chargement = ref(false);
+const preparationEnCours = ref(false);
+const tourneePrepareeLe = ref<string | null>(null);
+const clePreparation = computed(() => {
+  const userId = auth.utilisateur?.id;
+  return userId ? `unipresence_tournee_preparee_${userId}` : null;
+});
+const heurePreparation = computed(() => {
+  if (!tourneePrepareeLe.value) return '';
+  return new Date(tourneePrepareeLe.value).toLocaleTimeString(
+    locale.value === 'en-US' ? 'en-US' : 'fr-FR',
+    { hour: '2-digit', minute: '2-digit' },
+  );
+});
 
 const optionsDepartements = computed(() =>
   departements.value.map((x) => ({ label: x.nom, value: x.id })),
@@ -299,28 +346,30 @@ const kpis = computed(() => {
   const g = d.value?.global;
   return [
     {
-      libelle: 'Séances programmées',
+      libelle: t('dashboard.kpis.plannedSessions'),
       valeur: g?.planifiees ?? 0,
-      detail: `${g?.controlees ?? 0} contrôlées (${pourcentLisible(g?.tauxControle)})`,
-      couleur: 'primary',
+      detail: t('dashboard.kpis.plannedSessionsDetail', {
+        count: g?.controlees ?? 0,
+        percent: pourcentLisible(g?.tauxControle),
+      }),
     },
     {
-      libelle: 'Taux de présence',
+      libelle: t('dashboard.kpis.presenceRate'),
       valeur: pourcentLisible(g?.tauxPresence),
-      detail: `${g?.assurees ?? 0} séance(s) assurée(s)`,
-      couleur: 'positive',
+      detail: t('dashboard.kpis.presenceRateDetail', { count: g?.assurees ?? 0 }),
     },
     {
-      libelle: 'Absences',
+      libelle: t('dashboard.kpis.absences'),
       valeur: g?.absent ?? 0,
-      detail: `${g?.excuse ?? 0} excusée(s) · ${g?.retard ?? 0} retard(s)`,
-      couleur: 'negative',
+      detail: t('dashboard.kpis.absencesDetail', {
+        excused: g?.excuse ?? 0,
+        late: g?.retard ?? 0,
+      }),
     },
     {
-      libelle: 'Heures réalisées',
+      libelle: t('dashboard.kpis.hoursWorked'),
       valeur: heuresLisibles(g?.heuresRealisees),
-      detail: `sur ${heuresLisibles(g?.heuresPrevues)} programmées`,
-      couleur: 'secondary',
+      detail: t('dashboard.kpis.hoursWorkedDetail', { planned: heuresLisibles(g?.heuresPrevues) }),
     },
   ];
 });
@@ -331,17 +380,17 @@ const configEvolution = computed<ChartConfiguration>(() => ({
     labels: (d.value?.evolution ?? []).map((e: any) => e.date.slice(5)),
     datasets: [
       {
-        label: 'Séances assurées',
+        label: t('dashboard.charts.datasets.sessionsHeld'),
         data: (d.value?.evolution ?? []).map((e: any) => e.assurees),
         borderColor: VERT,
-        backgroundColor: 'rgba(15,122,69,.16)',
+        backgroundColor: 'rgba(3, 161, 14, 0.12)',
         borderWidth: 3,
         fill: true,
         tension: 0,
         pointRadius: 0,
       },
       {
-        label: 'Absences',
+        label: t('dashboard.charts.datasets.absences'),
         data: (d.value?.evolution ?? []).map((e: any) => e.absences),
         borderColor: ROUGE,
         borderWidth: 3,
@@ -349,7 +398,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
         pointRadius: 0,
       },
       {
-        label: 'Retards',
+        label: t('dashboard.charts.datasets.delays'),
         data: (d.value?.evolution ?? []).map((e: any) => e.retards),
         borderColor: JAUNE,
         borderWidth: 3,
@@ -373,10 +422,10 @@ const configRepartition = computed<ChartConfiguration>(() => ({
     datasets: [
       {
         data: (d.value?.repartition ?? []).map((r: any) => r.valeur),
-        backgroundColor: (d.value?.repartition ?? []).map(
-          (r: any) => PEINTURE_STATUT[r.statut] ?? ENCRE_DOUCE,
-        ),
-        borderColor: ENCRE,
+        backgroundColor: (d.value?.repartition ?? []).map((r: any) => peinture(r.statut)),
+        // Le liséré sépare les parts : il prend la couleur de la surface,
+        // jamais celle de l'encre — sinon la couronne se lit comme un cerclage.
+        borderColor: '#FFFFFF',
         borderWidth: 2,
       },
     ],
@@ -403,7 +452,49 @@ async function charger() {
   }
 }
 
+/** Précharge les lectures utilisées par la tournée dans le cache PWA, lié au JWT courant. */
+async function preparerTournee() {
+  if (!navigator.onLine || !navigator.serviceWorker?.controller || !clePreparation.value) {
+    $q.notify({ type: 'warning', message: t('dashboard.actions.prepareRequiresNetwork') });
+    return;
+  }
+
+  preparationEnCours.value = true;
+  const date = aujourdhui();
+  try {
+    // Le nonce empêche une ancienne réponse santé en cache de faire croire que
+    // les données de la tournée viennent d'être rafraîchies.
+    await api.get('/health', { params: { _tournee: Date.now() } });
+    const [, salles, affectations] = await Promise.all([
+      api.get('/seances/journee', { params: { date } }),
+      api.get('/salles', { params: { all: '1' } }),
+      api.get('/affectations', { params: { all: '1' } }),
+    ]);
+    seancesHorsLigne.enregistrerAffectations(affectations.data.data ?? []);
+    seancesHorsLigne.enregistrerSalles(salles.data.data ?? []);
+    const maintenant = new Date().toISOString();
+    localStorage.setItem(clePreparation.value, JSON.stringify({ date, prepareeLe: maintenant }));
+    tourneePrepareeLe.value = maintenant;
+    $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });
+  } catch {
+    $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
+  } finally {
+    preparationEnCours.value = false;
+  }
+}
+
 onMounted(async () => {
+  if (clePreparation.value) {
+    try {
+      const preparation = JSON.parse(localStorage.getItem(clePreparation.value) ?? 'null');
+      const age = preparation?.prepareeLe ? Date.now() - new Date(preparation.prepareeLe).getTime() : Infinity;
+      if (preparation?.date === aujourdhui() && age >= 0 && age < 24 * 60 * 60 * 1000) {
+        tourneePrepareeLe.value = preparation.prepareeLe;
+      }
+    } catch {
+      tourneePrepareeLe.value = null;
+    }
+  }
   // Le référentiel n'alimente qu'une liste déroulante : son échec ne doit pas
   // priver la page de son tableau.
   try {
@@ -428,26 +519,29 @@ watch([dateDebut, dateFin, departementId], charger);
   flex-wrap: wrap;
 }
 
-.jour__mention { color: rgba(255, 255, 255, 0.74); }
+.jour__mention { color: var(--up-encre-douce); }
 
 .jour__compte {
   font-size: clamp(2.2rem, 1.6rem + 3vw, 3.4rem);
-  color: #fff;
+  color: var(--up-encre);
   margin: 2px 0 0;
 }
 
 .jour__sur {
   font-size: 0.5em;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--up-encre-douce);
 }
 
-.jour__legende { color: rgba(255, 255, 255, 0.8); }
+.jour__legende { color: var(--up-encre-douce); }
 
 .jour__jauge {
   flex: 1 1 240px;
   position: relative;
   height: 34px;
-  border: 2px solid rgba(255, 255, 255, 0.6);
+  border: 0;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-pilule);
+  overflow: hidden;
   display: flex;
   align-items: center;
 }
@@ -455,13 +549,14 @@ watch([dateDebut, dateFin, departementId], charger);
 .jour__jauge-remplie {
   position: absolute;
   inset: 0 auto 0 0;
-  background: $vert;
+  background: #{$vert-action};
+  border-radius: var(--up-pilule);
 }
 
 .jour__taux {
   position: relative;
   padding-left: var(--up-2);
-  color: #fff;
+  color: var(--up-encre);
 }
 
 // Compteur d'absences en champ peint : la règle du statut peint interdit la
@@ -469,7 +564,7 @@ watch([dateDebut, dateFin, departementId], charger);
 .tableau-de-bord__compte {
   width: 34px;
   height: 34px;
-  color: #fff;
+  color: var(--up-encre);
 }
 
 .carte__vide {
@@ -500,6 +595,7 @@ watch([dateDebut, dateFin, departementId], charger);
 
 .releve__valeur {
   font-size: clamp(1.7rem, 1.2rem + 1.8vw, 2.3rem);
+  color: var(--up-encre);
   margin: 0;
   white-space: nowrap;
 }

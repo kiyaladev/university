@@ -1,0 +1,785 @@
+{
+  "date": "2026-10-06T15:10:16.705107+00:00",
+  "backend": {
+    "tests": 933,
+    "suites": 109,
+    "passed": true,
+    "targetedTests": 37,
+    "stagesTests": 32,
+    "fullSuiteEvidenceDate": "2026-10-06T15:10:16.705107+00:00",
+    "patrimoineTargetedTests": 14,
+    "patrimoineTargetedSuites": 2,
+    "patrimoinePassed": true,
+    "courrierTargetedTests": 23,
+    "courrierTargetedSuites": 2,
+    "courrierPassed": true,
+    "logementsTargetedTests": 10,
+    "logementsPassed": true,
+    "restaurantTargetedTests": 20,
+    "restaurantPassed": true,
+    "vodTargetedTests": 41,
+    "vodTargetedSuites": 3,
+    "vodPassed": true,
+    "formationsTargetedTests": 17,
+    "formationsTargetedSuites": 1,
+    "formationsPassed": true,
+    "examensTirageTargetedTests": 23,
+    "examensTirageTargetedSuites": 4,
+    "examensTiragePassed": true,
+    "identityValidityTargetedTests": 34,
+    "identityValidityTargetedSuites": 3,
+    "identityValidityPassed": true,
+    "attestationRattachementTargetedTests": 18,
+    "attestationRattachementTargetedSuites": 2,
+    "attestationRattachementPassed": true,
+    "justificatifsTargetedTests": 21,
+    "justificatifsTargetedSuites": 2,
+    "justificatifsPassed": true,
+    "fullSuiteTestTimeoutMs": 60000,
+    "electionsTargetedTests": 35,
+    "electionsTargetedSuites": 3,
+    "fullSuiteScope": "Suite complète incluant élections, helpdesk et booléens des imports ; log backend-tests-current.log"
+  },
+  "typescript": {
+    "passed": true
+  },
+  "catalogues": {
+    "date": "2026-10-06T13:16:25.591Z",
+    "frenchKeys": 5509,
+    "englishKeys": 5509,
+    "missingEnglish": [],
+    "missingFrench": [],
+    "html": [
+      [],
+      []
+    ],
+    "stubs": []
+  },
+  "screens": {
+    "checks": 252,
+    "failed": 0,
+    "overflow": 0
+  },
+  "accessibility": {
+    "checks": 19,
+    "violations": 0,
+    "manualReviewRequired": true
+  },
+  "builds": {
+    "qa": true,
+    "productionCandidate": true,
+    "demoMediaPresent": false,
+    "demoPrecacheReferences": 0
+  },
+  "production": {
+    "deployed": false,
+    "databaseMutated": false
+  },
+  "externalValidationPending": [
+    "offsite backup",
+    "real administrator",
+    "SMS/OTP",
+    "Mobile Money",
+    "biometric reader",
+    "closed-year correction policy",
+    "multi-establishment architecture",
+    "business and field acceptance"
+  ],
+  "frenchMobile": {
+    "checks": 16,
+    "width": 375,
+    "failed": 0,
+    "overflow": 0
+  },
+  "pwa": {
+    "passed": true,
+    "publicCatalogueIsolated": true,
+    "proves": "manifest, service worker, shell reload offline"
+  },
+  "businessHTTP": {
+    "passed": true,
+    "modules": [
+      "stages/soutenances",
+      "helpdesk",
+      "bibliothèque",
+      "patrimoine/réparations concurrentes",
+      "courrier/circuit ordonné et archivage",
+      "logements/attribution unique et retrait"
+    ],
+    "database": "university_recommandations_20261006",
+    "proof": "modules-pilotes.json",
+    "humanAcceptancePending": true,
+    "proofDate": "2026-10-06T10:20:22.701Z"
+  },
+  "courrierBrowser": {
+    "passed": true,
+    "viewport": 375,
+    "proof": "courrier-interface.json"
+  },
+  "backendCatalogues": {
+    "date": "2026-10-06T10:19:54.301Z",
+    "usedKeys": 357,
+    "frenchKeys": 416,
+    "englishKeys": 416,
+    "missingUsed": [],
+    "missingEnglish": [],
+    "missingFrench": []
+  },
+  "restaurantHTTP": {
+    "passed": true,
+    "proof": "restaurant.json",
+    "proofDate": "2026-10-06T10:19:22.738Z",
+    "operatorCalled": false,
+    "externalAcceptancePending": true
+  },
+  "vodHTTP": {
+    "passed": true,
+    "proof": "vod.json",
+    "proofDate": "2026-10-06T10:31:07.092Z",
+    "mediaDownloaded": false,
+    "realMediaAcceptancePending": true
+  },
+  "vodBrowser": {
+    "passed": true,
+    "viewport": 375,
+    "proof": "vod-interface.json",
+    "proofDate": "2026-10-06T10:35:13.550Z",
+    "mediaPlayed": false
+  },
+  "formationsHTTP": {
+    "passed": true,
+    "proof": "formations.json",
+    "proofDate": "2026-10-06T10:51:39.381Z",
+    "operatorCalled": false,
+    "educationalCompletionAcceptancePending": true
+  },
+  "formationsBuilds": {
+    "backend": true,
+    "frontendQA": true,
+    "productionCandidate": true,
+    "typescript": true,
+    "productionPublished": false
+  },
+  "examens-tirageHTTP": {
+    "passed": true,
+    "proof": "examens-tirage.json",
+    "proofDate": "2026-10-06T11:03:34.967Z",
+    "humanAcceptancePending": true
+  },
+  "rectoratHTTP": {
+    "passed": true,
+    "proof": "rectorat.json",
+    "proofDate": "2026-10-06T11:04:33.308Z",
+    "humanAcceptancePending": true
+  },
+  "tirageBrowser": {
+    "passed": true,
+    "proof": "tirage-interface.json",
+    "viewport": 375,
+    "proofDate": "2026-10-06T11:09:49.859Z",
+    "physicalPrinterUsed": false
+  },
+  "examensTirageBuilds": {
+    "backend": true,
+    "frontendQA": true,
+    "productionCandidate": true,
+    "typescript": true,
+    "productionPublished": false
+  },
+  "identityValidity": {
+    "date": "2026-10-06T11:29:41.763Z",
+    "passed": true,
+    "database": "university_recommandations_20261006",
+    "observations": {
+      "cardRevocations": [
+        201,
+        400,
+        400,
+        400
+      ],
+      "cardRevocationAudits": 1,
+      "expiredBadgeRejectedAndExtensionRestoresValidity": true,
+      "badgeCancellations": [
+        201,
+        400,
+        400,
+        400
+      ],
+      "badgeCancellationAudits": 1,
+      "attestationRevocations": [
+        201,
+        400,
+        400,
+        400
+      ],
+      "attestationRevocationAudits": 1,
+      "validCardNipAccepted": true,
+      "wrongNipRejected": true,
+      "expiredCardNipRejected": true,
+      "expiredQrRejectedAndAuditFailure": true,
+      "anonymousPrintRejected": true,
+      "adminPrintAllowed": true,
+      "ownerCardAndAttestationPrintAllowed": true,
+      "otherStudentPrintRejected": true,
+      "ownNipChangeAllowedOtherStudentRejected": true,
+      "studentNipVerificationRejected": true,
+      "revokedCardNipChangeRejected": true,
+      "revokedAttestationRejectedWithoutPrivateReason": true,
+      "cancelledBadgeCannotBeModifiedOrExtended": true,
+      "badgePublicIdentityMinimized": true
+    },
+    "productionUntouched": true,
+    "completeIdentityCycleAndPhysicalPrintPending": true,
+    "backendBuildPassed": true,
+    "targetedTests": 34,
+    "targetedSuites": 3,
+    "evidence": "validite-identite.json",
+    "regressionEvidence": "identite-concurrence-regression.json",
+    "fixtureCleanup": {
+      "temporaryUsersRemaining": 0,
+      "temporaryStudentsRemaining": 0
+    }
+  },
+  "attestationRattachement": {
+    "date": "2026-10-06T11:29:39.503Z",
+    "database": "university_recommandations_20261006",
+    "passed": true,
+    "observations": {
+      "mismatchedStudentInscription": 400,
+      "nonexistentInscription": 400,
+      "mismatchedYear": 400,
+      "mismatchedPromotion": 400,
+      "concurrentEmissions": [
+        201,
+        409,
+        409,
+        409
+      ],
+      "activeSchoolCertificates": 1,
+      "promotionDerivedFromInscription": true,
+      "yearDerivedFromInscription": true,
+      "typeChangeToExistingCertificate": 409,
+      "immutableOwnerRejectedByDto": 400,
+      "concurrentTypeChanges": [
+        200,
+        409
+      ],
+      "activeSuccessCertificates": 1,
+      "reissueAfterRevocation": 201,
+      "revokedCertificateStillInvalid": true
+    },
+    "productionUntouched": true,
+    "backendBuildPassed": true,
+    "evidence": "rattachement-attestations.json",
+    "regressionEvidence": "rattachement-attestations-regression.json"
+  },
+  "attestationForm": {
+    "date": "2026-10-06T11:39:05.811Z",
+    "passed": true,
+    "viewport": 375,
+    "observations": {
+      "mobileDialogFitsViewport": true,
+      "promotionChangeClearsIncompatibleEnrollment": true,
+      "yearChangeClearsPreviousPromotion": true,
+      "yearChangeClearsPreviousEnrollment": true,
+      "latePreviousYearResponseIgnored": true,
+      "clearingYearClearsPromotionAndEnrollment": true,
+      "promotionWithoutYearSelectsItsYear": true,
+      "studentChangeClearsPreviousEnrollment": true,
+      "issuanceStatus": 201,
+      "persistedTrackMatchesLatestChoice": true
+    },
+    "errors": [],
+    "apiFailures": [],
+    "apiAndDatabaseReal": true,
+    "oldResponseDelayedWithoutChangingItsContent": true,
+    "serviceWorkerBlockedForNetworkInterception": true,
+    "productionUntouched": true,
+    "typescriptPassed": true,
+    "qaBuildPassed": true,
+    "productionCandidateBuildPassed": true,
+    "qaApiCorrect": true,
+    "productionApiCorrect": true,
+    "productionDemoMediaAbsent": true,
+    "evidence": "attestation-formulaire.json",
+    "languageEvidence": "attestation-formulaire-langues.json",
+    "languageEvidenceDate": "2026-10-06T11:47:28.817Z",
+    "latestLanguageRerunBlockedByLoginRateLimit": false,
+    "languageSessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me"
+  },
+  "regie": {
+    "date": "2026-10-06T11:47:22.866Z",
+    "database": "university_recommandations_20261006",
+    "passed": true,
+    "observations": {
+      "studentReadsRejected": true,
+      "scolariteDashboardRejected": true,
+      "directionDashboardAllowed": true,
+      "directionCreationAndCollectionRejected": true,
+      "scolariteCreationAndCollectionAllowed": true,
+      "emittedGnFDelta": 1500,
+      "emittedGnFDeltaAfterAmountChange": 1750,
+      "otherCurrencyAndYearExcluded": true,
+      "monthlySumMatchesYear": true,
+      "concurrentCollectionStatuses": [
+        201,
+        409,
+        409,
+        409
+      ],
+      "successfulLinkedPaymentsForConcurrentReceipt": 1,
+      "collectionAudits": 1,
+      "noOrphanPayment": true,
+      "accountingFieldsFrozen": true,
+      "documentaryCorrectionAllowed": true,
+      "cancellationOfSuccessfulPaymentRejected": true,
+      "paidAndUnpaidFiltersAgree": true,
+      "auditOmitsPrivateClientAndDescription": true
+    },
+    "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+    "indicatorDefinition": "recettes émises, encaissées ou non, en GNF sur l’année civile de leur émission",
+    "cashMovementAndAccountingValidationPending": true,
+    "productionUntouched": true,
+    "targetedTests": 17,
+    "targetedSuites": 2,
+    "targetedTestsPassed": true,
+    "evidence": "regie.json"
+  },
+  "regieInterface": {
+    "date": "2026-10-06T11:51:12.356Z",
+    "passed": true,
+    "viewport": 375,
+    "observations": {
+      "dateAmountCurrencyFieldsReadable": true,
+      "issuanceStatus": 201,
+      "collectionStatus": 201,
+      "successfulPaymentAmount": 1250,
+      "paidCardHidesCollectionAction": true
+    },
+    "errors": [],
+    "apiFailures": [],
+    "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+    "actualCashMovementPending": true,
+    "productionUntouched": true,
+    "typescriptPassed": true,
+    "qaBuildPassed": true,
+    "productionCandidateBuildPassed": true,
+    "qaApiCorrect": true,
+    "productionApiCorrect": true,
+    "productionDemoMediaAbsent": true,
+    "fixtureCleanup": {
+      "receipts": 0,
+      "payments": 0
+    },
+    "evidence": "regie-interface.json"
+  },
+  "vodPrivateAffiliationBrowser": {
+    "passed": true,
+    "proof": "vod-affectation-interface.json",
+    "buildProof": "vod-affectation-builds.json",
+    "viewport": 375,
+    "scope": "une inscription bénéficiaire affectée par ADMIN",
+    "persistedBeneficiary": true,
+    "editPreservesBeneficiary": true,
+    "removalRevokesAccess": true,
+    "reassignmentRestoresAccess": true,
+    "otherStudentRejected": true,
+    "teacherRegistryNotQueried": true,
+    "frenchAndEnglish": true,
+    "qaResourcesRemaining": 0,
+    "sessionSource": "AuthService.login avec mots de passe QA vérifiés, identités contrôlées par GET /auth/me",
+    "httpLoginRouteQualified": false,
+    "realMediaPlaybackPending": true,
+    "pedagogicalValidationPending": true,
+    "productionUntouched": true,
+    "typecheckPassed": true,
+    "attestationLabelsRegressionPassed": true,
+    "attestationLabelsRegressionProof": "attestation-formulaire-langues.json"
+  },
+  "courrierDepartmentIsolation": {
+    "passed": true,
+    "regressionProof": "courrier-departements-regression.json",
+    "httpProof": "courrier-departements.json",
+    "browserProof": "courrier-interface.json",
+    "migrationProof": "courrier-migration-qa-restauration.json",
+    "qaAndRestoredAppliedMigrations": 21,
+    "productionPendingMigrations": 9,
+    "legacyRecipientNotInferred": true,
+    "typecheckPassed": true,
+    "backendBuildPassed": true,
+    "qaBuildPassed": true,
+    "candidateBuildPassed": true,
+    "humanSecretariatValidationPending": true,
+    "productionUntouched": true,
+    "buildProof": "courrier-departements-builds.json",
+    "qaFixtureLettersRemaining": 0,
+    "qaFixtureDepartmentsRemaining": 0,
+    "qaFixtureHeadsRemaining": 0
+  },
+  "justificatifsHTTP": {
+    "passed": true,
+    "regressionProof": "justificatifs-regression.json",
+    "proof": "justificatifs.json",
+    "twoDepartments": true,
+    "teachersCrossDepartment": true,
+    "pieceOmittedOnHeadDeposit": true,
+    "finalDecisionFromPendingOnly": true,
+    "processedEvidenceRetained": true,
+    "concurrentDecisionStatuses": [
+      200,
+      409,
+      409,
+      409
+    ],
+    "closedYearMutationsRejected": true,
+    "qaFixtureYearsRemaining": 0,
+    "qaFixtureDepartmentsRemaining": 0,
+    "qaFixtureAccountsRemaining": 0,
+    "backendBuildPassed": true,
+    "frontendFunctionalChange": false,
+    "humanAcceptancePending": true,
+    "decisionCorrectionPolicyPending": true,
+    "productionUntouched": true
+  },
+  "carteExtensionBrowser": {
+    "passed": true,
+    "proof": "carte-prolongation.json",
+    "buildProof": "carte-prolongation-builds.json",
+    "viewport": 375,
+    "dialogWidth": 327,
+    "existingCardExtendedBySchool": true,
+    "qrPinAndIdentityPreserved": true,
+    "revokedEditHidden": true,
+    "revocationAndExtensionStatuses": [
+      201,
+      400
+    ],
+    "newCardAndHistoryPolicyPending": true,
+    "physicalPrintAndScanPending": true,
+    "typecheckPassed": true,
+    "qaFixturesRemaining": 0,
+    "backendFunctionalChange": false,
+    "productionUntouched": true
+  },
+  "juryConcurrency": {
+    "targetedTests": 7,
+    "targetedSuites": 2,
+    "passed": true,
+    "proof": "jury-concurrence.json",
+    "backendBuildPassed": true,
+    "httpRattrapagePending": false,
+    "qaApiReloadPending": false,
+    "productionUntouched": true
+  },
+  "rattrapageHTTP": {
+    "passed": true,
+    "proof": "rattrapage.json",
+    "unequalCoefficientsAndCredits": true,
+    "weightedAverages": [
+      14.75,
+      8.69
+    ],
+    "ranks": [
+      1,
+      2
+    ],
+    "successRate": 50,
+    "normalValidationStatuses": [
+      201,
+      400,
+      400,
+      400
+    ],
+    "concurrentValidationAndCalculationStatuses": [
+      201,
+      400
+    ],
+    "departmentScopeVerified": true,
+    "physicalPrintingAndHumanRulesValidationPending": true,
+    "productionUntouched": true
+  },
+  "electionsHTTP": {
+    "passed": true,
+    "proof": "elections.json",
+    "concurrencyProof": "elections-concurrence.json",
+    "backendBuildPassed": true,
+    "qaApiReloadPending": false,
+    "productionUntouched": true,
+    "humanElectionRulesPending": true
+  },
+  "helpdeskConcurrency": {
+    "passed": true,
+    "targetedTests": 30,
+    "targetedSuites": 2,
+    "backendBuildPassed": true,
+    "httpProof": "helpdesk-concurrence-http.json",
+    "qaApiReloadPending": false,
+    "qaFixturesRemaining": 0,
+    "productionUntouched": true
+  },
+  "planningHTTP": {
+    "passed": true,
+    "proof": "planning-http.json",
+    "generatedDates": [
+      "2026-10-12",
+      "2026-10-26"
+    ],
+    "excludedDate": "2026-10-19",
+    "replayCreated": 0,
+    "offlineSeanceReplayVerified": true,
+    "divergentOfflinePayloadRejected": true,
+    "closedYearMutationsRejected": true,
+    "qaFixturesRemaining": 0,
+    "frontendAndFieldAcceptancePending": true,
+    "backendFunctionalChange": false,
+    "productionUntouched": true
+  },
+  "sallesQrHTTP": {
+    "passed": true,
+    "proof": "salles-qr-http.json",
+    "protectedSvgVerified": true,
+    "rotationVerified": true,
+    "physicalPrintAndScanPending": true,
+    "backendFunctionalChange": false,
+    "productionUntouched": true
+  },
+  "importsHTTP": {
+    "passed": true,
+    "proof": "imports-http.json",
+    "types": [
+      "enseignants",
+      "matieres",
+      "salles"
+    ],
+    "targetedTests": 24,
+    "targetedSuites": 2,
+    "negativeBooleanPersisted": true,
+    "backendBuildPassed": true,
+    "creneauxHttpPending": false,
+    "historicalFilesPending": true,
+    "productionUntouched": true,
+    "creneauxProof": "imports-creneaux-http.json"
+  },
+  "importsXlsxBrowser": {
+    "passed": true,
+    "proof": "imports-xlsx-interface.json",
+    "viewport": 375,
+    "type": "salles",
+    "actualQaApi": true,
+    "previewDoesNotWrite": true,
+    "negativeBooleanPersisted": true,
+    "historicalFilesPending": true,
+    "productionUntouched": true
+  },
+  "weeklyPdfHTTP": {
+    "passed": true,
+    "proof": "releve-pdf-http.json",
+    "scope": "deux séances propres, une présence et une séance étrangère",
+    "crossDepartmentRejected": true,
+    "pdfHashesVerified": true,
+    "presenceContentPending": false,
+    "physicalAndHumanValidationPending": true,
+    "productionUntouched": true,
+    "extractedPdfContentVerified": true,
+    "planned": 2,
+    "controlled": 1,
+    "hours": 2
+  },
+  "offlineSessionsQa": {
+    "passed": true,
+    "proof": "seances-hors-ligne-qa.json",
+    "simulatedApi": false,
+    "actualQaController": true,
+    "serviceWorkerOfflineReload": true,
+    "singleSessionAndAudit": true,
+    "scope": "store Pinia de séances avec référentiels QA injectés au cache",
+    "prepareButtonAndPointagePending": true,
+    "physicalDevicePending": true,
+    "productionUntouched": true
+  },
+  "offlinePreparationQa": {
+    "passed": true,
+    "proof": "preparation-hors-ligne-qa.json",
+    "buildProof": "preparation-hors-ligne-regression.json",
+    "typecheckPassed": true,
+    "actualPrepareButtonVerified": true,
+    "actualQaController": true,
+    "apiSimulated": false,
+    "qaAndCandidateBuilt": true,
+    "productionUntouched": true,
+    "offlineFormPending": false,
+    "pointagePending": true,
+    "offlineFormProof": "seance-formulaire-hors-ligne-qa.json"
+  },
+  "offlinePointageQa": {
+    "passed": true,
+    "proof": "pointages-hors-ligne-qa.json",
+    "actualQaApi": true,
+    "scope": "ABSENT injecté dans le store de file après création par formulaire",
+    "encryptedObservationVerified": true,
+    "pinRemoved": true,
+    "reloadAndDependentSessionSyncVerified": true,
+    "singleControlPersisted": true,
+    "pointageFormAndPresentSignaturePending": false,
+    "partialErrorsPending": false,
+    "physicalDevicePending": true,
+    "productionUntouched": true,
+    "signedPresenceVerified": true,
+    "partialFailureProof": "pointages-partiels-hors-ligne-qa.json",
+    "pointageFormPending": false,
+    "pointageFormProof": "pointage-formulaire-hors-ligne-qa.json",
+    "canvasVerified": true
+  },
+  "controllerCoverageHTTP": {
+    "passed": true,
+    "proof": "tournees-couverture-http.json",
+    "coverage": 66.67,
+    "assignedCompletion": 33.33,
+    "individualAndBatchAssignment": true,
+    "realAssignmentsPending": true,
+    "productionUntouched": true
+  },
+  "realAuditBrowser": {
+    "passed": true,
+    "proof": "journal-reel-interface.json",
+    "checks": 8,
+    "entity": "Salle",
+    "realQaApi": true,
+    "restrictedRolesVerified": true,
+    "otherModuleEventRenderingPending": true,
+    "productionUntouched": true
+  },
+  "anonymousComplaintAuditBrowser": {
+    "passed": true,
+    "proof": "journal-reclamation-interface.json",
+    "checks": 8,
+    "anonymousActorOmitted": true,
+    "privateContentsOmitted": true,
+    "actualQaApi": true,
+    "productionUntouched": true
+  },
+  "historicalVoteAuditPrivacy": {
+    "passed": true,
+    "proof": "journal-votes-historiques-interface.json",
+    "checks": 8,
+    "syntheticQaHistoricalRow": true,
+    "actionAndEntityFiltersHideRowsAndCount": true,
+    "productionUntouched": true
+  },
+  "campusAuditBrowser": {
+    "passed": true,
+    "proof": "journal-campus-interface.json",
+    "checks": 16,
+    "actions": [
+      "VOD_CREE",
+      "COURRIER_CREE"
+    ],
+    "realQaApi": true,
+    "privateContentsOmitted": true,
+    "productionUntouched": true
+  },
+  "servicesAuditBrowser": {
+    "passed": true,
+    "proof": "journal-services-interface.json",
+    "checks": 16,
+    "actions": [
+      "TICKET_OUVERT",
+      "ELECTION_CREEE"
+    ],
+    "realQaApi": true,
+    "privateContentsOmitted": true,
+    "productionUntouched": true
+  },
+  "managementAuditBrowser": {
+    "passed": true,
+    "proof": "journal-gestion-interface.json",
+    "checks": 24,
+    "actions": [
+      "RESERVATION_CREEE",
+      "PATRIMOINE_REPARATION_DECLAREE",
+      "FORMATION_CREE"
+    ],
+    "realQaApi": true,
+    "privateContentsOmitted": true,
+    "productionUntouched": true
+  },
+  "documentsStagesAuditBrowser": {
+    "passed": true,
+    "proof": "journal-documents-stages-interface.json",
+    "checks": 24,
+    "actions": [
+      "TRAVAIL_ENCADRE_CREE",
+      "DOCUMENT_DEPOT_CREE",
+      "DOCUMENT_DEPOT_TELECHARGE"
+    ],
+    "realQaApi": true,
+    "authenticatedDownloadBytesVerified": true,
+    "downloadCount": 1,
+    "downloadEventWithoutDetails": true,
+    "privateContentsOmitted": true,
+    "productionUntouched": true
+  },
+  "plagiarismAuditBrowser": {
+    "passed": true,
+    "proof": "journal-plagiat-interface.json",
+    "checks": 16,
+    "actions": [
+      "PLAGIAT_SUSPICION_OUVERTE",
+      "PLAGIAT_CONFIRME"
+    ],
+    "realQaApi": true,
+    "automaticExactDuplicateDetection": true,
+    "score": 100,
+    "privateCommentOmitted": true,
+    "productionUntouched": true
+  },
+  "realAuditKeyboard": {
+    "passed": true,
+    "proof": "journal-clavier-reel-interface.json",
+    "checks": 12,
+    "roles": [
+      "ADMIN",
+      "DIRECTION"
+    ],
+    "locales": [
+      "fr-FR",
+      "en-US"
+    ],
+    "widths": [
+      320,
+      375,
+      1440
+    ],
+    "realQaApi": true,
+    "keyboardSearchAndDetails": true,
+    "focusTrapBothDirections": true,
+    "escapeAndFocusRestoration": true,
+    "screenReaderHumanValidationPending": true,
+    "productionUntouched": true
+  },
+  "auditRecipeIntegrity": {
+    "passed": true,
+    "proof": "journal-nettoyage-qa.json",
+    "readOnlyQa": true,
+    "fixtureModelsChecked": 11,
+    "fixturesRemaining": 0,
+    "reportsChecked": 7,
+    "realEventConfigurations": 112,
+    "command": "QA_ENV_FILE=<fichier privé QA> npm run test:qa:journal-integrite",
+    "scope": "Fixtures identifiées par les préfixes des recettes récentes ; pas un contrôle global de toutes les données QA."
+  },
+  "payrollHTTP": {
+    "passed": true,
+    "proof": "paie-http.json",
+    "presentMinutes": 125,
+    "absentMinutesExcluded": 120,
+    "hours": 2,
+    "net": 30000,
+    "recalculationIdempotent": true,
+    "terminalProtected": true,
+    "protectedPrint": true,
+    "auditEvents": 5,
+    "accountingValidationPending": true,
+    "productionUntouched": true
+  }
+}

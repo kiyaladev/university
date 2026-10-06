@@ -5,7 +5,9 @@
  * promotion. Bouton « Imprimer » qui ouvre la version A4 officielle.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { LIBELLE_DECISION_JURY, dateLisible } from '../utils/libelles';
+import { ouvrirImpression } from '../services/impression';
 
 interface Ligne {
   matiere: string;
@@ -31,9 +33,10 @@ interface Bulletin {
 
 const props = defineProps<{
   bulletin: Bulletin;
-  /** URL d'impression (ouvre un nouvel onglet) */
-  urlImpression?: string;
+  /** Chemin d'impression du relevé ; l'onglet est ouvert avec l'en-tête d'auth. */
+  cheminImpression?: string;
 }>();
+const { t } = useI18n();
 
 /** Même code couleur que les listes de délibération et de bulletins. */
 const COULEUR: Record<string, string> = {
@@ -47,12 +50,12 @@ const couleur = computed(() => COULEUR[props.bulletin.decision ?? ''] ?? 'grey-7
 const libelleDecision = computed(() =>
   props.bulletin.decision
     ? (LIBELLE_DECISION_JURY[props.bulletin.decision] ?? props.bulletin.decision)
-    : 'Non délibéré',
+    : t('bulletins.table.nonDelibere'),
 );
 
 function imprimer() {
-  if (!props.urlImpression) return;
-  window.open(props.urlImpression, '_blank');
+  if (!props.cheminImpression) return;
+  void ouvrirImpression(props.cheminImpression);
 }
 </script>
 
@@ -61,7 +64,7 @@ function imprimer() {
     <q-card-section class="bulletin__entete">
       <div>
         <div class="bulletin__nom">{{ bulletin.etudiant.prenom }} {{ bulletin.etudiant.nom }}</div>
-        <div class="bulletin__meta">Matricule {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} · {{ bulletin.annee }}</div>
+        <div class="bulletin__meta">{{ $t('common.fields.matricule') }} {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} · {{ bulletin.annee }}</div>
       </div>
       <q-badge :color="couleur" :label="libelleDecision" />
     </q-card-section>
@@ -75,20 +78,19 @@ function imprimer() {
         un tableau vide sur un document qui fait foi.
       -->
       <div v-if="!bulletin.lignes.length" class="bulletin__sans-detail">
-        <q-icon name="description" size="24px" color="grey-5" />
+        <q-icon name="description" size="24px" class="bulletin__icone-detail" />
         <div class="q-mt-xs">
-          Le détail par matière (UE, crédits, épreuves) figure sur le bulletin
-          officiel imprimable.
+          {{ $t('bulletins.cards.detailOnOfficial') }}
         </div>
       </div>
       <q-table
         v-else
         flat
         :columns="[
-          { name: 'matiere', label: 'Matière', field: 'matiere', align: 'left' },
-          { name: 'code', label: 'Code', field: 'code', align: 'left', style: 'width: 100px' },
-          { name: 'credits', label: 'Crédits', field: 'credits', align: 'right', style: 'width: 80px' },
-          { name: 'moyenne', label: 'Moyenne /20', field: 'moyenne', align: 'right', style: 'width: 110px' },
+          { name: 'matiere', label: $t('bulletins.cards.columns.subject'), field: 'matiere', align: 'left' },
+          { name: 'code', label: $t('bulletins.cards.columns.code'), field: 'code', align: 'left', style: 'width: 100px' },
+          { name: 'credits', label: $t('bulletins.cards.columns.credits'), field: 'credits', align: 'right', style: 'width: 80px' },
+          { name: 'moyenne', label: $t('bulletins.cards.columns.average'), field: 'moyenne', align: 'right', style: 'width: 110px' },
         ]"
         :rows="bulletin.lignes"
         row-key="matiere"
@@ -108,23 +110,23 @@ function imprimer() {
 
     <q-card-section class="bulletin__pied">
       <div>
-        <div v-if="totalCredits" class="bulletin__total">Total crédits : {{ totalCredits }}</div>
+        <div v-if="totalCredits" class="bulletin__total">{{ $t('bulletins.cards.totalCredits') }} {{ totalCredits }}</div>
         <div v-if="bulletin.dateDeliberation" class="bulletin__total">
-          Délibéré le {{ dateLisible(bulletin.dateDeliberation) }} · {{ bulletin.session }}
+          {{ $t('bulletins.cards.deliberatedOn') }} {{ dateLisible(bulletin.dateDeliberation) }} · {{ bulletin.session }}
         </div>
         <div class="bulletin__moyenne">
-          Moyenne générale : <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>/20
+          {{ $t('bulletins.cards.overallAverage') }} <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>/20
         </div>
-        <div v-if="bulletin.mention" class="bulletin__mention">Mention : {{ bulletin.mention }}</div>
+        <div v-if="bulletin.mention" class="bulletin__mention">{{ $t('bulletins.cards.honors') }} {{ bulletin.mention }}</div>
       </div>
       <div class="bulletin__rang" v-if="bulletin.rang">
-        Rang {{ bulletin.rang }}{{ bulletin.effectif ? ` / ${bulletin.effectif}` : '' }}
+        {{ $t('bulletins.table.columns.rang') }} {{ bulletin.rang }}{{ bulletin.effectif ? ` / ${bulletin.effectif}` : '' }}
       </div>
       <q-btn
-        v-if="urlImpression"
+        v-if="cheminImpression"
         flat
         icon="picture_as_pdf"
-        label="Imprimer le bulletin"
+        :label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
         no-caps
         color="primary"
         @click="imprimer"
@@ -135,7 +137,7 @@ function imprimer() {
 
 <style scoped>
 .bulletin {
-  background: white;
+  background: var(--up-plaque);
 }
 .bulletin__entete {
   display: flex;
@@ -143,29 +145,32 @@ function imprimer() {
   align-items: center;
 }
 .bulletin__nom {
-  font-weight: 700;
+  font-weight: 590;
   font-size: 18px;
 }
 .bulletin__meta {
   font-size: 12px;
-  color: #666;
+  color: var(--up-encre-douce);
 }
 .bulletin__pied {
   display: flex;
   align-items: center;
   gap: 16px;
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--up-chaux);
 }
 .bulletin__total {
   font-size: 12px;
-  color: #555;
+  color: var(--up-encre-douce);
 }
 .bulletin__sans-detail {
   padding: 20px 12px;
   text-align: center;
   font-size: 13px;
-  color: #666;
-  background: rgba(0, 0, 0, 0.02);
+  color: var(--up-encre-douce);
+  background: var(--up-chaux);
+}
+.bulletin__icone-detail {
+  color: var(--up-encre-tertiaire);
 }
 .bulletin__moyenne {
   font-size: 14px;
@@ -173,13 +178,13 @@ function imprimer() {
 }
 .bulletin__rang {
   margin-left: auto;
-  font-weight: 700;
+  font-weight: 590;
   font-size: 16px;
   color: var(--up-encre);
 }
 .bulletin__mention {
   font-size: 12px;
-  color: var(--up-secondary, #0F7A45);
+  color: var(--up-secondary, #007A4D);
   font-weight: 600;
   margin-top: 4px;
 }

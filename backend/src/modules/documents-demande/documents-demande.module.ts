@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { DocumentsDemandeController } from './documents-demande.controller';
 import { DocumentsDemandeService } from './documents-demande.service';
+import { MobileMoneyModule } from '../inscription/mobile-money.module';
 
 /**
  * Plateforme de demande de documents en ligne : l'étudiant formule une
@@ -13,10 +14,7 @@ import { DocumentsDemandeService } from './documents-demande.service';
  */
 @Module({
   imports: [
-    JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'change-me-in-production',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '12h') as any },
-    }),
+    MobileMoneyModule,
   ],
   controllers: [DocumentsDemandeController],
   providers: [DocumentsDemandeService],

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { api } from '../boot/axios';
 import type { CarteEtudiante, Etudiant } from '../types';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const props = defineProps<{
   modelValue: boolean;
@@ -38,11 +40,11 @@ watch(
 );
 
 const enEdition = computed(() => Boolean(props.carte?.id));
-const titre = computed(() => (enEdition.value ? 'Modifier la carte' : 'Émettre une carte'));
+const titre = computed(() => t(enEdition.value ? 'carteEtudiante.formDialog.titleEdit' : 'carteEtudiante.formDialog.titleNew'));
 
 async function soumettre() {
   if (!formulaire.value.etudiantId) {
-    $q.notify({ type: 'warning', message: "Sélectionnez l'étudiant." });
+    $q.notify({ type: 'warning', message: t('carteEtudiante.formDialog.studentRequired') });
     return;
   }
   enregistrement.value = true;
@@ -58,14 +60,14 @@ async function soumettre() {
     const { data } = await api[methode](url, payload);
     $q.notify({
       type: 'positive',
-      message: enEdition.value ? 'Carte mise à jour.' : 'Carte émise.',
+      message: t(enEdition.value ? 'carteEtudiante.formDialog.updated' : 'carteEtudiante.formDialog.issued'),
     });
     emit('enregistre', data);
     emit('update:modelValue', false);
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Émission impossible.',
+      message: e?.response?.data?.message ?? t('carteEtudiante.formDialog.issueFailed'),
     });
   } finally {
     enregistrement.value = false;
@@ -79,11 +81,11 @@ function fermer() {
 
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="min-width: 520px; max-width: 92vw">
+    <q-card style="width: 520px; max-width: 92vw">
       <q-card-section class="row items-center">
         <div class="text-h6">{{ titre }}</div>
         <q-space />
-        <q-btn flat round dense icon="close" @click="fermer" />
+        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
       </q-card-section>
 
       <q-card-section class="q-pt-none q-gutter-md">
@@ -92,12 +94,12 @@ function fermer() {
           v-model="formulaire.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e: Etudiant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
-          label="Étudiant"
+          :label="$t('common.fields.student')"
         />
         <q-input
           v-else
           :model-value="carte?.etudiant ? `${carte.etudiant.matricule} — ${carte.etudiant.prenom} ${carte.etudiant.nom}` : ''"
-          label="Étudiant"
+          :label="$t('common.fields.student')"
           readonly
           outlined
           dense
@@ -106,44 +108,40 @@ function fermer() {
         <q-input
           v-model="formulaire.dateValidite"
           type="date"
-          label="Date de validité"
+          :label="$t('carteEtudiante.formDialog.validityLabel')"
           outlined
           dense
         />
 
         <q-input
           v-model="formulaire.photoUrl"
-          label="Photo (URL)"
+          :label="$t('carteEtudiante.formDialog.photoLabel')"
           outlined
           dense
-          placeholder="https://…"
         />
 
         <q-banner v-if="enEdition" class="note--info">
-          La révocation d'une carte se fait depuis la liste (bouton « Révoquer »)
-          : elle exige un motif et invalide immédiatement le QR.
+          {{ $t('carteEtudiante.formDialog.revokeHint') }}
         </q-banner>
 
         <q-banner v-if="!enEdition" class="note--info">
-          Le NIP est normalement défini par l'étudiant depuis « Ma carte
-          étudiante ». Si vous devez l'initialiser pour lui, renseignez 4 à 6
-          chiffres ci-dessous — lui seul pourra ensuite le changer.
+          {{ $t('carteEtudiante.formDialog.pinHint') }}
         </q-banner>
 
         <q-input
           v-if="!enEdition"
           v-model="formulaire.nip"
-          label="NIP initial (4 à 6 chiffres)"
+          :label="$t('carteEtudiante.formDialog.initialPinLabel')"
           outlined
           dense
           mask="######"
-          hint="Facultatif : l'étudiant pourra le redéfinir depuis son portail."
+          :hint="$t('carteEtudiante.formDialog.pinHintOptional')"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="enEdition ? 'Enregistrer' : 'Émettre la carte'" @click="soumettre" />
+        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
+        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="$t(enEdition ? 'common.actions.save' : 'carteEtudiante.actions.issue')" @click="soumettre" />
       </q-card-actions>
     </q-card>
   </q-dialog>

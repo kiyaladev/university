@@ -1,7 +1,7 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 520px; max-width: 95vw">
-      <q-card-section class="text-h6">Réserver une salle</q-card-section>
+      <q-card-section class="text-h6">{{ $t('reservations.actions.reserve') }}</q-card-section>
 
       <q-card-section>
         <q-select
@@ -11,32 +11,32 @@
           dense
           emit-value
           map-options
-          label="Salle *"
+          :label="t('reservations.createDialog.roomLabel')"
         />
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <champ-date v-model="form.dateJour" label="Date *" />
+            <champ-date v-model="form.dateJour" :label="t('reservations.createDialog.dateLabel')" />
           </div>
           <div class="col-12 col-sm-6">
             <div class="row q-col-gutter-sm">
               <div class="col-6">
-                <q-input v-model="form.heureDebut" outlined dense mask="##:##" label="Début *" />
+                <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="t('reservations.createDialog.startLabel')" />
               </div>
               <div class="col-6">
-                <q-input v-model="form.heureFin" outlined dense mask="##:##" label="Fin *" />
+                <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="t('reservations.createDialog.endLabel')" />
               </div>
             </div>
           </div>
         </div>
 
-        <q-input v-model="form.motif" outlined dense label="Motif de l’événement *" />
-        <q-input v-model="form.organisme" outlined dense label="Organisme" hint="Ex. direction, département, entreprise…" />
-        <q-input v-model="form.responsable" outlined dense label="Responsable sur place" />
+        <q-input v-model="form.motif" outlined dense :label="t('reservations.createDialog.reasonLabel')" />
+        <q-input v-model="form.organisme" outlined dense :label="$t('reservations.table.columns.organization')" :hint="t('reservations.createDialog.organizationHint')" />
+        <q-input v-model="form.responsable" outlined dense :label="t('reservations.createDialog.responsibleLabel')" />
 
         <q-banner v-if="conflits.length" dense class="note--avis q-mt-sm">
           <template #avatar><q-icon name="warning" size="22px" /></template>
-          <div class="text-weight-bold">Cette salle est déjà occupée sur ce créneau :</div>
+          <div class="text-weight-bold">{{ t('reservations.createDialog.conflictTitle') }}</div>
           <div
             v-for="c in conflits"
             :key="c.id"
@@ -47,7 +47,7 @@
             <span v-if="c.organisme">({{ c.organisme }})</span>
             — {{ LIBELLE_STATUT_RESERVATION[c.statut].toLowerCase() }}
           </div>
-          <div class="conflit-aide">La demande partira quand même : l’administration tranchera.</div>
+          <div class="conflit-aide">{{ t('reservations.createDialog.conflictHint') }}</div>
         </q-banner>
 
         <q-banner v-if="erreur" dense class="note--erreur q-mt-sm">
@@ -57,8 +57,8 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
-        <q-btn color="primary" unelevated label="Demander la réservation" :loading="enregistrement" @click="enregistrer" />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+        <q-btn color="primary" unelevated :label="t('reservations.createDialog.submit')" :loading="enregistrement" @click="enregistrer" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
 import { aujourdhui, LIBELLE_STATUT_RESERVATION } from '../utils/libelles';
@@ -76,6 +77,7 @@ const props = defineProps<{ modelValue: boolean; salles: Salle[] }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 const erreur = ref('');
 const conflits = ref<ReservationSalle[]>([]);
@@ -153,11 +155,11 @@ async function enregistrer() {
       organisme: form.value.organisme || undefined,
       responsable: form.value.responsable || undefined,
     });
-    $q.notify({ type: 'positive', message: 'Demande de réservation envoyée' });
+    $q.notify({ type: 'positive', message: t('reservations.createDialog.sent') });
     emit('enregistre');
     emit('update:modelValue', false);
   } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? 'Enregistrement impossible';
+    erreur.value = e.response?.data?.message ?? t('reservations.createDialog.saveFailed');
   } finally {
     enregistrement.value = false;
   }
@@ -166,8 +168,11 @@ async function enregistrer() {
 
 <style scoped lang="scss">
 .note--avis {
-  border: 2px solid var(--up-jaune-fonce);
-  border-radius: 0;
+  border: 0;
+  background: $jaune-fond;
+  color: $jaune-texte;
+  border-radius: var(--up-rayon);
+  border-radius: var(--up-rayon-sm);
 
   :deep(.q-banner__avatar) {
     color: var(--up-jaune-fonce);

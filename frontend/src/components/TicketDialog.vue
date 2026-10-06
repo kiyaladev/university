@@ -1,17 +1,17 @@
 <template>
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 620px; max-width: 96vw">
-      <q-card-section class="text-h6">Déclarer un incident</q-card-section>
+      <q-card-section class="text-h6">{{ $t('helpdesk.actions.declareIncident') }}</q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Équipement concerné</span>
+        <span class="section-titre">{{ $t('helpdesk.ticketForm.equipmentSection') }}</span>
         <div v-if="equipementRetenu" class="row items-center q-gutter-sm q-mb-md">
           <q-chip color="primary" text-color="white" :icon="ICONE_CATEGORIE[form.categorie] ?? 'qr_code_2'">
             {{ equipementRetenu.libelle }}
           </q-chip>
           <span class="text-caption text-grey-7">{{ equipementRetenu.emplacement ?? '—' }}</span>
-          <q-btn flat dense round size="sm" icon="close" @click="form.equipementId = null">
-            <q-tooltip>Ne pas rattacher d’équipement</q-tooltip>
+          <q-btn flat dense round size="sm" icon="close" :aria-label="$t('helpdesk.ticketForm.unlinkEquipment')" @click="form.equipementId = null">
+            <q-tooltip>{{ $t('helpdesk.ticketForm.unlinkEquipment') }}</q-tooltip>
           </q-btn>
         </div>
         <q-select
@@ -23,11 +23,11 @@
           clearable
           emit-value
           map-options
-          label="Équipement (facultatif)"
-          hint="Renseigné automatiquement quand vous arrivez par le QR scanné"
+          :label="$t('helpdesk.ticketForm.equipmentOptional')"
+          :hint="$t('helpdesk.ticketForm.qrPrefillHint')"
         />
 
-        <span class="section-titre">Nature du problème *</span>
+        <span class="section-titre">{{ $t('helpdesk.ticketForm.category') }}</span>
         <div class="row q-col-gutter-sm">
           <div
             v-for="c in CATEGORIES"
@@ -49,7 +49,7 @@
           </div>
         </div>
 
-        <span class="section-titre">Description *</span>
+        <span class="section-titre">{{ $t('helpdesk.ticketForm.description') }}</span>
         <q-input
           v-model="form.description"
           outlined
@@ -60,35 +60,35 @@
           :min-length="5"
           :max-length="500"
           :rules="[
-            (v) => (v ?? '').trim().length >= 5 || 'Au moins 5 caractères',
-            (v) => (v ?? '').trim().length <= 500 || 'Au plus 500 caractères',
+            (v) => (v ?? '').trim().length >= 5 || $t('helpdesk.ticketForm.minLength'),
+            (v) => (v ?? '').trim().length <= 500 || $t('helpdesk.ticketForm.maxLength'),
           ]"
-          label="Décrivez le problème"
-          placeholder="Ex. : l'image du vidéoprojecteur clignote puis s'éteint après quelques minutes"
+          :label="$t('helpdesk.ticketForm.descriptionLabel')"
+          :placeholder="$t('helpdesk.ticketForm.descriptionPlaceholder')"
           class="q-mb-md"
         />
 
-        <span class="section-titre">Priorité</span>
+        <span class="section-titre">{{ $t('common.fields.priority') }}</span>
         <q-select
           v-model="form.priorite"
-          :options="OPTIONS_PRIORITES"
+          :options="optionsPriorites"
           outlined
           dense
           emit-value
           map-options
-          label="Priorité"
-          hint="Normale par défaut — réservez « Haute » aux incidents qui bloquent un cours"
+          :label="$t('common.fields.priority')"
+          :hint="$t('helpdesk.ticketForm.priorityHint')"
           class="q-mb-md"
         />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           icon="send"
-          label="Envoyer"
+          :label="$t('common.actions.send')"
           :loading="enregistrement"
           :disable="!form.categorie || form.description.trim().length < 5 || form.description.trim().length > 500"
           @click="envoyer"
@@ -101,6 +101,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { LIBELLE_CATEGORIE_INCIDENT } from '../utils/libelles';
 import type { CategorieIncident, EquipementCampus, TicketSupport } from '../types';
@@ -125,6 +126,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const enregistrement = ref(false);
 
 const ICONE_CATEGORIE: Record<CategorieIncident, string> = {
@@ -138,19 +140,19 @@ const ICONE_CATEGORIE: Record<CategorieIncident, string> = {
   AUTRE: 'build',
 };
 
-const CATEGORIES = (
+const CATEGORIES = computed(() => (
   Object.keys(LIBELLE_CATEGORIE_INCIDENT) as CategorieIncident[]
 ).map((value) => ({
   value,
   label: LIBELLE_CATEGORIE_INCIDENT[value],
   icone: ICONE_CATEGORIE[value],
-}));
+})));
 
-const OPTIONS_PRIORITES = [
-  { label: 'Basse', value: 'BASSE' },
-  { label: 'Normale', value: 'NORMALE' },
-  { label: 'Haute', value: 'HAUTE' },
-];
+const optionsPriorites = computed(() => [
+  { label: t('helpdesk.ticketForm.priorities.low'), value: 'BASSE' },
+  { label: t('helpdesk.ticketForm.priorities.normal'), value: 'NORMALE' },
+  { label: t('helpdesk.ticketForm.priorities.high'), value: 'HAUTE' },
+]);
 
 const form = ref({
   equipementId: null as string | null,
@@ -199,7 +201,7 @@ async function envoyer() {
       description: form.value.description.trim(),
       priorite: form.value.priorite,
     });
-    $q.notify({ type: 'positive', message: `Ticket ${data.numero} ouvert — la DSI est prévenue` });
+    $q.notify({ type: 'positive', message: t('helpdesk.ticketForm.opened', { number: data.numero }) });
     emit('declare', data);
     emit('update:modelValue', false);
   } catch {
@@ -211,22 +213,20 @@ async function envoyer() {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$blanc-craie: #FAFAF7;
-
 .tuile-cat {
-  border: 2px solid rgba(16, 37, 30, 0.34);
+  border: var(--up-filet);
   padding: 10px 6px;
   min-height: 78px;
   background: var(--up-craie);
   color: var(--up-encre);
   font-size: 11px;
-  letter-spacing: 0.03em;
+  letter-spacing: -0.01em;
   line-height: 1.25;
 
   &--active {
-    background: $encre;
-    color: $blanc-craie;
+    background: #{$vert-action};
+    color: #fff;
+    border-color: #{$vert-action};
   }
 }
 </style>

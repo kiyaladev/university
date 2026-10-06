@@ -2,17 +2,17 @@
   <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
     <q-card style="width: 720px; max-width: 95vw">
       <q-card-section class="text-h6">
-        {{ etudiant ? 'Modifier l’étudiant' : 'Nouvel étudiant' }}
+        {{ $t(etudiant ? 'etudiants.dialogForm.editTitle' : 'etudiants.dialogForm.newTitle') }}
       </q-card-section>
 
       <q-card-section>
-        <span class="section-titre">Identité</span>
+        <span class="section-titre">{{ $t('badges.table.columns.identity') }}</span>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.nom" outlined dense label="Nom *" />
+            <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.prenom" outlined dense label="Prénom *" />
+            <q-input v-model="form.prenom" outlined dense :label="$t('inscriptionPublique.form.step1.prenom.label')" />
           </div>
         </div>
 
@@ -24,11 +24,11 @@
               outlined
               dense
               clearable
-              label="Sexe"
+              :label="$t('inscriptionPublique.form.step1.sexe.label')"
             />
           </div>
           <div class="col-12 col-sm-8">
-            <champ-date v-model="form.dateNaissance" label="Date de naissance" />
+            <champ-date v-model="form.dateNaissance" :label="$t('inscriptionPublique.form.step1.dateNaissance.label')" />
           </div>
         </div>
 
@@ -36,7 +36,7 @@
           v-model="form.lieuNaissance"
           outlined
           dense
-          label="Lieu de naissance"
+          :label="$t('inscriptionPublique.form.step1.lieuNaissance.label')"
           class="champ-bloc"
         />
 
@@ -46,12 +46,12 @@
               v-model="form.telephone"
               outlined
               dense
-              label="Téléphone"
-              placeholder="622 00 00 00"
+              :label="$t('common.fields.phone')"
+              :placeholder="$t('inscriptionPublique.form.step1.telephone.placeholder')"
             />
           </div>
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.email" outlined dense type="email" label="Adresse e-mail" />
+            <q-input v-model="form.email" outlined dense type="email" :label="$t('common.fields.email')" />
           </div>
         </div>
 
@@ -59,31 +59,31 @@
           v-model="form.adresse"
           outlined
           dense
-          label="Adresse"
+          :label="$t('common.fields.address')"
           class="champ-bloc"
         />
 
-        <span class="section-titre">Matricule</span>
+        <span class="section-titre">{{ $t('common.fields.matricule') }}</span>
         <!--
           Le matricule (INE « 2026-0004 ») est attribué par le registre à la
           création et ne se modifie pas : on l'affiche, on ne le saisit pas.
         -->
         <q-input
-          :model-value="etudiant?.matricule ?? 'Attribué à l’enregistrement'"
+          :model-value="etudiant?.matricule ?? $t('etudiants.dialogForm.assignedOnSave')"
           outlined
           dense
           readonly
-          label="Matricule (INE)"
+          :label="$t('etudiants.dialogForm.matricule')"
           :hint="
             etudiant
-              ? 'Attribué par le registre, non modifiable'
-              : 'Numéro séquentiel généré automatiquement à l’enregistrement'
+              ? $t('etudiants.dialogForm.matriculeReadOnly')
+              : $t('etudiants.dialogForm.matriculeGenerated')
           "
         >
           <template #prepend><q-icon name="badge" /></template>
         </q-input>
 
-        <span class="section-titre">Promotion</span>
+        <span class="section-titre">{{ $t('affectations.filters.promotion') }}</span>
         <!--
           La promotion se porte par un dossier d'inscription, jamais par la
           fiche : on renvoie vers l'écran qui en a la charge.
@@ -91,25 +91,25 @@
         <div class="plaque etudiant-dialog__renvoi">
           <div class="text-caption">
             <template v-if="promotionActuelle">
-              Promotion actuelle : <strong>{{ promotionActuelle }}</strong>.
+              {{ $t('etudiants.dialogForm.currentCohort') }} <strong>{{ promotionActuelle }}</strong>.
             </template>
-            <template v-else>Aucune inscription : l’étudiant n’est rattaché à aucune promotion.</template>
-            La promotion se change en ouvrant un dossier d’inscription.
+            <template v-else>{{ $t('etudiants.dialogForm.noCohort') }}</template>
+            {{ $t('etudiants.dialogForm.cohortChangeHint') }}
           </div>
           <q-btn
             flat
             dense
             no-caps
             icon="how_to_reg"
-            :label="etudiant ? 'Voir ses inscriptions' : 'Ouvrir les inscriptions'"
+            :label="$t(etudiant ? 'etudiants.dialogForm.viewEnrollments' : 'etudiants.dialogForm.openEnrollments')"
             @click="allerAuxInscriptions"
           />
         </div>
 
-        <span class="section-titre">Compte portail</span>
+        <span class="section-titre">{{ $t('inscriptions.studentDialog.portalAccount') }}</span>
         <q-toggle
           v-model="form.creerCompte"
-          label="Créer aussi le compte de connexion (portail étudiant)"
+          :label="$t('etudiants.dialogForm.createPortalAccount')"
         />
         <div v-if="form.creerCompte" class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
@@ -118,8 +118,8 @@
               outlined
               dense
               type="email"
-              label="E-mail du compte *"
-              hint="À défaut, l’e-mail de la fiche est utilisé"
+              :label="$t('etudiants.dialogForm.accountEmail')"
+              :hint="$t('etudiants.dialogForm.accountEmailHint')"
             />
           </div>
           <div class="col-12 col-sm-6">
@@ -128,26 +128,26 @@
               outlined
               dense
               type="password"
-              label="Mot de passe *"
-              hint="8 caractères au minimum"
+              :label="$t('utilisateurs.dialog.passwordNewAccount')"
+              :hint="$t('etudiants.dialogForm.passwordHint')"
               :rules="[
-                (v) => !form.creerCompte || (v && v.length >= 8) || '8 caractères minimum',
+                (v) => !form.creerCompte || (v && v.length >= 8) || $t('etudiants.dialogForm.passwordMinLength'),
               ]"
               lazy-rules
             />
           </div>
         </div>
 
-        <q-toggle v-model="form.actif" label="Étudiant actif" class="champ-bloc--toggle" />
+        <q-toggle v-model="form.actif" :label="$t('etudiants.dialogForm.active')" class="champ-bloc--toggle" />
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" v-close-popup />
+        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         <q-btn
           color="primary"
           unelevated
           no-caps
-          label="Enregistrer"
+          :label="$t('common.actions.register')"
           :loading="enregistrement"
           :disable="!formulaireValide"
           @click="enregistrer"
@@ -161,6 +161,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
 import type { Etudiant, Promotion } from '../types';
@@ -176,6 +177,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const { t } = useI18n();
 const router = useRouter();
 const enregistrement = ref(false);
 
@@ -256,7 +258,7 @@ async function enregistrer() {
     }
     if (props.etudiant) await api.put(`/etudiants/${props.etudiant.id}`, payload);
     else await api.post('/etudiants', payload);
-    $q.notify({ type: 'positive', message: 'Étudiant enregistré' });
+    $q.notify({ type: 'positive', message: t('etudiants.dialogForm.saved') });
     emit('enregistre');
     emit('update:modelValue', false);
   } finally {

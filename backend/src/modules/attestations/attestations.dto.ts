@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, PickType } from '@nestjs/swagger';
 import { StatutAttestation, TypeAttestation } from '@prisma/client';
 import {
   IsEnum,
@@ -40,7 +40,7 @@ export class CreateAttestationDto {
 }
 
 /** Une attestation émise ne se modifie que sur son type et son motif. */
-export class UpdateAttestationDto extends PartialType(CreateAttestationDto) {}
+export class UpdateAttestationDto extends PartialType(PickType(CreateAttestationDto, ['type', 'motif'] as const)) {}
 
 /** Révocation : motif obligatoire, car c'est une décision opposable. */
 export class RevoquerAttestationDto {
@@ -72,9 +72,13 @@ export class AttestationQueryDto extends QueryDto {
 export class VerifierAttestationDto {
   /** Numéro imprimé, ex. "ATT-2026-00001". */
   @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   ref: string;
 
   /** Jeton transporté par le QR ("UP-DOC-…"). */
   @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   k: string;
 }

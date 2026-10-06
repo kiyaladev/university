@@ -23,9 +23,11 @@ import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
+import { QueryDto } from '../../common/dto';
 import { baseApplicative } from '../../common/utils';
 import { FormationsService } from './formations.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateFormationDto,
   FormationQueryDto,
@@ -133,8 +135,8 @@ export class FormationsController {
   /** Registre d'une formation : dossiers, statuts, paiements liés, montants. */
   @Roles(...GESTIONNAIRES)
   @Get(':id/inscriptions')
-  inscriptions(@Param('id') id: string) {
-    return this.service.inscriptionsDe(id);
+  inscriptions(@Param('id') id: string, @Query() query: QueryDto) {
+    return this.service.inscriptionsDe(id, query);
   }
 
   /**
@@ -158,15 +160,14 @@ export class FormationsController {
    * arrive pas, le jeton passe en paramètre d'URL et est vérifié à la main.
    * :id est ici l'identifiant de l'inscription (dossier FOR-AAAA-NNNNN).
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/certificat')
   async certificat(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.certificat(id, token, base));
+    res.type('html').send(await this.service.certificat(id, jetonImprimable(req), base));
   }
 }

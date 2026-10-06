@@ -39,6 +39,6 @@ import { AffectationsController, AffectationsService } from './affectations';
     MatieresService,
     AffectationsService,
   ],
-  exports: [AnneesService, SallesService, EnseignantsService, AffectationsService],
+  exports: [AnneesService, SallesService, EnseignantsService, MatieresService, AffectationsService],
 })
 export class ReferentielModule {}

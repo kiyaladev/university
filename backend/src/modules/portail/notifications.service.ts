@@ -3,7 +3,9 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
 import {
   DecisionJury,
   Prisma,
@@ -74,9 +76,7 @@ export class NotificationsService {
     if (dto.tousInscrits) {
       const annee = await this.prisma.anneeAcademique.findFirst({ where: { active: true } });
       if (!annee) {
-        throw new BadRequestException(
-          'Aucune année académique active : impossible de cibler les inscrits.',
-        );
+        throw new BadRequestException(I18nContext.current()!.t('portail.aucune_annee_academique_active_impossible_de_cibler_les_insc'));
       }
       const lignes = await this.prisma.inscription.findMany({
         where: { anneeId: annee.id, statut: { not: StatutInscription.ANNULEE } },
@@ -94,16 +94,12 @@ export class NotificationsService {
           destinataireNom: `${l.etudiant.nom} ${l.etudiant.prenom}`.trim(),
         }));
       if (!cibles.length) {
-        throw new BadRequestException(
-          'Aucun étudiant joignable (aucun numéro valide sur les fiches d’inscription).',
-        );
+        throw new BadRequestException(I18nContext.current()!.t('portail.no_reachable_student'));
       }
     } else {
       cibles = (dto.destinatairesTelephones ?? []).map((t) => ({ telephone: numerique(t) }));
       if (!cibles.length || !dto.message) {
-        throw new BadRequestException(
-          'Précisez au moins un numéro (ou « tous les inscrits ») et un message.',
-        );
+        throw new BadRequestException(I18nContext.current()!.t('portail.diffusion_needs_targets_and_message'));
       }
     }
 
@@ -137,11 +133,9 @@ export class NotificationsService {
         },
       },
     });
-    if (!deliberation) throw new NotFoundException('Délibération introuvable');
+    if (!deliberation) throw new NotFoundException(I18nContext.current()!.t('portail.deliberation_introuvable'));
     if (deliberation.statut !== StatutDeliberation.VALIDEE) {
-      throw new ConflictException(
-        'Seuls des résultats validés par le jury peuvent être diffusés aux étudiants.',
-      );
+      throw new ConflictException(I18nContext.current()!.t('portail.results_only_validated'));
     }
 
     const libellePromotion = deliberation.promotion?.nom ?? 'Scolarité';
@@ -157,9 +151,14 @@ export class NotificationsService {
         const decision =
           c.ligne.decision === DecisionJury.ADMIS ? 'ADMIS' : 'AJOURNÉ';
         const rang = c.ligne.rang != null ? ` (rang ${c.ligne.rang})` : '';
-        const corps =
-          `Résultats — ${libellePromotion} : ${c.nom} : moyenne ` +
-          `${c.ligne.moyenne.toFixed(2)} — ${decision}${rang}`;
+        const t = I18nContext.current()!;
+        const header = t.t('sms.resultsHeader', { args: { promotion: libellePromotion } });
+        const body = t.t('sms.resultsBody', { args: { name: c.nom, average: c.ligne.moyenne.toFixed(2) } });
+        const decisionLabel = c.ligne.decision === DecisionJury.ADMIS
+          ? t.t('sms.resultsAdmis')
+          : t.t('sms.resultsAjourne');
+        const rankLabel = c.ligne.rang != null ? t.t('sms.resultsRank', { args: { rank: c.ligne.rang } }) : '';
+        const corps = `${header} : ${body} — ${decisionLabel}${rankLabel}`;
         return {
           telephone: c.telephone,
           message: corps.slice(0, 160),
@@ -171,9 +170,7 @@ export class NotificationsService {
       });
 
     if (!cibles.length) {
-      throw new BadRequestException(
-        'Aucun étudiant joignable : la délibération ne compte aucun admis ou ajourné avec un numéro valide.',
-      );
+      throw new BadRequestException(I18nContext.current()!.t('portail.no_reachable_student_results'));
     }
 
     return this.sms.envoyerPlusieurs(cibles);

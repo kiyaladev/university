@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-06T14:35:51.997Z",
+  "statut": "valide",
+  "viewport": 375,
+  "observations": [
+    "Fichier XLSX réel choisi dans le formulaire mobile",
+    "Décodage Unicode et transmission CSV à API QA",
+    "Aperçu sans écriture",
+    "Confirmation puis création persistée inactive, capacité 20",
+    "Une trace de création",
+    "Aucune erreur JavaScript"
+  ],
+  "fixturesRestantes": 0,
+  "historicalFilesPending": true,
+  "productionUntouched": true
+}

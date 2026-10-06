@@ -175,15 +175,15 @@ const peutEditer = computed(() => !props.lectureSeule);
   <div class="saisie-masse">
     <div class="saisie-masse__entete">
       <div class="saisie-masse__stats">
-        <q-chip outline color="primary" icon="edit_note" :label="`${lignes.length} étudiants`" />
-        <q-chip outline color="positive" icon="check" :label="`${remplies} notés`" />
-        <q-chip outline color="secondary" icon="person" :label="`${presentes} présents`" />
-        <q-chip outline color="grey-7" icon="person_off" :label="`${absents} absents`" />
+        <q-chip outline color="primary" icon="edit_note" :label="$t(lignes.length === 1 ? 'notes.bulk.studentOne' : 'notes.bulk.students', { count: lignes.length })" />
+        <q-chip outline color="positive" icon="check" :label="$t(remplies === 1 ? 'notes.bulk.gradedOne' : 'notes.bulk.graded', { count: remplies })" />
+        <q-chip outline color="secondary" icon="person" :label="$t(presentes === 1 ? 'notes.bulk.presentOne' : 'notes.bulk.present', { count: presentes })" />
+        <q-chip outline color="grey-7" icon="person_off" :label="$t(absents === 1 ? 'notes.bulk.absentOne' : 'notes.bulk.absentCount', { count: absents })" />
         <q-chip
           v-if="lignesModifiees.length"
           color="warning"
           icon="edit"
-          :label="`${lignesModifiees.length} modifié${lignesModifiees.length > 1 ? 's' : ''}`"
+          :label="$t(lignesModifiees.length === 1 ? 'notes.bulk.modifiedOne' : 'notes.bulk.modifiedCount', { count: lignesModifiees.length })"
         />
       </div>
       <div class="saisie-masse__progression">
@@ -196,7 +196,7 @@ const peutEditer = computed(() => !props.lectureSeule);
           class="saisie-masse__barre"
         >
           <div class="saisie-masse__progress-texte">
-            {{ remplies }} / {{ lignes.length }} notes saisies
+            {{ $t('notes.bulk.progress', { filled: remplies, total: lignes.length }) }}
           </div>
         </q-linear-progress>
       </div>
@@ -205,18 +205,18 @@ const peutEditer = computed(() => !props.lectureSeule);
     <div v-if="lectureSeule" class="saisie-masse__alerte q-mb-sm">
       <q-banner dense class="note--info">
         <template #avatar><q-icon name="lock" /></template>
-        {{ motifLectureSeule || 'Saisie désactivée pour cette évaluation.' }}
+        {{ motifLectureSeule || $t('notes.bulk.readOnly') }}
       </q-banner>
     </div>
 
     <div class="saisie-masse__tableau-carte">
       <div class="saisie-masse__tableau-entete">
-        <div class="col-num">N° inscription</div>
-        <div class="col-mat">Matricule</div>
-        <div class="col-etu">Étudiant</div>
-        <div class="col-pres">Présent</div>
-        <div class="col-note">Note /20</div>
-        <div class="col-eta">État</div>
+        <div class="col-num">{{ $t('notes.bulk.registrationNumber') }}</div>
+        <div class="col-mat">{{ $t('common.fields.matricule') }}</div>
+        <div class="col-etu">{{ $t('common.fields.student') }}</div>
+        <div class="col-pres">{{ $t('common.actions.pickPresent') }}</div>
+        <div class="col-note">{{ $t('notes.bulk.grade') }}</div>
+        <div class="col-eta">{{ $t('bibliotheque.table.columns.state') }}</div>
       </div>
 
       <div
@@ -240,7 +240,7 @@ const peutEditer = computed(() => !props.lectureSeule);
             :disable="!peutEditer"
             dense
             color="primary"
-            :aria-label="`Présence de ${l.prenom} ${l.nom}`"
+            :aria-label="$t('notes.bulk.attendanceFor', { name: `${l.prenom} ${l.nom}` })"
             @update:model-value="(v) => { l.present = !!v; if (!v) l.note = null; }"
             @focus="surFocus(idx, 'present')"
           />
@@ -260,8 +260,8 @@ const peutEditer = computed(() => !props.lectureSeule);
             max="20"
             step="0.25"
             input-class="text-center chiffres"
-            :aria-label="`Note sur 20 de ${l.prenom} ${l.nom}`"
-            :placeholder="l.present ? '/20' : 'absent'"
+            :aria-label="$t('notes.bulk.gradeFor', { name: `${l.prenom} ${l.nom}` })"
+            :placeholder="l.present ? '/20' : $t('notes.bulk.absent')"
             @update:model-value="borner(l)"
             @focus="surFocus(idx, 'note')"
             @keydown="(ev) => surKeynote(ev, idx)"
@@ -271,32 +271,30 @@ const peutEditer = computed(() => !props.lectureSeule);
           <q-badge
             v-if="l.note === null && l.present"
             color="warning"
-            label="manquante"
+            :label="$t('notes.bulk.missing')"
           />
           <q-badge
             v-else-if="!l.present"
             color="grey-6"
-            label="absent"
+            :label="$t('notes.bulk.absent')"
           />
           <q-badge
             v-else-if="estModifiee(l)"
             color="warning"
             icon="edit"
-            label="modifié"
+            :label="$t('notes.bulk.modified')"
           />
           <q-badge
             v-else
             color="positive"
             icon="task_alt"
-            label="enregistré"
+            :label="$t('notes.bulk.saved')"
           />
         </div>
       </div>
 
       <div v-if="!lignes.length" class="saisie-masse__vide">
-        Aucun étudiant à noter : la feuille ne reprend que les dossiers
-        d’inscription <strong>validés</strong> de cette promotion pour l’année
-        de l’évaluation.
+        {{ $t('notes.bulk.empty') }}
       </div>
     </div>
 
@@ -308,7 +306,7 @@ const peutEditer = computed(() => !props.lectureSeule);
           dense
           no-caps
           icon="done_all"
-          label="Tous présents"
+          :label="$t('notes.bulk.markAllPresent')"
           @click="marquerToutPresent"
         />
         <q-btn
@@ -317,7 +315,7 @@ const peutEditer = computed(() => !props.lectureSeule);
           dense
           no-caps
           icon="person_off"
-          label="Tous absents"
+          :label="$t('notes.bulk.markAllAbsent')"
           @click="marquerToutAbsent"
         />
       </div>
@@ -328,13 +326,13 @@ const peutEditer = computed(() => !props.lectureSeule);
         color="primary"
         no-caps
         icon="save"
-        label="Enregistrer tout"
+        :label="$t('notes.bulk.saveAll')"
         :loading="sauvegardeEnCours"
         :disable="!lignesModifiees.length"
         @click="enregistrer"
       >
         <q-tooltip v-if="!lignesModifiees.length && sauvegardeFaite">
-          Aucune note modifiée depuis le dernier enregistrement
+          {{ $t('notes.bulk.noChanges') }}
         </q-tooltip>
       </q-btn>
     </div>
@@ -372,9 +370,8 @@ const peutEditer = computed(() => !props.lectureSeule);
 
 .saisie-masse__progress-texte {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
   color: var(--up-craie);
 }
 
@@ -393,13 +390,12 @@ const peutEditer = computed(() => !props.lectureSeule);
 }
 
 .saisie-masse__tableau-entete {
-  background: var(--up-encre);
-  color: var(--up-craie);
-  font-family: 'Anton', 'Archivo Variable', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 11px;
-  font-weight: 400;
+  background: var(--up-chaux);
+  color: var(--up-encre-douce);
+  letter-spacing: -0.003em;
+  font-size: 12px;
+  font-weight: 500;
+  border-bottom: var(--up-filet);
 }
 
 .saisie-masse__ligne + .saisie-masse__ligne {

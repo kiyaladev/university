@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import ParcoursMetier from '../components/ParcoursMetier.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
 import QRCode from 'qrcode';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -11,10 +14,12 @@ import ViewToggle from '../components/ViewToggle.vue';
 import CarteDialog from '../components/CarteDialog.vue';
 import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
+const { t } = useI18n();
 
 const cartes = ref<CarteEtudiante[]>([]);
 const chargement = ref(false);
@@ -44,14 +49,14 @@ const motifRevocation = ref('');
 const canvasQr = ref<HTMLCanvasElement | null>(null);
 const urlVerification = ref('');
 
-const colonnes: QTableColumn[] = [
-  { name: 'etudiant', label: 'Étudiant', field: 'etudiant', align: 'left' },
-  { name: 'matricule', label: 'Matricule', field: 'etudiant', align: 'left' },
-  { name: 'emission', label: 'Émise le', field: 'dateEmission', align: 'left' },
-  { name: 'validite', label: 'Validité', field: 'dateValidite', align: 'left' },
-  { name: 'statut', label: 'Statut', field: 'statut', align: 'center' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-];
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'etudiant', label: t('carteEtudiante.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'matricule', label: t('carteEtudiante.table.columns.matricule'), field: 'etudiant', align: 'left' },
+  { name: 'emission', label: t('carteEtudiante.table.columns.issuedOn'), field: 'dateEmission', align: 'left' },
+  { name: 'validite', label: t('carteEtudiante.table.columns.validity'), field: 'dateValidite', align: 'left' },
+  { name: 'statut', label: t('carteEtudiante.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'actions', label: t('carteEtudiante.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function ouvrirDetail(c: CarteEtudiante) {
   carteDetail.value = c;
@@ -76,14 +81,14 @@ function ouvrirVerification() {
 async function copierUrlVerification() {
   try {
     await navigator.clipboard.writeText(urlVerification.value);
-    $q.notify({ type: 'positive', message: 'Lien de vérification copié.' });
+    $q.notify({ type: 'positive', message: t('carteEtudiante.messages.linkCopied') });
   } catch {
-    $q.notify({ type: 'warning', message: 'Copie impossible : sélectionnez le lien à la main.' });
+    $q.notify({ type: 'warning', message: t('carteEtudiante.messages.copyError') });
   }
 }
 
 function imprimer(c: CarteEtudiante) {
-  window.open(`${API_URL}/cartes-etudiantes/${c.id}/imprimer?token=${auth.token}`, '_blank');
+  void ouvrirImpression(`/cartes-etudiantes/${c.id}/imprimer`);
 }
 
 function ouvrirRevocation(c: CarteEtudiante) {
@@ -98,11 +103,11 @@ async function confirmerRevocation() {
     await api.post(`/cartes-etudiantes/${carteRevocation.value.id}/revoquer`, {
       motif: motifRevocation.value.trim(),
     });
-    $q.notify({ type: 'warning', message: 'Carte révoquée.' });
+    $q.notify({ type: 'warning', message: t('carteEtudiante.messages.revoked') });
     dialogRevocation.value = false;
     await charger();
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Révocation impossible.' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('carteEtudiante.messages.revokeError') });
   }
 }
 
@@ -155,36 +160,34 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <div class="page-titre">Cartes étudiantes</div>
-        <div class="page-sous-titre">
-          Carte numérique vérifiable par QR code, avec NIP personnel.
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('carteEtudiante.title')" :subtitle="$t('carteEtudiante.subtitle')">
+      <template #actions>
+<div class="col-auto">
         <q-btn
           v-if="peutEmettre"
           unelevated
           color="primary"
           no-caps
           icon="add"
-          label="Émettre une carte"
+          :label="$t('carteEtudiante.actions.issue')"
           @click="ouvrirEmission"
         />
       </div>
-    </div>
+      </template>
+    </page-header>
+
+    <parcours-metier parcours="documents" />
 
     <q-banner v-if="etudiantId" class="note--info q-mb-md">
-      Liste restreinte aux cartes d'un seul étudiant (lien entrant).
+      {{ $t('carteEtudiante.studentBanner.message') }}
       <template #action>
-        <q-btn flat no-caps label="Voir toutes les cartes" @click="retirerFiltreEtudiant" />
+        <q-btn flat no-caps :label="$t('carteEtudiante.studentBanner.seeAll')" @click="retirerFiltreEtudiant" />
       </template>
     </q-banner>
 
     <filter-bar
       v-model="filtres"
-      placeholder="Matricule, nom, jeton du QR…"
+      :placeholder="$t('carteEtudiante.filters.searchPlaceholder')"
       @update:model-value="recharger"
     >
       <template #actions>
@@ -217,12 +220,11 @@ onMounted(charger);
       row-key="id"
       :loading="chargement"
       :rows-per-page-options="[0]"
-      hide-bottom
+      :hide-bottom="chargement || cartes.length > 0"
     >
       <template #no-data>
         <div class="text-center q-pa-md text-grey-7">
-          Aucune carte pour ces critères. Émettez-en une depuis le dossier d'un
-          étudiant inscrit.
+          {{ $t('carteEtudiante.emptyState.message') }}
         </div>
       </template>
       <template #body-cell-etudiant="p">
@@ -256,24 +258,24 @@ onMounted(charger);
             round
             dense
             icon="qr_code_2"
-            aria-label="QR de vérification"
+            :aria-label="$t('carteEtudiante.actionsColumn.qrAria')"
             @click="ouvrirDetail(p.row)"
           >
-            <q-tooltip>QR de vérification</q-tooltip>
+            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.qrTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn flat round dense icon="print" aria-label="Imprimer la carte" @click="imprimer(p.row)">
-            <q-tooltip>Imprimer</q-tooltip>
+          <q-btn flat round dense icon="print" :aria-label="$t('carteEtudiante.actionsColumn.printAria')" @click="imprimer(p.row)">
+            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.printTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutModifier"
+            v-if="peutModifier && p.row.statut === 'EMISE'"
             flat
             round
             dense
             icon="edit"
-            aria-label="Modifier la carte"
+            :aria-label="$t('carteEtudiante.actionsColumn.editAria')"
             @click="ouvrirModification(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.editTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="p.row.statut === 'EMISE' && peutRevoquer"
@@ -282,10 +284,10 @@ onMounted(charger);
             dense
             icon="block"
             color="negative"
-            aria-label="Révoquer la carte"
+            :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')"
             @click="ouvrirRevocation(p.row)"
           >
-            <q-tooltip>Révoquer</q-tooltip>
+            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.revokeTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -303,7 +305,7 @@ onMounted(charger);
             <div class="col">
               <div class="text-weight-bold">{{ c.etudiant?.prenom }} {{ c.etudiant?.nom }}</div>
               <div class="text-caption text-grey-7">
-                Matricule <code>{{ c.etudiant?.matricule }}</code>
+                {{ $t('carteEtudiante.table.columns.matricule') }} <code>{{ c.etudiant?.matricule }}</code>
               </div>
             </div>
             <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[c.statut]">
@@ -312,21 +314,21 @@ onMounted(charger);
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
-            Émise le {{ dateFr(c.dateEmission) }}<br>
-            Valable jusqu'au {{ dateFr(c.dateValidite) }}
+            {{ $t('carteEtudiante.card.issuedOn', { date: dateFr(c.dateEmission) }) }}<br>
+            {{ $t('carteEtudiante.card.validUntil', { date: dateFr(c.dateValidite) }) }}
             <div v-if="c.motifRevocation" class="text-grey-7 q-mt-xs">
-              Motif de révocation : {{ c.motifRevocation }}
+              {{ $t('carteEtudiante.card.revocationReason', { motif: c.motifRevocation }) }}
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense icon="qr_code_2" label="QR" no-caps @click="ouvrirDetail(c)" />
-            <q-btn flat dense icon="print" label="Imprimer" no-caps @click="imprimer(c)" />
+            <q-btn flat dense icon="qr_code_2" :label="$t('carteEtudiante.cardActions.qr')" no-caps @click="ouvrirDetail(c)" />
+            <q-btn flat dense icon="print" :label="$t('carteEtudiante.cardActions.print')" no-caps @click="imprimer(c)" />
             <q-btn
-              v-if="peutModifier"
+              v-if="peutModifier && c.statut === 'EMISE'"
               flat
               dense
               icon="edit"
-              label="Modifier"
+              :label="$t('carteEtudiante.cardActions.edit')"
               no-caps
               @click="ouvrirModification(c)"
             />
@@ -336,7 +338,7 @@ onMounted(charger);
               dense
               icon="block"
               color="negative"
-              label="Révoquer"
+              :label="$t('carteEtudiante.cardActions.revoke')"
               no-caps
               @click="ouvrirRevocation(c)"
             />
@@ -346,8 +348,7 @@ onMounted(charger);
       <div v-if="!chargement && !cartes.length" class="col-12 text-center text-grey-7 q-pa-lg">
         <q-icon name="badge" size="42px" color="grey-5" />
         <div class="q-mt-sm">
-          Aucune carte pour ces critères. Émettez-en une depuis le dossier d'un
-          étudiant inscrit.
+          {{ $t('carteEtudiante.emptyState.message') }}
         </div>
       </div>
     </div>
@@ -360,24 +361,22 @@ onMounted(charger);
       <q-card style="min-width: 420px">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-h6">Révoquer la carte</div>
+            <div class="text-h6">{{ $t('carteEtudiante.revokeDialog.title') }}</div>
             <div v-if="carteRevocation?.etudiant" class="text-caption text-grey-7">
               {{ carteRevocation.etudiant.prenom }} {{ carteRevocation.etudiant.nom }} ·
               {{ carteRevocation.etudiant.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogRevocation = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('carteEtudiante.revokeDialog.close')" @click="dialogRevocation = false" />
         </q-card-section>
         <q-card-section>
           <q-banner class="note--alerte q-mb-md">
-            Action irréversible : la carte devient inutilisable et tout scan de
-            son QR affichera « carte non valable ». L'étudiant en est informé sur
-            « Ma carte étudiante ».
+            {{ $t('carteEtudiante.revokeDialog.warning') }}
           </q-banner>
           <q-input
             v-model="motifRevocation"
-            label="Motif de révocation"
-            hint="3 caractères minimum — il sera affiché à l'étudiant."
+            :label="$t('carteEtudiante.revokeDialog.motifLabel')"
+            :hint="$t('carteEtudiante.revokeDialog.motifHint')"
             outlined
             dense
             type="textarea"
@@ -385,12 +384,12 @@ onMounted(charger);
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" no-caps @click="dialogRevocation = false" />
+          <q-btn flat :label="$t('carteEtudiante.revokeDialog.cancel')" no-caps @click="dialogRevocation = false" />
           <q-btn
             unelevated
             color="negative"
             no-caps
-            label="Révoquer définitivement"
+            :label="$t('carteEtudiante.revokeDialog.confirm')"
             :disable="motifRevocation.trim().length < 3"
             @click="confirmerRevocation"
           />
@@ -403,32 +402,31 @@ onMounted(charger);
       <q-card style="min-width: 360px">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-h6">QR de vérification</div>
+            <div class="text-h6">{{ $t('carteEtudiante.detailDialog.title') }}</div>
             <div v-if="carteDetail?.etudiant" class="text-caption text-grey-7">
               {{ carteDetail.etudiant.prenom }} {{ carteDetail.etudiant.nom }} ·
               {{ carteDetail.etudiant.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" aria-label="Fermer" @click="dialogDetail = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('carteEtudiante.detailDialog.close')" @click="dialogDetail = false" />
         </q-card-section>
         <q-card-section class="text-center">
           <canvas ref="canvasQr" />
           <div class="text-caption text-grey-7 q-mt-sm">
-            Scannez ce QR pour vérifier l'authenticité de la carte. Toute
-            consultation est journalisée.
+            {{ $t('carteEtudiante.detailDialog.scanHint') }}
           </div>
           <div class="text-caption text-grey-7 q-mt-xs url-verification">
             <code>{{ urlVerification }}</code>
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps icon="content_copy" label="Copier le lien" @click="copierUrlVerification" />
+          <q-btn flat no-caps icon="content_copy" :label="$t('carteEtudiante.detailDialog.copyLink')" @click="copierUrlVerification" />
           <q-btn
             unelevated
             color="primary"
             no-caps
             icon="verified_user"
-            label="Ouvrir la vérification"
+            :label="$t('carteEtudiante.detailDialog.openVerification')"
             @click="ouvrirVerification"
           />
         </q-card-actions>
@@ -451,8 +449,8 @@ onMounted(charger);
   padding: 3px 8px;
   min-height: 24px;
 }
-.badge--ok { background: #e3f5e9; color: #17683a; }
-.badge--ko { background: #fdeaea; color: #a52020; }
+.badge--ok { background: #f1fbf2; color: #027a0b; }
+.badge--ko { background: #fff1f2; color: #c10000; }
 
 .url-verification code {
   word-break: break-all;

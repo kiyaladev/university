@@ -98,7 +98,7 @@ const indexActuel = computed(() => props.etapes.findIndex((e) => e.identifiant =
   background: white;
 }
 .workflow__etape--actuelle {
-  border-color: var(--up-primary, #10251E);
+  border-color: var(--up-primary, #1D1D1F);
   background: rgba(15, 122, 69, 0.06);
 }
 .workflow__etape--faite {
@@ -113,15 +113,18 @@ const indexActuel = computed(() => props.etapes.findIndex((e) => e.identifiant =
   margin: 0 auto 6px;
   display: grid;
   place-items: center;
-  font-weight: 700;
+  font-weight: 590;
 }
+/* L'étape en cours porte le vert de l'action : c'est là que ça se passe. */
 .workflow__etape--actuelle .workflow__puce {
-  background: var(--up-primary, #10251E);
-  color: white;
+  background: var(--up-primary);
+  color: #fff;
 }
+/* Une étape franchie est rangée, pas active : encre pleine. Le vert des deux
+   côtés rendait « en cours » et « fait » indiscernables. */
 .workflow__etape--faite .workflow__puce {
-  background: var(--up-secondary, #0F7A45);
-  color: white;
+  background: var(--up-secondary);
+  color: var(--up-plaque);
 }
 .workflow__libelle {
   font-weight: 600;

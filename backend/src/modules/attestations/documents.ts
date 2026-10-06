@@ -9,6 +9,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutAttestation, TypeAttestation } from '@prisma/client';
+import { echapper } from '../../common/utils';
 
 const LIBELLE_TYPE: Record<TypeAttestation, string> = {
   SCOLARITE: 'Certificat de scolarité',
@@ -35,14 +36,6 @@ export interface AttestationImprimable {
   annee?: { libelle?: string } | null;
   promotion?: { nom?: string; filiere?: { nom?: string } } | null;
   inscription?: { numero?: string } | null;
-}
-
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 function dateFr(v: Date | string | null | undefined): string {

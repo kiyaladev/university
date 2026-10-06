@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { BadgeAcces, TypeBadge } from '../types';
 import {
@@ -9,6 +10,7 @@ import {
 } from '../utils/libelles';
 
 const $q = useQuasar();
+const { t } = useI18n();
 
 const props = defineProps<{
   modelValue: boolean;
@@ -62,15 +64,15 @@ watch(
 );
 
 const enEdition = computed(() => Boolean(props.badge?.id));
-const titre = computed(() => (enEdition.value ? 'Modifier le badge' : 'Émettre un badge'));
+const titre = computed(() => t(enEdition.value ? 'badges.dialogs.form.titleEdit' : 'badges.dialogs.form.titleNew'));
 
 async function soumettre() {
   if (!formulaire.value.nom || !formulaire.value.prenom) {
-    $q.notify({ type: 'warning', message: 'Nom et prénom sont obligatoires.' });
+    $q.notify({ type: 'warning', message: t('badges.dialogs.form.nameRequired') });
     return;
   }
   if (!formulaire.value.dateValidite) {
-    $q.notify({ type: 'warning', message: 'Indiquez une date de validité.' });
+    $q.notify({ type: 'warning', message: t('badges.dialogs.form.validityRequired') });
     return;
   }
   enregistrement.value = true;
@@ -89,11 +91,11 @@ async function soumettre() {
       if (valeur) payload[champ] = valeur;
     }
     const { data } = await api[methode](url, payload);
-    $q.notify({ type: 'positive', message: enEdition.value ? 'Badge mis à jour.' : 'Badge émis.' });
+    $q.notify({ type: 'positive', message: t(enEdition.value ? 'badges.dialogs.form.updated' : 'badges.dialogs.form.issued') });
     emit('enregistre', data);
     emit('update:modelValue', false);
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Émission impossible.' });
+    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('badges.dialogs.form.issueFailed') });
   } finally {
     enregistrement.value = false;
   }
@@ -110,7 +112,7 @@ function fermer() {
       <q-card-section class="row items-center">
         <div class="text-h6">{{ titre }}</div>
         <q-space />
-        <q-btn flat round dense icon="close" @click="fermer" />
+        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
       </q-card-section>
 
       <q-card-section class="q-gutter-md">
@@ -119,36 +121,36 @@ function fermer() {
           :options="OPTIONS_TYPE"
           emit-value
           map-options
-          label="Type de badge"
+          :label="$t('badges.dialogs.form.typeLabel')"
           outlined
           dense
         />
         <div class="row q-col-gutter-md">
-          <q-input v-model="formulaire.prenom" label="Prénom" outlined dense class="col" />
-          <q-input v-model="formulaire.nom" label="Nom" outlined dense class="col" />
+          <q-input v-model="formulaire.prenom" :label="$t('common.fields.firstName')" outlined dense class="col" />
+          <q-input v-model="formulaire.nom" :label="$t('common.fields.lastName')" outlined dense class="col" />
         </div>
         <div class="row q-col-gutter-md">
-          <q-input v-model="formulaire.fonction" label="Fonction" outlined dense class="col" />
-          <q-input v-model="formulaire.organisation" label="Organisation" outlined dense class="col" />
+          <q-input v-model="formulaire.fonction" :label="$t('badges.dialogs.form.functionLabel')" outlined dense class="col" />
+          <q-input v-model="formulaire.organisation" :label="$t('badges.table.columns.organization')" outlined dense class="col" />
         </div>
         <div class="row q-col-gutter-md">
-          <q-input v-model="formulaire.telephone" label="Téléphone" outlined dense class="col" />
-          <q-input v-model="formulaire.email" label="Email" outlined dense class="col" type="email" />
+          <q-input v-model="formulaire.telephone" :label="$t('common.fields.phone')" outlined dense class="col" />
+          <q-input v-model="formulaire.email" :label="$t('badges.dialogs.form.emailLabel')" outlined dense class="col" type="email" />
         </div>
         <div class="row q-col-gutter-md">
-          <q-input v-model="formulaire.pieceIdentite" label="Type de pièce" outlined dense class="col" />
-          <q-input v-model="formulaire.numeroPiece" label="Numéro de pièce" outlined dense class="col" />
+          <q-input v-model="formulaire.pieceIdentite" :label="$t('badges.dialogs.form.idTypeLabel')" outlined dense class="col" />
+          <q-input v-model="formulaire.numeroPiece" :label="$t('badges.dialogs.form.idNumberLabel')" outlined dense class="col" />
         </div>
         <div class="row q-col-gutter-md">
-          <q-input v-model="formulaire.dateValidite" label="Valable jusqu'au" type="date" outlined dense class="col" />
-          <q-input v-model="formulaire.zonesAccess" label="Zones autorisées (CSV)" outlined dense class="col" />
+          <q-input v-model="formulaire.dateValidite" :label="$t('verificationCarte.result.table.validUntil')" type="date" outlined dense class="col" />
+          <q-input v-model="formulaire.zonesAccess" :label="$t('badges.dialogs.form.zonesLabel')" outlined dense class="col" />
         </div>
-        <q-input v-model="formulaire.photoUrl" label="Photo (URL)" outlined dense placeholder="https://…" />
+        <q-input v-model="formulaire.photoUrl" :label="$t('badges.dialogs.form.photoLabel')" outlined dense />
         <q-input
           v-if="enEdition"
           v-model="formulaire.motif"
-          label="Motif d'annulation"
-          hint="Renseigné automatiquement lors de l'annulation du badge."
+          :label="$t('badges.dialogs.cancel.reasonLabel')"
+          :hint="$t('badges.dialogs.form.reasonHint')"
           outlined
           dense
           type="textarea"
@@ -157,8 +159,8 @@ function fermer() {
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Annuler" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="enEdition ? 'Enregistrer' : 'Émettre le badge'" @click="soumettre" />
+        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
+        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="$t(enEdition ? 'common.actions.save' : 'badges.actions.issueBadge')" @click="soumettre" />
       </q-card-actions>
     </q-card>
   </q-dialog>

@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-03T13:03:39Z",
+  "outils": "Bun 1.4.2 bun audit",
+  "backend": {
+    "resultat": "aucune vulnérabilité détectée",
+    "paquetsVerifies": 655,
+    "braces": "absent de l’arbre après override nestjs-i18n>chokidar@4.0.3"
+  },
+  "frontend": {
+    "resultat": "aucune vulnérabilité détectée après retrait du plugin de précompilation i18n",
+    "paquetsVerifies": 751,
+    "paquetRetire": "@intlify/unplugin-vue-i18n",
+    "ancienneBrancheSupprimee": "fast-glob > micromatch > braces",
+    "usage": "Les catalogues TypeScript sont importés directement ; la compilation de production et l’affichage FR/EN dans le navigateur fonctionnent sans le plugin.",
+    "avis": "GHSA-vfj7-8cjw-p6xm / CVE-2026-93687",
+    "versionsAffectees": "<=3.0.3",
+    "versionCorrigeeAmont": null,
+    "interpretation": "La dépendance vulnérable n’est plus présente dans l’arbre frontend ; bun audit ne signale plus d’alerte.",
+    "source": "https://github.com/advisories/ghsa-vfj7-8cjw-p6xm"
+  },
+  "limites": [
+    "Rejouer l’audit des dépendances après les prochaines mises à jour frontend."
+  ]
+}

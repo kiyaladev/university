@@ -16,12 +16,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { documents, AttestationImprimable } from './documents';
+import { prochainNumeroTx } from '../../common/numero';
+import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AttestationQueryDto,
   CreateAttestationDto,
@@ -42,9 +45,9 @@ export const ATTESTATION_INCLUDE = {
       lieuNaissance: true,
     },
   },
-  annee: true,
-  promotion: { include: { filiere: true } },
-  inscription: true,
+  annee: { select: { libelle: true } },
+  promotion: { select: { nom: true, filiere: { select: { nom: true } } } },
+  inscription: { select: { numero: true } },
   emisePar: { select: { id: true, nom: true, prenom: true } },
   revoqueePar: { select: { id: true, nom: true, prenom: true } },
   _count: { select: { verifications: true } },
@@ -64,8 +67,8 @@ export class AttestationsService {
 
   async liste(query: AttestationQueryDto) {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.AttestationWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -95,12 +98,12 @@ export class AttestationsService {
         where,
         include: ATTESTATION_INCLUDE,
         orderBy: [{ emiseLe: 'desc' }],
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.attestation.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async findOne(id: string) {
@@ -108,7 +111,7 @@ export class AttestationsService {
       where: { id },
       include: ATTESTATION_INCLUDE,
     });
-    if (!attestation) throw new NotFoundException('Attestation introuvable');
+    if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
     return attestation;
   }
 
@@ -119,7 +122,8 @@ export class AttestationsService {
       const annee = await this.prisma.anneeAcademique.findUnique({
         where: { id: anneeId },
       });
-      if (!annee) throw new BadRequestException('Année académique introuvable');
+      if (!annee) throw new BadRequestException(I18nContext.current()!.t('attestations.annee_academique_introuvable'));
+      if (annee.cloturee) throw new BadRequestException(I18nContext.current()!.t('common.academicYearClosed'));
       return annee;
     }
     return (
@@ -145,16 +149,7 @@ export class AttestationsService {
    * recommence avec le suivant.
    */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    const prefixe = `${PREFIX}${annee}-`;
-    const existantes = await tx.attestation.findMany({
-      where: { numero: { startsWith: prefixe } },
-      select: { numero: true },
-    });
-    const max = existantes.reduce((m, a) => {
-      const n = Number(a.numero.slice(prefixe.length));
-      return Number.isFinite(n) ? Math.max(m, n) : m;
-    }, 0);
-    return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+    return prochainNumeroTx(tx, 'attestation', 'numero', `${PREFIX}${annee}-`, 5);
   }
 
   /** Le jeton encodé dans le QR : aléatoire, unique, impossible à deviner. */
@@ -162,14 +157,33 @@ export class AttestationsService {
     return `UP-DOC-${randomBytes(12).toString('base64url')}`;
   }
 
+  private instantaneAudit(attestation: any) {
+    if (!attestation) return null;
+    return {
+      id: attestation.id,
+      numero: attestation.numero,
+      type: attestation.type,
+      statut: attestation.statut,
+      anneeId: attestation.anneeId,
+      promotionId: attestation.promotionId,
+      inscriptionId: attestation.inscriptionId,
+      etudiantId: attestation.etudiantId,
+    };
+  }
+
   async creer(dto: CreateAttestationDto, user: AuthUser) {
     const etudiant = await this.prisma.etudiant.findUnique({
       where: { id: dto.etudiantId },
     });
-    if (!etudiant) throw new NotFoundException('Étudiant introuvable');
+    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('attestations.etudiant_introuvable'));
 
-    const annee = await this.anneeRetenue(dto.anneeId);
-    const anneeNumero = this.anneeNumero(annee?.libelle);
+    const inscriptionInitiale = dto.inscriptionId ? await this.prisma.inscription.findUnique({
+      where: { id: dto.inscriptionId }, select: { anneeId: true },
+    }) : null;
+    if (dto.inscriptionId && !inscriptionInitiale) {
+      throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
+    }
+    const annee = await this.anneeRetenue(dto.anneeId ?? inscriptionInitiale?.anneeId);
 
     // Dédoublonnage : une seule attestation émise du même type, même année,
     // pour le même étudiant. La révocation de l'existante rouvre le droit
@@ -177,45 +191,76 @@ export class AttestationsService {
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const attestation = await this.prisma.$transaction(async (tx) => {
+          const promotion = dto.promotionId ? await tx.promotion.findUnique({
+            where: { id: dto.promotionId },
+            select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
+          }) : null;
+          if (dto.promotionId && !promotion) {
+            throw new BadRequestException(I18nContext.current()!.t('common.academicPromotionNotFound'));
+          }
+          if (dto.promotionId && annee?.id) {
+            await exigerPromotionMemeAnnee(tx, dto.promotionId, annee.id);
+          }
+          const anneeIdRetenue = annee?.id ?? promotion?.anneeId ?? null;
+          await exigerAnneeOuverte(tx, anneeIdRetenue);
+          // Même verrou pour l’émission et le changement de type : le contrôle
+          // d’unicité reste vrai quand plusieurs documents du même étudiant changent.
+          await tx.$queryRaw`SELECT id FROM "Etudiant" WHERE id = ${dto.etudiantId} FOR UPDATE`;
+          let promotionIdRetenue = dto.promotionId ?? null;
+          if (dto.inscriptionId) {
+            await tx.$queryRaw`SELECT id FROM "Inscription" WHERE id = ${dto.inscriptionId} FOR SHARE`;
+            const inscription = await tx.inscription.findUnique({
+              where: { id: dto.inscriptionId },
+              select: { etudiantId: true, anneeId: true, promotionId: true },
+            });
+            if (!inscription) throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
+            if (inscription.etudiantId !== dto.etudiantId || inscription.anneeId !== anneeIdRetenue
+              || (dto.promotionId && inscription.promotionId !== dto.promotionId)) {
+              throw new BadRequestException(I18nContext.current()!.t('attestations.rattachement_incoherent'));
+            }
+            promotionIdRetenue = inscription.promotionId;
+            await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
+          }
+          const anneeNumero = this.anneeNumero(annee?.libelle ?? promotion?.annee.libelle);
           const doublon = await tx.attestation.findFirst({
             where: {
               etudiantId: dto.etudiantId,
               type: dto.type as TypeAttestation,
-              anneeId: annee?.id ?? null,
+              anneeId: anneeIdRetenue,
               statut: StatutAttestation.EMISE,
             },
           });
           if (doublon) {
             throw new ConflictException(
-              `Une attestation ${doublon.numero} est déjà émise pour cet étudiant sur ce type / cette année : révoquez-la d'abord pour en émettre une nouvelle.`,
+              I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }),
             );
           }
 
           const numero = await this.prochainNumero(tx, anneeNumero);
-          return tx.attestation.create({
+          const cree = await tx.attestation.create({
             data: {
               numero,
               type: dto.type,
               motif: dto.motif ?? null,
               qrToken: this.nouveauQrToken(),
               etudiantId: dto.etudiantId,
-              anneeId: annee?.id ?? null,
-              promotionId: dto.promotionId ?? null,
+              anneeId: anneeIdRetenue,
+              promotionId: promotionIdRetenue,
               inscriptionId: dto.inscriptionId ?? null,
               emiseParId: user.id,
             },
             include: ATTESTATION_INCLUDE,
           });
-        });
-
-        await this.prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'ATTESTATION_EMISE',
-            entite: 'Attestation',
-            entiteId: attestation.id,
-            details: `${attestation.numero} — ${attestation.type} (${etudiant.matricule} ${etudiant.nom} ${etudiant.prenom})`,
-          },
+          await tx.auditLog.create({
+            data: {
+              userId: user.id,
+              action: 'ATTESTATION_EMISE',
+              entite: 'Attestation',
+              entiteId: cree.id,
+              details: JSON.stringify({ avant: null, apres: this.instantaneAudit(cree) }),
+            },
+          });
+          return cree;
         });
         return attestation;
       } catch (e: any) {
@@ -224,69 +269,89 @@ export class AttestationsService {
         throw e;
       }
     }
-    throw new ConflictException("Numéro d'attestation temporairement indisponible, réessayez.");
+    throw new ConflictException(I18nContext.current()!.t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
   }
 
   // ------------------------------------------------------------------ gestion
 
   async modifier(id: string, dto: UpdateAttestationDto, user: AuthUser) {
     const attestation = await this.findOne(id);
+    await exigerAnneeOuverte(this.prisma, attestation.anneeId);
     if (attestation.statut === StatutAttestation.REVOQUEE) {
-      throw new BadRequestException(
-        'Cette attestation a été révoquée : elle ne peut plus être modifiée.',
-      );
+      throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
     }
     if (dto.type == null && dto.motif == null) {
-      throw new BadRequestException('Rien à modifier : renseignez un type ou un motif.');
+      throw new BadRequestException(I18nContext.current()!.t('attestations.rien_a_modifier_renseignez_un_type_ou_un_motif'));
     }
 
-    const miseAJour = await this.prisma.attestation.update({
-      where: { id },
-      data: {
-        ...(dto.type != null ? { type: dto.type } : {}),
-        ...(dto.motif != null ? { motif: dto.motif } : {}),
-      },
-      include: ATTESTATION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await exigerAnneeOuverte(tx, attestation.anneeId);
+      await tx.$queryRaw`SELECT id FROM "Etudiant" WHERE id = ${attestation.etudiantId} FOR UPDATE`;
+      await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
+      const actuel = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
+      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+      if (actuel.statut === StatutAttestation.REVOQUEE) {
+        throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
+      }
+      if (dto.type != null && dto.type !== actuel.type) {
+        const doublon = await tx.attestation.findFirst({
+          where: { id: { not: id }, etudiantId: actuel.etudiantId, anneeId: actuel.anneeId,
+            type: dto.type, statut: StatutAttestation.EMISE },
+        });
+        if (doublon) throw new ConflictException(I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }));
+      }
+      const miseAJour = await tx.attestation.update({
+        where: { id },
+        data: {
+          ...(dto.type != null ? { type: dto.type } : {}),
+          ...(dto.motif != null ? { motif: dto.motif } : {}),
+        },
+        include: ATTESTATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'ATTESTATION_MODIFICATION',
+          entite: 'Attestation',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) }),
+        },
+      });
+      return miseAJour;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'ATTESTATION_MODIFICATION',
-        entite: 'Attestation',
-        entiteId: id,
-        details: `Type ${attestation.type} → ${miseAJour.type} / motif revu`,
-      },
-    });
-    return miseAJour;
   }
 
   /** Révocation : la décision inverse de l'émission, la mémoire reste intacte. */
   async revoquer(id: string, dto: RevoquerAttestationDto, user: AuthUser) {
-    const attestation = await this.findOne(id);
-    if (attestation.statut === StatutAttestation.REVOQUEE) {
-      throw new BadRequestException('Cette attestation est déjà révoquée.');
-    }
-
-    const miseAJour = await this.prisma.attestation.update({
-      where: { id },
-      data: {
-        statut: StatutAttestation.REVOQUEE,
-        motifRevocation: dto.motifRevocation,
-        revoqueeLe: new Date(),
-        revoqueeParId: user.id,
-      },
-      include: ATTESTATION_INCLUDE,
+    // La révocation reste possible après clôture pour invalider un document frauduleux.
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
+      const attestation = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
+      if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+      if (attestation.statut === StatutAttestation.REVOQUEE) {
+        throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_est_deja_revoquee'));
+      }
+      const miseAJour = await tx.attestation.update({
+        where: { id },
+        data: {
+          statut: StatutAttestation.REVOQUEE,
+          motifRevocation: dto.motifRevocation,
+          revoqueeLe: new Date(),
+          revoqueeParId: user.id,
+        },
+        include: ATTESTATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'ATTESTATION_REVOCATION',
+          entite: 'Attestation',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) }),
+        },
+      });
+      return miseAJour;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'ATTESTATION_REVOCATION',
-        entite: 'Attestation',
-        entiteId: id,
-        details: `${miseAJour.numero} — motif : ${dto.motifRevocation}`,
-      },
-    });
-    return miseAJour;
   }
 
   /**
@@ -294,9 +359,7 @@ export class AttestationsService {
    * probant, elle se révoque, jamais elle ne s'efface.
    */
   async supprimerInterdit() {
-    throw new ForbiddenException(
-      "La suppression d'attestations est interdite : ces documents sont conservés pour leur valeur probante (annales, opposabilité aux tiers). Révoquez l'attestation au lieu de la supprimer.",
-    );
+    throw new ForbiddenException(I18nContext.current()!.t('attestations.la_suppression_d_attestations_est_interdite_ces_documents_so'));
   }
 
   // ------------------------------------------------------------- documentation
@@ -311,14 +374,14 @@ export class AttestationsService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('attestations.jeton_invalide_ou_expire'));
     }
 
     const attestation = await this.prisma.attestation.findUnique({
       where: { id },
       include: ATTESTATION_INCLUDE,
     });
-    if (!attestation) throw new NotFoundException('Attestation introuvable');
+    if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
 
     const urlVerification = this.urlVerification(baseUrl, attestation.numero, attestation.qrToken);
     const nomEtablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
@@ -357,8 +420,8 @@ export class AttestationsService {
         etudiant: {
           select: { nom: true, prenom: true, matricule: true },
         },
-        annee: true,
-        promotion: { include: { filiere: true } },
+        annee: { select: { libelle: true } },
+        promotion: { select: { nom: true, filiere: { select: { nom: true } } } },
       },
     });
 
@@ -406,7 +469,7 @@ export class AttestationsService {
     if (!statutOk) {
       return {
         valide: false,
-        raison: `Cette attestation a été révoquée le ${attestation.revoqueeLe?.toLocaleDateString('fr-FR') ?? '—'} (motif : ${attestation.motifRevocation ?? 'non précisé'}). Elle n'a plus aucune valeur.`,
+        raison: `Cette attestation a été révoquée le ${attestation.revoqueeLe?.toLocaleDateString('fr-FR') ?? '—'}. Elle n'a plus aucune valeur.`,
       };
     }
 

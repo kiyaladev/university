@@ -1,0 +1,10 @@
+{
+  "internal": "An internal error has occurred",
+  "unexpected": "An unexpected error has occurred",
+  "notImplemented": "This feature is not yet available",
+  "database": "The database returned an error",
+  "externalService": "An external service failed",
+  "validation": "Validation failed",
+  "payloadTooLarge": "The request exceeds the allowed size",
+  "tooManyRequests": "Too many requests: please try again later"
+}

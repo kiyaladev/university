@@ -1,0 +1,10 @@
+{
+  "date": "2026-10-02T12:58:19.986Z",
+  "environnement": "PWA QA locale isolée",
+  "formulaireConnexion": true,
+  "identifiantsDemoAffiches": false,
+  "chaineMotDePasseDansPwa": false,
+  "identifiantsDansReadme": false,
+  "identifiantsDansSortieSeed": false,
+  "erreursJavaScript": []
+}

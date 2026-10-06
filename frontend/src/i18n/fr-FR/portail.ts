@@ -1,0 +1,93 @@
+/** Namespace `portail` — page PortailPage.vue (espace étudiant : dossier, résultats, portefeuille resto). */
+export default {
+  actions: {
+    home: 'Retour à mon accueil',
+    logout: 'Se déconnecter',
+    retry: 'Réessayer',
+    view: 'Voir',
+    recharge: 'Recharger',
+    cancel: 'Annuler',
+  },
+  otherRole: {
+    title: 'Espace étudiant',
+    message:
+      'Cette vue est réservée aux comptes étudiants, ouverts par connexion par SMS depuis le portail étudiant.',
+  },
+  errorState: {
+    title: 'Dossier indisponible',
+  },
+  header: {
+    subtitle: 'Mon espace',
+    greeting: 'Bonjour, {prenom}',
+    matricule: 'Matricule {matricule}',
+  },
+  nav: {
+    title: 'Mes démarches',
+  },
+  services: {
+    maCarte: { label: 'Ma carte étudiante', help: 'Carte numérique, QR code et code personnel' },
+    demandesDocuments: { label: 'Mes demandes de documents', help: 'Certificats, relevés et attestations à demander' },
+    reclamations: { label: 'Mes réclamations', help: 'Contester une note, signaler une erreur de dossier' },
+    vote: { label: 'Voter', help: 'Élections des délégués et résultats proclamés' },
+    bibliotheque: { label: 'Bibliothèque numérique', help: 'Mémoires, thèses et supports de cours' },
+    formations: { label: 'Formation continue', help: 'Catalogue des formations ouvertes à l’inscription' },
+  },
+  sections: {
+    inscription: {
+      title: 'Inscription',
+      statut: 'Statut',
+      promotion: 'Promotion',
+      annee: 'Année',
+      filiere: 'Filière',
+      empty: 'Aucune inscription enregistrée.',
+    },
+    frais: {
+      title: "Frais d'inscription",
+      paye: 'Payé',
+      restant: 'Restant',
+      empty: 'Aucun frais pour cette année.',
+    },
+    paiements: {
+      title: 'Paiements récents',
+      empty: 'Aucun paiement enregistré.',
+    },
+    resultat: {
+      title: 'Résultat',
+      rankTooltip: 'Rang dans la promotion',
+      rank: 'rang {rang}',
+      empty: 'Aucun résultat publié pour le moment. Les délibérations validées par le jury apparaîtront ici.',
+    },
+    attestations: {
+      title: 'Attestations',
+      revoked: 'révoquée',
+      viewTooltip: "Ouvrir l'impression de l'attestation (nouvel onglet)",
+      empty: 'Aucune attestation émise. Demandez un certificat de scolarité ou un relevé depuis',
+      emptyLink: 'Mes demandes de documents',
+      note: "Chaque attestation porte un QR code : n'importe qui peut en vérifier l'authenticité sur la page",
+      noteLink: "Vérification d'attestation",
+    },
+    resto: {
+      title: 'Portefeuille resto',
+      description:
+        'Le solde sert au restaurant universitaire : scannez votre carte au guichet à chaque repas. Rechargez par Mobile Money et le solde est crédité après confirmation du guichet.',
+      empty: 'Aucune activité pour le moment.',
+      rechargeLabel: 'Recharge — {statut}',
+    },
+  },
+  dialogResto: {
+    title: 'Recharger le portefeuille resto',
+    montantLabel: 'Montant (GNF)',
+    montantHint: 'Minimum 500 GNF',
+    montantError: "Saisissez un montant d'au moins 500 GNF",
+    operateurLabel: 'Opérateur Mobile Money',
+    note:
+      'Vous paierez par Mobile Money : une référence vous sera communiquée pour le transfert. Le solde est crédité après confirmation du guichet.',
+    submit: 'Demander le paiement',
+  },
+  loading: 'Chargement de votre dossier…',
+  messages: {
+    popupBlocked: "Autorisez les fenêtres contextuelles pour ouvrir l’attestation.",
+    loadError: 'Votre dossier n’a pas pu être chargé. Vérifiez votre connexion, puis réessayez.',
+    rechargeInfo: 'Recharge {reference} en attente — suivez les instructions de paiement',
+  },
+};

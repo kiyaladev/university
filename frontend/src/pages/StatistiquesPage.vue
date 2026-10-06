@@ -2,24 +2,24 @@
   <q-page class="stats">
     <header class="stats__entete">
       <div>
-        <h1 class="page-titre">Statistiques</h1>
+        <h1 class="page-titre">{{ $t('statistiques.title') }}</h1>
         <p class="page-sous-titre">
-          Ce que la tournée a produit — salle par salle, enseignant par enseignant
+          {{ $t('statistiques.subtitle') }}
         </p>
       </div>
 
       <div class="stats__periode">
-        <champ-date v-model="filtres.dateDebut" label="Du" @update:model-value="raccourciActif = ''" />
-        <champ-date v-model="filtres.dateFin" label="Au" @update:model-value="raccourciActif = ''" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('statistiques.filters.from')" @update:model-value="raccourciActif = ''" />
+        <champ-date v-model="filtres.dateFin" :label="$t('statistiques.filters.to')" @update:model-value="raccourciActif = ''" />
         <q-btn
           round
           color="primary"
           icon="refresh"
-          aria-label="Recalculer les relevés"
+          :aria-label="$t('statistiques.filters.recalculateAria')"
           :loading="chargement"
           @click="charger"
         >
-          <q-tooltip>Recalculer</q-tooltip>
+          <q-tooltip>{{ $t('statistiques.filters.recalculateTooltip') }}</q-tooltip>
         </q-btn>
       </div>
     </header>
@@ -27,11 +27,11 @@
     <div class="stats__raccourcis">
       <button
         v-for="r in raccourcis"
-        :key="r.label"
+        :key="r.jours"
         type="button"
         class="pochoir raccourci"
-        :class="{ 'raccourci--actif': raccourciActif === r.label }"
-        :aria-pressed="raccourciActif === r.label"
+        :class="{ 'raccourci--actif': raccourciActif === r.jours }"
+        :aria-pressed="raccourciActif === r.jours"
         @click="appliquer(r)"
       >
         {{ r.label }}
@@ -40,10 +40,10 @@
 
     <div class="stats__barre">
       <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-        <q-tab name="salles" icon="meeting_room" label="Par salle" no-caps />
-        <q-tab name="enseignants" icon="school" label="Par enseignant" no-caps />
+        <q-tab name="salles" icon="meeting_room" :label="$t('statistiques.tabs.salles')" no-caps />
+        <q-tab name="enseignants" icon="school" :label="$t('statistiques.tabs.enseignants')" no-caps />
       </q-tabs>
-      <bascule-vue v-model="vue" />
+      <bascule-vue cle="statistiques" v-model:mode="vue" />
     </div>
 
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
@@ -51,26 +51,26 @@
       <q-tab-panel name="salles" class="q-pa-none">
         <section v-if="salles?.total" class="plaque releve">
           <div class="releve__ligne">
-            <p class="pochoir">Salles visitées</p>
+            <p class="pochoir">{{ $t('statistiques.salles.summary.visited') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ sallesVisitees }}/{{ salles.lignes.length }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Séances contrôlées</p>
+            <p class="pochoir">{{ $t('statistiques.salles.summary.controlled') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ salles.total.controlees }}/{{ salles.total.planifiees }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Absences constatées</p>
-            <p class="lettrage avec-unite chiffres releve__valeur text-negative">
+            <p class="pochoir">{{ $t('statistiques.salles.summary.absences') }}</p>
+            <p class="lettrage avec-unite chiffres releve__valeur">
               {{ salles.total.absent }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Heures assurées</p>
-            <p class="lettrage avec-unite chiffres releve__valeur text-positive">
+            <p class="pochoir">{{ $t('statistiques.salles.summary.hours') }}</p>
+            <p class="lettrage avec-unite chiffres releve__valeur">
               {{ heuresLisibles(salles.total.heuresRealisees) }}
             </p>
           </div>
@@ -89,40 +89,41 @@
 
               <div class="fiche__chiffres">
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Séances</span>
+                  <span class="pochoir">{{ $t('statistiques.salles.card.sessions') }}</span>
                   <span class="lettrage chiffres">{{ l.planifiees }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Contrôlées</span>
-                  <span class="lettrage chiffres text-positive">{{ l.controlees }}</span>
+                  <span class="pochoir">{{ $t('statistiques.salles.card.controlled') }}</span>
+                  <span class="lettrage chiffres">{{ l.controlees }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Absences</span>
+                  <span class="pochoir">{{ $t('statistiques.salles.card.absences') }}</span>
                   <span class="lettrage chiffres" :class="l.absent ? 'text-negative' : ''">
                     {{ l.absent }}
                   </span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Étudiants</span>
+                  <span class="pochoir">{{ $t('statistiques.salles.card.students') }}</span>
                   <span class="lettrage chiffres">{{ l.effectifMoyen || '—' }}</span>
                 </div>
               </div>
 
               <div class="fiche__taux">
-                <span class="pochoir">Occupation</span>
+                <span class="pochoir">{{ $t('statistiques.salles.card.occupation') }}</span>
                 <barre-taux :valeur="l.tauxOccupation" />
               </div>
               <div class="fiche__taux">
-                <span class="pochoir">Présence</span>
+                <span class="pochoir">{{ $t('statistiques.salles.card.presence') }}</span>
                 <barre-taux :valeur="l.tauxPresence" />
               </div>
 
               <footer class="fiche__pied">
                 <span class="pochoir">
                   <template v-if="l.derniereVisite">
-                    Vue le <span class="chiffres">{{ dateLisible(l.derniereVisite) }}</span>
+                    {{ $t('statistiques.salles.card.visitedOn') }}
+                    <span class="chiffres">{{ dateLisible(l.derniereVisite) }}</span>
                   </template>
-                  <span v-else class="text-negative">jamais visitée</span>
+                  <span v-else class="text-negative">{{ $t('statistiques.salles.card.neverVisited') }}</span>
                 </span>
                 <q-btn
                   v-if="l.salleId"
@@ -131,14 +132,14 @@
                   no-caps
                   size="sm"
                   icon="event_note"
-                  label="Ses séances"
+                  :label="$t('statistiques.salles.card.sessionsLink')"
                   :to="lienSeancesSalle(l.salleId)"
                 />
               </footer>
             </article>
           </li>
           <li v-if="!(salles?.lignes ?? []).length" class="stats__vide pochoir">
-            Aucune séance programmée en salle sur cette période — élargissez les dates.
+            {{ $t('statistiques.salles.empty.cards') }}
           </li>
         </ul>
 
@@ -153,8 +154,8 @@
           :loading="chargement"
           :pagination="{ rowsPerPage: 25, sortBy: 'code' }"
           :visible-columns="colonnesSallesVisibles"
-          loading-label="Calcul du relevé…"
-          no-data-label="Aucune séance programmée en salle sur cette période."
+          :loading-label="$t('statistiques.salles.table.loading')"
+          :no-data-label="$t('statistiques.salles.empty.table')"
         >
           <template #body-cell-salle="p">
             <q-td :props="p">
@@ -183,7 +184,7 @@
               <span v-if="p.row.derniereVisite" class="chiffres">
                 {{ dateLisible(p.row.derniereVisite) }}
               </span>
-              <span v-else class="pochoir text-negative">jamais visitée</span>
+              <span v-else class="pochoir text-negative">{{ $t('statistiques.salles.card.neverVisited') }}</span>
             </q-td>
           </template>
 
@@ -195,10 +196,10 @@
                 dense
                 round
                 icon="event_note"
-                aria-label="Voir les séances de cette salle"
+                :aria-label="$t('statistiques.salles.actions.sessionsAria')"
                 :to="lienSeancesSalle(p.row.salleId)"
               >
-                <q-tooltip>Ses séances sur la période</q-tooltip>
+                <q-tooltip>{{ $t('statistiques.salles.actions.sessionsTooltip') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -209,25 +210,25 @@
       <q-tab-panel name="enseignants" class="q-pa-none">
         <section v-if="enseignants?.total" class="plaque releve q-mb-md">
           <div class="releve__ligne">
-            <p class="pochoir">Séances</p>
+            <p class="pochoir">{{ $t('statistiques.enseignants.summary.sessions') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ enseignants.total.planifiees }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Présence</p>
-            <p class="lettrage avec-unite chiffres releve__valeur text-positive">
+            <p class="pochoir">{{ $t('statistiques.enseignants.summary.presence') }}</p>
+            <p class="lettrage avec-unite chiffres releve__valeur">
               {{ pourcentLisible(enseignants.total.tauxPresence) }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Absences</p>
-            <p class="lettrage avec-unite chiffres releve__valeur text-negative">
+            <p class="pochoir">{{ $t('statistiques.enseignants.summary.absences') }}</p>
+            <p class="lettrage avec-unite chiffres releve__valeur">
               {{ enseignants.total.absent }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">Heures assurées</p>
+            <p class="pochoir">{{ $t('statistiques.enseignants.summary.hours') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ heuresLisibles(enseignants.total.heuresRealisees) }}
             </p>
@@ -250,39 +251,39 @@
                     dense
                     round
                     icon="event_note"
-                    aria-label="Voir ses séances au registre"
+                    :aria-label="$t('statistiques.enseignants.actions.sessionsAria')"
                     :to="lienSeancesEnseignant(l.enseignantId)"
                   >
-                    <q-tooltip>Ses séances sur la période</q-tooltip>
+                    <q-tooltip>{{ $t('statistiques.enseignants.actions.sessionsTooltip') }}</q-tooltip>
                   </q-btn>
                   <q-btn
                     flat
                     dense
                     round
                     icon="print"
-                    aria-label="Imprimer sa fiche d’assiduité"
+                    :aria-label="$t('statistiques.enseignants.actions.printAria')"
                     @click="imprimerFiche(l.enseignantId)"
                   >
-                    <q-tooltip>Fiche d’assiduité</q-tooltip>
+                    <q-tooltip>{{ $t('statistiques.enseignants.actions.printTooltip') }}</q-tooltip>
                   </q-btn>
                 </span>
               </header>
 
               <div class="fiche__chiffres">
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Séances</span>
+                  <span class="pochoir">{{ $t('statistiques.enseignants.card.sessions') }}</span>
                   <span class="lettrage chiffres">{{ l.planifiees }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Assurées</span>
-                  <span class="lettrage chiffres text-positive">{{ l.assurees }}</span>
+                  <span class="pochoir">{{ $t('statistiques.enseignants.card.done') }}</span>
+                  <span class="lettrage chiffres">{{ l.assurees }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Retards</span>
+                  <span class="pochoir">{{ $t('statistiques.enseignants.card.late') }}</span>
                   <span class="lettrage chiffres">{{ l.retard }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">Absences</span>
+                  <span class="pochoir">{{ $t('statistiques.enseignants.card.absences') }}</span>
                   <span class="lettrage chiffres" :class="l.absent ? 'text-negative' : ''">
                     {{ l.absent }}
                   </span>
@@ -290,17 +291,17 @@
               </div>
 
               <div class="fiche__taux">
-                <span class="pochoir">Présence</span>
+                <span class="pochoir">{{ $t('statistiques.enseignants.card.presence') }}</span>
                 <barre-taux :valeur="l.tauxPresence" />
               </div>
 
               <footer class="pochoir pochoir--brut fiche__pied">
-                {{ heuresLisibles(l.heuresRealisees) }} assurées
+                {{ $t('statistiques.enseignants.card.hoursDone', { hours: heuresLisibles(l.heuresRealisees) }) }}
               </footer>
             </article>
           </li>
           <li v-if="!(enseignants?.lignes ?? []).length" class="stats__vide pochoir">
-            Aucun enseignant n’a de séance programmée sur cette période — élargissez les dates.
+            {{ $t('statistiques.enseignants.empty.cards') }}
           </li>
         </ul>
 
@@ -315,8 +316,8 @@
           :loading="chargement"
           :pagination="{ rowsPerPage: 25 }"
           :visible-columns="colonnesEnseignantsVisibles"
-          loading-label="Calcul du relevé…"
-          no-data-label="Aucun enseignant n’a de séance programmée sur cette période."
+          :loading-label="$t('statistiques.enseignants.table.loading')"
+          :no-data-label="$t('statistiques.enseignants.empty.table')"
         >
           <template #body-cell-presence="p">
             <q-td :props="p"><barre-taux :valeur="p.row.tauxPresence" /></q-td>
@@ -329,20 +330,20 @@
                 dense
                 round
                 icon="event_note"
-                aria-label="Voir ses séances au registre"
+                :aria-label="$t('statistiques.enseignants.actions.sessionsAria')"
                 :to="lienSeancesEnseignant(p.row.enseignantId)"
               >
-                <q-tooltip>Ses séances sur la période</q-tooltip>
+                <q-tooltip>{{ $t('statistiques.enseignants.actions.sessionsTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
                 flat
                 dense
                 round
                 icon="print"
-                aria-label="Imprimer sa fiche d’assiduité"
+                :aria-label="$t('statistiques.enseignants.actions.printAria')"
                 @click="imprimerFiche(p.row.enseignantId)"
               >
-                <q-tooltip>Fiche d’assiduité</q-tooltip>
+                <q-tooltip>{{ $t('statistiques.enseignants.actions.printTooltip') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -356,10 +357,11 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from '../components/ChampDate.vue';
 import BarreTaux from '../components/BarreTaux.vue';
-import BasculeVue from '../components/BasculeVue.vue';
+import BasculeVue from '../components/ViewToggle.vue';
 import { useVuePreferee } from '../composables/vuePreferee';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
@@ -372,6 +374,7 @@ import {
 
 const $q = useQuasar();
 const route = useRoute();
+const { t } = useI18n();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const onglet = ref<'salles' | 'enseignants'>(
@@ -389,18 +392,18 @@ const filtres = ref({
   dateFin: route.query.dateFin ? String(route.query.dateFin) : aujourdhui(),
 });
 
-const raccourcis = [
-  { label: '7 jours', jours: 7 },
-  { label: '30 jours', jours: 30 },
-  { label: '90 jours', jours: 90 },
-];
+const raccourcis = computed(() => [
+  { label: t('statistiques.shortcuts.d7'), jours: 7 },
+  { label: t('statistiques.shortcuts.d30'), jours: 30 },
+  { label: t('statistiques.shortcuts.d90'), jours: 90 },
+]);
 
 // La période choisie doit se voir : sans état actif, les trois raccourcis
 // ressemblent à trois boutons inertes.
-const raccourciActif = ref(route.query.dateDebut ? '' : '30 jours');
+const raccourciActif = ref<number | ''>(route.query.dateDebut ? '' : 30);
 
-const appliquer = (r: (typeof raccourcis)[number]) => {
-  raccourciActif.value = r.label;
+const appliquer = (r: (typeof raccourcis.value)[number]) => {
+  raccourciActif.value = r.jours;
   filtres.value = {
     dateDebut: decalerJours(aujourdhui(), -(r.jours - 1)),
     dateFin: aujourdhui(),
@@ -422,49 +425,49 @@ const sallesVisitees = computed(
   () => (salles.value?.lignes ?? []).filter((l: any) => l.controlees > 0).length,
 );
 
-const colonnesSalles: QTableColumn[] = [
-  { name: 'salle', label: 'Salle', field: 'code', align: 'left', sortable: true },
-  { name: 'planifiees', label: 'Séances', field: 'planifiees', align: 'right', sortable: true },
-  { name: 'controlees', label: 'Contr.', field: 'controlees', align: 'right', sortable: true },
-  { name: 'absent', label: 'Absences', field: 'absent', align: 'right', sortable: true },
-  { name: 'effectif', label: 'Étud.', field: 'effectifMoyen', align: 'right', sortable: true },
-  { name: 'occupation', label: 'Occupation', field: 'tauxOccupation', align: 'left', sortable: true },
-  { name: 'presence', label: 'Présence', field: 'tauxPresence', align: 'left', sortable: true },
-  { name: 'visite', label: 'Vue le', field: 'derniereVisite', align: 'left', sortable: true },
+const colonnesSalles = computed<QTableColumn[]>(() => [
+  { name: 'salle', label: t('statistiques.salles.table.columns.salle'), field: 'code', align: 'left', sortable: true },
+  { name: 'planifiees', label: t('statistiques.salles.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
+  { name: 'controlees', label: t('statistiques.salles.table.columns.controlees'), field: 'controlees', align: 'right', sortable: true },
+  { name: 'absent', label: t('statistiques.salles.table.columns.absent'), field: 'absent', align: 'right', sortable: true },
+  { name: 'effectif', label: t('statistiques.salles.table.columns.effectif'), field: 'effectifMoyen', align: 'right', sortable: true },
+  { name: 'occupation', label: t('statistiques.salles.table.columns.occupation'), field: 'tauxOccupation', align: 'left', sortable: true },
+  { name: 'presence', label: t('statistiques.salles.table.columns.presence'), field: 'tauxPresence', align: 'left', sortable: true },
+  { name: 'visite', label: t('statistiques.salles.table.columns.visite'), field: 'derniereVisite', align: 'left', sortable: true },
   { name: 'registre', label: '', field: 'salleId', align: 'right' },
-];
+]);
 
 // Sur téléphone, on garde ce que le contrôleur cherche : où il est passé, ce
 // qu'il y a constaté.
 const colonnesSallesVisibles = computed(() =>
   $q.screen.lt.md
     ? ['salle', 'controlees', 'absent', 'presence']
-    : colonnesSalles.map((c) => String(c.name)),
+    : colonnesSalles.value.map((c) => String(c.name)),
 );
 
 const colonnesEnseignantsVisibles = computed(() =>
   $q.screen.lt.md
     ? ['nom', 'absent', 'presence']
-    : colonnesEnseignants.map((c) => String(c.name)),
+    : colonnesEnseignants.value.map((c) => String(c.name)),
 );
 
-const colonnesEnseignants: QTableColumn[] = [
-  { name: 'matricule', label: 'Matricule', field: 'matricule', align: 'left' },
-  { name: 'nom', label: 'Enseignant', field: 'nom', align: 'left', sortable: true },
-  { name: 'departement', label: 'Département', field: 'departement', align: 'left' },
-  { name: 'planifiees', label: 'Séances', field: 'planifiees', align: 'right', sortable: true },
-  { name: 'assurees', label: 'Assurées', field: 'assurees', align: 'right' },
-  { name: 'retard', label: 'Retards', field: 'retard', align: 'right', sortable: true },
-  { name: 'absent', label: 'Absences', field: 'absent', align: 'right', sortable: true },
+const colonnesEnseignants = computed<QTableColumn[]>(() => [
+  { name: 'matricule', label: t('statistiques.enseignants.table.columns.matricule'), field: 'matricule', align: 'left' },
+  { name: 'nom', label: t('statistiques.enseignants.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'departement', label: t('statistiques.enseignants.table.columns.departement'), field: 'departement', align: 'left' },
+  { name: 'planifiees', label: t('statistiques.enseignants.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
+  { name: 'assurees', label: t('statistiques.enseignants.table.columns.assurees'), field: 'assurees', align: 'right' },
+  { name: 'retard', label: t('statistiques.enseignants.table.columns.retard'), field: 'retard', align: 'right', sortable: true },
+  { name: 'absent', label: t('statistiques.enseignants.table.columns.absent'), field: 'absent', align: 'right', sortable: true },
   {
     name: 'heures',
-    label: 'Heures',
+    label: t('statistiques.enseignants.table.columns.heures'),
     field: (r: any) => heuresLisibles(r.heuresRealisees),
     align: 'right',
   },
-  { name: 'presence', label: 'Présence', field: 'tauxPresence', align: 'left', sortable: true },
+  { name: 'presence', label: t('statistiques.enseignants.table.columns.presence'), field: 'tauxPresence', align: 'left', sortable: true },
   { name: 'fiche', label: '', field: 'enseignantId', align: 'right' },
-];
+]);
 
 function imprimerFiche(id: string) {
   ouvrirFicheEnseignant(id, filtres.value.dateDebut, filtres.value.dateFin);
@@ -510,28 +513,16 @@ onMounted(charger);
   gap: var(--up-2);
 }
 
+// Même gouttière que le registre des séances ; le reste vient de la règle
+// globale `.raccourci` d'app.scss.
 .stats__raccourcis {
-  display: flex;
-  gap: 0;
+  display: inline-flex;
+  align-self: flex-start;
+  background: var(--up-gris-inerte);
+  border-radius: var(--up-rayon);
+  padding: 3px;
+  gap: 2px;
   margin-bottom: var(--up-3);
-}
-
-.raccourci {
-  appearance: none;
-  background: var(--up-plaque);
-  color: var(--up-encre);
-  border: 2px solid var(--up-encre);
-  padding: 8px 12px;
-  min-height: 40px;
-  cursor: pointer;
-
-  & + & { border-left-width: 0; }
-  &:hover { background: var(--up-craie); }
-
-  &--actif {
-    background: var(--up-encre);
-    color: var(--up-craie);
-  }
 }
 
 .stats__salle {
@@ -641,7 +632,7 @@ onMounted(charger);
   .pochoir {
     color: var(--up-encre-douce);
     font-size: 10px;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.01em;
   }
 
   .lettrage { font-size: 1.25rem; }

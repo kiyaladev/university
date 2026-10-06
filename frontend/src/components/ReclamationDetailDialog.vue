@@ -3,9 +3,9 @@
     <q-card style="width: 760px; max-width: 96vw; max-height: 90vh" class="column">
       <q-card-section v-if="reclamation" class="row items-center no-wrap">
         <div class="col">
-          <div class="text-h6">{{ reclamation.numero }} — {{ reclamation.sujet }}</div>
+          <div class="text-h6">{{ reclamation.numero }} {{ $t('rectoratPage.subtitleFallback') }} {{ reclamation.sujet }}</div>
           <div class="text-caption text-grey-7">
-            {{ reclamation.etudiant ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom : (reclamation.anonyme ? 'Anonyme' : '—') }}
+            {{ reclamation.etudiant ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom : (reclamation.nomAuteur || (reclamation.anonyme ? $t('reclamations.dialog.detail.anonymous') : '—')) }}
             <span v-if="reclamation.etudiant"> · {{ reclamation.etudiant.matricule }}</span>
             <span v-if="reclamation.departement"> · {{ reclamation.departement.nom }}</span>
           </div>
@@ -16,7 +16,7 @@
               no-caps
               size="sm"
               icon="description"
-              label="Ses demandes de documents"
+              :label="$t('reclamations.dialog.detail.documentRequests')"
               @click="ouvrirDossier('demandes-docs')"
             />
             <q-btn
@@ -25,7 +25,7 @@
               no-caps
               size="sm"
               icon="badge"
-              label="Sa carte étudiante"
+              :label="$t('reclamations.dialog.detail.studentCard')"
               @click="ouvrirDossier('cartes-etudiantes')"
             />
           </div>
@@ -51,11 +51,11 @@
         <!-- Métadonnées -->
         <div class="reclamation-meta q-mt-md">
           <div>
-            <span class="pochoir reclamation-meta__libelle">Type</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.type') }}</span>
             <span>{{ libelleType(reclamation.type) }}</span>
           </div>
           <div>
-            <span class="pochoir reclamation-meta__libelle">Priorité</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.priority') }}</span>
             <span
               class="reclamation-champ reclamation-champ--prio"
               :class="`prio-${reclamation.priorite}`"
@@ -64,30 +64,30 @@
             </span>
           </div>
           <div>
-            <span class="pochoir reclamation-meta__libelle">Assigné à</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.filters.assigneA') }}</span>
             <span>{{ reclamation.assigneA ? reclamation.assigneA.prenom + ' ' + reclamation.assigneA.nom : '—' }}</span>
           </div>
           <div>
-            <span class="pochoir reclamation-meta__libelle">Créée le</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('deliberations.table.columns.creeLe') }}</span>
             <span>{{ dateHeureLisible(reclamation.creeLe) }}</span>
           </div>
           <div v-if="reclamation.escaladeLe">
-            <span class="pochoir reclamation-meta__libelle">Escaladée le</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalatedOn') }}</span>
             <span class="text-warning">{{ dateHeureLisible(reclamation.escaladeLe) }}</span>
           </div>
           <div v-if="reclamation.fermeLe">
-            <span class="pochoir reclamation-meta__libelle">Fermée le</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.closedOn') }}</span>
             <span>{{ dateHeureLisible(reclamation.fermeLe) }}</span>
           </div>
           <div v-if="reclamation.delaiEscaladeHeures">
-            <span class="pochoir reclamation-meta__libelle">Délai d'escalade</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalationDelay') }}</span>
             <span>{{ reclamation.delaiEscaladeHeures }} h</span>
           </div>
         </div>
 
         <!-- Description initiale -->
         <div class="q-mt-md">
-          <span class="section-titre">Description</span>
+          <span class="section-titre">{{ $t('common.fields.description') }}</span>
           <div class="reclamation-description" style="white-space: pre-wrap">
             {{ reclamation.description }}
           </div>
@@ -95,7 +95,7 @@
 
         <!-- Fil de messages -->
         <div class="q-mt-md">
-          <span class="section-titre">Fil ({{ reclamation.messages?.length ?? 0 }})</span>
+          <span class="section-titre">{{ $t('reclamations.dialog.detail.messageThread', { count: reclamation._count?.messages ?? reclamation.messages?.length ?? 0 }) }}</span>
           <q-list v-if="reclamation.messages?.length" separator>
             <q-item
               v-for="m in reclamation.messages"
@@ -119,18 +119,18 @@
                 <div class="q-mt-xs" style="white-space: pre-wrap">{{ m.contenu }}</div>
                 <div v-if="m.joint" class="q-mt-xs">
                   <a :href="m.joint" target="_blank" rel="noopener">
-                    <q-icon name="attach_file" size="16px" /> Pièce jointe
+                    <q-icon name="attach_file" size="16px" /> {{ $t('reclamations.dialog.detail.attachment') }}
                   </a>
                 </div>
               </q-item-section>
             </q-item>
           </q-list>
-          <p v-else class="text-caption text-grey-7 q-mt-sm">Aucun message pour le moment.</p>
+          <p v-else class="text-caption text-grey-7 q-mt-sm">{{ $t('reclamations.dialog.detail.noMessages') }}</p>
         </div>
 
         <!-- Notes internes : réservées au personnel, jamais montrées à l'étudiant -->
         <div v-if="estStaff && reclamation.notes" class="q-mt-md">
-          <span class="section-titre">Notes internes</span>
+          <span class="section-titre">{{ $t('reclamations.dialog.detail.internalNotes') }}</span>
           <div class="reclamation-notes" style="white-space: pre-wrap">{{ reclamation.notes }}</div>
         </div>
       </q-card-section>
@@ -146,7 +146,7 @@
           type="textarea"
           rows="2"
           :disable="!peutPoster"
-          :placeholder="peutPoster ? 'Votre réponse…' : 'Cette réclamation est close.'"
+          :placeholder="peutPoster ? $t('reclamations.dialog.detail.replyPlaceholder') : $t('reclamations.dialog.detail.closedPlaceholder')"
         />
         <div class="row items-center q-mt-sm q-gutter-sm">
           <q-btn
@@ -155,7 +155,7 @@
             color="primary"
             no-caps
             icon="person_add"
-            label="Assigner"
+            :label="$t('reclamations.dialog.detail.assign')"
             :loading="enCours === 'assigner'"
             @click="ouvrirAssigner"
           />
@@ -165,7 +165,7 @@
             color="warning"
             no-caps
             icon="priority_high"
-            label="Escalader"
+            :label="$t('reclamations.actions.escalate')"
             :loading="enCours === 'escalader'"
             @click="declencherEscalade"
           />
@@ -175,7 +175,7 @@
             color="positive"
             no-caps
             icon="task_alt"
-            label="Ajouter une note de clôture"
+            :label="$t('reclamations.dialog.detail.addClosingNote')"
             :loading="enCours === 'cloturer'"
             @click="cloturer"
           />
@@ -185,7 +185,7 @@
             color="primary"
             no-caps
             icon="send"
-            label="Répondre"
+            :label="$t('reclamations.dialog.detail.reply')"
             :loading="enCours === 'message'"
             :disable="!peutPoster || !messageCourant.trim()"
             @click="posterMessage"
@@ -194,7 +194,7 @@
       </q-card-section>
 
       <q-card-actions align="right">
-        <q-btn flat label="Fermer" v-close-popup />
+        <q-btn flat :label="$t('common.actions.close')" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -202,6 +202,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
@@ -236,6 +237,7 @@ const emit = defineEmits<{
 }>();
 
 const $q = useQuasar();
+const { t: $t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
 
@@ -254,12 +256,12 @@ const messageCourant = ref('');
 const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
 const peutOuvrirDossier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
-const ETAPES_RECLAMATION = [
-  { identifiant: 'OUVERTE', libelle: 'Ouverte', icone: 'inbox' },
-  { identifiant: 'EN_COURS', libelle: 'En cours', icone: 'autorenew' },
-  { identifiant: 'EN_ATTENTE_REPONSE', libelle: 'Attente réponse', icone: 'forum' },
-  { identifiant: 'RESOLUE', libelle: 'Résolue', icone: 'check_circle' },
-];
+const ETAPES_RECLAMATION = computed(() => [
+  { identifiant: 'OUVERTE', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
+  { identifiant: 'EN_COURS', libelle: $t('reclamations.dialog.detail.inProgress'), icone: 'autorenew' },
+  { identifiant: 'EN_ATTENTE_REPONSE', libelle: $t('reclamations.dialog.detail.awaitingReply'), icone: 'forum' },
+  { identifiant: 'RESOLUE', libelle: $t('reclamations.dialog.detail.resolved'), icone: 'check_circle' },
+]);
 
 const peutPoster = computed(() => {
   if (!props.reclamation) return false;
@@ -275,17 +277,17 @@ const transitionsAutorisees = computed<Transition[]>(() => {
 
   const possibles: Transition[] = [];
   if (props.reclamation.statut === 'OUVERTE') {
-    possibles.push({ cible: 'EN_COURS', label: 'Prendre en charge', icone: 'autorenew' });
+    possibles.push({ cible: 'EN_COURS', label: $t('reclamations.dialog.detail.takeOwnership'), icone: 'autorenew' });
   }
   if (props.reclamation.statut === 'EN_COURS') {
-    possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: 'En attente de réponse', icone: 'forum' });
-    possibles.push({ cible: 'RESOLUE', label: 'Marquer résolu', icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: 'Rejeter', icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: $t('reclamations.dialog.detail.awaitReply'), icone: 'forum' });
+    possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
+    possibles.push({ cible: 'REJETEE', label: $t('reclamations.dialog.detail.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
   }
   if (props.reclamation.statut === 'EN_ATTENTE_REPONSE') {
-    possibles.push({ cible: 'EN_COURS', label: 'Reprendre', icone: 'autorenew' });
-    possibles.push({ cible: 'RESOLUE', label: 'Marquer résolu', icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: 'Rejeter', icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({ cible: 'EN_COURS', label: $t('reclamations.dialog.detail.resume'), icone: 'autorenew' });
+    possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
+    possibles.push({ cible: 'REJETEE', label: $t('reclamations.dialog.detail.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
   }
   return possibles;
 });
@@ -326,7 +328,7 @@ async function posterMessage() {
     props.reclamation.messages = (maj.data as Reclamation).messages;
     props.reclamation.statut = (maj.data as Reclamation).statut;
     messageCourant.value = '';
-    $q.notify({ type: 'positive', message: 'Message envoyé' });
+    $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.messageSent') });
   } finally {
     enCours.value = '';
   }
@@ -340,11 +342,11 @@ async function changerStatut(cible: StatutReclamation) {
     // jamais en relisant le DOM d'un dialogue déjà fermé.
     const motif = await new Promise<string | null>((resolve) => {
       $q.dialog({
-        title: 'Rejeter la réclamation',
-        message: 'Indiquez le motif du rejet (obligatoire) :',
+        title: $t('reclamations.dialog.detail.rejectTitle'),
+        message: $t('reclamations.dialog.detail.rejectPrompt'),
         prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
         cancel: true,
-        ok: { label: 'Rejeter', color: 'negative' },
+        ok: { label: $t('reclamations.dialog.detail.reject'), color: 'negative' },
       })
         .onOk((valeur: string) => resolve(valeur))
         .onCancel(() => resolve(null));
@@ -360,7 +362,7 @@ async function changerStatut(cible: StatutReclamation) {
     });
     $q.notify({
       type: cible === 'REJETEE' ? 'warning' : 'positive',
-      message: `Réclamation passée à « ${libelleStatut(cible)} »`,
+      message: $t('reclamations.dialog.detail.statusChanged', { status: libelleStatut(cible) }),
     });
     emit('change', data as Reclamation);
     Object.assign(props.reclamation, data);
@@ -371,12 +373,12 @@ async function changerStatut(cible: StatutReclamation) {
 
 function ouvrirAssigner() {
   if (!props.membresStaff?.length) {
-    $q.notify({ type: 'warning', message: 'Aucun agent assignable disponible.' });
+    $q.notify({ type: 'warning', message: $t('reclamations.dialog.detail.noAssignableStaff') });
     return;
   }
   $q.dialog({
-    title: 'Assigner à un agent',
-    message: 'Choisissez la personne qui prendra la réclamation en charge.',
+    title: $t('reclamations.dialog.detail.assignTitle'),
+    message: $t('reclamations.dialog.detail.assignPrompt'),
     options: {
       type: 'radio',
       model: props.reclamation?.assigneAId ?? null,
@@ -386,13 +388,13 @@ function ouvrirAssigner() {
       })),
     },
     cancel: true,
-    ok: { label: 'Assigner', color: 'primary' },
+    ok: { label: $t('reclamations.dialog.detail.assign'), color: 'primary' },
   }).onOk(async (assigneAId: string | null) => {
     if (!props.reclamation || !assigneAId) return;
     enCours.value = 'assigner';
     try {
       const { data } = await api.put(`/reclamations/${props.reclamation.id}/assigner`, { assigneAId });
-      $q.notify({ type: 'positive', message: 'Réclamation assignée' });
+      $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.assigned') });
       emit('assigne', data as Reclamation);
       Object.assign(props.reclamation, data);
     } finally {
@@ -406,7 +408,7 @@ async function declencherEscalade() {
   enCours.value = 'escalader';
   try {
     const { data } = await api.post(`/reclamations/${props.reclamation.id}/escalader`);
-    $q.notify({ type: 'warning', message: 'Réclamation escaladée à la direction' });
+    $q.notify({ type: 'warning', message: $t('reclamations.dialog.detail.escalated') });
     emit('escalade', data as Reclamation);
     Object.assign(props.reclamation, data);
   } finally {
@@ -417,11 +419,11 @@ async function declencherEscalade() {
 function cloturer() {
   if (!props.reclamation) return;
   $q.dialog({
-    title: 'Note de clôture',
-    message: 'Indiquez la note qui figurera dans le dossier.',
+    title: $t('reclamations.dialog.detail.closingNoteTitle'),
+    message: $t('reclamations.dialog.detail.closingNotePrompt'),
     prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
     cancel: true,
-    ok: { label: 'Consigner', color: 'positive' },
+    ok: { label: $t('reclamations.dialog.detail.record'), color: 'positive' },
   }).onOk(async (noteClotureValue: string) => {
     if (!props.reclamation || !noteClotureValue.trim()) return;
     enCours.value = 'cloturer';
@@ -429,7 +431,7 @@ function cloturer() {
       const { data } = await api.post(`/reclamations/${props.reclamation.id}/cloturer`, {
         noteCloture: noteClotureValue.trim(),
       });
-      $q.notify({ type: 'positive', message: 'Note de clôture consignée' });
+      $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.closingNoteRecorded') });
       emit('cloture', data as Reclamation);
       Object.assign(props.reclamation, data);
     } finally {
@@ -440,44 +442,42 @@ function cloturer() {
 </script>
 
 <style scoped lang="scss">
-$encre: #10251E;
-$chaux-claire: #F2F3EE;
-$blanc-craie: #FAFAF7;
-$vert: #0F7A45;
-$jaune-fonce: #C98A00;
-$rouge: #C4122E;
+$encre: #1D1D1F;
+$chaux-claire: #FFFFFF;
+$blanc-craie: #FFFFFF;
+$vert: #007A4D;
+$jaune-fonce: #8A6300;
+$rouge: #CE1126;
 
 .reclamation-champ {
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
   min-height: 24px;
-  color: #fff;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  color: var(--up-encre);
+  border-radius: var(--up-rayon-sm);
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 590;
+  letter-spacing: -0.01em;
 
-  &--OUVERTE { background: $jaune-fonce; }
-  &--EN_COURS { background: $encre; }
-  &--EN_ATTENTE_REPONSE { background: #6b7280; }
-  &--RESOLUE { background: $vert; }
-  &--FERMEE { background: #4b5563; }
-  &--REJETEE { background: $rouge; }
+  &--OUVERTE { background: $jaune-fond; color: $jaune-texte; }
+  &--EN_COURS { background: $vert-fond; color: $vert-lien; }
+  &--EN_ATTENTE_REPONSE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &--RESOLUE { background: $vert-fond; color: #{$vert}; }
+  &--FERMEE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+  &--REJETEE { background: $rouge-fond; color: #{$rouge}; }
 
   &--prio {
     box-shadow: none;
     &.prio-BASSE {
-      background: $chaux-claire;
-      color: $encre;
-      border: 2px solid rgba(16, 37, 30, 0.45);
+      background: var(--up-gris-inerte);
+      color: var(--up-encre);
+      border: var(--up-filet);
     }
-    &.prio-NORMALE { background: #EFB700; color: $encre; }
-    &.prio-HAUTE { background: $rouge; }
+    &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
+    &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
     &.prio-URGENTE {
-      background: $rouge;
+      background: $rouge-fond; color: #{$rouge};
       animation: clignote 1.4s ease-in-out infinite;
     }
   }
@@ -508,7 +508,7 @@ $rouge: #C4122E;
   background: $blanc-craie;
   border: var(--up-filet-fin);
   padding: var(--up-2);
-  border-radius: 0;
+  border-radius: var(--up-rayon-sm);
   font-size: 0.95rem;
 }
 

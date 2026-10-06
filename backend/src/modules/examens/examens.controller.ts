@@ -12,6 +12,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
+import { QueryDto } from '../../common/dto';
 import {
   CreateExamenDto,
   ExamenQueryDto,
@@ -23,27 +24,35 @@ import { ExamensService } from './examens.service';
 @ApiTags('Examens')
 @ApiBearerAuth()
 @Controller('examens')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CONTROLEUR, Role.ENSEIGNANT)
 export class ExamensController {
   constructor(private readonly service: ExamensService) {}
 
   @Get()
-  liste(@Query() query: ExamenQueryDto) {
-    return this.service.liste(query);
+  liste(@Query() query: ExamenQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
+  }
+
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Get('surveillants')
+  surveillants() {
+    return this.service.listerSurveillants();
   }
 
   @Get(':id')
-  detail(@Param('id') id: string) {
-    return this.service.trouver(id);
+  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.trouver(id, user);
   }
 
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/scans')
-  scans(@Param('id') id: string) {
-    return this.service.listeScans(id);
+  scans(@Param('id') id: string, @Query() query: QueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listeScans(id, query, user);
   }
 
   @Get(':id/stats')
-  stats(@Param('id') id: string) {
-    return this.service.stats(id);
+  stats(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.stats(id, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
@@ -85,6 +94,7 @@ export class ExamensController {
    * métier si la référence est inconnue : un scan raté est consigné, jamais
    * bloquant. L'IP de l'appareil est tracée dans `ScanExamen.ipAppareil`.
    */
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Post('scan')
   scan(
     @Body() dto: ScanExamenDto,

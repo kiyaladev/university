@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-03",
+  "portee": "Revue des écritures directement ou indirectement rattachées à une année académique clôturée. Les rattachements indirects sont des candidats à une règle, pas une décision métier prise par l’audit.",
+  "garde": "exigerAnneeOuverte ne conserve son verrou FOR SHARE que si elle est appelée avec le client transactionnel et avant l’écriture.",
+  "corrige": [
+    {
+      "module": "tirage",
+      "lien": "Tirage.examenId → Examen.anneeId",
+      "operations": [
+        "creer",
+        "imprimer",
+        "mettreSousPli",
+        "distribuer",
+        "recuperer",
+        "annuler"
+      ],
+      "mesure": "L’année de l’examen est verrouillée avant chaque mutation ; la mutation et son AuditLog partagent la transaction.",
+      "preuve": "backend/src/modules/tirage/tirage.service.spec.ts"
+    },
+    {
+      "module": "deliberations",
+      "lien": "Deliberation.anneeId",
+      "operations": [
+        "creerDeliberation"
+      ],
+      "mesure": "Le verrou d’année est pris avant l’insertion dans la transaction.",
+      "preuve": "backend/src/modules/scolarite/scolarite.cloture.spec.ts"
+    },
+    {
+      "module": "annees-academiques",
+      "lien": "AnneeAcademique.dateDebut/dateFin",
+      "operations": [
+        "creer",
+        "modifier"
+      ],
+      "mesure": "Les périodes inversées ou vides sont refusées avant écriture ; les chevauchements restent à qualifier selon le modèle d’établissement. La désactivation des autres années filtre explicitement active=true et cloturee=false à la lecture et à l’écriture.",
+      "preuve": "backend/src/modules/referentiel/annees.spec.ts"
+    },
+    {
+      "module": "vod-coherence",
+      "lien": "CoursVOD.seanceId → Seance.anneeId et CoursVOD.inscriptionId → Inscription.anneeId",
+      "operations": [
+        "creer",
+        "modifier"
+      ],
+      "mesure": "Quand les deux liens existent, leurs années doivent correspondre ; la consultation d’un contenu historique reste indépendante de la règle de clôture.",
+      "preuve": "backend/src/modules/vod/vod.audit.spec.ts"
+    },
+    {
+      "module": "paiement-demande-document",
+      "lien": "DemandeDocument.inscriptionId → Inscription.anneeId → Paiement.anneeId",
+      "operations": [
+        "payer"
+      ],
+      "mesure": "Le paiement reprend inscriptionId et anneeId si la demande porte une inscription ; sa finalisation après clôture reste à décider.",
+      "preuve": "backend/src/modules/documents-demande/documents-demande.audit.spec.ts"
+    }
+  ],
+  "reglesAConfirmer": [
+    {
+      "module": "elections",
+      "lien": "Election.promotionId → Promotion.anneeId → Election, CandidatElection, VoteElection",
+      "operations": [
+        "creer",
+        "modifier",
+        "ouvrir",
+        "clore",
+        "proclamer",
+        "ajouterCandidat",
+        "supprimerCandidat",
+        "voter"
+      ],
+      "observation": "Aucune opération ne vérifie la clôture de l’année de la promotion. Le vote est dans une transaction Serializable, mais sans garde annuelle.",
+      "fichier": "backend/src/modules/elections/elections.service.ts",
+      "decision": "Confirmer si un scrutin rattaché à une promotion reste actif après clôture annuelle."
+    },
+    {
+      "module": "vod",
+      "lien": "CoursVOD.seanceId → Seance.anneeId et CoursVOD.inscriptionId → Inscription.anneeId",
+      "operations": [
+        "creer",
+        "modifier",
+        "publier",
+        "archiver",
+        "enregistrerVue"
+      ],
+      "observation": "Les contenus peuvent être associés à une séance ou inscription d’une année close ; la progression VOD modifie aussi des compteurs de consultation.",
+      "fichier": "backend/src/modules/vod/vod.service.ts",
+      "decision": "Distinguer la modification d’un contenu académique de la consultation et progression d’un cours historique."
+    },
+    {
+      "module": "demandes-documentaires",
+      "lien": "DemandeDocument.inscriptionId → Inscription.anneeId",
+      "operations": [
+        "creer",
+        "payer",
+        "confirmerPaiement",
+        "lancerTraitement",
+        "marquerPrete",
+        "remettre",
+        "rejeter"
+      ],
+      "observation": "Les écritures du cycle ne vérifient pas l’année de l’inscription. Les demandes de relevés ou attestations peuvent rester légitimes après la fin d’une année.",
+      "fichier": "backend/src/modules/documents-demande/documents-demande.service.ts",
+      "decision": "Définir quels services aux anciens étudiants doivent rester disponibles après clôture."
+    },
+    {
+      "module": "correlation-paiement-externe",
+      "lien": "Paiement.anneeId → AnneeAcademique",
+      "operations": [
+        "lier la référence Mobile Money après création du paiement"
+      ],
+      "observation": "Dans les paiements étudiants et documentaires, l’appel fournisseur se déroule entre la création du paiement et l’enregistrement de sa référence locale. Une clôture peut intervenir pendant cet appel externe ; un refus tardif de la référence laisserait une opération fournisseur orpheline.",
+      "fichiers": [
+        "backend/src/modules/inscription/inscription.service.ts",
+        "backend/src/modules/documents-demande/documents-demande.service.ts"
+      ],
+      "decision": "Définir si le rapprochement et le règlement d’un paiement déjà initié quand l’année était ouverte restent autorisés après clôture ; ne pas bloquer le retour fournisseur sans traiter le risque de paiement orphelin."
+    },
+    {
+      "module": "paie",
+      "lien": "FeuillePaie.anneeAcademiqueId existe dans le schéma, mais n’est jamais écrit ; le calcul lit des séances selon mois/année civile.",
+      "operations": [
+        "creer",
+        "calculer",
+        "valider",
+        "payer",
+        "supprimer"
+      ],
+      "observation": "Aucune année académique ne peut actuellement être verrouillée lors du calcul des heures. Une feuille de paie peut recouvrir plusieurs années académiques.",
+      "fichier": "backend/src/modules/paie/paie.service.ts",
+      "decision": "Définir l’imputation et le paiement des heures acquises avant clôture mais versées après clôture."
+    }
+  ],
+  "horsChampOuExceptionPossible": [
+    "La progression VOD et la consultation de documents historiques modifient des données opérationnelles, pas le relevé académique lui-même.",
+    "La révocation d’une attestation après clôture reste volontairement permise pour invalider un document frauduleux ; la vérification publique QR journalise chaque consultation."
+  ],
+  "prochaineAction": "Appliquer les politiques choisies aux rattachements indirects et à la finalisation des paiements externes, puis ajouter une matrice de tests ouverte/close par flux.",
+  "validation": {
+    "suiteComplete": "795 tests réussis dans 100 suites ; build backend et typage TypeScript réussis."
+  }
+}

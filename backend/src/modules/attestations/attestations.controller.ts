@@ -14,9 +14,11 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { AttestationsService } from './attestations.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
+import { Throttle } from '@nestjs/throttler';
 import {
   AttestationQueryDto,
   CreateAttestationDto,
@@ -31,6 +33,7 @@ const LECTEURS = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE];
 @ApiTags('Attestations')
 @ApiBearerAuth()
 @Controller('attestations')
+@Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
 export class AttestationsController {
   constructor(private readonly service: AttestationsService) {}
 
@@ -41,6 +44,11 @@ export class AttestationsController {
    * pas de compte.
    */
   @Public()
+  // Chaque consultation écrit une ligne de vérification, et chaque échec une
+  // ligne d'audit. Sans bridage, la limite globale (1200/min) autorisait
+  // ~1,7 million de lignes par jour depuis un seul appelant ; la route est
+  // publique, donc rien n'y distingue unscan légitime d'un remplissage.
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('verifier')
   verifier(@Query() query: VerifierAttestationDto, @Ip() ip: string) {
     return this.service.verifier(query, ip);
@@ -88,16 +96,16 @@ export class AttestationsController {
    * Document A4. Ouvert dans un nouvel onglet : l'en-tête Authorization n'y
    * arrive pas, le jeton passe donc en paramètre d'URL et est vérifié à la main.
    */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT)
+  @DocumentScope('attestation', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, token, base, req.ip);
+    const html = await this.service.imprimer(id, jetonImprimable(req), base, req.ip);
     res.type('html').send(html);
   }
 

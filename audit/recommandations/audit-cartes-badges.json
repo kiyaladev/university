@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-03",
+  "portee": "Journal avant/après des mutations de cartes étudiantes et de badges d’accès, et minimisation de la vérification QR publique.",
+  "mesures": [
+    "L’émission, modification et révocation des cartes, y compris la définition du NIP, créent leur AuditLog dans la même transaction.",
+    "L’émission, modification, annulation et prolongation des badges créent leur AuditLog dans la même transaction.",
+    "Les instantanés indiquent les valeurs opérationnelles utiles et les noms des champs modifiés, mais ne copient ni NIP haché, jeton QR, coordonnées, pièce d’identité, identité étudiante, chemin de photo ou motif libre.",
+    "Les routes publiques QR ne sélectionnent plus le motif de révocation et retournent une raison générique. Le détail d’un badge calcule son statut effectif sans écriture cachée lors d’une lecture."
+  ],
+  "verification": {
+    "commande": "npm test -- --runInBand src/modules/carte-etudiante/carte-etudiante.service.spec.ts src/modules/badges/badges.service.spec.ts",
+    "resultat": "13 tests réussis dans 2 suites (8 pour les cartes étudiantes, 5 pour les badges) ; compte relevé sur l'arbre du 3 octobre au soir, après les derniers correctifs d'audit.",
+    "buildBackend": "Réussi."
+  },
+  "limites": [
+    "Les tests prouvent la minimisation des données pour modification/révocation et vérification publique ; une recette métier connectée reste nécessaire.",
+    "Le patrimoine dispose maintenant d'une preuve séparée pour ses catégories, équipements, jetons QR et réparations ; les autres modules sensibles et certaines transitions de paie restent à vérifier ([extension du 3 octobre](audit-avant-apres-2026-10-03.json))."
+  ]
+}

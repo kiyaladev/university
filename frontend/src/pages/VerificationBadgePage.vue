@@ -2,37 +2,36 @@
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
-        <q-btn flat dense no-caps icon="badge" label="Vérifier une carte" to="/verification-carte" />
-        <q-btn flat dense no-caps icon="fact_check" label="Vérifier une attestation" to="/verification" />
+        <q-btn flat dense no-caps icon="badge" :label="$t('verificationBadge.nav.verifyCard')" to="/verification-carte" />
+        <q-btn flat dense no-caps icon="fact_check" :label="$t('verificationBadge.nav.verifyAttestation')" to="/verification" />
       </div>
       <div class="text-center q-my-lg">
-        <div class="lettrage page-titre">Vérification de badge d’accès</div>
+        <h1 class="lettrage page-titre">{{ $t('verificationBadge.title') }}</h1>
         <div class="page-sous-titre verification-intro">
-          Cette page publique atteste qu’un badge présenté à l’entrée a bien été
-          délivré par l’établissement, qu’il n’a pas été annulé et que sa
-          validité court toujours. Chaque consultation est journalisée.
+          {{ $t('verificationBadge.subtitle') }}
         </div>
       </div>
 
       <div class="plaque q-pa-md q-mb-lg">
-        <span class="section-titre">Saisir l’identifiant et le code du QR</span>
+        <span class="section-titre">{{ $t('verificationBadge.form.sectionTitle') }}</span>
         <q-input
           v-model="identifiant"
           dense
           outlined
           clearable
-          label="Identifiant du badge"
-          hint="UUID inscrit sous le QR"
+          :label="$t('verificationBadge.form.identifiantLabel')"
+          :hint="$t('verificationBadge.form.identifiantHint')"
         />
         <qr-scanner
           v-model="codeQr"
-          label="Code QR du badge"
-          hint="Scannez le QR du badge ou saisissez le code"
+          :label="$t('verificationBadge.form.qrLabel')"
+          :hint="$t('verificationBadge.form.qrHint')"
         />
         <div class="text-caption text-grey-7 q-mt-xs">
-          Le QR scanné (ou collé) est une URL : ses paramètres
-          <code>badge</code> et <code>k</code> remplissent le formulaire
-          automatiquement.
+          <i18n-t keypath="verificationBadge.form.qrParamsHint" tag="span">
+            <template #badge><code>badge</code></template>
+            <template #k><code>k</code></template>
+          </i18n-t>
         </div>
         <div class="row justify-end q-mt-md">
           <q-btn
@@ -40,7 +39,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            label="Vérifier"
+            :label="$t('verificationBadge.form.submit')"
             :disable="!identifiant.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -59,55 +58,55 @@
             :color="resultat.valide ? 'positive' : 'negative'"
           />
           <div class="lettrage resultat-titre">
-            {{ resultat.valide ? 'Badge authentique' : 'Badge non valable' }}
+            {{ resultat.valide ? $t('verificationBadge.result.valid') : $t('verificationBadge.result.invalid') }}
           </div>
 
           <div v-if="resultat.valide && resultat.badge" class="q-mt-md text-left">
             <p class="q-mb-sm">
-              Le badge <strong>{{ resultat.badge.numero }}</strong> figure bien au
-              registre de l’établissement. Mentions vérifiées :
+              <i18n-t keypath="verificationBadge.result.intro" tag="span">
+                <template #numero><strong>{{ resultat.badge.numero }}</strong></template>
+              </i18n-t>
             </p>
             <table class="table-verification">
               <tbody>
                 <tr>
-                  <td class="pochoir ta-intitule">Porteur</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.porteur') }}</td>
                   <td>{{ resultat.badge.porteur ?? '—' }}</td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">Numéro</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.numero') }}</td>
                   <td><code>{{ resultat.badge.numero }}</code></td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">Type</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.type') }}</td>
                   <td>{{ LIBELLE_TYPE_BADGE[resultat.badge.type ?? ''] ?? resultat.badge.type }}</td>
                 </tr>
                 <tr v-if="resultat.badge.fonction || resultat.badge.organisation">
-                  <td class="pochoir ta-intitule">Qualité</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.qualite') }}</td>
                   <td>
                     {{ [resultat.badge.fonction, resultat.badge.organisation].filter(Boolean).join(' — ') }}
                   </td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">Statut</td>
-                  <td>Actif — non annulé, validité en cours</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.statut') }}</td>
+                  <td>{{ $t('verificationBadge.result.table.statutValue') }}</td>
                 </tr>
                 <tr v-if="resultat.badge.zonesAccess">
-                  <td class="pochoir ta-intitule">Zones autorisées</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.zones') }}</td>
                   <td>{{ resultat.badge.zonesAccess }}</td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">Délivré le</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.delivreLe') }}</td>
                   <td>{{ dateLisible(resultat.badge.dateDelivrance) }}</td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">Valable jusqu’au</td>
+                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.valableJusquau') }}</td>
                   <td>{{ dateLisible(resultat.badge.dateValidite) }}</td>
                 </tr>
               </tbody>
             </table>
             <div class="text-caption text-grey-7 q-mt-md">
-              Vérifié le {{ dateHeureLisible(new Date().toISOString()) }} — cette
-              consultation a été enregistrée dans le journal du badge.
+              {{ $t('verificationBadge.result.checkedAt', { date: dateHeureLisible(new Date().toISOString()) }) }}
             </div>
           </div>
 
@@ -116,8 +115,7 @@
       </div>
 
       <div class="text-center q-mt-xl text-caption text-grey-7">
-        La vérification est gratuite et ne requiert aucun compte. Un badge annulé
-        ou un identifiant inconnu ne prouve rien — méfiance.
+        {{ $t('verificationBadge.footer') }}
       </div>
     </div>
   </q-page>
@@ -126,6 +124,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import QrScanner from '../components/QrScanner.vue';
 import { LIBELLE_TYPE_BADGE, dateHeureLisible, dateLisible } from '../utils/libelles';
@@ -152,6 +151,7 @@ interface ResultatVerification {
 }
 
 const route = useRoute();
+const { t } = useI18n();
 
 const identifiant = ref('');
 const codeQr = ref('');
@@ -196,8 +196,7 @@ async function verifier() {
   } catch {
     resultat.value = {
       valide: false,
-      raison:
-        "La vérification n'a pas pu aboutir : le service est momentanément indisponible. Réessayez dans un instant.",
+      raison: t('verificationBadge.errors.serviceUnavailable'),
     };
   } finally {
     verificationEnCours.value = false;

@@ -27,9 +27,12 @@ import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } f
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import { Paginated } from '../../common/dto';
-import { isoDate, toDateOnly } from '../../common/utils';
+import { Paginated, QueryDto } from '../../common/dto';
+import { echapper, isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
+import { prochainNumeroTx } from '../../common/numero';
+import { t } from '../../common/i18n';
+import { I18nContext } from 'nestjs-i18n';
 import {
   CreateFormationDto,
   FormationQueryDto,
@@ -41,6 +44,22 @@ export const FORMATION_INCLUDE = {
   creePar: { select: { id: true, nom: true, prenom: true } },
   _count: { select: { inscriptions: true } },
 } satisfies Prisma.FormationInclude;
+
+/** Champs autorisés dans la vitrine publique (sans métadonnées internes). */
+export const FORMATION_PUBLIQUE_SELECT = {
+  id: true,
+  titre: true,
+  description: true,
+  categorie: true,
+  prix: true,
+  devise: true,
+  dureeHeures: true,
+  dateDebut: true,
+  dateFin: true,
+  lieu: true,
+  capacite: true,
+  statut: true,
+} satisfies Prisma.FormationSelect;
 
 export const INSCRIPTION_FORMATION_INCLUDE = {
   formation: {
@@ -60,7 +79,7 @@ export const INSCRIPTION_FORMATION_INCLUDE = {
     },
   },
   etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
-  paiement: true,
+  paiement: { select: { id: true, reference: true, montant: true, devise: true, statut: true } },
 } satisfies Prisma.InscriptionFormationInclude;
 
 const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
@@ -74,16 +93,7 @@ async function prochainNumeroFormation(
   tx: Prisma.TransactionClient,
   annee: string,
 ): Promise<string> {
-  const prefixe = `FOR-${annee}-`;
-  const existantes = await tx.inscriptionFormation.findMany({
-    where: { numero: { startsWith: prefixe } },
-    select: { numero: true },
-  });
-  const max = existantes.reduce((m, e) => {
-    const n = Number(e.numero.slice(prefixe.length));
-    return Number.isFinite(n) ? Math.max(m, n) : m;
-  }, 0);
-  return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+  return prochainNumeroTx(tx, 'inscriptionFormation', 'numero', `FOR-${annee}-`, 5);
 }
 
 /** "PAY-F-2026-00001" — paiement Mobile Money d'une formation (PAY-F-AAAA). */
@@ -91,16 +101,7 @@ async function prochaineReferencePaiement(
   tx: Prisma.TransactionClient,
   annee: string,
 ): Promise<string> {
-  const prefixe = `PAY-F-${annee}-`;
-  const existantes = await tx.paiement.findMany({
-    where: { reference: { startsWith: prefixe } },
-    select: { reference: true },
-  });
-  const max = existantes.reduce((m, p) => {
-    const n = Number(p.reference.slice(prefixe.length));
-    return Number.isFinite(n) ? Math.max(m, n) : m;
-  }, 0);
-  return `${prefixe}${String(max + 1).padStart(5, '0')}`;
+  return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-F-${annee}-`, 5);
 }
 
 @Injectable()
@@ -124,20 +125,7 @@ export class FormationsService {
         where: { statut: StatutFormation.PUBLIEE },
         orderBy: [{ dateDebut: 'asc' }],
         take: 100,
-        select: {
-          id: true,
-          titre: true,
-          description: true,
-          categorie: true,
-          prix: true,
-          devise: true,
-          dureeHeures: true,
-          dateDebut: true,
-          dateFin: true,
-          lieu: true,
-          capacite: true,
-          statut: true,
-        },
+        select: FORMATION_PUBLIQUE_SELECT,
       }),
       this.prisma.inscriptionFormation.groupBy({
         by: ['formationId'],
@@ -156,10 +144,13 @@ export class FormationsService {
 
   /** Détail public d'une formation : introuvable si elle n'est pas publiée. */
   async formationPublique(id: string) {
-    const formation = await this.prisma.formation.findUnique({ where: { id } });
-    if (!formation) throw new NotFoundException('Formation introuvable');
+    const formation = await this.prisma.formation.findUnique({
+      where: { id },
+      select: FORMATION_PUBLIQUE_SELECT,
+    });
+    if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
     if (formation.statut !== StatutFormation.PUBLIEE) {
-      throw new NotFoundException('Formation introuvable');
+      throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
     }
     const confirmees = await this.prisma.inscriptionFormation.count({
       where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
@@ -187,9 +178,9 @@ export class FormationsService {
     ip?: string,
   ) {
     const formation = await this.prisma.formation.findUnique({ where: { id: formationId } });
-    if (!formation) throw new NotFoundException('Formation introuvable');
+    if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
     if (formation.statut !== StatutFormation.PUBLIEE) {
-      throw new BadRequestException("Cette formation n'est pas ouverte aux inscriptions");
+      throw new BadRequestException(I18nContext.current()!.t('formations.cette_formation_n_est_pas_ouverte_aux_inscriptions'));
     }
 
     // Le matricule INE (facultatif) rattache la fiche étudiante existante.
@@ -200,9 +191,7 @@ export class FormationsService {
         select: { id: true },
       });
       if (!etudiant) {
-        throw new BadRequestException(
-          `Aucun étudiant ne porte le matricule ${dto.matricule} — laissez le champ vide si vous n'êtes pas encore étudiant`,
-        );
+        throw new BadRequestException(I18nContext.current()!.t('formations.aucun_etudiant_ne_porte_le_matricule_dto_matricule_laissez_l', { args: { matricule: dto.matricule } }));
       }
       etudiantId = etudiant.id;
     }
@@ -211,24 +200,33 @@ export class FormationsService {
       where: { formationId, statut: StatutInscriptionFormation.CONFIRMEE },
     });
     if (formation.capacite != null && confirmees >= formation.capacite) {
-      throw new ConflictException(
-        'Formation complète : toutes les places sont réservées. Contactez la scolarité.',
-      );
+      throw new ConflictException(I18nContext.current()!.t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
     }
 
     const annee = String(new Date().getFullYear());
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const creation = await this.prisma.$transaction(async (tx) => {
+          const verrou = await this.verrouillerFormation(tx, formationId);
+          const formationCourante = await tx.formation.findUnique({ where: { id: formationId } });
+          if (!formationCourante || formationCourante.statut !== StatutFormation.PUBLIEE) {
+            throw new BadRequestException(I18nContext.current()!.t('formations.cette_formation_n_est_pas_ouverte_aux_inscriptions'));
+          }
+          const confirmees = await tx.inscriptionFormation.count({
+            where: { formationId, statut: StatutInscriptionFormation.CONFIRMEE },
+          });
+          if (verrou.capacite != null && confirmees >= verrou.capacite) {
+            throw new ConflictException(I18nContext.current()!.t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
+          }
           const paiement = await tx.paiement.create({
             data: {
               reference: await prochaineReferencePaiement(tx, annee),
-              montant: formation.prix,
-              devise: formation.devise,
+              montant: formationCourante.prix,
+              devise: formationCourante.devise,
               mode: 'MOBILE_MONEY',
               telephone: dto.telephone,
               nomComplet: dto.nomComplet,
-              motif: `Formation : ${formation.titre}`,
+              motif: `Formation : ${formationCourante.titre}`,
               statut: 'EN_ATTENTE',
               etudiantId,
             },
@@ -252,7 +250,10 @@ export class FormationsService {
               action: 'FORMATION_INSCRIPTION',
               entite: 'InscriptionFormation',
               entiteId: inscription.id,
-              details: `${inscription.numero} — ${dto.nomComplet} · ${formation.titre} (${paiement.reference})`,
+              details: JSON.stringify({
+                avant: null,
+                apres: { statut: inscription.statut, formationId, paiementId: paiement.id },
+              }),
               ip: ip ?? null,
             },
           });
@@ -274,7 +275,7 @@ export class FormationsService {
         throw e;
       }
     }
-    throw new ConflictException('Référence de dossier temporairement indisponible, réessayez');
+    throw new ConflictException(I18nContext.current()!.t('formations.reference_de_dossier_temporairement_indisponible_reessayez'));
   }
 
   // -------------------------------------------------------------- gestion
@@ -282,13 +283,12 @@ export class FormationsService {
   /**
    * Tableau de bord agrégé pour la page d'administration : chaque formation
    * expose ses compteurs (inscrits, payés, recette encaissée) et les totaux
-   * sont cumulés en une seule passe — un groupBy pour les inscrits, un
-   * findMany pour les paiements réussis (la relation est nullable, on
-   * cumule en mémoire). On évite ainsi le N+1 du front qui itérait sur la
-   * liste des formations.
+   * sont cumulés côté base : un groupBy pour les inscrits et un agrégat SQL
+   * groupé par formation pour les paiements réussis. On évite le chargement
+   * intégral du registre des paiements et le N+1 du front.
    */
   async dashboard() {
-    const [formations, inscritsParFormation, paiementsReussis] = await Promise.all([
+    const [formations, inscritsParFormation, paiementsParFormation] = await Promise.all([
       this.prisma.formation.findMany({
         orderBy: { createdAt: 'desc' },
         select: { id: true, titre: true, prix: true, devise: true, statut: true },
@@ -297,31 +297,25 @@ export class FormationsService {
         by: ['formationId'],
         _count: { _all: true },
       }),
-      this.prisma.paiement.findMany({
-        where: {
-          statut: StatutPaiement.REUSSI,
-          inscriptionFormation: { isNot: null },
-        },
-        select: {
-          montant: true,
-          inscriptionFormation: { select: { formationId: true } },
-        },
-      }),
+      this.prisma.$queryRaw<Array<{ formationId: string; nbPayes: bigint; recette: number }>>(Prisma.sql`
+        SELECT inscription."formationId" AS "formationId",
+               COUNT(*)::bigint AS "nbPayes",
+               COALESCE(SUM(paiement."montant"), 0)::double precision AS "recette"
+        FROM "Paiement" AS paiement
+        INNER JOIN "InscriptionFormation" AS inscription
+          ON inscription."paiementId" = paiement."id"
+        WHERE paiement."statut" = ${StatutPaiement.REUSSI}::"StatutPaiement"
+        GROUP BY inscription."formationId"
+      `),
     ]);
 
     const inscritsMap = new Map(
       inscritsParFormation.map((g) => [g.formationId, g._count._all]),
     );
 
-    const paiementParFormation = new Map<string, { nbPayes: number; recette: number }>();
-    for (const p of paiementsReussis) {
-      const formationId = p.inscriptionFormation?.formationId;
-      if (!formationId) continue;
-      const acc = paiementParFormation.get(formationId) ?? { nbPayes: 0, recette: 0 };
-      acc.nbPayes += 1;
-      acc.recette += p.montant;
-      paiementParFormation.set(formationId, acc);
-    }
+    const paiementParFormation = new Map(
+      paiementsParFormation.map((p) => [p.formationId, { nbPayes: Number(p.nbPayes), recette: Number(p.recette) }]),
+    );
 
     const parFormation = formations.map((f) => {
       const paiement = paiementParFormation.get(f.id) ?? { nbPayes: 0, recette: 0 };
@@ -355,8 +349,8 @@ export class FormationsService {
 
   async liste(query: FormationQueryDto): Promise<Paginated<any>> {
     const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
     const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
     const where: Prisma.FormationWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.search
@@ -374,11 +368,11 @@ export class FormationsService {
         where,
         include: FORMATION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? {} : { skip: (page - 1) * pageSize, take: pageSize }),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.formation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? total : pageSize };
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouverFormation(id: string) {
@@ -386,39 +380,41 @@ export class FormationsService {
       where: { id },
       include: FORMATION_INCLUDE,
     });
-    if (!formation) throw new NotFoundException('Formation introuvable');
+    if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
     return formation;
   }
 
   /** Toute formation naît en BROUILLON ; seule la publication l'ouvre au public. */
   async creer(dto: CreateFormationDto, user: AuthUser) {
-    const formation = await this.prisma.formation.create({
-      data: {
-        titre: dto.titre,
-        description: dto.description ?? null,
-        categorie: dto.categorie ?? null,
-        prix: dto.prix ?? 0,
-        devise: dto.devise ?? 'GNF',
-        dureeHeures: dto.dureeHeures ?? null,
-        dateDebut: dto.dateDebut ? toDateOnly(dto.dateDebut) : null,
-        dateFin: dto.dateFin ? toDateOnly(dto.dateFin) : null,
-        lieu: dto.lieu ?? null,
-        capacite: dto.capacite ?? null,
-        statut: StatutFormation.BROUILLON,
-        creeParId: user.id,
-      },
-      include: FORMATION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      const formation = await tx.formation.create({
+        data: {
+          titre: dto.titre,
+          description: dto.description ?? null,
+          categorie: dto.categorie ?? null,
+          prix: dto.prix ?? 0,
+          devise: dto.devise ?? 'GNF',
+          dureeHeures: dto.dureeHeures ?? null,
+          dateDebut: dto.dateDebut ? toDateOnly(dto.dateDebut) : null,
+          dateFin: dto.dateFin ? toDateOnly(dto.dateFin) : null,
+          lieu: dto.lieu ?? null,
+          capacite: dto.capacite ?? null,
+          statut: StatutFormation.BROUILLON,
+          creeParId: user.id,
+        },
+        include: FORMATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_CREE',
+          entite: 'Formation',
+          entiteId: formation.id,
+          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(formation) }),
+        },
+      });
+      return formation;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_CREE',
-        entite: 'Formation',
-        entiteId: formation.id,
-        details: `${formation.titre} — ${formation.prix} ${formation.devise} (brouillon)`,
-      },
-    });
-    return formation;
   }
 
   /**
@@ -427,137 +423,183 @@ export class FormationsService {
    * (dates, lieu, description…) reste modifiable, sauf formation close.
    */
   async modifier(id: string, dto: UpdateFormationDto, user: AuthUser) {
-    const formation = await this.trouverFormation(id);
-    if (formation.statut === StatutFormation.COMPLETE) {
-      throw new BadRequestException(
-        'Formation close : le contenu en est figé, rouvrez-la avant de la modifier',
-      );
-    }
-    const confirmee = await this.prisma.inscriptionFormation.count({
-      where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouillerFormation(tx, id);
+      const formation = await tx.formation.findUnique({ where: { id }, include: FORMATION_INCLUDE });
+      if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
+      if (formation.statut === StatutFormation.COMPLETE) {
+        throw new BadRequestException(I18nContext.current()!.t('formations.formation_close_le_contenu_en_est_fige_rouvrez_la_avant_de_l'));
+      }
+      const confirmee = await tx.inscriptionFormation.count({
+        where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
+      });
+      if (confirmee > 0 && (dto.titre !== undefined || dto.prix !== undefined)) {
+        throw new ConflictException(I18nContext.current()!.t('formations.confirmee_inscription_s_deja_confirmee_s_et_payee_s_le_titre', { args: { confirmee } }));
+      }
+      if (dto.capacite !== undefined && dto.capacite !== null && dto.capacite < confirmee) {
+        throw new ConflictException(I18nContext.current()!.t('formations.capacite_inferieure_aux_inscriptions_confirmees'));
+      }
+      if (dto.capacite === null && confirmee > 0) {
+        throw new ConflictException(I18nContext.current()!.t('formations.capacite_inferieure_aux_inscriptions_confirmees'));
+      }
+      const maj = await tx.formation.update({
+        where: { id },
+        data: {
+          ...(dto.titre !== undefined ? { titre: dto.titre } : {}),
+          ...(dto.description !== undefined ? { description: dto.description } : {}),
+          ...(dto.categorie !== undefined ? { categorie: dto.categorie } : {}),
+          ...(dto.prix !== undefined ? { prix: dto.prix } : {}),
+          ...(dto.devise !== undefined ? { devise: dto.devise } : {}),
+          ...(dto.dureeHeures !== undefined ? { dureeHeures: dto.dureeHeures } : {}),
+          ...(dto.dateDebut !== undefined ? { dateDebut: toDateOnly(dto.dateDebut) } : {}),
+          ...(dto.dateFin !== undefined ? { dateFin: toDateOnly(dto.dateFin) } : {}),
+          ...(dto.lieu !== undefined ? { lieu: dto.lieu } : {}),
+          ...(dto.capacite !== undefined ? { capacite: dto.capacite } : {}),
+        },
+        include: FORMATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_MODIFIEE',
+          entite: 'Formation',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(formation),
+            apres: this.instantaneAudit(maj),
+          }),
+        },
+      });
+      return maj;
     });
-    if (confirmee > 0 && (dto.titre !== undefined || dto.prix !== undefined)) {
-      throw new ConflictException(
-        `${confirmee} inscription(s) déjà confirmée(s) et payée(s) : le titre et le prix de la formation sont figés.`,
-      );
-    }
-    const maj = await this.prisma.formation.update({
-      where: { id },
-      data: {
-        ...(dto.titre !== undefined ? { titre: dto.titre } : {}),
-        ...(dto.description !== undefined ? { description: dto.description } : {}),
-        ...(dto.categorie !== undefined ? { categorie: dto.categorie } : {}),
-        ...(dto.prix !== undefined ? { prix: dto.prix } : {}),
-        ...(dto.devise !== undefined ? { devise: dto.devise } : {}),
-        ...(dto.dureeHeures !== undefined ? { dureeHeures: dto.dureeHeures } : {}),
-        ...(dto.dateDebut !== undefined ? { dateDebut: toDateOnly(dto.dateDebut) } : {}),
-        ...(dto.dateFin !== undefined ? { dateFin: toDateOnly(dto.dateFin) } : {}),
-        ...(dto.lieu !== undefined ? { lieu: dto.lieu } : {}),
-        ...(dto.capacite !== undefined ? { capacite: dto.capacite } : {}),
-      },
-      include: FORMATION_INCLUDE,
-    });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_MODIFIEE',
-        entite: 'Formation',
-        entiteId: id,
-        details: `${maj.titre} (mise à jour par ${user.prenom} ${user.nom})`,
-      },
-    });
-    return maj;
   }
 
   /** Seul un brouillon sans inscription s'efface ; les autres se clôturent. */
   async supprimer(id: string, user: AuthUser) {
-    const formation = await this.trouverFormation(id);
-    if (formation.statut !== StatutFormation.BROUILLON) {
-      throw new ForbiddenException(
-        'Une formation publiée ou complète ne s’efface pas : clôturez-la pour en arrêter les inscriptions',
-      );
-    }
-    if (formation._count.inscriptions > 0) {
-      throw new ConflictException(
-        'Des demandes sont déjà déposées sur cette formation : annulez-les avant de la supprimer',
-      );
-    }
-    await this.prisma.formation.delete({ where: { id } });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_SUPPRIMEE',
-        entite: 'Formation',
-        entiteId: id,
-        details: `${formation.titre} (brouillon supprimé)`,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await this.verrouillerFormation(tx, id);
+      const formation = await tx.formation.findUnique({ where: { id }, include: FORMATION_INCLUDE });
+      if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
+      if (formation.statut !== StatutFormation.BROUILLON) {
+        throw new ForbiddenException(I18nContext.current()!.t('formations.une_formation_publiee_ou_complete_ne_s_efface_pas_cloturez_l'));
+      }
+      if (formation._count.inscriptions > 0) {
+        throw new ConflictException(I18nContext.current()!.t('formations.des_demandes_sont_deja_deposees_sur_cette_formation_annulez_'));
+      }
+      await tx.formation.delete({ where: { id } });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_SUPPRIMEE',
+          entite: 'Formation',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(formation), apres: null }),
+        },
+      });
     });
     return { id };
   }
 
   /** BROUILLON → PUBLIEE : la vitrine s'ouvre, les demandes affluent. */
   async publier(id: string, user: AuthUser) {
-    const formation = await this.trouverFormation(id);
-    if (formation.statut !== StatutFormation.BROUILLON) {
-      throw new BadRequestException(
-        formation.statut === StatutFormation.COMPLETE
-          ? 'Formation close : elle ne peut plus être publiée'
-          : 'Cette formation est déjà publiée',
-      );
-    }
-    const maj = await this.prisma.formation.update({
-      where: { id },
-      data: { statut: StatutFormation.PUBLIEE },
-      include: FORMATION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouillerFormation(tx, id);
+      const formation = await tx.formation.findUnique({ where: { id } });
+      if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
+      if (formation.statut !== StatutFormation.BROUILLON) {
+        throw new BadRequestException(
+          I18nContext.current()!.t(formation.statut === StatutFormation.COMPLETE
+            ? 'formations.formation_close_elle_ne_peut_plus_etre_publiee'
+            : 'formations.cette_formation_est_deja_publiee'),
+        );
+      }
+      const maj = await tx.formation.update({
+        where: { id },
+        data: { statut: StatutFormation.PUBLIEE },
+        include: FORMATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_PUBLIEE',
+          entite: 'Formation',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(formation),
+            apres: this.instantaneAudit(maj),
+          }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_PUBLIEE',
-        entite: 'Formation',
-        entiteId: id,
-        details: `${maj.titre} — publication de la vitrine`,
-      },
-    });
-    return maj;
   }
 
   /** PUBLIEE → COMPLETE : fin des inscriptions, les dossiers en cours restent. */
   async cloturer(id: string, user: AuthUser) {
-    const formation = await this.trouverFormation(id);
-    if (formation.statut !== StatutFormation.PUBLIEE) {
-      throw new BadRequestException(
-        formation.statut === StatutFormation.BROUILLON
-          ? "Une formation en brouillon ne se clôt pas : publiez-la d'abord"
-          : 'Cette formation est déjà clôturée',
-      );
-    }
-    const maj = await this.prisma.formation.update({
-      where: { id },
-      data: { statut: StatutFormation.COMPLETE },
-      include: FORMATION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouillerFormation(tx, id);
+      const formation = await tx.formation.findUnique({ where: { id } });
+      if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
+      if (formation.statut !== StatutFormation.PUBLIEE) {
+        throw new BadRequestException(
+          I18nContext.current()!.t(formation.statut === StatutFormation.BROUILLON
+            ? 'formations.une_formation_en_brouillon_ne_se_clot_pas_publiez_la_d_ab'
+            : 'formations.cette_formation_est_deja_cloturee'),
+        );
+      }
+      const maj = await tx.formation.update({
+        where: { id },
+        data: { statut: StatutFormation.COMPLETE },
+        include: FORMATION_INCLUDE,
+      });
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_CLOTUREE',
+          entite: 'Formation',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: this.instantaneAudit(formation),
+            apres: this.instantaneAudit(maj),
+          }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_CLOTUREE',
-        entite: 'Formation',
-        entiteId: id,
-        details: `${maj.titre} — le circuit de la promotion est clos`,
-      },
-    });
-    return maj;
+  }
+
+  private instantaneAudit(formation: any) {
+    return {
+      id: formation.id,
+      titreFourni: Boolean(formation.titre),
+      prix: formation.prix,
+      devise: formation.devise,
+      statut: formation.statut,
+      dateDebut: formation.dateDebut ?? null,
+      dateFin: formation.dateFin ?? null,
+      capacite: formation.capacite ?? null,
+    };
   }
 
   // --------------------------------------------------------- le registre
 
-  async inscriptionsDe(formationId: string) {
+  async inscriptionsDe(formationId: string, query: QueryDto = {}): Promise<Paginated<any>> {
     await this.trouverFormation(formationId);
-    return this.prisma.inscriptionFormation.findMany({
-      where: { formationId },
-      include: INSCRIPTION_FORMATION_INCLUDE,
-      orderBy: { inscriteLe: 'desc' },
-    });
+    const page = Math.max(1, Number(query.page ?? 1));
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const where = { formationId };
+    const [data, total] = await Promise.all([
+      this.prisma.inscriptionFormation.findMany({
+        where,
+        include: INSCRIPTION_FORMATION_INCLUDE,
+        orderBy: { inscriteLe: 'desc' },
+        skip: all ? 0 : (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.inscriptionFormation.count({ where }),
+    ]);
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
   async trouverInscription(id: string) {
@@ -565,7 +607,7 @@ export class FormationsService {
       where: { id },
       include: INSCRIPTION_FORMATION_INCLUDE,
     });
-    if (!inscription) throw new NotFoundException('Inscription à la formation introuvable');
+    if (!inscription) throw new NotFoundException(I18nContext.current()!.t('formations.inscription_a_la_formation_introuvable'));
     return inscription;
   }
 
@@ -577,67 +619,108 @@ export class FormationsService {
    */
   async confirmer(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
-    if (inscription.statut === StatutInscriptionFormation.ANNULEE) {
-      throw new BadRequestException('Cette demande est annulée : elle ne peut plus être confirmée');
-    }
-    if (inscription.statut === StatutInscriptionFormation.CONFIRMEE) {
-      return inscription;
-    }
-    if (inscription.formation.statut === StatutFormation.COMPLETE) {
-      throw new ConflictException(
-        'La formation est close : cette place ne peut plus être confirmée',
-      );
-    }
-    const paiement = inscription.paiement;
-    if (!paiement) {
-      throw new ConflictException("Aucun paiement n'est lié à cette demande : confirmez impossibilité");
-    }
-
-    const maj = await this.prisma.$transaction(async (tx) => {
-      await tx.paiement.update({
-        where: { id: paiement.id },
-        data: { statut: 'REUSSI', completeLe: new Date() },
-      });
-      return tx.inscriptionFormation.update({
+    return this.prisma.$transaction(async (tx) => {
+      const formation = await this.verrouillerFormation(tx, inscription.formationId);
+      const avant = await tx.inscriptionFormation.findUnique({
         where: { id },
-        data: { statut: StatutInscriptionFormation.CONFIRMEE },
         include: INSCRIPTION_FORMATION_INCLUDE,
       });
+      if (!avant) throw new NotFoundException(I18nContext.current()!.t('formations.inscription_a_la_formation_introuvable'));
+      if (avant.statut === StatutInscriptionFormation.ANNULEE) {
+        throw new BadRequestException(I18nContext.current()!.t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
+      }
+      if (avant.statut === StatutInscriptionFormation.CONFIRMEE) return avant;
+      if (formation.statut === StatutFormation.COMPLETE) {
+        throw new ConflictException(I18nContext.current()!.t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
+      }
+      const confirmees = await tx.inscriptionFormation.count({
+        where: { formationId: formation.id, statut: StatutInscriptionFormation.CONFIRMEE },
+      });
+      if (formation.capacite != null && confirmees >= formation.capacite) {
+        throw new ConflictException(I18nContext.current()!.t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
+      }
+      const paiement = avant.paiement;
+      if (!paiement) {
+        throw new ConflictException(I18nContext.current()!.t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
+      }
+      const paiementMaj = await tx.paiement.updateMany({
+        where: { id: paiement.id, statut: StatutPaiement.EN_ATTENTE },
+        data: { statut: StatutPaiement.REUSSI, completeLe: new Date() },
+      });
+      if (paiementMaj.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
+      }
+      const inscriptionMaj = await tx.inscriptionFormation.updateMany({
+        where: { id, statut: avant.statut },
+        data: { statut: StatutInscriptionFormation.CONFIRMEE },
+      });
+      if (inscriptionMaj.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
+      }
+      const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
+      if (!maj) throw new NotFoundException(I18nContext.current()!.t('formations.inscription_a_la_formation_introuvable'));
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_CONFIRMEE',
+          entite: 'InscriptionFormation',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
+            apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
+          }),
+        },
+      });
+      return maj;
     });
+  }
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_CONFIRMEE',
-        entite: 'InscriptionFormation',
-        entiteId: id,
-        details: `${maj.numero} — ${maj.nomComplet ?? (maj.etudiant ? `${maj.etudiant.prenom} ${maj.etudiant.nom}` : 'anonyme')} · ${maj.formation.titre} (paiement ${maj.paiement?.reference})`,
-      },
-    });
-    return maj;
+  /** Sérialise les confirmations d'une même formation pendant le contrôle de capacité. */
+  private async verrouillerFormation(tx: Prisma.TransactionClient, id: string) {
+    const formation = typeof (tx as any).$queryRaw === 'function'
+      ? ((await (tx as any).$queryRaw`
+          SELECT "id", "statut", "capacite"
+          FROM "Formation" WHERE "id" = ${id} FOR UPDATE
+        `)[0] as { id: string; statut: StatutFormation; capacite: number | null } | undefined)
+      : await tx.formation.findUnique({ where: { id }, select: { id: true, statut: true, capacite: true } });
+    if (!formation) throw new NotFoundException(I18nContext.current()!.t('formations.formation_introuvable'));
+    return formation;
   }
 
   /** Annulation (scolarité / direction) : la place est libérée, le paiement reste tracé. */
   async annuler(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
-    if (inscription.statut === StatutInscriptionFormation.ANNULEE) {
-      throw new BadRequestException('Cette demande est déjà annulée');
-    }
-    const maj = await this.prisma.inscriptionFormation.update({
-      where: { id },
-      data: { statut: StatutInscriptionFormation.ANNULEE },
-      include: INSCRIPTION_FORMATION_INCLUDE,
+    return this.prisma.$transaction(async (tx) => {
+      await this.verrouillerFormation(tx, inscription.formationId);
+      const avant = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
+      if (!avant) throw new NotFoundException(I18nContext.current()!.t('formations.inscription_a_la_formation_introuvable'));
+      if (avant.statut === StatutInscriptionFormation.ANNULEE) {
+        throw new ConflictException(I18nContext.current()!.t('formations.cette_demande_est_deja_annulee'));
+      }
+      if (avant.statut === StatutInscriptionFormation.CONFIRMEE) {
+        throw new ConflictException(I18nContext.current()!.t('formations.annulation_inscription_confirmee_exige_remboursement'));
+      }
+      const transition = await tx.inscriptionFormation.updateMany({
+        where: { id, statut: avant.statut },
+        data: { statut: StatutInscriptionFormation.ANNULEE },
+      });
+      if (transition.count !== 1) throw new ConflictException(I18nContext.current()!.t('formations.cette_demande_est_deja_annulee'));
+      const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
+      if (!maj) throw new NotFoundException(I18nContext.current()!.t('formations.inscription_a_la_formation_introuvable'));
+      await tx.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'FORMATION_INSCRIPTION_ANNULEE',
+          entite: 'InscriptionFormation',
+          entiteId: id,
+          details: JSON.stringify({
+            avant: { statut: avant.statut, formationId: avant.formationId },
+            apres: { statut: maj.statut, formationId: maj.formationId },
+          }),
+        },
+      });
+      return maj;
     });
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'FORMATION_INSCRIPTION_ANNULEE',
-        entite: 'InscriptionFormation',
-        entiteId: id,
-        details: `${maj.numero} — ${maj.formation.titre} (annulation par ${user.prenom} ${user.nom})`,
-      },
-    });
-    return maj;
   }
 
   // ------------------------------------------------------ certificat A4
@@ -651,16 +734,19 @@ export class FormationsService {
    */
   async certificat(id: string, token: string | undefined, baseUrl: string): Promise<string> {
     try {
-      this.jwt.verify(token ?? '', { secret: process.env.JWT_SECRET ?? 'change-me-in-production' });
+      this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException('Jeton invalide ou expiré');
+      throw new UnauthorizedException(I18nContext.current()!.t('formations.jeton_invalide_ou_expire'));
     }
 
     const inscription = await this.trouverInscription(id);
     if (inscription.statut !== StatutInscriptionFormation.CONFIRMEE) {
       throw new BadRequestException(
-        `${inscription.numero} n'est pas confirmée (${LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut}) : l'attestation n'est délivrée qu'aux formations suivies et réglées`,
+        I18nContext.current()!.t('formations.inscription_numero_n_est_pas_confirmee_libelle_statut_inscri', { args: { numero: inscription.numero, statut: LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut } }),
       );
+    }
+    if (inscription.paiement?.statut !== StatutPaiement.REUSSI) {
+      throw new ConflictException(I18nContext.current()!.t('formations.aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi'));
     }
 
     // URL publique portée par le QR : la page vitrine des formations,
@@ -690,14 +776,14 @@ export class FormationsService {
       .join(' au ');
     return `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8">
-<title>Attestation de formation — ${echapper(inscription.numero)}</title>
+<title>Confirmation d'inscription à une formation — ${echapper(inscription.numero)}</title>
 <style>
   ${STYLE_CERTIFICAT}
 </style></head>
 <body>
   <header>
     <div class="etab">${echapper(etablissement)}</div>
-    <div class="titre">Attestation de formation</div>
+    <div class="titre">Confirmation d'inscription à une formation</div>
     <div class="sous-titre">Formation continue & certifications professionnelles</div>
   </header>
   <div class="meta">
@@ -706,17 +792,17 @@ export class FormationsService {
   </div>
   <table>
     <tbody>
-      <tr><th>Diplômé(e)</th><td>${echapper(diplome)}${inscription.etudiant?.matricule ? ` <small>(${echapper(inscription.etudiant.matricule)})</small>` : ''}</td></tr>
-      <tr><th>Formation suivie</th><td>${echapper(formation.titre)}${formation.categorie ? ` — ${echapper(formation.categorie)}` : ''}</td></tr>
+      <tr><th>Participant(e)</th><td>${echapper(diplome)}${inscription.etudiant?.matricule ? ` <small>(${echapper(inscription.etudiant.matricule)})</small>` : ''}</td></tr>
+      <tr><th>Formation</th><td>${echapper(formation.titre)}${formation.categorie ? ` — ${echapper(formation.categorie)}` : ''}</td></tr>
       <tr><th>Période</th><td>${dates ? echapper(dates) : '—'}</td></tr>
       <tr><th>Durée totale</th><td>${formation.dureeHeures ? `${formation.dureeHeures} h` : '—'}${formation.lieu ? ` · ${echapper(formation.lieu)}` : ''}</td></tr>
     </tbody>
   </table>
   <div class="mention">
-    La présente attestation certifie que la personne ci-dessus a été inscrite,
-    a réglé les frais de la formation (${formation.prix.toLocaleString('fr-FR')} ${echapper(formation.devise)}) et a suivi
-    l'intégralité du programme. La scolarité de l'université en établit le
-    bilan définitif et remet, le cas échéant, le document officiel du parcours.
+    Le présent document confirme l'inscription de la personne ci-dessus et
+    le règlement de ${inscription.paiement.montant.toLocaleString('fr-FR')} ${echapper(inscription.paiement.devise)}.
+    La validation pédagogique relève du bilan définitif établi par la scolarité,
+    qui remet le document officiel du parcours après contrôle de son achèvement.
   </div>
   <div class="verification">
     ${svg}
@@ -729,20 +815,11 @@ export class FormationsService {
   </div>
   <footer>
     <span>${echapper(etablissement)} — hub de formation continue</span>
-    <span>Vérifiable via le service attestations de l'université · Édité le ${edite}</span>
+    <span>Confirmation d'inscription · Édité le ${edite}</span>
   </footer>
   <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
 </body></html>`;
   }
-}
-
-/** Échappement HTML strict (copie de la convention des états imprimés). */
-function echapper(v: unknown): string {
-  return String(v ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
 
 /**

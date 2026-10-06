@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-06T14:55:38.859Z",
+  "statut": "valide",
+  "api": "http://127.0.0.1:15041/api",
+  "simulatedApi": false,
+  "actualPrepareButtonVerified": true,
+  "actualOfflineFormVerified": true,
+  "encryptedPointageAndPinRemoved": true,
+  "uuid": "443c8b0d-9167-42a2-b616-f4fd358add7e",
+  "singlePersistedSessionAndAudit": true,
+  "singleOfflineControlPersisted": true,
+  "signedPresenceAndPartialFailureVerified": true,
+  "productionUntouched": true,
+  "physicalDevicePending": true,
+  "scope": "Séance par formulaire puis présence signée et référence invalide via store chiffré, API QA réelle"
+}

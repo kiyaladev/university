@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-06T15:12:45.429Z",
+  "statut": "valide",
+  "checks": [
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "legacyVoteHidden": true,
+      "filteredCountZero": true
+    }
+  ],
+  "productionUntouched": true,
+  "scope": "Trace historique VOTE_DEPOSE synthétique QA masquée par API et interface ADMIN/DIRECTION FR/EN bureau/mobile"
+}

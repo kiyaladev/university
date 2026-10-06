@@ -1,18 +1,39 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { I18nContext } from 'nestjs-i18n';
+import { Prisma, Role, StatutInscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import type { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
+import { t } from '../../common/i18n';
+import { exigerAnneeOuverte } from '../../common/annee';
 import { dureeMinutes, toMinutes, toDateOnly, isoDate, JOURS } from '../../common/utils';
 import { CreateCreneauDto, CreneauQueryDto, UpdateCreneauDto } from './planification.dto';
 
 export const CRENEAU_INCLUDE = {
   affectation: {
     include: {
-      enseignant: true,
+      enseignant: { select: {
+        id: true, matricule: true, nom: true, prenom: true, grade: true,
+        statut: true, actif: true, departementId: true,
+        departement: { select: { id: true, nom: true } },
+      } },
       matiere: true,
       promotion: { include: { filiere: true } },
     },
   },
-  salle: true,
+  salle: { select: { id: true, code: true, nom: true } },
+};
+
+const CRENEAU_INCLUDE_ETUDIANT = {
+  affectation: {
+    select: {
+      id: true,
+      enseignant: { select: { id: true, nom: true, prenom: true } },
+      matiere: { select: { id: true, code: true, intitule: true } },
+      promotion: { select: { id: true, nom: true } },
+    },
+  },
+  salle: { select: { id: true, code: true } },
 };
 
 type Periode = { dateDebut: Date | null; dateFin: Date | null };
@@ -50,11 +71,29 @@ export class CreneauxService extends CrudService {
     });
   }
 
-  private where(query: CreneauQueryDto) {
+  private where(query: CreneauQueryDto, user?: AuthUser) {
     const affectation: Record<string, any> = {};
     if (query.anneeId) affectation.anneeId = query.anneeId;
     if (query.enseignantId) affectation.enseignantId = query.enseignantId;
     if (query.promotionId) affectation.promotionId = query.promotionId;
+
+    if (user?.role === Role.ENSEIGNANT) {
+      affectation.enseignantId = user.enseignantId ?? '__aucun_enseignant__';
+    } else if (user?.role === Role.CHEF_DEPARTEMENT || user?.role === Role.CONTROLEUR) {
+      affectation.enseignant = { departementId: user.departementId ?? '__aucun_departement__' };
+    } else if (user?.role === Role.ETUDIANT) {
+      const etudiantId = user.etudiantId ?? '__aucun_etudiant__';
+      affectation.annee = { active: true, cloturee: false };
+      affectation.promotion = {
+        inscriptions: {
+          some: {
+            etudiantId,
+            statut: StatutInscription.VALIDEE,
+            annee: { active: true, cloturee: false },
+          },
+        },
+      };
+    }
 
     return {
       ...(Object.keys(affectation).length ? { affectation } : {}),
@@ -63,27 +102,53 @@ export class CreneauxService extends CrudService {
     };
   }
 
-  liste(query: CreneauQueryDto) {
-    return this.findAll(query, this.where(query));
+  liste(query: CreneauQueryDto, user: AuthUser) {
+    if (user.role !== Role.ETUDIANT) return this.findAll(query, this.where(query, user));
+
+    const where = this.where(query, user);
+    const page = Number(query.page ?? 1);
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    return Promise.all([
+      this.prisma.creneau.findMany({
+        where,
+        include: CRENEAU_INCLUDE_ETUDIANT,
+        orderBy: [{ jourSemaine: 'asc' }, { heureDebut: 'asc' }],
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      }),
+      this.prisma.creneau.count({ where }),
+    ]).then(([data, total]) => ({ data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize }));
   }
 
   /** Emploi du temps hebdomadaire regroupé par jour. */
-  async emploiDuTemps(query: CreneauQueryDto) {
+  async emploiDuTemps(query: CreneauQueryDto, user: AuthUser) {
+    const reference = query.semaineDu ? toDateOnly(query.semaineDu) : toDateOnly(isoDate(new Date()));
+    const lundi = new Date(reference);
+    lundi.setUTCDate(lundi.getUTCDate() - ((lundi.getUTCDay() + 6) % 7));
+    const dimanche = new Date(lundi.getTime() + 6 * 86400000);
+    const base = this.where(query, user) as Prisma.CreneauWhereInput;
+    const filtresExistants = base.AND
+      ? Array.isArray(base.AND) ? base.AND : [base.AND]
+      : [];
+    const where: Prisma.CreneauWhereInput = {
+      actif: true,
+      ...base,
+      AND: [
+        ...filtresExistants,
+        { OR: [{ dateDebut: null }, { dateDebut: { lte: dimanche } }] },
+        { OR: [{ dateFin: null }, { dateFin: { gte: lundi } }] },
+      ],
+    };
     const creneaux = await this.prisma.creneau.findMany({
-      where: { actif: true, ...this.where(query) },
-      include: CRENEAU_INCLUDE,
+      where,
+      include: user.role === Role.ETUDIANT ? CRENEAU_INCLUDE_ETUDIANT : CRENEAU_INCLUDE,
       orderBy: [{ jourSemaine: 'asc' }, { heureDebut: 'asc' }],
+      take: 2000,
     });
 
-    // Semaine de référence : on ne montre que ce qui vaut réellement cette
-    // semaine-là, sinon la grille mélange janvier et mai.
-    const retenus = query.semaineDu
-      ? creneaux.filter((c) => {
-          const lundi = toDateOnly(query.semaineDu!);
-          const dimanche = new Date(lundi.getTime() + 6 * 86400000);
-          return periodesSeCroisent(c, { dateDebut: lundi, dateFin: dimanche });
-        })
-      : creneaux;
+    // Le filtre SQL borne déjà les créneaux à la semaine de référence ; ce
+    // contrôle garde la règle métier des périodes date-only côté serveur.
+    const retenus = creneaux.filter((c) => periodesSeCroisent(c, { dateDebut: lundi, dateFin: dimanche }));
 
     return [1, 2, 3, 4, 5, 6, 7].map((jour) => ({
       jour,
@@ -92,33 +157,53 @@ export class CreneauxService extends CrudService {
     }));
   }
 
-  /** Refuse un créneau incohérent ou en collision (même salle / même enseignant). */
-  private async valider(dto: CreateCreneauDto | UpdateCreneauDto, id?: string) {
-    if (dto.heureDebut && dto.heureFin && dureeMinutes(dto.heureDebut, dto.heureFin) <= 0) {
-      throw new BadRequestException("L'heure de fin doit suivre l'heure de début");
-    }
-    if (dto.dateDebut && dto.dateFin && toDateOnly(dto.dateFin) < toDateOnly(dto.dateDebut)) {
-      throw new BadRequestException('La fin de la période doit suivre son début');
-    }
+  async findOne(id: string, user?: AuthUser) {
+    if (!user) throw new UnauthorizedException();
+    const creneau = await this.prisma.creneau.findFirst({
+      where: { id, ...this.where({}, user) },
+      include: user.role === Role.ETUDIANT ? CRENEAU_INCLUDE_ETUDIANT : CRENEAU_INCLUDE,
+    });
+    if (!creneau) throw new NotFoundException(t('common.notFoundRecord'));
+    return creneau;
+  }
 
-    const base = id ? await this.prisma.creneau.findUnique({ where: { id } }) : null;
-    const jour = dto.jourSemaine ?? base?.jourSemaine;
+  /** Refuse un créneau incohérent ou en collision (même salle / même enseignant). */
+  private async valider(dto: CreateCreneauDto | UpdateCreneauDto, id?: string, db: any = this.prisma, user?: AuthUser) {
+    const base = id ? await db.creneau.findUnique({ where: { id }, include: { affectation: true } }) : null;
     const debut = dto.heureDebut ?? base?.heureDebut;
     const fin = dto.heureFin ?? base?.heureFin;
+    const dateDebut = dto.dateDebut !== undefined
+      ? dto.dateDebut ? toDateOnly(dto.dateDebut) : null
+      : (base?.dateDebut ? toDateOnly(base.dateDebut) : null);
+    const dateFin = dto.dateFin !== undefined
+      ? dto.dateFin ? toDateOnly(dto.dateFin) : null
+      : (base?.dateFin ? toDateOnly(base.dateFin) : null);
+
+    if (debut && fin && dureeMinutes(debut, fin) <= 0) {
+      throw new BadRequestException(I18nContext.current()!.t('planification.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
+    }
+    if (dateDebut && dateFin && dateFin < dateDebut) {
+      throw new BadRequestException(I18nContext.current()!.t('planification.la_fin_de_la_periode_doit_suivre_son_debut'));
+    }
+
+    const jour = dto.jourSemaine ?? base?.jourSemaine;
     const salleId = dto.salleId ?? base?.salleId;
     const affectationId = dto.affectationId ?? base?.affectationId;
     const periode = {
-      dateDebut: dto.dateDebut ? toDateOnly(dto.dateDebut) : (base?.dateDebut ?? null),
-      dateFin: dto.dateFin ? toDateOnly(dto.dateFin) : (base?.dateFin ?? null),
+      dateDebut,
+      dateFin,
     };
     if (!jour || !debut || !fin || !affectationId) return;
 
-    const affectation = await this.prisma.affectation.findUnique({
-      where: { id: affectationId },
+    const scope = this.where({}, user).affectation;
+    const affectation = await db.affectation.findFirst({
+      where: { id: affectationId, ...(scope ?? {}) },
+      include: { annee: { select: { cloturee: true } } },
     });
-    if (!affectation) throw new BadRequestException('Affectation introuvable');
+    if (!affectation) throw new BadRequestException(I18nContext.current()!.t('planification.affectation_introuvable'));
+    await exigerAnneeOuverte(db, affectation.anneeId);
 
-    const memeJour = await this.prisma.creneau.findMany({
+    const memeJour = await db.creneau.findMany({
       where: {
         jourSemaine: jour,
         actif: true,
@@ -145,10 +230,7 @@ export class CreneauxService extends CrudService {
 
     if (collision) {
       throw new BadRequestException(
-        `Conflit d'emploi du temps : ${JOURS[jour]} ${collision.heureDebut}-${collision.heureFin} ` +
-          `(${collision.affectation.matiere.intitule} — ${collision.affectation.promotion.nom}` +
-          `${collision.salle ? `, salle ${collision.salle.code}` : ''}` +
-          `${libellePeriode(collision)})`,
+        I18nContext.current()!.t('planification.conflit_d_emploi_du_temps_jour_collision_heuredebut_collision', { args: { jour: JOURS[jour], debut: collision.heureDebut, fin: collision.heureFin } }),
       );
     }
   }
@@ -163,13 +245,69 @@ export class CreneauxService extends CrudService {
     };
   }
 
-  async creer(dto: CreateCreneauDto) {
-    await this.valider(dto);
-    return this.create(this.payload(dto));
+  async creer(dto: CreateCreneauDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      await this.valider(dto, undefined, tx, user);
+      const creneau = await tx.creneau.create({ data: this.payload(dto), include: CRENEAU_INCLUDE });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'CRENEAU_CREE', entite: 'Creneau', entiteId: creneau.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creneau) }),
+      } });
+      return creneau;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
 
-  async modifier(id: string, dto: UpdateCreneauDto) {
-    await this.valider(dto, id);
-    return this.update(id, this.payload(dto));
+  /** Même contrôle de collision lors de la prévisualisation d'un import. */
+  async verifierImport(dto: CreateCreneauDto) {
+    await this.valider(dto);
+  }
+
+  async modifier(id: string, dto: UpdateCreneauDto, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant: any = await tx.creneau.findFirst({
+        where: { id, ...this.where({}, user) }, include: CRENEAU_INCLUDE,
+      });
+      if (!avant) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      await exigerAnneeOuverte(tx, avant.affectation.anneeId);
+      await this.valider(dto, id, tx, user);
+      const cible: any = dto.affectationId ? await tx.affectation.findFirst({
+        where: { id: dto.affectationId, ...(this.where({}, user).affectation ?? {}) },
+        select: { anneeId: true },
+      }) : { anneeId: avant.affectation.anneeId };
+      if (!cible) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
+      const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
+      await tx.auditLog.create({ data: {
+        userId: user?.id ?? null, action: 'CRENEAU_MODIFIE', entite: 'Creneau', entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
+      } });
+      return apres;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  async remove(id: string, user?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+    const creneau: any = await tx.creneau.findFirst({
+      where: { id, ...this.where({}, user) },
+      include: CRENEAU_INCLUDE,
+    });
+    if (!creneau) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+    await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
+    await tx.creneau.delete({ where: { id } });
+    await tx.auditLog.create({ data: {
+      userId: user?.id ?? null, action: 'CRENEAU_SUPPRIME', entite: 'Creneau', entiteId: id,
+      details: JSON.stringify({ avant: this.instantaneAudit(creneau), apres: null }),
+    } });
+    return { id };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  }
+
+  private instantaneAudit(creneau: any) {
+    return {
+      id: creneau.id, affectationId: creneau.affectationId,
+      jourSemaine: creneau.jourSemaine, heureDebut: creneau.heureDebut,
+      heureFin: creneau.heureFin, salleId: creneau.salleId,
+      dateDebut: creneau.dateDebut, dateFin: creneau.dateFin, actif: creneau.actif,
+    };
   }
 }

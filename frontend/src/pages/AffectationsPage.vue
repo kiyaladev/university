@@ -2,9 +2,9 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Charges d’enseignement</div>
+        <h1 class="page-titre">{{ $t('affectations.title') }}</h1>
         <div class="page-sous-titre">
-          Qui enseigne quoi, à quelle promotion, pour quel volume horaire contractuel
+          {{ $t('affectations.subtitle') }}
         </div>
       </div>
       <div class="col-auto">
@@ -14,7 +14,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle affectation"
+          :label="$t('affectations.actions.new')"
           @click="ouvrir(null)"
         />
       </div>
@@ -23,7 +23,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (enseignant, matière, promotion)…"
+      :placeholder="$t('affectations.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -37,7 +37,7 @@
           map-options
           use-input
           input-debounce="0"
-          label="Enseignant"
+          :label="$t('affectations.filters.teacher')"
           @filter="filtrerEnseignants"
         />
         <q-select
@@ -50,7 +50,7 @@
           map-options
           use-input
           input-debounce="0"
-          label="Matière"
+          :label="$t('affectations.filters.subject')"
           @filter="filtrerMatieres"
         />
         <q-select
@@ -61,7 +61,7 @@
           clearable
           emit-value
           map-options
-          label="Promotion"
+          :label="$t('affectations.filters.promotion')"
         />
         <q-select
           v-model="filtres.anneeId"
@@ -71,14 +71,13 @@
           clearable
           emit-value
           map-options
-          label="Année académique"
+          :label="$t('affectations.filters.year')"
         />
       </template>
       <template #actions>
         <view-toggle
           cle="affectations"
           :modes="['tableau', 'cartes']"
-          defaut="tableau"
           @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
@@ -105,7 +104,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Créer la première affectation"
+            :label="$t('affectations.actions.createFirst')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -113,7 +112,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('affectations.actions.resetFilters')"
             @click="reinitialiser"
           />
         </div>
@@ -141,10 +140,10 @@
             dense
             round
             icon="edit"
-            aria-label="Modifier l’affectation"
+            :aria-label="$t('affectations.actions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('affectations.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutSupprimer"
@@ -153,10 +152,10 @@
             round
             color="negative"
             icon="delete"
-            aria-label="Supprimer l’affectation"
+            :aria-label="$t('affectations.actions.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>Supprimer</q-tooltip>
+            <q-tooltip>{{ $t('affectations.actions.delete') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -176,7 +175,7 @@
             </q-chip>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ a.annee?.libelle ?? '—' }} — volume contractuel
+            {{ a.annee?.libelle ?? '—' }} {{ $t('rectoratPage.subtitleFallback') }} {{ $t('affectations.cardView.contractualVolume') }}
             <span class="chiffres">{{ a.volumeHorairePrevu }} h</span>
           </div>
         </q-card-section>
@@ -188,7 +187,7 @@
             dense
             no-caps
             icon="edit"
-            label="Modifier"
+            :label="$t('affectations.actions.edit')"
             @click="ouvrir(a)"
           />
           <q-btn
@@ -198,7 +197,7 @@
             no-caps
             color="negative"
             icon="delete"
-            label="Supprimer"
+            :label="$t('affectations.actions.delete')"
             @click="supprimer(a)"
           />
         </q-card-actions>
@@ -212,7 +211,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Créer la première affectation"
+          :label="$t('affectations.actions.createFirst')"
           @click="ouvrir(null)"
         />
         <q-btn
@@ -220,7 +219,7 @@
           flat
           no-caps
           icon="refresh"
-          label="Réinitialiser les filtres"
+          :label="$t('affectations.actions.resetFilters')"
           @click="reinitialiser"
         />
       </div>
@@ -239,10 +238,10 @@
     <q-dialog v-model="dialogOuvert">
       <q-card style="width: 520px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ affectationEditee ? 'Modifier l’affectation' : 'Nouvelle affectation' }}
+          {{ affectationEditee ? $t('affectations.dialog.editTitle') : $t('affectations.dialog.newTitle') }}
         </q-card-section>
         <q-card-section>
-          <span class="section-titre">Qui enseigne quoi</span>
+          <span class="section-titre">{{ $t('affectations.dialog.sections.who') }}</span>
           <q-select
             v-model="form.enseignantId"
             :options="optionsEnseignants"
@@ -252,9 +251,9 @@
             map-options
             use-input
             input-debounce="0"
-            label="Enseignant *"
+            :label="$t('affectations.dialog.fields.teacher')"
             :error="erreurs.enseignantId"
-            error-message="Choisissez l’enseignant"
+            :error-message="$t('affectations.dialog.fields.teacherError')"
             @filter="filtrerEnseignants"
           />
           <q-select
@@ -266,13 +265,13 @@
             map-options
             use-input
             input-debounce="0"
-            label="Matière *"
+            :label="$t('affectations.dialog.fields.subject')"
             :error="erreurs.matiereId"
-            error-message="Choisissez la matière"
+            :error-message="$t('affectations.dialog.fields.subjectError')"
             @filter="filtrerMatieres"
           />
 
-          <span class="section-titre">Pour qui, et quand</span>
+          <span class="section-titre">{{ $t('affectations.dialog.sections.when') }}</span>
           <q-select
             v-model="form.promotionId"
             :options="optionsPromotions"
@@ -280,9 +279,9 @@
             dense
             emit-value
             map-options
-            label="Promotion *"
+            :label="$t('affectations.dialog.fields.promotion')"
             :error="erreurs.promotionId"
-            error-message="Choisissez la promotion"
+            :error-message="$t('affectations.dialog.fields.promotionError')"
           />
           <q-select
             v-model="form.anneeId"
@@ -291,9 +290,9 @@
             dense
             emit-value
             map-options
-            label="Année académique *"
+            :label="$t('affectations.dialog.fields.year')"
             :error="erreurs.anneeId"
-            error-message="Choisissez l’année académique"
+            :error-message="$t('affectations.dialog.fields.yearError')"
           />
           <q-input
             v-model.number="form.volumeHorairePrevu"
@@ -301,17 +300,17 @@
             min="0"
             outlined
             dense
-            label="Volume horaire contractuel (h)"
-            hint="Sert au suivi « heures réalisées / heures dues »"
+            :label="$t('affectations.dialog.fields.volume')"
+            :hint="$t('affectations.dialog.fields.volumeHint')"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('affectations.dialog.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('affectations.dialog.save')"
             :loading="enregistrement"
             @click="enregistrer"
           />
@@ -325,6 +324,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
@@ -340,6 +340,7 @@ interface Charge extends Affectation {
 const $q = useQuasar();
 const auth = useAuthStore();
 const route = useRoute();
+const { t } = useI18n();
 
 const affectations = ref<Charge[]>([]);
 const enseignants = ref<Enseignant[]>([]);
@@ -393,16 +394,14 @@ const filtresActifs = computed(() =>
   ),
 );
 const messageVide = computed(() =>
-  filtresActifs.value
-    ? 'Aucune charge d’enseignement pour ces critères.'
-    : 'Aucune charge d’enseignement enregistrée.',
+  filtresActifs.value ? t('affectations.emptyState.filtered') : t('affectations.emptyState.none'),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('affectations.chips.search', { query: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
@@ -411,7 +410,7 @@ const chips = computed(() => {
   if (filtres.value.enseignantId) {
     const e = enseignants.value.find((x) => x.id === filtres.value.enseignantId);
     cs.push({
-      label: `Enseignant : ${e ? `${e.nom} ${e.prenom}` : '?'}`,
+      label: t('affectations.chips.teacher', { name: e ? `${e.nom} ${e.prenom}` : '?' }),
       value: filtres.value.enseignantId,
       icone: 'person',
     });
@@ -419,7 +418,7 @@ const chips = computed(() => {
   if (filtres.value.matiereId) {
     const m = matieres.value.find((x) => x.id === filtres.value.matiereId);
     cs.push({
-      label: `Matière : ${m?.intitule ?? '?'}`,
+      label: t('affectations.chips.subject', { name: m?.intitule ?? '?' }),
       value: filtres.value.matiereId,
       icone: 'menu_book',
     });
@@ -427,7 +426,7 @@ const chips = computed(() => {
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
     cs.push({
-      label: `Promotion : ${p?.nom ?? '?'}`,
+      label: t('affectations.chips.promotion', { name: p?.nom ?? '?' }),
       value: filtres.value.promotionId,
       icone: 'groups',
     });
@@ -435,7 +434,7 @@ const chips = computed(() => {
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
     cs.push({
-      label: `Année : ${a?.libelle ?? '?'}`,
+      label: t('affectations.chips.year', { name: a?.libelle ?? '?' }),
       value: filtres.value.anneeId,
       icone: 'event',
     });
@@ -443,29 +442,29 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'enseignant', label: 'Enseignant', field: 'enseignantId', align: 'left' },
-  { name: 'matiere', label: 'Matière', field: 'matiereId', align: 'left' },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'enseignant', label: t('affectations.table.columns.teacher'), field: 'enseignantId', align: 'left' },
+  { name: 'matiere', label: t('affectations.table.columns.subject'), field: 'matiereId', align: 'left' },
   {
     name: 'promotion',
-    label: 'Promotion',
+    label: t('affectations.table.columns.promotion'),
     field: (r: Charge) => r.promotion?.nom ?? '—',
     align: 'left',
   },
   {
     name: 'annee',
-    label: 'Année',
+    label: t('affectations.table.columns.year'),
     field: (r: Charge) => r.annee?.libelle ?? '—',
     align: 'left',
   },
   {
     name: 'volume',
-    label: 'Volume prévu',
+    label: t('affectations.table.columns.volume'),
     field: (r: Charge) => `${r.volumeHorairePrevu} h`,
     align: 'right',
   },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'actions', label: t('affectations.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 function ouvrir(a: Charge | null) {
   affectationEditee.value = a;
@@ -522,7 +521,7 @@ async function enregistrer() {
     anneeId: !form.value.anneeId,
   };
   if (Object.values(erreurs.value).some(Boolean)) {
-    $q.notify({ type: 'warning', message: 'Complétez les champs obligatoires' });
+    $q.notify({ type: 'warning', message: t('affectations.messages.fillRequired') });
     return;
   }
 
@@ -533,13 +532,13 @@ async function enregistrer() {
     } else {
       await api.post('/affectations', form.value);
     }
-    $q.notify({ type: 'positive', message: 'Affectation enregistrée' });
+    $q.notify({ type: 'positive', message: t('affectations.messages.saved') });
     dialogOuvert.value = false;
     await charger();
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement impossible',
+      message: e?.response?.data?.message ?? t('affectations.messages.saveError'),
     });
   } finally {
     enregistrement.value = false;
@@ -548,21 +547,22 @@ async function enregistrer() {
 
 function supprimer(a: Charge) {
   $q.dialog({
-    title: 'Supprimer l’affectation',
-    message: `« ${a.matiere?.intitule ?? 'Matière'} » confiée à ${a.enseignant?.nom ?? ''} ${
-      a.enseignant?.prenom ?? ''
-    } : les séances liées seront également supprimées. Continuer ?`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('affectations.deleteDialog.title'),
+    message: t('affectations.deleteDialog.message', {
+      subject: a.matiere?.intitule ?? '?',
+      teacher: `${a.enseignant?.nom ?? ''} ${a.enseignant?.prenom ?? ''}`.trim(),
+    }),
+    cancel: { label: t('affectations.deleteDialog.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('affectations.deleteDialog.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/affectations/${a.id}`);
-      $q.notify({ type: 'positive', message: 'Affectation supprimée' });
+      $q.notify({ type: 'positive', message: t('affectations.messages.deleted') });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Suppression impossible',
+        message: e?.response?.data?.message ?? t('affectations.messages.deleteError'),
       });
     }
   });
@@ -590,7 +590,7 @@ async function charger(tout = false) {
     affectations.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des charges impossible',
+      message: e?.response?.data?.message ?? t('affectations.messages.loadError'),
     });
   } finally {
     chargement.value = false;

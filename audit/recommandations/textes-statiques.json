@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-02T16:53:42.000Z",
+  "interpretation": "Les trois exemples de saisie ont été retirés. Les seules chaînes visibles restantes sont les noms des paramètres d’URL du protocole QR ; elles doivent rester exactes et sont formatées comme du code.",
+  "rows": [
+    {
+      "file": "pages/VerificationBadgePage.vue",
+      "texts": [
+        {
+          "text": "badge",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "file": "pages/VerificationCartePage.vue",
+      "texts": [
+        {
+          "text": "carte",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "file": "pages/VerificationPage.vue",
+      "texts": [
+        {
+          "text": "ref",
+          "line": 33
+        }
+      ]
+    }
+  ],
+  "totalEntries": 207,
+  "files": 31
+}

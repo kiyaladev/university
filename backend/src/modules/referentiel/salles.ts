@@ -1,6 +1,6 @@
 /** Salles de cours : chaque salle porte un jeton QR affiché à l'entrée et,
  *  optionnellement, ses coordonnées GPS pour vérifier la présence sur site. */
-import { Body, Controller, Delete, Get, Injectable, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
@@ -8,7 +8,8 @@ import { IsBoolean, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-val
 import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
-import { Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
+import { t } from '../../common/i18n';
 
 export class CreateSalleDto {
   @IsString() code: string;
@@ -28,6 +29,7 @@ export class SallesService extends CrudService {
     super(prisma, 'salle', {
       searchFields: ['code', 'nom', 'batiment'],
       orderBy: { code: 'asc' },
+      sortFields: ['code', 'nom', 'capacite'],
       label: 'Salle',
     });
   }
@@ -36,24 +38,129 @@ export class SallesService extends CrudService {
     return `UP-${randomBytes(9).toString('base64url')}`;
   }
 
-  async creer(dto: CreateSalleDto) {
-    return this.create({ ...dto, qrToken: this.nouveauToken() });
+  /** L'instantané ignore le jeton de capacité et les coordonnées précises. */
+  private instantaneAudit(salle: any) {
+    return {
+      id: salle.id,
+      code: salle.code,
+      batimentRenseigne: Boolean(salle.batiment),
+      capacite: salle.capacite,
+      actif: salle.actif,
+      qrConfigure: Boolean(salle.qrToken),
+      coordonneesConfigurees: salle.latitude != null && salle.longitude != null,
+      rayonConfigure: salle.rayonMetres != null,
+    };
+  }
+
+  /** Les coordonnées et le jeton QR ne sont nécessaires qu'à la gestion des salles. */
+  private projectionPour(user: AuthUser) {
+    if (user.role === Role.ADMIN || user.role === Role.SCOLARITE) return undefined;
+    return {
+      id: true,
+      code: true,
+      nom: true,
+      batiment: true,
+      capacite: true,
+      actif: true,
+    };
+  }
+
+  async listePour(query: QueryDto, user: AuthUser) {
+    const select = this.projectionPour(user);
+    if (!select) return super.findAll(query);
+
+    const page = Number(query.page ?? 1);
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const fullWhere = this.searchWhere(query.search);
+    const [data, total] = await Promise.all([
+      this.delegate.findMany({
+        where: fullWhere,
+        select,
+        orderBy: this.orderByDe(query),
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      }),
+      this.delegate.count({ where: fullWhere }),
+    ]);
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+  }
+
+  async fichePour(id: string, user: AuthUser) {
+    const select = this.projectionPour(user);
+    if (!select) return super.findOne(id);
+    const salle = await this.delegate.findUnique({ where: { id }, select });
+    if (!salle) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
+    return salle;
+  }
+
+  async creer(dto: CreateSalleDto, acteur?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const creee = await tx.salle.create({ data: { ...dto, qrToken: this.nouveauToken() } });
+      await tx.auditLog.create({ data: {
+        userId: acteur?.id ?? null,
+        action: 'SALLE_CREEE',
+        entite: 'Salle',
+        entiteId: creee.id,
+        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) }),
+      } });
+      return creee;
+    });
+  }
+
+  async modifier(id: string, dto: UpdateSalleDto, acteur?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.salle.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
+      const maj = await tx.salle.update({ where: { id }, data: dto });
+      await tx.auditLog.create({ data: {
+        userId: acteur?.id ?? null,
+        action: 'SALLE_MODIFIEE',
+        entite: 'Salle',
+        entiteId: id,
+        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) }),
+      } });
+      return maj;
+    });
   }
 
   /** Régénère le QR (affiche invalidée, ex. affiche photographiée/diffusée). */
-  async regenererQr(id: string) {
-    await this.findOne(id);
-    return this.prisma.salle.update({
-      where: { id },
-      data: { qrToken: this.nouveauToken() },
+  async regenererQr(id: string, acteur?: AuthUser) {
+    return this.prisma.$transaction(async (tx) => {
+      const avant = await tx.salle.findUnique({ where: { id } });
+      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
+      const maj = await tx.salle.update({ where: { id }, data: { qrToken: this.nouveauToken() } });
+      await tx.auditLog.create({ data: {
+        userId: acteur?.id ?? null,
+        action: 'SALLE_QR_REGENERE',
+        entite: 'Salle',
+        entiteId: id,
+        details: JSON.stringify({
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(maj),
+          champsModifies: ['qrToken'],
+        }),
+      } });
+      return maj;
     });
   }
 
   /** Une salle où des séances ou des réservations sont posées se garde. */
-  async remove(id: string) {
+  async supprimer(id: string, acteur?: AuthUser) {
     return supprimerOuConflit(
-      () => super.remove(id),
-      'Cette salle ne peut pas être supprimée : des séances ou des réservations y sont rattachées. Désactivez-la plutôt que de la supprimer.',
+      () => this.prisma.$transaction(async (tx) => {
+        const avant = await tx.salle.findUnique({ where: { id } });
+        if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
+        await tx.salle.delete({ where: { id } });
+        await tx.auditLog.create({ data: {
+          userId: acteur?.id ?? null,
+          action: 'SALLE_SUPPRIMEE',
+          entite: 'Salle',
+          entiteId: id,
+          details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
+        } });
+        return { id };
+      }),
+      'referentiel.salle_referenced_delete',
     );
   }
 }
@@ -64,26 +171,26 @@ export class SallesService extends CrudService {
 export class SallesController {
   constructor(private readonly service: SallesService) {}
 
-  @Get() findAll(@Query() query: QueryDto) {
-    return this.service.findAll(query);
+  @Get() findAll(@Query() query: QueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.listePour(query, user);
   }
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-  @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Post() create(@Body() dto: CreateSalleDto) {
-    return this.service.creer(dto);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.fichePour(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateSalleDto) {
-    return this.service.update(id, dto);
+  @Post() create(@Body() dto: CreateSalleDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Post(':id/qr') regenerer(@Param('id') id: string) {
-    return this.service.regenererQr(id);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateSalleDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
+  }
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Post(':id/qr') regenerer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.regenererQr(id, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.supprimer(id, user);
   }
 }

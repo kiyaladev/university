@@ -1,0 +1,20 @@
+{
+  "election_introuvable": "Election not found",
+  "resultats_apres_cloture": "Results are available only after the poll has closed.",
+  "candidat_introuvable_sur_cette_election": "Candidate not found in this election",
+  "le_scrutin_est_clos": "The poll is closed.",
+  "bulletin_vide_selectionnez_au_moins_un_candidat": "Empty ballot: please select at least one candidate.",
+  "le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois": "The same candidate cannot be chosen twice.",
+  "vous_avez_deja_depose_un_bulletin_pour_cette_election": "You have already cast a ballot for this election.",
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "la_cloture_doit_suivre_l_ouverture": "Closing time must be after opening time.",
+  "le_scrutin_n_est_pas_ouvert": "The poll is not open.",
+  "l_ouverture_du_scrutin_n_est_pas_encore_effective": "The poll has not yet opened.",
+  "au_moins_un_candidat_n_appartient_pas_a_cette_election": "At least one candidate does not belong to this election.",
+  "une_election_publiee_ne_se_modifie_plus_creez_en_une_nouvell": "A published election can no longer be edited: please create a new one.",
+  "declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin": "Declare at least one candidate before opening the poll.",
+  "l_election_est_election_statut_seule_une_ouverte_peut_etre_c": "The election is {election.statut}: only an OPEN election can be closed.",
+  "l_election_est_election_statut_seule_une_close_peut_etre_pro": "The election is {election.statut}: only a CLOSED election can be announced.",
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scruti": "Candidates may only register before the poll opens.",
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Candidates can only register before voting opens."
+}

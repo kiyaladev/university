@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-03T10:20:16Z",
+  "methode": "Requêtes HTTP GET anonymes, sans jeton ni corps envoyé ; seules les réponses HTTP ont été conservées.",
+  "api": "https://university-api.naimba.com",
+  "resultats": {
+    "/api/docs": 200,
+    "/api/docs-json": 200,
+    "/api/health": 200
+  },
+  "constat": "Au premier contrôle à 10:20 UTC, Swagger était accessible anonymement. Le processus PM2 university-api a ensuite été rechargé avec le garde ADMIN déjà présent dans dist/main.js.",
+  "recontroleApresRechargement": {
+    "date": "2026-10-03T12:55:58Z",
+    "sante": 200,
+    "/api/docs": 401,
+    "/api/docs-json": 401,
+    "methode": "GET anonymes, aucune donnée ni jeton transmis"
+  },
+  "limite": "Aucune connexion à un compte ADMIN, migration, modification de configuration ou écriture métier n'a été effectuée."
+}

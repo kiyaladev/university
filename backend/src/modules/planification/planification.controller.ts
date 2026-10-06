@@ -6,11 +6,14 @@ import { CreneauxService } from './creneaux.service';
 import { SeancesService } from './seances.service';
 import {
   AnnulerSeanceDto,
+  AffecterControleurDto,
+  AffecterTourneeDto,
   CreateCreneauDto,
   CreateSeanceDto,
   CreneauQueryDto,
   GenerationDto,
   SeanceQueryDto,
+  SyncSeancesDto,
   UpdateCreneauDto,
   UpdateSeanceDto,
 } from './planification.dto';
@@ -33,22 +36,28 @@ const PERSONNEL = [
   Role.ENSEIGNANT,
 ] as const;
 
+const LECTEURS_CRENEAUX = [...PERSONNEL, Role.ETUDIANT] as const;
+
 @ApiTags("Emploi du temps")
 @ApiBearerAuth()
+// Les lectures sont réservées au personnel et aux étudiants, qui ne voient que
+// les créneaux de leur inscription validée dans l'année active. Les mutations
+// gardent leurs rôles propres sur chaque méthode.
+@Roles(...LECTEURS_CRENEAUX)
 @Controller('creneaux')
 export class CreneauxController {
   constructor(private readonly service: CreneauxService) {}
 
-  @Get() findAll(@Query() query: CreneauQueryDto) {
-    return this.service.liste(query);
+  @Get() findAll(@Query() query: CreneauQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.liste(query, user);
   }
 
-  @Get('emploi-du-temps') emploiDuTemps(@Query() query: CreneauQueryDto) {
-    return this.service.emploiDuTemps(query);
+  @Get('emploi-du-temps') emploiDuTemps(@Query() query: CreneauQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.emploiDuTemps(query, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.findOne(id, user);
   }
 
   /**
@@ -57,18 +66,18 @@ export class CreneauxController {
    * créneau, mais pas en supprimer — une suppression efface des séances.
    */
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
-  @Post() create(@Body() dto: CreateCreneauDto) {
-    return this.service.creer(dto);
+  @Post() create(@Body() dto: CreateCreneauDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
   }
 
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateCreneauDto) {
-    return this.service.modifier(id, dto);
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateCreneauDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
   }
 
   @Roles(...PLANIFICATEURS)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }
 
@@ -78,6 +87,16 @@ export class CreneauxController {
 @Roles(...PERSONNEL)
 export class SeancesController {
   constructor(private readonly service: SeancesService) {}
+
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Get('controleurs') controleurs() {
+    return this.service.controleurs();
+  }
+
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Get('tournee-apercu') apercuTournee(@Query() query: AffecterTourneeDto) {
+    return this.service.apercuTournee(query);
+  }
 
   @Get() findAll(@Query() query: SeanceQueryDto, @CurrentUser() user: AuthUser) {
     return this.service.liste(query, user);
@@ -93,8 +112,8 @@ export class SeancesController {
     return this.service.liste({ ...query, enseignantId: user.enseignantId ?? '—' }, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.consulter(id, user);
   }
 
   /**
@@ -104,27 +123,46 @@ export class SeancesController {
    * Il ouvre, il ne modifie ni ne supprime.
    */
   @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
-  @Post() create(@Body() dto: CreateSeanceDto) {
-    return this.service.creer(dto);
+  @Post() create(@Body() dto: CreateSeanceDto, @CurrentUser() user: AuthUser) {
+    return this.service.creer(dto, user);
+  }
+
+  @Roles(...PLANIFICATEURS, Role.CONTROLEUR)
+  @Post('sync') synchroniser(@Body() dto: SyncSeancesDto, @CurrentUser() user: AuthUser) {
+    return this.service.synchroniser(dto, user);
   }
 
   @Roles(...PLANIFICATEURS)
-  @Post('generer') generer(@Body() dto: GenerationDto) {
-    return this.service.generer(dto);
-  }
-
-  @Roles(...PLANIFICATEURS)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateSeanceDto) {
-    return this.service.modifier(id, dto);
-  }
-
-  @Roles(...PLANIFICATEURS)
-  @Post(':id/annuler') annuler(@Param('id') id: string, @Body() dto: AnnulerSeanceDto) {
-    return this.service.annuler(id, dto.motif);
+  @Post('generer') generer(@Body() dto: GenerationDto, @CurrentUser() user: AuthUser) {
+    return this.service.generer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Delete(':id') remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  @Put(':id/controleur') affecterControleur(
+    @Param('id') id: string,
+    @Body() dto: AffecterControleurDto,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.service.affecterControleur(id, dto, user);
+  }
+
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Post('tournee') affecterTournee(@Body() dto: AffecterTourneeDto, @CurrentUser() user: AuthUser) {
+    return this.service.affecterTournee(dto, user);
+  }
+
+  @Roles(...PLANIFICATEURS)
+  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateSeanceDto, @CurrentUser() user: AuthUser) {
+    return this.service.modifier(id, dto, user);
+  }
+
+  @Roles(...PLANIFICATEURS)
+  @Post(':id/annuler') annuler(@Param('id') id: string, @Body() dto: AnnulerSeanceDto, @CurrentUser() user: AuthUser) {
+    return this.service.annuler(id, dto.motif, user);
+  }
+
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.remove(id, user);
   }
 }

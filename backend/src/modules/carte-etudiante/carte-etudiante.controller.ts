@@ -13,11 +13,14 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
+import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { CarteEtudianteService } from './carte-etudiante.service';
+import { jetonImprimable } from '../../common/jeton-imprimable';
+import { Throttle } from '@nestjs/throttler';
 import {
   CreateCarteEtudianteDto,
+  CarteEtudianteQueryDto,
   DefinirNipDto,
   RevoquerCarteDto,
   UpdateCarteEtudianteDto,
@@ -45,6 +48,7 @@ export class CarteEtudianteController {
    * vérificateur (employeur, douane, etc.) n'a pas de compte.
    */
   @Public()
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('verifier')
   verifier(@Query() query: VerifierCartePubliqueDto, @Ip() ip: string) {
     return this.service.verifier(query, ip);
@@ -52,7 +56,7 @@ export class CarteEtudianteController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: { page?: number; pageSize?: number; all?: string; search?: string; etudiantId?: string }) {
+  liste(@Query() query: CarteEtudianteQueryDto) {
     return this.service.liste(query);
   }
 
@@ -106,27 +110,33 @@ export class CarteEtudianteController {
   }
 
   /**
-   * Vérification interne du NIP par un service tiers : aucun rôle requis
-   * — ce sont les routes parentes qui décident qui y accède en pratique.
-   * La route elle-même reste neutre pour ne pas figer un nouveau rôle.
+   * Vérification interne du NIP par un service tiers (resto U, cité, contrôle
+   * d'identité à distance).
+   *
+   * L'étudiant et le contrôleur ont été retirés de la liste. Sans vérification
+   * de périmètre ni bridage, la route était un oracle : un compte étudiant
+   * pouvait passer n'importe quel identifiant de carte et tester les 10 000 NIP
+   * à quatre chiffres, ce qui revient à ne plus avoir de NIP. Elle reste
+   * ouverte aux seuls rôles qui ont une raison professionnelle de la faire.
    */
-  @Roles(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT, Role.CONTROLEUR, Role.DIRECTION)
+  @Roles(Role.ADMIN, Role.SCOLARITE, Role.CONTROLEUR, Role.DIRECTION)
+  @Throttle({ courant: { ttl: 60_000, limit: 20 } })
   @Post(':id/verifier-nip')
   verifierNip(@Param('id') id: string, @Body() dto: VerifierNipDto) {
     return this.service.verifierNip(id, dto);
   }
 
   /** Document A4 : ouvert dans un nouvel onglet, jeton vérifié à la main. */
-  @Public()
+  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
+  @DocumentScope('carteEtudiante', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
   async imprimer(
     @Param('id') id: string,
-    @Query('token') token: string | undefined,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, token, base);
+    const html = await this.service.imprimer(id, jetonImprimable(req), base);
     res.type('html').send(html);
   }
 }

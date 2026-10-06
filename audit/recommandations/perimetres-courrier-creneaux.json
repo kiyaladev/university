@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-02",
+  "perimetres": {
+    "courrier": {
+      "preuves": "backend/src/modules/courrier/courrier.service.spec.ts",
+      "resultat": "5 tests réussis",
+      "regles": [
+        "ADMIN et DIRECTION peuvent consulter tous les courriers",
+        "les autres rôles autorisés ne voient que les courriers qu’ils ont enregistrés ou dont le circuit contient leur rôle",
+        "le paraphe est refusé si le rôle de l’étape ne correspond pas au rôle du signataire",
+        "les accès par identifiant et l’impression passent par le même contrôle"
+      ],
+      "limite": "Le schéma ne porte pas d’affectation nominative ni départementale d’un courrier ; le chef est filtré sur le rôle de l’étape, pas sur une affectation individuelle."
+    },
+    "creneaux": {
+      "preuves": "backend/src/modules/planification/creneaux.service.spec.ts",
+      "resultat": "4 tests réussis",
+      "regles": [
+        "un enseignant ne peut pas remplacer son identifiant par celui d’un collègue dans une requête",
+        "le chef ne voit que les créneaux du département courant, ou aucun s’il n’a pas de département",
+        "l’accès direct à un créneau hors périmètre est masqué",
+        "les routes liste et emploi du temps utilisent le même filtre"
+      ]
+    },
+    "validation": "Les deux suites font partie de l’exécution ciblée de 4 suites et 34 tests réussis ; compilation backend réussie ensuite. L’exécution complète passe 29 suites et 246 tests."
+  }
+}

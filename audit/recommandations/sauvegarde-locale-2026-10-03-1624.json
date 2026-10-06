@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-03T16:24:16+02:00",
+  "base": "university",
+  "archive": "backups/university-20261003-162415-274800628.dump",
+  "bytes": 317018,
+  "sha256": "550c47bd61118f687143b9126cfa961f6e3ea41723f637166f1042f9df492ecd",
+  "tablesData": 66,
+  "modeArchive": "0600",
+  "modeChecksum": "0600",
+  "checksum": "OK",
+  "remoteForThisRun": false,
+  "restaurationQA": "Une restauration QA de la sauvegarde du 3 octobre antérieure a déjà passé les huit migrations et restauré 10 enseignants, 107 séances et 67 contrôles ; le nouvel instantané n’a pas été écrasé dans cette base QA."
+}

@@ -1,0 +1,20 @@
+{
+  "formation_introuvable": "Formation introuvable",
+  "reference_de_dossier_temporairement_indisponible_reessayez": "Référence de dossier temporairement indisponible, réessayez",
+  "inscription_a_la_formation_introuvable": "Inscription à la formation introuvable",
+  "cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee": "Cette demande est annulée : elle ne peut plus être confirmée",
+  "cette_demande_est_deja_annulee": "Cette demande est déjà annulée",
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "cette_formation_n_est_pas_ouverte_aux_inscriptions": "Cette formation n'est pas ouverte aux inscriptions",
+  "aucun_paiement_n_est_lie_a_cette_demande_confirmez_impossibi": "Aucun paiement n'est lié à cette demande : confirmez impossibilité",
+  "formation_complete_toutes_les_places_sont_reservees_contacte": "Formation complète : toutes les places sont réservées. Contactez la scolarité.",
+  "formation_close_le_contenu_en_est_fige_rouvrez_la_avant_de_l": "Formation close : le contenu en est figé, rouvrez-la avant de la modifier",
+  "confirmee_inscription_s_deja_confirmee_s_et_payee_s_le_titre": "{confirmee} inscription(s) déjà confirmée(s) et payée(s) : le titre et le prix de la formation sont figés.",
+  "des_demandes_sont_deja_deposees_sur_cette_formation_annulez_": "Des demandes sont déjà déposées sur cette formation : annulez-les avant de la supprimer",
+  "aucun_etudiant_ne_porte_le_matricule_dto_matricule_laissez_l": "Aucun étudiant ne porte le matricule {matricule}. Laissez le champ vide pour inscrire une personne extérieure.",
+  "une_formation_publiee_ou_complete_ne_s_efface_pas_cloturez_l": "Une formation publiée ou complète ne peut pas être supprimée. Clôturez-la.",
+  "la_formation_est_close_cette_place_ne_peut_plus_etre_confirm": "La formation est close : cette place ne peut plus être confirmée.",
+  "inscription_numero_n_est_pas_confirmee_libelle_statut_inscri": "L’inscription {numero} n’est pas confirmée (statut : {statut}).",
+  "capacite_inferieure_aux_inscriptions_confirmees": "La capacité ne peut pas être inférieure au nombre d’inscriptions confirmées.",
+  "annulation_inscription_confirmee_exige_remboursement": "Une inscription confirmée ne peut être annulée sans remboursement explicite."
+}

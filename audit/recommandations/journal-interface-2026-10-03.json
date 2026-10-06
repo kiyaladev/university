@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-03T17:44:53.038Z",
+  "checks": [
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "ADMIN",
+      "locale": "fr-FR",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "ADMIN",
+      "locale": "en-US",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "fr-FR",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 1440,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    },
+    {
+      "role": "DIRECTION",
+      "locale": "en-US",
+      "width": 375,
+      "result": "OK",
+      "details": "Chargement, détail, filtre entité et absence de débordement"
+    }
+  ]
+}

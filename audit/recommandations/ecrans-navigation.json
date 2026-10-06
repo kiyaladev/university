@@ -1,0 +1,3907 @@
+[
+  {
+    "role": "ADMIN",
+    "path": "/",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/",
+    "pageCount": 1,
+    "headings": [
+      "Dashboard"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/controle",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/controle",
+    "pageCount": 1,
+    "headings": [
+      "vendredi 2 octobre",
+      "BAH Ousmane",
+      "KEÏTA Ibrahima",
+      "BAH Ousmane",
+      "BAH Ousmane"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/affectations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/affectations",
+    "pageCount": 1,
+    "headings": [
+      "Teaching loads"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/enseignants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/enseignants",
+    "pageCount": 1,
+    "headings": [
+      "Teachers"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/matieres",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/matieres",
+    "pageCount": 1,
+    "headings": [
+      "Subjects"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/structure",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/structure",
+    "pageCount": 1,
+    "headings": [
+      "Academic structure"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/salles",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/salles",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & QR"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/justificatifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/justificatifs",
+    "pageCount": 1,
+    "headings": [
+      "Absence excuses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/statistiques",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques",
+    "pageCount": 1,
+    "headings": [
+      "Statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/rapports",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rapports",
+    "pageCount": 1,
+    "headings": [
+      "Reports & statements"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/audit",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/audit",
+    "pageCount": 1,
+    "headings": [
+      "Audit log"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/scolarite",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/scolarite",
+    "pageCount": 1,
+    "headings": [
+      "Registrar workspace",
+      "Paid registrations awaiting validation",
+      "Documents to process",
+      "Documents ready for collection",
+      "Paid registrations awaiting validation"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/utilisateurs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/utilisateurs",
+    "pageCount": 1,
+    "headings": [
+      "Users"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/parametres",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/parametres",
+    "pageCount": 1,
+    "headings": [
+      "Settings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/etudiants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/etudiants",
+    "pageCount": 1,
+    "headings": [
+      "Students"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/inscriptions",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/inscriptions",
+    "pageCount": 1,
+    "headings": [
+      "Enrollments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/paiements",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paiements",
+    "pageCount": 1,
+    "headings": [
+      "Payments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/evaluations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/evaluations",
+    "pageCount": 1,
+    "headings": [
+      "Evaluations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/notes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notes",
+    "pageCount": 1,
+    "headings": [
+      "Grade entry"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/deliberations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/deliberations",
+    "pageCount": 1,
+    "headings": [
+      "Deliberations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/attestations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/attestations",
+    "pageCount": 1,
+    "headings": [
+      "Attestations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/plagiat",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/plagiat",
+    "pageCount": 1,
+    "headings": [
+      "Anti-plagiarism"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/bulletins",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bulletins",
+    "pageCount": 1,
+    "headings": [
+      "Report cards"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/paie",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paie",
+    "pageCount": 1,
+    "headings": [
+      "Adjunct staff payroll"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/notifications",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notifications",
+    "pageCount": 1,
+    "headings": [
+      "SMS Notifications",
+      "General notice",
+      "Deliberation results"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/cites",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/cites",
+    "pageCount": 1,
+    "headings": [
+      "University halls"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/bibliotheque-gestion",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bibliotheque-gestion",
+    "pageCount": 1,
+    "headings": [
+      "Digital library"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/resto",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/resto",
+    "pageCount": 1,
+    "headings": [
+      "Digital canteen"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/reservations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reservations",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & bookings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/stages",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/stages",
+    "pageCount": 1,
+    "headings": [
+      "Internships & theses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/helpdesk",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/helpdesk",
+    "pageCount": 1,
+    "headings": [
+      "IT Support"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/formations-admin",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/formations-admin",
+    "pageCount": 1,
+    "headings": [
+      "Continuing education"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/rectorat",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rectorat",
+    "pageCount": 1,
+    "headings": [
+      "Rectorate Dashboard"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/statistiques-mesrs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques-mesrs",
+    "pageCount": 1,
+    "headings": [
+      "MESRS statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/patrimoine",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/patrimoine",
+    "pageCount": 1,
+    "headings": [
+      "Assets & equipment"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/courrier",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/courrier",
+    "pageCount": 1,
+    "headings": [
+      "Administrative mail"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/examens",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens",
+    "pageCount": 1,
+    "headings": [
+      "Exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/examens/scan",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens/scan",
+    "pageCount": 1,
+    "headings": [
+      "Scan exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/tirage",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/tirage",
+    "pageCount": 1,
+    "headings": [
+      "Exam paper draws"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/recettes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/recettes",
+    "pageCount": 1,
+    "headings": [
+      "Revenue office"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/reclamations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reclamations",
+    "pageCount": 1,
+    "headings": [
+      "Complaints & requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/demandes-docs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/demandes-docs",
+    "pageCount": 1,
+    "headings": [
+      "Document requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/demandes-docs/tarifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/demandes-docs/tarifs",
+    "pageCount": 1,
+    "headings": [
+      "Request fees"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/cartes-etudiantes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/cartes-etudiantes",
+    "pageCount": 1,
+    "headings": [
+      "Student cards"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/badges",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/badges",
+    "pageCount": 1,
+    "headings": [
+      "Badges & visitors"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/vod",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "resources": [
+      {
+        "url": "https://vod.university.gn/info101-cm1.jpg",
+        "error": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    ],
+    "actual": "/vod",
+    "pageCount": 1,
+    "headings": [
+      "Course VOD"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/elections",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections",
+    "pageCount": 1,
+    "headings": [
+      "Elections"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/elections/vote",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections/vote",
+    "pageCount": 1,
+    "headings": [
+      "Vote"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/controle",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/scolarite",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/etudiants",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/paiements",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/helpdesk",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/controle",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/scolarite",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/etudiants",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/paiements",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ADMIN",
+    "path": "/helpdesk",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/",
+    "pageCount": 1,
+    "headings": [
+      "Dashboard"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/controle",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/controle",
+    "pageCount": 1,
+    "headings": [
+      "vendredi 2 octobre",
+      "BAH Ousmane",
+      "KEÏTA Ibrahima",
+      "BAH Ousmane",
+      "BAH Ousmane"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/affectations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/affectations",
+    "pageCount": 1,
+    "headings": [
+      "Teaching loads"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/enseignants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/enseignants",
+    "pageCount": 1,
+    "headings": [
+      "Teachers"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/matieres",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/matieres",
+    "pageCount": 1,
+    "headings": [
+      "Subjects"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/structure",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/structure",
+    "pageCount": 1,
+    "headings": [
+      "Academic structure"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/salles",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/salles",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & QR"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/justificatifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/justificatifs",
+    "pageCount": 1,
+    "headings": [
+      "Absence excuses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/statistiques",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques",
+    "pageCount": 1,
+    "headings": [
+      "Statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/rapports",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rapports",
+    "pageCount": 1,
+    "headings": [
+      "Reports & statements"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/audit",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/audit",
+    "pageCount": 1,
+    "headings": [
+      "Audit log"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/etudiants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/etudiants",
+    "pageCount": 1,
+    "headings": [
+      "Students"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/inscriptions",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/inscriptions",
+    "pageCount": 1,
+    "headings": [
+      "Enrollments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/paiements",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paiements",
+    "pageCount": 1,
+    "headings": [
+      "Payments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/evaluations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/evaluations",
+    "pageCount": 1,
+    "headings": [
+      "Evaluations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/notes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notes",
+    "pageCount": 1,
+    "headings": [
+      "Grade entry"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/deliberations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/deliberations",
+    "pageCount": 1,
+    "headings": [
+      "Deliberations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/attestations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/attestations",
+    "pageCount": 1,
+    "headings": [
+      "Attestations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/plagiat",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/plagiat",
+    "pageCount": 1,
+    "headings": [
+      "Anti-plagiarism"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/bulletins",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bulletins",
+    "pageCount": 1,
+    "headings": [
+      "Report cards"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/paie",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paie",
+    "pageCount": 1,
+    "headings": [
+      "Adjunct staff payroll"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/notifications",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notifications",
+    "pageCount": 1,
+    "headings": [
+      "SMS Notifications",
+      "General notice",
+      "Deliberation results"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/cites",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/cites",
+    "pageCount": 1,
+    "headings": [
+      "University halls"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/bibliotheque-gestion",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bibliotheque-gestion",
+    "pageCount": 1,
+    "headings": [
+      "Digital library"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/resto",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/resto",
+    "pageCount": 1,
+    "headings": [
+      "Digital canteen"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/reservations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reservations",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & bookings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/stages",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/stages",
+    "pageCount": 1,
+    "headings": [
+      "Internships & theses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/helpdesk",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/helpdesk",
+    "pageCount": 1,
+    "headings": [
+      "IT Support"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/formations-admin",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/formations-admin",
+    "pageCount": 1,
+    "headings": [
+      "Continuing education"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/rectorat",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rectorat",
+    "pageCount": 1,
+    "headings": [
+      "Rectorate Dashboard"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/statistiques-mesrs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques-mesrs",
+    "pageCount": 1,
+    "headings": [
+      "MESRS statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/patrimoine",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/patrimoine",
+    "pageCount": 1,
+    "headings": [
+      "Assets & equipment"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/courrier",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/courrier",
+    "pageCount": 1,
+    "headings": [
+      "Administrative mail"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/examens",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens",
+    "pageCount": 1,
+    "headings": [
+      "Exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/examens/scan",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens/scan",
+    "pageCount": 1,
+    "headings": [
+      "Scan exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/recettes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/recettes",
+    "pageCount": 1,
+    "headings": [
+      "Revenue office"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/reclamations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reclamations",
+    "pageCount": 1,
+    "headings": [
+      "Complaints & requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/vod",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "resources": [
+      {
+        "url": "https://vod.university.gn/info101-cm1.jpg",
+        "error": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    ],
+    "actual": "/vod",
+    "pageCount": 1,
+    "headings": [
+      "Course VOD"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/elections",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections",
+    "pageCount": 1,
+    "headings": [
+      "Elections"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/controle",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/etudiants",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/paiements",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/helpdesk",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/controle",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/etudiants",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/paiements",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "DIRECTION",
+    "path": "/helpdesk",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/affectations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/affectations",
+    "pageCount": 1,
+    "headings": [
+      "Teaching loads"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/enseignants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/enseignants",
+    "pageCount": 1,
+    "headings": [
+      "Teachers"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/matieres",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/matieres",
+    "pageCount": 1,
+    "headings": [
+      "Subjects"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/structure",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/structure",
+    "pageCount": 1,
+    "headings": [
+      "Academic structure"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/salles",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/salles",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & QR"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/justificatifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/justificatifs",
+    "pageCount": 1,
+    "headings": [
+      "Absence excuses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/statistiques",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques",
+    "pageCount": 1,
+    "headings": [
+      "Statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/rapports",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rapports",
+    "pageCount": 1,
+    "headings": [
+      "Reports & statements"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/scolarite",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/scolarite",
+    "pageCount": 1,
+    "headings": [
+      "Registrar workspace",
+      "Paid registrations awaiting validation",
+      "Documents to process",
+      "Documents ready for collection",
+      "Paid registrations awaiting validation"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/etudiants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/etudiants",
+    "pageCount": 1,
+    "headings": [
+      "Students"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/inscriptions",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/inscriptions",
+    "pageCount": 1,
+    "headings": [
+      "Enrollments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/paiements",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paiements",
+    "pageCount": 1,
+    "headings": [
+      "Payments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/evaluations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/evaluations",
+    "pageCount": 1,
+    "headings": [
+      "Evaluations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/notes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notes",
+    "pageCount": 1,
+    "headings": [
+      "Grade entry"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/deliberations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/deliberations",
+    "pageCount": 1,
+    "headings": [
+      "Deliberations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/attestations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/attestations",
+    "pageCount": 1,
+    "headings": [
+      "Attestations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/bulletins",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bulletins",
+    "pageCount": 1,
+    "headings": [
+      "Report cards"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/paie",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/paie",
+    "pageCount": 1,
+    "headings": [
+      "Adjunct staff payroll"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/notifications",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notifications",
+    "pageCount": 1,
+    "headings": [
+      "SMS Notifications",
+      "General notice",
+      "Deliberation results"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/cites",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/cites",
+    "pageCount": 1,
+    "headings": [
+      "University halls"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/bibliotheque-gestion",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bibliotheque-gestion",
+    "pageCount": 1,
+    "headings": [
+      "Digital library"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/resto",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/resto",
+    "pageCount": 1,
+    "headings": [
+      "Digital canteen"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/reservations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reservations",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & bookings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/stages",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/stages",
+    "pageCount": 1,
+    "headings": [
+      "Internships & theses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/helpdesk",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/helpdesk",
+    "pageCount": 1,
+    "headings": [
+      "IT Support"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/formations-admin",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/formations-admin",
+    "pageCount": 1,
+    "headings": [
+      "Continuing education"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/patrimoine",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/patrimoine",
+    "pageCount": 1,
+    "headings": [
+      "Assets & equipment"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/courrier",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/courrier",
+    "pageCount": 1,
+    "headings": [
+      "Administrative mail"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/examens",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens",
+    "pageCount": 1,
+    "headings": [
+      "Exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/examens/scan",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens/scan",
+    "pageCount": 1,
+    "headings": [
+      "Scan exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/tirage",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/tirage",
+    "pageCount": 1,
+    "headings": [
+      "Exam paper draws"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/recettes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/recettes",
+    "pageCount": 1,
+    "headings": [
+      "Revenue office"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/reclamations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reclamations",
+    "pageCount": 1,
+    "headings": [
+      "Complaints & requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/demandes-docs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/demandes-docs",
+    "pageCount": 1,
+    "headings": [
+      "Document requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/cartes-etudiantes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/cartes-etudiantes",
+    "pageCount": 1,
+    "headings": [
+      "Student cards"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/badges",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/badges",
+    "pageCount": 1,
+    "headings": [
+      "Badges & visitors"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/vod",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "resources": [
+      {
+        "url": "https://vod.university.gn/info101-cm1.jpg",
+        "error": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    ],
+    "actual": "/vod",
+    "pageCount": 1,
+    "headings": [
+      "Course VOD"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/elections",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections",
+    "pageCount": 1,
+    "headings": [
+      "Elections"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/scolarite",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/etudiants",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/paiements",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/helpdesk",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/scolarite",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/etudiants",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/paiements",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "SCOLARITE",
+    "path": "/helpdesk",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/",
+    "pageCount": 1,
+    "headings": [
+      "Dashboard"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/controle",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/controle",
+    "pageCount": 1,
+    "headings": [
+      "vendredi 2 octobre",
+      "BAH Ousmane",
+      "BAH Ousmane",
+      "BAH Ousmane"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/affectations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/affectations",
+    "pageCount": 1,
+    "headings": [
+      "Teaching loads"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/enseignants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/enseignants",
+    "pageCount": 1,
+    "headings": [
+      "Teachers"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/matieres",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/matieres",
+    "pageCount": 1,
+    "headings": [
+      "Subjects"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/justificatifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/justificatifs",
+    "pageCount": 1,
+    "headings": [
+      "Absence excuses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/statistiques",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques",
+    "pageCount": 1,
+    "headings": [
+      "Statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/rapports",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/rapports",
+    "pageCount": 1,
+    "headings": [
+      "Reports & statements"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/etudiants",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/etudiants",
+    "pageCount": 1,
+    "headings": [
+      "Students"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/inscriptions",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/inscriptions",
+    "pageCount": 1,
+    "headings": [
+      "Enrollments"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/evaluations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/evaluations",
+    "pageCount": 1,
+    "headings": [
+      "Evaluations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/notes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/notes",
+    "pageCount": 1,
+    "headings": [
+      "Grade entry"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/deliberations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/deliberations",
+    "pageCount": 1,
+    "headings": [
+      "Deliberations"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/courrier",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/courrier",
+    "pageCount": 1,
+    "headings": [
+      "Administrative mail"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/controle",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/etudiants",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/controle",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CHEF_DEPARTEMENT",
+    "path": "/etudiants",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/controle",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/controle",
+    "pageCount": 1,
+    "headings": [
+      "vendredi 2 octobre",
+      "BAH Ousmane",
+      "KEÏTA Ibrahima",
+      "BAH Ousmane",
+      "BAH Ousmane"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/salles",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/salles",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & QR"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/statistiques",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/statistiques",
+    "pageCount": 1,
+    "headings": [
+      "Statistics"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/resto",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/resto",
+    "pageCount": 1,
+    "headings": [
+      "Digital canteen"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/reservations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reservations",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & bookings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/helpdesk",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/helpdesk",
+    "pageCount": 1,
+    "headings": [
+      "IT Support"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/examens/scan",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens/scan",
+    "pageCount": 1,
+    "headings": [
+      "Scan exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/elections/vote",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections/vote",
+    "pageCount": 1,
+    "headings": [
+      "Vote"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/controle",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/helpdesk",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/controle",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "CONTROLEUR",
+    "path": "/helpdesk",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/seances",
+    "pageCount": 1,
+    "headings": [
+      "Sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/justificatifs",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/justificatifs",
+    "pageCount": 1,
+    "headings": [
+      "Absence excuses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/mes-seances",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/mes-seances",
+    "pageCount": 1,
+    "headings": [
+      "My sessions"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/bibliotheque-gestion",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/bibliotheque-gestion",
+    "pageCount": 1,
+    "headings": [
+      "Digital library"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/reservations",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reservations",
+    "pageCount": 1,
+    "headings": [
+      "Rooms & bookings"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/stages",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/stages",
+    "pageCount": 1,
+    "headings": [
+      "Internships & theses"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/helpdesk",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/helpdesk",
+    "pageCount": 1,
+    "headings": [
+      "IT Support"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/examens/scan",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/examens/scan",
+    "pageCount": 1,
+    "headings": [
+      "Scan exams"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/vod",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "resources": [
+      {
+        "url": "https://vod.university.gn/info101-cm1.jpg",
+        "error": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    ],
+    "actual": "/vod",
+    "pageCount": 1,
+    "headings": [
+      "Course VOD"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/elections/vote",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections/vote",
+    "pageCount": 1,
+    "headings": [
+      "Vote"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/mes-seances",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/helpdesk",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/mes-seances",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ENSEIGNANT",
+    "path": "/helpdesk",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/emploi-du-temps",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/emploi-du-temps",
+    "pageCount": 1,
+    "headings": [
+      "Timetable"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/portail",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/portail",
+    "pageCount": 1,
+    "headings": [
+      "Hello, Sory",
+      "My services",
+      "Enrollment",
+      "Enrollment fees",
+      "Recent payments",
+      "Result",
+      "Attestations",
+      "Canteen wallet"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/reclamations/mes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/reclamations/mes",
+    "pageCount": 1,
+    "headings": [
+      "My complaints"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/demandes-docs/mes",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/demandes-docs/mes",
+    "pageCount": 1,
+    "headings": [
+      "My document requests"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/ma-carte",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/ma-carte",
+    "pageCount": 1,
+    "headings": [
+      "My student card"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/vod",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "resources": [
+      {
+        "url": "https://vod.university.gn/info101-cm1.jpg",
+        "error": "net::ERR_NAME_NOT_RESOLVED"
+      }
+    ],
+    "actual": "/vod",
+    "pageCount": 1,
+    "headings": [
+      "Course VOD"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/elections/vote",
+    "viewport": 1440,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "actual": "/elections/vote",
+    "pageCount": 1,
+    "headings": [
+      "Vote"
+    ],
+    "layout": {
+      "width": 1440,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/emploi-du-temps",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/portail",
+    "viewport": 375,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 375,
+      "scrollWidth": 375
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/emploi-du-temps",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  },
+  {
+    "role": "ETUDIANT",
+    "path": "/portail",
+    "viewport": 768,
+    "errors": [],
+    "warnings": [],
+    "http": [],
+    "layout": {
+      "width": 768,
+      "scrollWidth": 768
+    }
+  }
+]

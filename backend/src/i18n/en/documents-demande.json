@@ -1,0 +1,19 @@
+{
+  "aucun_dossier_etudiant_rattache_a_ce_compte": "No student record linked to this account",
+  "demande_introuvable": "Request not found",
+  "tarif_introuvable": "Fee schedule not found",
+  "creation_temporairement_indisponible_reessayez": "Creation temporarily unavailable, please try again.",
+  "numero_de_demande_temporairement_indisponible_reessayez": "Request number temporarily unavailable, please try again.",
+  "seul_le_demandeur_peut_payer_sa_propre_demande": "Only the requester can pay for their own request.",
+  "reference_de_paiement_temporairement_indisponible_reessayez": "Payment reference temporarily unavailable, please try again.",
+  "simulationPaiementDesactiveeProduction": "Payment simulation is disabled in production.",
+  "identifiant_de_paiement_incoherent": "Inconsistent payment identifier.",
+  "cette_demande_est_deja_prete_ou_remise": "This request is already ready or delivered.",
+  "le_motif_de_rejet_est_obligatoire": "A rejection reason is required.",
+  "cette_demande_a_deja_ete_remise": "This request has already been delivered.",
+  "cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_": "This request is free: no payment is required, it is already being processed.",
+  "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "A payment has already been initiated for this request: please wait for confirmation or contact the academic services.",
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "This request is not yet ready to be processed: payment pending or already completed.",
+  "cette_demande_n_est_pas_marquee_comme_prete": "This request is not marked as ready.",
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished."
+}

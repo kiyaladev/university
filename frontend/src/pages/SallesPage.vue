@@ -2,22 +2,22 @@
   <q-page class="q-pa-md">
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
-        <div class="page-titre">Salles &amp; QR</div>
+        <h1 class="page-titre">{{ $t('salles.title') }}</h1>
         <div class="page-sous-titre">
-          Chaque salle porte un QR affiché à l’entrée : le contrôleur le scanne pour
-          attester sa présence sur place
+          {{ $t('salles.subtitle') }}
         </div>
       </div>
       <div class="col-auto q-gutter-sm">
         <q-btn
+          v-if="peutGerer"
           outline
           color="primary"
           no-caps
           icon="print"
-          label="Imprimer les affiches"
+          :label="$t('salles.actions.printPosters')"
           @click="imprimerQr()"
         >
-          <q-tooltip>Une affiche par salle, à coller à l’entrée</q-tooltip>
+          <q-tooltip>{{ $t('salles.actions.printPostersTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
           v-if="peutGerer"
@@ -25,7 +25,7 @@
           color="primary"
           no-caps
           icon="add"
-          label="Nouvelle salle"
+          :label="$t('salles.actions.newRoom')"
           @click="ouvrir(null)"
         />
       </div>
@@ -34,7 +34,7 @@
     <filter-bar
       v-model="filtres"
       :chips="chips"
-      placeholder="Rechercher (code, nom, bâtiment)…"
+      :placeholder="$t('salles.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
@@ -44,7 +44,7 @@
           outlined
           dense
           clearable
-          label="Bâtiment"
+          :label="$t('salles.filters.building')"
         />
         <q-select
           v-model="filtres.etat"
@@ -54,9 +54,10 @@
           clearable
           emit-value
           map-options
-          label="État"
+          :label="$t('salles.filters.state')"
         />
         <q-select
+          v-if="peutGerer"
           v-model="filtres.repere"
           :options="optionsRepere"
           outlined
@@ -64,7 +65,7 @@
           clearable
           emit-value
           map-options
-          label="Repère GPS"
+          :label="$t('salles.filters.gpsMark')"
         />
       </template>
       <template #actions>
@@ -90,23 +91,23 @@
               <div class="text-caption text-grey-7">{{ s.batiment ?? '—' }}</div>
             </div>
             <q-badge :color="s.actif ? 'positive' : 'grey-7'">
-              {{ s.actif ? 'active' : 'inactive' }}
+              {{ s.actif ? $t('salles.card.active') : $t('salles.card.inactive') }}
             </q-badge>
           </q-card-section>
 
-          <q-card-section class="text-center q-pt-none">
-            <canvas :ref="(el) => enregistrerCanvas(el, s)" :aria-label="`QR de la salle ${s.code}`" />
+          <q-card-section v-if="peutGerer" class="text-center q-pt-none">
+            <canvas :ref="(el) => enregistrerCanvas(el, s)" :aria-label="$t('salles.card.qrAria', { code: s.code })" />
             <div class="text-caption text-grey-6 ellipsis">{{ s.qrToken }}</div>
           </q-card-section>
 
           <q-card-section class="q-pt-none text-caption">
-            <div><q-icon name="groups" size="14px" /> {{ s.capacite }} places</div>
+            <div><q-icon name="groups" size="14px" /> {{ s.capacite }} {{ $t('salles.card.capacitySuffix') }}</div>
             <div v-if="s.latitude">
               <q-icon name="my_location" size="14px" />
               {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }} (± {{ s.rayonMetres }} m)
             </div>
             <div v-else class="text-grey-6">
-              <q-icon name="location_off" size="14px" /> Sans repère GPS
+              <q-icon name="location_off" size="14px" /> {{ $t('salles.card.noGpsMark') }}
             </div>
           </q-card-section>
 
@@ -117,20 +118,20 @@
               dense
               round
               icon="event_note"
-              aria-label="Voir les séances de la salle"
+              :aria-label="$t('salles.roomActions.viewSessionsAria')"
               @click="voirSeances(s)"
             >
-              <q-tooltip>Ses séances</q-tooltip>
+              <q-tooltip>{{ $t('salles.roomActions.viewSessionsTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               flat
               dense
               round
               icon="print"
-              aria-label="Imprimer l’affiche de la salle"
+              :aria-label="$t('salles.roomActions.printPosterAria')"
               @click="imprimerQr(s.id)"
             >
-              <q-tooltip>Affiche de cette salle</q-tooltip>
+              <q-tooltip>{{ $t('salles.roomActions.printPosterTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutGerer"
@@ -138,10 +139,10 @@
               dense
               round
               icon="autorenew"
-              aria-label="Régénérer le QR de la salle"
+              :aria-label="$t('salles.roomActions.regenerateAria')"
               @click="regenerer(s)"
             >
-              <q-tooltip>Régénérer le QR</q-tooltip>
+              <q-tooltip>{{ $t('salles.roomActions.regenerateTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutGerer"
@@ -149,10 +150,10 @@
               dense
               round
               icon="edit"
-              aria-label="Modifier la salle"
+              :aria-label="$t('salles.roomActions.editAria')"
               @click="ouvrir(s)"
             >
-              <q-tooltip>Modifier</q-tooltip>
+              <q-tooltip>{{ $t('salles.roomActions.editTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutSupprimer"
@@ -161,10 +162,10 @@
               round
               color="negative"
               icon="delete"
-              aria-label="Supprimer la salle"
+              :aria-label="$t('salles.roomActions.deleteAria')"
               @click="supprimer(s)"
             >
-              <q-tooltip>Supprimer</q-tooltip>
+              <q-tooltip>{{ $t('salles.roomActions.deleteTooltip') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
         </q-card>
@@ -179,7 +180,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Créer la première salle"
+            :label="$t('salles.emptyState.createFirst')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -187,7 +188,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('salles.emptyState.resetFilters')"
             @click="reinitialiser"
           />
         </div>
@@ -216,7 +217,7 @@
             color="primary"
             no-caps
             icon="add"
-            label="Créer la première salle"
+            :label="$t('salles.emptyState.createFirst')"
             @click="ouvrir(null)"
           />
           <q-btn
@@ -224,7 +225,7 @@
             flat
             no-caps
             icon="refresh"
-            label="Réinitialiser les filtres"
+            :label="$t('salles.emptyState.resetFilters')"
             @click="reinitialiser"
           />
         </div>
@@ -233,7 +234,7 @@
       <template #body-cell-etat="p">
         <q-td :props="p">
           <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
-            {{ p.row.actif ? 'active' : 'inactive' }}
+            {{ p.row.actif ? $t('salles.card.active') : $t('salles.card.inactive') }}
           </q-badge>
         </q-td>
       </template>
@@ -245,20 +246,20 @@
             dense
             round
             icon="event_note"
-            aria-label="Voir les séances de la salle"
+            :aria-label="$t('salles.roomActions.viewSessionsAria')"
             @click="voirSeances(p.row)"
           >
-            <q-tooltip>Ses séances</q-tooltip>
+            <q-tooltip>{{ $t('salles.roomActions.viewSessionsTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="print"
-            aria-label="Imprimer l’affiche de la salle"
+            :aria-label="$t('salles.roomActions.printPosterAria')"
             @click="imprimerQr(p.row.id)"
           >
-            <q-tooltip>Affiche de cette salle</q-tooltip>
+            <q-tooltip>{{ $t('salles.roomActions.printPosterTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGerer"
@@ -266,10 +267,10 @@
             dense
             round
             icon="autorenew"
-            aria-label="Régénérer le QR de la salle"
+            :aria-label="$t('salles.roomActions.regenerateAria')"
             @click="regenerer(p.row)"
           >
-            <q-tooltip>Régénérer le QR</q-tooltip>
+            <q-tooltip>{{ $t('salles.roomActions.regenerateTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGerer"
@@ -277,10 +278,10 @@
             dense
             round
             icon="edit"
-            aria-label="Modifier la salle"
+            :aria-label="$t('salles.roomActions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>Modifier</q-tooltip>
+            <q-tooltip>{{ $t('salles.roomActions.editTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutSupprimer"
@@ -289,10 +290,10 @@
             round
             color="negative"
             icon="delete"
-            aria-label="Supprimer la salle"
+            :aria-label="$t('salles.roomActions.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>Supprimer</q-tooltip>
+            <q-tooltip>{{ $t('salles.roomActions.deleteTooltip') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -312,20 +313,20 @@
     <q-dialog v-model="dialogOuvert">
       <q-card style="width: 480px; max-width: 95vw">
         <q-card-section class="text-h6">
-          {{ salleEditee ? 'Modifier la salle' : 'Nouvelle salle' }}
+          {{ salleEditee ? $t('salles.dialog.editTitle') : $t('salles.dialog.newTitle') }}
         </q-card-section>
         <q-card-section>
-          <span class="section-titre">Identification</span>
+          <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-5">
               <q-input
                 v-model="form.code"
                 outlined
                 dense
-                label="Code *"
-                hint="ex. AMPHI-A"
+                :label="$t('salles.dialog.codeLabel')"
+                :hint="$t('salles.dialog.codeHint')"
                 :error="erreurs.code"
-                error-message="Le code est obligatoire"
+                :error-message="$t('salles.dialog.codeRequired')"
               />
             </div>
             <div class="col-12 col-sm-7">
@@ -333,15 +334,15 @@
                 v-model="form.nom"
                 outlined
                 dense
-                label="Nom *"
+                :label="$t('salles.dialog.nameLabel')"
                 :error="erreurs.nom"
-                error-message="Le nom est obligatoire"
+                :error-message="$t('salles.dialog.nameRequired')"
               />
             </div>
           </div>
           <div class="row q-col-gutter-md">
             <div class="col-12 col-sm-7">
-              <q-input v-model="form.batiment" outlined dense label="Bâtiment" />
+              <q-input v-model="form.batiment" outlined dense :label="$t('salles.dialog.buildingLabel')" />
             </div>
             <div class="col-5">
               <q-input
@@ -350,21 +351,21 @@
                 min="0"
                 outlined
                 dense
-                label="Capacité"
+                :label="$t('salles.dialog.capacityLabel')"
               />
             </div>
           </div>
 
-          <span class="section-titre">Repère GPS (facultatif)</span>
+          <span class="section-titre">{{ $t('salles.dialog.gpsSection') }}</span>
           <p class="page-sous-titre q-mb-md">
-            Permet de vérifier que le contrôleur est bien sur place au moment du pointage.
+            {{ $t('salles.dialog.gpsHelp') }}
           </p>
           <div class="row q-col-gutter-md">
             <div class="col-4">
-              <q-input v-model.number="form.latitude" type="number" outlined dense label="Latitude" />
+              <q-input v-model.number="form.latitude" type="number" outlined dense :label="$t('salles.dialog.latitudeLabel')" />
             </div>
             <div class="col-4">
-              <q-input v-model.number="form.longitude" type="number" outlined dense label="Longitude" />
+              <q-input v-model.number="form.longitude" type="number" outlined dense :label="$t('salles.dialog.longitudeLabel')" />
             </div>
             <div class="col-4">
               <q-input
@@ -373,9 +374,9 @@
                 min="10"
                 outlined
                 dense
-                label="Rayon (m)"
+                :label="$t('salles.dialog.radiusLabel')"
                 :error="erreurs.rayon"
-                error-message="Minimum 10 m"
+                :error-message="$t('salles.dialog.radiusError')"
               />
             </div>
           </div>
@@ -384,19 +385,19 @@
             dense
             no-caps
             icon="my_location"
-            label="Utiliser ma position actuelle"
+            :label="$t('salles.dialog.useCurrentPosition')"
             @click="positionActuelle"
           />
 
-          <q-toggle v-model="form.actif" label="Salle utilisable" />
+          <q-toggle v-model="form.actif" :label="$t('salles.dialog.usableToggle')" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps label="Annuler" v-close-popup />
+          <q-btn flat no-caps :label="$t('salles.dialog.cancel')" v-close-popup />
           <q-btn
             color="primary"
             unelevated
             no-caps
-            label="Enregistrer"
+            :label="$t('salles.dialog.save')"
             :loading="enregistrement"
             @click="enregistrer"
           />
@@ -410,17 +411,20 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { api, API_URL } from '../boot/axios';
+import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ViewToggle from '../components/ViewToggle.vue';
 import type { Salle, ChipFiltre } from '../types';
+import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
+const { t } = useI18n();
 
 const salles = ref<Salle[]>([]);
 const chargement = ref(false);
@@ -449,14 +453,14 @@ const form = ref({
 });
 const erreurs = ref({ code: false, nom: false, rayon: false });
 
-const optionsEtat = [
-  { label: 'Salles utilisables', value: 'actif' },
-  { label: 'Salles hors service', value: 'inactif' },
-];
-const optionsRepere = [
-  { label: 'Avec repère GPS', value: 'avec' },
-  { label: 'Sans repère GPS', value: 'sans' },
-];
+const optionsEtat = computed(() => [
+  { label: t('salles.options.stateUsable'), value: 'actif' },
+  { label: t('salles.options.stateOutOfService'), value: 'inactif' },
+]);
+const optionsRepere = computed(() => [
+  { label: t('salles.options.withGps'), value: 'avec' },
+  { label: t('salles.options.withoutGps'), value: 'sans' },
+]);
 const optionsBatiments = computed(() =>
   [
     ...new Set(
@@ -491,52 +495,52 @@ const filtresActifs = computed(() =>
   Boolean(filtres.value.recherche || filtres.value.batiment || filtres.value.etat || filtres.value.repere),
 );
 const messageVide = computed(() =>
-  filtresActifs.value ? 'Aucune salle pour ces critères.' : 'Aucune salle enregistrée.',
+  filtresActifs.value ? t('salles.emptyState.noneForCriteria') : t('salles.emptyState.noneRegistered'),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     cs.push({
-      label: `« ${filtres.value.recherche} »`,
+      label: t('salles.chips.search', { value: filtres.value.recherche }),
       value: filtres.value.recherche,
       icone: 'search',
       defaut: true,
     });
   }
   if (filtres.value.batiment) {
-    cs.push({ label: `Bâtiment : ${filtres.value.batiment}`, value: filtres.value.batiment, icone: 'apartment' });
+    cs.push({ label: t('salles.chips.building', { value: filtres.value.batiment }), value: filtres.value.batiment, icone: 'apartment' });
   }
   if (filtres.value.etat) {
     cs.push({
-      label: filtres.value.etat === 'actif' ? 'Utilisables' : 'Hors service',
+      label: filtres.value.etat === 'actif' ? t('salles.chips.stateUsable') : t('salles.chips.stateOutOfService'),
       value: filtres.value.etat,
       icone: 'toggle_on', cle: 'etat'});
   }
   if (filtres.value.repere) {
     cs.push({
-      label: filtres.value.repere === 'avec' ? 'Avec repère GPS' : 'Sans repère GPS',
+      label: filtres.value.repere === 'avec' ? t('salles.chips.withGps') : t('salles.chips.withoutGps'),
       value: filtres.value.repere,
       icone: 'my_location', cle: 'repere'});
   }
   return cs;
 });
 
-const colonnes: QTableColumn[] = [
-  { name: 'code', label: 'Code', field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: 'Nom', field: 'nom', align: 'left', sortable: true },
-  { name: 'batiment', label: 'Bâtiment', field: (r: Salle) => r.batiment || '—', align: 'left' },
-  { name: 'capacite', label: 'Capacité', field: 'capacite', align: 'right', sortable: true },
+const colonnes = computed<QTableColumn[]>(() => [
+  { name: 'code', label: t('salles.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('salles.table.columns.name'), field: 'nom', align: 'left', sortable: true },
+  { name: 'batiment', label: t('salles.table.columns.building'), field: (r: Salle) => r.batiment || '—', align: 'left' },
+  { name: 'capacite', label: t('salles.table.columns.capacity'), field: 'capacite', align: 'right', sortable: true },
   {
     name: 'repere',
-    label: 'Repère GPS',
+    label: t('salles.table.columns.gpsMark'),
     field: (r: Salle) => (r.latitude ? `± ${r.rayonMetres} m` : '—'),
     align: 'left',
   },
-  { name: 'qr', label: 'Jeton QR', field: 'qrToken', align: 'left' },
-  { name: 'etat', label: 'État', field: 'actif', align: 'left' },
-  { name: 'actions', label: 'Actions', field: 'id', align: 'right' },
-];
+  { name: 'qr', label: t('salles.table.columns.qrToken'), field: 'qrToken', align: 'left' },
+  { name: 'etat', label: t('salles.table.columns.state'), field: 'actif', align: 'left' },
+  { name: 'actions', label: t('salles.table.columns.actions'), field: 'id', align: 'right' },
+]);
 
 /** Dessine le QR de la salle dans sa carte. */
 const canvasParSalle = new Map<string, HTMLCanvasElement>();
@@ -583,9 +587,9 @@ function positionActuelle() {
     (p) => {
       form.value.latitude = Number(p.coords.latitude.toFixed(6));
       form.value.longitude = Number(p.coords.longitude.toFixed(6));
-      $q.notify({ type: 'positive', message: 'Position renseignée' });
+      $q.notify({ type: 'positive', message: t('salles.messages.positionSet') });
     },
-    () => $q.notify({ type: 'negative', message: 'Position indisponible' }),
+    () => $q.notify({ type: 'negative', message: t('salles.messages.positionUnavailable') }),
   );
 }
 
@@ -596,7 +600,7 @@ async function enregistrer() {
     rayon: !!form.value.rayonMetres && form.value.rayonMetres < 10,
   };
   if (erreurs.value.code || erreurs.value.nom || erreurs.value.rayon) {
-    $q.notify({ type: 'warning', message: 'Complétez les champs obligatoires' });
+    $q.notify({ type: 'warning', message: t('salles.messages.requiredFields') });
     return;
   }
 
@@ -605,13 +609,13 @@ async function enregistrer() {
     const payload = { ...form.value, batiment: form.value.batiment || undefined };
     if (salleEditee.value) await api.put(`/salles/${salleEditee.value.id}`, payload);
     else await api.post('/salles', payload);
-    $q.notify({ type: 'positive', message: 'Salle enregistrée' });
+    $q.notify({ type: 'positive', message: t('salles.messages.saved') });
     dialogOuvert.value = false;
     await charger();
   } catch (e: any) {
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Enregistrement impossible',
+      message: e?.response?.data?.message ?? t('salles.messages.saveError'),
     });
   } finally {
     enregistrement.value = false;
@@ -620,19 +624,19 @@ async function enregistrer() {
 
 function regenerer(s: Salle) {
   $q.dialog({
-    title: 'Régénérer le QR',
-    message: `L’affiche actuelle de ${s.code} deviendra invalide. Continuer ?`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'primary', label: 'Régénérer', unelevated: true, noCaps: true },
+    title: t('salles.confirmRegenerate.title'),
+    message: t('salles.confirmRegenerate.message', { code: s.code }),
+    cancel: { label: t('salles.confirmRegenerate.cancel'), flat: true, noCaps: true },
+    ok: { color: 'primary', label: t('salles.confirmRegenerate.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.post(`/salles/${s.id}/qr`);
-      $q.notify({ type: 'positive', message: 'Nouveau QR généré — pensez à réimprimer l’affiche' });
+      $q.notify({ type: 'positive', message: t('salles.messages.regenerated') });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
-        message: e?.response?.data?.message ?? 'Régénération impossible',
+        message: e?.response?.data?.message ?? t('salles.messages.regenerateError'),
       });
     }
   });
@@ -640,29 +644,28 @@ function regenerer(s: Salle) {
 
 function supprimer(s: Salle) {
   $q.dialog({
-    title: 'Supprimer la salle',
-    message: `Supprimer « ${s.code} — ${s.nom} » ? Son affiche QR ne vaudra plus rien.`,
-    cancel: { label: 'Annuler', flat: true, noCaps: true },
-    ok: { color: 'negative', label: 'Supprimer', unelevated: true, noCaps: true },
+    title: t('salles.confirmDelete.title'),
+    message: t('salles.confirmDelete.message', { code: s.code, name: s.nom }),
+    cancel: { label: t('salles.confirmDelete.cancel'), flat: true, noCaps: true },
+    ok: { color: 'negative', label: t('salles.confirmDelete.confirm'), unelevated: true, noCaps: true },
   }).onOk(async () => {
     try {
       await api.delete(`/salles/${s.id}`);
-      $q.notify({ type: 'positive', message: 'Salle supprimée' });
+      $q.notify({ type: 'positive', message: t('salles.messages.deleted') });
       await charger();
     } catch (e: any) {
       $q.notify({
         type: 'negative',
         message:
           e?.response?.data?.message ??
-          'Suppression impossible — des séances s’y déroulent encore',
+          t('salles.messages.deleteError'),
       });
     }
   });
 }
 
 function imprimerQr(salleId?: string) {
-  const suffixe = salleId ? `&salleId=${salleId}` : '';
-  window.open(`${API_URL}/impression/qr-salles?token=${auth.token}${suffixe}`, '_blank');
+  void ouvrirImpression('/impression/qr-salles', { salleId });
 }
 
 function reinitialiser() {
@@ -679,7 +682,7 @@ async function charger() {
     salles.value = [];
     $q.notify({
       type: 'negative',
-      message: e?.response?.data?.message ?? 'Chargement des salles impossible',
+      message: e?.response?.data?.message ?? t('salles.messages.loadError'),
     });
   } finally {
     chargement.value = false;

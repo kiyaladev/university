@@ -1,13 +1,12 @@
 import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
 import { enrolerAppareilSiNecessaire } from '../services/empreinte';
+import { ecrireToken, effacerToken, lireToken } from '../services/session';
 import type { Role, Utilisateur } from '../types';
-
-const CLE_TOKEN = 'unipresence_token';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    token: localStorage.getItem(CLE_TOKEN) ?? '',
+    token: lireToken(),
     utilisateur: null as Utilisateur | null,
     chargement: false,
   }),
@@ -55,7 +54,7 @@ export const useAuthStore = defineStore('auth', {
         const { data } = await api.post('/auth/login', { email, password });
         this.token = data.token;
         this.utilisateur = data.user;
-        localStorage.setItem(CLE_TOKEN, data.token);
+        ecrireToken(data.token);
 
         // Dans l'application Android, l'appareil réclame sa clé de signature
         // dès la première session : c'est elle qui rendra ses lectures
@@ -91,7 +90,7 @@ export const useAuthStore = defineStore('auth', {
           { silencieux: true },
         );
         this.token = data.token;
-        localStorage.setItem(CLE_TOKEN, data.token);
+        ecrireToken(data.token);
         await this.chargerProfil();
         return this.utilisateur;
       } finally {
@@ -119,7 +118,10 @@ export const useAuthStore = defineStore('auth', {
     deconnexion() {
       this.token = '';
       this.utilisateur = null;
-      localStorage.removeItem(CLE_TOKEN);
+      effacerToken();
+      if ('caches' in window) {
+        void Promise.all(['unipresence-api', 'unipresence-api-v2'].map(name => caches.delete(name)));
+      }
     },
   },
 });

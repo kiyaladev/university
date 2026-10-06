@@ -8,6 +8,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import {
@@ -25,6 +26,8 @@ import { ReclamationsService } from './reclamations.service';
  * registre ; l'étudiant ne voit que ses propres réclamations via /me et /:id.
  */
 const ROLES_GESTION = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE] as const;
+const ROLES_LECTURE = [...ROLES_GESTION, Role.ETUDIANT] as const;
+const ROLES_CREATION = [...ROLES_GESTION, Role.ETUDIANT] as const;
 const ROLES_ASSIGNATION = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE] as const;
 const ROLES_ESCALADE = [Role.ADMIN, Role.DIRECTION] as const;
 const ROLES_CLOTURE = [Role.ADMIN, Role.DIRECTION] as const;
@@ -45,6 +48,12 @@ export class ReclamationsController {
     return this.service.dashboard();
   }
 
+  @Roles(...ROLES_GESTION)
+  @Get('agents')
+  agents() {
+    return this.service.agents();
+  }
+
   /** Vue propre à l'étudiant connecté : strictement ses réclamations. */
   @Roles(Role.ETUDIANT)
   @Get('me')
@@ -58,18 +67,21 @@ export class ReclamationsController {
     return this.service.liste(query, user);
   }
 
+  @Roles(...ROLES_LECTURE)
   @Get(':id')
   findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findOnePour(id, user);
   }
 
   /** Déclaration ouverte à tout utilisateur connecté. */
+  @Roles(...ROLES_CREATION)
   @Post()
   creer(@Body() dto: CreateReclamationDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   /** Tout utilisateur peut poster sur la réclamation qu'il a ouverte. */
+  @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Post(':id/messages')
   poster(
     @Param('id') id: string,
