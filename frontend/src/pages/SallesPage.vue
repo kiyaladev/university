@@ -68,14 +68,6 @@
           :label="$t('salles.filters.gpsMark')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="salles"
-          :modes="['cartes', 'tableau']"
-          defaut="cartes"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <q-linear-progress v-if="chargement" indeterminate color="primary" class="q-mb-sm" />
@@ -408,6 +400,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -417,7 +410,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import type { Salle, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
@@ -428,7 +420,7 @@ const { t } = useI18n();
 
 const salles = ref<Salle[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const salleEditee = ref<Salle | null>(null);
 const enregistrement = ref(false);

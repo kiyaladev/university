@@ -38,13 +38,6 @@
           :label="$t('matieres.filters.department')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="matieres"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <q-table
@@ -84,40 +77,39 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="assignment_ind"
-            :aria-label="$t('matieres.actionsColumn.whoTeachesAria')"
-            @click="voirCharges(p.row)"
-          >
-            <q-tooltip>{{ $t('matieres.actionsColumn.whoTeachesTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
+<q-btn
             v-if="auth.peutPlanifier"
             flat
-            dense
-            round
+            dense no-caps
             icon="edit"
-            :aria-label="$t('matieres.actionsColumn.editAria')"
+            :aria-label="$t('matieres.actionsColumn.editAria')" :label="$t('matieres.actionsColumn.editAria')"
             @click="ouvrir(p.row)"
           >
             <q-tooltip>{{ $t('matieres.actionsColumn.editTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            flat
+            dense no-caps
+            icon="assignment_ind"
+            :aria-label="$t('matieres.actionsColumn.whoTeachesAria')" :label="$t('matieres.actionsColumn.whoTeachesAria')"
+            @click="voirCharges(p.row)"
+          >
+            <q-tooltip>{{ $t('matieres.actionsColumn.whoTeachesTooltip') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
             v-if="auth.estAdmin"
             flat
-            dense
-            round
+            dense no-caps
             color="negative"
             icon="delete"
-            :aria-label="$t('matieres.actionsColumn.deleteAria')"
+            :aria-label="$t('matieres.actionsColumn.deleteAria')" :label="$t('matieres.actionsColumn.deleteAria')"
             @click="supprimer(p.row)"
           >
             <q-tooltip>{{ $t('matieres.actionsColumn.deleteTooltip') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -271,6 +263,8 @@
 </template>
 
 <script setup lang="ts">
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -279,7 +273,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import type { Departement, Matiere, ChipFiltre } from '../types';
 
 const $q = useQuasar();
@@ -290,7 +283,7 @@ const { t } = useI18n();
 const matieres = ref<Matiere[]>([]);
 const departements = ref<Departement[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const matiereEditee = ref<Matiere | null>(null);
 const enregistrement = ref(false);

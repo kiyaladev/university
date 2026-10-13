@@ -1,11 +1,11 @@
 /** Namespace `helpdesk`. */
 export default {
   _namespace: 'helpdesk',
-  title: 'IT Support',
+  title: 'IT assistance',
   subtitle:
-    'A QR code on every piece of equipment: the teacher scans it, describes the problem in two clicks, and IT is notified without waiting for word of mouth.',
+    "Report an IT problem and track its resolution.",
   actions: {
-    declareIncident: 'Report an incident',
+    declareIncident: "Report a problem",
     otherProblem: 'Other problem',
     scanEquipment: 'Scan equipment QR',
     newEquipment: 'New equipment',
@@ -16,9 +16,9 @@ export default {
     cancel: 'Cancel',
   },
   tabs: {
-    myTickets: 'Tickets / Report',
-    management: 'IT Management',
-    equipment: 'Equipment & QR',
+    myTickets: "My reports",
+    management: "Incident management",
+    equipment: "Support equipment",
   },
   declareCard: {
     title: 'Report in two clicks',
@@ -31,7 +31,7 @@ export default {
     titleMine: 'My reports',
     emptyAll: 'No ticket reported.',
     emptyMine: "You haven't reported any incident.",
-    emptyHint: 'Choose a category on the left, or scan the QR code of the faulty equipment.',
+    emptyHint: "Use “Report a problem” or scan the equipment QR code.",
   },
   filters: {
     searchTickets: 'Search (No., description…)',

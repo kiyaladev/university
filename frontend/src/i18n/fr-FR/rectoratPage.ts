@@ -1,8 +1,8 @@
 /** Namespace `rectoratPage` — page Tableau de bord Rectorat. */
 export default {
-  title: 'Tableau de bord Rectorat',
+  title: "Bilan de l’établissement",
   subtitle:
-    "L'état de l'université en une page, à l'instant présent : effectifs, réussite, masse salariale, incidents. Chaque chiffre renvoie à l'écran qui le produit. Année académique {annee}.",
+    "Situation actuelle de l’établissement · année {annee}.",
   subtitleFallback: '—',
   filters: {
     year: 'Année',
@@ -10,12 +10,12 @@ export default {
   actions: {
     generateReport: 'Générer le bilan MESRS',
     generateReportTooltip:
-      'Fige les chiffres ci-dessous dans un snapshot archivé, consultable dans Statistiques MESRS.',
+      "Enregistre les chiffres actuels dans les bilans archivés.",
   },
   links: {
     statisticsMesrs: 'Statistiques MESRS',
-    statisticsMesrsHelp: 'Les snapshots figés déjà transmis au Ministère',
-    reports: 'Rapports & états',
+    statisticsMesrsHelp: "Les bilans figés déjà transmis au Ministère",
+    reports: 'Rapports de présence',
     reportsHelp: 'Les états ligne à ligne, exportables',
     statistics: 'Statistiques',
     statisticsHelp: 'Le suivi du contrôle des séances au jour le jour',
@@ -73,7 +73,7 @@ export default {
   messages: {
     dashboardLoadFailed: 'Chargement du tableau de bord impossible.',
     reportGenerated: 'Bilan MESRS {annee} généré et archivé.',
-    viewSnapshots: 'Voir les snapshots',
+    viewSnapshots: "Voir les bilans archivés",
     reportGenerationFailed: 'Génération du bilan impossible.',
     yearsUnavailable: 'Années académiques indisponibles.',
   },

@@ -22,11 +22,11 @@ export default {
     matricule: 'Student ID {matricule}',
   },
   nav: {
-    title: 'My services',
+    title: 'Useful links',
   },
   services: {
     maCarte: { label: 'My student card', help: 'Digital card, QR code and personal code' },
-    demandesDocuments: { label: 'My document requests', help: 'Certificates, transcripts and attestations to request' },
+    demandesDocuments: { label: 'My document requests', help: 'Academic documents and complaints' },
     reclamations: { label: 'My complaints', help: 'Dispute a grade, report a record error' },
     vote: { label: 'Vote', help: 'Delegate elections and announced results' },
     bibliotheque: { label: 'Digital library', help: 'Theses, dissertations and course materials' },

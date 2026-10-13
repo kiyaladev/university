@@ -1,6 +1,6 @@
 /** Namespace `vodPage`. */
 export default {
-  title: 'Course VOD',
+  title: 'Video courses',
   subtitle: {
     student:
       'Replays, podcasts, notes and transcripts for your courses: what your enrollments give you access to, plus the public collection.',
@@ -16,8 +16,8 @@ export default {
     archive: 'Archive',
   },
   formDialog: {
-    editTitle: 'Edit VOD resource',
-    newTitle: 'New VOD resource',
+    editTitle: 'Edit video course',
+    newTitle: 'New video course',
     mediaUrl: 'Media URL (Mux / S3 / CDN / local path)',
     mediaUrlPlaceholder: 'https://… or /vod/file.mp4',
     thumbnailUrl: 'Thumbnail URL (optional)',

@@ -29,14 +29,6 @@
       </div>
     </div>
 
-    <liens-croises
-      :liens="[
-        { to: '/rectorat', libelle: $t('patrimoine.links.rectoratLabel'), icone: 'dashboard', aide: $t('patrimoine.links.rectoratHelp') },
-        { to: '/helpdesk', libelle: $t('patrimoine.links.helpdeskLabel'), icone: 'support_agent', aide: $t('patrimoine.links.helpdeskHelp') },
-        { to: '/salles', libelle: $t('patrimoine.links.sallesLabel'), icone: 'meeting_room', aide: $t('patrimoine.links.sallesHelp') },
-      ]"
-    />
-
     <!-- Les mêmes trois chiffres que le Tableau de bord Rectorat, à la source. -->
     <div v-if="synthese" class="row q-col-gutter-md q-mb-md">
       <div class="col-12 col-sm-4">
@@ -132,13 +124,6 @@
             map-options
             clearable
             :label="$t('patrimoine.equipments.filters.repairState')"
-          />
-        </template>
-        <template #actions>
-          <view-toggle
-            cle="patrimoine.equipements"
-            :modes="['tableau', 'cartes']"
-            @update:mode="(v: string) => (modeEquipements = v as 'tableau' | 'cartes')"
           />
         </template>
       </filter-bar>
@@ -677,6 +662,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -686,9 +672,7 @@ import { patrimoineService } from '../services/patrimoine';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import PatrimoineDialog from '../components/PatrimoineDialog.vue';
 import ReparationDialog from '../components/ReparationDialog.vue';
 import { dateLisible, montantLisible, nombreLisible } from '../utils/libelles';
@@ -710,7 +694,7 @@ const onglet = ref<'equipements' | 'categories' | 'reparations'>('equipements');
 const equipements = ref<EquipementPatrimoine[]>([]);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '' });
-const modeEquipements = ref<'tableau' | 'cartes'>('tableau');
+const modeEquipements = usePresentationListe();
 const chargement = ref(false);
 
 const categories = ref<CategoriePatrimoine[]>([]);

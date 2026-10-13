@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 /**
  * Catalogue VOD. Deux publics, un seul écran :
  *
@@ -16,7 +17,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import VodDialog from '../components/VodDialog.vue';
 import {
   LIBELLE_STATUT_VOD,
@@ -57,7 +57,7 @@ const chargement = ref(false);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
 
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = usePresentationListe();
 
 /** Écriture : les mêmes rôles que le backend (POST/PUT/publier/archiver). */
 const peutEditer = computed(() => auth.aRole(['ADMIN', 'ENSEIGNANT']));
@@ -288,14 +288,6 @@ onMounted(charger);
           outlined
           dense
           clearable
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="vod"
-          :modes="['tableau', 'cartes']"
-          defaut="cartes"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>

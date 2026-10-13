@@ -1,6 +1,6 @@
-/** Namespace `resto` — page Resto numérique. */
+/** Namespace `resto` — page Restaurant universitaire. */
 export default {
-  title: 'Resto numérique',
+  title: 'Restaurant universitaire',
   subtitle:
     "Fini les tickets papier : le guichet scanne la carte de l'étudiant, valide le repas en deux secondes — zéro cash, zéro fraude.",
   cantine: 'Cantine',

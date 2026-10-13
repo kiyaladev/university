@@ -16,16 +16,6 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="finances" />
-
-    <liens-croises
-      :liens="[
-        { to: '/rapports', libelle: $t('paiePage.links.reports.label'), icone: 'insights', aide: $t('paiePage.links.reports.help') },
-        { to: '/affectations', libelle: $t('paiePage.links.teachingLoads.label'), icone: 'assignment_ind', aide: $t('paiePage.links.teachingLoads.help') },
-        { to: '/rectorat', libelle: $t('paiePage.links.dashboard.label'), icone: 'dashboard', aide: $t('paiePage.links.dashboard.help') },
-      ]"
-    />
-
     <filter-bar
       v-model="filtres"
       :recherche="false"
@@ -33,11 +23,6 @@
       @reinitialiser="reinitialiser"
     >
       <template #actions>
-        <view-toggle
-          cle="feuilles_paie"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
         <q-btn
           flat
           dense
@@ -407,7 +392,7 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -417,8 +402,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import FeuillePaieDialog from '../components/FeuillePaieDialog.vue';
 import {
   LIBELLE_STATUT_PAIE,
@@ -433,7 +416,7 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const feuilles = ref<FeuillePaie[]>([]);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const chargement = ref(false);

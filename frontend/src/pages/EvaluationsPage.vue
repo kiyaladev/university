@@ -16,8 +16,6 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="resultats" />
-
     <filter-bar
       v-model="filtres"
       :chips="chips"
@@ -71,13 +69,6 @@
           emit-value
           map-options
           :label="$t('evaluations.filters.status')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="evaluations"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
         />
       </template>
     </filter-bar>
@@ -143,58 +134,55 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
+<q-btn
+            v-if="p.row.statut !== 'OUVERTE' || !peutSaisirNotes()"
             flat
-            dense
-            round
+            dense no-caps
             icon="visibility"
-            :aria-label="$t('evaluations.table.view_notes_aria')"
+            :aria-label="$t('evaluations.table.view_notes_aria')" :label="$t('evaluations.table.view_notes_aria')"
             @click="voirNotes(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.view_notes') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn
             v-if="p.row.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
-            dense
-            round
+            dense no-caps
             icon="edit_note"
             color="primary"
-            :aria-label="$t('evaluations.table.enter_notes_aria')"
+            :aria-label="$t('evaluations.table.enter_notes_aria')" :label="$t('evaluations.table.enter_notes_aria')"
             @click="saisirNotes(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.enter_notes') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
-            dense
-            round
+            dense no-caps
             icon="lock"
-            :aria-label="$t('evaluations.table.close_evaluation_aria')"
+            :aria-label="$t('evaluations.table.close_evaluation_aria')" :label="$t('evaluations.table.close_evaluation_aria')"
             @click="cloturer(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.close_evaluation') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
-            dense
-            round
+            dense no-caps
             icon="edit"
-            :aria-label="$t('evaluations.table.edit_evaluation_aria')"
+            :aria-label="$t('evaluations.table.edit_evaluation_aria')" :label="$t('evaluations.table.edit_evaluation_aria')"
             @click="ouvrir(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.edit_evaluation') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutGererEvaluation()"
             flat
-            dense
-            round
+            dense no-caps
             color="negative"
             icon="delete"
-            :aria-label="$t('evaluations.table.delete_aria')"
+            :aria-label="$t('evaluations.table.delete_aria')" :label="$t('evaluations.table.delete_aria')"
             :disable="nombreNotes(p.row) > 0"
             @click="supprimer(p.row)"
           >
@@ -206,7 +194,8 @@
               }}
             </q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -252,8 +241,8 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn flat dense icon="visibility" no-caps :label="$t('evaluations.cards.notes_view')" @click="voirNotes(e)" />
-          <q-btn
+<q-btn v-if="e.statut !== 'OUVERTE' || !peutSaisirNotes()" flat dense icon="visibility" no-caps :label="$t('evaluations.cards.notes_view')" @click="voirNotes(e)" />
+<q-btn
             v-if="e.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
             dense
@@ -263,7 +252,8 @@
             :label="$t('evaluations.cards.notes_enter')"
             @click="saisirNotes(e)"
           />
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
             dense
@@ -272,7 +262,7 @@
             :label="$t('evaluations.cards.edit')"
             @click="ouvrir(e)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
             flat
             dense
@@ -281,7 +271,7 @@
             :label="$t('evaluations.cards.close')"
             @click="cloturer(e)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="peutGererEvaluation()"
             flat
             dense
@@ -292,7 +282,8 @@
             :disable="nombreNotes(e) > 0"
             @click="supprimer(e)"
           />
-        </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!evaluations.length" class="evaluations-vide">
         <q-icon name="fact_check" size="42px" class="q-mb-sm" />
@@ -421,7 +412,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -432,7 +424,6 @@ import { useAuthStore } from '../stores/auth';
 import EvaluationDialog from '../components/EvaluationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import {
   LIBELLE_STATUT_EVALUATION,
@@ -469,7 +460,7 @@ const matieres = ref<Matiere[]>([]);
 const chargement = ref(false);
 const dialogOuvert = ref(false);
 const evaluationEditee = ref<Evaluation | null>(null);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const page = ref(1);
 const pageSize = ref(20);

@@ -8,7 +8,8 @@
         </div>
       </div>
       <div class="col-auto">
-        <q-btn unelevated color="primary" no-caps icon="warning" :label="$t('helpdesk.actions.declareIncident')" @click="declarerOuvert = true" />
+        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.declareIncident')" @click="ouvrirDeclaration()" />
+        <q-btn flat no-caps icon="qr_code_scanner" :label="$t('helpdesk.actions.scanEquipment')" @click="scanEquipement = true" />
       </div>
     </div>
 
@@ -23,40 +24,9 @@
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'mes-tickets'" name="mes-tickets" class="q-pa-none q-mt-md">
       <div class="row q-col-gutter-md">
-        <div class="col-12 col-lg-4">
-          <q-card flat bordered class="carte">
-            <q-card-section>
-              <div class="text-h6">{{ $t('helpdesk.declareCard.title') }}</div>
-              <div class="page-sous-titre q-mb-md">
-                {{ $t('helpdesk.declareCard.description') }}
-                <span v-if="dsi">{{ $t('helpdesk.declareCard.adminNote') }}</span>
-              </div>
-              <div class="row q-col-gutter-sm">
-                <div v-for="c in categoriesApercu" :key="c.value" class="col-6">
-                  <q-btn
-                    flat
-                    no-caps
-                    class="tuile-cat full-width"
-                    @click="ouvrirDeclaration(c.value)"
-                  >
-                    <div class="column items-center">
-                      <q-icon :name="c.icone" size="22px" />
-                      <span class="q-mt-xs text-center">{{ c.label }}</span>
-                    </div>
-                  </q-btn>
-                </div>
-              </div>
-              <div class="row q-mt-md">
-                <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.otherProblem')" class="full-width" @click="ouvrirDeclaration()" />
-              </div>
-              <div class="row q-mt-md">
-                <q-btn outline color="primary" no-caps icon="qr_code_scanner" :label="$t('helpdesk.actions.scanEquipment')" class="full-width" @click="scanEquipement = true" />
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
 
-        <div class="col-12 col-lg-8">
+
+        <div class="col-12">
           <q-table
             flat
             bordered
@@ -106,15 +76,8 @@
     <!-- GESTION DSI                                                       -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="dsi && onglet === 'gestion'" name="gestion" class="q-pa-none q-mt-md">
-      <div class="row q-col-gutter-md q-mb-md">
-        <div v-for="s in statutPlaques" :key="s.cle" class="col-6 col-md-3">
-          <q-card flat bordered class="carte">
-            <q-card-section class="text-center">
-              <div class="stat-chiffre chiffres">{{ stats?.[s.cle] ?? 0 }}</div>
-              <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-            </q-card-section>
-          </q-card>
-        </div>
+      <div class="resume-liste" role="status">
+        <span v-for="s in statutPlaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
       </div>
       <q-banner v-if="dsi" class="note--info q-mb-md">
         <i18n-t keypath="helpdesk.stats.resolutionRate" tag="span">
@@ -130,8 +93,8 @@
         :placeholder="$t('helpdesk.filters.searchTickets')"
         @reinitialiser="filtres = { recherche: '' }"
       >
-        <template #avances>
-          <q-select
+        <template #principaux>
+<q-select
             v-model="filtres.statut"
             :options="optionsStatuts"
             dense
@@ -141,6 +104,9 @@
             map-options
             :label="$t('helpdesk.filters.status')"
           />
+        </template>
+        <template #avances>
+
           <q-select
             v-model="filtres.categorie"
             :options="optionsCategories"
@@ -166,13 +132,6 @@
             endpoint="/equipements"
             :label-fn="(e) => `${e.libelle}${e.emplacement ? ' — ' + e.emplacement : ''}`"
             :label="$t('helpdesk.filters.equipment')"
-          />
-        </template>
-        <template #actions>
-          <view-toggle
-            cle="helpdesk.gestion"
-            :modes="['tableau', 'cartes']"
-            @update:mode="(v: string) => (modeGestion = v as 'tableau' | 'cartes')"
           />
         </template>
       </filter-bar>
@@ -361,13 +320,6 @@
             emit-value
             map-options
             :label="$t('helpdesk.filters.state')"
-          />
-        </template>
-        <template #actions>
-          <view-toggle
-            cle="helpdesk.equipements"
-            :modes="['tableau', 'cartes']"
-            @update:mode="(v: string) => (modeEquipements = v as 'tableau' | 'cartes')"
           />
         </template>
       </filter-bar>
@@ -594,6 +546,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
@@ -603,7 +556,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import QrScanner from '../components/QrScanner.vue';
 import TicketDialog from '../components/TicketDialog.vue';
@@ -647,32 +599,11 @@ const equipementEdite = ref<EquipementCampus | null>(null);
 const scanEquipement = ref(false);
 const codeScanne = ref('');
 
-const modeGestion = ref<'tableau' | 'cartes'>('tableau');
-const modeEquipements = ref<'tableau' | 'cartes'>('cartes');
+const modeGestion = usePresentationListe();
+const modeEquipements = usePresentationListe();
 
 const filtres = ref<Record<string, any>>({ recherche: '' });
 const filtresEquip = ref<Record<string, any>>({ recherche: '' });
-
-const ICONES_CATEGORIE: Record<CategorieIncident, string> = {
-  VIDEO: 'videocam',
-  SON: 'volume_up',
-  RESEAU: 'wifi',
-  ELECTRICITE: 'bolt',
-  MOBILIER: 'chair',
-  INFORMATIQUE: 'computer',
-  CLIMATISATION: 'ac_unit',
-  AUTRE: 'build',
-};
-
-const categoriesApercu = (
-  Object.keys(LIBELLE_CATEGORIE_INCIDENT) as CategorieIncident[]
-)
-  .slice(0, 6)
-  .map((value) => ({
-    value,
-    label: LIBELLE_CATEGORIE_INCIDENT[value],
-    icone: ICONES_CATEGORIE[value],
-  }));
 
 const optionsStatuts = (Object.keys(LIBELLE_STATUT_TICKET) as StatutTicket[]).map((v) => ({
   label: LIBELLE_STATUT_TICKET[v],
@@ -1001,16 +932,6 @@ $vert: #007A4D;
 $jaune-fonce: #8A6300;
 $rouge: #CE1126;
 
-.tuile-cat {
-  border: var(--up-filet);
-  padding: 10px 6px;
-  min-height: 68px;
-  background: var(--up-craie);
-  color: var(--up-encre);
-  font-size: 11px;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
 
 .stat-chiffre {
   font-size: 2rem;

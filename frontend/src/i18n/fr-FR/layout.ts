@@ -1,9 +1,9 @@
 /** Namespace `layout` : chrome de l'application (bandeau, menus, boutons). */
 export default {
-  searchModules: 'Rechercher un module',
+  searchModules: "Rechercher une page",
   frequentTasks: 'Tâches courantes',
   studentVideoCourses: 'Cours en vidéo',
-  noModule: 'Aucun module trouvé',
+  noModule: "Aucune page trouvée",
   relatedScreensAria: 'Écrans liés',
   seeAlso: 'Voir aussi',
   kanban: { empty: 'Aucune carte', count: '{n} élément(s)' },

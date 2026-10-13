@@ -134,14 +134,6 @@
           :label="$t('bibliotheque.filters.publication')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="biblio.gestion"
-          :modes="['tableau', 'cartes']"
-          defaut="cartes"
-          @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <div v-if="chargement && !documents.length" class="row justify-center q-py-xl">
@@ -393,6 +385,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
@@ -401,7 +394,6 @@ import { bibliothequeService, normaliserDocuments } from '../services/bibliotheq
 import DocumentDialog from '../components/DocumentDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import { useAuthStore } from '../stores/auth';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
@@ -428,7 +420,7 @@ const filtres = ref<Record<string, any>>({
   public: '',
 });
 
-const mode = ref<'tableau' | 'cartes'>('cartes');
+const mode = usePresentationListe();
 const dialogOuvert = ref(false);
 const documentEdite = ref<DocumentDepot | null>(null);
 

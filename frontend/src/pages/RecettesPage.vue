@@ -16,56 +16,9 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="finances" />
-
-    <liens-croises
-      :liens="[
-        { to: '/paiements', libelle: $t('recettes.crossLinks.paiements.label'), icone: 'payments', aide: $t('recettes.crossLinks.paiements.help') },
-        { to: '/rectorat', libelle: $t('recettes.crossLinks.rectorat.label'), icone: 'dashboard', aide: $t('recettes.crossLinks.rectorat.help') },
-      ]"
-    />
-
-    <div v-if="kpis" class="row q-col-gutter-md q-mb-md">
-      <div class="col-12 col-md-4">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section>
-            <div class="text-caption text-grey-7">{{ $t('recettes.kpis.totalMois.title') }}</div>
-            <div class="stat-chiffre chiffres">{{ montantLisible(kpis.totalMois) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
-            <div class="text-caption text-grey-6">{{ $t('recettes.kpis.totalMois.subtitle') }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-md-4">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section>
-            <div class="text-caption text-grey-7">{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }}</div>
-            <div class="stat-chiffre chiffres">{{ montantLisible(kpis.totalAnnee) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
-            <div class="text-caption text-grey-6">{{ $t('recettes.kpis.totalAnnee.subtitle') }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-md-4">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section>
-            <div class="text-caption text-grey-7">{{ $t('recettes.kpis.top3.title') }}</div>
-            <q-list dense>
-              <q-item v-for="t in kpis.top3" :key="t.type">
-                <q-item-section>
-                  <q-item-label>{{ libelleType(t.type) }}</q-item-label>
-                </q-item-section>
-                <q-item-section side>
-                  <q-item-label class="chiffres">{{ montantLisible(t.total) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</q-item-label>
-                </q-item-section>
-              </q-item>
-              <q-item v-if="!kpis.top3.length">
-                <q-item-section class="text-grey-7 text-caption">
-                  {{ $t('recettes.kpis.top3.empty') }}
-                </q-item-section>
-              </q-item>
-            </q-list>
-          </q-card-section>
-        </q-card>
-      </div>
+    <div v-if="kpis" class="resume-liste" role="status">
+      <span>{{ $t('recettes.kpis.totalMois.title') }} : <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
+      <span>{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} : <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
     </div>
 
     <filter-bar
@@ -74,12 +27,12 @@
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
-      <template #actions>
-        <view-toggle cle="recettes" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')" />
+      <template #principaux>
+        <q-select v-model="filtres.paiementStatut" :options="optionsPaiement" outlined dense clearable emit-value map-options :label="$t('recettes.filters.paiementStatut')" />
       </template>
       <template #avances>
         <q-select v-model="filtres.type" :options="optionsTypes" outlined dense clearable emit-value map-options :label="$t('recettes.filters.type')" />
-        <q-select v-model="filtres.paiementStatut" :options="optionsPaiement" outlined dense clearable emit-value map-options :label="$t('recettes.filters.paiementStatut')" />
+
         <champ-date v-model="filtres.dateDebut" :label="$t('recettes.filters.dateDebut')" />
         <champ-date v-model="filtres.dateFin" :label="$t('recettes.filters.dateFin')" />
       </template>
@@ -121,18 +74,17 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
+<q-btn
             flat
-            dense
-            round
+            dense no-caps
             icon="visibility"
             color="primary"
-            :aria-label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })"
+            :aria-label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })" :label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })"
             @click.stop="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('recettes.tooltips.detail') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn
             v-if="!p.row.paiementId && peutEncaisser"
             flat
             dense
@@ -143,8 +95,9 @@
             :disable="encaissementEnCours || dialogEncaissementOuvert"
             @click.stop="encaisser(p.row)"
           />
-          <q-btn
-            v-else-if="p.row.paiementId"
+<actions-secondaires>
+<q-btn v-close-popup
+            v-if="p.row.paiementId"
             flat
             dense
             no-caps
@@ -156,7 +109,8 @@
           >
             <q-tooltip>{{ $t('recettes.tooltips.voirPaiement') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
       <template #no-data>
         <div class="etat-vide">
@@ -251,7 +205,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -260,9 +215,7 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import RecetteDialog from '../components/RecetteDialog.vue';
 import {
   LIBELLE_TYPE_RECETTE,
@@ -277,7 +230,7 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const recettes = ref<RecetteExterne[]>([]);
 const total = ref(0);
 const chargement = ref(false);

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -9,7 +10,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import BadgeDialog from '../components/BadgeDialog.vue';
 import type { BadgeAcces, TypeBadge } from '../types';
 import { ouvrirImpression } from '../services/impression';
@@ -28,7 +28,7 @@ const chargement = ref(false);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
 
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
@@ -179,21 +179,11 @@ onMounted(charger);
       </template>
     </page-header>
 
-    <parcours-metier parcours="documents" />
-
     <filter-bar
       v-model="filtres"
       :placeholder="$t('badges.filters.searchPlaceholder')"
       @update:model-value="recharger"
     >
-      <template #actions>
-        <view-toggle
-          cle="badges"
-          :modes="['tableau', 'cartes']"
-          :defaut="modeVue"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
-      </template>
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -275,44 +265,43 @@ onMounted(charger);
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat round dense icon="print" :aria-label="$t('badges.aria.printBadge')" @click="imprimer(p.row)">
+<q-btn flat no-caps dense icon="print" :aria-label="$t('badges.aria.printBadge')" :label="$t('badges.aria.printBadge')" @click="imprimer(p.row)">
             <q-tooltip>{{ $t('badges.tooltips.print') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             v-if="peutEditer"
-            flat
-            round
+            flat no-caps
             dense
             icon="edit"
-            :aria-label="$t('badges.aria.editBadge')"
+            :aria-label="$t('badges.aria.editBadge')" :label="$t('badges.aria.editBadge')"
             @click="ouvrirEdition(p.row)"
           >
             <q-tooltip>{{ $t('badges.tooltips.edit') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
-            flat
-            round
+            flat no-caps
             dense
             icon="schedule"
-            :aria-label="$t('badges.aria.extendBadge')"
+            :aria-label="$t('badges.aria.extendBadge')" :label="$t('badges.aria.extendBadge')"
             @click="ouvrirRallonge(p.row)"
           >
             <q-tooltip>{{ $t('badges.tooltips.extend') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
-            flat
-            round
+            flat no-caps
             dense
             icon="block"
             color="negative"
-            :aria-label="$t('badges.aria.cancelBadge')"
+            :aria-label="$t('badges.aria.cancelBadge')" :label="$t('badges.aria.cancelBadge')"
             @click="ouvrirAnnulation(p.row)"
           >
             <q-tooltip>{{ $t('badges.tooltips.cancel') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -349,8 +338,9 @@ onMounted(charger);
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense icon="print" :label="$t('badges.actions.print')" no-caps @click="imprimer(b)" />
-            <q-btn
+<q-btn flat dense icon="print" :label="$t('badges.actions.print')" no-caps @click="imprimer(b)" />
+<actions-secondaires>
+<q-btn v-close-popup
               v-if="peutEditer"
               flat
               dense
@@ -359,7 +349,7 @@ onMounted(charger);
               no-caps
               @click="ouvrirEdition(b)"
             />
-            <q-btn
+<q-btn v-close-popup
               v-if="peutEditer && b.statut !== 'ANNULE'"
               flat
               dense
@@ -368,7 +358,7 @@ onMounted(charger);
               no-caps
               @click="ouvrirRallonge(b)"
             />
-            <q-btn
+<q-btn v-close-popup
               v-if="peutEditer && b.statut !== 'ANNULE'"
               flat
               dense
@@ -378,7 +368,8 @@ onMounted(charger);
               no-caps
               @click="ouvrirAnnulation(b)"
             />
-          </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !badges.length" class="col-12 text-center text-grey-7 q-pa-lg">

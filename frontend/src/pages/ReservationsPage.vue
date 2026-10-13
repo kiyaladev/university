@@ -17,7 +17,6 @@
           :label="$t('reservations.actions.reserve')"
           @click="dialogReservation = true"
         />
-        <view-toggle cle="reservations" :modes="['calendrier', 'tableau']" defaut="calendrier" @update:mode="(v: string) => (modeVue = v as 'calendrier' | 'tableau')" />
         <q-btn
           round
           color="primary"
@@ -89,7 +88,7 @@
     />
 
     <!-- Vue tableau liste -->
-    <q-table
+    <q-table :grid="$q.screen.lt.md"
       v-else
       flat
       bordered
@@ -101,6 +100,31 @@
       :rows-per-page-options="[0]"
       :hide-bottom="chargement || reservationsFiltrees.length > 0"
     >
+<template #item="p">
+    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
+      <q-card-section>
+        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+          <div class="text-caption text-grey-7">{{ c.label }}</div>
+          <template v-if="c.name === 'creneau'">{{ dateLisible(p.row.dateJour) }} · {{ p.row.heureDebut }}–{{ p.row.heureFin }}</template>
+  <template v-else-if="c.name === 'salle'">{{ p.row.salle?.code }} · {{ p.row.salle?.nom }}</template>
+  <template v-else-if="c.name === 'statut'">{{ LIBELLE_STATUT_RESERVATION[p.row.statut] }}</template>
+  <span v-else>{{ c.value }}</span>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            :aria-label="$t('reservations.table.viewDetail')"
+            @click="ouvrir(p.row)"
+          >
+            <q-tooltip>{{ $t('reservations.table.viewDetailTooltip') }}</q-tooltip>
+          </q-btn>
+        </q-card-actions>
+    </q-card></div>
+  </template>
       <template #body-cell-creneau="p">
         <q-td :props="p">
           <div class="chiffres">{{ p.row.heureDebut }}–{{ p.row.heureFin }}</div>
@@ -167,11 +191,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import CalendarGrid from '../components/CalendarGrid.vue';
 import ChampDate from '../components/ChampDate.vue';
@@ -220,7 +244,8 @@ const chargement = ref(false);
 const dialogReservation = ref(false);
 const dialogDetail = ref(false);
 const reservationChoisie = ref<ReservationSalle | null>(null);
-const modeVue = ref<'calendrier' | 'tableau'>('calendrier');
+const $q = useQuasar();
+const modeVue = computed(() => $q.screen.lt.md ? 'tableau' : 'calendrier');
 
 /** Par défaut : le mois courant en entier — le calendrier affiche un mois. */
 function premierJourDuMois(iso = aujourdhui()): string {

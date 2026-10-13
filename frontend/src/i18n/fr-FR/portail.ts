@@ -22,11 +22,11 @@ export default {
     matricule: 'Matricule {matricule}',
   },
   nav: {
-    title: 'Mes démarches',
+    title: 'Accès utiles',
   },
   services: {
     maCarte: { label: 'Ma carte étudiante', help: 'Carte numérique, QR code et code personnel' },
-    demandesDocuments: { label: 'Mes demandes de documents', help: 'Certificats, relevés et attestations à demander' },
+    demandesDocuments: { label: 'Mes demandes de documents', help: 'Documents scolaires et réclamations' },
     reclamations: { label: 'Mes réclamations', help: 'Contester une note, signaler une erreur de dossier' },
     vote: { label: 'Voter', help: 'Élections des délégués et résultats proclamés' },
     bibliotheque: { label: 'Bibliothèque numérique', help: 'Mémoires, thèses et supports de cours' },

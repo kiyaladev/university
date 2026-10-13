@@ -7,6 +7,9 @@ import { join } from 'node:path';
 export default defineConfig((ctx) => {
   const inclureMediasDemo = ctx.dev || Boolean(process.env.QA_BUILD_DIR && process.env.INCLUDE_DEMO_MEDIA === 'true');
   if (ctx.prod && !process.env.API_URL) throw new Error('API_URL est obligatoire pour une compilation de production. Utilisez QA_BUILD_DIR pour isoler une recette.');
+  if (ctx.prod && !process.env.QA_BUILD_DIR && /^(?:localhost|127(?:\.\d{1,3}){3}|\[?::1\]?)$/i.test(new URL(process.env.API_URL!).hostname)) {
+    throw new Error('Une API locale exige QA_BUILD_DIR : le dossier servi en production ne doit pas recevoir un build de recette.');
+  }
   return {
     boot: ['axios', 'i18n', 'accessibilite'],
 

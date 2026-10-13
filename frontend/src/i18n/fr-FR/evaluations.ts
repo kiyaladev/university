@@ -69,7 +69,7 @@ export default {
     coefficient: 'coeff. {n}',
     semester: 'sem. {n}',
     notes_view: 'Notes',
-    notes_enter: 'Saisir',
+    notes_enter: 'Saisir les notes',
     edit: 'Modifier',
     close: 'Clôturer',
     delete: 'Supprimer',

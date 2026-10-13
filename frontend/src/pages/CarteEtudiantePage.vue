@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import SectionNavigation from '../components/SectionNavigation.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -10,7 +12,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import CarteDialog from '../components/CarteDialog.vue';
 import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
@@ -33,7 +34,7 @@ const filtres = ref<Record<string, any>>({ recherche: '' });
  */
 const etudiantId = ref<string>(String(route.query.etudiantId ?? ''));
 
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const peutEmettre = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const peutModifier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
@@ -160,6 +161,7 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="documents" />
     <page-header :title="$t('carteEtudiante.title')" :subtitle="$t('carteEtudiante.subtitle')">
       <template #actions>
 <div class="col-auto">
@@ -176,8 +178,6 @@ onMounted(charger);
       </template>
     </page-header>
 
-    <parcours-metier parcours="documents" />
-
     <q-banner v-if="etudiantId" class="note--info q-mb-md">
       {{ $t('carteEtudiante.studentBanner.message') }}
       <template #action>
@@ -190,14 +190,6 @@ onMounted(charger);
       :placeholder="$t('carteEtudiante.filters.searchPlaceholder')"
       @update:model-value="recharger"
     >
-      <template #actions>
-        <view-toggle
-          cle="cartes-etudiantes"
-          :modes="['tableau', 'cartes']"
-          :defaut="modeVue"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <pagination-bar
@@ -253,43 +245,42 @@ onMounted(charger);
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            round
+<q-btn
+            flat no-caps
             dense
             icon="qr_code_2"
-            :aria-label="$t('carteEtudiante.actionsColumn.qrAria')"
+            :aria-label="$t('carteEtudiante.actionsColumn.qrAria')" :label="$t('carteEtudiante.actionsColumn.qrAria')"
             @click="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('carteEtudiante.actionsColumn.qrTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn flat round dense icon="print" :aria-label="$t('carteEtudiante.actionsColumn.printAria')" @click="imprimer(p.row)">
+<actions-secondaires>
+<q-btn v-close-popup flat no-caps dense icon="print" :aria-label="$t('carteEtudiante.actionsColumn.printAria')" :label="$t('carteEtudiante.actionsColumn.printAria')" @click="imprimer(p.row)">
             <q-tooltip>{{ $t('carteEtudiante.actionsColumn.printTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutModifier && p.row.statut === 'EMISE'"
-            flat
-            round
+            flat no-caps
             dense
             icon="edit"
-            :aria-label="$t('carteEtudiante.actionsColumn.editAria')"
+            :aria-label="$t('carteEtudiante.actionsColumn.editAria')" :label="$t('carteEtudiante.actionsColumn.editAria')"
             @click="ouvrirModification(p.row)"
           >
             <q-tooltip>{{ $t('carteEtudiante.actionsColumn.editTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="p.row.statut === 'EMISE' && peutRevoquer"
-            flat
-            round
+            flat no-caps
             dense
             icon="block"
             color="negative"
-            :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')"
+            :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')" :label="$t('carteEtudiante.actionsColumn.revokeAria')"
             @click="ouvrirRevocation(p.row)"
           >
             <q-tooltip>{{ $t('carteEtudiante.actionsColumn.revokeTooltip') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -321,9 +312,10 @@ onMounted(charger);
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense icon="qr_code_2" :label="$t('carteEtudiante.cardActions.qr')" no-caps @click="ouvrirDetail(c)" />
-            <q-btn flat dense icon="print" :label="$t('carteEtudiante.cardActions.print')" no-caps @click="imprimer(c)" />
-            <q-btn
+<q-btn flat dense icon="qr_code_2" :label="$t('carteEtudiante.cardActions.qr')" no-caps @click="ouvrirDetail(c)" />
+<actions-secondaires>
+<q-btn v-close-popup flat dense icon="print" :label="$t('carteEtudiante.cardActions.print')" no-caps @click="imprimer(c)" />
+<q-btn v-close-popup
               v-if="peutModifier && c.statut === 'EMISE'"
               flat
               dense
@@ -332,7 +324,7 @@ onMounted(charger);
               no-caps
               @click="ouvrirModification(c)"
             />
-            <q-btn
+<q-btn v-close-popup
               v-if="c.statut === 'EMISE' && peutRevoquer"
               flat
               dense
@@ -342,7 +334,8 @@ onMounted(charger);
               no-caps
               @click="ouvrirRevocation(c)"
             />
-          </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !cartes.length" class="col-12 text-center text-grey-7 q-pa-lg">

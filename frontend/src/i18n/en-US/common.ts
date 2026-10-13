@@ -681,7 +681,7 @@ export default {
     noResults: 'No results',
     clear: 'Clear',
     submit: 'Submit',
-    advanced: 'Advanced search',
+    advanced: "Filters",
     hideAdvanced: 'Hide filters',
   },
   auth: {

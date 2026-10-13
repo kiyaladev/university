@@ -1,6 +1,6 @@
 /** Namespace `patrimoine` — page PatrimoinePage.vue (equipment inventory). */
 export default {
-  title: 'Assets & equipment',
+  title: "Inventory and repairs",
   subtitle:
     "The university's equipment inventory. Every item carries an inventory QR code, an acquisition value and a repair log that follows it from commissioning to retirement.",
   actions: {

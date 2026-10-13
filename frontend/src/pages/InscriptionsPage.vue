@@ -15,7 +15,6 @@
       </div>
       </template>
     </page-header>
-    <parcours-metier parcours="dossiers" />
 
     <!-- Arrivée depuis la fiche d'un étudiant : le ciblage est annoncé et se lève. -->
     <q-banner v-if="etudiantCible" dense class="note--info q-mb-md">
@@ -33,6 +32,18 @@
       :placeholder="$t('inscriptions.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
+      <template #principaux>
+        <q-select
+          v-model="filtres.statut"
+          :options="optionsStatuts"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          :label="$t('inscriptions.filters.status')"
+        />
+      </template>
       <template #avances>
         <q-select
           v-model="filtres.anneeId"
@@ -55,25 +66,9 @@
           map-options
           :label="$t('inscriptions.filters.promotion')"
         />
-        <q-select
-          v-model="filtres.statut"
-          :options="optionsStatuts"
-          outlined
-          dense
-          clearable
-          emit-value
-          map-options
-          :label="$t('inscriptions.filters.status')"
-        />
+
         <champ-date v-model="filtres.dateDebut" :label="$t('inscriptions.filters.enrolledFrom')" />
         <champ-date v-model="filtres.dateFin" :label="$t('inscriptions.filters.enrolledUntil')" />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="inscriptions"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
-        />
       </template>
     </filter-bar>
 
@@ -167,76 +162,72 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
+<q-btn
             v-if="peutEncaisserDossier(p.row)"
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="payments"
-            :aria-label="$t('inscriptions.table.actions.collectAria')"
+            :aria-label="$t('inscriptions.table.actions.collectAria')" :label="$t('inscriptions.table.actions.collectAria')"
             @click="encaisser(p.row)"
           >
             <q-tooltip>
               {{ $t('inscriptions.table.actions.collectTooltip', { amount: montantLisible(resteAPayer(p.row)) }) }}
             </q-tooltip>
           </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="receipt_long"
-            :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')"
-            @click="voirPaiements(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
+<q-btn
             v-if="peutValider(p.row)"
             flat
-            dense
-            round
+            dense no-caps
             color="positive"
             icon="verified"
-            :aria-label="$t('inscriptions.table.actions.validateAria')"
+            :aria-label="$t('inscriptions.table.actions.validateAria')" :label="$t('inscriptions.table.actions.validateAria')"
             @click="valider(p.row)"
           >
             <q-tooltip>{{ $t('inscriptions.table.actions.validateTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            flat
+            dense no-caps
+            icon="receipt_long"
+            :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')" :label="$t('inscriptions.table.actions.viewPaymentsAria')"
+            @click="voirPaiements(p.row)"
+          >
+            <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
             v-if="peutAnnuler(p.row)"
             flat
-            dense
-            round
+            dense no-caps
             color="negative"
             icon="cancel"
-            :aria-label="$t('inscriptions.table.actions.cancelAria')"
+            :aria-label="$t('inscriptions.table.actions.cancelAria')" :label="$t('inscriptions.table.actions.cancelAria')"
             @click="annuler(p.row)"
           >
             <q-tooltip>{{ $t('inscriptions.table.actions.cancelTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             flat
-            dense
-            round
+            dense no-caps
             icon="print"
-            :aria-label="$t('inscriptions.table.actions.printAria')"
+            :aria-label="$t('inscriptions.table.actions.printAria')" :label="$t('inscriptions.table.actions.printAria')"
             @click="imprimer(p.row)"
           >
             <q-tooltip>{{ $t('inscriptions.table.actions.printTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="person"
-            :aria-label="$t('inscriptions.table.actions.viewStudentAria')"
+            :aria-label="$t('inscriptions.table.actions.viewStudentAria')" :label="$t('inscriptions.table.actions.viewStudentAria')"
             @click="voirEtudiant(p.row)"
           >
             <q-tooltip>{{ $t('inscriptions.table.actions.viewStudentTooltip') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -296,7 +287,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
+<q-btn
             v-if="peutEncaisserDossier(d)"
             flat
             dense
@@ -306,15 +297,7 @@
             :label="$t('inscriptions.cards.actions.collect')"
             @click="encaisser(d)"
           />
-          <q-btn
-            flat
-            dense
-            icon="receipt_long"
-            no-caps
-            :label="$t('inscriptions.cards.actions.payments')"
-            @click="voirPaiements(d)"
-          />
-          <q-btn
+<q-btn
             v-if="peutValider(d)"
             flat
             dense
@@ -324,7 +307,16 @@
             :label="$t('inscriptions.cards.actions.validate')"
             @click="valider(d)"
           />
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            flat
+            dense
+            icon="receipt_long"
+            no-caps
+            :label="$t('inscriptions.cards.actions.payments')"
+            @click="voirPaiements(d)"
+          />
+<q-btn v-close-popup
             v-if="peutAnnuler(d)"
             flat
             dense
@@ -334,7 +326,7 @@
             :label="$t('inscriptions.cards.actions.cancel')"
             @click="annuler(d)"
           />
-          <q-btn
+<q-btn v-close-popup
             flat
             dense
             color="primary"
@@ -343,7 +335,7 @@
             :label="$t('inscriptions.cards.actions.certificate')"
             @click="imprimer(d)"
           />
-          <q-btn
+<q-btn v-close-popup
             flat
             dense
             icon="person"
@@ -351,7 +343,8 @@
             :label="$t('inscriptions.cards.actions.student')"
             @click="voirEtudiant(d)"
           />
-        </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!inscriptions.length" class="inscriptions-vide">
         <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
@@ -495,7 +488,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -508,7 +502,6 @@ import PaiementDialog from '../components/PaiementDialog.vue';
 import EtudiantDialog from '../components/EtudiantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
 import { ouvrirImpression } from '../services/impression';
 import {
@@ -534,7 +527,7 @@ const inscriptions = ref<Inscription[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const page = ref(1);
 const pageSize = ref(20);

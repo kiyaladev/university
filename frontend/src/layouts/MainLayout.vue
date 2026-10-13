@@ -24,28 +24,6 @@
           {{ t('layout.offline') }}
         </q-chip>
 
-        <q-btn flat round dense icon="translate" :aria-label="t('layout.changerLangue')">
-          <q-tooltip>{{ t('layout.changerLangue') }}</q-tooltip>
-          <q-menu>
-            <q-list dense>
-              <q-item
-                v-for="option in LANGUES"
-                :key="option.code"
-                v-close-popup
-                clickable
-                :active="localeCourante === option.code"
-                @click="changerLangue(option.code)"
-              >
-                <q-item-section>{{ option.libelle }}</q-item-section>
-              </q-item>
-            </q-list>
-          </q-menu>
-        </q-btn>
-
-        <q-btn flat round dense :icon="dark.isActive ? 'light_mode' : 'dark_mode'" :aria-label="t('layout.basculerTheme')" @click="dark.toggle()">
-          <q-tooltip>{{ t('layout.basculerTheme') }}</q-tooltip>
-        </q-btn>
-
         <q-btn flat round dense :aria-label="t('layout.myAccount')">
           <q-avatar square size="32px" color="secondary" text-color="white" class="pochoir">
             {{ auth.initiales }}
@@ -59,7 +37,32 @@
               </q-chip>
             </div>
             <q-separator />
-            <q-list dense>
+            <q-list dense role="presentation">
+              <q-item-label header>{{ t('simplification.preferences') }}</q-item-label>
+              <div class="column q-px-md q-pb-sm">
+              <q-btn flat dense no-caps align="left" icon="translate" :label="t('layout.changerLangue')">
+                <q-tooltip>{{ t('layout.changerLangue') }}</q-tooltip>
+                <q-menu>
+                  <q-list dense role="menu">
+                    <q-item
+                            v-for="option in LANGUES"
+                            :key="option.code"
+                            v-close-popup
+                            clickable
+                            :active="localeCourante === option.code"
+                            @click="changerLangue(option.code)"
+                    >
+                            <q-item-section>{{ option.libelle }}</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-menu>
+              </q-btn>
+
+              <q-btn v-close-popup flat dense no-caps align="left" :icon="dark.isActive ? 'light_mode' : 'dark_mode'" :label="t('layout.basculerTheme')" @click="dark.toggle()">
+                <q-tooltip>{{ t('layout.basculerTheme') }}</q-tooltip>
+              </q-btn>
+
+              </div>
               <q-item v-if="installable" clickable v-close-popup @click="installer">
                 <q-item-section avatar><q-icon name="install_mobile" /></q-item-section>
                 <q-item-section>
@@ -108,7 +111,7 @@
           </div>
           <template v-if="raccourcisVisibles.length">
             <div class="index__repere">{{ t('layout.frequentTasks') }}</div>
-            <q-item v-for="lien in raccourcisVisibles" :key="lien.to" :to="lien.to" :exact="lien.exact" class="index__lien" @click="avantNavigationMenu">
+            <q-item v-for="lien in raccourcisVisibles" :key="lien.to" :to="lien.to" :exact="lien.exact" :active="familles[lien.to]?.includes(route.path) || undefined" class="index__lien" @click="avantNavigationMenu">
               <q-item-section avatar><q-icon :name="lien.icone" /></q-item-section>
               <q-item-section>{{ lien.libelle }}</q-item-section>
               <q-item-section v-if="lien.badge" side><q-badge color="negative">{{ lien.badge }}</q-badge></q-item-section>
@@ -125,7 +128,7 @@
               <q-item
               clickable
               :to="lien.to"
-              :exact="lien.exact"
+              :exact="lien.exact" :active="familles[lien.to]?.includes(route.path) || undefined"
               class="index__lien"
               @click="avantNavigationMenu"
             >
@@ -235,6 +238,8 @@ const menu = computed(() => {
   ) => {
     const meta = router.resolve(to).meta;
     const autorises = meta.roles ?? roles;
+    if (['/notes', '/bulletins', '/tirage', '/demandes-docs/tarifs', '/statistiques-mesrs', '/synthese-presences', '/statistiques', '/rapports', '/attestations', '/demandes-docs', '/cartes-etudiantes', '/reclamations/mes', '/demandes-docs/mes'].includes(to)) return [];
+    if (to === '/examens/scan' && !['ENSEIGNANT', 'CONTROLEUR'].includes(r ?? '')) return [];
     if (!services.autorise(to) || (r === 'ENSEIGNANT' && to === '/seances') || (autorises && !est(...autorises))) return [];
     const intitule = r === 'ETUDIANT' && to === '/vod'
       ? t('layout.studentVideoCourses')
@@ -243,6 +248,11 @@ const menu = computed(() => {
   };
 
   const groupes = [
+    { titre: '', liens: [
+      ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'], '/suivi-presences', 'insights', t('simplification.presence')),
+      ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/documents', 'description', t('simplification.documents')),
+      ...lien(['ETUDIANT'], '/mes-demarches', 'assignment', t('simplification.procedures')),
+    ] },
     // L'étudiant ouvre le panneau sur ce qui le concerne : sa rubrique passe
     // avant celles du personnel, qui pour lui sont toutes vides.
     {
@@ -420,7 +430,7 @@ const menu = computed(() => {
         ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/scolarite', 'school', t('nav.scolarite')),
         ...lien(['ADMIN', 'DIRECTION'], '/audit', 'history', t('audit.title')),
         ...lien(['ADMIN', 'DIRECTION'], '/statistiques-mesrs', 'analytics', 'Statistiques MESRS'),
-        ...lien(['ADMIN', 'DIRECTION'], '/rectorat', 'account_balance', 'Tableau de bord Rectorat'),
+        ...lien(['ADMIN', 'DIRECTION'], '/bilan', 'account_balance', t('simplification.bilan')),
         ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/recettes', 'request_quote', 'Régie des recettes'),
         ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/paie', 'payments', 'Paie des vacataires'),
         ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/patrimoine', 'inventory_2', 'Patrimoine & matériel'),
@@ -462,8 +472,8 @@ const menu = computed(() => {
     { id: 'campus', titre: t('layout.primary.campus'), icone: 'apartment', liens: [] as typeof groupes[number]['liens'] },
     { id: 'administration', titre: t('layout.primary.administration'), icone: 'settings', liens: [] as typeof groupes[number]['liens'] },
   ];
-  const presence = ['/synthese-presences', '/controle', '/seances', '/mes-seances', '/justificatifs', '/statistiques', '/rapports', '/emploi-du-temps'];
-  const registrar = ['portail', 'scolarite', 'etudiants', 'inscriptions', 'examens', 'notes', 'evaluations', 'deliberations', 'bulletins', 'attestations', 'demandes-docs', 'mes-demandes', 'ma-carte', 'cartes-etudiantes', 'stages', 'tirage', 'reclamations', 'mes-reclamations', 'badges'];
+  const presence = ['/suivi-presences', '/synthese-presences', '/controle', '/seances', '/mes-seances', '/justificatifs', '/statistiques', '/rapports', '/emploi-du-temps'];
+  const registrar = ['documents', 'mes-demarches', 'portail', 'scolarite', 'etudiants', 'inscriptions', 'examens', 'notes', 'evaluations', 'deliberations', 'bulletins', 'attestations', 'demandes-docs', 'mes-demandes', 'ma-carte', 'cartes-etudiantes', 'stages', 'tirage', 'reclamations', 'mes-reclamations'];
   const finance = ['paiements', 'recettes', 'paie'];
   const campus = ['bibliotheque', 'bibliotheque-gestion', 'vod', 'resto', 'cites', 'helpdesk', 'elections', 'patrimoine', 'reservations', 'formations', 'formations-admin', 'badges'];
   const dejaPlaces = new Set<string>();
@@ -474,7 +484,7 @@ const menu = computed(() => {
     const index = presence.includes(lien.to) ? 0 : registrar.includes(racine) ? 1 : finance.includes(racine) ? 2 : campus.includes(racine) ? 3 : 4;
     if (index === 1) lien.section = t(['etudiants', 'inscriptions', 'portail', 'scolarite'].includes(racine) ? 'accueilUniversity.dossiers'
       : ['examens', 'notes', 'evaluations', 'deliberations', 'bulletins', 'tirage'].includes(racine) ? 'accueilUniversity.resultats'
-      : ['attestations', 'demandes-docs', 'ma-carte', 'cartes-etudiantes', 'badges'].includes(racine) ? 'accueilUniversity.documents' : 'layout.groups.documents');
+      : ['documents', 'attestations', 'demandes-docs', 'ma-carte', 'cartes-etudiantes'].includes(racine) ? 'accueilUniversity.documents' : 'layout.groups.documents');
     if (index === 4) lien.section = t(['affectations', 'enseignants', 'matieres', 'structure', 'salles', 'imports'].includes(racine) ? 'layout.groups.organisation' : 'layout.groups.settings');
     rubriques[index].liens.push(lien);
   }
@@ -484,17 +494,24 @@ const menu = computed(() => {
 
 const raccourcis = computed(() => {
   const parRole: Record<string, string[]> = {
-    ADMIN: ['/', '/controle', '/inscriptions', '/rapports'],
-    DIRECTION: ['/', '/rapports', '/paie', '/rectorat'],
-    SCOLARITE: ['/scolarite', '/inscriptions', '/notes', '/demandes-docs'],
+    ADMIN: ['/', '/controle', '/inscriptions', '/suivi-presences'],
+    DIRECTION: ['/', '/suivi-presences', '/paie', '/bilan'],
+    SCOLARITE: ['/scolarite', '/inscriptions', '/evaluations', '/documents'],
     CONTROLEUR: ['/controle', '/emploi-du-temps'],
     ENSEIGNANT: ['/mes-seances', '/emploi-du-temps', '/justificatifs'],
-    CHEF_DEPARTEMENT: ['/', '/seances', '/notes', '/rapports'],
+    CHEF_DEPARTEMENT: ['/', '/seances', '/evaluations', '/suivi-presences'],
     ETUDIANT: ['/portail', '/emploi-du-temps', '/ma-carte'],
   };
   const tous = menu.value.flatMap(groupe => groupe.liens);
   return (parRole[auth.utilisateur?.role || ''] || []).flatMap(to => tous.filter(lien => lien.to === to));
 });
+const familles: Record<string, string[]> = {
+  '/suivi-presences': ['/synthese-presences', '/statistiques', '/rapports'],
+  '/documents': ['/demandes-docs', '/attestations', '/cartes-etudiantes'],
+  '/bilan': ['/rectorat', '/statistiques-mesrs'],
+  '/mes-demarches': ['/demandes-docs/mes', '/reclamations/mes'],
+  '/evaluations': ['/notes'], '/deliberations': ['/bulletins'], '/examens': ['/tirage'],
+};
 const normaliserRecherche = (texte: string) => texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
 const rechercheNormalisee = computed(() => normaliserRecherche(rechercheMenu.value || ''));
 const raccourcisVisibles = computed(() => raccourcis.value.filter(lien => normaliserRecherche(lien.libelle).includes(rechercheNormalisee.value)));
@@ -516,7 +533,7 @@ function avantNavigationMenu() {
 watch(() => route.path, path => {
   rechercheMenu.value = '';
   const lienActif = menu.value.flatMap(groupe => groupe.liens)
-    .filter(lien => path === lien.to || (!lien.exact && path.startsWith(`${lien.to}/`)))
+    .filter(lien => path === lien.to || familles[lien.to]?.includes(path) || (!lien.exact && path.startsWith(`${lien.to}/`)))
     .sort((a, b) => b.to.length - a.to.length)[0];
   rubriqueOuverte.value = rubriquesVisibles.value.find(groupe => groupe.liens.some(lien => lien.to === lienActif?.to))?.id ?? null;
 }, { immediate: true });
@@ -671,4 +688,5 @@ onMounted(async () => {
 }
 
 body.body--dark .index__lien:hover { background: rgba(255, 255, 255, 0.06); }
+body.body--dark .index__lien.q-item--active { color: var(--up-encre); }
 </style>

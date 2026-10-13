@@ -47,13 +47,6 @@
           :label="$t('utilisateurs.filters.department')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="utilisateurs"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <q-table
@@ -378,6 +371,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -386,7 +380,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import { LIBELLE_ROLE } from '../utils/libelles';
 import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '../types';
 
@@ -400,7 +393,7 @@ const departements = ref<Departement[]>([]);
 const enseignants = ref<Enseignant[]>([]);
 const optionsEnseignants = ref<{ label: string; value: string }[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const utilisateurEdite = ref<Utilisateur | null>(null);
 const enregistrement = ref(false);

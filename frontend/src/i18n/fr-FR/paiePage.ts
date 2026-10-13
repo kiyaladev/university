@@ -18,7 +18,7 @@ export default {
   },
   links: {
     reports: {
-      label: 'Rapports & états',
+      label: 'Rapports de présence',
       help: 'L’état de paiement détaillé, enseignant par enseignant',
     },
     teachingLoads: {

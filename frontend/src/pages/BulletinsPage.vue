@@ -26,8 +26,6 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="resultats" />
-
     <filter-bar
       v-model="filtres"
       :chips="chips"
@@ -70,13 +68,6 @@
           emit-value
           map-options
           :label="$t('bulletins.filters.decision')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="bulletins"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
@@ -180,43 +171,42 @@
 
           <template #body-cell-actions="p">
             <q-td :props="p" class="text-right">
-              <q-btn
+<q-btn
                 flat
-                dense
-                round
+                dense no-caps
                 icon="visibility"
-                :aria-label="$t('bulletins.table.ariaLabels.voirBulletin')"
+                :aria-label="$t('bulletins.table.ariaLabels.voirBulletin')" :label="$t('bulletins.table.ariaLabels.voirBulletin')"
                 @click.stop="selectionner(p.row)"
               >
                 <q-tooltip>{{ $t('bulletins.table.tooltips.voirBulletin') }}</q-tooltip>
               </q-btn>
-              <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
                 flat
-                dense
-                round
+                dense no-caps
                 icon="picture_as_pdf"
                 :color="p.row.deliberationId ? 'primary' : 'grey-5'"
                 :disable="!p.row.deliberationId"
-                :aria-label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
+                :aria-label="$t('bulletins.table.ariaLabels.imprimerBulletin')" :label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
                 @click.stop="imprimerUn(p.row)"
               >
                 <q-tooltip>
                   {{ p.row.deliberationId ? $t('bulletins.table.tooltips.imprimerOfficiel') : $t('bulletins.table.tooltips.aucuneDeliberationEtudiant') }}
                 </q-tooltip>
               </q-btn>
-              <q-btn
+<q-btn v-close-popup
                 v-if="p.row.decision === 'ADMIS'"
                 flat
-                dense
-                round
+                dense no-caps
                 icon="verified_user"
                 color="secondary"
-                :aria-label="$t('bulletins.table.ariaLabels.emettreAttestation')"
+                :aria-label="$t('bulletins.table.ariaLabels.emettreAttestation')" :label="$t('bulletins.table.ariaLabels.emettreAttestation')"
                 @click.stop="allerAttestation(p.row)"
               >
                 <q-tooltip>{{ $t('bulletins.table.tooltips.emettreAttestation') }}</q-tooltip>
               </q-btn>
-            </q-td>
+</actions-secondaires>
+</q-td>
           </template>
         </q-table>
 
@@ -252,8 +242,9 @@
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-              <q-btn flat dense no-caps icon="visibility" :label="$t('bulletins.cards.bulletin')" @click.stop="selectionner(l)" />
-              <q-btn
+<q-btn flat dense no-caps icon="visibility" :label="$t('bulletins.cards.bulletin')" @click.stop="selectionner(l)" />
+<actions-secondaires>
+<q-btn v-close-popup
                 flat
                 dense
                 no-caps
@@ -262,7 +253,7 @@
                 :disable="!l.deliberationId"
                 @click.stop="imprimerUn(l)"
               />
-              <q-btn
+<q-btn v-close-popup
                 v-if="l.decision === 'ADMIS'"
                 flat
                 dense
@@ -272,7 +263,8 @@
                 :label="$t('bulletins.cards.attestation')"
                 @click.stop="allerAttestation(l)"
               />
-            </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
           </q-card>
           <div v-if="!lignesPage.length" class="etat-vide plaque">
             <q-icon name="school" size="32px" color="grey-5" />
@@ -295,7 +287,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -306,7 +299,6 @@ import { useAuthStore } from '../stores/auth';
 import BulletinCard from '../components/BulletinCard.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import SemestreSelect from '../components/SemestreSelect.vue';
 import { ouvrirImpression, ouvrirImpressions } from '../services/impression';
 import {
@@ -362,7 +354,7 @@ const deliberations = ref<Deliberation[]>([]);
 
 const filtres = ref<Record<string, any>>({});
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const page = ref(1);
 const pageSize = ref(20);
 

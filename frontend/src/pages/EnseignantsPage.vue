@@ -46,13 +46,6 @@
           :label="$t('enseignants.filters.statutLabel')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="enseignants"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <q-table
@@ -120,61 +113,58 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="assignment_ind"
-            :aria-label="$t('enseignants.table.actionsAria.charges')"
-            @click="voirCharges(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.charges') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            color="primary"
-            icon="verified_user"
-            :aria-label="$t('enseignants.table.actionsAria.moyens')"
-            @click="ouvrirMoyens(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.moyens') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="assessment"
-            :aria-label="$t('enseignants.table.actionsAria.fiche')"
-            @click="imprimerFiche(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.fiche') }}</q-tooltip>
-          </q-btn>
-          <q-btn
+<q-btn
             v-if="auth.peutPlanifier"
             flat
-            dense
-            round
+            dense no-caps
             icon="edit"
-            :aria-label="$t('enseignants.table.actionsAria.modifier')"
+            :aria-label="$t('enseignants.table.actionsAria.modifier')" :label="$t('enseignants.table.actionsAria.modifier')"
             @click="ouvrir(p.row)"
           >
             <q-tooltip>{{ $t('enseignants.table.actionsTooltip.modifier') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            flat
+            dense no-caps
+            icon="assignment_ind"
+            :aria-label="$t('enseignants.table.actionsAria.charges')" :label="$t('enseignants.table.actionsAria.charges')"
+            @click="voirCharges(p.row)"
+          >
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.charges') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
+            flat
+            dense no-caps
+            color="primary"
+            icon="verified_user"
+            :aria-label="$t('enseignants.table.actionsAria.moyens')" :label="$t('enseignants.table.actionsAria.moyens')"
+            @click="ouvrirMoyens(p.row)"
+          >
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.moyens') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
+            flat
+            dense no-caps
+            icon="assessment"
+            :aria-label="$t('enseignants.table.actionsAria.fiche')" :label="$t('enseignants.table.actionsAria.fiche')"
+            @click="imprimerFiche(p.row)"
+          >
+            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.fiche') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
             v-if="auth.estAdmin"
             flat
-            dense
-            round
+            dense no-caps
             color="negative"
             icon="delete"
-            :aria-label="$t('enseignants.table.actionsAria.supprimer')"
+            :aria-label="$t('enseignants.table.actionsAria.supprimer')" :label="$t('enseignants.table.actionsAria.supprimer')"
             @click="supprimer(p.row)"
           >
             <q-tooltip>{{ $t('enseignants.table.actionsTooltip.supprimer') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -206,24 +196,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right">
-          <q-btn
-            flat
-            dense
-            no-caps
-            icon="assignment_ind"
-            :label="$t('enseignants.cards.charges')"
-            @click="voirCharges(e)"
-          />
-          <q-btn
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="verified_user"
-            :label="$t('enseignants.cards.attestation')"
-            @click="ouvrirMoyens(e)"
-          />
-          <q-btn
+<q-btn
             v-if="auth.peutPlanifier"
             flat
             dense
@@ -232,7 +205,26 @@
             :label="$t('enseignants.cards.modifier')"
             @click="ouvrir(e)"
           />
-        </q-card-actions>
+<actions-secondaires>
+<q-btn v-close-popup
+            flat
+            dense
+            no-caps
+            icon="assignment_ind"
+            :label="$t('enseignants.cards.charges')"
+            @click="voirCharges(e)"
+          />
+<q-btn v-close-popup
+            flat
+            dense
+            no-caps
+            color="primary"
+            icon="verified_user"
+            :label="$t('enseignants.cards.attestation')"
+            @click="ouvrirMoyens(e)"
+          />
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!enseignants.length && !chargement" class="etat-vide">
         <q-icon name="person" size="34px" />
@@ -353,6 +345,8 @@
 </template>
 
 <script setup lang="ts">
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -362,7 +356,6 @@ import { useAuthStore } from '../stores/auth';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
   LIBELLE_STATUT_ENSEIGNANT,
@@ -385,7 +378,7 @@ const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 const enseignants = ref<Enseignant[]>([]);
 const departements = ref<Departement[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const enseignantEdite = ref<Enseignant | null>(null);
 

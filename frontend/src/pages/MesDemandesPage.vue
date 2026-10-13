@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="procedures" />
     <page-header :title="$t('mesDemandes.title')" :subtitle="$t('mesDemandes.subtitle')">
       <template #actions>
 <div class="col-auto">
@@ -28,20 +29,8 @@
       </template>
     </q-banner>
 
-    <div v-if="!rolePasBon" class="row q-col-gutter-md q-mb-md">
-      <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
-        <q-card flat bordered class="carte">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres" :class="{ 'text-warning': s.alerte }">
-              {{ stats?.[s.cle] ?? 0 }}
-            </div>
-            <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 text-caption text-grey-7">
-        {{ $t('mesDemandes.stats.caption') }}
-      </div>
+    <div v-if="!rolePasBon" class="resume-liste" role="status">
+      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
     <filter-bar
@@ -51,7 +40,7 @@
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
-      <template #avances>
+      <template #principaux>
         <q-select
           v-model="filtres.statut"
           :options="OPTIONS_STATUTS"
@@ -63,12 +52,8 @@
           :label="$t('mesDemandes.filters.status')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="documents-demande.moi"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
+      <template #avances>
+
       </template>
     </filter-bar>
 
@@ -370,6 +355,8 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -378,7 +365,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import DemandeDocumentDialog from '../components/DemandeDocumentDialog.vue';
 import WorkflowStepper from '../components/WorkflowStepper.vue';
 import {
@@ -431,7 +417,7 @@ const demandes = ref<DemandeDocument[]>([]);
 const stats = ref<Record<string, number> | null>(null);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '' });
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = usePresentationListe();
 const chargement = ref(false);
 
 const creationOuverte = ref(false);
@@ -630,10 +616,12 @@ $rouge: #CE1126;
   letter-spacing: -0.01em;
 
   &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fond; color: $jaune-texte; }
-  &.statut-PAYEE { background: #007a4d; }
+  .pochoir { color: inherit; }
+
+  &.statut-PAYEE { background: #007a4d; color: white; }
   &.statut-EN_TRAITEMENT { background: $vert-fond; color: $vert-lien; }
   &.statut-PRETE { background: $vert-fond; color: #{$vert}; }
-  &.statut-REMISE { background: #0066cc; }
+  &.statut-REMISE { background: #0066cc; color: white; }
   &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 </style>

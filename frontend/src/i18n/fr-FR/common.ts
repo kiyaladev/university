@@ -681,7 +681,7 @@ export default {
     noResults: 'Aucun résultat',
     clear: 'Effacer',
     submit: 'Lancer',
-    advanced: 'Recherche avancée',
+    advanced: "Filtres",
     hideAdvanced: 'Masquer les filtres',
   },
   auth: {

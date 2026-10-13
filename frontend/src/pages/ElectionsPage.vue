@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -6,7 +7,6 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ElectionDialog from '../components/ElectionDialog.vue';
 import CandidatDialog from '../components/CandidatDialog.vue';
 import {
@@ -32,7 +32,7 @@ const chargement = ref(false);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '' });
 
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 /** L'administrateur est aussi un électeur : il retrouve l'urne depuis ici. */
@@ -311,13 +311,6 @@ onMounted(charger);
           emit-value
           map-options
           :label="$t('elections.filters.type')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="elections"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m: string) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>

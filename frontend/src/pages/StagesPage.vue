@@ -26,7 +26,7 @@
     </q-tabs>
 
     <!-- ============================================================== -->
-    <!-- TRAVAUX : Kanban + tableau + statistiques                          -->
+    <!-- TRAVAUX : liste et suivi                          -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'travaux'" name="travaux" class="q-pa-none q-mt-md">
       <filter-bar
@@ -53,14 +53,6 @@
             :label="$t('stages.filters.supervisor')"
           />
         </template>
-        <template #actions>
-          <view-toggle
-            cle="stages.travaux"
-            :modes="['kanban', 'tableau']"
-            defaut="kanban"
-            @update:mode="(v: string) => (modeTravail = v as 'kanban' | 'tableau')"
-          />
-        </template>
       </filter-bar>
 
       <!-- Compteurs par statut -->
@@ -85,15 +77,8 @@
         </div>
       </div>
 
-      <!-- Vue Kanban -->
-      <kanban-board
-        v-if="modeTravail === 'kanban'"
-        :colonnes="colonnesKanban"
-      />
-
       <!-- Vue tableau -->
-      <q-table
-        v-else
+      <q-table :grid="$q.screen.lt.md"
         flat
         bordered
         class="carte"
@@ -103,7 +88,55 @@
         :loading="chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
-        <template #no-data>
+
+        <template #item="p">
+    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
+      <q-card-section>
+        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+          <div class="text-caption text-grey-7">{{ c.label }}</div>
+          <template v-if="c.name === 'intitule'">{{ p.row.intitule }}</template>
+  <template v-else-if="c.name === 'etudiant'">{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</template>
+  <template v-else-if="c.name === 'encadrant'">{{ p.row.encadrant?.nom }} {{ p.row.encadrant?.prenom }}</template>
+  <template v-else-if="c.name === 'statut'">{{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}</template>
+  <template v-else-if="c.name === 'periode'">{{ dateLisible(p.row.dateDebut) }} — {{ dateLisible(p.row.dateFin) }}</template>
+  <template v-else-if="c.name === 'rapport'">
+    <q-toggle :model-value="p.row.rapportRendu" :disable="['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)"
+      :label="p.row.rapportRendu ? $t('stages.table.report.done') : $t('stages.table.report.pending')"
+      @update:model-value="(v: boolean) => basculerRapport(p.row, v)" />
+  </template>
+  <template v-else-if="c.name === 'soutenance'">{{ p.row.soutenance ? dateHeureLisible(p.row.soutenance.date) : '—' }}</template>
+  <span v-else>{{ c.value }}</span>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+            <q-btn flat dense no-caps icon="visibility" :label="$t('stages.table.actions.viewSheetTooltip')" @click="detail = p.row" />
+            <q-btn
+              v-for="b in boutonsTransition(p.row).slice(0, 1)" :key="b.statut"
+              flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
+              @click="transition(p.row, b.statut)"
+            />
+            <actions-secondaires>
+              <q-btn v-close-popup
+                v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
+                flat dense no-caps icon="edit" :label="$t('stages.table.actions.editTooltip')" @click="ouvrirEdition(p.row)"
+              />
+              <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
+              <q-btn v-close-popup
+                v-for="b in boutonsTransition(p.row).slice(1)" :key="b.statut"
+                flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
+                @click="transition(p.row, b.statut)"
+              />
+              <q-btn v-close-popup v-if="peutPlanifierSoutenance(p.row)" flat dense no-caps color="primary" icon="groups"
+                :label="$t('stages.table.actions.planDefense')" @click="ouvrirSoutenance(p.row)" />
+              <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
+                :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
+              <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
+                flat dense no-caps color="negative" icon="delete" :label="$t('stages.table.actions.deleteTooltip')" @click="supprimer(p.row)" />
+            </actions-secondaires>
+          </q-card-actions>
+    </q-card></div>
+  </template>
+<template #no-data>
           <div class="full-width text-center text-grey-7 q-pa-lg">
             <q-icon name="work_off" size="38px" color="grey-5" />
             <div class="q-mt-sm">{{ $t('stages.table.emptyState.title') }}</div>
@@ -191,55 +224,30 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" :aria-label="$t('stages.table.actions.viewSheet')" @click="detail = p.row">
-              <q-tooltip>{{ $t('stages.table.actions.viewSheetTooltip') }}</q-tooltip>
-            </q-btn>
+            <q-btn flat dense no-caps icon="visibility" :label="$t('stages.table.actions.viewSheetTooltip')" @click="detail = p.row" />
             <q-btn
-              v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-              flat dense round icon="edit" :aria-label="$t('stages.table.actions.edit')" @click="ouvrirEdition(p.row)"
-            >
-              <q-tooltip>{{ $t('stages.table.actions.editTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn flat dense round icon="print" :aria-label="$t('stages.table.actions.print')" @click="imprimer(p.row)">
-              <q-tooltip>{{ $t('stages.table.actions.print') }}</q-tooltip>
-            </q-btn>
-            <template v-if="boutonsTransition(p.row).length">
-              <q-btn
-                v-for="b in boutonsTransition(p.row).slice(0, 1)"
-                :key="b.statut"
-                flat dense round
-                :color="b.couleur"
-                :icon="b.icone"
-                :aria-label="b.libelle"
+              v-for="b in boutonsTransition(p.row).slice(0, 1)" :key="b.statut"
+              flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
+              @click="transition(p.row, b.statut)"
+            />
+            <actions-secondaires>
+              <q-btn v-close-popup
+                v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
+                flat dense no-caps icon="edit" :label="$t('stages.table.actions.editTooltip')" @click="ouvrirEdition(p.row)"
+              />
+              <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
+              <q-btn v-close-popup
+                v-for="b in boutonsTransition(p.row).slice(1)" :key="b.statut"
+                flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
                 @click="transition(p.row, b.statut)"
-              >
-                <q-tooltip>{{ b.libelle }}</q-tooltip>
-              </q-btn>
-            </template>
-            <q-btn
-              v-if="peutPlanifierSoutenance(p.row)"
-              flat dense round color="primary" icon="groups"
-              :aria-label="$t('stages.table.actions.planDefense')"
-              @click="ouvrirSoutenance(p.row)"
-            >
-              <q-tooltip>{{ $t('stages.table.actions.planDefense') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutConstatJury(p.row)"
-              flat dense round color="deep-purple" icon="fact_check"
-              :aria-label="$t('stages.table.actions.juryReport')"
-              @click="ouvrirJury(p.row)"
-            >
-              <q-tooltip>{{ $t('stages.table.actions.juryReportTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-              flat dense round color="negative" icon="delete"
-              :aria-label="$t('stages.table.actions.delete')"
-              @click="supprimer(p.row)"
-            >
-              <q-tooltip>{{ $t('stages.table.actions.deleteTooltip') }}</q-tooltip>
-            </q-btn>
+              />
+              <q-btn v-close-popup v-if="peutPlanifierSoutenance(p.row)" flat dense no-caps color="primary" icon="groups"
+                :label="$t('stages.table.actions.planDefense')" @click="ouvrirSoutenance(p.row)" />
+              <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
+                :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
+              <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
+                flat dense no-caps color="negative" icon="delete" :label="$t('stages.table.actions.deleteTooltip')" @click="supprimer(p.row)" />
+            </actions-secondaires>
           </q-td>
         </template>
       </q-table>
@@ -464,10 +472,9 @@
 <script setup lang="ts">
 import SoutenanceDialog from '../components/SoutenanceDialog.vue';
 import TravailDialog from '../components/TravailDialog.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import FilterBar from '../components/FilterBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
-import KanbanBoard from '../components/KanbanBoard.vue';
 import CalendarGrid from '../components/CalendarGrid.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -505,7 +512,6 @@ type SoutenanceCalendrier = {
 };
 
 const onglet = ref<'travaux' | 'soutenances'>('travaux');
-const modeTravail = ref<'kanban' | 'tableau'>('kanban');
 
 const travaux = ref<TravailEncadre[]>([]);
 const soutenancesAVenir = ref<SoutenanceCalendrier[]>([]);
@@ -590,17 +596,6 @@ const couleurStatut = (s: string) =>
           ? 'secondary'
           : 'grey-7';
 
-const COLONNES_KANBAN = computed<Array<{
-  statut: StatutEncadrement;
-  titre: string;
-  couleur: string;
-}>>(() => [
-  { statut: 'PROPOSE', titre: t('stages.kanban.columns.proposed'), couleur: '#86868b' },
-  { statut: 'VALIDE', titre: t('stages.kanban.columns.validated'), couleur: '#007A4D' },
-  { statut: 'EN_COURS', titre: t('stages.kanban.columns.inProgress'), couleur: '#1D1D1F' },
-  { statut: 'SOUTENU', titre: t('stages.kanban.columns.defended'), couleur: '#007A4D' },
-  { statut: 'ABANDONNE', titre: t('stages.kanban.columns.abandoned'), couleur: '#CE1126' },
-]);
 
 const compteurs = computed(() => {
   const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];
@@ -661,72 +656,6 @@ const statsParType = computed(() => {
     label: LIBELLE_TYPE_ENCADREMENT[type],
     nb: travaux.value.filter((t) => t.type === type).length,
   }));
-});
-
-const colonnesKanban = computed(() => {
-  const f = filtresTravaux.value;
-  const recherche = (f.recherche ?? '').toString().trim().toLowerCase();
-  // Un compteur sélectionné ne garde que sa colonne : le tableau et le kanban
-  // montrent alors exactement le même sous-ensemble.
-  const colonnesRetenues = f.statut
-    ? COLONNES_KANBAN.value.filter((c) => c.statut === f.statut)
-    : COLONNES_KANBAN.value;
-  return colonnesRetenues.map((col) => {
-    const cartes = travaux.value
-      .filter((t) => t.statut === col.statut)
-      .filter((t) => {
-        if (f.type && t.type !== f.type) return false;
-        if (f.encadrantId && t.encadrantId !== f.encadrantId) return false;
-        if (recherche) {
-          const blob = `${t.intitule} ${t.entreprise ?? ''} ${t.lieu ?? ''}`.toLowerCase();
-          if (!blob.includes(recherche)) return false;
-        }
-        return true;
-      })
-      .map((tr) => ({
-        id: tr.id,
-        titre: tr.intitule,
-        sousTitre: tr.etudiant ? `${tr.etudiant.nom} ${tr.etudiant.prenom} — ${tr.etudiant.matricule ?? ''}` : t('stages.kanban.studentToDesignate'),
-        meta: `${tr.encadrant ? `${tr.encadrant.nom} ${tr.encadrant.prenom}` : t('stages.toDesignate')}${tr.entreprise ? ` · ${tr.entreprise}` : ''}`,
-        badge: LIBELLE_TYPE_ENCADREMENT[tr.type] ?? tr.type,
-        couleur: col.couleur,
-        onClick: () => { detail.value = tr; },
-        actions: [
-          ...(peutCreer.value && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(tr.statut)
-            ? [{
-                label: t('stages.kanban.actions.edit'),
-                icone: 'edit',
-                couleur: 'primary',
-                onClick: () => ouvrirEdition(tr),
-              }]
-            : []),
-          ...(boutonsTransition(tr).slice(0, 1).map((b) => ({
-            label: b.libelle,
-            icone: b.icone,
-            couleur: b.couleur,
-            onClick: () => transition(tr, b.statut),
-          }))),
-          ...(peutPlanifierSoutenance(tr) ? [{
-            label: t('stages.kanban.actions.defense'),
-            icone: 'groups',
-            couleur: 'primary',
-            onClick: () => ouvrirSoutenance(tr),
-          }] : []),
-          ...(peutConstatJury(tr) ? [{
-            label: t('stages.kanban.actions.report'),
-            icone: 'fact_check',
-            couleur: 'deep-purple',
-            onClick: () => ouvrirJury(tr),
-          }] : []),
-        ],
-      }));
-    return {
-      identifiant: col.statut,
-      titre: col.titre,
-      couleur: col.couleur,
-      cartes,
-    };
-  });
 });
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
@@ -879,7 +808,7 @@ async function charger() {
   try {
     const f = filtresTravaux.value;
     // Le statut reste un filtre d'affichage : envoyé au serveur, il viderait
-    // les compteurs des autres états et les colonnes du kanban.
+    // les compteurs des autres états.
     const [travauxRes, calendrierRes] = await Promise.all([
       api.get('/travaux-encadres', {
         params: {

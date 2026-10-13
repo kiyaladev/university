@@ -66,9 +66,6 @@
             clearable
           />
         </template>
-        <template #actions>
-          <view-toggle cle="cites.residences" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeResidences = v as 'tableau' | 'cartes')" />
-        </template>
       </filter-bar>
 
       <!-- Vue tableau -->
@@ -238,9 +235,6 @@
             clearable
             :label="$t('cites.chambres.filters.statut')"
           />
-        </template>
-        <template #actions>
-          <view-toggle cle="cites.chambres" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeChambres = v as 'tableau' | 'cartes')" />
         </template>
       </filter-bar>
 
@@ -430,9 +424,6 @@
             clearable
             @keydown.enter="requeterAttributions"
           />
-        </template>
-        <template #actions>
-          <view-toggle cle="cites.attributions" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeAttributions = v as 'tableau' | 'cartes')" />
         </template>
       </filter-bar>
 
@@ -685,6 +676,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -692,7 +684,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ResidenceDialog from '../components/ResidenceDialog.vue';
 import ChambreDialog from '../components/ChambreDialog.vue';
@@ -728,9 +719,9 @@ const chambreDialog = ref(false);
 const chambreEditee = ref<Chambre | null>(null);
 const attributionDialog = ref(false);
 
-const modeResidences = ref<'tableau' | 'cartes'>('cartes');
-const modeChambres = ref<'tableau' | 'cartes'>('tableau');
-const modeAttributions = ref<'tableau' | 'cartes'>('cartes');
+const modeResidences = usePresentationListe();
+const modeChambres = usePresentationListe();
+const modeAttributions = usePresentationListe();
 
 const anneeDefaut = ref<string | null>(null);
 

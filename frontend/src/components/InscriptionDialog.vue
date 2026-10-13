@@ -44,23 +44,14 @@
           </div>
         </div>
         <q-input
+          v-if="tarifOfficiel === null"
           v-model.number="form.montantFrais"
           type="number"
           outlined
           dense
           :label="$t('inscriptions.createDialog.amount')"
-          :disable="tarifOfficiel !== null"
-          :hint="$t(tarifOfficiel !== null ? 'inscriptions.createDialog.officialFeeApplied' : 'inscriptions.createDialog.noFee')"
+          :hint="$t('inscriptions.createDialog.noFee')"
         >
-          <template #append>
-            <q-icon
-              v-if="tarifOfficiel !== null"
-              name="verified"
-              color="positive"
-            >
-              <q-tooltip>{{ $t('inscriptions.createDialog.officialFeeApplied') }}</q-tooltip>
-            </q-icon>
-          </template>
         </q-input>
       </q-card-section>
 

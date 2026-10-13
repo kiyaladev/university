@@ -68,7 +68,9 @@
     "test:qa:journal-gestion": "node tests/journal-gestion-qa.mjs",
     "test:qa:journal-documents-stages": "node tests/journal-documents-stages-qa.mjs",
     "test:qa:journal-plagiat": "node tests/journal-plagiat-qa.mjs",
-    "test:qa:journal-clavier": "node tests/journal-clavier-reel-qa.mjs"
+    "test:qa:journal-clavier": "node tests/journal-clavier-reel-qa.mjs",
+    "test:ui:simplification": "node tests/simplification.mjs",
+    "test:qa:simplification": "node tests/simplification-parcours.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.2",

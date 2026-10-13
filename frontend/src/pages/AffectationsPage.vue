@@ -74,13 +74,6 @@
           :label="$t('affectations.filters.year')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="affectations"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <q-table
@@ -321,6 +314,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -329,7 +323,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import type { Affectation, AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre } from '../types';
 
 /** Le backend joint l'année académique ; le type partagé ne la déclare pas. */
@@ -351,7 +344,7 @@ const optionsEnseignants = ref<{ label: string; value: string }[]>([]);
 const optionsMatieres = ref<{ label: string; value: string }[]>([]);
 
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const affectationEditee = ref<Charge | null>(null);
 const enregistrement = ref(false);

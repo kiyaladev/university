@@ -15,13 +15,6 @@
       </q-chip>
     </header>
 
-    <liens-croises
-      :liens="[
-        { to: '/deliberations', libelle: $t('notificationsPage.links.deliberations.label'), icone: 'how_to_vote', aide: $t('notificationsPage.links.deliberations.help') },
-        { to: '/etudiants', libelle: $t('notificationsPage.links.etudiants.label'), icone: 'groups', aide: $t('notificationsPage.links.etudiants.help') },
-      ]"
-    />
-
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="diffusion" icon="campaign" :label="$t('notificationsPage.tabs.diffusion')" no-caps />
       <q-tab name="historique" icon="history" :label="$t('notificationsPage.tabs.historique')" no-caps />
@@ -347,7 +340,6 @@ import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChartCanvas from '../components/ChartCanvas.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 
 /**
  * Peintures des états d'envoi, identiques aux pastilles du registre :

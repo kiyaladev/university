@@ -33,13 +33,6 @@
           :label="$t('formationsAdmin.filters.status')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="formations.admin"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <!-- Statistiques -->
@@ -445,6 +438,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -454,7 +448,6 @@ import { formationsService, type FormationDashboard } from '../services/formatio
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import FormationDialog from '../components/FormationDialog.vue';
 import {
   LIBELLE_STATUT_FORMATION,
@@ -482,7 +475,7 @@ const chargement = ref(false);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 
 const filtres = ref<Record<string, any>>({ recherche: '' });
-const mode = ref<'tableau' | 'cartes'>('tableau');
+const mode = usePresentationListe();
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_FORMATION).map(([value, label]) => ({
   value: value as StatutFormation,

@@ -1,6 +1,6 @@
 /** Namespace `rapports` — page RapportsPage.vue (états ligne à ligne du registre de contrôle). */
 export default {
-  title: 'Rapports & états',
+  title: 'Rapports de présence',
   subtitle:
     "Les états ligne à ligne du registre de contrôle, sur une période choisie : qui a assuré quoi, combien d'heures, combien à payer. C'est la pièce justificative — imprimable et exportable. Les indicateurs de suivi quotidien sont dans Statistiques, la synthèse annuelle dans le Tableau de bord Rectorat.",
   crossLinks: {

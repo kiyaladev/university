@@ -1,8 +1,8 @@
 /** Namespace `rectoratPage` — Rectorate dashboard page. */
 export default {
-  title: 'Rectorate Dashboard',
+  title: "Institution overview",
   subtitle:
-    'The state of the university on a single page, right now: headcount, success rate, payroll, incidents. Every figure links back to the screen that produces it. Academic year {annee}.',
+    "Current institution figures · year {annee}.",
   subtitleFallback: '—',
   filters: {
     year: 'Year',
@@ -10,12 +10,12 @@ export default {
   actions: {
     generateReport: 'Generate MESRS report',
     generateReportTooltip:
-      'Freezes the figures below into an archived snapshot, viewable in MESRS Statistics.',
+      "Save the current figures in archived reports.",
   },
   links: {
     statisticsMesrs: 'MESRS Statistics',
-    statisticsMesrsHelp: 'The frozen snapshots already sent to the Ministry',
-    reports: 'Reports & statements',
+    statisticsMesrsHelp: "The frozen reports already sent to the Ministry",
+    reports: 'Attendance reports',
     reportsHelp: 'Line-by-line, exportable statements',
     statistics: 'Statistics',
     statisticsHelp: 'Day-to-day tracking of session monitoring',
@@ -73,7 +73,7 @@ export default {
   messages: {
     dashboardLoadFailed: 'Unable to load the dashboard.',
     reportGenerated: 'MESRS report {annee} generated and archived.',
-    viewSnapshots: 'View snapshots',
+    viewSnapshots: "View archived reports",
     reportGenerationFailed: 'Unable to generate the report.',
     yearsUnavailable: 'Academic years unavailable.',
   },

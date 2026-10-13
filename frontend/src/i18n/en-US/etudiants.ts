@@ -2,7 +2,7 @@
 export default {
   title: 'Students',
   subtitle:
-    'The central registry: national student number, canteen card QR, and file count — other modules depend on it.',
+    'Find student records and access their enrolments.',
   actions: {
     new: 'New student',
     resetFilters: 'Reset filters',

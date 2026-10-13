@@ -68,20 +68,9 @@
           Le matricule (INE « 2026-0004 ») est attribué par le registre à la
           création et ne se modifie pas : on l'affiche, on ne le saisit pas.
         -->
-        <q-input
-          :model-value="etudiant?.matricule ?? $t('etudiants.dialogForm.assignedOnSave')"
-          outlined
-          dense
-          readonly
-          :label="$t('etudiants.dialogForm.matricule')"
-          :hint="
-            etudiant
-              ? $t('etudiants.dialogForm.matriculeReadOnly')
-              : $t('etudiants.dialogForm.matriculeGenerated')
-          "
-        >
-          <template #prepend><q-icon name="badge" /></template>
-        </q-input>
+        <p class="q-mt-sm q-mb-md">
+          {{ etudiant?.matricule ?? $t('etudiants.dialogForm.assignedOnSave') }}
+        </p>
 
         <span class="section-titre">{{ $t('affectations.filters.promotion') }}</span>
         <!--

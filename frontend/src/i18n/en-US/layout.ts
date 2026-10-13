@@ -1,9 +1,9 @@
 /** Namespace `layout` : application chrome (header, menus, buttons). */
 export default {
-  searchModules: 'Find a module',
+  searchModules: "Find a page",
   frequentTasks: 'Frequent tasks',
   studentVideoCourses: 'Video classes',
-  noModule: 'No matching module',
+  noModule: "No matching page",
   relatedScreensAria: 'Related screens',
   seeAlso: 'See also',
   kanban: { empty: 'No cards', count: '{n} item(s)' },

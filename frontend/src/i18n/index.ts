@@ -1,3 +1,5 @@
+import simplificationFR from './fr-FR/simplification';
+import simplificationEN from './en-US/simplification';
 import filePointagesFR from './fr-FR/filePointages';
 import filePointagesEN from './en-US/filePointages';
 import accueilScolariteFR from './fr-FR/accueilScolarite';
@@ -158,6 +160,7 @@ import importsFR from './fr-FR/imports';
 import importsEN from './en-US/imports';
 
 const frFR = {
+  simplification: simplificationFR,
   accueilUniversity: accueilUniversityFR,
   servicesActifs: servicesActifsFR,
   accueilScolarite: accueilScolariteFR,
@@ -236,6 +239,7 @@ const frFR = {
 };
 
 const enUS = {
+  simplification: simplificationEN,
   accueilUniversity: accueilUniversityEN,
   servicesActifs: servicesActifsEN,
   accueilScolarite: accueilScolariteEN,

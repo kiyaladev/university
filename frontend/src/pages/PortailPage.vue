@@ -36,31 +36,11 @@
             {{ $t('portail.header.matricule', { matricule: profil.etudiant.matricule }) }}
           </p>
         </div>
-        <q-btn
-          flat
-          no-caps
-          icon="logout"
-          :label="$t('portail.actions.logout')"
-          @click="seDeconnecter"
-        />
+
       </header>
 
       <!-- Tout ce que l'étudiant peut faire, au même endroit -->
-      <nav class="plaque portail__services" :aria-label="$t('portail.nav.title')">
-        <h2 class="pochoir section-titre">{{ $t('portail.nav.title') }}</h2>
-        <ul class="portail__services-liste">
-          <li v-for="s in services" :key="s.vers">
-            <router-link :to="s.vers" class="portail__service">
-              <q-icon :name="s.icone" size="24px" />
-              <span class="portail__service-texte">
-                <span class="lettrage portail__service-titre">{{ s.libelle }}</span>
-                <span class="portail__service-aide">{{ s.aide }}</span>
-              </span>
-              <q-icon name="east" size="18px" class="portail__service-fleche" />
-            </router-link>
-          </li>
-        </ul>
-      </nav>
+
 
       <div class="portail__grille">
         <!-- Inscription -->
@@ -114,11 +94,8 @@
             <barre-taux :valeur="profil.frais.taux" :seuil-bas="60" :seuil-haut="90" class="carte-portail__jauge" />
           </template>
           <p v-else class="carte-portail__aucun">{{ $t('portail.sections.frais.empty') }}</p>
-        </section>
-
         <!-- Paiements récents -->
-        <section class="plaque carte-portail">
-          <h2 class="pochoir section-titre">{{ $t('portail.sections.paiements.title') }}</h2>
+        <q-expansion-item :label="$t('simplification.history')" class="q-mt-md">
           <ul v-if="profil.paiements.length" class="carte-portail__liste">
             <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
               <span class="carte-portail__item-texte">
@@ -136,6 +113,8 @@
             </li>
           </ul>
           <p v-else class="carte-portail__aucune">{{ $t('portail.sections.paiements.empty') }}</p>
+        </q-expansion-item>
+
         </section>
 
         <!-- Résultats -->
@@ -173,8 +152,7 @@
         </section>
 
         <!-- Attestations -->
-        <section class="plaque carte-portail carte-portail--large">
-          <h2 class="pochoir section-titre">{{ $t('portail.sections.attestations.title') }}</h2>
+        <q-expansion-item class="plaque carte-portail carte-portail--large" :label="$t('portail.sections.attestations.title')">
           <ul v-if="profil.attestations.length" class="carte-portail__liste">
             <li
               v-for="a in profil.attestations"
@@ -214,11 +192,10 @@
               {{ $t('portail.sections.attestations.noteLink') }}
             </router-link>.
           </p>
-        </section>
+        </q-expansion-item>
 
         <!-- Portefeuille resto — section appendée (module resto) -->
-        <section v-if="resto" class="plaque carte-portail carte-portail--large">
-          <h2 class="pochoir section-titre">{{ $t('portail.sections.resto.title') }}</h2>
+        <q-expansion-item v-if="resto" class="plaque carte-portail carte-portail--large" :label="$t('portail.sections.resto.title')">
           <div class="carte-portail__recap">
             <span class="lettrage chiffres carte-portail__montant">
               {{ montantLisible(resto.solde) }}
@@ -258,8 +235,32 @@
           <p v-if="resto.instructions" class="pochoir carte-portail__avertissement">
             {{ resto.instructions }}
           </p>
-        </section>
+        </q-expansion-item>
       </div>
+
+      <nav class="plaque portail__services" :aria-label="$t('portail.nav.title')">
+        <h2 class="pochoir section-titre">{{ $t('portail.nav.title') }}</h2>
+        <ul class="portail__services-liste">
+          <li v-for="s in services.slice(0, 3)" :key="s.vers">
+            <router-link :to="s.vers" class="portail__service">
+              <q-icon :name="s.icone" size="24px" />
+              <span class="portail__service-texte">
+                <span class="lettrage portail__service-titre">{{ s.libelle }}</span>
+                <span v-if="s.aide" class="portail__service-aide">{{ s.aide }}</span>
+              </span>
+              <q-icon name="east" size="18px" class="portail__service-fleche" />
+            </router-link>
+          </li>
+        </ul>
+        <q-expansion-item v-if="services.length > 3" :label="$t('simplification.otherServices')">
+          <q-list>
+            <q-item v-for="s in services.slice(3)" :key="s.vers" clickable :to="s.vers">
+              <q-item-section avatar><q-icon :name="s.icone" /></q-item-section>
+              <q-item-section>{{ s.libelle }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-expansion-item>
+      </nav>
 
       <!-- Dialogue de rechargement du portefeuille resto -->
       <q-dialog v-model="dialogResto">
@@ -349,6 +350,7 @@ const { t } = useI18n();
  * route réelle de router/routes.ts ouverte au rôle ETUDIANT (ou publique).
  */
 const services = computed(() => [
+  { vers: '/emploi-du-temps', icone: 'calendar_month', libelle: t('nav.emploi-du-temps'), aide: '' },
   {
     vers: '/ma-carte',
     icone: 'badge',
@@ -356,16 +358,10 @@ const services = computed(() => [
     aide: t('portail.services.maCarte.help'),
   },
   {
-    vers: '/demandes-docs/mes',
+    vers: '/mes-demarches',
     icone: 'description',
-    libelle: t('portail.services.demandesDocuments.label'),
+    libelle: t('simplification.procedures'),
     aide: t('portail.services.demandesDocuments.help'),
-  },
-  {
-    vers: '/reclamations/mes',
-    icone: 'support_agent',
-    libelle: t('portail.services.reclamations.label'),
-    aide: t('portail.services.reclamations.help'),
   },
   {
     vers: '/elections/vote',

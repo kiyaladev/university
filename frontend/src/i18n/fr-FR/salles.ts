@@ -1,6 +1,6 @@
 /** Namespace `salles` — page SallesPage.vue (salles & QR de contrôle). */
 export default {
-  title: 'Salles & QR',
+  title: 'Salles',
   subtitle:
     'Chaque salle porte un QR affiché à l’entrée : le contrôleur le scanne pour attester sa présence sur place',
   actions: {

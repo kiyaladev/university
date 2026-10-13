@@ -111,14 +111,6 @@
         <champ-date v-model="filtres.dateMin" :label="$t('plagiatPage.filters.detectedFrom')" />
         <champ-date v-model="filtres.dateMax" :label="$t('plagiatPage.filters.detectedTo')" />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="plagiat.dashboard"
-          :modes="['tableau', 'cartes']"
-          defaut="cartes"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <!-- Top 5 documents les plus dupliqués -->
@@ -312,6 +304,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -319,7 +312,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import PlagiatCard from '../components/PlagiatCard.vue';
@@ -333,7 +325,7 @@ const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = usePresentationListe();
 
 /**
  * `GET /documents/plagiat` renvoie un tableau de bord complet — file d'attente,

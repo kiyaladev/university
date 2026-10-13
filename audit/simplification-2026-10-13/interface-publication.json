@@ -1,0 +1,89 @@
+{
+  "date": "2026-10-13T18:25:22.085Z",
+  "results": [
+    {
+      "role": "ADMIN",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "DIRECTION",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "SCOLARITE",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "CHEF_DEPARTEMENT",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "CONTROLEUR",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "ENSEIGNANT",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "role": "ETUDIANT",
+      "navigation": "OK",
+      "mobileMenu": "OK"
+    },
+    {
+      "locale": "fr-FR",
+      "adaptiveList": "OK",
+      "secondaryActions": "OK",
+      "assessmentContext": "OK",
+      "preferences": "OK"
+    },
+    {
+      "locale": "en-US",
+      "adaptiveList": "OK",
+      "secondaryActions": "OK",
+      "assessmentContext": "OK",
+      "preferences": "OK"
+    },
+    {
+      "portal": "OK",
+      "history": "OK"
+    },
+    {
+      "attendance": "OK",
+      "findingPreserved": "OK",
+      "requiredProof": "OK"
+    },
+    {
+      "correction": "OK",
+      "renewedProof": "OK",
+      "previousStatus": "OK"
+    },
+    {
+      "disabledServices": "OK"
+    },
+    {
+      "width": 375,
+      "stageTransitions": "OK",
+      "printActions": "OK",
+      "deliberationDetails": "OK"
+    },
+    {
+      "width": 768,
+      "stageTransitions": "OK",
+      "printActions": "OK",
+      "deliberationDetails": "OK"
+    },
+    {
+      "width": 1440,
+      "stageTransitions": "OK",
+      "printActions": "OK",
+      "deliberationDetails": "OK"
+    }
+  ]
+}

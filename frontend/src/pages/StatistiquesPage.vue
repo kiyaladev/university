@@ -1,5 +1,6 @@
 <template>
   <q-page class="stats">
+    <section-navigation section="presence" />
     <header class="stats__entete">
       <div>
         <h1 class="page-titre">{{ $t('statistiques.title') }}</h1>
@@ -43,7 +44,6 @@
         <q-tab name="salles" icon="meeting_room" :label="$t('statistiques.tabs.salles')" no-caps />
         <q-tab name="enseignants" icon="school" :label="$t('statistiques.tabs.enseignants')" no-caps />
       </q-tabs>
-      <bascule-vue cle="statistiques" v-model:mode="vue" />
     </div>
 
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
@@ -354,6 +354,7 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -361,8 +362,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from '../components/ChampDate.vue';
 import BarreTaux from '../components/BarreTaux.vue';
-import BasculeVue from '../components/ViewToggle.vue';
-import { useVuePreferee } from '../composables/vuePreferee';
+import { usePresentationListe } from '../composables/presentationListe';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
   aujourdhui,
@@ -380,7 +380,7 @@ const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 const onglet = ref<'salles' | 'enseignants'>(
   route.query.onglet === 'enseignants' ? 'enseignants' : 'salles',
 );
-const vue = useVuePreferee('statistiques');
+const vue = usePresentationListe();
 const chargement = ref(false);
 const salles = ref<any>(null);
 const enseignants = ref<any>(null);

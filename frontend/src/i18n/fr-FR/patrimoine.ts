@@ -1,6 +1,6 @@
 /** Namespace `patrimoine` — page PatrimoinePage.vue (inventaire du matériel). */
 export default {
-  title: 'Patrimoine & matériel',
+  title: "Inventaire et réparations",
   subtitle:
     "L'inventaire des équipements de l'université. Chaque pièce porte un QR d'inventaire, une valeur d'acquisition et un carnet de réparations qui la suit de sa mise en service à sa réforme.",
   actions: {
@@ -42,7 +42,7 @@ export default {
   links: {
     rectoratLabel: 'Tableau de bord Rectorat',
     rectoratHelp: 'Les obsolescences ci-dessous, dans la vue d’ensemble de la direction',
-    helpdeskLabel: 'Support IT',
+    helpdeskLabel: 'Assistance informatique',
     helpdeskHelp: 'Les incidents déclarés sur ces mêmes équipements',
     sallesLabel: 'Salles',
     sallesHelp: 'Les lieux où le matériel est affecté',

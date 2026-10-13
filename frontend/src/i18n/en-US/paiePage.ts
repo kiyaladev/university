@@ -18,7 +18,7 @@ export default {
   },
   links: {
     reports: {
-      label: 'Reports & statements',
+      label: 'Attendance reports',
       help: 'The detailed payment statement, teacher by teacher',
     },
     teachingLoads: {

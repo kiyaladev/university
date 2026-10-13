@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="documents" />
     <page-header :title="$t('attestations.title')" :subtitle="$t('attestations.subtitle')">
       <template #actions>
 <div class="col-auto">
@@ -25,8 +26,6 @@
       </div>
       </template>
     </page-header>
-
-    <parcours-metier parcours="documents" />
 
     <filter-bar
       v-model="filtres"
@@ -74,13 +73,6 @@
           emit-value
           map-options
           :label="$t('attestations.filters.promotion')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="attestations"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
@@ -169,39 +161,38 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
+<q-btn
             flat
-            dense
-            round
+            dense no-caps
             icon="qr_code_2"
-            :aria-label="$t('attestations.actionsColumn.detailAria')"
+            :aria-label="$t('attestations.actionsColumn.detailAria')" :label="$t('attestations.actionsColumn.detailAria')"
             @click.stop="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('attestations.actionsColumn.detailTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             flat
-            dense
-            round
+            dense no-caps
             icon="print"
-            :aria-label="$t('attestations.actionsColumn.printAria')"
+            :aria-label="$t('attestations.actionsColumn.printAria')" :label="$t('attestations.actionsColumn.printAria')"
             @click.stop="imprimer(p.row)"
           >
             <q-tooltip>{{ $t('attestations.actionsColumn.printTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutRevoquer && p.row.statut === 'EMISE'"
             flat
-            dense
-            round
+            dense no-caps
             color="negative"
             icon="block"
-            :aria-label="$t('attestations.actionsColumn.revokeAria')"
+            :aria-label="$t('attestations.actionsColumn.revokeAria')" :label="$t('attestations.actionsColumn.revokeAria')"
             @click.stop="revoquer(p.row)"
           >
             <q-tooltip>{{ $t('attestations.actionsColumn.revokeTooltip') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -236,9 +227,10 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right">
-          <q-btn flat dense no-caps icon="qr_code_2" :label="$t('attestations.actions.qr')" @click.stop="ouvrirDetail(a)" />
-          <q-btn flat dense no-caps icon="print" :label="$t('attestations.actions.print')" @click.stop="imprimer(a)" />
-          <q-btn
+<q-btn flat dense no-caps icon="qr_code_2" :label="$t('attestations.actions.qr')" @click.stop="ouvrirDetail(a)" />
+<actions-secondaires>
+<q-btn v-close-popup flat dense no-caps icon="print" :label="$t('attestations.actions.print')" @click.stop="imprimer(a)" />
+<q-btn v-close-popup
             v-if="peutRevoquer && a.statut === 'EMISE'"
             flat
             dense
@@ -248,7 +240,8 @@
             :label="$t('attestations.actions.revoke')"
             @click.stop="revoquer(a)"
           />
-        </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!attestations.length" class="etat-vide plaque">
         <q-icon name="verified_user" size="32px" color="grey-5" />
@@ -411,7 +404,9 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import SectionNavigation from '../components/SectionNavigation.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -424,7 +419,6 @@ import { useAuthStore } from '../stores/auth';
 import AttestationDialog from '../components/AttestationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import {
   LIBELLE_STATUT_ATTESTATION,
   LIBELLE_TYPE_ATTESTATION,
@@ -451,7 +445,7 @@ const { t } = useI18n();
 
 const attestations = ref<Attestation[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const page = ref(1);
 const pageSize = ref(20);

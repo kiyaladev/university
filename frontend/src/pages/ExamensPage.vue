@@ -47,13 +47,6 @@
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
-      <template #actions>
-        <view-toggle
-          cle="examens"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = m as 'tableau' | 'cartes')"
-        />
-      </template>
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -149,63 +142,60 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
+<q-btn
             flat
-            dense
-            round
+            dense no-caps
             icon="visibility"
             color="primary"
-            :aria-label="$t('examens.table.tooltips.openSheetAria')"
+            :aria-label="$t('examens.table.tooltips.openSheetAria')" :label="$t('examens.table.tooltips.openSheetAria')"
             @click.stop="ouvrirFiche(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.openSheet') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             v-if="p.row.statut === 'PLANIFIE' && peutDemarrer"
             flat
-            dense
-            round
+            dense no-caps
             icon="play_arrow"
             color="positive"
-            :aria-label="$t('examens.table.tooltips.start')"
+            :aria-label="$t('examens.table.tooltips.start')" :label="$t('examens.table.tooltips.start')"
             @click.stop="demarrer(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.start') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="p.row.statut === 'EN_COURS' && peutTerminer"
             flat
-            dense
-            round
+            dense no-caps
             icon="stop"
             color="negative"
-            :aria-label="$t('examens.table.tooltips.finish')"
+            :aria-label="$t('examens.table.tooltips.finish')" :label="$t('examens.table.tooltips.finish')"
             @click.stop="terminer(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.finish') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             flat
-            dense
-            round
+            dense no-caps
             icon="qr_code_scanner"
-            :aria-label="$t('examens.table.tooltips.scanCardsAria')"
+            :aria-label="$t('examens.table.tooltips.scanCardsAria')" :label="$t('examens.table.tooltips.scanCardsAria')"
             @click.stop="allerScan(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.scanCards') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutVoirTirage"
             flat
-            dense
-            round
+            dense no-caps
             icon="local_printshop"
-            :aria-label="$t('examens.table.tooltips.drawAria')"
+            :aria-label="$t('examens.table.tooltips.drawAria')" :label="$t('examens.table.tooltips.drawAria')"
             @click.stop="allerTirage(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -237,7 +227,7 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn
+<q-btn
               v-if="e.statut === 'PLANIFIE' && peutDemarrer"
               flat
               dense
@@ -247,7 +237,8 @@
               :label="$t('examens.actions.start')"
               @click.stop="demarrer(e)"
             />
-            <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
               v-if="e.statut === 'EN_COURS' && peutTerminer"
               flat
               dense
@@ -257,7 +248,7 @@
               :label="$t('examens.actions.finish')"
               @click.stop="terminer(e)"
             />
-            <q-btn
+<q-btn v-close-popup
               v-if="peutVoirTirage"
               flat
               dense
@@ -266,8 +257,9 @@
               :label="$t('examens.actions.drawShort')"
               @click.stop="allerTirage(e)"
             />
-            <q-btn flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
-          </q-card-actions>
+<q-btn v-close-popup flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
+</actions-secondaires>
+</q-card-actions>
         </q-card>
       </div>
       <div v-if="!examensFiltres.length" class="col-12">
@@ -406,6 +398,8 @@
 </template>
 
 <script setup lang="ts">
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -414,7 +408,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ExamenDialog from '../components/ExamenDialog.vue';
@@ -434,7 +427,7 @@ const auth = useAuthStore();
 const router = useRouter();
 
 const onglet = ref<StatutExamen>('PLANIFIE');
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const examens = ref<Examen[]>([]);
 const total = ref(0);
 const chargement = ref(false);

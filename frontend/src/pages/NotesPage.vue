@@ -17,11 +17,9 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="resultats" />
-
     <div class="carte q-pa-md q-mb-md">
       <div class="row q-col-gutter-md items-end">
-        <div class="col-12 col-md-8">
+        <div v-if="!evaluationActive" class="col-12 col-md-8">
           <autocomplete-async
             v-model="selEvaluationId"
             endpoint="/evaluations"
@@ -105,7 +103,6 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';

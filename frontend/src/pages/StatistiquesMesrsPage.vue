@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="bilan" />
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
         <h1 class="page-titre">{{ $t('statistiquesMesrs.title') }}</h1>
@@ -36,14 +37,6 @@
         </q-btn>
       </div>
     </div>
-
-    <liens-croises
-      :liens="[
-        { to: '/rectorat', libelle: $t('statistiquesMesrs.links.rectorat.label'), icone: 'dashboard', aide: $t('statistiquesMesrs.links.rectorat.hint') },
-        { to: '/rapports', libelle: $t('statistiquesMesrs.links.rapports.label'), icone: 'insights', aide: $t('statistiquesMesrs.links.rapports.hint') },
-        { to: '/statistiques', libelle: $t('statistiquesMesrs.links.statistiques.label'), icone: 'query_stats', aide: $t('statistiquesMesrs.links.statistiques.hint') },
-      ]"
-    />
 
     <div v-if="!snapshots.length && !chargement" class="plaque etat-vide">
       <q-icon name="analytics" size="42px" />
@@ -191,6 +184,7 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -199,7 +193,6 @@ import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
 import ChartCanvas from '../components/ChartCanvas.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import {
   dateHeureLisible,
   montantLisible,

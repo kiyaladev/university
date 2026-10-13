@@ -11,6 +11,6 @@ import { i18n } from '../boot/i18n';
  */
 export function titreRoute(cle?: string): string {
   if (!cle) return '';
-  if (!cle.startsWith('nav.')) return cle;
+  if (!i18n.global.te(cle)) return cle;
   return i18n.global.t(cle) as unknown as string;
 }

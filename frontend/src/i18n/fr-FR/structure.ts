@@ -1,6 +1,6 @@
 /** Namespace `structure` — page StructurePage.vue (années, départements, filières, promotions). */
 export default {
-  title: 'Structure académique',
+  title: 'Départements, filières et promotions',
   subtitle: 'Années, départements, filières et promotions — socle de l’emploi du temps',
   tabs: {
     annees: 'Années académiques',

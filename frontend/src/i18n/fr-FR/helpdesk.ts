@@ -1,11 +1,11 @@
 /** Namespace `helpdesk`. */
 export default {
   _namespace: 'helpdesk',
-  title: 'Support IT',
+  title: 'Assistance informatique',
   subtitle:
-    "Un QR sur chaque équipement : l'enseignant scanne, décrit le problème en deux clics, la DSI est prévenue sans attendre la rumeur.",
+    "Signalez un problème informatique et suivez son traitement.",
   actions: {
-    declareIncident: 'Déclarer un incident',
+    declareIncident: "Signaler un problème",
     otherProblem: 'Autre problème',
     scanEquipment: 'Scanner QR équipement',
     newEquipment: 'Nouvel équipement',
@@ -16,9 +16,9 @@ export default {
     cancel: 'Annuler',
   },
   tabs: {
-    myTickets: 'Tickets / Déclarer',
-    management: 'Gestion DSI',
-    equipment: 'Équipements & QR',
+    myTickets: "Mes signalements",
+    management: "Traitement des incidents",
+    equipment: "Équipements du support",
   },
   declareCard: {
     title: 'Déclarer en deux clics',
@@ -31,7 +31,7 @@ export default {
     titleMine: 'Mes déclarations',
     emptyAll: 'Aucun ticket déclaré.',
     emptyMine: "Vous n'avez déclaré aucun incident.",
-    emptyHint: "Choisissez une catégorie à gauche, ou scannez le QR de l'équipement en panne.",
+    emptyHint: "Utilisez « Signaler un problème » ou scannez le QR de l’équipement.",
   },
   filters: {
     searchTickets: 'Rechercher (N°, description…)',

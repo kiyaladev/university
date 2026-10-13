@@ -28,8 +28,6 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="documents" />
-
     <q-banner v-if="rolePasBon" class="note--erreur q-mb-md">
       {{ $t('tarifsDemandeAdmin.errors.role_forbidden', { role: auth.utilisateur?.role }) }}
     </q-banner>
@@ -148,7 +146,6 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';

@@ -92,13 +92,6 @@
           :label="$t('reclamations.filters.escalade')"
         />
       </template>
-      <template #actions>
-        <view-toggle
-          cle="reclamations.admin"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
-        />
-      </template>
     </filter-bar>
 
     <pagination-bar
@@ -291,6 +284,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -298,7 +292,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
@@ -335,7 +328,7 @@ const stats = ref<Record<string, number> | null>(null);
 const membresStaff = ref<Utilisateur[]>([]);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '' });
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const chargement = ref(false);
 const creationOuverte = ref(false);
 const detailOuvert = ref(false);

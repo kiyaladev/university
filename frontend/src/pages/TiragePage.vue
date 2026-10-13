@@ -45,14 +45,6 @@
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
-      <template #actions>
-        <view-toggle
-          cle="tirage"
-          :modes="['kanban', 'tableau']"
-          defaut="kanban"
-          @update:mode="(m) => (modeVue = m as 'kanban' | 'tableau')"
-        />
-      </template>
       <template #avances>
         <autocomplete-async
           v-model="filtres.examenId"
@@ -74,12 +66,7 @@
       </template>
     </filter-bar>
 
-    <div v-if="modeVue === 'kanban'" class="q-mt-md">
-      <kanban-board :colonnes="colonnesKanban" />
-    </div>
-
-    <q-table
-      v-else
+    <q-table :grid="$q.screen.lt.md"
       flat
       bordered
       class="carte q-mt-md"
@@ -89,7 +76,31 @@
       :loading="chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
-      <template #no-data>
+
+        <template #item="p">
+    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
+      <q-card-section>
+        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+          <div class="text-caption text-grey-7">{{ c.label }}</div>
+          <template v-if="c.name === 'examen'">{{ p.row.examen?.codeExamen }} · {{ p.row.examen?.intitule }}</template>
+  <template v-else-if="c.name === 'empreinte'">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</template>
+  <template v-else-if="c.name === 'stade'">{{ libelleStade(p.row.stade) }}</template>
+  <span v-else>{{ c.value }}</span>
+        </div>
+      </q-card-section>
+      <q-card-actions align="right">
+          <q-btn v-if="transitionSuivante(p.row.stade) && peutCreer" flat dense no-caps color="primary"
+            :label="labelSuivant(p.row.stade)" @click.stop="avancer(p.row)" />
+          <actions-secondaires>
+            <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('tirage.tooltips.bordereau')" @click.stop="voirBordereau(p.row)" />
+            <q-btn v-close-popup flat dense no-caps icon="quiz" :label="$t('tirage.tooltips.voirExamen')" @click.stop="allerExamen(p.row)" />
+            <q-btn v-close-popup v-if="p.row.stade === 'PROGRAMME' && peutCreer" flat dense no-caps color="negative" icon="block"
+              :label="$t('tirage.tooltips.annulerTirage')" @click.stop="annuler(p.row)" />
+          </actions-secondaires>
+        </q-card-actions>
+    </q-card></div>
+  </template>
+<template #no-data>
         <div class="etat-vide">
           <q-icon name="local_printshop" size="32px" color="grey-5" />
           <div class="q-mt-sm">{{ $t('tirage.emptyState.message') }}</div>
@@ -125,47 +136,14 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="print"
-            :aria-label="$t('tirage.ariaLabels.imprimerBordereau')"
-            @click.stop="voirBordereau(p.row)"
-          >
-            <q-tooltip>{{ $t('tirage.tooltips.bordereau') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="quiz"
-            :aria-label="$t('tirage.ariaLabels.voirExamen')"
-            @click.stop="allerExamen(p.row)"
-          >
-            <q-tooltip>{{ $t('tirage.tooltips.voirExamen') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="transitionSuivante(p.row.stade) && peutCreer"
-            flat
-            dense
-            no-caps
-            color="primary"
-            :label="labelSuivant(p.row.stade)"
-            @click.stop="avancer(p.row)"
-          />
-          <q-btn
-            v-if="p.row.stade === 'PROGRAMME' && peutCreer"
-            flat
-            dense
-            round
-            color="negative"
-            icon="block"
-            :aria-label="$t('tirage.ariaLabels.annulerTirage')"
-            @click.stop="annuler(p.row)"
-          >
-            <q-tooltip>{{ $t('tirage.tooltips.annulerTirage') }}</q-tooltip>
-          </q-btn>
+          <q-btn v-if="transitionSuivante(p.row.stade) && peutCreer" flat dense no-caps color="primary"
+            :label="labelSuivant(p.row.stade)" @click.stop="avancer(p.row)" />
+          <actions-secondaires>
+            <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('tirage.tooltips.bordereau')" @click.stop="voirBordereau(p.row)" />
+            <q-btn v-close-popup flat dense no-caps icon="quiz" :label="$t('tirage.tooltips.voirExamen')" @click.stop="allerExamen(p.row)" />
+            <q-btn v-close-popup v-if="p.row.stade === 'PROGRAMME' && peutCreer" flat dense no-caps color="negative" icon="block"
+              :label="$t('tirage.tooltips.annulerTirage')" @click.stop="annuler(p.row)" />
+          </actions-secondaires>
         </q-td>
       </template>
     </q-table>
@@ -192,10 +170,9 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
-import KanbanBoard from '../components/KanbanBoard.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import TirageDialog from '../components/TirageDialog.vue';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '../utils/libelles';
@@ -209,8 +186,6 @@ const router = useRouter();
 // Alias `translate` (not `t`) because several handlers below already use `t`
 // as the local parameter name for a Tirage row.
 const { t: translate } = useI18n();
-
-const modeVue = ref<'kanban' | 'tableau'>('kanban');
 const tirages = ref<Tirage[]>([]);
 const total = ref(0);
 const chargement = ref(false);
@@ -287,29 +262,6 @@ const colonnesTableau = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-const colonnesKanban = computed(() =>
-  ORDRES.map((stade) => {
-    const cartes = tiragesFiltres.value
-      .filter((t) => t.stade === stade)
-      .map((t) => ({
-        id: t.id,
-        titre: t.examen?.codeExamen ?? '—',
-        sousTitre: t.examen?.intitule ?? '',
-        meta: `${t.nbExemplaires} ex. · ${dateHeureLisible(t.dateTirage)} · ${(t.empreinteSource ?? '').slice(0, 12)}…`,
-        badge: LIBELLE_STADE_TIRAGE[stade],
-        couleur: couleurStade(stade),
-        actions: actionsPourCarte(t),
-        onClick: () => allerExamen(t),
-      }));
-    return {
-      identifiant: stade,
-      titre: LIBELLE_STADE_TIRAGE[stade],
-      couleur: couleurStade(stade),
-      cartes,
-    };
-  }),
-);
-
 function couleurStade(s: string) {
   switch (s) {
     case 'PROGRAMME':
@@ -351,24 +303,6 @@ function transitionSuivante(stade: string): StadeTirage | null {
 function labelSuivant(stade: string) {
   const suiv = transitionSuivante(stade);
   return suiv ? `→ ${LIBELLE_STADE_TIRAGE[suiv]}` : '';
-}
-
-function actionsPourCarte(t: Tirage) {
-  const acts: Array<{ label: string; icone: string; couleur: string; onClick: () => void }> = [
-    { label: translate('tirage.actions.bordereau'), icone: 'print', couleur: 'primary', onClick: () => voirBordereau(t) },
-  ];
-  if (transitionSuivante(t.stade) && peutCreer.value) {
-    acts.push({
-      label: labelSuivant(t.stade),
-      icone: 'arrow_forward',
-      couleur: 'primary',
-      onClick: () => avancer(t),
-    });
-  }
-  if (t.stade === 'PROGRAMME' && peutCreer.value) {
-    acts.push({ label: translate('tirage.actions.cancel'), icone: 'block', couleur: 'negative', onClick: () => annuler(t) });
-  }
-  return acts;
 }
 
 async function charger() {

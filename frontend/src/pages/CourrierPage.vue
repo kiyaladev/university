@@ -32,9 +32,6 @@
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
-      <template #actions>
-        <view-toggle cle="courrier" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')" />
-      </template>
       <template #avances>
         <q-select
           v-model="filtres.statut"
@@ -232,6 +229,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -240,7 +238,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ChampDate from '../components/ChampDate.vue';
 import CourrierDetailDialog from '../components/CourrierDetailDialog.vue';
 import CourrierCircuitDialog from '../components/CourrierCircuitDialog.vue';
@@ -262,7 +259,7 @@ const auth = useAuthStore();
 const { t } = useI18n();
 
 const onglet = ref<'ENTRANT' | 'SORTANT' | 'ARCHIVE'>('ENTRANT');
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const courriers = ref<Courrier[]>([]);
 const total = ref(0);
 const chargement = ref(false);

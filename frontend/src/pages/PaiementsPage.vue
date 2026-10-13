@@ -7,8 +7,6 @@
       </template>
     </page-header>
 
-    <parcours-metier parcours="finances" />
-
     <!-- Arrivée depuis un dossier ou une fiche étudiant : le ciblage est annoncé. -->
     <q-banner v-if="libelleCible" dense class="note--info q-mb-md">
       <template #avatar><q-icon name="filter_alt" /></template>
@@ -18,46 +16,10 @@
       </template>
     </q-banner>
 
-    <div class="row q-col-gutter-sm q-mb-md">
-      <div class="col-12 col-sm-4">
-        <q-card flat bordered class="carte paiements-kpi">
-          <q-card-section class="row items-center">
-            <q-icon name="check_circle" color="positive" size="32px" class="q-mr-md" />
-            <div>
-              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.totalCollected') }}</div>
-              <div class="lettrage chiffres paiements-kpi__valeur">
-                {{ montantLisible(kpis.totalEncaisse) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-4">
-        <q-card flat bordered class="carte paiements-kpi">
-          <q-card-section class="row items-center">
-            <q-icon name="hourglass_top" color="warning" size="32px" class="q-mr-md" />
-            <div>
-              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.pending') }}</div>
-              <div class="lettrage chiffres paiements-kpi__valeur">
-                {{ kpis.enAttente }}
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-4">
-        <q-card flat bordered class="carte paiements-kpi">
-          <q-card-section class="row items-center">
-            <q-icon name="cancel" color="negative" size="32px" class="q-mr-md" />
-            <div>
-              <div class="pochoir text-grey-7">{{ $t('paiements.kpis.failed') }}</div>
-              <div class="lettrage chiffres paiements-kpi__valeur">
-                {{ kpis.echoues }}
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+    <div class="resume-liste" role="status">
+      <span>{{ $t('paiements.kpis.totalCollected') }} : <strong>{{ montantLisible(kpis.totalEncaisse) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
+      <span>{{ $t('paiements.kpis.pending') }} : <strong>{{ kpis.enAttente }}</strong></span>
+      <span v-if="kpis.echoues">{{ $t('paiements.kpis.failed') }} : <strong>{{ kpis.echoues }}</strong></span>
     </div>
 
     <!-- Le registre est paginé côté serveur : ces totaux portent sur ce qui est affiché. -->
@@ -77,7 +39,7 @@
       :placeholder="$t('paiements.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
-      <template #avances>
+      <template #principaux>
         <q-select
           v-model="filtres.statut"
           :options="optionsStatuts"
@@ -88,6 +50,9 @@
           map-options
           :label="$t('paiements.filters.status')"
         />
+      </template>
+      <template #avances>
+
         <q-select
           v-model="filtres.mode"
           :options="optionsModes"
@@ -132,13 +97,6 @@
         />
         <champ-date v-model="filtres.dateDebut" :label="$t('paiements.filters.from')" />
         <champ-date v-model="filtres.dateFin" :label="$t('paiements.filters.to')" />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="paiements"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
-        />
       </template>
     </filter-bar>
 
@@ -348,7 +306,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
+<q-btn
             flat
             dense
             color="primary"
@@ -357,7 +315,8 @@
             :label="$t('paiements.cards.details')"
             @click="ouvrirDetail(p)"
           />
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
             v-if="peutSimuler(p)"
             flat
             dense
@@ -367,7 +326,7 @@
             :label="$t('paiements.cards.success')"
             @click="simuler(p, 'REUSSI')"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="peutSimuler(p)"
             flat
             dense
@@ -377,7 +336,7 @@
             :label="$t('paiements.cards.failed')"
             @click="simuler(p, 'ECHOUE')"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="peutAnnuler(p)"
             flat
             dense
@@ -387,7 +346,7 @@
             :label="$t('paiements.cards.cancel')"
             @click="ouvrirAnnulation(p)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="p.inscription || p.inscriptionId"
             flat
             dense
@@ -396,7 +355,7 @@
             :label="$t('paiements.cards.enrollment')"
             @click="voirInscription(p)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="p.etudiant"
             flat
             dense
@@ -405,7 +364,8 @@
             :label="$t('paiements.cards.student')"
             @click="voirEtudiant(p)"
           />
-        </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!paiementsFiltres.length" class="paiements-vide">
         <q-icon name="payments" size="42px" class="q-mb-sm" />
@@ -555,7 +515,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -566,7 +527,6 @@ import { useAuthStore } from '../stores/auth';
 import PaiementDialog from '../components/PaiementDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ChampDate from '../components/ChampDate.vue';
 import {
@@ -587,7 +547,7 @@ const { t } = useI18n();
 
 const paiements = ref<Paiement[]>([]);
 const chargement = ref(false);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const page = ref(1);
 const pageSize = ref(20);

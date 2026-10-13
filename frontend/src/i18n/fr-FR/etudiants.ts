@@ -2,7 +2,7 @@
 export default {
   title: 'Étudiants',
   subtitle:
-    'La base centrale du registre : matricule INE, QR de la carte resto et compteur de dossiers — les autres modules en dépendent.',
+    'Retrouvez les fiches des étudiants et accédez à leurs inscriptions.',
   actions: {
     new: 'Nouvel étudiant',
     resetFilters: 'Réinitialiser les filtres',

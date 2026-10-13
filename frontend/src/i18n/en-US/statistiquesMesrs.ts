@@ -1,8 +1,8 @@
 /** Namespace `statistiquesMesrs` — StatistiquesMesrsPage.vue page (MESRS snapshot archive). */
 export default {
-  title: 'MESRS statistics',
+  title: "Archived reports",
   subtitle:
-    'The archive of what was reported to the Ministry. Each snapshot freezes the figures at its generation date and never changes again — it is the memory of the declaration, not today’s situation. Today’s figures are on the Rectorate Dashboard, which is precisely what produces these snapshots.',
+    "Figures saved on each report date for Ministry reporting.",
   allYears: 'all years',
   filters: {
     annee: {
@@ -11,17 +11,17 @@ export default {
     },
   },
   actions: {
-    export: 'Export {count} snapshot(s) to CSV',
+    export: "Export {count} report(s) to CSV",
     exportTooltip: 'Spreadsheet (Excel / LibreOffice) — {annee}',
-    generateFromRectorat: 'Generate a report from the Rectorate',
+    generateFromRectorat: "Open current figures",
   },
   links: {
     rectorat: {
       label: 'Rectorate Dashboard',
-      hint: 'The same indicators in real time — and the button that generates a snapshot',
+      hint: "The same indicators in real time — and the button that generates a report",
     },
     rapports: {
-      label: 'Reports & statements',
+      label: 'Attendance reports',
       hint: 'The line-by-line statements behind these aggregates',
     },
     statistiques: {
@@ -30,22 +30,22 @@ export default {
     },
   },
   emptyState: {
-    title: 'No snapshot archived',
-    text: 'A MESRS snapshot is created from the Rectorate Dashboard: it freezes the headcount, the success rate and the payroll of the chosen year. Until one has been generated, this archive stays empty.',
+    title: "No report archived",
+    text: "Save a report from “Current figures” to archive headcount, success rate and payroll.",
   },
   stats: {
     effectif: 'Reported headcount',
     tauxReussite: 'Reported success rate',
     masseSalariale: 'Reported payroll',
-    snapshotsArchived: 'Archived snapshots',
-    lastSnapshot: 'Last snapshot from {date}',
+    snapshotsArchived: "Archived reports",
+    lastSnapshot: "Last report from {date}",
   },
   chart: {
     title: 'Reporting trend',
     subtitle:
-      'Headcount, success rate and payroll — one point per snapshot, from the oldest to the most recent',
-    summary: 'MESRS reporting trend over {count} snapshot(s): {details}.',
-    summaryEmpty: 'No snapshot to display.',
+      "Headcount, success rate and payroll — one point per report, from the oldest to the most recent",
+    summary: "MESRS reporting trend over {count} report(s): {details}.",
+    summaryEmpty: "No report to display.",
     summaryEntry: '{date} — headcount {effectif}, success rate {reussite}, payroll {masse} GNF',
     datasets: {
       effectif: 'Headcount',
@@ -59,7 +59,7 @@ export default {
     },
   },
   table: {
-    title: 'Archived snapshots',
+    title: "Archived reports",
     countLabel: '{count} record(s) —',
     filteredOn: 'filtered on {annee}',
     columns: {
@@ -91,7 +91,7 @@ export default {
     },
   },
   messages: {
-    loadError: 'Unable to load MESRS snapshots.',
+    loadError: "Unable to load MESRS reports.",
     anneesUnavailable: 'Academic years unavailable: the filter will remain empty.',
   },
 };

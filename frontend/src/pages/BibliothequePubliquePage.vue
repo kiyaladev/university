@@ -82,12 +82,6 @@
             />
           </div>
           <div class="col-6 col-sm-4 text-right">
-            <view-toggle
-              cle="biblio.publique"
-              :modes="['tableau', 'cartes']"
-              defaut="cartes"
-              @update:mode="(v: string) => (mode = v as 'tableau' | 'cartes')"
-            />
           </div>
         </div>
 
@@ -252,6 +246,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 /**
  * Bibliothèque publique (vitrine) : aucune garde d'authentification. Le même
  * fonds que l'écran de gestion `/bibliotheque-gestion`, mais restreint côté
@@ -263,7 +258,6 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
-import ViewToggle from '../components/ViewToggle.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
@@ -282,7 +276,7 @@ const page = ref(1);
 const pageSize = ref(10);
 /** `clearable` remet la valeur à null : le type l'assume. */
 const recherche = ref<string | null>('');
-const mode = ref<'tableau' | 'cartes'>('cartes');
+const mode = usePresentationListe();
 
 const filtre = ref<{
   type: string | null;

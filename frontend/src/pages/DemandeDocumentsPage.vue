@@ -1,22 +1,9 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="documents" />
     <page-header :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')">
-      <template #actions>
-<div class="col-auto">
-        <q-btn
-          v-if="auth.estAdmin"
-          outline
-          color="primary"
-          no-caps
-          icon="price_change"
-          :label="$t('demandeDocuments.actions.tarifs')"
-          :to="{ name: 'tarifs-demandes' }"
-        />
-      </div>
-      </template>
-    </page-header>
 
-    <parcours-metier parcours="documents" />
+    </page-header>
 
     <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
       {{ $t('demandeDocuments.studentBanner.message') }}
@@ -25,20 +12,8 @@
       </template>
     </q-banner>
 
-    <div class="row q-col-gutter-md q-mb-md">
-      <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
-        <q-card flat bordered class="carte">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres" :class="{ 'text-warning': s.alerte }">
-              {{ stats?.[s.cle] ?? 0 }}
-            </div>
-            <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 text-caption text-grey-7">
-        {{ $t('demandeDocuments.stats.revenues', { amount: montantLisible(stats?.recettes ?? 0) }) }}
-      </div>
+    <div class="resume-liste" role="status">
+      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
     <filter-bar
@@ -47,7 +22,7 @@
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
-      <template #avances>
+      <template #principaux>
         <q-select
           v-model="filtres.statut"
           :options="OPTIONS_STATUTS"
@@ -58,6 +33,9 @@
           map-options
           :label="$t('demandeDocuments.filters.status')"
         />
+      </template>
+      <template #avances>
+
         <q-select
           v-model="filtres.type"
           :options="OPTIONS_TYPES"
@@ -73,13 +51,6 @@
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
           :label="$t('demandeDocuments.filters.student')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="documents-demande.admin"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
@@ -156,74 +127,71 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            v-if="p.row.statut === 'EN_ATTENTE_PAIEMENT'"
-            flat
-            dense
-            round
-            icon="verified"
-            color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.confirmPayment')"
-            :loading="enCours === 'confirmer'"
-            @click.stop="confirmerPaiement(p.row)"
-          >
-            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.confirmPayment') }}</q-tooltip>
-          </q-btn>
-          <q-btn
+<q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
-            dense
-            round
+            dense no-caps
             icon="play_arrow"
-            :aria-label="$t('demandeDocuments.actionsColumn.startProcessing')"
+            :aria-label="$t('demandeDocuments.actionsColumn.startProcessing')" :label="$t('demandeDocuments.actionsColumn.startProcessing')"
             :loading="enCours === 'traitement'"
             @click.stop="lancerTraitement(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.startProcessing') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
-            dense
-            round
+            dense no-caps
             icon="check_circle"
             color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.markReady')"
+            :aria-label="$t('demandeDocuments.actionsColumn.markReady')" :label="$t('demandeDocuments.actionsColumn.markReady')"
             :loading="enCours === 'prete'"
             @click.stop="marquerPrete(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.markReady') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn
             v-if="p.row.statut === 'PRETE'"
             flat
-            dense
-            round
+            dense no-caps
             icon="assignment_turned_in"
             color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.handOver')"
+            :aria-label="$t('demandeDocuments.actionsColumn.handOver')" :label="$t('demandeDocuments.actionsColumn.handOver')"
             :loading="enCours === 'remettre'"
             @click.stop="remettre(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.handOver') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            v-if="p.row.statut === 'EN_ATTENTE_PAIEMENT'"
+            flat
+            dense no-caps
+            icon="verified"
+            color="positive"
+            :aria-label="$t('demandeDocuments.actionsColumn.confirmPayment')" :label="$t('demandeDocuments.actionsColumn.confirmPayment')"
+            :loading="enCours === 'confirmer'"
+            @click.stop="confirmerPaiement(p.row)"
+          >
+            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.confirmPayment') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
             v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
             flat
-            dense
-            round
+            dense no-caps
             icon="block"
             color="negative"
-            :aria-label="$t('demandeDocuments.actionsColumn.reject')"
+            :aria-label="$t('demandeDocuments.actionsColumn.reject')" :label="$t('demandeDocuments.actionsColumn.reject')"
             :loading="enCours === 'rejeter'"
             @click.stop="rejeter(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.reject') }}</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="visibility" :aria-label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(p.row)">
+<q-btn v-close-popup flat dense no-caps icon="visibility" :aria-label="$t('demandeDocuments.actionsColumn.detail')" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(p.row)">
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.detail') }}</q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -270,18 +238,7 @@
           </q-card-section>
           <q-separator />
           <q-card-actions align="right" class="q-gutter-xs">
-            <q-btn
-              v-if="d.statut === 'EN_ATTENTE_PAIEMENT'"
-              flat
-              dense
-              no-caps
-              icon="verified"
-              color="positive"
-              :label="$t('demandeDocuments.cardActions.confirm')"
-              :loading="enCours === 'confirmer'"
-              @click.stop="confirmerPaiement(d)"
-            />
-            <q-btn
+<q-btn
               v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
@@ -291,7 +248,7 @@
               :loading="enCours === 'traitement'"
               @click.stop="lancerTraitement(d)"
             />
-            <q-btn
+<q-btn
               v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
@@ -302,7 +259,7 @@
               :loading="enCours === 'prete'"
               @click.stop="marquerPrete(d)"
             />
-            <q-btn
+<q-btn
               v-if="d.statut === 'PRETE'"
               flat
               dense
@@ -313,7 +270,19 @@
               :loading="enCours === 'remettre'"
               @click.stop="remettre(d)"
             />
-            <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+              v-if="d.statut === 'EN_ATTENTE_PAIEMENT'"
+              flat
+              dense
+              no-caps
+              icon="verified"
+              color="positive"
+              :label="$t('demandeDocuments.cardActions.confirm')"
+              :loading="enCours === 'confirmer'"
+              @click.stop="confirmerPaiement(d)"
+            />
+<q-btn v-close-popup
               v-if="d.statut !== 'REMISE' && d.statut !== 'REJETEE'"
               flat
               dense
@@ -324,8 +293,9 @@
               :loading="enCours === 'rejeter'"
               @click.stop="rejeter(d)"
             />
-            <q-btn flat dense no-caps icon="visibility" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(d)" />
-          </q-card-actions>
+<q-btn v-close-popup flat dense no-caps icon="visibility" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(d)" />
+</actions-secondaires>
+</q-card-actions>
         </q-card>
       </div>
       <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
@@ -478,7 +448,9 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import SectionNavigation from '../components/SectionNavigation.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -488,7 +460,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import WorkflowStepper from '../components/WorkflowStepper.vue';
 import {
@@ -529,7 +500,7 @@ const filtres = ref<Record<string, any>>({
   recherche: '',
   etudiantId: String(route.query.etudiantId ?? '') || undefined,
 });
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 const chargement = ref(false);
 const detailOuvert = ref(false);
 const demandeSelectionnee = ref<DemandeDocument | null>(null);
@@ -803,10 +774,12 @@ $rouge: #CE1126;
   letter-spacing: -0.01em;
 
   &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fond; color: $jaune-texte; }
-  &.statut-PAYEE { background: #007a4d; }
+  .pochoir { color: inherit; }
+
+  &.statut-PAYEE { background: #007a4d; color: white; }
   &.statut-EN_TRAITEMENT { background: $vert-fond; color: $vert-lien; }
   &.statut-PRETE { background: $vert-fond; color: #{$vert}; }
-  &.statut-REMISE { background: #0066cc; }
+  &.statut-REMISE { background: #0066cc; color: white; }
   &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
 }
 

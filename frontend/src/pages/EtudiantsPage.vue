@@ -15,7 +15,6 @@
       </div>
       </template>
     </page-header>
-    <parcours-metier parcours="dossiers" />
 
     <filter-bar
       v-model="filtres"
@@ -53,13 +52,6 @@
         />
         <champ-date v-model="filtres.dateDebut" :label="$t('etudiants.filters.registeredFrom')" />
         <champ-date v-model="filtres.dateFin" :label="$t('etudiants.filters.registeredTo')" />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="etudiants"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(m) => (modeVue = (m as 'tableau' | 'cartes'))"
-        />
       </template>
     </filter-bar>
 
@@ -110,7 +102,7 @@
 
       <template #body-cell-sexe="p">
         <q-td :props="p">
-          <q-chip v-if="p.row.sexe" dense outline :color="p.row.sexe === 'F' ? 'pink' : 'primary'">
+          <q-chip v-if="p.row.sexe" dense outline color="primary">
             {{ p.row.sexe === 'F' ? 'F' : 'M' }}
           </q-chip>
           <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
@@ -181,61 +173,57 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            round
-            icon="edit"
-            :aria-label="$t('etudiants.actions.editAria')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('etudiants.actions.editTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
+<q-btn
             v-if="peutValiderVoir"
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="how_to_reg"
-            :aria-label="$t('etudiants.actions.inscriptionsAria')"
+            :aria-label="$t('etudiants.actions.inscriptionsAria')" :label="$t('etudiants.actions.inscriptionsAria')"
             @click="allerAuxInscriptions(p.row)"
           >
             <q-tooltip>{{ $t('etudiants.actions.inscriptionsTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            v-if="peutGerer"
+            flat
+            dense no-caps
+            icon="edit"
+            :aria-label="$t('etudiants.actions.editAria')" :label="$t('etudiants.actions.editAria')"
+            @click="ouvrir(p.row)"
+          >
+            <q-tooltip>{{ $t('etudiants.actions.editTooltip') }}</q-tooltip>
+          </q-btn>
+<q-btn v-close-popup
             v-if="peutVoirPaiements"
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="payments"
-            :aria-label="$t('etudiants.actions.paiementsAria')"
+            :aria-label="$t('etudiants.actions.paiementsAria')" :label="$t('etudiants.actions.paiementsAria')"
             @click="allerAuxPaiements(p.row)"
           >
             <q-tooltip>{{ $t('etudiants.actions.paiementsTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutValiderVoir"
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="fact_check"
-            :aria-label="$t('etudiants.actions.evaluationsAria')"
+            :aria-label="$t('etudiants.actions.evaluationsAria')" :label="$t('etudiants.actions.evaluationsAria')"
             @click="allerAuxEvaluations(p.row)"
           >
             <q-tooltip>{{ $t('etudiants.actions.evaluationsTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
+<q-btn v-close-popup
             v-if="peutGerer"
             flat
-            dense
-            round
+            dense no-caps
             color="primary"
             icon="print"
-            :aria-label="$t('etudiants.actions.printAria')"
+            :aria-label="$t('etudiants.actions.printAria')" :label="$t('etudiants.actions.printAria')"
             @click="imprimerAttestation(p.row)"
           >
             <q-tooltip>
@@ -246,7 +234,8 @@
               }}
             </q-tooltip>
           </q-btn>
-        </q-td>
+</actions-secondaires>
+</q-td>
       </template>
     </q-table>
 
@@ -274,7 +263,7 @@
               dense
               :label="e.actif ? $t('etudiants.cards.active') : $t('etudiants.cards.inactive')"
             />
-            <q-chip v-if="e.sexe" dense outline :color="e.sexe === 'F' ? 'pink' : 'primary'">
+            <q-chip v-if="e.sexe" dense outline color="primary">
               {{ e.sexe === 'F' ? $t('etudiants.options.gender.female') : $t('etudiants.options.gender.male') }}
             </q-chip>
             <q-space />
@@ -301,16 +290,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            icon="edit"
-            no-caps
-            :label="$t('etudiants.actions.edit')"
-            @click="ouvrir(e)"
-          />
-          <q-btn
+<q-btn
             v-if="peutValiderVoir"
             flat
             dense
@@ -320,7 +300,17 @@
             :label="$t('etudiants.actions.inscriptions')"
             @click="allerAuxInscriptions(e)"
           />
-          <q-btn
+<actions-secondaires>
+<q-btn v-close-popup
+            v-if="peutGerer"
+            flat
+            dense
+            icon="edit"
+            no-caps
+            :label="$t('etudiants.actions.edit')"
+            @click="ouvrir(e)"
+          />
+<q-btn v-close-popup
             v-if="peutVoirPaiements"
             flat
             dense
@@ -330,7 +320,7 @@
             :label="$t('etudiants.actions.paiements')"
             @click="allerAuxPaiements(e)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="peutValiderVoir"
             flat
             dense
@@ -340,7 +330,7 @@
             :label="$t('etudiants.actions.evaluations')"
             @click="allerAuxEvaluations(e)"
           />
-          <q-btn
+<q-btn v-close-popup
             v-if="peutGerer"
             flat
             dense
@@ -350,7 +340,8 @@
             :label="$t('etudiants.actions.print')"
             @click="imprimerAttestation(e)"
           />
-        </q-card-actions>
+</actions-secondaires>
+</q-card-actions>
       </q-card>
       <div v-if="!etudiants.length" class="etudiants-vide">
         <q-icon name="groups" size="42px" class="q-mb-sm" />
@@ -486,7 +477,8 @@
 </template>
 
 <script setup lang="ts">
-import ParcoursMetier from '../components/ParcoursMetier.vue';
+import ActionsSecondaires from '../components/ActionsSecondaires.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -498,7 +490,6 @@ import { useAuthStore } from '../stores/auth';
 import EtudiantDialog from '../components/EtudiantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ChampDate from '../components/ChampDate.vue';
 import {
@@ -529,7 +520,7 @@ const promotions = ref<Promotion[]>([]);
 const chargement = ref(false);
 const dialogOuvert = ref(false);
 const etudiantEdite = ref<EtudiantRegistre | null>(null);
-const modeVue = ref<'tableau' | 'cartes'>('tableau');
+const modeVue = usePresentationListe();
 
 const page = ref(1);
 const pageSize = ref(20);

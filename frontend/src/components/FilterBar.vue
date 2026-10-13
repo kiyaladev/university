@@ -94,12 +94,13 @@ const developpe = ref(false);
       >
         <template #prepend><q-icon name="search" /></template>
       </q-input>
+      <slot name="principaux" />
       <q-btn
         v-if="$slots.avances"
         flat
         dense
         :icon="developpe ? 'tune' : 'tune'"
-        :label="developpe ? t('common.search.hideAdvanced') : t('common.search.advanced')"
+        :label="developpe ? t('simplification.hideFilters') : t('simplification.filters')"
         no-caps
         class="barre-filtres__avances"
         :class="{ 'barre-filtres__avances--actif': developpe }"

@@ -1,17 +1,10 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="presence" />
     <h1 class="page-titre">{{ $t('rapports.title') }}</h1>
     <div class="page-sous-titre q-mb-md">
       {{ $t('rapports.subtitle') }}
     </div>
-
-    <liens-croises
-      :liens="[
-        { to: '/statistiques', libelle: $t('rapports.crossLinks.statistiques.label'), icone: 'query_stats', aide: $t('rapports.crossLinks.statistiques.help') },
-        { to: '/rectorat', libelle: $t('rapports.crossLinks.rectorat.label'), icone: 'dashboard', aide: $t('rapports.crossLinks.rectorat.help') },
-        { to: '/paie', libelle: $t('rapports.crossLinks.paie.label'), icone: 'payments', aide: $t('rapports.crossLinks.paie.help') },
-      ]"
-    />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm items-center">
@@ -382,6 +375,7 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -392,7 +386,6 @@ import { useAuthStore } from '../stores/auth';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import BarreTaux from '../components/BarreTaux.vue';
 import ChampStatut from '../components/ChampStatut.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import SignaturePad from '../components/SignaturePad.vue';
 import {
   STATUTS_ENSEIGNANT,

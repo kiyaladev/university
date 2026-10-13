@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="bilan" />
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
         <h1 class="page-titre">{{ $t('rectoratPage.title') }}</h1>
@@ -39,14 +40,6 @@
         </q-btn>
       </div>
     </div>
-
-    <liens-croises
-      :liens="[
-        { to: '/statistiques-mesrs', libelle: $t('rectoratPage.links.statisticsMesrs'), icone: 'analytics', aide: $t('rectoratPage.links.statisticsMesrsHelp') },
-        { to: '/rapports', libelle: $t('rectoratPage.links.reports'), icone: 'insights', aide: $t('rectoratPage.links.reportsHelp') },
-        { to: '/statistiques', libelle: $t('rectoratPage.links.statistics'), icone: 'query_stats', aide: $t('rectoratPage.links.statisticsHelp') },
-      ]"
-    />
 
     <div class="row q-col-gutter-md q-mb-md">
       <div class="col-12 col-sm-6 col-md-3">
@@ -249,6 +242,7 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
@@ -256,7 +250,6 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChartCanvas from '../components/ChartCanvas.vue';
-import LiensCroises from '../components/LiensCroises.vue';
 import { montantLisible, nombreLisible, pourcentLisible } from '../utils/libelles';
 import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRectorat } from '../types';
 

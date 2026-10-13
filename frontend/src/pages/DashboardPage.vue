@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="presence" />
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
         <h1 class="page-titre">{{ $t('dashboard.title') }}</h1>
@@ -221,6 +222,7 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

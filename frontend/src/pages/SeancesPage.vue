@@ -9,14 +9,7 @@
       </div>
 
       <div class="registre__actions">
-        <q-btn
-          v-if="auth.peutPlanifier"
-          outline
-          no-caps
-          icon="auto_awesome_motion"
-          :label="$t('seances.actions.generateFromSchedule')"
-          @click="dialogGeneration = true"
-        />
+
         <q-btn
           v-if="peutAffecterControleur"
           outline
@@ -64,7 +57,6 @@
         :label="etiquetteFiltres"
         @click="filtresOuverts = !filtresOuverts"
       />
-      <bascule-vue cle="seances" v-model:mode="vue" />
       <q-btn
         round
         color="primary"
@@ -161,15 +153,8 @@
           :label="$t('seances.emptyState.expand30')"
           @click="elargirA30Jours"
         />
-        <q-btn
-          v-if="auth.peutPlanifier"
-          unelevated
-          color="primary"
-          no-caps
-          icon="auto_awesome_motion"
-          :label="$t('seances.actions.generateFromSchedule')"
-          @click="dialogGeneration = true"
-        />
+        <q-btn v-if="auth.peutPlanifier" outline no-caps icon="calendar_month"
+          :label="$t('nav.emploi-du-temps')" to="/emploi-du-temps" />
       </div>
     </div>
 
@@ -315,7 +300,6 @@
       :salles="salles"
       @enregistre="apresCreation"
     />
-    <generation-dialog v-model="dialogGeneration" @genere="charger" />
     <pointage-dialog v-model="dialogPointage" :seance="seanceSelectionnee" @enregistre="charger" />
 
     <!-- Détail du contrôle consigné -->
@@ -540,12 +524,10 @@ import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
 import SeanceDialog from '../components/SeanceDialog.vue';
-import GenerationDialog from '../components/GenerationDialog.vue';
 import PointageDialog from '../components/PointageDialog.vue';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '../components/ChampDate.vue';
-import BasculeVue from '../components/ViewToggle.vue';
-import { useVuePreferee } from '../composables/vuePreferee';
+import { usePresentationListe } from '../composables/presentationListe';
 import {
   LIBELLE_ATTESTATION,
   LIBELLE_STATUT_JUSTIFICATIF,
@@ -564,7 +546,7 @@ const $q = useQuasar();
 const route = useRoute();
 const auth = useAuthStore();
 const peutAffecterControleur = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const vue = useVuePreferee('seances');
+const vue = usePresentationListe();
 const { t } = useI18n();
 
 /** Les mêmes séances, mises en colonnes : c'est la vue qui compare et qui trie. */
@@ -636,7 +618,6 @@ const filtresOuverts = ref(false);
 const seulementAPointer = ref(false);
 const detail = ref<Seance | null>(null);
 const dialogSeance = ref(false);
-const dialogGeneration = ref(false);
 const dialogPointage = ref(false);
 const seanceEditee = ref<Seance | null>(null);
 const seanceSelectionnee = ref<Seance | null>(null);

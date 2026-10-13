@@ -3,6 +3,7 @@ import { api } from '../boot/axios';
 
 export interface ServiceActif { id: string; actif: boolean; obligatoire: boolean; pilote: boolean }
 const ROUTES: Record<string, string> = {
+  bilan: 'rectorat',
   bibliotheque: 'bibliotheque', 'bibliotheque-gestion': 'bibliotheque', plagiat: 'bibliotheque',
   cites: 'logements', resto: 'restauration', stages: 'stages', helpdesk: 'helpdesk',
   formations: 'formations', 'formations-admin': 'formations', patrimoine: 'patrimoine',

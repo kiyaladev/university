@@ -1,7 +1,12 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')">
-      <template #actions>
+
+    </page-header>
+
+    <section aria-labelledby="regles-presence">
+    <h2 id="regles-presence" class="text-h6">{{ $t('simplification.rules') }}</h2>
+
 <div class="col-auto q-gutter-sm">
         <q-btn
           flat
@@ -22,8 +27,6 @@
           @click="enregistrer"
         />
       </div>
-      </template>
-    </page-header>
 
     <q-banner v-if="modifie" class="note--alerte q-mb-md" style="max-width: 820px">
       <template #avatar><q-icon name="edit_note" /></template>
@@ -76,7 +79,9 @@
       <q-btn flat no-caps icon="refresh" :label="$t('parametres.emptyState.reload')" @click="charger" />
     </div>
 
+    </section>
     <services-actifs />
+    <q-btn to="/demandes-docs/tarifs" flat no-caps icon="price_change" :label="$t('nav.tarifs-demandes')" class="q-mb-md" />
 
     <q-btn to="/audit" outline no-caps icon="history" :label="$t('audit.title')" />
   </q-page>

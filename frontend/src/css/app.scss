@@ -1000,3 +1000,13 @@ body.body--dark .q-table__middle {
 
 .q-item__label--caption { color: var(--up-encre-douce); }
 .q-notification__caption { opacity: 1; color: #F5F5F7; }
+// Synthèse courte des listes : les dossiers restent le contenu principal.
+.resume-liste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin: 8px 0 12px;
+  color: var(--up-encre-douce);
+  font-size: 13px;
+  strong { color: var(--up-encre); font-variant-numeric: tabular-nums; }
+}

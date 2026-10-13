@@ -1,5 +1,6 @@
 <template>
   <q-page class="q-pa-md">
+    <section-navigation section="procedures" />
     <div class="row items-center q-col-gutter-md q-mb-md">
       <div class="col">
         <h1 class="page-titre">{{ $t('mesReclamations.title') }}</h1>
@@ -32,18 +33,8 @@
       </template>
     </q-banner>
 
-    <div v-if="!rolePasBon" class="row q-col-gutter-md q-mb-md">
-      <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
-        <q-card flat bordered class="carte">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ stats?.[s.cle] ?? 0 }}</div>
-            <div class="pochoir text-grey-7">{{ s.libelle }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 text-caption text-grey-7">
-        {{ $t('mesReclamations.stats.caption') }}
-      </div>
+    <div v-if="!rolePasBon" class="resume-liste" role="status">
+      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
     <filter-bar
@@ -53,7 +44,7 @@
       :recherche="true"
       @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
     >
-      <template #avances>
+      <template #principaux>
         <q-select
           v-model="filtres.statut"
           :options="OPTIONS_STATUTS"
@@ -64,6 +55,9 @@
           map-options
           :label="$t('mesReclamations.filters.status')"
         />
+      </template>
+      <template #avances>
+
         <q-select
           v-model="filtres.type"
           :options="OPTIONS_TYPES"
@@ -83,13 +77,6 @@
           emit-value
           map-options
           :label="$t('mesReclamations.filters.priority')"
-        />
-      </template>
-      <template #actions>
-        <view-toggle
-          cle="reclamations.moi"
-          :modes="['tableau', 'cartes']"
-          @update:mode="(v: string) => (modeVue = v as 'tableau' | 'cartes')"
         />
       </template>
     </filter-bar>
@@ -217,6 +204,8 @@
 </template>
 
 <script setup lang="ts">
+import SectionNavigation from '../components/SectionNavigation.vue';
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -224,7 +213,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
 import {
@@ -254,7 +242,7 @@ const reclamations = ref<Reclamation[]>([]);
 const stats = ref<Record<string, number> | null>(null);
 const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '' });
-const modeVue = ref<'tableau' | 'cartes'>('cartes');
+const modeVue = usePresentationListe();
 const chargement = ref(false);
 const creationOuverte = ref(false);
 const detailOuvert = ref(false);

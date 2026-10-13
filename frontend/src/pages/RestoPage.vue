@@ -157,9 +157,6 @@
         :placeholder="$t('resto.wallets.searchPlaceholder')"
         @reinitialiser="reinitialiserPortefeuilles"
       >
-        <template #actions>
-          <view-toggle cle="resto.portefeuilles" :modes="['tableau', 'cartes']" @update:mode="(v: string) => (modePortefeuilles = v as 'tableau' | 'cartes')" />
-        </template>
       </filter-bar>
 
       <pagination-bar
@@ -416,6 +413,7 @@
 </template>
 
 <script setup lang="ts">
+import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -423,7 +421,6 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
-import ViewToggle from '../components/ViewToggle.vue';
 import QrScanner from '../components/QrScanner.vue';
 import ChampDate from '../components/ChampDate.vue';
 import RechargeDialog from '../components/RechargeDialog.vue';
@@ -525,7 +522,7 @@ const portefeuilles = ref<any[]>([]);
 const chargementPortefeuilles = ref(false);
 const paginationPortefeuilles = ref({ page: 1, pageSize: 20, total: 0 });
 const filtresPortefeuilles = ref<Record<string, any>>({ recherche: '' });
-const modePortefeuilles = ref<'tableau' | 'cartes'>('cartes');
+const modePortefeuilles = usePresentationListe();
 const dialogRecharge = ref(false);
 const rechargeEtudiantId = ref<string | null>(null);
 

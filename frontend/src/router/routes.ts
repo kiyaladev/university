@@ -112,6 +112,12 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
+      { path: 'suivi-presences', name: 'suivi-presences', component: () => import('pages/AccueilUniversityPage.vue'),
+        meta: { titre: 'simplification.presence', roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'] } },
+      { path: 'documents', name: 'documents', component: () => import('pages/AccueilUniversityPage.vue'),
+        meta: { titre: 'simplification.documents', roles: ['ADMIN', 'DIRECTION', 'SCOLARITE'] } },
+      { path: 'bilan', redirect: '/rectorat' },
+      { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
       {
         path: '',
         name: 'tableau-de-bord',

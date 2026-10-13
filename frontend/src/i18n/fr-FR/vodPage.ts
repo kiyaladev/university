@@ -1,6 +1,6 @@
 /** Namespace `vodPage`. */
 export default {
-  title: 'VOD des cours',
+  title: 'Cours en vidéo',
   subtitle: {
     student:
       'Replays, podcasts, notes et transcriptions de vos cours : ce que vos inscriptions vous ouvrent, plus le fonds public.',
@@ -16,8 +16,8 @@ export default {
     archive: 'Archiver',
   },
   formDialog: {
-    editTitle: 'Modifier la ressource VOD',
-    newTitle: 'Nouvelle ressource VOD',
+    editTitle: 'Modifier la cours en vidéo',
+    newTitle: 'Nouvelle cours en vidéo',
     mediaUrl: 'URL du média (Mux / S3 / CDN / chemin local)',
     mediaUrlPlaceholder: 'https://… ou /vod/fichier.mp4',
     thumbnailUrl: 'URL de la miniature (optionnel)',
