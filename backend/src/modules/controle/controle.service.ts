@@ -357,12 +357,23 @@ export class ControleService {
           },
         },
         affectation: { include: { enseignant: { select: { id: true, departementId: true } } } },
+        controle: { select: { controleurId: true } },
       },
     });
     if (!seance) throw new NotFoundException(t('controle.seance_introuvable'));
     if (
       user.role === Role.CHEF_DEPARTEMENT &&
       seance.affectation.enseignant.departementId !== user.departementId
+    ) {
+      throw new NotFoundException(t('controle.seance_introuvable'));
+    }
+    // Même périmètre qu'en consultation et au scan : séance attribuée, déjà
+    // pointée par ce contrôleur, ou de son département de rattachement.
+    if (
+      user.role === Role.CONTROLEUR &&
+      seance.controleurAssigneId !== user.id &&
+      seance.controle?.controleurId !== user.id &&
+      (!user.departementId || seance.affectation.enseignant.departementId !== user.departementId)
     ) {
       throw new NotFoundException(t('controle.seance_introuvable'));
     }
@@ -403,6 +414,16 @@ export class ControleService {
       seance.salle?.latitude != null
     ) {
       throw new BadRequestException(t('controle.la_position_gps_est_obligatoire_pour_ce_pointage'));
+    }
+
+    // Des horaires réels incohérents ne doivent pas retomber sur la durée
+    // planifiée : ils créditeraient toute la séance (et donc la paie).
+    if (
+      toMinutes(dto.heureArrivee) !== null &&
+      toMinutes(dto.heureFinReelle) !== null &&
+      dureeMinutes(dto.heureArrivee, dto.heureFinReelle) <= 0
+    ) {
+      throw new BadRequestException(t('controle.heure_fin_reelle_avant_arrivee'));
     }
 
     const statut =
@@ -499,12 +520,24 @@ export class ControleService {
         }
       }
 
-      const controle = await tx.controle.upsert({
-        where: { seanceId: seance.id },
-        create: donnees,
-        update: { ...donnees, controleurId: existant?.controleurId ?? user.id },
-        select: CONTROLE_SELECT_RESTREINT,
-      });
+      // Pas d'upsert : deux premières saisies concurrentes liraient toutes deux
+      // `existant === null` et la seconde écraserait la première, propriétaire
+      // compris. La création bute sur l'unicité de `seanceId` ; le perdant est
+      // refusé comme toute correction par un autre agent.
+      const controle = existant
+        ? await tx.controle.update({
+            where: { seanceId: seance.id },
+            data: { ...donnees, controleurId: existant.controleurId },
+            select: CONTROLE_SELECT_RESTREINT,
+          })
+        : await tx.controle
+            .create({ data: donnees, select: CONTROLE_SELECT_RESTREINT })
+            .catch((e: unknown) => {
+              if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+                throw new ForbiddenException(t('controle.cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l'));
+              }
+              throw e;
+            });
 
       await tx.seance.update({
         where: { id: seance.id },

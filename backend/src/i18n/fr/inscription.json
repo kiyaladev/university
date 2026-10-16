@@ -28,5 +28,8 @@
   "mobileMoneyUnavailable": "La passerelle Mobile Money est injoignable : le paiement reste en attente. La confirmation se fera au guichet.",
   "paiement_formation_confirme_par_action_de_formation": "Ce paiement appartient à une formation : confirmez-le depuis le registre de cette formation.",
   "mobileMoneyRejected": "La demande a été refusée par l’opérateur (HTTP {status}) : le paiement reste en attente.",
-  "mobileMoneyInvalidResponse": "La passerelle n’a pas fourni de référence de transaction valide : le paiement reste en attente."
+  "mobileMoneyInvalidResponse": "La passerelle n’a pas fourni de référence de transaction valide : le paiement reste en attente.",
+  "devise_incompatible": "Ce paiement est en {devise} alors que les frais du dossier sont en {deviseDossier} : aucune conversion n'est appliquée.",
+  "statut_modifie_entre_temps": "Le statut de ce dossier vient d'être modifié : rechargez-le avant de recommencer.",
+  "fiche_existante_connexion_requise": "Une fiche étudiante existe déjà pour cette adresse e-mail : connectez-vous au portail étudiant ou présentez-vous au guichet de la scolarité."
 }

@@ -75,6 +75,7 @@ export const INSCRIPTION_INCLUDE = {
       horodatage: true,
       completeLe: true,
       annuleLe: true,
+      demandeDocument: { select: { id: true } },
     },
   },
 } satisfies Prisma.InscriptionInclude;
@@ -113,6 +114,25 @@ function instantaneInscription(inscription: any) {
     statut: inscription.statut,
     montantFrais: inscription.montantFrais,
   };
+}
+
+/**
+ * Paiements qui règlent la scolarité d'un dossier : les frais de demandes de
+ * documents sont rattachés au dossier pour la traçabilité, mais ne soldent pas
+ * l'inscription.
+ */
+export const PAIEMENT_SCOLARITE: Prisma.PaiementWhereInput = { demandeDocument: { is: null } };
+
+/** Devise des frais d'un dossier : celle du tarif officiel de sa promotion. */
+export async function deviseDossier(
+  tx: Pick<Prisma.TransactionClient, 'frais'>,
+  dossier: { anneeId: string; promotionId: string },
+) {
+  const frais = await tx.frais.findUnique({
+    where: { anneeId_promotionId: { anneeId: dossier.anneeId, promotionId: dossier.promotionId } },
+    select: { devise: true },
+  });
+  return frais?.devise ?? 'GNF';
 }
 
 function instantanePaiement(paiement: any) {
@@ -266,8 +286,8 @@ export class InscriptionService {
   // ------------------------------------------------------ dépôt en ligne
 
   /**
-   * Dossier public : crée l'étudiant (matricule + QR resto) s'il n'existe pas
-   * encore — même e-mail, même fiche — puis le dossier EN_ATTENTE_PAIEMENT au
+   * Dossier public : crée l'étudiant (matricule + QR resto) — une adresse déjà
+   * connue est refusée, faute de preuve de possession — puis le dossier EN_ATTENTE_PAIEMENT au
    * tarif officiel, ou 0 avec un avertissement si aucun tarif n'est paramétré.
    */
   async depotPublic(dto: InscriptionPubliqueDto, ip?: string) {
@@ -296,39 +316,43 @@ export class InscriptionService {
       try {
         const resultat = await this.prisma.$transaction(async (tx) => {
           await exigerAnneeOuverte(tx, annee.id);
-          let etudiant = dto.email
+          // Route publique, sans authentification : connaître une adresse
+          // e-mail ne prouve pas qu'on la possède. Une fiche existante ne se
+          // rattache donc jamais ici (portail authentifié ou guichet).
+          const existant = dto.email
             ? await tx.etudiant.findUnique({
                 where: { email: dto.email },
                 select: { id: true },
               })
             : null;
-
-          if (!etudiant) {
-            etudiant = await tx.etudiant.create({
-              data: {
-                nom: dto.nom,
-                prenom: dto.prenom,
-                sexe: dto.sexe ?? null,
-                dateNaissance: dto.dateNaissance ? toDateOnly(dto.dateNaissance) : null,
-                lieuNaissance: dto.lieuNaissance ?? null,
-                telephone: dto.telephone,
-                email: dto.email ?? null,
-                adresse: dto.adresse ?? null,
-                matricule: await prochainMatricule(tx, anneeNumero(annee.libelle)),
-                qrRestoToken: this.etudiants.nouveauQrResto(),
-              },
-              select: { id: true },
-            });
-            await tx.auditLog.create({
-              data: {
-                action: 'ETUDIANT_CREE',
-                entite: 'Etudiant',
-                entiteId: etudiant.id,
-                details: 'Fiche étudiante créée par préinscription en ligne',
-                ip: ip ?? null,
-              },
-            });
+          if (existant) {
+            throw new ConflictException(I18nContext.current()!.t('inscription.fiche_existante_connexion_requise'));
           }
+
+          const etudiant = await tx.etudiant.create({
+            data: {
+              nom: dto.nom,
+              prenom: dto.prenom,
+              sexe: dto.sexe ?? null,
+              dateNaissance: dto.dateNaissance ? toDateOnly(dto.dateNaissance) : null,
+              lieuNaissance: dto.lieuNaissance ?? null,
+              telephone: dto.telephone,
+              email: dto.email ?? null,
+              adresse: dto.adresse ?? null,
+              matricule: await prochainMatricule(tx, anneeNumero(annee.libelle)),
+              qrRestoToken: this.etudiants.nouveauQrResto(),
+            },
+            select: { id: true },
+          });
+          await tx.auditLog.create({
+            data: {
+              action: 'ETUDIANT_CREE',
+              entite: 'Etudiant',
+              entiteId: etudiant.id,
+              details: 'Fiche étudiante créée par préinscription en ligne',
+              ip: ip ?? null,
+            },
+          });
 
           const deja = await tx.inscription.findUnique({
             where: { etudiantId_anneeId: { etudiantId: etudiant.id, anneeId: annee.id } },
@@ -403,7 +427,7 @@ export class InscriptionService {
 
     const existante = await this.prisma.inscription.findUnique({
       where: { etudiantId_anneeId: { etudiantId: dto.etudiantId, anneeId: annee.id } },
-      select: { numero: true, statut: true },
+      select: { id: true, numero: true, statut: true },
     });
     if (existante && existante.statut !== StatutInscription.ANNULEE) {
       throw new ConflictException(I18nContext.current()!.t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', { args: { 'existante.numero': existante.numero, 'etudiant.prenom': etudiant.prenom, 'etudiant.nom': etudiant.nom, 'annee.libelle': annee.libelle } }));
@@ -413,6 +437,41 @@ export class InscriptionService {
       where: { anneeId_promotionId: { anneeId: annee.id, promotionId: promotion.id } },
       select: { montant: true, devise: true },
     });
+
+    // Un dossier ANNULE occupe toujours le couple (étudiant, année) : il est
+    // rouvert explicitement plutôt que recréé, ce que l'unicité interdirait.
+    if (existante) {
+      return this.prisma.$transaction(async (tx) => {
+        await exigerAnneeOuverte(tx, annee.id);
+        const avant = await tx.inscription.findUnique({ where: { id: existante.id }, include: INSCRIPTION_INCLUDE });
+        const reouverture = await tx.inscription.updateMany({
+          where: { id: existante.id, statut: StatutInscription.ANNULEE },
+          data: {
+            promotionId: promotion.id,
+            statut: StatutInscription.EN_ATTENTE_PAIEMENT,
+            montantFrais: dto.montantFrais ?? frais?.montant ?? 0,
+            dateInscription: null,
+            valideeParId: null,
+            valideeLe: null,
+          },
+        });
+        if (reouverture.count !== 1) {
+          throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+        }
+        const rouverte = await tx.inscription.findUnique({ where: { id: existante.id }, include: INSCRIPTION_INCLUDE });
+        if (!rouverte) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+        await tx.auditLog.create({
+          data: {
+            userId: user.id,
+            action: 'INSCRIPTION_REOUVERTE',
+            entite: 'Inscription',
+            entiteId: rouverte.id,
+            details: JSON.stringify({ avant: instantaneInscription(avant), apres: instantaneInscription(rouverte) }),
+          },
+        });
+        return rouverte;
+      });
+    }
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
@@ -466,16 +525,22 @@ export class InscriptionService {
 
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, inscription.anneeId);
-      const maj = await tx.inscription.update({
-        where: { id },
+      // Transition conditionnée au statut lu : une annulation concurrente
+      // ne peut pas être écrasée par une validation (et inversement).
+      const transition = await tx.inscription.updateMany({
+        where: { id, statut: StatutInscription.PAYEE },
         data: {
           statut: StatutInscription.VALIDEE,
           dateInscription: new Date(),
           valideeParId: user.id,
           valideeLe: new Date(),
         },
-        include: INSCRIPTION_INCLUDE,
       });
+      if (transition.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+      }
+      const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
+      if (!maj) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
       await tx.auditLog.create({
         data: {
           userId: user.id,
@@ -500,11 +565,15 @@ export class InscriptionService {
     }
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, inscription.anneeId);
-      const maj = await tx.inscription.update({
-        where: { id },
+      const transition = await tx.inscription.updateMany({
+        where: { id, statut: inscription.statut },
         data: { statut: StatutInscription.ANNULEE },
-        include: INSCRIPTION_INCLUDE,
       });
+      if (transition.count !== 1) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+      }
+      const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
+      if (!maj) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
       await tx.auditLog.create({
         data: {
           userId: user.id,
@@ -582,11 +651,21 @@ export class InscriptionService {
           const inscription = dto.inscriptionId
             ? await tx.inscription.findUnique({
                 where: { id: dto.inscriptionId },
-                select: { id: true, etudiantId: true, anneeId: true },
+                select: { id: true, etudiantId: true, anneeId: true, promotionId: true },
               })
             : null;
           if (dto.inscriptionId && !inscription) {
             throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+          }
+          // Aucune conversion n'existe : un paiement de scolarité doit être
+          // dans la devise du tarif du dossier, sinon le cumul n'a pas de sens.
+          const devisePaiement = inscription
+            ? await deviseDossier(tx, inscription)
+            : 'GNF';
+          if (inscription && dto.devise && dto.devise !== devisePaiement) {
+            throw new BadRequestException(I18nContext.current()!.t('inscription.devise_incompatible', {
+              args: { devise: dto.devise, deviseDossier: devisePaiement },
+            }));
           }
           if (inscription && dto.anneeId && dto.anneeId !== inscription.anneeId) {
             throw new BadRequestException(I18nContext.current()!.t('common.academicYearMismatch'));
@@ -607,7 +686,7 @@ export class InscriptionService {
             data: {
               reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
               montant: dto.montant,
-              devise: dto.devise ?? 'GNF',
+              devise: dto.devise ?? devisePaiement,
               mode: dto.mode,
               operateur: dto.operateur ?? null,
               telephone: dto.telephone ?? null,
@@ -752,13 +831,20 @@ export class InscriptionService {
 
       let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
       if (reussi && p?.inscriptionId) {
-        const cumul = await tx.paiement.aggregate({
-          where: { inscriptionId: p.inscriptionId, statut: StatutPaiement.REUSSI },
-          _sum: { montant: true },
-        });
         const dossier = await tx.inscription.findUnique({
           where: { id: p.inscriptionId },
-          select: { statut: true, montantFrais: true },
+          select: { statut: true, montantFrais: true, anneeId: true, promotionId: true },
+        });
+        // Seuls les paiements de scolarité, dans la devise du tarif, soldent
+        // le dossier : ni frais documentaires, ni montants d'une autre devise.
+        const cumul = await tx.paiement.aggregate({
+          where: {
+            inscriptionId: p.inscriptionId,
+            statut: StatutPaiement.REUSSI,
+            devise: dossier ? await deviseDossier(tx, dossier) : 'GNF',
+            ...PAIEMENT_SCOLARITE,
+          },
+          _sum: { montant: true },
         });
         if (
           dossier &&
@@ -845,8 +931,10 @@ export class InscriptionService {
     const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
     const edite = new Date().toLocaleString('fr-FR');
 
+    // Mêmes règles que le passage en PAYEE : scolarité seule, devise du tarif.
+    const devise = await deviseDossier(this.prisma, inscription);
     const paye = (inscription.paiements ?? [])
-      .filter((p) => p.statut === StatutPaiement.REUSSI)
+      .filter((p) => p.statut === StatutPaiement.REUSSI && !p.demandeDocument && p.devise === devise)
       .reduce((t, p) => t + p.montant, 0);
     const restant = Math.max(0, inscription.montantFrais - paye);
     const statut = inscription.statut;
@@ -897,8 +985,8 @@ export class InscriptionService {
       <tr><th>Matricule (INE)</th><td>${echapper(inscription.etudiant.matricule)}</td></tr>
       <tr><th>Filière</th><td>${echapper(inscription.promotion.filiere?.nom ?? '—')}</td></tr>
       <tr><th>Promotion</th><td>${echapper(inscription.promotion.nom)}</td></tr>
-      <tr><th>Frais d'inscription</th><td>${inscription.montantFrais.toLocaleString('fr-FR')} GNF</td></tr>
-      <tr><th>Montant réglé</th><td>${paye.toLocaleString('fr-FR')} GNF (${paye >= inscription.montantFrais ? 'frais soldés' : `reste ${restant.toLocaleString('fr-FR')} GNF`})</td></tr>
+      <tr><th>Frais d'inscription</th><td>${inscription.montantFrais.toLocaleString('fr-FR')} ${echapper(devise)}</td></tr>
+      <tr><th>Montant réglé</th><td>${paye.toLocaleString('fr-FR')} ${echapper(devise)} (${paye >= inscription.montantFrais ? 'frais soldés' : `reste ${restant.toLocaleString('fr-FR')} ${echapper(devise)}`})</td></tr>
       <tr><th>Date de validation</th><td>${inscription.valideeLe ? echapper(isoDate(inscription.valideeLe)) : '—'}</td></tr>
     </tbody>
   </table>

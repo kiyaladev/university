@@ -14,5 +14,6 @@
   "la_signature_manuscrite_de_l_enseignant_est_obligatoire": "La signature manuscrite de l'enseignant est obligatoire",
   "le_nombre_d_etudiants_presents_est_obligatoire": "Le nombre d'étudiants présents est obligatoire",
   "cette_seance_a_deja_ete_controlee_par_un_autre_agent_seule_l": "Cette séance a déjà été contrôlée par un autre agent ; seule la direction peut corriger",
-  "l_enseignant_doit_attester_sa_presence_devant_vous_signature": "L'enseignant doit attester sa présence devant vous : signature, code personnel ou empreinte"
+  "l_enseignant_doit_attester_sa_presence_devant_vous_signature": "L'enseignant doit attester sa présence devant vous : signature, code personnel ou empreinte",
+  "heure_fin_reelle_avant_arrivee": "L'heure de fin réelle doit être postérieure à l'heure d'arrivée"
 }

@@ -28,5 +28,8 @@
   "mobileMoneyUnavailable": "The Mobile Money gateway is unavailable: payment remains pending. Confirmation will be handled at the payment desk.",
   "paiement_formation_confirme_par_action_de_formation": "This payment belongs to a course: confirm it from that course’s registration list.",
   "mobileMoneyRejected": "The operator rejected the request (HTTP {status}): payment remains pending.",
-  "mobileMoneyInvalidResponse": "The gateway did not provide a valid transaction reference: payment remains pending."
+  "mobileMoneyInvalidResponse": "The gateway did not provide a valid transaction reference: payment remains pending.",
+  "devise_incompatible": "This payment is in {devise} while the enrolment fees are in {deviseDossier}: no conversion is applied.",
+  "statut_modifie_entre_temps": "This enrolment's status has just changed: reload it before trying again.",
+  "fiche_existante_connexion_requise": "A student record already exists for this email address: sign in to the student portal or visit the registrar's office."
 }

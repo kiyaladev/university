@@ -156,8 +156,17 @@ export const usePointagesStore = defineStore('pointages', {
       // écrit sur l'appareil, où il survivrait à la séance. Hors ligne, seules
       // la signature (qui est elle-même la preuve) et l'empreinte (dont le
       // résultat est signé par la passerelle) sont conservables.
-      const { codePinEnseignant, ...sansSecret } = pointage;
+      //
+      // Le résultat d'empreinte n'est toutefois recevable que quelques minutes
+      // (anti-rejeu côté serveur) et il est vérifié avant la signature : s'il
+      // partait en file avec elle, une longue coupure ferait rejeter le
+      // pointage. Accompagné d'une signature, seule celle-ci est conservée ;
+      // seul, il part en file avec un avertissement.
+      const { codePinEnseignant, ...conservable } = pointage;
+      const sansSecret: Pointage = { ...conservable };
+      if (sansSecret.empreinte && sansSecret.signatureBase64) delete sansSecret.empreinte;
       const perdu = Boolean(codePinEnseignant) && !sansSecret.signatureBase64;
+      const empreinteSeule = Boolean(sansSecret.empreinte) && !sansSecret.signatureBase64;
 
       this.file = [
         ...this.file.filter((p) => p.seanceId !== pointage.seanceId),
@@ -169,16 +178,21 @@ export const usePointagesStore = defineStore('pointages', {
       ];
       await this.persister();
 
+      const avertir = perdu || empreinteSeule;
       Notify.create({
-        type: perdu ? 'warning' : 'info',
+        type: avertir ? 'warning' : 'info',
         message: perdu
           ? i18n.global.t('filePointages.withoutPin')
-          : i18n.global.t('filePointages.queued'),
+          : empreinteSeule
+            ? i18n.global.t('filePointages.fingerprintOnly')
+            : i18n.global.t('filePointages.queued'),
         caption: perdu
           ? i18n.global.t('filePointages.pinHelp')
-          : undefined,
+          : empreinteSeule
+            ? i18n.global.t('filePointages.fingerprintHelp')
+            : undefined,
         icon: 'cloud_off',
-        timeout: perdu ? 8000 : undefined,
+        timeout: avertir ? 8000 : undefined,
       });
     },
 

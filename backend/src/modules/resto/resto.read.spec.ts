@@ -114,3 +114,23 @@ describe('Lecture de la carte restaurant au guichet', () => {
     });
   });
 });
+
+describe('Registres du restaurant — filtres de dates', () => {
+  const prisma: any = {
+    recharge: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
+    consommationResto: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
+  };
+  const service = new RestoService(prisma, {} as never, {} as never);
+  const debut = new Date('2026-10-01T00:00:00');
+  const fin = new Date('2026-10-31T23:59:59.999');
+
+  it('conserve les deux bornes des recharges', async () => {
+    await service.listeRecharges({ dateDebut: '2026-10-01', dateFin: '2026-10-31' } as any);
+    expect(prisma.recharge.findMany.mock.calls[0][0].where).toEqual({ rechargeLe: { gte: debut, lte: fin } });
+  });
+
+  it('conserve les deux bornes des consommations', async () => {
+    await service.listeConsommations({ dateDebut: '2026-10-01', dateFin: '2026-10-31' } as any);
+    expect(prisma.consommationResto.findMany.mock.calls[0][0].where).toEqual({ consommeLe: { gte: debut, lte: fin } });
+  });
+});

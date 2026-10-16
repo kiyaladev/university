@@ -9,5 +9,6 @@
   "code_personnel_incorrect": "Incorrect personal code",
   "seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u": "Only academic services may define the means of attestation for a teacher.",
   "appareil_inconnu_ou_revoque_sa_lecture_d_empreinte_n_est_pas": "Unknown or revoked device: its fingerprint scan is not admissible.",
-  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "Teacher consent is required before any fingerprint enrolment. Personal code and signature remain available."
+  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "Teacher consent is required before any fingerprint enrolment. Personal code and signature remain available.",
+  "passerelle_biometrique_non_configuree": "Biometric gateway not configured: use an enrolled device, the personal code or a signature"
 }

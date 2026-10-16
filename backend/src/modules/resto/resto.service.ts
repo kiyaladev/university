@@ -404,8 +404,15 @@ export class RestoService {
 
     const where: Prisma.RechargeWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
-      ...(query.dateDebut ? { rechargeLe: { gte: new Date(`${query.dateDebut}T00:00:00`) } } : {}),
-      ...(query.dateFin ? { rechargeLe: { lte: new Date(`${query.dateFin}T23:59:59.999`) } } : {}),
+      // Un seul objet par champ : deux spreads successifs écrasaient `gte`.
+      ...(query.dateDebut || query.dateFin
+        ? {
+            rechargeLe: {
+              ...(query.dateDebut ? { gte: new Date(`${query.dateDebut}T00:00:00`) } : {}),
+              ...(query.dateFin ? { lte: new Date(`${query.dateFin}T23:59:59.999`) } : {}),
+            },
+          }
+        : {}),
     };
 
     const [data, total] = await Promise.all([
@@ -432,8 +439,15 @@ export class RestoService {
     const where: Prisma.ConsommationRestoWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.cantine ? { cantine: { contains: query.cantine, mode: 'insensitive' } } : {}),
-      ...(query.dateDebut ? { consommeLe: { gte: new Date(`${query.dateDebut}T00:00:00`) } } : {}),
-      ...(query.dateFin ? { consommeLe: { lte: new Date(`${query.dateFin}T23:59:59.999`) } } : {}),
+      // Un seul objet par champ : deux spreads successifs écrasaient `gte`.
+      ...(query.dateDebut || query.dateFin
+        ? {
+            consommeLe: {
+              ...(query.dateDebut ? { gte: new Date(`${query.dateDebut}T00:00:00`) } : {}),
+              ...(query.dateFin ? { lte: new Date(`${query.dateFin}T23:59:59.999`) } : {}),
+            },
+          }
+        : {}),
     };
 
     const [data, total] = await Promise.all([

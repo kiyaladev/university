@@ -7,6 +7,9 @@ interface LectureConfig {
   get<T = string>(cle: string): T | undefined;
 }
 
+/** Valeur d'exemple publique (`.env.example`) : refusée en production. */
+export const JWT_SECRET_EXEMPLE = 'change-me-in-production';
+
 /**
  * Résolution du secret et de la durée de vie. Exportée pour être testée
  * directement : c'est ici que se joue le bug décrit plus bas, pas dans la
@@ -18,13 +21,15 @@ export function optionsJwt(config: LectureConfig) {
   // l'application démarrait normalement et signait *et* vérifiait tous les
   // jetons avec une constante écrite en clair dans le dépôt : une
   // authentification entièrement contournable, sans le moindre signal.
-  if (!secret && process.env.NODE_ENV === 'production') {
+  // La valeur d'exemple de `.env.example` est publique : l'accepter revient
+  // au même contournement qu'un secret absent.
+  if (process.env.NODE_ENV === 'production' && (!secret || secret === JWT_SECRET_EXEMPLE)) {
     throw new Error(
       'JWT_SECRET est obligatoire en production. Générez-en une : openssl rand -hex 32',
     );
   }
   return {
-    secret: secret ?? 'change-me-in-production',
+    secret: secret ?? JWT_SECRET_EXEMPLE,
     signOptions: {
       expiresIn: (config.get<string>('JWT_EXPIRES_IN') ?? '12h') as any,
     },

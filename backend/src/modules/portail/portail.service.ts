@@ -251,7 +251,7 @@ export class PortailService {
           include: { annee: true, promotion: { include: { filiere: true } }, paiements: true },
           orderBy: { createdAt: 'desc' },
         },
-        paiements: { orderBy: { horodatage: 'desc' } },
+        paiements: { orderBy: { horodatage: 'desc' }, include: { demandeDocument: { select: { id: true } } } },
       },
     });
     if (!etudiant) throw new NotFoundException(t('portail.aucun_dossier_etudiant_rattache_a_ce_compte'));
@@ -275,10 +275,13 @@ export class PortailService {
       });
       if (tarif) devise = tarif.devise;
       if (!inscription.montantFrais && tarif) montantFrais = tarif.montant;
+      // Comme au passage en PAYEE : ni frais documentaires, ni autre devise.
       paye = etudiant.paiements
         .filter(
           (p) =>
             p.statut === StatutPaiement.REUSSI &&
+            !p.demandeDocument &&
+            p.devise === devise &&
             (!p.inscriptionId || p.inscriptionId === inscription.id),
         )
         .reduce((somme, p) => somme + p.montant, 0);
@@ -378,7 +381,7 @@ export class PortailService {
             statut: true,
             valideeLe: true,
             promotion: { select: { nom: true } },
-            annee: { select: { libelle: true } },
+            annee: { select: { libelle: true, dateDebut: true } },
           },
         },
       },
@@ -386,7 +389,24 @@ export class PortailService {
     });
 
     const deliberations = lignes.map((l) => this.ligneResume(l));
-    return { deliberations, finale: deliberations[deliberations.length - 1] ?? null };
+    // Résultat final : l'année la plus récente d'abord, puis sa dernière
+    // session (le rattrapage prime sur la session normale), puis la plus
+    // récemment validée. Le dernier élément de la liste triée ne le garantit pas.
+    const rangSession = (session: string) => (session === 'RATTRAPAGE' ? 1 : 0);
+    const cle = (l: (typeof lignes)[number]) => [
+      l.deliberation.annee.dateDebut ? new Date(l.deliberation.annee.dateDebut).getTime() : 0,
+      rangSession(l.deliberation.session),
+      l.deliberation.valideeLe ? new Date(l.deliberation.valideeLe).getTime() : 0,
+    ];
+    let indexFinale = -1;
+    lignes.forEach((l, i) => {
+      if (indexFinale < 0) { indexFinale = i; return; }
+      const a = cle(l);
+      const b = cle(lignes[indexFinale]);
+      const ecart = a.map((v, k) => v - b[k]).find((d) => d !== 0) ?? 0;
+      if (ecart > 0) indexFinale = i;
+    });
+    return { deliberations, finale: indexFinale >= 0 ? deliberations[indexFinale] : null };
   }
 
   /** Forme publique d'une ligne de délibération (jamais celle d'autrui). */

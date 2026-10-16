@@ -9,5 +9,6 @@
   "code_personnel_incorrect": "Code personnel incorrect",
   "seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u": "Seule la scolarité peut définir les moyens d’attestation d’un enseignant",
   "appareil_inconnu_ou_revoque_sa_lecture_d_empreinte_n_est_pas": "Appareil inconnu ou révoqué : sa lecture d’empreinte n’est pas recevable",
-  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "L'enseignant doit consentir avant tout enrôlement d'empreinte. Le code personnel et la signature restent disponibles."
+  "l_enseignant_doit_consentir_avant_tout_enrolement_d_empreint": "L'enseignant doit consentir avant tout enrôlement d'empreinte. Le code personnel et la signature restent disponibles.",
+  "passerelle_biometrique_non_configuree": "Passerelle biométrique non configurée : utilisez un appareil enrôlé, le code personnel ou la signature"
 }

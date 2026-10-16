@@ -198,7 +198,7 @@ describe('résultats dans le portail étudiant', () => {
         deliberation: {
           select: expect.objectContaining({
             promotion: { select: { nom: true } },
-            annee: { select: { libelle: true } },
+            annee: { select: { libelle: true, dateDebut: true } },
           }),
         },
       }),
@@ -210,5 +210,36 @@ describe('résultats dans le portail étudiant', () => {
     const select = prisma.deliberationLigne.findMany.mock.calls[0][0].select;
     expect(select).not.toHaveProperty('inscription.etudiant');
     expect(select.deliberation.select.promotion).not.toHaveProperty('include');
+  });
+});
+
+describe('résultat final du portail étudiant', () => {
+  const ligne = (id: string, session: string, annee: string, dateDebut: string, valideeLe: string) => ({
+    id, deliberationId: `d-${id}`, moyenne: 12, decision: 'ADMIS', mention: null, rang: null,
+    deliberation: {
+      session, statut: 'VALIDEE', valideeLe: new Date(valideeLe),
+      promotion: { nom: 'L' }, annee: { libelle: annee, dateDebut: new Date(dateDebut) },
+    },
+  });
+
+  it('retient l’année la plus récente, puis sa dernière session', async () => {
+    // Ordre renvoyé par la requête : session asc, puis validation desc.
+    const lignes = [
+      ligne('n-2026', 'NORMALE', '2025-2026', '2025-10-01', '2026-07-01'),
+      ligne('n-2025', 'NORMALE', '2024-2025', '2024-10-01', '2025-07-01'),
+      ligne('r-2025', 'RATTRAPAGE', '2024-2025', '2024-10-01', '2025-09-01'),
+    ];
+    const prisma: any = { deliberationLigne: { findMany: jest.fn().mockResolvedValue(lignes) } };
+    const service = new PortailService(prisma, {} as any, {} as any);
+
+    const resultat = await service.resultats({ id: 'user-1', role: Role.ETUDIANT, etudiantId: 'etu-1' } as any);
+    expect(resultat.finale).toMatchObject({ id: 'n-2026' });
+
+    prisma.deliberationLigne.findMany.mockResolvedValue([
+      ...lignes.slice(0, 1),
+      ligne('r-2026', 'RATTRAPAGE', '2025-2026', '2025-10-01', '2026-09-01'),
+    ]);
+    const avecRattrapage = await service.resultats({ id: 'user-1', role: Role.ETUDIANT, etudiantId: 'etu-1' } as any);
+    expect(avecRattrapage.finale).toMatchObject({ id: 'r-2026' });
   });
 });

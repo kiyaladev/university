@@ -35,6 +35,9 @@ import { toDateOnly } from '../../common/utils';
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
 
+/** Valeur d'exemple publique (`.env.example`) : refusée en production. */
+const BIOMETRIE_SECRET_EXEMPLE = 'change-me-biometrie';
+
 export interface PreuvesAttestation {
   signatureBase64?: string;
   codePinEnseignant?: string;
@@ -134,8 +137,18 @@ export class AttestationService {
 
   // ------------------------------------------------------------------ empreinte
 
+  /**
+   * Clé de la passerelle (preuves sans appareil enrôlé). En production, la
+   * valeur d'exemple publique ou une clé absente désactivent ce chemin : sinon
+   * n'importe qui pourrait forger une preuve signée.
+   */
   private get secretBiometrie() {
-    return process.env.BIOMETRIE_SECRET ?? 'change-me-biometrie';
+    const secret = process.env.BIOMETRIE_SECRET;
+    if (secret && secret !== BIOMETRIE_SECRET_EXEMPLE) return secret;
+    if (process.env.NODE_ENV === 'production') {
+      throw new BadRequestException(t('attestation.passerelle_biometrique_non_configuree'));
+    }
+    return secret ?? BIOMETRIE_SECRET_EXEMPLE;
   }
 
   /**

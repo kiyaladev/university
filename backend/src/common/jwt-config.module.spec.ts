@@ -28,4 +28,22 @@ describe('options du module JWT', () => {
     expect(optionsJwt(config({})).secret).toBe('change-me-in-production');
     expect(optionsJwt(config({})).signOptions.expiresIn).toBe('12h');
   });
+
+  describe('en production', () => {
+    const nodeEnv = process.env.NODE_ENV;
+    beforeEach(() => { process.env.NODE_ENV = 'production'; });
+    afterEach(() => { process.env.NODE_ENV = nodeEnv; });
+
+    it('refuse un secret absent', () => {
+      expect(() => optionsJwt(config({}))).toThrow(/JWT_SECRET/);
+    });
+
+    it('refuse la valeur d’exemple publique de .env.example', () => {
+      expect(() => optionsJwt(config({ JWT_SECRET: 'change-me-in-production' }))).toThrow(/JWT_SECRET/);
+    });
+
+    it('accepte un secret réel', () => {
+      expect(optionsJwt(config({ JWT_SECRET: 'a'.repeat(64) })).secret).toBe('a'.repeat(64));
+    });
+  });
 });

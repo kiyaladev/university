@@ -3,6 +3,8 @@ export default {
   "withoutPin": "Pointage mis en attente sans le code — faites signer l’enseignant",
   "queued": "Pointage enregistré hors ligne — il sera synchronisé automatiquement",
   "pinHelp": "Le code ne peut être vérifié qu’en ligne et n’est pas conservé sur l’appareil.",
+  "fingerprintOnly": "Pointage mis en attente avec la seule empreinte — faites aussi signer l’enseignant",
+  "fingerprintHelp": "Le résultat d’empreinte expire après quelques minutes : sans signature, il sera refusé si la connexion tarde à revenir.",
   "synced": "{synced}/{total} pointage(s) synchronisé(s)",
   "failed": "{n} en échec",
   "unavailable": "Synchronisation indisponible : les pointages restent sur cet appareil",

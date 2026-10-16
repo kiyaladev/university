@@ -18,7 +18,10 @@ describe('Audit des transitions d’inscription', () => {
     };
     const apres = { ...avant, statut: StatutInscription.VALIDEE };
     const tx = {
-      inscription: { update: jest.fn().mockResolvedValue(apres) },
+      inscription: {
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUnique: jest.fn().mockResolvedValue(apres),
+      },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
     };
@@ -49,7 +52,7 @@ describe('Audit des transitions d’inscription', () => {
       etudiant: { nom: 'Diallo', prenom: 'Aïssatou' }, promotion: { filiere: { departementId: 'dep-1' } },
     };
     const tx = {
-      inscription: { update: jest.fn() },
+      inscription: { updateMany: jest.fn(), findUnique: jest.fn() },
       auditLog: { create: jest.fn() },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: true }) },
     };
@@ -61,7 +64,7 @@ describe('Audit des transitions d’inscription', () => {
 
     await expect(service.validerInscription('ins-closed', { id: 'agent-1', role: Role.SCOLARITE } as AuthUser))
       .rejects.toBeInstanceOf(BadRequestException);
-    expect(tx.inscription.update).not.toHaveBeenCalled();
+    expect(tx.inscription.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,8 @@ export default {
   "withoutPin": "Record queued without the PIN — ask the teacher to sign",
   "queued": "Record saved offline — it will be synced automatically",
   "pinHelp": "The PIN can only be verified online and is not stored on this device.",
+  "fingerprintOnly": "Record queued with the fingerprint only — also ask the teacher to sign",
+  "fingerprintHelp": "A fingerprint result expires after a few minutes: without a signature it will be rejected if the connection takes long to return.",
   "synced": "{synced}/{total} attendance record(s) synced",
   "failed": "{n} failed",
   "unavailable": "Sync unavailable: records remain on this device",

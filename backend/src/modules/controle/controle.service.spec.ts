@@ -1,6 +1,6 @@
 /** Règles de pointage : déduction du statut, durée effective, preuves. */
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { Role, StatutPresence, StatutSeance } from '@prisma/client';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Prisma, Role, StatutPresence, StatutSeance } from '@prisma/client';
 import { ControleService } from './controle.service';
 import { AuthUser } from '../../common/decorators';
 
@@ -21,6 +21,7 @@ const SEANCE = {
   statut: StatutSeance.PLANIFIEE,
   heureDebut: '08:00',
   heureFin: '10:00',
+  controleurAssigneId: 'user-1',
   salle: {
     id: 'salle-1',
     qrToken: 'UP-salle-1',
@@ -42,7 +43,8 @@ function preparer(options: { parametres?: Record<string, unknown>; seance?: any 
     controle: {
       findFirst: jest.fn().mockResolvedValue(null),
       findUnique: jest.fn().mockResolvedValue(null),
-      upsert: jest.fn().mockImplementation(({ create }) => Promise.resolve({ id: 'c1', ...create })),
+      create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'c1', ...data })),
+      update: jest.fn().mockImplementation(({ data }) => Promise.resolve({ id: 'c1', ...data })),
       delete: jest.fn().mockResolvedValue({}),
     },
     anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
@@ -88,7 +90,56 @@ describe('ControleService — déduction du statut de présence', () => {
     const chef = { ...CONTROLEUR, role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1' };
 
     await expect(service.pointer({ seanceId: 'seance-1' }, chef)).rejects.toThrow(NotFoundException);
-    expect(prisma.controle.upsert).not.toHaveBeenCalled();
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+    expect(prisma.controle.update).not.toHaveBeenCalled();
+  });
+
+  it('refuse au contrôleur une séance hors de son attribution et de son département', async () => {
+    const { service, prisma } = preparer({
+      seance: { ...SEANCE, controleurAssigneId: 'user-2', controle: null },
+    });
+
+    await expect(
+      service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, CONTROLEUR),
+    ).rejects.toThrow(NotFoundException);
+    await expect(
+      service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, { ...CONTROLEUR, departementId: 'dept-2' }),
+    ).rejects.toThrow(NotFoundException);
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+    expect(prisma.controle.update).not.toHaveBeenCalled();
+  });
+
+  it('laisse le contrôleur du département pointer une séance non attribuée', async () => {
+    const { service, prisma } = preparer({ seance: { ...SEANCE, controleurAssigneId: null } });
+    await service.pointer(
+      { seanceId: 'seance-1', statut: StatutPresence.ABSENT },
+      { ...CONTROLEUR, departementId: 'dept-1' },
+    );
+    expect(prisma.controle.create).toHaveBeenCalled();
+  });
+
+  it('refuse une heure de fin réelle antérieure ou égale à l’arrivée', async () => {
+    const { service, prisma } = preparer();
+    for (const heureFinReelle of ['07:00', '08:00']) {
+      await expect(
+        service.pointer({ seanceId: 'seance-1', heureArrivee: '08:00', heureFinReelle }, CONTROLEUR),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    }
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+  });
+
+  it('refuse la seconde première saisie concurrente au lieu d’écraser la première', async () => {
+    const { service, prisma } = preparer();
+    // Les deux saisies ont lu `existant === null` ; la base refuse le second INSERT.
+    prisma.controle.create.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', { code: 'P2002', clientVersion: 'test' }),
+    );
+
+    await expect(
+      service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, CONTROLEUR),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(prisma.controle.update).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 
   it('considère présent un enseignant arrivé dans la tolérance', async () => {
@@ -163,7 +214,8 @@ describe('ControleService — année académique clôturée', () => {
     prisma.$queryRaw.mockResolvedValue([{ cloturee: true }]);
 
     await expect(service.pointer({ seanceId: 'seance-1' }, CONTROLEUR)).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.controle.upsert).not.toHaveBeenCalled();
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+    expect(prisma.controle.update).not.toHaveBeenCalled();
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     expect(prisma.$queryRaw.mock.calls[0][0].join('')).toContain('FOR SHARE');
   });
@@ -176,7 +228,8 @@ describe('ControleService — année académique clôturée', () => {
     prisma.controle.findUnique.mockResolvedValue({ id: 'c-existing', controleurId: CONTROLEUR.id, statut: StatutPresence.ABSENT });
 
     await expect(service.pointer({ seanceId: 'seance-1' }, CONTROLEUR)).rejects.toBeInstanceOf(BadRequestException);
-    expect(prisma.controle.upsert).not.toHaveBeenCalled();
+    expect(prisma.controle.create).not.toHaveBeenCalled();
+    expect(prisma.controle.update).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 

@@ -409,6 +409,31 @@ describe('Attestation — empreinte digitale', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
+  it('refuse en production la clé d’exemple publique de la passerelle', async () => {
+    const { service } = preparer({ enseignant: enrole });
+    const h = horodatage();
+    const exemple = 'change-me-biometrie';
+    const signatureForgee = createHmac('sha256', exemple)
+      .update(`verification|ens-1|${empreinteGabarit}|100|${h}`)
+      .digest('hex');
+    const avant = { secret: process.env.BIOMETRIE_SECRET, env: process.env.NODE_ENV };
+    try {
+      process.env.NODE_ENV = 'production';
+      for (const valeur of [undefined, exemple]) {
+        if (valeur === undefined) delete process.env.BIOMETRIE_SECRET;
+        else process.env.BIOMETRIE_SECRET = valeur;
+        await expect(
+          service.verifierPreuves('ens-1', {
+            empreinte: { score: 100, horodatage: h, signature: signatureForgee },
+          }),
+        ).rejects.toThrow('Passerelle biométrique non configurée');
+      }
+    } finally {
+      process.env.BIOMETRIE_SECRET = avant.secret;
+      process.env.NODE_ENV = avant.env;
+    }
+  });
+
   it('refuse une empreinte pour un enseignant non enrôlé', async () => {
     const { service } = preparer();
     const h = horodatage();
