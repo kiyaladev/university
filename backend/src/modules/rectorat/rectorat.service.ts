@@ -53,7 +53,8 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { AuthUser } from '../../common/decorators';
-import { echapper, isoDate, round2 } from '../../common/utils';
+import { isoDate, round2 } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { I18nContext } from 'nestjs-i18n';
 
@@ -390,7 +391,7 @@ export class RectoratService {
 
     const snapshot = await this.trouverBilan(id);
     const d = snapshot.donnees as any;
-    const etablissement = await this.parametresValeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
     const promos = Array.isArray(d?.effectifParPromotion) ? d.effectifParPromotion : [];
@@ -398,19 +399,15 @@ export class RectoratService {
     const cats = Array.isArray(patrimoine.parCategorie) ? patrimoine.parCategorie : [];
     const depts = Array.isArray(patrimoine.parDepartement) ? patrimoine.parDepartement : [];
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Bilan MESRS — ${echapper(snapshot.annee.libelle)}</title>
-<style>
-  ${STYLE_BILAN}
-</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre: `Bilan MESRS — ${snapshot.annee.libelle}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_BILAN,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Bilan d'activité — transmission MESRS</div>
-    <div class="sous-titre">Année académique ${echapper(snapshot.annee.libelle)} — snapshot du ${echapper(isoDate(snapshot.genereLe))}</div>
-  </header>
-  <div class="meta">
+    <div class="sous-titre">Année académique ${echapper(snapshot.annee.libelle)} — snapshot du ${echapper(isoDate(snapshot.genereLe))}</div>`,
+      corps: `<div class="meta">
     <span>Édité le <strong>${echapper(edite)}</strong></span>
     <span>Par ${echapper(snapshot.generePar ? `${snapshot.generePar.prenom} ${snapshot.generePar.nom}` : '—')}</span>
   </div>
@@ -476,29 +473,10 @@ export class RectoratService {
   <div class="encadre">
     <strong>${patrimoine.obsoletes ?? 0}</strong> équipement(s) obsolète(s) ·
     <strong>${patrimoine.enReparation ?? 0}</strong> en réparation.
-  </div>
-
-  <footer>
-    <span>${echapper(etablissement)} — bilan MESRS · ${echapper(snapshot.annee.libelle)}</span>
-    <span>Snapshot ${echapper(snapshot.id)}</span>
-  </footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
-  }
-
-  /**
-   * Récupère un paramètre système — on évite de coupler ce module au service
-   * Parametres pour rester permutable : on n'utilise qu'une valeur et le
-   * prisma.parametre n'a pas la même clé selon les universités. À défaut,
-   * on retombe sur l'établissement par défaut.
-   */
-  private async parametresValeur(cle: string): Promise<string> {
-    try {
-      const p = await this.prisma.parametre.findFirst({ where: { cle } });
-      return (p?.valeur as string) || 'Université';
-    } catch {
-      return 'Université';
-    }
+  </div>`,
+      piedDePage: `<span>${echapper(etablissement.nom)} — bilan MESRS · ${echapper(snapshot.annee.libelle)}</span>
+    <span>Snapshot ${echapper(snapshot.id)}</span>`,
+    });
   }
 }
 
@@ -578,25 +556,12 @@ function pourcent(v?: number | null): string {
 }
 
 const STYLE_BILAN = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  .meta { display: flex; gap: 18px; margin: 12px 0 4px; font-size: 11px; color: #444; flex-wrap: wrap; }
-  .section-titre { font-size: 13px; margin: 18px 0 6px; text-transform: uppercase; letter-spacing: .5px; color: #0d47a1; border-bottom: 1px solid #0d47a1; padding-bottom: 4px; }
+  .section-titre { font-size: 12px; margin: 18px 0 6px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid ${P.encre}; padding-bottom: 4px; }
   .cles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 4px; }
-  .cle { border: 1px solid #b9c4cf; padding: 8px 10px; background: #fafbfd; display: flex; flex-direction: column; gap: 2px; }
-  .cle .pochoir { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: .3px; }
-  .cle strong { font-size: 16px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .vide { text-align: center; color: #777; font-style: italic; }
-  .encadre { margin-top: 16px; padding: 8px 10px; border: 1px solid #b9c4cf; background: #fafbfd; font-size: 11px; }
-  footer { margin-top: 22px; font-size: 10px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #e3e8ee; padding-top: 6px; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
+  .cle { border: 1px solid ${P.grisFilet}; padding: 8px 10px; background: ${P.grisFond}; display: flex; flex-direction: column; gap: 2px; }
+  .cle .pochoir { font-size: 11px; color: ${P.encreDouce}; text-transform: uppercase; letter-spacing: .3px; }
+  .cle strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+  table { margin-top: 6px; }
+  .vide { text-align: center; color: ${P.encreTertiaire}; font-style: italic; }
+  .encadre { margin-top: 16px; padding: 8px 10px; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; font-size: 11px; }
 `;

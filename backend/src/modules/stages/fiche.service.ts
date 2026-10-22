@@ -1,13 +1,12 @@
 /** Fiche récapitulative d'un travail encadré — HTML A4 ouvert dans un nouvel
- *  onglet, imprimé via le navigateur. Le gabarit reprend la mise en page de
- *  modules/rapports/impression.service.ts : c'en est une copie LOCALE, ce
- *  service d'origine n'est jamais modifié. */
+ *  onglet, imprimé via le navigateur. L'enveloppe et le style viennent du
+ *  gabarit commun `common/impression` (pageA4). */
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4 } from '../../common/impression';
 
 const LIBELLE_TYPE: Record<string, string> = {
   STAGE: 'Stage',
@@ -31,34 +30,9 @@ const COULEUR_STATUT: Record<string, string> = {
   ABANDONNE: 'ABSENT',
 };
 
-/** Copie locale du gabarit de modules/rapports/impression.service.ts. */
+/** Règles propres à la fiche ; le reste (états de présence compris) vient de `pageA4`. */
 const STYLE = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
-  tbody tr:nth-child(even) { background: #fafbfd; }
-  .kpis { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
-  .kpi { flex: 1 1 120px; border: 1px solid #d6dee7; border-radius: 6px; padding: 8px 10px; }
-  .kpi span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
-  .kpi strong { font-size: 18px; color: #0d47a1; }
-  .badge { padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
-  .PRESENT { background: #e3f5e9; color: #17683a; }
-  .RETARD { background: #fff4e0; color: #8a5300; }
-  .ABSENT { background: #fdeaea; color: #a52020; }
-  .EXCUSE { background: #eef0fb; color: #3b419e; }
-  .REMPLACE, .DEPART_ANTICIPE { background: #eef4f8; color: #33586e; }
-  .NON_CONTROLE { background: #f0f0f0; color: #666; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 28px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
+  .signatures { margin-top: 28px; }
 `;
 
 function dateFr(v: Date | string | null | undefined): string {
@@ -115,7 +89,7 @@ export class FicheService {
       throw new NotFoundException(I18nContext.current()!.t('stages.travail_encadre_introuvable'));
     }
 
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
     const lignes: Array<[string, string]> = [
       ['Intitulé', travail.intitule],
@@ -141,17 +115,15 @@ export class FicheService {
       </table>`
       : '';
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Fiche travail encadré — ${echapper(travail.intitule)}</title>
-<style>${STYLE}</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre: `Fiche travail encadré — ${travail.intitule}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Fiche récapitulative — ${LIBELLE_TYPE[travail.type] ?? travail.type}</div>
-    <div class="sous-titre">Établie le ${echapper(dateFr(new Date()))} · document à conserver au dossier</div>
-  </header>
-
-  <div class="kpis">
+    <div class="sous-titre">Établie le ${echapper(dateFr(new Date()))} · document à conserver au dossier</div>`,
+      corps: `<div class="kpis">
     <div class="kpi"><span>Type</span><strong>${LIBELLE_TYPE[travail.type] ?? travail.type}</strong></div>
     <div class="kpi"><span>Statut</span><strong><span class="badge ${COULEUR_STATUT[travail.statut] ?? 'NON_CONTROLE'}">${LIBELLE_STATUT[travail.statut] ?? travail.statut}</span></strong></div>
     <div class="kpi"><span>Rapport</span><strong>${travail.rapportRendu ? 'Rendu' : 'Non rendu'}</strong></div>
@@ -170,10 +142,8 @@ export class FicheService {
     <div class="signature">L’étudiant</div>
     <div class="signature">L’encadrant</div>
     <div class="signature">La direction des études</div>
-  </div>
-
-  <footer><span>UniÉcole — suivi des stages et mémoires</span><span>Édité le ${echapper(edite)}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>UniÉcole — suivi des stages et mémoires</span><span>Édité le ${echapper(edite)}</span>`,
+    });
   }
 }

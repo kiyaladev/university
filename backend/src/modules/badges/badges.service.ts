@@ -18,6 +18,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StatutBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import {
@@ -421,10 +422,10 @@ export class BadgesService {
     }
     const badge = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, badge.id, badge.qrToken);
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     return documentsBadge.documentA4(badge as unknown as BadgeImprimable, {
       urlVerification,
-      nomEtablissement: etablissement,
+      etablissement,
     });
   }
 

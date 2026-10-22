@@ -37,6 +37,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { Prisma, Role, StatutElection } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { ParametresService } from '../parametres/parametres.module';
@@ -621,7 +622,7 @@ export class ElectionsService {
     }
     const election = await this.trouverPour(id, user);
     if (election.statut !== StatutElection.OUVERTE) throw new NotFoundException();
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const bulletin: BulletinElection = {
       id: election.id,
       titre: election.titre,
@@ -636,7 +637,7 @@ export class ElectionsService {
       })),
     };
     return documentsElection.bulletinA4(bulletin, {
-      nomEtablissement: etablissement,
+      etablissement,
       urlVerification: this.urlBulletin(baseUrl, election.id),
     });
   }

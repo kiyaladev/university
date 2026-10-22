@@ -10,7 +10,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutAttestation } from '@prisma/client';
-import { echapper } from '../../common/utils';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 
 export interface CarteImprimable {
   id: string;
@@ -36,32 +36,25 @@ function dateFr(v: Date | string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
+/** Règles propres à la carte ; le reste vient de `pageA4`. */
 const STYLE = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12.5px; line-height: 1.5; }
-  header { border-bottom: 3px solid #1565c0; padding-bottom: 8px; margin-bottom: 16px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #0d47a1; }
-  .coordonnees { font-size: 11px; color: #555; margin-top: 2px; }
-  .titre { font-size: 21px; font-weight: 700; margin-top: 14px; color: #0d47a1; }
-  .identite { margin-top: 18px; border: 1px solid #b9c4cf; border-collapse: collapse; width: 100%; }
-  .identite td { border: 1px solid #b9c4cf; padding: 10px 12px; vertical-align: top; }
-  .identite .intitule { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 170px; font-weight: 600; }
-  .photo { width: 130px; height: 160px; object-fit: cover; border: 1px solid #b9c4cf; background: #f6f8fa; }
-  .qr { text-align: center; margin-top: 26px; }
+  body { font-size: 12.5px; line-height: 1.5; }
+  .titre { margin-top: 14px; }
+  .identite { margin-top: 18px; border: 1px solid ${P.grisFilet}; border-collapse: collapse; width: 100%; }
+  .identite td { border: 1px solid ${P.grisFilet}; padding: 10px 12px; vertical-align: top; }
+  .identite .intitule { background: ${P.grisFond}; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 170px; font-weight: 600; }
+  .photo { width: 130px; height: 160px; object-fit: cover; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; }
   .qr svg { width: 230px; height: 230px; }
-  .qr .mention { font-size: 11px; color: #555; margin-top: 8px; word-break: break-all; }
-  .statut-revoquee { margin-top: 14px; border: 2px solid #a52020; color: #a52020; padding: 8px; text-align: center; font-weight: 700; letter-spacing: .6px; }
-  footer { margin-top: 26px; font-size: 10px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #e3e8ee; padding-top: 6px; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 12mm; }
+  .qr .mention { font-size: 11px; color: ${P.encreDouce}; margin-top: 8px; word-break: break-all; }
+  .revoque { margin-top: 14px; }
 `;
 
 export class DocumentsCarte {
   async documentA4(
     c: CarteImprimable,
-    opt: { urlVerification: string; nomEtablissement: string },
+    opt: { urlVerification: string; etablissement: Etablissement },
   ): Promise<string> {
-    const etablissement = echapper(opt.nomEtablissement);
+    const etablissement = echapper(opt.etablissement.nom);
     const civilite = c.etudiant?.sexe === 'F' ? 'Madame' : 'Monsieur';
     const edite = dateFr(new Date());
 
@@ -74,24 +67,22 @@ export class DocumentsCarte {
 
     const photo = c.photoUrl
       ? `<img class="photo" src="${echapper(c.photoUrl)}" alt="photo" />`
-      : `<div class="photo" style="display:flex;align-items:center;justify-content:center;color:#888;">Photo</div>`;
+      : `<div class="photo" style="display:flex;align-items:center;justify-content:center;color:${P.encreTertiaire};">Photo</div>`;
 
     const revoquee =
       c.statut === StatutAttestation.REVOQUEE
-        ? `<div class="statut-revoquee">CARTE RÉVOQUÉE${c.motifRevocation ? ` — ${echapper(c.motifRevocation)}` : ''}</div>`
+        ? `<div class="revoque">CARTE RÉVOQUÉE${c.motifRevocation ? ` — ${echapper(c.motifRevocation)}` : ''}</div>`
         : '';
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Carte d'étudiant ${echapper(c.etudiant?.matricule ?? '')}</title>
-<style>${STYLE}</style></head>
-<body>
-  <header>
-    <div class="etab">${etablissement}</div>
+    return pageA4({
+      titre: `Carte d'étudiant ${c.etudiant?.matricule ?? ''}`,
+      lang: 'fr',
+      etablissement: opt.etablissement,
+      styles: STYLE,
+      entete: `<div class="etab">${etablissement}</div>
     <div class="coordonnees">Le service de la scolarité</div>
-    <div class="titre">Carte d'étudiant numérique</div>
-  </header>
-
-  <table class="identite" cellspacing="0">
+    <div class="titre">Carte d'étudiant numérique</div>`,
+      corps: `<table class="identite" cellspacing="0">
     <tr>
       <td class="intitule">Identité</td>
       <td>
@@ -112,14 +103,10 @@ export class DocumentsCarte {
     ${svg}
     <div class="mention">Vérifiable à l'adresse : ${echapper(opt.urlVerification)}</div>
     <div class="mention" style="margin-top:4px">Toute consultation est journalisée.</div>
-  </div>
-
-  <footer>
-    <span>${etablissement}</span>
-    <span>Édité le ${edite} — vérification gratuite et publique du QR</span>
-  </footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>${etablissement}</span>
+    <span>Édité le ${edite} — vérification gratuite et publique du QR</span>`,
+    });
   }
 }
 

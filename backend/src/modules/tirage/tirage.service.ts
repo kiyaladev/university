@@ -19,7 +19,7 @@ import { Prisma, StadeTirage } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { exigerAnneeOuverte } from '../../common/annee';
 import {
   CreateTirageDto,
@@ -275,38 +275,16 @@ export class TirageService {
     const empreinteCourte = (h: string | null | undefined) =>
       h ? `${h.slice(0, 16)}…` : '—';
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Bordereau tirage — ${echapper(t.examen.codeExamen)}</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 14mm; font-size: 12px; }
-  header { border-bottom: 2px solid #10251E; padding-bottom: 8px; margin-bottom: 14px; }
-  .titre { font-size: 19px; font-weight: 700; margin: 4px 0 6px; color: #0F7A45; }
-  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin: 10px 0; font-size: 12px; }
-  .meta b { display: inline-block; min-width: 130px; color: #555; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  th, td { border: 1px solid #b9c4cf; padding: 6px 8px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; }
-  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-  .PROGRAMME { background: #e3eae5; color: #10251E; }
-  .IMPRIME { background: #fff3cd; color: #856404; }
-  .MIS_SOUS_PLI { background: #cfe5ff; color: #0d3a78; }
-  .DISTRIBUE { background: #e3f5e9; color: #17683a; }
-  .RECUPERE { background: #d4edda; color: #155724; }
-  .ANNULE { background: #f8d7da; color: #721c24; }
-  .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 60px; }
-  .signature { border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
-</style></head>
-<body>
-  <header>
-    <div class="titre">Bordereau de tirage — ${echapper(t.examen.codeExamen)}</div>
-    <div>${echapper(t.examen.intitule)}</div>
-  </header>
-  <div class="meta">
+    const etablissement = await chargerEtablissement(this.prisma);
+
+    return pageA4({
+      titre: `Bordereau tirage — ${t.examen.codeExamen}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_BORDEREAU,
+      entete: `<div class="titre">Bordereau de tirage — ${echapper(t.examen.codeExamen)}</div>
+    <div>${echapper(t.examen.intitule)}</div>`,
+      corps: `<div class="meta">
     <div><b>Mention :</b> ${echapper(t.examen.promotion.nom)}</div>
     <div><b>Matière :</b> ${echapper(t.examen.matiere.intitule)}</div>
     <div><b>Année :</b> ${echapper(t.examen.annee.libelle)}</div>
@@ -322,12 +300,27 @@ export class TirageService {
     <div class="signature">L'imprimeur<br /><small>${t.imprimeur ? `${echapper(t.imprimeur.prenom)} ${echapper(t.imprimeur.nom)}` : ''}</small></div>
     <div class="signature">Le surveillant<br /><small>${t.examen.surveillant ? `${echapper(t.examen.surveillant.prenom)} ${echapper(t.examen.surveillant.nom)}` : ''}</small></div>
     <div class="signature">Le Chef de département</div>
-  </div>
-  <footer><span>UniPrésence — sécurité des épreuves</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>UniPrésence — sécurité des épreuves</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
+    });
   }
 }
+
+/** Règles propres au bordereau de tirage ; le reste vient de `pageA4`. */
+const STYLE_BORDEREAU = `
+  body { padding: 16mm 14mm; }
+  .titre { margin: 4px 0 6px; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin: 10px 0; font-size: 12px; color: ${P.encre}; }
+  .meta b { display: inline-block; min-width: 130px; color: ${P.encreDouce}; }
+  th, td { padding: 6px 8px; }
+  .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
+  .PROGRAMME { background: ${P.grisInerte}; color: ${P.encre}; }
+  .IMPRIME, .MIS_SOUS_PLI { background: ${P.jauneFond}; color: ${P.jauneTexte}; }
+  .DISTRIBUE, .RECUPERE { background: ${P.vertFond}; color: ${P.vert}; }
+  .ANNULE { background: ${P.rougeFond}; color: ${P.rouge}; }
+  .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 60px; }
+  .signature { width: auto; }
+`;
 
 /** Calcule un SHA-256 stable (hex) à partir d'un contenu ; exporté pour les
  *  seeds / outils de test. La longueur normalisée évite le moindre doute sur

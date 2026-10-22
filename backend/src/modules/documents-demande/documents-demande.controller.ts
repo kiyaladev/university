@@ -17,7 +17,6 @@ import { CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '..
 import type { AuthUser } from '../../common/decorators';
 import { DocumentsDemandeService } from './documents-demande.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';
-import { echapper } from '../../common/utils';
 import {
   CreerDemandeDto,
   CreerTarifDto,
@@ -184,28 +183,6 @@ export class DocumentsDemandeController {
       res.status(401).send('Jeton invalide ou expiré');
       return;
     }
-    const demande = await this.service.findOne(id);
-    res.type('html').send(this.documentHtml(demande, req));
-  }
-
-  private documentHtml(demande: any, _req: Request): string {
-    const numero = echapper(demande.numero);
-    const type = echapper(demande.type);
-    const etudiant = echapper(demande.etudiant
-      ? `${demande.etudiant.prenom ?? ''} ${demande.etudiant.nom ?? ''}`.trim()
-      : '—');
-    const matricule = echapper(demande.etudiant?.matricule ?? '—');
-    const inscription = echapper(demande.inscription?.numero ?? '—');
-    return `<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Demande ${numero}</title>
-<style>body{font-family:Helvetica,Arial,sans-serif;margin:24px;color:#10251E}table{border-collapse:collapse;width:100%}
-th,td{border:1px solid #c9ccc4;padding:6px 10px;text-align:left}th{background:#f2f3ee}</style></head>
-<body><h1>Demande ${numero}</h1>
-<table><tbody><tr><th>Type</th><td>${type}</td></tr>
-<tr><th>Étudiant</th><td>${etudiant} (${matricule})</td></tr>
-<tr><th>Inscription</th><td>${inscription}</td></tr>
-<tr><th>Statut</th><td>${echapper(demande.statut)}</td></tr>
-<tr><th>Frais</th><td>${echapper(demande.frais)} ${echapper(demande.devise)}</td></tr>
-<tr><th>Créée le</th><td>${echapper(demande.creeLe)}</td></tr>
-</tbody></table></body></html>`;
+    res.type('html').send(await this.service.documentImprimable(id));
   }
 }

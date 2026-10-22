@@ -49,7 +49,7 @@ import { Paginated } from '../../common/dto';
 import { round2, isoDate } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
 import { CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 
 /** « Janvier 2026 » — les mois sont écrits en toutes lettres sur les états. */
 export const MOIS_LIBELLES = [
@@ -391,7 +391,7 @@ export class PaieService {
 
   async imprimer(id: string): Promise<string> {
     const feuille = await this.trouver(id);
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
     const lignesHtml = feuille.lignes
@@ -408,40 +408,15 @@ export class PaieService {
       </tr>`)
       .join('');
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Feuille de paie — ${echapper(feuille.libelle)}</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  .meta { display: flex; gap: 18px; margin: 12px 0 4px; font-size: 11px; color: #444; }
-  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-  .BROUILLON { background: #eceeef; color: #5b6570; }
-  .VALIDEE { background: #e3f5e9; color: #17683a; }
-  .PAYEE { background: #e3ecf7; color: #15518f; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
-  .num { text-align: right; }
-  tbody tr:nth-child(even) { background: #fafbfd; }
-  tfoot td { font-weight: 700; background: #e8eef5; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 42px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
-</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre: `Feuille de paie — ${feuille.libelle}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_FEUILLE_PAIE,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Feuille de paie — ${echapper(feuille.libelle)}</div>
-    <div class="sous-titre">Heures des vacataires contrôlées par UniPrésence</div>
-  </header>
-  <div class="meta">
+    <div class="sous-titre">Heures des vacataires contrôlées par UniPrésence</div>`,
+      corps: `<div class="meta">
     <span>Période : du ${echapper(isoDate(feuille.dateDebut))} au ${echapper(isoDate(feuille.dateFin))}</span>
     <span>Statut : <span class="badge ${feuille.statut}">${LIBELLE_STATUT_PAIE[feuille.statut]}</span></span>
     ${feuille.valideeLe ? `<span>Validée le ${echapper(feuille.valideeLe)}</span>` : ''}
@@ -452,7 +427,7 @@ export class PaieService {
       <th>Enseignant</th><th>Taux horaire</th><th>Heures réalisées</th>
       <th>Volume prévu</th><th>Brut</th><th>Retenue</th><th>Net</th><th>Commentaire</th>
     </tr></thead>
-    <tbody>${lignesHtml || '<tr><td colspan="8" style="color:#777">Aucune ligne — feuille non calculée</td></tr>'}</tbody>
+    <tbody>${lignesHtml || `<tr><td colspan="8" style="color:${P.encreTertiaire}">Aucune ligne — feuille non calculée</td></tr>`}</tbody>
     <tfoot><tr>
       <td colspan="6">Montant total à payer</td>
       <td class="num">${feuille.montantTotal.toLocaleString('fr-FR')}</td>
@@ -463,10 +438,9 @@ export class PaieService {
     <div class="signature">Le Comptable</div>
     <div class="signature">Le DAF</div>
     <div class="signature">Le Recteur</div>
-  </div>
-  <footer><span>UniPrésence — feuille de paie mensuelle des vacataires</span><span>Édité le ${edite}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>UniPrésence — feuille de paie mensuelle des vacataires</span><span>Édité le ${edite}</span>`,
+    });
   }
 }
 
@@ -475,3 +449,12 @@ const LIBELLE_STATUT_PAIE: Record<string, string> = {
   VALIDEE: 'Validée',
   PAYEE: 'Payée',
 };
+
+/** Règles propres à la feuille de paie ; le reste vient de `pageA4`. */
+const STYLE_FEUILLE_PAIE = `
+  .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
+  .BROUILLON { background: ${P.grisInerte}; color: ${P.encreDouce}; }
+  .VALIDEE, .PAYEE { background: ${P.vertFond}; color: ${P.vert}; }
+  tfoot td { font-weight: 700; background: ${P.grisFond}; }
+  .signatures { margin-top: 42px; }
+`;

@@ -26,6 +26,7 @@ import * as QRCode from 'qrcode';
 import { Prisma, StatutAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import {
@@ -356,10 +357,10 @@ export class CarteEtudianteService {
 
     const carte = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, carte.id, carte.qrToken);
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     return documentsCarte.documentA4(carte as unknown as CarteImprimable, {
       urlVerification,
-      nomEtablissement: etablissement,
+      etablissement,
     });
   }
 

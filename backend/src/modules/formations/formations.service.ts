@@ -28,7 +28,8 @@ import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
-import { echapper, isoDate, toDateOnly } from '../../common/utils';
+import { isoDate, toDateOnly } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.module';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -760,7 +761,7 @@ export class FormationsService {
       errorCorrectionLevel: 'M',
     });
 
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const formation = inscription.formation;
     const diplome =
       inscription.nomComplet ??
@@ -775,19 +776,15 @@ export class FormationsService {
     ]
       .filter(Boolean)
       .join(' au ');
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Confirmation d'inscription à une formation — ${echapper(inscription.numero)}</title>
-<style>
-  ${STYLE_CERTIFICAT}
-</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre: `Confirmation d'inscription à une formation — ${inscription.numero}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_CERTIFICAT,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Confirmation d'inscription à une formation</div>
-    <div class="sous-titre">Formation continue & certifications professionnelles</div>
-  </header>
-  <div class="meta">
+    <div class="sous-titre">Formation continue & certifications professionnelles</div>`,
+      corps: `<div class="meta">
     <span>N° dossier : <strong>${echapper(inscription.numero)}</strong></span>
     <span>Édité le ${edite}</span>
   </div>
@@ -813,41 +810,19 @@ export class FormationsService {
   <div class="signatures">
     <div class="signature">Le responsable de la formation</div>
     <div class="signature">La direction des affaires financières</div>
-  </div>
-  <footer>
-    <span>${echapper(etablissement)} — hub de formation continue</span>
-    <span>Confirmation d'inscription · Édité le ${edite}</span>
-  </footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>${echapper(etablissement.nom)} — hub de formation continue</span>
+    <span>Confirmation d'inscription · Édité le ${edite}</span>`,
+    });
   }
 }
 
-/**
- * Le style d'impression est la copie locale de celui des états imprimés
- * (modules/rapports — fichier intouchable) : en-tête d'établissement, filets,
- * signatures de pied de page. Quiconque modifie la charte des états doit
- * reporter les changements ici.
- */
+/** Règles propres à la confirmation d'inscription ; le reste vient de `pageA4`. */
 const STYLE_CERTIFICAT = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  .meta { display: flex; gap: 18px; margin: 12px 0 4px; font-size: 11px; color: #444; flex-wrap: wrap; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 30%; }
-  .mention { margin-top: 14px; padding: 8px 10px; border: 1px solid #b9c4cf; background: #fafbfd; font-size: 11px; color: #444; }
-  .verification { margin-top: 22px; border-top: 1px solid #b9c4cf; padding-top: 12px; text-align: center; }
+  th { width: 30%; }
+  .mention { margin-top: 14px; padding: 8px 10px; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; font-size: 11px; color: ${P.encreDouce}; }
   .verification svg { width: 200px; height: 200px; }
-  .verification .mention { font-size: 10px; color: #777; margin-top: 6px; word-break: break-all; border: none; background: none; padding: 0; }
-  .verification .numero-clair { font-size: 12px; font-weight: 700; letter-spacing: .4px; margin-top: 4px; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 44px; }
-  .signature { width: 38%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 22px; font-size: 10px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #e3e8ee; padding-top: 6px; }
-  @media print { body { padding: 8mm; } .no-print { display: none; } }
-  @page { size: A4; margin: 10mm; }
+  .verification .mention { border: none; background: none; padding: 0; }
+  .signatures { margin-top: 44px; }
+  .signature { width: 38%; }
 `;

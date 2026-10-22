@@ -30,7 +30,7 @@ import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
 import { I18nContext } from 'nestjs-i18n';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
@@ -658,33 +658,21 @@ export class PatrimoineService {
       </div>`,
     ).join('');
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Étiquette ${echapper(equipement.numeroInventaire)}</title>
-<style>
-  @page { size: A4; margin: 8mm; }
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #10251E; margin: 0; }
-  .entete { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid #10251E; padding-bottom: 4px; margin-bottom: 6mm; }
-  .etab { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #10251E; }
-  .consigne { font-size: 10px; color: #33463F; }
-  .grille { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
-  .etiquette { border: 1.5px dashed #33463F; padding: 5mm 4mm; text-align: center; page-break-inside: avoid; }
-  .etiquette img { width: 42mm; height: 42mm; }
-  .libelle { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: 12.5px; margin-top: 2mm; }
-  .categorie { font-size: 10px; color: #33463F; margin-top: 1mm; text-transform: uppercase; letter-spacing: .04em; }
-  .ligne { display: flex; justify-content: space-between; font-size: 10px; margin-top: 1.5mm; gap: 4mm; text-align: left; }
-  .ligne .pochoir { color: #33463F; text-transform: uppercase; letter-spacing: .03em; }
-  .ligne strong { font-family: Consolas, monospace; }
-  @media print { body { padding: 0; } }
-</style></head>
-<body>
-  <div class="entete">
+    const etablissement = await chargerEtablissement(this.prisma);
+
+    return pageA4({
+      titre: `Étiquette ${equipement.numeroInventaire}`,
+      lang: 'fr',
+      etablissement,
+      marge: '8mm',
+      entete: null,
+      styles: STYLE_ETIQUETTE_INVENTAIRE,
+      corps: `<div class="entete">
     <span class="etab">Inventaire du patrimoine</span>
     <span class="consigne">${echapper(equipement.qrCode)} · ${echapper(equipement.numeroInventaire)}</span>
   </div>
-  <div class="grille">${etiquettes}</div>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  <div class="grille">${etiquettes}</div>`,
+    });
   }
 
   // ============================================================ utilitaires
@@ -797,3 +785,12 @@ export class PatrimoineService {
 // Référence pour le typage Prisma — le préfixe est utilisé pour la séquence
 // d'inventaire (PAT-AAAA-NNNNN) si on l'active plus tard.
 void PREFIX_INVENTAIRE;
+
+/** Étiquette d'inventaire : planche commune + lignes propres au patrimoine. */
+const STYLE_ETIQUETTE_INVENTAIRE = `${STYLE_ETIQUETTES}
+  .etiquette img { width: 42mm; height: 42mm; }
+  .categorie { font-size: 10px; color: ${PALETTE_IMPRESSION.encreDouce}; margin-top: 1mm; text-transform: uppercase; letter-spacing: .04em; }
+  .ligne { display: flex; justify-content: space-between; font-size: 10px; margin-top: 1.5mm; gap: 4mm; text-align: left; }
+  .ligne .pochoir { color: ${PALETTE_IMPRESSION.encreDouce}; text-transform: uppercase; letter-spacing: .03em; }
+  .ligne strong { font-family: Consolas, monospace; }
+`;

@@ -20,6 +20,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { documents, AttestationImprimable } from './documents';
@@ -375,10 +376,10 @@ export class AttestationsService {
     if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
 
     const urlVerification = this.urlVerification(baseUrl, attestation.numero, attestation.qrToken);
-    const nomEtablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     return documents.documentA4(attestation as unknown as AttestationImprimable, {
       urlVerification,
-      nomEtablissement,
+      etablissement,
     });
   }
 
