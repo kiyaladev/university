@@ -357,7 +357,7 @@ model User {
   tiragesImprimes       Tirage[]             @relation("TirageImprimeur")
   recettesCrees         RecetteExterne[]     @relation("RecetteCreePar")
   reclamationsAssignees Reclamation[]        @relation("ReclamationAssignee")
-  reclamationsCrees    Reclamation[]         @relation("ReclamationCreateur")
+  reclamationsCrees     Reclamation[]        @relation("ReclamationCreateur")
   messagesReclamation   MessageReclamation[] @relation("MessageReclamationAuteur")
   demandesTraitees      DemandeDocument[]    @relation("DemandeDocumentTraitee")
   electionsCrees        Election[]           @relation("ElectionCreePar")
@@ -448,6 +448,7 @@ model Promotion {
   elections     Election[]
 
   @@unique([nom, anneeId])
+  @@index([anneeId])
 }
 
 model Salle {
@@ -528,6 +529,7 @@ model Enseignant {
   coursVOD          CoursVOD[]
 
   @@index([nom, prenom])
+  @@index([departementId])
 }
 
 model Matiere {
@@ -570,6 +572,8 @@ model Affectation {
   seances  Seance[]
 
   @@unique([enseignantId, matiereId, promotionId, anneeId])
+  @@index([anneeId, promotionId])
+  @@index([promotionId])
 }
 
 /// Créneau récurrent de l'emploi du temps (lundi 08:00-10:00, salle S204…).
@@ -627,7 +631,7 @@ model Seance {
   thematique String? // intitulé prévu de la séance
 
   controleurAssigneId String?
-  controleurAssigne   User? @relation("SeanceControleurAssigne", fields: [controleurAssigneId], references: [id], onDelete: SetNull)
+  controleurAssigne   User?   @relation("SeanceControleurAssigne", fields: [controleurAssigneId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -639,6 +643,7 @@ model Seance {
   @@unique([affectationId, date, heureDebut])
   @@index([date, statut])
   @@index([controleurAssigneId, date])
+  @@index([salleId, date])
 }
 
 /// Le pointage : ce que le contrôleur consignait auparavant dans son registre.
@@ -685,6 +690,7 @@ model Controle {
 
   @@index([statut])
   @@index([horodatage])
+  @@index([controleurId])
 }
 
 model Justificatif {
@@ -709,6 +715,7 @@ model Justificatif {
   updatedAt DateTime @updatedAt
 
   @@index([statut])
+  @@index([enseignantId])
 }
 
 // ---------------------------------------------------------------------------
@@ -836,6 +843,8 @@ model Inscription {
 
   @@unique([etudiantId, anneeId])
   @@index([statut])
+  @@index([anneeId, promotionId])
+  @@index([promotionId])
 }
 
 /// Tarif d'inscription par promotion, pour une année (monnaie : devise).
@@ -868,11 +877,11 @@ model Paiement {
   transactionId String? // référence renvoyée par l'opérateur Mobile Money
 
   inscriptionId String?
-  inscription   Inscription? @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
+  inscription   Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: Cascade)
   anneeId       String?
   annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   etudiantId    String?
-  etudiant      Etudiant?    @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  etudiant      Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
 
   horodatage DateTime  @default(now())
   completeLe DateTime?
@@ -896,6 +905,8 @@ model Paiement {
   @@index([statut])
   @@index([inscriptionId])
   @@index([horodatage])
+  @@index([etudiantId])
+  @@index([anneeId])
 }
 
 // ---------------------------------------------------------------------------
@@ -925,6 +936,7 @@ model Evaluation {
 
   @@index([matiereId])
   @@index([promotionId])
+  @@index([anneeId])
 }
 
 /// Note /20 d'un étudiant (via son inscription) à une épreuve.
@@ -1024,6 +1036,9 @@ model Attestation {
   verifications VerificationAttestation[]
 
   @@index([type, statut])
+  @@index([etudiantId])
+  @@index([anneeId])
+  @@index([promotionId])
 }
 
 /// Journal des consultations de vérification d'une attestation (QR code).
@@ -1149,6 +1164,7 @@ model Chambre {
   attributions AttributionLogement[]
 
   @@index([statut])
+  @@index([residenceId])
 }
 
 /// Attribution d'une chambre à un étudiant (critères sociaux/mérite, jury).
@@ -1173,6 +1189,9 @@ model AttributionLogement {
   updatedAt     DateTime                  @updatedAt
 
   @@index([statut])
+  @@index([chambreId])
+  @@index([etudiantId])
+  @@index([anneeId])
 }
 
 // ---------------------------------------------------------------------------
@@ -1227,6 +1246,7 @@ model DocumentDepot {
   @@index([type])
   @@index([public])
   @@index([empreinteHash])
+  @@index([departementId])
 }
 
 /// Suspicion de doublon : pair de documents dont la similarité dépasse un
@@ -1249,6 +1269,7 @@ model SuspicionPlagiat {
 
   @@index([statut])
   @@index([score])
+  @@index([documentAId, documentBId])
 }
 
 enum StatutSuspicionPlagiat {
@@ -1283,6 +1304,8 @@ model Recharge {
   paiementId     String?
   paiement       Paiement?         @relation("PaiementRecharge", fields: [paiementId], references: [id], onDelete: SetNull)
   rechargeLe     DateTime          @default(now())
+
+  @@index([portefeuilleId, rechargeLe])
 }
 
 model ConsommationResto {
@@ -1300,6 +1323,7 @@ model ConsommationResto {
   consommeLe     DateTime           @default(now())
 
   @@index([statut])
+  @@index([portefeuilleId, consommeLe])
 }
 
 // ---------------------------------------------------------------------------
@@ -1353,6 +1377,8 @@ model TravailEncadre {
   soutenance Soutenance?
 
   @@index([statut])
+  @@index([etudiantId])
+  @@index([encadrantId])
 }
 
 model Soutenance {
@@ -1412,6 +1438,9 @@ model TicketSupport {
   updatedAt              DateTime              @updatedAt
 
   @@index([statut])
+  @@index([utilisateurId])
+  @@index([equipementId])
+  @@index([equipementPatrimoineId])
 }
 
 // ---------------------------------------------------------------------------
@@ -1529,6 +1558,7 @@ model EquipementPatrimoine {
 
   @@index([categorieId])
   @@index([actif])
+  @@index([departementId])
 }
 
 enum StatutReparation {
@@ -1556,6 +1586,7 @@ model ReparationMateriel {
   notes           String?
 
   @@index([statut])
+  @@index([equipementId])
 }
 
 // ------------------ Gestion du Courrier Administratif -------------------
@@ -1582,7 +1613,7 @@ model Courrier {
   expediteur      String? // pour les entrants
   destinataire    String? // pour les sortants
   departementId   String?
-  departement     Departement? @relation(fields: [departementId], references: [id], onDelete: Restrict)
+  departement     Departement?   @relation(fields: [departementId], references: [id], onDelete: Restrict)
   dateReception   DateTime?      @db.Date
   dateEnvoi       DateTime?      @db.Date
   fichier         String? // data-url du PDF scanné
@@ -1603,6 +1634,7 @@ model Courrier {
 
   @@index([type, statut])
   @@index([departementId])
+  @@index([enregistreParId])
 }
 
 /// Étape de validation d'un courrier (paraphe).
@@ -1671,6 +1703,9 @@ model Examen {
 
   @@index([dateExamen])
   @@index([promotionId])
+  @@index([anneeId])
+  @@index([matiereId])
+  @@index([salleId])
 }
 
 /// Scan de la carte étudiante à l'entrée de la salle d'examen.
@@ -1726,6 +1761,7 @@ model Tirage {
   updatedAt            DateTime    @updatedAt
 
   @@index([examenId])
+  @@index([imprimeurId])
 }
 
 // ------------------ Régie des Recettes d'Ateliers & Prestations Externes
@@ -1818,6 +1854,8 @@ model Reclamation {
   @@index([statut, priorite])
   @@index([etudiantId])
   @@index([createurId])
+  @@index([departementId])
+  @@index([assigneAId])
 }
 
 model MessageReclamation {
@@ -1996,6 +2034,7 @@ model VoteElection {
   @@unique([electionId, candidatId, electeurId])
   @@index([electionId, candidatId])
   @@index([electionId, electeurId])
+  @@index([candidatId])
 }
 
 // ------------------ Carte d'Étudiant Numérique -----------------
@@ -2112,6 +2151,8 @@ model CoursVOD {
 
   @@index([type, statut])
   @@index([matiereId])
+  @@index([enseignantId])
+  @@index([inscriptionId])
 }
 
 model VueVOD {
