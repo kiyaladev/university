@@ -424,12 +424,8 @@ async function charger() {
     const params = anneeId.value ? { anneeId: anneeId.value } : {};
     const { data } = await api.get('/rectorat/bilan-mesrs', { params });
     snapshots.value = Array.isArray(data) ? data : data.data ?? [];
-  } catch (e: any) {
+  } catch {
     snapshots.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('statistiquesMesrs.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }

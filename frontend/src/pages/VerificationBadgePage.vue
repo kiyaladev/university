@@ -189,7 +189,9 @@ async function verifier() {
   verificationEnCours.value = true;
   resultat.value = null;
   try {
+    // Silencieux : le verdict (y compris l'échec) s'affiche dans le panneau de résultat.
     const { data } = await api.get('/badges/verifier', {
+      silencieux: true,
       params: { badge: identifiant.value.trim(), k: codeQr.value.trim() },
     });
     resultat.value = data;

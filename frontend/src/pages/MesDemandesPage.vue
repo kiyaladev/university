@@ -496,7 +496,9 @@ async function payer() {
       body.operateur = formPaiement.value.operateur;
       body.telephone = formPaiement.value.telephone.trim();
     }
-    await api.post(`/documents-demande/${demandeAPayer.value.id}/payer`, body);
+    await api.post(`/documents-demande/${demandeAPayer.value.id}/payer`, body, {
+      silencieux: true,
+    });
     $q.notify({
       type: 'positive',
       message: mobileMoney

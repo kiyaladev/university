@@ -16,7 +16,6 @@ import {
   OPTIONS_TYPE_ELECTION,
   dateHeureElection,
   electionsService,
-  messageErreurElection,
 } from '../services/elections';
 import type { CandidatElection, Election, ResultatElection, StatutElection, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
@@ -128,11 +127,8 @@ function supprimerCandidat(c: CandidatElection) {
       await electionsService.supprimerCandidat(election.id, c.id);
       candidatsListe.value = candidatsListe.value.filter((x) => x.id !== c.id);
       $q.notify({ type: 'positive', message: t('elections.messages.candidateRemoved') });
-    } catch (e) {
-      $q.notify({
-        type: 'negative',
-        message: messageErreurElection(e, t('elections.messages.candidateRemoveError')),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -145,11 +141,8 @@ async function ouvrirResultats(e: Election) {
   try {
     const { data } = await electionsService.resultats(e.id);
     resultats.value = data;
-  } catch (err) {
-    $q.notify({
-      type: 'negative',
-      message: messageErreurElection(err, t('elections.messages.resultsError')),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargementResultats.value = false;
   }
@@ -197,11 +190,8 @@ function transition(id: string, action: ActionTransition) {
       await electionsService.transition(id, action);
       $q.notify({ type: 'positive', message: info.succes });
       await charger();
-    } catch (e) {
-      $q.notify({
-        type: 'negative',
-        message: messageErreurElection(e, t('elections.messages.transitionError')),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -218,11 +208,8 @@ async function charger() {
     });
     elections.value = data.data;
     pagination.value.total = data.total;
-  } catch (e) {
-    $q.notify({
-      type: 'negative',
-      message: messageErreurElection(e, t('elections.messages.loadError')),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }

@@ -91,11 +91,8 @@ async function confirmerAnnulation() {
     $q.notify({ type: 'warning', message: t('badges.messages.cancelled') });
     dialogAnnulation.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('badges.messages.cancelFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 
@@ -112,11 +109,8 @@ async function confirmerRallonge() {
     $q.notify({ type: 'positive', message: t('badges.messages.extended') });
     dialogRallonge.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('badges.messages.extendFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 

@@ -604,11 +604,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('salles.messages.saved') });
     dialogOuvert.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('salles.messages.saveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
@@ -625,11 +622,8 @@ function regenerer(s: Salle) {
       await api.post(`/salles/${s.id}/qr`);
       $q.notify({ type: 'positive', message: t('salles.messages.regenerated') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('salles.messages.regenerateError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -645,13 +639,8 @@ function supprimer(s: Salle) {
       await api.delete(`/salles/${s.id}`);
       $q.notify({ type: 'positive', message: t('salles.messages.deleted') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message:
-          e?.response?.data?.message ??
-          t('salles.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -670,12 +659,8 @@ async function charger() {
   try {
     const { data } = await api.get('/salles', { params: { all: '1' } });
     salles.value = data.data ?? [];
-  } catch (e: any) {
+  } catch {
     salles.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('salles.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }

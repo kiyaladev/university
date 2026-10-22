@@ -231,7 +231,7 @@ async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
     await api.post(`/reservations/${id}/decider`, {
       statut,
       ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
-    });
+    }, { silencieux: true });
     $q.notify({
       type: statut === 'CONFIRMEE' ? 'positive' : 'warning',
       message: t(statut === 'CONFIRMEE' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
@@ -252,7 +252,7 @@ async function modifier() {
       ...form.value,
       organisme: form.value.organisme || undefined,
       responsable: form.value.responsable || undefined,
-    });
+    }, { silencieux: true });
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
   } catch (e: any) {
@@ -272,7 +272,7 @@ async function annuler() {
     enCours.value = 'annuler';
     erreur.value = '';
     try {
-      await api.delete(`/reservations/${props.reservation!.id}`);
+      await api.delete(`/reservations/${props.reservation!.id}`, { silencieux: true });
       $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
       emit('change');
       emit('update:modelValue', false);

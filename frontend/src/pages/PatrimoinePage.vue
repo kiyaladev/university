@@ -838,13 +838,9 @@ async function chargerEquipements() {
     const { data } = await patrimoineService.listeEquipements(queryEquipements.value);
     equipements.value = data.data;
     pagination.value.total = data.total;
-  } catch (e: any) {
+  } catch {
     equipements.value = [];
     pagination.value.total = 0;
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('patrimoine.messages.loadInventoryError'),
-    });
   } finally {
     chargement.value = false;
   }
@@ -855,12 +851,8 @@ async function chargerCategories() {
   try {
     const { data } = await patrimoineService.listeCategories();
     categories.value = Array.isArray(data) ? data : data.data ?? [];
-  } catch (e: any) {
+  } catch {
     categories.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('patrimoine.messages.loadCategoriesError'),
-    });
   } finally {
     chargementCategories.value = false;
   }
@@ -877,12 +869,8 @@ async function chargerReparations() {
         (a, b) =>
           new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime(),
       );
-  } catch (e: any) {
+  } catch {
     reparationsEnCours.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('patrimoine.messages.loadRepairsError'),
-    });
   } finally {
     chargementReparations.value = false;
   }
@@ -936,11 +924,8 @@ async function enregistrerCategorie() {
     }
     dialogCategorie.value = false;
     await chargerCategories();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('patrimoine.messages.categorySaveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrementCategorie.value = false;
   }
@@ -957,11 +942,8 @@ function supprimerCategorie(c: CategoriePatrimoine) {
       await patrimoineService.supprimerCategorie(c.id);
       $q.notify({ type: 'positive', message: t('patrimoine.messages.categoryDeleted') });
       await chargerCategories();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('patrimoine.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -978,11 +960,8 @@ function supprimerEquipement(e: EquipementPatrimoine) {
       $q.notify({ type: 'positive', message: t('patrimoine.messages.equipmentDeleted') });
       await chargerEquipements();
       await chargerSynthese();
-    } catch (err: any) {
-      $q.notify({
-        type: 'negative',
-        message: err?.response?.data?.message ?? t('patrimoine.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

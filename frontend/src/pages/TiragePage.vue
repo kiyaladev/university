@@ -318,10 +318,9 @@ async function charger() {
     });
     tirages.value = data.data ?? [];
     total.value = data.total ?? tirages.value.length;
-  } catch (e: any) {
+  } catch {
     tirages.value = [];
     total.value = 0;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.loadError') });
   } finally {
     chargement.value = false;
   }
@@ -389,8 +388,8 @@ async function avancer(t: Tirage) {
       await api.post(`/tirage/${t.id}/${routeSuivant}`, payload);
       $q.notify({ type: 'positive', message: translate('tirage.messages.stageChanged', { stade: libelleStade(stade) }) });
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.transitionError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   };
 
@@ -426,8 +425,8 @@ function annuler(t: Tirage) {
       await api.post(`/tirage/${t.id}/annuler`);
       $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? translate('tirage.messages.cancelError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

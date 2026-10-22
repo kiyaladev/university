@@ -42,8 +42,15 @@ export default defineBoot(({ app, router }) => {
     // garde de routes lit encore `connecte === true` et laisse repasser.
     async (error) => {
       const statut = error.response?.status;
+      // Sans message du serveur, `error.message` d'axios est en anglais
+      // (« Network Error », « timeout of 20000ms exceeded »…) : on le traduit.
       let message =
-        error.response?.data?.message ?? error.message ?? 'Erreur réseau inattendue';
+        error.response?.data?.message ??
+        (!error.response
+          ? error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
+            ? 'Le serveur met trop de temps à répondre. Réessayez dans un instant.'
+            : 'Serveur injoignable : vérifiez votre connexion réseau.'
+          : `Erreur inattendue du serveur (code ${statut}).`);
 
       // Le serveur répond « ThrottlerException: Too many requests » : illisible
       // pour un contrôleur, et en anglais.

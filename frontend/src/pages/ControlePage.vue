@@ -275,6 +275,7 @@
 import { useQuasar } from 'quasar';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { isAxiosError } from 'axios';
 import { api } from '../boot/axios';
 
 import { usePointagesStore } from '../stores/pointages';
@@ -319,8 +320,11 @@ async function preparerTournee() {
     seancesHorsLigne.enregistrerSalles(salles.data.data ?? []);
     localStorage.setItem(`unipresence_tournee_preparee_${auth.utilisateur.id}`, JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }));
     $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });
-  } catch {
-    $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
+  } catch (e) {
+    // Les erreurs de l'API sont notifiées par l'intercepteur ; reste le stockage local.
+    if (!isAxiosError(e)) {
+      $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
+    }
   } finally { preparationEnCours.value = false; }
 }
 

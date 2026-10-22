@@ -85,14 +85,24 @@ export function messageErreurElection(e: unknown, defaut: string): string {
   return message ?? defaut;
 }
 
+/**
+ * `silencieux` : l'intercepteur ne notifie pas l'erreur, la page l'affiche
+ * elle-même (bandeau de l'isoloir) ou l'ignore volontairement.
+ */
 export const electionsService = {
-  liste: (params: ParametresListeElections) => api.get<PageElections>('/elections', { params }),
-  actives: () => api.get<Election[]>('/elections/actives'),
-  trouver: (id: string) => api.get<Election>(`/elections/${id}`),
-  monVote: (electionId: string) => api.get<MonVote>(`/elections/${electionId}/mon-vote`),
-  resultats: (id: string) => api.get<ResultatElection>(`/elections/${id}/resultats`),
-  voter: (payload: { electionId: string; bulletin: Array<{ candidatId: string }> }) =>
-    api.post<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload),
+  liste: (params: ParametresListeElections, silencieux = false) =>
+    api.get<PageElections>('/elections', { params, silencieux }),
+  actives: (silencieux = false) => api.get<Election[]>('/elections/actives', { silencieux }),
+  trouver: (id: string, silencieux = false) =>
+    api.get<Election>(`/elections/${id}`, { silencieux }),
+  monVote: (electionId: string, silencieux = false) =>
+    api.get<MonVote>(`/elections/${electionId}/mon-vote`, { silencieux }),
+  resultats: (id: string, silencieux = false) =>
+    api.get<ResultatElection>(`/elections/${id}/resultats`, { silencieux }),
+  voter: (
+    payload: { electionId: string; bulletin: Array<{ candidatId: string }> },
+    silencieux = false,
+  ) => api.post<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
   transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') =>
     api.post<Election>(`/elections/${id}/${action}`),
   supprimerCandidat: (electionId: string, candidatId: string) =>

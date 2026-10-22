@@ -228,6 +228,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
+import { isAxiosError } from 'axios';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useSeancesStore } from '../stores/seances';
@@ -478,8 +479,11 @@ async function preparerTournee() {
     localStorage.setItem(clePreparation.value, JSON.stringify({ date, prepareeLe: maintenant }));
     tourneePrepareeLe.value = maintenant;
     $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });
-  } catch {
-    $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
+  } catch (e) {
+    // Les erreurs de l'API sont notifiées par l'intercepteur ; reste le stockage local.
+    if (!isAxiosError(e)) {
+      $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
+    }
   } finally {
     preparationEnCours.value = false;
   }

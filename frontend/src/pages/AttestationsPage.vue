@@ -586,8 +586,8 @@ async function confirmerRevocation() {
     $q.notify({ type: 'warning', message: t('attestations.messages.revoked') });
     dialogRevocation.value = false;
     await recharger();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('attestations.messages.revokeError') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     revocationEnCours.value = false;
   }
@@ -628,10 +628,9 @@ async function charger() {
     });
     attestations.value = data.data ?? [];
     total.value = data.total ?? attestations.value.length;
-  } catch (e: any) {
+  } catch {
     attestations.value = [];
     total.value = 0;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('attestations.messages.loadError') });
   } finally {
     chargement.value = false;
   }

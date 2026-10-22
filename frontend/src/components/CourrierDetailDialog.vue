@@ -227,8 +227,8 @@ async function validerParaphe() {
     dialogParaphe.value = false;
     await charger();
     emit('modifie');
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('courrierPage.detail.stampFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }
@@ -255,8 +255,8 @@ function cloturer() {
       $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
       await charger();
       emit('modifie');
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('courrierPage.messages.closeError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

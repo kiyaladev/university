@@ -563,7 +563,9 @@ async function requeter() {
   chargement.value = true;
   try {
     const f = filtres.value;
+    // Silencieux : le bloc catch remplace le 403 brut par un message clair.
     const { data } = await api.get('/documents-demande', {
+      silencieux: true,
       params: {
         page: pagination.value.page,
         pageSize: pagination.value.pageSize,
@@ -623,8 +625,8 @@ async function confirmerPaiement(d: DemandeDocument | null) {
       const { data } = await api.get(`/documents-demande/${d.id}`);
       demandeSelectionnee.value = data as DemandeDocument;
     }
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.confirmError') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enCours.value = '';
   }
@@ -641,8 +643,8 @@ async function lancerTraitement(d: DemandeDocument | null) {
       const { data } = await api.get(`/documents-demande/${d.id}`);
       demandeSelectionnee.value = data as DemandeDocument;
     }
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.processingError') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enCours.value = '';
   }
@@ -668,8 +670,8 @@ async function marquerPrete(d: DemandeDocument | null) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.markReadyError') });
+    } catch {
+      /* notifié par l'intercepteur */
     } finally {
       enCours.value = '';
     }
@@ -696,8 +698,8 @@ async function remettre(d: DemandeDocument | null) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.handOverError') });
+    } catch {
+      /* notifié par l'intercepteur */
     } finally {
       enCours.value = '';
     }
@@ -723,8 +725,8 @@ async function rejeter(d: DemandeDocument | null) {
         const { data } = await api.get(`/documents-demande/${d.id}`);
         demandeSelectionnee.value = data as DemandeDocument;
       }
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('demandeDocuments.messages.rejectError') });
+    } catch {
+      /* notifié par l'intercepteur */
     } finally {
       enCours.value = '';
     }

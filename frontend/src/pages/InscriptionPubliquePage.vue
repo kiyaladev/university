@@ -507,7 +507,7 @@ async function deposer() {
       adresse: form.value.adresse.trim() || undefined,
       anneeId: form.value.anneeId || undefined,
       promotionId: form.value.promotionId,
-    });
+    }, { silencieux: true });
     resultat.value = data as ResultatDepot;
     etape.value = 3;
     oublierBrouillon();

@@ -141,11 +141,8 @@ async function publier(v: RessourceCatalogue) {
     await api.post(`/vod/${v.id}/publier`);
     $q.notify({ type: 'positive', message: t('vodPage.messages.published') });
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('vodPage.messages.publishFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 
@@ -160,11 +157,8 @@ function archiver(v: RessourceCatalogue) {
       await api.post(`/vod/${v.id}/archiver`, {});
       $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('vodPage.messages.archiveFailed'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

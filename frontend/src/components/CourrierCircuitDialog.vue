@@ -184,8 +184,8 @@ async function enregistrer() {
       circuit: [],
     };
     fichier.value = null;
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? $t('courrierPage.registrationDialog.saveFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }

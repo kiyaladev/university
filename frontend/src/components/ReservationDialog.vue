@@ -154,7 +154,7 @@ async function enregistrer() {
       ...form.value,
       organisme: form.value.organisme || undefined,
       responsable: form.value.responsable || undefined,
-    });
+    }, { silencieux: true });
     $q.notify({ type: 'positive', message: t('reservations.createDialog.sent') });
     emit('enregistre');
     emit('update:modelValue', false);

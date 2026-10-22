@@ -569,10 +569,9 @@ async function charger() {
     });
     examens.value = data.data ?? [];
     total.value = data.total ?? examens.value.length;
-  } catch (e: any) {
+  } catch {
     examens.value = [];
     total.value = 0;
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('examens.messages.loadFailed') });
   } finally {
     chargement.value = false;
   }
@@ -628,8 +627,8 @@ function demarrer(e: Examen) {
       // Le changement d'onglet déclenche lui-même le rechargement.
       if (onglet.value === 'EN_COURS') await charger();
       else onglet.value = 'EN_COURS';
-    } catch (err: any) {
-      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? t('examens.messages.startFailed') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -646,8 +645,8 @@ function terminer(e: Examen) {
       $q.notify({ type: 'positive', message: t('examens.messages.finished') });
       if (onglet.value === 'TERMINE') await charger();
       else onglet.value = 'TERMINE';
-    } catch (err: any) {
-      $q.notify({ type: 'negative', message: err?.response?.data?.message ?? t('examens.messages.finishFailed') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

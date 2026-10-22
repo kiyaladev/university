@@ -233,15 +233,14 @@ async function chargerExamens() {
           message: t('scanExamen.messages.examNotStarted'),
         });
       } catch {
-        $q.notify({ type: 'negative', message: t('scanExamen.messages.examNotFound') });
+        /* notifié par l'intercepteur */
       }
     }
 
     const cible = demande || examenId.value || examens.value[0]?.id;
     if (cible) await selectionnerExamen(cible);
-  } catch (e: any) {
+  } catch {
     examens.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('scanExamen.messages.loadExamsFailed') });
   } finally {
     chargementExamens.value = false;
   }
@@ -259,7 +258,6 @@ async function selectionnerExamen(id: string) {
     examenCourant.value = data;
   } catch {
     examenCourant.value = null;
-    $q.notify({ type: 'negative', message: t('scanExamen.messages.examNotFound') });
   }
 }
 
@@ -287,8 +285,8 @@ async function confirmer() {
     dernierResultat.value = data;
     reference.value = '';
     await rafraichirCompteurs();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('scanExamen.messages.scanFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoiScan.value = false;
   }

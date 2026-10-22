@@ -462,8 +462,8 @@ async function envoyer() {
     });
     await chargerHistorique();
     await chargerStats();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.sendFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }
@@ -488,8 +488,8 @@ async function testerEnvoi() {
       type: 'info',
       message: t('notificationsPage.messages.testSentSummary', { total: data.total, envoyees: data.envoyees }),
     });
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.testFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     testEnvoi.value = false;
   }
@@ -537,8 +537,8 @@ async function diffuserResultats() {
     });
     await chargerHistorique();
     await chargerStats();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.broadcastFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoiResultats.value = false;
   }
@@ -632,13 +632,9 @@ async function chargerHistorique() {
     });
     lignes.value = data.data;
     pagination.value.total = data.total;
-  } catch (e: any) {
+  } catch {
     lignes.value = [];
     pagination.value.total = 0;
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('notificationsPage.messages.historyLoadFailed'),
-    });
   } finally {
     chargement.value = false;
   }
@@ -679,8 +675,8 @@ async function renvoyer(n: Notification) {
     await chargerHistorique();
     await chargerStats();
     await chargerRepartition();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e.response?.data?.message ?? t('notificationsPage.messages.resendFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     renvoiEnCours.value = null;
   }

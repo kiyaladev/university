@@ -521,8 +521,8 @@ async function ouvrirDetail(d: DeliberationListe) {
   try {
     const { data } = await api.get(`/deliberations/${d.id}`);
     detail.value = data;
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.detailError') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargementDetail.value = false;
   }
@@ -539,8 +539,8 @@ function calculer(d: DeliberationListe) {
       await api.post(`/deliberations/${d.id}/calculer`);
       $q.notify({ type: 'positive', message: t('deliberations.messages.recalculated') });
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.recalculateError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -557,8 +557,8 @@ function valider(d: DeliberationListe) {
       await api.post(`/deliberations/${d.id}/valider`);
       $q.notify({ type: 'positive', message: t('deliberations.messages.validated') });
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.validateError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -580,9 +580,8 @@ async function charger() {
       params: { all: '1', anneeId: filtres.value.anneeId || undefined },
     });
     deliberations.value = data.data ?? [];
-  } catch (e: any) {
+  } catch {
     deliberations.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('deliberations.messages.loadError') });
   } finally {
     chargement.value = false;
   }

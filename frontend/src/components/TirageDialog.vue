@@ -121,8 +121,8 @@ async function enregistrer() {
       notes: '',
     };
     fichierSource.value = null;
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('tirage.dialogs.schedule.saveFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }

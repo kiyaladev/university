@@ -98,7 +98,8 @@ async function charger(props?: { pagination: { page: number; rowsPerPage: number
   const requested = props?.pagination ?? pagination.value;
   chargement.value = true; erreur.value = '';
   try {
-    const { data } = await api.get('/controles/audit', { params: {
+    // Silencieux : l'échec s'affiche dans le bandeau de la page.
+    const { data } = await api.get('/controles/audit', { silencieux: true, params: {
       page: requested.page, pageSize: requested.rowsPerPage,
       acteur: filtres.value.acteur || undefined,
       entite: filtres.value.entite || undefined, action: filtres.value.action || undefined,

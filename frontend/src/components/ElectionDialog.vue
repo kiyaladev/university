@@ -80,8 +80,8 @@ async function soumettre() {
     $q.notify({ type: 'positive', message: enEdition.value ? t('elections.dialogs.electionForm.saved') : t('elections.dialogs.electionForm.created') });
     emit('enregistre', data);
     emit('update:modelValue', false);
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('elections.dialogs.electionForm.saveError') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

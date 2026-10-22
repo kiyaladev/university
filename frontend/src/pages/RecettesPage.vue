@@ -329,13 +329,9 @@ async function charger() {
     });
     recettes.value = data.data;
     total.value = data.total;
-  } catch (e: any) {
+  } catch {
     recettes.value = [];
     total.value = 0;
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('recettes.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }
@@ -406,8 +402,8 @@ async function encaisser(r: RecetteExterne) {
       $q.notify({ type: 'positive', message: t('recettes.messages.cashSuccess') });
       await charger();
       await chargerKpis();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('recettes.messages.cashError') });
+    } catch {
+      /* notifié par l'intercepteur */
     } finally {
       encaissementEnCours.value = false;
     }

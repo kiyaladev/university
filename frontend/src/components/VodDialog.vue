@@ -91,8 +91,8 @@ async function soumettre() {
     $q.notify({ type: 'positive', message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created') });
     emit('enregistre', data);
     emit('update:modelValue', false);
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('vodPage.formDialog.saveFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

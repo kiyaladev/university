@@ -430,13 +430,9 @@ async function charger() {
     });
     courriers.value = data.data;
     total.value = data.total;
-  } catch (e: any) {
+  } catch {
     courriers.value = [];
     total.value = 0;
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('courrierPage.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }
@@ -484,11 +480,8 @@ function cloturer(c: Courrier) {
       await api.post(`/courrier/${c.id}/cloturer`, {});
       $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('courrierPage.messages.closeError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

@@ -107,8 +107,8 @@ async function confirmerRevocation() {
     $q.notify({ type: 'warning', message: t('carteEtudiante.messages.revoked') });
     dialogRevocation.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('carteEtudiante.messages.revokeError') });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 

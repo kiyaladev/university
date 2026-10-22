@@ -27,6 +27,7 @@ export default {
   "gpsSaved": "Position enregistrée",
   "gpsDenied": "Position GPS refusée ou indisponible",
   "saved": "Pointage enregistré",
+  "saveFailed": "Pointage non enregistré",
   "attestation": {
     "title": "Attestation de l’enseignant",
     "help": "Faites signer, composer le code ou poser le doigt — un seul moyen suffit",

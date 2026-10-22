@@ -236,7 +236,7 @@ async function envoyer() {
       if (form.value.nomAuteur) body.nomAuteur = form.value.nomAuteur.trim();
       if (form.value.emailAuteur) body.emailAuteur = form.value.emailAuteur.trim();
     }
-    const { data } = await api.post('/reclamations', body);
+    const { data } = await api.post('/reclamations', body, { silencieux: true });
     $q.notify({ type: 'positive', message: $t('reclamations.dialog.create.opened', { numero: data.numero }) });
     emit('creee', data);
     emit('update:modelValue', false);

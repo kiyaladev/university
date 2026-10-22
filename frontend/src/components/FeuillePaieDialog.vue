@@ -149,8 +149,8 @@ async function creer() {
     creee.value = data;
     $q.notify({ type: 'positive', message: t('paiePage.createDialog.created', { label: data.libelle }) });
     emit('cree', data);
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.createDialog.createFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
