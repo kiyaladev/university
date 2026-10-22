@@ -29,6 +29,7 @@ import {
   prochainNumeroInscription,
   prochainNumeroPaiement,
 } from './etudiants.service';
+import { whereInscriptions } from './filtres';
 import { MobileMoneyService } from './mobile-money.service';
 import { echapper } from '../../common/utils';
 import { t } from '../../common/i18n';
@@ -245,26 +246,7 @@ export class InscriptionService {
 
     const where: Prisma.InscriptionWhereInput = {
       ...(user?.role === Role.CHEF_DEPARTEMENT ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } : {}),
-      ...(query.anneeId ? { anneeId: query.anneeId } : {}),
-      ...(query.promotionId ? { promotionId: query.promotionId } : {}),
-      ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
-      ...(query.statut ? { statut: query.statut } : {}),
-      ...(query.search
-        ? {
-            OR: [
-              { numero: { contains: query.search, mode: 'insensitive' } },
-              {
-                etudiant: {
-                  OR: [
-                    { nom: { contains: query.search, mode: 'insensitive' } },
-                    { prenom: { contains: query.search, mode: 'insensitive' } },
-                    { matricule: { contains: query.search, mode: 'insensitive' } },
-                  ],
-                },
-              },
-            ],
-          }
-        : {}),
+      ...whereInscriptions(query),
     };
 
     const [data, total] = await Promise.all([

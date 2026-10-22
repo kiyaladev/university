@@ -96,8 +96,6 @@ export default {
     since: 'Depuis : {date}',
     until: "Jusqu'à : {date}",
   },
-  localFilterNote:
-    'Promotion, genre et dates sont appliqués à la page affichée : utilisez « Charger tout » pour les appliquer à l’ensemble du registre.',
   dialogInscriptions: {
     title: 'Inscriptions — {name}',
     emptyState: 'Aucun dossier d’inscription pour cet étudiant.',

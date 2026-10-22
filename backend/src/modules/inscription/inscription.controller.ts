@@ -43,6 +43,7 @@ import {
   UpdateFraisDto,
 } from './inscription.dto';
 import { EtudiantsService } from './etudiants.service';
+import { whereEtudiants } from './filtres';
 import { FraisService, InscriptionService } from './inscription.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';
 
@@ -87,16 +88,9 @@ export class EtudiantsController {
 
   @Get()
   liste(@Query() query: EtudiantQueryDto, @CurrentUser() user: AuthUser) {
-    const actif =
-      query.actif === 'false' || query.actif === '0' ? false : query.actif ? true : undefined;
     return this.service.listePour(query, {
       ...(user.role === Role.ETUDIANT ? { id: user.etudiantId ?? "__aucun__" } : {}),
-      ...(actif !== undefined ? { actif } : {}),
-      // Un étudiant appartient à une promotion par ses inscriptions : le lien
-      // n'est pas porté par la fiche, on filtre donc sur la relation.
-      ...(query.promotionId
-        ? { inscriptions: { some: { promotionId: query.promotionId } } }
-        : {}),
+      ...whereEtudiants(query),
     }, user);
   }
 
