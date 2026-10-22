@@ -22,7 +22,8 @@ import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
-import { echapper, toDateOnly } from '../../common/utils';
+import { toDateOnly } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import {
   CloturerCourrierDto,
   CourrierQueryDto,
@@ -554,33 +555,16 @@ export class CourrierService {
     const typeBadge = c.type === 'ENTRANT' ? 'Entrant' : 'Sortant';
     const date = c.dateReception ?? c.dateEnvoi;
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Courrier ${echapper(c.numero)}</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #10251E; padding-bottom: 8px; margin-bottom: 14px; }
-  .numero { font-size: 16px; font-weight: 700; }
-  .objet { font-size: 18px; font-weight: 700; margin-top: 6px; color: #0F7A45; }
-  .meta { display: flex; gap: 16px; flex-wrap: wrap; margin: 12px 0; font-size: 11px; color: #555; }
-  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; background: #e3eae5; color: #10251E; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; }
-  tbody tr:nth-child(even) { background: #fafbfd; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 42px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
-</style></head>
-<body>
-  <header>
-    <div class="numero">${echapper(c.numero)} — <span class="badge">${typeBadge}</span></div>
-    <div class="objet">${echapper(c.objet)}</div>
-  </header>
-  <div class="meta">
+    const etablissement = await chargerEtablissement(this.prisma);
+
+    return pageA4({
+      titre: `Courrier ${c.numero}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_COURRIER,
+      entete: `<div class="numero">${echapper(c.numero)} — <span class="badge">${typeBadge}</span></div>
+    <div class="objet">${echapper(c.objet)}</div>`,
+      corps: `<div class="meta">
     ${c.expediteur ? `<span><b>Expéditeur :</b> ${echapper(c.expediteur)}</span>` : ''}
     ${c.destinataire ? `<span><b>Destinataire :</b> ${echapper(c.destinataire)}</span>` : ''}
     ${c.numeroReference ? `<span><b>Référence :</b> ${echapper(c.numeroReference)}</span>` : ''}
@@ -593,16 +577,24 @@ export class CourrierService {
       <th>#</th><th>Rôle</th><th>Valideur</th>
       <th>Statut</th><th>Date</th><th>Paraphe</th>
     </tr></thead>
-    <tbody>${circuits || '<tr><td colspan="6" style="color:#777">Aucun circuit</td></tr>'}</tbody>
+    <tbody>${circuits || `<tr><td colspan="6" style="color:${P.encreTertiaire}">Aucun circuit</td></tr>`}</tbody>
   </table>
   ${c.notes ? `<p style="margin-top:12px;"><b>Notes :</b> ${echapper(c.notes)}</p>` : ''}
   <div class="signatures">
     <div class="signature">Le Secrétariat</div>
     <div class="signature">Le Chef de département</div>
     <div class="signature">Les Archives</div>
-  </div>
-  <footer><span>UniPrésence — registre du courrier</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>UniPrésence — registre du courrier</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
+    });
   }
 }
+
+/** Règles propres à la feuille de courrier ; le reste vient de `pageA4`. */
+const STYLE_COURRIER = `
+  .numero { font-size: 16px; font-weight: 700; }
+  .objet { font-size: 18px; font-weight: 600; margin-top: 6px; }
+  .meta { gap: 16px; margin: 12px 0; }
+  .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
+  .signatures { margin-top: 42px; }
+`;

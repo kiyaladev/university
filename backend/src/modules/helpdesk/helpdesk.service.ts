@@ -24,7 +24,7 @@ import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,
@@ -261,7 +261,7 @@ export class EquipementsService extends CrudService {
       margin: 1,
       errorCorrectionLevel: 'M',
     });
-    const nomEtablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
 
     const etiquettes = Array.from(
       { length: 4 },
@@ -274,31 +274,19 @@ export class EquipementsService extends CrudService {
       </div>`,
     ).join('');
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Étiquette QR — ${echapper(equipement.libelle)}</title>
-<style>
-  @page { size: A4; margin: 8mm; }
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #10251E; margin: 0; }
-  .entete { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 3px solid #10251E; padding-bottom: 4px; margin-bottom: 6mm; }
-  .etab { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #10251E; }
-  .consigne { font-size: 10px; color: #33463F; }
-  .grille { display: grid; grid-template-columns: 1fr 1fr; gap: 7mm; }
-  .etiquette { border: 1.5px dashed #33463F; padding: 5mm 4mm; text-align: center; page-break-inside: avoid; }
-  .etiquette img { width: 40mm; height: 40mm; }
-  .libelle { font-weight: 700; text-transform: uppercase; letter-spacing: .03em; font-size: 12.5px; margin-top: 2mm; }
-  .emplacement { font-size: 11px; color: #33463F; margin-top: 1mm; }
-  .code { font-size: 9px; font-family: Consolas, monospace; color: #10251E; margin-top: 2mm; word-break: break-all; }
-  @media print { body { padding: 0; } }
-</style></head>
-<body>
-  <div class="entete">
-    <span class="etab">${echapper(nomEtablissement)} — support IT</span>
+    return pageA4({
+      titre: `Étiquette QR — ${equipement.libelle}`,
+      lang: 'fr',
+      etablissement,
+      marge: '8mm',
+      entete: null,
+      styles: STYLE_ETIQUETTE_SUPPORT,
+      corps: `<div class="entete">
+    <span class="etab">${echapper(etablissement.nom)} — support IT</span>
     <span class="consigne">Scannez pour signaler un problème à la DSI · ${echapper(equipement.codeQr)}</span>
   </div>
-  <div class="grille">${etiquettes}</div>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  <div class="grille">${etiquettes}</div>`,
+    });
   }
 }
 
@@ -486,3 +474,10 @@ export class TicketsService extends CrudService {
     };
   }
 }
+
+/** Étiquette de support IT : planche commune + lignes propres au helpdesk. */
+const STYLE_ETIQUETTE_SUPPORT = `${STYLE_ETIQUETTES}
+  .etiquette img { width: 40mm; height: 40mm; }
+  .emplacement { font-size: 11px; color: ${PALETTE_IMPRESSION.encreDouce}; margin-top: 1mm; }
+  .code { font-size: 9px; font-family: Consolas, monospace; margin-top: 2mm; word-break: break-all; }
+`;

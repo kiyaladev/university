@@ -7,8 +7,9 @@ import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { RapportQueryDto } from './rapports.dto';
-import { echapper, signaturePng } from '../../common/utils';
+import { signaturePng } from '../../common/utils';
 import { journaliser } from '../../common/audit';
+import { blocIndicateurs, chargerEtablissement, echapper, pageA4 } from '../../common/impression';
 
 const ATTESTATION_LIBELLE: Record<string, string> = {
   SIGNATURE: 'Signature',
@@ -48,35 +49,11 @@ function attestationHtml(l: {
   }</span>`;
 }
 
+/** Règles propres aux états de contrôle ; le reste vient de `pageA4`. */
 const STYLE = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; }
-  tbody tr:nth-child(even) { background: #fafbfd; }
-  .kpis { display: flex; gap: 10px; margin: 12px 0; flex-wrap: wrap; }
-  .kpi { flex: 1 1 120px; border: 1px solid #d6dee7; border-radius: 6px; padding: 8px 10px; }
-  .kpi span { display: block; font-size: 10px; color: #666; text-transform: uppercase; }
-  .kpi strong { font-size: 18px; color: #0d47a1; }
-  .badge { padding: 1px 6px; border-radius: 10px; font-size: 10px; font-weight: 600; }
-  .PRESENT { background: #e3f5e9; color: #17683a; }
-  .RETARD { background: #fff4e0; color: #8a5300; }
-  .ABSENT { background: #fdeaea; color: #a52020; }
-  .EXCUSE { background: #eef0fb; color: #3b419e; }
-  .REMPLACE, .DEPART_ANTICIPE { background: #eef4f8; color: #33586e; }
-  .NON_CONTROLE { background: #f0f0f0; color: #666; }
   .attestation { text-align: center; min-width: 92px; }
-  .signature { max-height: 34px; max-width: 110px; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 28px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } .no-print { display: none; } }
-  @page { size: A4; margin: 10mm; }
+  img.signature { max-height: 34px; max-width: 110px; width: auto; border: 0; padding: 0; }
+  .signatures { margin-top: 28px; }
 `;
 
 @Injectable()
@@ -88,28 +65,25 @@ export class ImpressionService {
   ) {}
 
   private async page(titre: string, sousTitre: string, contenu: string) {
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>${echapper(titre)}</title>
-<style>${STYLE}</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">${echapper(titre)}</div>
-    <div class="sous-titre">${sousTitre}</div>
-  </header>
-  ${contenu}
-  <footer><span>UniPrésence — contrôle numérique de présence des enseignants</span><span>Édité le ${edite}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+    <div class="sous-titre">${sousTitre}</div>`,
+      corps: contenu,
+      piedDePage: '<span>UniPrésence — contrôle numérique de présence des enseignants</span>'
+        + `<span>Édité le ${edite}</span>`,
+    });
   }
 
   private kpis(items: Array<[string, string | number]>) {
-    return `<div class="kpis">${items
-      .map(([l, v]) => `<div class="kpi"><span>${echapper(l)}</span><strong>${echapper(v)}</strong></div>`)
-      .join('')}</div>`;
+    return blocIndicateurs(items);
   }
 
   /** Registre journalier de contrôle. */

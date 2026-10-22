@@ -1,7 +1,7 @@
 /**
- * Rendu HTML A4 d'une attestation officielle. Le style d'impression est une
- * copie locale de celui des états imprimés (modules/rapports — intouchable) :
- * en-tête d'établissement, filets, signature de pied de page.
+ * Rendu HTML A4 d'une attestation officielle. L'enveloppe et le style
+ * d'impression viennent de `common/impression` (pageA4) : en-tête
+ * d'établissement, filets, signature de pied de page.
  *
  * Le QR code encode l'URL publique de vérification, qui porte à la fois le
  * numéro (ref) et le jeton aléatoire (k). Scanner le document, c'est ouvrir
@@ -9,7 +9,7 @@
  */
 import * as QRCode from 'qrcode';
 import { StatutAttestation, TypeAttestation } from '@prisma/client';
-import { echapper } from '../../common/utils';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 
 const LIBELLE_TYPE: Record<TypeAttestation, string> = {
   SCOLARITE: 'Certificat de scolarité',
@@ -44,38 +44,30 @@ function dateFr(v: Date | string | null | undefined): string {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
+/** Règles propres à l'attestation ; le reste vient de `pageA4`. */
 const STYLE = `
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12.5px; line-height: 1.55; }
-  header { border-bottom: 3px solid #1565c0; padding-bottom: 8px; margin-bottom: 16px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #0d47a1; }
-  .coordonnees { font-size: 11px; color: #555; margin-top: 2px; }
-  .titre { font-size: 21px; font-weight: 700; margin-top: 14px; color: #0d47a1; border-bottom: 1px solid #b9c4cf; padding-bottom: 6px; }
+  body { font-size: 12.5px; line-height: 1.55; }
+  .titre { margin-top: 14px; border-bottom: 1px solid ${P.grisFilet}; padding-bottom: 6px; }
   .numero { margin-top: 8px; font-size: 12px; }
   .numero strong { letter-spacing: .5px; }
   .corps { margin-top: 18px; font-size: 13.5px; }
   .corps p { margin: 10px 0; text-align: justify; }
-  .identite { margin: 18px 0 0; border: 1px solid #b9c4cf; border-collapse: collapse; width: 100%; }
-  .identite td { border: 1px solid #b9c4cf; padding: 8px 10px; }
-  .identite .intitule { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 150px; font-weight: 600; }
-  .verification { margin-top: 26px; border-top: 1px solid #b9c4cf; padding-top: 12px; text-align: center; }
+  .identite { margin: 18px 0 0; border: 1px solid ${P.grisFilet}; border-collapse: collapse; width: 100%; }
+  .identite td { border: 1px solid ${P.grisFilet}; padding: 8px 10px; }
+  .identite .intitule { background: ${P.grisFond}; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 150px; font-weight: 600; }
+  .verification { margin-top: 26px; }
   .verification svg { width: 230px; height: 230px; }
-  .verification .mention { font-size: 11px; color: #555; margin-top: 8px; word-break: break-all; }
-  .verification .numero-clair { font-size: 13px; font-weight: 700; letter-spacing: .4px; margin-top: 4px; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 44px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; font-size: 11.5px; }
-  footer { margin-top: 26px; font-size: 10px; color: #777; display: flex; justify-content: space-between; border-top: 1px solid #e3e8ee; padding-top: 6px; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 12mm; }
+  .signatures { margin-top: 44px; }
+  .signature { font-size: 11.5px; }
 `;
 
 export class DocumentsAttestation {
   /** Document officiel : en-tête, corps certifiant, QR de vérification. */
   async documentA4(
     a: AttestationImprimable,
-    opt: { urlVerification: string; nomEtablissement: string },
+    opt: { urlVerification: string; etablissement: Etablissement },
   ): Promise<string> {
-    const etablissement = echapper(opt.nomEtablissement);
+    const etablissement = echapper(opt.etablissement.nom);
     const libelle = LIBELLE_TYPE[a.type] ?? a.type;
     const edite = dateFr(a.emiseLe);
 
@@ -87,21 +79,19 @@ export class DocumentsAttestation {
     });
 
     const statut = a.statut === StatutAttestation.REVOQUEE
-      ? `<div style="margin-top:12px; border:2px solid #a52020; color:#a52020; padding:8px; text-align:center; font-weight:700; letter-spacing:.6px;">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>`
+      ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>'
       : '';
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>${echapper(libelle)} ${echapper(a.numero)}</title>
-<style>${STYLE}</style></head>
-<body>
-  <header>
-    <div class="etab">${etablissement}</div>
+    return pageA4({
+      titre: `${libelle} ${a.numero}`,
+      lang: 'fr',
+      etablissement: opt.etablissement,
+      styles: STYLE,
+      entete: `<div class="etab">${etablissement}</div>
     <div class="coordonnees">La direction des études — service de la scolarité</div>
     <div class="titre">${echapper(libelle)}</div>
-    <div class="numero">N° <strong>${echapper(a.numero)}</strong></div>
-  </header>
-
-  <div class="corps">
+    <div class="numero">N° <strong>${echapper(a.numero)}</strong></div>`,
+      corps: `<div class="corps">
     <p>
       La direction des études certifie que ${a.etudiant?.sexe === 'F' ? 'Madame' : 'Monsieur'}
       <strong>${echapper(`${a.etudiant?.prenom ?? ''} ${a.etudiant?.nom ?? ''}`)}</strong>,
@@ -135,14 +125,10 @@ export class DocumentsAttestation {
     <div class="signature">La scolarité</div>
     <div class="signature">Le secrétariat pédagogique</div>
     <div class="signature">La direction des études</div>
-  </div>
-
-  <footer>
-    <span>${etablissement}</span>
-    <span>Édité le ${edite} — vérification gratuite et publique du QR</span>
-  </footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>${etablissement}</span>
+    <span>Édité le ${edite} — vérification gratuite et publique du QR</span>`,
+    });
   }
 
   private parcours(a: AttestationImprimable): string {

@@ -35,6 +35,8 @@ import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
+import { demandeDocumentHtml } from './documents-demande.impression';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../common/finances';
@@ -870,5 +872,14 @@ export class DocumentsDemandeService extends CrudService {
       AUTRE: 'document',
     };
     return libelles[t] ?? 'document';
+  }
+
+  /** Fiche A4 de la demande (le contrôleur a vérifié le jeton d'impression). */
+  async documentImprimable(id: string): Promise<string> {
+    const [demande, etablissement] = await Promise.all([
+      this.findOne(id),
+      chargerEtablissement(this.prisma),
+    ]);
+    return demandeDocumentHtml(demande, etablissement);
   }
 }

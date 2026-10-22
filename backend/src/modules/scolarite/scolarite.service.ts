@@ -25,6 +25,8 @@ import { Paginated } from '../../common/dto';
 import { pct, toDateOnly } from '../../common/utils';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement } from '../../common/impression';
+import { bulletinDeliberationHtml, pvDeliberationHtml } from './scolarite.impression';
 import { classer, decider, moyenneUe, type ResultatEtudiant } from './calcul.service';
 import {
   CreateDeliberationDto,
@@ -772,5 +774,23 @@ export class ScolariteService {
     if (!ligne) throw new NotFoundException(I18nContext.current()!.t('scolarite.aucune_ligne_pour_cet_etudiant_a_cette_deliberation'));
     const matieres = await this.matieresDuEtudiant(delib, inscriptionId, this.prisma);
     return { delib, ligne, matieres };
+  }
+
+  /** PV du jury, document A4 complet. */
+  async imprimerPv(deliberationId: string): Promise<string> {
+    const [deliberation, etablissement] = await Promise.all([
+      this.pourImpression(deliberationId),
+      chargerEtablissement(this.prisma),
+    ]);
+    return pvDeliberationHtml(deliberation, etablissement);
+  }
+
+  /** Bulletin individuel, document A4 complet. */
+  async imprimerBulletin(deliberationId: string, inscriptionId: string): Promise<string> {
+    const [donnees, etablissement] = await Promise.all([
+      this.bulletin(deliberationId, inscriptionId),
+      chargerEtablissement(this.prisma),
+    ]);
+    return bulletinDeliberationHtml(donnees, etablissement);
   }
 }

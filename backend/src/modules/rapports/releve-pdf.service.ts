@@ -4,6 +4,7 @@ import PDFDocument from 'pdfkit';
 import { createHash, randomUUID } from 'node:crypto';
 import type { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
+import { chargerEtablissement, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { ReleveHebdomadaireDto } from './rapports.dto';
@@ -79,7 +80,7 @@ export class RelevePdfService {
     const signatureChef = decoderSignature(dto.signatureBase64);
     const signatureHash = hash(signatureChef);
     const numero = `RH-${dto.dateDebut.slice(0, 4)}-${dto.departementId.slice(0, 6).toUpperCase()}-${randomUUID().slice(0, 8).toUpperCase()}`;
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const { nom: etablissement } = await chargerEtablissement(this.prisma);
     const rapport = await this.rapports.registre({
       dateDebut: dto.dateDebut,
       dateFin: dto.dateFin,
@@ -103,28 +104,28 @@ export class RelevePdfService {
       const titres = ['Date', 'Horaire', 'Enseignant', 'Matière / promotion', 'Salle', 'État / arrivée', 'Heures', 'Signature enseignant'];
       let x = x0;
       const y = document.y;
-      document.font('Helvetica-Bold').fontSize(7).fillColor('#e8eef5');
+      document.font('Helvetica-Bold').fontSize(7).fillColor(P.grisFond);
       for (let i = 0; i < LARGEURS.length; i += 1) {
-        document.rect(x, y, LARGEURS[i], 24).fillAndStroke('#e8eef5', '#718096');
-        document.fillColor('#172b4d').text(titres[i], x + 3, y + 5, { width: LARGEURS[i] - 6, height: 16, ellipsis: true });
+        document.rect(x, y, LARGEURS[i], 24).fillAndStroke(P.grisFond, P.encreTertiaire);
+        document.fillColor(P.encre).text(titres[i], x + 3, y + 5, { width: LARGEURS[i] - 6, height: 16, ellipsis: true });
         x += LARGEURS[i];
       }
       document.y = y + 24;
     };
     const dessinerEntetePage = (premiere: boolean) => {
-      document.font('Helvetica-Bold').fontSize(premiere ? 15 : 9).fillColor('#123a5a')
+      document.font('Helvetica-Bold').fontSize(premiere ? 15 : 9).fillColor(P.encre)
         .text(etablissement, x0, document.y, { width: largeurTable });
       document.moveDown(0.35);
       if (premiere) {
-        document.font('Helvetica-Bold').fontSize(12).fillColor('#111')
+        document.font('Helvetica-Bold').fontSize(12).fillColor(P.encre)
           .text('RELEVÉ HEBDOMADAIRE DES SÉANCES', x0, document.y, { width: largeurTable, align: 'center' });
         document.moveDown(0.35);
-        document.font('Helvetica').fontSize(9).fillColor('#222')
+        document.font('Helvetica').fontSize(9).fillColor(P.encre)
           .text(`Département : ${departement.nom}    Semaine : ${dateFr(dto.dateDebut)} – ${dateFr(dto.dateFin)}`, x0, document.y, { width: largeurTable });
         document.text(`Numéro : ${numero}    Généré le : ${new Date().toLocaleString('fr-FR')}`, x0, document.y + 2, { width: largeurTable });
         document.moveDown(1.6);
         const s = rapport.synthese;
-        document.font('Helvetica-Bold').fontSize(8).fillColor('#123a5a')
+        document.font('Helvetica-Bold').fontSize(8).fillColor(P.encre)
           .text(`Séances : ${s.planifiees}    Contrôlées : ${s.controlees} (${s.tauxControle} %)    Assurées : ${s.assurees} (${s.tauxPresence} %)    Heures constatées : ${s.heuresRealisees} h`, x0, document.y, { width: largeurTable });
         document.moveDown(0.8);
       }
@@ -151,7 +152,7 @@ export class RelevePdfService {
         ligne.dureeMinutes ? (ligne.dureeMinutes / 60).toFixed(2) : '—',
         '',
       ];
-      document.font('Helvetica').fontSize(7).fillColor('#111');
+      document.font('Helvetica').fontSize(7).fillColor(P.encre);
       const hauteurTexte = valeurs.slice(0, 7).map((valeur, i) =>
         document.heightOfString(valeur, { width: LARGEURS[i] - 8, lineGap: 1 }),
       );
@@ -160,9 +161,9 @@ export class RelevePdfService {
       const y = document.y;
       let x = x0;
       for (let i = 0; i < LARGEURS.length; i += 1) {
-        document.rect(x, y, LARGEURS[i], hauteur).stroke('#9aa8b5');
+        document.rect(x, y, LARGEURS[i], hauteur).stroke(P.encreTertiaire);
         if (i < 7) {
-          document.font('Helvetica').fontSize(7).fillColor('#111').text(valeurs[i], x + 3, y + 4, {
+          document.font('Helvetica').fontSize(7).fillColor(P.encre).text(valeurs[i], x + 3, y + 4, {
             width: LARGEURS[i] - 6, height: hauteur - 8, ellipsis: true,
           });
         } else if (signatureEnseignant) {
@@ -170,10 +171,10 @@ export class RelevePdfService {
             const signature = decoderSignature(signatureEnseignant);
             document.image(signature, x + 4, y + 3, { fit: [LARGEURS[i] - 8, hauteur - 6], align: 'center', valign: 'center' });
           } catch {
-            document.font('Helvetica').fontSize(6).fillColor('#555').text('Signature enregistrée', x + 3, y + 8, { width: LARGEURS[i] - 6 });
+            document.font('Helvetica').fontSize(6).fillColor(P.encreDouce).text('Signature enregistrée', x + 3, y + 8, { width: LARGEURS[i] - 6 });
           }
         } else {
-          document.font('Helvetica').fontSize(7).fillColor('#777').text('—', x + 3, y + 8, { width: LARGEURS[i] - 6, align: 'center' });
+          document.font('Helvetica').fontSize(7).fillColor(P.encreTertiaire).text('—', x + 3, y + 8, { width: LARGEURS[i] - 6, align: 'center' });
         }
         x += LARGEURS[i];
       }
@@ -184,15 +185,15 @@ export class RelevePdfService {
     if (document.y + hauteurSignature > document.page.height - document.page.margins.bottom) document.addPage();
     document.moveDown(1.2);
     const ySignature = document.y;
-    document.font('Helvetica-Bold').fontSize(9).fillColor('#111')
+    document.font('Helvetica-Bold').fontSize(9).fillColor(P.encre)
       .text('Signature du chef de département', droite - 230, ySignature, { width: 230, align: 'center' });
     try {
       document.image(signatureChef, droite - 190, ySignature + 15, { fit: [150, 55], align: 'center', valign: 'center' });
     } catch {
       throw new BadRequestException('L’image de la signature ne peut pas être intégrée au PDF.');
     }
-    document.moveTo(droite - 230, ySignature + 75).lineTo(droite, ySignature + 75).stroke('#333');
-    document.font('Helvetica').fontSize(8).fillColor('#333')
+    document.moveTo(droite - 230, ySignature + 75).lineTo(droite, ySignature + 75).stroke(P.encre);
+    document.font('Helvetica').fontSize(8).fillColor(P.encre)
       .text(`${chef.prenom} ${chef.nom} — chef de département`, droite - 230, ySignature + 79, { width: 230, align: 'center' });
     document.text(`Numéro de relevé : ${numero}`, x0, ySignature + 25, { width: 320 });
     document.text(`Semaine close le ${dateFr(dto.dateFin)} · ${lignes.length} séance(s)`, x0, ySignature + 42, { width: 320 });

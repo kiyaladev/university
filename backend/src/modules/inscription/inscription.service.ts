@@ -28,7 +28,7 @@ import {
 } from './etudiants.service';
 import { whereInscriptions } from './filtres';
 import { deviseDossier } from './paiements.service';
-import { echapper } from '../../common/utils';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { anneeNumero } from '../../common/numero';
@@ -513,7 +513,7 @@ export class InscriptionService {
    */
   async attestationInscription(id: string): Promise<string> {
     const inscription = await this.trouverInscription(id);
-    const etablissement = await this.parametres.valeur('NOM_ETABLISSEMENT');
+    const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
     // Mêmes règles que le passage en PAYEE : scolarité seule, devise du tarif.
@@ -524,41 +524,15 @@ export class InscriptionService {
     const restant = Math.max(0, inscription.montantFrais - paye);
     const statut = inscription.statut;
 
-    return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8">
-<title>Certificat d'inscription — ${echapper(inscription.numero)}</title>
-<style>
-  * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; color: #1d1d1d; margin: 0; padding: 16mm 12mm; font-size: 12px; }
-  header { border-bottom: 2px solid #1565c0; padding-bottom: 8px; margin-bottom: 14px; }
-  .etab { font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
-  .titre { font-size: 19px; font-weight: 700; margin-top: 6px; color: #0d47a1; }
-  .sous-titre { color: #555; margin-top: 2px; }
-  .meta { display: flex; gap: 18px; margin: 12px 0 4px; font-size: 11px; color: #444; flex-wrap: wrap; }
-  .badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
-  .BROUILLON { background: #eceeef; color: #5b6570; }
-  .EN_ATTENTE_PAIEMENT { background: #fff4e0; color: #8a5300; }
-  .PAYEE { background: #e3f5e9; color: #17683a; }
-  .VALIDEE { background: #e3ecf7; color: #15518f; }
-  .ANNULEE { background: #fdeaea; color: #a52020; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #b9c4cf; padding: 5px 6px; text-align: left; vertical-align: top; }
-  th { background: #e8eef5; font-size: 11px; text-transform: uppercase; letter-spacing: .3px; width: 32%; }
-  .num { text-align: right; }
-  .mention { margin-top: 14px; padding: 8px 10px; border: 1px solid #b9c4cf; background: #fafbfd; font-size: 11px; color: #444; }
-  .signatures { display: flex; justify-content: space-between; margin-top: 46px; }
-  .signature { width: 30%; border-top: 1px solid #999; padding-top: 4px; text-align: center; color: #555; }
-  footer { margin-top: 18px; font-size: 10px; color: #777; display: flex; justify-content: space-between; }
-  @media print { body { padding: 8mm; } }
-  @page { size: A4; margin: 10mm; }
-</style></head>
-<body>
-  <header>
-    <div class="etab">${echapper(etablissement)}</div>
+    return pageA4({
+      titre: `Certificat d'inscription — ${inscription.numero}`,
+      lang: 'fr',
+      etablissement,
+      styles: STYLE_CERTIFICAT_INSCRIPTION,
+      entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Certificat d'inscription (provisoire)</div>
-    <div class="sous-titre">Document délivré en attendant la validation définitive de la scolarité</div>
-  </header>
-  <div class="meta">
+    <div class="sous-titre">Document délivré en attendant la validation définitive de la scolarité</div>`,
+      corps: `<div class="meta">
     <span>N° dossier : <strong>${echapper(inscription.numero)}</strong></span>
     <span>Statut : <span class="badge ${statut}">${LIBELLE_STATUT_INSCRIPTION[statut] ?? echapper(statut)}</span></span>
     <span>Année académique : ${echapper(inscription.annee.libelle)}</span>
@@ -584,9 +558,20 @@ export class InscriptionService {
     <div class="signature">L'agent comptable</div>
     <div class="signature">La scolarité</div>
     <div class="signature">Le Directeur des études</div>
-  </div>
-  <footer><span>UniPrésence — registre des inscriptions</span><span>Édité le ${edite}</span></footer>
-  <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
-</body></html>`;
+  </div>`,
+      piedDePage: `<span>UniPrésence — registre des inscriptions</span><span>Édité le ${edite}</span>`,
+    });
   }
 }
+
+/** Règles propres au certificat d'inscription ; le reste vient de `pageA4`. */
+const STYLE_CERTIFICAT_INSCRIPTION = `
+  .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
+  .BROUILLON { background: ${P.grisInerte}; color: ${P.encreDouce}; }
+  .EN_ATTENTE_PAIEMENT { background: ${P.jauneFond}; color: ${P.jauneTexte}; }
+  .PAYEE, .VALIDEE { background: ${P.vertFond}; color: ${P.vert}; }
+  .ANNULEE { background: ${P.rougeFond}; color: ${P.rouge}; }
+  th { width: 32%; }
+  .mention { margin-top: 14px; padding: 8px 10px; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; font-size: 11px; color: ${P.encreDouce}; }
+  .signatures { margin-top: 46px; }
+`;
