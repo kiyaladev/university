@@ -49,6 +49,7 @@ import {
 } from './elections.dto';
 import { documentsElection, BulletinElection } from './documents';
 import { paginer, pagine } from '../../common/pagination';
+import { avantApres, journaliser } from '../../common/audit';
 
 const ELECTION_INCLUDE = {
   promotion: { include: { filiere: true } },
@@ -98,8 +99,6 @@ function isoOuNull(v: Date | string | null | undefined): string | null {
 
 /** Client accepté par la lecture : la transaction de la mutation, ou la racine. */
 type ClientElection = Pick<Prisma.TransactionClient, 'election'>;
-/** Client accepté par le journal : la transaction de la mutation, ou la racine. */
-type ClientAudit = Pick<Prisma.TransactionClient, 'auditLog'>;
 
 @Injectable()
 export class ElectionsService {
@@ -268,7 +267,7 @@ export class ElectionsService {
         },
         include: ELECTION_INCLUDE,
       });
-      await this.journaliser(tx, user, 'ELECTION_CREEE', election.id, null, this.instantaneElection(election));
+      await journaliser(tx, user, 'ELECTION_CREEE', 'Election', election.id, avantApres(null, this.instantaneElection(election)));
       return election;
     });
   }
@@ -299,16 +298,15 @@ export class ElectionsService {
         },
         include: ELECTION_INCLUDE,
       });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'ELECTION_MODIFIEE',
+        'Election',
         id,
-        this.instantaneElection(election),
-        this.instantaneElection(miseAJour),
         // Les champs touchés sont nommés, leur contenu ne l'est pas : savoir que
         // le titre a changé suffit à l'audit sans le recopier.
-        { champsModifies: Object.keys(dto) },
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { champsModifies: Object.keys(dto) }),
       );
       return miseAJour;
     });
@@ -330,14 +328,13 @@ export class ElectionsService {
         data: { statut: StatutElection.OUVERTE },
         include: ELECTION_INCLUDE,
       });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'ELECTION_OUVERTE',
+        'Election',
         id,
-        this.instantaneElection(election),
-        this.instantaneElection(miseAJour),
-        { transition: `${election.statut}→${StatutElection.OUVERTE}` },
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.OUVERTE}` }),
       );
       return miseAJour;
     });
@@ -354,14 +351,13 @@ export class ElectionsService {
         data: { statut: StatutElection.CLOSE },
         include: ELECTION_INCLUDE,
       });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'ELECTION_CLOSE',
+        'Election',
         id,
-        this.instantaneElection(election),
-        this.instantaneElection(miseAJour),
-        { transition: `${election.statut}→${StatutElection.CLOSE}` },
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.CLOSE}` }),
       );
       return miseAJour;
     });
@@ -378,14 +374,13 @@ export class ElectionsService {
         data: { statut: StatutElection.PROCLAMEE },
         include: ELECTION_INCLUDE,
       });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'ELECTION_PROCLAMEE',
+        'Election',
         id,
-        this.instantaneElection(election),
-        this.instantaneElection(miseAJour),
-        { transition: `${election.statut}→${StatutElection.PROCLAMEE}` },
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.PROCLAMEE}` }),
       );
       return miseAJour;
     });
@@ -414,13 +409,13 @@ export class ElectionsService {
       });
       // Le titre de l'élection disparaît du journal : il ne reste que son
       // identifiant technique, et la candidature réduite à sa position.
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'CANDIDAT_AJOUTE',
+        'Election',
         candidat.id,
-        null,
-        this.instantaneCandidat(candidat, id),
+        avantApres(null, this.instantaneCandidat(candidat, id)),
       );
       return candidat;
     });
@@ -443,13 +438,13 @@ export class ElectionsService {
       await tx.candidatElection.delete({ where: { id: candidatId } });
       // Après le retrait, le journal est la seule trace qui survit à la ligne :
       // d'où la projection avant, réduite elle aussi à l'essentiel.
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'CANDIDAT_RETIRE',
+        'Election',
         candidatId,
-        this.instantaneCandidat(candidat, id),
-        null,
+        avantApres(this.instantaneCandidat(candidat, id), null),
       );
       return { id: candidatId };
     });
@@ -682,32 +677,6 @@ export class ElectionsService {
       programmeFourni: Boolean(candidat.programme),
       photoFournie: Boolean(candidat.photoUrl),
     };
-  }
-
-  /**
-   * Écrit la ligne de journal dans la transaction de la mutation : l'état et sa
-   * trace sont committés ensemble, ou pas du tout. Un scrutin modifié sans
-   * trace, ou une trace sans scrutin, sont tous deux inexploitables en cas de
-   * contestation d'un résultat proclamé.
-   */
-  private journaliser(
-    client: ClientAudit,
-    user: AuthUser,
-    action: string,
-    entiteId: string,
-    avant: unknown,
-    apres: unknown,
-    complement?: Record<string, unknown>,
-  ) {
-    return client.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite: 'Election',
-        entiteId,
-        details: JSON.stringify({ avant, apres, ...complement }),
-      },
-    });
   }
 
 }

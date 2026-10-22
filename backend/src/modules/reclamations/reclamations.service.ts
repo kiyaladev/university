@@ -34,6 +34,7 @@ import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
@@ -197,33 +198,6 @@ export class ReclamationsService extends CrudService {
       nomAuteurFourni: Boolean(reclamation.nomAuteur),
       emailAuteurFourni: Boolean(reclamation.emailAuteur),
     };
-  }
-
-  /**
-   * Écrit la trace dans la transaction de la mutation. Un journal écrit hors
-   * transaction survivrait à une mutation annulée : on ne conserve donc que
-   * ce qui a été validé par le même commit que l'écriture métier. Sans
-   * utilisateur (tâche planifiée), l'entrée n'est rattachée à aucun compte.
-   */
-  private journaliser(
-    tx: Prisma.TransactionClient,
-    user: AuthUser | null,
-    action: string,
-    entiteId: string,
-    details: Record<string, unknown>,
-    userId: string | null = user?.id ?? null,
-  ) {
-    return tx.auditLog.create({
-      data: {
-        // Pour une réclamation explicitement anonyme, conserver l'événement
-        // sans relier le journal d'audit au compte qui l'a déposée.
-        userId,
-        action,
-        entite: 'Reclamation',
-        entiteId,
-        details: JSON.stringify(details),
-      },
-    });
   }
 
   /** Liste paginée du registre, restreinte au propriétaire si l'utilisateur est étudiant. */
@@ -442,12 +416,12 @@ export class ReclamationsService extends CrudService {
             include: RECLAMATION_INCLUDE,
             omit: { createurId: true },
           });
-          await this.journaliser(tx, user, 'RECLAMATION_OUVERTE', reclamation.id, {
+          await journaliser(tx, anonyme ? null : user, 'RECLAMATION_OUVERTE', 'Reclamation', reclamation.id, {
             avant: null,
             apres: this.instantaneAudit(reclamation),
             champsModifies: ['statut', 'priorite', 'anonyme', 'departementId'],
             premierMessageInclus: true,
-          }, anonyme ? null : user.id);
+          });
           return reclamation;
         });
       } catch (e: any) {
@@ -506,7 +480,7 @@ export class ReclamationsService extends CrudService {
         },
       });
 
-      await this.journaliser(tx, user, 'RECLAMATION_MESSAGE', id, {
+      await journaliser(tx, reclamation.anonyme && user.role === Role.ETUDIANT ? null : user, 'RECLAMATION_MESSAGE', 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit({ ...reclamation, _count: { messages: nombreMessages + 1 } }),
         champsModifies: ['messages'],
@@ -520,7 +494,7 @@ export class ReclamationsService extends CrudService {
           contenuFourni: Boolean(contenu),
           pieceJointeFournie: Boolean(dto.joint),
         },
-      }, reclamation.anonyme && user.role === Role.ETUDIANT ? null : user.id);
+      });
       return cree;
     });
   }
@@ -553,7 +527,7 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: { createurId: true },
       });
-      await this.journaliser(tx, user, `RECLAMATION_${dto.statut}`, id, {
+      await journaliser(tx, user, `RECLAMATION_${dto.statut}`, 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit(miseAJour),
         champsModifies: [
@@ -587,7 +561,7 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: { createurId: true },
       });
-      await this.journaliser(tx, user, 'RECLAMATION_ASSIGNEE', id, {
+      await journaliser(tx, user, 'RECLAMATION_ASSIGNEE', 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit(miseAJour),
         champsModifies: ['assigneAId', ...(miseAJour.statut !== reclamation.statut ? ['statut'] : [])],
@@ -625,7 +599,7 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: { createurId: true },
       });
-      await this.journaliser(tx, user, 'RECLAMATION_ESCALADEE', id, {
+      await journaliser(tx, user, 'RECLAMATION_ESCALADEE', 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit(miseAJour),
         champsModifies: ['escaladeLe'],
@@ -670,7 +644,7 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: { createurId: true },
       });
-      await this.journaliser(tx, user, 'RECLAMATION_CLOTUREE', id, {
+      await journaliser(tx, user, 'RECLAMATION_CLOTUREE', 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit(miseAJour),
         champsModifies: ['notes', ...(reclamation.fermeLe ? [] : ['fermeLe'])],
@@ -714,7 +688,7 @@ export class ReclamationsService extends CrudService {
         });
         if (resultat.count !== 1) continue;
         escaladees.push(r);
-        await this.journaliser(tx, user, 'RECLAMATION_ESCALADEE', r.id, {
+        await journaliser(tx, user, 'RECLAMATION_ESCALADEE', 'Reclamation', r.id, {
           avant: this.instantaneAudit(r),
           apres: this.instantaneAudit({ ...r, escaladeLe: escalateLe }),
           champsModifies: ['escaladeLe'],

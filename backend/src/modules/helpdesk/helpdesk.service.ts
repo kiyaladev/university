@@ -34,6 +34,7 @@ import {
   UpdateEquipementDto,
 } from './helpdesk.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const PREFIX_TICKET = 'TKT-';
 
@@ -80,33 +81,6 @@ const TICKET_AUDIT = {
   declarantEmail: true,
   declarantTelephone: true,
 } satisfies Prisma.TicketSupportSelect;
-
-/**
- * Trace d'audit écrite par la transaction qui porte la mutation : un
- * équipement créé sans trace, ou une trace sans équipement, n'est plus
- * possible.
- *
- * `details` porte le format avant/après commun au module — c'est lui que
- * l'écran « Journal » sait lire.
- */
-function journaliser(
-  tx: Prisma.TransactionClient,
-  user: AuthUser,
-  action: string,
-  entite: string,
-  entiteId: string,
-  details: Record<string, unknown>,
-) {
-  return tx.auditLog.create({
-    data: {
-      userId: user.id,
-      action,
-      entite,
-      entiteId,
-      details: JSON.stringify(details),
-    },
-  });
-}
 
 /** Inventaire projeté : ni code QR, ni jeton, aucune donnée personnelle. */
 function instantaneEquipement(equipement: any) {

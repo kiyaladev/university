@@ -34,6 +34,7 @@ import {
   VodQueryDto,
 } from './vod.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { avantApres, journaliser } from '../../common/audit';
 
 const VOD_INCLUDE = {
   matiere: { select: { id: true, code: true, intitule: true } },
@@ -338,7 +339,7 @@ export class VodService {
         },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(tx, user, 'VOD_CREE', vod.id, null, instantaneVod(vod));
+      await journaliser(tx, user, 'VOD_CREE', 'CoursVOD', vod.id, avantApres(null, instantaneVod(vod)));
       return vod;
     });
   }
@@ -373,9 +374,16 @@ export class VodService {
         dto.inscriptionId !== undefined ? dto.inscriptionId : avant.inscriptionId,
       );
       const vod = await tx.coursVOD.update({ where: { id }, data: donnees, include: VOD_INCLUDE });
-      await this.journaliser(
-        tx, user, 'VOD_MODIFIE', id,
-        instantaneVod(avant), instantaneVod(vod), Object.keys(donnees),
+      // Noms des champs touchés seulement : leurs valeurs restent dans
+      // l'instantané projeté, jamais recopiées.
+      const champsModifies = Object.keys(donnees);
+      await journaliser(
+        tx,
+        user,
+        'VOD_MODIFIE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(vod), champsModifies.length ? { champsModifies } : undefined),
       );
       return vod;
     });
@@ -397,9 +405,13 @@ export class VodService {
         },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(
-        tx, user, 'VOD_PUBLIE', id,
-        instantaneVod(avant), instantaneVod(miseAJour), ['statut', 'dateMiseEnLigne'],
+      await journaliser(
+        tx,
+        user,
+        'VOD_PUBLIE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(miseAJour), { champsModifies: ['statut', 'dateMiseEnLigne'] }),
       );
       return miseAJour;
     });
@@ -418,44 +430,15 @@ export class VodService {
         data: { statut: StatutVOD.ARCHIVE },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(
-        tx, user, 'VOD_ARCHIVE', id,
-        instantaneVod(avant), instantaneVod(miseAJour), ['statut'],
+      await journaliser(
+        tx,
+        user,
+        'VOD_ARCHIVE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(miseAJour), { champsModifies: ['statut'] }),
       );
       return miseAJour;
-    });
-  }
-
-  // ---------------------------------------------------------------- journal
-
-  /**
-   * Écrit la ligne de journal dans la transaction de la mutation : l'état de
-   * la ressource et sa trace sont committés ensemble, ou pas du tout. Un
-   * journal écrit hors transaction survivrait à une mutation annulée.
-   */
-  private journaliser(
-    tx: Prisma.TransactionClient,
-    user: AuthUser,
-    action: string,
-    entiteId: string,
-    avant: unknown,
-    apres: unknown,
-    champsModifies?: string[],
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite: 'CoursVOD',
-        entiteId,
-        details: JSON.stringify({
-          avant,
-          apres,
-          // Noms des champs touchés seulement : leurs valeurs restent dans
-          // l'instantané projeté, jamais recopiées.
-          ...(champsModifies?.length ? { champsModifies } : {}),
-        }),
-      },
     });
   }
 

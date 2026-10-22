@@ -17,6 +17,7 @@ import {
   UpdateDocumentDto,
 } from './bibliotheque.dto';
 import { PlagiatService } from './plagiat.service';
+import { avantApres, journaliser } from '../../common/audit';
 
 /**
  * Dépôt institutionnel & bibliothèque numérique. En pilote : archivage natif
@@ -175,30 +176,6 @@ export class BibliothequeService extends CrudService {
     };
   }
 
-  private journaliserMutation(
-    tx: Prisma.TransactionClient,
-    utilisateur: AuthUser,
-    action: string,
-    id: string,
-    avant: any,
-    apres: any,
-    champsModifies: string[] = [],
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: utilisateur.id,
-        action,
-        entite: 'DocumentDepot',
-        entiteId: id,
-        details: JSON.stringify({
-          avant: this.instantaneAudit(avant),
-          apres: this.instantaneAudit(apres),
-          champsModifies,
-        }),
-      },
-    });
-  }
-
   /**
    * Liste accessible partout. Sans jeton valide : seuls les documents publiés.
    * Avec un jeton (staff) : tout le fonds, et le filtre « publié / non » via
@@ -278,7 +255,7 @@ export class BibliothequeService extends CrudService {
         include: DOCUMENT_INCLUDE,
         omit: { fichier: true, contenuTexte: true },
       });
-      await this.journaliserMutation(tx, utilisateur, 'DOCUMENT_DEPOT_CREE', cree.id, null, cree, Object.keys(dto));
+      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_CREE', 'DocumentDepot', cree.id, avantApres(this.instantaneAudit(null), this.instantaneAudit(cree), { champsModifies: Object.keys(dto) }));
       return cree;
     });
     void this.analyserDoublons(document.id);
@@ -318,7 +295,7 @@ export class BibliothequeService extends CrudService {
         where: { id }, data: donnees, include: DOCUMENT_INCLUDE,
         omit: { fichier: true, contenuTexte: true },
       });
-      await this.journaliserMutation(tx, utilisateur, 'DOCUMENT_DEPOT_MODIFIE', id, document, maj, Object.keys(dto));
+      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_MODIFIE', 'DocumentDepot', id, avantApres(this.instantaneAudit(document), this.instantaneAudit(maj), { champsModifies: Object.keys(dto) }));
       return maj;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     void this.analyserDoublons(id);
@@ -335,7 +312,7 @@ export class BibliothequeService extends CrudService {
         throw new ForbiddenException(t('bibliotheque.seul_le_deposant_initial_peut_supprimer_ce_document_sauf_adm'));
       }
       await tx.documentDepot.delete({ where: { id } });
-      await this.journaliserMutation(tx, utilisateur, 'DOCUMENT_DEPOT_SUPPRIME', id, document, null);
+      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_SUPPRIME', 'DocumentDepot', id, avantApres(this.instantaneAudit(document), this.instantaneAudit(null), { champsModifies: [] }));
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

@@ -31,6 +31,7 @@ import {
 } from './attestation.dto';
 import { t } from '../../common/i18n';
 import { toDateOnly } from '../../common/utils';
+import { journaliser } from '../../common/audit';
 
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
@@ -291,7 +292,7 @@ export class AttestationService {
         empreinteConsentementPar: `${user.prenom} ${user.nom}`,
       },
     });
-    await this.journaliser(user, 'EMPREINTE_ENROLEE', enseignantId);
+    await journaliser(this.prisma, user, 'EMPREINTE_ENROLEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte enrôlée' };
   }
 
@@ -307,7 +308,7 @@ export class AttestationService {
         empreinteConsentementPar: null,
       },
     });
-    await this.journaliser(user, 'EMPREINTE_SUPPRIMEE', enseignantId);
+    await journaliser(this.prisma, user, 'EMPREINTE_SUPPRIMEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte supprimée' };
   }
 
@@ -511,9 +512,4 @@ export class AttestationService {
     return { mode: AttestationMode.AUCUNE, valide: false };
   }
 
-  private journaliser(user: AuthUser, action: string, enseignantId: string) {
-    return this.prisma.auditLog.create({
-      data: { userId: user.id, action, entite: 'Enseignant', entiteId: enseignantId },
-    });
-  }
 }
