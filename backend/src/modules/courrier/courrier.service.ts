@@ -30,6 +30,7 @@ import {
   ParapherCourrierDto,
   UpdateCourrierDto,
 } from './courrier.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 const COURRIER_INCLUDE = {
   departement: { select: { id: true, code: true, nom: true } },
@@ -129,9 +130,7 @@ export class CourrierService {
   // ------------------------------------------------------- lecture
 
   async liste(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const scope = this.filtreVisible(user);
     const where: Prisma.CourrierWhereInput = {
@@ -165,11 +164,12 @@ export class CourrierService {
         where,
         include: COURRIER_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.courrier.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string, user: AuthUser) {

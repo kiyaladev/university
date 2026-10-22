@@ -3,6 +3,7 @@ import { t } from './i18n';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { Paginated, QueryDto } from './dto';
+import { paginer, pagine } from './pagination';
 
 /**
  * Enveloppe une suppression dure. Sur les référentiels (années, structure,
@@ -65,9 +66,7 @@ export class CrudService<T = any> {
   }
 
   async findAll(query: QueryDto = {}, where: Record<string, any> = {}): Promise<Paginated<T>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const fullWhere = { ...where, ...this.searchWhere(query.search) };
 
     // `?sort=` part d'une liste blanche : un champ inconnu sur le modèle doit
@@ -80,12 +79,13 @@ export class CrudService<T = any> {
         ...(this.options.select ? { select: this.options.select } : { include: this.options.include }),
         ...(this.options.omit && !this.options.select ? { omit: this.options.omit } : {}),
         orderBy,
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.delegate.count({ where: fullWhere }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Traduit `?sort=&order=` en un `orderBy` validé contre le schéma du modèle. */

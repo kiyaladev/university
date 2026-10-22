@@ -32,6 +32,7 @@ import {
   UpdateAttestationDto,
   VerifierAttestationDto,
 } from './attestations.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 export const ATTESTATION_INCLUDE = {
   etudiant: {
@@ -66,9 +67,7 @@ export class AttestationsService {
   // ------------------------------------------------------------- consultation
 
   async liste(query: AttestationQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.AttestationWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -98,12 +97,13 @@ export class AttestationsService {
         where,
         include: ATTESTATION_INCLUDE,
         orderBy: [{ emiseLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.attestation.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async findOne(id: string) {

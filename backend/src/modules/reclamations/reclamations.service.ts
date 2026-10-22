@@ -33,6 +33,7 @@ import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { paginer, pagine } from '../../common/pagination';
 
 const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
@@ -241,9 +242,7 @@ export class ReclamationsService extends CrudService {
     },
     user: AuthUser,
   ) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const filtreProprietaire: Prisma.ReclamationWhereInput = this.voitTout(user)
       ? {}
@@ -293,12 +292,13 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: this.omissionPour(user),
         orderBy: [{ priorite: 'desc' }, { creeLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.reclamation.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Variante pour l'étudiant connecté — strictement bornée à ses réclamations. */

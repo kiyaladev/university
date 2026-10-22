@@ -34,6 +34,7 @@ import { QueryDto } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { t } from '../../common/i18n';
+import { paginer, pagine } from '../../common/pagination';
 
 export class CreateJustificatifDto {
   @IsUUID() seanceId: string;
@@ -139,29 +140,21 @@ export class JustificatifsService extends CrudService {
     };
 
     if (user.role !== Role.ENSEIGNANT && user.role !== Role.CHEF_DEPARTEMENT) {
-      const page = Number(query.page ?? 1);
-      const all = query.all === 'true' || query.all === '1';
-      const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+      const pagination = paginer(query);
       return Promise.all([
         this.delegate.findMany({
           where,
           include: JUSTIFICATIF_INCLUDE,
           omit: { piece: true },
           orderBy: this.orderByDe(query),
-          ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+          skip: pagination.skip,
+          take: pagination.take,
         }),
         this.delegate.count({ where }),
-      ]).then(([data, total]) => ({
-        data,
-        total,
-        page: all ? 1 : page,
-        pageSize: all ? Math.min(total, pageSize) : pageSize,
-      }));
+      ]).then(([data, total]) => pagine(data, total, pagination));
     }
 
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     return Promise.all([
       this.delegate.findMany({
         where,
@@ -169,15 +162,11 @@ export class JustificatifsService extends CrudService {
         // médicales restent réservées au détail ADMIN/DIRECTION/SCOLARITE.
         select: JUSTIFICATIF_ENSEIGNANT_SELECT,
         orderBy: this.orderByDe(query),
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.delegate.count({ where }),
-    ]).then(([data, total]) => ({
-      data,
-      total,
-      page: all ? 1 : page,
-      pageSize: all ? Math.min(total, pageSize) : pageSize,
-    }));
+    ]).then(([data, total]) => pagine(data, total, pagination));
   }
 
   async findOnePour(id: string, user: AuthUser) {

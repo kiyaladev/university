@@ -30,6 +30,7 @@ import {
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { paginer, pagine } from '../../common/pagination';
 
 const BADGE_INCLUDE = {
   creePar: { select: { id: true, nom: true, prenom: true } },
@@ -108,9 +109,7 @@ export class BadgesService {
   // ----------------------------------------------------------- consultation
 
   async liste(query: BadgeQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.BadgeAccesWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -132,7 +131,8 @@ export class BadgesService {
         where,
         include: BADGE_INCLUDE,
         orderBy: { dateDelivrance: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.badgeAcces.count({ where }),
     ]);
@@ -143,7 +143,7 @@ export class BadgesService {
     // stockée, un badge périmé remonte donc encore dans le filtre « ACTIF ».
     const lignes = data.map((b) => ({ ...b, statut: this.evaluerStatut(b) }));
 
-    return { data: lignes, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(lignes, total, pagination);
   }
 
   async trouver(id: string) {

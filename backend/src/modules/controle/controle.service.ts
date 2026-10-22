@@ -28,6 +28,7 @@ import { AttestationService } from '../attestation/attestation.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
+import { paginer, pagine } from '../../common/pagination';
 
 const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
   'PAIE_CREEE',
@@ -212,9 +213,7 @@ export class ControleService {
       ? user.departementId ?? '__aucun__'
       : query.departementId;
     const controleurId = user.role === Role.CONTROLEUR && !user.departementId ? user.id : query.controleurId;
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const dateFilter: Prisma.DateTimeFilter = {};
     if (query.dateDebut) dateFilter.gte = toDateOnly(query.dateDebut);
@@ -243,7 +242,8 @@ export class ControleService {
     const options = {
       where,
       orderBy: [{ horodatage: 'desc' as const }],
-      ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      skip: pagination.skip,
+      take: pagination.take,
     };
     const requete = this.peutVoirDetails(user)
       ? this.prisma.controle.findMany({ ...options, include: CONTROLE_INCLUDE })
@@ -253,7 +253,7 @@ export class ControleService {
       this.prisma.controle.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async findOne(id: string, user?: AuthUser) {

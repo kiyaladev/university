@@ -36,6 +36,7 @@ import {
   SaisieNotesDto,
   UpdateEvaluationDto,
 } from './scolarite.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
 const INSCRITS_VALIDES = { statut: 'VALIDEE' } as const;
@@ -61,9 +62,7 @@ export class ScolariteService {
   // ----------------------------------------------------------- Évaluations
 
   async listerEvaluations(query: EvaluationQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.EvaluationWhereInput = {
       ...this.promotionAutorisee(user),
@@ -84,11 +83,12 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.evaluation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   private veillerEvaluation(id: string, db: Db = this.prisma) {
@@ -327,9 +327,7 @@ export class ScolariteService {
   }
 
   async listerNotes(query: NoteQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where: Prisma.NoteWhereInput = {
       ...(query.evaluationId ? { evaluationId: query.evaluationId } : {}),
       ...(user.role === Role.CHEF_DEPARTEMENT ? { evaluation: this.promotionAutorisee(user) } : {}),
@@ -348,11 +346,12 @@ export class ScolariteService {
           },
         },
         orderBy: { saisieLe: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.note.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Saisie en bloc (bulk upsert, transaction). Les lignes hors contexte
@@ -428,9 +427,7 @@ export class ScolariteService {
   // -------------------------------------------------------- Délibérations
 
   async listerDeliberations(query: DeliberationQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { ...(query.anneeId ? { anneeId: query.anneeId } : {}), ...this.promotionAutorisee(user) };
 
     const [data, total] = await Promise.all([
@@ -444,11 +441,12 @@ export class ScolariteService {
           _count: { select: { lignes: true } },
         },
         orderBy: { creeLe: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.deliberation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Détail d'une délibération, lignes réordonnées par rang. */

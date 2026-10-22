@@ -40,6 +40,7 @@ import {
   UpdateCategorieDto,
   UpdateEquipementDto,
 } from './patrimoine.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 const PREFIX_INVENTAIRE = 'PAT-';
 const QR_PREFIX = 'UP-PAT-';
@@ -164,9 +165,7 @@ export class PatrimoineService {
    * série, numéro d'inventaire et qrCode.
    */
   async listeEquipements(query: EquipementQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.EquipementPatrimoineWhereInput = {
       ...(query.categorieId ? { categorieId: query.categorieId } : {}),
@@ -192,11 +191,12 @@ export class PatrimoineService {
         where,
         include: EQUIPEMENT_INCLUDE,
         orderBy: { updatedAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.equipementPatrimoine.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async detailEquipement(id: string) {

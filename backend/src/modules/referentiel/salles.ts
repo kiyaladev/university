@@ -10,6 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { t } from '../../common/i18n';
+import { paginer, pagine } from '../../common/pagination';
 
 export class CreateSalleDto {
   @IsString() code: string;
@@ -69,20 +70,19 @@ export class SallesService extends CrudService {
     const select = this.projectionPour(user);
     if (!select) return super.findAll(query);
 
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const fullWhere = this.searchWhere(query.search);
     const [data, total] = await Promise.all([
       this.delegate.findMany({
         where: fullWhere,
         select,
         orderBy: this.orderByDe(query),
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.delegate.count({ where: fullWhere }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async fichePour(id: string, user: AuthUser) {

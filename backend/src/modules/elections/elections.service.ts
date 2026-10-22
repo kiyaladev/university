@@ -48,6 +48,7 @@ import {
   VoterDto,
 } from './elections.dto';
 import { documentsElection, BulletinElection } from './documents';
+import { paginer, pagine } from '../../common/pagination';
 
 const ELECTION_INCLUDE = {
   promotion: { include: { filiere: true } },
@@ -111,9 +112,7 @@ export class ElectionsService {
   // ----------------------------------------------------------- consultation
 
   async liste(query: ElectionQueryDto, user: AuthUser) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.ElectionWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -138,12 +137,13 @@ export class ElectionsService {
         where,
         include: ROLES_GESTION.includes(user.role) ? ELECTION_INCLUDE : ELECTION_VOTE_INCLUDE,
         orderBy: { dateOuverture: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.election.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Élections ouvertes à l'instant T (vitrine publique / portail étudiant). */

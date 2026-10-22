@@ -27,6 +27,7 @@ import {
   TirageQueryDto,
   UpdateStadeTirageDto,
 } from './tirage.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 const TIRAGE_INCLUDE = {
   examen: {
@@ -58,9 +59,7 @@ export class TirageService {
   // ------------------------------------------------------- lecture
 
   async liste(query: TirageQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.TirageWhereInput = {
       ...(query.stade ? { stade: query.stade } : {}),
@@ -73,11 +72,12 @@ export class TirageService {
         where,
         include: TIRAGE_INCLUDE,
         orderBy: { dateTirage: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.tirage.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {

@@ -16,6 +16,7 @@ import {
 } from './planification.dto';
 import { t } from '../../common/i18n';
 import { AnneeAcademiqueClotureeException, exigerAnneeOuverte } from '../../common/annee';
+import { paginer, pagine } from '../../common/pagination';
 
 /** Un créneau vaut-il à cette date ? Sans période, il vaut toute l'année. */
 function vaut(creneau: { dateDebut: Date | null; dateFin: Date | null }, jour: Date) {
@@ -170,18 +171,17 @@ export class SeancesService extends CrudService {
     const where = this.where(query, user);
     if (this.includePour(user) === SEANCE_INCLUDE) return this.findAll(requete, where);
 
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     return Promise.all([
       this.prisma.seance.findMany({
         where,
         include: this.includePour(user),
         orderBy: this.orderByDe(requete),
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.seance.count({ where }),
-    ]).then(([data, total]) => ({ data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize }));
+    ]).then(([data, total]) => pagine(data, total, pagination));
   }
 
   async consulter(id: string, user: AuthUser) {

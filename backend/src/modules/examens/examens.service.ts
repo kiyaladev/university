@@ -25,6 +25,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { CreateExamenDto, ExamenQueryDto, ScanExamenDto } from './examens.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 const EXAMEN_INCLUDE = {
   matiere: true,
@@ -74,9 +75,7 @@ export class ExamensService {
   // ------------------------------------------------------- lecture
 
   async liste(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.ExamenWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -98,11 +97,12 @@ export class ExamensService {
         where,
         include: EXAMEN_INCLUDE,
         orderBy: { dateExamen: 'asc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.examen.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string, user?: AuthUser) {
@@ -301,21 +301,19 @@ export class ExamensService {
 
   async listeScans(id: string, query: QueryDto, user: AuthUser): Promise<Paginated<any>> {
     await this.trouver(id, user);
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { examenId: id };
     const [data, total] = await Promise.all([
       this.prisma.scanExamen.findMany({
         where,
         include: SCAN_INCLUDE,
         orderBy: { heureScan: 'desc' },
-        skip: all ? 0 : (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.scanExamen.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /**

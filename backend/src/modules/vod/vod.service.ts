@@ -33,6 +33,7 @@ import {
   UpdateCoursVODDto,
   VodQueryDto,
 } from './vod.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 const VOD_INCLUDE = {
   matiere: { select: { id: true, code: true, intitule: true } },
@@ -169,9 +170,7 @@ export class VodService {
   }
 
   async liste(query: VodQueryDto, user: AuthUser) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.CoursVODWhereInput = {
       AND: [this.lectureWhere(user)],
@@ -196,12 +195,13 @@ export class VodService {
         where,
         include: VOD_INCLUDE,
         orderBy: { dateMiseEnLigne: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.coursVOD.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {

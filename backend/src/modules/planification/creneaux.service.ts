@@ -8,6 +8,7 @@ import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { dureeMinutes, toMinutes, toDateOnly, isoDate, JOURS } from '../../common/utils';
 import { CreateCreneauDto, CreneauQueryDto, UpdateCreneauDto } from './planification.dto';
+import { paginer, pagine } from '../../common/pagination';
 
 export const CRENEAU_INCLUDE = {
   affectation: {
@@ -106,18 +107,17 @@ export class CreneauxService extends CrudService {
     if (user.role !== Role.ETUDIANT) return this.findAll(query, this.where(query, user));
 
     const where = this.where(query, user);
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     return Promise.all([
       this.prisma.creneau.findMany({
         where,
         include: CRENEAU_INCLUDE_ETUDIANT,
         orderBy: [{ jourSemaine: 'asc' }, { heureDebut: 'asc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.creneau.count({ where }),
-    ]).then(([data, total]) => ({ data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize }));
+    ]).then(([data, total]) => pagine(data, total, pagination));
   }
 
   /** Emploi du temps hebdomadaire regroupé par jour. */
