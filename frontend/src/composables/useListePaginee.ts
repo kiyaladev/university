@@ -164,14 +164,8 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     for (const [k, v] of Object.entries(filtres)) query[prefixe + k] = v;
     if (paginee && etat.value.page > 1) query[`${prefixe}page`] = String(etat.value.page);
     if (JSON.stringify(query) === JSON.stringify(route.query)) return;
-    // Le `scrollBehavior` du routeur remonte en haut à chaque navigation, même
-    // un simple `replace` de query : on rend la position une fois la
-    // navigation faite (avant la peinture suivante, donc sans saut visible).
-    const y = window.scrollY;
-    void router
-      .replace({ query })
-      .then(() => requestAnimationFrame(() => window.scrollTo({ top: y })))
-      .catch(() => undefined);
+    // Le `scrollBehavior` du routeur garde la position quand seule la query change.
+    void router.replace({ query }).catch(() => undefined);
   }
 
   function recharger() {

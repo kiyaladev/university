@@ -32,7 +32,10 @@ export default defineRouter(function () {
       : createWebHashHistory;
 
   const Router = createRouter({
-    scrollBehavior: () => ({ left: 0, top: 0 }),
+    // Retour arrière : position mémorisée. Changement de filtres (même page,
+    // query seule) : on reste où l'on est. Nouvelle page : en haut.
+    scrollBehavior: (to, from, positionMemorisee) =>
+      positionMemorisee ?? (to.path === from.path ? false : { left: 0, top: 0 }),
     routes,
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
