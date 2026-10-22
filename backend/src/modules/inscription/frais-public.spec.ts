@@ -1,6 +1,6 @@
 import { IS_PUBLIC_KEY } from '../../common/decorators';
 import { FraisController } from './inscription.controller';
-import { FraisService } from './inscription.service';
+import { FraisService } from './frais.service';
 
 describe('lecture publique des tarifs d’inscription', () => {
   it('reste publique mais ne renvoie que le tarif et sa devise', async () => {

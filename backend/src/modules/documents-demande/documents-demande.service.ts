@@ -37,6 +37,7 @@ import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../common/finances';
 
 const PREFIX_DEMANDE = 'DOC-';
 
@@ -449,7 +450,7 @@ export class DocumentsDemandeService extends CrudService {
           if (demande.inscriptionId && !inscription) {
             throw new NotFoundException(t('documents-demande.demande_introuvable'));
           }
-          const cree = await tx.paiement.create({
+          const cree = await creerPaiementTx(tx, {
             data: {
               id: paiementId,
               reference,
@@ -847,82 +848,14 @@ export class DocumentsDemandeService extends CrudService {
    * Tentative de transmission Mobile Money. La passerelle est facultative —
    * en son absence, le paiement reste EN_ATTENTE et sera confirmé au guichet.
    */
-  private async tenterTransmissionMobileMoney(paiement: {
-    id: string;
-    reference: string;
-    montant: number;
-    devise: string;
-    operateur: string | null;
-    telephone: string | null;
-    motif: string | null;
-  }, userId: string) {
-    const url = process.env.MOBILE_MONEY_URL?.replace(/\/+$/, '');
-    if (!url || !paiement.telephone) return;
-    await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_TENTATIVE');
-    let transactionId: string | null = null;
-    try {
-      const reponse = await this.mobileMoney.demanderPaiement({
-          reference: paiement.reference,
-          montant: paiement.montant,
-          devise: paiement.devise,
-          operateur: paiement.operateur ?? 'AUTRE',
-          telephone: paiement.telephone,
-          motif: paiement.motif ?? undefined,
-      });
-      transactionId = reponse.transactionId;
-    } catch {
-      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_ECHEC');
-      this.logger.warn(`Demande Mobile Money ${paiement.reference} non transmise; le paiement reste en attente.`);
-      return;
-    }
-
-    if (!transactionId) {
-      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_MOBILE_MONEY_REPONSE_INVALIDE');
-      return;
-    }
-
-    try {
-      await this.prisma.$transaction(async (tx) => {
-          const avant = await tx.paiement.findUnique({ where: { id: paiement.id } });
-          if (!avant) return;
-          const apres = await tx.paiement.update({
-            where: { id: paiement.id },
-            data: { transactionId },
-          });
-          await tx.auditLog.create({
-            data: {
-              userId,
-              action: 'PAIEMENT_TRANSACTION_LIEE',
-              entite: 'Paiement',
-              entiteId: paiement.id,
-              details: JSON.stringify({
-                avant: this.instantanePaiement(avant),
-                apres: this.instantanePaiement(apres),
-                champsModifies: ['transactionId'],
-              }),
-            },
-          });
-      });
-    } catch {
-      await this.journalTransmissionMobileMoney(userId, paiement.id, 'PAIEMENT_TRANSACTION_LIAISON_ECHEC');
-      this.logger.error(`Mobile Money accepté pour ${paiement.reference}, mais sa référence n'a pas pu être liée localement.`);
-    }
-  }
-
-  private async journalTransmissionMobileMoney(userId: string, paiementId: string, action: string) {
-    try {
-      await this.prisma.auditLog.create({
-        data: {
-          userId,
-          action,
-          entite: 'Paiement',
-          entiteId: paiementId,
-          details: JSON.stringify({ statut: 'EN_ATTENTE' }),
-        },
-      });
-    } catch {
-      this.logger.warn(`Journal Mobile Money indisponible pour le paiement ${paiementId}.`);
-    }
+  private async tenterTransmissionMobileMoney(paiement: PaiementATransmettre, userId: string) {
+    await transmettreMobileMoney(paiement, {
+      prisma: this.prisma,
+      mobileMoney: this.mobileMoney,
+      userId,
+      logger: this.logger,
+      instantane: (p) => this.instantanePaiement(p),
+    });
   }
 
   /** Libellé humain d'un type de document, pour les messages SMS. */

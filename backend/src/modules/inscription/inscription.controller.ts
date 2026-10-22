@@ -44,7 +44,9 @@ import {
 } from './inscription.dto';
 import { EtudiantsService } from './etudiants.service';
 import { whereEtudiants } from './filtres';
-import { FraisService, InscriptionService } from './inscription.service';
+import { FraisService } from './frais.service';
+import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Inscription publique')
@@ -162,7 +164,7 @@ export class FraisController {
 @ApiBearerAuth()
 @Controller('paiements')
 export class PaiementsController {
-  constructor(private readonly service: InscriptionService) {}
+  constructor(private readonly service: PaiementsService) {}
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get()

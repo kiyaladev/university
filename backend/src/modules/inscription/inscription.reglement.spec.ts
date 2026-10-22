@@ -2,13 +2,18 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Role, StatutInscription, StatutPaiement } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
 import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
 const AGENT = { id: 'agent-1', role: Role.SCOLARITE } as AuthUser;
 
 function service(prisma: any) {
-  return new InscriptionService(prisma, { nouveauQrResto: () => 'qr' } as any, {} as any, {} as any);
+  return new InscriptionService(prisma, { nouveauQrResto: () => 'qr' } as any, {} as any);
+}
+
+function paiements(prisma: any) {
+  return new PaiementsService(prisma, {} as any);
 }
 
 describe('Règlement des inscriptions — cumul des paiements', () => {
@@ -35,7 +40,7 @@ describe('Règlement des inscriptions — cumul des paiements', () => {
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
     const prisma: any = { $transaction: jest.fn((work: any) => work(tx)) };
-    return { tx, service: service(prisma) };
+    return { tx, service: paiements(prisma) };
   }
 
   it('ne cumule que les paiements de scolarité dans la devise du tarif', async () => {
@@ -70,7 +75,7 @@ describe('Règlement des inscriptions — cumul des paiements', () => {
     };
     const prisma: any = { $transaction: jest.fn((work: any) => work(tx)) };
 
-    await expect(service(prisma).creerPaiement(
+    await expect(paiements(prisma).creerPaiement(
       { inscriptionId: 'ins-1', montant: 100, devise: 'GNF', mode: 'ESPECES' } as any, AGENT,
     )).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.paiement.create).not.toHaveBeenCalled();

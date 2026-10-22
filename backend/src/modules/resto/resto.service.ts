@@ -51,6 +51,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { creerPaiementTx } from '../../common/finances';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -599,7 +600,7 @@ export class RestoService {
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         return await this.prisma.$transaction(async (tx) => {
-          const paiement = await tx.paiement.create({
+          const paiement = await creerPaiementTx(tx, {
             data: {
               reference: await prochainNumeroPaiement(tx, annee),
               montant: args.montant,

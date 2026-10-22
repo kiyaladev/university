@@ -12,40 +12,30 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ModePaiement, Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
+import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
-import { CrudService } from '../../common/crud.service';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
 import {
   EtudiantsService,
   prochainMatricule,
   prochainNumeroInscription,
-  prochainNumeroPaiement,
 } from './etudiants.service';
 import { whereInscriptions } from './filtres';
-import { MobileMoneyService } from './mobile-money.service';
+import { deviseDossier } from './paiements.service';
 import { echapper } from '../../common/utils';
 import { t } from '../../common/i18n';
-import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
+import { exigerAnneeOuverte } from '../../common/annee';
 import { anneeNumero } from '../../common/numero';
 import {
-  AnnulerPaiementDto,
-  CreateFraisDto,
   CreateInscriptionDto,
-  CreatePaiementDto,
-  FraisQueryDto,
   InscriptionPubliqueDto,
   InscriptionQueryDto,
-  PaiementQueryDto,
-  SimulerPaiementDto,
-  UpdateFraisDto,
 } from './inscription.dto';
 
 export const INSCRIPTION_INCLUDE = {
@@ -81,33 +71,6 @@ export const INSCRIPTION_INCLUDE = {
   },
 } satisfies Prisma.InscriptionInclude;
 
-export const PAIEMENT_INCLUDE = {
-  etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
-  inscription: { select: { id: true, numero: true, anneeId: true, statut: true, montantFrais: true } },
-  inscriptionFormation: { select: { id: true, numero: true, formationId: true, statut: true } },
-  annee: { select: { id: true, libelle: true } },
-  creePar: { select: { id: true, nom: true, prenom: true } },
-  annulePar: { select: { id: true, nom: true, prenom: true } },
-} satisfies Prisma.PaiementInclude;
-
-/**
- * Chargement propre à la confirmation pilote : PAIEMENT_INCLUDE complété des
- * liens vers les autres portefeuilles (resto, recettes externes, demandes de
- * documents), qui se confirment dans leur module. La liste /paiements garde
- * PAIEMENT_INCLUDE tel quel.
- */
-const PAIEMENT_SIMULATION_INCLUDE = {
-  ...PAIEMENT_INCLUDE,
-  recharges: { select: { id: true }, take: 1 },
-  rechargesRecette: { select: { id: true } },
-  demandeDocument: { select: { id: true } },
-} satisfies Prisma.PaiementInclude;
-
-export const FRAIS_INCLUDE = {
-  annee: { select: { id: true, libelle: true } },
-  promotion: { include: { filiere: true } },
-} satisfies Prisma.FraisInclude;
-
 const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   BROUILLON: 'Brouillon',
   EN_ATTENTE_PAIEMENT: 'En attente de paiement',
@@ -130,51 +93,11 @@ function instantaneInscription(inscription: any) {
   };
 }
 
-/**
- * Paiements qui règlent la scolarité d'un dossier : les frais de demandes de
- * documents sont rattachés au dossier pour la traçabilité, mais ne soldent pas
- * l'inscription.
- */
-export const PAIEMENT_SCOLARITE: Prisma.PaiementWhereInput = { demandeDocument: { is: null } };
-
-/** Devise des frais d'un dossier : celle du tarif officiel de sa promotion. */
-export async function deviseDossier(
-  tx: Pick<Prisma.TransactionClient, 'frais'>,
-  dossier: { anneeId: string; promotionId: string },
-) {
-  const frais = await tx.frais.findUnique({
-    where: { anneeId_promotionId: { anneeId: dossier.anneeId, promotionId: dossier.promotionId } },
-    select: { devise: true },
-  });
-  return frais?.devise ?? 'GNF';
-}
-
-function instantanePaiement(paiement: any) {
-  if (!paiement) return null;
-  return {
-    id: paiement.id,
-    reference: paiement.reference,
-    anneeId: paiement.anneeId ?? paiement.inscription?.anneeId ?? null,
-    inscriptionId: paiement.inscriptionId,
-    etudiantId: paiement.etudiantId,
-    montant: paiement.montant,
-    devise: paiement.devise,
-    mode: paiement.mode,
-    operateur: paiement.operateur,
-    statut: paiement.statut,
-    completeLe: paiement.completeLe,
-    annuleLe: paiement.annuleLe,
-  };
-}
-
 @Injectable()
 export class InscriptionService {
-  private readonly logger = new Logger(InscriptionService.name);
-
   constructor(
     private prisma: PrismaService,
     private etudiants: EtudiantsService,
-    private mobileMoney: MobileMoneyService,
     private parametres: ParametresService,
   ) {}
 
@@ -582,351 +505,6 @@ export class InscriptionService {
     });
   }
 
-  // ------------------------------------------------------------- paiements
-
-  async listePaiements(query: PaiementQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
-
-    const where: Prisma.PaiementWhereInput = {
-      ...(query.statut ? { statut: query.statut } : {}),
-      ...(query.mode ? { mode: query.mode } : {}),
-      ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
-      ...(query.inscriptionId ? { inscriptionId: query.inscriptionId } : {}),
-      ...(query.anneeId ? { inscription: { anneeId: query.anneeId } } : {}),
-      ...(query.search
-        ? {
-            OR: [
-              { reference: { contains: query.search, mode: 'insensitive' } },
-              {
-                etudiant: {
-                  OR: [
-                    { nom: { contains: query.search, mode: 'insensitive' } },
-                    { prenom: { contains: query.search, mode: 'insensitive' } },
-                    { matricule: { contains: query.search, mode: 'insensitive' } },
-                  ],
-                },
-              },
-            ],
-          }
-        : {}),
-    };
-
-    const [data, total] = await Promise.all([
-      this.prisma.paiement.findMany({
-        where,
-        include: PAIEMENT_INCLUDE,
-        orderBy: { horodatage: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
-      }),
-      this.prisma.paiement.count({ where }),
-    ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
-  }
-
-  async trouverPaiement(id: string) {
-    const paiement = await this.prisma.paiement.findUnique({
-      where: { id },
-      include: PAIEMENT_INCLUDE,
-    });
-    if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
-    return paiement;
-  }
-
-  /**
-   * Encaissement. La référence "PAY-AAAA-NNNNN" est générée à la création.
-   * En Mobile Money, la demande est transmise à l'opérateur (ou simulée en
-   * pilote, sans URL) et reste EN_ATTENTE jusqu'à la confirmation.
-   */
-  async creerPaiement(dto: CreatePaiementDto, user: AuthUser) {
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const paiement = await this.prisma.$transaction(async (tx) => {
-          const inscription = dto.inscriptionId
-            ? await tx.inscription.findUnique({
-                where: { id: dto.inscriptionId },
-                select: { id: true, etudiantId: true, anneeId: true, promotionId: true },
-              })
-            : null;
-          if (dto.inscriptionId && !inscription) {
-            throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
-          }
-          // Aucune conversion n'existe : un paiement de scolarité doit être
-          // dans la devise du tarif du dossier, sinon le cumul n'a pas de sens.
-          const devisePaiement = inscription
-            ? await deviseDossier(tx, inscription)
-            : 'GNF';
-          if (inscription && dto.devise && dto.devise !== devisePaiement) {
-            throw new BadRequestException(I18nContext.current()!.t('inscription.devise_incompatible', {
-              args: { devise: dto.devise, deviseDossier: devisePaiement },
-            }));
-          }
-          if (inscription && dto.anneeId && dto.anneeId !== inscription.anneeId) {
-            throw new BadRequestException(I18nContext.current()!.t('common.academicYearMismatch'));
-          }
-          const anneeId = dto.anneeId ?? inscription?.anneeId
-            ?? (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id;
-          if (!anneeId) {
-            throw new BadRequestException(I18nContext.current()!.t('common.academicYearRequired'));
-          }
-          const annee = await tx.anneeAcademique.findUnique({
-            where: { id: anneeId },
-            select: { id: true, libelle: true },
-          });
-          if (!annee) throw new BadRequestException(I18nContext.current()!.t('common.academicYearNotFound'));
-          await exigerAnneeOuverte(tx, annee.id);
-
-          const cree = await tx.paiement.create({
-            data: {
-              reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
-              montant: dto.montant,
-              devise: dto.devise ?? devisePaiement,
-              mode: dto.mode,
-              operateur: dto.operateur ?? null,
-              telephone: dto.telephone ?? null,
-              nomComplet: dto.nomComplet ?? null,
-              motif: dto.motif ?? null,
-              inscriptionId: dto.inscriptionId ?? null,
-              anneeId: annee.id,
-              etudiantId: dto.etudiantId ?? inscription?.etudiantId ?? null,
-              creeParId: user.id,
-            },
-            include: PAIEMENT_INCLUDE,
-          });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'PAIEMENT_CREE',
-              entite: 'Paiement',
-              entiteId: cree.id,
-              details: JSON.stringify({ avant: null, apres: instantanePaiement(cree) }),
-            },
-          });
-          return cree;
-        });
-
-        if (paiement.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
-          const passerelleActive = !!process.env.MOBILE_MONEY_URL;
-          if (passerelleActive) {
-            await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_TENTATIVE');
-          }
-          let demande: Awaited<ReturnType<MobileMoneyService['demanderPaiement']>> | null = null;
-          try {
-            demande = await this.mobileMoney.demanderPaiement({
-              reference: paiement.reference,
-              montant: paiement.montant,
-              devise: paiement.devise,
-              operateur: paiement.operateur ?? 'AUTRE',
-              telephone: paiement.telephone,
-              motif: paiement.motif ?? undefined,
-            });
-          } catch {
-            if (passerelleActive) {
-              await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_ECHEC');
-            }
-            this.logger.warn(`Demande Mobile Money ${paiement.reference} non transmise; le paiement reste en attente.`);
-          }
-
-          if (demande?.transactionId) {
-            try {
-              const rattache = await this.prisma.$transaction(async (tx) => {
-                const avant = await tx.paiement.findUnique({ where: { id: paiement.id }, include: PAIEMENT_INCLUDE });
-                const maj = await tx.paiement.update({
-                  where: { id: paiement.id },
-                  data: { transactionId: demande.transactionId },
-                  include: PAIEMENT_INCLUDE,
-                });
-                await tx.auditLog.create({
-                  data: {
-                    userId: user.id,
-                    action: 'PAIEMENT_TRANSACTION_LIEE',
-                    entite: 'Paiement',
-                    entiteId: paiement.id,
-                    details: JSON.stringify({
-                      avant: instantanePaiement(avant),
-                      apres: instantanePaiement(maj),
-                      champsModifies: ['transactionId'],
-                    }),
-                  },
-                });
-                return maj;
-              });
-              return rattache;
-            } catch {
-              if (passerelleActive) {
-                await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_TRANSACTION_LIAISON_ECHEC');
-              }
-              this.logger.error(`Mobile Money accepté pour ${paiement.reference}, mais sa référence n'a pas pu être liée localement.`);
-            }
-          } else if (passerelleActive && demande?.mode === 'operateur') {
-            await this.journalMobileMoney(user.id, paiement.id, 'PAIEMENT_MOBILE_MONEY_REPONSE_INVALIDE');
-          }
-        }
-
-        return paiement;
-      } catch (e: any) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(I18nContext.current()!.t('inscription.reference_de_paiement_temporairement_indisponible_reessayez'));
-  }
-
-  private async journalMobileMoney(userId: string, paiementId: string, action: string) {
-    try {
-      await this.prisma.auditLog.create({
-        data: {
-          userId,
-          action,
-          entite: 'Paiement',
-          entiteId: paiementId,
-          details: JSON.stringify({ statut: 'EN_ATTENTE' }),
-        },
-      });
-    } catch {
-      this.logger.warn(`Journal Mobile Money indisponible pour le paiement ${paiementId}.`);
-    }
-  }
-
-  /**
-   * Confirmation pilote : l'agent comptable / le DAF répercute la réponse de
-   * l'opérateur (guichet). À un paiement réussi, si le cumul des paiements
-   * réussis du dossier atteint les frais, l'inscription passe en PAYEE.
-   */
-  async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
-    const reussi = dto.statut === 'REUSSI';
-    return this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_SIMULATION_INCLUDE });
-      if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
-      // Les paiements des autres portefeuilles ont leur propre confirmation :
-      // les passer ici sauterait le crédit du solde resto, le passage de la
-      // demande de document en PAYEE ou le circuit d'encaissement des recettes.
-      if (paiement.inscriptionFormation) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_formation_confirme_par_action_de_formation'));
-      }
-      if (paiement.recharges.length) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_resto_confirme_par_la_recharge'));
-      }
-      if (paiement.rechargesRecette) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_recette_geree_par_les_recettes'));
-      }
-      if (paiement.demandeDocument) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_document_confirme_par_la_demande'));
-      }
-      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
-      if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
-      }
-      if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_reussi_impossible_de_le_faire_echouer'));
-      }
-      if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') return paiement;
-
-      const transition = await tx.paiement.updateMany({
-        where: { id, statut: paiement.statut },
-        data: {
-          statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
-          completeLe: reussi ? new Date() : null,
-        },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
-      }
-      const p = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-      if (!p) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
-
-      let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
-      if (reussi && p?.inscriptionId) {
-        const dossier = await tx.inscription.findUnique({
-          where: { id: p.inscriptionId },
-          select: { statut: true, montantFrais: true, anneeId: true, promotionId: true },
-        });
-        // Seuls les paiements de scolarité, dans la devise du tarif, soldent
-        // le dossier : ni frais documentaires, ni montants d'une autre devise.
-        const cumul = await tx.paiement.aggregate({
-          where: {
-            inscriptionId: p.inscriptionId,
-            statut: StatutPaiement.REUSSI,
-            devise: dossier ? await deviseDossier(tx, dossier) : 'GNF',
-            ...PAIEMENT_SCOLARITE,
-          },
-          _sum: { montant: true },
-        });
-        if (
-          dossier &&
-          dossier.statut !== StatutInscription.VALIDEE &&
-          dossier.statut !== StatutInscription.ANNULEE &&
-          dossier.statut !== StatutInscription.PAYEE &&
-          (cumul._sum.montant ?? 0) >= dossier.montantFrais
-        ) {
-          const changement = await tx.inscription.updateMany({
-            where: { id: p.inscriptionId, statut: dossier.statut },
-            data: { statut: StatutInscription.PAYEE },
-          });
-          if (changement.count === 1) {
-            inscriptionAudit = {
-              avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: dossier.montantFrais },
-              apres: { id: p.inscriptionId, statut: StatutInscription.PAYEE, montantFrais: dossier.montantFrais },
-            };
-          }
-        }
-      }
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'PAIEMENT_SIMULE',
-          entite: 'Paiement',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: instantanePaiement(paiement),
-            apres: instantanePaiement(p),
-            inscription: inscriptionAudit,
-          }),
-        },
-      });
-      return p;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  }
-
-  /** Annulation d'un paiement en attente ou échoué — un encaissement se garde. */
-  async annulerPaiement(id: string, dto: AnnulerPaiementDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-      if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
-      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
-      if (paiement.statut === StatutPaiement.REUSSI) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.paiement_deja_encaisse_il_ne_peut_plus_etre_annule'));
-      }
-      if (paiement.statut === StatutPaiement.ANNULE) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_annule'));
-      }
-      const transition = await tx.paiement.updateMany({
-        where: { id, statut: paiement.statut },
-        data: {
-          statut: StatutPaiement.ANNULE,
-          annuleLe: new Date(),
-          annuleParId: user.id,
-          motifAnnulation: dto.motif,
-        },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.ce_paiement_est_deja_annule'));
-      }
-      const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'PAIEMENT_ANNULE',
-          entite: 'Paiement',
-          entiteId: id,
-          details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
-        },
-      });
-      return maj;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  }
-
   // ---------------------------------------------------------- impression
 
   /**
@@ -1010,132 +588,5 @@ export class InscriptionService {
   <footer><span>UniPrésence — registre des inscriptions</span><span>Édité le ${edite}</span></footer>
   <script>window.onload = () => window.matchMedia('print').matches || setTimeout(() => window.print(), 300);</script>
 </body></html>`;
-  }
-}
-
-/** Tarifs : changer un tarif recopie le nouveau montant sur les dossiers en attente. */
-@Injectable()
-export class FraisService extends CrudService {
-  constructor(prisma: PrismaService) {
-    super(prisma, 'frais', {
-      include: FRAIS_INCLUDE,
-      label: "Tarif d'inscription",
-    });
-  }
-
-  /** Tarif public : renvoie uniquement ce qu’exigent les formulaires d’inscription. */
-  async tarifsPublics(query: FraisQueryDto, filtres: Prisma.FraisWhereInput = {}) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
-    const where: Prisma.FraisWhereInput = {
-      AND: [{ annee: { cloturee: false } }, filtres],
-    };
-    const [data, total] = await Promise.all([
-      this.prisma.frais.findMany({
-        where,
-        select: { id: true, montant: true, devise: true },
-        orderBy: [{ anneeId: 'desc' }, { promotionId: 'asc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
-      }),
-      this.prisma.frais.count({ where }),
-    ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
-  }
-
-  private instantane(frais: { id: string; anneeId: string; promotionId: string; montant: number; devise: string }) {
-    return { id: frais.id, anneeId: frais.anneeId, promotionId: frais.promotionId, montant: frais.montant, devise: frais.devise };
-  }
-
-  /** Les dossiers EN_ATTENTE_PAIEMENT suivent le tarif officiel (instantané). */
-  private async propager(
-    tx: Prisma.TransactionClient,
-    promotionId: string,
-    anneeId: string,
-    montant: number,
-  ) {
-    await tx.inscription.updateMany({
-      where: { promotionId, anneeId, statut: StatutInscription.EN_ATTENTE_PAIEMENT },
-      data: { montantFrais: montant },
-    });
-  }
-
-  async creerFrais(dto: CreateFraisDto, user: AuthUser) {
-    await exigerAnneeOuverte(this.prisma, dto.anneeId);
-    const existant = await this.prisma.frais.findUnique({
-      where: { anneeId_promotionId: { anneeId: dto.anneeId, promotionId: dto.promotionId } },
-      select: { id: true },
-    });
-    if (existant) {
-      throw new ConflictException(I18nContext.current()!.t('inscription.un_tarif_existe_deja_pour_cette_promotion_et_cette_annee_mod'));
-    }
-    const frais = await this.prisma.$transaction(async (tx) => {
-      await exigerAnneeOuverte(tx, dto.anneeId);
-      await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
-      const f = await tx.frais.create({
-        data: { anneeId: dto.anneeId, promotionId: dto.promotionId, montant: dto.montant, devise: dto.devise ?? 'GNF' },
-        include: FRAIS_INCLUDE,
-      });
-      await this.propager(tx, f.promotionId, f.anneeId, f.montant);
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FRAIS_CREE',
-          entite: 'Frais',
-          entiteId: f.id,
-          details: JSON.stringify({ avant: null, apres: this.instantane(f) }),
-        },
-      });
-      return f;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    return frais;
-  }
-
-  async modifierFrais(id: string, dto: UpdateFraisDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.anneeId);
-      if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
-      await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
-      const f = await tx.frais.update({
-        where: { id },
-        data: { ...dto },
-        include: FRAIS_INCLUDE,
-      });
-      if (dto.montant !== undefined) {
-        await this.propager(tx, f.promotionId, f.anneeId, f.montant);
-      }
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FRAIS_MODIFIE',
-          entite: 'Frais',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantane(avant), apres: this.instantane(f) }),
-        },
-      });
-      return f;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-  }
-
-  async supprimerFrais(id: string, user: AuthUser) {
-    await this.prisma.$transaction(async (tx) => {
-      const actuel: any = await tx.frais.findUnique({ where: { id }, include: FRAIS_INCLUDE });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
-      await exigerAnneeOuverte(tx, actuel.anneeId);
-      await tx.frais.delete({ where: { id } });
-      await this.propager(tx, actuel.promotionId, actuel.anneeId, 0);
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FRAIS_SUPPRIME',
-          entite: 'Frais',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantane(actuel), apres: null }),
-        },
-      });
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    return { id };
   }
 }

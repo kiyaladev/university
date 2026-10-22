@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
@@ -33,7 +33,7 @@ describe('Paiements sans inscription', () => {
       paiement: { update: jest.fn() },
       auditLog: { create: jest.fn() },
     };
-    const service = new InscriptionService(prisma as any, {} as any, {} as any, {} as any);
+    const service = new PaiementsService(prisma as any, {} as any);
 
     await service.creerPaiement({ montant: 5000, mode: 'ESPECES' } as any, { id: 'agent-1' } as any);
 
@@ -52,7 +52,7 @@ describe('Paiements sans inscription', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma = { $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)) };
-    const service = new InscriptionService(prisma as any, {} as any, {} as any, {} as any);
+    const service = new PaiementsService(prisma as any, {} as any);
 
     await expect(service.creerPaiement({ montant: 5000, mode: 'ESPECES' } as any, { id: 'agent-1' } as any))
       .rejects.toThrow(BadRequestException);
