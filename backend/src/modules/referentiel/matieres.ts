@@ -6,7 +6,7 @@ import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
-import { estChefDeDepartement, exigerPerimetre } from '../../common/perimetre';
+import { estChefDeDepartement, exigerPerimetre, filtreDepartement } from '../../common/perimetre';
 import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
 
@@ -96,7 +96,7 @@ export class MatieresService extends CrudService {
   async trouverPerimetre(id: string, user: AuthUser) {
     if (estChefDeDepartement(user)) {
       const matiere = await this.prisma.matiere.findFirst({
-        where: { id, departementId: user.departementId ?? '__aucun__' },
+        where: { id, ...filtreDepartement(user) },
         include: { departement: true },
       });
       if (!matiere) throw new NotFoundException(t('common.notFound'));
@@ -115,7 +115,7 @@ export class MatieresService extends CrudService {
 
 /** Filtre de liste : un chef de département ne voit que son département. */
 function perimetreMatiere(user: AuthUser, departementId?: string) {
-  if (estChefDeDepartement(user)) return { departementId: user.departementId ?? '__aucun__' };
+  if (estChefDeDepartement(user)) return filtreDepartement(user);
   return departementId ? { departementId } : {};
 }
 

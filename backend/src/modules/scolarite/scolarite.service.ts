@@ -18,7 +18,6 @@ import {
   StatutDeliberation,
   StatutEvaluation,
   TypeEvaluation,
-  Role,
 } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
 import { I18nContext } from 'nestjs-i18n';
@@ -38,6 +37,7 @@ import {
 } from './scolarite.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { filtreDepartement } from '../../common/perimetre';
 
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
 const INSCRITS_VALIDES = { statut: 'VALIDEE' } as const;
@@ -55,9 +55,7 @@ export class ScolariteService {
   constructor(private readonly prisma: PrismaService) {}
 
   private promotionAutorisee(user: AuthUser) {
-    return user.role === Role.CHEF_DEPARTEMENT
-      ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun_departement__' } } }
-      : {};
+    return filtreDepartement(user, 'promotion.filiere', '__aucun_departement__');
   }
 
   // ----------------------------------------------------------- Évaluations
@@ -320,7 +318,7 @@ export class ScolariteService {
     const pagination = paginer(query);
     const where: Prisma.NoteWhereInput = {
       ...(query.evaluationId ? { evaluationId: query.evaluationId } : {}),
-      ...(user.role === Role.CHEF_DEPARTEMENT ? { evaluation: this.promotionAutorisee(user) } : {}),
+      ...filtreDepartement(user, 'evaluation.promotion.filiere', '__aucun_departement__'),
     };
 
     const [data, total] = await Promise.all([

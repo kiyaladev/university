@@ -21,6 +21,7 @@ import {
   UpdateReservationDto,
 } from './reservations.dto';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 const MAX_JOURS_CALENDRIER = 93;
 
@@ -346,7 +347,7 @@ export class ReservationsService extends CrudService {
 
     const perimetreSeances = user.role === Role.ENSEIGNANT
       ? { affectation: { enseignantId: user.enseignantId ?? '__aucun_enseignant__' } }
-      : user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+      : estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
         ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
         : user.role === Role.CONTROLEUR
           ? { OR: [

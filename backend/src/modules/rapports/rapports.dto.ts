@@ -1,6 +1,7 @@
 import { AuthUser } from '../../common/decorators';
 import { Role, StatutEnseignant } from '@prisma/client';
 import { IsDateString, IsEnum, IsOptional, IsUUID, Matches, MaxLength } from 'class-validator';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 export class RapportQueryDto {
   @IsOptional() @IsDateString() date?: string;
@@ -26,7 +27,7 @@ export class ReleveHebdomadaireDto {
 /** Les filtres fournis par le client ne peuvent pas élargir son périmètre. */
 export function perimetrePresence<T extends RapportQueryDto>(query: T, user: AuthUser): T {
   if (user.role === Role.ENSEIGNANT) return { ...query, enseignantId: user.enseignantId ?? '__aucun__' };
-  if (user.role === Role.CHEF_DEPARTEMENT || user.role === Role.CONTROLEUR) {
+  if (estChefDeDepartement(user) || user.role === Role.CONTROLEUR) {
     return { ...query, departementId: user.departementId ?? '__aucun__' };
   }
   return query;

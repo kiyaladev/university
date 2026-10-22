@@ -8,6 +8,7 @@ import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { ReleveHebdomadaireDto } from './rapports.dto';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 const LARGEURS = [40, 61, 118, 144, 49, 96, 62, 188];
 const STATUTS: Record<string, string> = {
@@ -54,7 +55,7 @@ export class RelevePdfService {
   ) {}
 
   async generer(dto: ReleveHebdomadaireDto, user: AuthUser) {
-    if (user.role !== Role.CHEF_DEPARTEMENT || !user.departementId || user.departementId !== dto.departementId) {
+    if (!estChefDeDepartement(user) || !user.departementId || user.departementId !== dto.departementId) {
       throw new ForbiddenException('Seul le chef du département concerné peut signer son relevé.');
     }
     const [chef, departement] = await Promise.all([

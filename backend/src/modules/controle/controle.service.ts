@@ -30,6 +30,7 @@ import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
   'PAIE_CREEE',
@@ -210,7 +211,7 @@ export class ControleService {
 
   async liste(query: ControleQueryDto, user: AuthUser) {
     const enseignantId = user.role === Role.ENSEIGNANT ? user.enseignantId ?? '__aucun__' : query.enseignantId;
-    const departementId = user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+    const departementId = estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
       ? user.departementId ?? '__aucun__'
       : query.departementId;
     const controleurId = user.role === Role.CONTROLEUR && !user.departementId ? user.id : query.controleurId;
@@ -262,7 +263,7 @@ export class ControleService {
       id,
       ...(user?.role === Role.ENSEIGNANT
         ? { seance: { affectation: { enseignantId: user.enseignantId ?? '__aucun__' } } }
-        : user?.role === Role.CHEF_DEPARTEMENT || (user?.role === Role.CONTROLEUR && user.departementId)
+        : estChefDeDepartement(user) || (user?.role === Role.CONTROLEUR && user.departementId)
           ? { seance: { affectation: { enseignant: { departementId: user.departementId ?? '__aucun__' } } } }
           : user?.role === Role.CONTROLEUR
             ? { controleurId: user.id }
@@ -288,7 +289,7 @@ export class ControleService {
       where: {
         salleId: salle.id,
         date: jour,
-        ...(user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+        ...(estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
           ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
           : {}),
         ...(user.role === Role.CONTROLEUR && !user.departementId
@@ -363,7 +364,7 @@ export class ControleService {
     });
     if (!seance) throw new NotFoundException(t('controle.seance_introuvable'));
     if (
-      user.role === Role.CHEF_DEPARTEMENT &&
+      estChefDeDepartement(user) &&
       seance.affectation.enseignant.departementId !== user.departementId
     ) {
       throw new NotFoundException(t('controle.seance_introuvable'));

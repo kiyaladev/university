@@ -18,6 +18,7 @@ import { t } from '../../common/i18n';
 import { AnneeAcademiqueClotureeException, exigerAnneeOuverte } from '../../common/annee';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 /** Un créneau vaut-il à cette date ? Sans période, il vaut toute l'année. */
 function vaut(creneau: { dateDebut: Date | null; dateFin: Date | null }, jour: Date) {
@@ -96,14 +97,14 @@ export class SeancesService extends CrudService {
   }
 
   private scopeAffectation(user?: AuthUser): Prisma.AffectationWhereInput {
-    if (user?.role === Role.CHEF_DEPARTEMENT || (user?.role === Role.CONTROLEUR && user.departementId)) {
+    if (estChefDeDepartement(user) || (user?.role === Role.CONTROLEUR && user.departementId)) {
       return { enseignant: { departementId: user.departementId ?? '__aucun__' } };
     }
     return {};
   }
 
   private includePour(user?: AuthUser): Prisma.SeanceInclude {
-    return user?.role === Role.ENSEIGNANT || user?.role === Role.CHEF_DEPARTEMENT || user?.role === Role.CONTROLEUR
+    return user?.role === Role.ENSEIGNANT || estChefDeDepartement(user) || user?.role === Role.CONTROLEUR
       ? SEANCE_INCLUDE_RESTREINT
       : SEANCE_INCLUDE;
   }
@@ -124,7 +125,7 @@ export class SeancesService extends CrudService {
     // ne voient que les séances de leur département.
     if (user?.role === Role.ENSEIGNANT) {
       affectation.enseignantId = user.enseignantId ?? '—';
-    } else if (user?.role === Role.CHEF_DEPARTEMENT || (user?.role === Role.CONTROLEUR && user.departementId)) {
+    } else if (estChefDeDepartement(user) || (user?.role === Role.CONTROLEUR && user.departementId)) {
       Object.assign(affectation, this.scopeAffectation(user));
     } else if (user?.role === Role.CONTROLEUR) {
       // Sans département de rattachement, le contrôleur ne voit que les

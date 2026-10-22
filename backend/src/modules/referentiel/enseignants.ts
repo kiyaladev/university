@@ -16,7 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { Roles, CurrentUser } from '../../common/decorators';
 import type { AuthUser } from '../../common/decorators';
-import { exigerPerimetre } from '../../common/perimetre';
+import { estChefDeDepartement, exigerPerimetre, filtreDepartement } from '../../common/perimetre';
 import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
 
@@ -83,17 +83,17 @@ export class EnseignantsService extends CrudService {
 
   listePour(query: EnseignantQueryDto, user: AuthUser) {
     return this.lecture(user).findAll(query, {
-      ...(user.role === Role.CHEF_DEPARTEMENT
-        ? { departementId: user.departementId ?? '__aucun__' }
+      ...(estChefDeDepartement(user)
+        ? filtreDepartement(user)
         : query.departementId ? { departementId: query.departementId } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
     });
   }
 
   async detailPour(id: string, user: AuthUser) {
-    if (user.role === Role.CHEF_DEPARTEMENT) {
+    if (estChefDeDepartement(user)) {
       const enseignant = await this.prisma.enseignant.findFirst({
-        where: { id, departementId: user.departementId ?? '__aucun__' },
+        where: { id, ...filtreDepartement(user) },
         select: ENSEIGNANT_LECTURE_MINIMALE,
       });
       if (!enseignant) throw new NotFoundException(t('common.notFound'));

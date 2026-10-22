@@ -10,6 +10,7 @@ import { dureeMinutes, toMinutes, toDateOnly, isoDate, JOURS } from '../../commo
 import { CreateCreneauDto, CreneauQueryDto, UpdateCreneauDto } from './planification.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 export const CRENEAU_INCLUDE = {
   affectation: {
@@ -81,7 +82,7 @@ export class CreneauxService extends CrudService {
 
     if (user?.role === Role.ENSEIGNANT) {
       affectation.enseignantId = user.enseignantId ?? '__aucun_enseignant__';
-    } else if (user?.role === Role.CHEF_DEPARTEMENT || user?.role === Role.CONTROLEUR) {
+    } else if (estChefDeDepartement(user) || user?.role === Role.CONTROLEUR) {
       affectation.enseignant = { departementId: user.departementId ?? '__aucun_departement__' };
     } else if (user?.role === Role.ETUDIANT) {
       const etudiantId = user.etudiantId ?? '__aucun_etudiant__';

@@ -11,12 +11,46 @@ import type { AuthUser } from './decorators';
  * y compris en changeant son `departementId` — c'est-à-dire en faisant sortir
  * la fiche de son propre périmètre, ou en la désactivant.
  *
- * Ces deux fonctions concentrent la règle pour que les trois référentiels
+ * Ces fonctions concentrent la règle pour que les trois référentiels
  * concernés (enseignants, matières, affectations) ne dérivent pas entre eux.
  */
 
-export function estChefDeDepartement(user: AuthUser): boolean {
-  return user.role === Role.CHEF_DEPARTEMENT;
+export function estChefDeDepartement(
+  user: AuthUser | null | undefined,
+): user is AuthUser & { role: typeof Role.CHEF_DEPARTEMENT } {
+  return user?.role === Role.CHEF_DEPARTEMENT;
+}
+
+/**
+ * Valeur sentinelle d'un chef de département sans département rattaché :
+ * aucun identifiant réel ne lui correspond, la liste filtrée est donc vide
+ * au lieu de s'ouvrir à tous les départements.
+ */
+export const AUCUN_DEPARTEMENT = '__aucun__';
+
+/**
+ * Fragment `where` Prisma qui borne une lecture au département d'un chef de
+ * département ; `{}` pour tout autre rôle (ou sans utilisateur).
+ *
+ * @param chemin relations à traverser jusqu'au champ `departementId`, séparées
+ *   par des points (ex. `'affectation.promotion.filiere'`) ; vide pour un
+ *   `departementId` porté par l'entité elle-même.
+ * @param sentinelle valeur retenue quand le chef n'a pas de département.
+ *
+ * @example filtreDepartement(chef, 'promotion.filiere')
+ *   // { promotion: { filiere: { departementId: chef.departementId ?? '__aucun__' } } }
+ */
+export function filtreDepartement(
+  user: AuthUser | null | undefined,
+  chemin = '',
+  sentinelle: string = AUCUN_DEPARTEMENT,
+): Record<string, any> {
+  if (!user || !estChefDeDepartement(user)) return {};
+  let fragment: Record<string, any> = { departementId: user.departementId ?? sentinelle };
+  for (const relation of chemin.split('.').filter(Boolean).reverse()) {
+    fragment = { [relation]: fragment };
+  }
+  return fragment;
 }
 
 /**

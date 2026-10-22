@@ -36,6 +36,7 @@ import { exigerAnneeOuverte } from '../../common/annee';
 import { t } from '../../common/i18n';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement, filtreDepartement } from '../../common/perimetre';
 
 export class CreateJustificatifDto {
   @IsUUID() seanceId: string;
@@ -121,9 +122,7 @@ export class JustificatifsService extends CrudService {
 
     const seance: Prisma.SeanceWhereInput = {
       ...(Object.keys(date).length ? { date } : {}),
-      ...(user.role === Role.CHEF_DEPARTEMENT
-        ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-        : {}),
+      ...filtreDepartement(user, 'affectation.promotion.filiere'),
     };
 
     const where = {
@@ -134,13 +133,13 @@ export class JustificatifsService extends CrudService {
         : query.enseignantId
           ? { enseignantId: query.enseignantId }
           : {}),
-      ...(query.departementId && user.role !== Role.CHEF_DEPARTEMENT
+      ...(query.departementId && !estChefDeDepartement(user)
         ? { enseignant: { departementId: query.departementId } }
         : {}),
       ...(Object.keys(seance).length ? { seance } : {}),
     };
 
-    if (user.role !== Role.ENSEIGNANT && user.role !== Role.CHEF_DEPARTEMENT) {
+    if (user.role !== Role.ENSEIGNANT && !estChefDeDepartement(user)) {
       const pagination = paginer(query);
       return Promise.all([
         this.delegate.findMany({
@@ -173,17 +172,10 @@ export class JustificatifsService extends CrudService {
   async findOnePour(id: string, user: AuthUser) {
     const where = user.role === Role.ENSEIGNANT
       ? { id, enseignantId: user.enseignantId ?? '__aucun__' }
-      : user.role === Role.CHEF_DEPARTEMENT
-        ? {
-            id,
-            seance: {
-              affectation: {
-                promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } },
-              },
-            },
-          }
+      : estChefDeDepartement(user)
+        ? { id, ...filtreDepartement(user, 'seance.affectation.promotion.filiere') }
         : { id };
-    const justificatif = user.role === Role.ENSEIGNANT || user.role === Role.CHEF_DEPARTEMENT
+    const justificatif = user.role === Role.ENSEIGNANT || estChefDeDepartement(user)
       ? await this.delegate.findFirst({ where, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
       : await this.delegate.findFirst({ where, include: JUSTIFICATIF_INCLUDE });
     if (!justificatif) throw new NotFoundException();
@@ -194,9 +186,7 @@ export class JustificatifsService extends CrudService {
     const seance = await this.prisma.seance.findFirst({
       where: {
         id: dto.seanceId,
-        ...(user.role === Role.CHEF_DEPARTEMENT
-          ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-          : {}),
+        ...filtreDepartement(user, 'affectation.promotion.filiere'),
       },
       include: { affectation: true },
     });
@@ -224,9 +214,7 @@ export class JustificatifsService extends CrudService {
       const seanceTx: any = await tx.seance.findFirst({
         where: {
           id: dto.seanceId,
-          ...(user.role === Role.CHEF_DEPARTEMENT
-            ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-            : {}),
+          ...filtreDepartement(user, 'affectation.promotion.filiere'),
         },
         include: { affectation: true },
       });
@@ -235,7 +223,7 @@ export class JustificatifsService extends CrudService {
       const dejaPresent = await tx.justificatif.findUnique({ where: { seanceId: dto.seanceId }, select: { id: true } });
       if (dejaPresent) throw new BadRequestException(t('justificatifs.un_justificatif_existe_deja_pour_cette_seance'));
       const data = { ...rest, enseignantId: seanceTx.affectation.enseignantId };
-      const justificatif = user.role === Role.CHEF_DEPARTEMENT || user.role === Role.ENSEIGNANT
+      const justificatif = estChefDeDepartement(user) || user.role === Role.ENSEIGNANT
         ? await tx.justificatif.create({ data, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
         : await tx.justificatif.create({ data, include: JUSTIFICATIF_INCLUDE });
       await journaliser(
@@ -262,7 +250,7 @@ export class JustificatifsService extends CrudService {
         where: { id }, include: { seance: { select: { id: true, anneeId: true, affectation: { select: { promotion: { select: { filiere: { select: { departementId: true } } } } } } } } },
       });
       if (!avant) throw new NotFoundException();
-      if (user.role === Role.CHEF_DEPARTEMENT && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
+      if (estChefDeDepartement(user) && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
         throw new NotFoundException();
       }
       await exigerAnneeOuverte(tx, avant.seance.anneeId);

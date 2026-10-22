@@ -32,6 +32,7 @@ import {
 } from './courrier.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement, filtreDepartement } from '../../common/perimetre';
 
 const COURRIER_INCLUDE = {
   departement: { select: { id: true, code: true, nom: true } },
@@ -68,7 +69,7 @@ export class CourrierService {
   }
 
   private peutConsulter(courrier: { departementId?: string | null; enregistreParId: string | null; circuits: Array<{ roleValideur: string | null }> }, user: AuthUser) {
-    if (user.role === Role.CHEF_DEPARTEMENT && (!user.departementId || courrier.departementId !== user.departementId)) return false;
+    if (estChefDeDepartement(user) && (!user.departementId || courrier.departementId !== user.departementId)) return false;
     if (this.estResponsable(user) || courrier.enregistreParId === user.id) return true;
     const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
     return courrier.circuits.some((etape) => etiquettes.includes(etape.roleValideur ?? ''));
@@ -120,7 +121,7 @@ export class CourrierService {
     if (this.estResponsable(user)) return {};
     const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
     return {
-      ...(user.role === Role.CHEF_DEPARTEMENT ? { departementId: user.departementId ?? '__aucun_departement__' } : {}),
+      ...filtreDepartement(user, '', '__aucun_departement__'),
       OR: [
         { enregistreParId: user.id },
         ...(etiquettes.length ? [{ circuits: { some: { roleValideur: { in: etiquettes } } } }] : []),
@@ -212,8 +213,8 @@ export class CourrierService {
   // ----------------------------------------------- création + circuit
 
   async creer(dto: CreateCourrierDto, user: AuthUser) {
-    const departementId = user.role === Role.CHEF_DEPARTEMENT ? user.departementId : dto.departementId;
-    if (user.role === Role.CHEF_DEPARTEMENT && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
+    const departementId = estChefDeDepartement(user) ? user.departementId : dto.departementId;
+    if (estChefDeDepartement(user) && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
       throw new ForbiddenException(I18nContext.current()!.t('courrier.department_scope_required'));
     }
     const etapes = dto.circuit?.length ? dto.circuit : CIRCUIT_PAR_DEFAUT;

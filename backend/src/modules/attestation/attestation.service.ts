@@ -32,6 +32,7 @@ import {
 import { t } from '../../common/i18n';
 import { toDateOnly } from '../../common/utils';
 import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
@@ -82,7 +83,7 @@ export class AttestationService {
     if (user.role === Role.ADMIN || user.role === Role.SCOLARITE || user.role === Role.DIRECTION) {
       return;
     }
-    if (user.role === Role.CHEF_DEPARTEMENT) {
+    if (estChefDeDepartement(user)) {
       const cible = await this.enseignantOuErreur(enseignantId);
       if (cible.departementId && cible.departementId === user.departementId) return;
       throw new NotFoundException(t('attestation.enseignant_introuvable'));
@@ -395,7 +396,7 @@ export class AttestationService {
 
   /** Moyens dont dispose l'enseignant — pilote l'affichage de l'écran de pointage. */
   async moyens(enseignantId: string, user: AuthUser, seanceId?: string) {
-    if (user.role === Role.CHEF_DEPARTEMENT) await this.controlerAcces(user, enseignantId);
+    if (estChefDeDepartement(user)) await this.controlerAcces(user, enseignantId);
     if (user.role === Role.CONTROLEUR) {
       if (!seanceId) throw new NotFoundException(t('attestation.enseignant_introuvable'));
       const seance = await this.prisma.seance.findFirst({
