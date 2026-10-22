@@ -148,6 +148,14 @@
         </q-td>
       </template>
 
+      <template #body-cell-source="p">
+        <q-td :props="p">
+          <span class="champ badge-source" :class="`badge-source--${sourceDe(p.row).toLowerCase()}`">
+            {{ libelleSource(p.row) }}
+          </span>
+        </q-td>
+      </template>
+
       <template #body-cell-montant="p">
         <q-td :props="p" class="text-right text-weight-medium">
           {{ montantLisible(p.row.montant) }} {{ p.row.devise }}
@@ -210,6 +218,18 @@
           >
             <q-tooltip>{{ $t('paiements.table.actions.viewStudentTooltip') }}</q-tooltip>
           </q-btn>
+          <q-btn
+            v-if="routeModule(p.row)"
+            flat
+            dense
+            round
+            icon="open_in_new"
+            color="primary"
+            :aria-label="$t('paiements.table.actions.openModule', { module: libelleSource(p.row) })"
+            @click="ouvrirModule(p.row)"
+          >
+            <q-tooltip>{{ $t('paiements.table.actions.openModule', { module: libelleSource(p.row) }) }}</q-tooltip>
+          </q-btn>
           <template v-if="peutSimuler(p.row)">
             <q-btn
               flat
@@ -270,6 +290,9 @@
             <span class="champ badge-statut" :class="classeStatut(p.statut)">
               {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
             </span>
+            <span class="champ badge-source q-ml-xs" :class="`badge-source--${sourceDe(p).toLowerCase()}`">
+              {{ libelleSource(p) }}
+            </span>
             <q-space />
             <div class="text-caption text-grey-7">{{ p.reference }}</div>
           </div>
@@ -316,6 +339,16 @@
             @click="ouvrirDetail(p)"
           />
 <actions-secondaires>
+<q-btn v-close-popup
+            v-if="routeModule(p)"
+            flat
+            dense
+            color="primary"
+            icon="open_in_new"
+            no-caps
+            :label="$t('paiements.cards.openModule', { module: libelleSource(p) })"
+            @click="ouvrirModule(p)"
+          />
 <q-btn v-close-popup
             v-if="peutSimuler(p)"
             flat
@@ -568,11 +601,43 @@ const paiementAnnuler = ref<Paiement | null>(null);
 const motifAnnulation = ref('');
 const annulationEnCours = ref(false);
 
+/** Portefeuille d'origine, calculé par `GET /paiements`. */
+type SourcePaiement = 'INSCRIPTION' | 'FORMATION' | 'RESTO' | 'RECETTE' | 'DOCUMENT';
+
+/** Écran de gestion de chaque portefeuille autre que les inscriptions. */
+const ROUTE_SOURCE: Record<Exclude<SourcePaiement, 'INSCRIPTION'>, string> = {
+  FORMATION: '/formations-admin',
+  RESTO: '/resto',
+  RECETTE: '/recettes',
+  DOCUMENT: '/demandes-docs',
+};
+
+const sourceDe = (p: Paiement): SourcePaiement =>
+  (p as Paiement & { source?: SourcePaiement }).source ?? 'INSCRIPTION';
+const libelleSource = (p: Paiement) => t(`paiements.sources.${sourceDe(p)}`);
+/** Seuls les paiements d'inscription se confirment ou s'annulent ici. */
+const estInscription = (p: Paiement) => sourceDe(p) === 'INSCRIPTION';
+
+/** Lien vers le module qui gère le paiement, si l'utilisateur peut l'ouvrir. */
+function routeModule(p: Paiement): string | null {
+  const source = sourceDe(p);
+  if (source === 'INSCRIPTION') return null;
+  const chemin = ROUTE_SOURCE[source];
+  const roles = router.resolve(chemin).meta.roles as Parameters<typeof auth.aRole>[0] | undefined;
+  if (roles && !auth.aRole(roles)) return null;
+  return chemin;
+}
+
+function ouvrirModule(p: Paiement) {
+  const chemin = routeModule(p);
+  if (chemin) void router.push(chemin);
+}
+
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 const peutSimuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && p.statut === 'EN_ATTENTE';
+  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && p.statut === 'EN_ATTENTE';
 const peutAnnuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
+  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
 
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({ value, label })),
@@ -586,6 +651,7 @@ const optionsOperateurs = computed(() =>
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'reference', label: t('paiements.table.columns.reference'), field: 'reference', align: 'left', sortable: true },
+  { name: 'source', label: t('paiements.table.columns.source'), field: 'source', align: 'left', sortable: true },
   { name: 'etudiant', label: t('paiements.table.columns.student'), field: 'etudiant', align: 'left' },
   { name: 'mode', label: t('paiements.table.columns.mode'), field: 'mode', align: 'left' },
   { name: 'montant', label: t('paiements.table.columns.amount'), field: 'montant', align: 'right', sortable: true },
@@ -976,4 +1042,15 @@ onMounted(async () => {
 .champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
 .champ--payee { background: #007a4d; color: #fff; }
 .champ--annulee { background: #ce1126; color: #fff; }
+
+.champ.badge-source {
+  display: inline-flex;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 590;
+  white-space: nowrap;
+  background: #e8e8ed;
+  color: #33463f;
+}
+.badge-source--inscription { background: #e3ecf7; color: #15518f; }
 </style>

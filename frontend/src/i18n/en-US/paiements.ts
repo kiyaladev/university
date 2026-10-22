@@ -30,6 +30,7 @@ export default {
   table: {
     columns: {
       reference: 'Reference',
+      source: 'Source',
       student: 'Student',
       mode: 'Mode / Operator',
       amount: 'Amount',
@@ -49,6 +50,7 @@ export default {
       markFailedAria: 'Mark the payment as failed',
       markFailedTooltip: 'Mark as failed',
       cancel: 'Cancel the payment',
+      openModule: 'Managed by the {module} module: open it',
     },
   },
   cards: {
@@ -61,6 +63,14 @@ export default {
     cancel: 'Cancel',
     enrollment: 'File',
     student: 'Student',
+    openModule: 'Open {module}',
+  },
+  sources: {
+    INSCRIPTION: 'Enrollment',
+    FORMATION: 'Training course',
+    RESTO: 'Canteen',
+    RECETTE: 'External revenue',
+    DOCUMENT: 'Document request',
   },
   emptyState: {
     filtered: 'No payment matches these criteria.',

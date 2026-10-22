@@ -30,6 +30,7 @@ export default {
   table: {
     columns: {
       reference: 'Référence',
+      source: 'Source',
       student: 'Étudiant',
       mode: 'Mode / Opérateur',
       amount: 'Montant',
@@ -49,6 +50,7 @@ export default {
       markFailedAria: 'Marquer le paiement échoué',
       markFailedTooltip: 'Marquer échoué',
       cancel: 'Annuler le paiement',
+      openModule: 'Géré par le module {module} : ouvrir',
     },
   },
   cards: {
@@ -61,6 +63,14 @@ export default {
     cancel: 'Annuler',
     enrollment: 'Dossier',
     student: 'Étudiant',
+    openModule: 'Ouvrir {module}',
+  },
+  sources: {
+    INSCRIPTION: 'Inscription',
+    FORMATION: 'Formation',
+    RESTO: 'Restauration',
+    RECETTE: 'Recette externe',
+    DOCUMENT: 'Demande de document',
   },
   emptyState: {
     filtered: 'Aucun paiement ne correspond à ces critères.',
