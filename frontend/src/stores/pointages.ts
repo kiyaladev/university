@@ -139,7 +139,9 @@ export const usePointagesStore = defineStore('pointages', {
         return false;
       }
       try {
-        await api.post('/controles', pointage);
+        // Silencieux : un échec réseau ou 5xx part dans la file (message « mis
+        // en file ») ; une erreur métier est relancée et notifiée par l'appelant.
+        await api.post('/controles', pointage, { silencieux: true });
         return true;
       } catch (e: any) {
         // Une erreur métier (400/403) ne doit pas être rejouée indéfiniment.
@@ -209,7 +211,8 @@ export const usePointagesStore = defineStore('pointages', {
         await this.chargerProprietaire();
         if (owner !== this.proprietaire || !this.file.length) return;
         const envoyes = JSON.parse(JSON.stringify(this.file)) as Pointage[];
-        const { data } = await api.post('/controles/sync', { pointages: envoyes });
+        // Silencieux : la file reste intacte et le catch prévient une seule fois.
+        const { data } = await api.post('/controles/sync', { pointages: envoyes }, { silencieux: true });
         const echecs = new Set((data.echecs ?? []).map((e: any) => e.seanceId));
         const acceptes = new Map(envoyes.filter(p => !echecs.has(p.seanceId)).map(p => [p.seanceId, JSON.stringify(p)]));
         // Une modification ajoutée pendant l'envoi doit rester à synchroniser.

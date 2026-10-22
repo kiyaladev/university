@@ -27,6 +27,7 @@ export default {
   "gpsSaved": "Location recorded",
   "gpsDenied": "GPS location denied or unavailable",
   "saved": "Attendance recorded",
+  "saveFailed": "Attendance not recorded",
   "attestation": {
     "title": "Teacher confirmation",
     "help": "Ask the teacher to sign, enter their PIN or place their finger — one method is enough",

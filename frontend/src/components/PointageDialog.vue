@@ -393,6 +393,14 @@ async function enregistrer() {
     }
     emit('enregistre');
     fermer(false);
+  } catch (e: any) {
+    // Requête silencieuse : l'erreur métier (4xx) relancée par le store, ou
+    // l'échec local de mise en file, n'est notifiée qu'ici.
+    const motif = e?.response?.data?.message;
+    $q.notify({
+      type: 'negative',
+      message: (Array.isArray(motif) ? motif.join(' · ') : motif) ?? e?.message ?? t('pointage.saveFailed'),
+    });
   } finally {
     enregistrement.value = false;
   }
