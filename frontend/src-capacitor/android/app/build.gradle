@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 // Clé de signature de production. Le fichier vit hors du dépôt : sans lui, le
 // build de release est simplement impossible, ce qui vaut mieux qu'un APK
 // signé avec la clé de débogage qu'Android refuserait de mettre à jour.
-def fichierCle = file('/opt/apps/unipresence/android-cle/cle.properties')
+def fichierCle = file('/opt/apps/university/android-cle/cle.properties')
 def cle = new Properties()
 if (fichierCle.exists()) {
     fichierCle.withInputStream { cle.load(it) }

@@ -6,12 +6,13 @@ activés par un symlink dans `/etc/nginx/sites-enabled/`. Les chemins `root`
 
 ```
 /opt/apps/university/frontend/dist/pwa   # SPA Quasar build PWA
-http://127.0.0.1:5081                   # NestJS (port par défaut, variable PORT du backend)
+http://127.0.0.1:5081                   # NestJS en production : PORT=5081 (5031 = port de développement, cf. backend/.env.example)
 ```
 
 ## Mise en place
 
 ```bash
+sudo cp infra/nginx/snippets/university-securite.conf /etc/nginx/snippets/
 sudo cp infra/nginx/university.naimba.com \
         infra/nginx/university-api.naimba.com \
         /etc/nginx/sites-available/
@@ -31,6 +32,47 @@ sudo nginx -t && sudo systemctl reload nginx
 Les certificats sont émis par Let's Encrypt (`/etc/letsencrypt/live/university.naimba.com/`)
 et renouvelés automatiquement par le timer certbot.
 
+## Appliquer une modification en production
+
+Le dépôt fait foi : on modifie d'abord `infra/nginx/`, puis on recopie. Les
+fichiers du dépôt contiennent déjà les lignes « managed by Certbot » : les
+copier tels quels ne casse pas le TLS.
+
+```bash
+cd /opt/apps/university
+
+# 1. Voir ce qui va changer
+diff -u /etc/nginx/sites-available/university.naimba.com     infra/nginx/university.naimba.com
+diff -u /etc/nginx/sites-available/university-api.naimba.com infra/nginx/university-api.naimba.com
+
+# 2. Sauvegarder, puis copier (vhosts + snippet des en-têtes de sécurité)
+sudo cp /etc/nginx/sites-available/university.naimba.com{,.bak-$(date +%Y%m%d)}
+sudo cp infra/nginx/snippets/university-securite.conf /etc/nginx/snippets/
+sudo cp infra/nginx/university.naimba.com infra/nginx/university-api.naimba.com \
+        /etc/nginx/sites-available/
+
+# 3. Tester : en cas d'erreur, NE PAS recharger, restaurer la sauvegarde
+sudo nginx -t
+
+# 4. Recharger (sans coupure)
+sudo systemctl reload nginx
+
+# 5. Vérifier
+curl -sI https://university.naimba.com/ | grep -iE 'strict-transport|x-frame|x-content|referrer'
+```
+
+`scripts/preflight-deploiement.cjs` signale (sans échouer) tout écart entre ces
+fichiers et `/etc/nginx/sites-available/`.
+
+### En-têtes de sécurité
+
+Ils vivent dans `snippets/university-securite.conf` (déployé dans
+`/etc/nginx/snippets/`). Un `add_header` posé dans un `location` annule tous
+ceux hérités du `server` : chaque `location` qui a son propre `add_header`
+ré-inclut donc le snippet. Toute nouvelle `location` avec `add_header` doit
+faire de même. La CSP n'est qu'en commentaire dans le snippet : à éprouver
+d'abord en `Content-Security-Policy-Report-Only`.
+
 ## Variables d'environnement backend (prod)
 
 Dans `/opt/apps/university/backend/.env`, renseigner :
@@ -44,7 +86,7 @@ Dans `/opt/apps/university/backend/.env`, renseigner :
 
 ```bash
 cd /opt/apps/university/frontend
-API_URL=https://university-api.naimba.com/api npm run build
+API_URL=https://university-api.naimba.com/api bun run build
 ```
 
 L'instance Quasar écrit le bundle dans `dist/pwa`, que Nginx sert en statique.

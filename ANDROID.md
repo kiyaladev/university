@@ -3,7 +3,7 @@
 UniPrésence s'installe aussi comme application Android, pour le contrôleur qui
 fait sa tournée avec un lecteur d'empreintes au bout du câble.
 
-**Téléchargement : https://presence.naimba.com/telechargement/unipresence.apk**
+**Téléchargement : https://university.naimba.com/telechargement/university.apk**
 
 Android affichera un avertissement à l'installation (application hors Play
 Store) : autoriser l'installation depuis cette source. L'APK est signé avec la
@@ -95,7 +95,7 @@ dans `android-cle/`.
 **La clé de signature est irremplaçable.** Android refuse une mise à jour
 signée par une autre clé : la perdre obligerait chaque contrôleur à
 désinstaller puis réinstaller l'application. Elle vit dans
-`/opt/apps/unipresence/android-cle/`, hors du dépôt, en `chmod 600`, et doit
+`/opt/apps/university/android-cle/`, hors du dépôt, en `chmod 600`, et doit
 être sauvegardée ailleurs que sur ce serveur.
 
 ## Ce qui reste à faire

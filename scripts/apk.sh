@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 #
-# Fabrique l'APK Android d'UniPrésence et le publie au téléchargement.
+# Fabrique l'APK Android d'University et le publie au téléchargement.
 #
 #   scripts/apk.sh            → APK signé (release), publié
 #   scripts/apk.sh debug      → APK de débogage, non publié
 #
-# La clé de signature vit dans /opt/apps/unipresence/android-cle/, hors du
+# La clé de signature vit dans /opt/apps/university/android-cle/, hors du
 # dépôt. La perdre interdit toute mise à jour de l'application déjà installée :
 # Android refuse une mise à jour signée par une autre clé.
 #
@@ -15,7 +15,7 @@ RACINE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VARIANTE="${1:-release}"
 export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
-export API_URL="${API_URL:-https://presence-api.naimba.com/api}"
+export API_URL="${API_URL:-https://university-api.naimba.com/api}"
 
 cd "$RACINE/frontend"
 
@@ -46,7 +46,7 @@ APK="src-capacitor/android/app/build/outputs/apk/release/app-release.apk"
 "$ANDROID_HOME"/build-tools/35.0.0/apksigner verify "$APK"
 
 mkdir -p "$RACINE/telechargement"
-cp "$APK" "$RACINE/telechargement/unipresence.apk"
+cp "$APK" "$RACINE/telechargement/university.apk"
 
-TAILLE="$(stat -c %s "$RACINE/telechargement/unipresence.apk")"
-echo "→ publié : https://presence.naimba.com/telechargement/unipresence.apk ($(numfmt --to=iec "$TAILLE"))"
+TAILLE="$(stat -c %s "$RACINE/telechargement/university.apk")"
+echo "→ publié : https://university.naimba.com/telechargement/university.apk ($(numfmt --to=iec "$TAILLE"))"

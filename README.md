@@ -395,7 +395,7 @@ biometrie/                    passerelle locale vers le lecteur d'empreintes (RE
 L'application est une **PWA installable** : elle s'ajoute à l'écran d'accueil et
 s'ouvre en plein écran, sans barre de navigateur, comme une application native.
 
-- **Android (Chrome)** : ouvrir <https://presence.naimba.com>, puis le menu du compte
+- **Android (Chrome)** : ouvrir <https://university.naimba.com>, puis le menu du compte
   en haut à droite → « Installer sur cet appareil ». Le navigateur propose aussi sa
   propre bannière, mais elle passe souvent inaperçue.
 - **iOS (Safari)** : bouton Partager → « Sur l'écran d'accueil ».

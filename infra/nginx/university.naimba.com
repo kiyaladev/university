@@ -5,6 +5,27 @@ server {
     root /opt/apps/university/frontend/dist/pwa;
     index index.html;
 
+    # En-têtes de sécurité (HSTS, nosniff, X-Frame-Options, Referrer-Policy).
+    # Attention : un `add_header` dans un `location` annule TOUS ceux hérités
+    # du `server`. Chaque location qui pose son propre `add_header` doit donc
+    # ré-inclure ce snippet (voir plus bas).
+    include /etc/nginx/snippets/university-securite.conf;
+
+    # API NestJS (préfixe global « api ») : même backend que university-api.naimba.com.
+    # Doit précéder le fallback SPA, sinon POST /api/* renvoie 405.
+    client_max_body_size 25m;
+    location ^~ /api/ {
+        proxy_pass http://127.0.0.1:5081;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -14,11 +35,13 @@ server {
     location = /index.html {
         expires -1;
         add_header Cache-Control "no-cache, must-revalidate";
+        include /etc/nginx/snippets/university-securite.conf;
     }
 
     location = /manifest.json {
         expires -1;
         add_header Cache-Control "no-cache, must-revalidate";
+        include /etc/nginx/snippets/university-securite.conf;
     }
 
     # Le service worker doit toujours être revalidé après un déploiement.
@@ -26,16 +49,18 @@ server {
         try_files $uri =404;
         expires -1;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
+        include /etc/nginx/snippets/university-securite.conf;
     }
 
     location ~* \.(?:css|js|mjs|jpg|jpeg|gif|png|svg|ico|webp|woff|woff2)$ {
         try_files $uri =404;
         expires 1y;
         add_header Cache-Control "public, immutable";
+        include /etc/nginx/snippets/university-securite.conf;
     }
 
     gzip on;
-    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml application/manifest+json;
 
     listen [::]:443 ssl; # managed by Certbot
     listen 443 ssl; # managed by Certbot
