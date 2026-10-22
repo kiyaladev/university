@@ -91,6 +91,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import SemestreSelect from './SemestreSelect.vue';
 import type {
   AnneeAcademique,
@@ -108,6 +109,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const enregistrement = ref(false);
 
@@ -165,7 +167,7 @@ watch(
   (ouvert) => {
     if (!ouvert) return;
     form.value = {
-      anneeId: props.annees.find((a) => a.active)?.id ?? null,
+      anneeId: referentiels.anneeCourante?.id ?? null,
       promotionId: null,
       session: 'NORMALE',
     };

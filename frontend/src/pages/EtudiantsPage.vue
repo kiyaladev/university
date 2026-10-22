@@ -483,6 +483,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import EtudiantDialog from '../components/EtudiantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -509,6 +510,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 
 const etudiants = ref<EtudiantRegistre[]>([]);
@@ -829,8 +831,7 @@ watch(
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/promotions', { params: { all: '1' } });
-    promotions.value = data.data ?? [];
+    promotions.value = await referentiels.promotions();
   } catch {
     promotions.value = [];
   }

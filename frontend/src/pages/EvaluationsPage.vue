@@ -421,6 +421,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import EvaluationDialog from '../components/EvaluationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -442,6 +443,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 
 /**
@@ -735,14 +737,11 @@ watch(
 
 onMounted(async () => {
   try {
-    const [a, promos, m] = await Promise.all([
-      api.get('/annees', { params: { all: '1' } }),
-      api.get('/promotions', { params: { all: '1' } }),
-      api.get('/matieres', { params: { all: '1' } }),
+    [annees.value, promotions.value, matieres.value] = await Promise.all([
+      referentiels.annees(),
+      referentiels.promotions(),
+      referentiels.matieres(),
     ]);
-    annees.value = a.data.data ?? [];
-    promotions.value = promos.data.data ?? [];
-    matieres.value = m.data.data ?? [];
   } catch {
     annees.value = [];
     promotions.value = [];

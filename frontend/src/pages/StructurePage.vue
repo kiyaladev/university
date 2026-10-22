@@ -655,6 +655,7 @@ import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import { NIVEAUX, dateLisible } from '../utils/libelles';
 import type { AnneeAcademique, Departement, Filiere, Promotion, ChipFiltre } from '../types';
 
@@ -665,6 +666,7 @@ interface PromotionListee extends Promotion {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
 
@@ -950,7 +952,7 @@ function ouvrirPromotion(p: PromotionListee | null) {
     effectif: p?.effectif ?? 0,
     filiereId: p?.filiereId ?? filtres.value.promotions.filiereId ?? '',
     anneeId:
-      p?.anneeId ?? filtres.value.promotions.anneeId ?? annees.value.find((a) => a.active)?.id ?? '',
+      p?.anneeId ?? filtres.value.promotions.anneeId ?? referentiels.anneeCourante?.id ?? '',
   };
   dialogPromotion.value = true;
 }
@@ -961,6 +963,7 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
   try {
     await (edition ? api.put(url, payload) : api.post(url, payload));
     $q.notify({ type: 'positive', message: messageOk });
+    await referentiels.rafraichir();
     await charger();
     return true;
   } catch {
@@ -1040,6 +1043,9 @@ function supprimer(ressource: string, libelle: string, id: string) {
     try {
       await api.delete(`/${ressource}/${id}`);
       $q.notify({ type: 'positive', message: t('structure.messages.deleted', { label: libelle }) });
+      // Années, départements et promotions sont partagés avec les autres
+      // écrans ; une filière renommée change aussi les promotions affichées.
+      await referentiels.rafraichir();
       await charger();
     } catch {
       /* notifié par l'intercepteur */
@@ -1051,15 +1057,15 @@ async function charger() {
   chargement.value = true;
   try {
     const [a, d, f, p] = await Promise.all([
-      api.get('/annees', { params: { all: '1' } }),
-      api.get('/departements', { params: { all: '1' } }),
+      referentiels.annees(),
+      referentiels.departements(),
       api.get('/filieres', { params: { all: '1' } }),
-      api.get('/promotions', { params: { all: '1' } }),
+      referentiels.promotions(),
     ]);
-    annees.value = a.data.data;
-    departements.value = d.data.data;
+    annees.value = a;
+    departements.value = d;
     filieres.value = f.data.data;
-    promotions.value = p.data.data;
+    promotions.value = p as PromotionListee[];
   } catch {
     /* notifié par l'intercepteur */
   } finally {

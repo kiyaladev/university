@@ -2,15 +2,10 @@ import { api } from '../boot/axios';
 import type {
   CategoriePatrimoine,
   EquipementPatrimoine,
+  Liste,
   ReparationMateriel,
   TableauBordPatrimoine,
 } from '../types';
-
-/** Réponse paginée du back : `{ data, total, page, pageSize }`. */
-interface Page<T> {
-  data: T[];
-  total: number;
-}
 
 export interface FiltresEquipements {
   page?: number;
@@ -31,14 +26,14 @@ export interface FiltresEquipements {
 export const patrimoineService = {
   // --- Équipements
   listeEquipements: (filtres: FiltresEquipements = {}) =>
-    api.get<Page<EquipementPatrimoine>>('/patrimoine/equipements', { params: filtres }),
+    api.get<Liste<EquipementPatrimoine>>('/patrimoine/equipements', { params: filtres }),
   supprimerEquipement: (id: string) => api.delete(`/patrimoine/equipements/${id}`),
   reparationsEquipement: (id: string) =>
     api.get<ReparationMateriel[]>(`/patrimoine/equipements/${id}/reparations`),
 
   // --- Catégories
   listeCategories: () =>
-    api.get<CategoriePatrimoine[] | Page<CategoriePatrimoine>>('/patrimoine/categories', {
+    api.get<CategoriePatrimoine[] | Liste<CategoriePatrimoine>>('/patrimoine/categories', {
       params: { all: '1' },
     }),
   creerCategorie: (payload: Record<string, unknown>) =>

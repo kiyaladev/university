@@ -279,6 +279,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import {
   LIBELLE_STATUT_JUSTIFICATIF,
   TYPES_JUSTIFICATIF,
@@ -292,6 +293,7 @@ const $q = useQuasar();
 const { t } = useI18n();
 const route = useRoute();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 
 const justificatifs = ref<Justificatif[]>([]);
 const seancesJustifiables = ref<Seance[]>([]);
@@ -432,8 +434,7 @@ async function ouvrirDepot() {
   enseignantChoisi.value = null;
   seancesJustifiables.value = [];
   if (!enseignants.value.length) {
-    const { data } = await api.get('/enseignants', { params: { all: '1' } });
-    enseignants.value = data.data;
+    enseignants.value = await referentiels.enseignants();
   }
   dialogDepot.value = true;
 }

@@ -408,6 +408,7 @@ import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import type { Salle, ChipFiltre } from '../types';
@@ -415,6 +416,7 @@ import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
 
@@ -654,11 +656,14 @@ function reinitialiser() {
   page.value = 1;
 }
 
+/**
+ * L'écran de gestion lit toujours le serveur (jetons QR, salles modifiées
+ * ailleurs) et met au passage à jour la liste partagée des référentiels.
+ */
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/salles', { params: { all: '1' } });
-    salles.value = data.data ?? [];
+    salles.value = await referentiels.salles(true);
   } catch {
     salles.value = [];
   } finally {

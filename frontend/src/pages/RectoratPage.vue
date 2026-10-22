@@ -249,6 +249,7 @@ import type { ChartConfiguration } from 'chart.js';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import { montantLisible, nombreLisible, pourcentLisible } from '../utils/libelles';
 import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRectorat } from '../types';
@@ -262,6 +263,7 @@ const PEINTURE_EFFECTIF = '#1D1D1F';
 const PEINTURE_ARGENT = '#8A6300';
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
 
@@ -435,10 +437,9 @@ async function genererBilan() {
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/annees', { params: { all: '1' } });
-    annees.value = Array.isArray(data) ? data : data.data ?? [];
+    annees.value = await referentiels.annees();
     if (annees.value.length) {
-      anneeId.value = annees.value.find((a) => a.active)?.id ?? annees.value[0].id;
+      anneeId.value = referentiels.anneeCourante?.id ?? annees.value[0].id;
     }
   } catch {
     /* notifié par l'intercepteur */

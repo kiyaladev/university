@@ -354,6 +354,7 @@ import { useI18n } from 'vue-i18n';
 import { isAxiosError } from 'axios';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -371,6 +372,7 @@ import type { Departement, Enseignant, MoyensAttestation, ChipFiltre } from '../
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
@@ -608,7 +610,7 @@ function supprimer(e: Enseignant) {
     try {
       await api.delete(`/enseignants/${e.id}`);
       $q.notify({ type: 'positive', message: t('enseignants.messages.deleteSuccess') });
-      await charger();
+      await Promise.all([charger(), referentiels.rafraichir('enseignants')]);
     } catch {
       /* notifié par l'intercepteur */
     }
@@ -658,8 +660,7 @@ watch(
 );
 
 onMounted(async () => {
-  const { data } = await api.get('/departements', { params: { all: '1' } });
-  departements.value = data.data;
+  departements.value = await referentiels.departements();
 
   // Arrivée depuis « Utilisateurs » : la fiche visée est pré-recherchée.
   const depuis: Record<string, any> = {};

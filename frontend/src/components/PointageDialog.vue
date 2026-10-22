@@ -200,6 +200,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import { usePointagesStore } from '../stores/pointages';
 import { dureeLisible, maintenantHHmm, LIBELLE_STATUT_PRESENCE } from '../utils/libelles';
 import type { Enseignant, Pointage, Seance, StatutPresence } from '../types';
@@ -210,6 +211,7 @@ const props = defineProps<{ modelValue: boolean; seance: Seance | null }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const pointages = usePointagesStore();
 
@@ -365,8 +367,7 @@ function capterPosition() {
 
 async function filtrerEnseignants(saisie: string, maj: (fn: () => void) => void) {
   if (!enseignants.value.length) {
-    const { data } = await api.get('/enseignants', { params: { all: '1' } });
-    enseignants.value = data.data;
+    enseignants.value = await referentiels.enseignants();
   }
   maj(() => {
     const q = saisie.toLowerCase();

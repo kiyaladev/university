@@ -192,6 +192,7 @@ import type { ChartConfiguration } from 'chart.js';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import {
   dateHeureLisible,
@@ -214,6 +215,7 @@ const PEINTURE_ARGENT = '#8A6300';
 const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 
 const annees = ref<AnneeAcademique[]>([]);
 const anneeId = ref<string | null>(null);
@@ -433,8 +435,7 @@ async function charger() {
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('/annees', { params: { all: '1' } });
-    annees.value = Array.isArray(data) ? data : data.data ?? [];
+    annees.value = await referentiels.annees();
   } catch {
     $q.notify({ type: 'warning', message: t('statistiquesMesrs.messages.anneesUnavailable') });
   }

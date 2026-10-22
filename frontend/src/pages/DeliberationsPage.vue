@@ -362,6 +362,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import DeliberationDialog from '../components/DeliberationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -378,6 +379,7 @@ import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const peutVoirBulletins = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 const router = useRouter();
 const { t } = useI18n();
@@ -605,14 +607,11 @@ watch(
 );
 
 onMounted(async () => {
-  const [a, p, m] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-    api.get('/matieres', { params: { all: '1' } }).catch(() => ({ data: { data: [] } })),
+  [annees.value, promotions.value, matieres.value] = await Promise.all([
+    referentiels.annees(),
+    referentiels.promotions(),
+    referentiels.matieres().catch(() => []),
   ]);
-  annees.value = a.data.data;
-  promotions.value = p.data.data;
-  matieres.value = m.data.data ?? [];
   await charger();
 });
 </script>

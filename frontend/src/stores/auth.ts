@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
 import { enrolerAppareilSiNecessaire } from '../services/empreinte';
 import { ecrireToken, effacerToken, lireToken } from '../services/session';
+import { useReferentielsStore } from './referentiels';
 import type { Role, Utilisateur } from '../types';
 
 export const useAuthStore = defineStore('auth', {
@@ -52,6 +53,8 @@ export const useAuthStore = defineStore('auth', {
       this.chargement = true;
       try {
         const { data } = await api.post('/auth/login', { email, password });
+        // Nouveau compte : rien du cache de l'ancien ne doit lui être servi.
+        useReferentielsStore().vider();
         this.token = data.token;
         this.utilisateur = data.user;
         ecrireToken(data.token);
@@ -89,6 +92,7 @@ export const useAuthStore = defineStore('auth', {
           { telephone, code },
           { silencieux: true },
         );
+        useReferentielsStore().vider();
         this.token = data.token;
         ecrireToken(data.token);
         await this.chargerProfil();
@@ -118,6 +122,9 @@ export const useAuthStore = defineStore('auth', {
     deconnexion() {
       this.token = '';
       this.utilisateur = null;
+      // Les référentiels peuvent dépendre du compte (périmètre d'un chef de
+      // département) : ils ne doivent pas survivre à la session.
+      useReferentielsStore().vider();
       effacerToken();
       if ('caches' in window) {
         void Promise.all(['unipresence-api', 'unipresence-api-v2'].map(name => caches.delete(name)));

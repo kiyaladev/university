@@ -416,6 +416,7 @@ import QRCode from 'qrcode';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import AttestationDialog from '../components/AttestationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -428,7 +429,7 @@ import {
 import type { AnneeAcademique, Attestation, Promotion, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
-/** Ligne du journal des vérifications (types.ts n'expose pas encore le modèle). */
+/** Ligne du journal des vérifications (types/ n'expose pas encore le modèle). */
 interface VerificationAttestation {
   id: string;
   attestationId: string;
@@ -439,6 +440,7 @@ interface VerificationAttestation {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
@@ -654,12 +656,10 @@ function reinitialiser() {
 }
 
 async function chargerReferentiels() {
-  const [rAnnees, rPromotions] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
+  [annees.value, promotions.value] = await Promise.all([
+    referentiels.annees(),
+    referentiels.promotions(),
   ]);
-  annees.value = rAnnees.data.data;
-  promotions.value = rPromotions.data.data;
 }
 
 watch(

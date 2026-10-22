@@ -1,17 +1,10 @@
 import { api } from '../boot/axios';
-import type { Election, ResultatElection, StatutElection, TypeElection } from '../types';
+import type { Election, Liste, ResultatElection, StatutElection, TypeElection } from '../types';
 
 export interface MonVote {
   aVote: boolean;
   scrutinId: string | null;
   dateVote: string | null;
-}
-
-export interface PageElections {
-  data: Election[];
-  total: number;
-  page: number;
-  pageSize: number;
 }
 
 export interface ParametresListeElections {
@@ -91,7 +84,7 @@ export function messageErreurElection(e: unknown, defaut: string): string {
  */
 export const electionsService = {
   liste: (params: ParametresListeElections, silencieux = false) =>
-    api.get<PageElections>('/elections', { params, silencieux }),
+    api.get<Liste<Election>>('/elections', { params, silencieux }),
   actives: (silencieux = false) => api.get<Election[]>('/elections/actives', { silencieux }),
   trouver: (id: string, silencieux = false) =>
     api.get<Election>(`/elections/${id}`, { silencieux }),

@@ -497,6 +497,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import InscriptionDialog from '../components/InscriptionDialog.vue';
 import PaiementDialog from '../components/PaiementDialog.vue';
 import EtudiantDialog from '../components/EtudiantDialog.vue';
@@ -522,6 +523,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 
 const inscriptions = ref<Inscription[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
@@ -817,7 +819,7 @@ async function retirerEtudiantCible() {
   pret.value = false;
   etudiantCible.value = null;
   delete filtres.value.recherche;
-  filtres.value.anneeId = annees.value.find((an) => an.active)?.id ?? null;
+  filtres.value.anneeId = referentiels.anneeCourante?.id ?? null;
   await router.replace({ path: '/inscriptions' });
   page.value = 1;
   pret.value = true;
@@ -860,12 +862,10 @@ async function appliquerEtudiantCible(id: string) {
 
 onMounted(async () => {
   try {
-    const [a, promos] = await Promise.all([
-      api.get('/annees', { params: { all: '1' } }),
-      api.get('/promotions', { params: { all: '1' } }),
+    [annees.value, promotions.value] = await Promise.all([
+      referentiels.annees(),
+      referentiels.promotions(),
     ]);
-    annees.value = a.data.data ?? [];
-    promotions.value = promos.data.data ?? [];
   } catch {
     annees.value = [];
     promotions.value = [];
@@ -880,7 +880,7 @@ onMounted(async () => {
     filtres.value.recherche = recherche;
     filtres.value.anneeId = null;
   } else {
-    filtres.value.anneeId = annees.value.find((an) => an.active)?.id ?? null;
+    filtres.value.anneeId = referentiels.anneeCourante?.id ?? null;
   }
 
   pret.value = true;

@@ -383,6 +383,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import BarreTaux from '../components/BarreTaux.vue';
 import ChampStatut from '../components/ChampStatut.vue';
@@ -402,6 +403,7 @@ import { ouvrirImpression, telechargerFichier } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const peutVoirPaiement = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
 const peutVoirCouverture = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
 const peutSignerReleve = computed(() => auth.aRole(['CHEF_DEPARTEMENT']) && !!auth.utilisateur?.departementId);
@@ -648,12 +650,10 @@ watch(filtres, charger, { deep: true });
 
 onMounted(async () => {
   try {
-    const [d, p] = await Promise.all([
-      api.get('/departements', { params: { all: '1' } }),
-      api.get('/promotions', { params: { all: '1' } }),
+    [departements.value, promotions.value] = await Promise.all([
+      referentiels.departements(),
+      referentiels.promotions(),
     ]);
-    departements.value = d.data.data;
-    promotions.value = p.data.data;
   } catch {
     $q.notify({ type: 'warning', message: t('rapports.messages.referenceDataError') });
   }

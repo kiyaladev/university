@@ -271,12 +271,14 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import type { Departement, Matiere, ChipFiltre } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
 
@@ -395,7 +397,7 @@ async function enregistrer() {
     else await api.post('/matieres', payload);
     $q.notify({ type: 'positive', message: t('matieres.messages.saved') });
     dialogOuvert.value = false;
-    await charger();
+    await Promise.all([charger(), referentiels.rafraichir('matieres')]);
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -413,7 +415,7 @@ function supprimer(m: Matiere) {
     try {
       await api.delete(`/matieres/${m.id}`);
       $q.notify({ type: 'positive', message: t('matieres.messages.deleted') });
-      await charger();
+      await Promise.all([charger(), referentiels.rafraichir('matieres')]);
     } catch {
       /* notifié par l'intercepteur */
     }
@@ -462,8 +464,7 @@ watch(
 );
 
 onMounted(async () => {
-  const { data } = await api.get('/departements', { params: { all: '1' } });
-  departements.value = data.data;
+  departements.value = await referentiels.departements();
   await charger();
 });
 </script>

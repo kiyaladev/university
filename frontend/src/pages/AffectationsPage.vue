@@ -321,6 +321,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import type { Affectation, AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre } from '../types';
@@ -332,6 +333,7 @@ interface Charge extends Affectation {
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const route = useRoute();
 const { t } = useI18n();
 
@@ -471,7 +473,7 @@ function ouvrir(a: Charge | null) {
     enseignantId: a?.enseignantId ?? filtres.value.enseignantId ?? '',
     matiereId: a?.matiereId ?? filtres.value.matiereId ?? '',
     promotionId: a?.promotionId ?? filtres.value.promotionId ?? '',
-    anneeId: a?.anneeId ?? annees.value.find((x) => x.active)?.id ?? '',
+    anneeId: a?.anneeId ?? referentiels.anneeCourante?.id ?? '',
     volumeHorairePrevu: a?.volumeHorairePrevu ?? 0,
   };
   dialogOuvert.value = true;
@@ -606,16 +608,12 @@ watch(
 );
 
 onMounted(async () => {
-  const [e, m, p, a] = await Promise.all([
-    api.get('/enseignants', { params: { all: '1' } }),
-    api.get('/matieres', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
-    api.get('/annees', { params: { all: '1' } }),
+  [enseignants.value, matieres.value, promotions.value, annees.value] = await Promise.all([
+    referentiels.enseignants(),
+    referentiels.matieres(),
+    referentiels.promotions(),
+    referentiels.annees(),
   ]);
-  enseignants.value = e.data.data;
-  matieres.value = m.data.data;
-  promotions.value = p.data.data;
-  annees.value = a.data.data;
   optionsEnseignants.value = enseignants.value.map((x) => ({
     label: `${x.nom} ${x.prenom} (${x.matricule})`,
     value: x.id,

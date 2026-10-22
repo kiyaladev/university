@@ -280,6 +280,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import CreneauDialog from '../components/CreneauDialog.vue';
 import GenerationDialog from '../components/GenerationDialog.vue';
 import { LIBELLE_TYPE_COURS, decalerJours, heuresLisibles } from '../utils/libelles';
@@ -288,6 +289,7 @@ import type { Creneau, Enseignant, Promotion, Salle } from '../types';
 const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 
 /** Amplitude d'une journée universitaire, et échelle de la grille. */
 const PREMIERE_HEURE = 7;
@@ -491,14 +493,11 @@ onMounted(async () => {
   // Les référentiels n'alimentent que les listes de filtres : leur échec ne
   // doit pas laisser la grille vide.
   try {
-    const [s, p, e] = await Promise.all([
-      api.get('/salles', { params: { all: '1' } }),
-      auth.role === 'ETUDIANT' ? Promise.resolve({ data: { data: [] } }) : api.get('/promotions', { params: { all: '1' } }),
-      api.get('/enseignants', { params: { all: '1' } }),
+    [salles.value, promotions.value, enseignants.value] = await Promise.all([
+      referentiels.salles(),
+      auth.role === 'ETUDIANT' ? Promise.resolve([]) : referentiels.promotions(),
+      referentiels.enseignants(),
     ]);
-    salles.value = s.data.data;
-    promotions.value = p.data.data;
-    enseignants.value = e.data.data;
   } catch {
     // Les listes déroulantes restent vides : la grille, elle, est lisible.
   }

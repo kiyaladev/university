@@ -523,6 +523,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import SeanceDialog from '../components/SeanceDialog.vue';
 import PointageDialog from '../components/PointageDialog.vue';
 import ChampStatut from '../components/ChampStatut.vue';
@@ -545,6 +546,7 @@ import { ouvrirImpression } from '../services/impression';
 const $q = useQuasar();
 const route = useRoute();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const peutAffecterControleur = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const vue = usePresentationListe();
 const { t } = useI18n();
@@ -801,12 +803,12 @@ async function ouvrirAffectationGroupee() {
   try {
     const [controleurs, departements] = await Promise.all([
       api.get('/seances/controleurs'),
-      api.get('/departements', { params: { all: '1' } }),
+      referentiels.departements(),
     ]);
     optionsControleurs.value = controleurs.data.map((u: { id: string; nom: string; prenom: string }) => ({
       value: u.id, label: `${u.prenom} ${u.nom}`,
     }));
-    optionsDepartements.value = departements.data.data.map((d: { id: string; nom: string }) => ({ value: d.id, label: d.nom }));
+    optionsDepartements.value = departements.map((d) => ({ value: d.id, label: d.nom }));
     if (!tournee.value.controleurId) tournee.value.controleurId = optionsControleurs.value[0]?.value ?? '';
   } catch {
     /* notifié par l'intercepteur */
@@ -982,12 +984,10 @@ onMounted(async () => {
   await charger();
   // Les référentiels n'alimentent que des listes déroulantes : ils ne doivent
   // pas retarder l'affichage du registre.
-  const [s, e] = await Promise.all([
-    api.get('/salles', { params: { all: '1' } }),
-    api.get('/enseignants', { params: { all: '1' } }),
+  [salles.value, enseignants.value] = await Promise.all([
+    referentiels.salles(),
+    referentiels.enseignants(),
   ]);
-  salles.value = s.data.data;
-  enseignants.value = e.data.data;
 });
 </script>
 

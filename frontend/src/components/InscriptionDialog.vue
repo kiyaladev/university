@@ -76,6 +76,7 @@ import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import { montantLisible } from '../utils/libelles';
 
@@ -83,6 +84,7 @@ const props = defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const enregistrement = ref(false);
 const tarifOfficiel = ref<number | null>(null);
@@ -106,9 +108,8 @@ watch(
 
 async function chargerAnneeDefaut() {
   try {
-    const { data } = await api.get('/annees', { params: { all: '1' } });
-    const liste = Array.isArray(data) ? data : data.data ?? [];
-    form.value.anneeId = liste.find((a: any) => a.active)?.id ?? liste[0]?.id ?? '';
+    const liste = await referentiels.annees();
+    form.value.anneeId = referentiels.anneeCourante?.id ?? liste[0]?.id ?? '';
   } catch {
     form.value.anneeId = '';
   }

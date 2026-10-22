@@ -378,6 +378,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import { LIBELLE_ROLE } from '../utils/libelles';
@@ -385,6 +386,7 @@ import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '../
 
 const $q = useQuasar();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
 
@@ -550,7 +552,8 @@ async function enregistrer() {
 
     $q.notify({ type: 'positive', message: t('utilisateurs.messages.saved') });
     dialogOuvert.value = false;
-    await Promise.all([charger(), chargerEnseignants()]);
+    // Le compte lié à un enseignant a pu changer : la liste partagée est périmée.
+    await Promise.all([charger(), chargerEnseignants(true)]);
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -569,7 +572,7 @@ function supprimer(u: Utilisateur) {
     try {
       await api.delete(`/utilisateurs/${u.id}`);
       $q.notify({ type: 'positive', message: t('utilisateurs.messages.deleted') });
-      await charger();
+      await Promise.all([charger(), chargerEnseignants(true)]);
     } catch {
       /* notifié par l'intercepteur */
     }
@@ -604,9 +607,8 @@ function chargerTout() {
   return charger(true);
 }
 
-async function chargerEnseignants() {
-  const { data } = await api.get('/enseignants', { params: { all: '1' } });
-  enseignants.value = data.data ?? [];
+async function chargerEnseignants(force = false) {
+  enseignants.value = await referentiels.enseignants(force);
   optionsEnseignants.value = enseignants.value.map((e) => ({
     label: `${e.nom} ${e.prenom} (${e.matricule})`,
     value: e.id,
@@ -635,8 +637,7 @@ watch(
 );
 
 onMounted(async () => {
-  const { data } = await api.get('/departements', { params: { all: '1' } });
-  departements.value = data.data;
+  departements.value = await referentiels.departements();
   await chargerEnseignants();
   await charger();
 });

@@ -115,10 +115,12 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import { LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
 import type { AnneeAcademique, Etudiant, Inscription, Promotion } from '../types';
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t: $t } = useI18n();
 const emit = defineEmits<{ enregistre: [] }>();
 
@@ -304,16 +306,12 @@ async function appliquerPrefill() {
 }
 
 async function chargerReferentiels() {
-  const [rAnnees, rPromotions] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
+  [annees.value, promotions.value] = await Promise.all([
+    referentiels.annees(),
+    referentiels.promotions(),
   ]);
-  annees.value = rAnnees.data.data;
-  promotions.value = rPromotions.data.data;
-  const active = (await api.get('/annees/active').catch(() => null))?.data as
-    | AnneeAcademique
-    | null
-    | undefined;
+  // Même résultat que `/annees/active`, sans requête supplémentaire.
+  const active = referentiels.anneeCourante;
   if (active?.id) {
     form.value.anneeId = active.id;
     if (!optionsPromotions.value.length && promotions.value.some((p) => p.anneeId === active.id)) {

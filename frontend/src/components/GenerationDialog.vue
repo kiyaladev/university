@@ -66,6 +66,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import { aujourdhui, decalerJours } from '../utils/libelles';
 import type { AnneeAcademique } from '../types';
 
@@ -73,6 +74,7 @@ defineProps<{ modelValue: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [boolean]; genere: [] }>();
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const annees = ref<AnneeAcademique[]>([]);
 const anneeId = ref<string>('');
@@ -112,8 +114,7 @@ async function generer() {
 }
 
 onMounted(async () => {
-  const { data } = await api.get('/annees', { params: { all: '1' } });
-  annees.value = data.data;
-  anneeId.value = annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
+  annees.value = await referentiels.annees();
+  anneeId.value = referentiels.anneeCourante?.id ?? annees.value[0]?.id ?? '';
 });
 </script>

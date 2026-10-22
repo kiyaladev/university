@@ -281,6 +281,7 @@ import { api } from '../boot/axios';
 import { usePointagesStore } from '../stores/pointages';
 import { useSeancesStore } from '../stores/seances';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import PointageDialog from '../components/PointageDialog.vue';
 import SeanceDialog from '../components/SeanceDialog.vue';
 import {
@@ -300,6 +301,7 @@ const $q = useQuasar();
 const pointages = usePointagesStore();
 const seancesHorsLigne = useSeancesStore();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 
 const preparationEnCours = ref(false);
@@ -311,13 +313,14 @@ async function preparerTournee() {
   preparationEnCours.value = true;
   try {
     await api.get('/health', { params: { _tournee: Date.now() } });
+    // `salles(true)` : la tournée doit repasser par le réseau, pas par le cache.
     const [, salles, affectations] = await Promise.all([
       api.get('/seances/journee', { params: { date: date.value } }),
-      api.get('/salles', { params: { all: '1' } }),
+      referentiels.salles(true),
       api.get('/affectations', { params: { all: '1' } }),
     ]);
     seancesHorsLigne.enregistrerAffectations(affectations.data.data ?? []);
-    seancesHorsLigne.enregistrerSalles(salles.data.data ?? []);
+    seancesHorsLigne.enregistrerSalles(salles);
     localStorage.setItem(`unipresence_tournee_preparee_${auth.utilisateur.id}`, JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }));
     $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });
   } catch (e) {
@@ -464,9 +467,8 @@ onMounted(async () => {
   try { await charger(); } catch { seances.value = seancesHorsLigne.pourDate(date.value); }
   // Les salles servent au formulaire de séance non programmée.
   try {
-    const { data } = await api.get('/salles', { params: { all: '1' } });
-    salles.value = data.data;
-    seancesHorsLigne.enregistrerSalles(data.data ?? []);
+    salles.value = await referentiels.salles();
+    seancesHorsLigne.enregistrerSalles(salles.value);
   } catch { salles.value = seancesHorsLigne.sallesCache; }
 });
 </script>

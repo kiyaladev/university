@@ -231,6 +231,7 @@ import type { ChartConfiguration } from 'chart.js';
 import { isAxiosError } from 'axios';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import { useSeancesStore } from '../stores/seances';
 import ChartCanvas from '../components/ChartCanvas.vue';
 import BarreTaux from '../components/BarreTaux.vue';
@@ -245,6 +246,7 @@ import {
 import type { Departement } from '../types';
 
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const seancesHorsLigne = useSeancesStore();
 const $q = useQuasar();
 const { t, locale } = useI18n();
@@ -468,13 +470,14 @@ async function preparerTournee() {
     // Le nonce empêche une ancienne réponse santé en cache de faire croire que
     // les données de la tournée viennent d'être rafraîchies.
     await api.get('/health', { params: { _tournee: Date.now() } });
+    // `salles(true)` : la tournée doit repasser par le réseau, pas par le cache.
     const [, salles, affectations] = await Promise.all([
       api.get('/seances/journee', { params: { date } }),
-      api.get('/salles', { params: { all: '1' } }),
+      referentiels.salles(true),
       api.get('/affectations', { params: { all: '1' } }),
     ]);
     seancesHorsLigne.enregistrerAffectations(affectations.data.data ?? []);
-    seancesHorsLigne.enregistrerSalles(salles.data.data ?? []);
+    seancesHorsLigne.enregistrerSalles(salles);
     const maintenant = new Date().toISOString();
     localStorage.setItem(clePreparation.value, JSON.stringify({ date, prepareeLe: maintenant }));
     tourneePrepareeLe.value = maintenant;
@@ -504,8 +507,7 @@ onMounted(async () => {
   // Le référentiel n'alimente qu'une liste déroulante : son échec ne doit pas
   // priver la page de son tableau.
   try {
-    const { data } = await api.get('/departements', { params: { all: '1' } });
-    departements.value = data.data;
+    departements.value = await referentiels.departements();
   } catch {
     departements.value = [];
   }

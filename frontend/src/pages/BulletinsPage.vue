@@ -296,6 +296,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useReferentielsStore } from '../stores/referentiels';
 import BulletinCard from '../components/BulletinCard.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -345,6 +346,7 @@ const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 
 const annees = ref<AnneeAcademique[]>([]);
@@ -611,12 +613,10 @@ watch(
 );
 
 onMounted(async () => {
-  const [a, p] = await Promise.all([
-    api.get('/annees', { params: { all: '1' } }),
-    api.get('/promotions', { params: { all: '1' } }),
+  [annees.value, promotions.value] = await Promise.all([
+    referentiels.annees(),
+    referentiels.promotions(),
   ]);
-  annees.value = a.data.data;
-  promotions.value = p.data.data;
 
   // Préremplissage depuis la délibération d'origine.
   if (route.query.anneeId) filtres.value.anneeId = String(route.query.anneeId);

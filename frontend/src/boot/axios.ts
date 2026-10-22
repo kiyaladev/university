@@ -1,14 +1,8 @@
 import { defineBoot } from '#q-app/wrappers';
-import axios, { type AxiosInstance } from 'axios';
+import axios from 'axios';
 import { Notify } from 'quasar';
 import { getAppLocale } from './i18n';
 import { effacerToken, lireToken } from '../services/session';
-
-declare module 'vue' {
-  interface ComponentCustomProperties {
-    $api: AxiosInstance;
-  }
-}
 
 /**
  * Option maison lue par l'intercepteur : une requête « silencieuse » n'affiche
@@ -27,7 +21,7 @@ export const API_URL = process.env.API_URL || 'http://localhost:5031/api';
 
 const api = axios.create({ baseURL: API_URL, timeout: 20000 });
 
-export default defineBoot(({ app, router }) => {
+export default defineBoot(({ router }) => {
   if ('caches' in window) void caches.delete('unipresence-api');
   api.interceptors.request.use((config) => {
     config.headers['Accept-Language'] = getAppLocale();
@@ -91,8 +85,6 @@ export default defineBoot(({ app, router }) => {
       return Promise.reject(error);
     },
   );
-
-  app.config.globalProperties.$api = api;
 });
 
 export { api };

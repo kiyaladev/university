@@ -113,6 +113,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useReferentielsStore } from '../stores/referentiels';
 import ChampDate from './ChampDate.vue';
 import { LIBELLE_TYPE_EVALUATION } from '../utils/libelles';
 import type { AnneeAcademique, Evaluation, Matiere, Promotion, TypeEvaluation } from '../types';
@@ -127,6 +128,7 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
+const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const enregistrement = ref(false);
 
@@ -186,7 +188,7 @@ watch(
       coefficient: e?.coefficient ?? 1,
       semestre: e?.semestre ?? 1,
       date: e?.date?.slice(0, 10) ?? '',
-      anneeId: e?.anneeId ?? props.annees.find((a) => a.active)?.id ?? null,
+      anneeId: e?.anneeId ?? referentiels.anneeCourante?.id ?? null,
       promotionId: e?.promotionId ?? null,
       matiereId: e?.matiereId ?? null,
     };
