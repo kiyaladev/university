@@ -13,9 +13,7 @@ import {
 } from 'class-validator';
 import { ModePaiement, StatutConsommation, StatutPaiement, TypeRepas } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
-
-/** Opérateurs Mobile Money acceptés pour la cantine. */
-export const OPERATEURS_MOBILE_MONEY = ['ORANGE_MONEY', 'MTN_MOMO', 'TELECEL', 'AUTRE'] as const;
+import { OPERATEURS_MOBILE_MONEY } from '../../common/finances/paiement';
 
 // ---------------------------------------------------------------------------
 // Portefeuilles

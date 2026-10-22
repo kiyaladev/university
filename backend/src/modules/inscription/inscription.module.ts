@@ -19,7 +19,9 @@ import {
   PaiementsController,
 } from './inscription.controller';
 import { EtudiantsService } from './etudiants.service';
-import { FraisService, InscriptionService } from './inscription.service';
+import { FraisService } from './frais.service';
+import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 import { MobileMoneyModule } from './mobile-money.module';
 
 @Module({
@@ -35,7 +37,7 @@ import { MobileMoneyModule } from './mobile-money.module';
     PaiementsController,
     InscriptionsController,
   ],
-  providers: [InscriptionService, EtudiantsService, FraisService],
+  providers: [InscriptionService, EtudiantsService, FraisService, PaiementsService],
   exports: [],
 })
 export class InscriptionModule {}

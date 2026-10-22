@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { FraisService } from './inscription.service';
+import { FraisService } from './frais.service';
 
 describe('Tarifs d’inscription — historique de modification', () => {
   it('refuse un tarif rattaché à une promotion d’une autre année', async () => {

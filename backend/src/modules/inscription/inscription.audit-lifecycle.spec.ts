@@ -30,7 +30,7 @@ describe('Audit des transitions d’inscription', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       $transaction: jest.fn((work) => work(tx)),
     };
-    const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+    const service = new InscriptionService(prisma, {} as any, {} as any);
     const user = { id: 'agent-1', role: Role.SCOLARITE } as AuthUser;
 
     await service.validerInscription('ins-1', user);
@@ -60,7 +60,7 @@ describe('Audit des transitions d’inscription', () => {
       inscription: { findUnique: jest.fn().mockResolvedValue(avant) },
       $transaction: jest.fn((work) => work(tx)),
     };
-    const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+    const service = new InscriptionService(prisma, {} as any, {} as any);
 
     await expect(service.validerInscription('ins-closed', { id: 'agent-1', role: Role.SCOLARITE } as AuthUser))
       .rejects.toBeInstanceOf(BadRequestException);

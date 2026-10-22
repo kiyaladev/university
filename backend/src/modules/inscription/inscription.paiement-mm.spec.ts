@@ -1,5 +1,5 @@
 import { ModePaiement } from '@prisma/client';
-import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
@@ -38,7 +38,7 @@ function preparerPaiementMm() {
     auditLog: { create: jest.fn().mockResolvedValue({}) },
   };
   const mobileMoney = { demanderPaiement: jest.fn() };
-  const service = new InscriptionService(prisma, {} as any, mobileMoney as any, {} as any);
+  const service = new PaiementsService(prisma, mobileMoney as any);
   return { paiement, tx, prisma, mobileMoney, service };
 }
 

@@ -1,6 +1,6 @@
 import { ConflictException } from '@nestjs/common';
 import { StatutPaiement } from '@prisma/client';
-import { InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
@@ -35,7 +35,7 @@ function preparer(liens: Record<string, unknown>) {
     auditLog: { create: jest.fn() },
   };
   const prisma: any = { $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)) };
-  const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+  const service = new PaiementsService(prisma, {} as any);
   return { tx, service, paiement };
 }
 

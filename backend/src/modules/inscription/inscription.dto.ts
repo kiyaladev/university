@@ -15,11 +15,11 @@ import {
 import { PartialType } from '@nestjs/swagger';
 import { ModePaiement, StatutInscription, StatutPaiement } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
+import { OPERATEURS_MOBILE_MONEY } from '../../common/finances/paiement';
 
 /** Valeurs admises pour `Etudiant.sexe`. */
 export const SEXES = ['M', 'F'] as const;
 
-export const OPERATEURS_MOBILE_MONEY = ['ORANGE_MONEY', 'MTN_MOMO', 'TELECEL', 'AUTRE'] as const;
 
 /** Dossier déposé en ligne, sans compte : identité du candidat + choix de promotion. */
 export class InscriptionPubliqueDto {

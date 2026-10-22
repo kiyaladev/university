@@ -1,6 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { INSCRIPTION_INCLUDE, InscriptionService } from './inscription.service';
+import { PaiementsService } from './paiements.service';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
@@ -10,7 +11,7 @@ function preparer() {
     findFirst: jest.fn().mockResolvedValue({ id: 'ins-2', etudiantId: 'etu-2' }),
     findUnique: jest.fn().mockResolvedValue({ id: 'ins-2', etudiantId: 'etu-2' }),
   } };
-  return { prisma, service: new InscriptionService(prisma, {} as any, {} as any, {} as any) };
+  return { prisma, service: new InscriptionService(prisma, {} as any, {} as any) };
 }
 const etudiant: any = { role: Role.ETUDIANT, etudiantId: 'etu-1' };
 
@@ -66,7 +67,7 @@ describe('Préinscription publique', () => {
       promotion: { findMany: jest.fn() },
       frais: { findMany: jest.fn() },
     };
-    const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+    const service = new InscriptionService(prisma, {} as any, {} as any);
 
     await expect(service.promotionsOuvertes('annee-close')).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.promotion.findMany).not.toHaveBeenCalled();
@@ -83,7 +84,7 @@ describe('Préinscription publique', () => {
       },
       frais: { findMany: jest.fn().mockResolvedValue([{ promotionId: 'promotion-1', montant: 1500000, devise: 'GNF' }]) },
     };
-    const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+    const service = new InscriptionService(prisma, {} as any, {} as any);
 
     await expect(service.promotionsOuvertes('annee-open')).resolves.toEqual([{
       id: 'promotion-1', nom: 'L1 Informatique', niveau: 'L1',
@@ -106,7 +107,7 @@ describe('Simulation de paiement', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma: any = { $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)) };
-    const service = new InscriptionService(prisma, {} as any, {} as any, {} as any);
+    const service = new PaiementsService(prisma, {} as any);
 
     await expect(service.simulerPaiement('payment-1', { statut: 'REUSSI' } as any, { id: 'agent' } as any))
       .rejects.toBeInstanceOf(ConflictException);

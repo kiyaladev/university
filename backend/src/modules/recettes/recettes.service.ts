@@ -20,6 +20,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
 import { prochainNumeroTx } from '../../common/numero';
+import { creerPaiementTx } from '../../common/finances';
 import {
   CreateRecetteDto,
   EncaisserRecetteDto,
@@ -213,7 +214,7 @@ export class RecettesService {
           }
           const avant = this.instantaneAudit(recette);
           const annee = String(recette.date.getUTCFullYear());
-          const cree = await tx.paiement.create({
+          const cree = await creerPaiementTx(tx, {
             data: {
               reference: await this.prochainNumeroPaiement(tx, annee),
               montant: recette.montant,

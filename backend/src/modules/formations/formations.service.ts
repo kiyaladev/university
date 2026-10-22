@@ -31,6 +31,7 @@ import { Paginated, QueryDto } from '../../common/dto';
 import { echapper, isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { creerPaiementTx } from '../../common/finances';
 import { t } from '../../common/i18n';
 import { I18nContext } from 'nestjs-i18n';
 import {
@@ -218,7 +219,7 @@ export class FormationsService {
           if (verrou.capacite != null && confirmees >= verrou.capacite) {
             throw new ConflictException(I18nContext.current()!.t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
           }
-          const paiement = await tx.paiement.create({
+          const paiement = await creerPaiementTx(tx, {
             data: {
               reference: await prochaineReferencePaiement(tx, annee),
               montant: formationCourante.prix,

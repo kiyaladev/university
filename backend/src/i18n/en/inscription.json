@@ -34,5 +34,8 @@
   "mobileMoneyInvalidResponse": "The gateway did not provide a valid transaction reference: payment remains pending.",
   "devise_incompatible": "This payment is in {devise} while the enrolment fees are in {deviseDossier}: no conversion is applied.",
   "statut_modifie_entre_temps": "This enrolment's status has just changed: reload it before trying again.",
-  "fiche_existante_connexion_requise": "A student record already exists for this email address: sign in to the student portal or visit the registrar's office."
+  "fiche_existante_connexion_requise": "A student record already exists for this email address: sign in to the student portal or visit the registrar's office.",
+  "paiement_formation_annule_par_la_formation": "This payment belongs to a course: it cannot be cancelled here; cancel the registration from that course’s registration list.",
+  "paiement_resto_annule_par_la_recharge": "This payment tops up a canteen wallet: manage it from the matching top-up in the Canteen module.",
+  "paiement_document_annule_par_la_demande": "This payment settles a document request: manage it from that request."
 }
