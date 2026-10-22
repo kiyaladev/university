@@ -69,8 +69,11 @@ export const formationsService = {
   /** Vitrine publique : aucune authentification requise. */
   publiques: () => api.get<FormationVitrine[]>('/formations/publiques'),
 
+  /** Silencieux : la vitrine affiche le motif d'échec dans son propre bandeau. */
   inscriptionPublique: (formationId: string, corps: DemandeInscriptionPublique) =>
-    api.post<ResultatDepotInscription>(`/formations/${formationId}/inscription`, corps),
+    api.post<ResultatDepotInscription>(`/formations/${formationId}/inscription`, corps, {
+      silencieux: true,
+    }),
 
   liste: (params: Record<string, unknown> = {}) =>
     api.get<PaginatedFormations>('/formations', { params }),

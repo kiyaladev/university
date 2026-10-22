@@ -187,11 +187,8 @@ async function charger() {
     reference.value = Object.fromEntries(
       (data as Parametre[]).map((p) => [p.cle, p.valeur]),
     );
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('parametres.messages.loadError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }
@@ -206,11 +203,8 @@ async function enregistrer() {
       (data as Parametre[]).map((p) => [p.cle, p.valeur]),
     );
     $q.notify({ type: 'positive', message: t('parametres.messages.saved') });
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('parametres.messages.saveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

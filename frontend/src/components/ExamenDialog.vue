@@ -129,8 +129,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: 'Examen planifié' });
     emit('update:modelValue', false);
     emit('cree');
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? 'Enregistrement impossible' });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }

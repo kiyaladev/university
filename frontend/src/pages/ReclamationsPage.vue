@@ -438,11 +438,8 @@ async function escalader(r: Reclamation) {
     $q.notify({ type: 'warning', message: t('reclamations.messages.escalated', { numero: r.numero }) });
     await requeter();
     await chargerStats();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e.response?.data?.message ?? t('reclamations.messages.escalateError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 

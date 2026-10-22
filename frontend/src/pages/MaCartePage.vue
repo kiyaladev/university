@@ -81,11 +81,8 @@ async function confirmerNip() {
     await api.post(`/cartes-etudiantes/${carte.value.id}/nip`, { nip: nipValeur.value });
     $q.notify({ type: 'positive', message: t('maCarte.messages.nipSaved') });
     nipDialog.value = false;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('maCarte.messages.nipSaveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
 }
 

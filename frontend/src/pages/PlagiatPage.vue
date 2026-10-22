@@ -458,12 +458,8 @@ async function charger() {
     topDocuments.value = Array.from(compteur.values())
       .sort((a, b) => b.compte - a.compte)
       .slice(0, 5);
-  } catch (e: any) {
+  } catch {
     suspicions.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('plagiatPage.messages.dashboardUnavailable'),
-    });
   } finally {
     chargement.value = false;
     page.value = 1;
@@ -517,8 +513,8 @@ async function validerDecision() {
     });
     decisionDialogOuvert.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('plagiatPage.messages.decisionFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     decisionEnCours.value = false;
   }
@@ -544,8 +540,8 @@ async function lancerRecalcul() {
       };
       $q.notify({ type: 'positive', message: t('plagiatPage.messages.recalculateSuccess') });
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('plagiatPage.messages.recalculateFailed') });
+    } catch {
+      /* notifié par l'intercepteur */
     } finally {
       recalculEnCours.value = false;
     }

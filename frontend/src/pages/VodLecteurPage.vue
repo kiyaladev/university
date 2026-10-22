@@ -49,7 +49,7 @@ async function charger() {
     vod.value = data;
     dureeMax.value = data.dureeSecondes ?? 0;
   } catch {
-    $q.notify({ type: 'negative', message: t('vodLecteur.notify.ressourceIntrouvable') });
+    // Le motif (ressource introuvable, accès refusé…) est notifié par l'intercepteur.
     retour();
   } finally {
     chargement.value = false;

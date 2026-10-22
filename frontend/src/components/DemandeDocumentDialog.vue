@@ -166,7 +166,7 @@ async function envoyer() {
     const body: Record<string, unknown> = { type: form.value.type };
     if (form.value.motif.trim()) body.motif = form.value.motif.trim();
     if (form.value.inscriptionId) body.inscriptionId = form.value.inscriptionId;
-    const { data } = await api.post('/documents-demande', body);
+    const { data } = await api.post('/documents-demande', body, { silencieux: true });
     $q.notify({ type: 'positive', message: t('demandeDocuments.createDialog.created', { number: data.numero }) });
     emit('creee', data as DemandeDocument);
     emit('update:modelValue', false);

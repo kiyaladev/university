@@ -528,11 +528,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('affectations.messages.saved') });
     dialogOuvert.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('affectations.messages.saveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
@@ -552,11 +549,8 @@ function supprimer(a: Charge) {
       await api.delete(`/affectations/${a.id}`);
       $q.notify({ type: 'positive', message: t('affectations.messages.deleted') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('affectations.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -579,12 +573,8 @@ async function charger(tout = false) {
     const { data } = await api.get('/affectations', { params: parametres(tout) });
     affectations.value = data.data ?? [];
     total.value = data.total ?? affectations.value.length;
-  } catch (e: any) {
+  } catch {
     affectations.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('affectations.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }

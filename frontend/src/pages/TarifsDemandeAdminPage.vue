@@ -224,14 +224,14 @@ async function enregistrer() {
       await api.put(`/documents-demande/tarifs/${tarifEdite.value.id}`, {
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
-      });
+      }, { silencieux: true });
       $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.updated') });
     } else {
       await api.post('/documents-demande/tarifs', {
         type: form.value.type,
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
-      });
+      }, { silencieux: true });
       $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.created') });
     }
     dialogOuvert.value = false;

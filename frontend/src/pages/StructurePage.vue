@@ -963,11 +963,7 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
     $q.notify({ type: 'positive', message: messageOk });
     await charger();
     return true;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('structure.messages.saveError'),
-    });
+  } catch {
     return false;
   } finally {
     enregistrement.value = false;
@@ -1045,11 +1041,8 @@ function supprimer(ressource: string, libelle: string, id: string) {
       await api.delete(`/${ressource}/${id}`);
       $q.notify({ type: 'positive', message: t('structure.messages.deleted', { label: libelle }) });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('structure.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -1067,11 +1060,8 @@ async function charger() {
     departements.value = d.data.data;
     filieres.value = f.data.data;
     promotions.value = p.data.data;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('structure.messages.loadError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }

@@ -551,11 +551,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('utilisateurs.messages.saved') });
     dialogOuvert.value = false;
     await Promise.all([charger(), chargerEnseignants()]);
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('utilisateurs.messages.saveFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
@@ -573,11 +570,8 @@ function supprimer(u: Utilisateur) {
       await api.delete(`/utilisateurs/${u.id}`);
       $q.notify({ type: 'positive', message: t('utilisateurs.messages.deleted') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('utilisateurs.messages.deleteFailed'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -598,12 +592,8 @@ async function charger(tout = false) {
     const { data } = await api.get('/utilisateurs', { params: parametres(tout) });
     utilisateurs.value = data.data ?? [];
     total.value = data.total ?? utilisateurs.value.length;
-  } catch (e: any) {
+  } catch {
     utilisateurs.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('utilisateurs.messages.loadFailed'),
-    });
   } finally {
     chargement.value = false;
   }

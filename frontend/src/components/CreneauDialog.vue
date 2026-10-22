@@ -216,8 +216,9 @@ async function enregistrer() {
       dateDebut: form.value.dateDebut || null,
       dateFin: form.value.dateFin || null,
     };
-    if (props.creneau) await api.put(`/creneaux/${props.creneau.id}`, charge);
-    else await api.post('/creneaux', charge);
+    // Silencieux : le motif (conflit d'emploi du temps…) s'affiche dans le bandeau.
+    if (props.creneau) await api.put(`/creneaux/${props.creneau.id}`, charge, { silencieux: true });
+    else await api.post('/creneaux', charge, { silencieux: true });
     $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.saved') });
     emit('enregistre');
     emit('update:modelValue', false);

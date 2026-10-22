@@ -335,12 +335,8 @@ async function charger() {
     suspicion.value = data;
     decisionStatut.value = 'ACQUITTE';
     decisionMotif.value = data?.commentaire ?? '';
-  } catch (e: any) {
+  } catch {
     suspicion.value = null;
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('plagiatDetail.messages.notFound'),
-    });
   } finally {
     chargement.value = false;
   }
@@ -417,11 +413,8 @@ async function validerDecision() {
         ? t('plagiatDetail.messages.acquitted')
         : t('plagiatDetail.messages.confirmed'),
     });
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('plagiatDetail.messages.decisionFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     decisionEnCours.value = false;
   }

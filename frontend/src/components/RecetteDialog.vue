@@ -150,12 +150,8 @@ async function enregistrer() {
     }
     emit('update:modelValue', false);
     emit('cree');
-  } catch (e: any) {
-    const details = e?.response?.data?.message ?? e?.response?.data?.messages;
-    $q.notify({
-      type: 'negative',
-      message: Array.isArray(details) ? details.join('\n') : details ?? t('recettes.formDialog.saveFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }

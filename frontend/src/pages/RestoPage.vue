@@ -489,7 +489,7 @@ async function validerRepas() {
       repas: repas.value,
       montant: montant.value,
       cantine: cantine.value.trim() || undefined,
-    });
+    }, { silencieux: true });
     resultat.value = {
       ok: true,
       etudiant: data.etudiant,

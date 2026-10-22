@@ -210,7 +210,8 @@ async function lireEmpreinte() {
     // Le gabarit enrôlé ne quitte le serveur que pour la comparaison locale.
     const { data: gabarit } = await api.get(
       `/attestation/enseignants/${enseignantId.value}/gabarit`,
-      { params: { seanceId: props.seance?.id } },
+      // Silencieux : l'échec s'affiche dans le bandeau du lecteur d'empreinte.
+      { params: { seanceId: props.seance?.id }, silencieux: true },
     );
 
     const lecture = await verifierEmpreinte(enseignantId.value, gabarit.template);
@@ -233,7 +234,8 @@ async function lireEmpreinte() {
       },
     });
   } catch (e: any) {
-    erreurEmpreinte.value = e?.message ?? t('pointage.attestation.unavailable');
+    erreurEmpreinte.value =
+      e?.response?.data?.message ?? e?.message ?? t('pointage.attestation.unavailable');
   } finally {
     lectureEnCours.value = false;
   }

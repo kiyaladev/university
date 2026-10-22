@@ -782,7 +782,7 @@ async function ouvrirAffectationControleur(seance: Seance) {
       label: `${u.prenom} ${u.nom}`,
     }));
   } catch {
-    $q.notify({ type: 'negative', message: t('seances.detail.controllersLoadError') });
+    /* notifié par l'intercepteur */
   } finally {
     chargementControleurs.value = false;
   }
@@ -809,7 +809,7 @@ async function ouvrirAffectationGroupee() {
     optionsDepartements.value = departements.data.data.map((d: { id: string; nom: string }) => ({ value: d.id, label: d.nom }));
     if (!tournee.value.controleurId) tournee.value.controleurId = optionsControleurs.value[0]?.value ?? '';
   } catch {
-    $q.notify({ type: 'negative', message: t('seances.tournee.loadError') });
+    /* notifié par l'intercepteur */
   } finally {
     chargementTournee.value = false;
   }
@@ -830,7 +830,7 @@ async function previsualiserTournee() {
     } });
     tourneeApercu.value = data;
   } catch {
-    $q.notify({ type: 'negative', message: t('seances.tournee.previewError') });
+    /* notifié par l'intercepteur */
   } finally {
     chargementTournee.value = false;
   }
@@ -851,7 +851,6 @@ async function affecterTournee() {
     $q.notify({ type: 'positive', message: t('seances.tournee.assigned', { count: data.seancesAffectees }) });
   } catch {
     tourneeApercu.value = null;
-    $q.notify({ type: 'negative', message: t('seances.tournee.assignError') });
   } finally {
     sauvegardeTournee.value = false;
   }
@@ -867,7 +866,7 @@ async function enregistrerAffectationControleur() {
     await charger();
     $q.notify({ type: 'positive', message: t('seances.detail.controllerAssigned') });
   } catch {
-    $q.notify({ type: 'negative', message: t('seances.detail.controllerAssignError') });
+    /* notifié par l'intercepteur */
   } finally {
     sauvegardeAffectation.value = false;
   }

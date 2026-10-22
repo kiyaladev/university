@@ -94,8 +94,8 @@ async function soumettre() {
     $q.notify({ type: 'positive', message: t(enEdition.value ? 'badges.dialogs.form.updated' : 'badges.dialogs.form.issued') });
     emit('enregistre', data);
     emit('update:modelValue', false);
-  } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('badges.dialogs.form.issueFailed') });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

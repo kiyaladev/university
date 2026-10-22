@@ -64,11 +64,8 @@ async function soumettre() {
     });
     emit('enregistre', data);
     emit('update:modelValue', false);
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('carteEtudiante.formDialog.issueFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

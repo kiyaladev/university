@@ -455,12 +455,14 @@ async function genererReleve() {
   }
   generationReleve.value = true;
   try {
+    // Silencieux : en `blob`, le message du serveur est illisible pour
+    // l'intercepteur ; le message local du catch est plus parlant.
     const response = await api.post('/impression/releve-hebdomadaire', {
       departementId: auth.utilisateur.departementId,
       dateDebut: semaineDebut.value,
       dateFin: semaineFin.value,
       signatureBase64: signatureChef.value,
-    }, { responseType: 'blob' });
+    }, { responseType: 'blob', silencieux: true });
     const url = URL.createObjectURL(response.data);
     const lien = document.createElement('a');
     lien.href = url;
@@ -635,11 +637,8 @@ async function charger() {
     paiement.value = pa.data;
     registre.value = r.data;
     couverture.value = c.data;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('rapports.messages.loadError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }

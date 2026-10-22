@@ -183,11 +183,8 @@ async function creer() {
     $q.notify({ type: 'positive', message: t('deliberations.createDialog.created') });
     emit('enregistre');
     emit('update:modelValue', false);
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('deliberations.createDialog.createFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

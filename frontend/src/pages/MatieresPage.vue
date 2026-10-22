@@ -396,11 +396,8 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('matieres.messages.saved') });
     dialogOuvert.value = false;
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('matieres.messages.saveError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
@@ -417,11 +414,8 @@ function supprimer(m: Matiere) {
       await api.delete(`/matieres/${m.id}`);
       $q.notify({ type: 'positive', message: t('matieres.messages.deleted') });
       await charger();
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('matieres.messages.deleteError'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -441,12 +435,8 @@ async function charger(tout = false) {
     const { data } = await api.get('/matieres', { params: parametres(tout) });
     matieres.value = data.data ?? [];
     total.value = data.total ?? matieres.value.length;
-  } catch (e: any) {
+  } catch {
     matieres.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('matieres.messages.loadError'),
-    });
   } finally {
     chargement.value = false;
   }

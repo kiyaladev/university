@@ -505,9 +505,8 @@ async function chargerLignes() {
       };
     });
     page.value = 1;
-  } catch (e: any) {
+  } catch {
     lignes.value = [];
-    $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('bulletins.messages.chargementImpossible') });
   } finally {
     chargement.value = false;
   }

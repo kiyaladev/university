@@ -558,11 +558,8 @@ async function charger() {
     });
     feuilles.value = data.data;
     pagination.value.total = data.total;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('paiePage.messages.loadError'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }
@@ -597,8 +594,8 @@ function recalculer(f: FeuillePaie) {
       $q.notify({ type: 'positive', message: t('paiePage.messages.recalculated') });
       detail.value = data;
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.recalculateError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -615,8 +612,8 @@ function valider(f: FeuillePaie) {
       $q.notify({ type: 'positive', message: t('paiePage.messages.validated') });
       detail.value = data;
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.validateError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -633,8 +630,8 @@ function payer(f: FeuillePaie) {
       $q.notify({ type: 'positive', message: t('paiePage.messages.paid') });
       detail.value = data;
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.payError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -655,8 +652,8 @@ function supprimer(f: FeuillePaie) {
       $q.notify({ type: 'positive', message: t('paiePage.messages.deleted') });
       if (detail.value?.id === f.id) dialogDetail.value = false;
       await charger();
-    } catch (e: any) {
-      $q.notify({ type: 'negative', message: e?.response?.data?.message ?? t('paiePage.messages.deleteError') });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }

@@ -62,8 +62,9 @@ async function charger() {
     // proclamés (on y lit le verdict) — /elections/actives ne rend que les
     // premiers.
     const [ouvertes, proclamees] = await Promise.all([
-      electionsService.actives(),
-      electionsService.liste({ statut: 'PROCLAMEE', pageSize: 20 }).catch(() => null),
+      // Silencieux : l'échec s'affiche dans le bandeau de la page.
+      electionsService.actives(true),
+      electionsService.liste({ statut: 'PROCLAMEE', pageSize: 20 }, true).catch(() => null),
     ]);
     elections.value = [...ouvertes.data, ...(proclamees?.data.data ?? [])];
     if (elections.value[0]) await selectionnerElection(elections.value[0]);
@@ -91,7 +92,7 @@ async function selectionnerElection(e: Election) {
   // renvoie pas (cas des scrutins proclamés).
   if (!e.candidats?.length) {
     try {
-      const { data } = await electionsService.trouver(e.id);
+      const { data } = await electionsService.trouver(e.id, true);
       electionActive.value = data;
     } catch {
       /* on garde la fiche résumée : le vote reste possible sur les ouvertes */
@@ -99,7 +100,7 @@ async function selectionnerElection(e: Election) {
   }
 
   try {
-    const { data: vote } = await electionsService.monVote(e.id);
+    const { data: vote } = await electionsService.monVote(e.id, true);
     aVote.value = vote.aVote;
     dateVote.value = vote.dateVote;
     scrutinId.value = vote.scrutinId;
@@ -110,7 +111,7 @@ async function selectionnerElection(e: Election) {
   if (e.statut === 'CLOSE' || e.statut === 'PROCLAMEE') {
     chargementResultats.value = true;
     try {
-      const { data } = await electionsService.resultats(e.id);
+      const { data } = await electionsService.resultats(e.id, true);
       resultats.value = data;
     } catch {
       resultats.value = null;
@@ -163,10 +164,14 @@ async function validerVote() {
   depot.value = true;
   erreurDepot.value = '';
   try {
-    const { data } = await electionsService.voter({
-      electionId: electionActive.value.id,
-      bulletin: selections.value.map((candidatId) => ({ candidatId })),
-    });
+    // Silencieux : le motif du refus s'affiche dans le bandeau sous le bulletin.
+    const { data } = await electionsService.voter(
+      {
+        electionId: electionActive.value.id,
+        bulletin: selections.value.map((candidatId) => ({ candidatId })),
+      },
+      true,
+    );
     scrutinId.value = data.scrutinId;
     aVote.value = true;
     dateVote.value = new Date().toISOString();
@@ -174,7 +179,6 @@ async function validerVote() {
     $q.notify({ type: 'positive', message: t('vote.messages.ballot_submitted') });
   } catch (e) {
     erreurDepot.value = messageErreurElection(e, t('vote.errors.submit'));
-    $q.notify({ type: 'negative', message: erreurDepot.value });
   } finally {
     depot.value = false;
   }

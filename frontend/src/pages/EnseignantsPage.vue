@@ -351,6 +351,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
+import { isAxiosError } from 'axios';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
@@ -489,11 +490,7 @@ async function ouvrirMoyens(e: Enseignant) {
   try {
     const { data } = await api.get(`/attestation/enseignants/${e.id}/moyens`);
     moyens.value = data;
-  } catch (err: any) {
-    $q.notify({
-      type: 'negative',
-      message: err?.response?.data?.message ?? t('enseignants.messages.moyensUnreadable'),
-    });
+  } catch {
     dialogMoyens.value = false;
     return;
   } finally {
@@ -526,11 +523,8 @@ function reinitialiserPin() {
       );
       codeGenere.value = data.code;
       moyens.value = { ...moyens.value!, codePin: true };
-    } catch (e: any) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('enseignants.messages.pinGenerationFailed'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -589,7 +583,11 @@ async function enrolerEmpreinte() {
     $q.notify({ type: 'positive', message: t('enseignants.messages.enrolementSuccess', { qualite: capture.qualite }) });
     moyens.value = { ...moyens.value!, empreinte: true, empreinteDoigt: 'index droit' };
   } catch (e: any) {
-    $q.notify({ type: 'negative', message: e?.message ?? t('enseignants.messages.enrolementFailed') });
+    // L'erreur de l'API est notifiée par l'intercepteur ; reste la passerelle
+    // locale du lecteur (fetch, JSON illisible, capture refusée).
+    if (!isAxiosError(e)) {
+      $q.notify({ type: 'negative', message: e?.message ?? t('enseignants.messages.enrolementFailed') });
+    }
   } finally {
     enrolementEnCours.value = false;
   }
@@ -611,11 +609,8 @@ function supprimer(e: Enseignant) {
       await api.delete(`/enseignants/${e.id}`);
       $q.notify({ type: 'positive', message: t('enseignants.messages.deleteSuccess') });
       await charger();
-    } catch (err: any) {
-      $q.notify({
-        type: 'negative',
-        message: err?.response?.data?.message ?? t('enseignants.messages.deleteFailed'),
-      });
+    } catch {
+      /* notifié par l'intercepteur */
     }
   });
 }
@@ -636,12 +631,8 @@ async function charger(tout = false) {
     const { data } = await api.get('/enseignants', { params: parametres(tout) });
     enseignants.value = data.data ?? [];
     total.value = data.total ?? enseignants.value.length;
-  } catch (e: any) {
+  } catch {
     enseignants.value = [];
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('enseignants.messages.loadFailed'),
-    });
   } finally {
     chargement.value = false;
   }

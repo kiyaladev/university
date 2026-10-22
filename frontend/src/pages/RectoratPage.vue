@@ -364,11 +364,8 @@ async function charger() {
     chiffres.value = c.data;
     dashboard.value = d.data;
     evolutionMasse.value = masses;
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('rectoratPage.messages.dashboardLoadFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargement.value = false;
   }
@@ -429,11 +426,8 @@ async function genererBilan() {
       ],
     });
     await charger();
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('rectoratPage.messages.reportGenerationFailed'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     generation.value = false;
   }
@@ -446,11 +440,8 @@ onMounted(async () => {
     if (annees.value.length) {
       anneeId.value = annees.value.find((a) => a.active)?.id ?? annees.value[0].id;
     }
-  } catch (e: any) {
-    $q.notify({
-      type: 'negative',
-      message: e?.response?.data?.message ?? t('rectoratPage.messages.yearsUnavailable'),
-    });
+  } catch {
+    /* notifié par l'intercepteur */
   }
   await charger();
 });
