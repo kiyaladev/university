@@ -35,6 +35,7 @@ import { toDateOnly } from '../../common/utils';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { t } from '../../common/i18n';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 export class CreateJustificatifDto {
   @IsUUID() seanceId: string;
@@ -237,10 +238,14 @@ export class JustificatifsService extends CrudService {
       const justificatif = user.role === Role.CHEF_DEPARTEMENT || user.role === Role.ENSEIGNANT
         ? await tx.justificatif.create({ data, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
         : await tx.justificatif.create({ data, include: JUSTIFICATIF_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user.id, action: 'JUSTIFICATIF_DEPOSE', entite: 'Justificatif', entiteId: justificatif.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(justificatif) }),
-      } });
+      await journaliser(
+        tx,
+        user,
+        'JUSTIFICATIF_DEPOSE',
+        'Justificatif',
+        justificatif.id,
+        { avant: null, apres: this.instantaneAudit(justificatif) },
+      );
       return justificatif;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -294,10 +299,14 @@ export class JustificatifsService extends CrudService {
         });
       }
 
-      await tx.auditLog.create({ data: {
-        userId: user.id, action: `JUSTIFICATIF_${dto.statut}`, entite: 'Justificatif', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user,
+        `JUSTIFICATIF_${dto.statut}`,
+        'Justificatif',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     // Relecture après mise à jour du contrôle : la réponse reflète l'état final.
@@ -315,10 +324,14 @@ export class JustificatifsService extends CrudService {
         throw new BadRequestException(t('justificatifs.deja_traite'));
       }
       await tx.justificatif.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'JUSTIFICATIF_SUPPRIME', entite: 'Justificatif', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'JUSTIFICATIF_SUPPRIME',
+        'Justificatif',
+        id,
+        { avant: this.instantaneAudit(avant), apres: null },
+      );
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

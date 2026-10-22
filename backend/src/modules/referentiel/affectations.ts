@@ -23,6 +23,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { estChefDeDepartement, exigerPerimetre } from '../../common/perimetre';
+import { journaliser } from '../../common/audit';
 
 export class CreateAffectationDto {
   @IsUUID() enseignantId: string;
@@ -90,15 +91,14 @@ export class AffectationsService extends CrudService {
       await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
       await this.exigerPerimetreAffectation(user, dto.enseignantId, tx as any);
       const affectation = await tx.affectation.create({ data: dto, include: AFFECTATION_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'AFFECTATION_CREEE',
-          entite: 'Affectation',
-          entiteId: affectation.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(affectation) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'AFFECTATION_CREEE',
+        'Affectation',
+        affectation.id,
+        { avant: null, apres: this.instantaneAudit(affectation) },
+      );
       return affectation;
     });
   }
@@ -122,15 +122,14 @@ export class AffectationsService extends CrudService {
       if (estChefDeDepartement(user)) exigerPerimetre(user, avant.enseignant?.departementId);
       await this.exigerPerimetreAffectation(user, dto.enseignantId ?? avant.enseignantId, tx as any);
       const maj = await tx.affectation.update({ where: { id }, data: dto, include: AFFECTATION_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'AFFECTATION_MODIFIEE',
-          entite: 'Affectation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'AFFECTATION_MODIFIEE',
+        'Affectation',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -143,15 +142,7 @@ export class AffectationsService extends CrudService {
       if (!avant) throw new ForbiddenException();
       await exigerAnneeOuverte(tx, avant.anneeId);
       await tx.affectation.delete({ where: { id } });
-      await tx.auditLog.create({
-        data: {
-          userId: user?.id ?? null,
-          action: 'AFFECTATION_SUPPRIMEE',
-          entite: 'Affectation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-        },
-      });
+      await journaliser(tx, user ?? null, 'AFFECTATION_SUPPRIMEE', 'Affectation', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     });
   }

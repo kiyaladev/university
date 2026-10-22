@@ -8,6 +8,7 @@ import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { RapportQueryDto } from './rapports.dto';
 import { echapper, signaturePng } from '../../common/utils';
+import { journaliser } from '../../common/audit';
 
 const ATTESTATION_LIBELLE: Record<string, string> = {
   SIGNATURE: 'Signature',
@@ -253,15 +254,7 @@ export class ImpressionService {
       orderBy: { code: 'asc' },
     });
 
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'IMPRESSION_QR_SALLES',
-        entite: 'Salle',
-        entiteId: salleId ?? null,
-        details: `${salles.length} affiche(s) QR générée(s)`,
-      },
-    });
+    await journaliser(this.prisma, user, 'IMPRESSION_QR_SALLES', 'Salle', salleId ?? null, `${salles.length} affiche(s) QR générée(s)`);
 
     const blocs = await Promise.all(
       salles.map(async (s) => {

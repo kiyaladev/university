@@ -56,6 +56,7 @@ import { AuthUser } from '../../common/decorators';
 import { echapper, isoDate, round2 } from '../../common/utils';
 import { t } from '../../common/i18n';
 import { I18nContext } from 'nestjs-i18n';
+import { journaliser } from '../../common/audit';
 
 @Injectable()
 export class RectoratService {
@@ -285,15 +286,14 @@ export class RectoratService {
         },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'BILAN_MESRS_GENERE',
-          entite: 'StatistiqueMesrs',
-          entiteId: snapshot.id,
-          details: `Bilan MESRS ${annee.libelle} — effectif ${chiffres.effectifTotal}, taux ${chiffres.tauxReussite}%`,
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'BILAN_MESRS_GENERE',
+        'StatistiqueMesrs',
+        snapshot.id,
+        `Bilan MESRS ${annee.libelle} — effectif ${chiffres.effectifTotal}, taux ${chiffres.tauxReussite}%`,
+      );
       return snapshot;
     });
   }

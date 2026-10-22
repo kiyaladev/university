@@ -14,6 +14,7 @@ import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OtpClient, numerique } from './otp.client';
+import { journaliser } from '../../common/audit';
 
 /**
  * Portail étudiant : connexion par SMS (code OTP), profil complet et
@@ -171,15 +172,14 @@ export class PortailService {
           where: { id: etudiant.id },
           data: { userId: cree.id },
         });
-        await tx.auditLog.create({
-          data: {
-            userId: null,
-            action: 'COMPTE_ETUDIANT_CREE',
-            entite: 'Etudiant',
-            entiteId: etudiant.id,
-            details: JSON.stringify({ avant: null, apres: { compteLie: true, role: cree.role, actif: cree.actif } }),
-          },
-        });
+        await journaliser(
+          tx,
+          null,
+          'COMPTE_ETUDIANT_CREE',
+          'Etudiant',
+          etudiant.id,
+          { avant: null, apres: { compteLie: true, role: cree.role, actif: cree.actif } },
+        );
         return cree;
       });
     } catch (erreur) {
@@ -207,18 +207,17 @@ export class PortailService {
               }
             }
             if (lie.count === 1) {
-              await tx.auditLog.create({
-                data: {
-                  userId: null,
-                  action: 'COMPTE_ETUDIANT_RATTACHE',
-                  entite: 'Etudiant',
-                  entiteId: etudiant.id,
-                  details: JSON.stringify({
+              await journaliser(
+                tx,
+                null,
+                'COMPTE_ETUDIANT_RATTACHE',
+                'Etudiant',
+                etudiant.id,
+                {
                     avant: { compteLie: false },
                     apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
-                  }),
-                },
-              });
+                  },
+              );
             }
           });
           return existant;

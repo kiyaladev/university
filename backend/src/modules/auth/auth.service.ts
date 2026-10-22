@@ -6,6 +6,7 @@ import { AuthUser } from '../../common/decorators';
 import { ChangePasswordDto, LoginDto } from './auth.dto';
 import { t } from '../../common/i18n';
 import { motDePasseDemo } from '../../common/demo-accounts';
+import { journaliser } from '../../common/audit';
 
 /**
  * Verrouillage après échecs répétés. Le débit par IP est déjà bridé par le
@@ -204,15 +205,7 @@ export class AuthService {
       if (maj.count !== 1) {
         throw new ConflictException(t('auth.mot_de_passe_modifie_concurrence_reessayez'));
       }
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'MOT_DE_PASSE_MODIFIE',
-          entite: 'User',
-          entiteId: user.id,
-          details: JSON.stringify({ sessionsRevoquees: true }),
-        },
-      });
+      await journaliser(tx, user, 'MOT_DE_PASSE_MODIFIE', 'User', user.id, { sessionsRevoquees: true });
     });
     return { message: 'Mot de passe modifié' };
   }

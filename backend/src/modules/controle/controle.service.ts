@@ -29,6 +29,7 @@ import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } fr
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
   'PAIE_CREEE',
@@ -615,15 +616,14 @@ export class ControleService {
         where: { id: controle.seanceId },
         data: { statut: StatutSeance.PLANIFIEE },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'POINTAGE_SUPPRESSION',
-          entite: 'Controle',
-          entiteId: id,
-          details: JSON.stringify({ seanceId: controle.seanceId, avant: this.etatAudit(controle), apres: null }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'POINTAGE_SUPPRESSION',
+        'Controle',
+        id,
+        { seanceId: controle.seanceId, avant: this.etatAudit(controle), apres: null },
+      );
       return { id };
     });
   }

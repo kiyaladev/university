@@ -333,14 +333,7 @@ export class BibliothequeService extends CrudService {
         data: { telechargements: { increment: 1 } },
       });
       if (utilisateur) {
-        await tx.auditLog.create({
-          data: {
-            userId: utilisateur.id,
-            action: 'DOCUMENT_DEPOT_TELECHARGE',
-            entite: 'DocumentDepot',
-            entiteId: id,
-          },
-        });
+        await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_TELECHARGE', 'DocumentDepot', id);
       }
     });
 

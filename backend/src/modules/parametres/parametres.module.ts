@@ -6,6 +6,7 @@ import { Type } from 'class-transformer';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 /** Règles de contrôle paramétrables par l'établissement. */
 export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: string }> = {
@@ -130,18 +131,19 @@ export class ParametresService {
           },
           update: { valeur: p.valeur },
         });
-        await tx.auditLog.create({ data: {
-          userId: user?.id ?? null,
-          action: 'PARAMETRE_MODIFIE',
-          entite: 'Parametre',
-          entiteId: p.cle,
-          details: JSON.stringify({
+        await journaliser(
+          tx,
+          user ?? null,
+          'PARAMETRE_MODIFIE',
+          'Parametre',
+          p.cle,
+          {
             cle: p.cle,
             avant: this.instantaneAudit(p.cle, avant?.valeur ?? PARAMETRES_DEFAUT[p.cle]?.valeur ?? null),
             apres: this.instantaneAudit(p.cle, apres.valeur),
             descriptionModifiee: !avant && Boolean(p.description ?? PARAMETRES_DEFAUT[p.cle]?.description),
-          }),
-        } });
+          },
+        );
       }
     });
     return this.liste();

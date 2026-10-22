@@ -102,7 +102,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin, codePinDefiniLe: new Date() },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_DEFINI', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_DEFINI', 'Enseignant', enseignantId);
     });
     return { message: 'Code personnel enregistré' };
   }
@@ -119,7 +119,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin, codePinDefiniLe: new Date() },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_REINITIALISE', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_REINITIALISE', 'Enseignant', enseignantId);
     });
     return { code, message: 'Communiquez ce code à l’enseignant : il ne sera plus affiché' };
   }
@@ -131,7 +131,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin: null, codePinDefiniLe: null },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_SUPPRIME', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_SUPPRIME', 'Enseignant', enseignantId);
     });
     return { message: 'Code personnel supprimé' };
   }
@@ -163,19 +163,18 @@ export class AttestationService {
       const cree = await tx.appareil.create({
         data: { libelle, secret, userId: user.id },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'APPAREIL_ENROLE',
-          entite: 'Appareil',
-          entiteId: cree.id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'APPAREIL_ENROLE',
+        'Appareil',
+        cree.id,
+        {
             avant: null,
             apres: { libelle: cree.libelle, actif: cree.actif },
             champsModifies: ['libelle', 'actif'],
-          }),
-        },
-      });
+          },
+      );
       return cree;
     });
     return { appareilId: appareil.id, secret, libelle: appareil.libelle };
@@ -193,19 +192,18 @@ export class AttestationService {
         where: { id },
         data: { actif: false, revoqueLe: new Date() },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'APPAREIL_REVOQUE',
-          entite: 'Appareil',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'APPAREIL_REVOQUE',
+        'Appareil',
+        id,
+        {
             avant: { libelle: avant.libelle, actif: avant.actif },
             apres: { libelle: apres.libelle, actif: apres.actif },
             champsModifies: ['actif'],
-          }),
-        },
-      });
+          },
+      );
     });
     return { message: 'Appareil révoqué : ses lectures d’empreinte ne sont plus acceptées' };
   }
@@ -388,15 +386,7 @@ export class AttestationService {
     if (!e.empreinteTemplate) {
       throw new BadRequestException(t('attestation.aucune_empreinte_enrolee_pour_cet_enseignant'));
     }
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'GABARIT_BIOMETRIQUE_CONSULTE',
-        entite: 'Enseignant',
-        entiteId: enseignantId,
-        details: JSON.stringify({ seanceId, role: user.role }),
-      },
-    });
+    await journaliser(this.prisma, user, 'GABARIT_BIOMETRIQUE_CONSULTE', 'Enseignant', enseignantId, { seanceId, role: user.role });
     // Déchiffré uniquement ici, pour la comparaison faite par la passerelle.
     return { template: dechiffrer(e.empreinteTemplate), doigt: e.empreinteDoigt };
   }
@@ -430,15 +420,7 @@ export class AttestationService {
       ) {
         throw new NotFoundException(t('attestation.enseignant_introuvable'));
       }
-      await this.prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'MOYENS_ATTESTATION_CONSULTES',
-          entite: 'Enseignant',
-          entiteId: enseignantId,
-          details: JSON.stringify({ seanceId, role: user.role }),
-        },
-      });
+      await journaliser(this.prisma, user, 'MOYENS_ATTESTATION_CONSULTES', 'Enseignant', enseignantId, { seanceId, role: user.role });
     }
     const e = await this.prisma.enseignant.findUnique({
       where: { id: enseignantId, actif: true },

@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { ReleveHebdomadaireDto } from './rapports.dto';
+import { journaliser } from '../../common/audit';
 
 const LARGEURS = [40, 61, 118, 144, 49, 96, 62, 188];
 const STATUTS: Record<string, string> = {
@@ -197,15 +198,14 @@ export class RelevePdfService {
     document.end();
     const pdf = await sortie;
     const pdfHash = hash(pdf);
-    await this.prisma.auditLog.create({
-      data: {
-        userId: chef.id,
-        action: 'RAPPORT_HEBDOMADAIRE_SIGNE',
-        entite: 'RapportHebdomadaire',
-        entiteId: numero,
-        details: JSON.stringify({ departementId: departement.id, dateDebut: dto.dateDebut, dateFin: dto.dateFin, signatureHash, pdfHash }),
-      },
-    });
+    await journaliser(
+      this.prisma,
+      chef,
+      'RAPPORT_HEBDOMADAIRE_SIGNE',
+      'RapportHebdomadaire',
+      numero,
+      { departementId: departement.id, dateDebut: dto.dateDebut, dateFin: dto.dateFin, signatureHash, pdfHash },
+    );
     return { numero, pdf, pdfHash };
   }
 }

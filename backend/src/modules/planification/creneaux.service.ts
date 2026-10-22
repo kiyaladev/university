@@ -9,6 +9,7 @@ import { exigerAnneeOuverte } from '../../common/annee';
 import { dureeMinutes, toMinutes, toDateOnly, isoDate, JOURS } from '../../common/utils';
 import { CreateCreneauDto, CreneauQueryDto, UpdateCreneauDto } from './planification.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 export const CRENEAU_INCLUDE = {
   affectation: {
@@ -249,10 +250,7 @@ export class CreneauxService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       await this.valider(dto, undefined, tx, user);
       const creneau = await tx.creneau.create({ data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'CRENEAU_CREE', entite: 'Creneau', entiteId: creneau.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creneau) }),
-      } });
+      await journaliser(tx, user ?? null, 'CRENEAU_CREE', 'Creneau', creneau.id, { avant: null, apres: this.instantaneAudit(creneau) });
       return creneau;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -277,10 +275,14 @@ export class CreneauxService extends CrudService {
       if (!cible) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
       if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
       const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'CRENEAU_MODIFIE', entite: 'Creneau', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'CRENEAU_MODIFIE',
+        'Creneau',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -294,10 +296,7 @@ export class CreneauxService extends CrudService {
     if (!creneau) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
     await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
     await tx.creneau.delete({ where: { id } });
-    await tx.auditLog.create({ data: {
-      userId: user?.id ?? null, action: 'CRENEAU_SUPPRIME', entite: 'Creneau', entiteId: id,
-      details: JSON.stringify({ avant: this.instantaneAudit(creneau), apres: null }),
-    } });
+    await journaliser(tx, user ?? null, 'CRENEAU_SUPPRIME', 'Creneau', id, { avant: this.instantaneAudit(creneau), apres: null });
     return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

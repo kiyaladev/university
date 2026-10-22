@@ -28,6 +28,7 @@ import {
   UpdateStadeTirageDto,
 } from './tirage.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const TIRAGE_INCLUDE = {
   examen: {
@@ -113,15 +114,14 @@ export class TirageService {
         include: TIRAGE_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'TIRAGE_CREE',
-          entite: 'Tirage',
-          entiteId: tirage.id,
-          details: `Examen ${examen.codeExamen} — ${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'TIRAGE_CREE',
+        'Tirage',
+        tirage.id,
+        `Examen ${examen.codeExamen} — ${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
+      );
       return tirage;
     });
   }
@@ -158,15 +158,14 @@ export class TirageService {
         include: TIRAGE_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'TIRAGE_IMPRIME',
-          entite: 'Tirage',
-          entiteId: id,
-          details: `${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'TIRAGE_IMPRIME',
+        'Tirage',
+        id,
+        `${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
+      );
       return maj;
     });
   }
@@ -197,15 +196,7 @@ export class TirageService {
         },
         include: TIRAGE_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: actionAudit,
-          entite: 'Tirage',
-          entiteId: id,
-          details: `${tirage.stade} → ${maj.stade}`,
-        },
-      });
+      await journaliser(tx, user, actionAudit, 'Tirage', id, `${tirage.stade} → ${maj.stade}`);
       return maj;
     });
   }
@@ -250,15 +241,7 @@ export class TirageService {
         data: { stade: StadeTirage.ANNULE },
         include: TIRAGE_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'TIRAGE_ANNULE',
-          entite: 'Tirage',
-          entiteId: id,
-          details: `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`,
-        },
-      });
+      await journaliser(tx, user, 'TIRAGE_ANNULE', 'Tirage', id, `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`);
       return maj;
     });
   }

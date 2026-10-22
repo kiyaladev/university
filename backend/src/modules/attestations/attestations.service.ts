@@ -33,6 +33,7 @@ import {
   VerifierAttestationDto,
 } from './attestations.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 export const ATTESTATION_INCLUDE = {
   etudiant: {
@@ -242,15 +243,7 @@ export class AttestationsService {
             },
             include: ATTESTATION_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'ATTESTATION_EMISE',
-              entite: 'Attestation',
-              entiteId: cree.id,
-              details: JSON.stringify({ avant: null, apres: this.instantaneAudit(cree) }),
-            },
-          });
+          await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, { avant: null, apres: this.instantaneAudit(cree) });
           return cree;
         });
         return attestation;
@@ -299,15 +292,14 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTESTATION_MODIFICATION',
-          entite: 'Attestation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ATTESTATION_MODIFICATION',
+        'Attestation',
+        id,
+        { avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) },
+      );
       return miseAJour;
     });
   }
@@ -332,15 +324,14 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTESTATION_REVOCATION',
-          entite: 'Attestation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ATTESTATION_REVOCATION',
+        'Attestation',
+        id,
+        { avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) },
+      );
       return miseAJour;
     });
   }

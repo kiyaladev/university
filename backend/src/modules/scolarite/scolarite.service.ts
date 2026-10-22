@@ -37,6 +37,7 @@ import {
   UpdateEvaluationDto,
 } from './scolarite.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
 const INSCRITS_VALIDES = { statut: 'VALIDEE' } as const;
@@ -157,15 +158,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_CREEE',
-          entite: 'Evaluation',
-          entiteId: evaluation.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneEvaluation(evaluation) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_CREEE',
+        'Evaluation',
+        evaluation.id,
+        { avant: null, apres: this.instantaneEvaluation(evaluation) },
+      );
       return evaluation;
     });
   }
@@ -208,15 +208,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_MODIFIEE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_MODIFIEE',
+        'Evaluation',
+        id,
+        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
+      );
       return maj;
     });
   }
@@ -238,15 +237,7 @@ export class ScolariteService {
         throw new BadRequestException(I18nContext.current()!.t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { args: { intitule: avant.intitule, nombre: avant._count.notes } }));
       }
       await tx.evaluation.delete({ where: { id } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_SUPPRIMEE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: null }),
-        },
-      });
+      await journaliser(tx, user, 'EVALUATION_SUPPRIMEE', 'Evaluation', id, { avant: this.instantaneEvaluation(avant), apres: null });
       return { id };
     });
   }
@@ -277,15 +268,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_CLOTUREE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_CLOTUREE',
+        'Evaluation',
+        id,
+        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
+      );
       return maj;
     });
   }
@@ -400,13 +390,13 @@ export class ScolariteService {
       }
 
       if (valides.length) {
-        await tx.auditLog.create({
-          data: {
-            userId: saisiePar.id,
-            action: 'NOTES_SAISIES',
-            entite: 'Evaluation',
-            entiteId: dto.evaluationId,
-            details: JSON.stringify({
+        await journaliser(
+          tx,
+          saisiePar,
+          'NOTES_SAISIES',
+          'Evaluation',
+          dto.evaluationId,
+          {
               acteur: saisiePar.id,
               changements: valides.map((note) => {
                 const precedent = parInscription.get(note.inscriptionId);
@@ -416,9 +406,8 @@ export class ScolariteService {
                   apres: { note: note.note ?? null, present: note.present ?? true },
                 };
               }),
-            }),
-          },
-        });
+            },
+        );
       }
       return { n: valides.length, ignorees };
     });
@@ -517,15 +506,14 @@ export class ScolariteService {
         },
       });
       const calcul = await this.calculerDeliberation(cree.id, tx);
-      await tx.auditLog.create({
-        data: {
-          userId: creePar.id,
-          action: 'DELIBERATION_CREEE',
-          entite: 'Deliberation',
-          entiteId: cree.id,
-          details: JSON.stringify({ anneeId: cree.anneeId, promotionId: cree.promotionId, resultat: calcul }),
-        },
-      });
+      await journaliser(
+        tx,
+        creePar,
+        'DELIBERATION_CREEE',
+        'Deliberation',
+        cree.id,
+        { anneeId: cree.anneeId, promotionId: cree.promotionId, resultat: calcul },
+      );
       return this.detailDeliberation(cree.id, tx);
     });
     return delib;

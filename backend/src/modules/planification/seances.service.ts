@@ -17,6 +17,7 @@ import {
 import { t } from '../../common/i18n';
 import { AnneeAcademiqueClotureeException, exigerAnneeOuverte } from '../../common/annee';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 /** Un créneau vaut-il à cette date ? Sans période, il vaut toute l'année. */
 function vaut(creneau: { dateDebut: Date | null; dateFin: Date | null }, jour: Date) {
@@ -219,15 +220,14 @@ export class SeancesService extends CrudService {
         data: { controleurAssigneId: nouveauControleurId },
         include: SEANCE_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: nouveauControleurId ? 'CONTROLEUR_AFFECTE_SEANCE' : 'CONTROLEUR_RETIRE_SEANCE',
-          entite: 'Seance',
-          entiteId: id,
-          details: JSON.stringify({ avant: { controleurAssigneId: seance.controleurAssigneId }, apres: { controleurAssigneId: nouveauControleurId } }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        nouveauControleurId ? 'CONTROLEUR_AFFECTE_SEANCE' : 'CONTROLEUR_RETIRE_SEANCE',
+        'Seance',
+        id,
+        { avant: { controleurAssigneId: seance.controleurAssigneId }, apres: { controleurAssigneId: nouveauControleurId } },
+      );
       return miseAJour;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -298,13 +298,13 @@ export class SeancesService extends CrudService {
         : { count: 0 };
 
       if (resultat.count) {
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'TOURNEE_CONTROLEUR_AFFECTEE',
-            entite: 'TourneeControleur',
-            entiteId: `${dto.dateDebut}_${dto.dateFin}`,
-            details: JSON.stringify({
+        await journaliser(
+          tx,
+          user,
+          'TOURNEE_CONTROLEUR_AFFECTEE',
+          'TourneeControleur',
+          `${dto.dateDebut}_${dto.dateFin}`,
+          {
               controleurId: dto.controleurId,
               departementId: dto.departementId ?? null,
               dateDebut: dto.dateDebut,
@@ -313,9 +313,8 @@ export class SeancesService extends CrudService {
               seancesCandidates: idsOuverts,
               controleurApres: dto.controleurId,
               seancesIgnoreesAnneeCloturee: ignoreesAnneeCloturee,
-            }),
-          },
-        });
+            },
+        );
       }
       return {
         seancesAffectees: resultat.count,
@@ -406,10 +405,7 @@ export class SeancesService extends CrudService {
         } as Prisma.SeanceUncheckedCreateInput,
         include: SEANCE_INCLUDE,
       });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'SEANCE_CREEE', entite: 'Seance', entiteId: seance.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(seance) }),
-      } });
+      await journaliser(tx, user ?? null, 'SEANCE_CREEE', 'Seance', seance.id, { avant: null, apres: this.instantaneAudit(seance) });
       return seance;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -424,10 +420,14 @@ export class SeancesService extends CrudService {
       const data = await this.payload(dto, avant.anneeId, false, tx, user);
       await exigerAnneeOuverte(tx, data.anneeId);
       const apres = await tx.seance.update({ where: { id }, data, include: SEANCE_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'SEANCE_MODIFIEE', entite: 'Seance', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'SEANCE_MODIFIEE',
+        'Seance',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -445,10 +445,14 @@ export class SeancesService extends CrudService {
         data: { statut: StatutSeance.ANNULEE, thematique: motif ? `[Annulée] ${motif}` : avant.thematique },
         include: SEANCE_INCLUDE,
       });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'SEANCE_ANNULEE', entite: 'Seance', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'SEANCE_ANNULEE',
+        'Seance',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -459,10 +463,7 @@ export class SeancesService extends CrudService {
       if (!avant) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       await tx.seance.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'SEANCE_SUPPRIMEE', entite: 'Seance', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(tx, user ?? null, 'SEANCE_SUPPRIMEE', 'Seance', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -527,10 +528,14 @@ export class SeancesService extends CrudService {
 
     const res = await tx.seance.createMany({ data: lignes, skipDuplicates: true });
     if (res.count > 0) {
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'SEANCES_GENEREES', entite: 'AnneeAcademique', entiteId: dto.anneeId,
-        details: JSON.stringify({ periode: { debut: isoDate(debut), fin: isoDate(fin) }, candidates: lignes.length, creees: res.count, ignorees: lignes.length - res.count }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'SEANCES_GENEREES',
+        'AnneeAcademique',
+        dto.anneeId,
+        { periode: { debut: isoDate(debut), fin: isoDate(fin) }, candidates: lignes.length, creees: res.count, ignorees: lignes.length - res.count },
+      );
     }
     return {
       creneaux: creneaux.length,
@@ -573,11 +578,14 @@ export class SeancesService extends CrudService {
             } as Prisma.SeanceUncheckedCreateInput,
             include: SEANCE_INCLUDE,
           });
-          await tx.auditLog.create({ data: {
-            userId: user?.id ?? null, action: 'SEANCE_SYNCHRONISEE_HORS_LIGNE',
-            entite: 'Seance', entiteId: creee.id,
-            details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), idClient }),
-          } });
+          await journaliser(
+            tx,
+            user ?? null,
+            'SEANCE_SYNCHRONISEE_HORS_LIGNE',
+            'Seance',
+            creee.id,
+            { avant: null, apres: this.instantaneAudit(creee), idClient },
+          );
           return { seance: creee, dejaCreee: false };
         }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
         resultats.push({ idClient, ok: true, id: resultat.seance.id, dejaCreee: resultat.dejaCreee });
@@ -660,13 +668,14 @@ export class SeancesService extends CrudService {
         data: { statut: StatutSeance.NON_TENUE },
       });
       if (resultat.count) {
-        await tx.auditLog.create({ data: {
-          userId: null,
-          action: 'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT',
-          entite: 'Seance',
-          entiteId: isoDate(hier),
-          details: JSON.stringify({ statutAvant: StatutSeance.PLANIFIEE, statutApres: StatutSeance.NON_TENUE, nombre: resultat.count }),
-        } });
+        await journaliser(
+          tx,
+          null,
+          'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT',
+          'Seance',
+          isoDate(hier),
+          { statutAvant: StatutSeance.PLANIFIEE, statutApres: StatutSeance.NON_TENUE, nombre: resultat.count },
+        );
       }
       return resultat;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

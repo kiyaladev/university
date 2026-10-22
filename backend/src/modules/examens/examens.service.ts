@@ -26,6 +26,7 @@ import { Paginated, QueryDto } from '../../common/dto';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { CreateExamenDto, ExamenQueryDto, ScanExamenDto } from './examens.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const EXAMEN_INCLUDE = {
   matiere: true,
@@ -163,15 +164,7 @@ export class ExamensService {
         },
         include: EXAMEN_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_CREE',
-          entite: 'Examen',
-          entiteId: examen.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(examen) }),
-        },
-      });
+      await journaliser(tx, user, 'EXAMEN_CREE', 'Examen', examen.id, { avant: null, apres: this.instantaneAudit(examen) });
       return examen;
     });
   }
@@ -196,15 +189,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_STATUT',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_STATUT',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -240,15 +232,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_DEMARRE',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_DEMARRE',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -271,15 +262,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_TERMINE',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_TERMINE',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -398,15 +388,14 @@ export class ExamensService {
         data: { nbPresents: { increment: 1 } },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_SCAN_VALIDE',
-          entite: 'ScanExamen',
-          entiteId: created.id,
-          details: `${examen.codeExamen} — présence enregistrée (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_SCAN_VALIDE',
+        'ScanExamen',
+        created.id,
+        `${examen.codeExamen} — présence enregistrée (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
+      );
 
       return created;
     });
@@ -487,15 +476,7 @@ export class ExamensService {
         include: SCAN_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_SCAN_REJETE',
-          entite: 'ScanExamen',
-          entiteId: scan.id,
-          details: `${codeExamen} — scan refusé`,
-        },
-      });
+      await journaliser(tx, user, 'EXAMEN_SCAN_REJETE', 'ScanExamen', scan.id, `${codeExamen} — scan refusé`);
       return scan;
     });
   }

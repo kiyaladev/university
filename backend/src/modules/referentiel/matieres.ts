@@ -8,6 +8,7 @@ import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { estChefDeDepartement, exigerPerimetre } from '../../common/perimetre';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 export class CreateMatiereDto {
   @IsString() code: string;
@@ -48,13 +49,14 @@ export class MatieresService extends CrudService {
     if (acteur) exigerPerimetre(acteur, dto.departementId);
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.matiere.create({ data: dto, include: { departement: true } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'MATIERE_CREEE',
-        entite: 'Matiere',
-        entiteId: creee.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'MATIERE_CREEE',
+        'Matiere',
+        creee.id,
+        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
+      );
       return creee;
     });
   }
@@ -68,13 +70,14 @@ export class MatieresService extends CrudService {
         exigerPerimetre(acteur, dto.departementId ?? avant.departementId);
       }
       const maj = await tx.matiere.update({ where: { id }, data: dto, include: { departement: true } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'MATIERE_MODIFIEE',
-        entite: 'Matiere',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'MATIERE_MODIFIEE',
+        'Matiere',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) },
+      );
       return maj;
     });
   }
@@ -84,13 +87,7 @@ export class MatieresService extends CrudService {
       const avant = await tx.matiere.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.notFound'));
       await tx.matiere.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'MATIERE_SUPPRIMEE',
-        entite: 'Matiere',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(tx, acteur ?? null, 'MATIERE_SUPPRIMEE', 'Matiere', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     });
   }

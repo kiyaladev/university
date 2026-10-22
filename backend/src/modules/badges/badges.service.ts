@@ -31,6 +31,7 @@ import {
 import { documentsBadge, BadgeImprimable } from './documents';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const BADGE_INCLUDE = {
   creePar: { select: { id: true, nom: true, prenom: true } },
@@ -187,19 +188,18 @@ export class BadgesService {
             },
             include: BADGE_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'BADGE_ACCES_EMIS',
-              entite: 'BadgeAcces',
-              entiteId: badge.id,
-              details: JSON.stringify({
+          await journaliser(
+            tx,
+            user,
+            'BADGE_ACCES_EMIS',
+            'BadgeAcces',
+            badge.id,
+            {
                 avant: null,
                 apres: this.instantaneAudit(badge),
                 champsModifies: ['type', 'statut', 'dateValidite', 'zonesAccess', 'qrToken', 'photoUrl'],
-              }),
-            },
-          });
+              },
+          );
           return badge;
         });
         break;
@@ -241,19 +241,18 @@ export class BadgesService {
       const final = statut !== maj.statut
         ? await tx.badgeAcces.update({ where: { id }, data: { statut }, include: BADGE_INCLUDE })
         : maj;
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'BADGE_ACCES_MODIFIE',
-          entite: 'BadgeAcces',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'BADGE_ACCES_MODIFIE',
+        'BadgeAcces',
+        id,
+        {
             avant: this.instantaneAudit(badge),
             apres: this.instantaneAudit(final),
             champsModifies: [...Object.keys(data), ...(statut !== badge.statut ? ['statut'] : [])],
-          }),
-        },
-      });
+          },
+      );
       return final;
     });
   }
@@ -271,20 +270,19 @@ export class BadgesService {
         data: { statut: StatutBadge.ANNULE, motif: dto.motif },
         include: BADGE_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'BADGE_ACCES_ANNULE',
-          entite: 'BadgeAcces',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'BADGE_ACCES_ANNULE',
+        'BadgeAcces',
+        id,
+        {
             avant: this.instantaneAudit(badge),
             apres: this.instantaneAudit(miseAJour),
             motifFourni: Boolean(dto.motif),
             champsModifies: ['statut', 'motif'],
-          }),
-        },
-      });
+          },
+      );
       return miseAJour;
     });
   }
@@ -309,19 +307,18 @@ export class BadgesService {
       }
       const miseAJour = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
       if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'BADGE_ACCES_RALLONGE',
-          entite: 'BadgeAcces',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'BADGE_ACCES_RALLONGE',
+        'BadgeAcces',
+        id,
+        {
             avant: this.instantaneAudit(badge),
             apres: this.instantaneAudit(miseAJour),
             champsModifies: ['dateValidite', 'statut'],
-          }),
-        },
-      });
+          },
+      );
       return miseAJour;
     });
   }

@@ -31,6 +31,7 @@ import {
   UpdateCourrierDto,
 } from './courrier.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const COURRIER_INCLUDE = {
   departement: { select: { id: true, code: true, nom: true } },
@@ -253,18 +254,17 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_CREE',
-          entite: 'Courrier',
-          entiteId: courrier.id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_CREE',
+        'Courrier',
+        courrier.id,
+        {
             avant: null,
             apres: this.instantaneAudit(courrier),
-          }),
-        },
-      });
+          },
+      );
       return courrier;
     });
   }
@@ -312,19 +312,18 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_MODIFIE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_MODIFIE',
+        'Courrier',
+        id,
+        {
             avant: this.instantaneAudit(actuel),
             apres: this.instantaneAudit(maj),
             champsModifies: Object.keys(dto),
-          }),
-        },
-      });
+          },
+      );
       return maj;
     });
   }
@@ -420,13 +419,13 @@ export class CourrierService {
             include: COURRIER_INCLUDE,
           });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_PARAPHE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_PARAPHE',
+        'Courrier',
+        id,
+        {
             etape: {
               id: etape.id,
               ordre: etape.ordre,
@@ -439,9 +438,8 @@ export class CourrierService {
             champsModifies: restantes === 0
               ? ['circuit', 'statut', 'traiteParId']
               : ['circuit'],
-          }),
-        },
-      });
+          },
+      );
       return apres;
     });
 
@@ -499,13 +497,13 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_CLOTURE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_CLOTURE',
+        'Courrier',
+        id,
+        {
             transition: `${courrier.statut}→${apres.statut}`,
             etapesForcees: true,
             notesModifiees: Boolean(dto.notes),
@@ -517,9 +515,8 @@ export class CourrierService {
               ...(statutSuivant === StatutCourrier.TRAITE ? ['traiteParId'] : []),
               ...(dto.notes ? ['notes'] : []),
             ],
-          }),
-        },
-      });
+          },
+      );
       return apres;
     });
 

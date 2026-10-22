@@ -7,6 +7,7 @@ import { Transform, Type } from 'class-transformer';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 /** Les services obligatoires portent aussi les archives et le rapprochement. */
 export const SERVICES = [
@@ -71,7 +72,14 @@ export class ServicesActifsService {
         const avant = await tx.parametre.findUnique({ where: { cle }, select: { valeur: true } });
         if ((avant?.valeur !== 'false') === service.actif) continue;
         await tx.parametre.upsert({ where: { cle }, create: { cle, valeur: String(service.actif) }, update: { valeur: String(service.actif) } });
-        await tx.auditLog.create({ data: { userId: user.id, action: 'SERVICE_ACTIVATION_MODIFIEE', entite: 'Parametre', entiteId: cle, details: JSON.stringify({ service: service.id, avant: { actif: avant?.valeur !== 'false' }, apres: { actif: service.actif } }) } });
+        await journaliser(
+          tx,
+          user,
+          'SERVICE_ACTIVATION_MODIFIEE',
+          'Parametre',
+          cle,
+          { service: service.id, avant: { actif: avant?.valeur !== 'false' }, apres: { actif: service.actif } },
+        );
       }
     });
     return this.liste();
