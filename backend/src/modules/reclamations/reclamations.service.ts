@@ -22,14 +22,17 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma, PrioriteReclamation, Role, StatutReclamation, TypeReclamation } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 
 const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
@@ -92,6 +95,8 @@ const MAX_MESSAGES_PAR_RECLAMATION = 100;
 
 @Injectable()
 export class ReclamationsService extends CrudService {
+  private readonly logger = new Logger(ReclamationsService.name);
+
   constructor(prisma: PrismaService) {
     super(prisma, 'reclamation', {
       orderBy: { creeLe: 'desc' },
@@ -101,20 +106,24 @@ export class ReclamationsService extends CrudService {
     });
   }
 
-  /** Les contrôles d'état et leurs écritures doivent partager un instantané sérialisable. */
+  /**
+   * Les contrôles d'état et leurs écritures doivent partager un instantané
+   * sérialisable. Partagé avec le cron d'escalade : le message passe par t(),
+   * qui fonctionne aussi hors requête HTTP.
+   */
   private async transactionSerializable<T>(operation: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     try {
       return await this.prisma.$transaction(operation, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
-        throw new ConflictException(I18nContext.current()!.t('reclamations.ecriture_concurrente_reessayez'));
+        throw this.conflitConcurrent();
       }
       throw error;
     }
   }
 
   private conflitConcurrent() {
-    return new ConflictException(I18nContext.current()!.t('reclamations.ecriture_concurrente_reessayez'));
+    return new ConflictException(t('reclamations.ecriture_concurrente_reessayez'));
   }
 
   /** Rôles autorisés à voir le registre entier (ADMIN, DIRECTION, SCOLARITE). */
@@ -192,15 +201,16 @@ export class ReclamationsService extends CrudService {
   /**
    * Écrit la trace dans la transaction de la mutation. Un journal écrit hors
    * transaction survivrait à une mutation annulée : on ne conserve donc que
-   * ce qui a été validé par le même commit que l'écriture métier.
+   * ce qui a été validé par le même commit que l'écriture métier. Sans
+   * utilisateur (tâche planifiée), l'entrée n'est rattachée à aucun compte.
    */
   private journaliser(
     tx: Prisma.TransactionClient,
-    user: AuthUser,
+    user: AuthUser | null,
     action: string,
     entiteId: string,
     details: Record<string, unknown>,
-    userId: string | null = user.id,
+    userId: string | null = user?.id ?? null,
   ) {
     return tx.auditLog.create({
       data: {
@@ -386,7 +396,7 @@ export class ReclamationsService extends CrudService {
     },
     user: AuthUser,
   ) {
-    const annee = String(new Date().getFullYear());
+    const annee = anneeNumero();
     const anonyme = dto.anonyme === true;
 
     if (user.role === Role.ETUDIANT && !user.etudiantId) {
@@ -673,10 +683,12 @@ export class ReclamationsService extends CrudService {
   }
 
   /**
-   * Cron manuel : escalade en série toutes les réclamations ouvertes dont le
-   * délai est écoulé. Renvoie la liste des réclamations escaladées.
+   * Escalade en série de toutes les réclamations ouvertes dont le délai est
+   * écoulé. Déclenchée chaque heure par `escaladerReclamationsEchues` (sans
+   * utilisateur) ou à la main par un ADMIN via POST /reclamations/cron/escalade.
+   * Renvoie la liste des réclamations escaladées.
    */
-  async cronEscalade(user: AuthUser) {
+  async cronEscalade(user: AuthUser | null) {
     const maintenant = Date.now();
     const toutes = await this.prisma.reclamation.findMany({
       where: { statut: { in: STATUTS_OUVERTS }, escaladeLe: null },
@@ -710,7 +722,8 @@ export class ReclamationsService extends CrudService {
           delaiEscaladeHeures: r.delaiEscaladeHeures ?? 48,
           forcee: false,
           // L'escalade automatique est un traitement de fond : elle est
-          // attribuée au compte à l'origine de l'exécution, pas à un agent.
+          // attribuée au compte qui l'a lancée à la main, à aucun compte
+          // quand c'est la tâche planifiée.
           origine: 'CRON',
         });
       }
@@ -719,5 +732,27 @@ export class ReclamationsService extends CrudService {
       escaladees: escaladees.length,
       numeros: escaladees.map((r) => r.numero),
     };
+  }
+
+  /**
+   * Chaque heure : escalade des réclamations dont le délai est dépassé. Le
+   * délai se compte en heures (48 h par défaut), une passe horaire suffit à
+   * ne jamais laisser une échéance dormir plus d'une heure. Hors requête
+   * HTTP, il n'y a ni utilisateur ni contexte i18n : le journal d'audit porte
+   * userId null (comme la clôture nocturne des séances) et une erreur est
+   * consignée sans remonter, la passe suivante reprenant les mêmes dossiers.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async escaladerReclamationsEchues() {
+    try {
+      const resultat = await this.cronEscalade(null);
+      if (resultat.escaladees) {
+        this.logger.log(`${resultat.escaladees} réclamation(s) escaladée(s) automatiquement : ${resultat.numeros.join(', ')}`);
+      }
+      return resultat;
+    } catch (error: any) {
+      this.logger.error(`Escalade automatique des réclamations interrompue : ${error?.message ?? error}`);
+      return null;
+    }
   }
 }

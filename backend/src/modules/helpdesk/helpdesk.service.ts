@@ -23,7 +23,7 @@ import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { echapper } from '../../common/utils';
 import {
   CreateEquipementDto,
@@ -408,7 +408,7 @@ export class TicketsService extends CrudService {
       }
     }
 
-    const annee = String(new Date().getFullYear());
+    const annee = anneeNumero();
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         return await this.prisma.$transaction(async (tx) => {

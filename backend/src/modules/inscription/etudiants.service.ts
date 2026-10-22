@@ -19,7 +19,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { toDateOnly } from '../../common/utils';
 import { CreateEtudiantDto, UpdateEtudiantDto } from './inscription.dto';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 
 export const ETUDIANT_INCLUDE = {
   user: { select: { id: true, email: true, actif: true } },
@@ -76,13 +76,6 @@ export async function prochainNumeroPaiement(
   annee: string,
 ): Promise<string> {
   return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
-}
-
-/** Année portée par les numéros : fin du libellé scolaire, sinon année civile. */
-export function anneeNumero(libelleAnnee?: string | null): string {
-  const fin = libelleAnnee?.split('-')[1]?.trim();
-  if (fin && /^\d{4}$/.test(fin)) return fin;
-  return String(new Date().getFullYear());
 }
 
 @Injectable()

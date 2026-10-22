@@ -25,7 +25,6 @@ import { isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
 import {
   EtudiantsService,
-  anneeNumero,
   prochainMatricule,
   prochainNumeroInscription,
   prochainNumeroPaiement,
@@ -34,6 +33,7 @@ import { MobileMoneyService } from './mobile-money.service';
 import { echapper } from '../../common/utils';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
+import { anneeNumero } from '../../common/numero';
 import {
   AnnulerPaiementDto,
   CreateFraisDto,
@@ -87,6 +87,19 @@ export const PAIEMENT_INCLUDE = {
   annee: { select: { id: true, libelle: true } },
   creePar: { select: { id: true, nom: true, prenom: true } },
   annulePar: { select: { id: true, nom: true, prenom: true } },
+} satisfies Prisma.PaiementInclude;
+
+/**
+ * Chargement propre à la confirmation pilote : PAIEMENT_INCLUDE complété des
+ * liens vers les autres portefeuilles (resto, recettes externes, demandes de
+ * documents), qui se confirment dans leur module. La liste /paiements garde
+ * PAIEMENT_INCLUDE tel quel.
+ */
+const PAIEMENT_SIMULATION_INCLUDE = {
+  ...PAIEMENT_INCLUDE,
+  recharges: { select: { id: true }, take: 1 },
+  rechargesRecette: { select: { id: true } },
+  demandeDocument: { select: { id: true } },
 } satisfies Prisma.PaiementInclude;
 
 export const FRAIS_INCLUDE = {
@@ -802,10 +815,22 @@ export class InscriptionService {
   async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
     const reussi = dto.statut === 'REUSSI';
     return this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_SIMULATION_INCLUDE });
       if (!paiement) throw new NotFoundException(I18nContext.current()!.t('inscription.paiement_introuvable'));
+      // Les paiements des autres portefeuilles ont leur propre confirmation :
+      // les passer ici sauterait le crédit du solde resto, le passage de la
+      // demande de document en PAYEE ou le circuit d'encaissement des recettes.
       if (paiement.inscriptionFormation) {
         throw new ConflictException(I18nContext.current()!.t('inscription.paiement_formation_confirme_par_action_de_formation'));
+      }
+      if (paiement.recharges.length) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_resto_confirme_par_la_recharge'));
+      }
+      if (paiement.rechargesRecette) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_recette_geree_par_les_recettes'));
+      }
+      if (paiement.demandeDocument) {
+        throw new ConflictException(I18nContext.current()!.t('inscription.paiement_document_confirme_par_la_demande'));
       }
       await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
       if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {

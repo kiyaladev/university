@@ -30,7 +30,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
 import { echapper, isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.module';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { t } from '../../common/i18n';
 import { I18nContext } from 'nestjs-i18n';
 import {
@@ -203,7 +203,7 @@ export class FormationsService {
       throw new ConflictException(I18nContext.current()!.t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
     }
 
-    const annee = String(new Date().getFullYear());
+    const annee = anneeNumero();
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const creation = await this.prisma.$transaction(async (tx) => {
