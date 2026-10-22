@@ -671,6 +671,10 @@ export default {
     description: 'Aucune donnée ne correspond à votre recherche.',
     cta: 'Réinitialiser les filtres',
   },
+  confirmation: {
+    deleteTitle: 'Confirmer la suppression',
+    deleteMessage: 'Supprimer « {libelle} » ? Cette action est irréversible.',
+  },
   languageSwitch: {
     label: 'Langue',
     fr: 'Français',

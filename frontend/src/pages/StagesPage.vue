@@ -33,7 +33,7 @@
         v-model="filtresTravaux"
         :chips="chipsTravaux"
         :placeholder="$t('stages.filters.searchPlaceholderWorks')"
-        @reinitialiser="reinitialiserTravaux"
+        @reinitialiser="trav.reinitialiser()"
       >
         <template #avances>
           <q-select
@@ -85,7 +85,7 @@
         :rows="lignesVisibles"
         :columns="colonnes"
         row-key="id"
-        :loading="chargement"
+        :loading="trav.chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
 
@@ -136,24 +136,12 @@
           </q-card-actions>
     </q-card></div>
   </template>
-<template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="work_off" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('stages.table.emptyState.title') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('stages.table.emptyState.description') }}
-            </div>
-            <q-btn
-              v-if="peutCreer"
-              flat
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('stages.actions.new')"
-              class="q-mt-sm"
-              @click="ouvrirCreation"
-            />
-          </div>
+        <template #no-data>
+          <etat-vide icone="work_off" :titre="$t('stages.table.emptyState.title')" :aide="$t('stages.table.emptyState.description')">
+            <template v-if="peutCreer" #action>
+              <q-btn flat no-caps color="primary" icon="add" :label="$t('stages.actions.new')" @click="ouvrirCreation" />
+            </template>
+          </etat-vide>
         </template>
 
         <template #body-cell-intitule="p">
@@ -476,7 +464,10 @@ import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import FilterBar from '../components/FilterBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import CalendarGrid from '../components/CalendarGrid.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import EtatVide from '../components/EtatVide.vue';
+import { texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
@@ -498,6 +489,7 @@ import type {
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 
 type SoutenanceCalendrier = {
   id: string;
@@ -513,9 +505,7 @@ type SoutenanceCalendrier = {
 
 const onglet = ref<'travaux' | 'soutenances'>('travaux');
 
-const travaux = ref<TravailEncadre[]>([]);
 const soutenancesAVenir = ref<SoutenanceCalendrier[]>([]);
-const chargement = ref(false);
 const detail = ref<TravailEncadre | null>(null);
 
 const filtresTravaux = ref<Record<string, any>>({
@@ -525,6 +515,32 @@ const filtresTravaux = ref<Record<string, any>>({
   encadrantId: null,
 });
 
+/**
+ * Travaux : l'API ne pagine pas, le q-table le fait. Le statut reste un filtre
+ * d'affichage (`clesLocales`) : envoyé au serveur, il viderait les compteurs
+ * des autres états.
+ */
+const trav = reactive(
+  useListePaginee<TravailEncadre>({
+    filtres: filtresTravaux,
+    pageSize: 0,
+    syncUrl: true,
+    clesLocales: ['statut'],
+    charger: ({ filtres: f }) =>
+      api
+        .get('/travaux-encadres', {
+          params: {
+            all: '1',
+            search: texteApi(f.recherche),
+            type: f.type || undefined,
+            encadrantId: f.encadrantId || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
+
+// Les filtres de soutenance sont purement locaux : aucun rechargement.
 const filtresSoutenances = ref<Record<string, any>>({
   recherche: '',
   statut: null,
@@ -555,24 +571,18 @@ interface BoutonTransition {
   role?: string[];
 }
 
-const BOUTONS_PAR_STATUT = computed<Record<StatutEncadrement, BoutonTransition[]>>(() => ({
-  PROPOSE: [
-    { statut: 'VALIDE', libelle: t('stages.transitions.validate'), icone: 'check', couleur: 'positive' },
-    { statut: 'ABANDONNE', libelle: t('stages.transitions.abandon'), icone: 'flag', couleur: 'negative' },
-  ],
-  VALIDE: [
-    { statut: 'EN_COURS', libelle: t('stages.transitions.startSupervision'), icone: 'play_arrow', couleur: 'primary' },
-    { statut: 'ABANDONNE', libelle: t('stages.transitions.abandon'), icone: 'flag', couleur: 'negative' },
-  ],
-  EN_COURS: [
-    { statut: 'SOUTENU', libelle: t('stages.transitions.moveToDefended'), icone: 'workspace_premium', couleur: 'positive' },
-    { statut: 'ABANDONNE', libelle: t('stages.transitions.abandon'), icone: 'flag', couleur: 'negative' },
-  ],
-  SOUTENU: [],
-  ABANDONNE: [
-    { statut: 'PROPOSE', libelle: t('stages.transitions.reactivate'), icone: 'restart_alt', couleur: 'primary', role: ['ADMIN'] },
-  ],
-}));
+const BOUTONS_PAR_STATUT = computed<Record<StatutEncadrement, BoutonTransition[]>>(() => {
+  const abandon = { statut: 'ABANDONNE' as const, libelle: t('stages.transitions.abandon'), icone: 'flag', couleur: 'negative' };
+  return {
+    PROPOSE: [{ statut: 'VALIDE', libelle: t('stages.transitions.validate'), icone: 'check', couleur: 'positive' }, abandon],
+    VALIDE: [{ statut: 'EN_COURS', libelle: t('stages.transitions.startSupervision'), icone: 'play_arrow', couleur: 'primary' }, abandon],
+    EN_COURS: [{ statut: 'SOUTENU', libelle: t('stages.transitions.moveToDefended'), icone: 'workspace_premium', couleur: 'positive' }, abandon],
+    SOUTENU: [],
+    ABANDONNE: [
+      { statut: 'PROPOSE', libelle: t('stages.transitions.reactivate'), icone: 'restart_alt', couleur: 'primary', role: ['ADMIN'] },
+    ],
+  };
+});
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'intitule', label: t('stages.table.columns.work'), field: 'intitule', align: 'left', sortable: true },
@@ -586,75 +596,45 @@ const colonnes = computed<QTableColumn[]>(() => [
 ]);
 
 const couleurStatut = (s: string) =>
-  s === 'SOUTENU'
-    ? 'positive'
-    : s === 'ABANDONNE'
-      ? 'negative'
-      : s === 'EN_COURS'
-        ? 'primary'
-        : s === 'VALIDE'
-          ? 'secondary'
-          : 'grey-7';
-
+  ({ SOUTENU: 'positive', ABANDONNE: 'negative', EN_COURS: 'primary', VALIDE: 'secondary' })[s] ?? 'grey-7';
 
 const compteurs = computed(() => {
   const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];
   return statuts.map((statut) => ({
     statut,
     label: LIBELLE_STATUT_ENCADREMENT[statut] ?? statut,
-    nb: travaux.value.filter((t) => t.statut === statut).length,
+    nb: trav.lignes.filter((x) => x.statut === statut).length,
   }));
 });
 
-const lignesVisibles = computed(() => {
-  let liste = travaux.value;
-  if (filtresTravaux.value.statut) {
-    liste = liste.filter((t) => t.statut === filtresTravaux.value.statut);
-  }
-  return liste;
-});
+const lignesVisibles = computed(() =>
+  filtresTravaux.value.statut ? trav.lignes.filter((x) => x.statut === filtresTravaux.value.statut) : trav.lignes,
+);
+
+function chipsCommuns(f: Record<string, any>): ChipFiltre[] {
+  const cs: ChipFiltre[] = [];
+  if (f.recherche) cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
+  if (f.type) cs.push({ label: LIBELLE_TYPE_ENCADREMENT[f.type] ?? f.type, value: f.type, icone: 'work', cle: 'type' });
+  if (f.statut) cs.push({ label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut' });
+  return cs;
+}
 
 /** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
 const chipsTravaux = computed(() => {
   const f = filtresTravaux.value;
-  const cs: ChipFiltre[] = [];
-  if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
-  }
-  if (f.type) {
-    cs.push({ label: LIBELLE_TYPE_ENCADREMENT[f.type] ?? f.type, value: f.type, icone: 'work', cle: 'type'});
-  }
-  if (f.statut) {
-    cs.push({
-      label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut,
-      value: f.statut,
-      icone: 'flag', cle: 'statut'});
-  }
-  if (f.encadrantId) cs.push({ label: t('stages.filters.supervisorFiltered'), value: f.encadrantId, icone: 'person', cle: 'encadrantId'});
+  const cs = chipsCommuns(f);
+  if (f.encadrantId) cs.push({ label: t('stages.filters.supervisorFiltered'), value: f.encadrantId, icone: 'person', cle: 'encadrantId' });
   return cs;
 });
 
-const chipsSoutenances = computed(() => {
-  const f = filtresSoutenances.value;
-  const cs: ChipFiltre[] = [];
-  if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
-  }
-  if (f.statut) {
-    cs.push({
-      label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut,
-      value: f.statut,
-      icone: 'flag', cle: 'statut'});
-  }
-  return cs;
-});
+const chipsSoutenances = computed(() => chipsCommuns(filtresSoutenances.value));
 
 const statsParType = computed(() => {
   const types: TypeEncadrement[] = ['STAGE', 'MEMOIRE', 'RAPPORT'];
   return types.map((type) => ({
     type,
     label: LIBELLE_TYPE_ENCADREMENT[type],
-    nb: travaux.value.filter((t) => t.type === type).length,
+    nb: trav.lignes.filter((x) => x.type === type).length,
   }));
 });
 
@@ -668,27 +648,27 @@ function basculerStatut(statut: StatutEncadrement) {
   filtresTravaux.value.statut = filtresTravaux.value.statut === statut ? null : statut;
 }
 
-function boutonsTransition(t: TravailEncadre) {
+const estEncadrant = (tr: TravailEncadre) =>
+  auth.role === 'ENSEIGNANT' && tr.encadrantId === auth.utilisateur?.enseignantId;
+
+function boutonsTransition(tr: TravailEncadre) {
   if (!peutTransitionner.value) return [];
-  if (auth.role === 'ENSEIGNANT' && t.encadrantId !== auth.utilisateur?.enseignantId) return [];
-  return (BOUTONS_PAR_STATUT.value[t.statut] ?? []).filter(
+  if (auth.role === 'ENSEIGNANT' && !estEncadrant(tr)) return [];
+  return (BOUTONS_PAR_STATUT.value[tr.statut] ?? []).filter(
     (b) => !b.role || auth.aRole(b.role as never),
   );
 }
 
-function peutModifierRapport(t: TravailEncadre) {
-  return (
-    auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) ||
-    (auth.role === 'ENSEIGNANT' && t.encadrantId === auth.utilisateur?.enseignantId)
-  );
+function peutModifierRapport(tr: TravailEncadre) {
+  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) || estEncadrant(tr);
 }
 
-function peutPlanifierSoutenance(t: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && t.statut === 'EN_COURS' && !t.soutenance;
+function peutPlanifierSoutenance(tr: TravailEncadre) {
+  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && tr.statut === 'EN_COURS' && !tr.soutenance;
 }
 
-function peutConstatJury(t: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION']) && !!t.soutenance;
+function peutConstatJury(tr: TravailEncadre) {
+  return auth.aRole(['ADMIN', 'DIRECTION']) && !!tr.soutenance;
 }
 
 function ouvrirCreation() {
@@ -696,83 +676,78 @@ function ouvrirCreation() {
   dialogTravail.value = true;
 }
 
-function ouvrirEdition(t: TravailEncadre) {
+function ouvrirEdition(tr: TravailEncadre) {
   if (!peutCreer.value) return;
-  travailEdite.value = t;
+  travailEdite.value = tr;
   dialogTravail.value = true;
 }
 
-function ouvrirSoutenance(t: TravailEncadre) {
-  travailSoutenance.value = t;
+function ouvrirSoutenance(tr: TravailEncadre) {
+  travailSoutenance.value = tr;
   modeSoutenance.value = 'planifier';
   dialogSoutenance.value = true;
 }
 
-function ouvrirJury(t: TravailEncadre) {
-  travailSoutenance.value = t;
+function ouvrirJury(tr: TravailEncadre) {
+  travailSoutenance.value = tr;
   modeSoutenance.value = 'jury';
   dialogSoutenance.value = true;
 }
 
-function transition(travail: TravailEncadre, cible: StatutEncadrement) {
+async function transition(travail: TravailEncadre, cible: StatutEncadrement) {
   const libelle = LIBELLE_STATUT_ENCADREMENT[cible] ?? cible;
-  $q.dialog({
-    title: t('stages.dialogs.transition.title', { label: libelle }),
+  const ok = await confirmer({
+    titre: t('stages.dialogs.transition.title', { label: libelle }),
     message:
       cible === 'ABANDONNE'
         ? t('stages.dialogs.transition.abandonMessage')
         : cible === 'SOUTENU'
           ? t('stages.dialogs.transition.defendedMessage')
           : t('stages.dialogs.transition.defaultMessage'),
-    cancel: true,
-  }).onOk(async () => {
+    danger: cible === 'ABANDONNE',
+  });
+  if (!ok) return;
+  try {
     await api.post(`/travaux-encadres/${travail.id}/transition`, { statut: cible });
     $q.notify({ type: 'positive', message: t('stages.notifications.transitionSuccess', { label: libelle }) });
     await charger();
-  });
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 
 async function basculerRapport(travail: TravailEncadre, rendu: boolean) {
-  await api.put(`/travaux-encadres/${travail.id}`, { rapportRendu: rendu });
-  $q.notify({
-    type: 'positive',
-    message: rendu ? t('stages.notifications.reportMarkedDone') : t('stages.notifications.reportMarkedPending'),
-  });
-  await charger();
+  try {
+    await api.put(`/travaux-encadres/${travail.id}`, { rapportRendu: rendu });
+    $q.notify({
+      type: 'positive',
+      message: rendu ? t('stages.notifications.reportMarkedDone') : t('stages.notifications.reportMarkedPending'),
+    });
+    await charger();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 
-function imprimer(t: TravailEncadre) {
-  void ouvrirImpression(`/travaux-encadres/${t.id}/fiche`);
+function imprimer(tr: TravailEncadre) {
+  void ouvrirImpression(`/travaux-encadres/${tr.id}/fiche`);
 }
 
 function supprimer(travail: TravailEncadre) {
-  $q.dialog({
-    title: t('stages.dialogs.delete.title'),
+  void supprimerAvecConfirmation(`/travaux-encadres/${travail.id}`, travail.intitule, charger, {
+    titre: t('stages.dialogs.delete.title'),
     message: t('stages.dialogs.delete.message', { title: travail.intitule }),
-    cancel: true,
-    ok: { color: 'negative', label: t('stages.dialogs.delete.confirm') },
-  }).onOk(async () => {
-    await api.delete(`/travaux-encadres/${travail.id}`);
-    $q.notify({ type: 'positive', message: t('stages.notifications.deleted') });
-    await charger();
+    ok: t('stages.dialogs.delete.confirm'),
+    succes: t('stages.notifications.deleted'),
   });
 }
 
-function reinitialiserTravaux() {
-  filtresTravaux.value = {
-    recherche: filtresTravaux.value.recherche ?? '',
-    type: null,
-    statut: null,
-    encadrantId: null,
-  };
-}
-
-const travauxFiltresSoutenance = computed(() => {
-  return travaux.value.filter((t) => t.statut === 'EN_COURS' || t.statut === 'SOUTENU' || t.soutenance);
-});
+const travauxFiltresSoutenance = computed(() =>
+  trav.lignes.filter((x) => x.statut === 'EN_COURS' || x.statut === 'SOUTENU' || x.soutenance),
+);
 
 /** Dossiers arrivés au bout du parcours — calculés sur la liste complète. */
-const travauxSoutenus = computed(() => travaux.value.filter((t) => t.statut === 'SOUTENU'));
+const travauxSoutenus = computed(() => trav.lignes.filter((x) => x.statut === 'SOUTENU'));
 
 const soutenancesFiltrees = computed(() => {
   const f = filtresSoutenances.value;
@@ -803,46 +778,25 @@ const evenementsSoutenances = computed(() =>
   })),
 );
 
-async function charger() {
-  chargement.value = true;
+/** Calendrier des soutenances : réservé à la scolarité, fenêtre à venir. */
+async function chargerSoutenances() {
+  if (!peutCreer.value) return;
   try {
-    const f = filtresTravaux.value;
-    // Le statut reste un filtre d'affichage : envoyé au serveur, il viderait
-    // les compteurs des autres états.
-    const [travauxRes, calendrierRes] = await Promise.all([
-      api.get('/travaux-encadres', {
-        params: {
-          all: '1',
-          search: f.recherche || undefined,
-          type: f.type || undefined,
-          encadrantId: f.encadrantId || undefined,
-        },
-      }),
-      peutCreer.value
-        ? api.get('/soutenances').catch(() => ({ data: [] }))
-        : Promise.resolve({ data: [] }),
-    ]);
-    travaux.value = travauxRes.data.data;
-    const listeS = (calendrierRes.data ?? []) as Array<{
-      id: string;
-      date: string;
-      travailEncadre?: any;
-      travailEncadreId?: string;
-    }>;
+    const { data } = await api.get<SoutenanceCalendrier[]>('/soutenances');
     const dateMin = aujourdhui();
-    soutenancesAVenir.value = (listeS as SoutenanceCalendrier[]).filter(
-      (s) => s.date.slice(0, 10) >= dateMin,
-    );
-  } finally {
-    chargement.value = false;
+    soutenancesAVenir.value = (data ?? []).filter((s) => s.date.slice(0, 10) >= dateMin);
+  } catch {
+    soutenancesAVenir.value = [];
   }
 }
 
-// Les filtres de soutenance sont purement locaux : aucun rechargement.
-watch(filtresTravaux, () => charger(), { deep: true });
+/** Après une action : la liste des travaux et le calendrier bougent ensemble. */
+function charger() {
+  return Promise.all([trav.recharger(), chargerSoutenances()]);
+}
 
 onMounted(() => {
-  void charger();
+  void chargerSoutenances();
 });
 </script>
 

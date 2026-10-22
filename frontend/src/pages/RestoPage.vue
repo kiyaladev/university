@@ -155,32 +155,23 @@
         v-model="filtresPortefeuilles"
         :chips="chipsPortefeuilles"
         :placeholder="$t('resto.wallets.searchPlaceholder')"
-        @reinitialiser="reinitialiserPortefeuilles"
-      >
-      </filter-bar>
-
-      <pagination-bar
-        :page="paginationPortefeuilles.page"
-        :page-size="paginationPortefeuilles.pageSize"
-        :total="paginationPortefeuilles.total"
-        :show-all="false"
-        @update:page="paginationPortefeuilles.page = $event; requeterPortefeuilles()"
-        @update:page-size="paginationPortefeuilles.pageSize = $event; paginationPortefeuilles.page = 1; requeterPortefeuilles()"
-        @tous="chargerTousPortefeuilles"
+        @reinitialiser="pf.reinitialiser()"
       />
+
+      <pagination-bar v-model:page="pf.page" v-model:page-size="pf.pageSize" :total="pf.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
-        v-if="modePortefeuilles === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="portefeuilles"
+        :rows="pf.lignes"
         :columns="colonnesPortefeuilles"
         row-key="id"
-        :loading="chargementPortefeuilles"
+        :loading="pf.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementPortefeuilles || portefeuilles.length > 0"
+        :hide-bottom="pf.chargement || pf.lignes.length > 0"
       >
         <template #body-cell-etudiant="p">
           <q-td :props="p">
@@ -199,32 +190,20 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="account_balance_wallet" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('resto.wallets.emptyState.title') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('resto.wallets.emptyState.description') }}
-            </div>
-            <q-btn
-              v-if="peutRecharger"
-              flat
-              no-caps
-              color="primary"
-              icon="account_balance_wallet"
-              :label="$t('resto.actions.creditWallet')"
-              class="q-mt-sm"
-              @click="rechargerCible"
-            />
-          </div>
+          <etat-vide icone="account_balance_wallet" :titre="$t('resto.wallets.emptyState.title')" :aide="$t('resto.wallets.emptyState.description')">
+            <template v-if="peutRecharger" #action>
+              <q-btn flat no-caps color="primary" icon="account_balance_wallet" :label="$t('resto.actions.creditWallet')" @click="rechargerCible" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <!-- Vue cartes -->
       <div v-else class="row q-col-gutter-md">
-        <div v-if="chargementPortefeuilles" class="col-12 q-pa-md text-center">
+        <div v-if="pf.chargement" class="col-12 q-pa-md text-center">
           <q-spinner color="primary" />
         </div>
-        <div v-for="p in portefeuilles" :key="p.id" class="col-12 col-md-6 col-xl-4">
+        <div v-for="p in pf.lignes" :key="p.id" class="col-12 col-md-6 col-xl-4">
           <q-card flat bordered class="carte">
             <q-card-section class="text-center">
               <div class="pochoir text-grey-7">{{ p.etudiant?.matricule ?? '—' }}</div>
@@ -246,20 +225,11 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementPortefeuilles && !portefeuilles.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="account_balance_wallet" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('resto.wallets.emptyState.title') }}</div>
-          <q-btn
-            v-if="peutRecharger"
-            flat
-            no-caps
-            color="primary"
-            icon="account_balance_wallet"
-            :label="$t('resto.actions.creditWallet')"
-            class="q-mt-sm"
-            @click="rechargerCible"
-          />
-        </div>
+        <etat-vide v-if="!pf.chargement && !pf.lignes.length" class="col-12" icone="account_balance_wallet" :titre="$t('resto.wallets.emptyState.title')">
+          <template v-if="peutRecharger" #action>
+            <q-btn flat no-caps color="primary" icon="account_balance_wallet" :label="$t('resto.actions.creditWallet')" @click="rechargerCible" />
+          </template>
+        </etat-vide>
       </div>
     </q-tab-panel>
 
@@ -276,7 +246,7 @@
         v-model="filtresTransactions"
         :chips="chipsTransactions"
         :recherche="false"
-        @reinitialiser="reinitialiserTransactions"
+        @reinitialiser="tx.reinitialiser(['dateDebut', 'dateFin'])"
       >
         <template #avances>
           <champ-date v-model="filtresTransactions.dateDebut" :label="$t('resto.transactions.filters.from')" />
@@ -304,7 +274,7 @@
         </template>
         <template #actions>
           <q-btn flat dense no-caps icon="today" :label="$t('resto.transactions.actions.today')" @click="periodeAujourdhui" />
-          <q-btn flat dense round icon="refresh" :aria-label="$t('resto.transactions.actions.refresh')" @click="chargerTransactions">
+          <q-btn flat dense round icon="refresh" :aria-label="$t('resto.transactions.actions.refresh')" @click="tx.recharger()">
             <q-tooltip>{{ $t('resto.transactions.actions.refresh') }}</q-tooltip>
           </q-btn>
         </template>
@@ -340,9 +310,9 @@
         :rows="transactions"
         :columns="colonnesTransactions"
         row-key="cle"
-        :loading="chargementTransactions"
+        :loading="tx.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementTransactions || transactions.length > 0"
+        :hide-bottom="tx.chargement || transactions.length > 0"
         :sort-method="triTable"
         :default-sort="{ sortBy: 'date', descending: true }"
       >
@@ -383,38 +353,29 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="receipt_long" size="38px" color="grey-5" />
-            <div class="q-mt-sm">
-              {{
-                $t('resto.transactions.emptyState.title', {
-                  type:
-                    ongletTransactions === 'recharges'
-                      ? $t('resto.transactions.typeLabel.recharges')
-                      : $t('resto.transactions.typeLabel.consommations'),
-                })
-              }}
-            </div>
-            <div class="text-caption q-mt-xs">
-              {{
-                $t('resto.transactions.emptyState.description', {
-                  from: dateLisible(filtresTransactions.dateDebut),
-                  to: dateLisible(filtresTransactions.dateFin),
-                })
-              }}
-            </div>
-          </div>
+          <etat-vide
+            icone="receipt_long"
+            :titre="$t('resto.transactions.emptyState.title', {
+              type: $t(`resto.transactions.typeLabel.${ongletTransactions}`),
+            })"
+            :aide="$t('resto.transactions.emptyState.description', {
+              from: dateLisible(filtresTransactions.dateDebut),
+              to: dateLisible(filtresTransactions.dateFin),
+            })"
+          />
         </template>
       </q-table>
     </q-tab-panel>
 
-    <recharge-dialog v-if="peutRecharger" v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @rechargee="apresRecharge" />
+    <recharge-dialog v-if="peutRecharger" v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @enregistre="apresRecharge" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -423,6 +384,7 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import QrScanner from '../components/QrScanner.vue';
 import ChampDate from '../components/ChampDate.vue';
+import EtatVide from '../components/EtatVide.vue';
 import RechargeDialog from '../components/RechargeDialog.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
@@ -447,6 +409,8 @@ const PRIX_REPAS: Record<TypeRepas, number> = {
 const auth = useAuthStore();
 const $q = useQuasar();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
+const presentation = usePresentationListe();
 
 const peutGuichet = computed(() => auth.aRole(['CONTROLEUR', 'ADMIN', 'SCOLARITE']));
 const peutRecharger = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
@@ -518,20 +482,24 @@ function rechargerDepuisGuichet() {
 }
 
 // ------------------------------------------------------------- portefeuilles
-const portefeuilles = ref<any[]>([]);
-const chargementPortefeuilles = ref(false);
-const paginationPortefeuilles = ref({ page: 1, pageSize: 20, total: 0 });
+// Le serveur ne filtre que sur l'étudiant (matricule, nom, prénom).
 const filtresPortefeuilles = ref<Record<string, any>>({ recherche: '' });
-const modePortefeuilles = usePresentationListe();
+const pf = reactive(
+  useListePaginee<any>({
+    filtres: filtresPortefeuilles,
+    syncUrl: true,
+    prefixeUrl: 'pf_',
+    actif: () => peutRecharger.value,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/resto/portefeuilles', { params: { ...pageApi(p), search: texteApi(f.recherche) } })
+        .then((r) => r.data),
+  }),
+);
 const dialogRecharge = ref(false);
 const rechargeEtudiantId = ref<string | null>(null);
 
-watch(filtresPortefeuilles, () => {
-  paginationPortefeuilles.value.page = 1;
-  requeterPortefeuilles();
-}, { deep: true });
-
-const chipsPortefeuilles = computed(() =>
+const chipsPortefeuilles = computed<ChipFiltre[]>(() =>
   filtresPortefeuilles.value.recherche
     ? [{
         label: t('resto.wallets.chips.search', { search: filtresPortefeuilles.value.recherche }),
@@ -541,34 +509,6 @@ const chipsPortefeuilles = computed(() =>
       }]
     : [],
 );
-
-async function requeterPortefeuilles() {
-  if (!peutRecharger.value) return;
-  chargementPortefeuilles.value = true;
-  try {
-    const f = filtresPortefeuilles.value;
-    const params: Record<string, any> = {
-      page: paginationPortefeuilles.value.page,
-      pageSize: paginationPortefeuilles.value.pageSize,
-      search: (f.recherche ?? '').toString().trim() || undefined,
-    };
-    const { data } = await api.get('/resto/portefeuilles', { params });
-    portefeuilles.value = data.data;
-    paginationPortefeuilles.value.total = data.total;
-  } finally {
-    chargementPortefeuilles.value = false;
-  }
-}
-
-async function chargerTousPortefeuilles() {
-  paginationPortefeuilles.value.page = 1;
-  paginationPortefeuilles.value.pageSize = Math.max(paginationPortefeuilles.value.total, 200) || 200;
-  await requeterPortefeuilles();
-}
-
-function reinitialiserPortefeuilles() {
-  filtresPortefeuilles.value = { recherche: filtresPortefeuilles.value.recherche ?? '' };
-}
 
 function rechargerPortefeuille(row: any) {
   rechargeEtudiantId.value = row.etudiant?.id ?? null;
@@ -593,23 +533,6 @@ const colonnesPortefeuilles = computed<QTableColumn[]>(() => [
 ]);
 
 // ------------------------------------------------------------ transactions
-const ongletTransactions = ref<'recharges' | 'consommations'>('recharges');
-const chargementTransactions = ref(false);
-/** Les deux flux de la période : les KPI portent sur l'ensemble. */
-const toutesLignes = ref<LigneTransaction[]>([]);
-
-const filtresTransactions = ref<Record<string, any>>({
-  dateDebut: aujourdhui(),
-  dateFin: aujourdhui(),
-});
-
-/** L'onglet ne fait que trancher dans ce qui est déjà chargé. */
-const transactions = computed(() =>
-  toutesLignes.value.filter((l) =>
-    ongletTransactions.value === 'recharges' ? l.type === 'RECHARGE' : l.type === 'REPAS',
-  ),
-);
-
 interface LigneTransaction {
   cle: string;
   id: string;
@@ -623,6 +546,74 @@ interface LigneTransaction {
   annulable: boolean;
 }
 
+const ongletTransactions = ref<'recharges' | 'consommations'>('recharges');
+
+/** La période reste au réinitialiser : c'est le cadre de lecture, pas un filtre parmi d'autres. */
+const filtresTransactions = ref<Record<string, any>>({
+  dateDebut: aujourdhui(),
+  dateFin: aujourdhui(),
+  statut: null,
+  cantine: '',
+});
+
+const nomEtudiant = (e: any) => (e ? `${e.matricule} ${e.nom} ${e.prenom}` : '');
+
+/**
+ * Les deux flux de la période (consommations et recharges) fusionnés en une
+ * liste : les KPI portent sur l'ensemble, l'onglet ne fait que trancher.
+ */
+async function chargerFlux(f: Record<string, any>): Promise<{ data: LigneTransaction[] }> {
+  const periode = { dateDebut: f.dateDebut || aujourdhui(), dateFin: f.dateFin || aujourdhui(), pageSize: 200 };
+  const [cons, rech] = await Promise.all([
+    api.get('/resto/consommations', { params: { ...periode, cantine: texteApi(f.cantine) } }),
+    // Le serveur ne filtre les recharges que par statut de paiement.
+    api.get('/resto/recharges', { params: { ...periode, statut: f.statut || undefined } }),
+  ]);
+  const peutAnnuler = auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']);
+  const lignes: LigneTransaction[] = [
+    ...cons.data.data.map((c: any) => ({
+      cle: `c-${c.id}`,
+      id: c.id,
+      repas: c.repas as TypeRepas,
+      type: 'REPAS' as const,
+      date: c.consommeLe,
+      libelle: c.cantine ? `${LIBELLE_TYPE_REPAS[c.repas] ?? c.repas} · ${c.cantine}` : LIBELLE_TYPE_REPAS[c.repas] ?? c.repas,
+      etudiant: c.portefeuille?.etudiant ? nomEtudiant(c.portefeuille.etudiant) : c.etudiant,
+      montant: -c.montant,
+      statut: c.statut,
+      annulable: c.statut === 'VALIDEE' && peutAnnuler,
+    })),
+    ...rech.data.data.map((r: any) => ({
+      cle: `r-${r.id}`,
+      id: r.id,
+      type: 'RECHARGE' as const,
+      date: r.rechargeLe,
+      libelle: `${LIBELLE_MODE_PAIEMENT[r.paiement?.mode] ?? t('resto.transactions.paymentModeFallback')}${r.paiement?.reference ? ` — ${r.paiement.reference}` : ''}`,
+      etudiant: nomEtudiant(r.portefeuille?.etudiant),
+      montant: r.montant,
+      statut: r.paiement?.statut ?? r.statut,
+      annulable: false,
+    })),
+  ];
+  return { data: lignes.sort((a, b) => (a.date < b.date ? 1 : -1)) };
+}
+
+const tx = reactive(
+  useListePaginee<LigneTransaction>({
+    filtres: filtresTransactions,
+    pageSize: 0,
+    syncUrl: true,
+    prefixeUrl: 'tx_',
+    clesTexte: ['cantine'],
+    actif: () => peutRecharger.value,
+    charger: ({ filtres: f }) => chargerFlux(f),
+  }),
+);
+
+const transactions = computed(() =>
+  tx.lignes.filter((l) => (ongletTransactions.value === 'recharges' ? l.type === 'RECHARGE' : l.type === 'REPAS')),
+);
+
 const optionsStatutsPaiement = Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({
   value, label,
 }));
@@ -630,9 +621,9 @@ const optionsStatutsPaiement = Object.entries(LIBELLE_STATUT_PAIEMENT).map(([val
 const totaux = computed(() => {
   let debite = 0;
   let credite = 0;
-  for (const t of toutesLignes.value) {
-    if (t.montant < 0) debite += -t.montant;
-    else credite += t.montant;
+  for (const l of tx.lignes) {
+    if (l.montant < 0) debite += -l.montant;
+    else credite += l.montant;
   }
   return { debite, credite, net: credite - debite };
 });
@@ -647,89 +638,16 @@ const chipsTransactions = computed(() => {
     },
   ];
   if (f.statut) {
-    cs.push({
-      label: LIBELLE_STATUT_PAIEMENT[f.statut] ?? f.statut,
-      value: f.statut,
-      icone: 'payments', cle: 'statut'});
+    cs.push({ label: LIBELLE_STATUT_PAIEMENT[f.statut] ?? f.statut, value: f.statut, icone: 'payments', cle: 'statut' });
   }
-  if (f.cantine)
-    cs.push({
-      label: t('resto.transactions.chips.cantine', { cantine: f.cantine }),
-      value: f.cantine,
-      icone: 'restaurant',
-    });
+  if (f.cantine) {
+    cs.push({ label: t('resto.transactions.chips.cantine', { cantine: f.cantine }), value: f.cantine, icone: 'restaurant' });
+  }
   return cs;
 });
 
-/** La période reste : c'est le cadre de lecture, pas un filtre parmi d'autres. */
-function reinitialiserTransactions() {
-  filtresTransactions.value = {
-    dateDebut: filtresTransactions.value.dateDebut,
-    dateFin: filtresTransactions.value.dateFin,
-  };
-}
-
 function periodeAujourdhui() {
-  filtresTransactions.value = {
-    ...filtresTransactions.value,
-    dateDebut: aujourdhui(),
-    dateFin: aujourdhui(),
-  };
-}
-
-async function chargerTransactions() {
-  if (!peutRecharger.value) return;
-  chargementTransactions.value = true;
-  try {
-    const params: Record<string, any> = {
-      dateDebut: filtresTransactions.value.dateDebut || aujourdhui(),
-      dateFin: filtresTransactions.value.dateFin || aujourdhui(),
-      pageSize: 200,
-    };
-    // Le serveur ne filtre les recharges que par statut de paiement.
-    const paramsRecharges: Record<string, any> = { ...params };
-    if (filtresTransactions.value.statut) paramsRecharges.statut = filtresTransactions.value.statut;
-
-    const paramsConso: Record<string, any> = { ...params };
-    if (filtresTransactions.value.cantine) paramsConso.cantine = filtresTransactions.value.cantine;
-
-    const [cons, rech] = await Promise.all([
-      api.get('/resto/consommations', { params: paramsConso }),
-      api.get('/resto/recharges', { params: paramsRecharges }),
-    ]);
-    const lignes: LigneTransaction[] = [
-      ...cons.data.data.map((c: any) => ({
-        cle: `c-${c.id}`,
-        id: c.id,
-        repas: c.repas as TypeRepas,
-        type: 'REPAS' as const,
-        date: c.consommeLe,
-        libelle: c.cantine ? `${LIBELLE_TYPE_REPAS[c.repas] ?? c.repas} · ${c.cantine}` : LIBELLE_TYPE_REPAS[c.repas] ?? c.repas,
-        etudiant: c.portefeuille?.etudiant
-          ? `${c.portefeuille.etudiant.matricule} ${c.portefeuille.etudiant.nom} ${c.portefeuille.etudiant.prenom}`
-          : c.etudiant,
-        montant: -c.montant,
-        statut: c.statut,
-        annulable: c.statut === 'VALIDEE' && auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']),
-      })),
-      ...rech.data.data.map((r: any) => ({
-        cle: `r-${r.id}`,
-        id: r.id,
-        type: 'RECHARGE' as const,
-        date: r.rechargeLe,
-        libelle: `${LIBELLE_MODE_PAIEMENT[r.paiement?.mode] ?? t('resto.transactions.paymentModeFallback')}${r.paiement?.reference ? ` — ${r.paiement.reference}` : ''}`,
-        etudiant: r.portefeuille?.etudiant
-          ? `${r.portefeuille.etudiant.matricule} ${r.portefeuille.etudiant.nom} ${r.portefeuille.etudiant.prenom}`
-          : '',
-        montant: r.montant,
-        statut: r.paiement?.statut ?? r.statut,
-        annulable: false,
-      })),
-    ];
-    toutesLignes.value = lignes.sort((a, b) => (a.date < b.date ? 1 : -1));
-  } finally {
-    chargementTransactions.value = false;
-  }
+  filtresTransactions.value = { ...filtresTransactions.value, dateDebut: aujourdhui(), dateFin: aujourdhui() };
 }
 
 function classeStatut(s: string) {
@@ -745,21 +663,25 @@ function classeStatut(s: string) {
     })[s] ?? 'champ--attente';
 }
 
-function annulerRepas(ligne: LigneTransaction) {
-  $q.dialog({
-    title: t('resto.transactions.confirmRefund.title'),
+async function annulerRepas(ligne: LigneTransaction) {
+  const ok = await confirmer({
+    titre: t('resto.transactions.confirmRefund.title'),
     message: t('resto.transactions.confirmRefund.message', {
       meal: LIBELLE_TYPE_REPAS[ligne.repas ?? 'AUTRE'] ?? ligne.libelle,
       amount: montantLisible(-ligne.montant),
     }),
-    cancel: true,
-    ok: { label: t('resto.transactions.confirmRefund.confirm'), color: 'negative' },
-  }).onOk(async () => {
+    ok: t('resto.transactions.confirmRefund.confirm'),
+    danger: true,
+  });
+  if (!ok) return;
+  try {
     // Motif interne conservé en français : c'est une valeur d'audit stockée côté serveur, pas un texte affiché.
     await api.post(`/resto/consommations/${ligne.id}/annuler`, { motif: 'Remboursement guichet' });
     $q.notify({ type: 'positive', message: t('resto.transactions.messages.refunded') });
-    void chargerTransactions();
-  });
+    void tx.recharger();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 
 const colonnesTransactions = computed<QTableColumn[]>(() => [
@@ -786,20 +708,9 @@ function triTable(rows: readonly any[], sortBy: string, descending: boolean) {
 
 // --------------------------------------------------------------- cycle de vie
 function apresRecharge() {
-  void requeterPortefeuilles();
-  void chargerTransactions();
+  void pf.recharger();
+  void tx.recharger();
 }
-
-// Sans ce watcher, changer les dates n'avait aucun effet tant qu'on ne
-// cliquait pas sur « Actualiser ».
-watch(filtresTransactions, () => {
-  void chargerTransactions();
-}, { deep: true });
-
-onMounted(() => {
-  void requeterPortefeuilles();
-  void chargerTransactions();
-});
 </script>
 
 <style scoped lang="scss">

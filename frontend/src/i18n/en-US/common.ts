@@ -671,6 +671,10 @@ export default {
     description: 'No data matches your search.',
     cta: 'Reset filters',
   },
+  confirmation: {
+    deleteTitle: 'Confirm deletion',
+    deleteMessage: 'Delete “{libelle}”? This action cannot be undone.',
+  },
   languageSwitch: {
     label: 'Language',
     fr: 'French',
