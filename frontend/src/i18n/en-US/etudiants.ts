@@ -96,8 +96,6 @@ export default {
     since: 'Since: {date}',
     until: 'Until: {date}',
   },
-  localFilterNote:
-    'Cohort, gender, and dates are applied to the displayed page only: use "Load all" to apply them to the whole registry.',
   dialogInscriptions: {
     title: 'Enrollments — {name}',
     emptyState: 'No enrollment record for this student.',

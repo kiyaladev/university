@@ -368,10 +368,6 @@
       </div>
     </div>
 
-    <div v-if="filtrageLocalActif && etudiants.length" class="text-caption text-grey-7 q-mt-sm">
-      {{ $t('etudiants.localFilterNote') }}
-    </div>
-
     <pagination-bar
       v-if="etudiants.length"
       :page="page"
@@ -757,49 +753,21 @@ function imprimerDossier(dossier: Inscription) {
   void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
-/** Paramètres réellement compris par `GET /etudiants`. */
+/**
+ * Filtres transmis à `GET /etudiants` : tous sont appliqués par le serveur,
+ * donc à l'ensemble du registre et au total paginé. Promotion et dates
+ * portent sur les dossiers d'inscription de l'étudiant (date de création).
+ */
 function paramsServeur(): Record<string, any> {
-  const params: Record<string, any> = { all: '1' };
+  const params: Record<string, any> = {};
   if (filtres.value.recherche) params.search = filtres.value.recherche;
   if (filtres.value.actif) params.actif = filtres.value.actif;
+  if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
+  if (filtres.value.sexe) params.sexe = filtres.value.sexe;
+  if (filtres.value.dateDebut) params.dateDebut = filtres.value.dateDebut;
+  if (filtres.value.dateFin) params.dateFin = filtres.value.dateFin;
   return params;
 }
-
-/**
- * Promotion, genre et dates ne sont pas filtrés par l'API : on les applique
- * sur la page reçue, à partir du dernier dossier de chaque fiche.
- */
-function filtrerLocalement(liste: EtudiantRegistre[]): EtudiantRegistre[] {
-  let r = liste;
-  if (filtres.value.promotionId) {
-    r = r.filter((e) => derniereInscription(e)?.promotionId === filtres.value.promotionId);
-  }
-  if (filtres.value.sexe) r = r.filter((e) => e.sexe === filtres.value.sexe);
-  if (filtres.value.dateDebut) {
-    const d = new Date(filtres.value.dateDebut).getTime();
-    r = r.filter((e) => {
-      const c = derniereInscription(e)?.createdAt ?? null;
-      return c ? new Date(c).getTime() >= d : true;
-    });
-  }
-  if (filtres.value.dateFin) {
-    const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
-    r = r.filter((e) => {
-      const c = derniereInscription(e)?.createdAt ?? null;
-      return c ? new Date(c).getTime() <= d : true;
-    });
-  }
-  return r;
-}
-
-/** Un filtre non géré par l'API restreint la page affichée, pas le total serveur. */
-const filtrageLocalActif = computed(
-  () =>
-    !!filtres.value.promotionId ||
-    !!filtres.value.sexe ||
-    !!filtres.value.dateDebut ||
-    !!filtres.value.dateFin,
-);
 
 async function charger() {
   chargement.value = true;
@@ -807,7 +775,7 @@ async function charger() {
     const { data } = await api.get('/etudiants', {
       params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
     });
-    const liste = filtrerLocalement(data.data ?? []);
+    const liste: EtudiantRegistre[] = data.data ?? [];
     etudiants.value = liste;
     total.value = data.total ?? liste.length;
   } catch {
@@ -822,11 +790,11 @@ async function chargerTout() {
   chargement.value = true;
   try {
     const { data } = await api.get('/etudiants', {
-      params: { ...paramsServeur(), pageSize: 1000 },
+      params: { ...paramsServeur(), page: 1, pageSize: 1000 },
     });
-    const liste = filtrerLocalement(data.data ?? []);
+    const liste: EtudiantRegistre[] = data.data ?? [];
     etudiants.value = liste;
-    total.value = liste.length;
+    total.value = data.total ?? liste.length;
     pageSize.value = Math.max(liste.length, 1);
     page.value = 1;
   } catch {

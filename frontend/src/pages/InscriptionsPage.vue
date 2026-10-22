@@ -750,40 +750,21 @@ function ouvrirModificationEtudiant() {
   dialogFicheEtudiant.value = true;
 }
 
-/** Paramètres réellement compris par `GET /inscriptions`. */
+/**
+ * Filtres transmis à `GET /inscriptions` : tous sont appliqués par le serveur,
+ * donc à l'ensemble des dossiers et au total paginé. Les dates portent sur la
+ * date d'inscription, à défaut la date de création du dossier.
+ */
 function paramsServeur(): Record<string, any> {
-  const params: Record<string, any> = { all: '1' };
+  const params: Record<string, any> = {};
   if (filtres.value.recherche) params.search = filtres.value.recherche;
   if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
   if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
   if (filtres.value.statut) params.statut = filtres.value.statut;
+  if (filtres.value.dateDebut) params.dateDebut = filtres.value.dateDebut;
+  if (filtres.value.dateFin) params.dateFin = filtres.value.dateFin;
+  if (etudiantCible.value) params.etudiantId = etudiantCible.value.id;
   return params;
-}
-
-/**
- * Les bornes de date ne sont pas filtrées par l'API ; l'étudiant ciblé non
- * plus (la recherche par matricule dégrossit, on resserre ici sur l'identifiant).
- */
-function filtrerLocalement(liste: Inscription[]): Inscription[] {
-  let r = liste;
-  if (etudiantCible.value) {
-    r = r.filter((i) => i.etudiantId === etudiantCible.value!.id);
-  }
-  if (filtres.value.dateDebut) {
-    const d = new Date(filtres.value.dateDebut).getTime();
-    r = r.filter((i) => {
-      const c = i.dateInscription ?? i.createdAt;
-      return c ? new Date(c).getTime() >= d : true;
-    });
-  }
-  if (filtres.value.dateFin) {
-    const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
-    r = r.filter((i) => {
-      const c = i.dateInscription ?? i.createdAt;
-      return c ? new Date(c).getTime() <= d : true;
-    });
-  }
-  return r;
 }
 
 async function charger() {
@@ -792,7 +773,7 @@ async function charger() {
     const { data } = await api.get('/inscriptions', {
       params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
     });
-    const liste = filtrerLocalement(data.data ?? []);
+    const liste: Inscription[] = data.data ?? [];
     inscriptions.value = liste;
     total.value = data.total ?? liste.length;
   } catch {
@@ -807,11 +788,11 @@ async function chargerTout() {
   chargement.value = true;
   try {
     const { data } = await api.get('/inscriptions', {
-      params: { ...paramsServeur(), pageSize: 1000 },
+      params: { ...paramsServeur(), page: 1, pageSize: 1000 },
     });
-    const liste = filtrerLocalement(data.data ?? []);
+    const liste: Inscription[] = data.data ?? [];
     inscriptions.value = liste;
-    total.value = liste.length;
+    total.value = data.total ?? liste.length;
     pageSize.value = Math.max(liste.length, 1);
     page.value = 1;
   } catch {
@@ -861,8 +842,8 @@ watch(
 
 /**
  * `/inscriptions?etudiant=<id>` : on lit la fiche pour afficher son nom et
- * poser la recherche sur son matricule — `GET /inscriptions` ne filtre pas par
- * étudiant, mais sa recherche couvre le matricule.
+ * poser la recherche sur son matricule ; le filtre exact passe par
+ * `etudiantId` (voir `paramsServeur`).
  */
 async function appliquerEtudiantCible(id: string) {
   try {

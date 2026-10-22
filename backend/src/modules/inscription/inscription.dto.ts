@@ -16,6 +16,9 @@ import { PartialType } from '@nestjs/swagger';
 import { ModePaiement, StatutInscription, StatutPaiement } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 
+/** Valeurs admises pour `Etudiant.sexe`. */
+export const SEXES = ['M', 'F'] as const;
+
 export const OPERATEURS_MOBILE_MONEY = ['ORANGE_MONEY', 'MTN_MOMO', 'TELECEL', 'AUTRE'] as const;
 
 /** Dossier déposé en ligne, sans compte : identité du candidat + choix de promotion. */
@@ -54,6 +57,11 @@ export class EtudiantQueryDto extends QueryDto {
   @IsOptional() @IsIn(['true', 'false', '1', '0']) actif?: string;
   /** Restreint le registre aux étudiants inscrits dans cette promotion. */
   @IsOptional() @IsUUID() promotionId?: string;
+  /** Genre porté par la fiche (`Etudiant.sexe` est une chaîne "M" / "F", pas un enum Prisma). */
+  @IsOptional() @IsIn(SEXES) sexe?: (typeof SEXES)[number];
+  /** Bornes incluses sur la date de création d'un dossier d'inscription de l'étudiant. */
+  @IsOptional() @IsDateString() dateDebut?: string;
+  @IsOptional() @IsDateString() dateFin?: string;
 }
 
 export class CreateFraisDto {
@@ -85,6 +93,9 @@ export class InscriptionQueryDto extends QueryDto {
   /** Tous les dossiers d'un étudiant donné (fiche étudiant, historique). */
   @IsOptional() @IsUUID() etudiantId?: string;
   @IsOptional() @IsEnum(StatutInscription) statut?: StatutInscription;
+  /** Bornes incluses sur la date d'inscription, à défaut la date de création. */
+  @IsOptional() @IsDateString() dateDebut?: string;
+  @IsOptional() @IsDateString() dateFin?: string;
 }
 
 export class CreatePaiementDto {
