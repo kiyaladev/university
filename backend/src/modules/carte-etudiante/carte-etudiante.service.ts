@@ -38,6 +38,7 @@ import {
   VerifierNipDto,
 } from './carte-etudiante.dto';
 import { documentsCarte, CarteImprimable } from './documents';
+import { journaliser } from '../../common/audit';
 
 const CARTE_INCLUDE = {
   etudiant: {
@@ -190,19 +191,18 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'CARTE_ETUDIANTE_EMISE',
-          entite: 'CarteEtudiante',
-          entiteId: carte.id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'CARTE_ETUDIANTE_EMISE',
+        'CarteEtudiante',
+        carte.id,
+        {
             avant: null,
             apres: this.instantaneAudit({ ...carte, nip: nipHash }),
             champsModifies: ['active', 'statut', 'dateValidite', 'photoUrl', 'nip'],
-          }),
-        },
-      });
+          },
+      );
       return carte;
     });
   }
@@ -227,19 +227,18 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'CARTE_ETUDIANTE_MODIFIEE',
-          entite: 'CarteEtudiante',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'CARTE_ETUDIANTE_MODIFIEE',
+        'CarteEtudiante',
+        id,
+        {
             avant: this.instantaneAudit(actuel),
             apres: this.instantaneAudit({ ...miseAJour, nip: nipHash ?? actuel.nip }),
             champsModifies: Object.keys(data),
-          }),
-        },
-      });
+          },
+      );
       return miseAJour;
     });
   }
@@ -258,20 +257,19 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'CARTE_ETUDIANTE_REVOQUEE',
-          entite: 'CarteEtudiante',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'CARTE_ETUDIANTE_REVOQUEE',
+        'CarteEtudiante',
+        id,
+        {
             avant: this.instantaneAudit(actuel),
             apres: this.instantaneAudit({ ...miseAJour, nip: actuel.nip }),
             motifFourni: Boolean(dto.motif),
             champsModifies: ['statut', 'active', 'motifRevocation'],
-          }),
-        },
-      });
+          },
+      );
       return miseAJour;
     });
   }
@@ -296,19 +294,18 @@ export class CarteEtudianteService {
         throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte'));
       }
       const miseAJour = await tx.carteEtudiante.update({ where: { id }, data: { nip: nipHash } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'CARTE_ETUDIANTE_NIP_MODIFIE',
-          entite: 'CarteEtudiante',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'CARTE_ETUDIANTE_NIP_MODIFIE',
+        'CarteEtudiante',
+        id,
+        {
             avant: { nipConfigure: Boolean(actuel.nip) },
             apres: { nipConfigure: true },
             champsModifies: ['nip'],
-          }),
-        },
-      });
+          },
+      );
       return { id: miseAJour.id, nipDefini: true };
     });
   }

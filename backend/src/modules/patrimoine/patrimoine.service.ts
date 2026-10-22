@@ -40,6 +40,8 @@ import {
   UpdateCategorieDto,
   UpdateEquipementDto,
 } from './patrimoine.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const PREFIX_INVENTAIRE = 'PAT-';
 const QR_PREFIX = 'UP-PAT-';
@@ -102,7 +104,7 @@ export class PatrimoineService {
         },
         include: CATEGORIE_INCLUDE,
       });
-      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_CREEE', 'CategoriePatrimoine', categorie.id, {
+      await journaliser(tx, user, 'PATRIMOINE_CATEGORIE_CREEE', 'CategoriePatrimoine', categorie.id, {
         avant: null,
         apres: this.instantaneCategorie(categorie),
         champsModifies: ['code', 'libelle', 'dureeAmortissement'],
@@ -126,7 +128,7 @@ export class PatrimoineService {
         data,
         include: CATEGORIE_INCLUDE,
       });
-      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_MODIFIEE', 'CategoriePatrimoine', id, {
+      await journaliser(tx, user, 'PATRIMOINE_CATEGORIE_MODIFIEE', 'CategoriePatrimoine', id, {
         avant: this.instantaneCategorie(avant),
         apres: this.instantaneCategorie(apres),
         champsModifies: Object.keys(data),
@@ -147,7 +149,7 @@ export class PatrimoineService {
         throw new ConflictException(I18nContext.current()!.t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', { args: { 'cat.libelle': cat.libelle, '(cat._count as any).equipements': (cat._count as any).equipements } }));
       }
       await tx.categoriePatrimoine.delete({ where: { id } });
-      await this.journaliser(tx, user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', 'CategoriePatrimoine', id, {
+      await journaliser(tx, user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', 'CategoriePatrimoine', id, {
         avant: this.instantaneCategorie(cat),
         apres: null,
         champsModifies: ['code', 'libelle', 'dureeAmortissement'],
@@ -164,9 +166,7 @@ export class PatrimoineService {
    * série, numéro d'inventaire et qrCode.
    */
   async listeEquipements(query: EquipementQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.EquipementPatrimoineWhereInput = {
       ...(query.categorieId ? { categorieId: query.categorieId } : {}),
@@ -192,11 +192,12 @@ export class PatrimoineService {
         where,
         include: EQUIPEMENT_INCLUDE,
         orderBy: { updatedAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.equipementPatrimoine.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async detailEquipement(id: string) {
@@ -233,7 +234,7 @@ export class PatrimoineService {
             include: EQUIPEMENT_INCLUDE,
           });
           // Le jeton QR n'est pas recopié : l'inventaire se lit par son numéro.
-          await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_CREE', 'EquipementPatrimoine', equipement.id, {
+          await journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_CREE', 'EquipementPatrimoine', equipement.id, {
             avant: null,
             apres: this.instantaneEquipement(equipement),
             champsModifies: ['numeroSerie', 'numeroInventaire', 'libelle', 'categorieId', 'actif'],
@@ -292,7 +293,7 @@ export class PatrimoineService {
         data,
         include: EQUIPEMENT_INCLUDE,
       });
-      await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_MODIFIE', 'EquipementPatrimoine', id, {
+      await journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_MODIFIE', 'EquipementPatrimoine', id, {
         avant: this.instantaneEquipement(avant),
         apres: this.instantaneEquipement(maj),
         champsModifies: Object.keys(data),
@@ -314,7 +315,7 @@ export class PatrimoineService {
         throw new ConflictException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire, reparations } }));
       }
       await tx.equipementPatrimoine.delete({ where: { id } });
-      await this.journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_SUPPRIME', 'EquipementPatrimoine', id, {
+      await journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_SUPPRIME', 'EquipementPatrimoine', id, {
         avant: this.instantaneEquipement(equipement),
         apres: null,
         nbReparations: 0,
@@ -340,7 +341,7 @@ export class PatrimoineService {
             data: { qrCode },
             include: EQUIPEMENT_INCLUDE,
           });
-          await this.journaliser(tx, user, 'PATRIMOINE_QR_REGENERE', 'EquipementPatrimoine', id, {
+          await journaliser(tx, user, 'PATRIMOINE_QR_REGENERE', 'EquipementPatrimoine', id, {
             avant: this.instantaneEquipement(equipement),
             apres: this.instantaneEquipement(maj),
             champsModifies: ['qrCode'],
@@ -422,7 +423,7 @@ export class PatrimoineService {
         data: { enReparation: true },
         include: EQUIPEMENT_INCLUDE,
       });
-      await this.journaliser(tx, user, 'PATRIMOINE_REPARATION_DECLAREE', 'ReparationMateriel', reparation.id, {
+      await journaliser(tx, user, 'PATRIMOINE_REPARATION_DECLAREE', 'ReparationMateriel', reparation.id, {
         avant: null,
         apres: this.instantaneReparation(reparation),
         equipementAvant: this.instantaneEquipement(equipement),
@@ -470,7 +471,7 @@ export class PatrimoineService {
         data: { enReparation: false },
         include: EQUIPEMENT_INCLUDE,
       });
-      await this.journaliser(tx, user, 'PATRIMOINE_REPARATION_RESOLUE', 'ReparationMateriel', ouverte.id, {
+      await journaliser(tx, user, 'PATRIMOINE_REPARATION_RESOLUE', 'ReparationMateriel', ouverte.id, {
         avant: this.instantaneReparation(ouverte),
         apres: this.instantaneReparation(reparation),
         equipementAvant: this.instantaneEquipement(equipement),
@@ -769,29 +770,6 @@ export class PatrimoineService {
     };
   }
 
-  /**
-   * Écrit la trace avant/après. `details` est sérialisé ici : toutes les
-   * entrées du module partagent le même format, lisible tel quel par l'écran
-   * « Journal ».
-   */
-  private journaliser(
-    tx: Prisma.TransactionClient | PrismaService,
-    user: AuthUser,
-    action: string,
-    entite: string,
-    entiteId: string,
-    details: unknown,
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite,
-        entiteId,
-        details: JSON.stringify(details),
-      },
-    });
-  }
 }
 
 // Référence pour le typage Prisma — le préfixe est utilisé pour la séquence

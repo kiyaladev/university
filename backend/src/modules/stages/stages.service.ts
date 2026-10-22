@@ -42,6 +42,7 @@ import {
   TravailQueryDto,
   UpdateTravailDto,
 } from './stages.dto';
+import { avantApres, journaliser } from '../../common/audit';
 
 /** Rôles « administration » : ils voient et pilotent tous les travaux. */
 export const ROLES_PILOTES: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE];
@@ -202,7 +203,7 @@ export class StagesService extends CrudService {
     // enregistré sans journal (ou l'inverse) n'est pas reconstituable.
     return this.prisma.$transaction(async (tx) => {
       const cree = await tx.travailEncadre.create({ data: donnees, include: TRAVAIL_INCLUDE });
-      await this.journaliser(tx, user, 'TRAVAIL_ENCADRE_CREE', 'TravailEncadre', cree.id, null, this.instantaneTravail(cree));
+      await journaliser(tx, user, 'TRAVAIL_ENCADRE_CREE', 'TravailEncadre', cree.id, avantApres(null, this.instantaneTravail(cree)));
       return cree;
     });
   }
@@ -252,14 +253,13 @@ export class StagesService extends CrudService {
       // remplacé ne peut pas réécrire le dossier dans la foulée.
       this.autoriserPropriete(avant, user);
       const maj = await tx.travailEncadre.update({ where: { id }, data: donnees, include: TRAVAIL_INCLUDE });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'TRAVAIL_ENCADRE_MODIFIE',
         'TravailEncadre',
         id,
-        this.instantaneTravail(avant),
-        this.instantaneTravail(maj),
+        avantApres(this.instantaneTravail(avant), this.instantaneTravail(maj)),
       );
       return maj;
     });
@@ -280,7 +280,7 @@ export class StagesService extends CrudService {
       });
       if (!avant) throw new NotFoundException(t('stages.ce_travail_ne_vous_appartient_pas'));
       await tx.travailEncadre.delete({ where: { id } });
-      await this.journaliser(tx, user, 'TRAVAIL_ENCADRE_SUPPRIME', 'TravailEncadre', id, this.instantaneTravail(avant), null);
+      await journaliser(tx, user, 'TRAVAIL_ENCADRE_SUPPRIME', 'TravailEncadre', id, avantApres(this.instantaneTravail(avant), null));
       return { id };
     });
   }
@@ -320,14 +320,13 @@ export class StagesService extends CrudService {
         throw new ConflictException(I18nContext.current()!.t('stages.ce_travail_a_change_d_etat_pendant_la_transition_recharge'));
       }
       const apres = await tx.travailEncadre.findUnique({ where: { id }, include: TRAVAIL_INCLUDE });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         `TRAVAIL_${avant.statut}_${cible}`,
         'TravailEncadre',
         id,
-        this.instantaneTravail(avant),
-        this.instantaneTravail(apres),
+        avantApres(this.instantaneTravail(avant), this.instantaneTravail(apres)),
       );
       return apres;
     });
@@ -438,14 +437,13 @@ export class StagesService extends CrudService {
         where: { id: travail.id },
         select: TRAVAIL_AUDIT_SELECT,
       });
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'SOUTENANCE_CREEE',
         'TravailEncadre',
         travail.id,
-        { ...this.instantaneTravail(travail), soutenance: null },
-        { ...this.instantaneTravail(apres), soutenance: this.instantaneSoutenance(soutenance) },
+        avantApres({ ...this.instantaneTravail(travail), soutenance: null }, { ...this.instantaneTravail(apres), soutenance: this.instantaneSoutenance(soutenance) }),
       );
       return soutenance;
     });
@@ -473,14 +471,13 @@ export class StagesService extends CrudService {
       });
       // Note chiffrée : elle est journalisée. Mention rédigée : seule sa
       // présence l'est — le texte du jury ne part pas dans le journal.
-      await this.journaliser(
+      await journaliser(
         tx,
         user,
         'SOUTENANCE_NOTEE',
         'Soutenance',
         id,
-        this.instantaneSoutenance(avant),
-        this.instantaneSoutenance(maj),
+        avantApres(this.instantaneSoutenance(avant), this.instantaneSoutenance(maj)),
       );
       return maj;
     });
@@ -576,29 +573,5 @@ export class StagesService extends CrudService {
       note: soutenance.note ?? null,
       mentionPresente: Boolean(soutenance.mention),
     };
-  }
-
-  /**
-   * Écrit la ligne de journal dans la transaction de la mutation : l'état et
-   * sa trace sont committés ensemble, ou pas du tout.
-   */
-  private journaliser(
-    tx: any,
-    user: AuthUser,
-    action: string,
-    entite: string,
-    entiteId: string,
-    avant: unknown,
-    apres: unknown,
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite,
-        entiteId,
-        details: JSON.stringify({ avant, apres }),
-      },
-    });
   }
 }

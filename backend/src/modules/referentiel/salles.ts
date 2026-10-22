@@ -10,6 +10,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { t } from '../../common/i18n';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 export class CreateSalleDto {
   @IsString() code: string;
@@ -69,20 +71,19 @@ export class SallesService extends CrudService {
     const select = this.projectionPour(user);
     if (!select) return super.findAll(query);
 
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const fullWhere = this.searchWhere(query.search);
     const [data, total] = await Promise.all([
       this.delegate.findMany({
         where: fullWhere,
         select,
         orderBy: this.orderByDe(query),
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.delegate.count({ where: fullWhere }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async fichePour(id: string, user: AuthUser) {
@@ -96,13 +97,14 @@ export class SallesService extends CrudService {
   async creer(dto: CreateSalleDto, acteur?: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.salle.create({ data: { ...dto, qrToken: this.nouveauToken() } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'SALLE_CREEE',
-        entite: 'Salle',
-        entiteId: creee.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'SALLE_CREEE',
+        'Salle',
+        creee.id,
+        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
+      );
       return creee;
     });
   }
@@ -112,13 +114,14 @@ export class SallesService extends CrudService {
       const avant = await tx.salle.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
       const maj = await tx.salle.update({ where: { id }, data: dto });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'SALLE_MODIFIEE',
-        entite: 'Salle',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'SALLE_MODIFIEE',
+        'Salle',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) },
+      );
       return maj;
     });
   }
@@ -129,17 +132,18 @@ export class SallesService extends CrudService {
       const avant = await tx.salle.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
       const maj = await tx.salle.update({ where: { id }, data: { qrToken: this.nouveauToken() } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'SALLE_QR_REGENERE',
-        entite: 'Salle',
-        entiteId: id,
-        details: JSON.stringify({
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'SALLE_QR_REGENERE',
+        'Salle',
+        id,
+        {
           avant: this.instantaneAudit(avant),
           apres: this.instantaneAudit(maj),
           champsModifies: ['qrToken'],
-        }),
-      } });
+        },
+      );
       return maj;
     });
   }
@@ -151,13 +155,7 @@ export class SallesService extends CrudService {
         const avant = await tx.salle.findUnique({ where: { id } });
         if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Salle' }));
         await tx.salle.delete({ where: { id } });
-        await tx.auditLog.create({ data: {
-          userId: acteur?.id ?? null,
-          action: 'SALLE_SUPPRIMEE',
-          entite: 'Salle',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-        } });
+        await journaliser(tx, acteur ?? null, 'SALLE_SUPPRIMEE', 'Salle', id, { avant: this.instantaneAudit(avant), apres: null });
         return { id };
       }),
       'referentiel.salle_referenced_delete',

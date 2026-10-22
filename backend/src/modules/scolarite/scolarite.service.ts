@@ -18,7 +18,6 @@ import {
   StatutDeliberation,
   StatutEvaluation,
   TypeEvaluation,
-  Role,
 } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
 import { I18nContext } from 'nestjs-i18n';
@@ -36,6 +35,9 @@ import {
   SaisieNotesDto,
   UpdateEvaluationDto,
 } from './scolarite.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
+import { filtreDepartement } from '../../common/perimetre';
 
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
 const INSCRITS_VALIDES = { statut: 'VALIDEE' } as const;
@@ -53,17 +55,13 @@ export class ScolariteService {
   constructor(private readonly prisma: PrismaService) {}
 
   private promotionAutorisee(user: AuthUser) {
-    return user.role === Role.CHEF_DEPARTEMENT
-      ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun_departement__' } } }
-      : {};
+    return filtreDepartement(user, 'promotion.filiere', '__aucun_departement__');
   }
 
   // ----------------------------------------------------------- Évaluations
 
   async listerEvaluations(query: EvaluationQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.EvaluationWhereInput = {
       ...this.promotionAutorisee(user),
@@ -84,11 +82,12 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.evaluation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   private veillerEvaluation(id: string, db: Db = this.prisma) {
@@ -157,15 +156,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_CREEE',
-          entite: 'Evaluation',
-          entiteId: evaluation.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneEvaluation(evaluation) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_CREEE',
+        'Evaluation',
+        evaluation.id,
+        { avant: null, apres: this.instantaneEvaluation(evaluation) },
+      );
       return evaluation;
     });
   }
@@ -208,15 +206,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_MODIFIEE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_MODIFIEE',
+        'Evaluation',
+        id,
+        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
+      );
       return maj;
     });
   }
@@ -238,15 +235,7 @@ export class ScolariteService {
         throw new BadRequestException(I18nContext.current()!.t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { args: { intitule: avant.intitule, nombre: avant._count.notes } }));
       }
       await tx.evaluation.delete({ where: { id } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_SUPPRIMEE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: null }),
-        },
-      });
+      await journaliser(tx, user, 'EVALUATION_SUPPRIMEE', 'Evaluation', id, { avant: this.instantaneEvaluation(avant), apres: null });
       return { id };
     });
   }
@@ -277,15 +266,14 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EVALUATION_CLOTUREE',
-          entite: 'Evaluation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EVALUATION_CLOTUREE',
+        'Evaluation',
+        id,
+        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
+      );
       return maj;
     });
   }
@@ -327,12 +315,10 @@ export class ScolariteService {
   }
 
   async listerNotes(query: NoteQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where: Prisma.NoteWhereInput = {
       ...(query.evaluationId ? { evaluationId: query.evaluationId } : {}),
-      ...(user.role === Role.CHEF_DEPARTEMENT ? { evaluation: this.promotionAutorisee(user) } : {}),
+      ...filtreDepartement(user, 'evaluation.promotion.filiere', '__aucun_departement__'),
     };
 
     const [data, total] = await Promise.all([
@@ -348,11 +334,12 @@ export class ScolariteService {
           },
         },
         orderBy: { saisieLe: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.note.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Saisie en bloc (bulk upsert, transaction). Les lignes hors contexte
@@ -401,13 +388,13 @@ export class ScolariteService {
       }
 
       if (valides.length) {
-        await tx.auditLog.create({
-          data: {
-            userId: saisiePar.id,
-            action: 'NOTES_SAISIES',
-            entite: 'Evaluation',
-            entiteId: dto.evaluationId,
-            details: JSON.stringify({
+        await journaliser(
+          tx,
+          saisiePar,
+          'NOTES_SAISIES',
+          'Evaluation',
+          dto.evaluationId,
+          {
               acteur: saisiePar.id,
               changements: valides.map((note) => {
                 const precedent = parInscription.get(note.inscriptionId);
@@ -417,9 +404,8 @@ export class ScolariteService {
                   apres: { note: note.note ?? null, present: note.present ?? true },
                 };
               }),
-            }),
-          },
-        });
+            },
+        );
       }
       return { n: valides.length, ignorees };
     });
@@ -428,9 +414,7 @@ export class ScolariteService {
   // -------------------------------------------------------- Délibérations
 
   async listerDeliberations(query: DeliberationQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { ...(query.anneeId ? { anneeId: query.anneeId } : {}), ...this.promotionAutorisee(user) };
 
     const [data, total] = await Promise.all([
@@ -444,11 +428,12 @@ export class ScolariteService {
           _count: { select: { lignes: true } },
         },
         orderBy: { creeLe: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.deliberation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Détail d'une délibération, lignes réordonnées par rang. */
@@ -519,15 +504,14 @@ export class ScolariteService {
         },
       });
       const calcul = await this.calculerDeliberation(cree.id, tx);
-      await tx.auditLog.create({
-        data: {
-          userId: creePar.id,
-          action: 'DELIBERATION_CREEE',
-          entite: 'Deliberation',
-          entiteId: cree.id,
-          details: JSON.stringify({ anneeId: cree.anneeId, promotionId: cree.promotionId, resultat: calcul }),
-        },
-      });
+      await journaliser(
+        tx,
+        creePar,
+        'DELIBERATION_CREEE',
+        'Deliberation',
+        cree.id,
+        { anneeId: cree.anneeId, promotionId: cree.promotionId, resultat: calcul },
+      );
       return this.detailDeliberation(cree.id, tx);
     });
     return delib;

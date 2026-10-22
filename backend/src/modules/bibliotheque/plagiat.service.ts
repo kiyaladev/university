@@ -7,9 +7,10 @@ import {
 import { createHash } from 'node:crypto';
 import { I18nContext } from 'nestjs-i18n';
 import { PDFParse } from 'pdf-parse';
-import { Prisma, StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
+import { StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 
 /**
  * Détection de doublons dans le dépôt. Le service regroupe toute la logique
@@ -110,34 +111,6 @@ function nettoyerTextePdf(brut: string): string {
 export interface ContenuExtrait {
   contenuTexte: string | null;
   empreinteHash: string | null;
-}
-
-/**
- * Trace d'audit écrite par la transaction qui porte la mutation : une décision
- * d'arbitrage sans trace, ou une trace d'une décision annulée, ne sont plus
- * possibles. `details` porte le format avant/après commun aux modules — c'est
- * lui que l'écran « Journal » sait lire.
- *
- * `user` peut être nul : le moteur de détection n'a pas d'acteur, et l'on ne
- * veut pas attribuer à un compte le travail d'un calcul automatique.
- */
-function journaliser(
-  tx: Prisma.TransactionClient,
-  user: AuthUser | null,
-  action: string,
-  entite: string,
-  entiteId: string,
-  details: Record<string, unknown>,
-) {
-  return tx.auditLog.create({
-    data: {
-      userId: user?.id ?? null,
-      action,
-      entite,
-      entiteId,
-      details: JSON.stringify(details),
-    },
-  });
 }
 
 /**

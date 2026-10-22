@@ -8,6 +8,9 @@ import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { dureeMinutes, toMinutes, toDateOnly, isoDate, JOURS } from '../../common/utils';
 import { CreateCreneauDto, CreneauQueryDto, UpdateCreneauDto } from './planification.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 export const CRENEAU_INCLUDE = {
   affectation: {
@@ -79,7 +82,7 @@ export class CreneauxService extends CrudService {
 
     if (user?.role === Role.ENSEIGNANT) {
       affectation.enseignantId = user.enseignantId ?? '__aucun_enseignant__';
-    } else if (user?.role === Role.CHEF_DEPARTEMENT || user?.role === Role.CONTROLEUR) {
+    } else if (estChefDeDepartement(user) || user?.role === Role.CONTROLEUR) {
       affectation.enseignant = { departementId: user.departementId ?? '__aucun_departement__' };
     } else if (user?.role === Role.ETUDIANT) {
       const etudiantId = user.etudiantId ?? '__aucun_etudiant__';
@@ -106,18 +109,17 @@ export class CreneauxService extends CrudService {
     if (user.role !== Role.ETUDIANT) return this.findAll(query, this.where(query, user));
 
     const where = this.where(query, user);
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     return Promise.all([
       this.prisma.creneau.findMany({
         where,
         include: CRENEAU_INCLUDE_ETUDIANT,
         orderBy: [{ jourSemaine: 'asc' }, { heureDebut: 'asc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.creneau.count({ where }),
-    ]).then(([data, total]) => ({ data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize }));
+    ]).then(([data, total]) => pagine(data, total, pagination));
   }
 
   /** Emploi du temps hebdomadaire regroupé par jour. */
@@ -249,10 +251,7 @@ export class CreneauxService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       await this.valider(dto, undefined, tx, user);
       const creneau = await tx.creneau.create({ data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'CRENEAU_CREE', entite: 'Creneau', entiteId: creneau.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creneau) }),
-      } });
+      await journaliser(tx, user ?? null, 'CRENEAU_CREE', 'Creneau', creneau.id, { avant: null, apres: this.instantaneAudit(creneau) });
       return creneau;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -277,10 +276,14 @@ export class CreneauxService extends CrudService {
       if (!cible) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
       if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
       const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'CRENEAU_MODIFIE', entite: 'Creneau', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'CRENEAU_MODIFIE',
+        'Creneau',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -294,10 +297,7 @@ export class CreneauxService extends CrudService {
     if (!creneau) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
     await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
     await tx.creneau.delete({ where: { id } });
-    await tx.auditLog.create({ data: {
-      userId: user?.id ?? null, action: 'CRENEAU_SUPPRIME', entite: 'Creneau', entiteId: id,
-      details: JSON.stringify({ avant: this.instantaneAudit(creneau), apres: null }),
-    } });
+    await journaliser(tx, user ?? null, 'CRENEAU_SUPPRIME', 'Creneau', id, { avant: this.instantaneAudit(creneau), apres: null });
     return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

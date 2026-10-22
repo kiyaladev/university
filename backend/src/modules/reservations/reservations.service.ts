@@ -20,6 +20,8 @@ import {
   ReservationQueryDto,
   UpdateReservationDto,
 } from './reservations.dto';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 const MAX_JOURS_CALENDRIER = 93;
 
@@ -199,25 +201,6 @@ export class ReservationsService extends CrudService {
     };
   }
 
-  /** Journal écrit par la transaction qui porte la mutation. */
-  private journaliser(
-    tx: Prisma.TransactionClient,
-    user: AuthUser,
-    action: string,
-    id: string,
-    details: Record<string, unknown>,
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite: 'ReservationSalle',
-        entiteId: id,
-        details: JSON.stringify(details),
-      },
-    });
-  }
-
   async creer(dto: CreateReservationDto, user: AuthUser) {
     const { dateJour, ...reste } = dto;
     return this.transactionSerializable(async (tx) => {
@@ -230,7 +213,7 @@ export class ReservationsService extends CrudService {
         },
         include: RESERVATION_INCLUDE,
       });
-      await this.journaliser(tx, user, 'RESERVATION_CREEE', creee.id, {
+      await journaliser(tx, user, 'RESERVATION_CREEE', 'ReservationSalle', creee.id, {
         avant: null,
         apres: this.instantaneAudit(creee),
       });
@@ -266,7 +249,7 @@ export class ReservationsService extends CrudService {
         },
         include: RESERVATION_INCLUDE,
       });
-      await this.journaliser(tx, user, 'RESERVATION_MODIFIEE', id, {
+      await journaliser(tx, user, 'RESERVATION_MODIFIEE', 'ReservationSalle', id, {
         avant: this.instantaneAudit(existante),
         apres: this.instantaneAudit(maj),
         champsModifies: Object.keys(dto),
@@ -285,7 +268,7 @@ export class ReservationsService extends CrudService {
         throw new ForbiddenException(I18nContext.current()!.t('reservations.seul_le_demandeur_ou_l_administrateur_peut_annuler'));
       }
       await tx.reservationSalle.delete({ where: { id } });
-      await this.journaliser(tx, user, 'RESERVATION_SUPPRIMEE', id, {
+      await journaliser(tx, user, 'RESERVATION_SUPPRIMEE', 'ReservationSalle', id, {
         avant: this.instantaneAudit(existante),
         apres: null,
       });
@@ -326,7 +309,7 @@ export class ReservationsService extends CrudService {
         data,
         include: RESERVATION_INCLUDE,
       });
-      await this.journaliser(tx, user, `RESERVATION_${dto.statut}`, id, {
+      await journaliser(tx, user, `RESERVATION_${dto.statut}`, 'ReservationSalle', id, {
         avant: this.instantaneAudit(existante),
         apres: this.instantaneAudit(maj),
         champsModifies: [
@@ -364,7 +347,7 @@ export class ReservationsService extends CrudService {
 
     const perimetreSeances = user.role === Role.ENSEIGNANT
       ? { affectation: { enseignantId: user.enseignantId ?? '__aucun_enseignant__' } }
-      : user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+      : estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
         ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
         : user.role === Role.CONTROLEUR
           ? { OR: [

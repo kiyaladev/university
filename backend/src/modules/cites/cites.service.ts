@@ -29,6 +29,7 @@ import {
   UpdateChambreDto,
   UpdateResidenceDto,
 } from './cites.dto';
+import { journaliser } from '../../common/audit';
 
 const RESIDENCE_INCLUDE = {
   _count: { select: { chambres: true } },
@@ -73,13 +74,14 @@ export class ResidencesService extends CrudService {
   async creer(dto: CreateResidenceDto, user?: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.residence.create({ data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'RESIDENCE_CREEE',
-        entite: 'Residence',
-        entiteId: creee.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'RESIDENCE_CREEE',
+        'Residence',
+        creee.id,
+        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
+      );
       return creee;
     });
   }
@@ -89,13 +91,14 @@ export class ResidencesService extends CrudService {
       const avant = await tx.residence.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
       const apres = await tx.residence.update({ where: { id }, data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'RESIDENCE_MODIFIEE',
-        entite: 'Residence',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'RESIDENCE_MODIFIEE',
+        'Residence',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
+      );
       return apres;
     });
   }
@@ -113,13 +116,7 @@ export class ResidencesService extends CrudService {
         throw new BadRequestException(I18nContext.current()!.t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', { args: { 'residence.nom': residence.nom, nb } }));
       }
       await tx.residence.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'RESIDENCE_SUPPRIMEE',
-        entite: 'Residence',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(residence), apres: null }),
-      } });
+      await journaliser(tx, user ?? null, 'RESIDENCE_SUPPRIMEE', 'Residence', id, { avant: this.instantaneAudit(residence), apres: null });
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -156,13 +153,14 @@ export class ChambresService extends CrudService {
     }
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.chambre.create({ data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'CHAMBRE_CREEE',
-        entite: 'Chambre',
-        entiteId: creee.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'CHAMBRE_CREEE',
+        'Chambre',
+        creee.id,
+        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
+      );
       return creee;
     });
   }
@@ -188,13 +186,14 @@ export class ChambresService extends CrudService {
         }
       }
       const apres = await tx.chambre.update({ where: { id }, data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'CHAMBRE_MODIFIEE',
-        entite: 'Chambre',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'CHAMBRE_MODIFIEE',
+        'Chambre',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -212,13 +211,7 @@ export class ChambresService extends CrudService {
         throw new BadRequestException(I18nContext.current()!.t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', { args: { 'chambre.code': chambre.code, nb } }));
       }
       await tx.chambre.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'CHAMBRE_SUPPRIMEE',
-        entite: 'Chambre',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(chambre), apres: null }),
-      } });
+      await journaliser(tx, user ?? null, 'CHAMBRE_SUPPRIMEE', 'Chambre', id, { avant: this.instantaneAudit(chambre), apres: null });
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -308,18 +301,17 @@ export class AttributionsService extends CrudService {
           },
           include: ATTRIBUTION_INCLUDE,
         });
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'ATTRIBUTION_MODIFIEE',
-            entite: 'AttributionLogement',
-            entiteId: miseAJour.id,
-            details: JSON.stringify({
+        await journaliser(
+          tx,
+          user,
+          'ATTRIBUTION_MODIFIEE',
+          'AttributionLogement',
+          miseAJour.id,
+          {
               avant: this.instantaneAudit(enAttente),
               apres: this.instantaneAudit(miseAJour),
-            }),
-          },
-        });
+            },
+        );
         return miseAJour;
       }
 
@@ -337,15 +329,14 @@ export class AttributionsService extends CrudService {
         where: { id: dto.chambreId },
         data: { statut: StatutChambre.RESERVEE },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTRIBUTION_CREEE',
-          entite: 'AttributionLogement',
-          entiteId: attribution.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(attribution) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ATTRIBUTION_CREEE',
+        'AttributionLogement',
+        attribution.id,
+        { avant: null, apres: this.instantaneAudit(attribution) },
+      );
       return attribution;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -439,22 +430,21 @@ export class AttributionsService extends CrudService {
         where: { id },
         include: ATTRIBUTION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: `ATTRIBUTION_${dto.statut}`,
-          entite: 'AttributionLogement',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        `ATTRIBUTION_${dto.statut}`,
+        'AttributionLogement',
+        id,
+        {
             commentaire: dto.commentaire ?? null,
             autresRefusees: dto.statut === StatutAttributionLogement.ACCORDEE
               ? autresEnAttente.map((autre) => autre.id)
               : [],
             avant: this.instantaneAudit(attribution),
             apres: this.instantaneAudit(apres),
-          }),
-        },
-      });
+          },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -505,18 +495,17 @@ export class AttributionsService extends CrudService {
         where: { id },
         include: ATTRIBUTION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTRIBUTION_RETIREE',
-          entite: 'AttributionLogement',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'ATTRIBUTION_RETIREE',
+        'AttributionLogement',
+        id,
+        {
             avant: this.instantaneAudit(attribution),
             apres: this.instantaneAudit(apres),
-          }),
-        },
-      });
+          },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

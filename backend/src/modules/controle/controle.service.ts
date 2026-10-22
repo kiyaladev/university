@@ -28,6 +28,9 @@ import { AttestationService } from '../attestation/attestation.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 const AUDIT_DETAILS_LIBRES_A_MASQUER = new Set([
   'PAIE_CREEE',
@@ -208,13 +211,11 @@ export class ControleService {
 
   async liste(query: ControleQueryDto, user: AuthUser) {
     const enseignantId = user.role === Role.ENSEIGNANT ? user.enseignantId ?? '__aucun__' : query.enseignantId;
-    const departementId = user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+    const departementId = estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
       ? user.departementId ?? '__aucun__'
       : query.departementId;
     const controleurId = user.role === Role.CONTROLEUR && !user.departementId ? user.id : query.controleurId;
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const dateFilter: Prisma.DateTimeFilter = {};
     if (query.dateDebut) dateFilter.gte = toDateOnly(query.dateDebut);
@@ -243,7 +244,8 @@ export class ControleService {
     const options = {
       where,
       orderBy: [{ horodatage: 'desc' as const }],
-      ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      skip: pagination.skip,
+      take: pagination.take,
     };
     const requete = this.peutVoirDetails(user)
       ? this.prisma.controle.findMany({ ...options, include: CONTROLE_INCLUDE })
@@ -253,7 +255,7 @@ export class ControleService {
       this.prisma.controle.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async findOne(id: string, user?: AuthUser) {
@@ -261,7 +263,7 @@ export class ControleService {
       id,
       ...(user?.role === Role.ENSEIGNANT
         ? { seance: { affectation: { enseignantId: user.enseignantId ?? '__aucun__' } } }
-        : user?.role === Role.CHEF_DEPARTEMENT || (user?.role === Role.CONTROLEUR && user.departementId)
+        : estChefDeDepartement(user) || (user?.role === Role.CONTROLEUR && user.departementId)
           ? { seance: { affectation: { enseignant: { departementId: user.departementId ?? '__aucun__' } } } }
           : user?.role === Role.CONTROLEUR
             ? { controleurId: user.id }
@@ -287,7 +289,7 @@ export class ControleService {
       where: {
         salleId: salle.id,
         date: jour,
-        ...(user.role === Role.CHEF_DEPARTEMENT || (user.role === Role.CONTROLEUR && user.departementId)
+        ...(estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
           ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
           : {}),
         ...(user.role === Role.CONTROLEUR && !user.departementId
@@ -362,7 +364,7 @@ export class ControleService {
     });
     if (!seance) throw new NotFoundException(t('controle.seance_introuvable'));
     if (
-      user.role === Role.CHEF_DEPARTEMENT &&
+      estChefDeDepartement(user) &&
       seance.affectation.enseignant.departementId !== user.departementId
     ) {
       throw new NotFoundException(t('controle.seance_introuvable'));
@@ -615,15 +617,14 @@ export class ControleService {
         where: { id: controle.seanceId },
         data: { statut: StatutSeance.PLANIFIEE },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'POINTAGE_SUPPRESSION',
-          entite: 'Controle',
-          entiteId: id,
-          details: JSON.stringify({ seanceId: controle.seanceId, avant: this.etatAudit(controle), apres: null }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'POINTAGE_SUPPRESSION',
+        'Controle',
+        id,
+        { seanceId: controle.seanceId, avant: this.etatAudit(controle), apres: null },
+      );
       return { id };
     });
   }

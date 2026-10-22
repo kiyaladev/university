@@ -33,6 +33,8 @@ import {
   TraiterTicketDto,
   UpdateEquipementDto,
 } from './helpdesk.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const PREFIX_TICKET = 'TKT-';
 
@@ -79,33 +81,6 @@ const TICKET_AUDIT = {
   declarantEmail: true,
   declarantTelephone: true,
 } satisfies Prisma.TicketSupportSelect;
-
-/**
- * Trace d'audit écrite par la transaction qui porte la mutation : un
- * équipement créé sans trace, ou une trace sans équipement, n'est plus
- * possible.
- *
- * `details` porte le format avant/après commun au module — c'est lui que
- * l'écran « Journal » sait lire.
- */
-function journaliser(
-  tx: Prisma.TransactionClient,
-  user: AuthUser,
-  action: string,
-  entite: string,
-  entiteId: string,
-  details: Record<string, unknown>,
-) {
-  return tx.auditLog.create({
-    data: {
-      userId: user.id,
-      action,
-      entite,
-      entiteId,
-      details: JSON.stringify(details),
-    },
-  });
-}
 
 /** Inventaire projeté : ni code QR, ni jeton, aucune donnée personnelle. */
 function instantaneEquipement(equipement: any) {
@@ -342,9 +317,7 @@ export class TicketsService extends CrudService {
   }
 
   async liste(query: TicketQueryDto, user: AuthUser) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.TicketSupportWhereInput = {
       ...(this.visibiliteReduite(user) ? { utilisateurId: user.id } : {}),
@@ -369,11 +342,12 @@ export class TicketsService extends CrudService {
         where,
         include: TICKET_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.ticketSupport.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async findTicket(id: string, user: AuthUser) {

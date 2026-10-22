@@ -34,6 +34,9 @@ import { QueryDto } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { t } from '../../common/i18n';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement, filtreDepartement } from '../../common/perimetre';
 
 export class CreateJustificatifDto {
   @IsUUID() seanceId: string;
@@ -119,9 +122,7 @@ export class JustificatifsService extends CrudService {
 
     const seance: Prisma.SeanceWhereInput = {
       ...(Object.keys(date).length ? { date } : {}),
-      ...(user.role === Role.CHEF_DEPARTEMENT
-        ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-        : {}),
+      ...filtreDepartement(user, 'affectation.promotion.filiere'),
     };
 
     const where = {
@@ -132,36 +133,28 @@ export class JustificatifsService extends CrudService {
         : query.enseignantId
           ? { enseignantId: query.enseignantId }
           : {}),
-      ...(query.departementId && user.role !== Role.CHEF_DEPARTEMENT
+      ...(query.departementId && !estChefDeDepartement(user)
         ? { enseignant: { departementId: query.departementId } }
         : {}),
       ...(Object.keys(seance).length ? { seance } : {}),
     };
 
-    if (user.role !== Role.ENSEIGNANT && user.role !== Role.CHEF_DEPARTEMENT) {
-      const page = Number(query.page ?? 1);
-      const all = query.all === 'true' || query.all === '1';
-      const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    if (user.role !== Role.ENSEIGNANT && !estChefDeDepartement(user)) {
+      const pagination = paginer(query);
       return Promise.all([
         this.delegate.findMany({
           where,
           include: JUSTIFICATIF_INCLUDE,
           omit: { piece: true },
           orderBy: this.orderByDe(query),
-          ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+          skip: pagination.skip,
+          take: pagination.take,
         }),
         this.delegate.count({ where }),
-      ]).then(([data, total]) => ({
-        data,
-        total,
-        page: all ? 1 : page,
-        pageSize: all ? Math.min(total, pageSize) : pageSize,
-      }));
+      ]).then(([data, total]) => pagine(data, total, pagination));
     }
 
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     return Promise.all([
       this.delegate.findMany({
         where,
@@ -169,31 +162,20 @@ export class JustificatifsService extends CrudService {
         // médicales restent réservées au détail ADMIN/DIRECTION/SCOLARITE.
         select: JUSTIFICATIF_ENSEIGNANT_SELECT,
         orderBy: this.orderByDe(query),
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.delegate.count({ where }),
-    ]).then(([data, total]) => ({
-      data,
-      total,
-      page: all ? 1 : page,
-      pageSize: all ? Math.min(total, pageSize) : pageSize,
-    }));
+    ]).then(([data, total]) => pagine(data, total, pagination));
   }
 
   async findOnePour(id: string, user: AuthUser) {
     const where = user.role === Role.ENSEIGNANT
       ? { id, enseignantId: user.enseignantId ?? '__aucun__' }
-      : user.role === Role.CHEF_DEPARTEMENT
-        ? {
-            id,
-            seance: {
-              affectation: {
-                promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } },
-              },
-            },
-          }
+      : estChefDeDepartement(user)
+        ? { id, ...filtreDepartement(user, 'seance.affectation.promotion.filiere') }
         : { id };
-    const justificatif = user.role === Role.ENSEIGNANT || user.role === Role.CHEF_DEPARTEMENT
+    const justificatif = user.role === Role.ENSEIGNANT || estChefDeDepartement(user)
       ? await this.delegate.findFirst({ where, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
       : await this.delegate.findFirst({ where, include: JUSTIFICATIF_INCLUDE });
     if (!justificatif) throw new NotFoundException();
@@ -204,9 +186,7 @@ export class JustificatifsService extends CrudService {
     const seance = await this.prisma.seance.findFirst({
       where: {
         id: dto.seanceId,
-        ...(user.role === Role.CHEF_DEPARTEMENT
-          ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-          : {}),
+        ...filtreDepartement(user, 'affectation.promotion.filiere'),
       },
       include: { affectation: true },
     });
@@ -234,9 +214,7 @@ export class JustificatifsService extends CrudService {
       const seanceTx: any = await tx.seance.findFirst({
         where: {
           id: dto.seanceId,
-          ...(user.role === Role.CHEF_DEPARTEMENT
-            ? { affectation: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } }
-            : {}),
+          ...filtreDepartement(user, 'affectation.promotion.filiere'),
         },
         include: { affectation: true },
       });
@@ -245,13 +223,17 @@ export class JustificatifsService extends CrudService {
       const dejaPresent = await tx.justificatif.findUnique({ where: { seanceId: dto.seanceId }, select: { id: true } });
       if (dejaPresent) throw new BadRequestException(t('justificatifs.un_justificatif_existe_deja_pour_cette_seance'));
       const data = { ...rest, enseignantId: seanceTx.affectation.enseignantId };
-      const justificatif = user.role === Role.CHEF_DEPARTEMENT || user.role === Role.ENSEIGNANT
+      const justificatif = estChefDeDepartement(user) || user.role === Role.ENSEIGNANT
         ? await tx.justificatif.create({ data, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
         : await tx.justificatif.create({ data, include: JUSTIFICATIF_INCLUDE });
-      await tx.auditLog.create({ data: {
-        userId: user.id, action: 'JUSTIFICATIF_DEPOSE', entite: 'Justificatif', entiteId: justificatif.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(justificatif) }),
-      } });
+      await journaliser(
+        tx,
+        user,
+        'JUSTIFICATIF_DEPOSE',
+        'Justificatif',
+        justificatif.id,
+        { avant: null, apres: this.instantaneAudit(justificatif) },
+      );
       return justificatif;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -268,7 +250,7 @@ export class JustificatifsService extends CrudService {
         where: { id }, include: { seance: { select: { id: true, anneeId: true, affectation: { select: { promotion: { select: { filiere: { select: { departementId: true } } } } } } } } },
       });
       if (!avant) throw new NotFoundException();
-      if (user.role === Role.CHEF_DEPARTEMENT && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
+      if (estChefDeDepartement(user) && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
         throw new NotFoundException();
       }
       await exigerAnneeOuverte(tx, avant.seance.anneeId);
@@ -305,10 +287,14 @@ export class JustificatifsService extends CrudService {
         });
       }
 
-      await tx.auditLog.create({ data: {
-        userId: user.id, action: `JUSTIFICATIF_${dto.statut}`, entite: 'Justificatif', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user,
+        `JUSTIFICATIF_${dto.statut}`,
+        'Justificatif',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
+      );
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
 
     // Relecture après mise à jour du contrôle : la réponse reflète l'état final.
@@ -326,10 +312,14 @@ export class JustificatifsService extends CrudService {
         throw new BadRequestException(t('justificatifs.deja_traite'));
       }
       await tx.justificatif.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'JUSTIFICATIF_SUPPRIME', entite: 'Justificatif', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'JUSTIFICATIF_SUPPRIME',
+        'Justificatif',
+        id,
+        { avant: this.instantaneAudit(avant), apres: null },
+      );
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

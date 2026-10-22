@@ -16,8 +16,9 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { Roles, CurrentUser } from '../../common/decorators';
 import type { AuthUser } from '../../common/decorators';
-import { exigerPerimetre } from '../../common/perimetre';
+import { estChefDeDepartement, exigerPerimetre, filtreDepartement } from '../../common/perimetre';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 export const ENSEIGNANT_LECTURE_MINIMALE = {
   id: true, matricule: true, nom: true, prenom: true, grade: true,
@@ -82,17 +83,17 @@ export class EnseignantsService extends CrudService {
 
   listePour(query: EnseignantQueryDto, user: AuthUser) {
     return this.lecture(user).findAll(query, {
-      ...(user.role === Role.CHEF_DEPARTEMENT
-        ? { departementId: user.departementId ?? '__aucun__' }
+      ...(estChefDeDepartement(user)
+        ? filtreDepartement(user)
         : query.departementId ? { departementId: query.departementId } : {}),
       ...(query.statut ? { statut: query.statut } : {}),
     });
   }
 
   async detailPour(id: string, user: AuthUser) {
-    if (user.role === Role.CHEF_DEPARTEMENT) {
+    if (estChefDeDepartement(user)) {
       const enseignant = await this.prisma.enseignant.findFirst({
-        where: { id, departementId: user.departementId ?? '__aucun__' },
+        where: { id, ...filtreDepartement(user) },
         select: ENSEIGNANT_LECTURE_MINIMALE,
       });
       if (!enseignant) throw new NotFoundException(t('common.notFound'));
@@ -112,13 +113,14 @@ export class EnseignantsService extends CrudService {
     exigerPerimetre(user, dto.departementId);
     return this.prisma.$transaction(async (tx) => {
       const cree = await tx.enseignant.create({ data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user.id,
-        action: 'ENSEIGNANT_CREE',
-        entite: 'Enseignant',
-        entiteId: cree.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(cree), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user,
+        'ENSEIGNANT_CREE',
+        'Enseignant',
+        cree.id,
+        { avant: null, apres: this.instantaneAudit(cree), champsModifies: Object.keys(dto) },
+      );
       return cree;
     });
   }
@@ -131,17 +133,18 @@ export class EnseignantsService extends CrudService {
       exigerPerimetre(user, cible.departementId);
       exigerPerimetre(user, dto.departementId ?? cible.departementId);
       const maj = await tx.enseignant.update({ where: { id }, data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user.id,
-        action: 'ENSEIGNANT_MODIFIE',
-        entite: 'Enseignant',
-        entiteId: id,
-        details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'ENSEIGNANT_MODIFIE',
+        'Enseignant',
+        id,
+        {
           avant: this.instantaneAudit(cible),
           apres: this.instantaneAudit(maj),
           champsModifies: Object.keys(dto),
-        }),
-      } });
+        },
+      );
       return maj;
     });
   }
@@ -151,13 +154,7 @@ export class EnseignantsService extends CrudService {
       const avant = await tx.enseignant.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Enseignant' }));
       await tx.enseignant.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user.id,
-        action: 'ENSEIGNANT_SUPPRIME',
-        entite: 'Enseignant',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(tx, user, 'ENSEIGNANT_SUPPRIME', 'Enseignant', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     });
   }

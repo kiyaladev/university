@@ -8,6 +8,7 @@ import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { toDateOnly } from '../../common/utils';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 export class CreateAnneeDto {
   @IsString() libelle: string;
@@ -96,15 +97,7 @@ export class AnneesService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       if (dto.active) await this.desactiverAutres(tx, undefined, user.id);
       const annee = await tx.anneeAcademique.create({ data: creation });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ANNEE_ACADEMIQUE_CREEE',
-          entite: 'AnneeAcademique',
-          entiteId: annee.id,
-          details: JSON.stringify({ avant: null, apres: this.instantane(annee) }),
-        },
-      });
+      await journaliser(tx, user, 'ANNEE_ACADEMIQUE_CREEE', 'AnneeAcademique', annee.id, { avant: null, apres: this.instantane(annee) });
       return annee;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -132,29 +125,27 @@ export class AnneesService extends CrudService {
           where: { id },
           data: { ...this.prepare(dto), active: false, cloturee: true },
         });
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'ANNEE_ACADEMIQUE_CLOTUREE',
-            entite: 'AnneeAcademique',
-            entiteId: id,
-            details: JSON.stringify({ avant: this.instantane(actuelle), apres: this.instantane(annee) }),
-          },
-        });
+        await journaliser(
+          tx,
+          user,
+          'ANNEE_ACADEMIQUE_CLOTUREE',
+          'AnneeAcademique',
+          id,
+          { avant: this.instantane(actuelle), apres: this.instantane(annee) },
+        );
         return annee;
       }
 
       if (dto.active) await this.desactiverAutres(tx, id, user.id);
       const annee = await tx.anneeAcademique.update({ where: { id }, data: this.prepare(dto) });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ANNEE_ACADEMIQUE_MODIFIEE',
-          entite: 'AnneeAcademique',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantane(actuelle), apres: this.instantane(annee) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ANNEE_ACADEMIQUE_MODIFIEE',
+        'AnneeAcademique',
+        id,
+        { avant: this.instantane(actuelle), apres: this.instantane(annee) },
+      );
       return annee;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -196,15 +187,14 @@ export class AnneesService extends CrudService {
       }
       return supprimerOuConflit(async () => {
         await tx.anneeAcademique.delete({ where: { id } });
-        await tx.auditLog.create({
-          data: {
-            userId: user?.id ?? null,
-            action: 'ANNEE_ACADEMIQUE_SUPPRIMEE',
-            entite: 'AnneeAcademique',
-            entiteId: id,
-            details: JSON.stringify({ avant: this.instantane(annee), apres: null }),
-          },
-        });
+        await journaliser(
+          tx,
+          user ?? null,
+          'ANNEE_ACADEMIQUE_SUPPRIMEE',
+          'AnneeAcademique',
+          id,
+          { avant: this.instantane(annee), apres: null },
+        );
         return { id };
       }, 'referentiel.annee_referenced_delete');
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

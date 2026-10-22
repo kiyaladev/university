@@ -25,6 +25,8 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { CreateExamenDto, ExamenQueryDto, ScanExamenDto } from './examens.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 const EXAMEN_INCLUDE = {
   matiere: true,
@@ -74,9 +76,7 @@ export class ExamensService {
   // ------------------------------------------------------- lecture
 
   async liste(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.ExamenWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -98,11 +98,12 @@ export class ExamensService {
         where,
         include: EXAMEN_INCLUDE,
         orderBy: { dateExamen: 'asc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.examen.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string, user?: AuthUser) {
@@ -163,15 +164,7 @@ export class ExamensService {
         },
         include: EXAMEN_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_CREE',
-          entite: 'Examen',
-          entiteId: examen.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(examen) }),
-        },
-      });
+      await journaliser(tx, user, 'EXAMEN_CREE', 'Examen', examen.id, { avant: null, apres: this.instantaneAudit(examen) });
       return examen;
     });
   }
@@ -196,15 +189,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_STATUT',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_STATUT',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -240,15 +232,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_DEMARRE',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_DEMARRE',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -271,15 +262,14 @@ export class ExamensService {
         throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_TERMINE',
-          entite: 'Examen',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_TERMINE',
+        'Examen',
+        id,
+        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
+      );
       return maj;
     });
   }
@@ -301,21 +291,19 @@ export class ExamensService {
 
   async listeScans(id: string, query: QueryDto, user: AuthUser): Promise<Paginated<any>> {
     await this.trouver(id, user);
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { examenId: id };
     const [data, total] = await Promise.all([
       this.prisma.scanExamen.findMany({
         where,
         include: SCAN_INCLUDE,
         orderBy: { heureScan: 'desc' },
-        skip: all ? 0 : (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.scanExamen.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /**
@@ -400,15 +388,14 @@ export class ExamensService {
         data: { nbPresents: { increment: 1 } },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_SCAN_VALIDE',
-          entite: 'ScanExamen',
-          entiteId: created.id,
-          details: `${examen.codeExamen} — présence enregistrée (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'EXAMEN_SCAN_VALIDE',
+        'ScanExamen',
+        created.id,
+        `${examen.codeExamen} — présence enregistrée (${examenMaj.nbPresents}/${examenMaj.nbInscrits})`,
+      );
 
       return created;
     });
@@ -489,15 +476,7 @@ export class ExamensService {
         include: SCAN_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'EXAMEN_SCAN_REJETE',
-          entite: 'ScanExamen',
-          entiteId: scan.id,
-          details: `${codeExamen} — scan refusé`,
-        },
-      });
+      await journaliser(tx, user, 'EXAMEN_SCAN_REJETE', 'ScanExamen', scan.id, `${codeExamen} — scan refusé`);
       return scan;
     });
   }

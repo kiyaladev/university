@@ -2,6 +2,7 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { Observable, map } from 'rxjs';
 import { Role } from '@prisma/client';
 import { AuthUser } from './decorators';
+import { estChefDeDepartement } from './perimetre';
 
 /** Password/PIN hashes and biometric templates never belong in an HTTP response. */
 const SECRETS = new Set(['password', 'codePin', 'empreinteTemplate', 'nip', 'qrRestoToken']);
@@ -22,7 +23,7 @@ export function sansSecrets(value: unknown, user?: AuthUser): unknown {
   );
   const projectionMinimale = enseignant && user && (
     user.role === Role.ETUDIANT || user.role === Role.CONTROLEUR ||
-    user.role === Role.CHEF_DEPARTEMENT ||
+    estChefDeDepartement(user) ||
     (user.role === Role.ENSEIGNANT && record.id !== user.enseignantId)
   );
   return Object.fromEntries(Object.entries(record)

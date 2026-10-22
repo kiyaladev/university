@@ -31,6 +31,8 @@ import {
 } from './attestation.dto';
 import { t } from '../../common/i18n';
 import { toDateOnly } from '../../common/utils';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement } from '../../common/perimetre';
 
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
@@ -81,7 +83,7 @@ export class AttestationService {
     if (user.role === Role.ADMIN || user.role === Role.SCOLARITE || user.role === Role.DIRECTION) {
       return;
     }
-    if (user.role === Role.CHEF_DEPARTEMENT) {
+    if (estChefDeDepartement(user)) {
       const cible = await this.enseignantOuErreur(enseignantId);
       if (cible.departementId && cible.departementId === user.departementId) return;
       throw new NotFoundException(t('attestation.enseignant_introuvable'));
@@ -101,7 +103,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin, codePinDefiniLe: new Date() },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_DEFINI', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_DEFINI', 'Enseignant', enseignantId);
     });
     return { message: 'Code personnel enregistré' };
   }
@@ -118,7 +120,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin, codePinDefiniLe: new Date() },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_REINITIALISE', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_REINITIALISE', 'Enseignant', enseignantId);
     });
     return { code, message: 'Communiquez ce code à l’enseignant : il ne sera plus affiché' };
   }
@@ -130,7 +132,7 @@ export class AttestationService {
         where: { id: enseignantId },
         data: { codePin: null, codePinDefiniLe: null },
       });
-      await tx.auditLog.create({ data: { userId: user.id, action: 'PIN_SUPPRIME', entite: 'Enseignant', entiteId: enseignantId } });
+      await journaliser(tx, user, 'PIN_SUPPRIME', 'Enseignant', enseignantId);
     });
     return { message: 'Code personnel supprimé' };
   }
@@ -162,19 +164,18 @@ export class AttestationService {
       const cree = await tx.appareil.create({
         data: { libelle, secret, userId: user.id },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'APPAREIL_ENROLE',
-          entite: 'Appareil',
-          entiteId: cree.id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'APPAREIL_ENROLE',
+        'Appareil',
+        cree.id,
+        {
             avant: null,
             apres: { libelle: cree.libelle, actif: cree.actif },
             champsModifies: ['libelle', 'actif'],
-          }),
-        },
-      });
+          },
+      );
       return cree;
     });
     return { appareilId: appareil.id, secret, libelle: appareil.libelle };
@@ -192,19 +193,18 @@ export class AttestationService {
         where: { id },
         data: { actif: false, revoqueLe: new Date() },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'APPAREIL_REVOQUE',
-          entite: 'Appareil',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'APPAREIL_REVOQUE',
+        'Appareil',
+        id,
+        {
             avant: { libelle: avant.libelle, actif: avant.actif },
             apres: { libelle: apres.libelle, actif: apres.actif },
             champsModifies: ['actif'],
-          }),
-        },
-      });
+          },
+      );
     });
     return { message: 'Appareil révoqué : ses lectures d’empreinte ne sont plus acceptées' };
   }
@@ -291,7 +291,7 @@ export class AttestationService {
         empreinteConsentementPar: `${user.prenom} ${user.nom}`,
       },
     });
-    await this.journaliser(user, 'EMPREINTE_ENROLEE', enseignantId);
+    await journaliser(this.prisma, user, 'EMPREINTE_ENROLEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte enrôlée' };
   }
 
@@ -307,7 +307,7 @@ export class AttestationService {
         empreinteConsentementPar: null,
       },
     });
-    await this.journaliser(user, 'EMPREINTE_SUPPRIMEE', enseignantId);
+    await journaliser(this.prisma, user, 'EMPREINTE_SUPPRIMEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte supprimée' };
   }
 
@@ -387,15 +387,7 @@ export class AttestationService {
     if (!e.empreinteTemplate) {
       throw new BadRequestException(t('attestation.aucune_empreinte_enrolee_pour_cet_enseignant'));
     }
-    await this.prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'GABARIT_BIOMETRIQUE_CONSULTE',
-        entite: 'Enseignant',
-        entiteId: enseignantId,
-        details: JSON.stringify({ seanceId, role: user.role }),
-      },
-    });
+    await journaliser(this.prisma, user, 'GABARIT_BIOMETRIQUE_CONSULTE', 'Enseignant', enseignantId, { seanceId, role: user.role });
     // Déchiffré uniquement ici, pour la comparaison faite par la passerelle.
     return { template: dechiffrer(e.empreinteTemplate), doigt: e.empreinteDoigt };
   }
@@ -404,7 +396,7 @@ export class AttestationService {
 
   /** Moyens dont dispose l'enseignant — pilote l'affichage de l'écran de pointage. */
   async moyens(enseignantId: string, user: AuthUser, seanceId?: string) {
-    if (user.role === Role.CHEF_DEPARTEMENT) await this.controlerAcces(user, enseignantId);
+    if (estChefDeDepartement(user)) await this.controlerAcces(user, enseignantId);
     if (user.role === Role.CONTROLEUR) {
       if (!seanceId) throw new NotFoundException(t('attestation.enseignant_introuvable'));
       const seance = await this.prisma.seance.findFirst({
@@ -429,15 +421,7 @@ export class AttestationService {
       ) {
         throw new NotFoundException(t('attestation.enseignant_introuvable'));
       }
-      await this.prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'MOYENS_ATTESTATION_CONSULTES',
-          entite: 'Enseignant',
-          entiteId: enseignantId,
-          details: JSON.stringify({ seanceId, role: user.role }),
-        },
-      });
+      await journaliser(this.prisma, user, 'MOYENS_ATTESTATION_CONSULTES', 'Enseignant', enseignantId, { seanceId, role: user.role });
     }
     const e = await this.prisma.enseignant.findUnique({
       where: { id: enseignantId, actif: true },
@@ -511,9 +495,4 @@ export class AttestationService {
     return { mode: AttestationMode.AUCUNE, valide: false };
   }
 
-  private journaliser(user: AuthUser, action: string, enseignantId: string) {
-    return this.prisma.auditLog.create({
-      data: { userId: user.id, action, entite: 'Enseignant', entiteId: enseignantId },
-    });
-  }
 }

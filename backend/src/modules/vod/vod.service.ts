@@ -33,6 +33,8 @@ import {
   UpdateCoursVODDto,
   VodQueryDto,
 } from './vod.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { avantApres, journaliser } from '../../common/audit';
 
 const VOD_INCLUDE = {
   matiere: { select: { id: true, code: true, intitule: true } },
@@ -169,9 +171,7 @@ export class VodService {
   }
 
   async liste(query: VodQueryDto, user: AuthUser) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.CoursVODWhereInput = {
       AND: [this.lectureWhere(user)],
@@ -196,12 +196,13 @@ export class VodService {
         where,
         include: VOD_INCLUDE,
         orderBy: { dateMiseEnLigne: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.coursVOD.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {
@@ -338,7 +339,7 @@ export class VodService {
         },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(tx, user, 'VOD_CREE', vod.id, null, instantaneVod(vod));
+      await journaliser(tx, user, 'VOD_CREE', 'CoursVOD', vod.id, avantApres(null, instantaneVod(vod)));
       return vod;
     });
   }
@@ -373,9 +374,16 @@ export class VodService {
         dto.inscriptionId !== undefined ? dto.inscriptionId : avant.inscriptionId,
       );
       const vod = await tx.coursVOD.update({ where: { id }, data: donnees, include: VOD_INCLUDE });
-      await this.journaliser(
-        tx, user, 'VOD_MODIFIE', id,
-        instantaneVod(avant), instantaneVod(vod), Object.keys(donnees),
+      // Noms des champs touchés seulement : leurs valeurs restent dans
+      // l'instantané projeté, jamais recopiées.
+      const champsModifies = Object.keys(donnees);
+      await journaliser(
+        tx,
+        user,
+        'VOD_MODIFIE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(vod), champsModifies.length ? { champsModifies } : undefined),
       );
       return vod;
     });
@@ -397,9 +405,13 @@ export class VodService {
         },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(
-        tx, user, 'VOD_PUBLIE', id,
-        instantaneVod(avant), instantaneVod(miseAJour), ['statut', 'dateMiseEnLigne'],
+      await journaliser(
+        tx,
+        user,
+        'VOD_PUBLIE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(miseAJour), { champsModifies: ['statut', 'dateMiseEnLigne'] }),
       );
       return miseAJour;
     });
@@ -418,44 +430,15 @@ export class VodService {
         data: { statut: StatutVOD.ARCHIVE },
         include: VOD_INCLUDE,
       });
-      await this.journaliser(
-        tx, user, 'VOD_ARCHIVE', id,
-        instantaneVod(avant), instantaneVod(miseAJour), ['statut'],
+      await journaliser(
+        tx,
+        user,
+        'VOD_ARCHIVE',
+        'CoursVOD',
+        id,
+        avantApres(instantaneVod(avant), instantaneVod(miseAJour), { champsModifies: ['statut'] }),
       );
       return miseAJour;
-    });
-  }
-
-  // ---------------------------------------------------------------- journal
-
-  /**
-   * Écrit la ligne de journal dans la transaction de la mutation : l'état de
-   * la ressource et sa trace sont committés ensemble, ou pas du tout. Un
-   * journal écrit hors transaction survivrait à une mutation annulée.
-   */
-  private journaliser(
-    tx: Prisma.TransactionClient,
-    user: AuthUser,
-    action: string,
-    entiteId: string,
-    avant: unknown,
-    apres: unknown,
-    champsModifies?: string[],
-  ) {
-    return tx.auditLog.create({
-      data: {
-        userId: user.id,
-        action,
-        entite: 'CoursVOD',
-        entiteId,
-        details: JSON.stringify({
-          avant,
-          apres,
-          // Noms des champs touchés seulement : leurs valeurs restent dans
-          // l'instantané projeté, jamais recopiées.
-          ...(champsModifies?.length ? { champsModifies } : {}),
-        }),
-      },
     });
   }
 

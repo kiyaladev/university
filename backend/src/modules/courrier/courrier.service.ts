@@ -30,6 +30,9 @@ import {
   ParapherCourrierDto,
   UpdateCourrierDto,
 } from './courrier.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
+import { estChefDeDepartement, filtreDepartement } from '../../common/perimetre';
 
 const COURRIER_INCLUDE = {
   departement: { select: { id: true, code: true, nom: true } },
@@ -66,7 +69,7 @@ export class CourrierService {
   }
 
   private peutConsulter(courrier: { departementId?: string | null; enregistreParId: string | null; circuits: Array<{ roleValideur: string | null }> }, user: AuthUser) {
-    if (user.role === Role.CHEF_DEPARTEMENT && (!user.departementId || courrier.departementId !== user.departementId)) return false;
+    if (estChefDeDepartement(user) && (!user.departementId || courrier.departementId !== user.departementId)) return false;
     if (this.estResponsable(user) || courrier.enregistreParId === user.id) return true;
     const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
     return courrier.circuits.some((etape) => etiquettes.includes(etape.roleValideur ?? ''));
@@ -118,7 +121,7 @@ export class CourrierService {
     if (this.estResponsable(user)) return {};
     const etiquettes = ETIQUETTES_PAR_ROLE[user.role] ?? [];
     return {
-      ...(user.role === Role.CHEF_DEPARTEMENT ? { departementId: user.departementId ?? '__aucun_departement__' } : {}),
+      ...filtreDepartement(user, '', '__aucun_departement__'),
       OR: [
         { enregistreParId: user.id },
         ...(etiquettes.length ? [{ circuits: { some: { roleValideur: { in: etiquettes } } } }] : []),
@@ -129,9 +132,7 @@ export class CourrierService {
   // ------------------------------------------------------- lecture
 
   async liste(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const scope = this.filtreVisible(user);
     const where: Prisma.CourrierWhereInput = {
@@ -165,11 +166,12 @@ export class CourrierService {
         where,
         include: COURRIER_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.courrier.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string, user: AuthUser) {
@@ -211,8 +213,8 @@ export class CourrierService {
   // ----------------------------------------------- création + circuit
 
   async creer(dto: CreateCourrierDto, user: AuthUser) {
-    const departementId = user.role === Role.CHEF_DEPARTEMENT ? user.departementId : dto.departementId;
-    if (user.role === Role.CHEF_DEPARTEMENT && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
+    const departementId = estChefDeDepartement(user) ? user.departementId : dto.departementId;
+    if (estChefDeDepartement(user) && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
       throw new ForbiddenException(I18nContext.current()!.t('courrier.department_scope_required'));
     }
     const etapes = dto.circuit?.length ? dto.circuit : CIRCUIT_PAR_DEFAUT;
@@ -253,18 +255,17 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_CREE',
-          entite: 'Courrier',
-          entiteId: courrier.id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_CREE',
+        'Courrier',
+        courrier.id,
+        {
             avant: null,
             apres: this.instantaneAudit(courrier),
-          }),
-        },
-      });
+          },
+      );
       return courrier;
     });
   }
@@ -312,19 +313,18 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_MODIFIE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_MODIFIE',
+        'Courrier',
+        id,
+        {
             avant: this.instantaneAudit(actuel),
             apres: this.instantaneAudit(maj),
             champsModifies: Object.keys(dto),
-          }),
-        },
-      });
+          },
+      );
       return maj;
     });
   }
@@ -420,13 +420,13 @@ export class CourrierService {
             include: COURRIER_INCLUDE,
           });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_PARAPHE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_PARAPHE',
+        'Courrier',
+        id,
+        {
             etape: {
               id: etape.id,
               ordre: etape.ordre,
@@ -439,9 +439,8 @@ export class CourrierService {
             champsModifies: restantes === 0
               ? ['circuit', 'statut', 'traiteParId']
               : ['circuit'],
-          }),
-        },
-      });
+          },
+      );
       return apres;
     });
 
@@ -499,13 +498,13 @@ export class CourrierService {
         include: COURRIER_INCLUDE,
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'COURRIER_CLOTURE',
-          entite: 'Courrier',
-          entiteId: id,
-          details: JSON.stringify({
+      await journaliser(
+        tx,
+        user,
+        'COURRIER_CLOTURE',
+        'Courrier',
+        id,
+        {
             transition: `${courrier.statut}→${apres.statut}`,
             etapesForcees: true,
             notesModifiees: Boolean(dto.notes),
@@ -517,9 +516,8 @@ export class CourrierService {
               ...(statutSuivant === StatutCourrier.TRAITE ? ['traiteParId'] : []),
               ...(dto.notes ? ['notes'] : []),
             ],
-          }),
-        },
-      });
+          },
+      );
       return apres;
     });
 

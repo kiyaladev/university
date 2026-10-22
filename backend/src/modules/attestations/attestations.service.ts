@@ -32,6 +32,8 @@ import {
   UpdateAttestationDto,
   VerifierAttestationDto,
 } from './attestations.dto';
+import { paginer, pagine } from '../../common/pagination';
+import { journaliser } from '../../common/audit';
 
 export const ATTESTATION_INCLUDE = {
   etudiant: {
@@ -66,9 +68,7 @@ export class AttestationsService {
   // ------------------------------------------------------------- consultation
 
   async liste(query: AttestationQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.AttestationWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -98,12 +98,13 @@ export class AttestationsService {
         where,
         include: ATTESTATION_INCLUDE,
         orderBy: [{ emiseLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.attestation.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async findOne(id: string) {
@@ -242,15 +243,7 @@ export class AttestationsService {
             },
             include: ATTESTATION_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'ATTESTATION_EMISE',
-              entite: 'Attestation',
-              entiteId: cree.id,
-              details: JSON.stringify({ avant: null, apres: this.instantaneAudit(cree) }),
-            },
-          });
+          await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, { avant: null, apres: this.instantaneAudit(cree) });
           return cree;
         });
         return attestation;
@@ -299,15 +292,14 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTESTATION_MODIFICATION',
-          entite: 'Attestation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ATTESTATION_MODIFICATION',
+        'Attestation',
+        id,
+        { avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) },
+      );
       return miseAJour;
     });
   }
@@ -332,15 +324,14 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ATTESTATION_REVOCATION',
-          entite: 'Attestation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) }),
-        },
-      });
+      await journaliser(
+        tx,
+        user,
+        'ATTESTATION_REVOCATION',
+        'Attestation',
+        id,
+        { avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) },
+      );
       return miseAJour;
     });
   }

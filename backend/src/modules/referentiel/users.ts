@@ -16,6 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 export class CreateUserDto {
   @IsEmail() email: string;
@@ -106,13 +107,14 @@ export class UsersService extends CrudService {
         select: this.selectAudit(),
       });
       if (enseignantId) await tx.enseignant.update({ where: { id: enseignantId }, data: { userId: user.id } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'UTILISATEUR_CREE',
-        entite: 'Utilisateur',
-        entiteId: user.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(user), champsModifies: Object.keys(rest) }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'UTILISATEUR_CREE',
+        'Utilisateur',
+        user.id,
+        { avant: null, apres: this.instantaneAudit(user), champsModifies: Object.keys(rest) },
+      );
       return this.profilSecurise(user);
     });
   }
@@ -135,17 +137,18 @@ export class UsersService extends CrudService {
         select: this.selectAudit(),
       });
       if (enseignantId) await tx.enseignant.update({ where: { id: enseignantId }, data: { userId: id } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'UTILISATEUR_MODIFIE',
-        entite: 'Utilisateur',
-        entiteId: id,
-        details: JSON.stringify({
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'UTILISATEUR_MODIFIE',
+        'Utilisateur',
+        id,
+        {
           avant: this.instantaneAudit(avant),
           apres: this.instantaneAudit(apres),
           champsModifies: [...Object.keys(rest), ...(password ? ['motDePasse'] : []), ...(enseignantId ? ['enseignantId'] : [])],
-        }),
-      } });
+        },
+      );
       return this.profilSecurise(apres);
     });
   }
@@ -155,13 +158,14 @@ export class UsersService extends CrudService {
       const avant = await tx.user.findUnique({ where: { id }, select: this.selectAudit() });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Utilisateur' }));
       await tx.user.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: acteur?.id ?? null,
-        action: 'UTILISATEUR_SUPPRIME',
-        entite: 'Utilisateur',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: null }),
-      } });
+      await journaliser(
+        tx,
+        acteur ?? null,
+        'UTILISATEUR_SUPPRIME',
+        'Utilisateur',
+        id,
+        { avant: this.instantaneAudit(avant), apres: null },
+      );
       return { id };
     });
   }

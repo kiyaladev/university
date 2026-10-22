@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 const GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
 const LECTURE_STRUCTURE = [
@@ -49,13 +50,14 @@ export class DepartementsService extends CrudService {
   async creer(dto: CreateDepartementDto, user?: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const departement = await tx.departement.create({ data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'DEPARTEMENT_CREE',
-        entite: 'Departement',
-        entiteId: departement.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(departement), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'DEPARTEMENT_CREE',
+        'Departement',
+        departement.id,
+        { avant: null, apres: this.instantaneAudit(departement), champsModifies: Object.keys(dto) },
+      );
       return departement;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -65,13 +67,14 @@ export class DepartementsService extends CrudService {
       const avant = await tx.departement.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Département' }));
       const apres = await tx.departement.update({ where: { id }, data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'DEPARTEMENT_MODIFIE',
-        entite: 'Departement',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'DEPARTEMENT_MODIFIE',
+        'Departement',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -94,10 +97,14 @@ export class DepartementsService extends CrudService {
         throw new ConflictException(t('referentiel.departement_referenced_delete'));
       }
       await supprimerOuConflit(() => tx.departement.delete({ where: { id } }), 'referentiel.departement_referenced_delete');
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'DEPARTEMENT_SUPPRIME', entite: 'Departement', entiteId: id,
-        details: JSON.stringify({ avant: { id, code: departement.code, nom: departement.nom }, apres: null }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'DEPARTEMENT_SUPPRIME',
+        'Departement',
+        id,
+        { avant: { id, code: departement.code, nom: departement.nom }, apres: null },
+      );
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -165,13 +172,14 @@ export class FilieresService extends CrudService {
   async creer(dto: CreateFiliereDto, user?: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const filiere = await tx.filiere.create({ data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'FILIERE_CREEE',
-        entite: 'Filiere',
-        entiteId: filiere.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(filiere), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'FILIERE_CREEE',
+        'Filiere',
+        filiere.id,
+        { avant: null, apres: this.instantaneAudit(filiere), champsModifies: Object.keys(dto) },
+      );
       return filiere;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -181,13 +189,14 @@ export class FilieresService extends CrudService {
       const avant = await tx.filiere.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Filière' }));
       const apres = await tx.filiere.update({ where: { id }, data: dto, include: this.options.include });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null,
-        action: 'FILIERE_MODIFIEE',
-        entite: 'Filiere',
-        entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'FILIERE_MODIFIEE',
+        'Filiere',
+        id,
+        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -204,10 +213,14 @@ export class FilieresService extends CrudService {
         throw new ConflictException(t('referentiel.filiere_referenced_delete'));
       }
       await supprimerOuConflit(() => tx.filiere.delete({ where: { id } }), 'referentiel.filiere_referenced_delete');
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'FILIERE_SUPPRIMEE', entite: 'Filiere', entiteId: id,
-        details: JSON.stringify({ avant: { id, code: filiere.code, nom: filiere.nom, departementId: filiere.departementId }, apres: null }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'FILIERE_SUPPRIMEE',
+        'Filiere',
+        id,
+        { avant: { id, code: filiere.code, nom: filiere.nom, departementId: filiere.departementId }, apres: null },
+      );
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -278,10 +291,14 @@ export class PromotionsService extends CrudService {
         data: dto,
         include: { filiere: { include: { departement: true } }, annee: true },
       });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'PROMOTION_CREEE', entite: 'Promotion', entiteId: promotion.id,
-        details: JSON.stringify({ avant: null, apres: this.instantaneAudit(promotion) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'PROMOTION_CREEE',
+        'Promotion',
+        promotion.id,
+        { avant: null, apres: this.instantaneAudit(promotion) },
+      );
       return promotion;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -310,10 +327,14 @@ export class PromotionsService extends CrudService {
         where: { id }, data: dto,
         include: { filiere: { include: { departement: true } }, annee: true },
       });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'PROMOTION_MODIFIEE', entite: 'Promotion', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(actuelle), apres: this.instantaneAudit(apres) }),
-      } });
+      await journaliser(
+        tx,
+        user ?? null,
+        'PROMOTION_MODIFIEE',
+        'Promotion',
+        id,
+        { avant: this.instantaneAudit(actuelle), apres: this.instantaneAudit(apres) },
+      );
       return apres;
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
@@ -337,10 +358,7 @@ export class PromotionsService extends CrudService {
         throw new ConflictException(t('referentiel.promotion_referenced_delete'));
       }
       await tx.promotion.delete({ where: { id } });
-      await tx.auditLog.create({ data: {
-        userId: user?.id ?? null, action: 'PROMOTION_SUPPRIMEE', entite: 'Promotion', entiteId: id,
-        details: JSON.stringify({ avant: this.instantaneAudit(actuelle), apres: null }),
-      } });
+      await journaliser(tx, user ?? null, 'PROMOTION_SUPPRIMEE', 'Promotion', id, { avant: this.instantaneAudit(actuelle), apres: null });
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }
