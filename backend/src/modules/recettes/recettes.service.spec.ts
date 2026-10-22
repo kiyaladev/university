@@ -122,7 +122,7 @@ describe('journal des recettes externes', () => {
       },
       paiement: {
         findMany: jest.fn().mockResolvedValue([]),
-        create: jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-R-2026-00001' }),
+        create: jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-X-2026-00001' }),
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
@@ -140,11 +140,11 @@ describe('journal des recettes externes', () => {
     });
     expect(tx.paiement.create.mock.calls[0][0].data.completeLe).toBeInstanceOf(Date);
     expect(tx.paiement.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { reference: { startsWith: 'PAY-R-2026-' } },
+      where: { reference: { startsWith: 'PAY-X-2026-' } },
     }));
     expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
       userId: 'agent-1', action: 'RECETTE_ENCAISSEE', entiteId: 'recette-1',
-      details: expect.stringContaining('PAY-R-2026-00001'),
+      details: expect.stringContaining('PAY-X-2026-00001'),
     }) });
   });
 
@@ -157,7 +157,7 @@ describe('journal des recettes externes', () => {
       },
       paiement: {
         findMany: jest.fn().mockResolvedValue([]),
-        create: jest.fn().mockResolvedValue({ id: 'paiement-2', reference: 'PAY-R-2026-00001' }),
+        create: jest.fn().mockResolvedValue({ id: 'paiement-2', reference: 'PAY-X-2026-00001' }),
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
@@ -183,7 +183,7 @@ describe('journal des recettes externes', () => {
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     });
     const premier = transaction(jest.fn().mockRejectedValue({ code: 'P2002', meta: { target: ['reference'] } }));
-    const secondCreate = jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-R-2026-00001' });
+    const secondCreate = jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-X-2026-00001' });
     const second = transaction(secondCreate);
     const prisma = { $transaction: jest.fn()
       .mockImplementationOnce((run: (tx: any) => unknown) => run(premier))
@@ -194,6 +194,33 @@ describe('journal des recettes externes', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     expect(premier.auditLog.create).not.toHaveBeenCalled();
     expect(second.auditLog.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('numérote sous PAY-X- sans tenir compte des références resto ni des anciennes recettes PAY-R-', async () => {
+    const payee = { ...avant, paiementId: 'paiement-1' };
+    const references = ['PAY-R-2026-00041', 'PAY-2026-00090', 'PAY-X-2026-00002'];
+    const tx = {
+      recetteExterne: {
+        findUnique: jest.fn().mockResolvedValue(avant),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        findUniqueOrThrow: jest.fn().mockResolvedValue(payee),
+      },
+      paiement: {
+        // Honore `startsWith` comme Prisma, sinon le test ne prouverait rien.
+        findMany: jest.fn(async (args: any) => references
+          .filter((r) => r.startsWith(args.where.reference.startsWith))
+          .map((reference) => ({ reference }))),
+        create: jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-X-2026-00003' }),
+      },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const service = new RecettesService({
+      $transaction: jest.fn((run: (tx: any) => unknown) => run(tx)),
+    } as never);
+
+    await service.encaisser('recette-1', {}, { id: 'agent-1' } as never);
+
+    expect(tx.paiement.create.mock.calls[0][0].data.reference).toBe('PAY-X-2026-00003');
   });
 
   it('conserve une modification textuelle partielle et permet de vider une description nullable', async () => {

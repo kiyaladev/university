@@ -1,4 +1,4 @@
-import { prochainNumero, prochainNumeroTx, type Numerotable } from './numero';
+import { anneeNumero, prochainNumero, prochainNumeroTx, type Numerotable } from './numero';
 
 /**
  * Delegate Prisma minimal : il honore `where.startsWith` et `select` comme le
@@ -62,5 +62,27 @@ describe('numérotation séquentielle', () => {
       'PAY-2026-00003',
     );
     expect(paiement.findMany).toHaveBeenCalled();
+  });
+});
+
+describe('année portée par les numéros', () => {
+  beforeEach(() => jest.useFakeTimers().setSystemTime(new Date('2026-10-22T10:00:00')));
+  afterEach(() => jest.useRealTimers());
+
+  it('prend la fin du libellé scolaire par défaut (matricules, INS-, PAY-, PAY-R-)', () => {
+    expect(anneeNumero('2025-2026')).toBe('2026');
+    expect(anneeNumero(' 2025 - 2026 ')).toBe('2026');
+  });
+
+  it('prend le début du libellé quand le module le demande (attestations)', () => {
+    expect(anneeNumero('2025-2026', 'debut')).toBe('2025');
+  });
+
+  it("retombe sur l'année civile sans libellé exploitable", () => {
+    expect(anneeNumero()).toBe('2026');
+    expect(anneeNumero(null)).toBe('2026');
+    expect(anneeNumero('')).toBe('2026');
+    expect(anneeNumero('Année 2025')).toBe('2026');
+    expect(anneeNumero('25-26', 'debut')).toBe('2026');
   });
 });

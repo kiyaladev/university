@@ -127,7 +127,7 @@ export class ReclamationsController {
     return this.service.cloturer(id, dto, user);
   }
 
-  /** Cron manuel — escalade en série toutes les réclamations en retard. */
+  /** Déclenchement manuel de l'escalade horaire (ReclamationsService.escaladerReclamationsEchues). */
   @Roles(Role.ADMIN)
   @Post('cron/escalade')
   cronEscalade(@CurrentUser() user: AuthUser) {

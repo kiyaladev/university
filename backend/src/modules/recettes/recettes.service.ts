@@ -9,7 +9,8 @@
  * ou non, en GNF par type et par mois de leur date d’émission.
  *
  * Le numéro de recette est fourni à la création et soumis à sa contrainte
- * d’unicité. Les références de paiement sont générées par le service.
+ * d’unicité. Les références de paiement sont générées par le service, sous
+ * le préfixe "PAY-X-AAAA-NNNNN" (année civile de la date de la recette).
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { I18nContext } from 'nestjs-i18n';
@@ -25,6 +26,9 @@ import {
   RecetteQueryDto,
   UpdateRecetteDto,
 } from './recettes.dto';
+
+/** Préfixe des références de paiement des recettes externes ("PAY-X-2026-00001"). */
+export const PREFIXE_PAIEMENT_RECETTE = 'PAY-X-';
 
 const RECETTE_INCLUDE = {
   paiement: { select: { id: true, reference: true, montant: true, devise: true, statut: true } },
@@ -347,11 +351,17 @@ export class RecettesService {
 
   // ------------------------------------------------------- helpers
 
+  /**
+   * "PAY-X-2026-00001" — préfixe propre aux recettes externes, distinct du
+   * resto ("PAY-R-") et des inscriptions ("PAY-"). Les encaissements
+   * antérieurs gardent leur référence "PAY-R-…" : elle reste valide, seule la
+   * séquence des nouveaux encaissements repart sous "PAY-X-".
+   */
   private async prochainNumeroPaiement(
     tx: Prisma.TransactionClient,
     annee: string,
   ): Promise<string> {
-    return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-R-${annee}-`, 5);
+    return prochainNumeroTx(tx, 'paiement', 'reference', `${PREFIXE_PAIEMENT_RECETTE}${annee}-`, 5);
   }
 }
 

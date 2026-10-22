@@ -36,7 +36,7 @@ import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 
 const PREFIX_DEMANDE = 'DOC-';
 
@@ -73,11 +73,6 @@ export class DocumentsDemandeService extends CrudService {
       include: DEMANDE_INCLUDE,
       label: 'Demande de document',
     });
-  }
-
-  /** Année portée par le numéro "DOC-AAAA-NNNNN". */
-  private anneeNumero(): string {
-    return String(new Date().getFullYear());
   }
 
   /** Numéro séquentiel par année : "DOC-2026-00001". */
@@ -350,7 +345,7 @@ export class DocumentsDemandeService extends CrudService {
     const tarif = await this.tarifPour(dto.type);
     const frais = tarif?.montant ?? 0;
     const devise = tarif?.devise ?? 'GNF';
-    const annee = this.anneeNumero();
+    const annee = anneeNumero();
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
@@ -431,7 +426,7 @@ export class DocumentsDemandeService extends CrudService {
       throw new BadRequestException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
     }
 
-    const annee = this.anneeNumero();
+    const annee = anneeNumero();
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const paiement = await this.prisma.$transaction(async (tx) => {

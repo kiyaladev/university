@@ -29,8 +29,11 @@
  *    Les portefeuilles sont créés sur demande (idempotent) — jamais en tâche
  *    de fond, jamais de comptes pour tous.
  * 6. Références de paiement propres au resto : "PAY-R-AAAA-NNNNN", distinctes
- *    de celles du module inscriptions ("PAY-AAAA-NNNNN") pour ne jamais
- *    prendre les deux transactions l'une pour l'autre à la trésorerie.
+ *    de celles du module inscriptions ("PAY-AAAA-NNNNN") et des recettes
+ *    externes ("PAY-X-AAAA-NNNNN") pour ne jamais prendre une transaction pour
+ *    une autre à la trésorerie. Les recettes encaissées avant l'introduction
+ *    de "PAY-X-" portent encore "PAY-R-" : ces références restent valides et
+ *    le compteur resto les enjambe (il prend le plus grand suffixe du préfixe).
  */
 import {
   BadRequestException,
@@ -47,7 +50,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -672,9 +675,7 @@ export class RestoService {
       where: { active: true, cloturee: false },
       select: { libelle: true },
     });
-    const fin = annee?.libelle.split('-')[1]?.trim();
-    if (fin && /^\d{4}$/.test(fin)) return fin;
-    return String(new Date().getFullYear());
+    return anneeNumero(annee?.libelle);
   }
 
   /**

@@ -29,7 +29,7 @@ import {
   UpdateBadgeDto,
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 
 const BADGE_INCLUDE = {
   creePar: { select: { id: true, nom: true, prenom: true } },
@@ -159,7 +159,7 @@ export class BadgesService {
   // ---------------------------------------------------------------- édition
 
   async creer(dto: CreateBadgeDto, user: AuthUser) {
-    const annee = String(new Date().getFullYear());
+    const annee = anneeNumero();
     let badge: Awaited<ReturnType<typeof this.prisma.badgeAcces.create>> | null = null;
 
     for (let tentative = 0; tentative < 10; tentative++) {

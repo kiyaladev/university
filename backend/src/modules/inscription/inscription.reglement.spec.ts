@@ -15,7 +15,8 @@ describe('Règlement des inscriptions — cumul des paiements', () => {
   function preparer(cumul: number) {
     const paiement = {
       id: 'pay-1', statut: StatutPaiement.EN_ATTENTE, inscriptionId: 'ins-1', anneeId: 'annee-1',
-      inscriptionFormation: null, inscription: { anneeId: 'annee-1' },
+      inscriptionFormation: null, recharges: [], rechargesRecette: null, demandeDocument: null,
+      inscription: { anneeId: 'annee-1' },
     };
     const tx: any = {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },

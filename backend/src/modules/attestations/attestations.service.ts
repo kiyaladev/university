@@ -23,7 +23,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.module';
 import { documents, AttestationImprimable } from './documents';
-import { prochainNumeroTx } from '../../common/numero';
+import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AttestationQueryDto,
@@ -133,15 +133,6 @@ export class AttestationsService {
     );
   }
 
-  /** Année du numéro : celle de l'année scolaire retenue, sinon l'année civile. */
-  private anneeNumero(libelleAnnee?: string): string {
-    if (libelleAnnee) {
-      const debut = libelleAnnee.split('-')[0]?.trim();
-      if (debut && /^\d{4}$/.test(debut)) return debut;
-    }
-    return String(new Date().getFullYear());
-  }
-
   /**
    * Numéro séquentiel par année : "ATT-YYYY-00005". Le compteur se lit dans la
    * base (il n'y a pas de table de séquence) ; deux émissions simultanées
@@ -221,7 +212,7 @@ export class AttestationsService {
             promotionIdRetenue = inscription.promotionId;
             await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
           }
-          const anneeNumero = this.anneeNumero(annee?.libelle ?? promotion?.annee.libelle);
+          const numeroAnnee = anneeNumero(annee?.libelle ?? promotion?.annee.libelle, 'debut');
           const doublon = await tx.attestation.findFirst({
             where: {
               etudiantId: dto.etudiantId,
@@ -236,7 +227,7 @@ export class AttestationsService {
             );
           }
 
-          const numero = await this.prochainNumero(tx, anneeNumero);
+          const numero = await this.prochainNumero(tx, numeroAnnee);
           const cree = await tx.attestation.create({
             data: {
               numero,

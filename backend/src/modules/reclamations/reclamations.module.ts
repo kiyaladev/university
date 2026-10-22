@@ -11,7 +11,8 @@ import { ReclamationsService } from './reclamations.service';
  * Chaque réclamation suit un cycle : OUVERTE → EN_COURS → EN_ATTENTE_REPONSE
  * → RESOLUE / FERMEE / REJETEE. Une note de clôture consigne la décision finale.
  * Un délai d'escalade (par défaut 48 h) peut être dépassé sans intervention :
- * la direction force alors l'escalade et trace l'événement.
+ * la réclamation est escaladée chaque heure par une tâche planifiée, et la
+ * direction peut aussi forcer l'escalade ; l'événement est tracé.
  */
 @Module({
   controllers: [ReclamationsController],
