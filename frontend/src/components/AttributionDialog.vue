@@ -1,90 +1,84 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 600px; max-width: 95vw">
-      <q-card-section class="text-h6">{{ $t('cites.actions.newAttribution') }}</q-card-section>
-      <q-card-section class="q-pt-none text-caption text-grey-7">
-        {{ $t('cites.attributions.dialog.note') }}
-      </q-card-section>
-
-      <q-card-section>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.chambreId"
-              :options="optionsChambres"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('cites.attributions.dialog.roomLabel')"
-              @update:model-value="chambreChoisie"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.anneeId"
-              :options="optionsAnnees"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('affectations.filters.year')"
-            />
-          </div>
-        </div>
-
-        <span class="section-titre">{{ $t('common.fields.student') }}</span>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('cites.actions.newAttribution')"
+    :sous-titre="$t('cites.attributions.dialog.note')"
+    :envoi="enregistrement"
+    @valider="enregistrer"
+  >
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
         <q-select
-          v-model="form.etudiantId"
-          :options="optionsEtudiants"
+          v-model="form.chambreId"
+          :options="optionsChambres"
           outlined
           dense
-          use-input
-          clearable
           emit-value
           map-options
-          input-debounce="300"
-          :label="$t('cites.attributions.dialog.studentSearch')"
-          @filter="filtrerEtudiants"
+          :label="$t('cites.attributions.dialog.roomLabel')"
+          :rules="[requis]"
+          @update:model-value="chambreChoisie"
         />
-        <p v-if="rechercheImpossible" class="text-caption text-negative q-mt-xs">
-          {{ $t('cites.attributions.dialog.studentsUnavailable') }}
-        </p>
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.anneeId"
+          :options="optionsAnnees"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('affectations.filters.year')"
+        />
+      </div>
+    </div>
 
-        <span class="section-titre">{{ $t('cites.attributions.dialog.criteriaTitle') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-4">
-            <q-input
-              v-model.number="form.critereScore"
-              type="number"
-              min="0"
-              max="100"
-              outlined
-              dense
-              :label="$t('cites.attributions.dialog.scoreLabel')"
-            />
-          </div>
-          <div class="col-12 col-sm-8">
-            <q-input
-              v-model="form.justificatif"
-              outlined
-              dense
-              type="textarea"
-              :label="$t('justificatifs.detailDialog.title')"
-              :autogrow="true"
-              :hint="$t('cites.attributions.dialog.proofHint')"
-              rows="2"
-            />
-          </div>
-        </div>
-      </q-card-section>
+    <span class="section-titre">{{ $t('common.fields.student') }}</span>
+    <q-select
+      v-model="form.etudiantId"
+      :options="optionsEtudiants"
+      outlined
+      dense
+      use-input
+      clearable
+      emit-value
+      map-options
+      input-debounce="300"
+      :label="$t('cites.attributions.dialog.studentSearch')"
+      :rules="[requis]"
+      @filter="filtrerEtudiants"
+    />
+    <p v-if="rechercheImpossible" class="text-caption text-negative q-mt-xs">
+      {{ $t('cites.attributions.dialog.studentsUnavailable') }}
+    </p>
 
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+    <span class="section-titre">{{ $t('cites.attributions.dialog.criteriaTitle') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-4">
+        <q-input
+          v-model.number="form.critereScore"
+          type="number"
+          min="0"
+          max="100"
+          outlined
+          dense
+          :label="$t('cites.attributions.dialog.scoreLabel')"
+        />
+      </div>
+      <div class="col-12 col-sm-8">
+        <q-input
+          v-model="form.justificatif"
+          outlined
+          dense
+          type="textarea"
+          :label="$t('justificatifs.detailDialog.title')"
+          :autogrow="true"
+          :hint="$t('cites.attributions.dialog.proofHint')"
+          rows="2"
+        />
+      </div>
+    </div>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -92,6 +86,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_STATUT_CHAMBRE } from '../utils/libelles';
 import type { AnneeAcademique, Chambre, Etudiant } from '../types';
 
@@ -99,21 +94,21 @@ import type { AnneeAcademique, Chambre, Etudiant } from '../types';
  * Recherche d'étudiants — contrat du module 1 (registre universitaire) :
  *   GET /api/etudiants?search=&all=1
  *   → { data: [{ id, matricule, nom, prenom, telephone }] }
- * L'endpoint n'est pas encore déployé ; le dialogue le consommera tel quel.
  */
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   chambres: Chambre[];
   annees: AnneeAcademique[];
   anneeDefautId?: string | null;
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
 const enregistrement = ref(false);
 const optionsEtudiants = ref<{ label: string; value: string }[]>([]);
 const rechercheImpossible = ref(false);
+const requis = (v: string | null) => !!v || t('common.messages.errors.required');
 
 const form = ref({
   chambreId: null as string | null,
@@ -134,21 +129,18 @@ const optionsAnnees = computed(() =>
   props.annees.map((a) => ({ label: a.libelle, value: a.id })),
 );
 
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    form.value = {
-      chambreId: null,
-      etudiantId: null,
-      anneeId: props.anneeDefautId ?? null,
-      critereScore: null,
-      justificatif: '',
-    };
-    optionsEtudiants.value = [];
-    rechercheImpossible.value = false;
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  form.value = {
+    chambreId: null,
+    etudiantId: null,
+    anneeId: props.anneeDefautId ?? null,
+    critereScore: null,
+    justificatif: '',
+  };
+  optionsEtudiants.value = [];
+  rechercheImpossible.value = false;
+});
 
 function chambreChoisie(id: string | null) {
   const c = props.chambres.find((x) => x.id === id);
@@ -180,17 +172,18 @@ async function filtrerEtudiants(val: string, update: (cb: () => void) => void) {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const payload = {
+    await api.post('/attributions-logement', {
       chambreId: form.value.chambreId!,
       etudiantId: form.value.etudiantId!,
       anneeId: form.value.anneeId || undefined,
       critereScore: form.value.critereScore ?? undefined,
       justificatif: form.value.justificatif || undefined,
-    };
-    await api.post('/attributions-logement', payload);
+    });
     $q.notify({ type: 'positive', message: t('cites.attributions.dialog.saved') });
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

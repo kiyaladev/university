@@ -31,10 +31,10 @@
             flat
             bordered
             class="carte"
-            :rows="mesTickets"
+            :rows="mes.lignes"
             :columns="colonnesMes"
             row-key="id"
-            :loading="chargementMes"
+            :loading="mes.chargement"
             :pagination="{ rowsPerPage: 10 }"
           >
             <template #top-left>
@@ -43,15 +43,11 @@
               </div>
             </template>
             <template #no-data>
-              <div class="full-width text-center text-grey-7 q-pa-lg">
-                <q-icon name="assignment_turned_in" size="38px" color="grey-5" />
-                <div class="q-mt-sm">
-                  {{ dsi ? $t('helpdesk.myTicketsTable.emptyAll') : $t('helpdesk.myTicketsTable.emptyMine') }}
-                </div>
-                <div class="text-caption q-mt-xs">
-                  {{ $t('helpdesk.myTicketsTable.emptyHint') }}
-                </div>
-              </div>
+              <etat-vide
+                icone="assignment_turned_in"
+                :titre="dsi ? $t('helpdesk.myTicketsTable.emptyAll') : $t('helpdesk.myTicketsTable.emptyMine')"
+                :aide="$t('helpdesk.myTicketsTable.emptyHint')"
+              />
             </template>
             <template #body-cell-statut="p">
               <q-td :props="p">
@@ -91,10 +87,10 @@
         v-model="filtres"
         :chips="chipsTickets"
         :placeholder="$t('helpdesk.filters.searchTickets')"
-        @reinitialiser="filtres = { recherche: '' }"
+        @reinitialiser="gestion.reinitialiser([])"
       >
         <template #principaux>
-<q-select
+          <q-select
             v-model="filtres.statut"
             :options="optionsStatuts"
             dense
@@ -137,26 +133,23 @@
       </filter-bar>
 
       <pagination-bar
-        :page="paginationGestion.page"
-        :page-size="paginationGestion.pageSize"
-        :total="paginationGestion.total"
+        v-model:page="gestion.page"
+        v-model:page-size="gestion.pageSize"
+        :total="gestion.total"
         :show-all="false"
-        @update:page="paginationGestion.page = $event; requeterGestion()"
-        @update:page-size="paginationGestion.pageSize = $event; paginationGestion.page = 1; requeterGestion()"
-        @tous="chargerTousGestion"
       />
 
       <q-table
-        v-if="modeGestion === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="tickets"
+        :rows="gestion.lignes"
         :columns="colonnesGestion"
         row-key="id"
-        :loading="chargementGestion"
+        :loading="gestion.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementGestion || tickets.length > 0"
+        :hide-bottom="gestion.chargement || gestion.lignes.length > 0"
       >
         <template #body-cell-priorite="p">
           <q-td :props="p">
@@ -173,13 +166,7 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="support_agent" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('helpdesk.gestionTable.emptyTitle') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('helpdesk.gestionTable.emptyHint') }}
-            </div>
-          </div>
+          <etat-vide icone="support_agent" :titre="$t('helpdesk.gestionTable.emptyTitle')" :aide="$t('helpdesk.gestionTable.emptyHint')" />
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
@@ -214,7 +201,7 @@
       </q-table>
 
       <div v-else class="row q-col-gutter-md">
-        <div v-for="t in tickets" :key="t.id" class="col-12 col-md-6 col-xl-4">
+        <div v-for="t in gestion.lignes" :key="t.id" class="col-12 col-md-6 col-xl-4">
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
@@ -276,13 +263,13 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementGestion && !tickets.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="support_agent" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('helpdesk.gestionTable.emptyTitle') }}</div>
-          <div class="text-caption q-mt-xs">
-            {{ $t('helpdesk.gestionTable.emptyHintShort') }}
-          </div>
-        </div>
+        <etat-vide
+          v-if="!gestion.chargement && !gestion.lignes.length"
+          class="col-12"
+          icone="support_agent"
+          :titre="$t('helpdesk.gestionTable.emptyTitle')"
+          :aide="$t('helpdesk.gestionTable.emptyHintShort')"
+        />
       </div>
     </q-tab-panel>
 
@@ -305,7 +292,7 @@
         v-model="filtresEquip"
         :chips="chipsEquipements"
         :placeholder="$t('helpdesk.filters.searchEquipment')"
-        @reinitialiser="filtresEquip = { recherche: '' }"
+        @reinitialiser="equip.reinitialiser([])"
       >
         <template #avances>
           <q-select
@@ -325,14 +312,14 @@
       </filter-bar>
 
       <q-table
-        v-if="modeEquipements === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="equipements"
+        :rows="equip.lignes"
         :columns="colonnesEquipements"
         row-key="id"
-        :loading="chargementEquipements"
+        :loading="equip.chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
         <template #body-cell-actif="p">
@@ -366,27 +353,16 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="qr_code_2" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('helpdesk.equipmentTab.emptyTitle') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('helpdesk.equipmentTab.emptyHint') }}
-            </div>
-            <q-btn
-              flat
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('helpdesk.actions.newEquipment')"
-              class="q-mt-sm"
-              @click="ouvrirEquipement(null)"
-            />
-          </div>
+          <etat-vide icone="qr_code_2" :titre="$t('helpdesk.equipmentTab.emptyTitle')" :aide="$t('helpdesk.equipmentTab.emptyHint')">
+            <template #action>
+              <q-btn flat no-caps color="primary" icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <div v-else class="row q-col-gutter-md">
-        <div v-for="e in equipements" :key="e.id" class="col-12 col-md-6 col-xl-4">
+        <div v-for="e in equip.lignes" :key="e.id" class="col-12 col-md-6 col-xl-4">
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
@@ -418,19 +394,11 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementEquipements && !equipements.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="qr_code_2" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('helpdesk.equipmentTab.emptyTitle') }}</div>
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('helpdesk.actions.newEquipment')"
-            class="q-mt-sm"
-            @click="ouvrirEquipement(null)"
-          />
-        </div>
+        <etat-vide v-if="!equip.chargement && !equip.lignes.length" class="col-12" icone="qr_code_2" :titre="$t('helpdesk.equipmentTab.emptyTitle')">
+          <template #action>
+            <q-btn flat no-caps color="primary" icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
+          </template>
+        </etat-vide>
       </div>
     </q-tab-panel>
 
@@ -517,11 +485,11 @@
     <ticket-dialog
       v-model="declarerOuvert"
       :equipement="equipementScanne"
-      :equipements="equipements"
+      :equipements="equip.lignes"
       :categorie-initiale="categorieInitiale"
-      @declare="onDeclare"
+      @enregistre="onDeclare"
     />
-    <equipement-dialog v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="rechargerEquipements" />
+    <equipement-dialog v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="equip.recharger()" />
 
     <!-- Scanner QR -->
     <q-dialog v-model="scanEquipement">
@@ -547,7 +515,9 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -560,6 +530,7 @@ import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import QrScanner from '../components/QrScanner.vue';
 import TicketDialog from '../components/TicketDialog.vue';
 import EquipementDialog from '../components/EquipementDialog.vue';
+import EtatVide from '../components/EtatVide.vue';
 import {
   LIBELLE_CATEGORIE_INCIDENT,
   LIBELLE_PRIORITE_TICKET,
@@ -574,20 +545,13 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { supprimerAvecConfirmation } = useConfirmation();
 
 const dsi = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const presentation = usePresentationListe();
 
 const onglet = ref('mes-tickets');
-const mesTickets = ref<TicketSupport[]>([]);
-const tickets = ref<TicketSupport[]>([]);
-const equipements = ref<EquipementCampus[]>([]);
 const stats = ref<Record<string, number> | null>(null);
-
-const paginationGestion = ref({ page: 1, pageSize: 20, total: 0 });
-
-const chargementMes = ref(false);
-const chargementGestion = ref(false);
-const chargementEquipements = ref(false);
 
 const declarerOuvert = ref(false);
 const categorieInitiale = ref<CategorieIncident | ''>('');
@@ -599,65 +563,105 @@ const equipementEdite = ref<EquipementCampus | null>(null);
 const scanEquipement = ref(false);
 const codeScanne = ref('');
 
-const modeGestion = usePresentationListe();
-const modeEquipements = usePresentationListe();
+// ------------------------------------------------------------------ listes
+/** Mes tickets (ou tous pour la DSI) : liste entière, paginée par le q-table. */
+const mes = reactive(
+  useListePaginee<TicketSupport>({
+    filtres: ref({}),
+    pageSize: 0,
+    charger: () => api.get('/tickets', { params: { all: '1' } }).then((r) => r.data),
+  }),
+);
 
-const filtres = ref<Record<string, any>>({ recherche: '' });
-const filtresEquip = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  statut: null,
+  categorie: null,
+  priorite: null,
+  equipementId: null,
+});
+/** Gestion DSI : paginée côté serveur, filtres gardés dans l'URL. */
+const gestion = reactive(
+  useListePaginee<TicketSupport>({
+    filtres,
+    syncUrl: true,
+    actif: () => dsi.value,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/tickets', {
+          params: {
+            ...pageApi(p),
+            statut: f.statut || undefined,
+            categorie: f.categorie || undefined,
+            priorite: f.priorite || undefined,
+            equipementId: f.equipementId || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
+const filtresEquip = ref<Record<string, any>>({ recherche: '', actif: null });
+/** Parc d'équipements : l'API filtre mais ne pagine pas. */
+const equip = reactive(
+  useListePaginee<EquipementCampus>({
+    filtres: filtresEquip,
+    pageSize: 0,
+    syncUrl: true,
+    prefixeUrl: 'eq_',
+    charger: ({ filtres: f }) =>
+      api
+        .get('/equipements', {
+          params: { all: '1', search: texteApi(f.recherche), actif: f.actif || undefined },
+        })
+        .then((r) => r.data),
+  }),
+);
+
+// ----------------------------------------------------------------- filtres
 const optionsStatuts = (Object.keys(LIBELLE_STATUT_TICKET) as StatutTicket[]).map((v) => ({
   label: LIBELLE_STATUT_TICKET[v],
   value: v,
 }));
-const optionsCategories = Object.entries(LIBELLE_CATEGORIE_INCIDENT).map(([value, label]) => ({
-  label,
-  value,
-}));
-const optionsPriorites = Object.entries(LIBELLE_PRIORITE_TICKET).map(([value, label]) => ({
-  label,
-  value,
-}));
+const optionsCategories = Object.entries(LIBELLE_CATEGORIE_INCIDENT).map(([value, label]) => ({ label, value }));
+const optionsPriorites = Object.entries(LIBELLE_PRIORITE_TICKET).map(([value, label]) => ({ label, value }));
+
+const chipRecherche = (r: string): ChipFiltre[] =>
+  r ? [{ label: `« ${r} »`, value: r, icone: 'search', defaut: true }] : [];
 
 const chipsTickets = computed(() => {
   const f = filtres.value;
-  const cs: ChipFiltre[] = [];
-  if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
-  }
-  if (f.statut) cs.push({ label: libelleStatut(f.statut), value: f.statut, icone: 'flag', cle: 'statut'});
-  if (f.categorie) {
-    cs.push({ label: libelleCategorie(f.categorie), value: f.categorie, icone: 'category', cle: 'categorie'});
-  }
-  if (f.priorite) {
-    cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite'});
-  }
+  const cs = chipRecherche(f.recherche);
+  if (f.statut) cs.push({ label: libelleStatut(f.statut), value: f.statut, icone: 'flag', cle: 'statut' });
+  if (f.categorie) cs.push({ label: libelleCategorie(f.categorie), value: f.categorie, icone: 'category', cle: 'categorie' });
+  if (f.priorite) cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite' });
   if (f.equipementId) {
-    cs.push({ label: t('helpdesk.filters.equipmentFiltered'), value: f.equipementId, icone: 'devices', cle: 'equipementId'});
+    cs.push({ label: t('helpdesk.filters.equipmentFiltered'), value: f.equipementId, icone: 'devices', cle: 'equipementId' });
   }
   return cs;
 });
 
 const chipsEquipements = computed(() => {
   const f = filtresEquip.value;
-  const cs: ChipFiltre[] = [];
-  if (f.recherche) {
-    cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
-  }
+  const cs = chipRecherche(f.recherche);
   if (f.actif) {
     cs.push({
       label: f.actif === 'true' ? t('helpdesk.filters.stateActive') : t('helpdesk.filters.stateInactive'),
       value: f.actif,
-      icone: 'toggle_on', cle: 'actif'});
+      icone: 'toggle_on',
+      cle: 'actif',
+    });
   }
   return cs;
 });
 
-const statutPlaques = computed(() => [
-  { cle: 'OUVERT', libelle: t('helpdesk.stats.labels.OUVERT') },
-  { cle: 'EN_COURS', libelle: t('helpdesk.stats.labels.EN_COURS') },
-  { cle: 'RESOLU', libelle: t('helpdesk.stats.labels.RESOLU') },
-  { cle: 'CLOTURE', libelle: t('helpdesk.stats.labels.CLOTURE') },
-]);
+const statutPlaques = computed(() =>
+  (['OUVERT', 'EN_COURS', 'RESOLU', 'CLOTURE'] as const).map((cle) => ({
+    cle,
+    libelle: t(`helpdesk.stats.labels.${cle}`),
+  })),
+);
 
 function libelleStatut(s: string): string {
   return LIBELLE_STATUT_TICKET[s] ?? s;
@@ -673,7 +677,8 @@ function nomCourt(u: { nom?: string; prenom?: string } | null | undefined): stri
   return nom || '—';
 }
 
-const colonnesMes = computed<QTableColumn[]>(() => [
+// ---------------------------------------------------------------- colonnes
+const colonnesCommunes = (): QTableColumn[] => [
   { name: 'numero', label: t('helpdesk.table.columns.number'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'categorie',
@@ -687,7 +692,8 @@ const colonnesMes = computed<QTableColumn[]>(() => [
     field: (r: TicketSupport) => r.equipement?.libelle ?? '—',
     align: 'left',
   },
-  { name: 'description', label: t('helpdesk.table.columns.description'), field: 'description', align: 'left' },
+];
+const colonnesFin = (): QTableColumn[] => [
   { name: 'priorite', label: t('helpdesk.table.columns.priority'), field: 'priorite', align: 'left' },
   { name: 'statut', label: t('helpdesk.table.columns.status'), field: 'statut', align: 'left' },
   {
@@ -696,36 +702,23 @@ const colonnesMes = computed<QTableColumn[]>(() => [
     field: (r: TicketSupport) => dateHeureLisible(r.createdAt),
     align: 'left',
   },
+];
+
+const colonnesMes = computed<QTableColumn[]>(() => [
+  ...colonnesCommunes(),
+  { name: 'description', label: t('helpdesk.table.columns.description'), field: 'description', align: 'left' },
+  ...colonnesFin(),
 ]);
 
 const colonnesGestion = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('helpdesk.table.columns.number'), field: 'numero', align: 'left', sortable: true },
-  {
-    name: 'categorie',
-    label: t('helpdesk.table.columns.category'),
-    field: (r: TicketSupport) => libelleCategorie(r.categorie),
-    align: 'left',
-  },
-  {
-    name: 'equipement',
-    label: t('helpdesk.table.columns.equipment'),
-    field: (r: TicketSupport) => r.equipement?.libelle ?? '—',
-    align: 'left',
-  },
+  ...colonnesCommunes(),
   {
     name: 'declarant',
     label: t('helpdesk.table.columns.declarant'),
     field: (r: TicketSupport) => nomCourt(r.utilisateur ?? null) || (r.declarantNom ?? '—'),
     align: 'left',
   },
-  { name: 'priorite', label: t('helpdesk.table.columns.priority'), field: 'priorite', align: 'left' },
-  { name: 'statut', label: t('helpdesk.table.columns.status'), field: 'statut', align: 'left' },
-  {
-    name: 'createdAt',
-    label: t('helpdesk.table.columns.date'),
-    field: (r: TicketSupport) => dateHeureLisible(r.createdAt),
-    align: 'left',
-  },
+  ...colonnesFin(),
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -743,6 +736,7 @@ const colonnesEquipements = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
+// ----------------------------------------------------------------- actions
 function ouvrirDeclaration(cat?: CategorieIncident) {
   categorieInitiale.value = (cat ?? '') as CategorieIncident | '';
   declarerOuvert.value = true;
@@ -750,85 +744,17 @@ function ouvrirDeclaration(cat?: CategorieIncident) {
 
 function onDeclare() {
   categorieInitiale.value = '';
-  void chargerMes();
+  void mes.recharger();
   if (dsi.value) {
-    void requeterGestion();
+    void gestion.recharger();
     void chargerStats();
   }
-}
-
-async function chargerMes() {
-  chargementMes.value = true;
-  try {
-    const { data } = await api.get('/tickets', { params: { all: '1' } });
-    mesTickets.value = data.data;
-  } finally {
-    chargementMes.value = false;
-  }
-}
-
-watch(filtres, () => {
-  paginationGestion.value.page = 1;
-  void requeterGestion();
-}, { deep: true });
-
-watch(filtresEquip, () => chargerEquipements(), { deep: true });
-
-async function requeterGestion() {
-  if (!dsi.value) return;
-  chargementGestion.value = true;
-  try {
-    const f = filtres.value;
-    const { data } = await api.get('/tickets', {
-      params: {
-        page: paginationGestion.value.page,
-        pageSize: paginationGestion.value.pageSize,
-        statut: f.statut || undefined,
-        categorie: f.categorie || undefined,
-        priorite: f.priorite || undefined,
-        equipementId: f.equipementId || undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-      },
-    });
-    tickets.value = data.data;
-    paginationGestion.value.total = data.total;
-  } finally {
-    chargementGestion.value = false;
-  }
-}
-
-async function chargerTousGestion() {
-  paginationGestion.value.page = 1;
-  paginationGestion.value.pageSize = Math.max(paginationGestion.value.total, 200) || 200;
-  await requeterGestion();
 }
 
 async function chargerStats() {
   if (!dsi.value) return;
   const { data } = await api.get('/tickets/stats');
   stats.value = data;
-}
-
-async function chargerEquipements() {
-  chargementEquipements.value = true;
-  try {
-    const { data } = await api.get('/equipements', {
-      params: {
-        all: '1',
-        search: (filtresEquip.value.recherche ?? '').toString().trim() || undefined,
-        actif: filtresEquip.value.actif || undefined,
-      },
-    });
-    equipements.value = data.data;
-    await nextTick();
-    await dessinerTousLesQr();
-  } finally {
-    chargementEquipements.value = false;
-  }
-}
-
-function rechargerEquipements() {
-  void chargerEquipements();
 }
 
 /**
@@ -841,21 +767,24 @@ function urlEtiquette(codeQr: string): string {
   return new URL(href, window.location.origin).toString();
 }
 
-async function dessinerTousLesQr() {
-  const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas.qr-canvas');
-  for (const canvas of canvases) {
-    const eqId = canvas.dataset.equipement;
-    const eq = equipements.value.find((e) => e.id === eqId);
-    if (!eq) continue;
-    await QRCode.toCanvas(canvas, urlEtiquette(eq.codeQr), { width: 160, margin: 1 });
-  }
-}
+/** Les vignettes QR des cartes se dessinent dès que la liste ou l'onglet change. */
+watch(
+  () => [equip.lignes, onglet.value, presentation.value],
+  async () => {
+    await nextTick();
+    const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas.qr-canvas');
+    for (const canvas of canvases) {
+      const eq = equip.lignes.find((e) => e.id === canvas.dataset.equipement);
+      if (eq) await QRCode.toCanvas(canvas, urlEtiquette(eq.codeQr), { width: 160, margin: 1 });
+    }
+  },
+);
 
 async function changerStatut(ticket: TicketSupport, statut: StatutTicket) {
   try {
     await api.post(`/tickets/${ticket.id}/statut`, { statut });
     $q.notify({ type: 'positive', message: t('helpdesk.messages.ticketStatusChanged', { numero: ticket.numero, statut: libelleStatut(statut).toLowerCase() }) });
-    await Promise.all([chargerMes(), requeterGestion(), chargerStats()]);
+    await Promise.all([mes.recharger(), gestion.recharger(), chargerStats()]);
   } catch {
     /* le boot axios affiche déjà le motif */
   }
@@ -876,17 +805,14 @@ function ouvrirEquipement(e: EquipementCampus | null) {
 }
 
 function supprimerEquipement(e: EquipementCampus) {
-  $q.dialog({
-    title: t('helpdesk.deleteEquipmentDialog.title'),
+  void supprimerAvecConfirmation(`/equipements/${e.id}`, e.libelle, equip.recharger, {
+    titre: t('helpdesk.deleteEquipmentDialog.title'),
     message: t('helpdesk.deleteEquipmentDialog.message', { libelle: e.libelle }),
-    cancel: true,
-  }).onOk(async () => {
-    await api.delete(`/equipements/${e.id}`);
-    $q.notify({ type: 'positive', message: t('helpdesk.messages.equipmentDeleted') });
-    await chargerEquipements();
+    succes: t('helpdesk.messages.equipmentDeleted'),
   });
 }
 
+// --------------------------------------------------------------- scan QR
 async function resoudreScanCode(brut: string) {
   if (!brut) return;
   try {
@@ -907,20 +833,9 @@ watch(codeScanne, (v) => {
   }
 });
 
-async function resoudreScanUrl() {
-  const brut = String(route.query.equipement ?? route.query.code ?? '').trim();
-  if (!brut) return;
-  await resoudreScanCode(brut);
-}
-
 onMounted(() => {
-  void chargerMes();
-  void chargerEquipements();
-  if (dsi.value) {
-    void requeterGestion();
-    void chargerStats();
-  }
-  void resoudreScanUrl();
+  void chargerStats();
+  void resoudreScanCode(String(route.query.equipement ?? route.query.code ?? '').trim());
 });
 </script>
 
@@ -933,11 +848,6 @@ $jaune-fonce: #8A6300;
 $rouge: #CE1126;
 
 
-.stat-chiffre {
-  font-size: 2rem;
-  line-height: 1.1;
-  font-weight: 590;
-}
 
 .ticket-champ {
   display: inline-flex;

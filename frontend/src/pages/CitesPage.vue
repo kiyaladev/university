@@ -33,7 +33,7 @@
         v-model="filtresResidences"
         :chips="chipsResidences"
         :placeholder="$t('cites.residences.filters.placeholder')"
-        @reinitialiser="reinitialiserResidences"
+        @reinitialiser="res.reinitialiser()"
       >
         <template #avances>
           <q-input
@@ -70,16 +70,16 @@
 
       <!-- Vue tableau -->
       <q-table
-        v-if="modeResidences === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
         :rows="residencesFiltrees"
         :columns="colonnesResidences"
         row-key="id"
-        :loading="chargementResidences"
+        :loading="res.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementResidences || residencesFiltrees.length > 0"
+        :hide-bottom="res.chargement || residencesFiltrees.length > 0"
       >
         <template #body-cell-statut="p">
           <q-td :props="p">
@@ -109,29 +109,17 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="apartment" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('cites.residences.emptyState.title') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('cites.residences.emptyState.hint') }}
-            </div>
-            <q-btn
-              v-if="peutGererResidences"
-              flat
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('cites.actions.newResidence')"
-              class="q-mt-sm"
-              @click="ouvrirResidence(null)"
-            />
-          </div>
+          <etat-vide icone="apartment" :titre="$t('cites.residences.emptyState.title')" :aide="$t('cites.residences.emptyState.hint')">
+            <template v-if="peutGererResidences" #action>
+              <q-btn flat no-caps color="primary" icon="add" :label="$t('cites.actions.newResidence')" @click="ouvrirResidence(null)" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <!-- Vue cartes -->
       <div v-else class="row q-col-gutter-md">
-        <div v-if="chargementResidences" class="col-12 q-pa-md text-center">
+        <div v-if="res.chargement" class="col-12 q-pa-md text-center">
           <q-spinner color="primary" />
         </div>
         <div v-for="r in residencesFiltrees" :key="r.id" class="col-12 col-md-6 col-xl-4">
@@ -181,20 +169,11 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementResidences && !residencesFiltrees.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="apartment" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('cites.residences.emptyState.title') }}</div>
-          <q-btn
-            v-if="peutGererResidences"
-            flat
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('cites.actions.newResidence')"
-            class="q-mt-sm"
-            @click="ouvrirResidence(null)"
-          />
-        </div>
+        <etat-vide v-if="!res.chargement && !residencesFiltrees.length" class="col-12" icone="apartment" :titre="$t('cites.residences.emptyState.title')">
+          <template v-if="peutGererResidences" #action>
+            <q-btn flat no-caps color="primary" icon="add" :label="$t('cites.actions.newResidence')" @click="ouvrirResidence(null)" />
+          </template>
+        </etat-vide>
       </div>
     </q-tab-panel>
 
@@ -206,7 +185,7 @@
         v-model="filtresChambres"
         :chips="chipsChambres"
         :placeholder="$t('cites.chambres.filters.placeholder')"
-        @reinitialiser="reinitialiserChambres"
+        @reinitialiser="ch.reinitialiser()"
       >
         <template #avances>
           <autocomplete-async
@@ -238,28 +217,20 @@
         </template>
       </filter-bar>
 
-      <pagination-bar
-        :page="paginationChambres.page"
-        :page-size="paginationChambres.pageSize"
-        :total="paginationChambres.total"
-        :show-all="false"
-        @update:page="paginationChambres.page = $event; requeterChambres()"
-        @update:page-size="paginationChambres.pageSize = $event; paginationChambres.page = 1; requeterChambres()"
-        @tous="chargerToutChambres"
-      />
+      <pagination-bar v-model:page="ch.page" v-model:page-size="ch.pageSize" :total="ch.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
-        v-if="modeChambres === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="chambres"
+        :rows="ch.lignes"
         :columns="colonnesChambres"
         row-key="id"
-        :loading="chargementChambres"
+        :loading="ch.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementChambres || chambres.length > 0"
+        :hide-bottom="ch.chargement || ch.lignes.length > 0"
       >
         <template #body-cell-categorie="p">
           <q-td :props="p">{{ LIBELLE_CATEGORIE_CHAMBRE[p.row.categorie] ?? p.row.categorie }}</q-td>
@@ -298,32 +269,20 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="meeting_room" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('cites.chambres.emptyState.title') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('cites.chambres.emptyState.hint') }}
-            </div>
-            <q-btn
-              v-if="peutGererChambres"
-              flat
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('cites.actions.newChambre')"
-              class="q-mt-sm"
-              @click="ouvrirChambre(null)"
-            />
-          </div>
+          <etat-vide icone="meeting_room" :titre="$t('cites.chambres.emptyState.title')" :aide="$t('cites.chambres.emptyState.hint')">
+            <template v-if="peutGererChambres" #action>
+              <q-btn flat no-caps color="primary" icon="add" :label="$t('cites.actions.newChambre')" @click="ouvrirChambre(null)" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <!-- Vue cartes -->
       <div v-else class="row q-col-gutter-md">
-        <div v-if="chargementChambres" class="col-12 q-pa-md text-center">
+        <div v-if="ch.chargement" class="col-12 q-pa-md text-center">
           <q-spinner color="primary" />
         </div>
-        <div v-for="c in chambres" :key="c.id" class="col-12 col-md-6 col-xl-4">
+        <div v-for="c in ch.lignes" :key="c.id" class="col-12 col-md-6 col-xl-4">
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
@@ -362,20 +321,11 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementChambres && !chambres.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="meeting_room" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('cites.chambres.emptyState.title') }}</div>
-          <q-btn
-            v-if="peutGererChambres"
-            flat
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('cites.actions.newChambre')"
-            class="q-mt-sm"
-            @click="ouvrirChambre(null)"
-          />
-        </div>
+        <etat-vide v-if="!ch.chargement && !ch.lignes.length" class="col-12" icone="meeting_room" :titre="$t('cites.chambres.emptyState.title')">
+          <template v-if="peutGererChambres" #action>
+            <q-btn flat no-caps color="primary" icon="add" :label="$t('cites.actions.newChambre')" @click="ouvrirChambre(null)" />
+          </template>
+        </etat-vide>
       </div>
     </q-tab-panel>
 
@@ -387,7 +337,7 @@
         v-model="filtresAttributions"
         :chips="chipsAttributions"
         :recherche="false"
-        @reinitialiser="reinitialiserAttributions"
+        @reinitialiser="att.reinitialiser([])"
       >
         <template #avances>
           <q-select
@@ -422,33 +372,25 @@
             outlined
             :label="$t('cites.attributions.filters.etudiant')"
             clearable
-            @keydown.enter="requeterAttributions"
+            @keydown.enter="att.recharger()"
           />
         </template>
       </filter-bar>
 
-      <pagination-bar
-        :page="paginationAttributions.page"
-        :page-size="paginationAttributions.pageSize"
-        :total="paginationAttributions.total"
-        :show-all="false"
-        @update:page="paginationAttributions.page = $event; requeterAttributions()"
-        @update:page-size="paginationAttributions.pageSize = $event; paginationAttributions.page = 1; requeterAttributions()"
-        @tous="chargerToutesAttributions"
-      />
+      <pagination-bar v-model:page="att.page" v-model:page-size="att.pageSize" :total="att.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
-        v-if="modeAttributions === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="attributions"
+        :rows="att.lignes"
         :columns="colonnesAttributions"
         row-key="id"
-        :loading="chargementAttributions"
+        :loading="att.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargementAttributions || attributions.length > 0"
+        :hide-bottom="att.chargement || att.lignes.length > 0"
       >
         <template #body-cell-createdAt="p">
           <q-td :props="p">{{ dateLisible(p.row.createdAt) }}</q-td>
@@ -499,32 +441,20 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="full-width text-center text-grey-7 q-pa-lg">
-            <q-icon name="how_to_reg" size="38px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('cites.attributions.emptyState.title') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('cites.attributions.emptyState.hint') }}
-            </div>
-            <q-btn
-              v-if="peutCreerAttribution"
-              flat
-              no-caps
-              color="primary"
-              icon="how_to_reg"
-              :label="$t('cites.actions.newAttribution')"
-              class="q-mt-sm"
-              @click="ouvrirCourant"
-            />
-          </div>
+          <etat-vide icone="how_to_reg" :titre="$t('cites.attributions.emptyState.title')" :aide="$t('cites.attributions.emptyState.hint')">
+            <template v-if="peutCreerAttribution" #action>
+              <q-btn flat no-caps color="primary" icon="how_to_reg" :label="$t('cites.actions.newAttribution')" @click="ouvrirCourant" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <!-- Vue cartes -->
       <div v-else class="row q-col-gutter-md">
-        <div v-if="chargementAttributions" class="col-12 q-pa-md text-center">
+        <div v-if="att.chargement" class="col-12 q-pa-md text-center">
           <q-spinner color="primary" />
         </div>
-        <div v-for="a in attributions" :key="a.id" class="col-12 col-md-6 col-xl-4">
+        <div v-for="a in att.lignes" :key="a.id" class="col-12 col-md-6 col-xl-4">
           <q-card flat bordered class="carte">
             <q-card-section class="row items-center q-pb-none">
               <div class="col">
@@ -580,34 +510,25 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!chargementAttributions && !attributions.length" class="col-12 text-center text-grey-7 q-pa-lg">
-          <q-icon name="how_to_reg" size="42px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('cites.attributions.emptyState.title') }}</div>
-          <q-btn
-            v-if="peutCreerAttribution"
-            flat
-            no-caps
-            color="primary"
-            icon="how_to_reg"
-            :label="$t('cites.actions.newAttribution')"
-            class="q-mt-sm"
-            @click="ouvrirCourant"
-          />
-        </div>
+        <etat-vide v-if="!att.chargement && !att.lignes.length" class="col-12" icone="how_to_reg" :titre="$t('cites.attributions.emptyState.title')">
+          <template v-if="peutCreerAttribution" #action>
+            <q-btn flat no-caps color="primary" icon="how_to_reg" :label="$t('cites.actions.newAttribution')" @click="ouvrirCourant" />
+          </template>
+        </etat-vide>
       </div>
     </q-tab-panel>
 
     <!-- Dialogues -->
-    <residence-dialog v-model="residenceDialog" :residence="residenceEditee" @enregistre="chargerResidences" />
-    <chambre-dialog v-model="chambreDialog" :chambre="chambreEditee" :residences="residences" @enregistre="chargerChambres" />
-    <!-- `ouvrirCourant` recharge tout le parc avant d'ouvrir ce dialogue :
+    <residence-dialog v-model="residenceDialog" :residence="residenceEditee" @enregistre="res.recharger()" />
+    <chambre-dialog v-model="chambreDialog" :chambre="chambreEditee" :residences="res.lignes" @enregistre="ch.recharger()" />
+    <!-- `ouvrirCourant` charge tout le parc avant d'ouvrir ce dialogue :
          l'attribution doit pouvoir viser une chambre hors de la page affichée. -->
     <attribution-dialog
       v-model="attributionDialog"
-      :chambres="chambres"
+      :chambres="chambresDialogue"
       :annees="annees"
       :annee-defaut-id="anneeDefaut"
-      @enregistre="chargerAttributions"
+      @enregistre="att.recharger()"
     />
 
     <!-- Dialog de décision du jury -->
@@ -677,7 +598,9 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
@@ -685,6 +608,7 @@ import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import EtatVide from '../components/EtatVide.vue';
 import ResidenceDialog from '../components/ResidenceDialog.vue';
 import ChambreDialog from '../components/ChambreDialog.vue';
 import AttributionDialog from '../components/AttributionDialog.vue';
@@ -701,67 +625,113 @@ import type { AnneeAcademique, AttributionLogement, Chambre, Residence, ChipFilt
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmerAvecSaisie, supprimerAvecConfirmation } = useConfirmation();
+const presentation = usePresentationListe();
 
 const onglet = ref<'residences' | 'chambres' | 'attributions'>('residences');
-
-const residences = ref<Residence[]>([]);
-const chambres = ref<Chambre[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
-const attributions = ref<AttributionLogement[]>([]);
-
-const chargementResidences = ref(false);
-const chargementChambres = ref(false);
-const chargementAttributions = ref(false);
+const anneeDefaut = ref<string | null>(null);
 
 const residenceDialog = ref(false);
 const residenceEditee = ref<Residence | null>(null);
 const chambreDialog = ref(false);
 const chambreEditee = ref<Chambre | null>(null);
 const attributionDialog = ref(false);
+/** Tout le parc, pas seulement la page affichée : voir `ouvrirCourant`. */
+const chambresDialogue = ref<Chambre[]>([]);
 
-const modeResidences = usePresentationListe();
-const modeChambres = usePresentationListe();
-const modeAttributions = usePresentationListe();
+// ------------------------------------------------------------------ listes
+// Trois listes sur une page : chacune garde ses filtres dans l'URL sous son
+// préfixe (res_, ch_, at_).
 
-const anneeDefaut = ref<string | null>(null);
-
-// ---------------------------------------------------------------- filtres résidences
-const filtresResidences = ref<Record<string, any>>({ recherche: '' });
-
-// ---------------------------------------------------------------- filtres chambres
-const filtresChambres = ref<Record<string, any>>({ recherche: '' });
-const paginationChambres = ref({ page: 1, pageSize: 20, total: 0 });
-
-const optionsCategories = computed(() =>
-  Object.entries(LIBELLE_CATEGORIE_CHAMBRE).map(([value, label]) => ({ value, label })),
+/** Résidences : peu nombreuses, chargées en entier et filtrées ici. */
+const filtresResidences = ref<Record<string, any>>({ recherche: '', capaciteMin: null, actif: null, ville: '' });
+const res = reactive(
+  useListePaginee<Residence>({
+    filtres: filtresResidences,
+    pageSize: 0,
+    clesLocales: true,
+    syncUrl: true,
+    prefixeUrl: 'res_',
+    charger: () => api.get('/residences', { params: { all: '1' } }).then((r) => r.data),
+  }),
 );
-const optionsStatutsChambre = computed(() =>
-  Object.entries(LIBELLE_STATUT_CHAMBRE).map(([value, label]) => ({ value, label })),
+
+const filtresChambres = ref<Record<string, any>>({ recherche: '', residenceId: null, categorie: null, statut: null });
+const ch = reactive(
+  useListePaginee<Chambre>({
+    filtres: filtresChambres,
+    syncUrl: true,
+    prefixeUrl: 'ch_',
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/chambres', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            residenceId: f.residenceId || undefined,
+            categorie: f.categorie || undefined,
+            statut: f.statut || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
 );
 
-// ---------------------------------------------------------------- filtres attributions
-const filtresAttributions = ref<Record<string, any>>({ recherche: '' });
-const paginationAttributions = ref({ page: 1, pageSize: 20, total: 0 });
+const filtresAttributions = ref<Record<string, any>>({ anneeId: null, statut: null, residenceId: null, etudiant: '' });
+const att = reactive(
+  useListePaginee<AttributionLogement>({
+    filtres: filtresAttributions,
+    syncUrl: true,
+    prefixeUrl: 'at_',
+    clesTexte: ['etudiant'],
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/attributions-logement', {
+          params: {
+            ...pageApi(p),
+            anneeId: f.anneeId || undefined,
+            statut: f.statut || undefined,
+            residenceId: f.residenceId || undefined,
+            search: texteApi(f.etudiant),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
-);
-const optionsStatutsAttribution = computed(() =>
-  Object.entries(LIBELLE_STATUT_ATTRIBUTION).map(([value, label]) => ({ value, label })),
-);
+const residencesFiltrees = computed(() => {
+  const f = filtresResidences.value;
+  const q = (f.recherche ?? '').toString().trim().toLowerCase();
+  const capMin = f.capaciteMin;
+  const ville = (f.ville ?? '').toString().trim().toLowerCase();
+  return res.lignes.filter((r) => {
+    if (capMin !== null && capMin !== undefined && capMin !== '' && r.capacite < Number(capMin)) return false;
+    if (f.actif === 'true' && !r.actif) return false;
+    if (f.actif === 'false' && r.actif) return false;
+    if (ville && !(r.ville ?? '').toLowerCase().includes(ville)) return false;
+    if (q && !`${r.code} ${r.nom} ${r.ville ?? ''} ${r.responsable ?? ''}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+});
+
+const optionsCategories = Object.entries(LIBELLE_CATEGORIE_CHAMBRE).map(([value, label]) => ({ value, label }));
+const optionsStatutsChambre = Object.entries(LIBELLE_STATUT_CHAMBRE).map(([value, label]) => ({ value, label }));
+const optionsStatutsAttribution = Object.entries(LIBELLE_STATUT_ATTRIBUTION).map(([value, label]) => ({ value, label }));
+const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
 // ------------------------------------------------------------------ chips
 // FilterBar masque « Réinitialiser » tant qu'aucun chip personnalisé n'existe :
 // chaque onglet décrit donc ses filtres actifs.
-type Chip = ChipFiltre;
-
-function chipRecherche(f: Record<string, any>): Chip[] {
+function chipRecherche(f: Record<string, any>): ChipFiltre[] {
   return f.recherche
     ? [{ label: t('cites.chips.recherche', { q: f.recherche }), value: f.recherche, icone: 'search', defaut: true }]
     : [];
 }
 
-const chipsResidences = computed<Chip[]>(() => {
+const codeResidence = (id: string) => res.lignes.find((x) => x.id === id)?.code ?? '…';
+
+const chipsResidences = computed<ChipFiltre[]>(() => {
   const f = filtresResidences.value;
   const cs = chipRecherche(f);
   if (f.capaciteMin) cs.push({ label: t('cites.residences.chips.capaciteMin', { n: f.capaciteMin }), value: f.capaciteMin, icone: 'bed' });
@@ -769,65 +739,39 @@ const chipsResidences = computed<Chip[]>(() => {
     cs.push({
       label: f.actif === 'true' ? t('cites.residences.filters.etatActives') : t('cites.residences.filters.etatInactives'),
       value: f.actif,
-      icone: 'toggle_on', cle: 'actif',
+      icone: 'toggle_on',
+      cle: 'actif',
     });
   }
   if (f.ville) cs.push({ label: t('cites.residences.chips.ville', { ville: f.ville }), value: f.ville, icone: 'place' });
   return cs;
 });
 
-const chipsChambres = computed<Chip[]>(() => {
+const chipsChambres = computed<ChipFiltre[]>(() => {
   const f = filtresChambres.value;
   const cs = chipRecherche(f);
   if (f.residenceId) {
-    const r = residences.value.find((x) => x.id === f.residenceId);
-    cs.push({ label: t('cites.chambres.chips.residence', { code: r?.code ?? '…' }), value: f.residenceId, icone: 'apartment' });
+    cs.push({ label: t('cites.chambres.chips.residence', { code: codeResidence(f.residenceId) }), value: f.residenceId, icone: 'apartment' });
   }
-  if (f.categorie) {
-    cs.push({
-      label: LIBELLE_CATEGORIE_CHAMBRE[f.categorie] ?? f.categorie,
-      value: f.categorie,
-      icone: 'category', cle: 'categorie'});
-  }
-  if (f.statut) {
-    cs.push({
-      label: LIBELLE_STATUT_CHAMBRE[f.statut] ?? f.statut,
-      value: f.statut,
-      icone: 'meeting_room', cle: 'statut'});
-  }
+  if (f.categorie) cs.push({ label: LIBELLE_CATEGORIE_CHAMBRE[f.categorie] ?? f.categorie, value: f.categorie, icone: 'category', cle: 'categorie' });
+  if (f.statut) cs.push({ label: LIBELLE_STATUT_CHAMBRE[f.statut] ?? f.statut, value: f.statut, icone: 'meeting_room', cle: 'statut' });
   return cs;
 });
 
-const chipsAttributions = computed<Chip[]>(() => {
+const chipsAttributions = computed<ChipFiltre[]>(() => {
   const f = filtresAttributions.value;
-  const cs: Chip[] = [];
+  const cs: ChipFiltre[] = [];
   if (f.anneeId) {
     const a = annees.value.find((x) => x.id === f.anneeId);
-    cs.push({ label: a?.libelle ?? t('cites.attributions.chips.anneeFallback'), value: f.anneeId, icone: 'event', cle: 'anneeId'});
+    cs.push({ label: a?.libelle ?? t('cites.attributions.chips.anneeFallback'), value: f.anneeId, icone: 'event', cle: 'anneeId' });
   }
-  if (f.statut) {
-    cs.push({
-      label: LIBELLE_STATUT_ATTRIBUTION[f.statut] ?? f.statut,
-      value: f.statut,
-      icone: 'how_to_reg', cle: 'statut'});
-  }
+  if (f.statut) cs.push({ label: LIBELLE_STATUT_ATTRIBUTION[f.statut] ?? f.statut, value: f.statut, icone: 'how_to_reg', cle: 'statut' });
   if (f.residenceId) {
-    const r = residences.value.find((x) => x.id === f.residenceId);
-    cs.push({ label: t('cites.attributions.chips.residence', { code: r?.code ?? '…' }), value: f.residenceId, icone: 'apartment' });
+    cs.push({ label: t('cites.attributions.chips.residence', { code: codeResidence(f.residenceId) }), value: f.residenceId, icone: 'apartment' });
   }
   if (f.etudiant) cs.push({ label: t('cites.attributions.chips.etudiant', { etudiant: f.etudiant }), value: f.etudiant, icone: 'person' });
   return cs;
 });
-
-watch(filtresChambres, () => {
-  paginationChambres.value.page = 1;
-  requeterChambres();
-}, { deep: true });
-
-watch(filtresAttributions, () => {
-  paginationAttributions.value.page = 1;
-  requeterAttributions();
-}, { deep: true });
 
 // ------------------------------------------------------------- colonnes
 const colonnesResidences = computed<QTableColumn[]>(() => [
@@ -881,14 +825,16 @@ function ouvrirCourant() {
   if (onglet.value === 'residences') ouvrirResidence(null);
   else if (onglet.value === 'chambres') ouvrirChambre(null);
   else {
-    // Recharge toutes les chambres (non filtrées par la page courante) pour
-    // que le dialogue d'attribution propose la totalité du parc.
-    void api.get('/chambres', { params: { all: '1' } }).then(({ data }) => {
-      chambres.value = data.data ?? chambres.value;
-    }).catch(() => undefined);
+    // La page courante d'abord, puis tout le parc dès qu'il arrive : le
+    // dialogue d'attribution doit pouvoir viser n'importe quelle chambre.
+    chambresDialogue.value = ch.lignes;
+    void ch.chargerTout().then((toutes) => (chambresDialogue.value = toutes)).catch(() => undefined);
     attributionDialog.value = true;
   }
 }
+
+/** Une décision ou un retrait change l'état des chambres et des résidences. */
+const rechargerParc = () => Promise.all([att.recharger(), ch.recharger(), res.recharger()]);
 
 // ----------------------------------------------------------- résidences
 function ouvrirResidence(r: Residence | null) {
@@ -897,45 +843,18 @@ function ouvrirResidence(r: Residence | null) {
 }
 
 function supprimerResidence(r: Residence) {
-  $q.dialog({
-    title: t('cites.residences.dialogs.delete.title'),
+  void supprimerAvecConfirmation(`/residences/${r.id}`, r.nom, res.recharger, {
+    titre: t('cites.residences.dialogs.delete.title'),
     message: t('cites.residences.dialogs.delete.message', { nom: r.nom, code: r.code }),
-    cancel: true,
-    ok: { color: 'negative', label: t('cites.residences.dialogs.delete.confirm') },
-  }).onOk(async () => {
-    await api.delete(`/residences/${r.id}`);
-    $q.notify({ type: 'positive', message: t('cites.residences.dialogs.deleted') });
-    await chargerResidences();
+    ok: t('cites.residences.dialogs.delete.confirm'),
+    succes: t('cites.residences.dialogs.deleted'),
   });
 }
 
-const chambresResidence = (r: Residence) => r.chambres ?? [];
-const compteLibres = (r: Residence) => chambresResidence(r).filter((c) => c.statut === 'LIBRE').length;
-const compteReservees = (r: Residence) => chambresResidence(r).filter((c) => c.statut === 'RESERVEE').length;
-const compteOccupees = (r: Residence) => chambresResidence(r).filter((c) => c.statut === 'OCCUPEE').length;
-
-const residencesFiltrees = computed(() => {
-  const f = filtresResidences.value;
-  const q = (f.recherche ?? '').toString().trim().toLowerCase();
-  const capMin = f.capaciteMin;
-  const actif = f.actif;
-  const ville = (f.ville ?? '').toString().trim().toLowerCase();
-  return residences.value.filter((r) => {
-    if (capMin !== null && capMin !== undefined && r.capacite < Number(capMin)) return false;
-    if (actif === 'true' && !r.actif) return false;
-    if (actif === 'false' && r.actif) return false;
-    if (ville && !(r.ville ?? '').toLowerCase().includes(ville)) return false;
-    if (q) {
-      const blob = `${r.code} ${r.nom} ${r.ville ?? ''} ${r.responsable ?? ''}`.toLowerCase();
-      if (!blob.includes(q)) return false;
-    }
-    return true;
-  });
-});
-
-function reinitialiserResidences() {
-  filtresResidences.value = { recherche: filtresResidences.value.recherche ?? '' };
-}
+const compteStatut = (r: Residence, statut: string) => (r.chambres ?? []).filter((c) => c.statut === statut).length;
+const compteLibres = (r: Residence) => compteStatut(r, 'LIBRE');
+const compteReservees = (r: Residence) => compteStatut(r, 'RESERVEE');
+const compteOccupees = (r: Residence) => compteStatut(r, 'OCCUPEE');
 
 // ---------------------------------------------------------------- chambres
 function ouvrirChambre(c: Chambre | null) {
@@ -944,77 +863,12 @@ function ouvrirChambre(c: Chambre | null) {
 }
 
 function supprimerChambre(c: Chambre) {
-  $q.dialog({
-    title: t('cites.chambres.dialogs.delete.title'),
+  void supprimerAvecConfirmation(`/chambres/${c.id}`, c.code, ch.recharger, {
+    titre: t('cites.chambres.dialogs.delete.title'),
     message: t('cites.chambres.dialogs.delete.message', { code: c.code }),
-    cancel: true,
-    ok: { color: 'negative', label: t('cites.chambres.dialogs.delete.confirm') },
-  }).onOk(async () => {
-    await api.delete(`/chambres/${c.id}`);
-    $q.notify({ type: 'positive', message: t('cites.chambres.dialogs.deleted') });
-    await chargerChambres();
+    ok: t('cites.chambres.dialogs.delete.confirm'),
+    succes: t('cites.chambres.dialogs.deleted'),
   });
-}
-
-function reinitialiserChambres() {
-  filtresChambres.value = { recherche: filtresChambres.value.recherche ?? '' };
-}
-
-async function requeterChambres() {
-  chargementChambres.value = true;
-  try {
-    const f = filtresChambres.value;
-    const params: Record<string, any> = {
-      page: paginationChambres.value.page,
-      pageSize: paginationChambres.value.pageSize,
-      search: (f.recherche ?? '').toString().trim() || undefined,
-      residenceId: f.residenceId || undefined,
-      categorie: f.categorie || undefined,
-      statut: f.statut || undefined,
-    };
-    const { data } = await api.get('/chambres', { params });
-    chambres.value = data.data;
-    paginationChambres.value.total = data.total;
-  } finally {
-    chargementChambres.value = false;
-  }
-}
-
-async function chargerToutChambres() {
-  paginationChambres.value.page = 1;
-  paginationChambres.value.pageSize = Math.max(paginationChambres.value.total, 200) || 200;
-  await requeterChambres();
-}
-
-// ------------------------------------------------------------- attributions
-function reinitialiserAttributions() {
-  filtresAttributions.value = { recherche: filtresAttributions.value.recherche ?? '' };
-}
-
-async function requeterAttributions() {
-  chargementAttributions.value = true;
-  try {
-    const f = filtresAttributions.value;
-    const params: Record<string, any> = {
-      page: paginationAttributions.value.page,
-      pageSize: paginationAttributions.value.pageSize,
-      anneeId: f.anneeId || undefined,
-      statut: f.statut || undefined,
-      residenceId: f.residenceId || undefined,
-      search: (f.etudiant ?? '').toString().trim() || undefined,
-    };
-    const { data } = await api.get('/attributions-logement', { params });
-    attributions.value = data.data;
-    paginationAttributions.value.total = data.total;
-  } finally {
-    chargementAttributions.value = false;
-  }
-}
-
-async function chargerToutesAttributions() {
-  paginationAttributions.value.page = 1;
-  paginationAttributions.value.pageSize = Math.max(paginationAttributions.value.total, 200) || 200;
-  await requeterAttributions();
 }
 
 // ------------------------------------------------------- décision du jury
@@ -1048,29 +902,34 @@ async function decider() {
         : t('cites.attributions.dialogs.refused'),
     });
     decisionDialog.value = false;
-    await Promise.all([chargerAttributions(), chargerChambres(), chargerResidences()]);
+    await rechargerParc();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     decisionEnCours.value = false;
   }
 }
 
-function retirerAttribution(a: AttributionLogement) {
-  const etudiant = `${a.etudiant?.nom} ${a.etudiant?.prenom}`;
-  $q.dialog({
-    title: t('cites.attributions.dialogs.retirer.title'),
+async function retirerAttribution(a: AttributionLogement) {
+  const motif = await confirmerAvecSaisie({
+    titre: t('cites.attributions.dialogs.retirer.title'),
     message: t('cites.attributions.dialogs.retirer.message', {
-      etudiant,
+      etudiant: `${a.etudiant?.nom} ${a.etudiant?.prenom}`,
       code: a.chambre?.code,
       residence: a.chambre?.residence?.nom,
     }),
-    prompt: { model: '', type: 'text', label: t('cites.attributions.dialogs.retirer.motifLabel') },
-    cancel: true,
-    ok: { color: 'negative', label: t('cites.attributions.dialogs.retirer.confirm'), unelevated: true },
-  }).onOk(async (motif: string) => {
+    libelleSaisie: t('cites.attributions.dialogs.retirer.motifLabel'),
+    ok: t('cites.attributions.dialogs.retirer.confirm'),
+    danger: true,
+  });
+  if (motif === null) return;
+  try {
     await api.put(`/attributions-logement/${a.id}/retirer`, { motif: motif || undefined });
     $q.notify({ type: 'positive', message: t('cites.attributions.dialogs.withdrawn') });
-    await Promise.all([chargerAttributions(), chargerChambres(), chargerResidences()]);
-  });
+    await rechargerParc();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 
 function voirEtudiant(a: AttributionLogement) {
@@ -1105,9 +964,7 @@ function voirChambresDe(r: Residence) {
  * sa résidence et on rappelle le code recherché.
  */
 function voirAttributionsDe(c: Chambre) {
-  filtresAttributions.value = {
-    ...(c.residenceId ? { residenceId: c.residenceId } : {}),
-  };
+  filtresAttributions.value = c.residenceId ? { residenceId: c.residenceId } : {};
   onglet.value = 'attributions';
   $q.notify({
     type: 'info',
@@ -1136,38 +993,14 @@ const couleurScore = (score: number) =>
   (score >= 70 ? 'positive' : score >= 40 ? 'warning' : 'negative');
 
 // ------------------------------------------------------------------ chargement
-async function chargerResidences() {
-  chargementResidences.value = true;
-  try {
-    const { data } = await api.get('/residences', { params: { all: '1' } });
-    residences.value = data.data;
-  } finally {
-    chargementResidences.value = false;
-  }
-}
-
-async function chargerChambres() {
-  await requeterChambres();
-}
-
-async function chargerAttributions() {
-  await requeterAttributions();
-}
-
 onMounted(async () => {
-  await Promise.all([
-    chargerResidences(),
-    chargerChambres(),
-    (async () => {
-      const { data } = await api.get('/annees', { params: { all: '1' } });
-      annees.value = data.data;
-      const active = annees.value.find((a) => a.active);
-      if (active) {
-        anneeDefaut.value = active.id;
-        filtresAttributions.value.anneeId = active.id;
-      }
-    })(),
-    chargerAttributions(),
-  ]);
+  const { data } = await api.get('/annees', { params: { all: '1' } });
+  annees.value = data.data;
+  const active = annees.value.find((a) => a.active);
+  if (active) {
+    anneeDefaut.value = active.id;
+    // L'année venue de l'URL (retour arrière) prime sur l'année active.
+    if (!filtresAttributions.value.anneeId) filtresAttributions.value.anneeId = active.id;
+  }
 });
 </script>

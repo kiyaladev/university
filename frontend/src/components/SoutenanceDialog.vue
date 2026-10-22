@@ -1,103 +1,89 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 560px; max-width: 95vw">
-      <q-card-section class="text-h6">
-        {{ $t(mode === 'jury' ? 'stages.dialogs.defense.juryTitle' : 'stages.dialogs.defense.scheduleTitle') }}
-      </q-card-section>
-      <q-card-section v-if="mode === 'jury'" class="page-sous-titre">
-        {{ $t('stages.dialogs.defense.juryHint', { title: travail?.intitule }) }}
-      </q-card-section>
-
-      <q-card-section v-if="mode !== 'jury'" class="q-gutter-md">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-7">
-            <champ-date v-model="form.date" :label="$t('stages.dialogs.defense.date')" />
-          </div>
-          <div class="col-12 col-sm-5">
-            <q-input v-model="form.heure" type="time" outlined dense :label="$t('stages.dialogs.defense.time')" />
-          </div>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t(mode === 'jury' ? 'stages.dialogs.defense.juryTitle' : 'stages.dialogs.defense.scheduleTitle')"
+    :sous-titre="mode === 'jury' ? $t('stages.dialogs.defense.juryHint', { title: travail?.intitule }) : undefined"
+    :libelle-valider="$t(mode === 'jury' ? 'stages.dialogs.defense.saveJury' : 'stages.dialogs.defense.saveDefense')"
+    :envoi="enregistrement"
+    @valider="enregistrer"
+  >
+    <div v-if="mode !== 'jury'" class="q-gutter-md">
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-7">
+          <champ-date v-model="form.date" :label="$t('stages.dialogs.defense.date')" />
         </div>
+        <div class="col-12 col-sm-5">
+          <q-input v-model="form.heure" type="time" outlined dense :label="$t('stages.dialogs.defense.time')" />
+        </div>
+      </div>
 
-        <q-select
-          v-model="form.salleId"
-          :options="optionsSalles"
+      <q-select
+        v-model="form.salleId"
+        :options="optionsSalles"
+        outlined
+        dense
+        emit-value
+        map-options
+        clearable
+        :label="$t('common.fields.classroom')"
+        @filter="filtrerSalles"
+      />
+
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-6">
+          <q-select
+            v-model="form.presidentId"
+            :options="optionsEncadrants"
+            outlined
+            dense
+            emit-value
+            map-options
+            use-input
+            input-debounce="300"
+            clearable
+            :label="$t('stages.dialogs.defense.chair')"
+            @filter="filtrerEncadrants"
+          />
+        </div>
+        <div class="col-12 col-sm-6">
+          <q-input
+            v-model="form.assesseurs"
+            outlined
+            dense
+            :label="$t('stages.dialogs.defense.assessors')"
+            :hint="$t('stages.dialogs.defense.assessorsHint')"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-input
+          v-model.number="form.note"
+          type="number"
+          min="0"
+          max="20"
+          step="0.5"
           outlined
           dense
-          emit-value
-          map-options
-          clearable
-          :label="$t('common.fields.classroom')"
-          @filter="filtrerSalles"
+          :label="$t('stages.dialogs.defense.grade')"
         />
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.presidentId"
-              :options="optionsEncadrants"
-              outlined
-              dense
-              emit-value
-              map-options
-              use-input
-              input-debounce="300"
-              clearable
-              :label="$t('stages.dialogs.defense.chair')"
-              @filter="filtrerEncadrants"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.assesseurs"
-              outlined
-              dense
-              :label="$t('stages.dialogs.defense.assessors')"
-              :hint="$t('stages.dialogs.defense.assessorsHint')"
-            />
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-card-section v-else class="q-gutter-md">
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model.number="form.note"
-              type="number"
-              min="0"
-              max="20"
-              step="0.5"
-              outlined
-              dense
-              :label="$t('stages.dialogs.defense.grade')"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" hint="Félicitations, Très bien…" />
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          :label="$t(mode === 'jury' ? 'stages.dialogs.defense.saveJury' : 'stages.dialogs.defense.saveDefense')"
-          :loading="enregistrement"
-          @click="enregistrer"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" hint="Félicitations, Très bien…" />
+      </div>
+    </div>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
-import ChampDate from './ChampDate.vue';
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import ChampDate from './ChampDate.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import type { Enseignant, Salle, Soutenance, TravailEncadre } from '../types';
 
 /**
@@ -105,12 +91,12 @@ import type { Enseignant, Salle, Soutenance, TravailEncadre } from '../types';
  * - planifier (mode création) : POST /soutenances — date, salle, jury ;
  * - constat du jury : PUT /soutenances/:id/hota — note et mention.
  */
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   travail: TravailEncadre;
   mode: 'planifier' | 'jury';
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -130,39 +116,30 @@ const optionsSalles = ref<{ label: string; value: string }[]>([]);
 const optionsEncadrants = ref<{ label: string; value: string }[]>([]);
 const encadrantsTous = ref<Enseignant[]>([]);
 
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    const s: Soutenance | null = props.travail.soutenance ?? null;
-    form.value = {
-      date: s ? s.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
-      heure: s ? s.date.slice(11, 16) : '09:00',
-      salleId: s?.salleId ?? null,
-      presidentId: s?.presidentId ?? null,
-      assesseurs: s?.assesseurs ?? '',
-      note: s?.note ?? null,
-      mention: s?.mention ?? '',
-    };
-    api
-      .get('/salles', { params: { all: '1' } })
-      .then(({ data }) => {
-        optionsSalles.value = data.data.map((x: Salle) => ({
-          label: `${x.nom} (${x.code})`,
-          value: x.id,
-        }));
-      });
-    if (!encadrantsTous.value.length) {
-      api.get('/enseignants', { params: { all: '1' } }).then(({ data }) => {
-        encadrantsTous.value = data.data;
-        optionsEncadrants.value = encadrantsTous.value.map((e) => ({
-          label: `${e.nom} ${e.prenom} (${e.matricule})`,
-          value: e.id,
-        }));
-      });
-    }
-  },
-);
+const libelleEncadrant = (e: Enseignant) => ({ label: `${e.nom} ${e.prenom} (${e.matricule})`, value: e.id });
+
+watch(ouvert, (o) => {
+  if (!o) return;
+  const s: Soutenance | null = props.travail.soutenance ?? null;
+  form.value = {
+    date: s ? s.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
+    heure: s ? s.date.slice(11, 16) : '09:00',
+    salleId: s?.salleId ?? null,
+    presidentId: s?.presidentId ?? null,
+    assesseurs: s?.assesseurs ?? '',
+    note: s?.note ?? null,
+    mention: s?.mention ?? '',
+  };
+  void api.get('/salles', { params: { all: '1' } }).then(({ data }) => {
+    optionsSalles.value = data.data.map((x: Salle) => ({ label: `${x.nom} (${x.code})`, value: x.id }));
+  }).catch(() => undefined);
+  if (!encadrantsTous.value.length) {
+    void api.get('/enseignants', { params: { all: '1' } }).then(({ data }) => {
+      encadrantsTous.value = data.data;
+      optionsEncadrants.value = encadrantsTous.value.map(libelleEncadrant);
+    }).catch(() => undefined);
+  }
+});
 
 function filtrerSalles(saisie: string, maj: (fn: () => void) => void) {
   maj(() => {
@@ -176,11 +153,15 @@ function filtrerEncadrants(saisie: string, maj: (fn: () => void) => void) {
     const q = saisie.toLowerCase();
     optionsEncadrants.value = encadrantsTous.value
       .filter((e) => `${e.nom} ${e.prenom} ${e.matricule}`.toLowerCase().includes(q))
-      .map((e) => ({ label: `${e.nom} ${e.prenom} (${e.matricule})`, value: e.id }));
+      .map(libelleEncadrant);
   });
 }
 
 async function enregistrer() {
+  if (props.mode !== 'jury' && !form.value.date) {
+    $q.notify({ type: 'warning', message: t('stages.dialogs.defense.dateRequired') });
+    return;
+  }
   enregistrement.value = true;
   try {
     if (props.mode === 'jury') {
@@ -190,10 +171,6 @@ async function enregistrer() {
       });
       $q.notify({ type: 'positive', message: t('stages.dialogs.defense.jurySaved') });
     } else {
-      if (!form.value.date) {
-        $q.notify({ type: 'warning', message: t('stages.dialogs.defense.dateRequired') });
-        return;
-      }
       await api.post('/soutenances', {
         travailEncadreId: props.travail.id,
         date: `${form.value.date}T${form.value.heure || '09:00'}`,
@@ -204,7 +181,9 @@ async function enregistrer() {
       $q.notify({ type: 'positive', message: t('stages.dialogs.defense.saved') });
     }
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

@@ -82,7 +82,7 @@
         v-model="filtres"
         :placeholder="$t('patrimoine.equipments.searchPlaceholder')"
         :recherche="true"
-        @reinitialiser="reinitialiserFiltres"
+        @reinitialiser="eq.reinitialiser()"
       >
         <template #avances>
           <autocomplete-async
@@ -129,16 +129,16 @@
       </filter-bar>
 
       <q-table
-        v-if="modeEquipements === 'tableau'"
+        v-if="presentation === 'tableau'"
         flat
         bordered
         class="carte"
-        :rows="equipements"
+        :rows="eq.lignes"
         :columns="colonnesEquipements"
         row-key="id"
-        :loading="chargement"
+        :loading="eq.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargement || equipements.length > 0"
+        :hide-bottom="eq.chargement || eq.lignes.length > 0"
       >
         <template #body-cell-libelle="p">
           <q-td :props="p">
@@ -237,39 +237,35 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="etat-vide">
-            <q-icon name="inventory_2" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.equipments.emptyState.title') }}</div>
-            <div class="text-caption">
-              {{ $t('patrimoine.equipments.emptyState.description') }}
-              {{ aDesFiltres ? $t('patrimoine.equipments.emptyState.noneMatchFilters') : '' }}
-            </div>
-            <q-btn
-              v-if="aDesFiltres"
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="filter_alt_off"
-              :label="$t('patrimoine.equipments.emptyState.removeFilters')"
-              @click="reinitialiserFiltres"
-            />
-            <q-btn
-              v-else-if="auth.peutPlanifier"
-              unelevated
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('patrimoine.equipments.emptyState.createFirst')"
-              @click="ouvrirEquipement(null)"
-            />
-          </div>
+          <etat-vide icone="inventory_2" :titre="$t('patrimoine.equipments.emptyState.title')" :aide="aideVideEquipements">
+            <template #action>
+              <q-btn
+                v-if="aDesFiltres"
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="filter_alt_off"
+                :label="$t('patrimoine.equipments.emptyState.removeFilters')"
+                @click="eq.reinitialiser()"
+              />
+              <q-btn
+                v-else-if="auth.peutPlanifier"
+                unelevated
+                no-caps
+                color="primary"
+                icon="add"
+                :label="$t('patrimoine.equipments.emptyState.createFirst')"
+                @click="ouvrirEquipement(null)"
+              />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <div v-else class="row q-col-gutter-md">
         <div
-          v-for="e in equipements"
+          v-for="e in eq.lignes"
           :key="e.id"
           class="col-12 col-sm-6 col-md-4 col-lg-3"
         >
@@ -342,14 +338,14 @@
             </q-card-actions>
           </q-card>
         </div>
-        <div v-if="!equipements.length && !chargement" class="col-12">
-          <div class="etat-vide">
-            <q-icon name="inventory_2" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.equipments.emptyState.title') }}</div>
-            <div class="text-caption">
-              {{ $t('patrimoine.equipments.emptyState.description') }}
-              {{ aDesFiltres ? $t('patrimoine.equipments.emptyState.noneMatchFilters') : '' }}
-            </div>
+        <etat-vide
+          v-if="!eq.lignes.length && !eq.chargement"
+          class="col-12"
+          icone="inventory_2"
+          :titre="$t('patrimoine.equipments.emptyState.title')"
+          :aide="aideVideEquipements"
+        >
+          <template #action>
             <q-btn
               v-if="aDesFiltres"
               flat
@@ -358,7 +354,7 @@
               color="primary"
               icon="filter_alt_off"
               :label="$t('patrimoine.equipments.emptyState.removeFilters')"
-              @click="reinitialiserFiltres"
+              @click="eq.reinitialiser()"
             />
             <q-btn
               v-else-if="auth.peutPlanifier"
@@ -369,18 +365,11 @@
               :label="$t('patrimoine.equipments.emptyState.createFirst')"
               @click="ouvrirEquipement(null)"
             />
-          </div>
-        </div>
+          </template>
+        </etat-vide>
       </div>
 
-      <pagination-bar
-        :page="pagination.page"
-        :page-size="pagination.pageSize"
-        :total="pagination.total"
-        :show-all="false"
-        @update:page="pagination.page = $event; chargerEquipements()"
-        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerEquipements()"
-      />
+      <pagination-bar v-model:page="eq.page" v-model:page-size="eq.pageSize" :total="eq.total" :show-all="false" />
     </template>
 
     <!-- ============================== Catégories -->
@@ -389,10 +378,10 @@
         flat
         bordered
         class="carte"
-        :rows="categories"
+        :rows="cat.lignes"
         :columns="colonnesCategories"
         row-key="id"
-        :loading="chargementCategories"
+        :loading="cat.chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
         <template #body-cell-equipements="p">
@@ -428,22 +417,11 @@
           </q-td>
         </template>
         <template #no-data>
-          <div class="etat-vide">
-            <q-icon name="category" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.categories.emptyState.title') }}</div>
-            <div class="text-caption">
-              {{ $t('patrimoine.categories.emptyState.description') }}
-            </div>
-            <q-btn
-              v-if="auth.peutPlanifier"
-              unelevated
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('patrimoine.categories.emptyState.createFirst')"
-              @click="ouvrirCategorie(null)"
-            />
-          </div>
+          <etat-vide icone="category" :titre="$t('patrimoine.categories.emptyState.title')" :aide="$t('patrimoine.categories.emptyState.description')">
+            <template v-if="auth.peutPlanifier" #action>
+              <q-btn unelevated no-caps color="primary" icon="add" :label="$t('patrimoine.categories.emptyState.createFirst')" @click="ouvrirCategorie(null)" />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
     </template>
@@ -460,12 +438,12 @@
         <q-table
           flat
           bordered
-          :rows="reparationsEnCours"
+          :rows="rep.lignes"
           :columns="colonnesReparations"
           row-key="id"
-          :loading="chargementReparations"
+          :loading="rep.chargement"
           :pagination="{ rowsPerPage: 20 }"
-          :hide-bottom="chargementReparations || reparationsEnCours.length > 0"
+          :hide-bottom="rep.chargement || rep.lignes.length > 0"
         >
           <template #body-cell-equipement="p">
             <q-td :props="p">
@@ -519,22 +497,11 @@
             </q-td>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="build" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('patrimoine.repairs.emptyState.title') }}</div>
-              <div class="text-caption">
-                {{ $t('patrimoine.repairs.emptyState.description') }}
-              </div>
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="primary"
-                icon="inventory_2"
-                :label="$t('patrimoine.repairs.emptyState.goToEquipments')"
-                @click="onglet = 'equipements'"
-              />
-            </div>
+            <etat-vide icone="build" :titre="$t('patrimoine.repairs.emptyState.title')" :aide="$t('patrimoine.repairs.emptyState.description')">
+              <template #action>
+                <q-btn flat dense no-caps color="primary" icon="inventory_2" :label="$t('patrimoine.repairs.emptyState.goToEquipments')" @click="onglet = 'equipements'" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-card>
@@ -543,61 +510,52 @@
     <patrimoine-dialog
       v-model="dialogEquipement"
       :equipement="equipementEdite"
-      @enregistre="() => { chargerEquipements(); chargerSynthese(); }"
+      @enregistre="apresEquipement"
     />
 
-    <q-dialog v-model="dialogCategorie">
-      <q-card style="width: 460px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle') }}
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="formCategorie.code"
-            outlined
-            dense
-            :label="$t('patrimoine.categories.dialog.codeLabel')"
-            :hint="$t('patrimoine.categories.dialog.codeHint')"
-            class="q-mb-md"
-          />
-          <q-input
-            v-model="formCategorie.libelle"
-            outlined
-            dense
-            :label="$t('patrimoine.categories.dialog.labelLabel')"
-            :hint="$t('patrimoine.categories.dialog.labelHint')"
-            class="q-mb-md"
-          />
-          <q-input
-            v-model.number="formCategorie.dureeAmortissement"
-            type="number"
-            min="1"
-            outlined
-            dense
-            :label="$t('patrimoine.categories.dialog.amortizationLabel')"
-            :hint="$t('patrimoine.categories.dialog.amortizationHint')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('patrimoine.categories.dialog.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            :label="$t('patrimoine.categories.dialog.save')"
-            :loading="enregistrementCategorie"
-            :disable="formCategorie.code.length < 2 || formCategorie.libelle.length < 2"
-            @click="enregistrerCategorie"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogCategorie"
+      taille="s"
+      :titre="categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle')"
+      :libelle-valider="$t('patrimoine.categories.dialog.save')"
+      :envoi="enregistrementCategorie"
+      @valider="enregistrerCategorie"
+    >
+      <q-input
+        v-model="formCategorie.code"
+        outlined
+        dense
+        :label="$t('patrimoine.categories.dialog.codeLabel')"
+        :hint="$t('patrimoine.categories.dialog.codeHint')"
+        :rules="[auMoinsDeux]"
+        class="q-mb-md"
+      />
+      <q-input
+        v-model="formCategorie.libelle"
+        outlined
+        dense
+        :label="$t('patrimoine.categories.dialog.labelLabel')"
+        :hint="$t('patrimoine.categories.dialog.labelHint')"
+        :rules="[auMoinsDeux]"
+        class="q-mb-md"
+      />
+      <q-input
+        v-model.number="formCategorie.dureeAmortissement"
+        type="number"
+        min="1"
+        outlined
+        dense
+        :label="$t('patrimoine.categories.dialog.amortizationLabel')"
+        :hint="$t('patrimoine.categories.dialog.amortizationHint')"
+      />
+    </dialogue-formulaire>
 
     <reparation-dialog
       v-model="dialogReparation"
       :mode="modeReparation"
       :equipement="equipementReparation"
       :reparation-ouverte="reparationOuverte"
-      @enregistre="() => { chargerReparations(); chargerEquipements(); chargerSynthese(); }"
+      @enregistre="apresReparation"
     />
 
     <q-dialog v-model="dialogDetails">
@@ -663,7 +621,9 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
@@ -673,6 +633,8 @@ import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import EtatVide from '../components/EtatVide.vue';
 import PatrimoineDialog from '../components/PatrimoineDialog.vue';
 import ReparationDialog from '../components/ReparationDialog.vue';
 import { dateLisible, montantLisible, nombreLisible } from '../utils/libelles';
@@ -688,21 +650,63 @@ import type {
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { supprimerAvecConfirmation } = useConfirmation();
+const presentation = usePresentationListe();
 
 const onglet = ref<'equipements' | 'categories' | 'reparations'>('equipements');
 
-const equipements = ref<EquipementPatrimoine[]>([]);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
-const modeEquipements = usePresentationListe();
-const chargement = ref(false);
+// ------------------------------------------------------------------ listes
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  categorieId: null,
+  departementId: null,
+  actif: null,
+  enReparation: null,
+});
+/** Inventaire : paginé côté serveur, filtres gardés dans l'URL. */
+const eq = reactive(
+  useListePaginee<EquipementPatrimoine>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      patrimoineService
+        .listeEquipements({
+          ...pageApi(p),
+          search: texteApi(f.recherche),
+          categorieId: f.categorieId || undefined,
+          departementId: f.departementId || undefined,
+          actif: f.actif || undefined,
+          enReparation: f.enReparation || undefined,
+        })
+        .then((r) => r.data),
+  }),
+);
 
-const categories = ref<CategoriePatrimoine[]>([]);
-const chargementCategories = ref(false);
+const cat = reactive(
+  useListePaginee<CategoriePatrimoine>({
+    filtres: ref({}),
+    pageSize: 0,
+    charger: () =>
+      patrimoineService.listeCategories().then(({ data }) => ({ data: Array.isArray(data) ? data : data.data ?? [] })),
+  }),
+);
 
-const reparationsEnCours = ref<ReparationMateriel[]>([]);
+/** Réparations ouvertes, les plus anciennes d'abord ; chargées à l'ouverture de l'onglet. */
+const rep = reactive(
+  useListePaginee<ReparationMateriel>({
+    filtres: ref({}),
+    pageSize: 0,
+    immediat: false,
+    charger: () =>
+      patrimoineService.listeReparations({}).then(({ data }) => ({
+        data: (data ?? [])
+          .filter((r) => r.statut === 'EN_COURS' || r.statut === 'DECLARE')
+          .sort((a, b) => new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime()),
+      })),
+  }),
+);
+
 const reparationsDetail = ref<ReparationMateriel[]>([]);
-const chargementReparations = ref(false);
 
 const dialogEquipement = ref(false);
 const equipementEdite = ref<EquipementPatrimoine | null>(null);
@@ -711,6 +715,7 @@ const dialogCategorie = ref(false);
 const categorieEditee = ref<CategoriePatrimoine | null>(null);
 const formCategorie = ref({ code: '', libelle: '', dureeAmortissement: 60 as number | null });
 const enregistrementCategorie = ref(false);
+const auMoinsDeux = (v: string) => (v ?? '').trim().length >= 2 || t('common.messages.errors.tooShort');
 
 const dialogReparation = ref(false);
 const modeReparation = ref<'declarer' | 'resoudre'>('declarer');
@@ -723,16 +728,13 @@ const equipementDetail = ref<EquipementPatrimoine | null>(null);
 const synthese = ref<TableauBordPatrimoine | null>(null);
 
 /** Un filtre autre que la recherche vide est posé sur la liste. */
-const aDesFiltres = computed(() =>
-  Boolean(
-    filtres.value.recherche ||
-      filtres.value.categorieId ||
-      filtres.value.departementId ||
-      filtres.value.actif ||
-      filtres.value.enReparation,
-  ),
+const aDesFiltres = computed(() => Object.values(filtres.value).some(Boolean));
+
+const aideVideEquipements = computed(() =>
+  `${t('patrimoine.equipments.emptyState.description')} ${aDesFiltres.value ? t('patrimoine.equipments.emptyState.noneMatchFilters') : ''}`.trim(),
 );
 
+// ---------------------------------------------------------------- colonnes
 const colonnesEquipements = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('patrimoine.equipments.table.columns.equipment'), field: 'libelle', align: 'left' },
   { name: 'categorie', label: t('patrimoine.equipments.table.columns.category'), field: 'categorie', align: 'left' },
@@ -743,12 +745,7 @@ const colonnesEquipements = computed<QTableColumn[]>(() => [
     align: 'left',
   },
   { name: 'valeur', label: t('patrimoine.equipments.table.columns.value'), field: 'valeur', align: 'right' },
-  {
-    name: 'serie',
-    label: t('patrimoine.equipments.table.columns.serial'),
-    field: 'numeroSerie',
-    align: 'left',
-  },
+  { name: 'serie', label: t('patrimoine.equipments.table.columns.serial'), field: 'numeroSerie', align: 'left' },
   { name: 'etat', label: t('patrimoine.equipments.table.columns.state'), field: 'etat', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -791,8 +788,7 @@ function enregistrerCanvasDetail(el: any) {
 function joursEcarts(date: string): number {
   const d = new Date(date);
   if (Number.isNaN(d.getTime())) return 0;
-  const diff = Date.now() - d.getTime();
-  return Math.floor(diff / (1000 * 60 * 60 * 24));
+  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function couleurDelai(j: number): string {
@@ -802,78 +798,8 @@ function couleurDelai(j: number): string {
 }
 
 function libelleStatutReparation(s: StatutReparation): string {
-  return s === 'DECLARE'
-    ? t('patrimoine.repairs.status.declared')
-    : s === 'EN_COURS'
-    ? t('patrimoine.repairs.status.inProgress')
-    : s === 'TERMINE'
-    ? t('patrimoine.repairs.status.done')
-    : t('patrimoine.repairs.status.cancelled');
-}
-
-function reinitialiserFiltres() {
-  filtres.value = { recherche: filtres.value.recherche ?? '' };
-  pagination.value.page = 1;
-  chargerEquipements();
-}
-
-// --- Liste
-
-const queryEquipements = computed(() => {
-  const f = filtres.value;
-  return {
-    page: pagination.value.page,
-    pageSize: pagination.value.pageSize,
-    search: (f.recherche ?? '').toString().trim() || undefined,
-    categorieId: f.categorieId || undefined,
-    departementId: f.departementId || undefined,
-    actif: f.actif || undefined,
-    enReparation: f.enReparation || undefined,
-  };
-});
-
-async function chargerEquipements() {
-  chargement.value = true;
-  try {
-    const { data } = await patrimoineService.listeEquipements(queryEquipements.value);
-    equipements.value = data.data;
-    pagination.value.total = data.total;
-  } catch {
-    equipements.value = [];
-    pagination.value.total = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerCategories() {
-  chargementCategories.value = true;
-  try {
-    const { data } = await patrimoineService.listeCategories();
-    categories.value = Array.isArray(data) ? data : data.data ?? [];
-  } catch {
-    categories.value = [];
-  } finally {
-    chargementCategories.value = false;
-  }
-}
-
-async function chargerReparations() {
-  chargementReparations.value = true;
-  try {
-    const { data } = await patrimoineService.listeReparations({});
-    const toutes = (data ?? []) as ReparationMateriel[];
-    reparationsEnCours.value = toutes
-      .filter((r) => r.statut === 'EN_COURS' || r.statut === 'DECLARE')
-      .sort(
-        (a, b) =>
-          new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime(),
-      );
-  } catch {
-    reparationsEnCours.value = [];
-  } finally {
-    chargementReparations.value = false;
-  }
+  const cles: Record<string, string> = { DECLARE: 'declared', EN_COURS: 'inProgress', TERMINE: 'done' };
+  return t(`patrimoine.repairs.status.${cles[s] ?? 'cancelled'}`);
 }
 
 /** Les trois chiffres d'en-tête, ceux-là mêmes que reprend le Rectorat. */
@@ -886,6 +812,16 @@ async function chargerSynthese() {
   }
 }
 
+function apresEquipement() {
+  void eq.recharger();
+  void chargerSynthese();
+}
+
+function apresReparation() {
+  void rep.recharger();
+  apresEquipement();
+}
+
 // --- Actions
 
 function ouvrirEquipement(e: EquipementPatrimoine | null) {
@@ -895,15 +831,9 @@ function ouvrirEquipement(e: EquipementPatrimoine | null) {
 
 function ouvrirCategorie(c: CategoriePatrimoine | null) {
   categorieEditee.value = c;
-  if (c) {
-    formCategorie.value = {
-      code: c.code,
-      libelle: c.libelle,
-      dureeAmortissement: c.dureeAmortissement ?? null,
-    };
-  } else {
-    formCategorie.value = { code: '', libelle: '', dureeAmortissement: 60 };
-  }
+  formCategorie.value = c
+    ? { code: c.code, libelle: c.libelle, dureeAmortissement: c.dureeAmortissement ?? null }
+    : { code: '', libelle: '', dureeAmortissement: 60 };
   dialogCategorie.value = true;
 }
 
@@ -923,7 +853,7 @@ async function enregistrerCategorie() {
       $q.notify({ type: 'positive', message: t('patrimoine.messages.categorySaved') });
     }
     dialogCategorie.value = false;
-    await chargerCategories();
+    await cat.recharger();
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -932,37 +862,20 @@ async function enregistrerCategorie() {
 }
 
 function supprimerCategorie(c: CategoriePatrimoine) {
-  $q.dialog({
-    title: t('patrimoine.categories.confirmDelete.title'),
+  void supprimerAvecConfirmation(`/patrimoine/categories/${c.id}`, c.libelle, cat.recharger, {
+    titre: t('patrimoine.categories.confirmDelete.title'),
     message: t('patrimoine.categories.confirmDelete.message', { name: c.libelle }),
-    cancel: true,
-    ok: { color: 'negative', label: t('patrimoine.categories.confirmDelete.confirm') },
-  }).onOk(async () => {
-    try {
-      await patrimoineService.supprimerCategorie(c.id);
-      $q.notify({ type: 'positive', message: t('patrimoine.messages.categoryDeleted') });
-      await chargerCategories();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('patrimoine.categories.confirmDelete.confirm'),
+    succes: t('patrimoine.messages.categoryDeleted'),
   });
 }
 
 function supprimerEquipement(e: EquipementPatrimoine) {
-  $q.dialog({
-    title: t('patrimoine.deleteEquipment.title'),
+  void supprimerAvecConfirmation(`/patrimoine/equipements/${e.id}`, e.numeroInventaire, apresEquipement, {
+    titre: t('patrimoine.deleteEquipment.title'),
     message: t('patrimoine.deleteEquipment.message', { code: e.numeroInventaire }),
-    cancel: true,
-    ok: { color: 'negative', label: t('patrimoine.deleteEquipment.confirm') },
-  }).onOk(async () => {
-    try {
-      await patrimoineService.supprimerEquipement(e.id);
-      $q.notify({ type: 'positive', message: t('patrimoine.messages.equipmentDeleted') });
-      await chargerEquipements();
-      await chargerSynthese();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('patrimoine.deleteEquipment.confirm'),
+    succes: t('patrimoine.messages.equipmentDeleted'),
   });
 }
 
@@ -983,14 +896,14 @@ function ouvrirReparation(
  * plus fréquent, l'onglet Réparations ne suivant pas la pagination.
  */
 function resoudreReparation(r: ReparationMateriel) {
-  const eq =
+  const equipement =
     (r.equipement as EquipementPatrimoine | undefined) ??
-    equipements.value.find((e) => e.id === r.equipementId);
-  if (!eq) {
+    eq.lignes.find((e) => e.id === r.equipementId);
+  if (!equipement) {
     $q.notify({ type: 'warning', message: t('patrimoine.messages.equipmentNotFound') });
     return;
   }
-  ouvrirReparation(eq, 'resoudre', r);
+  ouvrirReparation(equipement, 'resoudre', r);
 }
 
 function imprimerEtiquette(e: EquipementPatrimoine) {
@@ -1005,26 +918,19 @@ async function voirDetails(e: EquipementPatrimoine) {
     const { data } = await patrimoineService.reparationsEquipement(e.id);
     reparationsDetail.value = data;
   } catch {
-    $q.notify({ type: 'warning', message: t('patrimoine.messages.repairsUnavailable') });
+    /* l'intercepteur axios affiche le motif ; la fiche reste lisible */
   }
 }
 
 // --- Wiring
 
 watch(onglet, (v) => {
-  if (v === 'reparations') chargerReparations();
-  if (v === 'categories' && !categories.value.length) chargerCategories();
+  if (v === 'reparations') void rep.recharger();
+  if (v === 'categories' && !cat.lignes.length) void cat.recharger();
 });
 
-watch(filtres, () => {
-  pagination.value.page = 1;
-  chargerEquipements();
-}, { deep: true });
-
-onMounted(async () => {
-  await chargerCategories();
-  await chargerEquipements();
-  await chargerSynthese();
+onMounted(() => {
+  void chargerSynthese();
 });
 </script>
 

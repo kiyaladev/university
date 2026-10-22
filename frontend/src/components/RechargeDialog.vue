@@ -1,92 +1,85 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 560px; max-width: 95vw">
-      <q-card-section class="text-h6">{{ $t('resto.rechargeDialog.title') }}</q-card-section>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('resto.rechargeDialog.title')"
+    :libelle-valider="$t('common.actions.reload')"
+    :envoi="enregistrement"
+    :desactive="!valide"
+    @valider="recharger"
+  >
+    <span class="section-titre">{{ $t('common.fields.student') }}</span>
+    <q-select
+      v-model="etudiantId"
+      :options="optionsEtudiants"
+      option-value="id"
+      option-label="libelle"
+      emit-value
+      map-options
+      :label="$t('resto.rechargeDialog.student')"
+      outlined
+      dense
+      use-input
+      input-debounce="300"
+      clearable
+      :disable="!!etudiant"
+      :loading="chargementEtudiants"
+      @filter="filtrerEtudiants"
+    >
+      <template #no-option>
+        <q-item><q-item-section class="text-grey-7">{{ $t('resto.rechargeDialog.noWallet') }}</q-item-section></q-item>
+      </template>
+    </q-select>
 
-      <q-card-section>
-        <span class="section-titre">{{ $t('common.fields.student') }}</span>
-        <q-select
-          v-model="etudiantId"
-          :options="optionsEtudiants"
-          option-value="id"
-          option-label="libelle"
-          :label="$t('resto.rechargeDialog.student')"
+    <span class="section-titre q-mt-md">{{ $t('resto.rechargeDialog.sectionTitle') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-6">
+        <q-input
+          v-model.number="form.montant"
+          type="number"
+          min="500"
+          step="500"
           outlined
           dense
-          use-input
-          input-debounce="300"
-          clearable
-          filterable
-          :disable="!!preSelectionnee"
-          :loading="chargementEtudiants"
-          @filter="filtrerEtudiants"
-        >
-          <template #no-option>
-            <q-item><q-item-section class="text-grey-7">{{ $t('resto.rechargeDialog.noWallet') }}</q-item-section></q-item>
-          </template>
-        </q-select>
-
-        <span class="section-titre q-mt-md">{{ $t('resto.rechargeDialog.sectionTitle') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-6">
-            <q-input
-              v-model.number="form.montant"
-              type="number"
-              min="500"
-              step="500"
-              outlined
-              dense
-              :label="$t('resto.rechargeDialog.amount')"
-              suffix="GNF"
-            />
-          </div>
-          <div class="col-6">
-            <q-select
-              v-model="form.mode"
-              :options="optionsModes"
-              :label="$t('resto.rechargeDialog.mode')"
-              outlined
-              dense
-            />
-          </div>
-        </div>
-
-        <template v-if="form.mode === 'MOBILE_MONEY'">
-          <q-select
-            v-model="form.operateur"
-            :options="optionsOperateurs"
-            :label="$t('examens.scansTable.columns.operator')"
-            outlined
-            dense
-            class="q-mt-md"
-          />
-          <q-toggle v-model="form.simuler" :label="$t('resto.rechargeDialog.confirmImmediately')" class="q-mt-sm" />
-          <p class="note-rechargement">
-            <q-icon name="info" size="15px" />
-            <span>
-              {{ $t('resto.rechargeDialog.mobileMoneyNote') }}
-            </span>
-          </p>
-        </template>
-        <p v-else class="note-rechargement note-rechargement--positif">
-          <q-icon name="payments" size="15px" />
-          <span>{{ $t('resto.rechargeDialog.cashNote') }}</span>
-        </p>
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          :label="$t('common.actions.reload')"
-          :loading="enregistrement"
-          :disable="!valide"
-          @click="recharger"
+          :label="$t('resto.rechargeDialog.amount')"
+          suffix="GNF"
+          :rules="[(v: number) => v >= 500 || $t('common.messages.errors.range')]"
         />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+      <div class="col-6">
+        <q-select
+          v-model="form.mode"
+          :options="optionsModes"
+          emit-value
+          map-options
+          :label="$t('resto.rechargeDialog.mode')"
+          outlined
+          dense
+        />
+      </div>
+    </div>
+
+    <template v-if="form.mode === 'MOBILE_MONEY'">
+      <q-select
+        v-model="form.operateur"
+        :options="optionsOperateurs"
+        emit-value
+        map-options
+        :label="$t('examens.scansTable.columns.operator')"
+        outlined
+        dense
+        class="q-mt-md"
+      />
+      <q-toggle v-model="form.simuler" :label="$t('resto.rechargeDialog.confirmImmediately')" class="q-mt-sm" />
+      <p class="note-rechargement">
+        <q-icon name="info" size="15px" />
+        <span>{{ $t('resto.rechargeDialog.mobileMoneyNote') }}</span>
+      </p>
+    </template>
+    <p v-else class="note-rechargement note-rechargement--positif">
+      <q-icon name="payments" size="15px" />
+      <span>{{ $t('resto.rechargeDialog.cashNote') }}</span>
+    </p>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -94,6 +87,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_MODE_PAIEMENT } from '../utils/libelles';
 
 interface EtudiantOption {
@@ -105,12 +99,16 @@ interface EtudiantOption {
   libelle: string;
 }
 
+/**
+ * Recharge d'un portefeuille. Les selects rendent la valeur (`emit-value`) :
+ * sans cela l'objet option entier partait dans l'URL et dans `mode`.
+ */
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   /** Étudiant pré-sélectionné (bouton « Recharger » d'une ligne du tableau). */
   etudiant?: string | null;
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; rechargee: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -118,6 +116,7 @@ const enregistrement = ref(false);
 const chargementEtudiants = ref(false);
 const etudiantId = ref<string | null>(null);
 const tousEtudiants = ref<EtudiantOption[]>([]);
+const optionsEtudiants = ref<EtudiantOption[]>([]);
 
 const form = ref({
   montant: 10_000 as number,
@@ -135,28 +134,20 @@ const optionsOperateurs = [
   { value: 'TELECEL', label: 'Telecel' },
 ];
 
-const optionsEtudiants = computed(() => tousEtudiants.value);
-const preSelectionnee = computed(() => props.etudiant ?? null);
+const valide = computed(() => !!(etudiantId.value ?? props.etudiant) && form.value.montant >= 500);
 
-const valide = computed(() => {
-  const id = etudiantId.value ?? props.etudiant;
-  return !!id && form.value.montant >= 500;
-});
-
-function filtrerEtudiants(terme: string, miseAJour: (v: () => EtudiantOption[]) => void) {
-  if (!terme) {
-    miseAJour(() => tousEtudiants.value);
-    return;
-  }
-  const t = terme.toLowerCase();
-  miseAJour(() =>
-    tousEtudiants.value.filter(
-      (e) =>
-        e.matricule.toLowerCase().includes(t) ||
-        e.nom.toLowerCase().includes(t) ||
-        e.prenom.toLowerCase().includes(t),
-    ),
-  );
+function filtrerEtudiants(terme: string, miseAJour: (fn: () => void) => void) {
+  miseAJour(() => {
+    const q = terme.toLowerCase();
+    optionsEtudiants.value = !q
+      ? tousEtudiants.value
+      : tousEtudiants.value.filter(
+          (e) =>
+            e.matricule.toLowerCase().includes(q) ||
+            e.nom.toLowerCase().includes(q) ||
+            e.prenom.toLowerCase().includes(q),
+        );
+  });
 }
 
 async function recharger() {
@@ -164,7 +155,7 @@ async function recharger() {
   if (!id) return;
   enregistrement.value = true;
   try {
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       montant: form.value.montant,
       mode: form.value.mode,
     };
@@ -179,9 +170,11 @@ async function recharger() {
         ? t('resto.rechargeDialog.messages.credited', { balance: data.solde.toLocaleString('fr-FR') })
         : t('resto.rechargeDialog.messages.pending', { reference: data.paiement.reference }),
     });
-    emit('rechargee');
-    emit('update:modelValue', false);
+    emit('enregistre');
+    ouvert.value = false;
     void charger(true);
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }
@@ -195,7 +188,7 @@ onMounted(() => {
 watch(
   () => props.etudiant,
   (v) => {
-    if (v) etudiantId.value = v;
+    etudiantId.value = v ?? null;
   },
 );
 
@@ -212,6 +205,9 @@ async function charger(hard = false) {
       solde: p.solde,
       libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${p.solde.toLocaleString('fr-FR')} GNF)`,
     }));
+    optionsEtudiants.value = tousEtudiants.value;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     chargementEtudiants.value = false;
   }
