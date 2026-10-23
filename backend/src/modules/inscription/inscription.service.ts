@@ -13,6 +13,7 @@ import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client'
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.service';
 import { EtudiantsService, prochainMatricule, prochainNumeroInscription } from './etudiants.service';
@@ -150,9 +151,7 @@ export class InscriptionService {
 
   async listeInscriptions(query: InscriptionQueryDto, user?: AuthUser): Promise<Paginated<any>> {
     if (user?.role === Role.ETUDIANT) query = { ...query, etudiantId: user.etudiantId ?? '__aucun__' };
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.InscriptionWhereInput = {
       ...(user?.role === Role.CHEF_DEPARTEMENT
@@ -166,11 +165,12 @@ export class InscriptionService {
         where,
         include: INSCRIPTION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.inscription.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverInscription(id: string, user?: AuthUser) {

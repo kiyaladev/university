@@ -3,6 +3,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { paginer } from '../../common/pagination';
 import { RechercheDocumentDto } from './bibliotheque.dto';
 
 const DOCUMENT_INCLUDE = {
@@ -74,21 +75,22 @@ export class RechercheService {
   constructor(private readonly prisma: PrismaService) {}
 
   async rechercher(query: RechercheDocumentDto, utilisateur: AuthUser | null) {
+    // La recherche borne la page à 200 lignes (au-delà, le classement FTS
+    // devient illisible) : la limite est propre à ce service, le reste de la
+    // pagination est commun.
+    const pagination = paginer({ page: Math.max(1, Number(query.page ?? 1)), pageSize: query.pageSize });
     const tsquery = construireTsQuery(query.q);
     if (!tsquery) {
       return {
         data: [],
         total: 0,
-        page: query.page ?? 1,
-        pageSize: Math.max(1, Math.min(1000, Number(query.pageSize ?? 50))),
+        page: pagination.page,
+        pageSize: pagination.pageSize,
       };
     }
 
-    const page = Number(query.page ?? 1);
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? 50)));
-    const all = query.all === 'true' || query.all === '1';
-    const limit = all ? 1000 : Math.max(1, Math.min(200, pageSize));
-    const offset = all ? 0 : (Math.max(1, page) - 1) * pageSize;
+    const limit = pagination.tout ? 1000 : Math.max(1, Math.min(200, pagination.pageSize));
+    const offset = pagination.skip;
 
     // Un appelant anonyme est verrouillé sur les documents publiés : `?public=false`
     // ne doit jamais pouvoir élargir la sélection côté SQL.
@@ -122,7 +124,12 @@ export class RechercheService {
     const total = Number(totalRow[0]?.count ?? 0);
 
     if (!ids.length) {
-      return { data: [], total, page: all ? 1 : page, pageSize: all ? Math.min(total, limit) : pageSize };
+      return {
+        data: [],
+        total,
+        page: pagination.tout ? 1 : pagination.page,
+        pageSize: pagination.tout ? Math.min(total, limit) : pagination.pageSize,
+      };
     }
 
     const docs = await this.prisma.documentDepot.findMany({
@@ -145,8 +152,8 @@ export class RechercheService {
     return {
       data: ordonnes,
       total,
-      page: all ? 1 : page,
-      pageSize: all ? Math.min(total, limit) : pageSize,
+      page: pagination.tout ? 1 : pagination.page,
+      pageSize: pagination.tout ? Math.min(total, limit) : pagination.pageSize,
     };
   }
 }

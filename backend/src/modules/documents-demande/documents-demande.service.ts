@@ -31,6 +31,7 @@ import { randomUUID } from 'node:crypto';
 import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { demandeDocumentHtml } from './documents-demande.impression';
@@ -143,9 +144,7 @@ export class DocumentsDemandeService extends CrudService {
     },
     user: AuthUser,
   ) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.DemandeDocumentWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -175,12 +174,13 @@ export class DocumentsDemandeService extends CrudService {
         where,
         include: includeDemandePour(user),
         orderBy: { creeLe: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.demandeDocument.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Vue propre à l'étudiant connecté : strictement ses demandes. */

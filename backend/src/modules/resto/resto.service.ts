@@ -48,6 +48,7 @@ import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Et
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -88,9 +89,7 @@ export class RestoService {
   // ------------------------------------------------------------ consultation
 
   async listePortefeuilles(query: PortefeuillesQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.PortefeuilleRestoWhereInput = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -112,12 +111,13 @@ export class RestoService {
         where,
         include: PORTEFEUILLE_INCLUDE,
         orderBy: [{ updatedAt: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.portefeuilleResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Portefeuille de l'étudiant connecté (portail) : créé si absent, jamais null. */
@@ -402,9 +402,7 @@ export class RestoService {
 
   /** Recharges (toutes, annulées comprises) : le miroir comptable des repas. */
   async listeRecharges(query: RechargesQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.RechargeWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -427,18 +425,17 @@ export class RestoService {
           portefeuille: { include: PORTEFEUILLE_INCLUDE },
         },
         orderBy: [{ rechargeLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.recharge.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async listeConsommations(query: ConsommationsQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.ConsommationRestoWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -459,12 +456,13 @@ export class RestoService {
         where,
         include: { portefeuille: { include: PORTEFEUILLE_INCLUDE } },
         orderBy: [{ consommeLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.consommationResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /**

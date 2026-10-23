@@ -27,6 +27,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { ParametresService } from '../parametres/parametres.service';
 import {
   CreateCarteEtudianteDto,
@@ -69,10 +70,13 @@ export class CarteEtudianteService {
   // ------------------------------------------------------------ consultation
 
   async liste(query: CarteEtudianteQueryDto) {
+    // La liste ne connaît pas le mode « tout » : la pagination est bornée à
+    // 1 000 lignes et la page demandée est ramenée à 1 si elle est invalide.
     const pageDemandee = Number(query.page ?? 1);
     const tailleDemandee = Number(query.pageSize ?? 50);
     const page = Number.isInteger(pageDemandee) && pageDemandee > 0 ? pageDemandee : 1;
     const pageSize = Number.isInteger(tailleDemandee) && tailleDemandee > 0 ? Math.min(tailleDemandee, 1000) : 50;
+    const pagination = paginer({ page, pageSize });
 
     const where: Record<string, unknown> = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -100,13 +104,13 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
         orderBy: { dateEmission: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.carteEtudiante.count({ where }),
     ]);
 
-    return { data, total, page, pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {

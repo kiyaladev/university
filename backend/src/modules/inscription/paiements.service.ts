@@ -12,6 +12,7 @@ import { ModePaiement, Prisma, StatutInscription, StatutPaiement } from '@prisma
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
@@ -120,9 +121,7 @@ export class PaiementsService {
 
   /** Tous les paiements, quel que soit leur portefeuille, avec leur `source`. */
   async listePaiements(query: PaiementQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.PaiementWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -153,7 +152,8 @@ export class PaiementsService {
         where,
         include: PAIEMENT_AVEC_SOURCE_INCLUDE,
         orderBy: { horodatage: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.paiement.count({ where }),
     ]);
@@ -168,7 +168,7 @@ export class PaiementsService {
         demandeDocument,
       }),
     }));
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverPaiement(id: string) {

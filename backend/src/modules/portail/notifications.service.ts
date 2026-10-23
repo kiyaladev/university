@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { t } from '../../common/i18n';
 import { DecisionJury, Prisma, StatutDeliberation, StatutInscription, StatutNotification } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { PrismaService } from '../../prisma/prisma.service';
 import { numerique } from './otp.client';
 import { SmsService } from './sms.service';
@@ -22,8 +23,9 @@ export class NotificationsService {
 
   /** Historique paginé, filtrable par statut et par recherche (téléphone…). */
   async lister(query: ListeNotificationsQueryDto) {
-    const page = query.page ?? 1;
-    const pageSize = query.pageSize ?? 50;
+    // L'historique ne connaît pas le mode « tout » : la page est bornée à
+    // 1 000 lignes, comme partout ailleurs.
+    const pagination = paginer({ page: query.page, pageSize: query.pageSize });
 
     const where: Prisma.NotificationWhereInput = {};
     if (query.statut) where.statut = query.statut;
@@ -45,12 +47,12 @@ export class NotificationsService {
           etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
           envoyePar: { select: { id: true, nom: true, prenom: true } },
         },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
     ]);
 
-    return { data, total, page, pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Diffusion manuelle : numéros explicites ou tous les inscrits de l'année. */

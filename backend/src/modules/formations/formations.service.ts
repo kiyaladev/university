@@ -28,6 +28,7 @@ import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.service';
@@ -338,9 +339,7 @@ export class FormationsService {
   }
 
   async liste(query: FormationQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where: Prisma.FormationWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.search
@@ -358,11 +357,12 @@ export class FormationsService {
         where,
         include: FORMATION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.formation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverFormation(id: string) {
@@ -581,21 +581,19 @@ export class FormationsService {
 
   async inscriptionsDe(formationId: string, query: QueryDto = {}): Promise<Paginated<any>> {
     await this.trouverFormation(formationId);
-    const page = Math.max(1, Number(query.page ?? 1));
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { formationId };
     const [data, total] = await Promise.all([
       this.prisma.inscriptionFormation.findMany({
         where,
         include: INSCRIPTION_FORMATION_INCLUDE,
         orderBy: { inscriteLe: 'desc' },
-        skip: all ? 0 : (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.inscriptionFormation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverInscription(id: string) {

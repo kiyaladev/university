@@ -7,6 +7,7 @@ import { Prisma, StatutInscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
+import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { toMontant } from '../../common/finances/montant';
@@ -29,9 +30,7 @@ export class FraisService extends CrudService {
 
   /** Tarif public : renvoie uniquement ce qu’exigent les formulaires d’inscription. */
   async tarifsPublics(query: FraisQueryDto, filtres: Prisma.FraisWhereInput = {}) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where: Prisma.FraisWhereInput = {
       AND: [{ annee: { cloturee: false } }, filtres],
     };
@@ -40,11 +39,12 @@ export class FraisService extends CrudService {
         where,
         select: { id: true, montant: true, devise: true },
         orderBy: [{ anneeId: 'desc' }, { promotionId: 'asc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.frais.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   private instantane(frais: {
