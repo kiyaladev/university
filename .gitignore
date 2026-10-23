@@ -2,6 +2,10 @@ node_modules/
 dist/
 .quasar/
 *.log
+
+# Worktrees d'agents (le dossier .claude/ du checkout de production en
+# contient) : jamais versionnés.
+.claude/
 .env
 .env.local
 coverage/
@@ -29,6 +33,8 @@ backups/
 
 # Captures d'écran et journaux des recettes : archivés hors dépôt
 # (/var/backups/university/audit-archive-AAAAMMJJ.tar.gz, voir docs/audits/README.md).
-audit/**/*.png
-audit/**/*.log
-!audit/simplification-2026-10-13/**
+# Les *.log sont ignorés par la règle globale ci-dessus ; les *.png le sont
+# partout, sauf les ressources d'interface qui font partie de l'application.
+*.png
+!frontend/public/icons/*.png
+!frontend/src-capacitor/android/app/src/main/res/**/*.png
