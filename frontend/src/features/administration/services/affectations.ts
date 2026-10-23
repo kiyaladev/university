@@ -38,7 +38,7 @@ export interface AffectationsParams {
 
 export const affectationsService = {
   /** Charges, paginées par le serveur. */
-  liste: (params: AffectationsParams = {}) => lister<Charge>('/affectations', { ...params }),
+  liste: (params: AffectationsParams = {}) => lister<Charge>('/affectations', params),
 
   /** Création d'une charge. */
   creer: (corps: AffectationSaisie) => creer<Charge>('/affectations', corps),

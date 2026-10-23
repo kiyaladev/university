@@ -55,7 +55,7 @@ export interface ResolutionReparation {
 export const patrimoineService = {
   // --- Équipements
   listeEquipements: (filtres: FiltresEquipements = {}) =>
-    lister<EquipementPatrimoine>('/patrimoine/equipements', { ...filtres }),
+    lister<EquipementPatrimoine>('/patrimoine/equipements', filtres),
 
   creerEquipement: (corps: CorpsEquipementPatrimoine) => creer<EquipementPatrimoine>('/patrimoine/equipements', corps),
 
@@ -89,7 +89,7 @@ export const patrimoineService = {
 
   // --- Réparations et synthèse
   listeReparations: (filtres: { statut?: string } = {}) =>
-    lire<ReparationMateriel[]>('/patrimoine/reparations', { ...filtres }),
+    lire<ReparationMateriel[]>('/patrimoine/reparations', filtres),
 
   tableauDeBord: () => lire<TableauBordPatrimoine>('/patrimoine/dashboard'),
 };

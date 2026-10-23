@@ -1,7 +1,7 @@
 /** Inscriptions : dossiers d'inscription, validation et annulation. */
 
 import { creer, lire, lister, modifier, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Inscription } from '@/types';
 
 export const inscriptionsService = {

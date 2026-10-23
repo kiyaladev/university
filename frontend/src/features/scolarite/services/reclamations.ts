@@ -1,7 +1,7 @@
 /** Réclamations : registre, traitement, escalade et clôture. */
 
 import { creer, lire, lister, modifier, type OptionsRequete, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Reclamation } from '@/types';
 import type { Utilisateur } from '@/types';
 

@@ -108,7 +108,7 @@ describe('useConfirmation', () => {
     await expect(supprimerAvecConfirmation('/residences/r1', 'Cité A', recharger)).resolves.toBe(true);
 
     expect(etat.dialogues[0]!.message).toContain('Cité A');
-    expect(api.delete).toHaveBeenCalledWith('/residences/r1');
+    expect(api.delete).toHaveBeenCalledWith('/residences/r1', {});
     expect(etat.notify).toEqual([{ type: 'positive', message: 'common.messages.deleted' }]);
     expect(recharger).toHaveBeenCalledOnce();
   });

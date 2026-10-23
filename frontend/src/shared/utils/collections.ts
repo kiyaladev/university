@@ -1,9 +1,10 @@
 /**
- * Normalisation des réponses de liste de l'API scolarité.
+ * Forme des collections renvoyées par l'API.
  *
  * Selon la route et les paramètres (`all=1`, pagination), le back renvoie
- * soit un tableau nu, soit l'enveloppe paginée `{ data, total, page, pageSize }`.
- * Les écrans consomment toujours un tableau : la conversion vit ici.
+ * soit un tableau nu, soit l'enveloppe `{ data, total, page, pageSize }` —
+ * dont la pagination n'est pas systématique. Les écrans consomment toujours
+ * un tableau : la conversion vit ici.
  */
 
 import type { Liste } from '@/types';

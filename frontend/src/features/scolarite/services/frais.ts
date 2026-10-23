@@ -6,7 +6,7 @@
  */
 
 import { lire, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Frais } from '@/types';
 
 export const fraisScolariteService = {

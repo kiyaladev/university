@@ -1,7 +1,7 @@
 /** Demandes de documents : registre, workflow, tarifs et paiement. */
 
 import { creer, lire, lister, type OptionsRequete, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { DemandeDocument, TarifDemande } from '@/types';
 
 /** Compteurs du tableau de bord des demandes de documents. */

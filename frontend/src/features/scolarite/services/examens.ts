@@ -1,7 +1,7 @@
 /** Examens : planification, suivi, scans et cycle de vie. */
 
 import { creer, lire, lister, modifier, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Examen, ScanExamen } from '@/types';
 
 /** Statistiques de présence d'un examen. */

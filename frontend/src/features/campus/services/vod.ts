@@ -39,7 +39,7 @@ export interface VueVod {
 
 export const vodService = {
   /** Catalogue des ressources, filtré et paginé par le serveur. */
-  liste: (params: ParametresVod = {}) => lister<RessourceCatalogue>('/vod', { ...params }),
+  liste: (params: ParametresVod = {}) => lister<RessourceCatalogue>('/vod', params),
 
   /** Collecte de l'étudiant : arrive d'un bloc, filtrée ensuite côté client. */
   maCollecte: () => lire<RessourceCatalogue[]>('/vod/ma-collecte'),

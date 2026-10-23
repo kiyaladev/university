@@ -83,7 +83,7 @@ export interface RetraitAttribution {
 export const citesService = {
   // --------------------------------------------------------------- résidences
   /** Parc complet des résidences (l'API ne pagine pas cette ressource). */
-  listeResidences: (params: ParametresResidences = {}) => lister<Residence>('/residences', { ...params }),
+  listeResidences: (params: ParametresResidences = {}) => lister<Residence>('/residences', params),
 
   creerResidence: (corps: CorpsResidence) => creer<Residence>('/residences', corps),
 
@@ -92,7 +92,7 @@ export const citesService = {
   supprimerResidence: (id: string) => supprimer(`/residences/${id}`),
 
   // ----------------------------------------------------------------- chambres
-  listeChambres: (params: ParametresChambres = {}) => lister<Chambre>('/chambres', { ...params }),
+  listeChambres: (params: ParametresChambres = {}) => lister<Chambre>('/chambres', params),
 
   creerChambre: (corps: CorpsChambre) => creer<Chambre>('/chambres', corps),
 
@@ -102,7 +102,7 @@ export const citesService = {
 
   // -------------------------------------------------------------- attributions
   listeAttributions: (params: ParametresAttributions = {}) =>
-    lister<AttributionLogement>('/attributions-logement', { ...params }),
+    lister<AttributionLogement>('/attributions-logement', params),
 
   creerAttribution: (corps: CorpsAttribution) => creer<AttributionLogement>('/attributions-logement', corps),
 

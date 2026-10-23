@@ -46,7 +46,7 @@ export interface ParametresRecettes {
 
 export const recettesService = {
   /** Registre paginé des recettes. */
-  liste: (params: ParametresRecettes = {}) => lister<RecetteExterne>('/recettes', { ...params }),
+  liste: (params: ParametresRecettes = {}) => lister<RecetteExterne>('/recettes', params),
 
   /** Totaux du tableau de bord des recettes. */
   dashboard: () => lire<KpisRecettes>('/recettes/dashboard'),

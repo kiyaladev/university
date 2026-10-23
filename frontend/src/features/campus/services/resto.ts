@@ -58,16 +58,16 @@ export const restoService = {
 
   // ----------------------------------------------------------- portefeuilles
   listePortefeuilles: (params: ParametresPortefeuilles = {}) =>
-    lister<PortefeuilleResto>('/resto/portefeuilles', { ...params }),
+    lister<PortefeuilleResto>('/resto/portefeuilles', params),
 
   /** Recharge d'un portefeuille : immédiate (compte) ou en attente de paiement. */
   recharger: (id: string, corps: CorpsRecharge) =>
     creer<ResultatRecharge>(`/resto/portefeuilles/${id}/recharger`, corps),
 
   // -------------------------------------------------------------- transactions
-  listeConsommations: (params: ParametresFlux = {}) => lister<ConsommationResto>('/resto/consommations', { ...params }),
+  listeConsommations: (params: ParametresFlux = {}) => lister<ConsommationResto>('/resto/consommations', params),
 
-  listeRecharges: (params: ParametresFlux = {}) => lister<RechargeResto>('/resto/recharges', { ...params }),
+  listeRecharges: (params: ParametresFlux = {}) => lister<RechargeResto>('/resto/recharges', params),
 
   /** Annulation d'une consommation (remboursement au guichet). */
   annulerConsommation: (id: string, motif: string) => creer<void>(`/resto/consommations/${id}/annuler`, { motif }),

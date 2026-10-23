@@ -1,6 +1,6 @@
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { supprimer } from '@/shared/services/http';
 
 /**
  * Confirmations en une ligne, au lieu d'un `$q.dialog(...).onOk(...)` par page.
@@ -117,7 +117,7 @@ export function useConfirmation() {
     });
     if (!ok) return false;
     try {
-      await api.delete(url);
+      await supprimer(url);
     } catch {
       return false;
     }

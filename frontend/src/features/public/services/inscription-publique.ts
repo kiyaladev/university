@@ -1,4 +1,5 @@
 import { creer, lire } from '@/shared/services/http';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { AnneeAcademique } from '@/types';
 
 /**
@@ -69,25 +70,17 @@ export interface DepotInscriptionPublique {
 /** Route des années ouvertes à l'inscription. */
 export const CHEMIN_ANNEES = '/inscription-publique/annees';
 
-/** Le backend peut répondre `{ data: [...] }` comme un tableau nu. */
-type ReponseListe<T> = T[] | { data?: T[] };
-
-/** Ramène les deux formes de réponse à un tableau. */
-function versListe<T>(reponse: ReponseListe<T>): T[] {
-  return Array.isArray(reponse) ? reponse : (reponse.data ?? []);
-}
-
 export const inscriptionPubliqueService = {
-  /** Années ouvertes à l'inscription. */
+  /** Années ouvertes à l'inscription : la route rend un tableau nu. */
   annees: async (): Promise<AnneeAcademique[]> => {
-    const reponse = await lire<ReponseListe<AnneeAcademique>>(CHEMIN_ANNEES, {});
+    const reponse = await lire<Collection<AnneeAcademique>>(CHEMIN_ANNEES, {});
     return Array.isArray(reponse) ? reponse : [];
   },
 
   /** Tarif de la promotion retenue pour l'année retenue. */
   frais: async (anneeId: string, promotionId: string): Promise<FraisPublic[]> => {
-    const reponse = await lire<ReponseListe<FraisPublic>>('/frais', { anneeId, promotionId });
-    return versListe(reponse);
+    const reponse = await lire<Collection<FraisPublic>>('/frais', { anneeId, promotionId });
+    return elements(reponse);
   },
 
   /** Dépose le dossier du candidat. */

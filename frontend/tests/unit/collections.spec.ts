@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { elements } from '../../../src/features/scolarite/services/collections';
+import { elements } from '../../src/shared/utils/collections';
 
-describe('features/scolarite/services/collections', () => {
+describe('shared/utils/collections', () => {
   it('laisse un tableau nu tel quel', () => {
     expect(elements([{ id: 'a' }])).toEqual([{ id: 'a' }]);
   });

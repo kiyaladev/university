@@ -1,11 +1,10 @@
-import { api } from '@/boot/axios';
+import { creerBlob } from '@/shared/services/http';
 
 /**
  * Relevé hebdomadaire du chef de département (`/impression/releve-hebdomadaire`).
  *
- * Le serveur renvoie un PDF : la réponse n'est pas du JSON, et les fonctions
- * génériques de `shared/services/http` ne savent pas lire un fichier. Ce
- * service passe donc par l'instance `api` pour demander le type `blob`.
+ * Le serveur renvoie un PDF : la réponse n'est pas du JSON, et la lecture
+ * passe par `creerBlob`, qui demande le type `blob` à l'API.
  */
 
 /** Corps de la demande de relevé. */
@@ -24,11 +23,7 @@ export interface ReleveHebdomadaire {
  * l'écran affiche alors le motif dans son propre bandeau.
  */
 export async function telechargerReleveHebdomadaire(corps: ReleveHebdomadaire): Promise<Blob> {
-  const reponse = await api.post('/impression/releve-hebdomadaire', corps, {
-    responseType: 'blob',
-    silencieux: true,
-  });
-  return reponse.data as Blob;
+  return creerBlob('/impression/releve-hebdomadaire', corps, { silencieux: true });
 }
 
 /** Nom du fichier téléchargé, daté du début de la semaine. */

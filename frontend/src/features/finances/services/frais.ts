@@ -54,7 +54,7 @@ export const ROLES_SUPPRESSION_FRAIS = ['ADMIN'] as const;
 
 export const fraisService = {
   /** Tarifs filtrés par année et/ou promotion. */
-  liste: (params: ParametresFrais = {}) => lister<FraisAvecLibelles>('/frais/gestion', { ...params }),
+  liste: (params: ParametresFrais = {}) => lister<FraisAvecLibelles>('/frais/gestion', params),
 
   /** Création d'un tarif. */
   creer: (corps: FraisSaisie) => creer<FraisAvecLibelles>('/frais', corps),

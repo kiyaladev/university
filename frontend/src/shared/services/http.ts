@@ -13,13 +13,36 @@ import type { Liste } from '@/types';
  */
 export type OptionsRequete = Pick<AxiosRequestConfig, 'silencieux' | 'signal' | 'timeout' | 'headers'>;
 
-/** Paramètres de requête acceptés par les listes (filtres, pagination, `all`). */
-export type ParametresListe = Record<string, string | number | boolean | null | undefined>;
+/** Valeur de paramètre de requête acceptée par l'API. */
+export type ValeurParametre = string | number | boolean | null | undefined;
 
-/** Liste paginée `{ data, total, page, pageSize }`. */
-export async function lister<T>(
+/**
+ * Paramètres de requête des listes (filtres, pagination, `all`).
+ *
+ * Chaque service déclare ses propres filtres — le plus souvent une interface
+ * — et la passe telle quelle : le type des paramètres est générique (`P`),
+ * pour que ces interfaces soient acceptées sans copie ni index signature.
+ * Les valeurs restent des primitives : c'est le contrat de l'API, et chaque
+ * service le déclare dans le type de ses propres paramètres.
+ */
+export type ParametresListe = Record<string, ValeurParametre>;
+
+/**
+ * Forme d'une réponse de liste : l'enveloppe `{ data }` (avec ou sans
+ * pagination) ou un tableau nu. Le back n'a pas une forme unique — `elements()`
+ * (shared/utils/collections) normalise les deux.
+ */
+export type ReponseListe<T> = Liste<T> | T[];
+
+/**
+ * Liste paginée `{ data, total, page, pageSize }`.
+ *
+ * La pagination est facultative : le back ne l'annonce pas sur toutes ses
+ * routes de liste.
+ */
+export async function lister<T, P extends object = object>(
   url: string,
-  params: ParametresListe = {},
+  params?: P,
   opts: OptionsRequete = {},
 ): Promise<Liste<T>> {
   const { data } = await api.get<Liste<T>>(url, { ...opts, params });
@@ -27,7 +50,11 @@ export async function lister<T>(
 }
 
 /** Lecture d'une ressource (`GET url`). */
-export async function lire<T>(url: string, params?: ParametresListe, opts: OptionsRequete = {}): Promise<T> {
+export async function lire<T, P extends object = object>(
+  url: string,
+  params?: P,
+  opts: OptionsRequete = {},
+): Promise<T> {
   const { data } = await api.get<T>(url, { ...opts, params });
   return data;
 }
@@ -47,4 +74,30 @@ export async function modifier<T, C = unknown>(url: string, corps?: C, opts: Opt
 /** Suppression (`DELETE url`). */
 export async function supprimer(url: string, opts: OptionsRequete = {}): Promise<void> {
   await api.delete(url, opts);
+}
+
+/**
+ * Lecture d'un fichier binaire (`GET url`, réponse `blob`).
+ *
+ * Un PDF n'est pas du JSON : la lecture passe par ici plutôt que par
+ * `lire`, qui rend le corps de la réponse tel quel.
+ */
+export async function lireBlob<P extends object = object>(
+  url: string,
+  params?: P,
+  opts: OptionsRequete = {},
+): Promise<Blob> {
+  const { data } = await api.get<Blob>(url, { ...opts, params, responseType: 'blob' });
+  return data;
+}
+
+/**
+ * Création d'un fichier binaire (`POST url`, réponse `blob`).
+ *
+ * Même usage que `lireBlob`, pour les fichiers produits par le serveur :
+ * un relevé hebdomadaire, par exemple.
+ */
+export async function creerBlob<C = unknown>(url: string, corps?: C, opts: OptionsRequete = {}): Promise<Blob> {
+  const { data } = await api.post<Blob>(url, corps, { ...opts, responseType: 'blob' });
+  return data;
 }

@@ -93,7 +93,7 @@ export function messageErreurElection(e: unknown, defaut: string): string {
  */
 export const electionsService = {
   liste: (params: ParametresListeElections, silencieux = false) =>
-    lister<Election>('/elections', { ...params }, { silencieux }),
+    lister<Election>('/elections', params, { silencieux }),
 
   actives: (silencieux = false) => lire<Election[]>('/elections/actives', undefined, { silencieux }),
 

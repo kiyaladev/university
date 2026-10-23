@@ -249,29 +249,29 @@ export interface FicheEnseignant {
 
 export const rapportsService = {
   /** Tableau de bord : synthèse de la période, évolution, classement par département. */
-  dashboard: (params: ParametresRapports = {}) => lire<RapportTableauBord>('/rapports/dashboard', { ...params }),
+  dashboard: (params: ParametresRapports = {}) => lire<RapportTableauBord>('/rapports/dashboard', params),
 
   /** Assiduité des enseignants sur la période. */
   presenceEnseignants: (params: ParametresRapports = {}) =>
-    lire<RapportAssiduite>('/rapports/presence-enseignants', { ...params }),
+    lire<RapportAssiduite>('/rapports/presence-enseignants', params),
 
   /** Occupation des salles sur la période. */
-  salles: (params: ParametresRapports = {}) => lire<RapportSalles>('/rapports/salles', { ...params }),
+  salles: (params: ParametresRapports = {}) => lire<RapportSalles>('/rapports/salles', params),
 
   /** Volume horaire : le contrat face au réalisé, par affectation. */
   volumeHoraire: (params: ParametresRapports = {}) =>
-    lire<RapportVolumeHoraire>('/rapports/volume-horaire', { ...params }),
+    lire<RapportVolumeHoraire>('/rapports/volume-horaire', params),
 
   /** État de paiement des enseignants vacataires. */
-  etatPaiement: (params: ParametresRapports = {}) => lire<RapportPaiement>('/rapports/etat-paiement', { ...params }),
+  etatPaiement: (params: ParametresRapports = {}) => lire<RapportPaiement>('/rapports/etat-paiement', params),
 
   /** Registre de contrôle : la transcription du cahier du contrôleur. */
-  registre: (params: ParametresRapports = {}) => lire<RapportRegistre>('/rapports/registre', { ...params }),
+  registre: (params: ParametresRapports = {}) => lire<RapportRegistre>('/rapports/registre', params),
 
   /** Couverture des contrôleurs sur la période. */
   couvertureControleurs: (params: ParametresRapports = {}) =>
-    lire<RapportCouverture>('/rapports/couverture-controleurs', { ...params }),
+    lire<RapportCouverture>('/rapports/couverture-controleurs', params),
 
   /** Fiche personnelle de l'agent connecté : ses séances sur la période. */
-  maFiche: (params: ParametresRapports = {}) => lire<FicheEnseignant>('/rapports/ma-fiche', { ...params }),
+  maFiche: (params: ParametresRapports = {}) => lire<FicheEnseignant>('/rapports/ma-fiche', params),
 };

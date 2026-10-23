@@ -1,7 +1,7 @@
 /** Travaux encadrés (stages) : suivi, transitions de statut et rapport. */
 
 import { creer, lire, modifier, supprimer, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { TravailEncadre } from '@/types';
 
 /** Statuts d'un travail encadré, dans l'ordre du workflow. */

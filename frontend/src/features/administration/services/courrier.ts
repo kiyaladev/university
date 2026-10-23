@@ -60,7 +60,7 @@ export interface ParapheSaisie {
 
 export const courrierService = {
   /** Courriers filtrés par type, statut, recherche et période. */
-  liste: (params: ParametresCourrier = {}) => lister<Courrier>('/courrier', { ...params }),
+  liste: (params: ParametresCourrier = {}) => lister<Courrier>('/courrier', params),
 
   /** Fiche d'un courrier, avec son circuit de validation. */
   lire: (id: string) => lire<Courrier>(`/courrier/${id}`),

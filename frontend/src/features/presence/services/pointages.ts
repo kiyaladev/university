@@ -55,7 +55,7 @@ export const ROLES_SUPPRESSION_POINTAGES = ['ADMIN', 'DIRECTION'] as const;
 
 export const pointagesService = {
   /** Pointages filtrés par date, statut, méthode, enseignant, salle… */
-  liste: (params: ParametresPointages = {}) => lister<Controle>('/controles', { ...params }),
+  liste: (params: ParametresPointages = {}) => lister<Controle>('/controles', params),
 
   /** Pointage détaillé. */
   lire: (id: string) => lire<Controle>(`/controles/${id}`),

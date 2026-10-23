@@ -1,7 +1,7 @@
 /** Soutenances : planification d'une soutenance et constat du jury. */
 
 import { creer, lire, modifier } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Soutenance } from '@/types';
 
 export const soutenancesService = {

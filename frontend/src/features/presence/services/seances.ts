@@ -101,7 +101,7 @@ export interface ModificationSeance {
 
 export const seancesService = {
   /** Séances filtrées par période, enseignant, statut, salle… */
-  liste: (params: ParametresSeances = {}) => lister<Seance>('/seances', { ...params }),
+  liste: (params: ParametresSeances = {}) => lister<Seance>('/seances', params),
 
   /** Feuille de contrôle du jour : les séances et leur état de contrôle. */
   journee: (date: string, params: Omit<ParametresSeances, 'date'> = {}) =>
@@ -111,7 +111,7 @@ export const seancesService = {
   controleurs: () => lire<ControleurSeance[]>('/seances/controleurs'),
 
   /** Ce qu'une tournée affecterait sur la période demandée. */
-  apercuTournee: (params: Tournee) => lire<ApercuTournee>('/seances/tournee-apercu', { ...params }),
+  apercuTournee: (params: Tournee) => lire<ApercuTournee>('/seances/tournee-apercu', params),
 
   /** Affecte d'un bloc les séances encore sans contrôleur. */
   affecterTournee: (params: Tournee) => creer<ResultatTournee>('/seances/tournee', params),

@@ -1,7 +1,7 @@
 /** Registre étudiants : liste, fiche, création et mise à jour. */
 
 import { creer, lire, lister, modifier, type ParametresListe } from '@/shared/services/http';
-import { elements, type Collection } from './collections';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Etudiant } from '@/types';
 
 export const etudiantsService = {

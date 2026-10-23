@@ -41,7 +41,7 @@ export type ReponseInscriptions = Inscription[] | { data: Inscription[] };
 
 export const paiementsService = {
   /** Registre paginé des paiements. */
-  liste: (params: ParametresPaiements = {}) => lister<Paiement>('/paiements', { ...params }),
+  liste: (params: ParametresPaiements = {}) => lister<Paiement>('/paiements', params),
 
   /** Tranche un paiement en attente : réussi ou échoué. */
   simuler: (id: string, statut: 'REUSSI' | 'ECHOUE') =>

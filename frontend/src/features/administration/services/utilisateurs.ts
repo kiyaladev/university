@@ -38,7 +38,7 @@ export interface UtilisateursParams {
 
 export const utilisateursService = {
   /** Comptes, paginés par le serveur. */
-  liste: (params: UtilisateursParams = {}) => lister<Utilisateur>('/utilisateurs', { ...params }),
+  liste: (params: UtilisateursParams = {}) => lister<Utilisateur>('/utilisateurs', params),
 
   /** Création d'un compte. */
   creer: (corps: UtilisateurSaisie) => creer<Utilisateur>('/utilisateurs', corps),

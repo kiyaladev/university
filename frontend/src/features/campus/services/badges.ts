@@ -34,7 +34,7 @@ export interface CorpsBadge {
 
 export const badgesService = {
   /** Badges filtrés et paginés par le serveur. */
-  liste: (params: ParametresBadges = {}) => lister<BadgeAcces>('/badges', { ...params }),
+  liste: (params: ParametresBadges = {}) => lister<BadgeAcces>('/badges', params),
 
   creer: (corps: CorpsBadge) => creer<BadgeAcces>('/badges', corps),
 

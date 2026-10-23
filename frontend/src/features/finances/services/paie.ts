@@ -25,7 +25,7 @@ export interface ParametresFeuillesPaie {
 
 export const paieService = {
   /** Feuilles paginées. */
-  liste: (params: ParametresFeuillesPaie = {}) => lister<FeuillePaie>('/feuilles-paie', { ...params }),
+  liste: (params: ParametresFeuillesPaie = {}) => lister<FeuillePaie>('/feuilles-paie', params),
 
   /** Crée une feuille pour un mois et une année. */
   creer: (corps: { mois: number | null; annee: number | null }) =>

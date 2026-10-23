@@ -29,7 +29,7 @@ export interface MatieresParams {
 
 export const matieresService = {
   /** Matières, paginées par le serveur. */
-  liste: (params: MatieresParams = {}) => lister<Matiere>('/matieres', { ...params }),
+  liste: (params: MatieresParams = {}) => lister<Matiere>('/matieres', params),
 
   /** Création d'une matière. */
   creer: (corps: MatiereSaisie) => creer<Matiere>('/matieres', corps),
