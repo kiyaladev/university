@@ -8,7 +8,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { vodService } from '../services/vod';
 import type { CoursVOD } from '@/types';
 import EtatVide from '@/shared/components/EtatVide.vue';
 
@@ -44,9 +44,8 @@ async function charger() {
   const id = route.params.id as string;
   chargement.value = true;
   try {
-    const { data } = await api.get(`/vod/${id}`);
-    vod.value = data;
-    dureeMax.value = data.dureeSecondes ?? 0;
+    vod.value = await vodService.detail(id);
+    dureeMax.value = vod.value.dureeSecondes ?? 0;
   } catch {
     // Le motif (ressource introuvable, accès refusé…) est notifié par l'intercepteur.
     retour();
@@ -101,7 +100,7 @@ async function signalerVue(termine: boolean) {
   if (!vod.value) return;
   dernierSignal = Date.now();
   try {
-    await api.post(`/vod/${vod.value.id}/vue`, {
+    await vodService.signalerVue(vod.value.id, {
       positionSecondes: Math.floor(dureeActuelle.value),
       dureeSecondes: Math.floor(dureeMax.value),
       termine,

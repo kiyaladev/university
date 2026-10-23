@@ -195,10 +195,10 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
+import { documentsService } from '../services/documents';
 import type { DocumentDepot, SuspicionPlagiat } from '@/types';
 
 const props = defineProps<{
@@ -341,10 +341,9 @@ async function enregistrer() {
     // Nettoyage des clés vides.
     Object.keys(payload).forEach((k) => nettoyable(payload[k]) && delete payload[k]);
 
-    const url = props.document ? `/documents/${props.document.id}` : '/documents';
-    const methode = props.document ? 'put' : 'post';
-    const reponse = await api[methode](url, payload);
-    const data = reponse.data;
+    const data = props.document
+      ? await documentsService.modifier(props.document.id, payload)
+      : await documentsService.creer(payload);
 
     // Le backend peut renvoyer des suspicions de plagiat nouvellement créées.
     const suspicions: SuspicionPlagiat[] | undefined = data?.suspicionsPlagiat ?? data?.data?.suspicionsPlagiat;

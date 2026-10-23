@@ -4,7 +4,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { api } from '@/boot/axios';
+import { electionsService, type CorpsCandidat } from '../services/elections';
 import type { CandidatElection, Election, Enseignant, Etudiant } from '@/types';
 
 const $q = useQuasar();
@@ -57,7 +57,7 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const payload: Record<string, unknown> = {
+    const payload: CorpsCandidat = {
       nom: formulaire.value.nom,
       prenom: formulaire.value.prenom,
       ordre: formulaire.value.ordre,
@@ -66,7 +66,7 @@ async function soumettre() {
     if (formulaire.value.enseignantId) payload.enseignantId = formulaire.value.enseignantId;
     if (formulaire.value.photoUrl) payload.photoUrl = formulaire.value.photoUrl;
     if (formulaire.value.programme) payload.programme = formulaire.value.programme;
-    const { data: res } = await api.post(`/elections/${props.election.id}/candidats`, payload);
+    const res = await electionsService.creerCandidat(props.election.id, payload);
     $q.notify({
       type: 'positive',
       message: enEdition.value

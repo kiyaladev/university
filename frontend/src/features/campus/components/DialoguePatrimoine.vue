@@ -118,10 +118,10 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { patrimoineService, type CorpsEquipementPatrimoine } from '../services/patrimoine';
 import type { EquipementPatrimoine } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -176,7 +176,7 @@ watch(ouvert, (o) => {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const payload: Record<string, unknown> = {
+    const payload: CorpsEquipementPatrimoine = {
       libelle: form.value.libelle.trim(),
       numeroSerie: form.value.numeroSerie.trim(),
       numeroInventaire: form.value.numeroInventaire.trim(),
@@ -189,10 +189,10 @@ async function enregistrer() {
       actif: form.value.actif ? 'true' : 'false',
     };
     if (props.equipement) {
-      await api.put(`/patrimoine/equipements/${props.equipement.id}`, payload);
+      await patrimoineService.modifierEquipement(props.equipement.id, payload);
       $q.notify({ type: 'positive', message: t('patrimoine.equipmentDialog.messages.updated') });
     } else {
-      await api.post('/patrimoine/equipements', payload);
+      await patrimoineService.creerEquipement(payload);
       $q.notify({ type: 'positive', message: t('patrimoine.equipmentDialog.messages.created') });
     }
     ouvert.value = false;

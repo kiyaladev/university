@@ -50,8 +50,8 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { citesService } from '../services/cites';
 import type { Residence } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -96,8 +96,8 @@ async function enregistrer() {
       adresse: form.value.adresse || undefined,
       responsable: form.value.responsable || undefined,
     };
-    if (props.residence) await api.put(`/residences/${props.residence.id}`, payload);
-    else await api.post('/residences', payload);
+    if (props.residence) await citesService.modifierResidence(props.residence.id, payload);
+    else await citesService.creerResidence(payload);
     $q.notify({ type: 'positive', message: t('cites.residences.dialogs.form.saved') });
     emit('enregistre');
     ouvert.value = false;

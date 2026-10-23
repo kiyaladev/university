@@ -98,8 +98,8 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { ticketsService } from '../services/assistance';
 import { LIBELLE_CATEGORIE_INCIDENT } from '@/shared/utils/libelles';
 import type { CategorieIncident, EquipementCampus, TicketSupport } from '@/types';
 
@@ -183,7 +183,7 @@ async function envoyer() {
   if (!form.value.categorie) return;
   enregistrement.value = true;
   try {
-    const { data } = await api.post('/tickets', {
+    const data = await ticketsService.creer({
       equipementId: form.value.equipementId || undefined,
       categorie: form.value.categorie,
       description: form.value.description.trim(),

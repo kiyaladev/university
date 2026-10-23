@@ -77,10 +77,11 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { aujourdhui, LIBELLE_STATUT_RESERVATION } from '@/shared/utils/libelles';
+import { aujourdhui } from '@/shared/utils/format';
+import { LIBELLE_STATUT_RESERVATION } from '@/shared/utils/libelles';
+import { reservationsService } from '../services/reservations';
 import type { ReservationSalle, Salle } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -115,12 +116,14 @@ const minutes = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5)
 async function verifierConflits() {
   if (!form.value.salleId || !form.value.dateJour) return;
   try {
-    const { data } = await api.get('/reservations', {
-      params: { salleId: form.value.salleId, dateJour: form.value.dateJour, all: '1' },
+    const resultat = await reservationsService.liste({
+      salleId: form.value.salleId,
+      dateJour: form.value.dateJour,
+      all: '1',
     });
     const d = minutes(form.value.heureDebut);
     const f = minutes(form.value.heureFin);
-    conflits.value = (data.data as ReservationSalle[]).filter(
+    conflits.value = resultat.data.filter(
       (r) =>
         (r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRME') && d < minutes(r.heureFin) && minutes(r.heureDebut) < f,
     );
@@ -151,15 +154,11 @@ async function enregistrer() {
   enregistrement.value = true;
   erreur.value = '';
   try {
-    await api.post(
-      '/reservations',
-      {
-        ...form.value,
-        organisme: form.value.organisme || undefined,
-        responsable: form.value.responsable || undefined,
-      },
-      { silencieux: true },
-    );
+    await reservationsService.creer({
+      ...form.value,
+      organisme: form.value.organisme || undefined,
+      responsable: form.value.responsable || undefined,
+    });
     $q.notify({ type: 'positive', message: t('reservations.createDialog.sent') });
     emit('enregistre');
     ouvert.value = false;
