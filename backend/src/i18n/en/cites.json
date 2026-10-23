@@ -10,6 +10,6 @@
   "cette_chambre_ne_peut_pas_prendre_le_statut_occupe_aucune_at": "This room cannot take the OCCUPE status: no allocation has been granted for it.",
   "cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou": "This student already has a room allocated for the current year.",
   "une_chambre_ne_peut_pas_etre_creee_au_statut_occupe_elle_doi": "A room cannot be created with the OCCUPE status: it must first be granted an allocation by the jury.",
-  "impossible_de_supprimer_la_residence_residence_nom_nb_chambr": "Cannot delete residence {residence.nom}: {nb} room(s) are still attached. Please reassign them first.",
-  "impossible_de_supprimer_la_chambre_chambre_code_nb_attributi": "Cannot delete room {chambre.code}: {nb} allocation(s) are still attached."
+  "residenceNonVide": "Cannot delete residence {nom}: {nb} room(s) are still attached. Please reassign them first.",
+  "chambreNonVide": "Cannot delete room {code}: {nb} allocation(s) are still attached."
 }
