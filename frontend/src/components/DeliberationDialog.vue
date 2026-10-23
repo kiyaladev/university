@@ -1,89 +1,77 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 640px; max-width: 95vw">
-      <q-card-section class="text-h6">{{ $t('deliberations.actions.newDeliberation') }}</q-card-section>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('deliberations.actions.newDeliberation')"
+    :envoi="enregistrement"
+    :libelle-valider="$t('common.actions.create')"
+    :desactive="!form.anneeId || !form.promotionId"
+    @valider="creer"
+  >
+    <q-select
+      v-model="form.anneeId"
+      :options="optionsAnnees"
+      outlined
+      dense
+      emit-value
+      map-options
+      :label="$t('affectations.dialog.fields.year')"
+      @update:model-value="resetPromotion"
+    />
+    <q-select
+      v-model="form.promotionId"
+      :options="optionsPromotions"
+      outlined
+      dense
+      emit-value
+      map-options
+      :label="$t('affectations.dialog.fields.promotion')"
+      class="q-mt-sm"
+    />
+    <semestre-select
+      v-model="form.session"
+      type="session"
+      :label="$t('deliberations.createDialog.session')"
+      class="q-mt-sm"
+      :hint="$t('deliberations.createDialog.sessionHint')"
+    />
 
-      <q-card-section>
-        <q-select
-          v-model="form.anneeId"
-          :options="optionsAnnees"
-          outlined
-          dense
-          emit-value
-          map-options
-          :label="$t('affectations.dialog.fields.year')"
-          @update:model-value="resetPromotion"
-        />
-        <q-select
-          v-model="form.promotionId"
-          :options="optionsPromotions"
-          outlined
-          dense
-          emit-value
-          map-options
-          :label="$t('affectations.dialog.fields.promotion')"
-          class="q-mt-sm"
-        />
-        <semestre-select
-          v-model="form.session"
-          type="session"
-          :label="$t('deliberations.createDialog.session')"
-          class="q-mt-sm"
-          :hint="$t('deliberations.createDialog.sessionHint')"
-        />
+    <q-banner class="note--valide q-mt-md" dense>
+      <template #avatar><q-icon name="gavel" /></template>
+      {{ $t('deliberations.createDialog.draftHint') }}
+    </q-banner>
 
-        <q-banner class="note--valide q-mt-md" dense>
-          <template #avatar><q-icon name="gavel" /></template>
-          {{ $t('deliberations.createDialog.draftHint') }}
-        </q-banner>
+    <q-separator class="q-my-md" />
 
-        <q-separator class="q-my-md" />
-
-        <span class="section-titre">{{ $t('deliberations.createDialog.previewTitle') }}</span>
-        <q-card flat bordered class="apercu-bulletin">
-          <q-card-section class="apercu-bulletin__entete">
-            <div>
-              <div class="apercu-bulletin__nom">
-                {{ apercu.etudiant.prenom }} {{ apercu.etudiant.nom }}
-              </div>
-              <div class="apercu-bulletin__meta">
-                {{ $t('common.fields.matricule') }} {{ apercu.etudiant.matricule }} ·
-                {{ apercu.promotion }} · {{ apercu.annee }}
-              </div>
-            </div>
-            <q-badge color="grey-6" :label="$t('deliberations.createDialog.previewDecision')" />
-          </q-card-section>
-          <q-card-section class="apercu-bulletin__corps">
-            <div class="apercu-bulletin__ligne" v-for="m in apercu.lignes" :key="m.code">
-              <div class="apercu-bulletin__matiere">
-                <div class="text-weight-medium">{{ m.intitule }}</div>
-                <div class="text-caption text-grey-7">{{ m.code }} · {{ m.credits }} cr.</div>
-              </div>
-              <div class="apercu-bulletin__moyenne chiffres">—</div>
-            </div>
-          </q-card-section>
-          <q-card-section class="apercu-bulletin__pied">
-            <span class="text-caption text-grey-7">
-              {{ $t('deliberations.createDialog.previewHint') }}
-            </span>
-          </q-card-section>
-        </q-card>
+    <span class="section-titre">{{ $t('deliberations.createDialog.previewTitle') }}</span>
+    <q-card flat bordered class="apercu-bulletin">
+      <q-card-section class="apercu-bulletin__entete">
+        <div>
+          <div class="apercu-bulletin__nom">
+            {{ apercu.etudiant.prenom }} {{ apercu.etudiant.nom }}
+          </div>
+          <div class="apercu-bulletin__meta">
+            {{ $t('common.fields.matricule') }} {{ apercu.etudiant.matricule }} ·
+            {{ apercu.promotion }} · {{ apercu.annee }}
+          </div>
+        </div>
+        <q-badge color="grey-6" :label="$t('deliberations.createDialog.previewDecision')" />
       </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat no-caps :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          :label="$t('common.actions.create')"
-          :loading="enregistrement"
-          :disable="!form.anneeId || !form.promotionId"
-          @click="creer"
-        />
-      </q-card-actions>
+      <q-card-section class="apercu-bulletin__corps">
+        <div class="apercu-bulletin__ligne" v-for="m in apercu.lignes" :key="m.code">
+          <div class="apercu-bulletin__matiere">
+            <div class="text-weight-medium">{{ m.intitule }}</div>
+            <div class="text-caption text-grey-7">{{ m.code }} · {{ m.credits }} cr.</div>
+          </div>
+          <div class="apercu-bulletin__moyenne chiffres">—</div>
+        </div>
+      </q-card-section>
+      <q-card-section class="apercu-bulletin__pied">
+        <span class="text-caption text-grey-7">
+          {{ $t('deliberations.createDialog.previewHint') }}
+        </span>
+      </q-card-section>
     </q-card>
-  </q-dialog>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -93,6 +81,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useReferentielsStore } from '../stores/referentiels';
 import SemestreSelect from './SemestreSelect.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import type {
   AnneeAcademique,
   Matiere,
@@ -100,13 +89,13 @@ import type {
   SessionDeliberation,
 } from '../types';
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   annees: AnneeAcademique[];
   promotions: Promotion[];
   matieres?: Matiere[];
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
@@ -162,17 +151,14 @@ function resetPromotion() {
   form.value.promotionId = null;
 }
 
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    form.value = {
-      anneeId: referentiels.anneeCourante?.id ?? null,
-      promotionId: null,
-      session: 'NORMALE',
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  form.value = {
+    anneeId: referentiels.anneeCourante?.id ?? null,
+    promotionId: null,
+    session: 'NORMALE',
+  };
+});
 
 async function creer() {
   enregistrement.value = true;
@@ -184,7 +170,7 @@ async function creer() {
     });
     $q.notify({ type: 'positive', message: t('deliberations.createDialog.created') });
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
   } catch {
     /* notifié par l'intercepteur */
   } finally {

@@ -1,14 +1,11 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="presence" />
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('dashboard.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('dashboard.subtitle', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) }) }}
-        </div>
-      </div>
-      <div class="col-auto row q-gutter-sm">
+    <page-header
+      :title="$t('dashboard.title')"
+      :subtitle="$t('dashboard.subtitle', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) })"
+    >
+      <template #actions>
         <champ-date v-model="dateDebut" :label="$t('dashboard.filters.from')" style="width: 160px" />
         <champ-date v-model="dateFin" :label="$t('dashboard.filters.to')" style="width: 160px" />
         <q-select
@@ -24,6 +21,7 @@
         />
         <q-btn
           round
+          class="self-center"
           color="primary"
           icon="refresh"
           :aria-label="$t('dashboard.actions.refreshAria')"
@@ -32,8 +30,8 @@
         >
           <q-tooltip>{{ $t('dashboard.actions.refreshTooltip') }}</q-tooltip>
         </q-btn>
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- Situation du jour : ce que la tournée a déjà couvert -->
     <section class="bandeau jour">
@@ -223,6 +221,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '../components/SectionNavigation.vue';
+import PageHeader from '../components/PageHeader.vue';
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';

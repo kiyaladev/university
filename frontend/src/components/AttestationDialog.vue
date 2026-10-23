@@ -1,113 +1,97 @@
 <template>
-  <q-dialog v-model="dialogOuvert" persistent>
-    <q-card style="width: 560px; max-width: 95vw">
-      <q-card-section>
-        <div class="text-h6">{{ $t('attestations.actions.issue') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ $t('attestations.issueDialog.subtitle') }}
-        </div>
-      </q-card-section>
+  <dialogue-formulaire
+    v-model="dialogOuvert"
+    :titre="$t('attestations.actions.issue')"
+    :sous-titre="$t('attestations.issueDialog.subtitle')"
+    :envoi="enregistrement"
+    :desactive="!formulaireValide"
+    icone-valider="qr_code_2"
+    :libelle-valider="$t('attestations.issueDialog.submit')"
+    @valider="enregistrer"
+  >
+    <span class="section-titre">{{ $t('common.fields.student') }}</span>
+    <q-select
+      v-model="form.etudiantId"
+      :options="optionsEtudiants"
+      use-input
+      input-debounce="300"
+      outlined
+      dense
+      clearable
+      autofocus
+      emit-value
+      map-options
+      :label="$t('attestations.issueDialog.student')"
+      option-label="label"
+      option-value="value"
+      :hint="$t('attestations.issueDialog.studentHint')"
+      :loading="rechercheEtudiants"
+      @filter="filtrerEtudiants"
+    >
+      <template #no-option>
+        <q-item><q-item-section class="text-grey-7">{{ $t('attestations.issueDialog.studentEmpty') }}</q-item-section></q-item>
+      </template>
+    </q-select>
 
-      <q-card-section>
-        <span class="section-titre">{{ $t('common.fields.student') }}</span>
-        <q-select
-          v-model="form.etudiantId"
-          :options="optionsEtudiants"
-          use-input
-          input-debounce="300"
-          outlined
-          dense
-          clearable
-          autofocus
-          emit-value
-          map-options
-          :label="$t('attestations.issueDialog.student')"
-          option-label="label"
-          option-value="value"
-          :hint="$t('attestations.issueDialog.studentHint')"
-          :loading="rechercheEtudiants"
-          @filter="filtrerEtudiants"
-        >
-          <template #no-option>
-            <q-item><q-item-section class="text-grey-7">{{ $t('attestations.issueDialog.studentEmpty') }}</q-item-section></q-item>
-          </template>
-        </q-select>
+    <span class="section-titre q-mt-md">{{ $t('bibliotheque.table.columns.document') }}</span>
+    <q-select
+      v-model="form.type"
+      :options="optionsTypes"
+      outlined
+      dense
+      emit-value
+      map-options
+      :label="$t('attestations.issueDialog.type')"
+    />
+    <q-input
+      v-model="form.motif"
+      outlined
+      dense
+      type="textarea"
+      rows="2"
+      :label="$t('attestations.issueDialog.reason')"
+    />
 
-        <span class="section-titre q-mt-md">{{ $t('bibliotheque.table.columns.document') }}</span>
+    <span class="section-titre q-mt-md">{{ $t('attestations.issueDialog.track') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
         <q-select
-          v-model="form.type"
-          :options="optionsTypes"
-          outlined
-          dense
-          emit-value
-          map-options
-          :label="$t('attestations.issueDialog.type')"
-        />
-        <q-input
-          v-model="form.motif"
-          outlined
-          dense
-          type="textarea"
-          rows="2"
-          :label="$t('attestations.issueDialog.reason')"
-        />
-
-        <span class="section-titre q-mt-md">{{ $t('attestations.issueDialog.track') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.anneeId"
-              :options="optionsAnnees"
-              outlined
-              dense
-              emit-value
-              map-options
-              clearable
-              :label="$t('affectations.filters.year')"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.promotionId"
-              :options="optionsPromotions"
-              outlined
-              dense
-              emit-value
-              map-options
-              clearable
-              :label="$t('affectations.filters.promotion')"
-            />
-          </div>
-        </div>
-        <q-select
-          v-if="optionsInscriptions.length"
-          v-model="form.inscriptionId"
-          :options="optionsInscriptions"
+          v-model="form.anneeId"
+          :options="optionsAnnees"
           outlined
           dense
           emit-value
           map-options
           clearable
-          :label="$t('attestations.issueDialog.enrollment')"
-          :hint="$t('attestations.issueDialog.enrollmentHint')"
+          :label="$t('affectations.filters.year')"
         />
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          icon="qr_code_2"
-          :label="$t('attestations.issueDialog.submit')"
-          :disable="!formulaireValide"
-          :loading="enregistrement"
-          @click="enregistrer"
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.promotionId"
+          :options="optionsPromotions"
+          outlined
+          dense
+          emit-value
+          map-options
+          clearable
+          :label="$t('affectations.filters.promotion')"
         />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+    </div>
+    <q-select
+      v-if="optionsInscriptions.length"
+      v-model="form.inscriptionId"
+      :options="optionsInscriptions"
+      outlined
+      dense
+      emit-value
+      map-options
+      clearable
+      :label="$t('attestations.issueDialog.enrollment')"
+      :hint="$t('attestations.issueDialog.enrollmentHint')"
+    />
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -115,6 +99,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { useReferentielsStore } from '../stores/referentiels';
 import { LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
 import type { AnneeAcademique, Etudiant, Inscription, Promotion } from '../types';
@@ -264,8 +249,10 @@ async function enregistrer() {
     };
     await api.post('/attestations', payload);
     $q.notify({ type: 'positive', message: $t('attestations.issueDialog.issued') });
-    dialogOuvert.value = false;
     emit('enregistre');
+    dialogOuvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

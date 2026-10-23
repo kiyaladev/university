@@ -1,10 +1,8 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('evaluations.title')" :subtitle="$t('evaluations.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutGererEvaluation()" #actions>
         <q-btn
-          v-if="peutGererEvaluation()"
           unelevated
           color="primary"
           no-caps
@@ -12,7 +10,6 @@
           :label="$t('evaluations.actions.new')"
           @click="ouvrir(null)"
         />
-      </div>
       </template>
     </page-header>
 
@@ -78,17 +75,15 @@
       flat
       bordered
       class="carte"
-      :rows="evaluations"
+      :rows="ev.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="ev.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="evaluations-vide">
-          <q-icon name="fact_check" size="42px" class="q-mb-sm" />
-          <div>{{ messageVide }}</div>
-          <div class="q-mt-sm q-gutter-sm">
+        <etat-vide icone="fact_check" :titre="messageVide">
+          <template #action>
             <q-btn
               v-if="filtresActifs"
               outline
@@ -106,8 +101,8 @@
               :label="$t('evaluations.actions.new')"
               @click="ouvrir(null)"
             />
-          </div>
-        </div>
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-type="p">
@@ -200,7 +195,7 @@
     </q-table>
 
     <q-linear-progress
-      v-if="modeVue === 'cartes' && chargement"
+      v-if="modeVue === 'cartes' && ev.chargement"
       indeterminate
       color="primary"
       class="q-mb-sm"
@@ -208,7 +203,7 @@
 
     <div v-else-if="modeVue === 'cartes'" class="evaluations-cartes">
       <q-card
-        v-for="e in evaluations"
+        v-for="e in ev.lignes"
         :key="e.id"
         flat
         bordered
@@ -285,10 +280,8 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!evaluations.length" class="evaluations-vide">
-        <q-icon name="fact_check" size="42px" class="q-mb-sm" />
-        <div>{{ messageVide }}</div>
-        <div class="q-mt-sm q-gutter-sm">
+      <etat-vide v-if="!ev.lignes.length" icone="fact_check" :titre="messageVide">
+        <template #action>
           <q-btn
             v-if="filtresActifs"
             outline
@@ -306,18 +299,16 @@
             :label="$t('evaluations.actions.new')"
             @click="ouvrir(null)"
           />
-        </div>
-      </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="evaluations.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="ev.lignes.length"
+      v-model:page="ev.page"
+      v-model:page-size="ev.pageSize"
+      :total="ev.total"
+      @tous="ev.pageSize = Math.max(ev.total, 1)"
     />
 
     <evaluation-dialog
@@ -326,7 +317,7 @@
       :annees="annees"
       :promotions="promotions"
       :matieres="matieres"
-      @enregistre="charger"
+      @enregistre="ev.recharger()"
     />
 
     <!-- Modale « Voir les notes » -->
@@ -376,9 +367,7 @@
             dense
           >
             <template #no-data>
-              <div class="text-center q-pa-md text-grey-7">
-                {{ $t('evaluations.notes_modal.empty') }}
-              </div>
+              <etat-vide icone="people_outline" :titre="$t('evaluations.notes_modal.empty')" />
             </template>
             <template #body-cell-note="p">
               <q-td :props="p" class="text-center chiffres">
@@ -415,14 +404,17 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import EvaluationDialog from '../components/EvaluationDialog.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
@@ -445,6 +437,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 
 /**
  * Deux droits distincts, alignés sur l'API :
@@ -455,22 +448,40 @@ const peutGererEvaluation = () => auth.aRole(['ADMIN', 'SCOLARITE']);
 const peutSaisirNotes = () =>
   auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']);
 
-const evaluations = ref<Evaluation[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
 const matieres = ref<Matiere[]>([]);
-const chargement = ref(false);
 const dialogOuvert = ref(false);
 const evaluationEditee = ref<Evaluation | null>(null);
 const modeVue = usePresentationListe();
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
-const pret = ref(false);
+const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, matiereId: null, type: null, statut: null };
+const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+// `/evaluations?promotion=…` : arrivée depuis la fiche d'un étudiant.
+if (typeof route.query.promotion === 'string' && route.query.promotion) {
+  filtres.value.promotionId = route.query.promotion;
+}
 
-const filtres = ref<Record<string, any>>({});
+const ev = reactive(
+  useListePaginee<Evaluation>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/evaluations', {
+          params: {
+            ...pageApi(p),
+            anneeId: f.anneeId || undefined,
+            promotionId: f.promotionId || undefined,
+            matiereId: f.matiereId || undefined,
+            type: f.type || undefined,
+            statut: f.statut || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
@@ -575,29 +586,28 @@ function saisirNotes(e: Evaluation) {
   void router.push({ path: '/notes', query: { evaluation: e.id } });
 }
 
-function cloturer(e: Evaluation) {
-  $q.dialog({
-    title: t('evaluations.dialogs.close_title'),
+async function cloturer(e: Evaluation) {
+  const ok = await confirmer({
+    titre: t('evaluations.dialogs.close_title'),
     message: t('evaluations.dialogs.close_message', { name: e.intitule }),
-    cancel: true,
-    ok: { color: 'primary', label: t('evaluations.dialogs.close_confirm') },
-  }).onOk(async () => {
-    await api.post(`/evaluations/${e.id}/cloturer`);
-    $q.notify({ type: 'positive', message: t('evaluations.messages.closed') });
-    await charger();
+    ok: t('evaluations.dialogs.close_confirm'),
   });
+  if (!ok) return;
+  try {
+    await api.post(`/evaluations/${e.id}/cloturer`);
+  } catch {
+    return;
+  }
+  $q.notify({ type: 'positive', message: t('evaluations.messages.closed') });
+  await ev.recharger();
 }
 
 function supprimer(e: Evaluation) {
-  $q.dialog({
-    title: t('evaluations.dialogs.delete_title'),
+  void supprimerAvecConfirmation(`/evaluations/${e.id}`, e.intitule, ev.recharger, {
+    titre: t('evaluations.dialogs.delete_title'),
     message: t('evaluations.dialogs.delete_message', { name: e.intitule }),
-    cancel: true,
-    ok: { color: 'negative', label: t('evaluations.dialogs.delete_confirm') },
-  }).onOk(async () => {
-    await api.delete(`/evaluations/${e.id}`);
-    $q.notify({ type: 'positive', message: t('evaluations.messages.deleted') });
-    await charger();
+    ok: t('evaluations.dialogs.delete_confirm'),
+    succes: t('evaluations.messages.deleted'),
   });
 }
 
@@ -666,74 +676,9 @@ function saisirDepuisConsultation() {
 
 // --- Chargement ---------------------------------------------------------
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/evaluations', {
-      params: {
-        all: '1',
-        page: page.value,
-        pageSize: pageSize.value,
-        anneeId: filtres.value.anneeId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        matiereId: filtres.value.matiereId || undefined,
-        type: filtres.value.type || undefined,
-        statut: filtres.value.statut || undefined,
-        search: filtres.value.recherche || undefined,
-      },
-    });
-    evaluations.value = data.data ?? [];
-    total.value = data.total ?? evaluations.value.length;
-  } catch {
-    evaluations.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/evaluations', {
-      params: {
-        all: '1',
-        pageSize: 1000,
-        anneeId: filtres.value.anneeId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        matiereId: filtres.value.matiereId || undefined,
-        type: filtres.value.type || undefined,
-        statut: filtres.value.statut || undefined,
-        search: filtres.value.recherche || undefined,
-      },
-    });
-    evaluations.value = data.data ?? [];
-    total.value = evaluations.value.length;
-    pageSize.value = Math.max(evaluations.value.length, 1);
-    page.value = 1;
-  } catch {
-    evaluations.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  filtres.value = { ...FILTRES_VIDES };
 }
-
-watch(
-  () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.matiereId,
-         filtres.value.type, filtres.value.statut, filtres.value.recherche],
-  () => {
-    if (!pret.value) return;
-    page.value = 1;
-    void charger();
-  },
-);
 
 onMounted(async () => {
   try {
@@ -747,11 +692,6 @@ onMounted(async () => {
     promotions.value = [];
     matieres.value = [];
   }
-  // `/evaluations?promotion=…` : arrivée depuis la fiche d'un étudiant.
-  const promotion = route.query.promotion as string | undefined;
-  if (promotion) filtres.value.promotionId = promotion;
-  pret.value = true;
-  await charger();
 });
 </script>
 
@@ -763,13 +703,5 @@ onMounted(async () => {
 }
 .evaluations-cartes__carte {
   background: var(--up-plaque);
-}
-
-// État vide : on nomme la cause et on offre la sortie.
-.evaluations-vide {
-  grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
 }
 </style>

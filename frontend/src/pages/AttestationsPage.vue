@@ -31,7 +31,7 @@
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('attestations.filters.searchPlaceholder')"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #avances>
         <q-select
@@ -82,28 +82,27 @@
       flat
       bordered
       class="carte"
-      :rows="attestations"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
       @row-click="(_, row) => ouvrirDetail(row)"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="verified_user" size="32px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('attestations.emptyState.title') }}</div>
-          <q-btn
-            v-if="peutEmettre"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('attestations.actions.issue')"
-            class="q-mt-sm"
-            @click="ouvrirEmission()"
-          />
-        </div>
+        <etat-vide icone="verified_user" :titre="$t('attestations.emptyState.title')">
+          <template v-if="peutEmettre" #action>
+            <q-btn
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('attestations.actions.issue')"
+              class="q-mt-sm"
+              @click="ouvrirEmission()"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-etudiant="p">
@@ -198,7 +197,7 @@
 
     <div v-else class="attestations-cartes">
       <q-card
-        v-for="a in attestations"
+        v-for="a in liste.lignes"
         :key="a.id"
         flat
         bordered
@@ -243,20 +242,20 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!attestations.length" class="etat-vide plaque">
-        <q-icon name="verified_user" size="32px" color="grey-5" />
-        <div class="q-mt-sm">{{ $t('attestations.emptyState.title') }}</div>
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="plaque"
+        icone="verified_user"
+        :titre="$t('attestations.emptyState.title')"
+      />
     </div>
 
     <pagination-bar
-      v-if="total"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="liste.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.max(liste.total, 200)"
     />
 
     <attestation-dialog
@@ -328,41 +327,29 @@
     </q-dialog>
 
     <!-- Révocation : la décision inverse de l'émission, le motif est exigé -->
-    <q-dialog v-model="dialogRevocation">
-      <q-card style="width: 460px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t('attestations.revocation.title', { numero: attestationARevoquer?.numero }) }}</div>
-          <div class="text-caption text-grey-7">
-            {{ $t('attestations.revocation.warning') }}
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="motifRevocation"
-            outlined
-            dense
-            type="textarea"
-            rows="3"
-            :label="$t('attestations.revocation.motifLabel')"
-            :hint="$t('attestations.revocation.motifHint')"
-            autofocus
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('attestations.revocation.cancel')" v-close-popup />
-          <q-btn
-            color="negative"
-            unelevated
-            no-caps
-            icon="block"
-            :label="$t('attestations.revocation.confirm')"
-            :disable="motifRevocation.trim().length < 3"
-            :loading="revocationEnCours"
-            @click="confirmerRevocation"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogRevocation"
+      taille="s"
+      :titre="$t('attestations.revocation.title', { numero: attestationARevoquer?.numero })"
+      :sous-titre="$t('attestations.revocation.warning')"
+      :envoi="revocationEnCours"
+      :desactive="motifRevocation.trim().length < 3"
+      couleur-valider="negative"
+      icone-valider="block"
+      :libelle-valider="$t('attestations.revocation.confirm')"
+      @valider="confirmerRevocation"
+    >
+      <q-input
+        v-model="motifRevocation"
+        outlined
+        dense
+        type="textarea"
+        rows="3"
+        :label="$t('attestations.revocation.motifLabel')"
+        :hint="$t('attestations.revocation.motifHint')"
+        autofocus
+      />
+    </dialogue-formulaire>
 
     <!-- Journal des vérifications -->
     <q-dialog v-model="dialogVerifications">
@@ -408,7 +395,8 @@ import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -420,6 +408,8 @@ import { useReferentielsStore } from '../stores/referentiels';
 import AttestationDialog from '../components/AttestationDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import {
   LIBELLE_STATUT_ATTESTATION,
   LIBELLE_TYPE_ATTESTATION,
@@ -445,15 +435,30 @@ const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
 
-const attestations = ref<Attestation[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-
-const filtres = ref<Record<string, any>>({});
+const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null, anneeId: null, promotionId: null });
+const liste = reactive(
+  useListePaginee<Attestation>({
+    filtres,
+    // Arrivée depuis un bulletin (`emettre=1`) : la query sert au préremplissage
+    // de l'émission, pas aux filtres de la liste.
+    syncUrl: route.query.emettre !== '1',
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/attestations', {
+          params: {
+            ...pageApi(p),
+            type: f.type || undefined,
+            statut: f.statut || undefined,
+            anneeId: f.anneeId || undefined,
+            promotionId: f.promotionId || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
@@ -614,45 +619,10 @@ async function ouvrirVerifications(a: Attestation) {
 
 // ------------------------------------------------------------------ chargement
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/attestations', {
-      params: {
-        page: page.value,
-        pageSize: pageSize.value,
-        type: filtres.value.type || undefined,
-        statut: filtres.value.statut || undefined,
-        anneeId: filtres.value.anneeId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        search: filtres.value.recherche || undefined,
-      },
-    });
-    attestations.value = data.data ?? [];
-    total.value = data.total ?? attestations.value.length;
-  } catch {
-    attestations.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
+/** Après une émission ou une révocation : retour en tête de liste. */
 async function recharger() {
-  page.value = 1;
-  await charger();
-}
-
-async function chargerTout() {
-  page.value = 1;
-  pageSize.value = Math.max(total.value, 200);
-  await charger();
-}
-
-function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  charger();
+  if (liste.page === 1) await liste.recharger();
+  else liste.page = 1;
 }
 
 async function chargerReferentiels() {
@@ -662,22 +632,8 @@ async function chargerReferentiels() {
   ]);
 }
 
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.type,
-    filtres.value.statut,
-    filtres.value.anneeId,
-    filtres.value.promotionId,
-  ],
-  () => {
-    page.value = 1;
-    charger();
-  },
-);
-
 onMounted(async () => {
-  await Promise.all([charger(), chargerReferentiels()]);
+  await chargerReferentiels();
 
   // Chaîne : un bulletin ADMIS ouvre l'émission de l'attestation de réussite.
   if (route.query.emettre === '1') {

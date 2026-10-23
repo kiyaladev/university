@@ -1,24 +1,10 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('matieres.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('matieres.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
-        <q-btn
-          v-if="auth.peutPlanifier"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('matieres.actions.new')"
-          @click="ouvrir(null)"
-        />
-      </div>
-    </div>
+    <page-header :title="$t('matieres.title')" :subtitle="$t('matieres.subtitle')">
+      <template v-if="auth.peutPlanifier" #actions>
+        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('matieres.actions.new')" @click="ouvrir(null)" />
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -45,34 +31,34 @@
       flat
       bordered
       class="carte"
-      :rows="matieres"
+      :rows="mat.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="mat.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="menu_book" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
-          <q-btn
-            v-if="auth.peutPlanifier && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('matieres.emptyState.create')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('matieres.emptyState.reset')"
-            @click="reinitialiser"
-          />
-        </div>
+        <etat-vide icone="menu_book" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="auth.peutPlanifier && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('matieres.emptyState.create')"
+              @click="ouvrir(null)"
+            />
+            <q-btn
+              v-else-if="filtresActifs"
+              flat
+              no-caps
+              icon="refresh"
+              :label="$t('matieres.emptyState.reset')"
+              @click="reinitialiser"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-actions="p">
@@ -114,7 +100,7 @@
     </q-table>
 
     <div v-else class="grille-cartes">
-      <q-card v-for="m in matieres" :key="m.id" flat bordered class="carte grille-cartes__carte">
+      <q-card v-for="m in mat.lignes" :key="m.id" flat bordered class="carte grille-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <q-chip dense outline color="primary">{{ m.code }}</q-chip>
@@ -148,124 +134,109 @@
           />
         </q-card-actions>
       </q-card>
-      <div v-if="!matieres.length && !chargement" class="etat-vide">
-        <q-icon name="menu_book" size="34px" />
-        <div class="pochoir">{{ messageVide }}</div>
-        <q-btn
-          v-if="auth.peutPlanifier && !filtresActifs"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('matieres.emptyState.create')"
-          @click="ouvrir(null)"
-        />
-        <q-btn
-          v-else-if="filtresActifs"
-          flat
-          no-caps
-          icon="refresh"
-          :label="$t('matieres.emptyState.reset')"
-          @click="reinitialiser"
-        />
-      </div>
+      <etat-vide v-if="!mat.lignes.length && !mat.chargement" icone="menu_book" :titre="messageVide">
+        <template #action>
+          <q-btn
+            v-if="auth.peutPlanifier && !filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('matieres.emptyState.create')"
+            @click="ouvrir(null)"
+          />
+          <q-btn
+            v-else-if="filtresActifs"
+            flat
+            no-caps
+            icon="refresh"
+            :label="$t('matieres.emptyState.reset')"
+            @click="reinitialiser"
+          />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="matieres.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="mat.lignes.length"
+      v-model:page="mat.page"
+      v-model:page-size="mat.pageSize"
+      :total="mat.total"
+      @tous="toutAfficher"
     />
 
     <!-- Formulaire dédié matière -->
-    <q-dialog v-model="dialogOuvert">
-      <q-card style="width: 480px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ matiereEditee ? $t('matieres.dialog.editTitle') : $t('matieres.dialog.newTitle') }}
-        </q-card-section>
-        <q-card-section>
-          <span class="section-titre">{{ $t('matieres.dialog.sectionTitle') }}</span>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-5">
-              <q-input
-                v-model="form.code"
-                outlined
-                dense
-                :label="$t('matieres.dialog.codeLabel')"
-                :hint="$t('matieres.dialog.codeHint')"
-                :error="erreurs.code"
-                :error-message="$t('matieres.dialog.codeError')"
-              />
-            </div>
-            <div class="col-12 col-sm-7">
-              <q-select
-                v-model="form.departementId"
-                :options="optionsDepartements"
-                outlined
-                dense
-                clearable
-                emit-value
-                map-options
-                :label="$t('matieres.dialog.departmentLabel')"
-              />
-            </div>
-          </div>
+    <dialogue-formulaire
+      v-model="dialogOuvert"
+      :titre="matiereEditee ? $t('matieres.dialog.editTitle') : $t('matieres.dialog.newTitle')"
+      taille="s"
+      :libelle-valider="$t('matieres.dialog.save')"
+      :envoi="enregistrement"
+      @valider="enregistrer"
+    >
+      <span class="section-titre">{{ $t('matieres.dialog.sectionTitle') }}</span>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-5">
           <q-input
-            v-model="form.intitule"
+            v-model="form.code"
             outlined
             dense
-            :label="$t('matieres.dialog.intituleLabel')"
-            :error="erreurs.intitule"
-            :error-message="$t('matieres.dialog.intituleError')"
+            :label="$t('matieres.dialog.codeLabel')"
+            :hint="$t('matieres.dialog.codeHint')"
+            :rules="[(v: string) => !!(v ?? '').trim() || $t('matieres.dialog.codeError')]"
           />
-          <div class="row q-col-gutter-md">
-            <div class="col-6">
-              <q-input
-                v-model.number="form.volumeHoraireTotal"
-                type="number"
-                min="0"
-                outlined
-                dense
-                :label="$t('matieres.dialog.volumeLabel')"
-                :hint="$t('matieres.dialog.volumeHint')"
-              />
-            </div>
-            <div class="col-6">
-              <q-input
-                v-model.number="form.credits"
-                type="number"
-                min="0"
-                outlined
-                dense
-                :label="$t('matieres.dialog.creditsLabel')"
-              />
-            </div>
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('matieres.dialog.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('matieres.dialog.save')"
-            :loading="enregistrement"
-            @click="enregistrer"
+        </div>
+        <div class="col-12 col-sm-7">
+          <q-select
+            v-model="form.departementId"
+            :options="optionsDepartements"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
+            :label="$t('matieres.dialog.departmentLabel')"
           />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        </div>
+      </div>
+      <q-input
+        v-model="form.intitule"
+        outlined
+        dense
+        :label="$t('matieres.dialog.intituleLabel')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('matieres.dialog.intituleError')]"
+      />
+      <div class="row q-col-gutter-md">
+        <div class="col-6">
+          <q-input
+            v-model.number="form.volumeHoraireTotal"
+            type="number"
+            min="0"
+            outlined
+            dense
+            :label="$t('matieres.dialog.volumeLabel')"
+            :hint="$t('matieres.dialog.volumeHint')"
+          />
+        </div>
+        <div class="col-6">
+          <q-input
+            v-model.number="form.credits"
+            type="number"
+            min="0"
+            outlined
+            dense
+            :label="$t('matieres.dialog.creditsLabel')"
+          />
+        </div>
+      </div>
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -274,6 +245,11 @@ import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import type { Departement, Matiere, ChipFiltre } from '../types';
 
 const $q = useQuasar();
@@ -281,20 +257,27 @@ const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
+const { supprimerAvecConfirmation } = useConfirmation();
 
-const matieres = ref<Matiere[]>([]);
 const departements = ref<Departement[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const matiereEditee = ref<Matiere | null>(null);
 const enregistrement = ref(false);
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-
-const filtres = ref<Record<string, any>>({});
+const filtres = ref<Record<string, any>>({ recherche: '', departementId: null });
+const mat = reactive(
+  useListePaginee<Matiere>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/matieres', {
+          params: { ...pageApi(p), search: texteApi(f.recherche), departementId: f.departementId || undefined },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const form = ref({
   code: '',
@@ -303,7 +286,6 @@ const form = ref({
   credits: 0,
   departementId: null as string | null,
 });
-const erreurs = ref({ code: false, intitule: false });
 
 const optionsDepartements = computed(() =>
   departements.value.map((d) => ({ label: d.nom, value: d.id })),
@@ -370,7 +352,6 @@ function voirCharges(m: Matiere) {
 watch(dialogOuvert, (ouvert) => {
   if (!ouvert) return;
   const m = matiereEditee.value;
-  erreurs.value = { code: false, intitule: false };
   form.value = {
     code: m?.code ?? '',
     intitule: m?.intitule ?? '',
@@ -381,15 +362,6 @@ watch(dialogOuvert, (ouvert) => {
 });
 
 async function enregistrer() {
-  erreurs.value = {
-    code: !form.value.code.trim(),
-    intitule: !form.value.intitule.trim(),
-  };
-  if (erreurs.value.code || erreurs.value.intitule) {
-    $q.notify({ type: 'warning', message: t('matieres.messages.requiredFields') });
-    return;
-  }
-
   enregistrement.value = true;
   try {
     const payload = { ...form.value, departementId: form.value.departementId || undefined };
@@ -397,7 +369,7 @@ async function enregistrer() {
     else await api.post('/matieres', payload);
     $q.notify({ type: 'positive', message: t('matieres.messages.saved') });
     dialogOuvert.value = false;
-    await Promise.all([charger(), referentiels.rafraichir('matieres')]);
+    await Promise.all([mat.recharger(), referentiels.rafraichir('matieres')]);
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -406,66 +378,30 @@ async function enregistrer() {
 }
 
 function supprimer(m: Matiere) {
-  $q.dialog({
-    title: t('matieres.deleteDialog.title'),
-    message: t('matieres.deleteDialog.message', { intitule: m.intitule }),
-    cancel: { label: t('matieres.deleteDialog.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('matieres.deleteDialog.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/matieres/${m.id}`);
-      $q.notify({ type: 'positive', message: t('matieres.messages.deleted') });
-      await Promise.all([charger(), referentiels.rafraichir('matieres')]);
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
+  void supprimerAvecConfirmation(
+    `/matieres/${m.id}`,
+    m.intitule,
+    () => Promise.all([mat.recharger(), referentiels.rafraichir('matieres')]),
+    {
+      titre: t('matieres.deleteDialog.title'),
+      message: t('matieres.deleteDialog.message', { intitule: m.intitule }),
+      ok: t('matieres.deleteDialog.confirm'),
+      succes: t('matieres.messages.deleted'),
+    },
+  );
 }
 
-function parametres(tout = false) {
-  const params: Record<string, any> = tout
-    ? { all: '1' }
-    : { page: page.value, pageSize: pageSize.value };
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.departementId) params.departementId = filtres.value.departementId;
-  return params;
-}
-
-async function charger(tout = false) {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/matieres', { params: parametres(tout) });
-    matieres.value = data.data ?? [];
-    total.value = data.total ?? matieres.value.length;
-  } catch {
-    matieres.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function chargerTout() {
-  page.value = 1;
-  return charger(true);
+/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
+function toutAfficher() {
+  mat.pageSize = Math.min(Math.max(mat.total, mat.pageSize), 1000);
 }
 
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  mat.reinitialiser([]);
 }
-
-watch(
-  () => [filtres.value.recherche, filtres.value.departementId],
-  () => {
-    page.value = 1;
-    void charger();
-  },
-);
 
 onMounted(async () => {
   departements.value = await referentiels.departements();
-  await charger();
 });
 </script>
 

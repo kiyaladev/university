@@ -2,7 +2,6 @@
   <q-page class="q-pa-md">
     <page-header :title="$t('etudiants.title')" :subtitle="$t('etudiants.subtitle')">
       <template #actions>
-<div class="col-auto">
         <q-btn
           v-if="peutGerer"
           unelevated
@@ -12,7 +11,6 @@
           :label="$t('etudiants.actions.new')"
           @click="ouvrir(null)"
         />
-      </div>
       </template>
     </page-header>
 
@@ -60,37 +58,37 @@
       flat
       bordered
       class="carte"
-      :rows="etudiants"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
-      :hide-bottom="chargement || etudiants.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <div class="etudiants-vide">
-          <q-icon name="groups" size="42px" class="q-mb-sm" />
-          <div>{{ messageVide }}</div>
-          <div class="q-mt-sm q-gutter-sm">
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('etudiants.actions.resetFilters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutGerer && !filtresActifs"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('etudiants.actions.new')"
-              @click="ouvrir(null)"
-            />
-          </div>
-        </div>
+        <etat-vide icone="groups" :titre="messageVide">
+          <template #action>
+            <div class="q-gutter-sm">
+              <q-btn
+                v-if="filtresActifs"
+                outline
+                no-caps
+                icon="refresh"
+                :label="$t('etudiants.actions.resetFilters')"
+                @click="reinitialiser"
+              />
+              <q-btn
+                v-if="peutGerer && !filtresActifs"
+                unelevated
+                color="primary"
+                no-caps
+                icon="add"
+                :label="$t('etudiants.actions.new')"
+                @click="ouvrir(null)"
+              />
+            </div>
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-nom="p">
@@ -240,7 +238,7 @@
     </q-table>
 
     <q-linear-progress
-      v-if="modeVue === 'cartes' && chargement"
+      v-if="modeVue === 'cartes' && liste.chargement"
       indeterminate
       color="primary"
       class="q-mb-sm"
@@ -248,7 +246,7 @@
 
     <div v-else-if="modeVue === 'cartes'" class="etudiants-cartes">
       <q-card
-        v-for="e in etudiants"
+        v-for="e in liste.lignes"
         :key="e.id"
         flat
         bordered
@@ -343,45 +341,43 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!etudiants.length" class="etudiants-vide">
-        <q-icon name="groups" size="42px" class="q-mb-sm" />
-        <div>{{ messageVide }}</div>
-        <div class="q-mt-sm q-gutter-sm">
-          <q-btn
-            v-if="filtresActifs"
-            outline
-            no-caps
-            icon="refresh"
-            :label="$t('etudiants.actions.resetFilters')"
-            @click="reinitialiser"
-          />
-          <q-btn
-            v-if="peutGerer && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('etudiants.actions.new')"
-            @click="ouvrir(null)"
-          />
-        </div>
-      </div>
+      <etat-vide v-if="!liste.lignes.length" icone="groups" :titre="messageVide">
+        <template #action>
+          <div class="q-gutter-sm">
+            <q-btn
+              v-if="filtresActifs"
+              outline
+              no-caps
+              icon="refresh"
+              :label="$t('etudiants.actions.resetFilters')"
+              @click="reinitialiser"
+            />
+            <q-btn
+              v-if="peutGerer && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('etudiants.actions.new')"
+              @click="ouvrir(null)"
+            />
+          </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="etudiants.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="toutAfficher"
     />
 
     <etudiant-dialog
       v-model="dialogOuvert"
       :etudiant="etudiantEdite"
-      @enregistre="charger"
+      @enregistre="liste.recharger()"
     />
 
     <!-- Dialog : inscriptions de l'étudiant -->
@@ -411,9 +407,7 @@
             dense
           >
             <template #no-data>
-              <div class="text-center q-pa-md text-grey-7">
-                {{ $t('etudiants.dialogInscriptions.emptyState') }}
-              </div>
+              <etat-vide icone="how_to_reg" :titre="$t('etudiants.dialogInscriptions.emptyState')" />
             </template>
             <template #body-cell-statut="p">
               <q-td :props="p">
@@ -476,8 +470,8 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -489,6 +483,9 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ChampDate from '../components/ChampDate.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import {
   LIBELLE_STATUT_INSCRIPTION,
   dateLisible,
@@ -507,26 +504,51 @@ interface EtudiantRegistre extends Etudiant {
 }
 
 const $q = useQuasar();
-const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
-const etudiants = ref<EtudiantRegistre[]>([]);
 const promotions = ref<Promotion[]>([]);
-const chargement = ref(false);
 const dialogOuvert = ref(false);
 const etudiantEdite = ref<EtudiantRegistre | null>(null);
 const modeVue = usePresentationListe();
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
-const pret = ref(false);
-
-const filtres = ref<Record<string, any>>({});
+/**
+ * Filtres appliqués par `GET /etudiants` (registre entier, total paginé) et
+ * gardés dans l'URL : `/etudiants?recherche=…` arrive d'un dossier ou d'un
+ * paiement. Promotion et dates portent sur les dossiers d'inscription.
+ */
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  promotionId: null,
+  actif: null,
+  sexe: null,
+  dateDebut: null,
+  dateFin: null,
+});
+const liste = reactive(
+  useListePaginee<EtudiantRegistre>({
+    filtres,
+    syncUrl: true,
+    charger: ({ page, pageSize, filtres: f }) =>
+      api
+        .get('/etudiants', {
+          params: {
+            page,
+            pageSize,
+            search: texteApi(f.recherche),
+            actif: f.actif || undefined,
+            promotionId: f.promotionId || undefined,
+            sexe: f.sexe || undefined,
+            dateDebut: f.dateDebut || undefined,
+            dateFin: f.dateFin || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const dialogInscriptions = ref(false);
 const listeInscriptions = ref<Inscription[]>([]);
@@ -654,48 +676,41 @@ const derniereInscription = (e: EtudiantRegistre) => e.inscriptions?.[0] ?? null
  * Désactiver un étudiant lui ferme le portail et le retire des feuilles de
  * notes : la bascule se confirme, comme toute décision de registre.
  */
-function basculerActif(e: EtudiantRegistre, v: unknown) {
+async function basculerActif(e: EtudiantRegistre, v: unknown) {
   const actif = v === true;
-  const appliquer = async () => {
-    try {
-      await api.put(`/etudiants/${e.id}`, { actif });
-      e.actif = actif;
-      $q.notify({
-        type: 'positive',
-        message: actif ? t('etudiants.messages.reactivated') : t('etudiants.messages.deactivated'),
-      });
-    } catch {
-      /* Notification gérée par l'intercepteur axios */
-    }
-  };
-  if (actif) {
-    void appliquer();
-    return;
-  }
-  $q.dialog({
-    title: t('etudiants.confirmDeactivate.title'),
-    message: t('etudiants.confirmDeactivate.message', { name: `${e.prenom} ${e.nom}`, matricule: e.matricule }),
-    cancel: true,
-    ok: { color: 'negative', label: t('etudiants.confirmDeactivate.confirm'), unelevated: true, noCaps: true },
-  }).onOk(() => void appliquer());
   // Bascule refusée : la case reste pilotée par `actif`, rien à défaire.
+  if (
+    !actif &&
+    !(await confirmer({
+      titre: t('etudiants.confirmDeactivate.title'),
+      message: t('etudiants.confirmDeactivate.message', { name: `${e.prenom} ${e.nom}`, matricule: e.matricule }),
+      ok: t('etudiants.confirmDeactivate.confirm'),
+      danger: true,
+    }))
+  )
+    return;
+  try {
+    await api.put(`/etudiants/${e.id}`, { actif });
+    e.actif = actif;
+    $q.notify({
+      type: 'positive',
+      message: actif ? t('etudiants.messages.reactivated') : t('etudiants.messages.deactivated'),
+    });
+  } catch {
+    /* Notification gérée par l'intercepteur axios */
+  }
 }
 
-/**
- * Dossiers de l'étudiant. `/inscriptions` ne filtre pas par `etudiantId` :
- * on interroge par matricule (unique, couvert par la recherche serveur) puis
- * on resserre côté client sur l'identifiant exact.
- */
+/** Dossiers de l'étudiant, toutes années confondues (`etudiantId` côté serveur). */
 async function voirInscriptions(e: EtudiantRegistre) {
   etudiantInscriptions.value = e;
   dialogInscriptions.value = true;
   chargementInscriptions.value = true;
   try {
     const { data } = await api.get('/inscriptions', {
-      params: { all: '1', search: e.matricule },
+      params: { all: '1', etudiantId: e.id },
     });
-    const liste: Inscription[] = Array.isArray(data) ? data : data.data ?? [];
-    listeInscriptions.value = liste.filter((i) => i.etudiantId === e.id);
+    listeInscriptions.value = Array.isArray(data) ? data : data.data ?? [];
   } catch {
     listeInscriptions.value = [];
   } finally {
@@ -755,79 +770,15 @@ function imprimerDossier(dossier: Inscription) {
   void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
-/**
- * Filtres transmis à `GET /etudiants` : tous sont appliqués par le serveur,
- * donc à l'ensemble du registre et au total paginé. Promotion et dates
- * portent sur les dossiers d'inscription de l'étudiant (date de création).
- */
-function paramsServeur(): Record<string, any> {
-  const params: Record<string, any> = {};
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.actif) params.actif = filtres.value.actif;
-  if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
-  if (filtres.value.sexe) params.sexe = filtres.value.sexe;
-  if (filtres.value.dateDebut) params.dateDebut = filtres.value.dateDebut;
-  if (filtres.value.dateFin) params.dateFin = filtres.value.dateFin;
-  return params;
+/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
+function toutAfficher() {
+  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/etudiants', {
-      params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
-    });
-    const liste: EtudiantRegistre[] = data.data ?? [];
-    etudiants.value = liste;
-    total.value = data.total ?? liste.length;
-  } catch {
-    etudiants.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/etudiants', {
-      params: { ...paramsServeur(), page: 1, pageSize: 1000 },
-    });
-    const liste: EtudiantRegistre[] = data.data ?? [];
-    etudiants.value = liste;
-    total.value = data.total ?? liste.length;
-    pageSize.value = Math.max(liste.length, 1);
-    page.value = 1;
-  } catch {
-    etudiants.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
+/** Tous les filtres tombent, recherche comprise. */
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  liste.reinitialiser([]);
 }
-
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.promotionId,
-    filtres.value.actif,
-    filtres.value.sexe,
-    filtres.value.dateDebut,
-    filtres.value.dateFin,
-  ],
-  () => {
-    if (!pret.value) return;
-    page.value = 1;
-    void charger();
-  },
-);
 
 onMounted(async () => {
   try {
@@ -835,11 +786,6 @@ onMounted(async () => {
   } catch {
     promotions.value = [];
   }
-  // `/etudiants?recherche=…` : arrivée depuis un dossier ou un paiement.
-  const recherche = route.query.recherche as string | undefined;
-  if (recherche) filtres.value.recherche = recherche;
-  pret.value = true;
-  await charger();
 });
 </script>
 
@@ -853,13 +799,6 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-// État vide : on nomme la cause et on offre la sortie.
-.etudiants-vide {
-  grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
-}
 
 .champ.badge-statut {
   display: inline-flex;

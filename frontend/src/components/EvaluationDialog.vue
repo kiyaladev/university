@@ -1,111 +1,100 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 600px; max-width: 95vw">
-      <q-card-section class="text-h6">
-        {{ $t(evaluation ? 'evaluations.dialogForm.editTitle' : 'evaluations.dialogForm.newTitle') }}
-      </q-card-section>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t(evaluation ? 'evaluations.dialogForm.editTitle' : 'evaluations.dialogForm.newTitle')"
+    :envoi="enregistrement"
+    :libelle-valider="$t('common.actions.register')"
+    :desactive="!formulaireValide"
+    @valider="enregistrer"
+  >
+    <span class="section-titre">{{ $t('evaluations.dialogForm.assessment') }}</span>
+    <q-input
+      v-model="form.intitule"
+      outlined
+      dense
+      :label="$t('matieres.dialog.intituleLabel')"
+      :hint="$t('evaluations.dialogForm.titleHint')"
+    />
 
-      <q-card-section>
-        <span class="section-titre">{{ $t('evaluations.dialogForm.assessment') }}</span>
-        <q-input
-          v-model="form.intitule"
-          outlined
-          dense
-          :label="$t('matieres.dialog.intituleLabel')"
-          :hint="$t('evaluations.dialogForm.titleHint')"
-        />
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.type"
-              :options="optionsTypes"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('evaluations.dialogForm.type')"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model.number="form.coefficient"
-              :options="optionsCoefficients"
-              outlined
-              dense
-              :label="$t('evaluations.dialogForm.coefficient')"
-              :hint="$t('evaluations.dialogForm.coefficientHint')"
-            />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.semestre"
-              :options="[1, 2]"
-              outlined
-              dense
-              :label="$t('evaluations.dialogForm.semester')"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <champ-date v-model="form.date" :label="$t('evaluations.dialogForm.date')" />
-          </div>
-        </div>
-
-        <span class="section-titre">{{ $t('evaluations.dialogForm.context') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.anneeId"
-              :options="optionsAnnees"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('affectations.dialog.fields.year')"
-              @update:model-value="resetAnneeChangee"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.promotionId"
-              :options="optionsPromotions"
-              outlined
-              dense
-              emit-value
-              map-options
-              clearable
-              :label="$t('affectations.dialog.fields.promotion')"
-            />
-          </div>
-        </div>
-
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
         <q-select
-          v-model="form.matiereId"
-          :options="optionsMatieres"
+          v-model="form.type"
+          :options="optionsTypes"
           outlined
           dense
           emit-value
           map-options
-          :label="$t('evaluations.dialogForm.subject')"
+          :label="$t('evaluations.dialogForm.type')"
         />
-      </q-card-section>
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.coefficient"
+          :options="optionsCoefficients"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('evaluations.dialogForm.coefficient')"
+          :hint="$t('evaluations.dialogForm.coefficientHint')"
+        />
+      </div>
+    </div>
 
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          :label="$t('common.actions.register')"
-          :loading="enregistrement"
-          :disable="!formulaireValide"
-          @click="enregistrer"
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.semestre"
+          :options="[1, 2]"
+          outlined
+          dense
+          :label="$t('evaluations.dialogForm.semester')"
         />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+      <div class="col-12 col-sm-6">
+        <champ-date v-model="form.date" :label="$t('evaluations.dialogForm.date')" />
+      </div>
+    </div>
+
+    <span class="section-titre">{{ $t('evaluations.dialogForm.context') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.anneeId"
+          :options="optionsAnnees"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('affectations.dialog.fields.year')"
+          @update:model-value="resetAnneeChangee"
+        />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.promotionId"
+          :options="optionsPromotions"
+          outlined
+          dense
+          emit-value
+          map-options
+          clearable
+          :label="$t('affectations.dialog.fields.promotion')"
+        />
+      </div>
+    </div>
+
+    <q-select
+      v-model="form.matiereId"
+      :options="optionsMatieres"
+      outlined
+      dense
+      emit-value
+      map-options
+      :label="$t('evaluations.dialogForm.subject')"
+    />
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -115,17 +104,18 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useReferentielsStore } from '../stores/referentiels';
 import ChampDate from './ChampDate.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_TYPE_EVALUATION } from '../utils/libelles';
 import type { AnneeAcademique, Evaluation, Matiere, Promotion, TypeEvaluation } from '../types';
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   evaluation?: Evaluation | null;
   annees: AnneeAcademique[];
   promotions: Promotion[];
   matieres: Matiere[];
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
@@ -177,23 +167,20 @@ function resetAnneeChangee() {
   form.value.promotionId = null;
 }
 
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    const e = props.evaluation;
-    form.value = {
-      intitule: e?.intitule ?? '',
-      type: e?.type ?? 'CC',
-      coefficient: e?.coefficient ?? 1,
-      semestre: e?.semestre ?? 1,
-      date: e?.date?.slice(0, 10) ?? '',
-      anneeId: e?.anneeId ?? referentiels.anneeCourante?.id ?? null,
-      promotionId: e?.promotionId ?? null,
-      matiereId: e?.matiereId ?? null,
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  const e = props.evaluation;
+  form.value = {
+    intitule: e?.intitule ?? '',
+    type: e?.type ?? 'CC',
+    coefficient: e?.coefficient ?? 1,
+    semestre: e?.semestre ?? 1,
+    date: e?.date?.slice(0, 10) ?? '',
+    anneeId: e?.anneeId ?? referentiels.anneeCourante?.id ?? null,
+    promotionId: e?.promotionId ?? null,
+    matiereId: e?.matiereId ?? null,
+  };
+});
 
 async function enregistrer() {
   enregistrement.value = true;
@@ -206,7 +193,9 @@ async function enregistrer() {
     else await api.post('/evaluations', payload);
     $q.notify({ type: 'positive', message: t('evaluations.dialogForm.saved') });
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

@@ -1,7 +1,6 @@
 <template>
   <q-page class="q-pa-md page-imports">
-    <h1 class="page-titre">{{ t('imports.title') }}</h1>
-    <div class="page-sous-titre q-mb-md">{{ t('imports.subtitle') }}</div>
+    <page-header :title="t('imports.title')" :subtitle="t('imports.subtitle')" />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-md items-start">
@@ -136,8 +135,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Dialog } from 'quasar';
+import { isAxiosError } from 'axios';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import PageHeader from '../components/PageHeader.vue';
+import { useConfirmation } from '../composables/useConfirmation';
 
 type TypeImport = 'enseignants' | 'matieres' | 'salles' | 'creneaux';
 interface LigneErreur { numero: number; erreurs: string[] }
@@ -153,6 +155,7 @@ interface Apercu {
 interface Rapport { importees: number; rejetees: number; erreurs: LigneErreur[]; colonnesIgnorees?: string[] }
 
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 const type = ref<TypeImport | null>(null);
 const fichier = ref<File | null>(null);
 const apercu = ref<Apercu | null>(null);
@@ -215,23 +218,31 @@ async function previsualiser() {
       contenu,
     }, { timeout: 60_000 });
     apercu.value = data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     apercu.value = null;
-    const message = error?.response?.data?.message ?? error?.message ?? t('imports.readFailed');
-    Dialog.create({ title: t('imports.errors'), message: Array.isArray(message) ? message.join(' · ') : message });
+    signalerErreurLecture(error);
   } finally {
     chargement.value = '';
   }
 }
 
-function confirmerImport() {
+/**
+ * Seules les erreurs de lecture du fichier (CSV/XLSX illisible) s'affichent
+ * ici : celles du serveur sont déjà notifiées par l'intercepteur axios.
+ */
+function signalerErreurLecture(error: unknown) {
+  if (isAxiosError(error)) return;
+  const message = error instanceof Error && error.message ? error.message : t('imports.readFailed');
+  Dialog.create({ title: t('imports.errors'), message });
+}
+
+async function confirmerImport() {
   if (!apercu.value || !type.value || apercu.value.valides === 0) return;
-  Dialog.create({
-    title: t('imports.apply'),
+  const ok = await confirmer({
+    titre: t('imports.apply'),
     message: t('imports.confirm', { count: apercu.value.valides }),
-    cancel: true,
-    persistent: true,
-  }).onOk(() => void appliquer());
+  });
+  if (ok) await appliquer();
 }
 
 async function appliquer() {
@@ -244,9 +255,8 @@ async function appliquer() {
     }, { timeout: 120_000 });
     rapport.value = data;
     apercu.value = null;
-  } catch (error: any) {
-    const message = error?.response?.data?.message ?? error?.message ?? t('imports.readFailed');
-    Dialog.create({ title: t('imports.errors'), message: Array.isArray(message) ? message.join(' · ') : message });
+  } catch (error: unknown) {
+    signalerErreurLecture(error);
   } finally {
     chargement.value = '';
   }

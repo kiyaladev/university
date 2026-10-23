@@ -1,82 +1,80 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 720px; max-width: 95vw">
-      <q-card-section>
-        <div class="text-h6">{{ $t('examens.actions.schedule') }}</div>
-        <div class="text-caption text-grey-7">{{ $t('examens.fields.codeHint') }}</div>
-      </q-card-section>
-      <q-card-section class="q-gutter-md">
-        <q-input v-model="form.intitule" outlined dense :label="$t('evaluations.table.columns.title')" />
-        <autocomplete-async
-          v-model="form.surveillantId"
-          endpoint="/examens/surveillants"
-          :label="$t('examens.fields.supervisor')"
-          :label-fn="(u) => `${u.prenom} ${u.nom} — ${u.role}`"
-          :clearable="true"
-        />
-        <div class="row q-col-gutter-md">
-          <div class="col-6">
-            <q-select v-model="form.type" :options="optionsTypes" outlined dense emit-value map-options :label="$t('common.fields.type')" />
-          </div>
-          <div class="col-6">
-            <q-input v-model="form.codeExamen" outlined dense :label="$t('examens.fields.code')" />
-          </div>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('examens.actions.schedule')"
+    :sous-titre="$t('examens.fields.codeHint')"
+    taille="l"
+    :envoi="envoi"
+    :libelle-valider="$t('common.actions.register')"
+    @valider="enregistrer"
+  >
+    <div class="q-gutter-md">
+      <q-input v-model="form.intitule" outlined dense :label="$t('evaluations.table.columns.title')" />
+      <autocomplete-async
+        v-model="form.surveillantId"
+        endpoint="/examens/surveillants"
+        :label="$t('examens.fields.supervisor')"
+        :label-fn="(u) => `${u.prenom} ${u.nom} — ${u.role}`"
+        :clearable="true"
+      />
+      <div class="row q-col-gutter-md">
+        <div class="col-6">
+          <q-select v-model="form.type" :options="optionsTypes" outlined dense emit-value map-options :label="$t('common.fields.type')" />
         </div>
-        <div class="row q-col-gutter-md">
-          <div class="col-6">
-            <autocomplete-async
-              v-model="form.matiereId"
-              endpoint="/matieres"
-              :label="$t('affectations.dialog.fields.subject')"
-              :label-fn="(m) => `${m.code} — ${m.intitule}`"
-            />
-          </div>
-          <div class="col-6">
-            <autocomplete-async
-              v-model="form.promotionId"
-              endpoint="/referentiel/promotions"
-              :label="$t('affectations.dialog.fields.promotion')"
-              :label-fn="(p) => `${p.nom} — ${p.niveau}`"
-            />
-          </div>
+        <div class="col-6">
+          <q-input v-model="form.codeExamen" outlined dense :label="$t('examens.fields.code')" />
         </div>
-        <div class="row q-col-gutter-md">
-          <div class="col-6">
-            <autocomplete-async
-              v-model="form.anneeId"
-              endpoint="/referentiel/annees"
-              :label="$t('affectations.dialog.fields.year')"
-              :label-fn="(a) => a.libelle"
-            />
-          </div>
-          <div class="col-6">
-            <autocomplete-async
-              v-model="form.salleId"
-              endpoint="/salles"
-              :label="$t('common.fields.classroom')"
-              :label-fn="(s) => `${s.code} — ${s.nom}`"
-              :clearable="true"
-            />
-          </div>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-6">
+          <autocomplete-async
+            v-model="form.matiereId"
+            endpoint="/matieres"
+            :label="$t('affectations.dialog.fields.subject')"
+            :label-fn="(m) => `${m.code} — ${m.intitule}`"
+          />
         </div>
-        <div class="row q-col-gutter-md">
-          <div class="col-4">
-            <champ-date v-model="form.dateExamen" :label="$t('examens.fields.examDate')" />
-          </div>
-          <div class="col-4">
-            <q-input v-model="form.heureDebut" outlined dense type="time" :label="$t('examens.fields.startTime')" />
-          </div>
-          <div class="col-4">
-            <q-input v-model="form.heureFin" outlined dense type="time" :label="$t('examens.fields.endTime')" />
-          </div>
+        <div class="col-6">
+          <autocomplete-async
+            v-model="form.promotionId"
+            endpoint="/referentiel/promotions"
+            :label="$t('affectations.dialog.fields.promotion')"
+            :label-fn="(p) => `${p.nom} — ${p.niveau}`"
+          />
         </div>
-      </q-card-section>
-      <q-card-actions align="right">
-        <q-btn flat no-caps :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn unelevated no-caps color="primary" :label="$t('common.actions.register')" :loading="envoi" @click="enregistrer" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-6">
+          <autocomplete-async
+            v-model="form.anneeId"
+            endpoint="/referentiel/annees"
+            :label="$t('affectations.dialog.fields.year')"
+            :label-fn="(a) => a.libelle"
+          />
+        </div>
+        <div class="col-6">
+          <autocomplete-async
+            v-model="form.salleId"
+            endpoint="/salles"
+            :label="$t('common.fields.classroom')"
+            :label-fn="(s) => `${s.code} — ${s.nom}`"
+            :clearable="true"
+          />
+        </div>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-4">
+          <champ-date v-model="form.dateExamen" :label="$t('examens.fields.examDate')" />
+        </div>
+        <div class="col-4">
+          <q-input v-model="form.heureDebut" outlined dense type="time" :label="$t('examens.fields.startTime')" />
+        </div>
+        <div class="col-4">
+          <q-input v-model="form.heureFin" outlined dense type="time" :label="$t('examens.fields.endTime')" />
+        </div>
+      </div>
+    </div>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -85,15 +83,11 @@ import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
 import ChampDate from './ChampDate.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_TYPE_EXAMEN } from '../utils/libelles';
 
-defineProps<{
-  modelValue: boolean;
-}>();
-const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
-  cree: [];
-}>();
+const ouvert = defineModel<boolean>({ required: true });
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 
@@ -127,8 +121,8 @@ async function enregistrer() {
   try {
     await api.post('/examens', form.value);
     $q.notify({ type: 'positive', message: 'Examen planifié' });
-    emit('update:modelValue', false);
-    emit('cree');
+    ouvert.value = false;
+    emit('enregistre');
   } catch {
     /* notifié par l'intercepteur */
   } finally {

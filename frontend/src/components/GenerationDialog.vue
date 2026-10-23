@@ -71,7 +71,7 @@ import { aujourdhui, decalerJours } from '../utils/libelles';
 import type { AnneeAcademique } from '../types';
 
 defineProps<{ modelValue: boolean }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; genere: [] }>();
+const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
@@ -107,7 +107,7 @@ async function generer() {
         .filter(Boolean),
     });
     resultat.value = data;
-    emit('genere');
+    emit('enregistre');
   } finally {
     chargement.value = false;
   }

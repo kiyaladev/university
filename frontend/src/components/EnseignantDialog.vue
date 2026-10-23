@@ -1,82 +1,75 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 560px; max-width: 95vw">
-      <q-card-section class="text-h6">
-        {{ $t(enseignant ? 'enseignants.formDialog.editTitle' : 'enseignants.formDialog.newTitle') }}
-      </q-card-section>
-
-      <q-card-section>
-        <span class="section-titre">{{ $t('badges.table.columns.identity') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.matricule" outlined dense :label="$t('enseignants.formDialog.matricule')" />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.statut"
-              :options="STATUTS_ENSEIGNANT"
-              outlined
-              dense
-              :label="$t('enseignants.formDialog.status')"
-            />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.prenom" outlined dense :label="$t('inscriptionPublique.form.step1.prenom.label')" />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.email" outlined dense type="email" :label="$t('etudiants.table.columns.email')" />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.telephone" outlined dense :label="$t('common.fields.phone')" />
-          </div>
-        </div>
-
-        <span class="section-titre">{{ $t('enseignants.formDialog.assignmentAndPay') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.grade" outlined dense :label="$t('enseignants.table.columns.grade')" :hint="$t('enseignants.formDialog.gradeHint')" />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.departementId"
-              :options="optionsDepartements"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :label="$t('common.fields.department')"
-            />
-          </div>
-        </div>
-
-        <q-input
-          v-model.number="form.tauxHoraire"
-          type="number"
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t(enseignant ? 'enseignants.formDialog.editTitle' : 'enseignants.formDialog.newTitle')"
+    :libelle-valider="$t('common.actions.register')"
+    :envoi="enregistrement"
+    @valider="enregistrer"
+  >
+    <span class="section-titre">{{ $t('badges.table.columns.identity') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.matricule" outlined dense :label="$t('enseignants.formDialog.matricule')" :rules="[requis]" />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.statut"
+          :options="STATUTS_ENSEIGNANT"
           outlined
           dense
-          :label="$t('paiePage.table.lignesColumns.taux')"
-          :hint="$t('enseignants.formDialog.hourlyRateHint')"
+          :label="$t('enseignants.formDialog.status')"
         />
+      </div>
+    </div>
 
-        <q-toggle v-model="form.actif" :label="$t('enseignants.formDialog.active')" />
-      </q-card-section>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" :rules="[requis]" />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.prenom" outlined dense :label="$t('inscriptionPublique.form.step1.prenom.label')" :rules="[requis]" />
+      </div>
+    </div>
 
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn color="primary" unelevated :label="$t('common.actions.register')" :loading="enregistrement" @click="enregistrer" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.email" outlined dense type="email" :label="$t('etudiants.table.columns.email')" />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.telephone" outlined dense :label="$t('common.fields.phone')" />
+      </div>
+    </div>
+
+    <span class="section-titre">{{ $t('enseignants.formDialog.assignmentAndPay') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
+        <q-input v-model="form.grade" outlined dense :label="$t('enseignants.table.columns.grade')" :hint="$t('enseignants.formDialog.gradeHint')" />
+      </div>
+      <div class="col-12 col-sm-6">
+        <q-select
+          v-model="form.departementId"
+          :options="optionsDepartements"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          :label="$t('common.fields.department')"
+        />
+      </div>
+    </div>
+
+    <q-input
+      v-model.number="form.tauxHoraire"
+      type="number"
+      outlined
+      dense
+      :label="$t('paiePage.table.lignesColumns.taux')"
+      :hint="$t('enseignants.formDialog.hourlyRateHint')"
+    />
+
+    <q-toggle v-model="form.actif" :label="$t('enseignants.formDialog.active')" />
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -84,21 +77,23 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { useReferentielsStore } from '../stores/referentiels';
 import { STATUTS_ENSEIGNANT } from '../utils/libelles';
 import type { Departement, Enseignant } from '../types';
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   enseignant?: Enseignant | null;
   departements: Departement[];
 }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const enregistrement = ref(false);
+const requis = (v: string) => !!(v ?? '').trim() || t('common.messages.errors.required');
 
 const form = ref({
   matricule: '',
@@ -118,9 +113,9 @@ const optionsDepartements = computed(() =>
 );
 
 watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
+  ouvert,
+  (o) => {
+    if (!o) return;
     const e = props.enseignant;
     form.value = {
       matricule: e?.matricule ?? '',
@@ -152,7 +147,9 @@ async function enregistrer() {
     await referentiels.rafraichir('enseignants');
     $q.notify({ type: 'positive', message: t('enseignants.formDialog.saved') });
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

@@ -2,7 +2,6 @@
   <q-page class="q-pa-md">
     <page-header :title="$t('bulletins.title')" :subtitle="$t('bulletins.subtitle')">
       <template #actions>
-<div class="col-auto">
         <q-btn
           outline
           color="secondary"
@@ -11,8 +10,6 @@
           :label="$t('bulletins.actions.deliberations')"
           @click="router.push({ name: 'deliberations' })"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           v-if="nbImprimables"
           unelevated
@@ -22,7 +19,6 @@
           :label="$t('bulletins.actions.imprimerTous', { n: nbImprimables })"
           @click="imprimerTous"
         />
-      </div>
       </template>
     </page-header>
 
@@ -96,30 +92,32 @@
 
     <template v-else>
       <!-- Guidage : sans promotion, la liste n'a pas de sens -->
-      <div v-if="!filtres.promotionId" class="plaque q-pa-lg text-center text-grey-7">
-        <q-icon name="school" size="38px" color="grey-5" />
-        <div class="q-mt-sm text-weight-medium">{{ $t('bulletins.guidance.choisirPromotion') }}</div>
-        <div class="text-caption q-mt-xs">
-          {{ $t('bulletins.guidance.text') }}
-        </div>
-        <q-btn
-          unelevated
-          color="primary"
-          no-caps
-          icon="gavel"
-          :label="$t('bulletins.guidance.voirDeliberations')"
-          class="q-mt-md"
-          @click="router.push({ name: 'deliberations' })"
-        />
-      </div>
+      <etat-vide
+        v-if="!filtres.promotionId"
+        class="plaque"
+        icone="school"
+        :titre="$t('bulletins.guidance.choisirPromotion')"
+        :aide="$t('bulletins.guidance.text')"
+      >
+        <template #action>
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="gavel"
+            :label="$t('bulletins.guidance.voirDeliberations')"
+            @click="router.push({ name: 'deliberations' })"
+          />
+        </template>
+      </etat-vide>
 
       <template v-else>
-        <q-banner v-if="!chargement && !aucuneDeliberation" dense class="carte q-mb-md">
+        <q-banner v-if="!bl.chargement && !aucuneDeliberation" dense class="carte q-mb-md">
           <template #avatar><q-icon name="info" color="primary" /></template>
           {{ $t('bulletins.banners.infoImprimables', { nbImprimables, total: lignesFiltrees.length }) }}
         </q-banner>
 
-        <q-banner v-if="!chargement && aucuneDeliberation" dense class="carte q-mb-md">
+        <q-banner v-if="!bl.chargement && aucuneDeliberation" dense class="carte q-mb-md">
           <template #avatar><q-icon name="warning" color="warning" /></template>
           {{ $t('bulletins.banners.aucuneDeliberation') }}
           <template #action>
@@ -135,15 +133,12 @@
           :rows="lignesPage"
           :columns="colonnes"
           row-key="inscriptionId"
-          :loading="chargement"
+          :loading="bl.chargement"
           :pagination="{ rowsPerPage: 0 }"
           @row-click="(_, row) => selectionner(row)"
         >
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="school" size="32px" color="grey-5" />
-              <div class="q-mt-sm">{{ $t('bulletins.table.emptyState') }}</div>
-            </div>
+            <etat-vide icone="school" :titre="$t('bulletins.table.emptyState')" />
           </template>
 
           <template #body-cell-moyenne="p">
@@ -266,10 +261,7 @@
 </actions-secondaires>
 </q-card-actions>
           </q-card>
-          <div v-if="!lignesPage.length" class="etat-vide plaque">
-            <q-icon name="school" size="32px" color="grey-5" />
-            <div class="q-mt-sm">{{ $t('bulletins.table.emptyState') }}</div>
-          </div>
+          <etat-vide v-if="!lignesPage.length" class="plaque" icone="school" :titre="$t('bulletins.table.emptyState')" />
         </div>
 
         <pagination-bar
@@ -290,11 +282,14 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import EtatVide from '../components/EtatVide.vue';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import BulletinCard from '../components/BulletinCard.vue';
@@ -343,24 +338,38 @@ interface BulletinView {
 }
 
 const $q = useQuasar();
-const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
 /** Délibérations du filtre, rechargées en détail pour disposer de leurs lignes. */
 const deliberations = ref<Deliberation[]>([]);
 
-const filtres = ref<Record<string, any>>({});
-const chargement = ref(false);
+/**
+ * `anneeId`, `promotionId` et `session` arrivent aussi de la délibération
+ * d'origine (`/bulletins?promotionId=…`) : ce sont les mêmes clés d'URL.
+ */
+const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, session: null, decision: null };
+const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
 const modeVue = usePresentationListe();
+/** Pagination locale : la liste de la promotion arrive entière. */
 const page = ref(1);
 const pageSize = ref(20);
 
-const lignes = ref<LigneBulletin[]>([]);
+const bl = reactive(
+  useListePaginee<LigneBulletin>({
+    filtres,
+    pageSize: 0,
+    syncUrl: true,
+    clesLocales: ['recherche', 'decision'],
+    charger: () => chargerLignes().then((data) => ({ data })),
+  }),
+);
+const lignes = computed(() => bl.lignes);
 const bulletinSelectionne = ref<BulletinView | null>(null);
 const ligneSelectionnee = ref<LigneBulletin | null>(null);
 
@@ -467,13 +476,12 @@ async function chargerDeliberations() {
   deliberations.value = details;
 }
 
-async function chargerLignes() {
+/** Inscrits de la promotion, croisés avec les décisions de jury. */
+async function chargerLignes(): Promise<LigneBulletin[]> {
   if (!filtres.value.promotionId) {
-    lignes.value = [];
     deliberations.value = [];
-    return;
+    return [];
   }
-  chargement.value = true;
   try {
     await chargerDeliberations();
 
@@ -490,7 +498,7 @@ async function chargerLignes() {
       }
     }
 
-    lignes.value = inscriptions.map((ins) => {
+    return inscriptions.map((ins) => {
       const res = parInscription.get(ins.id);
       const etu = ins.etudiant;
       return {
@@ -506,11 +514,8 @@ async function chargerLignes() {
         deliberationId: res?.deliberationId ?? null,
       };
     });
-    page.value = 1;
   } catch {
-    lignes.value = [];
-  } finally {
-    chargement.value = false;
+    return [];
   }
 }
 
@@ -556,22 +561,21 @@ function imprimerUn(row: LigneBulletin) {
   void ouvrirImpression(`/deliberations/${row.deliberationId}/releve/${row.inscriptionId}`);
 }
 
-function imprimerTous() {
+async function imprimerTous() {
   const imprimables = lignesFiltrees.value.filter((l) => l.deliberationId);
   if (!imprimables.length) {
     $q.notify({ type: 'warning', message: t('bulletins.messages.aucunBulletinDisponible') });
     return;
   }
-  $q.dialog({
-    title: t('bulletins.dialogs.imprimerPromotion.title'),
+  const ok = await confirmer({
+    titre: t('bulletins.dialogs.imprimerPromotion.title'),
     message: t('bulletins.dialogs.imprimerPromotion.message', { n: imprimables.length }),
-    cancel: true,
-    ok: { color: 'primary', label: t('bulletins.dialogs.imprimerPromotion.ok'), unelevated: true, noCaps: true },
-  }).onOk(() => {
-    void ouvrirImpressions(
-      imprimables.map((l) => `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`),
-    );
+    ok: t('bulletins.dialogs.imprimerPromotion.ok'),
   });
+  if (!ok) return;
+  void ouvrirImpressions(
+    imprimables.map((l) => `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`),
+  );
 }
 
 /** Bulletin → attestation : la page Attestations ouvre l'émission préremplie. */
@@ -593,20 +597,17 @@ function allerAttestation(l: LigneBulletin | null) {
 }
 
 function reinitialiser() {
-  filtres.value = {};
-  fermerApercu();
-  chargerLignes();
+  filtres.value = { ...FILTRES_VIDES };
 }
 
+// Changer de promotion, d'année ou de session ferme l'aperçu en cours.
 watch(
   () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session],
-  () => {
-    fermerApercu();
-    chargerLignes();
-  },
+  fermerApercu,
 );
+// Nouvelle liste ou nouveau filtre local : retour à la première page.
 watch(
-  () => [filtres.value.recherche, filtres.value.decision],
+  () => [bl.lignes, filtres.value.recherche, filtres.value.decision],
   () => {
     page.value = 1;
   },
@@ -617,13 +618,6 @@ onMounted(async () => {
     referentiels.annees(),
     referentiels.promotions(),
   ]);
-
-  // Préremplissage depuis la délibération d'origine.
-  if (route.query.anneeId) filtres.value.anneeId = String(route.query.anneeId);
-  if (route.query.promotionId) filtres.value.promotionId = String(route.query.promotionId);
-  if (route.query.session) filtres.value.session = String(route.query.session);
-
-  await chargerLignes();
 });
 </script>
 

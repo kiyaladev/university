@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('justificatifs.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('justificatifs.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('justificatifs.title')" :subtitle="$t('justificatifs.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutDeposer"
           unelevated
@@ -17,8 +11,8 @@
           :label="$t('justificatifs.actions.record')"
           @click="ouvrirDepot"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- Un enseignant ne dépose pas lui-même : il doit savoir par où passer. -->
     <q-banner v-if="!peutDeposer" class="note--info q-mb-md">
@@ -65,14 +59,16 @@
       flat
       bordered
       class="carte"
-      :rows="justificatifs"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 20, sortBy: 'date', descending: true }"
       :loading-label="$t('justificatifs.table.loadingLabel')"
-      :no-data-label="messageVide"
     >
+      <template #no-data>
+        <etat-vide icone="assignment_turned_in" :titre="messageVide" />
+      </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
           <span class="champ champ-justificatif" :class="`champ--${champStatut(p.row.statut)}`">
@@ -122,80 +118,69 @@
     </q-table>
 
     <!-- Dépôt d'un justificatif (enseignant) -->
-    <q-dialog v-model="dialogDepot">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t('justificatifs.depositDialog.title') }}</div>
-          <div class="page-sous-titre">
-            {{ $t('justificatifs.depositDialog.subtitle') }}
-          </div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <q-select
-            v-model="enseignantChoisi"
-            :options="optionsEnseignants"
-            outlined
-            dense
-            emit-value
-            map-options
-            use-input
-            :label="$t('justificatifs.depositDialog.teacher')"
-            @filter="filtrerEnseignants"
-            @update:model-value="chargerSeancesJustifiables"
-          />
-          <q-select
-            v-model="form.seanceId"
-            :options="optionsSeances"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('justificatifs.depositDialog.session')"
-            :disable="!enseignantChoisi"
-            :hint="$t('justificatifs.depositDialog.sessionHint')"
-          />
-          <q-select
-            v-model="form.type"
-            :options="TYPES_JUSTIFICATIF"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('justificatifs.depositDialog.reason')"
-          />
-          <q-input
-            v-model="form.motif"
-            outlined
-            dense
-            type="textarea"
-            rows="3"
-            :label="$t('justificatifs.depositDialog.explanation')"
-          />
-          <q-file
-            v-model="fichier"
-            outlined
-            dense
-            :label="$t('justificatifs.depositDialog.file')"
-            accept="image/*,.pdf"
-            @update:model-value="lireFichier"
-          >
-            <template #prepend><q-icon name="attach_file" /></template>
-          </q-file>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('justificatifs.depositDialog.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            icon="post_add"
-            :label="$t('justificatifs.depositDialog.submit')"
-            :loading="enregistrement"
-            @click="deposer"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogDepot"
+      :titre="$t('justificatifs.depositDialog.title')"
+      :sous-titre="$t('justificatifs.depositDialog.subtitle')"
+      taille="s"
+      :envoi="enregistrement"
+      icone-valider="post_add"
+      :libelle-valider="$t('justificatifs.depositDialog.submit')"
+      @valider="deposer"
+    >
+      <div class="q-gutter-md">
+        <q-select
+          v-model="enseignantChoisi"
+          :options="optionsEnseignants"
+          outlined
+          dense
+          emit-value
+          map-options
+          use-input
+          :label="$t('justificatifs.depositDialog.teacher')"
+          @filter="filtrerEnseignants"
+          @update:model-value="chargerSeancesJustifiables"
+        />
+        <q-select
+          v-model="form.seanceId"
+          :options="optionsSeances"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('justificatifs.depositDialog.session')"
+          :disable="!enseignantChoisi"
+          :hint="$t('justificatifs.depositDialog.sessionHint')"
+        />
+        <q-select
+          v-model="form.type"
+          :options="TYPES_JUSTIFICATIF"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('justificatifs.depositDialog.reason')"
+        />
+        <q-input
+          v-model="form.motif"
+          outlined
+          dense
+          type="textarea"
+          rows="3"
+          :label="$t('justificatifs.depositDialog.explanation')"
+        />
+        <q-file
+          v-model="fichier"
+          outlined
+          dense
+          :label="$t('justificatifs.depositDialog.file')"
+          accept="image/*,.pdf"
+          @update:model-value="lireFichier"
+        >
+          <template #prepend><q-icon name="attach_file" /></template>
+        </q-file>
+      </div>
+    </dialogue-formulaire>
 
     <!-- Détail -->
     <q-dialog :model-value="!!detail" @update:model-value="detail = null">
@@ -273,8 +258,11 @@
 
 <script setup lang="ts">
 import ChampDate from '../components/ChampDate.vue';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { useListePaginee } from '../composables/useListePaginee';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -291,13 +279,10 @@ import type { Enseignant, Justificatif, Seance } from '../types';
 
 const $q = useQuasar();
 const { t } = useI18n();
-const route = useRoute();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 
-const justificatifs = ref<Justificatif[]>([]);
 const seancesJustifiables = ref<Seance[]>([]);
-const chargement = ref(false);
 const detail = ref<Justificatif | null>(null);
 const dialogDepot = ref(false);
 const enregistrement = ref(false);
@@ -312,6 +297,28 @@ const filtres = ref({
   dateDebut: decalerJours(aujourdhui(), -90),
   dateFin: aujourdhui(),
 });
+
+/** API non paginée : tout arrive, le q-table pagine. Les filtres vivent dans
+ *  l'URL (arrivée par lien « justificatifs à arbitrer » du tableau de bord). */
+const liste = reactive(
+  useListePaginee<Justificatif, typeof filtres.value>({
+    filtres,
+    pageSize: 0,
+    syncUrl: true,
+    charger: ({ filtres: f }) =>
+      api
+        .get('/justificatifs', {
+          params: {
+            all: '1',
+            statut: f.statut || undefined,
+            type: f.type || undefined,
+            dateDebut: f.dateDebut,
+            dateFin: f.dateFin,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const form = ref({ seanceId: '', type: 'MALADIE', motif: '', piece: undefined as string | undefined });
 
@@ -414,7 +421,7 @@ function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
       type: 'positive',
       message: valide ? t('justificatifs.messages.validated') : t('justificatifs.messages.rejected'),
     });
-    await charger();
+    await liste.recharger();
   });
 }
 
@@ -478,36 +485,11 @@ async function deposer() {
     await api.post('/justificatifs', { ...form.value, enseignantId: enseignantChoisi.value });
     $q.notify({ type: 'positive', message: t('justificatifs.messages.deposited') });
     dialogDepot.value = false;
-    await charger();
+    await liste.recharger();
   } finally {
     enregistrement.value = false;
   }
 }
-
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/justificatifs', {
-      params: {
-        all: '1',
-        statut: filtres.value.statut || undefined,
-        type: filtres.value.type || undefined,
-        dateDebut: filtres.value.dateDebut,
-        dateFin: filtres.value.dateFin,
-      },
-    });
-    justificatifs.value = data.data;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-/** Arrivée par lien (« justificatifs à arbitrer » du tableau de bord). */
-if (route.query.statut) filtres.value.statut = String(route.query.statut);
-if (route.query.type) filtres.value.type = String(route.query.type);
-
-watch(filtres, charger, { deep: true });
-onMounted(charger);
 </script>
 
 <style scoped lang="scss">

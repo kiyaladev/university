@@ -1,74 +1,61 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 620px; max-width: 95vw">
-      <q-card-section class="text-h6">{{ $t('inscriptions.createDialog.title') }}</q-card-section>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('inscriptions.createDialog.title')"
+    :envoi="enregistrement"
+    :libelle-valider="$t('inscriptions.createDialog.save')"
+    :desactive="!form.etudiantId || !form.promotionId || form.montantFrais === null"
+    @valider="enregistrer"
+  >
+    <span class="section-titre">{{ $t('common.fields.student') }}</span>
+    <autocomplete-async
+      v-model="form.etudiantId"
+      endpoint="/etudiants"
+      :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
+      :label="$t('inscriptions.createDialog.student')"
+      :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
+    />
 
-      <q-card-section>
-        <span class="section-titre">{{ $t('common.fields.student') }}</span>
+    <span class="section-titre">{{ $t('verification.result.table.parcours') }}</span>
+    <div class="row q-col-gutter-md">
+      <div class="col-12 col-sm-6">
         <autocomplete-async
-          v-model="form.etudiantId"
-          endpoint="/etudiants"
-          :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
-          :label="$t('inscriptions.createDialog.student')"
-          :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
+          v-model="form.anneeId"
+          endpoint="/annees"
+          :label-fn="(a) => a.libelle"
+          :label="$t('affectations.dialog.fields.year')"
+          @update:model-value="onAnneeChange"
         />
-
-        <span class="section-titre">{{ $t('verification.result.table.parcours') }}</span>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <autocomplete-async
-              v-model="form.anneeId"
-              endpoint="/annees"
-              :label-fn="(a) => a.libelle"
-              :label="$t('affectations.dialog.fields.year')"
-              @update:model-value="onAnneeChange"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <autocomplete-async
-              v-model="form.promotionId"
-              endpoint="/promotions"
-              :label-fn="(p) => p.nom"
-              :label="$t('affectations.dialog.fields.promotion')"
-              :disable="!form.anneeId"
-              @update:model-value="chargerTarif"
-            />
-          </div>
-        </div>
-
-        <span class="section-titre">{{ $t('demandeDocuments.detail.fees') }}</span>
-        <div v-if="tarifOfficiel !== null" class="plaque acces-tarif q-mb-sm">
-          <div class="text-caption acces-tarif__libelle">{{ $t('inscriptions.createDialog.officialFee') }}</div>
-          <div class="lettrage chiffres acces-tarif__montant">
-            {{ montantLisible(tarifOfficiel) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
-          </div>
-        </div>
-        <q-input
-          v-if="tarifOfficiel === null"
-          v-model.number="form.montantFrais"
-          type="number"
-          outlined
-          dense
-          :label="$t('inscriptions.createDialog.amount')"
-          :hint="$t('inscriptions.createDialog.noFee')"
-        >
-        </q-input>
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          :label="$t('inscriptions.createDialog.save')"
-          :loading="enregistrement"
-          :disable="!form.etudiantId || !form.promotionId || form.montantFrais === null"
-          @click="enregistrer"
+      </div>
+      <div class="col-12 col-sm-6">
+        <autocomplete-async
+          v-model="form.promotionId"
+          endpoint="/promotions"
+          :label-fn="(p) => p.nom"
+          :label="$t('affectations.dialog.fields.promotion')"
+          :disable="!form.anneeId"
+          @update:model-value="chargerTarif"
         />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+    </div>
+
+    <span class="section-titre">{{ $t('demandeDocuments.detail.fees') }}</span>
+    <div v-if="tarifOfficiel !== null" class="plaque acces-tarif q-mb-sm">
+      <div class="text-caption acces-tarif__libelle">{{ $t('inscriptions.createDialog.officialFee') }}</div>
+      <div class="lettrage chiffres acces-tarif__montant">
+        {{ montantLisible(tarifOfficiel) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+      </div>
+    </div>
+    <q-input
+      v-if="tarifOfficiel === null"
+      v-model.number="form.montantFrais"
+      type="number"
+      outlined
+      dense
+      :label="$t('inscriptions.createDialog.amount')"
+      :hint="$t('inscriptions.createDialog.noFee')"
+    />
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -78,10 +65,11 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useReferentielsStore } from '../stores/referentiels';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { montantLisible } from '../utils/libelles';
 
-const props = defineProps<{ modelValue: boolean }>();
-const emit = defineEmits<{ 'update:modelValue': [boolean]; enregistre: [] }>();
+const ouvert = defineModel<boolean>({ required: true });
+const emit = defineEmits<{ enregistre: [] }>();
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
@@ -96,15 +84,12 @@ const form = ref({
   montantFrais: null as number | null,
 });
 
-watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
-    form.value = { etudiantId: '', anneeId: '', promotionId: '', montantFrais: null };
-    tarifOfficiel.value = null;
-    void chargerAnneeDefaut();
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  form.value = { etudiantId: '', anneeId: '', promotionId: '', montantFrais: null };
+  tarifOfficiel.value = null;
+  void chargerAnneeDefaut();
+});
 
 async function chargerAnneeDefaut() {
   try {
@@ -115,7 +100,7 @@ async function chargerAnneeDefaut() {
   }
 }
 
-async function onAnneeChange() {
+function onAnneeChange() {
   form.value.promotionId = '';
   tarifOfficiel.value = null;
   form.value.montantFrais = null;
@@ -155,7 +140,9 @@ async function enregistrer() {
     });
     $q.notify({ type: 'positive', message: t('inscriptions.createDialog.created') });
     emit('enregistre');
-    emit('update:modelValue', false);
+    ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }

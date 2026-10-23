@@ -1,10 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="presence" />
-    <h1 class="page-titre">{{ $t('rapports.title') }}</h1>
-    <div class="page-sous-titre q-mb-md">
-      {{ $t('rapports.subtitle') }}
-    </div>
+    <page-header :title="$t('rapports.title')" :subtitle="$t('rapports.subtitle')" />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm items-center">
@@ -133,14 +130,11 @@
             </q-td>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="how_to_reg" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rapports.assiduite.emptyState.title') }}</div>
-              <div class="text-caption">
-                {{ $t('rapports.assiduite.emptyState.message') }}
-              </div>
-              <q-btn flat dense no-caps color="primary" icon="event" :label="$t('rapports.assiduite.emptyState.action')" to="/emploi-du-temps" />
-            </div>
+            <etat-vide icone="how_to_reg" :titre="$t('rapports.assiduite.emptyState.title')" :aide="$t('rapports.assiduite.emptyState.message')">
+              <template #action>
+                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.assiduite.emptyState.action')" to="/emploi-du-temps" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-tab-panel>
@@ -165,14 +159,11 @@
             </q-td>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="timelapse" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rapports.volume.emptyState.title') }}</div>
-              <div class="text-caption">
-                {{ $t('rapports.volume.emptyState.message') }}
-              </div>
-              <q-btn flat dense no-caps color="primary" icon="assignment_ind" :label="$t('rapports.volume.emptyState.action')" to="/affectations" />
-            </div>
+            <etat-vide icone="timelapse" :titre="$t('rapports.volume.emptyState.title')" :aide="$t('rapports.volume.emptyState.message')">
+              <template #action>
+                <q-btn flat no-caps color="primary" icon="assignment_ind" :label="$t('rapports.volume.emptyState.action')" to="/affectations" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-tab-panel>
@@ -204,12 +195,11 @@
             <q-td :props="p"><barre-taux :valeur="p.row.tauxParAssigne" /></q-td>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="route" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rapports.controleurs.emptyTitle') }}</div>
-              <div class="text-caption">{{ $t('rapports.controleurs.emptyHelp') }}</div>
-              <q-btn flat dense no-caps color="primary" icon="event" :label="$t('rapports.controleurs.emptyAction')" to="/seances" />
-            </div>
+            <etat-vide icone="route" :titre="$t('rapports.controleurs.emptyTitle')" :aide="$t('rapports.controleurs.emptyHelp')">
+              <template #action>
+                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.controleurs.emptyAction')" to="/seances" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-tab-panel>
@@ -280,14 +270,11 @@
             </q-tr>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="payments" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rapports.paiement.emptyState.title') }}</div>
-              <div class="text-caption">
-                {{ $t('rapports.paiement.emptyState.message') }}
-              </div>
-              <q-btn flat dense no-caps color="primary" icon="fact_check" :label="$t('rapports.paiement.emptyState.action')" to="/controle" />
-            </div>
+            <etat-vide icone="payments" :titre="$t('rapports.paiement.emptyState.title')" :aide="$t('rapports.paiement.emptyState.message')">
+              <template #action>
+                <q-btn flat no-caps color="primary" icon="fact_check" :label="$t('rapports.paiement.emptyState.action')" to="/controle" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-tab-panel>
@@ -339,14 +326,11 @@
             </q-td>
           </template>
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="menu_book" size="36px" />
-              <div class="text-subtitle2 q-mt-sm">{{ $t('rapports.registre.emptyState.title') }}</div>
-              <div class="text-caption">
-                {{ $t('rapports.registre.emptyState.message') }}
-              </div>
-              <q-btn flat dense no-caps color="primary" icon="event" :label="$t('rapports.registre.emptyState.action')" to="/seances" />
-            </div>
+            <etat-vide icone="menu_book" :titre="$t('rapports.registre.emptyState.title')" :aide="$t('rapports.registre.emptyState.message')">
+              <template #action>
+                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.registre.emptyState.action')" to="/seances" />
+              </template>
+            </etat-vide>
           </template>
         </q-table>
       </q-tab-panel>
@@ -376,6 +360,8 @@
 
 <script setup lang="ts">
 import SectionNavigation from '../components/SectionNavigation.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import ChampDate from '../components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -655,7 +641,7 @@ onMounted(async () => {
       referentiels.promotions(),
     ]);
   } catch {
-    $q.notify({ type: 'warning', message: t('rapports.messages.referenceDataError') });
+    /* l'intercepteur axios a déjà affiché le motif ; la page reste utilisable sans filtres */
   }
   await charger();
 });

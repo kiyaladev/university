@@ -1,24 +1,10 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('affectations.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('affectations.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
-        <q-btn
-          v-if="auth.peutPlanifier"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('affectations.actions.new')"
-          @click="ouvrir(null)"
-        />
-      </div>
-    </div>
+    <page-header :title="$t('affectations.title')" :subtitle="$t('affectations.subtitle')">
+      <template v-if="auth.peutPlanifier" #actions>
+        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('affectations.actions.new')" @click="ouvrir(null)" />
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -81,34 +67,34 @@
       flat
       bordered
       class="carte"
-      :rows="affectations"
+      :rows="aff.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="aff.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="assignment_ind" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
-          <q-btn
-            v-if="auth.peutPlanifier && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('affectations.actions.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('affectations.actions.resetFilters')"
-            @click="reinitialiser"
-          />
-        </div>
+        <etat-vide icone="assignment_ind" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="auth.peutPlanifier && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('affectations.actions.createFirst')"
+              @click="ouvrir(null)"
+            />
+            <q-btn
+              v-else-if="filtresActifs"
+              flat
+              no-caps
+              icon="refresh"
+              :label="$t('affectations.actions.resetFilters')"
+              @click="reinitialiser"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-enseignant="p">
@@ -155,7 +141,7 @@
     </q-table>
 
     <div v-else class="grille-cartes">
-      <q-card v-for="a in affectations" :key="a.id" flat bordered class="carte grille-cartes__carte">
+      <q-card v-for="a in aff.lignes" :key="a.id" flat bordered class="carte grille-cartes__carte">
         <q-card-section>
           <div class="text-subtitle1 text-weight-medium">{{ a.matiere?.intitule }}</div>
           <div class="text-caption text-grey-7">{{ a.matiere?.code }}</div>
@@ -195,128 +181,110 @@
           />
         </q-card-actions>
       </q-card>
-      <div v-if="!affectations.length && !chargement" class="etat-vide">
-        <q-icon name="assignment_ind" size="34px" />
-        <div class="pochoir">{{ messageVide }}</div>
-        <q-btn
-          v-if="auth.peutPlanifier && !filtresActifs"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('affectations.actions.createFirst')"
-          @click="ouvrir(null)"
-        />
-        <q-btn
-          v-else-if="filtresActifs"
-          flat
-          no-caps
-          icon="refresh"
-          :label="$t('affectations.actions.resetFilters')"
-          @click="reinitialiser"
-        />
-      </div>
+      <etat-vide v-if="!aff.lignes.length && !aff.chargement" icone="assignment_ind" :titre="messageVide">
+        <template #action>
+          <q-btn
+            v-if="auth.peutPlanifier && !filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('affectations.actions.createFirst')"
+            @click="ouvrir(null)"
+          />
+          <q-btn
+            v-else-if="filtresActifs"
+            flat
+            no-caps
+            icon="refresh"
+            :label="$t('affectations.actions.resetFilters')"
+            @click="reinitialiser"
+          />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="affectations.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="aff.lignes.length"
+      v-model:page="aff.page"
+      v-model:page-size="aff.pageSize"
+      :total="aff.total"
+      @tous="toutAfficher"
     />
 
-    <q-dialog v-model="dialogOuvert">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ affectationEditee ? $t('affectations.dialog.editTitle') : $t('affectations.dialog.newTitle') }}
-        </q-card-section>
-        <q-card-section>
-          <span class="section-titre">{{ $t('affectations.dialog.sections.who') }}</span>
-          <q-select
-            v-model="form.enseignantId"
-            :options="optionsEnseignants"
-            outlined
-            dense
-            emit-value
-            map-options
-            use-input
-            input-debounce="0"
-            :label="$t('affectations.dialog.fields.teacher')"
-            :error="erreurs.enseignantId"
-            :error-message="$t('affectations.dialog.fields.teacherError')"
-            @filter="filtrerEnseignants"
-          />
-          <q-select
-            v-model="form.matiereId"
-            :options="optionsMatieres"
-            outlined
-            dense
-            emit-value
-            map-options
-            use-input
-            input-debounce="0"
-            :label="$t('affectations.dialog.fields.subject')"
-            :error="erreurs.matiereId"
-            :error-message="$t('affectations.dialog.fields.subjectError')"
-            @filter="filtrerMatieres"
-          />
+    <dialogue-formulaire
+      v-model="dialogOuvert"
+      :titre="affectationEditee ? $t('affectations.dialog.editTitle') : $t('affectations.dialog.newTitle')"
+      taille="s"
+      :libelle-valider="$t('affectations.dialog.save')"
+      :envoi="enregistrement"
+      @valider="enregistrer"
+    >
+      <span class="section-titre">{{ $t('affectations.dialog.sections.who') }}</span>
+      <q-select
+        v-model="form.enseignantId"
+        :options="optionsEnseignants"
+        outlined
+        dense
+        emit-value
+        map-options
+        use-input
+        input-debounce="0"
+        :label="$t('affectations.dialog.fields.teacher')"
+        :rules="[(v: string) => !!v || $t('affectations.dialog.fields.teacherError')]"
+        @filter="filtrerEnseignants"
+      />
+      <q-select
+        v-model="form.matiereId"
+        :options="optionsMatieres"
+        outlined
+        dense
+        emit-value
+        map-options
+        use-input
+        input-debounce="0"
+        :label="$t('affectations.dialog.fields.subject')"
+        :rules="[(v: string) => !!v || $t('affectations.dialog.fields.subjectError')]"
+        @filter="filtrerMatieres"
+      />
 
-          <span class="section-titre">{{ $t('affectations.dialog.sections.when') }}</span>
-          <q-select
-            v-model="form.promotionId"
-            :options="optionsPromotions"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('affectations.dialog.fields.promotion')"
-            :error="erreurs.promotionId"
-            :error-message="$t('affectations.dialog.fields.promotionError')"
-          />
-          <q-select
-            v-model="form.anneeId"
-            :options="optionsAnnees"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('affectations.dialog.fields.year')"
-            :error="erreurs.anneeId"
-            :error-message="$t('affectations.dialog.fields.yearError')"
-          />
-          <q-input
-            v-model.number="form.volumeHorairePrevu"
-            type="number"
-            min="0"
-            outlined
-            dense
-            :label="$t('affectations.dialog.fields.volume')"
-            :hint="$t('affectations.dialog.fields.volumeHint')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('affectations.dialog.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('affectations.dialog.save')"
-            :loading="enregistrement"
-            @click="enregistrer"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+      <span class="section-titre">{{ $t('affectations.dialog.sections.when') }}</span>
+      <q-select
+        v-model="form.promotionId"
+        :options="optionsPromotions"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('affectations.dialog.fields.promotion')"
+        :rules="[(v: string) => !!v || $t('affectations.dialog.fields.promotionError')]"
+      />
+      <q-select
+        v-model="form.anneeId"
+        :options="optionsAnnees"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('affectations.dialog.fields.year')"
+        :rules="[(v: string) => !!v || $t('affectations.dialog.fields.yearError')]"
+      />
+      <q-input
+        v-model.number="form.volumeHorairePrevu"
+        type="number"
+        min="0"
+        outlined
+        dense
+        :label="$t('affectations.dialog.fields.volume')"
+        :hint="$t('affectations.dialog.fields.volumeHint')"
+      />
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
@@ -324,6 +292,11 @@ import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import type { Affectation, AnneeAcademique, Enseignant, Matiere, Promotion, ChipFiltre } from '../types';
 
 /** Le backend joint l'année académique ; le type partagé ne la déclare pas. */
@@ -334,10 +307,9 @@ interface Charge extends Affectation {
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const route = useRoute();
 const { t } = useI18n();
+const { supprimerAvecConfirmation } = useConfirmation();
 
-const affectations = ref<Charge[]>([]);
 const enseignants = ref<Enseignant[]>([]);
 const matieres = ref<Matiere[]>([]);
 const promotions = ref<Promotion[]>([]);
@@ -345,17 +317,39 @@ const annees = ref<AnneeAcademique[]>([]);
 const optionsEnseignants = ref<{ label: string; value: string }[]>([]);
 const optionsMatieres = ref<{ label: string; value: string }[]>([]);
 
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const affectationEditee = ref<Charge | null>(null);
 const enregistrement = ref(false);
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-
-const filtres = ref<Record<string, any>>({});
+// Filtres gardés dans l'URL : l'arrivée depuis « Enseignants », « Matières »
+// ou « Structure académique » pré-filtre la liste des charges.
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  enseignantId: null,
+  matiereId: null,
+  promotionId: null,
+  anneeId: null,
+});
+const aff = reactive(
+  useListePaginee<Charge>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/affectations', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            enseignantId: f.enseignantId || undefined,
+            matiereId: f.matiereId || undefined,
+            promotionId: f.promotionId || undefined,
+            anneeId: f.anneeId || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const form = ref({
   enseignantId: '',
@@ -363,12 +357,6 @@ const form = ref({
   promotionId: '',
   anneeId: '',
   volumeHorairePrevu: 0,
-});
-const erreurs = ref({
-  enseignantId: false,
-  matiereId: false,
-  promotionId: false,
-  anneeId: false,
 });
 
 /** Supprimer une charge est réservé à l'administration et à la scolarité. */
@@ -463,12 +451,6 @@ const colonnes = computed<QTableColumn[]>(() => [
 
 function ouvrir(a: Charge | null) {
   affectationEditee.value = a;
-  erreurs.value = {
-    enseignantId: false,
-    matiereId: false,
-    promotionId: false,
-    anneeId: false,
-  };
   form.value = {
     enseignantId: a?.enseignantId ?? filtres.value.enseignantId ?? '',
     matiereId: a?.matiereId ?? filtres.value.matiereId ?? '',
@@ -509,17 +491,6 @@ watch(
 );
 
 async function enregistrer() {
-  erreurs.value = {
-    enseignantId: !form.value.enseignantId,
-    matiereId: !form.value.matiereId,
-    promotionId: !form.value.promotionId,
-    anneeId: !form.value.anneeId,
-  };
-  if (Object.values(erreurs.value).some(Boolean)) {
-    $q.notify({ type: 'warning', message: t('affectations.messages.fillRequired') });
-    return;
-  }
-
   enregistrement.value = true;
   try {
     if (affectationEditee.value) {
@@ -529,7 +500,7 @@ async function enregistrer() {
     }
     $q.notify({ type: 'positive', message: t('affectations.messages.saved') });
     dialogOuvert.value = false;
-    await charger();
+    await aff.recharger();
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -538,74 +509,23 @@ async function enregistrer() {
 }
 
 function supprimer(a: Charge) {
-  $q.dialog({
-    title: t('affectations.deleteDialog.title'),
-    message: t('affectations.deleteDialog.message', {
-      subject: a.matiere?.intitule ?? '?',
-      teacher: `${a.enseignant?.nom ?? ''} ${a.enseignant?.prenom ?? ''}`.trim(),
-    }),
-    cancel: { label: t('affectations.deleteDialog.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('affectations.deleteDialog.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/affectations/${a.id}`);
-      $q.notify({ type: 'positive', message: t('affectations.messages.deleted') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+  const teacher = `${a.enseignant?.nom ?? ''} ${a.enseignant?.prenom ?? ''}`.trim();
+  void supprimerAvecConfirmation(`/affectations/${a.id}`, a.matiere?.intitule ?? '?', aff.recharger, {
+    titre: t('affectations.deleteDialog.title'),
+    message: t('affectations.deleteDialog.message', { subject: a.matiere?.intitule ?? '?', teacher }),
+    ok: t('affectations.deleteDialog.confirm'),
+    succes: t('affectations.messages.deleted'),
   });
 }
 
-function parametres(tout = false) {
-  const params: Record<string, any> = tout
-    ? { all: '1' }
-    : { page: page.value, pageSize: pageSize.value };
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.enseignantId) params.enseignantId = filtres.value.enseignantId;
-  if (filtres.value.matiereId) params.matiereId = filtres.value.matiereId;
-  if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
-  if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
-  return params;
-}
-
-async function charger(tout = false) {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/affectations', { params: parametres(tout) });
-    affectations.value = data.data ?? [];
-    total.value = data.total ?? affectations.value.length;
-  } catch {
-    affectations.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function chargerTout() {
-  page.value = 1;
-  return charger(true);
+/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
+function toutAfficher() {
+  aff.pageSize = Math.min(Math.max(aff.total, aff.pageSize), 1000);
 }
 
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  aff.reinitialiser([]);
 }
-
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.enseignantId,
-    filtres.value.matiereId,
-    filtres.value.promotionId,
-    filtres.value.anneeId,
-  ],
-  () => {
-    page.value = 1;
-    void charger();
-  },
-);
 
 onMounted(async () => {
   [enseignants.value, matieres.value, promotions.value, annees.value] = await Promise.all([
@@ -622,19 +542,6 @@ onMounted(async () => {
     label: `${x.code} — ${x.intitule}`,
     value: x.id,
   }));
-
-  // Arrivée depuis « Enseignants », « Matières » ou « Structure académique » :
-  // la fiche d'origine pré-filtre la liste des charges.
-  const depuis: Record<string, any> = {};
-  for (const cle of ['enseignantId', 'matiereId', 'promotionId', 'anneeId']) {
-    const v = route.query[cle];
-    if (typeof v === 'string' && v) depuis[cle] = v;
-  }
-  if (Object.keys(depuis).length) {
-    filtres.value = depuis;
-    return; // le watcher déclenche le chargement
-  }
-  await charger();
 });
 </script>
 

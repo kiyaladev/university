@@ -2,7 +2,6 @@
   <q-page class="q-pa-md">
     <page-header :title="$t('inscriptions.title')" :subtitle="$t('inscriptions.subtitle')">
       <template #actions>
-<div class="col-auto">
         <q-btn
           v-if="peutGerer"
           unelevated
@@ -12,12 +11,11 @@
           :label="$t('inscriptions.actions.new')"
           @click="dialogInscription = true"
         />
-      </div>
       </template>
     </page-header>
 
     <!-- Arrivée depuis la fiche d'un étudiant : le ciblage est annoncé et se lève. -->
-    <q-banner v-if="etudiantCible" dense class="note--info q-mb-md">
+    <q-banner v-if="etudiantCible && filtres.etudiant" dense class="note--info q-mb-md">
       <template #avatar><q-icon name="person_search" /></template>
       {{ $t('inscriptions.banner.dossiersOf') }} <strong>{{ etudiantCible.prenom }} {{ etudiantCible.nom }}</strong>
       {{ $t('inscriptions.banner.allYears', { matricule: etudiantCible.matricule }) }}
@@ -77,37 +75,37 @@
       flat
       bordered
       class="carte"
-      :rows="inscriptions"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #loading><q-linear-progress indeterminate color="primary" :aria-label="$t('common.messages.loading')" /></template>
       <template #no-data>
-        <div class="inscriptions-vide">
-          <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
-          <div>{{ messageVide }}</div>
-          <div class="q-mt-sm q-gutter-sm">
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('inscriptions.actions.resetFilters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('inscriptions.actions.new')"
-              @click="dialogInscription = true"
-            />
-          </div>
-        </div>
+        <etat-vide icone="how_to_reg" :titre="messageVide">
+          <template #action>
+            <div class="q-gutter-sm">
+              <q-btn
+                v-if="filtresActifs"
+                outline
+                no-caps
+                icon="refresh"
+                :label="$t('inscriptions.actions.resetFilters')"
+                @click="reinitialiser"
+              />
+              <q-btn
+                v-if="peutGerer"
+                unelevated
+                color="primary"
+                no-caps
+                icon="add"
+                :label="$t('inscriptions.actions.new')"
+                @click="dialogInscription = true"
+              />
+            </div>
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-etudiant="p">
@@ -232,7 +230,7 @@
     </q-table>
 
     <q-linear-progress :aria-label="$t('common.messages.loading')"
-      v-if="modeVue === 'cartes' && chargement"
+      v-if="modeVue === 'cartes' && liste.chargement"
       indeterminate
       color="primary"
       class="q-mb-sm"
@@ -240,7 +238,7 @@
 
     <div v-else-if="modeVue === 'cartes'" class="inscriptions-cartes">
       <q-card
-        v-for="d in inscriptions"
+        v-for="d in liste.lignes"
         :key="d.id"
         flat
         bordered
@@ -346,52 +344,50 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!inscriptions.length" class="inscriptions-vide">
-        <q-icon name="how_to_reg" size="42px" class="q-mb-sm" />
-        <div>{{ messageVide }}</div>
-        <div class="q-mt-sm q-gutter-sm">
-          <q-btn
-            v-if="filtresActifs"
-            outline
-            no-caps
-            icon="refresh"
-            :label="$t('inscriptions.actions.resetFilters')"
-            @click="reinitialiser"
-          />
-          <q-btn
-            v-if="peutGerer"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('inscriptions.actions.new')"
-            @click="dialogInscription = true"
-          />
-        </div>
-      </div>
+      <etat-vide v-if="!liste.lignes.length" icone="how_to_reg" :titre="messageVide">
+        <template #action>
+          <div class="q-gutter-sm">
+            <q-btn
+              v-if="filtresActifs"
+              outline
+              no-caps
+              icon="refresh"
+              :label="$t('inscriptions.actions.resetFilters')"
+              @click="reinitialiser"
+            />
+            <q-btn
+              v-if="peutGerer"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('inscriptions.actions.new')"
+              @click="dialogInscription = true"
+            />
+          </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="inscriptions.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="toutAfficher"
     />
 
-    <inscription-dialog v-model="dialogInscription" @enregistre="charger" />
+    <inscription-dialog v-model="dialogInscription" @enregistre="liste.recharger()" />
     <paiement-dialog
       v-model="dialogPaiement"
       :inscription-id="paiementInscriptionId"
       :montant-initial="paiementMontantInitial"
-      @paye="charger"
+      @paye="liste.recharger()"
     />
     <etudiant-dialog
       v-model="dialogFicheEtudiant"
       :etudiant="etudiantEdite"
-      @enregistre="charger"
+      @enregistre="liste.recharger()"
     />
 
     <!-- Dialog : aperçu de l'étudiant -->
@@ -491,7 +487,7 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -504,6 +500,9 @@ import EtudiantDialog from '../components/EtudiantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChampDate from '../components/ChampDate.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_STATUT_INSCRIPTION,
@@ -524,21 +523,52 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
+const { confirmer } = useConfirmation();
 
-const inscriptions = ref<Inscription[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
-const pret = ref(false);
-
-const filtres = ref<Record<string, any>>({});
-/** Étudiant reçu en paramètre d'URL (`/inscriptions?etudiant=…`). */
+/**
+ * Filtres transmis à `GET /inscriptions` : tous sont appliqués par le serveur,
+ * donc à l'ensemble des dossiers et au total paginé. Les dates portent sur la
+ * date d'inscription, à défaut la date de création du dossier. `etudiant`
+ * (`/inscriptions?etudiant=<id>`) restreint aux dossiers d'un étudiant.
+ */
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  statut: null,
+  anneeId: null,
+  promotionId: null,
+  dateDebut: null,
+  dateFin: null,
+  etudiant: null,
+});
+const liste = reactive(
+  useListePaginee<Inscription>({
+    filtres,
+    syncUrl: true,
+    // Premier chargement une fois les filtres d'ouverture posés (onMounted).
+    immediat: false,
+    charger: ({ page, pageSize, filtres: f }) =>
+      api
+        .get('/inscriptions', {
+          params: {
+            page,
+            pageSize,
+            search: texteApi(f.recherche),
+            anneeId: f.anneeId || undefined,
+            promotionId: f.promotionId || undefined,
+            statut: f.statut || undefined,
+            dateDebut: f.dateDebut || undefined,
+            dateFin: f.dateFin || undefined,
+            etudiantId: f.etudiant || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
+/** Fiche de l'étudiant ciblé, pour annoncer son nom. */
 const etudiantCible = ref<Etudiant | null>(null);
 
 const dialogInscription = ref(false);
@@ -588,14 +618,12 @@ const classeStatut = (s: string) =>
   })[s] ?? 'champ--brouillon';
 
 /** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
-const filtresActifs = computed(
-  () =>
-    !!etudiantCible.value ||
-    Object.entries(filtres.value).some(([, v]) => v !== null && v !== undefined && v !== ''),
+const filtresActifs = computed(() =>
+  Object.entries(filtres.value).some(([, v]) => v !== null && v !== undefined && v !== ''),
 );
 
 const messageVide = computed(() => {
-  if (etudiantCible.value) {
+  if (etudiantCible.value && filtres.value.etudiant) {
     return t('inscriptions.emptyState.noRecordsForStudent', {
       name: `${etudiantCible.value.prenom} ${etudiantCible.value.nom}`,
     });
@@ -681,34 +709,41 @@ function voirPaiements(dossier: Inscription) {
   void router.push({ path: '/paiements', query: { inscription: dossier.id } });
 }
 
-function valider(dossier: Inscription) {
-  $q.dialog({
-    title: t('inscriptions.dialogs.validate.title'),
+async function valider(dossier: Inscription) {
+  const ok = await confirmer({
+    titre: t('inscriptions.dialogs.validate.title'),
     message: t('inscriptions.dialogs.validate.message', {
       numero: dossier.numero,
       prenom: dossier.etudiant?.prenom,
       nom: dossier.etudiant?.nom,
     }),
-    cancel: true,
-    ok: { label: t('inscriptions.dialogs.validate.confirm'), color: 'positive', unelevated: true },
-  }).onOk(async () => {
-    await api.put(`/inscriptions/${dossier.id}/valider`);
-    $q.notify({ type: 'positive', message: t('inscriptions.messages.validated') });
-    await charger();
+    ok: t('inscriptions.dialogs.validate.confirm'),
   });
+  if (!ok) return;
+  try {
+    await api.put(`/inscriptions/${dossier.id}/valider`);
+  } catch {
+    return;
+  }
+  $q.notify({ type: 'positive', message: t('inscriptions.messages.validated') });
+  await liste.recharger();
 }
 
-function annuler(dossier: Inscription) {
-  $q.dialog({
-    title: t('inscriptions.dialogs.cancel.title'),
+async function annuler(dossier: Inscription) {
+  const ok = await confirmer({
+    titre: t('inscriptions.dialogs.cancel.title'),
     message: t('inscriptions.dialogs.cancel.message', { numero: dossier.numero }),
-    cancel: true,
-    ok: { color: 'negative', label: t('inscriptions.dialogs.cancel.confirm') },
-  }).onOk(async () => {
-    await api.put(`/inscriptions/${dossier.id}/annuler`);
-    $q.notify({ type: 'warning', message: t('inscriptions.messages.cancelled') });
-    await charger();
+    ok: t('inscriptions.dialogs.cancel.confirm'),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await api.put(`/inscriptions/${dossier.id}/annuler`);
+  } catch {
+    return;
+  }
+  $q.notify({ type: 'warning', message: t('inscriptions.messages.cancelled') });
+  await liste.recharger();
 }
 
 function imprimer(dossier: Inscription) {
@@ -752,100 +787,34 @@ function ouvrirModificationEtudiant() {
   dialogFicheEtudiant.value = true;
 }
 
-/**
- * Filtres transmis à `GET /inscriptions` : tous sont appliqués par le serveur,
- * donc à l'ensemble des dossiers et au total paginé. Les dates portent sur la
- * date d'inscription, à défaut la date de création du dossier.
- */
-function paramsServeur(): Record<string, any> {
-  const params: Record<string, any> = {};
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.anneeId) params.anneeId = filtres.value.anneeId;
-  if (filtres.value.promotionId) params.promotionId = filtres.value.promotionId;
-  if (filtres.value.statut) params.statut = filtres.value.statut;
-  if (filtres.value.dateDebut) params.dateDebut = filtres.value.dateDebut;
-  if (filtres.value.dateFin) params.dateFin = filtres.value.dateFin;
-  if (etudiantCible.value) params.etudiantId = etudiantCible.value.id;
-  return params;
+/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
+function toutAfficher() {
+  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/inscriptions', {
-      params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
-    });
-    const liste: Inscription[] = data.data ?? [];
-    inscriptions.value = liste;
-    total.value = data.total ?? liste.length;
-  } catch {
-    inscriptions.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/inscriptions', {
-      params: { ...paramsServeur(), page: 1, pageSize: 1000 },
-    });
-    const liste: Inscription[] = data.data ?? [];
-    inscriptions.value = liste;
-    total.value = data.total ?? liste.length;
-    pageSize.value = Math.max(liste.length, 1);
-    page.value = 1;
-  } catch {
-    inscriptions.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
+/** Tout tombe, recherche comprise ; un ciblage levé ramène à l'année en cours. */
 function reinitialiser() {
-  filtres.value = {};
-  retirerEtudiantCible();
-  page.value = 1;
-  void charger();
-}
-
-/** Lève le ciblage venu de l'URL et nettoie la barre d'adresse. */
-async function retirerEtudiantCible() {
-  if (!etudiantCible.value) return;
-  // Le drapeau évite que chaque retrait de filtre déclenche sa propre requête.
-  pret.value = false;
+  const ciblait = !!filtres.value.etudiant;
+  liste.reinitialiser([]);
   etudiantCible.value = null;
-  delete filtres.value.recherche;
-  filtres.value.anneeId = referentiels.anneeCourante?.id ?? null;
-  await router.replace({ path: '/inscriptions' });
-  page.value = 1;
-  pret.value = true;
-  await charger();
+  if (ciblait) filtres.value.anneeId = referentiels.anneeCourante?.id ?? null;
 }
 
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.anneeId,
-    filtres.value.promotionId,
-    filtres.value.statut,
-    filtres.value.dateDebut,
-    filtres.value.dateFin,
-  ],
-  () => {
-    if (!pret.value) return;
-    page.value = 1;
-    void charger();
-  },
-);
+/** Lève le ciblage venu de l'URL : retour aux dossiers de l'année en cours. */
+function retirerEtudiantCible() {
+  etudiantCible.value = null;
+  filtres.value = {
+    ...filtres.value,
+    etudiant: null,
+    recherche: '',
+    anneeId: referentiels.anneeCourante?.id ?? null,
+  };
+}
 
 /**
  * `/inscriptions?etudiant=<id>` : on lit la fiche pour afficher son nom et
  * poser la recherche sur son matricule ; le filtre exact passe par
- * `etudiantId` (voir `paramsServeur`).
+ * `etudiantId`.
  */
 async function appliquerEtudiantCible(id: string) {
   try {
@@ -856,6 +825,7 @@ async function appliquerEtudiantCible(id: string) {
     filtres.value.anneeId = null;
   } catch {
     etudiantCible.value = null;
+    filtres.value.etudiant = null;
     $q.notify({ type: 'warning', message: t('inscriptions.messages.studentNotFound') });
   }
 }
@@ -871,20 +841,17 @@ onMounted(async () => {
     promotions.value = [];
   }
 
-  const cible = route.query.etudiant as string | undefined;
-  const recherche = route.query.recherche as string | undefined;
-  if (cible) {
-    await appliquerEtudiantCible(cible);
-  } else if (recherche) {
-    // Arrivée par n° de dossier (depuis un paiement) : toutes années confondues.
-    filtres.value.recherche = recherche;
-    filtres.value.anneeId = null;
-  } else {
+  const avant = JSON.stringify(filtres.value);
+  if (filtres.value.etudiant) {
+    await appliquerEtudiantCible(filtres.value.etudiant);
+  } else if (!Object.keys(filtres.value).some((k) => route.query[k])) {
+    // Arrivée sans filtre : l'année en cours. Une recherche reçue (n° de dossier
+    // depuis un paiement) ou des filtres relus de l'URL valent toutes années.
     filtres.value.anneeId = referentiels.anneeCourante?.id ?? null;
   }
 
-  pret.value = true;
-  await charger();
+  // Un filtre posé ci-dessus relance déjà la liste par l'observateur.
+  if (JSON.stringify(filtres.value) === avant) await liste.recharger();
 });
 </script>
 
@@ -898,13 +865,6 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-// État vide : on nomme la cause et on offre la sortie.
-.inscriptions-vide {
-  grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
-}
 
 .champ.badge-statut {
   display: inline-flex;

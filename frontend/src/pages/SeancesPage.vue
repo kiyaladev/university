@@ -1,15 +1,7 @@
 <template>
   <q-page class="registre">
-    <header class="registre__entete">
-      <div>
-        <h1 class="page-titre">{{ $t('seances.title') }}</h1>
-        <p class="page-sous-titre">
-          {{ $t('seances.subtitle') }}
-        </p>
-      </div>
-
-      <div class="registre__actions">
-
+    <page-header :title="$t('seances.title')" :subtitle="$t('seances.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutAffecterControleur"
           outline
@@ -28,8 +20,8 @@
           @click="ouvrirSeance(null)"
         />
         <q-btn outline no-caps icon="print" :label="$t('seances.actions.print')" @click="imprimer" />
-      </div>
-    </header>
+      </template>
+    </page-header>
 
     <!-- Période : les trois lectures courantes en un geste -->
     <div class="registre__periode">
@@ -524,6 +516,7 @@ import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
+import PageHeader from '../components/PageHeader.vue';
 import SeanceDialog from '../components/SeanceDialog.vue';
 import PointageDialog from '../components/PointageDialog.vue';
 import ChampStatut from '../components/ChampStatut.vue';
@@ -1038,21 +1031,6 @@ onMounted(async () => {
 
 .registre {
   padding: var(--up-4) var(--up-3) var(--up-6);
-}
-
-.registre__entete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--up-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
-}
-
-.registre__actions {
-  display: flex;
-  gap: var(--up-2);
-  flex-wrap: wrap;
 }
 
 .registre__periode {

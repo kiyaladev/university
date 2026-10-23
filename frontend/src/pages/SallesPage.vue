@@ -1,15 +1,8 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('salles.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('salles.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto q-gutter-sm">
+    <page-header :title="$t('salles.title')" :subtitle="$t('salles.subtitle')">
+      <template v-if="peutGerer" #actions>
         <q-btn
-          v-if="peutGerer"
           outline
           color="primary"
           no-caps
@@ -20,7 +13,6 @@
           <q-tooltip>{{ $t('salles.actions.printPostersTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
-          v-if="peutGerer"
           unelevated
           color="primary"
           no-caps
@@ -28,8 +20,8 @@
           :label="$t('salles.actions.newRoom')"
           @click="ouvrir(null)"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -70,7 +62,7 @@
       </template>
     </filter-bar>
 
-    <q-linear-progress v-if="chargement" indeterminate color="primary" class="q-mb-sm" />
+    <q-linear-progress v-if="sal.chargement" indeterminate color="primary" class="q-mb-sm" />
 
     <!-- Vue cartes : chaque plaque montre le QR tel qu'il sera affiché -->
     <div v-if="modeVue === 'cartes'" class="row q-col-gutter-md">
@@ -162,10 +154,8 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!sallesAffichees.length && !chargement" class="col-12">
-        <div class="etat-vide">
-          <q-icon name="meeting_room" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
+      <etat-vide v-if="!sallesAffichees.length && !sal.chargement" class="col-12" icone="meeting_room" :titre="messageVide">
+        <template #action>
           <q-btn
             v-if="peutGerer && !filtresActifs"
             unelevated
@@ -183,8 +173,8 @@
             :label="$t('salles.emptyState.resetFilters')"
             @click="reinitialiser"
           />
-        </div>
-      </div>
+        </template>
+      </etat-vide>
     </div>
 
     <!-- Vue tableau : pour comparer capacités, bâtiments et repères -->
@@ -196,31 +186,31 @@
       :rows="sallesAffichees"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="sal.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="meeting_room" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
-          <q-btn
-            v-if="peutGerer && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('salles.emptyState.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('salles.emptyState.resetFilters')"
-            @click="reinitialiser"
-          />
-        </div>
+        <etat-vide icone="meeting_room" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="peutGerer && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('salles.emptyState.createFirst')"
+              @click="ouvrir(null)"
+            />
+            <q-btn
+              v-else-if="filtresActifs"
+              flat
+              no-caps
+              icon="refresh"
+              :label="$t('salles.emptyState.resetFilters')"
+              @click="reinitialiser"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-etat="p">
@@ -302,106 +292,92 @@
     />
 
     <!-- Formulaire salle -->
-    <q-dialog v-model="dialogOuvert">
-      <q-card style="width: 480px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ salleEditee ? $t('salles.dialog.editTitle') : $t('salles.dialog.newTitle') }}
-        </q-card-section>
-        <q-card-section>
-          <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-5">
-              <q-input
-                v-model="form.code"
-                outlined
-                dense
-                :label="$t('salles.dialog.codeLabel')"
-                :hint="$t('salles.dialog.codeHint')"
-                :error="erreurs.code"
-                :error-message="$t('salles.dialog.codeRequired')"
-              />
-            </div>
-            <div class="col-12 col-sm-7">
-              <q-input
-                v-model="form.nom"
-                outlined
-                dense
-                :label="$t('salles.dialog.nameLabel')"
-                :error="erreurs.nom"
-                :error-message="$t('salles.dialog.nameRequired')"
-              />
-            </div>
-          </div>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-7">
-              <q-input v-model="form.batiment" outlined dense :label="$t('salles.dialog.buildingLabel')" />
-            </div>
-            <div class="col-5">
-              <q-input
-                v-model.number="form.capacite"
-                type="number"
-                min="0"
-                outlined
-                dense
-                :label="$t('salles.dialog.capacityLabel')"
-              />
-            </div>
-          </div>
-
-          <span class="section-titre">{{ $t('salles.dialog.gpsSection') }}</span>
-          <p class="page-sous-titre q-mb-md">
-            {{ $t('salles.dialog.gpsHelp') }}
-          </p>
-          <div class="row q-col-gutter-md">
-            <div class="col-4">
-              <q-input v-model.number="form.latitude" type="number" outlined dense :label="$t('salles.dialog.latitudeLabel')" />
-            </div>
-            <div class="col-4">
-              <q-input v-model.number="form.longitude" type="number" outlined dense :label="$t('salles.dialog.longitudeLabel')" />
-            </div>
-            <div class="col-4">
-              <q-input
-                v-model.number="form.rayonMetres"
-                type="number"
-                min="10"
-                outlined
-                dense
-                :label="$t('salles.dialog.radiusLabel')"
-                :error="erreurs.rayon"
-                :error-message="$t('salles.dialog.radiusError')"
-              />
-            </div>
-          </div>
-          <q-btn
-            flat
+    <dialogue-formulaire
+      v-model="dialogOuvert"
+      :titre="salleEditee ? $t('salles.dialog.editTitle') : $t('salles.dialog.newTitle')"
+      taille="s"
+      :libelle-valider="$t('salles.dialog.save')"
+      :envoi="enregistrement"
+      @valider="enregistrer"
+    >
+      <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-5">
+          <q-input
+            v-model="form.code"
+            outlined
             dense
-            no-caps
-            icon="my_location"
-            :label="$t('salles.dialog.useCurrentPosition')"
-            @click="positionActuelle"
+            :label="$t('salles.dialog.codeLabel')"
+            :hint="$t('salles.dialog.codeHint')"
+            :rules="[(v: string) => !!(v ?? '').trim() || $t('salles.dialog.codeRequired')]"
           />
+        </div>
+        <div class="col-12 col-sm-7">
+          <q-input
+            v-model="form.nom"
+            outlined
+            dense
+            :label="$t('salles.dialog.nameLabel')"
+            :rules="[(v: string) => !!(v ?? '').trim() || $t('salles.dialog.nameRequired')]"
+          />
+        </div>
+      </div>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-7">
+          <q-input v-model="form.batiment" outlined dense :label="$t('salles.dialog.buildingLabel')" />
+        </div>
+        <div class="col-5">
+          <q-input
+            v-model.number="form.capacite"
+            type="number"
+            min="0"
+            outlined
+            dense
+            :label="$t('salles.dialog.capacityLabel')"
+          />
+        </div>
+      </div>
 
-          <q-toggle v-model="form.actif" :label="$t('salles.dialog.usableToggle')" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('salles.dialog.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('salles.dialog.save')"
-            :loading="enregistrement"
-            @click="enregistrer"
+      <span class="section-titre">{{ $t('salles.dialog.gpsSection') }}</span>
+      <p class="page-sous-titre q-mb-md">
+        {{ $t('salles.dialog.gpsHelp') }}
+      </p>
+      <div class="row q-col-gutter-md">
+        <div class="col-4">
+          <q-input v-model.number="form.latitude" type="number" outlined dense :label="$t('salles.dialog.latitudeLabel')" />
+        </div>
+        <div class="col-4">
+          <q-input v-model.number="form.longitude" type="number" outlined dense :label="$t('salles.dialog.longitudeLabel')" />
+        </div>
+        <div class="col-4">
+          <q-input
+            v-model.number="form.rayonMetres"
+            type="number"
+            min="10"
+            outlined
+            dense
+            :label="$t('salles.dialog.radiusLabel')"
+            :rules="[(v: number | null) => !v || v >= 10 || $t('salles.dialog.radiusError')]"
           />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        </div>
+      </div>
+      <q-btn
+        flat
+        dense
+        no-caps
+        icon="my_location"
+        :label="$t('salles.dialog.useCurrentPosition')"
+        @click="positionActuelle"
+      />
+
+      <q-toggle v-model="form.actif" :label="$t('salles.dialog.usableToggle')" />
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -411,6 +387,11 @@ import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import type { Salle, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
@@ -419,9 +400,8 @@ const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 
-const salles = ref<Salle[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const salleEditee = ref<Salle | null>(null);
@@ -429,7 +409,23 @@ const enregistrement = ref(false);
 
 const page = ref(1);
 const pageSize = ref(20);
-const filtres = ref<Record<string, any>>({});
+const filtres = ref<Record<string, any>>({ recherche: '', batiment: null, etat: null, repere: null });
+
+/**
+ * L'écran de gestion lit toujours le serveur (jetons QR, salles modifiées
+ * ailleurs) et met au passage à jour la liste partagée des référentiels.
+ * Toute la liste arrive d'un coup : filtres et pagination restent locaux.
+ */
+const sal = reactive(
+  useListePaginee<Salle>({
+    filtres,
+    pageSize: 0,
+    clesLocales: true,
+    syncUrl: true,
+    charger: () => referentiels.salles(true).then((data) => ({ data })),
+  }),
+);
+const salles = computed(() => sal.lignes);
 
 /** Créer/modifier/régénérer : ADMIN et SCOLARITE. Supprimer : ADMIN (cf. backend). */
 const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
@@ -445,7 +441,6 @@ const form = ref({
   rayonMetres: 80,
   actif: true,
 });
-const erreurs = ref({ code: false, nom: false, rayon: false });
 
 const optionsEtat = computed(() => [
   { label: t('salles.options.stateUsable'), value: 'actif' },
@@ -557,7 +552,6 @@ function dessinerTousLesQr() {
 
 function ouvrir(s: Salle | null) {
   salleEditee.value = s;
-  erreurs.value = { code: false, nom: false, rayon: false };
   form.value = {
     code: s?.code ?? '',
     nom: s?.nom ?? '',
@@ -588,16 +582,6 @@ function positionActuelle() {
 }
 
 async function enregistrer() {
-  erreurs.value = {
-    code: !form.value.code.trim(),
-    nom: !form.value.nom.trim(),
-    rayon: !!form.value.rayonMetres && form.value.rayonMetres < 10,
-  };
-  if (erreurs.value.code || erreurs.value.nom || erreurs.value.rayon) {
-    $q.notify({ type: 'warning', message: t('salles.messages.requiredFields') });
-    return;
-  }
-
   enregistrement.value = true;
   try {
     const payload = { ...form.value, batiment: form.value.batiment || undefined };
@@ -605,7 +589,7 @@ async function enregistrer() {
     else await api.post('/salles', payload);
     $q.notify({ type: 'positive', message: t('salles.messages.saved') });
     dialogOuvert.value = false;
-    await charger();
+    await sal.recharger();
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -613,37 +597,28 @@ async function enregistrer() {
   }
 }
 
-function regenerer(s: Salle) {
-  $q.dialog({
-    title: t('salles.confirmRegenerate.title'),
+async function regenerer(s: Salle) {
+  const ok = await confirmer({
+    titre: t('salles.confirmRegenerate.title'),
     message: t('salles.confirmRegenerate.message', { code: s.code }),
-    cancel: { label: t('salles.confirmRegenerate.cancel'), flat: true, noCaps: true },
-    ok: { color: 'primary', label: t('salles.confirmRegenerate.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/salles/${s.id}/qr`);
-      $q.notify({ type: 'positive', message: t('salles.messages.regenerated') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('salles.confirmRegenerate.confirm'),
   });
+  if (!ok) return;
+  try {
+    await api.post(`/salles/${s.id}/qr`);
+    $q.notify({ type: 'positive', message: t('salles.messages.regenerated') });
+    await sal.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
 
 function supprimer(s: Salle) {
-  $q.dialog({
-    title: t('salles.confirmDelete.title'),
+  void supprimerAvecConfirmation(`/salles/${s.id}`, s.code, sal.recharger, {
+    titre: t('salles.confirmDelete.title'),
     message: t('salles.confirmDelete.message', { code: s.code, name: s.nom }),
-    cancel: { label: t('salles.confirmDelete.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('salles.confirmDelete.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/salles/${s.id}`);
-      $q.notify({ type: 'positive', message: t('salles.messages.deleted') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('salles.confirmDelete.confirm'),
+    succes: t('salles.messages.deleted'),
   });
 }
 
@@ -652,26 +627,9 @@ function imprimerQr(salleId?: string) {
 }
 
 function reinitialiser() {
-  filtres.value = {};
+  sal.reinitialiser([]);
   page.value = 1;
 }
-
-/**
- * L'écran de gestion lit toujours le serveur (jetons QR, salles modifiées
- * ailleurs) et met au passage à jour la liste partagée des référentiels.
- */
-async function charger() {
-  chargement.value = true;
-  try {
-    salles.value = await referentiels.salles(true);
-  } catch {
-    salles.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
-onMounted(charger);
 
 // Un filtre qui vide la page courante doit ramener à la première.
 watch(sallesFiltrees, (liste) => {
