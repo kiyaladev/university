@@ -35,10 +35,14 @@ const sousTitre = computed(() =>
 async function confirmer() {
   const b = props.badge;
   if (!b || motif.value.trim().length < 3) return;
-  await badgesService.annuler(b.id, motif.value.trim());
-  $q.notify({ type: 'warning', message: t('badges.messages.cancelled') });
-  ouvert.value = false;
-  emit('enregistre', b);
+  try {
+    await badgesService.annuler(b.id, motif.value.trim());
+    $q.notify({ type: 'warning', message: t('badges.messages.cancelled') });
+    ouvert.value = false;
+    emit('enregistre', b);
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 </script>
 

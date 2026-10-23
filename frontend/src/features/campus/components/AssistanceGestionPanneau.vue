@@ -241,7 +241,7 @@ import { dateHeureLisible } from '@/shared/utils/format';
 import { LIBELLE_CATEGORIE_INCIDENT, LIBELLE_PRIORITE_TICKET, LIBELLE_STATUT_TICKET } from '@/shared/utils/libelles';
 import type { ChipFiltre, StatutTicket, TicketSupport } from '@/types';
 
-const props = defineProps<{
+defineProps<{
   lignes: TicketSupport[];
   chargement: boolean;
   total: number;

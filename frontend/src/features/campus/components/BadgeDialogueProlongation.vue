@@ -34,10 +34,14 @@ const sousTitre = computed(() =>
 async function confirmer() {
   const b = props.badge;
   if (!b || !dateRallonge.value) return;
-  await badgesService.rallonger(b.id, dateRallonge.value);
-  $q.notify({ type: 'positive', message: t('badges.messages.extended') });
-  ouvert.value = false;
-  emit('enregistre', b);
+  try {
+    await badgesService.rallonger(b.id, dateRallonge.value);
+    $q.notify({ type: 'positive', message: t('badges.messages.extended') });
+    ouvert.value = false;
+    emit('enregistre', b);
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 </script>
 

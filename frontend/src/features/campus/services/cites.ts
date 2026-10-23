@@ -1,4 +1,4 @@
-import { creer, lire, lister, modifier, supprimer } from '@/shared/services/http';
+import { creer, lister, modifier, supprimer } from '@/shared/services/http';
 import type { AnneeAcademique, AttributionLogement, Chambre, Etudiant, Residence } from '@/types';
 
 /**
@@ -120,7 +120,4 @@ export const citesService = {
 
   /** Recherche d'un étudiant (matricule, nom…) pour le dialogue d'attribution. */
   rechercherEtudiants: (terme: string) => lister<Etudiant>('/etudiants', { search: terme, all: '1' }),
-
-  /** Un étudiant précis, par identifiant. */
-  lireEtudiant: (id: string) => lire<Etudiant>(`/etudiants/${id}`),
 };

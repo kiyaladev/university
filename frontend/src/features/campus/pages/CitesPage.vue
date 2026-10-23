@@ -1,8 +1,9 @@
 <template>
   <q-page class="q-pa-md">
     <en-tete-page :title="t('cites.title')" :subtitle="t('cites.subtitle')">
-      <template v-if="peutGerer" #actions>
+      <template #actions>
         <q-btn
+          v-if="peutGerer"
           unelevated
           color="primary"
           no-caps

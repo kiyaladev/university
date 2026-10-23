@@ -281,7 +281,7 @@ import { LIBELLE_STATUT_ELECTION } from '@/shared/utils/libelles';
 import type { ActionTransitionElection } from '../types';
 import type { ChipFiltre, Election, StatutElection } from '@/types';
 
-const props = defineProps<{
+defineProps<{
   lignes: Election[];
   chargement: boolean;
   total: number;

@@ -160,8 +160,8 @@ const liste = reactive(
       const params: ParametresCalendrier = { dateDebut: debut, dateFin: fin };
       if (f.salleId) params.salleId = f.salleId;
       const data = await reservationsService.calendrier(params);
-      jours.value = data.jours ?? [];
-      salles.value = (data.salles ?? []) as Salle[];
+      jours.value = Array.isArray(data?.jours) ? data.jours : [];
+      salles.value = (Array.isArray(data?.salles) ? data.salles : []) as Salle[];
       return { data: trierReservations(jours.value.flatMap((j) => j.reservations)) };
     },
   }),

@@ -325,7 +325,7 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { montantLisible } from '@/shared/utils/format';
 import type { EquipementPatrimoine } from '@/types';
 
-const props = defineProps<{
+defineProps<{
   lignes: EquipementPatrimoine[];
   chargement: boolean;
   total: number;

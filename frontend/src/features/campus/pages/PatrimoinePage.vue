@@ -1,8 +1,9 @@
 <template>
   <q-page class="q-pa-md">
     <en-tete-page :title="t('patrimoine.title')" :subtitle="t('patrimoine.subtitle')">
-      <template v-if="onglet === 'equipements' && auth.peutPlanifier" #actions>
+      <template #actions>
         <q-btn
+          v-if="onglet === 'equipements' && auth.peutPlanifier"
           unelevated
           color="primary"
           no-caps
@@ -10,9 +11,8 @@
           :label="$t('patrimoine.actions.newEquipment')"
           @click="ouvrirEquipement(null)"
         />
-      </template>
-      <template v-else-if="onglet === 'categories' && auth.peutPlanifier" #actions>
         <q-btn
+          v-else-if="onglet === 'categories' && auth.peutPlanifier"
           unelevated
           color="primary"
           no-caps

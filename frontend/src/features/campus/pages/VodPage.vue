@@ -122,9 +122,13 @@ function lecteur(v: RessourceCatalogue) {
 }
 
 async function publier(v: RessourceCatalogue) {
-  await vodService.publier(v.id);
-  $q.notify({ type: 'positive', message: t('vodPage.messages.published') });
-  await liste.recharger();
+  try {
+    await vodService.publier(v.id);
+    $q.notify({ type: 'positive', message: t('vodPage.messages.published') });
+    await liste.recharger();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 
 async function archiver(v: RessourceCatalogue) {
@@ -135,9 +139,13 @@ async function archiver(v: RessourceCatalogue) {
     danger: true,
   });
   if (!ok) return;
-  await vodService.archiver(v.id);
-  $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
-  await liste.recharger();
+  try {
+    await vodService.archiver(v.id);
+    $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
+    await liste.recharger();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  }
 }
 </script>
 

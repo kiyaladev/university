@@ -91,6 +91,8 @@ async function soumettre() {
     });
     emit('enregistre', data);
     ouvert.value = false;
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }
