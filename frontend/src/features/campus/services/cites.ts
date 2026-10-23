@@ -20,6 +20,7 @@ export interface ParametresResidences {
 export interface ParametresChambres {
   page?: number;
   pageSize?: number;
+  all?: string;
   search?: string;
   residenceId?: string;
   categorie?: string;
@@ -30,6 +31,7 @@ export interface ParametresChambres {
 export interface ParametresAttributions {
   page?: number;
   pageSize?: number;
+  all?: string;
   search?: string;
   anneeId?: string;
   statut?: string;
