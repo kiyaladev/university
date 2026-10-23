@@ -83,11 +83,11 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { aujourdhui, DEVISE, LIBELLE_TYPE_RECETTE } from '@/shared/utils/libelles';
 import { recettesService } from '../services/recettes';
-import type { TypeRecette } from '@/types';
+import type { RecetteExterne, TypeRecette } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  existant: any | null;
+  existant: RecetteExterne | null;
 }>();
 const emit = defineEmits<{
   enregistre: [];
