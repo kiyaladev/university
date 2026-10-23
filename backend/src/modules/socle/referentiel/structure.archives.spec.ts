@@ -26,7 +26,7 @@ describe('Protection des archives du référentiel', () => {
     prisma.auditLog = { create: jest.fn() };
     const service = new DepartementsService(prisma);
 
-    await expect(service.remove('dept-1')).rejects.toThrow(ConflictException);
+    await expect(service.supprimer('dept-1')).rejects.toThrow(ConflictException);
     expect(prisma.departement.delete).not.toHaveBeenCalled();
   });
 
@@ -41,7 +41,7 @@ describe('Protection des archives du référentiel', () => {
     prisma.auditLog = { create: jest.fn() };
     const service = new FilieresService(prisma);
 
-    await expect(service.remove('filiere-1')).rejects.toThrow(ConflictException);
+    await expect(service.supprimer('filiere-1')).rejects.toThrow(ConflictException);
     expect(prisma.filiere.delete).not.toHaveBeenCalled();
   });
 

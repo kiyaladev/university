@@ -14,23 +14,23 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly service: UsersService) {}
 
-  @Get() findAll(@Query() query: UserQueryDto) {
-    return this.service.list(query);
+  @Get() lister(@Query() query: UserQueryDto) {
+    return this.service.lister(query);
   }
 
-  @Get(':id') findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Get(':id') lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
-  @Post() create(@Body() dto: CreateUserDto, @CurrentUser() user: AuthUser) {
+  @Post() creer(@Body() dto: CreateUserDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateUserDto, @CurrentUser() user: AuthUser) {
+  @Put(':id') modifier(@Param('id') id: string, @Body() dto: UpdateUserDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id') supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

@@ -19,8 +19,8 @@ export class ParametresController {
 
   @Roles(Role.ADMIN)
   @Get()
-  liste() {
-    return this.service.liste();
+  lister() {
+    return this.service.lister();
   }
 
   @Roles(Role.ADMIN)

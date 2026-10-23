@@ -60,7 +60,7 @@ export class EnseignantsService extends CrudService {
   }
 
   listePour(query: EnseignantQueryDto, user: AuthUser) {
-    return this.lecture(user).findAll(query, {
+    return this.lecture(user).lister(query, {
       ...(estChefDeDepartement(user)
         ? filtreDepartement(user)
         : query.departementId
@@ -79,7 +79,7 @@ export class EnseignantsService extends CrudService {
       if (!enseignant) throw new NotFoundException(t('common.notFound'));
       return enseignant;
     }
-    return this.lecture(user).findOne(id);
+    return this.lecture(user).lire(id);
   }
 
   /**

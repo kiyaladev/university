@@ -69,7 +69,7 @@ export class ParametresService {
     return map;
   }
 
-  async liste() {
+  async lister() {
     const valeurs = await this.tous();
     return Object.entries(valeurs)
       .map(([cle, valeur]) => ({
@@ -132,6 +132,6 @@ export class ParametresService {
         });
       }
     });
-    return this.liste();
+    return this.lister();
   }
 }

@@ -20,11 +20,11 @@ describe('Activation des services', () => {
       },
     };
     const service = new ServicesActifsService(prisma as any);
-    const liste = await service.liste();
+    const liste = await service.lister();
     expect(liste.find((s) => s.id === 'presence')?.actif).toBe(true);
     expect(liste.find((s) => s.id === 'vod')?.actif).toBe(false);
     expect(liste.find((s) => s.id === 'bibliotheque')?.actif).toBe(true);
-    expect(Reflect.getMetadata(IS_PUBLIC_KEY, ServicesActifsController.prototype.liste)).toBe(true);
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, ServicesActifsController.prototype.lister)).toBe(true);
     expect(Reflect.getMetadata(ROLES_KEY, ServicesActifsController.prototype.enregistrer)).toEqual(['ADMIN']);
   });
   it('refuse les inconnus, doublons et désactivations essentielles avant transaction', async () => {

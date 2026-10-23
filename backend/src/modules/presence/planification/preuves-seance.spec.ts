@@ -66,13 +66,13 @@ describe('Suppression d’une affectation', () => {
       $transaction: (fn: any) => fn(tx),
     };
     const service = new AffectationsService(prisma as any);
-    jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1' } as any);
+    jest.spyOn(service, 'lire').mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1' } as any);
     return { tx, service };
   }
 
   it('refuse en 409 tant qu’une séance porte un contrôle ou un justificatif', async () => {
     const { tx, service } = monter(2);
-    const erreur = await service.remove('aff-1', { id: 'admin' } as any).catch((e) => e);
+    const erreur = await service.supprimer('aff-1', { id: 'admin' } as any).catch((e) => e);
     expect(erreur).toBeInstanceOf(ConflictException);
     expect(erreur.message).toContain('2 séance(s)');
     expect(tx.seance.count).toHaveBeenCalledWith({
@@ -84,7 +84,7 @@ describe('Suppression d’une affectation', () => {
 
   it('efface explicitement les séances sans preuve puis l’affectation', async () => {
     const { tx, service } = monter(0);
-    await expect(service.remove('aff-1', { id: 'admin' } as any)).resolves.toEqual({ id: 'aff-1' });
+    await expect(service.supprimer('aff-1', { id: 'admin' } as any)).resolves.toEqual({ id: 'aff-1' });
     expect(tx.seance.deleteMany).toHaveBeenCalledWith({
       where: { affectationId: 'aff-1', controle: { is: null }, justificatif: { is: null } },
     });

@@ -8,7 +8,7 @@ describe('lecture des référentiels de structure', () => {
   it.each([DepartementsController, FilieresController, PromotionsController])(
     'réserve les listes et détails de %s aux rôles internes',
     (controller) => {
-      for (const method of ['findAll', 'findOne']) {
+      for (const method of ['lister', 'lire']) {
         const roles = Reflect.getMetadata(ROLES_KEY, controller.prototype[method]);
         expect(roles).toEqual(
           expect.arrayContaining([

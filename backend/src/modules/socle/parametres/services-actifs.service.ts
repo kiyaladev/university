@@ -119,7 +119,7 @@ export class ServicesActifsService {
     this.chargement = null;
   }
 
-  async liste() {
+  async lister() {
     const valeurs = await this.valeurs();
     // Les installations existantes gardent leurs accès jusqu'au choix ADMIN.
     return SERVICES.map(({ id, obligatoire, pilote }) => ({
@@ -148,7 +148,7 @@ export class ServicesActifsService {
       // Après le commit (ou l'échec) : aucune lecture ne garde l'état d'avant.
       this.invalider();
     }
-    return this.liste();
+    return this.lister();
   }
 
   private async ecrire(dto: ServicesActifsDto, user: AuthUser) {
