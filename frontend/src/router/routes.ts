@@ -151,6 +151,20 @@ const routes: RouteRecordRaw[] = [
         meta: ecran('/controle'),
       },
       {
+        /** Appareils de contrôle et moyens d'attestation des enseignants. */
+        path: 'moyens-attestation',
+        name: 'moyens-attestation',
+        component: () => import('@/features/presence/pages/MoyensAttestationPage.vue'),
+        meta: ecran('/moyens-attestation'),
+      },
+      {
+        /** Correction des pointages enregistrés. */
+        path: 'corrections-pointages',
+        name: 'corrections-pointages',
+        component: () => import('@/features/presence/pages/CorrectionsPointagesPage.vue'),
+        meta: ecran('/corrections-pointages'),
+      },
+      {
         /** Registre de travail du personnel : on y pointe et on y programme. */
         path: 'seances',
         name: 'seances',

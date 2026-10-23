@@ -22,6 +22,8 @@ export default {
   salles: 'Salles',
   imports: 'Importer des données',
   justificatifs: 'Justificatifs d’absence',
+  'moyens-attestation': 'Moyens de preuve',
+  'corrections-pointages': 'Corrections des pointages',
   statistiques: 'Statistiques de présence',
   rapports: 'Rapports de présence',
   'mes-seances': 'Mes séances',

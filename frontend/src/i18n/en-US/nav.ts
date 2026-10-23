@@ -22,6 +22,8 @@ export default {
   salles: 'Rooms & QR',
   imports: 'Import data',
   justificatifs: 'Absence evidence',
+  'moyens-attestation': 'Proof means',
+  'corrections-pointages': 'Attendance corrections',
   statistiques: 'Attendance statistics',
   rapports: 'Attendance reports',
   'mes-seances': 'My sessions',

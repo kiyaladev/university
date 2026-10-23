@@ -48,6 +48,8 @@ import carteEtudianteFR from './fr-FR/carteEtudiante';
 import carteEtudianteEN from './en-US/carteEtudiante';
 import controleFR from './fr-FR/controle';
 import controleEN from './en-US/controle';
+import correctionsPointagesFR from './fr-FR/correctionsPointages';
+import correctionsPointagesEN from './en-US/correctionsPointages';
 import courrierFR from './fr-FR/courrier';
 import courrierEN from './en-US/courrier';
 import dashboardFR from './fr-FR/dashboard';
@@ -88,6 +90,8 @@ import maCarteFR from './fr-FR/maCarte';
 import maCarteEN from './en-US/maCarte';
 import matieresFR from './fr-FR/matieres';
 import matieresEN from './en-US/matieres';
+import moyensAttestationFR from './fr-FR/moyensAttestation';
+import moyensAttestationEN from './en-US/moyensAttestation';
 import mesDemandesFR from './fr-FR/mesDemandes';
 import mesDemandesEN from './en-US/mesDemandes';
 import mesReclamationsFR from './fr-FR/mesReclamations';
@@ -181,6 +185,7 @@ const frFR = {
   bulletins: bulletinsFR,
   carteEtudiante: carteEtudianteFR,
   controle: controleFR,
+  correctionsPointages: correctionsPointagesFR,
   courrier: courrierFR,
   dashboard: dashboardFR,
   deliberations: deliberationsFR,
@@ -202,6 +207,7 @@ const frFR = {
   loginPage: loginPageFR,
   maCarte: maCarteFR,
   matieres: matieresFR,
+  moyensAttestation: moyensAttestationFR,
   mesDemandes: mesDemandesFR,
   mesReclamations: mesReclamationsFR,
   mesSeances: mesSeancesFR,
@@ -260,6 +266,7 @@ const enUS = {
   bulletins: bulletinsEN,
   carteEtudiante: carteEtudianteEN,
   controle: controleEN,
+  correctionsPointages: correctionsPointagesEN,
   courrier: courrierEN,
   dashboard: dashboardEN,
   deliberations: deliberationsEN,
@@ -281,6 +288,7 @@ const enUS = {
   loginPage: loginPageEN,
   maCarte: maCarteEN,
   matieres: matieresEN,
+  moyensAttestation: moyensAttestationEN,
   mesDemandes: mesDemandesEN,
   mesReclamations: mesReclamationsEN,
   mesSeances: mesSeancesEN,
