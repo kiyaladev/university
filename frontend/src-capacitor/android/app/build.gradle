@@ -10,10 +10,10 @@ if (fichierCle.exists()) {
 }
 
 android {
-    namespace = "gn.unipresence.controle"
+    namespace = "gn.university.controle"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "gn.unipresence.controle"
+        applicationId "gn.university.controle"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

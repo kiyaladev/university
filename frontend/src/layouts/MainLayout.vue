@@ -80,7 +80,7 @@
               </q-item>
               <!-- L'application Android n'a de sens que sur Android, et pas
                    depuis l'application elle-même. -->
-              <q-item v-if="proposerApk" clickable v-close-popup tag="a" href="/telechargement/unipresence.apk">
+              <q-item v-if="proposerApk" clickable v-close-popup tag="a" href="/telechargement/university.apk">
                 <q-item-section avatar><q-icon name="android" /></q-item-section>
                 <q-item-section>
                   <q-item-label>{{ t('layout.downloadAndroid') }}</q-item-label>

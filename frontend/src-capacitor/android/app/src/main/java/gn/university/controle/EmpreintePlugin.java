@@ -1,4 +1,4 @@
-package gn.unipresence.controle;
+package gn.university.controle;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -47,8 +47,8 @@ import javax.crypto.spec.SecretKeySpec;
 @CapacitorPlugin(name = "Empreinte")
 public class EmpreintePlugin extends Plugin {
 
-    private static final String TAG = "UniPresence.Empreinte";
-    private static final String COFFRE = "unipresence_appareil";
+    private static final String TAG = "University.Empreinte";
+    private static final String COFFRE = "university_appareil";
     private static final String CLE_ID = "appareil_id";
     private static final String CLE_SECRET = "appareil_secret";
 
@@ -229,7 +229,7 @@ public class EmpreintePlugin extends Plugin {
                     });
 
             invite.authenticate(new BiometricPrompt.PromptInfo.Builder()
-                    .setTitle("UniPrésence")
+                    .setTitle("University")
                     .setSubtitle("Déverrouillez votre tournée")
                     .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK
                             | BiometricManager.Authenticators.DEVICE_CREDENTIAL)

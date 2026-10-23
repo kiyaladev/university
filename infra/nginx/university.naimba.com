@@ -26,6 +26,27 @@ server {
         proxy_read_timeout 300s;
     }
 
+    # Téléchargement de l'APK Android.
+    # Doit précéder le repli SPA : sans cette location,
+    # /telechargement/university.apk renverrait l'application web.
+    location ^~ /telechargement/ {
+        alias /opt/apps/university/telechargement/;
+        # Pas d'index de répertoire : on ne liste pas les fichiers publiés.
+        autoindex off;
+        # nginx ne connaît pas .apk (absent de /etc/nginx/mime.types) :
+        # on déclare le type explicitement, sinon le fichier part en
+        # application/octet-stream et certains telephones refusent l'install.
+        types {
+            application/vnd.android.package-archive apk;
+        }
+        default_type application/octet-stream;
+        # Le fichier est proposé en téléchargement, pas affiché dans l'onglet.
+        add_header Content-Disposition "attachment" always;
+        # Un add_header ici annule ceux hérités du server : on ré-inclut le
+        # snippet des en-têtes de sécurité (voir l'en-tête du fichier).
+        include /etc/nginx/snippets/university-securite.conf;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }

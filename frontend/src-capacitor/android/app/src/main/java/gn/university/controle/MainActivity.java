@@ -1,4 +1,4 @@
-package gn.unipresence.controle;
+package gn.university.controle;
 
 import com.getcapacitor.BridgeActivity;
 
