@@ -16,5 +16,8 @@
   "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_c": "L'état de l'élection est {election.statut} : elle ne peut être close que depuis l'état ouvert.",
   "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_p": "L'état de l'élection est {election.statut} : elle ne peut être proclamée que depuis l'état clos.",
   "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scruti": "Les candidats ne se déclarent qu'avant l'ouverture du scrutin.",
-  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Les candidats ne peuvent se déclarer qu’avant l’ouverture du scrutin."
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Les candidats ne peuvent se déclarer qu’avant l’ouverture du scrutin.",
+  "on_ne_peut_ouvrir_l_election_que_depuis_brouillon": "L’élection est {statut} : on ne peut l’ouvrir que depuis BROUILLON.",
+  "les_candidats_ne_se_retirent_qu_avant_l_ouverture": "Les candidats ne se retirent qu’avant l’ouverture du scrutin.",
+  "vous_pouvez_choisir_au_plus_n_candidats": "Vous pouvez choisir au plus {sieges} candidat(s) (sièges à pourvoir)."
 }

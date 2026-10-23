@@ -10,5 +10,6 @@
   "courrier_courrier_statut_la_cloture_exige_en_circuit_traite_": "Courrier {courrier.statut} : la clôture exige EN_CIRCUIT, TRAITE ou CLASSE",
   "department_scope_required": "Un chef doit être rattaché au département destinataire du courrier.",
   "department_invalid": "Département destinataire introuvable.",
-  "department_routing_started": "Le département destinataire ne peut plus changer après un premier paraphe."
+  "department_routing_started": "Le département destinataire ne peut plus changer après un premier paraphe.",
+  "seul_un_courrier_en_circuit_peut_etre_paraphe": "Courrier {statut} : seul un courrier EN_CIRCUIT peut être paraphé"
 }

@@ -448,9 +448,7 @@ export class MoyensAttestationService {
       this.verifierSignaturePasserelle(charge, signature, horodatage, secret);
       const seuil = await this.parametres.nombre('EMPREINTE_SCORE_MIN', 60);
       if (score < seuil) {
-        throw new BadRequestException(
-          `Empreinte non reconnue (score ${score} < ${seuil}) — recommencez ou utilisez un autre moyen`,
-        );
+        throw new BadRequestException(t('attestation.empreinte_non_reconnue', { score, seuil }));
       }
       return { mode: AttestationMode.EMPREINTE, valide: true, score };
     }

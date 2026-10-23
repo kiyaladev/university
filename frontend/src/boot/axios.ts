@@ -4,6 +4,7 @@ import { Notify } from 'quasar';
 import { getAppLocale, i18n } from './i18n';
 import { effacerToken, lireToken } from '@/shared/services/session';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
+import { completerMessageErreur, extraireMessageErreur } from '@/shared/utils/erreur-http';
 
 /**
  * Option maison lue par l'intercepteur : une requête « silencieuse » n'affiche
@@ -44,10 +45,17 @@ export default defineBoot(({ router }) => {
     // garde de routes lit encore `connecte === true` et laisse repasser.
     async (error) => {
       const statut = error.response?.status;
+      // L'API a une seule écriture d'erreur (`{ statusCode, message, error }`),
+      // mais un téléphone peut garder en cache un front plus ancien, ou
+      // l'inverse. On remet le message au même endroit dans tous les cas :
+      // les écrans qui lisent `response.data.message` voient alors la cause
+      // réelle, quel que soit le format reçu.
+      const corpsErreur = completerMessageErreur(error.response?.data);
+      if (corpsErreur) error.response.data = corpsErreur;
       // Sans message du serveur, `error.message` d'axios est en anglais
       // (« Network Error », « timeout of 20000ms exceeded »…) : on le traduit.
       let message =
-        error.response?.data?.message ??
+        extraireMessageErreur(error.response?.data) ??
         (!error.response
           ? error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT'
             ? i18n.global.t('common.http.timeout')

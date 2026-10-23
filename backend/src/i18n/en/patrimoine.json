@@ -7,5 +7,7 @@
   "equipement_numeroinventaire_n_a_pas_de_reparation_en_cours": "{equipement.numeroInventaire} has no repair in progress.",
   "categorie_cat_libelle_cat_count_as_any_equipements_equipemen": "Category \"{cat.libelle}\": {(cat._count as any).equipements} piece(s) of equipment are still attached. Please reassign them before deleting.",
   "equipement_numeroinventaire_reparations_reparation_s_consign": "{equipement.numeroInventaire}: {reparations} repair(s) logged. Please deactivate the equipment rather than deleting it.",
-  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} already has a repair in progress ({ouverte.statut})."
+  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} already has a repair in progress ({ouverte.statut}).",
+  "un_equipement_porte_deja_le_numero_de_serie": "An equipment already carries the serial number {numero}",
+  "un_equipement_porte_deja_le_numero_d_inventaire": "An equipment already carries the inventory number {numero}"
 }

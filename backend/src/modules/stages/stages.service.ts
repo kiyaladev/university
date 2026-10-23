@@ -364,7 +364,11 @@ export class StagesService extends CrudService {
     const autorisees = TRANSITIONS[travail.statut] ?? [];
     if (!autorisees.includes(cible)) {
       throw new BadRequestException(
-        `Transition ${travail.statut} → ${cible} interdite (autorisées : ${autorisees.join(', ') || 'aucune'})`,
+        t('stages.transition_interdite', {
+          statut: travail.statut,
+          cible,
+          autorisees: autorisees.join(', ') || t('stages.aucune_transition_autorisee'),
+        }),
       );
     }
 
@@ -374,12 +378,10 @@ export class StagesService extends CrudService {
 
     if (cible === StatutEncadrement.SOUTENU) {
       if (!travail.rapportRendu) {
-        throw new BadRequestException('La soutenance suppose le rapport rendu : cochez « rapport rendu » d’abord');
+        throw new BadRequestException(t('stages.la_soutenance_suppose_le_rapport_rendu'));
       }
       if (!travail.soutenance) {
-        throw new BadRequestException(
-          'Aucune soutenance enregistrée : la défense passe par l’enregistrement d’une soutenance',
-        );
+        throw new BadRequestException(t('stages.aucune_soutenance_enregistree'));
       }
     }
 
@@ -414,7 +416,7 @@ export class StagesService extends CrudService {
         throw new BadRequestException(t('stages.ce_travail_est_abandonnee_reactivez_le_avant_de_planifier_un'));
       }
       if (travail.statut !== StatutEncadrement.EN_COURS) {
-        throw new BadRequestException(`Un dossier ${travail.statut} ne se soutient pas : il doit être EN_COURS`);
+        throw new BadRequestException(t('stages.ce_dossier_ne_se_soutient_pas', { statut: travail.statut }));
       }
       if (!travail.rapportRendu) {
         throw new BadRequestException(t('stages.le_rapport_doit_etre_rendu_avant_de_planifier_la_soutenance'));

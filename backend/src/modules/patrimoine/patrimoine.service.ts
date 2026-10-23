@@ -250,10 +250,14 @@ export class PatrimoineService {
           const cible = (e.meta?.target as string[]) ?? [];
           if (cible.includes('qrCode')) continue;
           if (cible.includes('numeroSerie')) {
-            throw new BadRequestException(`Un équipement porte déjà le numéro de série ${numeroSerie}`);
+            throw new ConflictException(
+              t('patrimoine.un_equipement_porte_deja_le_numero_de_serie', { numero: numeroSerie }),
+            );
           }
           if (cible.includes('numeroInventaire')) {
-            throw new BadRequestException(`Un équipement porte déjà le numéro d'inventaire ${numeroInventaire}`);
+            throw new ConflictException(
+              t('patrimoine.un_equipement_porte_deja_le_numero_d_inventaire', { numero: numeroInventaire }),
+            );
           }
         }
         throw e;

@@ -12,5 +12,7 @@
   "l_escalade_automatique_n_est_possible_qu_apres_delaiheures": "L’escalade automatique n’est possible qu’après {delaiHeures} h sans réponse.",
   "transition_de_statut_non_autorisee": "Cette transition n'est pas autorisée depuis l'état actuel.",
   "reclamation_close_assignation_impossible": "Une réclamation close ne peut pas être réassignée.",
-  "ecriture_concurrente_reessayez": "Cette réclamation vient d'être modifiée. Rechargez-la puis réessayez."
+  "ecriture_concurrente_reessayez": "Cette réclamation vient d'être modifiée. Rechargez-la puis réessayez.",
+  "cette_reclamation_est_close_aucun_message_supplement": "Cette réclamation est close : aucun message supplémentaire n’est accepté.",
+  "pour_cloturer_passez_d_abord_la_reclamation_a_l_etat": "Pour clôturer, passez d’abord la réclamation à l’état RESOLU, FERME ou REJETE."
 }

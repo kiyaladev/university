@@ -16,5 +16,8 @@
   "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_c": "The state of the election is {election.statut}: it can only be closed from the open state.",
   "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_p": "The state of the election is {election.statut}: it can only be announced from the closed state.",
   "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scruti": "Candidates may only register before the poll opens.",
-  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Candidates can only register before voting opens."
+  "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Candidates can only register before voting opens.",
+  "on_ne_peut_ouvrir_l_election_que_depuis_brouillon": "The election is {statut}: it can only be opened from BROUILLON.",
+  "les_candidats_ne_se_retirent_qu_avant_l_ouverture": "Candidates can only withdraw before the vote opens.",
+  "vous_pouvez_choisir_au_plus_n_candidats": "You may select at most {sieges} candidate(s) (seats to fill)."
 }
