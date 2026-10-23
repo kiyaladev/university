@@ -102,7 +102,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('University — API')
     .setDescription(
-      'ERP universitaire : présence des enseignants (UniPrésence), scolarité, finances, campus, documents.',
+      'ERP universitaire : présence des enseignants, scolarité, finances, campus, documents.',
     )
     .setVersion('1.0')
     .addBearerAuth()
