@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import express from 'express';
 import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
@@ -87,7 +88,6 @@ async function bootstrap() {
   });
 
   // Les signatures manuscrites et pièces jointes transitent en base64.
-  const express = require('express');
   app.use(express.json({ limit: '8mb' }));
   app.use(express.urlencoded({ limit: '8mb', extended: true }));
 
