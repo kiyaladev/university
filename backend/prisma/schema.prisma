@@ -951,7 +951,12 @@ model Evaluation {
   type        TypeEvaluation   @default(CC)
   coefficient Float            @default(1) // pondération de l'épreuve au sein de la matière
   matiereId   String
-  matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  // RESTRICT : les notes (Note.evaluationId) sont déjà en RESTRICT. En
+  // CASCADE, la suppression d'une matière effaçait ses évaluations et
+  // échouait à mi-chemin sur les notes : le référentiel matières traduisait
+  // alors l'échec en 409, mais la base restait à moitié modifiée. En RESTRICT,
+  // la suppression est refusée d'emblée et atomiquement.
+  matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Restrict)
   anneeId     String
   annee       AnneeAcademique  @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
@@ -1188,7 +1193,10 @@ model Chambre {
   id          String           @id @default(uuid())
   code        String           @unique // "R1-101"
   residenceId String
-  residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  // RESTRICT : supprimer une résidence ne doit pas effacer les chambres et,
+  // par cascade, l'historique d'attribution de logement. Le service cités
+  // refuse déjà la suppression d'une résidence non vide (400).
+  residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Restrict)
   categorie   CategorieChambre @default(CHAMBRE_PARTAGEE)
   lits        Int              @default(2)
   loyer       Decimal          @default(0) @db.Decimal(14, 2)
@@ -1207,9 +1215,14 @@ model Chambre {
 model AttributionLogement {
   id         String           @id @default(uuid())
   chambreId  String
-  chambre    Chambre          @relation(fields: [chambreId], references: [id], onDelete: Cascade)
+  // RESTRICT : une attribution est l'historique de l'occupation d'une chambre
+  // (critères sociaux, date d'attribution, retrait). En CASCADE, supprimer
+  // une chambre effaçait ce justificatif.
+  chambre    Chambre          @relation(fields: [chambreId], references: [id], onDelete: Restrict)
   etudiantId String
-  etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  // RESTRICT : cohérent avec les autres relations vers Etudiant (inscription,
+  // paiement, demande de document…), toutes en RESTRICT.
+  etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   anneeId    String?
   annee      AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
