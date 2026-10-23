@@ -172,6 +172,8 @@
           <champ-recherche
             v-model="form.anneeId"
             endpoint="/inscription-publique/annees"
+            :endpoint-detail="false"
+            :libelle-initial="libelleAnneeCourante"
             :label-fn="(a) => a.libelle"
             :label="$t('common.fields.academicYearRequired')"
             :disable="annees.length <= 1"
@@ -413,6 +415,15 @@ const tarifCourant = ref<{ montant: number; devise: string } | null>(null);
 const chargementTarif = ref(false);
 const endpointPromotions = computed(() =>
   form.value.anneeId ? `/inscription-publique/annees/${form.value.anneeId}/promotions` : '/inscription-publique/annees',
+);
+
+/**
+ * Libellé de l'année retenue. La route publique `/inscription-publique/annees`
+ * n'a pas de variante par identifiant : c'est la page qui connaît l'année,
+ * elle en donne le libellé au sélecteur.
+ */
+const libelleAnneeCourante = computed(
+  () => annees.value.find((a) => a.id === form.value.anneeId)?.libelle ?? '',
 );
 
 const labelPromotion = (p: PromotionOuverte) =>

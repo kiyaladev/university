@@ -83,6 +83,7 @@
             v-model="filtres.categorieId"
             :label="$t('common.fields.category')"
             endpoint="/patrimoine/categories"
+            :endpoint-detail="false"
             :label-fn="(c) => `${c.libelle} (${c.code})`"
             preload
           />

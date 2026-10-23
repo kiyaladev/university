@@ -49,6 +49,8 @@
           v-model="form.categorieId"
           :label="$t('patrimoine.equipmentDialog.fields.category')"
           endpoint="/patrimoine/categories"
+          :endpoint-detail="false"
+          :libelle-initial="libelleCategorie"
           :label-fn="(c) => `${c.libelle} (${c.code})`"
           :clearable="false"
         />
@@ -113,7 +115,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '@/boot/axios';
@@ -130,6 +132,16 @@ const $q = useQuasar();
 const { t } = useI18n();
 
 const enregistrement = ref(false);
+
+/**
+ * Libellé de la catégorie de l'équipement édité. L'API n'expose pas
+ * `/patrimoine/categories/{id}` : c'est l'équipement qui porte le nom de sa
+ * catégorie, on le passe donc au sélecteur.
+ */
+const libelleCategorie = computed(() => {
+  const categorie = props.equipement?.categorie;
+  return categorie ? `${categorie.libelle} (${categorie.code})` : '';
+});
 
 const form = ref({
   libelle: '',
