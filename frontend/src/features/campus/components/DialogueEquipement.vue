@@ -32,8 +32,8 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { equipementsService } from '../services/assistance';
 import type { EquipementCampus } from '@/types';
 
 /**
@@ -67,8 +67,8 @@ async function enregistrer() {
       emplacement: form.value.emplacement.trim() || undefined,
       actif: form.value.actif,
     };
-    if (props.equipement) await api.put(`/equipements/${props.equipement.id}`, payload);
-    else await api.post('/equipements', payload);
+    if (props.equipement) await equipementsService.modifier(props.equipement.id, payload);
+    else await equipementsService.creer(payload);
     $q.notify({ type: 'positive', message: t('helpdesk.equipmentDialog.saved') });
     emit('enregistre');
     ouvert.value = false;
