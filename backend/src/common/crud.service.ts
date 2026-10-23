@@ -77,19 +77,6 @@ export class CrudService<T = any> {
   }
 
   async lister(query: QueryDto = {}, where: unknown = {}): Promise<Paginated<T>> {
-    return this.listerModele(query, where);
-  }
-
-  /**
-   * @deprecated Alias de migration : `lister` le remplace. Conservé le temps
-   * que tous les modules passent à la convention française. Il délègue à
-   * `lister` : la surcharge métier d'un service reste donc atteinte.
-   */
-  async findAll(query: QueryDto = {}, where: unknown = {}, ..._contexte: unknown[]): Promise<Paginated<T>> {
-    return this.lister(query, where);
-  }
-
-  private async listerModele(query: QueryDto, where: unknown): Promise<Paginated<T>> {
     const pagination = paginer(query);
     const fullWhere = { ...(where as Record<string, unknown>), ...this.searchWhere(query.search) };
 
@@ -140,19 +127,6 @@ export class CrudService<T = any> {
   }
 
   async lire(id: string, ..._contexte: unknown[]): Promise<T> {
-    return this.lireModele(id);
-  }
-
-  /**
-   * @deprecated Alias de migration : `lire` le remplace. Conservé le temps que
-   * tous les modules passent à la convention française. Il délègue à `lire` :
-   * la surcharge métier d'un service reste donc atteinte.
-   */
-  async findOne(id: string, ..._contexte: unknown[]): Promise<T> {
-    return this.lire(id);
-  }
-
-  private async lireModele(id: string): Promise<T> {
     const item = await this.delegate.findUnique({
       where: { id },
       ...(this.options.select ? { select: this.options.select } : { include: this.options.include }),
@@ -165,19 +139,6 @@ export class CrudService<T = any> {
   }
 
   async creer(data: unknown, ..._contexte: unknown[]): Promise<T> {
-    return this.creerModele(data);
-  }
-
-  /**
-   * @deprecated Alias de migration : `creer` le remplace. Conservé le temps
-   * que tous les modules passent à la convention française. Il délègue à
-   * `creer` : la surcharge métier d'un service reste donc atteinte.
-   */
-  async create(data: unknown, ..._contexte: unknown[]): Promise<T> {
-    return this.creer(data);
-  }
-
-  private async creerModele(data: unknown): Promise<T> {
     return this.delegate.create({
       data,
       include: this.options.include,
@@ -186,20 +147,7 @@ export class CrudService<T = any> {
   }
 
   async modifier(id: string, data: unknown, ..._contexte: unknown[]): Promise<T> {
-    return this.modifierModele(id, data);
-  }
-
-  /**
-   * @deprecated Alias de migration : `modifier` le remplace. Conservé le temps
-   * que tous les modules passent à la convention française. Il délègue à
-   * `modifier` : la surcharge métier d'un service reste donc atteinte.
-   */
-  async update(id: string, data: unknown, ..._contexte: unknown[]): Promise<T> {
-    return this.modifier(id, data);
-  }
-
-  private async modifierModele(id: string, data: unknown): Promise<T> {
-    await this.lireModele(id);
+    await this.lire(id);
     return this.delegate.update({
       where: { id },
       data,
@@ -209,20 +157,7 @@ export class CrudService<T = any> {
   }
 
   async supprimer(id: string, ..._contexte: unknown[]): Promise<{ id: string }> {
-    return this.supprimerModele(id);
-  }
-
-  /**
-   * @deprecated Alias de migration : `supprimer` le remplace. Conservé le temps
-   * que tous les modules passent à la convention française. Il délègue à
-   * `supprimer` : la surcharge métier d'un service reste donc atteinte.
-   */
-  async remove(id: string, ..._contexte: unknown[]): Promise<{ id: string }> {
-    return this.supprimer(id);
-  }
-
-  private async supprimerModele(id: string): Promise<{ id: string }> {
-    await this.lireModele(id);
+    await this.lire(id);
     await this.delegate.delete({ where: { id } });
     return { id };
   }
