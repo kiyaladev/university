@@ -11,6 +11,24 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
+// Objets SQL hors schéma Prisma
+//
+// Prisma ne sait pas représenter certains objets PostgreSQL. Ils sont posés
+// à la main par une migration, ne sont pas visibles dans `migrate diff` et
+// disparaîtraient d'un `migrate dev` ou d'un `migrate reset` mal appliqué. La
+// liste complète, avec la migration d'origine, est tenue dans
+// docs/decisions/donnees.md :
+//
+//  - "AnneeAcademique_active_key"        : index UNIQUE partiel
+//    (WHERE "active" = true) — 20261002233000_unique_active_annee
+//  - "TicketSupport_un_seul_inventaire"  : contrainte CHECK — 20261023100000
+//  - "DocumentDepot_recherche_trigger()"  : fonction + trigger tsvector
+//    — 20260815220000_bibliotheque_recherche
+//  - extensions "pg_trgm" et "btree_gin"   — 20260815220000_bibliotheque_recherche
+//
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Énumérations
 // ---------------------------------------------------------------------------
 
@@ -374,6 +392,11 @@ model AnneeAcademique {
   libelle   String   @unique // "2025-2026"
   dateDebut DateTime @db.Date
   dateFin   DateTime @db.Date
+  // Objet SQL hors schéma : index UNIQUE partiel "AnneeAcademique_active_key"
+  // (WHERE "active" = true), posé par la migration
+  // 20261002233000_unique_active_annee. Prisma ne sait pas exprimer un
+  // index partiel : il n'apparaît pas dans ce schéma et `migrate diff` ne le
+  // voit pas. Il garantit qu'une seule année académique est active.
   active    Boolean  @default(false)
   cloturee  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -1215,7 +1238,10 @@ model DocumentDepot {
   /// Texte intégral extrait du PDF (recherche plein texte PostgreSQL).
   contenuTexte  String?
   /// Vecteur de recherche tsvector pour PostgreSQL FTS (français).
-  /// Mis à jour par trigger `tsvector_update_trigger` (migration).
+  /// Mis à jour par le trigger `DocumentDepot_recherche_update` (migration
+  /// 20260815220000_bibliotheque_recherche) ; les index qui l'exploitent sont
+  /// déclarés en bas de modèle et recréés par la migration
+  /// 20261024020000_index_recherche.
   recherche     Unsupported("tsvector")?
   /// Hash SHA-256 du fichier pour la détection de doublons (anti-plagiat basique).
   empreinteHash String?
@@ -1248,6 +1274,20 @@ model DocumentDepot {
   @@index([public])
   @@index([empreinteHash])
   @@index([departementId])
+  // Recherche de la bibliothèque : `recherche @@ to_tsquery` (index GIN
+  // plein texte) et similarités par trigrammes sur le titre, le résumé et le
+  // texte extrait. Ces index avait été supprimés par la migration
+  // 20260815230000_modules_universite_avancee sans être recréés : la
+  // recherche plein texte ne s'appuyait donc sur aucun index. Ils sont
+  // déclarés ici pour que `migrate dev` ne les supprime plus, et recréés
+  // par la migration 20261024020000_index_recherche. Le nom d'index est
+  // figé (`map:`) sur celui créé à l'origine par la migration
+  // 20260815220000_bibliotheque_recherche.
+  @@index([recherche], type: Gin)
+  @@index([motsClefs], type: Gin)
+  @@index([contenuTexte(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_contenuTexte_trgm")
+  @@index([titre(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_titre_trgm")
+  @@index([resume(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_resume_trgm")
 }
 
 /// Suspicion de doublon : pair de documents dont la similarité dépasse un
