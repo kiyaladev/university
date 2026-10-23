@@ -15,40 +15,40 @@ import { validerConfiguration } from './common/configuration';
 import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
 import { MontantInterceptor } from './common/finances/montant.interceptor';
 import { HealthController } from './common/health.controller';
-import { AuthModule } from './modules/auth/auth.module';
-import { ReferentielModule } from './modules/referentiel/referentiel.module';
-import { PlanificationModule } from './modules/planification/planification.module';
-import { ImportsModule } from './modules/imports/imports.module';
-import { ControleModule } from './modules/controle/controle.module';
-import { MoyensAttestationModule } from './modules/moyens-attestation/moyens-attestation.module';
-import { JustificatifsModule } from './modules/justificatifs/justificatifs.module';
-import { RapportsModule } from './modules/rapports/rapports.module';
-import { ParametresModule } from './modules/parametres/parametres.module';
-import { InscriptionModule } from './modules/inscription/inscription.module';
-import { PaieModule } from './modules/paie/paie.module';
-import { ScolariteModule } from './modules/scolarite/scolarite.module';
-import { AttestationsModule } from './modules/attestations/attestations.module';
-import { PortailModule } from './modules/portail/portail.module';
-import { CitesModule } from './modules/cites/cites.module';
-import { BibliothequeModule } from './modules/bibliotheque/bibliotheque.module';
-import { RestoModule } from './modules/resto/resto.module';
-import { ReservationsModule } from './modules/reservations/reservations.module';
-import { StagesModule } from './modules/stages/stages.module';
-import { HelpdeskModule } from './modules/helpdesk/helpdesk.module';
-import { FormationsModule } from './modules/formations/formations.module';
-import { RectoratModule } from './modules/rectorat/rectorat.module';
-import { PatrimoineModule } from './modules/patrimoine/patrimoine.module';
-import { CourrierModule } from './modules/courrier/courrier.module';
-import { ExamensModule } from './modules/examens/examens.module';
-import { TirageModule } from './modules/tirage/tirage.module';
-import { RecettesModule } from './modules/recettes/recettes.module';
-import { ReclamationsModule } from './modules/reclamations/reclamations.module';
-import { DocumentsDemandeModule } from './modules/documents-demande/documents-demande.module';
-import { ElectionsModule } from './modules/elections/elections.module';
-import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.module';
-import { BadgesModule } from './modules/badges/badges.module';
-import { VodModule } from './modules/vod/vod.module';
-import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard';
+import { AuthModule } from './modules/socle/auth/auth.module';
+import { ReferentielModule } from './modules/socle/referentiel/referentiel.module';
+import { ParametresModule } from './modules/socle/parametres/parametres.module';
+import { PlanificationModule } from './modules/presence/planification/planification.module';
+import { ControleModule } from './modules/presence/controle/controle.module';
+import { PresencePreuvesModule } from './modules/presence/presence-preuves/presence-preuves.module';
+import { JustificatifsModule } from './modules/presence/justificatifs/justificatifs.module';
+import { TirageModule } from './modules/presence/tirage/tirage.module';
+import { InscriptionModule } from './modules/scolarite/inscription/inscription.module';
+import { ScolariteModule } from './modules/scolarite/scolarite/scolarite.module';
+import { ExamensModule } from './modules/scolarite/examens/examens.module';
+import { FormationsModule } from './modules/scolarite/formations/formations.module';
+import { StagesModule } from './modules/scolarite/stages/stages.module';
+import { PortailModule } from './modules/scolarite/portail/portail.module';
+import { AttestationsModule } from './modules/documents/attestations/attestations.module';
+import { DocumentsDemandeModule } from './modules/documents/documents-demande/documents-demande.module';
+import { CarteEtudianteModule } from './modules/documents/carte-etudiante/carte-etudiante.module';
+import { BadgesModule } from './modules/documents/badges/badges.module';
+import { CourrierModule } from './modules/documents/courrier/courrier.module';
+import { PaieModule } from './modules/finances/paie/paie.module';
+import { RecettesModule } from './modules/finances/recettes/recettes.module';
+import { CitesModule } from './modules/campus/cites/cites.module';
+import { RestoModule } from './modules/campus/resto/resto.module';
+import { ReservationsModule } from './modules/campus/reservations/reservations.module';
+import { HelpdeskModule } from './modules/campus/helpdesk/helpdesk.module';
+import { PatrimoineModule } from './modules/campus/patrimoine/patrimoine.module';
+import { ElectionsModule } from './modules/campus/elections/elections.module';
+import { BibliothequeModule } from './modules/campus/bibliotheque/bibliotheque.module';
+import { VodModule } from './modules/campus/vod/vod.module';
+import { ReclamationsModule } from './modules/campus/reclamations/reclamations.module';
+import { RapportsModule } from './modules/pilotage/rapports/rapports.module';
+import { RectoratModule } from './modules/pilotage/rectorat/rectorat.module';
+import { ImportsModule } from './modules/pilotage/imports/imports.module';
+import { ServicesActifsGuard } from './modules/socle/parametres/services-actifs.guard';
 
 @Module({
   imports: [
@@ -74,39 +74,46 @@ import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard'
       resolvers: [new HeaderResolver(['x-lang']), new AcceptLanguageResolver(), new QueryResolver(['lang', 'l'])],
     }),
     PrismaModule,
+    // socle : authentification, données de référence et paramètres
     AuthModule,
     ReferentielModule,
-    PlanificationModule,
-    ImportsModule,
-    ControleModule,
-    MoyensAttestationModule,
-    JustificatifsModule,
-    RapportsModule,
     ParametresModule,
-    InscriptionModule,
-    PaieModule,
-    ScolariteModule,
-    AttestationsModule,
-    PortailModule,
-    CitesModule,
-    BibliothequeModule,
-    RestoModule,
-    ReservationsModule,
-    StagesModule,
-    HelpdeskModule,
-    FormationsModule,
-    RectoratModule,
-    PatrimoineModule,
-    CourrierModule,
-    ExamensModule,
+    // presence : planification, contrôle et preuves de passage en salle
+    PlanificationModule,
+    ControleModule,
+    PresencePreuvesModule,
+    JustificatifsModule,
     TirageModule,
-    RecettesModule,
-    ReclamationsModule,
+    // scolarite : étudiants, notes et vie de l'étudiant
+    InscriptionModule,
+    ScolariteModule,
+    ExamensModule,
+    FormationsModule,
+    StagesModule,
+    PortailModule,
+    // documents : attestations, demandes, carte, badges et courrier
+    AttestationsModule,
     DocumentsDemandeModule,
-    ElectionsModule,
     CarteEtudianteModule,
     BadgesModule,
+    CourrierModule,
+    // finances : paie et recettes
+    PaieModule,
+    RecettesModule,
+    // campus : logement, restauration, services et équipements
+    CitesModule,
+    RestoModule,
+    ReservationsModule,
+    HelpdeskModule,
+    PatrimoineModule,
+    ElectionsModule,
+    BibliothequeModule,
     VodModule,
+    ReclamationsModule,
+    // pilotage : rapports, rectorat et imports
+    RapportsModule,
+    RectoratModule,
+    ImportsModule,
   ],
   controllers: [HealthController],
   providers: [

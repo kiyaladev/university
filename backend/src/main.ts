@@ -7,7 +7,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationError } from 'class-validator';
 import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
-import { JwtStrategy } from './modules/auth/jwt.strategy';
+import { JwtStrategy } from './modules/socle/auth/jwt.strategy';
 import { AppModule } from './app.module';
 import { ValidationPipeCompatStatuts } from './common/statuts';
 import { ErreurHttpFilter } from './common/filters/erreur-http.filter';

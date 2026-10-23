@@ -1,0 +1,430 @@
+// Domaine « scolarité » : étudiants, évaluations, notes, examens, formations et stages.
+
+/// Cycle de vie d'une inscription (en ligne ou au guichet).
+enum StatutInscription {
+  BROUILLON // dossier ouvert, non rendu
+  EN_ATTENTE_PAIEMENT // dossier rendu, frais non réglés
+  PAYE // frais réglés, pas encore validée par la scolarité
+  VALIDE // scolarité : dossier complet (frais + pièces)
+  ANNULE
+}
+
+enum TypeEvaluation {
+  CC // contrôle continu
+  EXAMEN // épreuve de session
+  RATTRAPAGE
+  ORAL
+  TP // travaux pratiques notés
+}
+
+enum StatutEvaluation {
+  OUVERT // saisie des notes possible
+  CLOTURE // notes publiées, plus de modification
+}
+
+enum SessionDeliberation {
+  NORMALE // première session
+  RATTRAPAGE // session de rattrapage
+}
+
+enum StatutDeliberation {
+  BROUILLON
+  VALIDE
+}
+
+enum DecisionJury {
+  ADMIS
+  AJOURNE
+  DEFAILLANT
+}
+
+enum TypeEncadrement {
+  STAGE
+  MEMOIRE
+  RAPPORT
+}
+
+enum StatutEncadrement {
+  PROPOSE
+  VALIDE
+  EN_COURS
+  SOUTENU
+  ABANDONNE
+}
+
+enum StatutFormation {
+  BROUILLON
+  PUBLIE
+  COMPLET
+}
+
+enum StatutInscriptionFormation {
+  EN_ATTENTE
+  CONFIRME
+  ANNULE
+}
+
+model Etudiant {
+  id            String    @id @default(uuid())
+  matricule     String    @unique // INE : "2026-00001"
+  nom           String
+  prenom        String
+  sexe          String? // "M" / "F"
+  dateNaissance DateTime? @db.Date
+  lieuNaissance String?
+  telephone     String?
+  email         String?   @unique
+  adresse       String?
+  actif         Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Jeton encodé dans le QR « carte resto » de l'étudiant (module resto).
+  qrRestoToken String? @unique
+
+  // Compte portail (ETUDIANT) facultatif au moment de l'inscription
+  userId String? @unique
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  inscriptions      Inscription[]
+  paiements         Paiement[]
+  attestations      Attestation[]
+  notifications     Notification[]
+  reclamations      Reclamation[]
+  demandesDocuments DemandeDocument[]
+  carteEtudiante    CarteEtudiante?
+  candidatsElection CandidatElection[]
+  votesElection     VoteElection[]
+  vuesVOD           VueVOD[]
+
+  attributionLogements  AttributionLogement[]
+  documents             DocumentDepot[]
+  portefeuillesResto    PortefeuilleResto[]
+  recharges             Recharge[]
+  inscriptionFormations InscriptionFormation[]
+  travauxEncadres       TravailEncadre[]
+
+  @@index([nom, prenom])
+}
+
+/// Dossier d'inscription d'un étudiant pour une année académique.
+model Inscription {
+  id          String          @id @default(uuid())
+  numero      String          @unique // "INS-2026-00042"
+  etudiantId  String
+  etudiant    Etudiant        @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  anneeId     String
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  promotionId String
+  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+
+  statut          StatutInscription @default(BROUILLON)
+  montantFrais    Decimal           @default(0) @db.Decimal(14, 2) // instantané du montant à payer
+  dateInscription DateTime?
+
+  valideeParId String?
+  valideePar   User?     @relation("InscriptionValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
+  valideeLe    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  paiements         Paiement[]
+  notes             Note[]
+  deliberations     DeliberationLigne[]
+  attestations      Attestation[]
+  scansExamen       ScanExamen[]
+  demandesDocuments DemandeDocument[]
+  coursVOD          CoursVOD[]
+
+  @@unique([etudiantId, anneeId])
+  @@index([statut])
+  @@index([anneeId, promotionId])
+  @@index([promotionId])
+}
+
+/// Tarif d'inscription par promotion, pour une année (monnaie : devise).
+model Frais {
+  id          String          @id @default(uuid())
+  anneeId     String
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  promotionId String
+  promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  montant     Decimal         @default(0) @db.Decimal(14, 2)
+  devise      String          @default("GNF")
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([anneeId, promotionId])
+}
+
+// ---------------------------------------------------------------------------
+// Scolarité LMD : évaluations, notes & délibérations (Module 3)
+// ---------------------------------------------------------------------------
+
+/// Épreuve notée : une matière, une promotion, une année, une session.
+model Evaluation {
+  id          String           @id @default(uuid())
+  intitule    String
+  type        TypeEvaluation   @default(CC)
+  coefficient Float            @default(1) // pondération de l'épreuve au sein de la matière
+  matiereId   String
+  // RESTRICT : les notes (Note.evaluationId) sont déjà en RESTRICT. En
+  // CASCADE, la suppression d'une matière effaçait ses évaluations et
+  // échouait à mi-chemin sur les notes : le référentiel matières traduisait
+  // alors l'échec en 409, mais la base restait à moitié modifiée. En RESTRICT,
+  // la suppression est refusée d'emblée et atomiquement.
+  matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Restrict)
+  anneeId     String
+  annee       AnneeAcademique  @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  promotionId String
+  promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  semestre    Int              @default(1)
+  date        DateTime?
+  statut      StatutEvaluation @default(OUVERT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes Note[]
+
+  @@index([matiereId])
+  @@index([promotionId])
+  @@index([anneeId])
+}
+
+/// Note /20 d'un étudiant (via son inscription) à une épreuve.
+model Note {
+  id            String      @id @default(uuid())
+  evaluationId  String
+  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id], onDelete: Restrict)
+  inscriptionId String
+  inscription   Inscription @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
+  note          Float? // /20, null si non noté (absent)
+  present       Boolean     @default(true)
+  saisieParId   String?
+  saisiePar     User?       @relation("NoteSaisiePar", fields: [saisieParId], references: [id], onDelete: SetNull)
+  saisieLe      DateTime    @default(now())
+
+  @@unique([evaluationId, inscriptionId])
+  @@index([inscriptionId])
+}
+
+/// Séance de jury : délibération d'une promotion à une session.
+model Deliberation {
+  id           String              @id @default(uuid())
+  anneeId      String
+  annee        AnneeAcademique     @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  promotionId  String
+  promotion    Promotion           @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  session      SessionDeliberation @default(NORMALE)
+  statut       StatutDeliberation  @default(BROUILLON)
+  tauxReussite Float?
+  commentaire  String?
+
+  creeParId    String?
+  creePar      User?     @relation("DeliberationCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier de création du jury (utilisée par l'écran des délibérations),
+  // `createdAt` la date technique d'écriture de la ligne. Les harmoniser
+  // ferait perdre la distinction : à traiter dans une migration dédiée.
+  creeLe       DateTime  @default(now())
+  valideeParId String?
+  valideePar   User?     @relation("DeliberationValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
+  valideeLe    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lignes DeliberationLigne[]
+
+  @@unique([anneeId, promotionId, session])
+  // Les délibérations sont listées par promotion (jury d'une promotion).
+  @@index([promotionId])
+}
+
+/// Ligne de résultat d'un étudiant à une délibération.
+model DeliberationLigne {
+  id             String       @id @default(uuid())
+  deliberationId String
+  deliberation   Deliberation @relation(fields: [deliberationId], references: [id], onDelete: Cascade)
+  inscriptionId  String
+  inscription    Inscription  @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
+
+  moyenne  Float        @default(0) // /20 calculée par le jury
+  decision DecisionJury @default(AJOURNE)
+  mention  String? // "passable", "bien", "très bien"…
+  rang     Int?
+
+  @@unique([deliberationId, inscriptionId])
+}
+
+// ---------------------------------------------------------------------------
+// 5. Gestion des stages & mémoires (espace tripartite)
+// ---------------------------------------------------------------------------
+
+model TravailEncadre {
+  id               String            @id @default(uuid())
+  type             TypeEncadrement   @default(MEMOIRE)
+  intitule         String
+  description      String?
+  etudiantId       String
+  etudiant         Etudiant          @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+  encadrantId      String?
+  encadrant        Enseignant?       @relation(fields: [encadrantId], references: [id], onDelete: SetNull)
+  entreprise       String?
+  tuteurEntreprise String?
+  lieu             String?
+  dateDebut        DateTime?         @db.Date
+  dateFin          DateTime?         @db.Date
+  statut           StatutEncadrement @default(PROPOSE)
+  rapportRendu     Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  soutenance Soutenance?
+
+  @@index([statut])
+  @@index([etudiantId])
+  @@index([encadrantId])
+}
+
+model Soutenance {
+  id               String         @id @default(uuid())
+  travailEncadreId String         @unique
+  travailEncadre   TravailEncadre @relation(fields: [travailEncadreId], references: [id], onDelete: Cascade)
+  date             DateTime
+  salleId          String?
+  salle            Salle?         @relation(fields: [salleId], references: [id], onDelete: SetNull)
+  presidentId      String?
+  president        Enseignant?    @relation(fields: [presidentId], references: [id], onDelete: SetNull)
+  assesseurs       String? // "Pr. X ; Dr. Y"
+  note             Float?
+  mention          String? // Félicitations, Très bien…
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt        DateTime       @default(now()) @map("creeLe")
+}
+
+// ---------------------------------------------------------------------------
+// 7. Hub de formation continue & certifications (recettes propres)
+// ---------------------------------------------------------------------------
+
+model Formation {
+  id          String          @id @default(uuid())
+  titre       String
+  description String?
+  categorie   String? // "Informatique", "Gestion"…
+  prix        Decimal         @default(0) @db.Decimal(14, 2)
+  devise      String          @default("GNF")
+  dureeHeures Int?
+  dateDebut   DateTime?       @db.Date
+  dateFin     DateTime?       @db.Date
+  lieu        String?
+  capacite    Int?
+  statut      StatutFormation @default(BROUILLON)
+  creeParId   String?
+  creePar     User?           @relation("FormationCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  inscriptions InscriptionFormation[]
+
+  @@index([statut])
+}
+
+/// Inscription payante à une formation continue.
+model InscriptionFormation {
+  id          String                     @id @default(uuid())
+  numero      String                     @unique // "FOR-2026-00001"
+  formationId String
+  formation   Formation                  @relation(fields: [formationId], references: [id], onDelete: Restrict)
+  etudiantId  String?
+  etudiant    Etudiant?                  @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  nomComplet  String?
+  telephone   String?
+  email       String?
+  statut      StatutInscriptionFormation @default(EN_ATTENTE)
+  paiementId  String?                    @unique
+  paiement    Paiement?                  @relation("PaiementFormation", fields: [paiementId], references: [id], onDelete: SetNull)
+  inscriteLe  DateTime                   @default(now())
+
+  @@index([formationId])
+}
+
+// ------------------ Anti-Fantômes & Contrôle d'Accès Examens ----------
+
+enum TypeExamen {
+  PARTIEL
+  FINAL
+  RATTRAPAGE
+  CONTROLE_CONTINU
+}
+
+enum StatutExamen {
+  PLANIFIE
+  EN_COURS
+  TERMINE
+  ANNULE
+}
+
+model Examen {
+  id            String          @id @default(uuid())
+  intitule      String
+  type          TypeExamen      @default(FINAL)
+  matiereId     String
+  matiere       Matiere         @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  promotionId   String
+  promotion     Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
+  anneeId       String
+  annee         AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  dateExamen    DateTime
+  heureDebut    String
+  heureFin      String
+  salleId       String?
+  salle         Salle?          @relation(fields: [salleId], references: [id], onDelete: SetNull)
+  nbInscrits    Int             @default(0)
+  nbPresents    Int             @default(0)
+  // Identifiant unique de session pour empêcher les substitutions
+  codeExamen    String          @unique // "EXAM-2026-0001"
+  statut        StatutExamen    @default(PLANIFIE)
+  creeParId     String?
+  creePar       User?           @relation("ExamenCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  surveillantId String?
+  surveillant   User?           @relation("ExamenSurveillant", fields: [surveillantId], references: [id], onDelete: SetNull)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  scans ScanExamen[]
+
+  tirages Tirage[]
+
+  @@index([dateExamen])
+  @@index([promotionId])
+  @@index([anneeId])
+  @@index([matiereId])
+  @@index([salleId])
+}
+
+/// Scan de la carte étudiante à l'entrée de la salle d'examen.
+model ScanExamen {
+  id             String       @id @default(uuid())
+  examenId       String
+  examen         Examen       @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  // Identifiant porteur : étudiant (via son inscription) ou un agent
+  inscriptionId  String?
+  inscription    Inscription? @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  matriculeSaisi String? // fallback si QR ne marche pas
+  nomPorteur     String? // capture au scan
+  prenomPorteur  String?
+  heureScan      DateTime     @default(now())
+  // Le scan est validé (porteur légitime) ou rejeté (substitution)
+  valide         Boolean      @default(true)
+  motifRejet     String? // "carte autre", "photo non reconnue", "introuvable"
+  scanneurId     String?
+  scanneur       User?        @relation("ScanExamenOperateur", fields: [scanneurId], references: [id], onDelete: SetNull)
+  ipAppareil     String?
+
+  @@unique([examenId, inscriptionId])
+  @@index([examenId, heureScan])
+}

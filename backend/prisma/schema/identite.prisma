@@ -1,0 +1,116 @@
+// Domaine « identité » : comptes, rôles, paramètres et journal d'audit.
+
+enum Role {
+  ADMIN // administrateur système
+  DIRECTION // direction des études / vice-doyen : lecture globale + validation
+  SCOLARITE // service de scolarité : planification, référentiels
+  CHEF_DEPARTEMENT // pilote son département
+  CONTROLEUR // agent qui passe dans les salles
+  ENSEIGNANT // consultation seule : ses séances et son relevé, rien d'autre
+  ETUDIANT // portail étudiant : inscription, paiements, notes, attestations
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nom       String
+  prenom    String
+  telephone String?
+  role      Role     @default(CONTROLEUR)
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Durcissement de la connexion : au-delà d'un seuil d'échecs le compte est
+  // verrouillé temporairement, et tout jeton émis avant le dernier changement
+  // de mot de passe cesse d'être accepté.
+  tentativesEchouees  Int       @default(0)
+  verrouilleJusqua    DateTime?
+  motDePasseModifieLe DateTime?
+
+  // Un compte ENSEIGNANT est rattaché à sa fiche enseignant
+  enseignant Enseignant?
+
+  // Un compte ETUDIANT (portail) est rattaché à sa fiche étudiant
+  etudiant Etudiant?
+
+  // Un compte CHEF_DEPARTEMENT / CONTROLEUR peut être rattaché à un département
+  departementId String?
+  departement   Departement? @relation("MembresDepartement", fields: [departementId], references: [id], onDelete: SetNull)
+
+  appareils            Appareil[]
+  controlesEffectues   Controle[]     @relation("ControleAgent")
+  seancesAssignees     Seance[]       @relation("SeanceControleurAssigne")
+  justificatifsTraites Justificatif[] @relation("JustificatifTraitant")
+  auditLogs            AuditLog[]
+
+  // --- Traçabilité des opérations du registre universitaire ---
+  inscriptionsValidees  Inscription[]  @relation("InscriptionValideePar")
+  paiementsCrees        Paiement[]     @relation("PaiementCreePar")
+  paiementsAnnules      Paiement[]     @relation("PaiementAnnulePar")
+  notesSaisies          Note[]         @relation("NoteSaisiePar")
+  deliberationsCrees    Deliberation[] @relation("DeliberationCreePar")
+  deliberationsValidees Deliberation[] @relation("DeliberationValideePar")
+  attestationsEmises    Attestation[]  @relation("AttestationEmetteur")
+  attestationsRevoquees Attestation[]  @relation("AttestationRevocateur")
+  notificationsEnvoyees Notification[] @relation("NotificationEnvoyeur")
+  feuillesPaieCrees     FeuillePaie[]  @relation("FeuillePaieCreePar")
+  feuillesPaieValidees  FeuillePaie[]  @relation("FeuillePaieValideePar")
+
+  attributionsLogements AttributionLogement[] @relation("AttributionAccordeePar")
+  documentsDeposes      DocumentDepot[]       @relation("DocumentDeposePar")
+  repasValides          ConsommationResto[]   @relation("RepasValidePar")
+  reservationsDemandees ReservationSalle[]    @relation("ReservationDemandeePar")
+  reservationsRefusees  ReservationSalle[]    @relation("ReservationRefuseePar")
+  ticketsDeclares       TicketSupport[]       @relation("TicketDeclarePar")
+  ticketsTraites        TicketSupport[]       @relation("TicketTraitePar")
+  formationsCrees       Formation[]           @relation("FormationCreePar")
+
+  suspicionsAcquittees SuspicionPlagiat[] @relation("SuspicionAcquitteePar")
+
+  statistiquesGenerees  StatistiqueMesrs[]   @relation("StatistiqueGenerePar")
+  reparationsDeclarees  ReparationMateriel[] @relation("ReparationDeclareePar")
+  reparationsResolues   ReparationMateriel[] @relation("ReparationResoluePar")
+  courriersEnregistres  Courrier[]           @relation("CourrierEnregistrePar")
+  courriersTraites      Courrier[]           @relation("CourrierTraitePar")
+  courrierValidations   CircuitCourrier[]    @relation("CourrierValideur")
+  examensCrees          Examen[]             @relation("ExamenCreePar")
+  examensSurveilles     Examen[]             @relation("ExamenSurveillant")
+  scansExamenEffectues  ScanExamen[]         @relation("ScanExamenOperateur")
+  tiragesImprimes       Tirage[]             @relation("TirageImprimeur")
+  recettesCrees         RecetteExterne[]     @relation("RecetteCreePar")
+  reclamationsAssignees Reclamation[]        @relation("ReclamationAssignee")
+  reclamationsCrees     Reclamation[]        @relation("ReclamationCreateur")
+  messagesReclamation   MessageReclamation[] @relation("MessageReclamationAuteur")
+  demandesTraitees      DemandeDocument[]    @relation("DemandeDocumentTraitee")
+  electionsCrees        Election[]           @relation("ElectionCreePar")
+  bulletinsDeposes      VoteElection[]       @relation("VoteElecteur")
+  cartesCrees           CarteEtudiante[]     @relation("CarteCreePar")
+  badgesCrees           BadgeAcces[]         @relation("BadgeCreePar")
+  vodCrees              CoursVOD[]           @relation("VodCreePar")
+
+  @@index([role])
+}
+
+model Parametre {
+  cle         String   @id
+  valeur      String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String // CREATE / UPDATE / DELETE / LOGIN / POINTAGE
+  entite    String
+  entiteId  String?
+  details   String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entite, entiteId])
+  @@index([createdAt])
+}

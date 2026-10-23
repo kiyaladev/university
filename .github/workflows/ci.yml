@@ -52,6 +52,12 @@ jobs:
         working-directory: backend
         run: bunx prisma generate
 
+      # Le schéma est réparti par domaine dans `backend/prisma/schema/` :
+      # `prisma validate` vérifie l'ensemble des fichiers d'un coup.
+      - name: Validation du schéma Prisma
+        working-directory: backend
+        run: bunx prisma validate
+
       - name: Typecheck backend
         working-directory: backend
         run: bun run typecheck

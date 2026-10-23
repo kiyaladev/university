@@ -12,19 +12,61 @@ geste central : le contrôleur pointe chaque salle depuis son téléphone.
 | Passerelle biométrique | Bun, prototype avec simulateur | `biometrie/` ([doc](biometrie.md)) |
 | Exploitation | Scripts de sauvegarde, restauration, preflight, APK ; vhosts nginx ; PM2 | `scripts/`, `infra/nginx/`, `ecosystem.config.cjs` ([doc](exploitation.md)) |
 
-Le schéma Prisma (`backend/prisma/schema.prisma`) compte 65 modèles.
+Le schéma Prisma est découpé par domaine dans `backend/prisma/schema/` :
+65 modèles et 55 énumérations, répartis sur douze fichiers.
+
+| Fichier de schéma | Contenu |
+| --- | --- |
+| `base.prisma` | générateur, source de données, objets SQL posés à la main |
+| `identite.prisma` | comptes, rôles, paramètres, journal d’audit |
+| `referentiel.prisma` | années, départements, filières, promotions, salles, enseignants, matières, affectations |
+| `presence.prisma` | créneaux, séances, contrôles, justificatifs, appareils, tirages |
+| `scolarite.prisma` | étudiants, inscriptions, frais, évaluations, notes, délibérations, examens, formations, stages |
+| `documents.prisma` | attestations, demandes de documents, carte d’étudiant, badges |
+| `finances.prisma` | paiements, frais, feuilles de paie, recettes |
+| `campus.prisma` | cités, chambres, réservations, helpdesk, patrimoine, élections, réclamations |
+| `recherche.prisma` | dépôt institutionnel, plagiat, ressources VOD |
+| `vie-etudiante.prisma` | notifications, titre de restauration |
+| `courrier.prisma` | courrier administratif, circuits de validation |
+| `pilotage.prisma` | statistiques agrégées (rectorat, MESRS) |
+
+Les migrations restent à côté, dans `backend/prisma/schema/migrations/` :
+Prisma les cherche toujours dans le dossier du fichier qui porte la source de
+données. `bunx prisma migrate deploy` et `bunx prisma generate` fonctionnent
+donc depuis `backend/` sans argument.
 
 ## Modules métier
 
-Chaque dossier de `backend/src/modules/` est un module Nest. Ils sont regroupés
-en **services** activables par l’ADMIN (Paramètres → Services de
-l’établissement, module `services-actifs`). Un service désactivé perd ses liens
-dans le menu et ses routes API (`ServicesActifsGuard`), sans suppression de
-données. Les services obligatoires ne peuvent pas être désactivés.
+Les modules Nest sont rangés par domaine dans `backend/src/modules/<domaine>/`.
+Un module est un dossier : `<nom>.module.ts` déclare le module,
+`<nom>.controller.ts` porte les routes, `<nom>.service.ts` la logique,
+`<nom>.dto.ts` les entrées validées, `<nom>.*.spec.ts` les tests.
+
+| Domaine | Modules |
+| --- | --- |
+| `socle` | `auth`, `referentiel`, `parametres` |
+| `presence` | `planification`, `controle`, `presence-preuves`, `justificatifs`, `tirage` |
+| `scolarite` | `inscription`, `scolarite`, `examens`, `formations`, `stages`, `portail` |
+| `documents` | `attestations`, `documents-demande`, `carte-etudiante`, `badges`, `courrier` |
+| `finances` | `paie`, `recettes` |
+| `campus` | `cites`, `resto`, `reservations`, `helpdesk`, `patrimoine`, `elections`, `bibliotheque`, `vod`, `reclamations` |
+| `pilotage` | `rapports`, `rectorat`, `imports` |
+
+Le domaine nomme le métier, pas la partie du menu : `attestation` est un
+module de `documents` (les attestations de scolarité), `presence-preuves`
+(appareils, code personnel, empreintes) est un module de `presence`. Les
+classes de `presence-preuves` sont nommées `PresencePreuves*` ; sa route reste
+`/attestation` et ses clés i18n restent celles d’avant.
+
+Chaque module est regroupé en **services** activables par l’ADMIN (Paramètres →
+Services de l’établissement, module `services-actifs`). Un service désactivé perd
+ses liens dans le menu et ses routes API (`ServicesActifsGuard`), sans
+suppression de données. Les services obligatoires ne peuvent pas être
+désactivés.
 
 | Service | Obligatoire | Modules backend |
 | --- | --- | --- |
-| Présence | oui | `controle`, `planification` (créneaux, séances, génération), `attestation`, `justificatifs`, `rapports` |
+| Présence | oui | `controle`, `planification` (créneaux, séances, génération), `presence-preuves`, `justificatifs`, `rapports` |
 | Scolarité | oui | `scolarite` (évaluations, notes, délibérations), `inscription`, `portail` |
 | Finances | oui | `inscription` (paiements), `paie`, `recettes` |
 | Documents étudiants | oui | `documents-demande`, `attestations` |
@@ -34,6 +76,27 @@ données. Les services obligatoires ne peuvent pas être désactivés.
 Modules transverses : `auth`, `referentiel` (comptes, années, structure,
 salles, enseignants, matières, affectations), `parametres`, `imports`,
 `services-actifs`.
+
+### Règles d’organisation du backend
+
+- **Un module, un domaine.** Un module appartient à un seul dossier de
+  domaine ; il n’y a pas de module à cheval entre deux domaines. Quand un
+  module n’a pas de place évidente, on le déplace — jamais on ne duplique.
+- **Nommage des fichiers.** `<nom>.controller.ts`, `<nom>.service.ts`,
+  `<nom>.dto.ts`, `<nom>.module.ts` : plus de fichier « fourre-tout » qui
+  rassemble plusieurs entités (le référentiel a été découpé ainsi).
+- **Briques transverses.** Ce qui sert à plusieurs modules vit dans
+  `backend/src/common/` (pagination, audit, périmètre, impression,
+  numérotation, finances, filtres) : une fonction sans état, un appelant, pas
+  un provider Nest. Un module qui n’a besoin de rien d’autre n’ajoute rien à
+  `common/`.
+- **Imports.** Relatifs à l’intérieur du backend (`../../common/…`,
+  `../parametres/parametres.service`), jamais de chemin absolu.
+- **Catalogue i18n.** Les clés restent dans `backend/src/i18n/{fr,en}` et ne
+  suivent pas les déplacements de fichiers : un module renommé garde ses clés.
+- **Schéma Prisma.** Un modèle et ses énumérations appartiennent au fichier de
+  domaine correspondant (`backend/prisma/schema/<domaine>.prisma`) ; les
+  migrations vivent à côté, dans `backend/prisma/schema/migrations/`.
 
 L’état vérifié de chaque module et le travail restant sont dans
 [suivi.md](suivi.md).
@@ -186,7 +249,7 @@ une nouvelle année (ou un nouveau préfixe) repart de 00001.
 ### Un préfixe par module
 
 Les cinq portefeuilles de paiement partagent la table `Paiement`, dont la
-colonne `reference` est **unique** (`backend/prisma/schema.prisma`). Avant,
+colonne `reference` est **unique** (`backend/prisma/schema/finances.prisma`). Avant,
 les inscriptions prenaient `PAY-<année de fin>-` et les demandes de documents
 `PAY-<année civile>-`. Quand l’année de fin de l’année universitaire coïncide
 avec l’année civile (janvier à août), les deux séries partagent le même

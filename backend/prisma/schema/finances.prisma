@@ -1,0 +1,153 @@
+// Domaine « finances » : paiements, frais, paie des vacataires et recettes.
+
+/// État d'une transaction de paiement (Mobile Money ou autre).
+enum StatutPaiement {
+  EN_ATTENTE
+  REUSSI
+  ECHOUE
+  ANNULE
+  REMBOURSE
+}
+
+enum ModePaiement {
+  MOBILE_MONEY // Orange Money / MTN MoMo / Telecel…
+  ESPECES // guichet
+  VIREMENT // banque
+}
+
+/// Cycle de vie d'une feuille de paie vacataires.
+enum StatutPaie {
+  BROUILLON // calculée, non figée
+  VALIDE // validée par la direction, les montants sont figés
+  PAYE // mandat exécuté
+}
+
+/// Transaction de paiement (Mobile Money, guichet, virement).
+model Paiement {
+  id            String         @id @default(uuid())
+  reference     String         @unique // "PAY-2026-00001"
+  montant       Decimal        @db.Decimal(14, 2)
+  devise        String         @default("GNF")
+  mode          ModePaiement   @default(MOBILE_MONEY)
+  operateur     String? // "ORANGE_MONEY", "MTN_MOMO", "TELECEL"…
+  telephone     String? // numéro Mobile Money du payeur
+  nomComplet    String? // donneur d'ordre affiché au guichet
+  motif         String? // "Frais d'inscription L1"
+  statut        StatutPaiement @default(EN_ATTENTE)
+  transactionId String? // référence renvoyée par l'opérateur Mobile Money
+
+  inscriptionId String?
+  inscription   Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: Restrict)
+  anneeId       String?
+  annee         AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  etudiantId    String?
+  etudiant      Etudiant?        @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
+
+  horodatage DateTime  @default(now())
+  completeLe DateTime?
+
+  creeParId       String?
+  creePar         User?     @relation("PaiementCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  annuleLe        DateTime?
+  annuleParId     String?
+  annulePar       User?     @relation("PaiementAnnulePar", fields: [annuleParId], references: [id], onDelete: SetNull)
+  motifAnnulation String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Liens verso les paiements des autres portefeuilles (resto, formations, recettes, demandes documents)
+  recharges            Recharge[]            @relation("PaiementRecharge")
+  inscriptionFormation InscriptionFormation? @relation("PaiementFormation")
+  rechargesRecette     RecetteExterne?       @relation("PaiementRecette")
+  demandeDocument      DemandeDocument?      @relation("PaiementDemandeDocument")
+
+  @@index([statut])
+  @@index([inscriptionId])
+  @@index([horodatage])
+  @@index([etudiantId])
+  @@index([anneeId])
+}
+
+/// Feuille de paie mensuelle des heures complémentaires / vacations.
+model FeuillePaie {
+  id           String     @id @default(uuid())
+  libelle      String     @unique // "Janvier 2026"
+  mois         Int
+  annee        Int
+  dateDebut    DateTime   @db.Date
+  dateFin      DateTime   @db.Date
+  statut       StatutPaie @default(BROUILLON)
+  montantTotal Decimal    @default(0) @db.Decimal(14, 2) // somme des lignes
+
+  creeParId    String?
+  creePar      User?     @relation("FeuillePaieCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier d'établissement de la feuille de paie, `createdAt` la date
+  // technique d'écriture de la ligne. Idem Deliberation.
+  creeLe       DateTime  @default(now())
+  valideeParId String?
+  valideePar   User?     @relation("FeuillePaieValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
+  valideeLe    DateTime?
+  payeeLe      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lignes            LignePaie[]
+  anneeAcademique   AnneeAcademique? @relation(fields: [anneeAcademiqueId], references: [id], onDelete: Restrict)
+  anneeAcademiqueId String?
+
+  @@index([statut])
+}
+
+/// Ligne de paie : heures réalisées × taux horaire, figées à la validation.
+model LignePaie {
+  id           String      @id @default(uuid())
+  feuilleId    String
+  feuille      FeuillePaie @relation(fields: [feuilleId], references: [id], onDelete: Cascade)
+  enseignantId String
+  enseignant   Enseignant  @relation(fields: [enseignantId], references: [id], onDelete: Restrict)
+
+  tauxHoraire   Decimal @default(0) @db.Decimal(14, 2) // instantané au moment du calcul
+  heuresReelles Int     @default(0) // heures de service fait contrôlé
+  volumePrevu   Int     @default(0) // heures contractuelles de la période
+  montantBrut   Decimal @default(0) @db.Decimal(14, 2)
+  retenue       Decimal @default(0) @db.Decimal(14, 2)
+  montantNet    Decimal @default(0) @db.Decimal(14, 2)
+  commentaire   String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([feuilleId, enseignantId])
+}
+
+// ------------------ Régie des Recettes d'Ateliers & Prestations Externes
+
+enum TypeRecette {
+  ANALYSE_LABO
+  LOCATION_AMPHI
+  PRESTATION_FORMATION
+  PRESTATION_CONSEIL
+  AUTRE
+}
+
+model RecetteExterne {
+  id          String      @id @default(uuid())
+  numero      String      @unique // "REC-2026-00001"
+  type        TypeRecette
+  libelle     String
+  description String?
+  montant     Decimal     @db.Decimal(14, 2)
+  devise      String      @default("GNF")
+  date        DateTime    @db.Date
+  client      String?
+  factureNum  String?
+  paiementId  String?     @unique
+  paiement    Paiement?   @relation("PaiementRecette", fields: [paiementId], references: [id], onDelete: SetNull)
+  creeParId   String?
+  creePar     User?       @relation("RecetteCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  createdAt   DateTime    @default(now())
+
+  @@index([type, date])
+}

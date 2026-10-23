@@ -2,7 +2,7 @@
 
 - **Statut** : proposée, prête à revue — **jamais appliquée en production depuis cette branche**
 - **Date** : 2026-10-23
-- **Périmètre** : `backend/prisma/schema.prisma`, le code applicatif, les catalogues i18n, les
+- **Périmètre** : `backend/prisma/schema/`, le code applicatif, les catalogues i18n, les
   scripts de recette, le seed et la documentation.
 - **Branche** : `mc/statuts` (worktree dédié, non fusionnée dans `development`).
 
@@ -214,7 +214,7 @@ Légende des impacts : **B** backend (`backend/src`, DTO, services, tests) — *
 
 ### Détail par domaine
 
-- **Backend** : 44 occurrences dans `schema.prisma`, 43 dans `seed.ts`, ~250 dans
+- **Backend** : 44 occurrences dans `backend/prisma/schema/`, 43 dans `seed.ts`, ~250 dans
   `backend/src` (services, DTO, tests). Les comparaisons directes (`statut === 'VALIDEE'`),
   les `@IsEnum(...)` et les `switch` sont mis à jour ; les libellés français des services
   (`LIBELLE_STATUT_INSCRIPTION`, etc.) sont alignés sur le nouveau jeton.

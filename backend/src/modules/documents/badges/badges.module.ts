@@ -1,0 +1,18 @@
+import { Module } from '@nestjs/common';
+import { ParametresModule } from '../../socle/parametres/parametres.module';
+import { BadgesController } from './badges.controller';
+import { BadgesService } from './badges.service';
+
+/**
+ * Badges d'accès visiteurs & intervenants.
+ *
+ * JwtModule local pour la route d'impression @Public() à jeton vérifié à la
+ * main — même motif que les modules attestations / formations / rapports.
+ */
+@Module({
+  imports: [ParametresModule],
+  controllers: [BadgesController],
+  providers: [BadgesService],
+  exports: [BadgesService],
+})
+export class BadgesModule {}

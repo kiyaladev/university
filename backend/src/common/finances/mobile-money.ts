@@ -12,7 +12,7 @@
 import type { Logger } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
-import type { MobileMoneyService } from '../../modules/inscription/mobile-money.service';
+import type { MobileMoneyService } from '../../modules/scolarite/inscription/mobile-money.service';
 import { toMontant } from './montant';
 
 /** Champs du paiement nécessaires à la demande opérateur. */

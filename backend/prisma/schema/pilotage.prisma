@@ -1,0 +1,20 @@
+// Domaine « pilotage » : statistiques agrégées pour le rectorat et le MESRS.
+
+// ------------------ Tableau de Bord Rectorat & Statistiques MESRS --------
+
+/// Chiffres-clés agrégés automatiquement (effectifs, taux de réussite, masse
+/// salariale) destinés aux rapports ministériels. Calculés par un cron
+/// quotidien, archivés pour permettre la traçabilité historique.
+model StatistiqueMesrs {
+  id          String          @id @default(uuid())
+  anneeId     String
+  annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+  /// JSON des chiffres : { effectifTotal, effectifL1, ..., tauxReussiteL1,
+  /// masseSalariale, ..., parDepartement: { deptId: {...}} }
+  donnees     Json
+  genereLe    DateTime        @default(now())
+  genereParId String?
+  generePar   User?           @relation("StatistiqueGenerePar", fields: [genereParId], references: [id], onDelete: SetNull)
+
+  @@index([anneeId, genereLe])
+}

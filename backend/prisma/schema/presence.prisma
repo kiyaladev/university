@@ -1,0 +1,259 @@
+// Domaine « présence » : séances, contrôle de présence, justificatifs et preuves.
+
+enum TypeCours {
+  CM // cours magistral
+  TD // travaux dirigés
+  TP // travaux pratiques
+  EXAMEN
+  CONFERENCE
+}
+
+enum StatutSeance {
+  PLANIFIE
+  EN_COURS
+  CONTROLE
+  ANNULE
+  NON_TENUE
+}
+
+enum StatutPresence {
+  PRESENT
+  RETARD
+  ABSENT
+  DEPART_ANTICIPE
+  REMPLACE
+  EXCUSE
+}
+
+/// Comment le CONTRÔLEUR prouve son passage en salle.
+enum MethodeVerification {
+  MANUEL // saisie du contrôleur
+  QR_SALLE // scan du QR affiché dans la salle
+  GEOLOCALISATION
+  SIGNATURE // signature manuscrite de l'enseignant sur l'écran
+}
+
+/// Comment l'enseignant atteste sa présence DEVANT le contrôleur, sur l'appareil
+/// de celui-ci. L'enseignant n'atteste jamais seul ni à distance.
+enum AttestationMode {
+  AUCUNE
+  SIGNATURE // signature manuscrite sur l'écran du contrôleur
+  CODE_PIN // code personnel saisi sur l'écran du contrôleur
+  EMPREINTE // lecteur d'empreintes branché au poste de contrôle
+}
+
+enum TypeJustificatif {
+  MALADIE
+  MISSION
+  FORMATION
+  DEUIL
+  TRANSPORT
+  AUTRE
+}
+
+enum StatutJustificatif {
+  EN_ATTENTE
+  VALIDE
+  REJETE
+}
+
+/// Créneau récurrent de l'emploi du temps (lundi 08:00-10:00, salle S204…).
+/// Sert de gabarit pour générer les séances d'une période.
+model Creneau {
+  id            String      @id @default(uuid())
+  affectationId String
+  affectation   Affectation @relation(fields: [affectationId], references: [id], onDelete: Cascade)
+
+  jourSemaine Int // 1 = lundi … 7 = dimanche
+  heureDebut  String // "08:00"
+  heureFin    String // "10:00"
+  type        TypeCours @default(CM)
+
+  /// Période de validité du créneau : « chaque lundi 08h-12h, du 1er au
+  /// 31 janvier ». Vides, le créneau vaut pour toute l'année académique.
+  dateDebut DateTime?
+  dateFin   DateTime?
+
+  salleId String?
+  salle   Salle?  @relation(fields: [salleId], references: [id], onDelete: SetNull)
+
+  actif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  seances Seance[]
+
+  @@index([jourSemaine])
+  // Les créneaux sont filtrés par affectation (emploi du temps d'un enseignant
+  // ou d'une promotion) et supprimés avec elle.
+  @@index([affectationId])
+}
+
+// ---------------------------------------------------------------------------
+// Séances & contrôle de présence
+// ---------------------------------------------------------------------------
+
+model Seance {
+  id            String      @id @default(uuid())
+  affectationId String
+  affectation   Affectation @relation(fields: [affectationId], references: [id], onDelete: Restrict)
+
+  creneauId String?
+  creneau   Creneau? @relation(fields: [creneauId], references: [id], onDelete: SetNull)
+
+  anneeId String
+  annee   AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
+
+  date       DateTime  @db.Date
+  heureDebut String // prévue "08:00"
+  heureFin   String // prévue "10:00"
+  type       TypeCours @default(CM)
+
+  salleId String?
+  salle   Salle?  @relation(fields: [salleId], references: [id], onDelete: SetNull)
+
+  statut     StatutSeance @default(PLANIFIE)
+  thematique String? // intitulé prévu de la séance
+
+  controleurAssigneId String?
+  controleurAssigne   User?   @relation("SeanceControleurAssigne", fields: [controleurAssigneId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  controle     Controle?
+  justificatif Justificatif?
+  coursVOD     CoursVOD[]
+
+  @@unique([affectationId, date, heureDebut])
+  @@index([date, statut])
+  @@index([controleurAssigneId, date])
+  @@index([salleId, date])
+  // Le planning et le contrôle des années ouvertes filtrent les séances par
+  // année académique.
+  @@index([anneeId])
+}
+
+/// Le pointage : ce que le contrôleur consignait auparavant dans son registre.
+model Controle {
+  id       String @id @default(uuid())
+  seanceId String @unique
+  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Restrict)
+
+  controleurId String
+  controleur   User   @relation("ControleAgent", fields: [controleurId], references: [id], onDelete: Restrict)
+
+  statut StatutPresence @default(PRESENT)
+
+  // Déroulement réel constaté
+  heureArrivee      String? // "08:12"
+  heureFinReelle    String? // "09:55"
+  dureeMinutes      Int     @default(0) // durée effective de la séance
+  effectifPresent   Int? // nombre d'étudiants comptés
+  thematiqueTraitee String? // matière/chapitre réellement déroulé
+  observation       String?
+
+  // Preuves apportées par le contrôleur
+  methode        MethodeVerification @default(MANUEL)
+  latitude       Float?
+  longitude      Float?
+  distanceMetres Int?
+  qrSalleValide  Boolean             @default(false)
+
+  // Attestation apportée par l'enseignant lui-même
+  attestation       AttestationMode @default(AUCUNE)
+  attestationValide Boolean         @default(false)
+  attestationLe     DateTime?
+  signatureBase64   String? // signature manuscrite tracée sur l'écran
+  empreinteScore    Int? // score de correspondance renvoyé par le lecteur
+
+  // Cas particuliers
+  enseignantRemplacantId String?
+  enseignantRemplacant   Enseignant? @relation("EnseignantRemplacant", fields: [enseignantRemplacantId], references: [id], onDelete: SetNull)
+
+  horodatage DateTime @default(now()) // date/heure réelle du contrôle
+  horsLigne  Boolean  @default(false) // saisi hors connexion puis synchronisé
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([statut])
+  @@index([horodatage])
+  @@index([controleurId])
+}
+
+model Justificatif {
+  id       String @id @default(uuid())
+  seanceId String @unique
+  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Restrict)
+
+  enseignantId String
+  enseignant   Enseignant @relation(fields: [enseignantId], references: [id], onDelete: Restrict)
+
+  type   TypeJustificatif   @default(AUTRE)
+  motif  String
+  piece  String? // pièce jointe (data-url ou chemin)
+  statut StatutJustificatif @default(EN_ATTENTE)
+
+  traiteParId String?
+  traitePar   User?     @relation("JustificatifTraitant", fields: [traiteParId], references: [id], onDelete: SetNull)
+  commentaire String?
+  traiteLe    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([statut])
+  @@index([enseignantId])
+}
+
+/// Appareil de contrôle (téléphone du contrôleur, poste de salle) autorisé à
+/// signer des résultats biométriques. Chaque appareil a sa propre clé : un
+/// téléphone perdu se révoque seul, sans invalider les autres, et un secret
+/// unique glissé dans l'APK ne suffirait plus à forger une vérification.
+model Appareil {
+  id      String  @id @default(uuid())
+  libelle String // « Téléphone de Facinet SOUMAH »
+  secret  String // clé HMAC propre à l'appareil, jamais renvoyée après l'enrôlement
+  actif   Boolean @default(true)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime  @default(now())
+  dernierUsage DateTime?
+  revoqueLe    DateTime?
+
+  @@index([actif])
+}
+
+// ------------------ Tirage & Distribution Sécurisée des Épreuves -----
+
+enum StadeTirage {
+  PROGRAMME
+  IMPRIME
+  MIS_SOUS_PLI
+  DISTRIBUE
+  RECUPERE
+  ANNULE
+}
+
+model Tirage {
+  id                   String      @id @default(uuid())
+  examenId             String
+  examen               Examen      @relation(fields: [examenId], references: [id], onDelete: Cascade)
+  dateTirage           DateTime
+  imprimeurId          String?
+  imprimeur            User?       @relation("TirageImprimeur", fields: [imprimeurId], references: [id], onDelete: SetNull)
+  nbExemplaires        Int         @default(0)
+  // Empreinte du fichier source pour traçabilité
+  empreinteSource      String
+  // Hash des exemplaires (un par copie)
+  empreinteExemplaires String? // CSV "hash1,hash2,..."
+  circuitImpression    String? // "Salle 1 → Salle 2 → …"
+  stade                StadeTirage @default(PROGRAMME)
+  notes                String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  @@index([examenId])
+  @@index([imprimeurId])
+}

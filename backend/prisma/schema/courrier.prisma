@@ -1,0 +1,66 @@
+// Domaine « courrier » : courrier administratif et circuits de validation.
+
+// ------------------ Gestion du Courrier Administratif -------------------
+
+enum TypeCourrier {
+  ENTRANT
+  SORTANT
+}
+
+enum StatutCourrier {
+  RECU
+  ENREGISTRE
+  EN_CIRCUIT
+  TRAITE
+  CLASSE
+  ARCHIVE
+}
+
+model Courrier {
+  id              String         @id @default(uuid())
+  numero          String         @unique // "COUR-2026-00042"
+  type            TypeCourrier
+  objet           String
+  expediteur      String? // pour les entrants
+  destinataire    String? // pour les sortants
+  departementId   String?
+  departement     Departement?   @relation(fields: [departementId], references: [id], onDelete: Restrict)
+  dateReception   DateTime?      @db.Date
+  dateEnvoi       DateTime?      @db.Date
+  fichier         String? // data-url du PDF scanné
+  typeMime        String?
+  tailleKo        Int?
+  numeroReference String? // référence archive/archive de l'expéditeur
+  paraphe         String? // hash du paraphe électronique (signature)
+  statut          StatutCourrier @default(RECU)
+  enregistreParId String?
+  enregistrePar   User?          @relation("CourrierEnregistrePar", fields: [enregistreParId], references: [id], onDelete: SetNull)
+  traiteParId     String?
+  traitePar       User?          @relation("CourrierTraitePar", fields: [traiteParId], references: [id], onDelete: SetNull)
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  circuits CircuitCourrier[]
+
+  @@index([type, statut])
+  @@index([departementId])
+  @@index([enregistreParId])
+}
+
+/// Étape de validation d'un courrier (paraphe).
+model CircuitCourrier {
+  id           String         @id @default(uuid())
+  courrierId   String
+  courrier     Courrier       @relation(fields: [courrierId], references: [id], onDelete: Cascade)
+  ordre        Int // 1, 2, 3 ...
+  valideurId   String?
+  valideur     User?          @relation("CourrierValideur", fields: [valideurId], references: [id], onDelete: SetNull)
+  roleValideur String? // "Chef département", "Secrétariat général", "Recteur"
+  statut       StatutCourrier @default(EN_CIRCUIT)
+  paraphe      String? // hash paraphé à cette étape
+  parapheLe    DateTime?
+  commentaire  String?
+
+  @@index([courrierId, ordre])
+}

@@ -1,0 +1,35 @@
+// Schéma Prisma — configuration commune.
+//
+// Le reste du schéma est réparti par domaine : chaque fichier contient les
+// modèles et les énumérations d'un seul domaine. Les relations traversent
+// les fichiers sans différence.
+
+// UniPrésence — contrôle numérique de présence des enseignants en séance de cours
+// Remplace le registre papier du contrôleur pédagogique.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Objets SQL hors schéma Prisma
+//
+// Prisma ne sait pas représenter certains objets PostgreSQL. Ils sont posés
+// à la main par une migration, ne sont pas visibles dans `migrate diff` et
+// disparaîtraient d'un `migrate dev` ou d'un `migrate reset` mal appliqué. La
+// liste complète, avec la migration d'origine, est tenue dans
+// docs/decisions/donnees.md :
+//
+//  - "AnneeAcademique_active_key"        : index UNIQUE partiel
+//    (WHERE "active" = true) — 20261002233000_unique_active_annee
+//  - "TicketSupport_un_seul_inventaire"  : contrainte CHECK — 20261023100000
+//  - "DocumentDepot_recherche_trigger()"  : fonction + trigger tsvector
+//    — 20260815220000_bibliotheque_recherche
+//  - extensions "pg_trgm" et "btree_gin"   — 20260815220000_bibliotheque_recherche
+//
+// ---------------------------------------------------------------------------
