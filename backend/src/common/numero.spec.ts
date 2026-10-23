@@ -1,6 +1,8 @@
 import {
   SERIES_NUMERO,
   anneeNumero,
+  avecNumeroUnique,
+  estCollisionNumero,
   millesimeSerie,
   prefixeSerie,
   prochainNumero,
@@ -190,5 +192,85 @@ describe('année portée par les numéros', () => {
     expect(millesimeSerie(SERIES_NUMERO.TICKET_SUPPORT)).toBe('2026');
     expect(millesimeSerie(SERIES_NUMERO.RECLAMATION)).toBe('2026');
     expect(millesimeSerie(SERIES_NUMERO.BADGE_ACCES)).toBe('2026');
+  });
+});
+
+/** Collision d'unicité Prisma, comme la lève le client sur un doublon. */
+function violationUnique(colonne?: string): Error {
+  return Object.assign(new Error('Unique constraint failed'), {
+    code: 'P2002',
+    ...(colonne ? { meta: { target: [colonne] } } : {}),
+  });
+}
+
+describe('avecNumeroUnique — relance sur collision de numéro', () => {
+  it('crée du premier coup quand rien ne se heurte', async () => {
+    const creer = jest.fn().mockResolvedValue({ id: 'ligne-1' });
+
+    await expect(avecNumeroUnique(creer)).resolves.toEqual({ id: 'ligne-1' });
+    expect(creer).toHaveBeenCalledTimes(1);
+  });
+
+  it('relance sur une collision de numéro et renvoie la tentative qui aboutit', async () => {
+    const creer = jest
+      .fn()
+      .mockRejectedValueOnce(violationUnique('numero'))
+      .mockRejectedValueOnce(violationUnique('numero'))
+      .mockResolvedValue({ id: 'ligne-3' });
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'] })).resolves.toEqual({ id: 'ligne-3' });
+    expect(creer).toHaveBeenCalledTimes(3);
+  });
+
+  it('relance trois fois par défaut, puis échoue', async () => {
+    const creer = jest.fn().mockRejectedValue(violationUnique('numero'));
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'] })).rejects.toBeDefined();
+    expect(creer).toHaveBeenCalledTimes(3);
+  });
+
+  it('respecte le nombre de tentatives demandé', async () => {
+    const creer = jest.fn().mockRejectedValue(violationUnique('reference'));
+
+    await expect(avecNumeroUnique(creer, { tentatives: 10, colonnes: ['reference'] })).rejects.toBeDefined();
+    expect(creer).toHaveBeenCalledTimes(10);
+  });
+
+  it('relance sur une contrainte dont le nom n’est pas connu', async () => {
+    const creer = jest.fn().mockRejectedValueOnce(violationUnique()).mockResolvedValue({ id: 'ligne-2' });
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'] })).resolves.toEqual({ id: 'ligne-2' });
+    expect(creer).toHaveBeenCalledTimes(2);
+  });
+
+  it('ne relance pas une collision sur une autre colonne', async () => {
+    // Un e-mail déjà pris n'est pas une course sur le compteur : le vrai
+    // doublon doit remonter, pas être transformé en « numéro indisponible ».
+    const creer = jest.fn().mockRejectedValue(violationUnique('email'));
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'] })).rejects.toBeDefined();
+    expect(creer).toHaveBeenCalledTimes(1);
+  });
+
+  it('ne relance pas une erreur qui n’est pas une collision', async () => {
+    const erreur = new Error('base injoignable');
+    const creer = jest.fn().mockRejectedValue(erreur);
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'] })).rejects.toBe(erreur);
+    expect(creer).toHaveBeenCalledTimes(1);
+  });
+
+  it('lève l’erreur fournie quand toutes les tentatives échouent', async () => {
+    const creer = jest.fn().mockRejectedValue(violationUnique('numero'));
+    const erreur = new Error('numéro indisponible');
+
+    await expect(avecNumeroUnique(creer, { colonnes: ['numero'], erreur: () => erreur })).rejects.toBe(erreur);
+  });
+
+  it('reconnaît une collision de numéro', () => {
+    expect(estCollisionNumero(violationUnique('numero'), ['numero'])).toBe(true);
+    expect(estCollisionNumero(violationUnique('reference'), ['numero'])).toBe(false);
+    expect(estCollisionNumero(new Error('oups'), ['numero'])).toBe(false);
+    expect(estCollisionNumero(undefined, ['numero'])).toBe(false);
   });
 });
