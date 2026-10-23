@@ -21,7 +21,7 @@ describe('tri des listes génériques', () => {
     const s = service({ nom: 'asc' });
     s['delegate'].count.mockResolvedValue(1400);
 
-    const resultat = await s.findAll({ all: '1' });
+    const resultat = await s.lister({ all: '1' });
 
     expect(s['delegate'].findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -34,13 +34,13 @@ describe('tri des listes génériques', () => {
 
   it('plafonne aussi pageSize quand le service est appelé hors ValidationPipe', async () => {
     const s = service({ nom: 'asc' });
-    await s.findAll({ pageSize: 1_000_000 } as any);
+    await s.lister({ pageSize: 1_000_000 } as any);
     expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 1000 }));
   });
 
   it("accepte un champ déclaré dans l'ordre par défaut", async () => {
     const s = service({ nom: 'asc' });
-    await s.findAll({ sort: 'nom', order: 'desc' });
+    await s.lister({ sort: 'nom', order: 'desc' });
     expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { nom: 'desc' } }));
   });
 
@@ -48,27 +48,27 @@ describe('tri des listes génériques', () => {
     // Sans liste blanche, `?sort=bogus` produisait une erreur de validation
     // Prisma, remontée en 500 sans aucun message exploitable.
     const s = service({ nom: 'asc' });
-    await expect(s.findAll({ sort: 'inexistant' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(s.lister({ sort: 'inexistant' })).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('utilise les sortFields explicites quand le service en déclare', async () => {
     const s = service({ nom: 'asc' }, ['nom', 'capacite']);
-    await s.findAll({ sort: 'capacite' });
+    await s.lister({ sort: 'capacite' });
     expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { capacite: 'asc' } }));
   });
 
   it('retombe sur le tri par défaut quand aucun tri est demandé', async () => {
     const s = service({ nom: 'asc' });
-    await s.findAll({});
+    await s.lister({});
     expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { nom: 'asc' } }));
   });
 
   it('prend la première clé quand le tri par défaut en donne plusieurs', async () => {
     const s = service([{ date: 'desc' }, { heureDebut: 'asc' }]);
-    await s.findAll({ sort: 'date', order: 'desc' });
+    await s.lister({ sort: 'date', order: 'desc' });
     expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { date: 'desc' } }));
     // heureDebut n'est pas exposée : le tri est refusé plutôt que de laisser
     // Prisma renvoyer une erreur de validation.
-    return expect(s.findAll({ sort: 'heureDebut' })).rejects.toBeInstanceOf(BadRequestException);
+    return expect(s.lister({ sort: 'heureDebut' })).rejects.toBeInstanceOf(BadRequestException);
   });
 });
