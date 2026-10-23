@@ -30,6 +30,7 @@ import {
   TypeDemandeDocument,
   TypeAttestation,
   ModePaiement,
+  Role,
 } from '@prisma/client';
 import { AttestationsService } from '../attestations/attestations.service';
 import { randomUUID } from 'node:crypto';
@@ -70,6 +71,25 @@ export const DEMANDE_INCLUDE = {
   // en tire le lien vers la page publique de vérification.
   attestation: { select: { id: true, numero: true, statut: true } },
 } satisfies Prisma.DemandeDocumentInclude;
+
+/**
+ * Rôles qui lisent le registre des attestations (GET /attestations, :id) et y
+ * reçoivent `qrToken`, dont l'écran tire le lien ?ref=&k= de vérification.
+ * La demande de document expose le jeton à ces mêmes rôles, ni plus ni moins :
+ * l'étudiant voit le numéro, pas le jeton.
+ */
+const ROLES_LECTURE_ATTESTATION: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE];
+
+const DEMANDE_INCLUDE_LECTEUR_ATTESTATION = {
+  ...DEMANDE_INCLUDE,
+  attestation: { select: { id: true, numero: true, statut: true, qrToken: true } },
+} satisfies Prisma.DemandeDocumentInclude;
+
+export function includeDemandePour(user?: Pick<AuthUser, 'role'> | null): typeof DEMANDE_INCLUDE {
+  return user && ROLES_LECTURE_ATTESTATION.includes(user.role as Role)
+    ? DEMANDE_INCLUDE_LECTEUR_ATTESTATION
+    : DEMANDE_INCLUDE;
+}
 
 /**
  * Types de demande qui donnent lieu à une attestation vérifiable par QR.
@@ -159,7 +179,7 @@ export class DocumentsDemandeService extends CrudService {
     const [data, total] = await Promise.all([
       this.prisma.demandeDocument.findMany({
         where,
-        include: DEMANDE_INCLUDE,
+        include: includeDemandePour(user),
         orderBy: { creeLe: 'desc' },
         ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
@@ -199,7 +219,7 @@ export class DocumentsDemandeService extends CrudService {
         id,
         ...(!estStaff ? { etudiantId: user.etudiantId ?? '__aucun__' } : {}),
       },
-      include: DEMANDE_INCLUDE,
+      include: includeDemandePour(user),
     });
     if (!demande) {
       throw new NotFoundException(t('documents-demande.demande_introuvable'));
@@ -574,7 +594,7 @@ export class DocumentsDemandeService extends CrudService {
       const demandeApres = await tx.demandeDocument.update({
         where: { id },
         data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
-        include: DEMANDE_INCLUDE,
+        include: includeDemandePour(user),
       });
       await tx.auditLog.create({
         data: {
@@ -609,7 +629,7 @@ export class DocumentsDemandeService extends CrudService {
       const apres = await tx.demandeDocument.update({
         where: { id },
         data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
-        include: DEMANDE_INCLUDE,
+        include: includeDemandePour(user),
       });
       await tx.auditLog.create({
         data: {
@@ -716,7 +736,7 @@ export class DocumentsDemandeService extends CrudService {
               traiteParId: user.id,
               ...(attestationId && attestationId !== avant.attestationId ? { attestationId } : {}),
             },
-            include: DEMANDE_INCLUDE,
+            include: includeDemandePour(user),
           });
           await tx.auditLog.create({
             data: {
@@ -792,7 +812,7 @@ export class DocumentsDemandeService extends CrudService {
       const apres = await tx.demandeDocument.update({
         where: { id },
         data,
-        include: DEMANDE_INCLUDE,
+        include: includeDemandePour(user),
       });
       await tx.auditLog.create({
         data: {
@@ -836,7 +856,7 @@ export class DocumentsDemandeService extends CrudService {
       const apres = await tx.demandeDocument.update({
         where: { id },
         data,
-        include: DEMANDE_INCLUDE,
+        include: includeDemandePour(user),
       });
       await tx.auditLog.create({
         data: {

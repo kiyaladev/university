@@ -12,5 +12,6 @@
   "controleurAffectationRequired": "Choisissez un contrôleur ou envoyez null pour retirer l’affectation.",
   "controleurAffectationInvalid": "Le contrôleur est introuvable, inactif ou n’a pas le rôle requis.",
   "tourneePeriodInvalid": "La date de fin doit être égale ou postérieure à la date de début.",
-  "tourneePeriodTooLong": "La période d’affectation ne peut pas dépasser 400 jours."
+  "tourneePeriodTooLong": "La période d’affectation ne peut pas dépasser 400 jours.",
+  "seance_pointee_non_supprimable": "Cette séance porte un contrôle ou un justificatif : c’est une preuve de service, elle ne se supprime pas. Annulez-la plutôt."
 }
