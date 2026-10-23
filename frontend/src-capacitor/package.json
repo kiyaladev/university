@@ -1,8 +1,8 @@
 {
-  "name": "unipresence-frontend",
+  "name": "university-capacitor",
   "version": "1.0.0",
-  "description": "UniPrésence — contrôle numérique de présence des enseignants",
-  "author": "UniPrésence",
+  "description": "University — contrôle numérique de présence des enseignants",
+  "author": "University",
   "private": true,
   "dependencies": {
     "@capacitor/android": "^8.5.0",

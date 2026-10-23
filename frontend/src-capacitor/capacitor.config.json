@@ -1,6 +1,6 @@
 {
-  "appId": "gn.unipresence.controle",
-  "appName": "UniPrésence",
+  "appId": "gn.university.controle",
+  "appName": "University",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

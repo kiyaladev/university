@@ -1,4 +1,4 @@
-package gn.unipresence.controle;
+package gn.university.controle;
 
 /**
  * Ce que l'application attend d'un lecteur d'empreintes, quel qu'il soit.

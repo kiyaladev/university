@@ -1,4 +1,4 @@
-package gn.unipresence.controle;
+package gn.university.controle;
 
 import android.content.Context;
 import android.hardware.usb.UsbDevice;
@@ -27,7 +27,7 @@ import java.util.Map;
  */
 public class LecteurMantra implements LecteurEmpreinte {
 
-    private static final String TAG = "UniPresence.Mantra";
+    private static final String TAG = "University.Mantra";
     private static final String CLASSE_SDK = "com.mantra.mfs100.MFS100";
 
     /** Identifiants USB des lecteurs Mantra (vendor id Mantra Softech). */
