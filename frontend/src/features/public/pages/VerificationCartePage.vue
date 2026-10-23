@@ -122,9 +122,12 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
+import {
+  verificationService,
+  type ResultatVerificationCarte,
+} from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur la carte
@@ -133,17 +136,6 @@ import LecteurQr from '@/shared/components/LecteurQr.vue';
  * extrait les paramètres « carte » et « k », exactement comme le ferait le
  * navigateur pour l'URL complète.
  */
-interface ResultatVerification {
-  valide: boolean;
-  raison?: string;
-  carte?: {
-    identifiant?: string;
-    etudiant?: string | null;
-    dateEmission?: string | null;
-    dateValidite?: string | null;
-  };
-}
-
 const route = useRoute();
 const { t } = useI18n();
 /** Noms des paramètres d'URL lus dans le QR : identifiants techniques, non traduits. */
@@ -151,7 +143,7 @@ const PARAMETRES_QR = { carte: 'carte', k: 'k' } as const;
 
 const identifiant = ref('');
 const codeQr = ref('');
-const resultat = ref<ResultatVerification | null>(null);
+const resultat = ref<ResultatVerificationCarte | null>(null);
 const verificationEnCours = ref(false);
 
 // Ouverture directe depuis le QR : les paramètres sont déjà dans l'URL.
@@ -187,11 +179,7 @@ async function verifier() {
   resultat.value = null;
   try {
     // Silencieux : le verdict (y compris l'échec) s'affiche dans le panneau de résultat.
-    const { data } = await api.get('/cartes-etudiantes/verifier', {
-      silencieux: true,
-      params: { carte: identifiant.value.trim(), k: codeQr.value.trim() },
-    });
-    resultat.value = data;
+    resultat.value = await verificationService.carte(identifiant.value, codeQr.value);
   } catch {
     resultat.value = {
       valide: false,

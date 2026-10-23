@@ -241,18 +241,17 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
  */
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { bibliothequeService, normaliserDocuments } from '@/shared/services/bibliotheque';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
 import type { Departement, DocumentDepot } from '@/types';
-
-interface OptionSimple {
-  label: string;
-  value: string;
-}
+import {
+  bibliothequePubliqueService,
+  optionsDepartements as departementsEnOptions,
+  type OptionSimple,
+} from '@/features/public/services/bibliotheque-publique';
 
 const { t } = useI18n();
 
@@ -311,9 +310,7 @@ function reinitialiser() {
 }
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([v, l]) => ({ value: v, label: l }));
-const optionsDepartements = computed<OptionSimple[]>(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed<OptionSimple[]>(() => departementsEnOptions(departements.value));
 
 const colonnesTableau = computed(() => [
   { name: 'titre', label: t('bibliothequePublique.table.columns.document'), field: 'titre', align: 'left' as const },
@@ -370,10 +367,10 @@ async function telecharger(doc: DocumentDepot) {
 onMounted(async () => {
   chargementDepartements.value = true;
   try {
-    const { data } = await api.get('/departements/public', { silencieux: true });
-    departements.value = Array.isArray(data) ? data : (data.data ?? []);
+    departements.value = await bibliothequePubliqueService.departements();
   } catch {
-    /* silencieux : le filtre par département reste simplement vide */
+    // Silencieux : le filtre par département reste simplement vide.
+    departements.value = [];
   } finally {
     chargementDepartements.value = false;
   }

@@ -170,8 +170,8 @@ import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
+import { portailService } from '@/features/public/services/portail';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -207,7 +207,7 @@ async function demanderCode() {
   try {
     // La réponse est volontairement identique pour un numéro connu ou non :
     // le portail ne révèle jamais quels numéros figurent au registre.
-    await api.post('/portail/otp', { telephone: telephone.value }, { silencieux: true });
+    await portailService.demanderCode({ telephone: telephone.value });
     erreur.value = '';
     code.value = '';
     codeDemande.value = true;

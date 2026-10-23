@@ -128,10 +128,13 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
+import {
+  verificationService,
+  type ResultatVerificationAttestation,
+} from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur le document
@@ -140,21 +143,6 @@ import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
  * extrait les paramètres « ref » et « k », exactement comme le ferait le
  * navigateur pour l'URL complète.
  */
-interface ResultatVerification {
-  valide: boolean;
-  raison?: string;
-  verificationId?: string;
-  attestation?: {
-    numero?: string;
-    type?: string;
-    motif?: string | null;
-    emiseLe?: string;
-    etudiant?: { nom?: string; prenom?: string; matricule?: string } | null;
-    annee?: string | null;
-    promotion?: string | null;
-  };
-}
-
 const route = useRoute();
 const { t } = useI18n();
 /** Noms des paramètres d'URL lus dans le QR : identifiants techniques, non traduits. */
@@ -162,7 +150,7 @@ const PARAMETRES_QR = { ref: 'ref', k: 'k' } as const;
 
 const numero = ref('');
 const codeQr = ref('');
-const resultat = ref<ResultatVerification | null>(null);
+const resultat = ref<ResultatVerificationAttestation | null>(null);
 const verificationEnCours = ref(false);
 
 const detail = computed(() => resultat.value?.attestation ?? null);
@@ -200,11 +188,7 @@ async function verifier() {
   resultat.value = null;
   try {
     // Silencieux : le verdict (y compris l'échec) s'affiche dans le panneau de résultat.
-    const { data } = await api.get('/attestations/verifier', {
-      silencieux: true,
-      params: { ref: numero.value.trim(), k: codeQr.value.trim() },
-    });
-    resultat.value = data;
+    resultat.value = await verificationService.attestation(numero.value, codeQr.value);
   } catch {
     resultat.value = {
       valide: false,
