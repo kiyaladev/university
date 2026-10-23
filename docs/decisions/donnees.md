@@ -19,13 +19,13 @@ Il fait suite à `docs/decisions/montants.md` (types de montants) et
 cinq index GIN sur `DocumentDepot` : `recherche` (tsvector), `motsClefs`,
 `contenuTexte`, `titre` et `resume` (trigrammes). La migration
 `20260815230000_modules_universite_avancee` les a supprimés (lignes 56-68) et
-ne les a jamais recréés. Or `backend/src/modules/bibliotheque/recherche.service.ts`
+ne les a jamais recréés. Or `backend/src/modules/campus/bibliotheque/recherche.service.ts`
 fait `recherche @@ to_tsquery` : la recherche plein texte s'appuyait donc sur
 un balayage séquentiel de la table, et les similarités par trigrammes n'étaient
 plus indexées du tout.
 
 **Décision.** Les cinq index sont recréés par la migration
-`20261024020000_index_recherche` **et déclarés dans `schema.prisma`**, avec
+`20261024020000_index_recherche` **et déclarés dans `backend/prisma/schema/recherche.prisma`**, avec
 `map:` pour figer leurs noms d'origine. Prisma sait exprimer ces index :
 
 ```prisma
@@ -128,7 +128,7 @@ deux** champs : `creeLe` y est une date métier (création du jury, établisseme
 de la feuille de paie) distincte de `createdAt`, date technique d'écriture de
 la ligne. Les supprimer broke l'historique métier ; les harmoniser ferait
 perdre la distinction. **Rien n'est modifié** pour ces deux modèles : un
-commentaire le signale dans `schema.prisma`.
+commentaire le signale dans `backend/prisma/schema/scolarite.prisma` et `backend/prisma/schema/finances.prisma`.
 
 ### 1.5 Le seed vide les tables dans l'ordre des règles `onDelete`
 
@@ -181,7 +181,7 @@ Les migrations déjà présentes (`20261022120000_index_cles_etrangeres`,
 ## 3. Objets SQL hors schéma Prisma
 
 Prisma ne sait pas représenter certains objets PostgreSQL. Ils sont posés à la
-main par une migration, **n'apparaissent pas dans `schema.prisma`**, et
+main par une migration, **n'apparaissent pas dans `backend/prisma/schema/`**, et
 `migrate diff` ne les voit pas. La liste complète, avec la migration
 d'origine :
 
@@ -197,7 +197,7 @@ triggers et des extensions — que le moteur de migration ignore — Prisma
 **gère** les index : un index présent en base mais absent du schéma est
 proposé à la suppression par `migrate diff`. `AnneeAcademique_active_key` est
 donc susceptible de disparaître lors d'un prochain `migrate dev`. Il est
-signalé par un commentaire dans `schema.prisma` (modèle `AnneeAcademique` et
+signalé par un commentaire dans `backend/prisma/schema/recherche.prisma` (modèle `AnneeAcademique` et
 en-tête du fichier) ; après un `migrate dev`, vérifier sa présence et le
 recréer avec l'expression ci-dessus.
 
@@ -327,7 +327,7 @@ DROP INDEX IF EXISTS "DocumentDepot_resume_trgm";
 
 La recherche plein texte redevient un balayage séquentiel : la fonctionnalité
 reste correcte, seule la performance se dégrade. Il faut **aussivement**
-revenir sur `schema.prisma` (retirer les cinq `@@index`), sinon le prochain
+revenir sur `backend/prisma/schema/recherche.prisma` (retirer les cinq `@@index`), sinon le prochain
 `migrate dev` les recréera.
 
 ### 6.2 Les index de clés étrangères
@@ -378,3 +378,60 @@ Le seed est idempotent : on peut le rejouer tel quel après un retour arrière.
 Si l'ordre de suppression doit être revu, se rappeler que `Evaluation.matiereId`
 en RESTRICT impose de vider `Note` puis `Evaluation` **avant** `Matiere`, et que
 `Frais` doit être vidée **avant** `Promotion`.
+
+---
+
+## 7. Découpage du schéma en fichiers par domaine
+
+**Constat.** `backend/prisma/schema.prisma` faisait 2 264 lignes : 65 modèles
+et 55 énumérations sans aucune séparation entre le socle technique, la
+présence, la scolarité, le campus et les finances. Deux développeurs ne
+pouvaient pas travailler sur deux domaines sans se marcher dessus, et le fichier
+ne donnait aucune indication de la frontière entre les domaines métier.
+
+**Décision.** Le schéma est découpé en un fichier par domaine, dans
+`backend/prisma/schema/` :
+
+| Fichier | Contenu |
+| --- | --- |
+| `base.prisma` | générateur, source de données, note sur les objets SQL hors Prisma |
+| `identite.prisma` | `User`, `AuditLog`, `Parametre`, `Role` |
+| `referentiel.prisma` | `AnneeAcademique`, `Departement`, `Filiere`, `Promotion`, `Salle`, `Enseignant`, `Matiere`, `Affectation` |
+| `presence.prisma` | `Creneau`, `Seance`, `Controle`, `Justificatif`, `Appareil`, `Tirage` |
+| `scolarite.prisma` | `Etudiant`, `Inscription`, `Frais`, `Evaluation`, `Note`, `Deliberation`, `Examen`, `Formation`, `TravailEncadre`, `Soutenance` |
+| `documents.prisma` | `Attestation`, `VerificationAttestation`, `DemandeDocument`, `CarteEtudiante`, `BadgeAcces` |
+| `finances.prisma` | `Paiement`, `FeuillePaie`, `LignePaie`, `RecetteExterne` |
+| `campus.prisma` | `Residence`, `Chambre`, `ReservationSalle`, `TicketSupport`, `EquipementPatrimoine`, `Election`, `Reclamation` |
+| `recherche.prisma` | `DocumentDepot`, `SuspicionPlagiat`, `CoursVOD`, `VueVOD` |
+| `vie-etudiante.prisma` | `Notification`, `PortefeuilleResto`, `Recharge`, `ConsommationResto` |
+| `courrier.prisma` | `Courrier`, `CircuitCourrier` |
+| `pilotage.prisma` | `StatistiqueMesrs` |
+
+Chaque énumération suit le modèle qui l’utilise. Les commentaires `///` sont
+conservés, ainsi que les séparateurs de section d'origine lorsque la section
+entière reste dans le même fichier.
+
+**Contraintes de Prisma 6.19.** Le chemin du dossier de schéma est déclaré
+dans `backend/package.json` (`"prisma": { "schema": "prisma/schema" }`), et le
+dossier des migrations doit se trouver **à côté du fichier qui porte la
+source de données** : les migrations sont donc passées de
+`backend/prisma/migrations/` à `backend/prisma/schema/migrations/`, sans
+renommer aucune migration. `prisma migrate deploy` et `prisma generate`
+continuent de fonctionner depuis `backend/` sans argument.
+
+**Preuve d'équivalence.** Le découpage est purement textuel : aucun modèle,
+aucune énumération, aucune relation n'a été modifié.
+
+```bash
+prisma migrate diff \
+  --from-schema-datamodel <ancien schema.prisma> \
+  --to-schema-datamodel prisma/schema --script
+# → "-- This is an empty migration."
+```
+
+**Ce qui n'a pas changé.** Aucune migration n'a été ajoutée, aucune donnée
+n'est touchée, `backend/prisma/seed.ts` reste à sa place et la commande
+`bunx prisma migrate deploy` reste identique pour l'exploitation. Le seul
+fichier généré impacté est `frontend/src/types/generated/enums.ts`, dont
+l'ordre des énumérations suit désormais les fichiers de domaine ; le contenu
+des énumérations est identique.

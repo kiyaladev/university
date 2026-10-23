@@ -53,7 +53,7 @@ async function inspecter() {
   }
   const appliquees = await prisma.$queryRawUnsafe('SELECT migration_name FROM "_prisma_migrations" WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL');
   const noms = new Set(appliquees.map(m => m.migration_name));
-  const attendues = fs.readdirSync(path.join(backend, 'prisma/migrations'), { withFileTypes: true }).filter(f => f.isDirectory()).map(f => f.name);
+  const attendues = fs.readdirSync(path.join(backend, 'prisma/schema/migrations'), { withFileTypes: true }).filter(f => f.isDirectory()).map(f => f.name);
   const enAttente = attendues.filter(n => !noms.has(n));
   // Le nom de la variable suit le produit ; l'ancien nom reste accepté.
   const destination = config.UNIVERSITY_BACKUP_REMOTE || config.UNIPRESENCE_BACKUP_REMOTE || '';

@@ -9,7 +9,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "build": "nest build && cp -r src/i18n dist/i18n",
+    "build": "nest build",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
@@ -68,6 +68,7 @@
     "testEnvironment": "node"
   },
   "prisma": {
+    "schema": "prisma/schema",
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   },
   "dependencies": {

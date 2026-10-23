@@ -1,0 +1,187 @@
+// Domaine « recherche » : dépôt institutionnel, plagiat et ressources VOD.
+
+enum TypeDocument {
+  MEMOIRE
+  THESE
+  ARTICLE
+  RAPPORT
+  SUPPORT_COURS
+  ARCHIVE
+  AUTRE
+}
+
+// ---------------------------------------------------------------------------
+// 2. Dépôt institutionnel & bibliothèque numérique (subventions AUF/UNESCO)
+// ---------------------------------------------------------------------------
+
+model DocumentDepot {
+  id           String       @id @default(uuid())
+  titre        String
+  type         TypeDocument @default(AUTRE)
+  /// Texte libre : "Nom1 ; Nom2"
+  auteurs      String?
+  anneeEdition Int?
+  resume       String?
+
+  // ---------------------------------------------------------------- plein texte
+  /// Mots-clés saisis manuellement par le déposant (en plus de l'extraction
+  /// automatique et du titre).
+  motsClefs     String[]                 @default([])
+  /// Texte intégral extrait du PDF (recherche plein texte PostgreSQL).
+  contenuTexte  String?
+  /// Vecteur de recherche tsvector pour PostgreSQL FTS (français).
+  /// Mis à jour par le trigger `DocumentDepot_recherche_update` (migration
+  /// 20260815220000_bibliotheque_recherche) ; les index qui l'exploitent sont
+  /// déclarés en bas de modèle et recréés par la migration
+  /// 20261024020000_index_recherche.
+  recherche     Unsupported("tsvector")?
+  /// Hash SHA-256 du fichier pour la détection de doublons (anti-plagiat basique).
+  empreinteHash String?
+  /// Index de trigrammes pour la recherche full-text sur le résumé/titre.
+  /// Note : le tri-gram est porté par l'index SQL créé en migration.
+
+  fichier         String? // data-url ou chemin ; document PDF
+  typeMime        String?
+  tailleKo        Int?
+  public          Boolean      @default(true)
+  departementId   String?
+  departement     Departement? @relation(fields: [departementId], references: [id], onDelete: SetNull)
+  enseignantId    String?
+  enseignant      Enseignant?  @relation(fields: [enseignantId], references: [id], onDelete: SetNull)
+  etudiantId      String?
+  etudiant        Etudiant?    @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  deposeParId     String?
+  deposePar       User?        @relation("DocumentDeposePar", fields: [deposeParId], references: [id], onDelete: SetNull)
+  telechargements Int          @default(0)
+  /// Pourcentage de similarité avec d'autres documents du dépôt (0-100). Le
+  /// service de détection recalcule périodiquement (cron).
+  indicePlagiat   Int?         @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  suspicionsA SuspicionPlagiat[] @relation("SuspicionA")
+  suspicionsB SuspicionPlagiat[] @relation("SuspicionB")
+
+  @@index([type])
+  @@index([public])
+  @@index([empreinteHash])
+  @@index([departementId])
+  // Recherche de la bibliothèque : `recherche @@ to_tsquery` (index GIN
+  // plein texte) et similarités par trigrammes sur le titre, le résumé et le
+  // texte extrait. Ces index avait été supprimés par la migration
+  // 20260815230000_modules_universite_avancee sans être recréés : la
+  // recherche plein texte ne s'appuyait donc sur aucun index. Ils sont
+  // déclarés ici pour que `migrate dev` ne les supprime plus, et recréés
+  // par la migration 20261024020000_index_recherche. Le nom d'index est
+  // figé (`map:`) sur celui créé à l'origine par la migration
+  // 20260815220000_bibliotheque_recherche.
+  @@index([recherche], type: Gin)
+  @@index([motsClefs], type: Gin)
+  @@index([contenuTexte(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_contenuTexte_trgm")
+  @@index([titre(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_titre_trgm")
+  @@index([resume(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_resume_trgm")
+}
+
+/// Suspicion de doublon : pair de documents dont la similarité dépasse un
+/// seuil. L'admin peut « acquitter » (marquer comme légitime) ou « confirmer »
+/// (suppression du doublon).
+model SuspicionPlagiat {
+  id            String                 @id @default(uuid())
+  documentAId   String
+  documentA     DocumentDepot          @relation("SuspicionA", fields: [documentAId], references: [id], onDelete: Cascade)
+  documentBId   String
+  documentB     DocumentDepot          @relation("SuspicionB", fields: [documentBId], references: [id], onDelete: Cascade)
+  /// Score de similarité 0-100 (au-dessus de 80 % = suspicion forte).
+  score         Float
+  statut        StatutSuspicionPlagiat @default(EN_ATTENTE)
+  detecteLe     DateTime               @default(now())
+  acquitteParId String?
+  acquittePar   User?                  @relation("SuspicionAcquitteePar", fields: [acquitteParId], references: [id], onDelete: SetNull)
+  acquitteLe    DateTime?
+  commentaire   String?
+
+  @@index([statut])
+  @@index([score])
+  @@index([documentAId, documentBId])
+}
+
+enum StatutSuspicionPlagiat {
+  EN_ATTENTE
+  ACQUITTE
+  CONFIRME
+}
+
+// ------------------ Plateforme VOD des Cours Magistraux -----------
+
+enum TypeRessourceVOD {
+  AUDIO
+  VIDEO
+  NOTES
+  TRANSCRIPTION
+}
+
+enum StatutVOD {
+  BROUILLON
+  EN_LIGNE
+  HORS_LIGNE
+  ARCHIVE
+}
+
+model CoursVOD {
+  id              String           @id @default(uuid())
+  titre           String
+  description     String?
+  matiereId       String?
+  matiere         Matiere?         @relation(fields: [matiereId], references: [id], onDelete: SetNull)
+  // Séance ratée que cet enregistrement remplace
+  seanceId        String?
+  seance          Seance?          @relation(fields: [seanceId], references: [id], onDelete: SetNull)
+  enseignantId    String?
+  enseignant      Enseignant?      @relation(fields: [enseignantId], references: [id], onDelete: SetNull)
+  type            TypeRessourceVOD @default(VIDEO)
+  // URL du fichier (Mux, S3, CDN, ou chemin local)
+  url             String
+  thumbnailUrl    String?
+  dureeSecondes   Int?
+  tailleKo        Int?
+  // Transcription automatique (recherche full-text dédiée à la VOD)
+  transcription   String?
+  // Statistiques de visionnage
+  nbVues          Int              @default(0)
+  nbComplets      Int              @default(0)
+  // Accès (public, inscription, payant)
+  public          Boolean          @default(true)
+  inscriptionId   String?
+  inscription     Inscription?     @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  // Métadonnées
+  statut          StatutVOD        @default(BROUILLON)
+  creeParId       String?
+  creePar         User?            @relation("VodCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  dateMiseEnLigne DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  vues VueVOD[]
+
+  @@index([type, statut])
+  @@index([matiereId])
+  @@index([enseignantId])
+  @@index([inscriptionId])
+}
+
+model VueVOD {
+  id               String    @id @default(uuid())
+  vodId            String
+  vod              CoursVOD  @relation(fields: [vodId], references: [id], onDelete: Cascade)
+  etudiantId       String?
+  etudiant         Etudiant? @relation(fields: [etudiantId], references: [id], onDelete: SetNull)
+  // Position de lecture (pour reprendre)
+  positionSecondes Int       @default(0)
+  termine          Boolean   @default(false)
+  dureeSecondes    Int       @default(0)
+  ipAppareil       String?
+  dateDebut        DateTime  @default(now())
+  dateFin          DateTime?
+
+  @@index([vodId, etudiantId])
+}

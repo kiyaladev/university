@@ -9,11 +9,10 @@
  *   bun scripts/generer-types-enums.ts           # écrit le fichier généré
  *   bun scripts/generer-types-enums.ts --check   # échoue si le fichier n'est pas à jour
  *
- * Source de vérité : le schéma Prisma (`backend/prisma/schema.prisma`, ou
- * `backend/prisma/schema/*.prisma` quand le schéma est découpé en plusieurs
- * fichiers). Le client Prisma généré sert uniquement de recoupement : il ne
- * conserve pas les commentaires `///` et peut être périmé tant que
- * `prisma generate` n'a pas été relancé.
+ * Source de vérité : le schéma Prisma, découpé par domaine dans
+ * `backend/prisma/schema/*.prisma`. Le client Prisma généré sert uniquement de
+ * recoupement : il ne conserve pas les commentaires `///` et peut être périmé
+ * tant que `prisma generate` n'a pas été relancé.
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -56,6 +55,11 @@ function fichiersSchemas(): string[] {
     throw new Error(`Schéma Prisma introuvable : ni ${SCHEMA_SIMPLE} ni ${DOSSIER_SCHEMA}/*.prisma n'existent.`);
   }
   return [SCHEMA_SIMPLE];
+}
+
+/** La source affichée dans l'en-tête du fichier généré. */
+function sourceAffichee(): string {
+  return existsSync(DOSSIER_SCHEMA) ? 'backend/prisma/schema/*.prisma' : 'backend/prisma/schema.prisma';
 }
 
 /** Retire la balise `///` d'une ligne de documentation et son espace de début. */
@@ -180,12 +184,12 @@ function blocDoc(texte: string | undefined, indent = ''): string[] {
 }
 
 /** Rend le contenu du fichier TypeScript généré. */
-function rendre(enums: EnumPrisma[], sources: string[]): string {
+function rendre(enums: EnumPrisma[], source: string): string {
   const entete = [
     '/**',
     ' * FICHIER GÉNÉRÉ — NE PAS MODIFIER À LA MAIN.',
     ' *',
-    ` * Source : ${sources.join(', ')} (enums Prisma)`,
+    ` * Source : ${source} (enums Prisma)`,
     ' * Régénération : bun run types:generer',
     ' * Vérification : bun run types:verifier',
     ' *',
@@ -223,13 +227,13 @@ async function principal(): Promise<void> {
   const enums = lireEnums();
   await recouperAvecClientPrisma(enums);
 
-  const sources = fichiersSchemas().map((f) => f.slice(RACINE.length + 1));
-  const contenu = rendre(enums, sources);
+  const source = sourceAffichee();
+  const contenu = rendre(enums, source);
 
   if (verification) {
     const actuel = existsSync(FICHIER_SORTIE) ? readFileSync(FICHIER_SORTIE, 'utf8') : null;
     if (actuel === contenu) {
-      console.log(`✔ ${enums.length} enums à jour (${sources.join(', ')}).`);
+      console.log(`✔ ${enums.length} enums à jour (${source}).`);
       return;
     }
     console.error(
@@ -243,7 +247,7 @@ async function principal(): Promise<void> {
   mkdirSync(dirname(FICHIER_SORTIE), { recursive: true });
   writeFileSync(FICHIER_SORTIE, contenu, 'utf8');
   console.log(
-    `✔ ${enums.length} enums écrits dans ${FICHIER_SORTIE.slice(RACINE.length + 1)} (${sources.join(', ')}).`,
+    `✔ ${enums.length} enums écrits dans ${FICHIER_SORTIE.slice(RACINE.length + 1)} (${source}).`,
   );
 }
 

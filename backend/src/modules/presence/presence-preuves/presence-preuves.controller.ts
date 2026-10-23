@@ -6,9 +6,9 @@ import { PresencePreuvesService } from './presence-preuves.service';
 import { DefinirCodePinDto, EnrolerAppareilDto, EnrolerEmpreinteDto } from './presence-preuves.dto';
 
 /**
- * Moyens d'attestation d'un enseignant. Ils sont administrés par
- * l'établissement : l'enseignant ne définit ni son code, ni son empreinte, et
- * n'atteste jamais depuis son propre appareil.
+ * Moyens d'attestation d'un enseignant (module « presence-preuves »). Ils sont
+ * administrés par l'établissement : l'enseignant ne définit ni son code, ni
+ * son empreinte, et n'atteste jamais depuis son propre appareil.
  */
 const GESTION = [Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.DIRECTION] as const;
 
