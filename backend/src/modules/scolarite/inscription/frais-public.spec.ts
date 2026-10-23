@@ -26,7 +26,7 @@ describe('lecture publique des tarifs d’inscription', () => {
     expect(count).toHaveBeenCalledWith({
       where: { AND: [{ annee: { cloturee: false } }, { anneeId: 'annee-1', promotionId: 'promotion-1' }] },
     });
-    expect(Reflect.getMetadata(IS_PUBLIC_KEY, FraisController.prototype.liste)).toBe(true);
+    expect(Reflect.getMetadata(IS_PUBLIC_KEY, FraisController.prototype.lister)).toBe(true);
   });
 
   it('respecte all=true pour le sélecteur de tarif administratif', async () => {

@@ -40,7 +40,7 @@ export class EvaluationsController {
 
   @Get(':id')
   @DocumentScope('evaluation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
-  detail(@Param('id') id: string) {
+  lire(@Param('id') id: string) {
     return this.service.findEvaluation(id);
   }
 
@@ -124,7 +124,7 @@ export class DeliberationsController {
   @Roles(...NOTES)
   @Get(':id')
   @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
-  detail(@Param('id') id: string) {
+  lire(@Param('id') id: string) {
     return this.service.detailDeliberation(id);
   }
 

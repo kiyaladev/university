@@ -15,8 +15,8 @@ export class ExamensController {
   constructor(private readonly service: ExamensService) {}
 
   @Get()
-  liste(@Query() query: ExamenQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: ExamenQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
@@ -26,7 +26,7 @@ export class ExamensController {
   }
 
   @Get(':id')
-  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.trouver(id, user);
   }
 

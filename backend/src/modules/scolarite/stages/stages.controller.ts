@@ -33,8 +33,8 @@ export class TravauxEncadresController {
   ) {}
 
   @Get()
-  liste(@Query() query: TravailQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: TravailQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Fiche A4 : ouverte dans un nouvel onglet, le jeton passe par l'URL. */
@@ -47,8 +47,8 @@ export class TravauxEncadresController {
   }
 
   @Get(':id')
-  detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.detail(id, user);
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.lire(id, user);
   }
 
   /** Création : la scolarité saisit pour n'importe quel étudiant ; l'étudiant

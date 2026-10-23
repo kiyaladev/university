@@ -257,7 +257,7 @@ describe('audit des fiches étudiant', () => {
     const prisma: any = { $transaction: jest.fn((work) => work(tx)) };
     const service = new EtudiantsService(prisma);
 
-    await service.remove('etu-1', { id: 'agent-1' } as any);
+    await service.supprimer('etu-1', { id: 'agent-1' } as any);
 
     const details = JSON.parse(tx.auditLog.create.mock.calls[0][0].data.details);
     expect(details.avant.actif).toBe(true);

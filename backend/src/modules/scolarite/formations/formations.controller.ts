@@ -67,8 +67,8 @@ export class FormationsController {
 
   @Roles(...GESTIONNAIRES)
   @Get()
-  liste(@Query() query: FormationQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: FormationQueryDto) {
+    return this.service.lister(query);
   }
 
   /**

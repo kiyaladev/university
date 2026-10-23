@@ -19,19 +19,19 @@ describe('Périmètre de lecture des travaux encadrés', () => {
 
   it('refuse la liste aux rôles sans périmètre de consultation', async () => {
     const controleur = { id: 'u-1', role: Role.CONTROLEUR } as AuthUser;
-    await expect(service.liste({} as any, controleur)).rejects.toThrow(ForbiddenException);
+    await expect(service.lister({} as any, controleur)).rejects.toThrow(ForbiddenException);
     expect(db.travailEncadre.findMany).not.toHaveBeenCalled();
   });
 
   it('limite la liste enseignant aux travaux qu’il encadre', async () => {
     const enseignant = { id: 'u-prof', role: Role.ENSEIGNANT, enseignantId: 'prof-1' } as AuthUser;
-    await service.liste({} as any, enseignant);
+    await service.lister({} as any, enseignant);
     expect(db.travailEncadre.findMany.mock.calls[0][0].where.encadrantId).toBe('prof-1');
   });
 
   it('projette les seules identités utiles, sans coordonnées ni champs biométriques', async () => {
     const admin = { id: 'admin', role: Role.ADMIN } as AuthUser;
-    await service.liste({} as any, admin);
+    await service.lister({} as any, admin);
     const include = db.travailEncadre.findMany.mock.calls[0][0].include;
     expect(include.etudiant.select).toEqual({ id: true, matricule: true, nom: true, prenom: true });
     expect(include.encadrant.select).toEqual({ id: true, nom: true, prenom: true });
@@ -49,7 +49,7 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     db.travailEncadre.findFirst.mockResolvedValue(travail);
     const etudiant = { id: 'user-etu', role: Role.ETUDIANT, etudiantId: 'etudiant-1' } as AuthUser;
 
-    await expect(service.detail('travail-1', etudiant)).resolves.toEqual(travail);
+    await expect(service.lire('travail-1', etudiant)).resolves.toEqual(travail);
     expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'travail-1', etudiantId: 'etudiant-1' },
@@ -61,7 +61,7 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     db.travailEncadre.findFirst.mockResolvedValue(null);
     const etudiant = { id: 'user-etu', role: Role.ETUDIANT, etudiantId: 'etudiant-1' } as AuthUser;
 
-    await expect(service.detail('travail-2', etudiant)).rejects.toThrow(NotFoundException);
+    await expect(service.lire('travail-2', etudiant)).rejects.toThrow(NotFoundException);
     expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'travail-2', etudiantId: 'etudiant-1' },
@@ -73,7 +73,7 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     db.travailEncadre.findFirst.mockResolvedValue({ id: 'travail-1', encadrantId: 'prof-1' });
     const enseignant = { id: 'user-prof', role: Role.ENSEIGNANT, enseignantId: 'prof-1' } as AuthUser;
 
-    await service.detail('travail-1', enseignant);
+    await service.lire('travail-1', enseignant);
     expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: 'travail-1', encadrantId: 'prof-1' },

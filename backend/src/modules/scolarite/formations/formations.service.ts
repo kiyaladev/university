@@ -329,7 +329,7 @@ export class FormationsService {
     };
   }
 
-  async liste(query: FormationQueryDto): Promise<Paginated<any>> {
+  async lister(query: FormationQueryDto): Promise<Paginated<any>> {
     const pagination = paginer(query);
     const where: Prisma.FormationWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),

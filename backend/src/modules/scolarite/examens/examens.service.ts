@@ -71,7 +71,7 @@ export class ExamensService {
 
   // ------------------------------------------------------- lecture
 
-  async liste(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async lister(query: ExamenQueryDto, user: AuthUser): Promise<Paginated<any>> {
     const pagination = paginer(query);
 
     const where: Prisma.ExamenWhereInput = {
