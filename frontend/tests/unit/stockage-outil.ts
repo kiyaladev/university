@@ -37,6 +37,10 @@ export function creerStockageFaux() {
 /**
  * IndexedDB minimal : le service y conserve la clé AES-GCM du compte, avec la
  * seule exigence d'`extractable: false` — la clé n'est jamais lisible.
+ *
+ * La fin d'une transaction est signalée par une micro-tâche, jamais par un
+ * minuteur : le faux ne doit pas introduire de délai réel, sans quoi les
+ * tests qui l'utilisent peuvent expirer sur une machine chargée.
  */
 export function creerIndexedDbFaux() {
   const bases = new Map<string, Map<string, Map<string, unknown>>>();
@@ -79,7 +83,7 @@ export function creerIndexedDbFaux() {
                 },
               }),
             };
-            setTimeout(() => tx.oncomplete?.(), 0);
+            queueMicrotask(() => tx.oncomplete?.());
             return tx;
           },
           close: () => undefined,

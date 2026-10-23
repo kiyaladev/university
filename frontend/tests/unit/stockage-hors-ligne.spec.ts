@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Ce fichier rejoue le chiffrement réel (AES-GCM) et recharge les modules à
+// chaque scénario : il est plus lent que les autres. Le délai par défaut de
+// Vitest (5 s) peut alors expirer sur une machine chargée, ce qui rend le
+// résultat aléatoire. On lui donne une marge large : le test reste
+// déterministe, il ne dépend plus de la charge de la machine.
+vi.setConfig({ testTimeout: 30_000 });
+
 const api = vi.hoisted(() => ({ post: vi.fn(), get: vi.fn() }));
 
 // Les files hors ligne sont le sujet : i18n, Quasar et l'API sont simulés, la
