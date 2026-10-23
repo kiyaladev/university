@@ -189,7 +189,15 @@ describe('journal des recettes externes', () => {
     expect(tx.paiement.create.mock.calls[0][0].data.completeLe).toBeInstanceOf(Date);
     expect(tx.paiement.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { reference: { startsWith: 'PAY-X-2026-' } },
+        where: {
+          reference: {
+            startsWith: 'PAY-X-2026-',
+            gte: 'PAY-X-2026-00000',
+            lte: 'PAY-X-2026-99999',
+          },
+        },
+        orderBy: { reference: 'desc' },
+        take: 1,
       }),
     );
     expect(tx.auditLog.create).toHaveBeenCalledWith({

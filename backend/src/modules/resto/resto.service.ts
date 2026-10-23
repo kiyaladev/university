@@ -50,7 +50,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import {
   AnnulerConsommationDto,
@@ -678,7 +678,7 @@ export class RestoService {
       where: { active: true, cloturee: false },
       select: { libelle: true },
     });
-    return anneeNumero(annee?.libelle);
+    return millesimeSerie(SERIES_NUMERO.PAIEMENT_RESTAURATION, annee?.libelle);
   }
 
   /**
@@ -734,5 +734,5 @@ function nouveauQrRestoToken(): string {
 
 /** "PAY-R-2026-00001" — référence des paiements du portefeuille resto. */
 async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-R-${annee}-`, 5);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RESTAURATION, annee);
 }

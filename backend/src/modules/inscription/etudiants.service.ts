@@ -14,7 +14,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { toDateOnly } from '../../common/utils';
 import { CreateEtudiantDto, UpdateEtudiantDto } from './inscription.dto';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 
 export const ETUDIANT_INCLUDE = {
   user: { select: { id: true, email: true, actif: true } },
@@ -51,17 +51,21 @@ const ETUDIANT_DEPARTEMENT_SELECT = {
 
 /** "2026-0001" — INE du candidat, année du libellé scolaire (2025-2026 → 2026). */
 export async function prochainMatricule(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'etudiant', 'matricule', `${annee}-`, 4);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.MATRICULE, annee);
 }
 
 /** "INS-2026-00042" — dossier d'inscription. */
 export async function prochainNumeroInscription(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'inscription', 'numero', `INS-${annee}-`, 5);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.INSCRIPTION, annee);
 }
 
-/** "PAY-2026-00001" — transaction de paiement. */
+/**
+ * "PAY-2026-00001" — transaction de paiement de scolarité. Préfixe propre aux
+ * inscriptions : les autres portefeuilles ont leur propre préfixe (documents
+ * "PAY-D-", formations "PAY-F-", resto "PAY-R-", recettes "PAY-X-").
+ */
 export async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_INSCRIPTION, annee);
 }
 
 @Injectable()
@@ -138,7 +142,7 @@ export class EtudiantsService extends CrudService {
       }
     }
 
-    const annee = anneeNumero(libelleAnnee);
+    const annee = millesimeSerie(SERIES_NUMERO.MATRICULE, libelleAnnee);
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const etudiant = await this.prisma.$transaction(async (tx) => {

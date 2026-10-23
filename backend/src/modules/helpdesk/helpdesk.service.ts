@@ -22,7 +22,7 @@ import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateEquipementDto,
@@ -34,8 +34,6 @@ import {
 } from './helpdesk.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
-
-const PREFIX_TICKET = 'TKT-';
 
 const TICKET_INCLUDE = {
   equipement: { select: { id: true, libelle: true, emplacement: true } },
@@ -356,7 +354,7 @@ export class TicketsService extends CrudService {
    * @unique départage et la création recommence avec le suivant.
    */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'ticketSupport', 'numero', `${PREFIX_TICKET}${annee}-`, 4);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.TICKET_SUPPORT, annee);
   }
 
   /** Déclaration rapide : n'importe quel utilisateur connecté. */
@@ -370,7 +368,7 @@ export class TicketsService extends CrudService {
       }
     }
 
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.TICKET_SUPPORT);
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         return await this.prisma.$transaction(async (tx) => {

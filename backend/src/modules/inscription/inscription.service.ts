@@ -21,7 +21,7 @@ import { deviseDossier } from './paiements.service';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
-import { anneeNumero } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
 import { CreateInscriptionDto, InscriptionPubliqueDto, InscriptionQueryDto } from './inscription.dto';
 
 export const INSCRIPTION_INCLUDE = {
@@ -243,7 +243,7 @@ export class InscriptionService {
               telephone: dto.telephone,
               email: dto.email ?? null,
               adresse: dto.adresse ?? null,
-              matricule: await prochainMatricule(tx, anneeNumero(annee.libelle)),
+              matricule: await prochainMatricule(tx, millesimeSerie(SERIES_NUMERO.MATRICULE, annee.libelle)),
               qrRestoToken: this.etudiants.nouveauQrResto(),
             },
             select: { id: true },
@@ -275,7 +275,7 @@ export class InscriptionService {
 
           const inscription = await tx.inscription.create({
             data: {
-              numero: await prochainNumeroInscription(tx, anneeNumero(annee.libelle)),
+              numero: await prochainNumeroInscription(tx, millesimeSerie(SERIES_NUMERO.INSCRIPTION, annee.libelle)),
               etudiantId: etudiant.id,
               anneeId: annee.id,
               promotionId: promotion.id,
@@ -397,7 +397,7 @@ export class InscriptionService {
           await exigerAnneeOuverte(tx, annee.id);
           const cree = await tx.inscription.create({
             data: {
-              numero: await prochainNumeroInscription(tx, anneeNumero(annee.libelle)),
+              numero: await prochainNumeroInscription(tx, millesimeSerie(SERIES_NUMERO.INSCRIPTION, annee.libelle)),
               etudiantId: dto.etudiantId,
               anneeId: annee.id,
               promotionId: promotion.id,

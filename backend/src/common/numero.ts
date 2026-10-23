@@ -4,27 +4,239 @@
  * Une dizaine de modules avaient chacun réécrit la même boucle : charger toutes
  * les lignes du préfixe, prendre le plus grand suffixe, l'incrémenter. Deux
  * problèmes avec dix copies : le comportement divergeait d'un module à l'autre
- * (largeurs, colonnes, préfixes), et toute correction devait être répétée
- * dix fois. La boucle ci-dessous est celle qui était la plus répandue et la
- * plus stricte : maximum **numérique**, en ignorant les lignes qui ne suivent
- * pas le format attendu.
+ * (largeurs, colonnes, préfixes), et toute correction devait être répétée dix
+ * fois. La boucle ci-dessous est celle qui était la plus répandue et la plus
+ * stricte : maximum **numérique**, en ignorant les lignes qui ne suivent pas
+ * le format attendu.
  *
- * Contrainte connue, conservée telle quelle : le maximum est calculé en
- * ramenant les lignes du préfixe en mémoire. Passer à un tri en base serait plus
- * rapide, mais un tri lexicographique se trompe sur des largeurs inégales
- * (« 999 » > « 1000 » en texte). Le vrai correctif est une séquence SQL par
- * préfixe, pas un raccourci sur cette fonction.
+ * Deux décisions structurent ce fichier (voir `docs/architecture.md`,
+ * section « Numérotation ») :
+ *
+ *  1. **Une table unique des séries** (`SERIES_NUMERO`) : chaque préfixe y est
+ *     déclaré avec son module, son champ, sa largeur et son millésime. Un
+ *     préfixe appartient à un seul module : plus jamais deux portefeuilles
+ *     (inscriptions et demandes de documents) ne partagent `PAY-`, donc plus
+ *     jamais de collision ni d'ambiguïté d'origine.
+ *  2. **Une lecture au lieu d'un chargement** : une seule ligne est lue (la
+ *     plus grande référence du préfixe) au lieu de toutes les lignes du préfixe.
+ *
+ * Contrainte connue, conservée telle quelle : l'ordre lexicographique de la
+ * colonne n'est l'ordre numérique que parce que la séquence est à zéros
+ * initiaux de largeur fixe. Le vrai correctif au-delà de 99 999 numéros par
+ * série reste une séquence SQL par préfixe, pas un raccourci sur cette
+ * fonction.
  */
 import type { Prisma } from '@prisma/client';
 
-/** Délègue Prisma minimal : un `findMany` avec `select`. */
+/** Délègue Prisma minimal : un `findMany` avec `where`, `orderBy` et `select`. */
 export interface Numerotable {
   findMany(args: unknown): Promise<Array<Record<string, string>>>;
 }
 
 /**
+ * Modèle Prisma porteur d'une référence numérotée. Le compilateur refuse un
+ * nom de modèle inexistant : une faute de frappe ne passe pas en revue.
+ */
+export type ModeleNumerique = keyof Prisma.TransactionClient & string;
+
+/**
+ * Origine du millésime d'une série :
+ *
+ *  - `fin` : année universitaire de fin (« 2025-2026 » → 2026) ;
+ *  - `debut` : année universitaire de début (« 2025-2026 » → 2025) ;
+ *  - `civile` : année civile, sans rattachement à une année universitaire.
+ */
+export type MillesimeSerie = 'fin' | 'debut' | 'civile';
+
+/** Description d'une série numérotée : `<PRÉFIXE>-<MILLÉSIME>-<SÉQUENCE>`. */
+export interface SerieNumerique {
+  /** Préfixe imprimé devant le millésime (« INS- », « PAY-D- »…). */
+  prefixe: string;
+  /** Modèle Prisma qui porte la référence. */
+  modele: ModeleNumerique;
+  /** Champ qui porte la référence dans ce modèle. */
+  champ: 'numero' | 'reference' | 'matricule';
+  /** Nombre de chiffres de la séquence. */
+  largeur: number;
+  /** Origine du millésime, figée pour la série. */
+  millesime: MillesimeSerie;
+}
+
+/**
+ * Table unique des séries numérotées.
+ *
+ * Règles de rédaction :
+ *
+ *  - **un préfixe = un module**. Les cinq portefeuilles de paiement ont chacun
+ *    leur préfixe (`PAY-`, `PAY-D-`, `PAY-F-`, `PAY-R-`, `PAY-X-`) : une
+ *    référence dit d'où elle vient ;
+ *  - **un préfixe = un millésime**. La divergence historique (année de fin
+ *    pour la scolarité, année de début pour les attestations, année civile
+ *    ailleurs) est déclarée ici, elle n'est plus décidée au cas par cas dans
+ *    les services ;
+ *  - **un préfixe = une largeur**. La séquence est à zéros initiaux, ce qui
+ *    rend l'ordre lexicographique de la colonne égal à l'ordre numérique.
+ *
+ * Le préfixe d'un nouveau module est choisi sans recouvrement avec les
+ * préfixes voisins (`PAY-` et `PAY-D-` ne se confondent pas : le millésime
+ * suit le préfixe, `PAY-2026-` ne commence pas `PAY-D-2026-`).
+ */
+export const SERIES_NUMERO = {
+  /** Matricule d'étudiant : « 2026-0001 » (pas de préfixe, l'année ouvre). */
+  MATRICULE: { prefixe: '', modele: 'etudiant', champ: 'matricule', largeur: 4, millesime: 'fin' },
+  /** Dossier d'inscription : « INS-2026-00001 ». */
+  INSCRIPTION: { prefixe: 'INS-', modele: 'inscription', champ: 'numero', largeur: 5, millesime: 'fin' },
+  /** Paiement de scolarité : « PAY-2026-00001 ». */
+  PAIEMENT_INSCRIPTION: {
+    prefixe: 'PAY-',
+    modele: 'paiement',
+    champ: 'reference',
+    largeur: 5,
+    millesime: 'fin',
+  },
+  /** Paiement d'une demande de document : « PAY-D-2026-00001 ». */
+  PAIEMENT_DOCUMENT_DEMANDE: {
+    prefixe: 'PAY-D-',
+    modele: 'paiement',
+    champ: 'reference',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Paiement d'une formation continue : « PAY-F-2026-00001 ». */
+  PAIEMENT_FORMATION: {
+    prefixe: 'PAY-F-',
+    modele: 'paiement',
+    champ: 'reference',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Recharge de restaurant : « PAY-R-2026-00001 ». */
+  PAIEMENT_RESTAURATION: {
+    prefixe: 'PAY-R-',
+    modele: 'paiement',
+    champ: 'reference',
+    largeur: 5,
+    millesime: 'fin',
+  },
+  /** Encaissement d'une recette externe : « PAY-X-2026-00001 ». */
+  PAIEMENT_RECETTE: {
+    prefixe: 'PAY-X-',
+    modele: 'paiement',
+    champ: 'reference',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Demande de document : « DOC-2026-00001 ». */
+  DOCUMENT_DEMANDE: {
+    prefixe: 'DOC-',
+    modele: 'demandeDocument',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Attestation : « ATT-2025-00001 » (millésime = année de début). */
+  ATTESTATION: {
+    prefixe: 'ATT-',
+    modele: 'attestation',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'debut',
+  },
+  /** Inscription à une formation continue : « FOR-2026-00001 ». */
+  FORMATION: {
+    prefixe: 'FOR-',
+    modele: 'inscriptionFormation',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Ticket de support : « TKT-2026-0001 » (largeur 4). */
+  TICKET_SUPPORT: {
+    prefixe: 'TKT-',
+    modele: 'ticketSupport',
+    champ: 'numero',
+    largeur: 4,
+    millesime: 'civile',
+  },
+  /** Réclamation : « REC-2026-00001 ». */
+  RECLAMATION: {
+    prefixe: 'REC-',
+    modele: 'reclamation',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'civile',
+  },
+  /** Badge d'accès : « BADGE-2026-00001 ». */
+  BADGE_ACCES: {
+    prefixe: 'BADGE-',
+    modele: 'badgeAcces',
+    champ: 'numero',
+    largeur: 5,
+    millesime: 'civile',
+  },
+} as const satisfies Record<string, SerieNumerique>;
+
+/** Préfixe complet d'une série : préfixe + millésime + tiret. */
+export function prefixeSerie(serie: SerieNumerique, annee: string): string {
+  return `${serie.prefixe}${annee}-`;
+}
+
+/**
+ * Millésime d'une série : l'**année de rattachement** du document.
+ *
+ *  - série rattachée à une année universitaire : l'année de fin (« fin »,
+ *    scolarité) ou de début (« debut », attestations) du libellé
+ *    « 2025-2026 » ;
+ *  - série sans rattachement : l'année civile de l'émission.
+ *
+ * Le libellé est facultatif : sans libellé exploitable, on retombe sur
+ * l'année civile, comme toujours.
+ */
+export function millesimeSerie(serie: SerieNumerique, libelleAnnee?: string | null): string {
+  return serie.millesime === 'civile' ? anneeNumero() : anneeNumero(libelleAnnee, serie.millesime);
+}
+
+/**
+ * Bornes de la plage des références d'une série : la séquence attendue, à
+ * zéros initiaux de largeur fixe. Toute référence comprise entre ces bornes a
+ * la forme `préfixe + suite de chiffres` ; l'ordre lexicographique de la
+ * colonne y est donc l'ordre numérique.
+ */
+function bornesSerie(prefixe: string, largeur: number): { gte: string; lte: string } {
+  return { gte: `${prefixe}${'0'.repeat(largeur)}`, lte: `${prefixe}${'9'.repeat(largeur)}` };
+}
+
+/**
+ * Maximum numérique des suffixes lisibles d'un lot de références. Renvoie
+ * `null` quand aucune ligne du lot n'est une référence de la série : les
+ * lignes saisies à la main ou venues d'une ancienne numérotation sont
+ * ignorées, elles ne font pas dévier la série.
+ */
+function maxNumerique(lignes: Array<Record<string, string>>, champ: string, prefixe: string): number | null {
+  let max: number | null = null;
+  for (const ligne of lignes) {
+    const suffixe = typeof ligne?.[champ] === 'string' ? String(ligne[champ]).slice(prefixe.length) : '';
+    if (!suffixe) continue;
+    const n = Number(suffixe);
+    if (!Number.isFinite(n)) continue;
+    max = max === null ? n : Math.max(max, n);
+  }
+  return max;
+}
+
+/**
  * Prochain numéro pour `prefixe` + largeur, porté par le champ `champ`.
  * Accepte un delegate comme une transaction (`tx.x`) ou le client direct.
+ *
+ * Une seule ligne est lue : la plus grande référence de la série
+ * (`orderBy` décroissant + `take: 1`, bornes de la plage de largeur fixe).
+ * L'ordre lexicographique de la colonne est l'ordre numérique parce que la
+ * séquence est à zéros initiaux de largeur fixe.
+ *
+ * La lecture est bornée : la base ne renvoie plus toutes les lignes du
+ * préfixe, seulement la plus grande. Si cette ligne n'est pas une référence de
+ * la série (saisie manuelle, ancienne numérotation), la lecture est élargie à
+ * un lot limité pour rester tolérant et ne pas repartir de zéro.
  */
 export async function prochainNumero(
   delegate: Numerotable,
@@ -32,15 +244,23 @@ export async function prochainNumero(
   prefixe: string,
   largeur: number,
 ): Promise<string> {
-  const existantes = await delegate.findMany({
-    where: { [champ]: { startsWith: prefixe } },
+  const lignes = await delegate.findMany({
+    where: { [champ]: { startsWith: prefixe, ...bornesSerie(prefixe, largeur) } },
+    orderBy: { [champ]: 'desc' },
+    take: 1,
     select: { [champ]: true },
   });
 
-  const max = existantes.reduce((m: number, ligne: Record<string, string>) => {
-    const n = Number(ligne[champ].slice(prefixe.length));
-    return Number.isFinite(n) ? Math.max(m, n) : m;
-  }, 0);
+  let max = lignes.length > 0 ? maxNumerique(lignes, champ, prefixe) : 0;
+  if (max === null) {
+    const lot = await delegate.findMany({
+      where: { [champ]: { startsWith: prefixe } },
+      orderBy: { [champ]: 'desc' },
+      take: 32,
+      select: { [champ]: true },
+    });
+    max = maxNumerique(lot, champ, prefixe) ?? 0;
+  }
 
   return `${prefixe}${String(max + 1).padStart(largeur, '0')}`;
 }
@@ -52,12 +272,25 @@ export async function prochainNumero(
  */
 export function prochainNumeroTx(
   tx: Prisma.TransactionClient,
-  modele: keyof Prisma.TransactionClient & string,
+  modele: ModeleNumerique,
   champ: string,
   prefixe: string,
   largeur: number,
 ): Promise<string> {
   return prochainNumero(tx[modele] as unknown as Numerotable, champ, prefixe, largeur);
+}
+
+/**
+ * Prochain numéro d'une série déclarée dans `SERIES_NUMERO` : le préfixe, le
+ * champ et la largeur viennent de la table, l'appelant ne fournit que le
+ * millésime.
+ */
+export function prochainNumeroSerie(
+  tx: Prisma.TransactionClient,
+  serie: SerieNumerique,
+  annee: string,
+): Promise<string> {
+  return prochainNumeroTx(tx, serie.modele, serie.champ, prefixeSerie(serie, annee), serie.largeur);
 }
 
 /**
@@ -70,15 +303,14 @@ export function prochainNumeroTx(
  *  - `fin` (défaut) : 2025-2026 → 2026. Matricules, dossiers INS-, paiements
  *    de scolarité PAY-, recharges resto PAY-R- ;
  *  - `debut` : 2025-2026 → 2025. Attestations ATT- ;
- *  - sans libellé : année civile. Demandes de documents DOC- (et leur PAY-),
+ *  - sans libellé : année civile. Demandes de documents DOC- (et leur PAY-D-),
  *    réclamations, tickets helpdesk, badges, paiements de formation PAY-F-.
  *
  * Les recettes externes (PAY-X-) prennent l'année civile UTC de la date de la
  * recette, pas celle du jour : elles n'utilisent pas cette fonction.
  *
- * Ces règles divergentes sont historiques et chaque module garde la sienne :
- * en changer romprait la séquence des numéros déjà émis sous l'ancienne
- * année. Les harmoniser relève d'une décision métier.
+ * Quelle moitié du libellé s'applique est une propriété de la série, pas du
+ * module qui émet le numéro : c'est `SERIES_NUMERO` qui le déclare.
  */
 export function anneeNumero(libelleAnnee?: string | null, borne: 'debut' | 'fin' = 'fin'): string {
   const partie = libelleAnnee?.split('-')[borne === 'debut' ? 0 : 1]?.trim();

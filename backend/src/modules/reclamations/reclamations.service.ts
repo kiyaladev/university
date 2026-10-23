@@ -31,11 +31,10 @@ import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
 
-const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
   StatutReclamation.OUVERTE,
   StatutReclamation.EN_COURS,
@@ -151,7 +150,7 @@ export class ReclamationsService extends CrudService {
 
   /** Numéro séquentiel par année : "REC-2026-00001". */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'reclamation', 'numero', `${PREFIX_RECLAMATION}${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.RECLAMATION, annee);
   }
 
   /**
@@ -360,7 +359,7 @@ export class ReclamationsService extends CrudService {
     },
     user: AuthUser,
   ) {
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.RECLAMATION);
     const anonyme = dto.anonyme === true;
 
     if (user.role === Role.ETUDIANT && !user.etudiantId) {

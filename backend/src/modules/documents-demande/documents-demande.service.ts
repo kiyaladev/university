@@ -35,10 +35,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { demandeDocumentHtml } from './documents-demande.impression';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../common/finances';
-
-const PREFIX_DEMANDE = 'DOC-';
 
 const STATUTS_PAIEMENT_REQUIS: StatutDemande[] = [
   StatutDemande.PAYEE,
@@ -115,12 +113,19 @@ export class DocumentsDemandeService extends CrudService {
 
   /** Numéro séquentiel par année : "DOC-2026-00001". */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'demandeDocument', 'numero', `${PREFIX_DEMANDE}${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.DOCUMENT_DEMANDE, annee);
   }
 
-  /** Numéro séquentiel "PAY-AAAA-NNNNN" pour le paiement lié. */
+  /**
+   * Numéro séquentiel "PAY-D-AAAA-NNNNN" pour le paiement lié. Le préfixe est
+   * propre aux demandes de documents : les paiements de scolarité gardent
+   * "PAY-AAAA-NNNNN", les deux séries ne se confondent plus (même millésime
+   * ou non) et l'origine d'une référence se lit dans le préfixe. Les
+   * paiements de documents émis avant cette décision gardent leur ancienne
+   * référence "PAY-…", toujours valide.
+   */
   private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE, annee);
   }
 
   // ---------------------------------------------------------- lecture
@@ -369,7 +374,7 @@ export class DocumentsDemandeService extends CrudService {
     const tarif = await this.tarifPour(dto.type);
     const frais = tarif?.montant ?? 0;
     const devise = tarif?.devise ?? 'GNF';
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.DOCUMENT_DEMANDE);
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
@@ -452,7 +457,7 @@ export class DocumentsDemandeService extends CrudService {
       );
     }
 
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE);
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const paiement = await this.prisma.$transaction(async (tx) => {

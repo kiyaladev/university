@@ -127,7 +127,7 @@ describe('Demandes de documents — encaissement', () => {
     const demandeApres = { ...DEMANDE, statut: StatutDemande.EN_TRAITEMENT, traiteParId: 'agent-1' };
     const paiementAvant = {
       id: 'pay-1',
-      reference: 'PAY-2026-00001',
+      reference: 'PAY-D-2026-00001',
       montant: 25000,
       devise: 'GNF',
       mode: 'ESPECES',
@@ -200,7 +200,7 @@ describe('Demandes de documents — encaissement', () => {
   it('rattache le paiement à la demande dans la transaction qui le crée', async () => {
     const paiement = {
       id: 'pay-1',
-      reference: 'PAY-2026-00001',
+      reference: 'PAY-D-2026-00001',
       montant: 25000,
       devise: 'GNF',
       mode: 'ESPECES',
@@ -211,13 +211,13 @@ describe('Demandes de documents — encaissement', () => {
     const { tx, prisma, audit } = transaction(
       {
         demandeDocument: {
-          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-D-2026-00001' }]),
           findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }),
           updateMany: jest.fn().mockResolvedValue({ count: 1 }),
         },
         paiement: {
           create: jest.fn(async ({ data }: any) => ({ ...paiement, id: data.id })),
-          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-D-2026-00001' }]),
         },
         inscription: { findUnique: jest.fn().mockResolvedValue({ id: 'ins-1', anneeId: 'annee-2026' }) },
       },
@@ -253,14 +253,14 @@ describe('Demandes de documents — encaissement', () => {
     const details = lire(audit);
     expect(audit.mock.calls[0][0].data.action).toBe('DEMANDE_DOC_PAIEMENT_INITIE');
     expect(details.avant.paiementId).toBeUndefined();
-    expect(details.paiement.reference).toBe('PAY-2026-00001');
+    expect(details.paiement.reference).toBe('PAY-D-2026-00001');
     expect(details.paiement.statut).toBe(StatutPaiement.EN_ATTENTE);
   });
 
   it('annule un second paiement si une autre transaction rattache le premier', async () => {
     const paiement = {
       id: 'pay-2',
-      reference: 'PAY-2026-00002',
+      reference: 'PAY-D-2026-00002',
       montant: 25000,
       devise: 'GNF',
       mode: 'ESPECES',
@@ -271,13 +271,13 @@ describe('Demandes de documents — encaissement', () => {
     const { tx, prisma, audit } = transaction(
       {
         demandeDocument: {
-          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-D-2026-00001' }]),
           findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }),
           updateMany: jest.fn().mockResolvedValue({ count: 0 }),
         },
         paiement: {
           create: jest.fn(async ({ data }: any) => ({ ...paiement, id: data.id })),
-          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-D-2026-00001' }]),
         },
         inscription: { findUnique: jest.fn() },
       },
@@ -439,7 +439,7 @@ describe('Demandes de documents — corrélation Mobile Money', () => {
   it('lie et journalise la référence opérateur dans une même transaction sans la copier au journal', async () => {
     const paiementAvant = {
       id: 'pay-mm-1',
-      reference: 'PAY-2026-00009',
+      reference: 'PAY-D-2026-00009',
       montant: 25000,
       devise: 'GNF',
       mode: 'MOBILE_MONEY',
@@ -560,7 +560,7 @@ describe('Demandes de documents — erreurs de transmission Mobile Money', () =>
   const cleAvant = process.env.MOBILE_MONEY_API_KEY;
   const paiement = {
     id: 'pay-mm-echec',
-    reference: 'PAY-2026-00010',
+    reference: 'PAY-D-2026-00010',
     montant: 25000,
     devise: 'GNF',
     operateur: 'ORANGE',

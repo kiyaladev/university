@@ -24,7 +24,7 @@ import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
 import { documents, AttestationImprimable } from './documents';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AttestationQueryDto,
@@ -55,8 +55,6 @@ export const ATTESTATION_INCLUDE = {
   revoqueePar: { select: { id: true, nom: true, prenom: true } },
   _count: { select: { verifications: true } },
 } satisfies Prisma.AttestationInclude;
-
-const PREFIX = 'ATT-';
 
 @Injectable()
 export class AttestationsService {
@@ -142,7 +140,7 @@ export class AttestationsService {
    * recommence avec le suivant.
    */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'attestation', 'numero', `${PREFIX}${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.ATTESTATION, annee);
   }
 
   /** Le jeton encodé dans le QR : aléatoire, unique, impossible à deviner. */
@@ -245,7 +243,7 @@ export class AttestationsService {
       promotionIdRetenue = inscription.promotionId;
       await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
     }
-    const numeroAnnee = anneeNumero(annee?.libelle ?? promotion?.annee.libelle, 'debut');
+    const numeroAnnee = millesimeSerie(SERIES_NUMERO.ATTESTATION, annee?.libelle ?? promotion?.annee.libelle);
     const doublon = await tx.attestation.findFirst({
       where: {
         etudiantId: dto.etudiantId,

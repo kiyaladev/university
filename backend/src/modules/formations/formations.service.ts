@@ -31,7 +31,7 @@ import { Paginated, QueryDto } from '../../common/dto';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.service';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import { t } from '../../common/i18n';
 import {
@@ -91,12 +91,12 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
 
 /** "FOR-2026-00001" — dossier d'inscription à une formation continue. */
 async function prochainNumeroFormation(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'inscriptionFormation', 'numero', `FOR-${annee}-`, 5);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.FORMATION, annee);
 }
 
 /** "PAY-F-2026-00001" — paiement Mobile Money d'une formation (PAY-F-AAAA). */
 async function prochaineReferencePaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-F-${annee}-`, 5);
+  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_FORMATION, annee);
 }
 
 @Injectable()
@@ -194,7 +194,7 @@ export class FormationsService {
       throw new ConflictException(t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
     }
 
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.FORMATION);
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
         const creation = await this.prisma.$transaction(async (tx) => {

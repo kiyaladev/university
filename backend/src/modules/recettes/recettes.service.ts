@@ -19,12 +19,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
-import { prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
 
 /** Préfixe des références de paiement des recettes externes ("PAY-X-2026-00001"). */
-export const PREFIXE_PAIEMENT_RECETTE = 'PAY-X-';
+export const PREFIXE_PAIEMENT_RECETTE = SERIES_NUMERO.PAIEMENT_RECETTE.prefixe;
 
 const RECETTE_INCLUDE = {
   paiement: { select: { id: true, reference: true, montant: true, devise: true, statut: true } },
@@ -358,7 +358,7 @@ export class RecettesService {
    * séquence des nouveaux encaissements repart sous "PAY-X-".
    */
   private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'paiement', 'reference', `${PREFIXE_PAIEMENT_RECETTE}${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RECETTE, annee);
   }
 }
 

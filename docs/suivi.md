@@ -15,9 +15,9 @@ Vocabulaire :
 - Aucune ligne ne vaut validation de production, opérateur ou terrain. Les
   tests locaux ne remplacent ni la publication, ni la recette humaine.
 
-Dernière vérification locale (23 octobre 2026, branche `amelioration/lot-2`) :
-Jest backend **120 suites, 1 033 tests réussis** ; `tsc --noEmit` et `vue-tsc`
-sans erreur.
+Dernière vérification locale (23 octobre 2026, branche `mc/numeros`) :
+Jest backend **129 suites, 1 167 tests réussis** ; `tsc --noEmit` (backend) et
+ESLint (backend) sans erreur. Le frontend n’est pas touché par ce lot.
 
 ## Priorités
 
@@ -38,7 +38,6 @@ sans erreur.
 | --- | --- | --- |
 | Identifiant de l’application Android | `appId` / `applicationId` = `gn.unipresence.controle` (`frontend/src-capacitor/capacitor.config.json`, `android/app/build.gradle`), nom affiché « UniPrésence » : identique à l’application UniPrésence. Android ne peut pas installer les deux côte à côte, et l’une remplacerait l’autre si elles partagent la clé. | Garder l’identifiant (et assumer qu’University remplace UniPrésence sur les téléphones) ou en choisir un propre (ex. `gn.university.controle`), ce qui impose une réinstallation. |
 | Nom « UniPrésence » dans l’application | Reste dans le code (`frontend/src/i18n`, manifeste PWA, pieds de page A4 du backend, clés de stockage local, comptes de seed `@unipresence.gn`), et dans `PRODUCT.md` / `DESIGN.md`. Les clés de stockage ne doivent pas être renommées sans migration (files hors ligne). | Renommer les libellés visibles en « University » ; décider du sort de `PRODUCT.md` / `DESIGN.md`. |
-| Règle d’année des numéros | `common/numero.ts` (`anneeNumero`) : fin du libellé d’année pour matricules, INS-, PAY-, PAY-R- ; début pour ATT- ; année civile pour DOC-, réclamations, tickets, badges, PAY-F- ; année civile UTC de la date de recette pour PAY-X-. | Harmoniser ou non ; tout changement rompt la séquence des numéros déjà émis. |
 | Sauvegarde hors serveur | Cron local à 3 h 15 vers `backups/` ; aucune destination distante. | Fournir hôte, compte et clé SSH ; prouver copie et restauration. Sauvegarder aussi `android-cle/` et `BIOMETRIE_CHIFFREMENT_CLE`. |
 | Publication des lots 1 à 3 | Branches `amelioration/lot-1`, `lot-2`, `lot-3` non publiées ; la production tourne sur une version antérieure. | Ordre de fusion dans `main`, fenêtre de déploiement, après les P0. |
 | Version de bun | Le projet déclare `bun@1.4.2` (`packageManager`, CI) ; le serveur a bun **1.3.10**. Un `bun install` avec 1.3.10 réécrit `bun.lock` en format 1 et aplatit les overrides imbriqués (`paquet@version>dépendance`). Les deux `bun.lock` ont été régénérés en format 3 avec bun 1.4.2 le 23 octobre ; la CI les installe en `--frozen-lockfile`. | Mettre à jour bun sur le serveur avant toute installation, sinon ne pas commiter le `bun.lock` réécrit. |
@@ -48,6 +47,12 @@ sans erreur.
 | Paie | Troncature à l’heure entière, retenues à zéro. | Confirmation par la comptabilité. |
 | Biométrie | Conservation 90 jours après désactivation. | Validation RH. |
 | Réinscription en ligne | La préinscription publique refuse un e-mail déjà connu (409) ; l’ancien étudiant passe au guichet. | Parcours de réinscription authentifié dans le portail ? |
+
+## Décisions prises
+
+| Sujet | Décision | Où |
+| --- | --- | --- |
+| Numérotation : année et préfixes | Le millésime d’un numéro est l’**année de rattachement** du document : année universitaire de fin pour la scolarité (matricule, `INS-`, `PAY-`, `PAY-R-`), année universitaire de début pour les attestations (`ATT-`), année civile pour les séries de calendrier (`DOC-`, `PAY-D-`, `FOR-`, `PAY-F-`, `PAY-X-`, `TKT-`, `REC-`, `BADGE-`). Chaque module qui crée un paiement a son préfixe (`PAY-`, `PAY-D-`, `PAY-F-`, `PAY-R-`, `PAY-X-`) : les inscriptions et les demandes de documents ne se disputent plus le même compteur. Aucun numéro émis n’est renuméroté — les paiements de documents antérieurs gardent `PAY-…`, la série `PAY-D-` repart à 00001. La table unique des séries est `SERIES_NUMERO` (`backend/src/common/numero.ts`). | [architecture.md](architecture.md#numérotation) |
 
 ## État par module
 
@@ -101,5 +106,5 @@ sans erreur.
 | Lint | ESLint + Prettier en place, règles en avertissement ; corriger progressivement sans `--fix` massif pendant les travaux parallèles |
 | Tests frontend | Vitest en place (`frontend/tests/unit/`) ; étendre aux composables et stores |
 | CI | `.github/workflows/ci.yml` ; rendre le lint bloquant quand les avertissements seront résorbés |
-| Numérotation | Séquence SQL par préfixe plutôt que maximum calculé en mémoire (`common/numero.ts`) |
+| Numérotation | Lecture bornée : une seule ligne lue (`orderBy` décroissant + `take: 1`, bornes de largeur) au lieu de toutes les lignes du préfixe (`common/numero.ts`). Reste : séquence SQL par préfixe, seule façon de passer au-delà de 99 999 numéros par série et par an |
 | Nettoyage | Scripts de recette non référencés par `package.json` : `recette-cycles.cjs`, `recette-langues.cjs`, `recette-securite.cjs`, `catalogues.cjs` (backend/scripts), conservés |

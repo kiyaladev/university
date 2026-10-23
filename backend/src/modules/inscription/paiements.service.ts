@@ -14,7 +14,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
-import { anneeNumero } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
 import {
   PAIEMENT_SOURCE_INCLUDE,
   SourcePaiement,
@@ -229,7 +229,10 @@ export class PaiementsService {
             tx,
             {
               data: {
-                reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
+                reference: await prochainNumeroPaiement(
+                  tx,
+                  millesimeSerie(SERIES_NUMERO.PAIEMENT_INSCRIPTION, annee.libelle),
+                ),
                 montant: dto.montant,
                 devise: dto.devise ?? devisePaiement,
                 mode: dto.mode,

@@ -133,8 +133,101 @@ ou sa transaction.
 | Pagination | `common/pagination.ts` | `paginer(query)` lit `?page`, `?pageSize` (50 par défaut, borné à 1 000) et `?all=1` et rend `skip`/`take` ; `pagine(data, total, p)` rend `{ data, total, page, pageSize }`. |
 | Impression | `common/impression/` | `pageA4({ titre, entete, corps, piedDePage, lang, etablissement, orientation })` produit le HTML A4 commun (palette de DESIGN.md, impression automatique) ; `chargerEtablissement()` lit une seule fois l’identité de l’établissement dans `Parametre` ; `echapper()`, `blocIndicateurs()`. Contrat : `titre` est du texte brut échappé ici, `corps` est du HTML déjà échappé par l’appelant. |
 | Périmètre | `common/perimetre.ts` | `filtreDepartement(user, 'promotion.filiere')` rend le fragment `where` Prisma qui borne la lecture d’un chef de département (`{}` pour les autres rôles ; sentinelle `__aucun__` pour un chef sans département) ; `exigerPerimetre(user, departementId)` refuse l’écriture hors de son département ; `estChefDeDepartement()`. |
-| Numérotation | `common/numero.ts` | `prochainNumero()` / `prochainNumeroTx()` ; `anneeNumero(libelle, borne)` — les règles d’année diffèrent selon les modules (voir [décisions en attente](suivi.md#décisions-en-attente)). |
+| Numérotation | `common/numero.ts` | `SERIES_NUMERO` (table unique des séries : préfixe, module, champ, largeur, millésime) ; `prochainNumero()` / `prochainNumeroTx()` / `prochainNumeroSerie()` ; `millesimeSerie()` ; `anneeNumero(libelle, borne)`. Voir [Numérotation](#numérotation). |
 | Autres | `common/` | `crud.service.ts` (CRUD générique), `guards.ts`, `annee.ts`, `coffre.ts` (chiffrement des gabarits), `jeton-imprimable.ts`, `sensitive-data.interceptor.ts`. |
+
+## Numérotation
+
+Les numéros sont lisibles et séquentiels : `<PRÉFIXE>-<MILLÉSIME>-<SÉQUENCE>`
+(`INS-2026-00042`), le matricule d’étudiant étant `<MILLÉSIME>-<SÉQUENCE>`
+(`2026-0001`). La **table unique des séries** est `SERIES_NUMERO`
+(`backend/src/common/numero.ts`) : elle déclare, pour chaque préfixe, son
+module, le champ qui porte la référence, la largeur de la séquence et son
+millésime. Aucun module n’écrit plus son préfixe ni son année dans son code :
+`SERIES_NUMERO` est la seule source de vérité.
+
+### Règle d’année
+
+**Le millésime d’un numéro est l’année de rattachement du document** :
+l’année universitaire quand le document est rattaché à une année
+universitaire, l’année civile sinon. Le choix de la moitié du libellé est une
+propriété de la série, déclarée dans la table — il n’est plus décidé au cas par
+cas dans les services.
+
+| Type de série | Millésime | Exemple |
+| --- | --- | --- |
+| Scolarité (matricule, `INS-`, `PAY-`, `PAY-R-`) | année universitaire de **fin** (« 2025-2026 » → 2026) | `PAY-2026-00042` |
+| Attestations (`ATT-`) | année universitaire de **début** (« 2025-2026 » → 2025) | `ATT-2025-00007` |
+| Calendrier (`DOC-`, `PAY-D-`, `FOR-`, `PAY-F-`, `PAY-X-`, `TKT-`, `REC-`, `BADGE-`) | **année civile** d’émission | `DOC-2026-00003` |
+
+Pourquoi ces trois déclinaisons, et non une seule année pour toutes les
+séries ? Parce qu’une année unique **fusionnerait deux découpages annuels qui
+coexistent déjà**, et qu’aucune des deux séries universitaires concernées ne
+peut être renumérotée sans casser les références émises :
+
+- **Scolarité.** Le matricule, le dossier d’inscription et la facture
+  renvoient à l’année de rattachement de l’étudiant, pas à l’année du
+  calendrier de la saisie : une inscription faite en septembre 2026 pour
+  l’année 2026-2027 porte 2027. L’année civile donnerait 2026 et ferait
+  cohabiter dans `INS-2026-` la fin de 2025-2026 et le début de 2026-2027 ;
+  la série ne repartirait plus à 00001 en septembre.
+- **Attestations.** `ATT-2026-` désigne déjà les attestations de l’année
+  2026-2027 (millésime de début). Basculer sur le millésime de fin
+  mélangerait, dans une même série `ATT-2026-`, deux années universitaires
+  différentes : collision et ambiguïté d’origine. Le millésime de début est
+  conservé.
+- **Calendrier.** Une demande de document, un ticket, un badge ou une
+  inscription à une formation continue ne sont pas rattachés à une année
+  universitaire : l’année civile s’impose, et c’est déjà ce qui se fait.
+
+Aucun numéro déjà émis n’est modifié, et aucune série ne change de millésime :
+une nouvelle année (ou un nouveau préfixe) repart de 00001.
+
+### Un préfixe par module
+
+Les cinq portefeuilles de paiement partagent la table `Paiement`, dont la
+colonne `reference` est **unique** (`backend/prisma/schema.prisma`). Avant,
+les inscriptions prenaient `PAY-<année de fin>-` et les demandes de documents
+`PAY-<année civile>-`. Quand l’année de fin de l’année universitaire coïncide
+avec l’année civile (janvier à août), les deux séries partagent le même
+préfixe **et** le même millésime, donc le même compteur : deux écritures
+concourantes se disputent le même numéro, l’une bute sur la contrainte
+d’unicité, et la référence finale ne dit plus d’où elle vient.
+
+Chaque module qui crée un paiement a donc son préfixe :
+
+| Portefeuille | Préfixe | Millésime |
+| --- | --- | --- |
+| Scolarité | `PAY-` | année de fin |
+| Demandes de documents | `PAY-D-` | année civile |
+| Formations | `PAY-F-` | année civile |
+| Restaurant | `PAY-R-` | année de fin |
+| Recettes externes | `PAY-X-` | année civile |
+
+Les paiements de documents émis avant cette décision gardent leur référence
+`PAY-…` : elle reste valide, elle est seulement plus rare. La série `PAY-D-`
+repart à 00001. Aucun préfixe complet n’en englobe un autre (`PAY-2026-` ne
+commence pas `PAY-D-2026-`), et chaque préfixe appartient à un seul module.
+
+### Lecture du plus grand numéro
+
+`prochainNumero()` ne charge plus toutes les lignes du préfixe : elle lit **une
+seule** ligne, la plus grande (`orderBy` décroissant + `take: 1`), bornée à la
+plage de largeur de la séquence (`gte` / `lte`). L’ordre lexicographique de la
+colonne est l’ordre numérique parce que la séquence est à zéros initiaux de
+largeur fixe ; la requête reste un parcours d’index sur la colonne unique.
+
+- Les références qui ne suivent pas le format attendu (saisie manuelle,
+  ancienne numérotation) sont ignorées. Si la ligne lue n’est pas une
+  référence de la série, la lecture est élargie à un lot limité (32 lignes)
+  pour ne pas bloquer la série ni repartir de zéro.
+- La protection contre les écritures concurrentes est inchangée : la création
+  se fait dans une transaction, et l’échec de la contrainte d’unicité
+  (`P2002`) relance la génération du numéro.
+
+Limite connue : au-delà de 99 999 numéros par série et par millésime, la
+séquence déborde la largeur fixe ; le correctif durable est une séquence SQL
+par préfixe, encore au [backlog](suivi.md#outillage-et-code).
 
 ## Organisation du frontend
 

@@ -30,7 +30,7 @@ import {
   UpdateBadgeDto,
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
-import { anneeNumero, prochainNumeroTx } from '../../common/numero';
+import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
 
@@ -54,8 +54,6 @@ export const BADGE_VERIFICATION_SELECT = {
   dateDelivrance: true,
 } satisfies Prisma.BadgeAccesSelect;
 
-const PREFIXE = 'BADGE-';
-
 @Injectable()
 export class BadgesService {
   constructor(
@@ -68,7 +66,7 @@ export class BadgesService {
 
   /** Numéro séquentiel par année : "BADGE-AAAA-NNNNN". */
   private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroTx(tx, 'badgeAcces', 'numero', `${PREFIXE}${annee}-`, 5);
+    return prochainNumeroSerie(tx, SERIES_NUMERO.BADGE_ACCES, annee);
   }
 
   private nouveauQrToken(): string {
@@ -158,7 +156,7 @@ export class BadgesService {
   // ---------------------------------------------------------------- édition
 
   async creer(dto: CreateBadgeDto, user: AuthUser) {
-    const annee = anneeNumero();
+    const annee = millesimeSerie(SERIES_NUMERO.BADGE_ACCES);
     let badge: Awaited<ReturnType<typeof this.prisma.badgeAcces.create>> | null = null;
 
     for (let tentative = 0; tentative < 10; tentative++) {
