@@ -6,9 +6,8 @@
  * scrutin est secret. Le QR encode l'URL de l'élection (vérification
  * publique côté serveur, sans révéler les choix).
  */
-import * as QRCode from 'qrcode';
 import { StatutElection } from '@prisma/client';
-import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 
 export interface BulletinCandidat {
   id: string;
@@ -47,12 +46,7 @@ export class DocumentsElection {
   ): Promise<string> {
     const etablissement = echapper(opt.etablissement.nom);
     const candidatsTries = [...e.candidats].sort((a, b) => a.ordre - b.ordre);
-    const svg = await QRCode.toString(opt.urlVerification, {
-      type: 'svg',
-      margin: 1,
-      width: 130,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(opt.urlVerification, { margin: 1, width: 130 });
 
     const lignes = candidatsTries
       .map(

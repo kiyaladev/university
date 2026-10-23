@@ -4,9 +4,8 @@
  * Format paysage A6 / A5 centré sur la page A4, pour découpe ou plastification.
  * Le QR encode l'URL publique de vérification.
  */
-import * as QRCode from 'qrcode';
 import { StatutBadge } from '@prisma/client';
-import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 
 export interface BadgeImprimable {
   id: string;
@@ -72,12 +71,7 @@ export class DocumentsBadge {
     const libelleType = TYPE_LIBELLE[b.type] ?? b.type;
     const edite = dateFr(new Date());
 
-    const svg = await QRCode.toString(opt.urlVerification, {
-      type: 'svg',
-      margin: 1,
-      width: 110,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(opt.urlVerification, { margin: 1, width: 110 });
 
     const photo = b.photoUrl
       ? `<img class="photo" src="${echapper(b.photoUrl)}" alt="photo" />`

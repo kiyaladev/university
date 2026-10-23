@@ -8,9 +8,8 @@
  * Le style d'impression reprend les codes couleurs des attestations et des
  * états : en-tête d'établissement, filets, signature de pied de page.
  */
-import * as QRCode from 'qrcode';
 import { StatutAttestation } from '@prisma/client';
-import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 
 export interface CarteImprimable {
   id: string;
@@ -58,12 +57,7 @@ export class DocumentsCarte {
     const civilite = c.etudiant?.sexe === 'F' ? 'Madame' : 'Monsieur';
     const edite = dateFr(new Date());
 
-    const svg = await QRCode.toString(opt.urlVerification, {
-      type: 'svg',
-      margin: 2,
-      width: 230,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(opt.urlVerification, { margin: 2, width: 230 });
 
     const photo = c.photoUrl
       ? `<img class="photo" src="${echapper(c.photoUrl)}" alt="photo" />`

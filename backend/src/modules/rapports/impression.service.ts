@@ -1,7 +1,6 @@
 /** Génération des états imprimables (HTML A4, impression navigateur → PDF).
  *  Remplace les feuillets du registre papier tout en gardant leur mise en forme. */
 import { Injectable } from '@nestjs/common';
-import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
@@ -9,7 +8,7 @@ import { RapportsService } from './rapports.service';
 import { RapportQueryDto } from './rapports.dto';
 import { signaturePng } from '../../common/utils';
 import { journaliser } from '../../common/audit';
-import { blocIndicateurs, chargerEtablissement, echapper, pageA4 } from '../../common/impression';
+import { blocIndicateurs, chargerEtablissement, echapper, pageA4, qrSvg } from '../../common/impression';
 
 const ATTESTATION_LIBELLE: Record<string, string> = {
   SIGNATURE: 'Signature',
@@ -239,7 +238,7 @@ export class ImpressionService {
 
     const blocs = await Promise.all(
       salles.map(async (s) => {
-        const svg = await QRCode.toString(s.qrToken, { type: 'svg', margin: 1, width: 220 });
+        const svg = await qrSvg(s.qrToken, { margin: 1, width: 220 });
         return `<div style="page-break-after: always; text-align:center; padding-top:20mm">
           <div class="titre" style="font-size:26px">${echapper(s.code)} — ${echapper(s.nom)}</div>
           <p>${echapper(s.batiment ?? '')} · capacité ${s.capacite} places</p>

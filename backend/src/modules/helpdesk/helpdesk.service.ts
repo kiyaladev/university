@@ -16,14 +16,13 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, Role, StatutTicket } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
-import * as QRCode from 'qrcode';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, qrDataUrl, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,
@@ -254,11 +253,7 @@ export class EquipementsService extends CrudService {
     });
     if (!equipement) throw new NotFoundException(t('patrimoine.equipement_introuvable'));
     const urlSignalement = `${baseUrl.replace(/\/+$/, '')}/#/helpdesk?equipement=${encodeURIComponent(equipement.codeQr)}`;
-    const qr = await QRCode.toDataURL(urlSignalement, {
-      width: 320,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-    });
+    const qr = await qrDataUrl(urlSignalement, { width: 320 });
     const etablissement = await chargerEtablissement(this.prisma);
 
     const etiquettes = Array.from(

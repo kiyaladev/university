@@ -24,12 +24,11 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, StatutReparation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
-import * as QRCode from 'qrcode';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, qrDataUrl, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
@@ -647,11 +646,7 @@ export class PatrimoineService {
 
     const equipement = await this.trouverEquipement(id);
     const urlInventaire = `${baseUrl.replace(/\/+$/, '')}/#/patrimoine?qr=${encodeURIComponent(equipement.qrCode)}`;
-    const qr = await QRCode.toDataURL(urlInventaire, {
-      width: 360,
-      margin: 1,
-      errorCorrectionLevel: 'M',
-    });
+    const qr = await qrDataUrl(urlInventaire, { width: 360 });
 
     // Le test porte sur la VALEUR, pas sur l'objet : un `Decimal(0)` est un
     // objet, donc « vrai » — sans cette conversion, un équipement valué à

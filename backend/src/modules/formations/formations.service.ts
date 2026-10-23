@@ -24,14 +24,13 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
-import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { journaliser } from '../../common/audit';
 import { Paginated, QueryDto } from '../../common/dto';
 import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -703,12 +702,7 @@ export class FormationsService {
     // URL publique portée par le QR : la page vitrine des formations,
     // point de départ du circuit de vérification (module attestations).
     const urlPublique = `${baseUrl.replace(/\/+$/, '')}/#/formations`;
-    const svg = await QRCode.toString(urlPublique, {
-      type: 'svg',
-      margin: 2,
-      width: 220,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(urlPublique, { margin: 2, width: 220 });
 
     const etablissement = await chargerEtablissement(this.prisma);
     const formation = inscription.formation;
