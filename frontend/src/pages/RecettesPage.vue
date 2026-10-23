@@ -170,7 +170,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <recette-dialog
@@ -347,6 +347,7 @@ async function encaisser(r: RecetteExterne) {
       devise: r.devise,
     }),
     ok: t('recettes.encaisserDialog.ok'),
+    couleur: 'positive',
   });
   dialogEncaissementOuvert.value = false;
   if (!ok) return;

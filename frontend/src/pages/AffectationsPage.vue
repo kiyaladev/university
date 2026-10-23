@@ -209,7 +209,7 @@
       v-model:page="aff.page"
       v-model:page-size="aff.pageSize"
       :total="aff.total"
-      @tous="toutAfficher"
+      @tous="aff.toutAfficher()"
     />
 
     <dialogue-formulaire
@@ -516,11 +516,6 @@ function supprimer(a: Charge) {
     ok: t('affectations.deleteDialog.confirm'),
     succes: t('affectations.messages.deleted'),
   });
-}
-
-/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
-function toutAfficher() {
-  aff.pageSize = Math.min(Math.max(aff.total, aff.pageSize), 1000);
 }
 
 function reinitialiser() {

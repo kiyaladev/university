@@ -162,7 +162,7 @@
       v-model:page="mat.page"
       v-model:page-size="mat.pageSize"
       :total="mat.total"
-      @tous="toutAfficher"
+      @tous="mat.toutAfficher()"
     />
 
     <!-- Formulaire dédié matière -->
@@ -389,11 +389,6 @@ function supprimer(m: Matiere) {
       succes: t('matieres.messages.deleted'),
     },
   );
-}
-
-/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
-function toutAfficher() {
-  mat.pageSize = Math.min(Math.max(mat.total, mat.pageSize), 1000);
 }
 
 function reinitialiser() {

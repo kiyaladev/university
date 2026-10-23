@@ -64,6 +64,29 @@ describe('useConfirmation', () => {
     expect((etat.dialogues[0]!.ok as { color: string }).color).toBe('negative');
   });
 
+  it('couleur, libellé d’annulation et persistance sont transmis', async () => {
+    const { confirmer } = useConfirmation();
+    await confirmer({ titre: 'Valider', message: '…' });
+    await confirmer({ titre: 'Voter', message: '…', couleur: 'positive', libelleAnnuler: 'Revenir', persistent: true });
+    await confirmer({ titre: 'Purger', message: '…', couleur: 'positive', danger: true });
+    const [defaut, vote, purge] = etat.dialogues as Array<{ ok: { color: string }; cancel: { label: string }; persistent: boolean }>;
+    expect(defaut!.ok.color).toBe('primary');
+    expect(defaut!.cancel.label).toBe('common.actions.cancel');
+    expect(defaut!.persistent).toBe(false);
+    expect(vote!.ok.color).toBe('positive');
+    expect(vote!.cancel.label).toBe('Revenir');
+    expect(vote!.persistent).toBe(true);
+    expect(purge!.ok.color).toBe('negative');
+  });
+
+  it('confirmerAvecSaisie préremplit le champ avec la valeur initiale', async () => {
+    const { confirmerAvecSaisie } = useConfirmation();
+    await confirmerAvecSaisie({ titre: 'Imprimer', message: '…', valeurInitiale: 'abc123' });
+    await confirmerAvecSaisie({ titre: 'Imprimer', message: '…', valeurInitiale: null });
+    expect((etat.dialogues[0]!.prompt as { model: string }).model).toBe('abc123');
+    expect((etat.dialogues[1]!.prompt as { model: string }).model).toBe('');
+  });
+
   it('confirmerAvecSaisie rend le texte saisi, ou null si annulé', async () => {
     const { confirmerAvecSaisie } = useConfirmation();
     await expect(confirmerAvecSaisie({ titre: 'Rejeter', message: '…', libelleSaisie: 'Motif' })).resolves.toBe('motif saisi');

@@ -573,6 +573,7 @@ async function agir(
     titre: t(`paiePage.dialogs.${dialogue}.title`),
     message: t(`paiePage.dialogs.${dialogue}.message`, { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
     ok: t(`paiePage.dialogs.${dialogue}.ok`),
+    couleur: dialogue === 'validate' ? 'positive' : 'primary',
   });
   if (!ok) return;
   try {

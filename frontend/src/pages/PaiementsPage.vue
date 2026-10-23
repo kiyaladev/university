@@ -430,7 +430,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.min(Math.max(liste.total, 1), 1000)"
+      @tous="liste.toutAfficher()"
     />
 
     <paiement-dialog v-model="dialogPaiement" @paye="liste.recharger()" />

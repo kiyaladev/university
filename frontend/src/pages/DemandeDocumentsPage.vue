@@ -18,7 +18,7 @@
       v-model="filtres"
       :placeholder="$t('demandeDocuments.filters.searchPlaceholder')"
       :recherche="true"
-      @reinitialiser="filtres = { recherche: '' }"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #principaux>
         <q-select
@@ -627,6 +627,7 @@ async function marquerPrete(d: DemandeDocument | null) {
     message: t('demandeDocuments.markReadyDialog.message'),
     libelleSaisie: t('demandeDocuments.detail.smsNotification'),
     ok: t('demandeDocuments.markReadyDialog.confirm'),
+    couleur: 'positive',
   });
   if (message === null) return;
   await agir(d, 'prete', 'prete', { message: message.trim() || undefined }, t('demandeDocuments.messages.markedReady'));
@@ -639,6 +640,7 @@ async function remettre(d: DemandeDocument | null) {
     message: t('demandeDocuments.handOverDialog.message'),
     libelleSaisie: t('demandeDocuments.detail.notes'),
     ok: t('demandeDocuments.handOverDialog.confirm'),
+    couleur: 'positive',
   });
   if (noteRemise === null) return;
   await agir(d, 'remettre', 'remettre', { noteRemise: noteRemise.trim() || undefined }, t('demandeDocuments.messages.handedOver'));

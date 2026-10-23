@@ -308,7 +308,7 @@
       v-model:page="ev.page"
       v-model:page-size="ev.pageSize"
       :total="ev.total"
-      @tous="ev.pageSize = Math.max(ev.total, 1)"
+      @tous="ev.toutAfficher()"
     />
 
     <evaluation-dialog

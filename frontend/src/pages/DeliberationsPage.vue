@@ -542,6 +542,7 @@ async function agir(d: DeliberationListe, action: 'calculer' | 'valider', cle: '
     titre: t(`deliberations.dialogs.${cle}.title`),
     message: t(`deliberations.dialogs.${cle}.message`),
     ok: t(`deliberations.dialogs.${cle}.ok`),
+    couleur: cle === 'validate' ? 'positive' : 'primary',
   });
   if (!ok) return;
   try {

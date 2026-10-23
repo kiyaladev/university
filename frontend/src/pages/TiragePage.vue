@@ -144,7 +144,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <tirage-dialog v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
@@ -178,7 +178,7 @@ const router = useRouter();
 // Alias `translate` (not `t`) because several handlers below already use `t`
 // as the local parameter name for a Tirage row.
 const { t: translate } = useI18n();
-const { confirmer } = useConfirmation();
+const { confirmer, confirmerAvecSaisie } = useConfirmation();
 const dialogCreationOuvert = ref(false);
 /** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
 const examenFiltre = ref<Examen | null>(null);
@@ -370,16 +370,15 @@ async function avancer(t: Tirage) {
     }
   };
 
-  // Seule saisie préremplie de la page : `confirmerAvecSaisie` ne sait pas
-  // proposer de valeur initiale, on garde donc le dialogue Quasar ici.
+  // Saisie préremplie avec l'empreinte connue de la source.
   if (stade === 'IMPRIME') {
-    $q.dialog({
-      title: translate('tirage.actions.confirmPrint'),
-      message: MESSAGES_TRANSITION.value.IMPRIME,
-      prompt: { model: t.empreinteSource, type: 'text' },
-      cancel: true,
-      ok: { color: 'primary', label: translate('tirage.actions.print'), unelevated: true, noCaps: true },
-    }).onOk((value: string) => validerEtAvancer(value));
+    const empreinte = await confirmerAvecSaisie({
+      titre: translate('tirage.actions.confirmPrint'),
+      message: MESSAGES_TRANSITION.value.IMPRIME ?? '',
+      valeurInitiale: t.empreinteSource,
+      ok: translate('tirage.actions.print'),
+    });
+    if (empreinte !== null) await validerEtAvancer(empreinte);
     return;
   }
 

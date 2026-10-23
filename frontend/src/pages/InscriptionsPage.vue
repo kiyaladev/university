@@ -374,7 +374,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="toutAfficher"
+      @tous="liste.toutAfficher()"
     />
 
     <inscription-dialog v-model="dialogInscription" @enregistre="liste.recharger()" />
@@ -718,6 +718,7 @@ async function valider(dossier: Inscription) {
       nom: dossier.etudiant?.nom,
     }),
     ok: t('inscriptions.dialogs.validate.confirm'),
+    couleur: 'positive',
   });
   if (!ok) return;
   try {
@@ -785,11 +786,6 @@ function ouvrirModificationEtudiant() {
   etudiantEdite.value = etudiantApercu.value;
   dialogEtudiant.value = false;
   dialogFicheEtudiant.value = true;
-}
-
-/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
-function toutAfficher() {
-  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
 }
 
 /** Tout tombe, recherche comprise ; un ciblage levé ramène à l'année en cours. */
