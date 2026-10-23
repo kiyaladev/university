@@ -115,19 +115,10 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { dateHeureLisible } from '@/shared/utils/format';
+import { auditService, bornesAudit, type AuditRow } from '../services/audit';
 
-interface AuditRow {
-  id: string;
-  action: string;
-  entite: string;
-  entiteId?: string;
-  createdAt: string;
-  details?: string;
-  user?: { nom: string; prenom: string; role: string };
-}
 const $q = useQuasar();
 const { t } = useI18n();
 /** Saisie du formulaire ; elle ne s'applique qu'au clic sur « Rechercher ». */
@@ -179,19 +170,14 @@ const liste = reactive(
       erreur.value = '';
       try {
         // Silencieux : l'échec s'affiche dans le bandeau de la page.
-        const { data } = await api.get('/controles/audit', {
-          silencieux: true,
-          params: {
-            page,
-            pageSize,
-            acteur: f.acteur || undefined,
-            entite: f.entite || undefined,
-            action: f.action || undefined,
-            dateDebut: f.dateDebut ? new Date(`${f.dateDebut}T00:00:00`).toISOString() : undefined,
-            dateFin: f.dateFin ? new Date(`${f.dateFin}T23:59:59.999`).toISOString() : undefined,
-          },
+        return await auditService.liste({
+          page,
+          pageSize,
+          acteur: f.acteur || undefined,
+          entite: f.entite || undefined,
+          action: f.action || undefined,
+          ...bornesAudit(f),
         });
-        return data;
       } catch (error: any) {
         erreur.value = error.response?.data?.message || t('audit.error');
         throw error;

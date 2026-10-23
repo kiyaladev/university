@@ -136,10 +136,10 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { DEVISE, LIBELLE_TYPE_DEMANDE, montantLisible, optionsDepuis } from '@/shared/utils/libelles';
 import type { TarifDemande, TypeDemandeDocument } from '@/types';
+import { tarifsDemandeService } from '../services/tarifs-demande';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -196,13 +196,13 @@ async function enregistrer() {
   enregistrement.value = true;
   try {
     if (tarifEdite.value) {
-      await api.put(`/documents-demande/tarifs/${tarifEdite.value.id}`, {
+      await tarifsDemandeService.modifier(tarifEdite.value.id, {
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
       });
       $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.updated') });
     } else {
-      await api.post('/documents-demande/tarifs', {
+      await tarifsDemandeService.creer({
         type: form.value.type,
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
@@ -211,8 +211,6 @@ async function enregistrer() {
     }
     dialogOuvert.value = false;
     await charger();
-  } catch {
-    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }
@@ -222,10 +220,7 @@ async function charger() {
   if (!auth.estAdmin) return;
   chargement.value = true;
   try {
-    const { data } = await api.get('/documents-demande/tarifs');
-    tarifs.value = Array.isArray(data) ? data : (data.data ?? []);
-  } catch {
-    /* l'intercepteur axios affiche le motif */
+    tarifs.value = await tarifsDemandeService.liste();
   } finally {
     chargement.value = false;
   }
