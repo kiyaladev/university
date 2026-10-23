@@ -1,3 +1,10 @@
 {
-  "jeton_invalide_ou_expire": "Invalid or expired token"
+  "jeton_invalide_ou_expire": "Invalid or expired token",
+  "signaturePngInvalide": "The signature must be a valid PNG image.",
+  "signatureResolutionExcessive": "The signature resolution exceeds the allowed limit.",
+  "releveReserveChefDepartement": "Only the head of the department concerned can sign its report.",
+  "compteSignatureNonChef": "The signing account does not head this department or is no longer active.",
+  "departementIntrouvable": "Department not found.",
+  "releveSemaineComplete": "The report must cover a full week, from Monday to Sunday.",
+  "signatureNonIntegrable": "The signature image cannot be embedded in the PDF."
 }

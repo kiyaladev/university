@@ -33,7 +33,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
 import { Prisma, Role, StatutElection } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -180,7 +179,7 @@ export class ElectionsService {
       where: { id },
       include: ELECTION_INCLUDE,
     });
-    if (!election) throw new NotFoundException(I18nContext.current()!.t('elections.election_introuvable'));
+    if (!election) throw new NotFoundException(t('elections.election_introuvable'));
     return election;
   }
 
@@ -249,7 +248,7 @@ export class ElectionsService {
 
   async creer(dto: CreateElectionDto, user: AuthUser) {
     if (new Date(dto.dateCloture) <= new Date(dto.dateOuverture)) {
-      throw new BadRequestException(I18nContext.current()!.t('elections.la_cloture_doit_suivre_l_ouverture'));
+      throw new BadRequestException(t('elections.la_cloture_doit_suivre_l_ouverture'));
     }
     return this.prisma.$transaction(async (tx) => {
       const election = await tx.election.create({
@@ -277,12 +276,12 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.une_election_publiee_ne_se_modifie_plus_creez_en_une_nouvell'));
+        throw new BadRequestException(t('elections.une_election_publiee_ne_se_modifie_plus_creez_en_une_nouvell'));
       }
       const ouverture = dto.dateOuverture !== undefined ? new Date(dto.dateOuverture) : election.dateOuverture;
       const cloture = dto.dateCloture !== undefined ? new Date(dto.dateCloture) : election.dateCloture;
       if (cloture <= ouverture) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.la_cloture_doit_suivre_l_ouverture'));
+        throw new BadRequestException(t('elections.la_cloture_doit_suivre_l_ouverture'));
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -322,7 +321,7 @@ export class ElectionsService {
         );
       }
       if (election.candidats.length === 0) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin'));
+        throw new BadRequestException(t('elections.declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin'));
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -345,7 +344,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.OUVERTE) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.l_election_est_election_statut_seule_une_ouverte_peut_etre_c', { args: { 'election.statut': election.statut } }));
+        throw new BadRequestException(t('elections.l_election_est_election_statut_seule_une_ouverte_peut_etre_c', { 'election.statut': election.statut }));
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -368,7 +367,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.CLOSE) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.l_election_est_election_statut_seule_une_close_peut_etre_pro', { args: { 'election.statut': election.statut } }));
+        throw new BadRequestException(t('elections.l_election_est_election_statut_seule_une_close_peut_etre_pro', { 'election.statut': election.statut }));
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -393,7 +392,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException(I18nContext.current()!.t('elections.les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin'));
+        throw new BadRequestException(t('elections.les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin'));
       }
       const ordre = dto.ordre ?? election.candidats.length;
       const candidat = await tx.candidatElection.create({
@@ -434,7 +433,7 @@ export class ElectionsService {
         where: { id: candidatId },
       });
       if (!candidat || candidat.electionId !== id) {
-        throw new NotFoundException(I18nContext.current()!.t('elections.candidat_introuvable_sur_cette_election'));
+        throw new NotFoundException(t('elections.candidat_introuvable_sur_cette_election'));
       }
       await tx.candidatElection.delete({ where: { id: candidatId } });
       // Après le retrait, le journal est la seule trace qui survit à la ligne :
@@ -475,17 +474,17 @@ export class ElectionsService {
         await this.prisma.$transaction(async (transaction) => {
           const election = await this.electionVerrouillee(transaction, dto.electionId);
           if (election.statut !== StatutElection.OUVERTE) {
-            throw new BadRequestException(I18nContext.current()!.t('elections.le_scrutin_n_est_pas_ouvert'));
+            throw new BadRequestException(t('elections.le_scrutin_n_est_pas_ouvert'));
           }
           const maintenant = new Date();
           if (election.dateOuverture > maintenant) {
-            throw new BadRequestException(I18nContext.current()!.t('elections.l_ouverture_du_scrutin_n_est_pas_encore_effective'));
+            throw new BadRequestException(t('elections.l_ouverture_du_scrutin_n_est_pas_encore_effective'));
           }
           if (election.dateCloture <= maintenant) {
-            throw new BadRequestException(I18nContext.current()!.t('elections.le_scrutin_est_clos'));
+            throw new BadRequestException(t('elections.le_scrutin_est_clos'));
           }
           if (dto.bulletin.length === 0) {
-            throw new BadRequestException(I18nContext.current()!.t('elections.bulletin_vide_selectionnez_au_moins_un_candidat'));
+            throw new BadRequestException(t('elections.bulletin_vide_selectionnez_au_moins_un_candidat'));
           }
           if (dto.bulletin.length > election.nbSieges) {
             throw new BadRequestException(
@@ -495,7 +494,7 @@ export class ElectionsService {
           const doublons = new Set<string>();
           for (const id of idsChoisis) {
             if (doublons.has(id)) {
-              throw new BadRequestException(I18nContext.current()!.t('elections.le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois'));
+              throw new BadRequestException(t('elections.le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois'));
             }
             doublons.add(id);
           }
@@ -505,7 +504,7 @@ export class ElectionsService {
             select: { id: true },
           });
           if (candidatsExistants.length !== idsChoisis.length) {
-            throw new BadRequestException(I18nContext.current()!.t('elections.au_moins_un_candidat_n_appartient_pas_a_cette_election'));
+            throw new BadRequestException(t('elections.au_moins_un_candidat_n_appartient_pas_a_cette_election'));
           }
 
           const dejaVote = await transaction.voteElection.findFirst({
@@ -514,7 +513,7 @@ export class ElectionsService {
               ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : []),
             ] }, select: { id: true },
           });
-          if (dejaVote) throw new ConflictException(I18nContext.current()!.t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
+          if (dejaVote) throw new ConflictException(t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
           await transaction.voteElection.createMany({ data: idsChoisis.map(candidatId => ({
             electionId: dto.electionId, candidatId, etudiantId: user.etudiantId ?? null,
             electeurId: user.id, scrutinId, mode: dto.mode ?? 'WEB', ipAppareil: ip ?? null,
@@ -525,7 +524,7 @@ export class ElectionsService {
         // Deux bulletins simultanés passent par le même contrôle transactionnel.
         if (error?.code === 'P2034' && tentative < 2) continue;
         if (error?.code === 'P2002' || error?.code === 'P2034') {
-          throw new ConflictException(I18nContext.current()!.t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
+          throw new ConflictException(t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
         }
         throw error;
       }
@@ -613,10 +612,10 @@ export class ElectionsService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('elections.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('elections.jeton_invalide_ou_expire'));
     }
     const election = await this.trouverPour(id, user);
-    if (election.statut !== StatutElection.OUVERTE) throw new NotFoundException();
+    if (election.statut !== StatutElection.OUVERTE) throw new NotFoundException(t('common.notFound'));
     const etablissement = await chargerEtablissement(this.prisma);
     const bulletin: BulletinElection = {
       id: election.id,

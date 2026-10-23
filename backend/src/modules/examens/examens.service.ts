@@ -19,7 +19,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutExamen } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
@@ -111,9 +111,9 @@ export class ExamensService {
       where: { id },
       include: EXAMEN_INCLUDE,
     });
-    if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+    if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
     if (user && (user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT) && examen.surveillantId !== user.id) {
-      throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      throw new NotFoundException(t('examens.examen_introuvable'));
     }
     return examen;
   }
@@ -173,20 +173,20 @@ export class ExamensService {
     await this.trouver(id);
     return this.prisma.$transaction(async (tx) => {
       const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       // Les transitions de démarrage et de clôture ont chacune leur endpoint,
       // avec leurs contrôles et compteurs. Cette route ne sert qu'à annuler
       // un examen encore planifié.
       if (statut !== StatutExamen.ANNULE || examen.statut !== StatutExamen.PLANIFIE) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
+        throw new BadRequestException(t('examens.transition_statut_invalide'));
       }
       const transition = await tx.examen.updateMany({
         where: { id, statut: StatutExamen.PLANIFIE },
         data: { statut: StatutExamen.ANNULE },
       });
       if (transition.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.transition_statut_invalide'));
+        throw new BadRequestException(t('examens.transition_statut_invalide'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(
@@ -213,13 +213,13 @@ export class ExamensService {
     await this.trouver(id, user);
     return this.prisma.$transaction(async (tx) => {
       const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       if (examen.statut === StatutExamen.ANNULE) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.examen_annule_demarrage_impossible'));
+        throw new BadRequestException(t('examens.examen_annule_demarrage_impossible'));
       }
       if (examen.statut !== StatutExamen.PLANIFIE) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
+        throw new BadRequestException(t('examens.examen_deja_termine'));
       }
       const nbInscrits = await tx.inscription.count({
         where: { promotionId: examen.promotionId, anneeId: examen.anneeId, statut: 'VALIDEE' },
@@ -229,7 +229,7 @@ export class ExamensService {
         data: { statut: StatutExamen.EN_COURS, nbInscrits, nbPresents: 0 },
       });
       if (transition.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.examen_deja_termine'));
+        throw new BadRequestException(t('examens.examen_deja_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(
@@ -249,17 +249,17 @@ export class ExamensService {
     await this.trouver(id);
     return this.prisma.$transaction(async (tx) => {
       const examen: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
       if (examen.statut !== StatutExamen.EN_COURS) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
+        throw new BadRequestException(t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
       const transition = await tx.examen.updateMany({
         where: { id, statut: StatutExamen.EN_COURS },
         data: { statut: StatutExamen.TERMINE },
       });
       if (transition.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('examens.seul_un_examen_en_cours_peut_etre_termine'));
+        throw new BadRequestException(t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
       await journaliser(
@@ -325,10 +325,10 @@ export class ExamensService {
     const examen = await this.trouver(dto.examenId, user);
     await exigerAnneeOuverte(this.prisma, examen.anneeId);
     const reference = dto.reference.trim();
-    if (!reference) throw new BadRequestException(I18nContext.current()!.t('examens.reference_vide'));
+    if (!reference) throw new BadRequestException(t('examens.reference_vide'));
 
     if (examen.statut !== StatutExamen.EN_COURS) {
-      throw new BadRequestException(I18nContext.current()!.t('examens.scan_exige_examen_en_cours'));
+      throw new BadRequestException(t('examens.scan_exige_examen_en_cours'));
     }
 
     const candidat = await this.trouverEtudiantParReference(reference);
@@ -422,13 +422,13 @@ export class ExamensService {
           where: { id: examenId },
           select: { anneeId: true, statut: true, surveillantId: true },
         });
-    if (!examen) throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
-    if (examen.anneeId !== anneeId) throw new BadRequestException(I18nContext.current()!.t('examens.examen_introuvable'));
+    if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
+    if (examen.anneeId !== anneeId) throw new BadRequestException(t('examens.examen_introuvable'));
     if ((user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT) && examen.surveillantId !== user.id) {
-      throw new NotFoundException(I18nContext.current()!.t('examens.examen_introuvable'));
+      throw new NotFoundException(t('examens.examen_introuvable'));
     }
     if (examen.statut !== StatutExamen.EN_COURS) {
-      throw new BadRequestException(I18nContext.current()!.t('examens.scan_exige_examen_en_cours'));
+      throw new BadRequestException(t('examens.scan_exige_examen_en_cours'));
     }
     return examen;
   }

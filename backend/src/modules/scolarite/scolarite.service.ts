@@ -20,7 +20,7 @@ import {
   TypeEvaluation,
 } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Paginated } from '../../common/dto';
 import { pct, toDateOnly } from '../../common/utils';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
@@ -106,7 +106,7 @@ export class ScolariteService {
 
   async findEvaluation(id: string) {
     const evaluation = await this.veillerEvaluation(id);
-    if (!evaluation) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+    if (!evaluation) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     return evaluation;
   }
 
@@ -132,10 +132,10 @@ export class ScolariteService {
       this.prisma.anneeAcademique.findUnique({ where: { id: dto.anneeId } }),
       this.prisma.promotion.findUnique({ where: { id: dto.promotionId } }),
     ]);
-    if (!matiere) throw new NotFoundException(I18nContext.current()!.t('scolarite.matiere_introuvable'));
-    if (!annee) throw new NotFoundException(I18nContext.current()!.t('scolarite.annee_academique_introuvable'));
+    if (!matiere) throw new NotFoundException(t('scolarite.matiere_introuvable'));
+    if (!annee) throw new NotFoundException(t('scolarite.annee_academique_introuvable'));
     await exigerAnneeOuverte(this.prisma, dto.anneeId);
-    if (!promotion) throw new NotFoundException(I18nContext.current()!.t('scolarite.promotion_introuvable'));
+    if (!promotion) throw new NotFoundException(t('scolarite.promotion_introuvable'));
 
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, dto.anneeId);
@@ -172,20 +172,20 @@ export class ScolariteService {
 
   async modifierEvaluation(id: string, dto: UpdateEvaluationDto, user: AuthUser) {
     const existante = await this.veillerEvaluation(id);
-    if (!existante) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+    if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (dto.anneeId !== undefined) await exigerAnneeOuverte(this.prisma, dto.anneeId);
     if (existante.statut === StatutEvaluation.CLOTUREE) {
-      throw new BadRequestException(I18nContext.current()!.t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { args: { intitule: existante.intitule } }));
+      throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: existante.intitule }));
     }
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.evaluation.findUnique({
         where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+      if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(I18nContext.current()!.t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { args: { intitule: avant.intitule } }));
+        throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: avant.intitule }));
       }
       if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
       await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
@@ -222,19 +222,19 @@ export class ScolariteService {
 
   async supprimerEvaluation(id: string, user: AuthUser) {
     const existante = await this.veillerEvaluation(id);
-    if (!existante) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+    if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (existante._count.notes > 0) {
-      throw new BadRequestException(I18nContext.current()!.t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { args: { intitule: existante.intitule, nombre: existante._count.notes } }));
+      throw new BadRequestException(t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { intitule: existante.intitule, nombre: existante._count.notes }));
     }
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.evaluation.findUnique({
         where: { id }, include: { _count: { select: { notes: true } } },
       });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+      if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant._count.notes > 0) {
-        throw new BadRequestException(I18nContext.current()!.t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { args: { intitule: avant.intitule, nombre: avant._count.notes } }));
+        throw new BadRequestException(t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { intitule: avant.intitule, nombre: avant._count.notes }));
       }
       await tx.evaluation.delete({ where: { id } });
       await journaliser(tx, user, 'EVALUATION_SUPPRIMEE', 'Evaluation', id, { avant: this.instantaneEvaluation(avant), apres: null });
@@ -244,19 +244,19 @@ export class ScolariteService {
 
   async cloturerEvaluation(id: string, user: AuthUser) {
     const existante = await this.veillerEvaluation(id);
-    if (!existante) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+    if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (existante.statut === StatutEvaluation.CLOTUREE) {
-      throw new BadRequestException(I18nContext.current()!.t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { args: { 'existante.intitule': existante.intitule } }));
+      throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': existante.intitule }));
     }
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.evaluation.findUnique({
         where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+      if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(I18nContext.current()!.t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { args: { 'existante.intitule': avant.intitule } }));
+        throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': avant.intitule }));
       }
       const maj = await tx.evaluation.update({
         where: { id },
@@ -286,7 +286,7 @@ export class ScolariteService {
    *  note éventuelle et le badge « manquante » pour les saisies absentes. */
   async feuilleEvaluation(id: string) {
     const evaluation = await this.veillerEvaluation(id);
-    if (!evaluation) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+    if (!evaluation) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
 
     const inscriptions = await this.prisma.inscription.findMany({
       where: { promotionId: evaluation.promotionId, anneeId: evaluation.anneeId, ...INSCRITS_VALIDES },
@@ -352,10 +352,10 @@ export class ScolariteService {
       const evaluation = await tx.evaluation.findFirst({
         where: { id: dto.evaluationId, ...this.promotionAutorisee(saisiePar) },
       });
-      if (!evaluation) throw new NotFoundException(I18nContext.current()!.t('scolarite.evaluation_introuvable'));
+      if (!evaluation) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, evaluation.anneeId);
       if (evaluation.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(I18nContext.current()!.t('scolarite.l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes', { args: { intitule: evaluation.intitule } }));
+        throw new BadRequestException(t('scolarite.l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes', { intitule: evaluation.intitule }));
       }
 
       const inscrits = await tx.inscription.findMany({
@@ -456,7 +456,7 @@ export class ScolariteService {
         },
       },
     });
-    if (!delib) throw new NotFoundException(I18nContext.current()!.t('scolarite.deliberation_introuvable'));
+    if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     const lignes = [...delib.lignes].sort((a, b) => (a.rang ?? 0) - (b.rang ?? 0));
     return { ...delib, lignes };
   }
@@ -478,7 +478,7 @@ export class ScolariteService {
     });
     if (existante) {
       throw new ConflictException(
-        I18nContext.current()!.t(session === SessionDeliberation.NORMALE
+        t(session === SessionDeliberation.NORMALE
           ? 'scolarite.une_deliberation_de_session_normale_existe_deja_pour_cette_p'
           : 'scolarite.une_deliberation_de_rattrapage_existe_deja_pour_cette_promot'),
       );
@@ -488,9 +488,9 @@ export class ScolariteService {
       this.prisma.anneeAcademique.findUnique({ where: { id: dto.anneeId } }),
       this.prisma.promotion.findUnique({ where: { id: dto.promotionId } }),
     ]);
-    if (!annee) throw new NotFoundException(I18nContext.current()!.t('scolarite.annee_academique_introuvable'));
+    if (!annee) throw new NotFoundException(t('scolarite.annee_academique_introuvable'));
     await exigerAnneeOuverte(this.prisma, annee.id);
-    if (!promotion) throw new NotFoundException(I18nContext.current()!.t('scolarite.promotion_introuvable'));
+    if (!promotion) throw new NotFoundException(t('scolarite.promotion_introuvable'));
 
     const delib = await this.prisma.$transaction(async (tx) => {
       await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
@@ -529,13 +529,13 @@ export class ScolariteService {
       where: { id: deliberationId },
       include: { annee: true, promotion: true },
     });
-    if (!delib) throw new NotFoundException(I18nContext.current()!.t('scolarite.deliberation_introuvable'));
+    if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     await exigerAnneeOuverte(db, delib.anneeId);
     await db.$queryRaw`SELECT id FROM "Deliberation" WHERE id = ${deliberationId} FOR UPDATE`;
     delib = await db.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true, promotion: true } });
-    if (!delib) throw new NotFoundException(I18nContext.current()!.t('scolarite.deliberation_introuvable'));
+    if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     if (delib.statut === StatutDeliberation.VALIDEE) {
-      throw new BadRequestException(I18nContext.current()!.t('scolarite.deliberation_validee_par_le_jury_tout_recalcul_est_bloque'));
+      throw new BadRequestException(t('scolarite.deliberation_validee_par_le_jury_tout_recalcul_est_bloque'));
     }
     const resultat = await this.calculerInternes(delib, db);
     if (user) {
@@ -556,15 +556,15 @@ export class ScolariteService {
   async validerDeliberation(deliberationId: string, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       let delib = await tx.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true } });
-      if (!delib) throw new NotFoundException(I18nContext.current()!.t('scolarite.deliberation_introuvable'));
+      if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
       await exigerAnneeOuverte(tx, delib.anneeId);
       await tx.$queryRaw`SELECT id FROM "Deliberation" WHERE id = ${deliberationId} FOR UPDATE`;
       delib = await tx.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true } });
-      if (!delib) throw new NotFoundException(I18nContext.current()!.t('scolarite.deliberation_introuvable'));
+      if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
       if (delib.statut === StatutDeliberation.VALIDEE) {
         const le = delib.valideeLe?.toLocaleDateString('fr-FR');
         throw new BadRequestException(
-          I18nContext.current()!.t(le ? 'scolarite.cette_deliberation_a_deja_ete_validee_par_le_jury_le_le' : 'scolarite.cette_deliberation_est_deja_validee', le ? { args: { le } } : undefined),
+          t(le ? 'scolarite.cette_deliberation_a_deja_ete_validee_par_le_jury_le_le' : 'scolarite.cette_deliberation_est_deja_validee', le ? { le } : undefined),
         );
       }
       const miseAJour = await tx.deliberation.update({
@@ -601,7 +601,7 @@ export class ScolariteService {
         },
       });
       if (!normale) {
-        throw new BadRequestException(I18nContext.current()!.t('scolarite.la_deliberation_de_la_session_normale_doit_d_abord_exister'));
+        throw new BadRequestException(t('scolarite.la_deliberation_de_la_session_normale_doit_d_abord_exister'));
       }
       const lignes = await tx.deliberationLigne.findMany({
         where: { deliberationId: normale.id, decision: DecisionJury.AJOURNE },
@@ -691,7 +691,7 @@ export class ScolariteService {
     const candidats = await this.candidatsDeliberation(delib, tx);
     if (!candidats.length) {
       throw new BadRequestException(
-        I18nContext.current()!.t(delib.session === SessionDeliberation.RATTRAPAGE
+        t(delib.session === SessionDeliberation.RATTRAPAGE
           ? 'scolarite.aucun_etudiant_a_repositionner_aucun_ajourne_a_la_session_no'
           : 'scolarite.aucun_etudiant_inscrit_statut_valide_pour_cette_promotion'),
       );
@@ -771,7 +771,7 @@ export class ScolariteService {
   async bulletin(deliberationId: string, inscriptionId: string) {
     const delib = await this.detailDeliberation(deliberationId);
     const ligne = delib.lignes.find((l: any) => l.inscriptionId === inscriptionId);
-    if (!ligne) throw new NotFoundException(I18nContext.current()!.t('scolarite.aucune_ligne_pour_cet_etudiant_a_cette_deliberation'));
+    if (!ligne) throw new NotFoundException(t('scolarite.aucune_ligne_pour_cet_etudiant_a_cette_deliberation'));
     const matieres = await this.matieresDuEtudiant(delib, inscriptionId, this.prisma);
     return { delib, ligne, matieres };
   }

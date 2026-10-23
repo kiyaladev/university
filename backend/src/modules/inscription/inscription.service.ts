@@ -15,7 +15,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
@@ -106,9 +105,9 @@ export class InscriptionService {
   private async anneeRetenue(anneeId?: string) {
     if (anneeId) {
       const annee = await this.prisma.anneeAcademique.findUnique({ where: { id: anneeId } });
-      if (!annee) throw new BadRequestException(I18nContext.current()!.t('inscription.annee_academique_introuvable'));
+      if (!annee) throw new BadRequestException(t('inscription.annee_academique_introuvable'));
       if (annee.cloturee) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
+        throw new BadRequestException(t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
       }
       return annee;
     }
@@ -211,15 +210,15 @@ export class InscriptionService {
   async depotPublic(dto: InscriptionPubliqueDto, ip?: string) {
     const annee = await this.anneeRetenue(dto.anneeId);
     if (!annee) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
+      throw new BadRequestException(t('inscription.aucune_annee_academique_n_est_ouverte_aux_inscriptions'));
     }
 
     const promotion = await this.prisma.promotion.findUnique({
       where: { id: dto.promotionId },
     });
-    if (!promotion) throw new BadRequestException(I18nContext.current()!.t('inscription.promotion_introuvable'));
+    if (!promotion) throw new BadRequestException(t('inscription.promotion_introuvable'));
     if (promotion.anneeId !== annee.id) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
+      throw new BadRequestException(t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
     }
 
     const frais = await this.prisma.frais.findUnique({
@@ -244,7 +243,7 @@ export class InscriptionService {
               })
             : null;
           if (existant) {
-            throw new ConflictException(I18nContext.current()!.t('inscription.fiche_existante_connexion_requise'));
+            throw new ConflictException(t('inscription.fiche_existante_connexion_requise'));
           }
 
           const etudiant = await tx.etudiant.create({
@@ -277,7 +276,7 @@ export class InscriptionService {
             select: { numero: true },
           });
           if (deja) {
-            throw new ConflictException(I18nContext.current()!.t('inscription.un_dossier_deja_numero_existe_deja_pour_dto_prenom_dto_nom_s', { args: { 'deja.numero': deja.numero, 'dto.prenom': dto.prenom, 'dto.nom': dto.nom, 'annee.libelle': annee.libelle } }));
+            throw new ConflictException(t('inscription.un_dossier_deja_numero_existe_deja_pour_dto_prenom_dto_nom_s', { 'deja.numero': deja.numero, 'dto.prenom': dto.prenom, 'dto.nom': dto.nom, 'annee.libelle': annee.libelle }));
           }
 
           const inscription = await tx.inscription.create({
@@ -323,7 +322,7 @@ export class InscriptionService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
   }
 
   /** Inscription au guichet (agent comptable / scolarité). */
@@ -332,15 +331,15 @@ export class InscriptionService {
       where: { id: dto.etudiantId },
       select: { id: true, nom: true, prenom: true },
     });
-    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('inscription.etudiant_introuvable'));
+    if (!etudiant) throw new NotFoundException(t('inscription.etudiant_introuvable'));
 
     const annee = await this.anneeRetenue(dto.anneeId);
-    if (!annee) throw new BadRequestException(I18nContext.current()!.t('inscription.aucune_annee_academique_n_est_active'));
+    if (!annee) throw new BadRequestException(t('inscription.aucune_annee_academique_n_est_active'));
 
     const promotion = await this.prisma.promotion.findUnique({ where: { id: dto.promotionId } });
-    if (!promotion) throw new BadRequestException(I18nContext.current()!.t('inscription.promotion_introuvable'));
+    if (!promotion) throw new BadRequestException(t('inscription.promotion_introuvable'));
     if (promotion.anneeId !== annee.id) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
+      throw new BadRequestException(t('inscription.la_promotion_choisie_n_appartient_pas_a_l_annee_retenue'));
     }
 
     const existante = await this.prisma.inscription.findUnique({
@@ -348,7 +347,7 @@ export class InscriptionService {
       select: { id: true, numero: true, statut: true },
     });
     if (existante && existante.statut !== StatutInscription.ANNULEE) {
-      throw new ConflictException(I18nContext.current()!.t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', { args: { 'existante.numero': existante.numero, 'etudiant.prenom': etudiant.prenom, 'etudiant.nom': etudiant.nom, 'annee.libelle': annee.libelle } }));
+      throw new ConflictException(t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', { 'existante.numero': existante.numero, 'etudiant.prenom': etudiant.prenom, 'etudiant.nom': etudiant.nom, 'annee.libelle': annee.libelle }));
     }
 
     const frais = await this.prisma.frais.findUnique({
@@ -374,10 +373,10 @@ export class InscriptionService {
           },
         });
         if (reouverture.count !== 1) {
-          throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+          throw new ConflictException(t('inscription.statut_modifie_entre_temps'));
         }
         const rouverte = await tx.inscription.findUnique({ where: { id: existante.id }, include: INSCRIPTION_INCLUDE });
-        if (!rouverte) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+        if (!rouverte) throw new NotFoundException(t('inscription.inscription_introuvable'));
         await tx.auditLog.create({
           data: {
             userId: user.id,
@@ -422,7 +421,7 @@ export class InscriptionService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
   }
 
   // ---------------------------------------------------------- cycle de vie
@@ -431,13 +430,13 @@ export class InscriptionService {
   async validerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut === StatutInscription.ANNULEE) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.ce_dossier_est_annule_impossible_de_le_valider'));
+      throw new BadRequestException(t('inscription.ce_dossier_est_annule_impossible_de_le_valider'));
     }
     if (
       inscription.statut !== StatutInscription.PAYEE &&
       inscription.statut !== StatutInscription.VALIDEE
     ) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', { args: { 'inscription.numero': inscription.numero, 'LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut': LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut } }));
+      throw new BadRequestException(t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', { 'inscription.numero': inscription.numero, 'LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut': LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut }));
     }
     if (inscription.statut === StatutInscription.VALIDEE) return inscription;
 
@@ -455,10 +454,10 @@ export class InscriptionService {
         },
       });
       if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+        throw new ConflictException(t('inscription.statut_modifie_entre_temps'));
       }
       const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
-      if (!maj) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+      if (!maj) throw new NotFoundException(t('inscription.inscription_introuvable'));
       await tx.auditLog.create({
         data: {
           userId: user.id,
@@ -476,10 +475,10 @@ export class InscriptionService {
   async annulerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut === StatutInscription.ANNULEE) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.ce_dossier_est_deja_annule'));
+      throw new BadRequestException(t('inscription.ce_dossier_est_deja_annule'));
     }
     if (inscription.statut === StatutInscription.VALIDEE) {
-      throw new BadRequestException(I18nContext.current()!.t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', { args: { 'inscription.numero': inscription.numero } }));
+      throw new BadRequestException(t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', { 'inscription.numero': inscription.numero }));
     }
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, inscription.anneeId);
@@ -488,10 +487,10 @@ export class InscriptionService {
         data: { statut: StatutInscription.ANNULEE },
       });
       if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('inscription.statut_modifie_entre_temps'));
+        throw new ConflictException(t('inscription.statut_modifie_entre_temps'));
       }
       const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
-      if (!maj) throw new NotFoundException(I18nContext.current()!.t('inscription.inscription_introuvable'));
+      if (!maj) throw new NotFoundException(t('inscription.inscription_introuvable'));
       await tx.auditLog.create({
         data: {
           userId: user.id,

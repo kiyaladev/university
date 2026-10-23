@@ -12,7 +12,6 @@
  *     est encore en attente)
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
 import { Prisma, StatutAttributionLogement, StatutChambre } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
@@ -113,7 +112,7 @@ export class ResidencesService extends CrudService {
       if (!residence) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
       const nb = residence._count.chambres;
       if (nb > 0) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', { args: { 'residence.nom': residence.nom, nb } }));
+        throw new BadRequestException(t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', { 'residence.nom': residence.nom, nb }));
       }
       await tx.residence.delete({ where: { id } });
       await journaliser(tx, user ?? null, 'RESIDENCE_SUPPRIMEE', 'Residence', id, { avant: this.instantaneAudit(residence), apres: null });
@@ -149,7 +148,7 @@ export class ChambresService extends CrudService {
   /** Une chambre neuve ne démarre jamais occupée : il faut une demande accordée. */
   async creer(dto: CreateChambreDto, user?: AuthUser) {
     if (dto.statut === StatutChambre.OCCUPEE) {
-      throw new BadRequestException(I18nContext.current()!.t('cites.une_chambre_ne_peut_pas_etre_creee_occupee_elle_doit_d_abord'));
+      throw new BadRequestException(t('cites.une_chambre_ne_peut_pas_etre_creee_occupee_elle_doit_d_abord'));
     }
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.chambre.create({ data: dto, include: this.options.include });
@@ -179,7 +178,7 @@ export class ChambresService extends CrudService {
           where: { chambreId: id, statut: StatutAttributionLogement.ACCORDEE },
         });
         if (dto.statut === StatutChambre.OCCUPEE && !accordee) {
-          throw new BadRequestException(I18nContext.current()!.t('cites.cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi'));
+          throw new BadRequestException(t('cites.cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi'));
         }
         if (accordee && dto.statut !== StatutChambre.OCCUPEE) {
           throw new BadRequestException(t('cites.activeAllocationRequiresOccupied'));
@@ -208,7 +207,7 @@ export class ChambresService extends CrudService {
       if (!chambre) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
       const nb = chambre._count.attributions;
       if (nb > 0) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', { args: { 'chambre.code': chambre.code, nb } }));
+        throw new BadRequestException(t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', { 'chambre.code': chambre.code, nb }));
       }
       await tx.chambre.delete({ where: { id } });
       await journaliser(tx, user ?? null, 'CHAMBRE_SUPPRIMEE', 'Chambre', id, { avant: this.instantaneAudit(chambre), apres: null });
@@ -261,12 +260,12 @@ export class AttributionsService extends CrudService {
         ?? undefined;
       await exigerAnneeOuverte(tx, anneeId);
       const chambre = await tx.chambre.findUnique({ where: { id: dto.chambreId } });
-      if (!chambre) throw new BadRequestException(I18nContext.current()!.t('cites.chambre_introuvable'));
+      if (!chambre) throw new BadRequestException(t('cites.chambre_introuvable'));
       if (chambre.statut === StatutChambre.OCCUPEE) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.la_chambre_est_deja_occupee'));
+        throw new BadRequestException(t('cites.la_chambre_est_deja_occupee'));
       }
       if (chambre.statut === StatutChambre.MAINTENANCE) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
+        throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
       }
 
       if (anneeId) {
@@ -278,7 +277,7 @@ export class AttributionsService extends CrudService {
           },
         });
         if (accordee) {
-          throw new BadRequestException(I18nContext.current()!.t('cites.cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou'));
+          throw new BadRequestException(t('cites.cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou'));
         }
       }
 
@@ -289,7 +288,7 @@ export class AttributionsService extends CrudService {
           include: ATTRIBUTION_INCLUDE,
         });
         if (!enAttente || enAttente.etudiantId !== dto.etudiantId) {
-          throw new BadRequestException(I18nContext.current()!.t('cites.la_chambre_est_deja_reservee_pour_un_autre_etudiant'));
+          throw new BadRequestException(t('cites.la_chambre_est_deja_reservee_pour_un_autre_etudiant'));
         }
         await exigerAnneeOuverte(tx, enAttente.anneeId);
         const miseAJour = await tx.attributionLogement.update({
@@ -352,10 +351,10 @@ export class AttributionsService extends CrudService {
         where: { id },
         include: ATTRIBUTION_INCLUDE,
       });
-      if (!attribution) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      if (!attribution) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, attribution.anneeId);
       if (attribution.statut !== StatutAttributionLogement.EN_ATTENTE) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.cette_demande_a_deja_ete_traitee'));
+        throw new BadRequestException(t('cites.cette_demande_a_deja_ete_traitee'));
       }
 
       if (dto.statut === StatutAttributionLogement.ACCORDEE) {
@@ -391,7 +390,7 @@ export class AttributionsService extends CrudService {
           : { statut: StatutAttributionLogement.REFUSEE, accorderParId: user.id },
       });
       if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('cites.cette_demande_a_deja_ete_traitee'));
+        throw new ConflictException(t('cites.cette_demande_a_deja_ete_traitee'));
       }
 
       const autresEnAttente = dto.statut === StatutAttributionLogement.ACCORDEE
@@ -459,13 +458,13 @@ export class AttributionsService extends CrudService {
         where: { id },
         include: ATTRIBUTION_INCLUDE,
       });
-      if (!attribution) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      if (!attribution) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, attribution.anneeId);
       if (
         attribution.statut === StatutAttributionLogement.REFUSEE
         || attribution.statut === StatutAttributionLogement.RETIREE
       ) {
-        throw new BadRequestException(I18nContext.current()!.t('cites.cette_attribution_n_est_plus_reversible'));
+        throw new BadRequestException(t('cites.cette_attribution_n_est_plus_reversible'));
       }
 
       const transition = await tx.attributionLogement.updateMany({
@@ -477,7 +476,7 @@ export class AttributionsService extends CrudService {
         },
       });
       if (transition.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('cites.cette_attribution_n_est_plus_reversible'));
+        throw new ConflictException(t('cites.cette_attribution_n_est_plus_reversible'));
       }
       const autreAttente = await tx.attributionLogement.findFirst({
           where: {

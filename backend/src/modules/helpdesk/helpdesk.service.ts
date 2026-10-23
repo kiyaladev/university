@@ -14,7 +14,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
 import { Prisma, Role, StatutTicket } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import * as QRCode from 'qrcode';
@@ -160,7 +159,7 @@ export class EquipementsService extends CrudService {
           select: { id: true, libelle: true, emplacement: true, actif: true },
         });
     if (!equipement || !equipement.actif) {
-      throw new NotFoundException(I18nContext.current()!.t('helpdesk.equipement_inconnu_ou_desactive'));
+      throw new NotFoundException(t('helpdesk.equipement_inconnu_ou_desactive'));
     }
     return {
       id: equipement.id,
@@ -225,7 +224,7 @@ export class EquipementsService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.equipementCampus.findUnique({ where: { id }, select: EQUIPEMENT_AUDIT });
       if (!avant) {
-        throw new NotFoundException(I18nContext.current()!.t('helpdesk.equipement_inconnu_ou_desactive'));
+        throw new NotFoundException(t('helpdesk.equipement_inconnu_ou_desactive'));
       }
       await tx.equipementCampus.delete({ where: { id } });
       await journaliser(tx, user, 'EQUIPEMENT_SUPPRESSION', 'Equipement', id, {
@@ -245,7 +244,7 @@ export class EquipementsService extends CrudService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('helpdesk.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('helpdesk.jeton_invalide_ou_expire'));
     }
 
     // `findOne` intentionally omits codeQr from authenticated API responses;
@@ -254,7 +253,7 @@ export class EquipementsService extends CrudService {
       where: { id },
       select: { id: true, libelle: true, emplacement: true, codeQr: true },
     });
-    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
+    if (!equipement) throw new NotFoundException(t('patrimoine.equipement_introuvable'));
     const urlSignalement = `${baseUrl.replace(/\/+$/, '')}/#/helpdesk?equipement=${encodeURIComponent(equipement.codeQr)}`;
     const qr = await QRCode.toDataURL(urlSignalement, {
       width: 320,
@@ -366,7 +365,7 @@ export class TicketsService extends CrudService {
         where: { id: dto.equipementId },
       });
       if (!equipement || !equipement.actif) {
-        throw new BadRequestException(I18nContext.current()!.t('helpdesk.l_equipement_vise_est_inconnu_ou_desactive'));
+        throw new BadRequestException(t('helpdesk.l_equipement_vise_est_inconnu_ou_desactive'));
       }
     }
 
@@ -403,7 +402,7 @@ export class TicketsService extends CrudService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('helpdesk.numero_de_ticket_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('helpdesk.numero_de_ticket_temporairement_indisponible_reessayez'));
   }
 
   /**
@@ -417,15 +416,15 @@ export class TicketsService extends CrudService {
   async changerStatut(id: string, dto: TraiterTicketDto, user: AuthUser) {
     const ticket = await this.findOne(id);
     if (ticket.statut !== StatutTicket.OUVERT && ticket.statut !== StatutTicket.EN_COURS) {
-      throw new BadRequestException(I18nContext.current()!.t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
+      throw new BadRequestException(t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
     }
 
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "TicketSupport" WHERE id = ${id} FOR UPDATE`;
       const avant = await tx.ticketSupport.findUnique({ where: { id }, select: TICKET_AUDIT });
-      if (!avant) throw new NotFoundException();
+      if (!avant) throw new NotFoundException(t('common.notFound'));
       if (avant.statut !== StatutTicket.OUVERT && avant.statut !== StatutTicket.EN_COURS) {
-        throw new BadRequestException(I18nContext.current()!.t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
+        throw new BadRequestException(t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
       }
       const cloture = dto.statut === StatutTicket.CLOTURE;
       const apres = await tx.ticketSupport.update({

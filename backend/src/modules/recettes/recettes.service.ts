@@ -13,7 +13,7 @@
  * le préfixe "PAY-X-AAAA-NNNNN" (année civile de la date de la recette).
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { ModePaiement, Prisma, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
@@ -88,7 +88,7 @@ export class RecettesService {
       where: { id },
       include: RECETTE_INCLUDE,
     });
-    if (!recette) throw new NotFoundException(I18nContext.current()!.t('recettes.recette_introuvable'));
+    if (!recette) throw new NotFoundException(t('recettes.recette_introuvable'));
     return recette;
   }
 
@@ -127,7 +127,7 @@ export class RecettesService {
   async modifier(id: string, dto: UpdateRecetteDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const actuel = await tx.recetteExterne.findUnique({ where: { id }, include: RECETTE_INCLUDE });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('recettes.recette_introuvable'));
+      if (!actuel) throw new NotFoundException(t('recettes.recette_introuvable'));
       const dateCible = dto.date !== undefined ? toDateOnly(dto.date) : actuel.date;
       const modifieMontantComptable = (
         (dto.montant !== undefined && dto.montant !== actuel.montant) ||
@@ -136,7 +136,7 @@ export class RecettesService {
         dateCible.getTime() !== actuel.date.getTime()
       );
       if (actuel.paiementId && modifieMontantComptable) {
-        throw new ConflictException(I18nContext.current()!.t('recettes.modification_comptable_apres_encaissement_interdite'));
+        throw new ConflictException(t('recettes.modification_comptable_apres_encaissement_interdite'));
       }
       const data: Prisma.RecetteExterneUpdateManyMutationInput = {
         ...(dto.type !== undefined ? { type: dto.type } : {}),
@@ -159,7 +159,7 @@ export class RecettesService {
       if (dto.factureNum !== undefined) where.factureNum = actuel.factureNum;
       if (modifieMontantComptable) {
         if (actuel.paiementId) {
-          throw new ConflictException(I18nContext.current()!.t('recettes.modification_comptable_apres_encaissement_interdite'));
+          throw new ConflictException(t('recettes.modification_comptable_apres_encaissement_interdite'));
         }
         where.paiementId = null;
         // La lecture et le changement de montant sont liés par comparaison de
@@ -169,11 +169,11 @@ export class RecettesService {
       const modifiee = await tx.recetteExterne.updateMany({ where, data });
       if (modifiee.count !== 1) {
         const courante = await tx.recetteExterne.findUnique({ where: { id }, select: { paiementId: true } });
-        if (!courante) throw new NotFoundException(I18nContext.current()!.t('recettes.recette_introuvable'));
+        if (!courante) throw new NotFoundException(t('recettes.recette_introuvable'));
         if (courante.paiementId && modifieMontantComptable) {
-          throw new ConflictException(I18nContext.current()!.t('recettes.modification_comptable_apres_encaissement_interdite'));
+          throw new ConflictException(t('recettes.modification_comptable_apres_encaissement_interdite'));
         }
-        throw new ConflictException(I18nContext.current()!.t('recettes.modification_concurrente'));
+        throw new ConflictException(t('recettes.modification_concurrente'));
       }
       const maj = await tx.recetteExterne.findUniqueOrThrow({ where: { id }, include: RECETTE_INCLUDE });
       await tx.auditLog.create({
@@ -208,9 +208,9 @@ export class RecettesService {
       try {
         return await this.prisma.$transaction(async (tx) => {
           const recette = await tx.recetteExterne.findUnique({ where: { id }, include: RECETTE_INCLUDE });
-          if (!recette) throw new NotFoundException(I18nContext.current()!.t('recettes.recette_introuvable'));
+          if (!recette) throw new NotFoundException(t('recettes.recette_introuvable'));
           if (recette.paiementId) {
-            throw new ConflictException(I18nContext.current()!.t('recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache'));
+            throw new ConflictException(t('recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache'));
           }
           const avant = this.instantaneAudit(recette);
           const annee = String(recette.date.getUTCFullYear());
@@ -245,11 +245,11 @@ export class RecettesService {
           });
           if (liee.count !== 1) {
             const courante = await tx.recetteExterne.findUnique({ where: { id }, select: { paiementId: true } });
-            if (!courante) throw new NotFoundException(I18nContext.current()!.t('recettes.recette_introuvable'));
+            if (!courante) throw new NotFoundException(t('recettes.recette_introuvable'));
             if (courante.paiementId) {
-              throw new ConflictException(I18nContext.current()!.t('recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache'));
+              throw new ConflictException(t('recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache'));
             }
-            throw new ConflictException(I18nContext.current()!.t('recettes.modification_concurrente'));
+            throw new ConflictException(t('recettes.modification_concurrente'));
           }
           const miseAJour = await tx.recetteExterne.findUniqueOrThrow({
             where: { id },
@@ -273,7 +273,7 @@ export class RecettesService {
         throw erreur;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('recettes.reference_paiement_temporairement_indisponible'));
+    throw new ConflictException(t('recettes.reference_paiement_temporairement_indisponible'));
   }
 
   private instantaneAudit(recette: any) {

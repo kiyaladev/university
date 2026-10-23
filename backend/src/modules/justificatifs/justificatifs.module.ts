@@ -178,7 +178,7 @@ export class JustificatifsService extends CrudService {
     const justificatif = user.role === Role.ENSEIGNANT || estChefDeDepartement(user)
       ? await this.delegate.findFirst({ where, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
       : await this.delegate.findFirst({ where, include: JUSTIFICATIF_INCLUDE });
-    if (!justificatif) throw new NotFoundException();
+    if (!justificatif) throw new NotFoundException(t('common.notFound'));
     return justificatif;
   }
 
@@ -249,9 +249,9 @@ export class JustificatifsService extends CrudService {
       const avant: any = await tx.justificatif.findUnique({
         where: { id }, include: { seance: { select: { id: true, anneeId: true, affectation: { select: { promotion: { select: { filiere: { select: { departementId: true } } } } } } } } },
       });
-      if (!avant) throw new NotFoundException();
+      if (!avant) throw new NotFoundException(t('common.notFound'));
       if (estChefDeDepartement(user) && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
-        throw new NotFoundException();
+        throw new NotFoundException(t('common.notFound'));
       }
       await exigerAnneeOuverte(tx, avant.seance.anneeId);
       if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
@@ -306,7 +306,7 @@ export class JustificatifsService extends CrudService {
       const avant: any = await tx.justificatif.findUnique({
         where: { id }, include: { seance: { select: { id: true, anneeId: true } } },
       });
-      if (!avant) throw new NotFoundException();
+      if (!avant) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, avant.seance.anneeId);
       if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
         throw new BadRequestException(t('justificatifs.deja_traite'));

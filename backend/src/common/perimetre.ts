@@ -1,6 +1,7 @@
 import { ForbiddenException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { AuthUser } from './decorators';
+import { t } from './i18n';
 
 /**
  * Périmètre d'un chef de département.
@@ -62,5 +63,5 @@ export function filtreDepartement(
 export function exigerPerimetre(user: AuthUser, departementId?: string | null): void {
   if (!estChefDeDepartement(user)) return;
   if (departementId && departementId === user.departementId) return;
-  throw new ForbiddenException();
+  throw new ForbiddenException(t('common.forbidden'));
 }

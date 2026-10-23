@@ -11,7 +11,6 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { I18nContext } from 'nestjs-i18n';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';

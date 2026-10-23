@@ -29,7 +29,6 @@ import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
-import { I18nContext } from 'nestjs-i18n';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateCategorieDto,
@@ -146,7 +145,7 @@ export class PatrimoineService {
     await this.prisma.$transaction(async (tx) => {
       const cat = await this.categorieCourante(tx, id);
       if (cat._count && (cat._count as any).equipements > 0) {
-        throw new ConflictException(I18nContext.current()!.t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', { args: { 'cat.libelle': cat.libelle, '(cat._count as any).equipements': (cat._count as any).equipements } }));
+        throw new ConflictException(t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', { 'cat.libelle': cat.libelle, '(cat._count as any).equipements': (cat._count as any).equipements }));
       }
       await tx.categoriePatrimoine.delete({ where: { id } });
       await journaliser(tx, user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', 'CategoriePatrimoine', id, {
@@ -260,7 +259,7 @@ export class PatrimoineService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('patrimoine.impossible_de_generer_un_identifiant_qr_unique_reessayez'));
+    throw new ConflictException(t('patrimoine.impossible_de_generer_un_identifiant_qr_unique_reessayez'));
   }
 
   async modifierEquipement(id: string, dto: UpdateEquipementDto, user: AuthUser) {
@@ -312,7 +311,7 @@ export class PatrimoineService {
       const equipement = await this.equipementCourant(tx, id);
       const reparations = await tx.reparationMateriel.count({ where: { equipementId: id } });
       if (reparations > 0) {
-        throw new ConflictException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire, reparations } }));
+        throw new ConflictException(t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', { 'equipement.numeroInventaire': equipement.numeroInventaire, reparations }));
       }
       await tx.equipementPatrimoine.delete({ where: { id } });
       await journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_SUPPRIME', 'EquipementPatrimoine', id, {
@@ -354,7 +353,7 @@ export class PatrimoineService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('patrimoine.impossible_de_generer_un_qr_unique_reessayez'));
+    throw new ConflictException(t('patrimoine.impossible_de_generer_un_qr_unique_reessayez'));
   }
 
   /**
@@ -404,7 +403,7 @@ export class PatrimoineService {
         },
       });
       if (ouverte) {
-        throw new ConflictException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_a_deja_une_reparation_en_cours_o', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire, 'ouverte.statut': ouverte.statut } }));
+        throw new ConflictException(t('patrimoine.equipement_numeroinventaire_a_deja_une_reparation_en_cours_o', { 'equipement.numeroInventaire': equipement.numeroInventaire, 'ouverte.statut': ouverte.statut }));
       }
       const reparation = await tx.reparationMateriel.create({
         data: {
@@ -454,7 +453,7 @@ export class PatrimoineService {
         orderBy: { dateDeclaration: 'desc' },
       });
       if (!ouverte) {
-        throw new BadRequestException(I18nContext.current()!.t('patrimoine.equipement_numeroinventaire_n_a_pas_de_reparation_en_cours', { args: { 'equipement.numeroInventaire': equipement.numeroInventaire } }));
+        throw new BadRequestException(t('patrimoine.equipement_numeroinventaire_n_a_pas_de_reparation_en_cours', { 'equipement.numeroInventaire': equipement.numeroInventaire }));
       }
       const reparation = await tx.reparationMateriel.update({
         where: { id: ouverte.id },
@@ -627,7 +626,7 @@ export class PatrimoineService {
     try {
       this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('patrimoine.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('patrimoine.jeton_invalide_ou_expire'));
     }
 
     const equipement = await this.trouverEquipement(id);
@@ -683,7 +682,7 @@ export class PatrimoineService {
       where: { id },
       include: EQUIPEMENT_INCLUDE,
     });
-    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
+    if (!equipement) throw new NotFoundException(t('patrimoine.equipement_introuvable'));
     return equipement;
   }
 
@@ -696,7 +695,7 @@ export class PatrimoineService {
       where: { id },
       include: EQUIPEMENT_INCLUDE,
     });
-    if (!equipement) throw new NotFoundException(I18nContext.current()!.t('patrimoine.equipement_introuvable'));
+    if (!equipement) throw new NotFoundException(t('patrimoine.equipement_introuvable'));
     return equipement;
   }
 

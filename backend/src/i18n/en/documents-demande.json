@@ -15,5 +15,10 @@
   "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "A payment has already been initiated for this request: please wait for confirmation or contact the academic services.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "This request is not yet ready to be processed: payment pending or already completed.",
   "cette_demande_n_est_pas_marquee_comme_prete": "This request is not marked as ready.",
-  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished."
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished.",
+  "tarifDejaExistant": "A fee already exists for type {type}: edit it instead of creating a new one.",
+  "demandeNonEnAttentePaiement": "This request is no longer awaiting payment.",
+  "demandeDejaTraitee": "This request is no longer awaiting payment: it has already been processed.",
+  "aucunPaiementAssocie": "No payment is linked to this request: the student must first initiate the payment.",
+  "demandeNonTraitee": "This request has not been processed yet: payment or handling is missing."
 }

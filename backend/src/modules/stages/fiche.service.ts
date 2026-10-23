@@ -2,7 +2,7 @@
  *  onglet, imprimé via le navigateur. L'enveloppe et le style viennent du
  *  gabarit commun `common/impression` (pageA4). */
 import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.module';
@@ -78,7 +78,7 @@ export class FicheService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('stages.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('stages.jeton_invalide_ou_expire'));
     }
 
     const travail: any = await this.prisma.travailEncadre.findUnique({
@@ -86,7 +86,7 @@ export class FicheService {
       include: TRAVAIL_FICHE_INCLUDE,
     });
     if (!travail) {
-      throw new NotFoundException(I18nContext.current()!.t('stages.travail_encadre_introuvable'));
+      throw new NotFoundException(t('stages.travail_encadre_introuvable'));
     }
 
     const etablissement = await chargerEtablissement(this.prisma);

@@ -18,7 +18,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutCourrier } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
@@ -78,7 +78,7 @@ export class CourrierService {
 
   private exigerAcces(courrier: Parameters<CourrierService['peutConsulter']>[0], user: AuthUser) {
     if (!this.peutConsulter(courrier, user)) {
-      throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      throw new NotFoundException(t('courrier.courrier_introuvable'));
     }
   }
 
@@ -180,7 +180,7 @@ export class CourrierService {
       where: { id, ...this.filtreVisible(user) },
       include: COURRIER_INCLUDE,
     });
-    if (!courrier) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+    if (!courrier) throw new NotFoundException(t('courrier.courrier_introuvable'));
     this.exigerAcces(courrier, user);
     return courrier;
   }
@@ -216,12 +216,12 @@ export class CourrierService {
   async creer(dto: CreateCourrierDto, user: AuthUser) {
     const departementId = estChefDeDepartement(user) ? user.departementId : dto.departementId;
     if (estChefDeDepartement(user) && (!departementId || (dto.departementId && dto.departementId !== departementId))) {
-      throw new ForbiddenException(I18nContext.current()!.t('courrier.department_scope_required'));
+      throw new ForbiddenException(t('courrier.department_scope_required'));
     }
     const etapes = dto.circuit?.length ? dto.circuit : CIRCUIT_PAR_DEFAUT;
     return this.prisma.$transaction(async (tx) => {
       if (departementId && !await tx.departement.findUnique({ where: { id: departementId }, select: { id: true } })) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.department_invalid'));
+        throw new BadRequestException(t('courrier.department_invalid'));
       }
       const courrier = await tx.courrier.create({
         data: {
@@ -278,20 +278,20 @@ export class CourrierService {
         where: { id, ...this.filtreVisible(user) },
         include: COURRIER_INCLUDE,
       });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      if (!actuel) throw new NotFoundException(t('courrier.courrier_introuvable'));
       this.exigerAcces(actuel, user);
       if (actuel.statut === StatutCourrier.ARCHIVE) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.archive_readonly'));
+        throw new BadRequestException(t('courrier.archive_readonly'));
       }
       if (dto.statut !== undefined && dto.statut !== actuel.statut) {
-        throw new ForbiddenException(I18nContext.current()!.t('courrier.status_workflow_required'));
+        throw new ForbiddenException(t('courrier.status_workflow_required'));
       }
       if (dto.departementId !== undefined && dto.departementId !== actuel.departementId) {
         if (actuel.circuits.some(e => e.statut === StatutCourrier.TRAITE)) {
-          throw new BadRequestException(I18nContext.current()!.t('courrier.department_routing_started'));
+          throw new BadRequestException(t('courrier.department_routing_started'));
         }
         if (!dto.departementId || !await tx.departement.findUnique({ where: { id: dto.departementId }, select: { id: true } })) {
-          throw new BadRequestException(I18nContext.current()!.t('courrier.department_invalid'));
+          throw new BadRequestException(t('courrier.department_invalid'));
         }
       }
       const maj = await tx.courrier.update({
@@ -350,7 +350,7 @@ export class CourrierService {
       where: { id: circuitId },
     });
     if (!etape || etape.courrierId !== id) {
-      throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
+      throw new NotFoundException(t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
     }
 
     const rolesEtape: Record<string, Role[]> = {
@@ -365,27 +365,27 @@ export class CourrierService {
       'Administration': [Role.ADMIN],
     };
     if (!this.estResponsable(user) && !rolesEtape[etape.roleValideur ?? '']?.includes(user.role)) {
-      throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
+      throw new NotFoundException(t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
     }
 
     // L'étape peut être signée une seule fois ; le rôle correspondant a déjà
     // été vérifié avant toute écriture.
     if (etape.statut !== StatutCourrier.EN_CIRCUIT) {
-      throw new BadRequestException(I18nContext.current()!.t('courrier.cette_etape_a_deja_ete_traitee'));
+      throw new BadRequestException(t('courrier.cette_etape_a_deja_ete_traitee'));
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       await this.verrouiller(tx, id);
       const avant = await tx.courrier.findUnique({ where: { id }, include: COURRIER_INCLUDE });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      if (!avant) throw new NotFoundException(t('courrier.courrier_introuvable'));
       this.exigerAcces(avant, user);
       if (avant.statut !== StatutCourrier.EN_CIRCUIT) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.status_workflow_required'));
+        throw new BadRequestException(t('courrier.status_workflow_required'));
       }
       const courante = avant.circuits.find(e => e.id === circuitId);
-      if (!courante) throw new NotFoundException(I18nContext.current()!.t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
+      if (!courante) throw new NotFoundException(t('courrier.etape_de_circuit_introuvable_pour_ce_courrier'));
       if (avant.circuits.some(e => e.ordre < courante.ordre && e.statut !== StatutCourrier.TRAITE)) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.previous_step_required'));
+        throw new BadRequestException(t('courrier.previous_step_required'));
       }
       const signature = await tx.circuitCourrier.updateMany({
         where: { id: circuitId, courrierId: id, statut: StatutCourrier.EN_CIRCUIT },
@@ -398,7 +398,7 @@ export class CourrierService {
         },
       });
       if (signature.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.cette_etape_a_deja_ete_traitee'));
+        throw new BadRequestException(t('courrier.cette_etape_a_deja_ete_traitee'));
       }
 
       // S'il reste des étapes non traitées, le courrier reste EN_CIRCUIT.
@@ -457,19 +457,19 @@ export class CourrierService {
    */
   async cloturer(id: string, dto: CloturerCourrierDto, user: AuthUser) {
     if (user.role !== 'ADMIN') {
-      throw new ForbiddenException(I18nContext.current()!.t('courrier.seul_un_administrateur_peut_cloturer_un_courrier_transition_'));
+      throw new ForbiddenException(t('courrier.seul_un_administrateur_peut_cloturer_un_courrier_transition_'));
     }
     const updated = await this.prisma.$transaction(async (tx) => {
       await this.verrouiller(tx, id);
       const courrier = await tx.courrier.findUnique({ where: { id }, include: COURRIER_INCLUDE });
-      if (!courrier) throw new NotFoundException(I18nContext.current()!.t('courrier.courrier_introuvable'));
+      if (!courrier) throw new NotFoundException(t('courrier.courrier_introuvable'));
       const autorisees: StatutCourrier[] = [
         StatutCourrier.EN_CIRCUIT,
         StatutCourrier.TRAITE,
         StatutCourrier.CLASSE,
       ];
       if (!autorisees.includes(courrier.statut)) {
-        throw new BadRequestException(I18nContext.current()!.t('courrier.courrier_courrier_statut_la_cloture_exige_en_circuit_traite_', { args: { 'courrier.statut': courrier.statut } }));
+        throw new BadRequestException(t('courrier.courrier_courrier_statut_la_cloture_exige_en_circuit_traite_', { 'courrier.statut': courrier.statut }));
       }
 
       // Forcer toutes les étapes encore en EN_CIRCUIT vers TRAITE (le courrier

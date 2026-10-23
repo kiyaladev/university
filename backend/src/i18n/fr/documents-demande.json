@@ -15,5 +15,10 @@
   "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "Un paiement a déjà été initié pour cette demande : attendez la confirmation ou contactez la scolarité.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "Cette demande n'est pas encore prête à être traitée : paiement en attente ou déjà terminée.",
   "cette_demande_n_est_pas_marquee_comme_prete": "Cette demande n'est pas marquée comme prête.",
-  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé."
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé.",
+  "tarifDejaExistant": "Un tarif existe déjà pour le type {type} : modifiez-le plutôt que d'en créer un nouveau.",
+  "demandeNonEnAttentePaiement": "Cette demande n'est plus en attente de paiement.",
+  "demandeDejaTraitee": "Cette demande n'est plus en attente de paiement : elle est déjà traitée.",
+  "aucunPaiementAssocie": "Aucun paiement associé à cette demande : l'étudiant doit d'abord initier le paiement.",
+  "demandeNonTraitee": "Cette demande n'est pas encore traitée — le paiement ou la prise en charge manque."
 }

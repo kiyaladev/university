@@ -44,7 +44,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -128,7 +128,7 @@ export class RestoService {
   /** Portefeuille de l'étudiant connecté (portail) : créé si absent, jamais null. */
   async monPortefeuille(user: AuthUser) {
     if (!user.etudiantId) {
-      throw new ForbiddenException(I18nContext.current()!.t('resto.compte_non_rattache_a_une_fiche_etudiante'));
+      throw new ForbiddenException(t('resto.compte_non_rattache_a_une_fiche_etudiante'));
     }
     const portefeuille = await this.portefeuilleOuCree(null, user.etudiantId);
     return this.prisma.portefeuilleResto.findUnique({
@@ -147,7 +147,7 @@ export class RestoService {
       where: { id: etudiantId },
       select: { id: true, matricule: true, nom: true, prenom: true, telephone: true },
     });
-    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable'));
+    if (!etudiant) throw new NotFoundException(t('resto.etudiant_introuvable'));
 
     const portefeuille = await this.prisma.portefeuilleResto.findUnique({
       where: { etudiantId },
@@ -184,7 +184,7 @@ export class RestoService {
       etudiantId = direct.etudiantId;
     } else {
       const etu = await this.prisma.etudiant.findUnique({ where: { id } });
-      if (!etu) throw new NotFoundException(I18nContext.current()!.t('resto.portefeuille_introuvable'));
+      if (!etu) throw new NotFoundException(t('resto.portefeuille_introuvable'));
       etudiantId = etu.id;
     }
     const portefeuille = await this.portefeuilleOuCree(null, etudiantId);
@@ -221,7 +221,7 @@ export class RestoService {
       where: { id },
       include: { paiement: true, portefeuille: { select: { id: true } } },
     });
-    if (!recharge) throw new NotFoundException(I18nContext.current()!.t('resto.recharge_introuvable'));
+    if (!recharge) throw new NotFoundException(t('resto.recharge_introuvable'));
 
     if (recharge.statut === StatutPaiement.REUSSI && dto.statut === StatutPaiement.REUSSI) {
       return this.prisma.recharge.findUnique({
@@ -230,10 +230,10 @@ export class RestoService {
       });
     }
     if (recharge.statut === StatutPaiement.REUSSI) {
-      throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech'));
+      throw new BadRequestException(t('resto.cette_recharge_est_deja_encaissee_impossible_de_la_faire_ech'));
     }
     if (recharge.statut === StatutPaiement.ANNULE || recharge.statut === StatutPaiement.REMBOURSE) {
-      throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
+      throw new BadRequestException(t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
     }
 
     const reussi = dto.statut === StatutPaiement.REUSSI;
@@ -245,7 +245,7 @@ export class RestoService {
         data: { statut: dto.statut },
       });
       if (prise.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
+        throw new BadRequestException(t('resto.cette_recharge_est_close_elle_ne_peut_plus_etre_confirmee'));
       }
       let soldeAvant: number | null = null;
       let soldeApres: number | null = null;
@@ -297,7 +297,7 @@ export class RestoService {
   /** Recharger depuis le portail : Mobile Money, jamais crédité directement. */
   async rechargerDepuisPortail(dto: RechargerPortailDto, user: AuthUser) {
     if (!user.etudiantId) {
-      throw new ForbiddenException(I18nContext.current()!.t('resto.compte_non_rattache_a_une_fiche_etudiante'));
+      throw new ForbiddenException(t('resto.compte_non_rattache_a_une_fiche_etudiante'));
     }
     const portefeuille = await this.portefeuilleOuCree(null, user.etudiantId);
     const mode = dto.mode ?? ModePaiement.MOBILE_MONEY;
@@ -355,7 +355,7 @@ export class RestoService {
         data: { solde: { decrement: dto.montant } },
       });
       if (debit.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('resto.solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_', { args: { solde: portefeuille.solde, montant: dto.montant } }));
+        throw new ConflictException(t('resto.solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_', { solde: portefeuille.solde, montant: dto.montant }));
       }
 
       const consommation = await tx.consommationResto.create({
@@ -477,9 +477,9 @@ export class RestoService {
       where: { id },
       include: { portefeuille: true },
     });
-    if (!consommation) throw new NotFoundException(I18nContext.current()!.t('resto.consommation_introuvable'));
+    if (!consommation) throw new NotFoundException(t('resto.consommation_introuvable'));
     if (consommation.statut !== StatutConsommation.VALIDEE) {
-      throw new BadRequestException(I18nContext.current()!.t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { args: { statut: consommation.statut } }));
+      throw new BadRequestException(t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }));
     }
 
     const { maj, solde } = await this.prisma.$transaction(async (tx) => {
@@ -488,7 +488,7 @@ export class RestoService {
         data: { statut: StatutConsommation.ANNULEE },
       });
       if (annulation.count !== 1) {
-        throw new BadRequestException(I18nContext.current()!.t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { args: { statut: consommation.statut } }));
+        throw new BadRequestException(t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }));
       }
       const maj = await tx.consommationResto.findUnique({ where: { id } });
       const portefeuille = await tx.portefeuilleResto.update({
@@ -525,7 +525,7 @@ export class RestoService {
   private async etudiantParReference(reference: string) {
     const ref = reference.trim();
     if (!ref || ref.length > 64) {
-      throw new BadRequestException(I18nContext.current()!.t('resto.reference_vide_scannez_le_qr_ou_saisissez_le_matricule'));
+      throw new BadRequestException(t('resto.reference_vide_scannez_le_qr_ou_saisissez_le_matricule'));
     }
 
     const parQr = ref.startsWith('UP-RESTO-') ? await this.prisma.etudiant.findUnique({ where: { qrRestoToken: ref } }) : null;
@@ -535,7 +535,7 @@ export class RestoService {
       (await this.prisma.etudiant.findFirst({ where: { telephone: ref } }));
 
     if (!etudiant) {
-      throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
+      throw new NotFoundException(t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
     }
     return this.assurerQrToken(null, etudiant);
   }
@@ -561,7 +561,7 @@ export class RestoService {
     // gagné par l'autre requête au lieu de le remplacer et d'invalider son QR.
     const courant = await client.etudiant.findUnique({ where: { id: etudiant.id } });
     if (!courant) {
-      throw new NotFoundException(I18nContext.current()!.t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
+      throw new NotFoundException(t('resto.etudiant_introuvable_verifiez_la_reference_scannee_ou_saisie'));
     }
     return courant;
   }
@@ -667,7 +667,7 @@ export class RestoService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('resto.reference_de_paiement_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('resto.reference_de_paiement_temporairement_indisponible_reessayez'));
   }
 
   /** Année des références "PAY-R-<aaaa>-…" : l'année scolaire active, sinon l'année civile. */
@@ -690,9 +690,9 @@ export class RestoService {
     try {
       payload = (await this.jwt.verifyAsync(token ?? '')) as any;
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('resto.jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet'));
+      throw new UnauthorizedException(t('resto.jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet'));
     }
-    if (!payload?.sub) throw new UnauthorizedException(I18nContext.current()!.t('resto.jeton_invalide'));
+    if (!payload?.sub) throw new UnauthorizedException(t('resto.jeton_invalide'));
 
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
@@ -702,15 +702,15 @@ export class RestoService {
       },
     });
     if (!user || !user.actif) {
-      throw new UnauthorizedException(I18nContext.current()!.t('resto.compte_inexistant_ou_desactive'));
+      throw new UnauthorizedException(t('resto.compte_inexistant_ou_desactive'));
     }
     if (payload.iat && user.motDePasseModifieLe) {
       if (payload.iat * 1000 < user.motDePasseModifieLe.getTime() - 1000) {
-        throw new UnauthorizedException(I18nContext.current()!.t('resto.session_expiree_reconnectez_vous'));
+        throw new UnauthorizedException(t('resto.session_expiree_reconnectez_vous'));
       }
     }
     if (!GUICHET.includes(user.role)) {
-      throw new ForbiddenException(I18nContext.current()!.t('resto.le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola'));
+      throw new ForbiddenException(t('resto.le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola'));
     }
     return {
       id: user.id,

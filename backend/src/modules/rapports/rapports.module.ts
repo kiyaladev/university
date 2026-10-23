@@ -1,6 +1,5 @@
 import { Role } from '@prisma/client';
 import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
 import { Module } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtModule, JwtService } from '@nestjs/jwt';

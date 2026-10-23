@@ -20,7 +20,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Role } from '@prisma/client';
 import { JwtStrategy } from '../auth/jwt.strategy';
 import { JwtService } from '@nestjs/jwt';
@@ -98,7 +98,7 @@ export class EtudiantsController {
 
   @Get(':id')
   detail(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    if (user.role === Role.ETUDIANT && id !== user.etudiantId) throw new NotFoundException();
+    if (user.role === Role.ETUDIANT && id !== user.etudiantId) throw new NotFoundException(t('common.notFound'));
     return this.service.detailPour(id, user);
   }
 
@@ -261,11 +261,11 @@ export class InscriptionsController {
       const payload = this.jwt.verify(jetonImprimable(req) ?? '');
       user = await this.identite.validate(payload);
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('inscription.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('inscription.jeton_invalide_ou_expire'));
     }
     const rolesAutorises: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.ETUDIANT];
     if (!rolesAutorises.includes(user.role)) {
-      throw new ForbiddenException();
+      throw new ForbiddenException(t('common.forbidden'));
     }
     await this.service.trouverInscription(id, user);
     res.type('html').send(await this.service.attestationInscription(id));
