@@ -47,6 +47,38 @@ export class FraisService extends CrudService {
     return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
+  /**
+   * Grille de gestion : l'administration et la scolarité voient l'année et la
+   * promotion de chaque tarif. La lecture publique, elle, n'en montre que le
+   * montant — l'écran qui gère les tarifs a besoin de plus.
+   */
+  async tarifsGestion(query: FraisQueryDto, filtres: Prisma.FraisWhereInput = {}) {
+    const page = Number(query.page ?? 1);
+    const all = query.all === 'true' || query.all === '1';
+    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const where: Prisma.FraisWhereInput = {
+      AND: [{ annee: { cloturee: false } }, filtres],
+    };
+    const [data, total] = await Promise.all([
+      this.prisma.frais.findMany({
+        where,
+        select: {
+          id: true,
+          anneeId: true,
+          promotionId: true,
+          montant: true,
+          devise: true,
+          annee: { select: { id: true, libelle: true } },
+          promotion: { select: { id: true, nom: true, niveau: true } },
+        },
+        orderBy: [{ anneeId: 'desc' }, { promotionId: 'asc' }],
+        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+      }),
+      this.prisma.frais.count({ where }),
+    ]);
+    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+  }
+
   private instantane(frais: {
     id: string;
     anneeId: string;

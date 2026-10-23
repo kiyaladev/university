@@ -141,6 +141,19 @@ export class FraisController {
     });
   }
 
+  /**
+   * Grille de gestion des tarifs : l'année et la promotion de chaque tarif,
+   * que la lecture publique ne montre pas.
+   */
+  @Roles(Role.ADMIN, Role.SCOLARITE)
+  @Get('gestion')
+  listeGestion(@Query() query: FraisQueryDto) {
+    return this.service.tarifsGestion(query, {
+      ...(query.anneeId ? { anneeId: query.anneeId } : {}),
+      ...(query.promotionId ? { promotionId: query.promotionId } : {}),
+    });
+  }
+
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post()
   creer(@Body() dto: CreateFraisDto, @CurrentUser() user: AuthUser) {
