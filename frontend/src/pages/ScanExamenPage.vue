@@ -1,13 +1,7 @@
 <template>
   <q-page class="scan-page q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('scanExamen.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('scanExamen.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('scanExamen.title')" :subtitle="$t('scanExamen.subtitle')">
+      <template #actions>
         <q-btn
           flat
           no-caps
@@ -15,26 +9,28 @@
           :label="$t('scanExamen.actions.backToExamens')"
           @click="router.push({ name: 'examens' })"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- Aucun examen ouvert : on dit pourquoi et on donne la sortie -->
-    <div v-if="!chargementExamens && !examens.length" class="plaque q-pa-lg text-center text-grey-7">
-      <q-icon name="event_busy" size="38px" color="grey-5" />
-      <div class="q-mt-sm text-weight-medium">{{ $t('scanExamen.emptyState.title') }}</div>
-      <div class="text-caption q-mt-xs">
-        {{ $t('scanExamen.emptyState.description') }}
-      </div>
-      <q-btn
-        unelevated
-        color="primary"
-        no-caps
-        icon="quiz"
-        :label="$t('scanExamen.actions.seePlannedExams')"
-        class="q-mt-md"
-        @click="router.push({ name: 'examens' })"
-      />
-    </div>
+    <etat-vide
+      v-if="!chargementExamens && !examens.length"
+      class="plaque"
+      icone="event_busy"
+      :titre="$t('scanExamen.emptyState.title')"
+      :aide="$t('scanExamen.emptyState.description')"
+    >
+      <template #action>
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="quiz"
+          :label="$t('scanExamen.actions.seePlannedExams')"
+          @click="router.push({ name: 'examens' })"
+        />
+      </template>
+    </etat-vide>
 
     <template v-else>
       <q-card flat bordered class="ratio-carte q-mb-md">
@@ -174,6 +170,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import QrScanner from '../components/QrScanner.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import { LIBELLE_TYPE_EXAMEN, dateLisible, pourcentLisible } from '../utils/libelles';
 import type { Examen, ScanExamen } from '../types';
 

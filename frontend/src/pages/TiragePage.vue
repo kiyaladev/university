@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('tirage.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('tirage.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('tirage.title')" :subtitle="$t('tirage.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutCreer"
           unelevated
@@ -17,8 +11,6 @@
           :label="$t('tirage.actions.schedule')"
           @click="dialogCreationOuvert = true"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           outline
           color="secondary"
@@ -27,8 +19,8 @@
           :label="$t('tirage.actions.exams')"
           @click="router.push({ name: 'examens' })"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
       <template #avatar><q-icon name="filter_alt" color="primary" /></template>
@@ -73,7 +65,7 @@
       :rows="tiragesFiltres"
       :columns="colonnesTableau"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
 
@@ -100,21 +92,20 @@
         </q-card-actions>
     </q-card></div>
   </template>
-<template #no-data>
-        <div class="etat-vide">
-          <q-icon name="local_printshop" size="32px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('tirage.emptyState.message') }}</div>
-          <q-btn
-            v-if="peutCreer"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('tirage.actions.schedule')"
-            class="q-mt-sm"
-            @click="dialogCreationOuvert = true"
-          />
-        </div>
+      <template #no-data>
+        <etat-vide icone="local_printshop" :titre="$t('tirage.emptyState.message')">
+          <template v-if="peutCreer" #action>
+            <q-btn
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('tirage.actions.schedule')"
+              class="q-mt-sm"
+              @click="dialogCreationOuvert = true"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-examen="p">
@@ -149,24 +140,22 @@
     </q-table>
 
     <pagination-bar
-      v-if="total"
-      :page="filtres.page"
-      :page-size="filtres.pageSize"
-      :total="total"
-      @update:page="(v) => { filtres.page = v; charger(); }"
-      @update:page-size="(v) => { filtres.pageSize = v; filtres.page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="liste.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.max(liste.total, 200)"
     />
 
-    <tirage-dialog v-model="dialogCreationOuvert" @cree="charger" />
+    <tirage-dialog v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
@@ -175,35 +164,51 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import TirageDialog from '../components/TirageDialog.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '../utils/libelles';
 import type { Examen, StadeTirage, Tirage, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
-const route = useRoute();
 const router = useRouter();
 // Alias `translate` (not `t`) because several handlers below already use `t`
 // as the local parameter name for a Tirage row.
 const { t: translate } = useI18n();
-const tirages = ref<Tirage[]>([]);
-const total = ref(0);
-const chargement = ref(false);
+const { confirmer } = useConfirmation();
 const dialogCreationOuvert = ref(false);
 /** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
 const examenFiltre = ref<Examen | null>(null);
 
-function filtresParDefaut() {
-  return {
-    recherche: '',
-    examenId: null as string | null,
-    stade: null as StadeTirage | null,
-    page: 1,
-    pageSize: 50,
-  };
-}
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  examenId: null as string | null,
+  stade: null as StadeTirage | null,
+});
 
-const filtres = ref<Record<string, any>>(filtresParDefaut());
+/** `examenId` vient aussi de l'URL : la fiche d'un examen ouvre ses tirages. */
+const liste = reactive(
+  useListePaginee<Tirage>({
+    filtres,
+    pageSize: 50,
+    syncUrl: true,
+    // `/tirage` ne filtre pas sur le texte : voir `tiragesFiltres`.
+    clesLocales: ['recherche'],
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/tirage', {
+          params: {
+            ...pageApi(p),
+            examenId: f.examenId || undefined,
+            stade: f.stade || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
@@ -244,8 +249,8 @@ const chipsFiltres = computed(() => {
  */
 const tiragesFiltres = computed(() => {
   const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
-  if (!q) return tirages.value;
-  return tirages.value.filter((t) =>
+  if (!q) return liste.lignes;
+  return liste.lignes.filter((t) =>
     [t.examen?.codeExamen, t.examen?.intitule, t.circuitImpression]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q)),
@@ -305,37 +310,9 @@ function labelSuivant(stade: string) {
   return suiv ? `→ ${LIBELLE_STADE_TIRAGE[suiv]}` : '';
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/tirage', {
-      params: {
-        examenId: filtres.value.examenId || undefined,
-        stade: filtres.value.stade || undefined,
-        page: filtres.value.page,
-        pageSize: filtres.value.pageSize,
-      },
-    });
-    tirages.value = data.data ?? [];
-    total.value = data.total ?? tirages.value.length;
-  } catch {
-    tirages.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  filtres.value.page = 1;
-  filtres.value.pageSize = Math.max(total.value, 200);
-  await charger();
-}
-
 function reinitialiser() {
-  filtres.value = filtresParDefaut();
+  liste.reinitialiser([]);
   examenFiltre.value = null;
-  charger();
 }
 
 function retirerFiltreExamen() {
@@ -387,12 +364,14 @@ async function avancer(t: Tirage) {
     try {
       await api.post(`/tirage/${t.id}/${routeSuivant}`, payload);
       $q.notify({ type: 'positive', message: translate('tirage.messages.stageChanged', { stade: libelleStade(stade) }) });
-      await charger();
+      await liste.recharger();
     } catch {
       /* notifié par l'intercepteur */
     }
   };
 
+  // Seule saisie préremplie de la page : `confirmerAvecSaisie` ne sait pas
+  // proposer de valeur initiale, on garde donc le dialogue Quasar ici.
   if (stade === 'IMPRIME') {
     $q.dialog({
       title: translate('tirage.actions.confirmPrint'),
@@ -404,46 +383,38 @@ async function avancer(t: Tirage) {
     return;
   }
 
-  $q.dialog({
-    title: translate('tirage.dialogs.advance.title', { stade: libelleStade(stade) }),
+  const ok = await confirmer({
+    titre: translate('tirage.dialogs.advance.title', { stade: libelleStade(stade) }),
     message: MESSAGES_TRANSITION.value[stade] ?? '',
-    cancel: true,
-    ok: { color: 'primary', label: libelleStade(stade), unelevated: true, noCaps: true },
-  }).onOk(() => validerEtAvancer());
+    ok: libelleStade(stade),
+  });
+  if (ok) await validerEtAvancer();
 }
 
-function annuler(t: Tirage) {
-  $q.dialog({
-    title: translate('tirage.dialogs.cancel.title'),
+async function annuler(t: Tirage) {
+  const ok = await confirmer({
+    titre: translate('tirage.dialogs.cancel.title'),
     message: translate('tirage.dialogs.cancel.message', {
       examen: t.examen?.codeExamen ?? translate('tirage.dialogs.cancel.thisExam'),
     }),
-    cancel: { flat: true, label: translate('tirage.actions.back'), noCaps: true },
-    ok: { color: 'negative', label: translate('tirage.actions.cancelDraw'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/tirage/${t.id}/annuler`);
-      $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: translate('tirage.actions.cancelDraw'),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await api.post(`/tirage/${t.id}/annuler`);
+    $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
 
-watch(
-  () => [filtres.value.examenId, filtres.value.stade],
-  () => {
-    filtres.value.page = 1;
-    charger();
-  },
-);
-
 onMounted(async () => {
-  // Chaîne : un examen ouvre directement ses tirages.
-  const examenId = String(route.query.examenId ?? '');
+  // Chaîne : un examen ouvre directement ses tirages (l'`examenId` de l'URL
+  // est déjà dans les filtres) ; on charge sa fiche pour le bandeau.
+  const examenId = filtres.value.examenId;
   if (examenId) {
-    filtres.value.examenId = examenId;
     try {
       const { data } = await api.get(`/examens/${examenId}`);
       examenFiltre.value = data;
@@ -451,7 +422,6 @@ onMounted(async () => {
       examenFiltre.value = null;
     }
   }
-  await charger();
 });
 </script>
 
