@@ -163,10 +163,10 @@ export class SeancesService extends CrudService {
     };
   }
 
-  liste(query: SeanceQueryDto, user?: AuthUser) {
+  lister(query: SeanceQueryDto, user?: AuthUser) {
     const requete = { ...query, search: undefined, sort: query.sort ?? undefined };
     const where = this.where(query, user);
-    if (this.includePour(user) === SEANCE_INCLUDE) return this.findAll(requete, where);
+    if (this.includePour(user) === SEANCE_INCLUDE) return super.lister(requete, where);
 
     const pagination = paginer(query);
     return Promise.all([
@@ -466,7 +466,7 @@ export class SeancesService extends CrudService {
     );
   }
 
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const avant: any = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });

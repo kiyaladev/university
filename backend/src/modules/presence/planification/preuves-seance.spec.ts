@@ -33,7 +33,7 @@ describe('Suppression d’une séance pointée', () => {
     ['un justificatif', { controle: null, justificatif: { id: 'j-1' } }],
   ])('refuse en 409 une séance qui porte %s', async (_libelle, preuves) => {
     const { tx, service } = monter(preuves);
-    const erreur = await service.remove('seance-1', { id: 'admin' } as any).catch((e) => e);
+    const erreur = await service.supprimer('seance-1', { id: 'admin' } as any).catch((e) => e);
     expect(erreur).toBeInstanceOf(ConflictException);
     expect(erreur.message).toContain('preuve de service');
     expect(tx.seance.delete).not.toHaveBeenCalled();
@@ -42,7 +42,7 @@ describe('Suppression d’une séance pointée', () => {
 
   it('supprime une séance seulement planifiée', async () => {
     const { tx, service } = monter({ controle: null, justificatif: null });
-    await expect(service.remove('seance-1', { id: 'admin' } as any)).resolves.toEqual({ id: 'seance-1' });
+    await expect(service.supprimer('seance-1', { id: 'admin' } as any)).resolves.toEqual({ id: 'seance-1' });
     expect(tx.seance.delete).toHaveBeenCalledWith({ where: { id: 'seance-1' } });
   });
 });

@@ -14,8 +14,8 @@ const CONTROLEURS = [Role.CONTROLEUR, Role.ADMIN, Role.DIRECTION, Role.CHEF_DEPA
 export class ControleController {
   constructor(private readonly service: ControleService) {}
 
-  @Get() liste(@Query() query: ControleQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  @Get() lister(@Query() query: ControleQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Scan du QR affiché dans la salle : renvoie la salle et ses séances du jour. */
@@ -31,8 +31,8 @@ export class ControleController {
     return this.service.audit(query);
   }
 
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
-    return this.service.findOne(id, user);
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.service.lire(id, user);
   }
 
   /** Pointage d'une séance en salle. */

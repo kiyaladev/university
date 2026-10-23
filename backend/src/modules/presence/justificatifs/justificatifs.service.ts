@@ -68,7 +68,7 @@ export class JustificatifsService extends CrudService {
     });
   }
 
-  liste(query: JustificatifQueryDto, user: AuthUser) {
+  lister(query: JustificatifQueryDto, user: AuthUser) {
     const date: Prisma.DateTimeFilter = {};
     if (query.dateDebut) date.gte = toDateOnly(query.dateDebut);
     if (query.dateFin) date.lte = toDateOnly(query.dateFin);
@@ -271,7 +271,7 @@ export class JustificatifsService extends CrudService {
     return this.findOnePour(id, user);
   }
 
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const avant: any = await tx.justificatif.findUnique({

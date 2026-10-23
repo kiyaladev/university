@@ -269,7 +269,7 @@ describe('TirageService — recherche', () => {
   it('filtre la liste par stade, examen et imprimeur', async () => {
     const { prisma, service } = preparer(StadeTirage.PROGRAMME);
 
-    await service.liste({ stade: StadeTirage.PROGRAMME, examenId: 'exam-1', imprimeurId: 'agent-1' } as any);
+    await service.lister({ stade: StadeTirage.PROGRAMME, examenId: 'exam-1', imprimeurId: 'agent-1' } as any);
 
     expect(prisma.tirage.findMany.mock.calls[0][0].where).toEqual({
       stade: StadeTirage.PROGRAMME,
@@ -282,7 +282,7 @@ describe('TirageService — recherche', () => {
   it('masque l’empreinte d’un tirage encore programmé dans la liste', async () => {
     const { service } = preparer(StadeTirage.PROGRAMME);
 
-    const page = await service.liste({} as any);
+    const page = await service.lister({} as any);
 
     expect((page.data[0] as any).empreinteSource).toBe(EMPREINTE.slice(0, 8));
   });
@@ -290,7 +290,7 @@ describe('TirageService — recherche', () => {
   it('révèle l’empreinte complète une fois le tirage imprimé', async () => {
     const { service } = preparer(StadeTirage.IMPRIME);
 
-    const page = await service.liste({} as any);
+    const page = await service.lister({} as any);
 
     expect((page.data[0] as any).empreinteSource).toBe(EMPREINTE);
   });

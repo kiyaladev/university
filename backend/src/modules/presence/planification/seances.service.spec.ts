@@ -51,7 +51,7 @@ function preparer(creneaux = [CRENEAU_LUNDI, CRENEAU_JEUDI]) {
 describe('SeancesService — génération depuis l’emploi du temps', () => {
   it('exclut les coordonnées, rémunération et données biométriques de l’enseignant dans les séances de gestion', async () => {
     const { service, prisma } = preparer();
-    await service.liste({} as any, { id: 'admin-1', role: Role.ADMIN } as any);
+    await service.lister({} as any, { id: 'admin-1', role: Role.ADMIN } as any);
 
     const include = prisma.seance.findMany.mock.calls[0][0].include;
     expect(include).toEqual(SEANCE_INCLUDE);
@@ -67,7 +67,7 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
   it('retire les preuves privées et les pièces médicales pour le personnel de terrain', async () => {
     const { service, prisma } = preparer();
     const controleur = { id: 'controleur-1', role: Role.CONTROLEUR, departementId: 'dept-1' } as any;
-    await service.liste({} as any, controleur);
+    await service.lister({} as any, controleur);
 
     const requete = prisma.seance.findMany.mock.calls[0][0];
     expect(requete.include).toEqual(SEANCE_INCLUDE_RESTREINT);
