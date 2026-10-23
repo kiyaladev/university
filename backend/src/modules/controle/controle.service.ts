@@ -480,7 +480,12 @@ export class ControleService {
     if (present && !avant && !dto.signatureBase64 && (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))) {
       throw new BadRequestException(t('controle.la_signature_manuscrite_de_l_enseignant_est_obligatoire'));
     }
-    if (present && !avant && dto.effectifPresent == null && (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))) {
+    if (
+      present &&
+      !avant &&
+      dto.effectifPresent == null &&
+      (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))
+    ) {
       throw new BadRequestException(t('controle.le_nombre_d_etudiants_presents_est_obligatoire'));
     }
 

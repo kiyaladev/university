@@ -1,8 +1,7 @@
 /** Namespace `correctionsPointages` — consultation et correction des pointages. */
 export default {
   title: 'Corrections des pointages',
-  subtitle:
-    'Les pointages consignés en salle. Une correction ne change que les champs modifiés et reste journalisée.',
+  subtitle: 'Les pointages consignés en salle. Une correction ne change que les champs modifiés et reste journalisée.',
   filters: {
     from: 'À partir du',
     to: "Jusqu'au",

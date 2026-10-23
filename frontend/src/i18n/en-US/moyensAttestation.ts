@@ -1,8 +1,7 @@
 /** Namespace `moyensAttestation` — moyens de preuve de présence des enseignants. */
 export default {
   title: 'Proof means',
-  subtitle:
-    'Enrolled control devices and the proof means of teachers: personal code and fingerprint.',
+  subtitle: 'Enrolled control devices and the proof means of teachers: personal code and fingerprint.',
   devices: {
     title: 'Control devices',
     subtitle: 'An enrolled device signs fingerprint readings. Revoke the one you lost.',
@@ -44,8 +43,7 @@ export default {
   },
   revokeDialog: {
     title: 'Revoke this device?',
-    message:
-      'Fingerprint readings produced by “{device}” will no longer be accepted. The other devices keep working.',
+    message: 'Fingerprint readings produced by “{device}” will no longer be accepted. The other devices keep working.',
   },
   resetDialog: {
     title: 'Reset the code?',
