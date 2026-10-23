@@ -47,7 +47,7 @@ describe('filtres de la liste des résidences', () => {
     }
   });
 
-  it('refuse une valeur qui n\'est pas un booléen', async () => {
+  it("refuse une valeur qui n'est pas un booléen", async () => {
     expect(await valider({ actif: 'peut-être' })).toEqual(['actif']);
   });
 
@@ -61,7 +61,7 @@ describe('filtres de la liste des résidences', () => {
     expect(count).toHaveBeenCalledWith({ where: attendu });
   });
 
-  it('applique le filtre d\'état actif', async () => {
+  it("applique le filtre d'état actif", async () => {
     const { service, findMany } = preparer('residence');
 
     await service.findAll({ actif: false } as any);
@@ -79,7 +79,7 @@ describe('filtres de la liste des résidences', () => {
     );
   });
 
-  it('ne filtre rien quand l\'écran n\'a rien demandé', async () => {
+  it("ne filtre rien quand l'écran n'a rien demandé", async () => {
     const { service, findMany } = preparer('residence');
 
     await service.findAll({} as any);

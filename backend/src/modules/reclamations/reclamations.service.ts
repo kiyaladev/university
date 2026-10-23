@@ -31,7 +31,7 @@ import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
 
@@ -387,9 +387,9 @@ export class ReclamationsService extends CrudService {
         : `${user.prenom} ${user.nom}`.trim();
     const emailAuteur = anonyme ? dto.emailAuteur?.trim() || null : null;
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
           const reclamation = await tx.reclamation.create({
             data: {
@@ -423,13 +423,14 @@ export class ReclamationsService extends CrudService {
             premierMessageInclus: true,
           });
           return reclamation;
-        });
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('reclamations.numero_de_reclamation_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['numero'],
+        erreur: () =>
+          new ConflictException(t('reclamations.numero_de_reclamation_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   /**

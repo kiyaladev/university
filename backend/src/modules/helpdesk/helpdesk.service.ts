@@ -22,7 +22,7 @@ import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {
   CreateEquipementDto,
@@ -369,9 +369,9 @@ export class TicketsService extends CrudService {
     }
 
     const annee = millesimeSerie(SERIES_NUMERO.TICKET_SUPPORT);
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
           const ticket = await tx.ticketSupport.create({
             data: {
@@ -395,13 +395,13 @@ export class TicketsService extends CrudService {
             apres: instantaneTicket(ticket),
           });
           return ticket;
-        });
-      } catch (e: any) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('helpdesk.numero_de_ticket_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['numero'],
+        erreur: () => new ConflictException(t('helpdesk.numero_de_ticket_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   /**

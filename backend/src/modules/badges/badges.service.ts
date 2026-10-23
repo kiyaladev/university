@@ -30,7 +30,7 @@ import {
   UpdateBadgeDto,
 } from './badges.dto';
 import { documentsBadge, BadgeImprimable } from './documents';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
 
@@ -157,11 +157,10 @@ export class BadgesService {
 
   async creer(dto: CreateBadgeDto, user: AuthUser) {
     const annee = millesimeSerie(SERIES_NUMERO.BADGE_ACCES);
-    let badge: Awaited<ReturnType<typeof this.prisma.badgeAcces.create>> | null = null;
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        badge = await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
           const badge = await tx.badgeAcces.create({
             data: {
@@ -190,16 +189,13 @@ export class BadgesService {
             champsModifies: ['type', 'statut', 'dateValidite', 'zonesAccess', 'qrToken', 'photoUrl'],
           });
           return badge;
-        });
-        break;
-      } catch (e: any) {
-        if (e?.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    if (!badge) throw new BadRequestException(t('badges.impossible_de_generer_un_numero_de_badge'));
-
-    return badge;
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['numero'],
+        erreur: () => new BadRequestException(t('badges.impossible_de_generer_un_numero_de_badge')),
+      },
+    );
   }
 
   async modifier(id: string, dto: UpdateBadgeDto, user: AuthUser) {

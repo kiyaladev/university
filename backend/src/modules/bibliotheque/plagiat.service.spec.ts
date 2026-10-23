@@ -89,11 +89,14 @@ describe('PlagiatService — recalcul complet par lots', () => {
 
   it('agrège l’indice de plagiat par document, et non document par document', async () => {
     const docs = [document('doc-a'), document('doc-b'), document('doc-c')];
-    const { prisma, tx } = preparer([], [
-      { documentAId: 'doc-a', documentBId: 'doc-b', score: 70 },
-      { documentAId: 'doc-a', documentBId: 'doc-c', score: 90 },
-      { documentAId: 'doc-b', documentBId: 'doc-c', score: 50 },
-    ]);
+    const { prisma, tx } = preparer(
+      [],
+      [
+        { documentAId: 'doc-a', documentBId: 'doc-b', score: 70 },
+        { documentAId: 'doc-a', documentBId: 'doc-c', score: 90 },
+        { documentAId: 'doc-b', documentBId: 'doc-c', score: 50 },
+      ],
+    );
     prisma.documentDepot.findMany.mockResolvedValue(docs);
     const service = new PlagiatService(prisma);
 

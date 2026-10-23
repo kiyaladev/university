@@ -24,7 +24,7 @@ import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
 import { documents, AttestationImprimable } from './documents';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AttestationQueryDto,
@@ -182,17 +182,11 @@ export class AttestationsService {
     // Dédoublonnage : une seule attestation émise du même type, même année,
     // pour le même étudiant. La révocation de l'existante rouvre le droit
     // d'en émettre une nouvelle.
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const attestation = await this.prisma.$transaction((tx) => this.emettreTx(tx, dto, annee, user));
-        return attestation;
-      } catch (e: any) {
-        if (e instanceof ConflictException) throw e;
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+    return avecNumeroUnique(() => this.prisma.$transaction((tx) => this.emettreTx(tx, dto, annee, user)), {
+      tentatives: 10,
+      colonnes: ['numero'],
+      erreur: () => new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez')),
+    });
   }
 
   /**
