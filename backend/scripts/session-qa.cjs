@@ -11,7 +11,7 @@ assert.ok(['localhost', '127.0.0.1'].includes(database.hostname));
 assert.equal(env.PORT, '15041');
 assert.equal(env.NODE_ENV, 'development');
 Object.assign(process.env, env);
-const { AuthService } = require('../dist/modules/auth/auth.service');
+const { AuthService } = require('../dist/modules/socle/auth/auth.service');
 const { optionsJwt } = require('../dist/common/jwt-config.module');
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 const auth = new AuthService(prisma, new JwtService(optionsJwt({ get: (key) => env[key] })));

@@ -1,23 +1,23 @@
 import 'reflect-metadata';
 import { DOCUMENT_ACCESS_KEY, IS_PUBLIC_KEY, ROLES_KEY } from './decorators';
 
-import { AttestationsController } from '../modules/attestations/attestations.controller';
-import { BadgesController } from '../modules/badges/badges.controller';
-import { CarteEtudianteController } from '../modules/carte-etudiante/carte-etudiante.controller';
-import { CourrierController } from '../modules/courrier/courrier.controller';
-import { DocumentsDemandeController } from '../modules/documents-demande/documents-demande.controller';
-import { ElectionsController } from '../modules/elections/elections.controller';
-import { ExportController } from '../modules/rapports/export.controller';
-import { FormationsController } from '../modules/formations/formations.controller';
-import { EquipementsController } from '../modules/helpdesk/helpdesk.controller';
-import { ImpressionController } from '../modules/rapports/impression.controller';
-import { InscriptionsController } from '../modules/inscription/inscription.controller';
-import { PaieController } from '../modules/paie/paie.controller';
-import { PatrimoineController } from '../modules/patrimoine/patrimoine.controller';
-import { RectoratController } from '../modules/rectorat/rectorat.controller';
-import { DeliberationsController } from '../modules/scolarite/scolarite.controller';
-import { TirageController } from '../modules/tirage/tirage.controller';
-import { TravauxEncadresController } from '../modules/stages/stages.controller';
+import { AttestationsController } from '../modules/documents/attestations/attestations.controller';
+import { BadgesController } from '../modules/documents/badges/badges.controller';
+import { CarteEtudianteController } from '../modules/documents/carte-etudiante/carte-etudiante.controller';
+import { CourrierController } from '../modules/documents/courrier/courrier.controller';
+import { DocumentsDemandeController } from '../modules/documents/documents-demande/documents-demande.controller';
+import { ElectionsController } from '../modules/campus/elections/elections.controller';
+import { ExportController } from '../modules/pilotage/rapports/export.controller';
+import { FormationsController } from '../modules/scolarite/formations/formations.controller';
+import { EquipementsController } from '../modules/campus/helpdesk/helpdesk.controller';
+import { ImpressionController } from '../modules/pilotage/rapports/impression.controller';
+import { InscriptionsController } from '../modules/scolarite/inscription/inscription.controller';
+import { PaieController } from '../modules/finances/paie/paie.controller';
+import { PatrimoineController } from '../modules/campus/patrimoine/patrimoine.controller';
+import { RectoratController } from '../modules/pilotage/rectorat/rectorat.controller';
+import { DeliberationsController } from '../modules/scolarite/scolarite/scolarite.controller';
+import { TirageController } from '../modules/presence/tirage/tirage.controller';
+import { TravauxEncadresController } from '../modules/scolarite/stages/stages.controller';
 
 /**
  * Ces routes vérifiaient le jeton d'impression à la main, en plus de la garde

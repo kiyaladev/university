@@ -1,10 +1,10 @@
-import { AttestationsController } from '../modules/attestations/attestations.controller';
-import { BadgesController } from '../modules/badges/badges.controller';
-import { CarteEtudianteController } from '../modules/carte-etudiante/carte-etudiante.controller';
-import { EquipementsController } from '../modules/helpdesk/helpdesk.controller';
-import { RestoController } from '../modules/resto/resto.controller';
-import { PatrimoineController } from '../modules/patrimoine/patrimoine.controller';
-import { BibliothequeController } from '../modules/bibliotheque/bibliotheque.controller';
+import { AttestationsController } from '../modules/documents/attestations/attestations.controller';
+import { BadgesController } from '../modules/documents/badges/badges.controller';
+import { CarteEtudianteController } from '../modules/documents/carte-etudiante/carte-etudiante.controller';
+import { EquipementsController } from '../modules/campus/helpdesk/helpdesk.controller';
+import { RestoController } from '../modules/campus/resto/resto.controller';
+import { PatrimoineController } from '../modules/campus/patrimoine/patrimoine.controller';
+import { BibliothequeController } from '../modules/campus/bibliotheque/bibliotheque.controller';
 import { IS_PUBLIC_KEY } from './decorators';
 
 describe('Protection des vérifications QR publiques', () => {
