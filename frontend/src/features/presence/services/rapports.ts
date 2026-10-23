@@ -142,9 +142,12 @@ export interface RapportRegistre {
 /** Résumé d'un groupe de séances, pour la couverture des contrôleurs. */
 export interface ResumeCouverture {
   seancesPassees?: number;
-  controlees?: number;
-  enAttente?: number;
+  visitees?: number;
+  nonVisitees?: number;
+  realiseesParAssigne?: number;
+  realiseesParUnAutre?: number;
   tauxCouverture?: number;
+  tauxParAssigne?: number;
 }
 
 /** Rapport de couverture des contrôleurs. */
