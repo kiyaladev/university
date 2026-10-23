@@ -171,7 +171,7 @@ async function enregistrer() {
         heureFin: form.value.heureFin,
         type: form.value.type as TypeCours,
         salleId: form.value.salleId,
-        statut: 'PLANIFIEE',
+        statut: 'PLANIFIE',
         thematique: form.value.thematique || null,
         affectation: selection,
         salle,

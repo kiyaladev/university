@@ -27,7 +27,7 @@ export class UpdateReservationDto extends PartialType(CreateReservationDto) {}
 
 /** Décision prise par l'administration : confirmer ou refuser proprement. */
 export class DeciderReservationDto {
-  @IsIn(['CONFIRMEE', 'REFUSEE']) statut: 'CONFIRMEE' | 'REFUSEE';
+  @IsIn(['CONFIRME', 'REFUSE']) statut: 'CONFIRME' | 'REFUSE';
 
   @IsOptional() @IsString() motif?: string;
 }

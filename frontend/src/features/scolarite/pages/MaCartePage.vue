@@ -27,7 +27,7 @@ const nipValeur = ref('');
 const nipConfirmation = ref('');
 
 /** Une carte révoquée ne s'imprime plus et n'accepte plus de NIP. */
-const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut === 'EMISE'));
+const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut === 'EMIS'));
 
 async function charger() {
   chargement.value = true;

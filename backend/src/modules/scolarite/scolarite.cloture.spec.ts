@@ -10,7 +10,7 @@ const EVALUATION = {
   id: 'eval-1',
   intitule: 'Examen',
   type: TypeEvaluation.EXAMEN,
-  statut: StatutEvaluation.OUVERTE,
+  statut: StatutEvaluation.OUVERT,
   anneeId: 'annee-1',
   promotionId: 'promo-1',
   matiereId: 'matiere-1',

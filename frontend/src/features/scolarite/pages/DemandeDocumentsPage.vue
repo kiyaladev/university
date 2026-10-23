@@ -120,7 +120,7 @@
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn
-            v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
+            v-if="['PAYE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
             dense
             no-caps
@@ -133,7 +133,7 @@
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.startProcessing') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
+            v-if="['PAYE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
             dense
             no-caps
@@ -147,7 +147,7 @@
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.markReady') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'PRETE'"
+            v-if="p.row.statut === 'PRET'"
             flat
             dense
             no-caps
@@ -178,7 +178,7 @@
             </q-btn>
             <q-btn
               v-close-popup
-              v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
+              v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETE'"
               flat
               dense
               no-caps
@@ -250,7 +250,7 @@
           <q-separator />
           <q-card-actions align="right" class="q-gutter-xs">
             <q-btn
-              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
+              v-if="['PAYE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
               no-caps
@@ -260,7 +260,7 @@
               @click.stop="lancerTraitement(d)"
             />
             <q-btn
-              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
+              v-if="['PAYE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
               no-caps
@@ -271,7 +271,7 @@
               @click.stop="marquerPrete(d)"
             />
             <q-btn
-              v-if="d.statut === 'PRETE'"
+              v-if="d.statut === 'PRET'"
               flat
               dense
               no-caps
@@ -296,7 +296,7 @@
               />
               <q-btn
                 v-close-popup
-                v-if="d.statut !== 'REMISE' && d.statut !== 'REJETEE'"
+                v-if="d.statut !== 'REMISE' && d.statut !== 'REJETE'"
                 flat
                 dense
                 no-caps
@@ -416,7 +416,7 @@
               @click="confirmerPaiement(demandeSelectionnee)"
             />
             <q-btn
-              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(demandeSelectionnee.statut)"
+              v-if="['PAYE', 'EN_TRAITEMENT'].includes(demandeSelectionnee.statut)"
               unelevated
               color="primary"
               no-caps
@@ -426,7 +426,7 @@
               @click="lancerTraitement(demandeSelectionnee)"
             />
             <q-btn
-              v-if="['PAYEE', 'EN_TRAITEMENT'].includes(demandeSelectionnee.statut)"
+              v-if="['PAYE', 'EN_TRAITEMENT'].includes(demandeSelectionnee.statut)"
               unelevated
               color="positive"
               no-caps
@@ -436,7 +436,7 @@
               @click="marquerPrete(demandeSelectionnee)"
             />
             <q-btn
-              v-if="demandeSelectionnee.statut === 'PRETE'"
+              v-if="demandeSelectionnee.statut === 'PRET'"
               unelevated
               color="positive"
               no-caps
@@ -446,7 +446,7 @@
               @click="remettre(demandeSelectionnee)"
             />
             <q-btn
-              v-if="demandeSelectionnee.statut !== 'REMISE' && demandeSelectionnee.statut !== 'REJETEE'"
+              v-if="demandeSelectionnee.statut !== 'REMISE' && demandeSelectionnee.statut !== 'REJETE'"
               outline
               color="negative"
               no-caps
@@ -502,9 +502,9 @@ const { confirmerAvecSaisie } = useConfirmation();
 
 const ETAPES_DEMANDE = computed(() => [
   { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('common.fields.payment'), icone: 'payments' },
-  { identifiant: 'PAYEE', libelle: t('demandeDocuments.steps.paid'), icone: 'verified' },
+  { identifiant: 'PAYE', libelle: t('demandeDocuments.steps.paid'), icone: 'verified' },
   { identifiant: 'EN_TRAITEMENT', libelle: t('demandeDocuments.steps.processing'), icone: 'build' },
-  { identifiant: 'PRETE', libelle: t('demandeDocuments.steps.ready'), icone: 'check_circle' },
+  { identifiant: 'PRET', libelle: t('demandeDocuments.steps.ready'), icone: 'check_circle' },
   { identifiant: 'REMISE', libelle: t('demandeDocuments.steps.handedOver'), icone: 'task_alt' },
 ]);
 
@@ -552,7 +552,7 @@ const enCours = ref('');
 const plaques = computed(() => [
   { cle: 'EN_ATTENTE_PAIEMENT', libelle: t('demandeDocuments.plaques.awaitingPayment'), alerte: false },
   { cle: 'EN_TRAITEMENT', libelle: t('demandeDocuments.plaques.processing'), alerte: false },
-  { cle: 'PRETE', libelle: t('demandeDocuments.plaques.ready'), alerte: false },
+  { cle: 'PRET', libelle: t('demandeDocuments.plaques.ready'), alerte: false },
   { cle: 'pretesNonRemises', libelle: t('demandeDocuments.plaques.readyOverdue'), alerte: true },
 ]);
 

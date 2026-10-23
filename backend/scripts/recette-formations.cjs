@@ -79,7 +79,7 @@ async function main() {
   assert.deepEqual(confirmationStatuses, [201, 409]);
   const accepted = candidates[confirmations.findIndex((r) => r.status === 201)];
   const rejected = candidates[confirmations.findIndex((r) => r.status === 409)];
-  assert.equal(await prisma.inscriptionFormation.count({ where: { formationId, statut: 'CONFIRMEE' } }), 1);
+  assert.equal(await prisma.inscriptionFormation.count({ where: { formationId, statut: 'CONFIRME' } }), 1);
   await request(admin, 'POST', `/formations/inscriptions/${accepted.inscriptionId}/confirmer`, {}, 201);
   const paid = await prisma.inscriptionFormation.findUniqueOrThrow({
     where: { id: accepted.inscriptionId },

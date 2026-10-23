@@ -115,7 +115,7 @@ export default {
     confirmPayment: {
       title: 'Confirm the payment?',
       message:
-        'Pilot confirmation: the Mobile Money operator has collected — {reference} moves to REUSSI and request {numero} moves to CONFIRMEE.',
+        'Pilot confirmation: the Mobile Money operator has collected — {reference} moves to REUSSI and request {numero} moves to CONFIRME.',
       paymentFallback: 'the payment',
     },
     cancelRequest: {

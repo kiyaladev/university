@@ -7,9 +7,9 @@
   "la_chambre_est_deja_reservee_pour_un_autre_etudiant": "The room is already reserved for another student.",
   "cette_demande_a_deja_ete_traitee": "This request has already been processed.",
   "cette_attribution_n_est_plus_reversible": "This allocation can no longer be reversed.",
-  "cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi": "This room cannot move to OCCUPIED: no allocation has been granted for it.",
+  "cette_chambre_ne_peut_pas_prendre_le_statut_occupe_aucune_at": "This room cannot take the OCCUPE status: no allocation has been granted for it.",
   "cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou": "This student already has a room allocated for the current year.",
-  "une_chambre_ne_peut_pas_etre_creee_occupee_elle_doit_d_abord": "A room cannot be created as OCCUPIED: it must first be granted an allocation by the jury.",
+  "une_chambre_ne_peut_pas_etre_creee_au_statut_occupe_elle_doi": "A room cannot be created with the OCCUPE status: it must first be granted an allocation by the jury.",
   "impossible_de_supprimer_la_residence_residence_nom_nb_chambr": "Cannot delete residence {residence.nom}: {nb} room(s) are still attached. Please reassign them first.",
   "impossible_de_supprimer_la_chambre_chambre_code_nb_attributi": "Cannot delete room {chambre.code}: {nb} allocation(s) are still attached."
 }

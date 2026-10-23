@@ -57,10 +57,10 @@ const peutVoter = computed(() => auth.peut('elections.voterDepuisGestion'));
 
 const ONGLETS = computed<Array<{ statut: StatutElection; label: string; icone: string }>>(() => [
   { statut: 'BROUILLON', label: t('elections.tabs.draft'), icone: 'edit_note' },
-  { statut: 'OUVERTE', label: t('elections.tabs.open'), icone: 'how_to_vote' },
-  { statut: 'CLOSE', label: t('elections.tabs.closed'), icone: 'lock' },
-  { statut: 'PROCLAMEE', label: t('elections.tabs.proclaimed'), icone: 'emoji_events' },
-  { statut: 'ANNULEE', label: t('elections.tabs.cancelled'), icone: 'block' },
+  { statut: 'OUVERT', label: t('elections.tabs.open'), icone: 'how_to_vote' },
+  { statut: 'CLOS', label: t('elections.tabs.closed'), icone: 'lock' },
+  { statut: 'PROCLAME', label: t('elections.tabs.proclaimed'), icone: 'emoji_events' },
+  { statut: 'ANNULE', label: t('elections.tabs.cancelled'), icone: 'block' },
 ]);
 
 const colonnes = computed<QTableColumn[]>(() => [
@@ -310,7 +310,7 @@ watch(onglet, () => {
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn
-            v-if="p.row.statut === 'CLOSE' || p.row.statut === 'PROCLAMEE'"
+            v-if="p.row.statut === 'CLOS' || p.row.statut === 'PROCLAME'"
             flat
             round
             dense
@@ -344,7 +344,7 @@ watch(onglet, () => {
             <q-tooltip>{{ $t('elections.dialogs.transitions.open.title') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutEditer && p.row.statut === 'OUVERTE'"
+            v-if="peutEditer && p.row.statut === 'OUVERT'"
             flat
             round
             dense
@@ -355,7 +355,7 @@ watch(onglet, () => {
             <q-tooltip>{{ $t('elections.dialogs.transitions.close.title') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="peutEditer && p.row.statut === 'CLOSE'"
+            v-if="peutEditer && p.row.statut === 'CLOS'"
             flat
             round
             dense
@@ -458,7 +458,7 @@ watch(onglet, () => {
                 @click="transition(e.id, 'ouvrir')"
               />
               <q-btn
-                v-if="peutEditer && e.statut === 'OUVERTE'"
+                v-if="peutEditer && e.statut === 'OUVERT'"
                 flat
                 dense
                 icon="lock"
@@ -467,7 +467,7 @@ watch(onglet, () => {
                 @click="transition(e.id, 'clore')"
               />
               <q-btn
-                v-if="peutEditer && e.statut === 'CLOSE'"
+                v-if="peutEditer && e.statut === 'CLOS'"
                 flat
                 dense
                 color="amber-8"
@@ -485,7 +485,7 @@ watch(onglet, () => {
                 @click="ouvrirCandidats(e)"
               />
               <q-btn
-                v-if="e.statut === 'CLOSE' || e.statut === 'PROCLAMEE'"
+                v-if="e.statut === 'CLOS' || e.statut === 'PROCLAME'"
                 flat
                 dense
                 icon="bar_chart"
@@ -636,7 +636,7 @@ watch(onglet, () => {
         </q-card-section>
 
         <q-card-section v-else>
-          <q-banner v-if="electionResultats?.statut !== 'PROCLAMEE'" class="note--alerte q-mb-md">
+          <q-banner v-if="electionResultats?.statut !== 'PROCLAME'" class="note--alerte q-mb-md">
             <template #avatar><q-icon name="visibility_off" /></template>
             {{ $t('elections.dialogs.results.provisionalBanner') }}
           </q-banner>

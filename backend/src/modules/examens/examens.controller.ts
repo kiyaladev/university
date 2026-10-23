@@ -57,7 +57,7 @@ export class ExamensController {
    * ADMIN, SCOLARITE, CONTROLEUR (le surveillant de salle est profilé
    * `CONTROLEUR` dans le référentiel — c'est lui qui tient le pointage en
    * salle). Le service recalcule immédiatement `nbInscrits` à partir des
-   * inscriptions VALIDEE de la promotion. `nbPresents` est remis à 0.
+   * inscriptions VALIDE de la promotion. `nbPresents` est remis à 0.
    */
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CONTROLEUR)
   @Post(':id/demarrer')

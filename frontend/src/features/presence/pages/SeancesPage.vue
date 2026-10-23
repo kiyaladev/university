@@ -191,7 +191,7 @@
             <q-tooltip>{{ $t('seances.table.actions.detail') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="auth.peutPointer && p.row.statut !== 'ANNULEE'"
+            v-if="auth.peutPointer && p.row.statut !== 'ANNULE'"
             dense
             unelevated
             no-caps
@@ -222,7 +222,7 @@
 
       <ol class="journee__liste">
         <li v-for="s in jour.seances" :key="s.id">
-          <article class="plaque ligne" :class="{ 'ligne--annulee': s.statut === 'ANNULEE' }">
+          <article class="plaque ligne" :class="{ 'ligne--annulee': s.statut === 'ANNULE' }">
             <div class="champ ligne__heure">
               <span class="lettrage chiffres">{{ s.heureDebut }}</span>
               <span class="pochoir chiffres">{{ s.heureFin }}</span>
@@ -252,7 +252,7 @@
 
             <div class="ligne__etat">
               <champ-statut :statut="s.controle?.statut ?? 'NON_CONTROLE'" />
-              <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">{{
+              <q-badge v-if="s.statut === 'ANNULE'" color="grey-7" class="q-mt-xs">{{
                 $t('seances.card.cancelledBadge')
               }}</q-badge>
 
@@ -268,7 +268,7 @@
                   <q-tooltip>{{ $t('seances.table.actions.detail') }}</q-tooltip>
                 </q-btn>
                 <q-btn
-                  v-if="auth.peutPointer && s.statut !== 'ANNULEE'"
+                  v-if="auth.peutPointer && s.statut !== 'ANNULE'"
                   dense
                   unelevated
                   no-caps
@@ -278,7 +278,7 @@
                   @click="ouvrirPointage(s)"
                 />
                 <q-btn
-                  v-if="auth.peutPlanifier && !s.controle && s.statut !== 'ANNULEE'"
+                  v-if="auth.peutPlanifier && !s.controle && s.statut !== 'ANNULE'"
                   flat
                   dense
                   round
@@ -432,7 +432,7 @@
         <q-card-actions align="right">
           <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
           <q-btn
-            v-if="auth.peutPointer && detail && detail.statut !== 'ANNULEE'"
+            v-if="auth.peutPointer && detail && detail.statut !== 'ANNULE'"
             unelevated
             color="primary"
             no-caps
@@ -778,7 +778,7 @@ const seancesFiltrees = computed(() => {
 });
 
 const compte = computed(() => {
-  const tenues = seancesFiltrees.value.filter((s) => s.statut !== 'ANNULEE');
+  const tenues = seancesFiltrees.value.filter((s) => s.statut !== 'ANNULE');
   return {
     controlees: tenues.filter((s) => s.controle).length,
     absences: tenues.filter((s) => s.controle?.statut === 'ABSENT').length,

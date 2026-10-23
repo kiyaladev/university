@@ -260,7 +260,7 @@ export class PortailService {
       });
       if (tarif) devise = tarif.devise;
       if (!inscription.montantFrais && tarif) montantFrais = tarif.montant;
-      // Comme au passage en PAYEE : ni frais documentaires, ni autre devise.
+      // Comme au passage en PAYE : ni frais documentaires, ni autre devise.
       paye = etudiant.paiements
         .filter(
           (p) =>
@@ -280,7 +280,7 @@ export class PortailService {
       this.prisma.deliberationLigne.findMany({
         where: {
           inscription: { etudiantId: etudiant.id },
-          deliberation: { statut: StatutDeliberation.VALIDEE },
+          deliberation: { statut: StatutDeliberation.VALIDE },
         },
         include: { deliberation: { include: { promotion: true, annee: true } } },
         orderBy: [{ deliberation: { session: 'asc' } }, { deliberation: { valideeLe: 'desc' } }],
@@ -351,7 +351,7 @@ export class PortailService {
     const lignes = await this.prisma.deliberationLigne.findMany({
       where: {
         inscription: { etudiantId: utilisateur.etudiantId },
-        deliberation: { statut: StatutDeliberation.VALIDEE },
+        deliberation: { statut: StatutDeliberation.VALIDE },
       },
       select: {
         id: true,

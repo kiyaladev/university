@@ -61,7 +61,7 @@ describe('audit des mutations du parc de logements', () => {
     });
   });
 
-  it('journalise le passage justifié à OCCUPEE sans exposer l’étudiant', async () => {
+  it('journalise le passage justifié à OCCUPE sans exposer l’étudiant', async () => {
     const auditCreate = jest.fn().mockResolvedValue(undefined);
     const chambre = {
       id: 'chambre-1',
@@ -76,14 +76,14 @@ describe('audit des mutations du parc de logements', () => {
     const tx: any = {
       chambre: {
         findUnique: jest.fn().mockResolvedValue(chambre),
-        update: jest.fn().mockResolvedValue({ ...chambre, statut: StatutChambre.OCCUPEE }),
+        update: jest.fn().mockResolvedValue({ ...chambre, statut: StatutChambre.OCCUPE }),
       },
       attributionLogement: {
         findFirst: jest.fn().mockResolvedValue({
           id: 'attribution-1',
           chambreId: 'chambre-1',
           etudiantId: 'etudiant-secret',
-          statut: StatutAttributionLogement.ACCORDEE,
+          statut: StatutAttributionLogement.ACCORDE,
         }),
       },
       auditLog: { create: auditCreate },
@@ -91,10 +91,10 @@ describe('audit des mutations du parc de logements', () => {
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
     const service = new ChambresService(prisma);
 
-    await service.modifier('chambre-1', { statut: StatutChambre.OCCUPEE }, { id: 'direction-1' } as any);
+    await service.modifier('chambre-1', { statut: StatutChambre.OCCUPE }, { id: 'direction-1' } as any);
 
     expect(tx.attributionLogement.findFirst).toHaveBeenCalledWith({
-      where: { chambreId: 'chambre-1', statut: StatutAttributionLogement.ACCORDEE },
+      where: { chambreId: 'chambre-1', statut: StatutAttributionLogement.ACCORDE },
     });
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
       isolationLevel: 'Serializable',
@@ -102,17 +102,17 @@ describe('audit des mutations du parc de logements', () => {
     const details = auditCreate.mock.calls[0][0].data.details;
     expect(JSON.parse(details)).toMatchObject({
       avant: { id: 'chambre-1', statut: 'LIBRE' },
-      apres: { id: 'chambre-1', statut: 'OCCUPEE' },
+      apres: { id: 'chambre-1', statut: 'OCCUPE' },
     });
     expect(details).not.toContain('etudiant-secret');
   });
 
-  it.each([StatutChambre.LIBRE, StatutChambre.RESERVEE, StatutChambre.MAINTENANCE])(
+  it.each([StatutChambre.LIBRE, StatutChambre.RESERVE, StatutChambre.MAINTENANCE])(
     'refuse le passage à %s tant que le logement reste accordé',
     async (statut) => {
       const tx: any = {
         chambre: {
-          findUnique: jest.fn().mockResolvedValue({ id: 'chambre-1', statut: StatutChambre.OCCUPEE }),
+          findUnique: jest.fn().mockResolvedValue({ id: 'chambre-1', statut: StatutChambre.OCCUPE }),
           update: jest.fn(),
         },
         attributionLogement: { findFirst: jest.fn().mockResolvedValue({ id: 'attribution-1' }) },

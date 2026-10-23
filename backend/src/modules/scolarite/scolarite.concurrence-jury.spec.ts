@@ -13,7 +13,7 @@ describe('Gel concurrent du jury', () => {
           findUnique: jest
             .fn()
             .mockResolvedValueOnce({ id: 'jury', anneeId: 'year', statut: 'BROUILLON' })
-            .mockResolvedValueOnce({ id: 'jury', anneeId: 'year', statut: 'VALIDEE' }),
+            .mockResolvedValueOnce({ id: 'jury', anneeId: 'year', statut: 'VALIDE' }),
           update: jest.fn(),
         },
         deliberationLigne: { upsert: jest.fn() },

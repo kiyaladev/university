@@ -79,7 +79,7 @@ async function main() {
   const balance = () => prisma.portefeuilleResto.findUniqueOrThrow({ where: { id: wallet.id } });
   assert.equal((await balance()).solde, 3000);
   const meal = await prisma.consommationResto.findFirstOrThrow({
-    where: { portefeuilleId: wallet.id, statut: 'VALIDEE' },
+    where: { portefeuilleId: wallet.id, statut: 'VALIDE' },
   });
   await request(studentToken, 'POST', `/resto/consommations/${meal.id}/annuler`, {}, 403);
   const refunds = await simultaneous(admin, `/resto/consommations/${meal.id}/annuler`, { motif: 'Annulation fictive' });

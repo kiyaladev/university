@@ -116,7 +116,7 @@ describe('Périmètre des lectures de réclamations', () => {
       id: 'rec-anonyme',
       anonyme: true,
       etudiantId: null,
-      statut: 'OUVERTE',
+      statut: 'OUVERT',
       messages: [],
     };
     const prisma = { reclamation: { findFirst: jest.fn().mockResolvedValue(anonyme) } };
@@ -135,7 +135,7 @@ describe('Périmètre des lectures de réclamations', () => {
   });
 
   it('garde l’auteur anonyme lors d’une réponse au fil', async () => {
-    const reclamation = { id: 'rec-anonyme', numero: 'REC-2026-00001', anonyme: true, statut: 'OUVERTE' };
+    const reclamation = { id: 'rec-anonyme', numero: 'REC-2026-00001', anonyme: true, statut: 'OUVERT' };
     const prisma: any = {
       reclamation: { findFirst: jest.fn().mockResolvedValue(reclamation) },
       messageReclamation: {
@@ -167,7 +167,7 @@ describe('Périmètre des lectures de réclamations', () => {
           id: 'rec-1',
           numero: 'REC-2026-00001',
           anonyme: false,
-          statut: 'OUVERTE',
+          statut: 'OUVERT',
         }),
       },
       messageReclamation: {
@@ -191,7 +191,7 @@ describe('Périmètre des lectures de réclamations', () => {
       reclamation: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'rec-1',
-          statut: 'OUVERTE',
+          statut: 'OUVERT',
           notes: null,
         }),
         update: jest.fn(),
@@ -203,7 +203,7 @@ describe('Périmètre des lectures de réclamations', () => {
     await expect(
       service.changerStatut(
         'rec-1',
-        { statut: 'RESOLUE', commentaire: 'Décision' } as any,
+        { statut: 'RESOLU', commentaire: 'Décision' } as any,
         { id: 'agent-1', role: Role.ADMIN } as any,
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
@@ -219,7 +219,7 @@ describe('Périmètre des lectures de réclamations', () => {
       reclamation: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'rec-1',
-          statut: 'RESOLUE',
+          statut: 'RESOLU',
           notes: null,
         }),
         update: jest.fn(),
@@ -240,7 +240,7 @@ describe('Périmètre des lectures de réclamations', () => {
       t: () => 'Utilisateur introuvable',
     } as any);
     const prisma = {
-      reclamation: { findUnique: jest.fn().mockResolvedValue({ id: 'rec-1', statut: 'OUVERTE' }) },
+      reclamation: { findUnique: jest.fn().mockResolvedValue({ id: 'rec-1', statut: 'OUVERT' }) },
       user: { findFirst: jest.fn().mockResolvedValue(null) },
     };
     lierTransaction(prisma);
@@ -265,7 +265,7 @@ describe('Périmètre des lectures de réclamations', () => {
       t: () => 'Réclamation close',
     } as any);
     const prisma = {
-      reclamation: { findUnique: jest.fn().mockResolvedValue({ id: 'rec-1', statut: 'RESOLUE' }) },
+      reclamation: { findUnique: jest.fn().mockResolvedValue({ id: 'rec-1', statut: 'RESOLU' }) },
       user: { findFirst: jest.fn() },
     };
     lierTransaction(prisma);

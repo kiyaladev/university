@@ -6,12 +6,12 @@ jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: stri
 
 describe('Mutations après révocation des attestations', () => {
   it.each(['modifier', 'revoquer'] as const)('refuse %s après une révocation concurrente', async (operation) => {
-    const avant = { id: 'attestation-1', statut: StatutAttestation.EMISE, anneeId: 'annee-1' };
+    const avant = { id: 'attestation-1', statut: StatutAttestation.EMIS, anneeId: 'annee-1' };
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false }]),
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       attestation: {
-        findUnique: jest.fn().mockResolvedValue({ ...avant, statut: StatutAttestation.REVOQUEE }),
+        findUnique: jest.fn().mockResolvedValue({ ...avant, statut: StatutAttestation.REVOQUE }),
         update: jest.fn(),
       },
       auditLog: { create: jest.fn() },
@@ -67,7 +67,7 @@ describe('Vérification publique des attestations', () => {
         findUnique: jest.fn().mockResolvedValue({
           id: 'attestation-1',
           qrToken: 'secret',
-          statut: StatutAttestation.REVOQUEE,
+          statut: StatutAttestation.REVOQUE,
           revoqueeLe: new Date('2026-10-01'),
           motifRevocation: 'information confidentielle',
         }),
@@ -88,7 +88,7 @@ describe('Vérification publique des attestations', () => {
       id: 'attestation-1',
       numero: 'ATT-2026-00001',
       qrToken: 'secret-qr',
-      statut: StatutAttestation.EMISE,
+      statut: StatutAttestation.EMIS,
       type: TypeAttestation.SCOLARITE,
       motif: null,
       emiseLe,
@@ -133,7 +133,7 @@ describe('Vérification publique des attestations', () => {
       id: 'attestation-1',
       numero: 'ATT-2026-00001',
       anneeId: 'annee-1',
-      statut: StatutAttestation.EMISE,
+      statut: StatutAttestation.EMIS,
     };
     const tx = {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: true }) },
@@ -162,7 +162,7 @@ describe('Vérification publique des attestations', () => {
       qrToken: 'secret-qr',
       type: TypeAttestation.SCOLARITE,
       motif: 'Ancien motif',
-      statut: StatutAttestation.EMISE,
+      statut: StatutAttestation.EMIS,
       anneeId: 'annee-1',
       promotionId: 'promotion-1',
       inscriptionId: 'inscription-1',
@@ -252,7 +252,7 @@ describe('Cohérence année-promotion des attestations', () => {
       etudiantId: 'etudiant-1',
       anneeId: 'annee-1',
       type: TypeAttestation.SITUATION,
-      statut: StatutAttestation.EMISE,
+      statut: StatutAttestation.EMIS,
     };
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false }]),
@@ -278,7 +278,7 @@ describe('Cohérence année-promotion des attestations', () => {
         etudiantId: actuel.etudiantId,
         anneeId: actuel.anneeId,
         type: TypeAttestation.SCOLARITE,
-        statut: StatutAttestation.EMISE,
+        statut: StatutAttestation.EMIS,
       },
     });
     expect(tx.attestation.update).not.toHaveBeenCalled();

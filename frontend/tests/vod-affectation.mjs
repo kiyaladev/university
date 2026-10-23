@@ -42,7 +42,7 @@ try {
   assert.ok(admin && owner && other && teacher);
   const me = await request(owner, 'GET', '/auth/me');
   const student = await prisma.etudiant.findUniqueOrThrow({ where: { userId: me.id } });
-  const inscription = await prisma.inscription.findFirstOrThrow({ where: { etudiantId: student.id, statut: 'VALIDEE' } });
+  const inscription = await prisma.inscription.findFirstOrThrow({ where: { etudiantId: student.id, statut: 'VALIDE' } });
   const page = await pageFor(admin);
   await page.getByRole('button', { name: 'Nouvelle ressource', exact: true }).click();
   const dialog = () => page.locator('.q-dialog').last();

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
+import { Logger, BadRequestException } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -8,6 +8,7 @@ import { I18nContext } from 'nestjs-i18n';
 import { JwtService } from '@nestjs/jwt';
 import { JwtStrategy } from './modules/auth/jwt.strategy';
 import { AppModule } from './app.module';
+import { ValidationPipeCompatStatuts } from './common/statuts';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: true });
@@ -58,7 +59,7 @@ async function bootstrap() {
   };
 
   app.useGlobalPipes(
-    new ValidationPipe({
+    new ValidationPipeCompatStatuts({
       whitelist: true,
       forbidNonWhitelisted: !enProduction,
       transform: true,

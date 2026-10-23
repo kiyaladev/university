@@ -2,8 +2,8 @@
  * Plateforme d'élection des délégués et représentants.
  *
  * Le cycle de vie d'une élection est verrouillé par transitions explicites :
- * BROUILLON → OUVERTE → CLOSE → PROCLAMEE. Aucune transition arrière n'est
- * admise (sauf ANNULEE, qui peut survenir depuis BROUILLON/OUVERTE).
+ * BROUILLON → OUVERT → CLOS → PROCLAME. Aucune transition arrière n'est
+ * admise (sauf ANNULE, qui peut survenir depuis BROUILLON/OUVERT).
  *
  * Le vote applique deux règles :
  *  - un électeur ne peut pas voter deux fois pour le même candidat
@@ -43,6 +43,19 @@ import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionD
 import { documentsElection, BulletinElection } from './documents';
 import { paginer, pagine } from '../../common/pagination';
 import { avantApres, journaliser } from '../../common/audit';
+
+/**
+ * Journal d'audit : le détail « transition » est écrit en base et relu par
+ * les rapports. Il garde son vocabulaire : une transition inscrite avant la
+ * migration reste lisible après, sans réécriture du journal.
+ */
+const TRANSITION_STATUT: Record<StatutElection, string> = {
+  BROUILLON: 'BROUILLON',
+  OUVERT: 'OUVERTE',
+  CLOS: 'CLOSE',
+  PROCLAME: 'PROCLAMEE',
+  ANNULE: 'ANNULEE',
+};
 
 const ELECTION_INCLUDE = {
   promotion: { include: { filiere: true } },
@@ -122,7 +135,7 @@ export class ElectionsService {
     };
     // Le portail ne doit jamais permettre d'énumérer les brouillons ou les
     // résultats intermédiaires en choisissant librement le statut du filtre.
-    if (!ROLES_GESTION.includes(user.role)) where.statut = StatutElection.PROCLAMEE;
+    if (!ROLES_GESTION.includes(user.role)) where.statut = StatutElection.PROCLAME;
 
     const [data, total] = await Promise.all([
       this.prisma.election.findMany({
@@ -143,7 +156,7 @@ export class ElectionsService {
     const maintenant = new Date();
     return this.prisma.election.findMany({
       where: {
-        statut: StatutElection.OUVERTE,
+        statut: StatutElection.OUVERT,
         dateOuverture: { lte: maintenant },
         dateCloture: { gt: maintenant },
       },
@@ -191,9 +204,9 @@ export class ElectionsService {
       where: {
         id,
         OR: [
-          { statut: StatutElection.PROCLAMEE },
+          { statut: StatutElection.PROCLAME },
           {
-            statut: StatutElection.OUVERTE,
+            statut: StatutElection.OUVERT,
             dateOuverture: { lte: maintenant },
             dateCloture: { gt: maintenant },
           },
@@ -322,7 +335,7 @@ export class ElectionsService {
       }
       const miseAJour = await tx.election.update({
         where: { id },
-        data: { statut: StatutElection.OUVERTE },
+        data: { statut: StatutElection.OUVERT },
         include: ELECTION_INCLUDE,
       });
       await journaliser(
@@ -332,7 +345,7 @@ export class ElectionsService {
         'Election',
         id,
         avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
-          transition: `${election.statut}→${StatutElection.OUVERTE}`,
+          transition: `${TRANSITION_STATUT[election.statut]}→${TRANSITION_STATUT[StatutElection.OUVERT]}`,
         }),
       );
       return miseAJour;
@@ -342,16 +355,16 @@ export class ElectionsService {
   async clore(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
-      if (election.statut !== StatutElection.OUVERTE) {
+      if (election.statut !== StatutElection.OUVERT) {
         throw new BadRequestException(
-          t('elections.l_election_est_election_statut_seule_une_ouverte_peut_etre_c', {
+          t('elections.l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_c', {
             'election.statut': election.statut,
           }),
         );
       }
       const miseAJour = await tx.election.update({
         where: { id },
-        data: { statut: StatutElection.CLOSE },
+        data: { statut: StatutElection.CLOS },
         include: ELECTION_INCLUDE,
       });
       await journaliser(
@@ -361,7 +374,7 @@ export class ElectionsService {
         'Election',
         id,
         avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
-          transition: `${election.statut}→${StatutElection.CLOSE}`,
+          transition: `${TRANSITION_STATUT[election.statut]}→${TRANSITION_STATUT[StatutElection.CLOS]}`,
         }),
       );
       return miseAJour;
@@ -371,16 +384,16 @@ export class ElectionsService {
   async proclamer(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
-      if (election.statut !== StatutElection.CLOSE) {
+      if (election.statut !== StatutElection.CLOS) {
         throw new BadRequestException(
-          t('elections.l_election_est_election_statut_seule_une_close_peut_etre_pro', {
+          t('elections.l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_p', {
             'election.statut': election.statut,
           }),
         );
       }
       const miseAJour = await tx.election.update({
         where: { id },
-        data: { statut: StatutElection.PROCLAMEE },
+        data: { statut: StatutElection.PROCLAME },
         include: ELECTION_INCLUDE,
       });
       await journaliser(
@@ -390,7 +403,7 @@ export class ElectionsService {
         'Election',
         id,
         avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
-          transition: `${election.statut}→${StatutElection.PROCLAMEE}`,
+          transition: `${TRANSITION_STATUT[election.statut]}→${TRANSITION_STATUT[StatutElection.PROCLAME]}`,
         }),
       );
       return miseAJour;
@@ -483,7 +496,7 @@ export class ElectionsService {
         await this.prisma.$transaction(
           async (transaction) => {
             const election = await this.electionVerrouillee(transaction, dto.electionId);
-            if (election.statut !== StatutElection.OUVERTE) {
+            if (election.statut !== StatutElection.OUVERT) {
               throw new BadRequestException(t('elections.le_scrutin_n_est_pas_ouvert'));
             }
             const maintenant = new Date();
@@ -571,7 +584,7 @@ export class ElectionsService {
       },
     });
     if (!election) throw new NotFoundException(t('elections.election_introuvable'));
-    if (election.statut !== StatutElection.CLOSE && election.statut !== StatutElection.PROCLAMEE) {
+    if (election.statut !== StatutElection.CLOS && election.statut !== StatutElection.PROCLAME) {
       throw new NotFoundException(t('elections.election_introuvable'));
     }
     const candidats = await this.prisma.candidatElection.findMany({
@@ -636,7 +649,7 @@ export class ElectionsService {
       throw new UnauthorizedException(t('elections.jeton_invalide_ou_expire'));
     }
     const election = await this.trouverPour(id, user);
-    if (election.statut !== StatutElection.OUVERTE) throw new NotFoundException(t('common.notFound'));
+    if (election.statut !== StatutElection.OUVERT) throw new NotFoundException(t('common.notFound'));
     const etablissement = await chargerEtablissement(this.prisma);
     const bulletin: BulletinElection = {
       id: election.id,

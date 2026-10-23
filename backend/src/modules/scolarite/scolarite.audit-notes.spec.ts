@@ -30,7 +30,7 @@ describe('ScolariteService — audit des notes', () => {
       evaluation: {
         findFirst: jest
           .fn()
-          .mockResolvedValue({ id: 'eval-1', anneeId: 'annee-1', promotionId: 'promo-1', statut: 'OUVERTE' }),
+          .mockResolvedValue({ id: 'eval-1', anneeId: 'annee-1', promotionId: 'promo-1', statut: 'OUVERT' }),
       },
       inscription: { findMany: jest.fn().mockResolvedValue([{ id: 'ins-1' }, { id: 'ins-2' }]) },
       note: {

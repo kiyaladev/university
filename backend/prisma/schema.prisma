@@ -39,10 +39,10 @@ enum TypeCours {
 }
 
 enum StatutSeance {
-  PLANIFIEE
+  PLANIFIE
   EN_COURS
-  CONTROLEE
-  ANNULEE
+  CONTROLE
+  ANNULE
   NON_TENUE
 }
 
@@ -100,9 +100,9 @@ enum Niveau {
 enum StatutInscription {
   BROUILLON // dossier ouvert, non rendu
   EN_ATTENTE_PAIEMENT // dossier rendu, frais non réglés
-  PAYEE // frais réglés, pas encore validée par la scolarité
-  VALIDEE // scolarité : dossier complet (frais + pièces)
-  ANNULEE
+  PAYE // frais réglés, pas encore validée par la scolarité
+  VALIDE // scolarité : dossier complet (frais + pièces)
+  ANNULE
 }
 
 /// État d'une transaction de paiement (Mobile Money ou autre).
@@ -123,8 +123,8 @@ enum ModePaiement {
 /// Cycle de vie d'une feuille de paie vacataires.
 enum StatutPaie {
   BROUILLON // calculée, non figée
-  VALIDEE // validée par la direction, les montants sont figés
-  PAYEE // mandat exécuté
+  VALIDE // validée par la direction, les montants sont figés
+  PAYE // mandat exécuté
 }
 
 enum TypeEvaluation {
@@ -136,8 +136,8 @@ enum TypeEvaluation {
 }
 
 enum StatutEvaluation {
-  OUVERTE // saisie des notes possible
-  CLOTUREE // notes publiées, plus de modification
+  OUVERT // saisie des notes possible
+  CLOTURE // notes publiées, plus de modification
 }
 
 enum SessionDeliberation {
@@ -147,7 +147,7 @@ enum SessionDeliberation {
 
 enum StatutDeliberation {
   BROUILLON
-  VALIDEE
+  VALIDE
 }
 
 enum DecisionJury {
@@ -165,13 +165,13 @@ enum TypeAttestation {
 }
 
 enum StatutAttestation {
-  EMISE
-  REVOQUEE // attestation invalidée (erreur, fraude…)
+  EMIS
+  REVOQUE // attestation invalidée (erreur, fraude…)
 }
 
 enum StatutNotification {
   EN_ATTENTE // en file d'envoi SMS
-  ENVOYEE
+  ENVOYE
   ECHOUE
 }
 
@@ -189,16 +189,16 @@ enum CategorieChambre {
 
 enum StatutChambre {
   LIBRE
-  RESERVEE
-  OCCUPEE
+  RESERVE
+  OCCUPE
   MAINTENANCE
 }
 
 enum StatutAttributionLogement {
   EN_ATTENTE
-  ACCORDEE
-  REFUSEE
-  RETIREE
+  ACCORDE
+  REFUSE
+  RETIRE
 }
 
 enum TypeDocument {
@@ -221,15 +221,15 @@ enum TypeRepas {
 
 enum StatutConsommation {
   EN_ATTENTE
-  VALIDEE
-  ANNULEE
+  VALIDE
+  ANNULE
 }
 
 enum StatutReservationSalle {
   EN_ATTENTE
-  CONFIRMEE
-  REFUSEE
-  ANNULEE
+  CONFIRME
+  REFUSE
+  ANNULE
 }
 
 enum TypeEncadrement {
@@ -272,14 +272,14 @@ enum StatutTicket {
 
 enum StatutFormation {
   BROUILLON
-  PUBLIEE
-  COMPLETE
+  PUBLIE
+  COMPLET
 }
 
 enum StatutInscriptionFormation {
   EN_ATTENTE
-  CONFIRMEE
-  ANNULEE
+  CONFIRME
+  ANNULE
 }
 
 // ---------------------------------------------------------------------------
@@ -627,7 +627,7 @@ model Seance {
   salleId String?
   salle   Salle?  @relation(fields: [salleId], references: [id], onDelete: SetNull)
 
-  statut     StatutSeance @default(PLANIFIEE)
+  statut     StatutSeance @default(PLANIFIE)
   thematique String? // intitulé prévu de la séance
 
   controleurAssigneId String?
@@ -927,7 +927,7 @@ model Evaluation {
   promotion   Promotion        @relation(fields: [promotionId], references: [id], onDelete: Restrict)
   semestre    Int              @default(1)
   date        DateTime?
-  statut      StatutEvaluation @default(OUVERTE)
+  statut      StatutEvaluation @default(OUVERT)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1009,7 +1009,7 @@ model Attestation {
   numero  String            @unique // "ATT-2026-00001"
   type    TypeAttestation
   motif   String? // texte libre : bourse, passeport, banque…
-  statut  StatutAttestation @default(EMISE)
+  statut  StatutAttestation @default(EMIS)
   // Le jeton encodé dans le QR de vérification (format "UP-DOC-<base64url>").
   qrToken String            @unique
 
@@ -1817,12 +1817,12 @@ enum PrioriteReclamation {
 }
 
 enum StatutReclamation {
-  OUVERTE
+  OUVERT
   EN_COURS
   EN_ATTENTE_REPONSE
-  RESOLUE
-  FERMEE
-  REJETEE
+  RESOLU
+  FERME
+  REJETE
 }
 
 model Reclamation {
@@ -1840,7 +1840,7 @@ model Reclamation {
   nomAuteur           String? // stocké si anonyme
   emailAuteur         String?
   priorite            PrioriteReclamation @default(NORMALE)
-  statut              StatutReclamation   @default(OUVERTE)
+  statut              StatutReclamation   @default(OUVERT)
   departementId       String?
   departement         Departement?        @relation(fields: [departementId], references: [id], onDelete: SetNull)
   assigneAId          String?
@@ -1890,11 +1890,11 @@ enum TypeDemandeDocument {
 
 enum StatutDemande {
   EN_ATTENTE_PAIEMENT
-  PAYEE
+  PAYE
   EN_TRAITEMENT
-  PRETE
+  PRET
   REMISE
-  REJETEE
+  REJETE
 }
 
 model DemandeDocument {
@@ -1950,10 +1950,10 @@ enum TypeElection {
 
 enum StatutElection {
   BROUILLON
-  OUVERTE
-  CLOSE
-  PROCLAMEE
-  ANNULEE
+  OUVERT
+  CLOS
+  PROCLAME
+  ANNULE
 }
 
 model Election {
@@ -2057,7 +2057,7 @@ model CarteEtudiante {
   qrToken         String            @unique // "UP-CARTE-<base64url>"
   dateEmission    DateTime          @default(now())
   dateValidite    DateTime? // à fixer chaque année
-  statut          StatutAttestation @default(EMISE) // réutilise : EMISE/REVOQUEE
+  statut          StatutAttestation @default(EMIS) // réutilise : EMIS/REVOQUE
   motifRevocation String?
   // Pour l'impression : photoUrl, signature
   photoUrl        String?

@@ -24,6 +24,18 @@ import { estChefDeDepartement } from '../../common/perimetre';
 
 const MAX_JOURS_CALENDRIER = 93;
 
+/**
+ * Journal d'audit : le vocabulaire des actions est une convention propre,
+ * écrite en base et lue par les rapports. Il ne suit pas le renommage des
+ * statuts : une action inscrite avant la migration reste lisible après.
+ */
+const ACTION_STATUT: Record<StatutReservationSalle, string> = {
+  EN_ATTENTE: 'RESERVATION_EN_ATTENTE',
+  CONFIRME: 'RESERVATION_CONFIRMEE',
+  REFUSE: 'RESERVATION_REFUSEE',
+  ANNULE: 'RESERVATION_ANNULEE',
+};
+
 export const RESERVATION_INCLUDE = {
   salle: { select: { id: true, code: true, nom: true } },
   demandeur: { select: { id: true, nom: true, prenom: true } },
@@ -32,7 +44,7 @@ export const RESERVATION_INCLUDE = {
 
 /** Seules les demandes encore vives occupent la salle : une réservation
  *  refusée ou annulée rend le créneau disponible aussitôt. */
-const STATUTS_OCCUPANTS = [StatutReservationSalle.EN_ATTENTE, StatutReservationSalle.CONFIRMEE];
+const STATUTS_OCCUPANTS = [StatutReservationSalle.EN_ATTENTE, StatutReservationSalle.CONFIRME];
 
 /** Séances de l'emploi du temps, allégées pour la grille de la semaine. */
 const SEANCE_CALENDRIER = {
@@ -285,7 +297,7 @@ export class ReservationsService extends CrudService {
       }
 
       const data: Prisma.ReservationSalleUpdateInput = { statut: dto.statut };
-      if (dto.statut === 'CONFIRMEE') {
+      if (dto.statut === 'CONFIRME') {
         await this.verifierConflit(
           existante.salleId,
           isoDate(existante.dateJour),
@@ -303,7 +315,7 @@ export class ReservationsService extends CrudService {
         data,
         include: RESERVATION_INCLUDE,
       });
-      await journaliser(tx, user, `RESERVATION_${dto.statut}`, 'ReservationSalle', id, {
+      await journaliser(tx, user, ACTION_STATUT[dto.statut], 'ReservationSalle', id, {
         avant: this.instantaneAudit(existante),
         apres: this.instantaneAudit(maj),
         champsModifies: [
@@ -363,7 +375,7 @@ export class ReservationsService extends CrudService {
           ...(query.salleId ? { salleId: query.salleId } : {}),
           salleId: { not: null },
           date: { gte: debut, lte: fin },
-          statut: { not: 'ANNULEE' },
+          statut: { not: 'ANNULE' },
           ...perimetreSeances,
         },
         orderBy: { heureDebut: 'asc' },

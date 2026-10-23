@@ -18,7 +18,7 @@ const CONTROLEUR: AuthUser = {
 const SEANCE = {
   id: 'seance-1',
   anneeId: 'annee-open',
-  statut: StatutSeance.PLANIFIEE,
+  statut: StatutSeance.PLANIFIE,
   heureDebut: '08:00',
   heureFin: '10:00',
   controleurAssigneId: 'user-1',
@@ -338,7 +338,7 @@ describe('ControleService — preuves et garde-fous', () => {
   });
 
   it('refuse de pointer une séance annulée', async () => {
-    const { service } = preparer({ seance: { ...SEANCE, statut: StatutSeance.ANNULEE } });
+    const { service } = preparer({ seance: { ...SEANCE, statut: StatutSeance.ANNULE } });
     await expect(service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR)).rejects.toBeInstanceOf(
       BadRequestException,
     );
@@ -350,7 +350,7 @@ describe('ControleService — preuves et garde-fous', () => {
 
     expect(prisma.seance.update).toHaveBeenCalledWith({
       where: { id: 'seance-1' },
-      data: { statut: StatutSeance.CONTROLEE },
+      data: { statut: StatutSeance.CONTROLE },
     });
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ action: 'POINTAGE' }) }),
@@ -754,7 +754,7 @@ describe('ControleService — journal de corrections', () => {
         action: 'RECLAMATION_OUVERTE',
         details: JSON.stringify({
           avant: null,
-          apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERTE', sujetFourni: true },
+          apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERT', sujetFourni: true },
         }),
       },
     ]);
@@ -765,7 +765,7 @@ describe('ControleService — journal de corrections', () => {
     expect(result.data[0].details).toBe('[détails masqués]');
     expect(JSON.parse(result.data[1].details)).toEqual({
       avant: null,
-      apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERTE', sujetFourni: true },
+      apres: { id: 'rec-2', numero: 'REC-2026-00002', statut: 'OUVERT', sujetFourni: true },
     });
     expect(JSON.stringify(result)).not.toContain('diagnostic médical confidentiel');
   });
@@ -807,7 +807,7 @@ describe('ControleService — journal de corrections', () => {
       {
         action: 'ELECTION_OUVERTE',
         user: null,
-        details: '{"avant":{"statut":"BROUILLON"},"apres":{"statut":"OUVERTE"}}',
+        details: '{"avant":{"statut":"BROUILLON"},"apres":{"statut":"OUVERT"}}',
       },
     ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(1);

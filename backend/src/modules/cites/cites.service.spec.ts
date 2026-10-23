@@ -20,7 +20,7 @@ describe('Cycle d’attribution de logement', () => {
     };
     const apres = {
       ...avant,
-      statut: StatutAttributionLogement.ACCORDEE,
+      statut: StatutAttributionLogement.ACCORDE,
       accordeeLe: new Date(),
       accorderParId: utilisateur.id,
     };
@@ -46,7 +46,7 @@ describe('Cycle d’attribution de logement', () => {
     const { service, tx } = preparer({ cloturee: true });
 
     await expect(
-      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDEE } as any, utilisateur),
+      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDE } as any, utilisateur),
     ).rejects.toThrow();
 
     expect(tx.attributionLogement.updateMany).not.toHaveBeenCalled();
@@ -60,7 +60,7 @@ describe('Cycle d’attribution de logement', () => {
     await service.decider(
       'attrib-1',
       {
-        statut: StatutAttributionLogement.ACCORDEE,
+        statut: StatutAttributionLogement.ACCORDE,
         commentaire: 'Dossier prioritaire',
       } as any,
       utilisateur,
@@ -72,7 +72,7 @@ describe('Cycle d’attribution de logement', () => {
     expect(details).toMatchObject({
       commentaire: 'Dossier prioritaire',
       avant: { statut: StatutAttributionLogement.EN_ATTENTE, anneeId: 'annee-1' },
-      apres: { statut: StatutAttributionLogement.ACCORDEE, anneeId: 'annee-1' },
+      apres: { statut: StatutAttributionLogement.ACCORDE, anneeId: 'annee-1' },
     });
   });
 
@@ -80,12 +80,12 @@ describe('Cycle d’attribution de logement', () => {
     const { service, tx } = preparer();
     tx.attributionLogement.findFirst.mockResolvedValue({ id: 'autre-attribution' } as never);
     await expect(
-      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDEE }, utilisateur),
+      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDE }, utilisateur),
     ).rejects.toThrow();
     expect(tx.attributionLogement.findFirst).toHaveBeenCalledWith({
       where: {
         id: { not: 'attrib-1' },
-        statut: StatutAttributionLogement.ACCORDEE,
+        statut: StatutAttributionLogement.ACCORDE,
         OR: [{ etudiantId: 'etudiant-1', anneeId: 'annee-1' }, { chambreId: 'chambre-1' }],
       },
     });
@@ -97,7 +97,7 @@ describe('Cycle d’attribution de logement', () => {
     const { service, tx, avant } = preparer();
     (avant.chambre as any).statut = 'MAINTENANCE';
     await expect(
-      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDEE }, utilisateur),
+      service.decider('attrib-1', { statut: StatutAttributionLogement.ACCORDE }, utilisateur),
     ).rejects.toThrow();
     expect(tx.attributionLogement.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();

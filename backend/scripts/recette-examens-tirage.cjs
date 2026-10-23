@@ -38,7 +38,7 @@ async function main() {
   const teacher = await login(teacherAccount.email, 'Passer@2026');
   const student = await login('etudiant1@university.gn', 'Etu#2026');
   const inscription = await prisma.inscription.findFirstOrThrow({
-    where: { statut: 'VALIDEE', annee: { active: true, cloturee: false } },
+    where: { statut: 'VALIDE', annee: { active: true, cloturee: false } },
     include: { etudiant: true },
   });
   const matiere = await prisma.matiere.findFirstOrThrow();
@@ -84,7 +84,7 @@ async function main() {
   const starts = await Promise.all([1, 2].map(() => call(admin, 'POST', `/examens/${exam.id}/demarrer`, {})));
   assert.deepEqual(starts.map((r) => r.status).sort(), [201, 400]);
   const nbInscrits = await prisma.inscription.count({
-    where: { promotionId: inscription.promotionId, anneeId: inscription.anneeId, statut: 'VALIDEE' },
+    where: { promotionId: inscription.promotionId, anneeId: inscription.anneeId, statut: 'VALIDE' },
   });
   assert.equal((await prisma.examen.findUniqueOrThrow({ where: { id: exam.id } })).nbInscrits, nbInscrits);
   const scans = await Promise.all(

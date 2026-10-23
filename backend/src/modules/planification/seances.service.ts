@@ -243,7 +243,7 @@ export class SeancesService extends CrudService {
     }
     return {
       date: { gte: debut, lte: fin },
-      statut: { not: StatutSeance.ANNULEE },
+      statut: { not: StatutSeance.ANNULE },
       controleurAssigneId: null,
       ...(dto.departementId ? { affectation: { enseignant: { departementId: dto.departementId } } } : {}),
     };
@@ -295,7 +295,7 @@ export class SeancesService extends CrudService {
         const ignoreesAnneeCloturee = seances.length - idsOuverts.length;
         const resultat = idsOuverts.length
           ? await tx.seance.updateMany({
-              where: { id: { in: idsOuverts }, controleurAssigneId: null, statut: { not: StatutSeance.ANNULEE } },
+              where: { id: { in: idsOuverts }, controleurAssigneId: null, statut: { not: StatutSeance.ANNULE } },
               data: { controleurAssigneId: dto.controleurId },
             })
           : { count: 0 };
@@ -342,7 +342,7 @@ export class SeancesService extends CrudService {
       date: jour,
       total: seances.length,
       controlees: seances.filter((s) => s.controle).length,
-      enAttente: seances.filter((s) => !s.controle && s.statut !== StatutSeance.ANNULEE).length,
+      enAttente: seances.filter((s) => !s.controle && s.statut !== StatutSeance.ANNULE).length,
       seances,
     };
   }
@@ -453,7 +453,7 @@ export class SeancesService extends CrudService {
           throw new BadRequestException(t('planification.une_seance_deja_controlee_ne_peut_pas_etre_annulee'));
         const apres = await tx.seance.update({
           where: { id },
-          data: { statut: StatutSeance.ANNULEE, thematique: motif ? `[Annulée] ${motif}` : avant.thematique },
+          data: { statut: StatutSeance.ANNULE, thematique: motif ? `[Annulée] ${motif}` : avant.thematique },
           include: SEANCE_INCLUDE,
         });
         await journaliser(tx, user ?? null, 'SEANCE_ANNULEE', 'Seance', id, {
@@ -683,7 +683,7 @@ export class SeancesService extends CrudService {
         const candidats = await tx.seance.findMany({
           where: {
             date: { lte: hier },
-            statut: StatutSeance.PLANIFIEE,
+            statut: StatutSeance.PLANIFIE,
             controle: { is: null },
             annee: { cloturee: false },
           },
@@ -702,7 +702,7 @@ export class SeancesService extends CrudService {
         const resultat = await tx.seance.updateMany({
           where: {
             date: { lte: hier },
-            statut: StatutSeance.PLANIFIEE,
+            statut: StatutSeance.PLANIFIE,
             controle: { is: null },
             anneeId: { in: [...anneesVerrouilleesOuvertes] },
             annee: { cloturee: false },
@@ -711,7 +711,7 @@ export class SeancesService extends CrudService {
         });
         if (resultat.count) {
           await journaliser(tx, null, 'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT', 'Seance', isoDate(hier), {
-            statutAvant: StatutSeance.PLANIFIEE,
+            statutAvant: StatutSeance.PLANIFIE,
             statutApres: StatutSeance.NON_TENUE,
             nombre: resultat.count,
           });

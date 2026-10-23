@@ -128,7 +128,7 @@
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn
-            v-if="p.row.statut !== 'OUVERTE' || !peutSaisirNotes()"
+            v-if="p.row.statut !== 'OUVERT' || !peutSaisirNotes()"
             flat
             dense
             no-caps
@@ -140,7 +140,7 @@
             <q-tooltip>{{ $t('evaluations.table.view_notes') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="p.row.statut === 'OUVERTE' && peutSaisirNotes()"
+            v-if="p.row.statut === 'OUVERT' && peutSaisirNotes()"
             flat
             dense
             no-caps
@@ -155,7 +155,7 @@
           <actions-secondaires>
             <q-btn
               v-close-popup
-              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
+              v-if="p.row.statut === 'OUVERT' && peutGererEvaluation()"
               flat
               dense
               no-caps
@@ -168,7 +168,7 @@
             </q-btn>
             <q-btn
               v-close-popup
-              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
+              v-if="p.row.statut === 'OUVERT' && peutGererEvaluation()"
               flat
               dense
               no-caps
@@ -230,7 +230,7 @@
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
           <q-btn
-            v-if="e.statut !== 'OUVERTE' || !peutSaisirNotes()"
+            v-if="e.statut !== 'OUVERT' || !peutSaisirNotes()"
             flat
             dense
             icon="visibility"
@@ -239,7 +239,7 @@
             @click="voirNotes(e)"
           />
           <q-btn
-            v-if="e.statut === 'OUVERTE' && peutSaisirNotes()"
+            v-if="e.statut === 'OUVERT' && peutSaisirNotes()"
             flat
             dense
             color="primary"
@@ -251,7 +251,7 @@
           <actions-secondaires>
             <q-btn
               v-close-popup
-              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
+              v-if="e.statut === 'OUVERT' && peutGererEvaluation()"
               flat
               dense
               icon="edit"
@@ -261,7 +261,7 @@
             />
             <q-btn
               v-close-popup
-              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
+              v-if="e.statut === 'OUVERT' && peutGererEvaluation()"
               flat
               dense
               icon="lock"
@@ -338,7 +338,7 @@
                   subject: evaluationSelectionnee?.matiere?.intitule,
                   promotion: evaluationSelectionnee?.promotion?.nom,
                   status:
-                    evaluationSelectionnee?.statut === 'OUVERTE'
+                    evaluationSelectionnee?.statut === 'OUVERT'
                       ? $t('evaluations.notes_modal.status_open')
                       : $t('evaluations.notes_modal.status_closed'),
                 })
@@ -346,7 +346,7 @@
             </div>
           </div>
           <q-btn
-            v-if="evaluationSelectionnee?.statut === 'OUVERTE' && peutSaisirNotes()"
+            v-if="evaluationSelectionnee?.statut === 'OUVERT' && peutSaisirNotes()"
             unelevated
             color="primary"
             no-caps

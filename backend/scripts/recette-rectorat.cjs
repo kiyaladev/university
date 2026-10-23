@@ -42,7 +42,7 @@ async function main() {
   const student = await prisma.etudiant.create({ data: { matricule: tag, nom: 'Recette', prenom: 'Consolidation' } });
   studentId = student.id;
   const inscription = await prisma.inscription.create({
-    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDEE' },
+    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDE' },
   });
   const current = await request(direction, 'GET', route);
   assert.equal(current.effectifTotal, before.effectifTotal + 1);
@@ -55,7 +55,7 @@ async function main() {
   snapshotId = snapshot.id;
   assert.equal(snapshot.donnees.effectifTotal, current.effectifTotal);
   assert.equal(snapshot.genereParId, account.id);
-  await prisma.inscription.update({ where: { id: inscription.id }, data: { statut: 'ANNULEE' } });
+  await prisma.inscription.update({ where: { id: inscription.id }, data: { statut: 'ANNULE' } });
   const after = await request(admin, 'GET', route);
   assert.equal(after.effectifTotal, before.effectifTotal);
   const persisted = await prisma.statistiqueMesrs.findUniqueOrThrow({ where: { id: snapshot.id } });

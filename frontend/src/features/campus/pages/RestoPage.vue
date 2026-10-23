@@ -668,7 +668,7 @@ async function chargerFlux(f: Record<string, any>): Promise<{ data: LigneTransac
       etudiant: c.portefeuille?.etudiant ? nomEtudiant(c.portefeuille.etudiant) : c.etudiant,
       montant: -c.montant,
       statut: c.statut,
-      annulable: c.statut === 'VALIDEE' && peutAnnuler,
+      annulable: c.statut === 'VALIDE' && peutAnnuler,
     })),
     ...rech.data.data.map((r: any) => ({
       cle: `r-${r.id}`,

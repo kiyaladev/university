@@ -59,13 +59,13 @@ const files = computed(() => [
   },
   {
     title: t('accueilScolarite.documentsToProcess'),
-    count: documents.value ? documents.value.PAYEE + documents.value.EN_TRAITEMENT : null,
+    count: documents.value ? documents.value.PAYE + documents.value.EN_TRAITEMENT : null,
     icon: 'description',
     to: '/demandes-docs',
   },
   {
     title: t('accueilScolarite.documentsToDeliver'),
-    count: documents.value?.PRETE,
+    count: documents.value?.PRET,
     icon: 'task_alt',
     to: '/demandes-docs',
   },
@@ -74,7 +74,7 @@ async function charger() {
   chargement.value = true;
   erreur.value = '';
   const resultats = await Promise.allSettled([
-    api.get('/inscriptions', { params: { statut: 'PAYEE', pageSize: 8 } }),
+    api.get('/inscriptions', { params: { statut: 'PAYE', pageSize: 8 } }),
     api.get('/documents-demande/dashboard'),
   ]);
   if (resultats[0].status === 'fulfilled') {

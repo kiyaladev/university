@@ -8,8 +8,8 @@ import { ReclamationsService } from './reclamations.service';
  * technique. Le canal peut être identifié (l'étudiant a un compte) ou
  * parfaitement anonyme (nom + email conservés à part, jamais reliés).
  *
- * Chaque réclamation suit un cycle : OUVERTE → EN_COURS → EN_ATTENTE_REPONSE
- * → RESOLUE / FERMEE / REJETEE. Une note de clôture consigne la décision finale.
+ * Chaque réclamation suit un cycle : OUVERT → EN_COURS → EN_ATTENTE_REPONSE
+ * → RESOLU / FERME / REJETE. Une note de clôture consigne la décision finale.
  * Un délai d'escalade (par défaut 48 h) peut être dépassé sans intervention :
  * la réclamation est escaladée chaque heure par une tâche planifiée, et la
  * direction peut aussi forcer l'escalade ; l'événement est tracé.

@@ -60,7 +60,7 @@ export class CreateAttributionDto {
 
 /** Décision du jury : seule une demande EN_ATTENTE peut être tranchée. */
 export class DeciderAttributionDto {
-  @IsIn([StatutAttributionLogement.ACCORDEE, StatutAttributionLogement.REFUSEE])
+  @IsIn([StatutAttributionLogement.ACCORDE, StatutAttributionLogement.REFUSE])
   statut: StatutAttributionLogement;
   @IsOptional() @IsString() commentaire?: string;
 }

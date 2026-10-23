@@ -27,8 +27,8 @@ describe('Périmètre de lecture des élections', () => {
 
   it('force les non-gestionnaires à ne lister que les scrutins proclamés', async () => {
     await service.liste({ statut: StatutElection.BROUILLON } as any, enseignant);
-    expect(prisma.election.findMany.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAMEE);
-    expect(prisma.election.count.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAMEE);
+    expect(prisma.election.findMany.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAME);
+    expect(prisma.election.count.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAME);
     expect(prisma.election.findMany.mock.calls[0][0].include.candidats.select).toEqual({
       id: true,
       nom: true,
@@ -55,8 +55,8 @@ describe('Périmètre de lecture des élections', () => {
       expect.objectContaining({
         id: 'e-1',
         OR: expect.arrayContaining([
-          { statut: StatutElection.PROCLAMEE },
-          expect.objectContaining({ statut: StatutElection.OUVERTE }),
+          { statut: StatutElection.PROCLAME },
+          expect.objectContaining({ statut: StatutElection.OUVERT }),
         ]),
       }),
     );
@@ -66,7 +66,7 @@ describe('Périmètre de lecture des élections', () => {
     const maintenant = new Date();
     prisma.election.findFirst.mockResolvedValue({
       id: 'e-1',
-      statut: StatutElection.OUVERTE,
+      statut: StatutElection.OUVERT,
       dateOuverture: new Date(maintenant.getTime() - 60_000),
       dateCloture: new Date(maintenant.getTime() + 60_000),
     });
@@ -76,7 +76,7 @@ describe('Périmètre de lecture des élections', () => {
         id: 'e-1',
         OR: expect.arrayContaining([
           expect.objectContaining({
-            statut: StatutElection.OUVERTE,
+            statut: StatutElection.OUVERT,
             dateOuverture: { lte: expect.any(Date) },
             dateCloture: { gt: expect.any(Date) },
           }),
@@ -112,7 +112,7 @@ describe('Périmètre de lecture des élections', () => {
     prisma.election.findUnique.mockResolvedValueOnce(null);
     await expect(service.resultats('absent')).rejects.toThrow(NotFoundException);
 
-    prisma.election.findUnique.mockResolvedValueOnce({ id: 'e-1', statut: StatutElection.OUVERTE });
+    prisma.election.findUnique.mockResolvedValueOnce({ id: 'e-1', statut: StatutElection.OUVERT });
     await expect(service.resultats('e-1')).rejects.toThrow(NotFoundException);
     expect(prisma.election.findUnique).toHaveBeenCalledWith({
       where: { id: 'e-1' },
@@ -136,7 +136,7 @@ describe('Périmètre de lecture des élections', () => {
       titre: 'Élection',
       type: 'BDE',
       nbSieges: 1,
-      statut: StatutElection.CLOSE,
+      statut: StatutElection.CLOS,
       dateOuverture: new Date(),
       dateCloture: new Date(),
     });
@@ -174,7 +174,7 @@ describe('impression du bulletin électoral', () => {
     return { service, prisma, jwt };
   }
 
-  it.each([StatutElection.BROUILLON, StatutElection.CLOSE])(
+  it.each([StatutElection.BROUILLON, StatutElection.CLOS])(
     'refuse le bulletin lorsque le scrutin est %s',
     async (statut) => {
       const { service, jwt } = await serviceAvecEtat(statut);

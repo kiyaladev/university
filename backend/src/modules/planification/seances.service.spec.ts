@@ -323,7 +323,7 @@ describe('SeancesService — clôture nocturne', () => {
     expect(prisma.seance.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          statut: StatutSeance.PLANIFIEE,
+          statut: StatutSeance.PLANIFIE,
           controle: { is: null },
         }),
         data: { statut: StatutSeance.NON_TENUE },

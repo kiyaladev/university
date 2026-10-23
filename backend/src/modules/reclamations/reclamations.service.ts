@@ -2,11 +2,11 @@
  * Plateforme de réclamations : guichet unique des doléances étudiantes.
  *
  * Cycle de vie d'une réclamation :
- *  - OUVERTE : déclaration, en attente de prise en charge
+ *  - OUVERT : déclaration, en attente de prise en charge
  *  - EN_COURS : un agent a pris le dossier
  *  - EN_ATTENTE_REPONSE : une réponse a été envoyée à l'étudiant, on attend son retour
- *  - RESOLUE / FERMEE : décision finale, l'étudiant est satisfait
- *  - REJETEE : décision finale, la réclamation est rejetée (motif obligatoire)
+ *  - RESOLU / FERME : décision finale, l'étudiant est satisfait
+ *  - REJETE : décision finale, la réclamation est rejetée (motif obligatoire)
  *
  * Le délai d'escalade (delaiEscaladeHeures, 48 h par défaut) borne le temps
  * pendant lequel une réclamation peut dormir sans réaction. Une escalade force
@@ -37,34 +37,45 @@ import { journaliser } from '../../common/audit';
 
 const PREFIX_RECLAMATION = 'REC-';
 const STATUTS_OUVERTS: StatutReclamation[] = [
-  StatutReclamation.OUVERTE,
+  StatutReclamation.OUVERT,
   StatutReclamation.EN_COURS,
   StatutReclamation.EN_ATTENTE_REPONSE,
 ];
 
-const STATUTS_CLOS: StatutReclamation[] = [
-  StatutReclamation.RESOLUE,
-  StatutReclamation.FERMEE,
-  StatutReclamation.REJETEE,
-];
+/**
+ * Journal d'audit : le vocabulaire des actions est une convention propre,
+ * écrite en base et lue par les rapports. Il ne suit pas le renommage des
+ * statuts : une action inscrite avant la migration reste lisible après, sans
+ * réécriture du journal.
+ */
+const ACTION_STATUT: Record<StatutReclamation, string> = {
+  OUVERT: 'RECLAMATION_OUVERTE',
+  EN_COURS: 'RECLAMATION_EN_COURS',
+  EN_ATTENTE_REPONSE: 'RECLAMATION_EN_ATTENTE_REPONSE',
+  RESOLU: 'RECLAMATION_RESOLUE',
+  FERME: 'RECLAMATION_FERMEE',
+  REJETE: 'RECLAMATION_REJETEE',
+};
+
+const STATUTS_CLOS: StatutReclamation[] = [StatutReclamation.RESOLU, StatutReclamation.FERME, StatutReclamation.REJETE];
 
 const TRANSITIONS_AUTORISEES: Record<StatutReclamation, StatutReclamation[]> = {
-  OUVERTE: [StatutReclamation.EN_COURS],
+  OUVERT: [StatutReclamation.EN_COURS],
   EN_COURS: [
     StatutReclamation.EN_ATTENTE_REPONSE,
-    StatutReclamation.RESOLUE,
-    StatutReclamation.FERMEE,
-    StatutReclamation.REJETEE,
+    StatutReclamation.RESOLU,
+    StatutReclamation.FERME,
+    StatutReclamation.REJETE,
   ],
   EN_ATTENTE_REPONSE: [
     StatutReclamation.EN_COURS,
-    StatutReclamation.RESOLUE,
-    StatutReclamation.FERMEE,
-    StatutReclamation.REJETEE,
+    StatutReclamation.RESOLU,
+    StatutReclamation.FERME,
+    StatutReclamation.REJETE,
   ],
-  RESOLUE: [],
-  FERMEE: [],
-  REJETEE: [],
+  RESOLU: [],
+  FERME: [],
+  REJETE: [],
 };
 
 const ROLES_AGENTS: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT];
@@ -329,12 +340,12 @@ export class ReclamationsService extends CrudService {
     ]);
 
     const comptes: Record<StatutReclamation, number> = {
-      OUVERTE: 0,
+      OUVERT: 0,
       EN_COURS: 0,
       EN_ATTENTE_REPONSE: 0,
-      RESOLUE: 0,
-      FERMEE: 0,
-      REJETEE: 0,
+      RESOLU: 0,
+      FERME: 0,
+      REJETE: 0,
     };
     for (const ligne of parStatut) comptes[ligne.statut] = ligne._count._all;
 
@@ -393,7 +404,7 @@ export class ReclamationsService extends CrudService {
               nomAuteur,
               emailAuteur,
               priorite: dto.priorite ?? PrioriteReclamation.NORMALE,
-              statut: StatutReclamation.OUVERTE,
+              statut: StatutReclamation.OUVERT,
               departementId: dto.departementId ?? null,
               messages: {
                 create: {
@@ -518,7 +529,7 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: { createurId: true },
       });
-      await journaliser(tx, user, `RECLAMATION_${dto.statut}`, 'Reclamation', id, {
+      await journaliser(tx, user, ACTION_STATUT[dto.statut], 'Reclamation', id, {
         avant: this.instantaneAudit(reclamation),
         apres: this.instantaneAudit(miseAJour),
         champsModifies: ['statut', ...(dto.commentaire?.trim() ? ['notes'] : []), ...(data.fermeLe ? ['fermeLe'] : [])],
@@ -548,7 +559,7 @@ export class ReclamationsService extends CrudService {
       if (!assigne) throw new NotFoundException(t('reclamations.utilisateur_introuvable'));
       const data: Prisma.ReclamationUpdateInput = {
         assigneA: { connect: { id: dto.assigneAId } },
-        statut: reclamation.statut === StatutReclamation.OUVERTE ? StatutReclamation.EN_COURS : reclamation.statut,
+        statut: reclamation.statut === StatutReclamation.OUVERT ? StatutReclamation.EN_COURS : reclamation.statut,
       };
       const miseAJour = await tx.reclamation.update({
         where: { id, statut: reclamation.statut },
@@ -633,9 +644,7 @@ export class ReclamationsService extends CrudService {
       });
       if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (!STATUTS_CLOS.includes(reclamation.statut)) {
-        throw new BadRequestException(
-          "Pour clôturer, passez d'abord la réclamation à l'état RESOLUE, FERMEE ou REJETEE.",
-        );
+        throw new BadRequestException("Pour clôturer, passez d'abord la réclamation à l'état RESOLU, FERME ou REJETE.");
       }
       const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] CLÔTURE — ${note}`;
       const data: Prisma.ReclamationUpdateInput = {

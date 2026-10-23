@@ -139,10 +139,10 @@ export default {
       fallbackEquipmentName: 'l’équipement',
     },
     status: {
-      declared: 'Déclarée',
+      declared: 'Déclaré',
       inProgress: 'En cours',
-      done: 'Terminée',
-      cancelled: 'Annulée',
+      done: 'Terminé',
+      cancelled: 'Annulé',
     },
     emptyState: {
       title: 'Aucune réparation en cours',

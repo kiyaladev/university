@@ -136,7 +136,7 @@ export class SmsService {
       reponse = { ok: false, raison: t('sms.gatewayUnavailable') };
     }
 
-    const statut = reponse.ok ? StatutNotification.ENVOYEE : StatutNotification.ECHOUE;
+    const statut = reponse.ok ? StatutNotification.ENVOYE : StatutNotification.ECHOUE;
     const erreur = reponse.ok ? null : (reponse.raison ?? t('sms.unknownFailure'));
     try {
       await this.prisma.notification.update({

@@ -6,9 +6,9 @@
  * scolarité ; l'administration gère le parc (résidences → chambres → loyers).
  *
  * Cycle d'une chambre :
- *   LIBRE → RESERVEE (demande EN_ATTENTE) → OCCUPEE (demande ACCORDEE)
- *   ↳ REFUSEE : la chambre redevient LIBRE
- *   ↳ RETIREE : la chambre redevient LIBRE (ou RESERVEE si une autre demande
+ *   LIBRE → RESERVE (demande EN_ATTENTE) → OCCUPE (demande ACCORDE)
+ *   ↳ REFUSE : la chambre redevient LIBRE
+ *   ↳ RETIRE : la chambre redevient LIBRE (ou RESERVE si une autre demande
  *     est encore en attente)
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
@@ -38,6 +38,18 @@ const RESIDENCE_INCLUDE = {
 const CHAMBRE_INCLUDE = {
   residence: true,
   _count: { select: { attributions: true } },
+};
+
+/**
+ * Journal d'audit : le vocabulaire des actions est une convention propre,
+ * écrite en base et lue par les rapports. Il ne suit pas le renommage des
+ * statuts : une action inscrite avant la migration reste lisible après.
+ */
+const ACTION_STATUT: Record<StatutAttributionLogement, string> = {
+  EN_ATTENTE: 'ATTRIBUTION_EN_ATTENTE',
+  ACCORDE: 'ATTRIBUTION_ACCORDEE',
+  REFUSE: 'ATTRIBUTION_REFUSEE',
+  RETIRE: 'ATTRIBUTION_RETIREE',
 };
 
 const ATTRIBUTION_INCLUDE = {
@@ -162,8 +174,8 @@ export class ChambresService extends CrudService {
 
   /** Une chambre neuve ne démarre jamais occupée : il faut une demande accordée. */
   async creer(dto: CreateChambreDto, user?: AuthUser) {
-    if (dto.statut === StatutChambre.OCCUPEE) {
-      throw new BadRequestException(t('cites.une_chambre_ne_peut_pas_etre_creee_occupee_elle_doit_d_abord'));
+    if (dto.statut === StatutChambre.OCCUPE) {
+      throw new BadRequestException(t('cites.une_chambre_ne_peut_pas_etre_creee_au_statut_occupe_elle_doi'));
     }
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.chambre.create({ data: dto, include: this.options.include });
@@ -177,7 +189,7 @@ export class ChambresService extends CrudService {
   }
 
   /**
-   * Une chambre ne passe en OCCUPEE que si une attribution lui est
+   * Une chambre ne passe en OCCUPE que si une attribution lui est
    * effectivement accordée ; un statut posé à la main casserait la
    * transparence de l'attribution.
    */
@@ -188,12 +200,12 @@ export class ChambresService extends CrudService {
         if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
         if (dto.statut !== undefined) {
           const accordee = await tx.attributionLogement.findFirst({
-            where: { chambreId: id, statut: StatutAttributionLogement.ACCORDEE },
+            where: { chambreId: id, statut: StatutAttributionLogement.ACCORDE },
           });
-          if (dto.statut === StatutChambre.OCCUPEE && !accordee) {
-            throw new BadRequestException(t('cites.cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi'));
+          if (dto.statut === StatutChambre.OCCUPE && !accordee) {
+            throw new BadRequestException(t('cites.cette_chambre_ne_peut_pas_prendre_le_statut_occupe_aucune_at'));
           }
-          if (accordee && dto.statut !== StatutChambre.OCCUPEE) {
+          if (accordee && dto.statut !== StatutChambre.OCCUPE) {
             throw new BadRequestException(t('cites.activeAllocationRequiresOccupied'));
           }
         }
@@ -282,7 +294,7 @@ export class AttributionsService extends CrudService {
   }
 
   /**
-   * Nouvelle demande : la chambre doit être LIBRE, ou RESERVEE par le même
+   * Nouvelle demande : la chambre doit être LIBRE, ou RESERVE par le même
    *   étudiant (sa demande en attente est alors enrichie). Un étudiant ne peut
    *   pas avoir deux chambres accordées sur la même année.
    */
@@ -296,7 +308,7 @@ export class AttributionsService extends CrudService {
         await exigerAnneeOuverte(tx, anneeId);
         const chambre = await tx.chambre.findUnique({ where: { id: dto.chambreId } });
         if (!chambre) throw new BadRequestException(t('cites.chambre_introuvable'));
-        if (chambre.statut === StatutChambre.OCCUPEE) {
+        if (chambre.statut === StatutChambre.OCCUPE) {
           throw new BadRequestException(t('cites.la_chambre_est_deja_occupee'));
         }
         if (chambre.statut === StatutChambre.MAINTENANCE) {
@@ -308,7 +320,7 @@ export class AttributionsService extends CrudService {
             where: {
               etudiantId: dto.etudiantId,
               anneeId,
-              statut: StatutAttributionLogement.ACCORDEE,
+              statut: StatutAttributionLogement.ACCORDE,
             },
           });
           if (accordee) {
@@ -317,7 +329,7 @@ export class AttributionsService extends CrudService {
         }
 
         // Chambre réservée : seuls sa demande et cet étudiant peuvent la compléter.
-        if (chambre.statut === StatutChambre.RESERVEE) {
+        if (chambre.statut === StatutChambre.RESERVE) {
           const enAttente: any = await tx.attributionLogement.findFirst({
             where: { chambreId: dto.chambreId, statut: StatutAttributionLogement.EN_ATTENTE },
             include: ATTRIBUTION_INCLUDE,
@@ -354,7 +366,7 @@ export class AttributionsService extends CrudService {
         });
         await tx.chambre.update({
           where: { id: dto.chambreId },
-          data: { statut: StatutChambre.RESERVEE },
+          data: { statut: StatutChambre.RESERVE },
         });
         await journaliser(tx, user, 'ATTRIBUTION_CREEE', 'AttributionLogement', attribution.id, {
           avant: null,
@@ -367,9 +379,9 @@ export class AttributionsService extends CrudService {
   }
 
   /**
-   * Décision du jury. ACCORDEE : la chambre passe OCCUPEE et les autres
+   * Décision du jury. ACCORDE : la chambre passe OCCUPE et les autres
    * demandes en attente sur cette chambre sont refusées (une seule
-   * attribution par chambre). REFUSEE : la chambre redevient libre.
+   * attribution par chambre). REFUSE : la chambre redevient libre.
    */
   async decider(id: string, dto: DeciderAttributionDto, user: AuthUser) {
     return this.prisma.$transaction(
@@ -384,7 +396,7 @@ export class AttributionsService extends CrudService {
           throw new BadRequestException(t('cites.cette_demande_a_deja_ete_traitee'));
         }
 
-        if (dto.statut === StatutAttributionLogement.ACCORDEE) {
+        if (dto.statut === StatutAttributionLogement.ACCORDE) {
           if (attribution.chambre.statut === StatutChambre.MAINTENANCE) {
             throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
           }
@@ -394,7 +406,7 @@ export class AttributionsService extends CrudService {
           const concurrente = await tx.attributionLogement.findFirst({
             where: {
               id: { not: id },
-              statut: StatutAttributionLogement.ACCORDEE,
+              statut: StatutAttributionLogement.ACCORDE,
               OR: [
                 { etudiantId: attribution.etudiantId, anneeId: attribution.anneeId },
                 { chambreId: attribution.chambreId },
@@ -409,20 +421,20 @@ export class AttributionsService extends CrudService {
         const transition = await tx.attributionLogement.updateMany({
           where: { id, statut: StatutAttributionLogement.EN_ATTENTE },
           data:
-            dto.statut === StatutAttributionLogement.ACCORDEE
+            dto.statut === StatutAttributionLogement.ACCORDE
               ? {
-                  statut: StatutAttributionLogement.ACCORDEE,
+                  statut: StatutAttributionLogement.ACCORDE,
                   accordeeLe: new Date(),
                   accorderParId: user.id,
                 }
-              : { statut: StatutAttributionLogement.REFUSEE, accorderParId: user.id },
+              : { statut: StatutAttributionLogement.REFUSE, accorderParId: user.id },
         });
         if (transition.count !== 1) {
           throw new ConflictException(t('cites.cette_demande_a_deja_ete_traitee'));
         }
 
         const autresEnAttente =
-          dto.statut === StatutAttributionLogement.ACCORDEE
+          dto.statut === StatutAttributionLogement.ACCORDE
             ? await tx.attributionLogement.findMany({
                 where: {
                   chambreId: attribution.chambreId,
@@ -433,7 +445,7 @@ export class AttributionsService extends CrudService {
                 select: { id: true },
               })
             : [];
-        if (dto.statut === StatutAttributionLogement.ACCORDEE) {
+        if (dto.statut === StatutAttributionLogement.ACCORDE) {
           await tx.attributionLogement.updateMany({
             where: {
               chambreId: attribution.chambreId,
@@ -441,11 +453,11 @@ export class AttributionsService extends CrudService {
               statut: StatutAttributionLogement.EN_ATTENTE,
               id: { not: id },
             },
-            data: { statut: StatutAttributionLogement.REFUSEE },
+            data: { statut: StatutAttributionLogement.REFUSE },
           });
           await tx.chambre.update({
             where: { id: attribution.chambreId },
-            data: { statut: StatutChambre.OCCUPEE },
+            data: { statut: StatutChambre.OCCUPE },
           });
         } else {
           await tx.chambre.update({
@@ -458,10 +470,10 @@ export class AttributionsService extends CrudService {
           where: { id },
           include: ATTRIBUTION_INCLUDE,
         });
-        await journaliser(tx, user, `ATTRIBUTION_${dto.statut}`, 'AttributionLogement', id, {
+        await journaliser(tx, user, ACTION_STATUT[dto.statut], 'AttributionLogement', id, {
           commentaire: dto.commentaire ?? null,
           autresRefusees:
-            dto.statut === StatutAttributionLogement.ACCORDEE ? autresEnAttente.map((autre) => autre.id) : [],
+            dto.statut === StatutAttributionLogement.ACCORDE ? autresEnAttente.map((autre) => autre.id) : [],
           avant: this.instantaneAudit(attribution),
           apres: this.instantaneAudit(apres),
         });
@@ -485,8 +497,8 @@ export class AttributionsService extends CrudService {
         if (!attribution) throw new NotFoundException(t('common.notFound'));
         await exigerAnneeOuverte(tx, attribution.anneeId);
         if (
-          attribution.statut === StatutAttributionLogement.REFUSEE ||
-          attribution.statut === StatutAttributionLogement.RETIREE
+          attribution.statut === StatutAttributionLogement.REFUSE ||
+          attribution.statut === StatutAttributionLogement.RETIRE
         ) {
           throw new BadRequestException(t('cites.cette_attribution_n_est_plus_reversible'));
         }
@@ -494,7 +506,7 @@ export class AttributionsService extends CrudService {
         const transition = await tx.attributionLogement.updateMany({
           where: { id, statut: attribution.statut },
           data: {
-            statut: StatutAttributionLogement.RETIREE,
+            statut: StatutAttributionLogement.RETIRE,
             retireeLe: new Date(),
             retireeMotif: dto.motif,
           },
@@ -512,7 +524,7 @@ export class AttributionsService extends CrudService {
         });
         await tx.chambre.update({
           where: { id: attribution.chambreId },
-          data: { statut: autreAttente ? StatutChambre.RESERVEE : StatutChambre.LIBRE },
+          data: { statut: autreAttente ? StatutChambre.RESERVE : StatutChambre.LIBRE },
         });
         const apres: any = await tx.attributionLogement.findUnique({
           where: { id },

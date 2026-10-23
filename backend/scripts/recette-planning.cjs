@@ -84,7 +84,7 @@ async function main() {
   await call(teacherToken, 'GET', '/seances/' + persisted[0].id, null, 404);
   await call(school, 'PUT', '/seances/' + persisted[0].id, { thematique: 'Thématique confidentielle QA' });
   await call(school, 'POST', '/seances/' + persisted[0].id + '/annuler', { motif: 'Motif confidentiel QA' }, 201);
-  assert.equal((await db.seance.findUniqueOrThrow({ where: { id: persisted[0].id } })).statut, 'ANNULEE');
+  assert.equal((await db.seance.findUniqueOrThrow({ where: { id: persisted[0].id } })).statut, 'ANNULE');
   const offlineId = randomUUID(),
     offline = {
       idClient: offlineId,

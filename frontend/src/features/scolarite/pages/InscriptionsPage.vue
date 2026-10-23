@@ -701,10 +701,10 @@ function resteAPayer(dossier: Inscription): number {
   return Math.max(0, dossier.montantFrais - montantPaye(dossier));
 }
 
-const peutValider = (d: Inscription) => auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
-const peutAnnuler = (d: Inscription) => auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
+const peutValider = (d: Inscription) => auth.peut('inscriptions.valider') && d.statut === 'PAYE';
+const peutAnnuler = (d: Inscription) => auth.peut('inscriptions.annuler') && !['VALIDE', 'ANNULE'].includes(d.statut);
 /** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
-const peutEncaisserDossier = (d: Inscription) => peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
+const peutEncaisserDossier = (d: Inscription) => peutEncaisser.value && d.statut !== 'ANNULE' && resteAPayer(d) > 0;
 
 /** Encaissement : le dialogue s'ouvre sur le dossier, au montant restant dû. */
 function encaisser(row: Inscription) {

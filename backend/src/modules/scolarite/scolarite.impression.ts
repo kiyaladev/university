@@ -76,7 +76,7 @@ export function pvDeliberationHtml(deliberation: any, etablissement: Etablisseme
       ['Ajournés', lignes.filter((l: any) => l.decision === DecisionJury.AJOURNE).length],
       ['Défaillants', lignes.filter((l: any) => l.decision === DecisionJury.DEFAILLANT).length],
       ['Taux de réussite', tauxReussite !== null && tauxReussite !== undefined ? `${tauxReussite} %` : '—'],
-      ['Statut', statut === StatutDeliberation.VALIDEE ? 'Validée par le jury' : 'Brouillon'],
+      ['Statut', statut === StatutDeliberation.VALIDE ? 'Validée par le jury' : 'Brouillon'],
     ])}
     <table>
       <thead><tr>
@@ -92,9 +92,9 @@ export function pvDeliberationHtml(deliberation: any, etablissement: Etablisseme
     </div>`;
 
   const ligneValidee =
-    statut === StatutDeliberation.VALIDEE && valideePar
+    statut === StatutDeliberation.VALIDE && valideePar
       ? ` — validée par ${echapper(`${valideePar.prenom ?? ''} ${valideePar.nom ?? ''}`)}`
-      : statut === StatutDeliberation.VALIDEE
+      : statut === StatutDeliberation.VALIDE
         ? ' — validée par le jury'
         : '';
 

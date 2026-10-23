@@ -165,9 +165,9 @@
           <q-btn
             v-if="
               auth.aRole(['ADMIN', 'DIRECTION']) &&
-              p.row.statut !== 'FERMEE' &&
-              p.row.statut !== 'REJETEE' &&
-              p.row.statut !== 'RESOLUE'
+              p.row.statut !== 'FERME' &&
+              p.row.statut !== 'REJETE' &&
+              p.row.statut !== 'RESOLU'
             "
             flat
             dense
@@ -237,9 +237,9 @@
             <q-btn
               v-if="
                 auth.aRole(['ADMIN', 'DIRECTION']) &&
-                r.statut !== 'FERMEE' &&
-                r.statut !== 'REJETEE' &&
-                r.statut !== 'RESOLUE'
+                r.statut !== 'FERME' &&
+                r.statut !== 'REJETE' &&
+                r.statut !== 'RESOLU'
               "
               flat
               dense
@@ -350,7 +350,7 @@ const reclamationSelectionnee = ref<Reclamation | null>(null);
 
 // Seuls les compteurs qui appellent une action sont mis en alerte.
 const plaques = computed(() => [
-  { cle: 'OUVERTE', libelle: t('reclamations.stats.ouvertes'), alerte: false },
+  { cle: 'OUVERT', libelle: t('reclamations.stats.ouvertes'), alerte: false },
   { cle: 'EN_ATTENTE_REPONSE', libelle: t('reclamations.stats.attenteReponse'), alerte: false },
   { cle: 'urgentes', libelle: t('reclamations.stats.urgentes'), alerte: true },
   { cle: 'delaiDepasse', libelle: t('reclamations.stats.delaiDepasse'), alerte: true },

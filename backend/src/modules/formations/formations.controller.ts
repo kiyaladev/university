@@ -37,7 +37,7 @@ export class FormationsController {
 
   // ------------------------------------------------------- vitrine publique
 
-  /** Vitrine : formations PUBLIEE, places restantes, triées par date de début. */
+  /** Vitrine : formations PUBLIE, places restantes, triées par date de début. */
   @Public()
   @Get('publiques')
   publiques() {
@@ -102,14 +102,14 @@ export class FormationsController {
     return this.service.supprimer(id, user);
   }
 
-  /** BROUILLON → PUBLIEE : la formation entre en vitrine. */
+  /** BROUILLON → PUBLIE : la formation entre en vitrine. */
   @Roles(...GESTIONNAIRES)
   @Post(':id/publier')
   publier(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.publier(id, user);
   }
 
-  /** PUBLIEE → COMPLETE : le circuit est clos, plus aucune demande acceptée. */
+  /** PUBLIE → COMPLET : le circuit est clos, plus aucune demande acceptée. */
   @Roles(...GESTIONNAIRES)
   @Post(':id/cloturer')
   cloturer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
@@ -125,7 +125,7 @@ export class FormationsController {
 
   /**
    * Confirmation pilote : la scolarité / la direction répercute la réponse de
-   * l'opérateur Mobile Money — paiement REUSSI, puis demande CONFIRMEE.
+   * l'opérateur Mobile Money — paiement REUSSI, puis demande CONFIRME.
    */
   @Roles(...GESTIONNAIRES)
   @Post('inscriptions/:id/confirmer')

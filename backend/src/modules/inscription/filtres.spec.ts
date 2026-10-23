@@ -56,9 +56,9 @@ describe('whereInscriptions', () => {
         anneeId: 'a',
         promotionId: PROMO,
         etudiantId: 'e',
-        statut: 'PAYEE',
+        statut: 'PAYE',
       }),
-    ).toEqual({ anneeId: 'a', promotionId: PROMO, etudiantId: 'e', statut: 'PAYEE' });
+    ).toEqual({ anneeId: 'a', promotionId: PROMO, etudiantId: 'e', statut: 'PAYE' });
   });
 
   it('filtre la date d’inscription, à défaut la date de création', () => {

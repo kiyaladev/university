@@ -4,7 +4,7 @@ export type Role = 'ADMIN' | 'DIRECTION' | 'SCOLARITE' | 'CHEF_DEPARTEMENT' | 'C
 
 export type StatutPresence = 'PRESENT' | 'RETARD' | 'ABSENT' | 'DEPART_ANTICIPE' | 'REMPLACE' | 'EXCUSE';
 
-export type StatutSeance = 'PLANIFIEE' | 'EN_COURS' | 'CONTROLEE' | 'ANNULEE' | 'NON_TENUE';
+export type StatutSeance = 'PLANIFIE' | 'EN_COURS' | 'CONTROLE' | 'ANNULE' | 'NON_TENUE';
 export type TypeCours = 'CM' | 'TD' | 'TP' | 'EXAMEN' | 'CONFERENCE';
 export type Niveau = 'L1' | 'L2' | 'L3' | 'M1' | 'M2' | 'DOCTORAT';
 export type StatutEnseignant = 'PERMANENT' | 'VACATAIRE' | 'CONTRACTUEL';

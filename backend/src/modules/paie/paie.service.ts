@@ -8,7 +8,7 @@
  * agents comptables — voir `calculer`) :
  *
  *   1. N'entrent dans le décompte que les séances de la période {dateDebut,
- *      dateFin} de la feuille, de statut CONTROLEE, dont le contrôle porte l'un
+ *      dateFin} de la feuille, de statut CONTROLE, dont le contrôle porte l'un
  *      des statuts PRESENT, RETARD, DEPART_ANTICIPE : l'enseignant a tenu sa
  *      séance, même en retard ou en départ anticipé. Les séances ABSENT,
  *      EXCUSE et REMPLACE ne sont jamais rémunérées sur cette feuille (la
@@ -27,7 +27,7 @@
  *      le commentaire porté sur une ligne existante est conservé. Le
  *      montantTotal de la feuille est la somme des montants nets.
  *
- * Une feuille VALIDEE ou PAYEE est figée : tout recalcul rejette la requête.
+ * Une feuille VALIDE ou PAYE est figée : tout recalcul rejette la requête.
  */
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, StatutEnseignant, StatutPaie, StatutPresence, StatutSeance } from '@prisma/client';
@@ -209,7 +209,7 @@ export class PaieService {
     if (feuille.statut !== StatutPaie.BROUILLON) {
       throw new BadRequestException(
         t('paie.feuille_feuille_statut_statutpaie_validee_validee_payee_les_', {
-          'feuille.statut': feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée',
+          'feuille.statut': feuille.statut === StatutPaie.VALIDE ? 'validée' : 'payée',
         }),
       );
     }
@@ -222,7 +222,7 @@ export class PaieService {
           const [seances, affectations] = await Promise.all([
             tx.seance.findMany({
               where: {
-                statut: StatutSeance.CONTROLEE,
+                statut: StatutSeance.CONTROLE,
                 date: { gte: feuille.dateDebut, lte: feuille.dateFin },
                 controle: { is: { statut: { in: STATUTS_PAYES } } },
                 affectation: { enseignant: statutEnseignant ? { statut: statutEnseignant } : {} },
@@ -342,7 +342,7 @@ export class PaieService {
     }
   }
 
-  /** BROUILLON → VALIDEE : les montants sont figés, plus aucun recalcul. */
+  /** BROUILLON → VALIDE : les montants sont figés, plus aucun recalcul. */
   async valider(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const feuille = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
@@ -356,7 +356,7 @@ export class PaieService {
       const ecriture = await tx.feuillePaie.updateMany({
         where: { id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
         data: {
-          statut: StatutPaie.VALIDEE,
+          statut: StatutPaie.VALIDE,
           valideeParId: user.id,
           valideeLe: new Date(),
         },
@@ -376,17 +376,17 @@ export class PaieService {
     });
   }
 
-  /** VALIDEE → PAYEE : le mandat est exécuté, trace du paiement. */
+  /** VALIDE → PAYE : le mandat est exécuté, trace du paiement. */
   async payer(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const feuille = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
       if (!feuille) throw new NotFoundException(t('paie.feuille_de_paie_introuvable'));
-      if (feuille.statut !== StatutPaie.VALIDEE) {
+      if (feuille.statut !== StatutPaie.VALIDE) {
         throw new BadRequestException(t('paie.seule_une_feuille_validee_peut_etre_payee'));
       }
       const ecriture = await tx.feuillePaie.updateMany({
-        where: { id, statut: StatutPaie.VALIDEE, updatedAt: feuille.updatedAt },
-        data: { statut: StatutPaie.PAYEE, payeeLe: new Date() },
+        where: { id, statut: StatutPaie.VALIDE, updatedAt: feuille.updatedAt },
+        data: { statut: StatutPaie.PAYE, payeeLe: new Date() },
       });
       if (ecriture.count !== 1) throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
       const miseAJour = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
@@ -488,15 +488,15 @@ export class PaieService {
 
 const LIBELLE_STATUT_PAIE: Record<string, string> = {
   BROUILLON: 'Brouillon',
-  VALIDEE: 'Validée',
-  PAYEE: 'Payée',
+  VALIDE: 'Validé',
+  PAYE: 'Payé',
 };
 
 /** Règles propres à la feuille de paie ; le reste vient de `pageA4`. */
 const STYLE_FEUILLE_PAIE = `
   .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
   .BROUILLON { background: ${P.grisInerte}; color: ${P.encreDouce}; }
-  .VALIDEE, .PAYEE { background: ${P.vertFond}; color: ${P.vert}; }
+  .VALIDE, .PAYE { background: ${P.vertFond}; color: ${P.vert}; }
   tfoot td { font-weight: 700; background: ${P.grisFond}; }
   .signatures { margin-top: 42px; }
 `;

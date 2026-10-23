@@ -26,10 +26,10 @@ export const ICONE_STATUT_PRESENCE: Record<string, string> = {
 };
 
 export const LIBELLE_STATUT_SEANCE: Record<StatutSeance, string> = traduireLibelles('statut_seance', {
-  PLANIFIEE: 'Planifiée',
+  PLANIFIE: 'Planifié',
   EN_COURS: 'En cours',
-  CONTROLEE: 'Contrôlée',
-  ANNULEE: 'Annulée',
+  CONTROLE: 'Contrôlé',
+  ANNULE: 'Annulé',
   NON_TENUE: 'Non tenue',
 });
 

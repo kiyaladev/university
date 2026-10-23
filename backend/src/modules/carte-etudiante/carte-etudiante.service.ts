@@ -3,7 +3,7 @@
  *
  * La carte relie un étudiant à un jeton QR (`qrToken`) unique : ce jeton est
  * encodé dans le QR imprimé et transporté par l'URL publique de vérification.
- * La révocation (StatutAttestation.REVOQUEE) marque la carte comme nulle :
+ * La révocation (StatutAttestation.REVOQUE) marque la carte comme nulle :
  * toute tentative de vérification publique renvoie alors « révoquée ».
  *
  * Le NIP est un code personnel à 4 chiffres choisi par l'étudiant : il est
@@ -204,7 +204,7 @@ export class CarteEtudianteService {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
       if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
-      if (actuel.statut === StatutAttestation.REVOQUEE) {
+      if (actuel.statut === StatutAttestation.REVOQUE) {
         throw new BadRequestException(t('carte-etudiante.cette_carte_a_ete_revoquee_elle_ne_peut_plus_etre_modifiee'));
       }
       const data = {
@@ -232,12 +232,12 @@ export class CarteEtudianteService {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
       if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
-      if (actuel.statut === StatutAttestation.REVOQUEE) {
+      if (actuel.statut === StatutAttestation.REVOQUE) {
         throw new BadRequestException(t('carte-etudiante.cette_carte_est_deja_revoquee'));
       }
       const miseAJour = await tx.carteEtudiante.update({
         where: { id },
-        data: { statut: StatutAttestation.REVOQUEE, motifRevocation: dto.motif, active: false },
+        data: { statut: StatutAttestation.REVOQUE, motifRevocation: dto.motif, active: false },
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
@@ -264,7 +264,7 @@ export class CarteEtudianteService {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
       if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
-      if (actuel.statut === StatutAttestation.REVOQUEE) {
+      if (actuel.statut === StatutAttestation.REVOQUE) {
         throw new BadRequestException(t('carte-etudiante.cette_carte_est_revoquee_nip_non_autorise'));
       }
       if (user.role !== 'ETUDIANT' || !user.etudiantId || user.etudiantId !== actuel.etudiantId) {
@@ -292,7 +292,7 @@ export class CarteEtudianteService {
     });
     if (
       !carte ||
-      carte.statut !== StatutAttestation.EMISE ||
+      carte.statut !== StatutAttestation.EMIS ||
       !carte.active ||
       !carte.nip ||
       (carte.dateValidite && carte.dateValidite.getTime() < Date.now())
@@ -372,7 +372,7 @@ export class CarteEtudianteService {
     }
 
     const jetonOk = carte.qrToken === jeton;
-    const statutOk = carte.statut === StatutAttestation.EMISE && carte.active;
+    const statutOk = carte.statut === StatutAttestation.EMIS && carte.active;
     const expiree = Boolean(carte.dateValidite && new Date(carte.dateValidite).getTime() < Date.now());
     const valide = jetonOk && statutOk && !expiree;
 

@@ -5,11 +5,11 @@
  *
  * Cycle de vie :
  *  - EN_ATTENTE_PAIEMENT : déclaration, paiement à venir
- *  - PAYEE : paiement réussi, en attente de prise en charge
+ *  - PAYE : paiement réussi, en attente de prise en charge
  *  - EN_TRAITEMENT : la scolarité a pris le dossier
- *  - PRETE : document prêt au retrait (notification SMS à l'étudiant)
+ *  - PRET : document prêt au retrait (notification SMS à l'étudiant)
  *  - REMISE : document remis au guichet
- *  - REJETEE : demande rejetée (motif obligatoire)
+ *  - REJETE : demande rejetée (motif obligatoire)
  *
  * Les tarifs par type (TarifDemande) sont paramétrables par l'administrateur.
  * En mode pilote, le paiement Mobile Money est simulé — l'agent comptable
@@ -41,9 +41,9 @@ import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '.
 const PREFIX_DEMANDE = 'DOC-';
 
 const STATUTS_PAIEMENT_REQUIS: StatutDemande[] = [
-  StatutDemande.PAYEE,
+  StatutDemande.PAYE,
   StatutDemande.EN_TRAITEMENT,
-  StatutDemande.PRETE,
+  StatutDemande.PRET,
   StatutDemande.REMISE,
 ];
 
@@ -219,7 +219,7 @@ export class DocumentsDemandeService extends CrudService {
    *  - total
    *  - compteurs par statut
    *  - montant cumulé des paiements réussis
-   *  - demandes PRETE depuis plus de 7 jours (non remises)
+   *  - demandes PRET depuis plus de 7 jours (non remises)
    */
   async dashboard() {
     const ilYA7j = new Date(Date.now() - 7 * 86400 * 1000);
@@ -236,7 +236,7 @@ export class DocumentsDemandeService extends CrudService {
       }),
       this.prisma.demandeDocument.count({
         where: {
-          statut: StatutDemande.PRETE,
+          statut: StatutDemande.PRET,
           creeLe: { lt: ilYA7j },
         },
       }),
@@ -244,11 +244,11 @@ export class DocumentsDemandeService extends CrudService {
 
     const comptes: Record<StatutDemande, number> = {
       EN_ATTENTE_PAIEMENT: 0,
-      PAYEE: 0,
+      PAYE: 0,
       EN_TRAITEMENT: 0,
-      PRETE: 0,
+      PRET: 0,
       REMISE: 0,
-      REJETEE: 0,
+      REJETE: 0,
     };
     for (const ligne of parStatut) comptes[ligne.statut] = ligne._count._all;
 
@@ -600,7 +600,7 @@ export class DocumentsDemandeService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.demandeDocument.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-      if (avant.statut !== StatutDemande.PAYEE && avant.statut !== StatutDemande.EN_TRAITEMENT) {
+      if (avant.statut !== StatutDemande.PAYE && avant.statut !== StatutDemande.EN_TRAITEMENT) {
         throw new BadRequestException(t('documents-demande.cette_demande_n_est_pas_encore_prete_a_etre_traitee'));
       }
 
@@ -627,7 +627,7 @@ export class DocumentsDemandeService extends CrudService {
   }
 
   /**
-   * Marquage PRETE : la scolarité a produit le document. Une notification SMS
+   * Marquage PRET : la scolarité a produit le document. Une notification SMS
    * est émise à l'étudiant (via Notification) avec le message transmis par
    * le guichet. La notification ne part que si l'étudiant a un téléphone.
    */
@@ -636,7 +636,7 @@ export class DocumentsDemandeService extends CrudService {
     if (!STATUTS_PAIEMENT_REQUIS.includes(demande.statut)) {
       throw new BadRequestException(t('documents-demande.demandeNonTraitee'));
     }
-    if (demande.statut === StatutDemande.PRETE || demande.statut === StatutDemande.REMISE) {
+    if (demande.statut === StatutDemande.PRET || demande.statut === StatutDemande.REMISE) {
       throw new BadRequestException(t('documents-demande.cette_demande_est_deja_prete_ou_remise'));
     }
 
@@ -662,14 +662,14 @@ export class DocumentsDemandeService extends CrudService {
               motif: 'DOCUMENT_PRET',
               destinataireNom: `${etudiant.prenom} ${etudiant.nom}`.trim(),
               etudiantId: etudiant.matricule ? undefined : undefined,
-              statut: StatutNotification.ENVOYEE,
+              statut: StatutNotification.ENVOYE,
               envoyeParId: user.id,
               envoyeLe: new Date(),
             },
           });
         } catch (e: unknown) {
           this.logger.warn(
-            `Notification PRETE non consignée pour ${demande.numero} : ${(e as Error | null)?.message ?? e}`,
+            `Notification PRET non consignée pour ${demande.numero} : ${(e as Error | null)?.message ?? e}`,
           );
         }
       }
@@ -679,7 +679,7 @@ export class DocumentsDemandeService extends CrudService {
   }
 
   /**
-   * Passage PRETE et, pour les types attestables, émission de l'attestation
+   * Passage PRET et, pour les types attestables, émission de l'attestation
    * vérifiable dans la même transaction : la demande n'est jamais « prête »
    * sans son attestation, ni l'attestation émise sans la demande.
    *
@@ -695,7 +695,7 @@ export class DocumentsDemandeService extends CrudService {
           await tx.$queryRaw`SELECT id FROM "DemandeDocument" WHERE id = ${id} FOR UPDATE`;
           const avant = await tx.demandeDocument.findUnique({ where: { id } });
           if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-          if (avant.statut === StatutDemande.PRETE || avant.statut === StatutDemande.REMISE) {
+          if (avant.statut === StatutDemande.PRET || avant.statut === StatutDemande.REMISE) {
             throw new BadRequestException(t('documents-demande.cette_demande_est_deja_prete_ou_remise'));
           }
 
@@ -703,7 +703,7 @@ export class DocumentsDemandeService extends CrudService {
           const apres = await tx.demandeDocument.update({
             where: { id },
             data: {
-              statut: StatutDemande.PRETE,
+              statut: StatutDemande.PRET,
               notification: message,
               traiteParId: user.id,
               ...(attestationId && attestationId !== avant.attestationId ? { attestationId } : {}),
@@ -776,7 +776,7 @@ export class DocumentsDemandeService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.demandeDocument.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-      if (avant.statut !== StatutDemande.PRETE) {
+      if (avant.statut !== StatutDemande.PRET) {
         throw new BadRequestException(t('documents-demande.cette_demande_n_est_pas_marquee_comme_prete'));
       }
 
@@ -830,7 +830,7 @@ export class DocumentsDemandeService extends CrudService {
       }
 
       const data: Prisma.DemandeDocumentUpdateInput = {
-        statut: StatutDemande.REJETEE,
+        statut: StatutDemande.REJETE,
         notes: avant.notes
           ? `${avant.notes}\n[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] REJET — ${dto.motif.trim()}`
           : `REJET — ${dto.motif.trim()}`,

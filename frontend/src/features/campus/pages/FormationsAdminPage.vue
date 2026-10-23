@@ -160,7 +160,7 @@
               <q-tooltip>{{ $t('formationsAdmin.table.tooltips.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
-              v-if="p.row.statut === 'PUBLIEE'"
+              v-if="p.row.statut === 'PUBLIE'"
               flat
               dense
               round
@@ -276,7 +276,7 @@
                     <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.confirmPayment') }}</q-tooltip>
                   </q-btn>
                   <q-btn
-                    v-if="r.row.statut !== 'ANNULEE'"
+                    v-if="r.row.statut !== 'ANNULE'"
                     flat
                     dense
                     round
@@ -288,7 +288,7 @@
                     <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.cancelRequest') }}</q-tooltip>
                   </q-btn>
                   <q-btn
-                    v-if="r.row.statut === 'CONFIRMEE'"
+                    v-if="r.row.statut === 'CONFIRME'"
                     flat
                     dense
                     round
@@ -365,7 +365,7 @@
               <q-tooltip>{{ $t('common.actions.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
-              v-if="f.statut === 'PUBLIEE'"
+              v-if="f.statut === 'PUBLIE'"
               flat
               dense
               round
@@ -458,7 +458,7 @@
                       <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.confirmPayment') }}</q-tooltip>
                     </q-btn>
                     <q-btn
-                      v-if="r.row.statut !== 'ANNULEE'"
+                      v-if="r.row.statut !== 'ANNULE'"
                       flat
                       dense
                       round
@@ -470,7 +470,7 @@
                       <q-tooltip>{{ $t('formationsAdmin.registry.tooltips.cancelRequest') }}</q-tooltip>
                     </q-btn>
                     <q-btn
-                      v-if="r.row.statut === 'CONFIRMEE'"
+                      v-if="r.row.statut === 'CONFIRME'"
                       flat
                       dense
                       round
@@ -658,7 +658,7 @@ function datesLisible(f: Formation): string {
 function placesRestantes(f: Formation): number {
   if (!f.capacite) return Number.POSITIVE_INFINITY;
   const occupe =
-    (f._count?.inscriptions ?? 0) - (registres.value[f.id]?.filter((r) => r.statut === 'ANNULEE').length ?? 0);
+    (f._count?.inscriptions ?? 0) - (registres.value[f.id]?.filter((r) => r.statut === 'ANNULE').length ?? 0);
   return Math.max(0, f.capacite - occupe);
 }
 

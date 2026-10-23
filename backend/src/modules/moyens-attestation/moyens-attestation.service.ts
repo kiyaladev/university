@@ -336,7 +336,7 @@ export class MoyensAttestationService {
       where: {
         id: seanceId,
         date: toDateOnly(new Date()),
-        statut: { not: 'ANNULEE' },
+        statut: { not: 'ANNULE' },
         affectation: { enseignantId },
       },
       select: {
@@ -378,7 +378,7 @@ export class MoyensAttestationService {
         where: {
           id: seanceId,
           date: toDateOnly(new Date()),
-          statut: { not: 'ANNULEE' },
+          statut: { not: 'ANNULE' },
           affectation: { enseignantId },
         },
         select: {

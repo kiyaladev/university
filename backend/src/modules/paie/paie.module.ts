@@ -6,7 +6,7 @@ import { PaieService } from './paie.service';
 /**
  * Module 2 — Gestion des vacataires & paie des heures complémentaires.
  *
- * Feuilles de paie mensuelles (BROUILLON → VALIDEE → PAYEE) calculées depuis
+ * Feuilles de paie mensuelles (BROUILLON → VALIDE → PAYE) calculées depuis
  * les séances contrôlées d'UniPrésence, avec impression A4 signée.
  */
 @Module({

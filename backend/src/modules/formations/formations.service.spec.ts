@@ -12,7 +12,7 @@ describe('Vitrine publique des formations', () => {
       prix: 100,
       devise: 'GNF',
       capacite: 2,
-      statut: StatutFormation.PUBLIEE,
+      statut: StatutFormation.PUBLIE,
     };
     const tx: any = {
       $queryRaw: jest.fn().mockResolvedValue([{ id: formation.id, statut: formation.statut, capacite: 2 }]),
@@ -54,7 +54,7 @@ describe('Vitrine publique des formations', () => {
       dateFin: new Date('2026-11-02T00:00:00Z'),
       lieu: 'Campus',
       capacite: 20,
-      statut: StatutFormation.PUBLIEE,
+      statut: StatutFormation.PUBLIE,
     };
     const prisma = {
       formation: { findUnique: jest.fn().mockResolvedValue(publicFields) },
@@ -118,10 +118,10 @@ describe('Vitrine publique des formations', () => {
 
 describe('transitions de formation sur l’état verrouillé', () => {
   it.each([
-    ['publier', StatutFormation.PUBLIEE, BadRequestException],
-    ['publier', StatutFormation.COMPLETE, BadRequestException],
-    ['cloturer', StatutFormation.COMPLETE, BadRequestException],
-    ['supprimer', StatutFormation.PUBLIEE, ForbiddenException],
+    ['publier', StatutFormation.PUBLIE, BadRequestException],
+    ['publier', StatutFormation.COMPLET, BadRequestException],
+    ['cloturer', StatutFormation.COMPLET, BadRequestException],
+    ['supprimer', StatutFormation.PUBLIE, ForbiddenException],
   ])('refuse %s après une transition concurrente vers %s', async (method, statut, exception) => {
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ id: 'f', statut, capacite: 1 }]),
@@ -149,7 +149,7 @@ describe('confirmation imprimée d’inscription à une formation', () => {
         findUnique: jest.fn().mockResolvedValue({
           id: 'ins',
           numero: 'FOR-QA',
-          statut: StatutInscriptionFormation.CONFIRMEE,
+          statut: StatutInscriptionFormation.CONFIRME,
           nomComplet: 'Participant fictif',
           formation: { titre: 'Cours', prix: 9000, devise: 'EUR' },
           paiement: { statut: statutPaiement, montant: 5000, devise: 'GNF' },
@@ -190,7 +190,7 @@ describe('Agrégat du tableau de bord des formations', () => {
             titre: 'Gestion',
             prix: 100,
             devise: 'GNF',
-            statut: StatutFormation.PUBLIEE,
+            statut: StatutFormation.PUBLIE,
           },
         ]),
       },
@@ -272,10 +272,10 @@ describe('confirmation des places de formation', () => {
       formationId: 'formation-1',
       statut: StatutInscriptionFormation.EN_ATTENTE,
       paiement: { id: 'payment-1', statut: StatutPaiement.EN_ATTENTE },
-      formation: { id: 'formation-1', statut: StatutFormation.PUBLIEE, capacite: 1 },
+      formation: { id: 'formation-1', statut: StatutFormation.PUBLIE, capacite: 1 },
     };
     const tx = {
-      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIEE, capacite: 1 }]),
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIE, capacite: 1 }]),
       inscriptionFormation: {
         findUnique: jest.fn().mockResolvedValue(inscription),
         count: jest.fn().mockResolvedValue(1),
@@ -293,7 +293,7 @@ describe('confirmation des places de formation', () => {
 
     expect(tx.$queryRaw.mock.calls[0][0].join(' ')).toContain('FOR UPDATE');
     expect(tx.inscriptionFormation.count).toHaveBeenCalledWith({
-      where: { formationId: 'formation-1', statut: StatutInscriptionFormation.CONFIRMEE },
+      where: { formationId: 'formation-1', statut: StatutInscriptionFormation.CONFIRME },
     });
     expect(tx.paiement.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
@@ -301,9 +301,9 @@ describe('confirmation des places de formation', () => {
 
   it('refuse de réduire ou supprimer la capacité sous les inscriptions confirmées', async () => {
     const tx: any = {
-      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIEE, capacite: 5 }]),
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIE, capacite: 5 }]),
       formation: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'formation-1', statut: StatutFormation.PUBLIEE, capacite: 5 }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'formation-1', statut: StatutFormation.PUBLIE, capacite: 5 }),
         update: jest.fn(),
       },
       inscriptionFormation: { count: jest.fn().mockResolvedValue(3) },
@@ -325,11 +325,11 @@ describe('confirmation des places de formation', () => {
     const inscription: any = {
       id: 'inscription-1',
       formationId: 'formation-1',
-      statut: StatutInscriptionFormation.CONFIRMEE,
-      formation: { id: 'formation-1', statut: StatutFormation.PUBLIEE },
+      statut: StatutInscriptionFormation.CONFIRME,
+      formation: { id: 'formation-1', statut: StatutFormation.PUBLIE },
     };
     const tx: any = {
-      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIEE, capacite: 5 }]),
+      $queryRaw: jest.fn().mockResolvedValue([{ id: 'formation-1', statut: StatutFormation.PUBLIE, capacite: 5 }]),
       inscriptionFormation: { findUnique: jest.fn().mockResolvedValue(inscription), updateMany: jest.fn() },
       auditLog: { create: jest.fn() },
     };

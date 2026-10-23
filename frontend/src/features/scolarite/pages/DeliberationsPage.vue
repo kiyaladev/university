@@ -468,7 +468,7 @@ const optionsPromotions = computed(() =>
 );
 const optionsStatuts = [
   { label: LIBELLE_STATUT_DELIBERATION.BROUILLON, value: 'BROUILLON' },
-  { label: LIBELLE_STATUT_DELIBERATION.VALIDEE, value: 'VALIDEE' },
+  { label: LIBELLE_STATUT_DELIBERATION.VALIDE, value: 'VALIDE' },
 ];
 
 const chips = computed(() => {

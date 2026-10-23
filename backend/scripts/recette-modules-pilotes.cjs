@@ -385,7 +385,7 @@ async function main() {
   );
   const year = await prisma.anneeAcademique.findFirstOrThrow({ where: { active: true, cloturee: false } });
   const housed = await prisma.attributionLogement.findMany({
-    where: { anneeId: year.id, statut: 'ACCORDEE' },
+    where: { anneeId: year.id, statut: 'ACCORDE' },
     select: { etudiantId: true },
   });
   const applicant = await prisma.etudiant.findFirstOrThrow({
@@ -422,23 +422,23 @@ async function main() {
     directionToken,
     'PUT',
     `/attributions-logement/${applications[1].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     400,
   );
-  await request(admin, 'PUT', '/chambres/' + rooms[1].id, { statut: 'RESERVEE' });
+  await request(admin, 'PUT', '/chambres/' + rooms[1].id, { statut: 'RESERVE' });
   await request(
     registrarToken,
     'PUT',
     `/attributions-logement/${applications[0].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     403,
   );
-  await request(directionToken, 'PUT', `/attributions-logement/${applications[0].id}/decider`, { statut: 'ACCORDEE' });
+  await request(directionToken, 'PUT', `/attributions-logement/${applications[0].id}/decider`, { statut: 'ACCORDE' });
   await request(
     directionToken,
     'PUT',
     `/attributions-logement/${applications[1].id}/decider`,
-    { statut: 'ACCORDEE' },
+    { statut: 'ACCORDE' },
     400,
   );
   await request(admin, 'PUT', '/chambres/' + rooms[0].id, { statut: 'LIBRE' }, 400);
@@ -448,11 +448,11 @@ async function main() {
     motif: 'Départ fictif de recette',
   });
   assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[0].id } })).statut, 'LIBRE');
-  await request(directionToken, 'PUT', `/attributions-logement/${applications[1].id}/decider`, { statut: 'ACCORDEE' });
-  assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[1].id } })).statut, 'OCCUPEE');
+  await request(directionToken, 'PUT', `/attributions-logement/${applications[1].id}/decider`, { statut: 'ACCORDE' });
+  assert.equal((await prisma.chambre.findUniqueOrThrow({ where: { id: rooms[1].id } })).statut, 'OCCUPE');
   assert.equal(
     await prisma.attributionLogement.count({
-      where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDEE' },
+      where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDE' },
     }),
     1,
   );
@@ -474,14 +474,14 @@ async function main() {
       fetch(api + `/attributions-logement/${application.id}/decider`, {
         method: 'PUT',
         headers: { Authorization: `Bearer ${directionToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ statut: 'ACCORDEE' }),
+        body: JSON.stringify({ statut: 'ACCORDE' }),
       }),
     ),
   );
   assert.equal(decisions.filter((r) => r.status === 200).length, 1);
   assert.ok(decisions.some((r) => [400, 409].includes(r.status)));
   const finalAllocations = await prisma.attributionLogement.count({
-    where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDEE' },
+    where: { etudiantId: applicant.id, anneeId: year.id, statut: 'ACCORDE' },
   });
   assert.equal(finalAllocations, 1);
   observations.logements = {

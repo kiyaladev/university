@@ -74,7 +74,7 @@ export class PosterMessageDto {
   joint?: string;
 }
 
-/** Changement de statut : RESOLUE / FERMEE / REJETEE requièrent une note. */
+/** Changement de statut : RESOLU / FERME / REJETE requièrent une note. */
 export class ChangerStatutDto {
   @IsEnum(StatutReclamation)
   statut: StatutReclamation;
@@ -85,7 +85,7 @@ export class ChangerStatutDto {
   commentaire?: string;
 }
 
-/** Assignation d'un agent — prend en charge automatique si la réclamation était OUVERTE. */
+/** Assignation d'un agent — prend en charge automatique si la réclamation était OUVERT. */
 export class AssignerReclamationDto {
   @IsUUID()
   assigneAId: string;

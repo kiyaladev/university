@@ -68,7 +68,7 @@ async function main() {
         date: new Date(`2088-01-${12 + index}`),
         heureDebut: '09:00',
         heureFin: '11:00',
-        statut: 'CONTROLEE',
+        statut: 'CONTROLE',
         type: 'CM',
       },
     });
@@ -100,7 +100,7 @@ async function main() {
   await call('ADMIN', 'POST', path + '/payer', {}, 201);
   await call('ADMIN', 'POST', path + '/payer', {}, 400);
   await call('ADMIN', 'DELETE', path, null, 400);
-  assert.equal((await db.feuillePaie.findUniqueOrThrow({ where: { id: own.sheet.id } })).statut, 'PAYEE');
+  assert.equal((await db.feuillePaie.findUniqueOrThrow({ where: { id: own.sheet.id } })).statut, 'PAYE');
   const html = await (await call('SCOLARITE', 'GET', path + '/imprimer')).text();
   assert.ok(html.includes(tag));
   await call('ETUDIANT', 'GET', path + '/imprimer', null, 403);
@@ -122,7 +122,7 @@ async function main() {
     ruleObserved:
       'Heures entières par enseignant, Math.floor(total minutes / 60) ; retenue zéro. Validation comptable requise.',
   };
-  report.transitions = 'BROUILLON → VALIDEE → PAYEE';
+  report.transitions = 'BROUILLON → VALIDE → PAYE';
   report.idempotentRecalculation = true;
   report.protectedPrint = true;
   report.auditEvents = 5;

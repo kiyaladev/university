@@ -89,7 +89,7 @@ export class CreneauxService extends CrudService {
         inscriptions: {
           some: {
             etudiantId,
-            statut: StatutInscription.VALIDEE,
+            statut: StatutInscription.VALIDE,
             annee: { active: true, cloturee: false },
           },
         },

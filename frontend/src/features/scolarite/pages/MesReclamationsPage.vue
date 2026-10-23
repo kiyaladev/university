@@ -258,7 +258,7 @@ const modeVue = usePresentationListe();
 // Compteurs calculés sur les réclamations affichées (l'API étudiante ne
 // fournit pas de tableau de bord dédié).
 const stats = computed(() => {
-  const counts: Record<string, number> = { OUVERTE: 0, EN_COURS: 0, EN_ATTENTE_REPONSE: 0, RESOLUE: 0 };
+  const counts: Record<string, number> = { OUVERT: 0, EN_COURS: 0, EN_ATTENTE_REPONSE: 0, RESOLU: 0 };
   for (const r of liste.lignes) {
     if (counts[r.statut] != null) counts[r.statut]++;
   }
@@ -270,10 +270,10 @@ const reclamationSelectionnee = ref<Reclamation | null>(null);
 
 // Mêmes intitulés de statut que le registre de la scolarité.
 const plaques = computed(() => [
-  { cle: 'OUVERTE', libelle: t('mesReclamations.stats.labels.open') },
+  { cle: 'OUVERT', libelle: t('mesReclamations.stats.labels.open') },
   { cle: 'EN_COURS', libelle: t('mesReclamations.stats.labels.inProgress') },
   { cle: 'EN_ATTENTE_REPONSE', libelle: t('mesReclamations.stats.labels.awaitingReply') },
-  { cle: 'RESOLUE', libelle: t('mesReclamations.stats.labels.resolved') },
+  { cle: 'RESOLU', libelle: t('mesReclamations.stats.labels.resolved') },
 ]);
 
 function libelleType(t: string) {

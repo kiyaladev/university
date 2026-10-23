@@ -122,7 +122,7 @@ async function verifierConflits() {
     const f = minutes(form.value.heureFin);
     conflits.value = (data.data as ReservationSalle[]).filter(
       (r) =>
-        (r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRMEE') && d < minutes(r.heureFin) && minutes(r.heureDebut) < f,
+        (r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRME') && d < minutes(r.heureFin) && minutes(r.heureDebut) < f,
     );
   } catch {
     conflits.value = [];

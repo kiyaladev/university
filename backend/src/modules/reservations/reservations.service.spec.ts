@@ -14,7 +14,7 @@ describe('Périmètre des réservations', () => {
     dateJour: new Date('2026-10-02T00:00:00.000Z'),
     heureDebut: '09:00',
     heureFin: '10:00',
-    statut: 'CONFIRMEE',
+    statut: 'CONFIRME',
     motif: 'Événement privé',
     organisme: 'Organisation privée',
     demandeur: { id: 'teacher-2', nom: 'Diallo', prenom: 'Awa' },
@@ -55,7 +55,7 @@ describe('Périmètre des réservations', () => {
     expect(reservation).toMatchObject({
       id: otherReservation.id,
       salleId: otherReservation.salleId,
-      statut: 'CONFIRMEE',
+      statut: 'CONFIRME',
     });
     expect(reservation).toMatchObject({
       motif: null,

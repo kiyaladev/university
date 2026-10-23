@@ -29,8 +29,8 @@ export const LIBELLE_STATUT_ENCADREMENT: Record<string, string> = traduireLibell
 /** Arbitrage d'une suspicion de plagiat (liste, détail et carte le disaient chacun à sa façon). */
 export const LIBELLE_STATUT_SUSPICION: Record<string, string> = traduireLibelles('statut_suspicion', {
   EN_ATTENTE: 'En attente',
-  ACQUITTE: 'Acquittée',
-  CONFIRME: 'Confirmée',
+  ACQUITTE: 'Acquitté',
+  CONFIRME: 'Confirmé',
 });
 
 /**
@@ -48,5 +48,5 @@ export const LIBELLE_STATUT_VOD: Record<StatutVOD, string> = traduireLibelles('s
   BROUILLON: 'Brouillon',
   EN_LIGNE: 'En ligne',
   HORS_LIGNE: 'Hors ligne',
-  ARCHIVE: 'Archivée',
+  ARCHIVE: 'Archivé',
 });

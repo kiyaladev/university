@@ -5,7 +5,7 @@
         <q-chip square color="warning" text-color="dark" icon="sms">
           {{ $t('notifications.header.queued', { n: stats.EN_ATTENTE }) }}
           <q-tooltip>
-            {{ $t('notifications.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
+            {{ $t('notifications.header.tooltip', { envoyees: stats.ENVOYE, echouees: stats.ECHOUE }) }}
           </q-tooltip>
         </q-chip>
       </template>
@@ -646,7 +646,7 @@ async function renvoyer(n: Notification) {
 }
 
 // -------------------------------------------------------------------- stats
-const stats = ref<{ EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number } | null>(null);
+const stats = ref<{ EN_ATTENTE: number; ENVOYE: number; ECHOUE: number } | null>(null);
 
 async function chargerStats() {
   try {
@@ -657,7 +657,7 @@ async function chargerStats() {
   }
 }
 
-const repartition30j = ref<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }[]>([]);
+const repartition30j = ref<{ date: string; EN_ATTENTE: number; ENVOYE: number; ECHOUE: number }[]>([]);
 
 async function chargerRepartition() {
   try {
@@ -675,7 +675,7 @@ const resumeRepartition = computed(() => {
   const totaux = repartition30j.value.reduce(
     (acc, r) => ({
       attente: acc.attente + r.EN_ATTENTE,
-      envoyes: acc.envoyes + r.ENVOYEE,
+      envoyes: acc.envoyes + r.ENVOYE,
       echoues: acc.echoues + r.ECHOUE,
     }),
     { attente: 0, envoyes: 0, echoues: 0 },
@@ -701,7 +701,7 @@ const chartConfig = computed<ChartConfiguration | null>(() => {
         },
         {
           label: t('notifications.history.chart.series.envoyes'),
-          data: repartition30j.value.map((r) => r.ENVOYEE),
+          data: repartition30j.value.map((r) => r.ENVOYE),
           backgroundColor: PEINTURE_ENVOYE,
         },
         {

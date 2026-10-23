@@ -4,7 +4,7 @@
  * Le candidat dépose son dossier sans compte (page publique), l'inscription
  * naît en EN_ATTENTE_PAIEMENT avec le montant de la table Frais pour sa
  * promotion, un paiement Mobile Money lui est demandé, la confirmation (mode
- * pilote : l'agent comptable la simule) passe le dossier en PAYEE dès que le
+ * pilote : l'agent comptable la simule) passe le dossier en PAYE dès que le
  * cumul des paiements réussis couvre les frais, puis la scolarité la VALIDE.
  * Le numéro "INS-2026-00042" est l'identifiant de tous les autres modules.
  */
@@ -60,9 +60,9 @@ export const INSCRIPTION_INCLUDE = {
 const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   BROUILLON: 'Brouillon',
   EN_ATTENTE_PAIEMENT: 'En attente de paiement',
-  PAYEE: 'Frais payés',
-  VALIDEE: 'Validée',
-  ANNULEE: 'Annulée',
+  PAYE: 'Frais payés',
+  VALIDE: 'Validé',
+  ANNULE: 'Annulé',
 };
 
 /** Instantanés limités aux données de gestion, sans coordonnées ou motif libre. */
@@ -340,7 +340,7 @@ export class InscriptionService {
       where: { etudiantId_anneeId: { etudiantId: dto.etudiantId, anneeId: annee.id } },
       select: { id: true, numero: true, statut: true },
     });
-    if (existante && existante.statut !== StatutInscription.ANNULEE) {
+    if (existante && existante.statut !== StatutInscription.ANNULE) {
       throw new ConflictException(
         t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', {
           'existante.numero': existante.numero,
@@ -363,7 +363,7 @@ export class InscriptionService {
         await exigerAnneeOuverte(tx, annee.id);
         const avant = await tx.inscription.findUnique({ where: { id: existante.id }, include: INSCRIPTION_INCLUDE });
         const reouverture = await tx.inscription.updateMany({
-          where: { id: existante.id, statut: StatutInscription.ANNULEE },
+          where: { id: existante.id, statut: StatutInscription.ANNULE },
           data: {
             promotionId: promotion.id,
             statut: StatutInscription.EN_ATTENTE_PAIEMENT,
@@ -427,13 +427,13 @@ export class InscriptionService {
 
   // ---------------------------------------------------------- cycle de vie
 
-  /** PAYEE → VALIDEE : la scolarité clôt le dossier, frais réglés et justifiés. */
+  /** PAYE → VALIDE : la scolarité clôt le dossier, frais réglés et justifiés. */
   async validerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
-    if (inscription.statut === StatutInscription.ANNULEE) {
+    if (inscription.statut === StatutInscription.ANNULE) {
       throw new BadRequestException(t('inscription.ce_dossier_est_annule_impossible_de_le_valider'));
     }
-    if (inscription.statut !== StatutInscription.PAYEE && inscription.statut !== StatutInscription.VALIDEE) {
+    if (inscription.statut !== StatutInscription.PAYE && inscription.statut !== StatutInscription.VALIDE) {
       throw new BadRequestException(
         t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', {
           'inscription.numero': inscription.numero,
@@ -442,16 +442,16 @@ export class InscriptionService {
         }),
       );
     }
-    if (inscription.statut === StatutInscription.VALIDEE) return inscription;
+    if (inscription.statut === StatutInscription.VALIDE) return inscription;
 
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, inscription.anneeId);
       // Transition conditionnée au statut lu : une annulation concurrente
       // ne peut pas être écrasée par une validation (et inversement).
       const transition = await tx.inscription.updateMany({
-        where: { id, statut: StatutInscription.PAYEE },
+        where: { id, statut: StatutInscription.PAYE },
         data: {
-          statut: StatutInscription.VALIDEE,
+          statut: StatutInscription.VALIDE,
           dateInscription: new Date(),
           valideeParId: user.id,
           valideeLe: new Date(),
@@ -478,10 +478,10 @@ export class InscriptionService {
   /** Annulation par la direction ; une inscription validée se garde. */
   async annulerInscription(id: string, user: AuthUser) {
     const inscription = await this.trouverInscription(id);
-    if (inscription.statut === StatutInscription.ANNULEE) {
+    if (inscription.statut === StatutInscription.ANNULE) {
       throw new BadRequestException(t('inscription.ce_dossier_est_deja_annule'));
     }
-    if (inscription.statut === StatutInscription.VALIDEE) {
+    if (inscription.statut === StatutInscription.VALIDE) {
       throw new BadRequestException(
         t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', {
           'inscription.numero': inscription.numero,
@@ -492,7 +492,7 @@ export class InscriptionService {
       await exigerAnneeOuverte(tx, inscription.anneeId);
       const transition = await tx.inscription.updateMany({
         where: { id, statut: inscription.statut },
-        data: { statut: StatutInscription.ANNULEE },
+        data: { statut: StatutInscription.ANNULE },
       });
       if (transition.count !== 1) {
         throw new ConflictException(t('inscription.statut_modifie_entre_temps'));
@@ -523,7 +523,7 @@ export class InscriptionService {
     const etablissement = await chargerEtablissement(this.prisma);
     const edite = new Date().toLocaleString('fr-FR');
 
-    // Mêmes règles que le passage en PAYEE : scolarité seule, devise du tarif.
+    // Mêmes règles que le passage en PAYE : scolarité seule, devise du tarif.
     const devise = await deviseDossier(this.prisma, inscription);
     const paye = (inscription.paiements ?? [])
       .filter((p) => p.statut === StatutPaiement.REUSSI && !p.demandeDocument && p.devise === devise)
@@ -576,8 +576,8 @@ const STYLE_CERTIFICAT_INSCRIPTION = `
   .badge { padding: 2px 8px; font-weight: 700; text-transform: uppercase; }
   .BROUILLON { background: ${P.grisInerte}; color: ${P.encreDouce}; }
   .EN_ATTENTE_PAIEMENT { background: ${P.jauneFond}; color: ${P.jauneTexte}; }
-  .PAYEE, .VALIDEE { background: ${P.vertFond}; color: ${P.vert}; }
-  .ANNULEE { background: ${P.rougeFond}; color: ${P.rouge}; }
+  .PAYE, .VALIDE { background: ${P.vertFond}; color: ${P.vert}; }
+  .ANNULE { background: ${P.rougeFond}; color: ${P.rouge}; }
   th { width: 32%; }
   .mention { margin-top: 14px; padding: 8px 10px; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; font-size: 11px; color: ${P.encreDouce}; }
   .signatures { margin-top: 46px; }

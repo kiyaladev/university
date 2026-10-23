@@ -6,6 +6,6 @@
   "seule_une_feuille_en_brouillon_peut_etre_supprimee": "Seule une feuille en brouillon peut être supprimée",
   "une_feuille_libelle_existe_deja": "Une feuille \" {libelle} \" existe déjà",
   "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
-  "feuille_feuille_statut_statutpaie_validee_validee_payee_les_": "Feuille {feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée'} : les montants sont figés, impossible de recalculer",
+  "feuille_feuille_statut_statutpaie_validee_validee_payee_les_": "Feuille {feuille.statut === StatutPaie.VALIDE ? 'validée' : 'payée'} : les montants sont figés, impossible de recalculer",
   "ecriture_concurrente_reessayez": "Cette feuille vient d'être modifiée. Rechargez-la puis réessayez."
 }

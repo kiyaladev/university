@@ -210,12 +210,12 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reservationSalle.update.mockResolvedValue({
       ...demande(),
-      statut: StatutReservationSalle.REFUSEE,
+      statut: StatutReservationSalle.REFUSE,
       refuseParId: 'admin-1',
       refuseMotif: 'motif de refus confidentiel',
     });
 
-    await service.decider('reservation-1', { statut: 'REFUSEE', motif: 'motif de refus confidentiel' } as any, admin);
+    await service.decider('reservation-1', { statut: 'REFUSE', motif: 'motif de refus confidentiel' } as any, admin);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mutations).toEqual(['update']);
@@ -230,7 +230,7 @@ describe('Journal avant/après des réservations de salle', () => {
     const ecrit = details(journal);
     expect(ecrit.avant).toEqual(instantane(StatutReservationSalle.EN_ATTENTE));
     expect(ecrit.apres).toEqual(
-      instantane(StatutReservationSalle.REFUSEE, {
+      instantane(StatutReservationSalle.REFUSE, {
         refuseParId: 'admin-1',
         refuseMotifFourni: true,
       }),
@@ -244,16 +244,16 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, prisma, tx, journal } = preparer();
     tx.reservationSalle.update.mockResolvedValue({
       ...demande(),
-      statut: StatutReservationSalle.CONFIRMEE,
+      statut: StatutReservationSalle.CONFIRME,
     });
 
-    await service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin);
+    await service.decider('reservation-1', { statut: 'CONFIRME' } as any, admin);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(journal).toHaveLength(1);
     const ecrit = details(journal);
     expect(ecrit.avant.statut).toBe(StatutReservationSalle.EN_ATTENTE);
-    expect(ecrit.apres.statut).toBe(StatutReservationSalle.CONFIRMEE);
+    expect(ecrit.apres.statut).toBe(StatutReservationSalle.CONFIRME);
     expect(ecrit.apres.refuseParId).toBeNull();
     expect(ecrit.champsModifies).toEqual(['statut']);
     expect(ecrit.refuseMotifFourni).toBe(false);
@@ -285,7 +285,7 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecEcriture = 'update';
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+    await expect(service.decider('reservation-1', { statut: 'CONFIRME' } as any, admin)).rejects.toThrow(
       'mutation refusée',
     );
 
@@ -297,7 +297,7 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecJournal = true;
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+    await expect(service.decider('reservation-1', { statut: 'CONFIRME' } as any, admin)).rejects.toThrow(
       'journal indisponible',
     );
 
@@ -309,7 +309,7 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reservationSalle.findUnique.mockResolvedValue({
       ...demande(),
-      statut: StatutReservationSalle.CONFIRMEE,
+      statut: StatutReservationSalle.CONFIRME,
     });
 
     await expect(service.modifier('reservation-1', { heureDebut: '11:00' } as any, enseignant)).rejects.toThrow(
@@ -327,13 +327,13 @@ describe('Journal avant/après des réservations de salle', () => {
       {
         ...demande(),
         id: 'reservation-overlap',
-        statut: StatutReservationSalle.CONFIRMEE,
+        statut: StatutReservationSalle.CONFIRME,
         heureDebut: '09:30',
         heureFin: '10:30',
       },
     ]);
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+    await expect(service.decider('reservation-1', { statut: 'CONFIRME' } as any, admin)).rejects.toThrow(
       'reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_',
     );
 

@@ -24,8 +24,8 @@ export const LIBELLE_OPERATEUR_MM: Record<string, string> = traduireLibelles('op
 
 export const LIBELLE_STATUT_PAIE: Record<string, string> = traduireLibelles('statut_paie', {
   BROUILLON: 'Brouillon',
-  VALIDEE: 'Validée',
-  PAYEE: 'Payée',
+  VALIDE: 'Validé',
+  PAYE: 'Payé',
 });
 
 export const LIBELLE_TYPE_RECETTE: Record<string, string> = traduireLibelles('type_recette', {
@@ -40,7 +40,7 @@ export const LIBELLE_TYPE_RECETTE: Record<string, string> = traduireLibelles('ty
  * Recette propre : le registre ne connaît que deux états, dérivés de la
  * présence d'un paiement rattaché.
  */
-export const LIBELLE_STATUT_RECETTE: Record<'ENCAISSEE' | 'A_ENCAISSER', string> = traduireLibelles('statut_recette', {
-  ENCAISSEE: 'Encaissée',
+export const LIBELLE_STATUT_RECETTE: Record<'ENCAISSE' | 'A_ENCAISSER', string> = traduireLibelles('statut_recette', {
+  ENCAISSE: 'Encaissée',
   A_ENCAISSER: 'À encaisser',
 });

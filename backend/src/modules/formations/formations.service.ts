@@ -1,18 +1,18 @@
 /**
  * Hub de formation continue & certifications — recettes propres de l'université.
  *
- * Une formation PUBLIEE se vend en ligne, sans compte : n'importe qui dépose
+ * Une formation PUBLIE se vend en ligne, sans compte : n'importe qui dépose
  * sa demande (identité + téléphone Mobile Money), un paiement PAY-F-AAAA naît
  * en EN_ATTENTE (écriture Prisma directe — le pipeline /api/paiements exige un
  * compte connecté, la vitrine publique n'en a pas), et l'équipe de la
  * scolarité / de la direction confirme l'encaissement en mode pilote
  * (POST /formations/inscriptions/:id/confirmer) : le paiement passe REUSSI
- * puis l'inscription passe CONFIRMEE. Au bout du circuit, la scolarité remet
+ * puis l'inscription passe CONFIRME. Au bout du circuit, la scolarité remet
  * l'attestation (module attestations — la vérification par QR s'y fait ; ici
  * le certificat A4 ne fait que signaler l'existence du service).
  *
- * Le nombre de places se lit sur les inscriptions CONFIRMEE : annuler une
- * demande libère la place, confirmer après COMPLETE est refusé.
+ * Le nombre de places se lit sur les inscriptions CONFIRME : annuler une
+ * demande libère la place, confirmer après COMPLET est refusé.
  */
 import {
   BadRequestException,
@@ -85,8 +85,8 @@ export const INSCRIPTION_FORMATION_INCLUDE = {
 
 const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   EN_ATTENTE: 'En attente de paiement',
-  CONFIRMEE: 'Confirmée',
-  ANNULEE: 'Annulée',
+  CONFIRME: 'Confirmé',
+  ANNULE: 'Annulé',
 };
 
 /** "FOR-2026-00001" — dossier d'inscription à une formation continue. */
@@ -110,21 +110,21 @@ export class FormationsService {
   // ------------------------------------------------------- vitrine publique
 
   /**
-   * Les formations PUBLIEE, dans l'ordre de démarrage, avec le nombre de
-   * places restantes (capacité moins les inscriptions CONFIRMEE). Sans
+   * Les formations PUBLIE, dans l'ordre de démarrage, avec le nombre de
+   * places restantes (capacité moins les inscriptions CONFIRME). Sans
    * capacité, la place n'est pas limitée.
    */
   async formationsPubliques() {
     const [formations, comptes] = await Promise.all([
       this.prisma.formation.findMany({
-        where: { statut: StatutFormation.PUBLIEE },
+        where: { statut: StatutFormation.PUBLIE },
         orderBy: [{ dateDebut: 'asc' }],
         take: 100,
         select: FORMATION_PUBLIQUE_SELECT,
       }),
       this.prisma.inscriptionFormation.groupBy({
         by: ['formationId'],
-        where: { statut: StatutInscriptionFormation.CONFIRMEE },
+        where: { statut: StatutInscriptionFormation.CONFIRME },
         _count: { _all: true },
       }),
     ]);
@@ -143,11 +143,11 @@ export class FormationsService {
       select: FORMATION_PUBLIQUE_SELECT,
     });
     if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
-    if (formation.statut !== StatutFormation.PUBLIEE) {
+    if (formation.statut !== StatutFormation.PUBLIE) {
       throw new NotFoundException(t('formations.formation_introuvable'));
     }
     const confirmees = await this.prisma.inscriptionFormation.count({
-      where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
+      where: { formationId: id, statut: StatutInscriptionFormation.CONFIRME },
     });
     return {
       ...formation,
@@ -168,7 +168,7 @@ export class FormationsService {
   async inscriptionPublique(formationId: string, dto: InscriptionFormationPubliqueDto, ip?: string) {
     const formation = await this.prisma.formation.findUnique({ where: { id: formationId } });
     if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
-    if (formation.statut !== StatutFormation.PUBLIEE) {
+    if (formation.statut !== StatutFormation.PUBLIE) {
       throw new BadRequestException(t('formations.cette_formation_n_est_pas_ouverte_aux_inscriptions'));
     }
 
@@ -188,7 +188,7 @@ export class FormationsService {
     }
 
     const confirmees = await this.prisma.inscriptionFormation.count({
-      where: { formationId, statut: StatutInscriptionFormation.CONFIRMEE },
+      where: { formationId, statut: StatutInscriptionFormation.CONFIRME },
     });
     if (formation.capacite != null && confirmees >= formation.capacite) {
       throw new ConflictException(t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
@@ -200,11 +200,11 @@ export class FormationsService {
         const creation = await this.prisma.$transaction(async (tx) => {
           const verrou = await this.verrouillerFormation(tx, formationId);
           const formationCourante = await tx.formation.findUnique({ where: { id: formationId } });
-          if (!formationCourante || formationCourante.statut !== StatutFormation.PUBLIEE) {
+          if (!formationCourante || formationCourante.statut !== StatutFormation.PUBLIE) {
             throw new BadRequestException(t('formations.cette_formation_n_est_pas_ouverte_aux_inscriptions'));
           }
           const confirmees = await tx.inscriptionFormation.count({
-            where: { formationId, statut: StatutInscriptionFormation.CONFIRMEE },
+            where: { formationId, statut: StatutInscriptionFormation.CONFIRME },
           });
           if (verrou.capacite != null && confirmees >= verrou.capacite) {
             throw new ConflictException(t('formations.formation_complete_toutes_les_places_sont_reservees_contacte'));
@@ -416,11 +416,11 @@ export class FormationsService {
       await this.verrouillerFormation(tx, id);
       const formation = await tx.formation.findUnique({ where: { id }, include: FORMATION_INCLUDE });
       if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
-      if (formation.statut === StatutFormation.COMPLETE) {
+      if (formation.statut === StatutFormation.COMPLET) {
         throw new BadRequestException(t('formations.formation_close_le_contenu_en_est_fige_rouvrez_la_avant_de_l'));
       }
       const confirmee = await tx.inscriptionFormation.count({
-        where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
+        where: { formationId: id, statut: StatutInscriptionFormation.CONFIRME },
       });
       if (confirmee > 0 && (dto.titre !== undefined || dto.prix !== undefined)) {
         throw new ConflictException(
@@ -491,7 +491,7 @@ export class FormationsService {
     return { id };
   }
 
-  /** BROUILLON → PUBLIEE : la vitrine s'ouvre, les demandes affluent. */
+  /** BROUILLON → PUBLIE : la vitrine s'ouvre, les demandes affluent. */
   async publier(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       await this.verrouillerFormation(tx, id);
@@ -500,7 +500,7 @@ export class FormationsService {
       if (formation.statut !== StatutFormation.BROUILLON) {
         throw new BadRequestException(
           t(
-            formation.statut === StatutFormation.COMPLETE
+            formation.statut === StatutFormation.COMPLET
               ? 'formations.formation_close_elle_ne_peut_plus_etre_publiee'
               : 'formations.cette_formation_est_deja_publiee',
           ),
@@ -508,7 +508,7 @@ export class FormationsService {
       }
       const maj = await tx.formation.update({
         where: { id },
-        data: { statut: StatutFormation.PUBLIEE },
+        data: { statut: StatutFormation.PUBLIE },
         include: FORMATION_INCLUDE,
       });
       await tx.auditLog.create({
@@ -527,13 +527,13 @@ export class FormationsService {
     });
   }
 
-  /** PUBLIEE → COMPLETE : fin des inscriptions, les dossiers en cours restent. */
+  /** PUBLIE → COMPLET : fin des inscriptions, les dossiers en cours restent. */
   async cloturer(id: string, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       await this.verrouillerFormation(tx, id);
       const formation = await tx.formation.findUnique({ where: { id } });
       if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
-      if (formation.statut !== StatutFormation.PUBLIEE) {
+      if (formation.statut !== StatutFormation.PUBLIE) {
         throw new BadRequestException(
           t(
             formation.statut === StatutFormation.BROUILLON
@@ -544,7 +544,7 @@ export class FormationsService {
       }
       const maj = await tx.formation.update({
         where: { id },
-        data: { statut: StatutFormation.COMPLETE },
+        data: { statut: StatutFormation.COMPLET },
         include: FORMATION_INCLUDE,
       });
       await tx.auditLog.create({
@@ -609,7 +609,7 @@ export class FormationsService {
   /**
    * Confirmation pilote (la scolarité répercute la réponse de l'opérateur
    * Mobile Money au guichet) : le PAIEMENT passe REUSSI (statut, completeLe),
-   * puis l'inscription passe CONFIRMEE puisque le paiement est réussi.
+   * puis l'inscription passe CONFIRME puisque le paiement est réussi.
    * Refusée si la formation est déjà complète : la place a été prise ailleurs.
    */
   async confirmer(id: string, user: AuthUser) {
@@ -621,15 +621,15 @@ export class FormationsService {
         include: INSCRIPTION_FORMATION_INCLUDE,
       });
       if (!avant) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      if (avant.statut === StatutInscriptionFormation.ANNULEE) {
+      if (avant.statut === StatutInscriptionFormation.ANNULE) {
         throw new BadRequestException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
       }
-      if (avant.statut === StatutInscriptionFormation.CONFIRMEE) return avant;
-      if (formation.statut === StatutFormation.COMPLETE) {
+      if (avant.statut === StatutInscriptionFormation.CONFIRME) return avant;
+      if (formation.statut === StatutFormation.COMPLET) {
         throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
       }
       const confirmees = await tx.inscriptionFormation.count({
-        where: { formationId: formation.id, statut: StatutInscriptionFormation.CONFIRMEE },
+        where: { formationId: formation.id, statut: StatutInscriptionFormation.CONFIRME },
       });
       if (formation.capacite != null && confirmees >= formation.capacite) {
         throw new ConflictException(t('formations.la_formation_est_close_cette_place_ne_peut_plus_etre_confirm'));
@@ -647,7 +647,7 @@ export class FormationsService {
       }
       const inscriptionMaj = await tx.inscriptionFormation.updateMany({
         where: { id, statut: avant.statut },
-        data: { statut: StatutInscriptionFormation.CONFIRMEE },
+        data: { statut: StatutInscriptionFormation.CONFIRME },
       });
       if (inscriptionMaj.count !== 1) {
         throw new ConflictException(t('formations.cette_demande_est_annulee_elle_ne_peut_plus_etre_confirmee'));
@@ -692,15 +692,15 @@ export class FormationsService {
       await this.verrouillerFormation(tx, inscription.formationId);
       const avant = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
       if (!avant) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      if (avant.statut === StatutInscriptionFormation.ANNULEE) {
+      if (avant.statut === StatutInscriptionFormation.ANNULE) {
         throw new ConflictException(t('formations.cette_demande_est_deja_annulee'));
       }
-      if (avant.statut === StatutInscriptionFormation.CONFIRMEE) {
+      if (avant.statut === StatutInscriptionFormation.CONFIRME) {
         throw new ConflictException(t('formations.annulation_inscription_confirmee_exige_remboursement'));
       }
       const transition = await tx.inscriptionFormation.updateMany({
         where: { id, statut: avant.statut },
-        data: { statut: StatutInscriptionFormation.ANNULEE },
+        data: { statut: StatutInscriptionFormation.ANNULE },
       });
       if (transition.count !== 1) throw new ConflictException(t('formations.cette_demande_est_deja_annulee'));
       const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
@@ -727,7 +727,7 @@ export class FormationsService {
    * Attestation de formation, A4, imprimée en nouvel onglet. Le jeton passe
    * en paramètre d'URL (pas d'en-tête Authorization possible) et est vérifié
    * à la main, comme /attestations/:id/imprimer. Seules les inscriptions
-   * CONFIRMEE (payées) donnent droit au document. La vérification du
+   * CONFIRME (payées) donnent droit au document. La vérification du
    * document relève du module attestations : le pied de page le signale.
    */
   async certificat(id: string, token: string | undefined, baseUrl: string): Promise<string> {
@@ -738,7 +738,7 @@ export class FormationsService {
     }
 
     const inscription = await this.trouverInscription(id);
-    if (inscription.statut !== StatutInscriptionFormation.CONFIRMEE) {
+    if (inscription.statut !== StatutInscriptionFormation.CONFIRME) {
       throw new BadRequestException(
         t('formations.inscription_numero_n_est_pas_confirmee_libelle_statut_inscri', {
           numero: inscription.numero,

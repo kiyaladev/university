@@ -81,7 +81,7 @@ async function main() {
     });
     ids.etudiant.push(e.id);
     const inscription = await db.inscription.create({
-      data: { numero: tag + '-' + i, etudiantId: e.id, promotionId: promotion.id, anneeId: year.id, statut: 'VALIDEE' },
+      data: { numero: tag + '-' + i, etudiantId: e.id, promotionId: promotion.id, anneeId: year.id, statut: 'VALIDE' },
     });
     ids.inscription.push(inscription.id);
   }

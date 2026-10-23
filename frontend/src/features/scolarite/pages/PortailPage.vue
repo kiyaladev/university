@@ -154,13 +154,13 @@
               v-for="a in profil.attestations"
               :key="a.id"
               class="carte-portail__ligne"
-              :class="{ 'carte-portail__ligne--revokee': a.statut === 'REVOQUEE' }"
+              :class="{ 'carte-portail__ligne--revokee': a.statut === 'REVOQUE' }"
             >
               <span class="carte-portail__item-texte">
                 <span class="lettrage carte-portail__item-titre">{{ LIBELLE_TYPE_ATTESTATION[a.type] }}</span>
                 <span class="pochoir pochoir--brut chiffres carte-portail__date">
                   {{ a.numero }} · {{ dateLisible(a.emiseLe) }}
-                  <span v-if="a.statut === 'REVOQUEE'" class="text-negative">
+                  <span v-if="a.statut === 'REVOQUE'" class="text-negative">
                     · {{ $t('portail.sections.attestations.revoked') }}</span
                   >
                 </span>
@@ -397,7 +397,7 @@ interface AttestationPortail {
   numero: string;
   type: string;
   motif?: string | null;
-  statut: 'EMISE' | 'REVOQUEE';
+  statut: 'EMIS' | 'REVOQUE';
   emiseLe: string;
 }
 
