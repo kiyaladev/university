@@ -183,6 +183,15 @@
           >
             <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
           </q-btn>
+<q-btn v-close-popup
+            v-if="p.row.statut === 'PLANIFIE' && peutAnnuler"
+            flat
+            dense no-caps
+            icon="block"
+            color="negative"
+            :aria-label="$t('examens.table.tooltips.cancel')" :label="$t('examens.actions.cancelExam')"
+            @click.stop="annulerExamen(p.row)"
+          />
 </actions-secondaires>
 </q-td>
       </template>
@@ -247,6 +256,16 @@
               @click.stop="allerTirage(e)"
             />
 <q-btn v-close-popup flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
+<q-btn v-close-popup
+              v-if="e.statut === 'PLANIFIE' && peutAnnuler"
+              flat
+              dense
+              no-caps
+              icon="block"
+              color="negative"
+              :label="$t('examens.actions.cancelExam')"
+              @click.stop="annulerExamen(e)"
+            />
 </actions-secondaires>
 </q-card-actions>
         </q-card>
@@ -467,6 +486,8 @@ const ex = reactive(
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const peutDemarrer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CONTROLEUR']));
 const peutTerminer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+/** Miroir du `@Roles` de `PUT /examens/:id/statut`. */
+const peutAnnuler = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 /** La route `tirage` est réservée à l'administration et à la scolarité. */
 const peutVoirTirage = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
@@ -596,9 +617,11 @@ function allerScan(e: Examen | null) {
 }
 
 /** Passe l'examen à l'étape suivante, puis montre l'onglet où il se trouve désormais. */
-async function changerStatut(e: Examen, action: 'demarrer' | 'terminer', cible: StatutExamen, message: string) {
+async function changerStatut(e: Examen, action: 'demarrer' | 'terminer' | 'annuler', cible: StatutExamen, message: string) {
   try {
-    await api.post(`/examens/${e.id}/${action}`);
+    // L'annulation passe par `PUT /examens/:id/statut` (PLANIFIE → ANNULE seulement).
+    if (action === 'annuler') await api.put(`/examens/${e.id}/statut`, { statut: 'ANNULE' });
+    else await api.post(`/examens/${e.id}/${action}`);
   } catch {
     return; /* notifié par l'intercepteur */
   }
@@ -625,6 +648,17 @@ async function terminer(e: Examen) {
     danger: true,
   });
   if (ok) await changerStatut(e, 'terminer', 'TERMINE', t('examens.messages.finished'));
+}
+
+/** Le backend n'accepte pas de motif : simple confirmation. */
+async function annulerExamen(e: Examen) {
+  const ok = await confirmer({
+    titre: t('examens.confirm.cancelTitle'),
+    message: t('examens.confirm.cancelMessage', { code: e.codeExamen, title: e.intitule }),
+    ok: t('examens.confirm.cancelAction'),
+    danger: true,
+  });
+  if (ok) await changerStatut(e, 'annuler', 'ANNULE', t('examens.messages.cancelled'));
 }
 </script>
 
