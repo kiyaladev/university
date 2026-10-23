@@ -130,7 +130,7 @@ async function main() {
       productionUntouched: true,
     };
     fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/justificatifs-regression.json',
+      '../docs/audits/preuves/2026-10-06/justificatifs-regression.json',
       JSON.stringify(proof, null, 2),
     );
     console.log(JSON.stringify(proof));
@@ -243,7 +243,7 @@ async function main() {
     httpLoginRouteQualified: false,
     productionUntouched: true,
   };
-  fs.writeFileSync('../audit/recommandations-2026-10-06/justificatifs.json', JSON.stringify(proof, null, 2));
+  fs.writeFileSync('../docs/audits/preuves/2026-10-06/justificatifs.json', JSON.stringify(proof, null, 2));
   console.log(JSON.stringify(proof));
 }
 main()

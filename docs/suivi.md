@@ -29,8 +29,8 @@ ESLint (backend) sans erreur. Le frontend n’est pas touché par ce lot.
 | P1 | Qualification métier | Cycles complets, refus, reprises et impressions vérifiés avec les agents et des données QA |
 | P1 | SMS/OTP, Mobile Money, biométrie | Essais avec fournisseurs et matériel de recette, échecs et doublons compris |
 | P1 | Terrain et accessibilité | Tournée sur téléphone réel, lecteur d’écran, contrôles manuels |
-| P2 | Clôture et correction | Politique de correction après clôture décidée ; [mutations indirectes](../audit/recommandations/matrice-mutations-annee-2026-10-03.json) alignées et testées |
-| P2 | Multi-établissement | Architecture choisie (base partagée cloisonnée ou base par université, [cadrage](../audit/recommandations/architecture-multi-etablissement.md)), isolation vérifiée avec deux universités |
+| P2 | Clôture et correction | Politique de correction après clôture décidée ; [mutations indirectes](audits/preuves/2026-10-03/matrice-mutations-annee-2026-10-03.json) alignées et testées |
+| P2 | Multi-établissement | Architecture choisie (base partagée cloisonnée ou base par université, [cadrage](audits/preuves/2026-10-03/architecture-multi-etablissement.md)), isolation vérifiée avec deux universités |
 
 ## Décisions en attente
 
@@ -59,45 +59,45 @@ ESLint (backend) sans erreur. Le frontend n’est pas touché par ce lot.
 
 | Module | État | Reste à faire |
 | --- | --- | --- |
-| Présences et tournée | Recette QA en navigateur : préparation, séance et pointage signé hors ligne, file chiffrée, reconnexion sans doublon, échec partiel conservé en file ([preuve](../audit/recommandations-2026-10-06/pointage-formulaire-hors-ligne-qa.json)) | Appareil terrain, caméra/GPS, attestation par une personne réelle ; anti-rejeu hors ligne d’une empreinte seule |
-| Planning, séances, référentiels | Recette QA HTTP : génération idempotente, jours exclus, collisions, synchronisation UUID, refus après clôture ([preuve](../audit/recommandations-2026-10-06/planning-http.json)) | Formulaires navigateur, validation par les agents |
+| Présences et tournée | Recette QA en navigateur : préparation, séance et pointage signé hors ligne, file chiffrée, reconnexion sans doublon, échec partiel conservé en file ([preuve](audits/preuves/2026-10-06/pointage-formulaire-hors-ligne-qa.json)) | Appareil terrain, caméra/GPS, attestation par une personne réelle ; anti-rejeu hors ligne d’une empreinte seule |
+| Planning, séances, référentiels | Recette QA HTTP : génération idempotente, jours exclus, collisions, synchronisation UUID, refus après clôture ([preuve](audits/preuves/2026-10-06/planning-http.json)) | Formulaires navigateur, validation par les agents |
 | Clôture des années | Verrouillage transactionnel des mutations rattachées | Revue des autres modules ; règle de correction ou réouverture |
-| Imports des référentiels | CSV et XLSX ; enseignants, matières, salles, créneaux qualifiés par HTTP ; parcours XLSX Salles à 375 px ([preuve](../audit/recommandations-2026-10-06/imports-http.json)) | Fichiers historiques de l’établissement |
-| Rapports de présence | Relevé PDF hebdomadaire numéroté, SHA-256 au journal, contenu vérifié par extraction ([preuve](../audit/recommandations-2026-10-06/releve-pdf-http.json)) | Lecture humaine, rendu physique |
-| Contrôle des tournées | Affectation des séances, couverture et réalisation distinguées ([preuve](../audit/recommandations-2026-10-06/tournees-couverture-http.json)) | Équipes et tournées réelles |
+| Imports des référentiels | CSV et XLSX ; enseignants, matières, salles, créneaux qualifiés par HTTP ; parcours XLSX Salles à 375 px ([preuve](audits/preuves/2026-10-06/imports-http.json)) | Fichiers historiques de l’établissement |
+| Rapports de présence | Relevé PDF hebdomadaire numéroté, SHA-256 au journal, contenu vérifié par extraction ([preuve](audits/preuves/2026-10-06/releve-pdf-http.json)) | Lecture humaine, rendu physique |
+| Contrôle des tournées | Affectation des séances, couverture et réalisation distinguées ([preuve](audits/preuves/2026-10-06/tournees-couverture-http.json)) | Équipes et tournées réelles |
 | Inscriptions au guichet | Recette QA | Préinscription publique avec OTP réel |
 | Paiement et Mobile Money | Pilote : confirmation manuelle vérifiée, simulation étudiante désactivée en production | Transaction opérateur, callback, rapprochement |
 | Documents demandés | Recette QA guichet : demande, paiement, traitement, remise | Clôture pour anciens étudiants ; SMS réel |
 | Évaluations et notes | Recette QA : saisie, clôture, périmètre départemental | — |
-| Délibérations et bulletins | Recette QA normale et rattrapage, validation concurrente unique, gel ([preuve](../audit/recommandations-2026-10-06/rattrapage.json)) | Règles pédagogiques humaines, impression physique |
+| Délibérations et bulletins | Recette QA normale et rattrapage, validation concurrente unique, gel ([preuve](audits/preuves/2026-10-06/rattrapage.json)) | Règles pédagogiques humaines, impression physique |
 | Réclamations | Recette QA : fil, assignation, anonymat, clôture | Escalade et validation métier |
 | Réservations de salles | Recette QA : collisions sérialisables (409) | Calendrier réel |
-| Paie des vacataires | Recette QA : calcul, validation, gel, paiement unique ([preuve](../audit/recommandations-2026-10-06/paie-http.json)) | Validation comptable, rapprochement |
-| Élections | Recette QA : bulletin unique, transitions concurrentes, proclamation ([preuve](../audit/recommandations-2026-10-06/elections.json)) | Validation humaine des règles électorales |
-| Attestations et QR | Recette QA HTTP et formulaire à 375 px : émission, rattachement, révocation concurrente, motif confidentiel ([preuve](../audit/recommandations-2026-10-06/rattachement-attestations.json)) | Validation terrain |
-| Justificatifs | Recette QA sur deux départements, décision unique sous concurrence ([preuve](../audit/recommandations-2026-10-06/justificatifs.json)) | Recette humaine ; règle de correction |
-| Salles et affiches QR | Recette QA HTTP : affiches protégées, rotation, impressions journalisées ([preuve](../audit/recommandations-2026-10-06/salles-qr-http.json)) | Impression et scan physiques |
-| Cartes étudiantes et badges | Pilote : émission, NIP, expiration, révocation, prolongation à 375 px ([preuve](../audit/recommandations-2026-10-06/carte-prolongation.json)) | Remplacement avec nouveau QR ; scan et impression sur site |
+| Paie des vacataires | Recette QA : calcul, validation, gel, paiement unique ([preuve](audits/preuves/2026-10-06/paie-http.json)) | Validation comptable, rapprochement |
+| Élections | Recette QA : bulletin unique, transitions concurrentes, proclamation ([preuve](audits/preuves/2026-10-06/elections.json)) | Validation humaine des règles électorales |
+| Attestations et QR | Recette QA HTTP et formulaire à 375 px : émission, rattachement, révocation concurrente, motif confidentiel ([preuve](audits/preuves/2026-10-06/rattachement-attestations.json)) | Validation terrain |
+| Justificatifs | Recette QA sur deux départements, décision unique sous concurrence ([preuve](audits/preuves/2026-10-06/justificatifs.json)) | Recette humaine ; règle de correction |
+| Salles et affiches QR | Recette QA HTTP : affiches protégées, rotation, impressions journalisées ([preuve](audits/preuves/2026-10-06/salles-qr-http.json)) | Impression et scan physiques |
+| Cartes étudiantes et badges | Pilote : émission, NIP, expiration, révocation, prolongation à 375 px ([preuve](audits/preuves/2026-10-06/carte-prolongation.json)) | Remplacement avec nouveau QR ; scan et impression sur site |
 | Portail étudiant | Pilote : profil limité, OTP sans énumération | SMS réel, tâches quotidiennes |
 | SMS et notifications | Pilote : contrat fournisseur simulé | Passerelle et livraison réelles |
 | Cités et logements | Recette QA : attribution unique, maintenance, retrait | Occupation par lit, critères sociaux |
-| Restaurant et portefeuille | Recette QA espèces et confirmation manuelle ([preuve](../audit/recommandations-2026-10-06/restaurant.json)) | Recharge opérateur, appareil de guichet |
+| Restaurant et portefeuille | Recette QA espèces et confirmation manuelle ([preuve](audits/preuves/2026-10-06/restaurant.json)) | Recharge opérateur, appareil de guichet |
 | Bibliothèque numérique | Recette QA : dépôt, publication, téléchargement, plagiat exact | Validation documentaire, données réelles |
-| VOD | Recette QA : accès privés, progression, affectation à 375 px ([preuve](../audit/recommandations-2026-10-06/vod.json)) | Médias réels, validation pédagogique |
-| Stages et mémoires | Recette QA du cycle stage ([preuve](../audit/recommandations-2026-10-06/modules-pilotes.json)) | Jury réel, réactivation |
-| Helpdesk | Recette QA dont concurrence ([preuve](../audit/recommandations-2026-10-06/helpdesk-concurrence-http.json)) | Étiquettes sur site, validation DSI |
-| Formation continue | Recette QA : capacité, confirmation unique, annulation ([preuve](../audit/recommandations-2026-10-06/formations.json)) | Paiement opérateur, validation pédagogique |
-| Examens et tirage | Recette QA HTTP et circuit à 375 px ([preuve](../audit/recommandations-2026-10-06/examens-tirage.json)) | Identité sur site, impression physique |
+| VOD | Recette QA : accès privés, progression, affectation à 375 px ([preuve](audits/preuves/2026-10-06/vod.json)) | Médias réels, validation pédagogique |
+| Stages et mémoires | Recette QA du cycle stage ([preuve](audits/preuves/2026-10-06/modules-pilotes.json)) | Jury réel, réactivation |
+| Helpdesk | Recette QA dont concurrence ([preuve](audits/preuves/2026-10-06/helpdesk-concurrence-http.json)) | Étiquettes sur site, validation DSI |
+| Formation continue | Recette QA : capacité, confirmation unique, annulation ([preuve](audits/preuves/2026-10-06/formations.json)) | Paiement opérateur, validation pédagogique |
+| Examens et tirage | Recette QA HTTP et circuit à 375 px ([preuve](audits/preuves/2026-10-06/examens-tirage.json)) | Identité sur site, impression physique |
 | Patrimoine et réparations | Recette QA : verrou de ligne, QR régénéré | Étiquettes, amortissement |
-| Courrier administratif | Recette QA : circuit ordonné, cloisonnement départemental ([preuve](../audit/recommandations-2026-10-06/courrier-departements.json)) | Validation par le secrétariat |
-| Rectorat et MESRS | Recette QA : effectifs et instantané conservé ([preuve](../audit/recommandations-2026-10-06/rectorat.json)) | Définitions des indicateurs, transmission au ministère |
-| Régie des recettes | Recette QA HTTP et guichet à 375 px ([preuve](../audit/recommandations-2026-10-06/regie.json)) | Caisse réelle, validation comptable |
-| Journal d’audit | Recette QA : 112 configurations sur événements réels, contenus privés masqués ([couverture](../audit/recommandations-2026-10-06/journal-couverture-interface.json)) | Autres familles d’événements |
+| Courrier administratif | Recette QA : circuit ordonné, cloisonnement départemental ([preuve](audits/preuves/2026-10-06/courrier-departements.json)) | Validation par le secrétariat |
+| Rectorat et MESRS | Recette QA : effectifs et instantané conservé ([preuve](audits/preuves/2026-10-06/rectorat.json)) | Définitions des indicateurs, transmission au ministère |
+| Régie des recettes | Recette QA HTTP et guichet à 375 px ([preuve](audits/preuves/2026-10-06/regie.json)) | Caisse réelle, validation comptable |
+| Journal d’audit | Recette QA : 112 configurations sur événements réels, contenus privés masqués ([couverture](audits/preuves/2026-10-06/journal-couverture-interface.json)) | Autres familles d’événements |
 | Administration et comptes | Refus des mots de passe publics préparé | Voir P0 « Comptes réels » |
 | Sauvegarde et restauration | Recette locale (dump, restauration, comparaison) | Voir P0 « Sauvegarde hors serveur » |
 | Biométrie | Pilote : gabarits chiffrés, purge atomique ; passerelle `biometrie/` en prototype ([biometrie.md](biometrie.md)) | Lecteur réel, consentement, écran des appareils enrôlés |
 | Internationalisation | Parité FR/EN vérifiée (`test:catalogues`) | Revue humaine des formulations |
-| Navigation et mobile | Recette technique : cinq rubriques, sept rôles, simplification du 13 octobre ([bilan](../SIMPLIFICATION_2026_10_13.md)) | Retours d’un contrôleur et d’un agent de scolarité |
+| Navigation et mobile | Recette technique : cinq rubriques, sept rôles, simplification du 13 octobre ([bilan](audits/2026-10-13-bilan-simplification.md)) | Retours d’un contrôleur et d’un agent de scolarité |
 | Accessibilité | axe-core sans violation automatique ; parcours clavier | Lecteur d’écran, cas `incomplete` |
 
 ## Outillage et code

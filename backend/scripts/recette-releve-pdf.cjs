@@ -201,7 +201,7 @@ main()
     report.physicalAndHumanValidationPending = true;
     report.productionUntouched = true;
     fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/releve-pdf-http.json',
+      '../docs/audits/preuves/2026-10-06/releve-pdf-http.json',
       JSON.stringify(report, null, 2) + '\n',
     );
     await db.$disconnect();

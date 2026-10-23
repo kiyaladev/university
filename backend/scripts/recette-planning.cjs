@@ -174,7 +174,7 @@ main()
       'Formulaires navigateur et acceptation humaine non qualifiés par cette recette',
       'Synchronisation des pointages et appareil terrain non qualifiés par cette recette',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/planning-http.json', JSON.stringify(report, null, 2) + '\n');
+    fs.writeFileSync('../docs/audits/preuves/2026-10-06/planning-http.json', JSON.stringify(report, null, 2) + '\n');
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

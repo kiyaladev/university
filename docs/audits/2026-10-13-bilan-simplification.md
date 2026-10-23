@@ -45,7 +45,7 @@ Les services facultatifs conservent leur configuration actuelle. Leur désactiva
 - File hors ligne : chiffrement avant persistance, absence du PIN, décryptage après rechargement, retrait après synchronisation et migration des anciennes files vérifiés.
 - `git diff --check` : réussi.
 
-Tests reproductibles : `frontend/tests/simplification.mjs` et `frontend/tests/simplification-parcours.mjs`. La recette complète exige une API locale et la base QA explicitement nommée ; elle ne doit pas viser la production.
+Tests reproductibles : `../../frontend/tests/simplification.mjs` et `../../frontend/tests/simplification-parcours.mjs`. La recette complète exige une API locale et la base QA explicitement nommée ; elle ne doit pas viser la production.
 
 Les résultats de recette sont conservés dans `/tmp/university-root-final-interface`, `/tmp/university-root-final-parcours` et `/tmp/university-root-final-offline.log`. Les contrôles de lisibilité et leurs captures sont dans `/tmp/university-simplification-qa/accessibilite-finale.json` et `/tmp/university-simplification-qa`. Les derniers libellés du portail ont été revérifiés après compilation.
 
@@ -65,9 +65,9 @@ La compilation PWA de production utilise `https://university-api.naimba.com/api`
 
 - Candidat prêt : `/var/backups/university/frontend/simplification-candidat-20261013T1825Z.tar.gz`.
 - Retour arrière local : `/var/backups/university/frontend/avant-simplification-20261013T182353Z.tar.gz` ; les 263 fichiers ont été comparés au site servi. Cette copie locale ne remplace pas la sauvegarde hors serveur demandée par la procédure.
-- Inventaire et résultats : [publication.json](audit/simplification-2026-10-13/publication.json).
+- Inventaire et résultats : [publication.json](preuves/2026-10-13/publication.json).
 - Protection ajoutée dans `frontend/quasar.config.ts` : une API de boucle locale exige `QA_BUILD_DIR`. Le refus a été vérifié avant toute écriture, avec contrôle de l’intégrité du site servi.
 
-L’inspection de production du 13 octobre refuse la publication : dix comptes actifs utilisent encore un mot de passe de démonstration, aucun administrateur réel n’est configuré, neuf migrations sont en attente et aucune destination SSH de sauvegarde hors serveur n’est renseignée. [Rapport en lecture seule](audit/simplification-2026-10-13/preflight-publication.json).
+L’inspection de production du 13 octobre refuse la publication : dix comptes actifs utilisent encore un mot de passe de démonstration, aucun administrateur réel n’est configuré, neuf migrations sont en attente et aucune destination SSH de sauvegarde hors serveur n’est renseignée. [Rapport en lecture seule](preuves/2026-10-13/preflight-publication.json).
 
-La [procédure du README](README.md#6-déploiement) demande de lever ces préconditions avant une mise à jour. Le site servi reste donc sur la version restaurée. Aucun compte, service, schéma de données ou processus API de production n’a été modifié pendant cette préparation.
+La [procédure du README](../../README.md#6-déploiement) demande de lever ces préconditions avant une mise à jour. Le site servi reste donc sur la version restaurée. Aucun compte, service, schéma de données ou processus API de production n’a été modifié pendant cette préparation.

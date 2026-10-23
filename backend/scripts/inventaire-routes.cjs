@@ -5,7 +5,7 @@ const path = require('node:path');
 const ts = require('typescript');
 
 const racine = path.resolve(__dirname, '..');
-const sortie = process.argv[2] || path.resolve(racine, '../audit/recommandations/inventaire-routes.json');
+const sortie = process.argv[2] || path.resolve(racine, '../docs/audits/preuves/2026-10-03/inventaire-routes.json');
 const fichiers = [];
 function parcourir(dir) {
   for (const entree of fs.readdirSync(dir, { withFileTypes: true })) {

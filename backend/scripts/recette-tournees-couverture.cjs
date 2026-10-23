@@ -162,7 +162,7 @@ main()
     report.productionUntouched = true;
     report.limites = ['Tournées réelles, validation humaine et appareil terrain non qualifiés'];
     fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/tournees-couverture-http.json',
+      '../docs/audits/preuves/2026-10-06/tournees-couverture-http.json',
       JSON.stringify(report, null, 2) + '\n',
     );
     await db.$disconnect();

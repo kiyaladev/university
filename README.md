@@ -67,12 +67,13 @@ d’environnement : [docs/exploitation.md](docs/exploitation.md).
 
 | Document | Contenu |
 | --- | --- |
+| [docs/README.md](docs/README.md) | **Index de la documentation** : où chercher quoi, ce qui est vivant et ce qui est figé |
 | [docs/architecture.md](docs/architecture.md) | Modules, rôles, flux principaux, briques communes du backend et du frontend |
 | [docs/exploitation.md](docs/exploitation.md) | Ports, PM2, nginx, déploiement, sauvegarde et restauration, preflight, variables d’environnement, outillage |
 | [docs/suivi.md](docs/suivi.md) | **Backlog vivant** : état par module, priorités, décisions en attente |
 | [docs/android.md](docs/android.md) | Application Android et lecteur d’empreintes USB-OTG |
 | [docs/biometrie.md](docs/biometrie.md) | Attestation par empreinte et passerelle `biometrie/` (prototype) |
-| [docs/audits/](docs/audits/README.md) | Audits datés, figés |
-| [SIMPLIFICATION_2026_10_13.md](SIMPLIFICATION_2026_10_13.md) | Bilan de la simplification des parcours |
+| [docs/audits/](docs/audits/README.md) | Audits datés, figés, et leurs preuves |
+| [docs/audits/2026-10-13-bilan-simplification.md](docs/audits/2026-10-13-bilan-simplification.md) | Bilan de la simplification des parcours |
 | [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md) | Contexte produit et système de design (lus par l’outil de design) |
 | [infra/nginx/README.md](infra/nginx/README.md) | Vhosts nginx |

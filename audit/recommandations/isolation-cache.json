@@ -1,9 +1,0 @@
-{
-  "date": "2026-10-02T10:24:05.758Z",
-  "checks": [
-    "Deux sessions pour une même URL",
-    "Aucun jeton dans les clés du cache",
-    "Projection étudiant conservée hors ligne",
-    "Cache administrateur séparé"
-  ]
-}

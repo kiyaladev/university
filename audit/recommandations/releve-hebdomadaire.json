@@ -1,9 +1,0 @@
-{
-  "date": "2026-10-02",
-  "route": "POST /api/impression/releve-hebdomadaire",
-  "perimetre": "Chef authentifié et actif, limité à son propre département ; plage hebdomadaire lundi-dimanche.",
-  "document": "PDF A4 paysage avec en-tête établissement, séances, synthèse, signatures enseignants disponibles, numéro unique et signature manuscrite du chef.",
-  "audit": "Journalise l’acteur, le département, la période, le hash de la signature et le SHA-256 du PDF. Le hash du document est retourné dans l’en-tête X-Document-SHA256.",
-  "verification": "Deux tests passent : génération d’un PDF réel avec entrée d’audit et refus d’un département tiers. Compilation backend et typage frontend réussis.",
-  "limite": "La signature manuscrite est reproduite visuellement et associée à une trace d’audit ; aucune signature électronique qualifiée (PAdES) n’est appliquée. Recette avec chefs de département et vérification de conservation à faire."
-}
