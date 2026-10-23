@@ -1,33 +1,29 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('mesSeances.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('mesSeances.subtitle') }}
+    <page-header :title="$t('mesSeances.title')" :subtitle="$t('mesSeances.subtitle')">
+      <template #actions>
+        <div class="row q-gutter-sm items-center">
+          <champ-date v-model="dateDebut" :label="$t('mesSeances.filters.from')" style="width: 152px" />
+          <champ-date v-model="dateFin" :label="$t('mesSeances.filters.to')" style="width: 152px" />
+          <q-btn
+            flat
+            no-caps
+            icon="assignment_turned_in"
+            :label="$t('mesSeances.actions.myJustificatifs')"
+            to="/justificatifs"
+          />
+          <q-btn
+            outline
+            color="primary"
+            icon="print"
+            no-caps
+            :label="$t('mesSeances.actions.printAttendance')"
+            :disable="!auth.utilisateur?.enseignantId"
+            @click="imprimer"
+          />
         </div>
-      </div>
-      <div class="col-auto row q-gutter-sm items-center">
-        <champ-date v-model="dateDebut" :label="$t('mesSeances.filters.from')" style="width: 152px" />
-        <champ-date v-model="dateFin" :label="$t('mesSeances.filters.to')" style="width: 152px" />
-        <q-btn
-          flat
-          no-caps
-          icon="assignment_turned_in"
-          :label="$t('mesSeances.actions.myJustificatifs')"
-          to="/justificatifs"
-        />
-        <q-btn
-          outline
-          color="primary"
-          icon="print"
-          no-caps
-          :label="$t('mesSeances.actions.printAttendance')"
-          :disable="!auth.utilisateur?.enseignantId"
-          @click="imprimer"
-        />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <section class="plaque releve-chiffres">
       <div v-for="k in kpis" :key="k.libelle" class="releve-chiffres__cellule">
@@ -77,9 +73,11 @@
       row-key="id"
       :loading="chargement"
       :pagination="{ rowsPerPage: 25 }"
-      :no-data-label="$t('mesSeances.emptyState.seances')"
       :loading-label="$t('mesSeances.table.loadingLabel')"
     >
+      <template #no-data>
+        <etat-vide icone="event_busy" :titre="$t('mesSeances.emptyState.seances')" />
+      </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
           <champ-statut :statut="p.row.statut" dense />
@@ -101,6 +99,8 @@ import { useAuthStore } from '../stores/auth';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '../components/ChampDate.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import {
   aujourdhui,
   dateLisible,

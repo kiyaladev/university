@@ -1,14 +1,7 @@
 <template>
   <q-page class="edt">
-    <header class="edt__entete">
-      <div>
-        <h1 class="page-titre">{{ $t('emploiDuTemps.title') }}</h1>
-        <p class="page-sous-titre">
-          {{ $t('emploiDuTemps.subtitle') }}
-        </p>
-      </div>
-
-      <div class="edt__actions">
+    <page-header :title="$t('emploiDuTemps.title')" :subtitle="$t('emploiDuTemps.subtitle')">
+      <template #actions>
         <q-btn
           v-if="auth.peutPlanifier"
           outline
@@ -36,8 +29,8 @@
           :label="$t('emploiDuTemps.actions.newSlot')"
           @click="ouvrir(null)"
         />
-      </div>
-    </header>
+      </template>
+    </page-header>
 
     <!-- Semaine affichée : la grille montre ce qui vaut cette semaine-là -->
     <div class="edt__semaine">
@@ -281,6 +274,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
+import PageHeader from '../components/PageHeader.vue';
 import CreneauDialog from '../components/CreneauDialog.vue';
 import GenerationDialog from '../components/GenerationDialog.vue';
 import { LIBELLE_TYPE_COURS, decalerJours, heuresLisibles } from '../utils/libelles';
@@ -507,21 +501,6 @@ onMounted(async () => {
 <style scoped lang="scss">
 .edt {
   padding: var(--up-4) var(--up-3) var(--up-6);
-}
-
-.edt__entete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--up-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
-}
-
-.edt__actions {
-  display: flex;
-  gap: var(--up-2);
-  flex-wrap: wrap;
 }
 
 .edt__semaine {
