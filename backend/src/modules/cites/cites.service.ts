@@ -24,12 +24,14 @@ import {
   CreateChambreDto,
   CreateResidenceDto,
   DeciderAttributionDto,
+  ResidenceQueryDto,
   RetirerAttributionDto,
   UpdateChambreDto,
   UpdateResidenceDto,
 } from './cites.dto';
 import { journaliser } from '../../common/audit';
 import { toMontant } from '../../common/finances/montant';
+import { toBool } from '../../common/transformers';
 
 const RESIDENCE_INCLUDE = {
   _count: { select: { chambres: true } },
@@ -67,6 +69,25 @@ export class ResidencesService extends CrudService {
       orderBy: [{ code: 'asc' }],
       include: RESIDENCE_INCLUDE,
       label: 'Résidence',
+    });
+  }
+
+  /**
+   * Filtres de la liste des résidences.
+   *
+   * Le contrôleur transmettait la requête au service sans `where` : les
+   * filtres déclarés par `ResidenceQueryDto` (ville, état) étaient donc
+   * acceptés, validés, puis ignorés — l'écran affichait tout le parc.
+   *
+   * La ville est comparée sans tenir compte de la casse ; l'état est lu
+   * par {@link toBool}, qui traduit « false » en `false` (la conversion
+   * implicite de class-transformer en ferait `true`).
+   */
+  findAll(query: ResidenceQueryDto) {
+    const actif = toBool(query.actif);
+    return super.findAll(query, {
+      ...(query.ville ? { ville: { contains: query.ville, mode: 'insensitive' } } : {}),
+      ...(typeof actif === 'boolean' ? { actif } : {}),
     });
   }
 

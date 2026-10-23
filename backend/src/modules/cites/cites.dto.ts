@@ -2,6 +2,7 @@ import { PartialType } from '@nestjs/swagger';
 import { CategorieChambre, StatutAttributionLogement, StatutChambre } from '@prisma/client';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { QueryDto } from '../../common/dto';
+import { ToBoolean } from '../../common/transformers';
 
 // ---------------------------------------------------------------------------
 // Résidences
@@ -21,7 +22,12 @@ export class UpdateResidenceDto extends PartialType(CreateResidenceDto) {}
 
 export class ResidenceQueryDto extends QueryDto {
   @IsOptional() @IsString() ville?: string;
-  @IsOptional() @IsBoolean() actif?: boolean;
+  /**
+   * `?actif=false` arrive en chaîne : sans transformateur, la conversion
+   * implicite en donnerait `true` (toute chaîne non vide est vraie) et le
+   * filtre demandé deviendrait son contraire.
+   */
+  @IsOptional() @ToBoolean() @IsBoolean() actif?: boolean;
 }
 
 // ---------------------------------------------------------------------------
