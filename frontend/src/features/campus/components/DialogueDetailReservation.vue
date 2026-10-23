@@ -135,19 +135,13 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import { dateHeureLisible } from '@/shared/utils/libelles';
-import type { ReservationSalle, Salle } from '@/types';
-
-/** Champs renvoyés par l'API mais non inscrits dans types.ts (ajouts récents). */
-type ReservationDetail = ReservationSalle & {
-  demandeurId?: string | null;
-  refuseParId?: string | null;
-  refusePar?: { id: string; nom: string; prenom: string } | null;
-};
+import { dateHeureLisible } from '@/shared/utils/format';
+import { reservationsService } from '../services/reservations';
+import type { ReservationDetail } from '../types';
+import type { Salle } from '@/types';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -212,14 +206,10 @@ async function decider(statut: 'CONFIRME' | 'REFUSE') {
   enCours.value = statut === 'CONFIRME' ? 'confirmer' : 'refuser';
   erreur.value = '';
   try {
-    await api.post(
-      `/reservations/${id}/decider`,
-      {
-        statut,
-        ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
-      },
-      { silencieux: true },
-    );
+    await reservationsService.decider(id, {
+      statut,
+      ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
+    });
     $q.notify({
       type: statut === 'CONFIRME' ? 'positive' : 'warning',
       message: t(statut === 'CONFIRME' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
@@ -236,15 +226,11 @@ async function modifier() {
   enCours.value = 'modifier';
   erreur.value = '';
   try {
-    await api.put(
-      `/reservations/${props.reservation!.id}`,
-      {
-        ...form.value,
-        organisme: form.value.organisme || undefined,
-        responsable: form.value.responsable || undefined,
-      },
-      { silencieux: true },
-    );
+    await reservationsService.modifier(props.reservation!.id, {
+      ...form.value,
+      organisme: form.value.organisme || undefined,
+      responsable: form.value.responsable || undefined,
+    });
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
   } catch (e: any) {
@@ -265,7 +251,7 @@ async function annuler() {
   enCours.value = 'annuler';
   erreur.value = '';
   try {
-    await api.delete(`/reservations/${props.reservation!.id}`, { silencieux: true });
+    await reservationsService.supprimer(props.reservation!.id);
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
     emit('change');
     emit('update:modelValue', false);
