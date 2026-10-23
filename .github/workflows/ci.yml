@@ -77,18 +77,14 @@ jobs:
         working-directory: frontend
         run: bun run lint
 
-      # Le backend est au format Prettier ; le frontend signale encore huit
-      # fichiers, tous dans `frontend/src/features/` (refactorisation en cours
-      # parallèlement). Le contrôle reste donc informatif : il redeviendra
-      # bloquant quand le frontend sera vert.
-      - name: Format backend (non bloquant)
+      # Le backend et le frontend passent au format Prettier : le contrôle est
+      # bloquant, comme le lint.
+      - name: Format backend
         working-directory: backend
-        continue-on-error: true
         run: bun run format:check
 
-      - name: Format frontend (non bloquant)
+      - name: Format frontend
         working-directory: frontend
-        continue-on-error: true
         run: bun run format:check
 
       # Les énumérations du frontend sont générées depuis le schéma Prisma :
