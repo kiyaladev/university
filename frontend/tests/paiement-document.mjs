@@ -18,7 +18,7 @@ assert.equal(demande.statut, 'EN_ATTENTE_PAIEMENT');
 const browser = await chromium.launch();
 try {
   const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1440, height: 950 } });
-  await context.addInitScript(token => localStorage.setItem('unipresence_token', token), student);
+  await context.addInitScript(token => localStorage.setItem('university_token', token), student);
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 const bcrypt = require('../../backend/node_modules/bcryptjs');
@@ -42,7 +43,7 @@ try {
  const token = (await auth.login({ email: controller.email, password }, 'QA-FIXTURE')).token;
  const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json(); assert.equal(me.id, controller.id);
  const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
- await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+ await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
  const page = await context.newPage(); page.setDefaultTimeout(60000);
  const erreurs = [], appelsSync = [];
  page.on('pageerror', e => erreurs.push(e.message));
@@ -55,7 +56,7 @@ try {
   await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'), null, { timeout: 60000 });
   await page.goto(`${base}/#/controle`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Préparer hors ligne', exact: true }).click();
-  await page.waitForFunction(id => Boolean(localStorage.getItem('unipresence_tournee_preparee_' + id)), controller.id);
+  await page.waitForFunction(id => Boolean(localStorage.getItem('university_tournee_preparee_' + id)), controller.id);
   const cache = await page.evaluate(() => {
     const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
     return { affectations: store.affectationsCache.map(a => a.id), salles: store.sallesCache.map(s => s.id) };
@@ -84,7 +85,7 @@ try {
       affectations: store.affectationsCache,
       salles: store.sallesCache,
       visible: store.pourDate('2026-10-06'),
-      storage: localStorage.getItem('unipresence_file_seances_' + userId),
+      storage: localStorage.getItem('university_file_seances_' + userId),
     };
   }, { affectation, salle, userId: controller.id });
   assert.equal(queued.result.enFile, true, 'la séance doit être mise en file hors ligne');
@@ -147,6 +148,6 @@ finally {
   await prisma.anneeAcademique.delete({ where: { id: year.id } });
  }
  report.productionUntouched = true; report.physicalDeviceAndPointagePending = true;
- fs.writeFileSync('../audit/recommandations-2026-10-06/preparation-hors-ligne-qa.json', JSON.stringify(report, null, 2) + '\n');
+ ecrirePreuve('preparation-hors-ligne-qa.json', report);
  await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
 }

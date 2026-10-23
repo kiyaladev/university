@@ -62,7 +62,7 @@ try {
   const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   const charge = Buffer.from(JSON.stringify({ sub: 'agent-test', role: 'CONTROLEUR', exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url');
-  await context.addInitScript(token => localStorage.setItem('unipresence_token', token), `e30.${charge}.signature-de-recette`);
+  await context.addInitScript(token => localStorage.setItem('university_token', token), `e30.${charge}.signature-de-recette`);
   const erreurs = [];
   page.on('pageerror', erreur => erreurs.push(erreur.message));
 
@@ -95,7 +95,7 @@ try {
       affectations: store.affectationsCache,
       salles: store.sallesCache,
       visible: store.pourDate('2026-10-03'),
-      storage: localStorage.getItem('unipresence_file_seances_agent-test'),
+      storage: localStorage.getItem('university_file_seances_agent-test'),
     };
   }, { affectation, salle });
   assert.equal(queued.result.enFile, true, 'la séance doit être mise en file hors ligne');

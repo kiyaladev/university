@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 const bcrypt = require('../../backend/node_modules/bcryptjs');
@@ -53,7 +54,7 @@ try {
  for (const fixture of fixtures) for (const role of ['ADMIN', 'DIRECTION']) for (const locale of ['fr-FR', 'en-US']) for (const width of [375, 1440]) {
   const token = session.sessions[role]; assert.equal((await request(token, 'GET', '/auth/me')).role, role);
   const context = await browser.newContext({ viewport: { width, height: 950 } });
-  await context.addInitScript(({ token, locale }) => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', locale); }, { token, locale });
+  await context.addInitScript(({ token, locale }) => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', locale); }, { token, locale });
   const page = await context.newPage(); page.setDefaultTimeout(60000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto(base + '/#/audit', { waitUntil: 'networkidle' });
   const en = locale === 'en-US';
@@ -76,6 +77,6 @@ finally {
  for (const fixture of [...new Map(fixtures.map(f => [f.id, f])).values()]) { await prisma.auditLog.deleteMany({ where: { entiteId: fixture.id } }); await prisma[fixture.model].delete({ where: { id: fixture.id } }); }
  if (documents.length) { const remainingSuspicions = await prisma.suspicionPlagiat.findMany({ where: { OR: [{ documentAId: { in: documents } }, { documentBId: { in: documents } }] }, select: { id: true } }); await prisma.auditLog.deleteMany({ where: { entiteId: { in: [...documents, ...remainingSuspicions.map(x => x.id)] } } }); await prisma.documentDepot.deleteMany({ where: { id: { in: documents } } }); }
  report.productionUntouched = true; report.scope = 'Détection automatique de dépôts identiques et arbitrage plagiat réels, interface avant/après ADMIN/DIRECTION FR/EN bureau/mobile';
- fs.writeFileSync('../audit/recommandations-2026-10-06/journal-plagiat-interface.json', JSON.stringify(report, null, 2) + '\n');
+ ecrirePreuve('journal-plagiat-interface.json', report);
  await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur, checks: report.checks.length }));
 }

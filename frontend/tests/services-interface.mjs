@@ -11,7 +11,7 @@ const { token } = await login.json();
 const browser = await chromium.launch();
 try {
   const context = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1440, height: 950 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+  await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
   const page = await context.newPage();
   await page.goto(base + '/#/parametres', { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Masquer les modules pilotes', exact: true }).click();

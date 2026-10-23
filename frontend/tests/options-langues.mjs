@@ -20,8 +20,8 @@ page.on('console', message => {
 
 try {
   await page.addInitScript(() => {
-    localStorage.setItem('unipresence_token', 'options-langues-test-token');
-    localStorage.setItem('lang', 'fr-FR');
+    localStorage.setItem('university_token', 'options-langues-test-token');
+    localStorage.setItem('university_lang', 'fr-FR');
   });
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());

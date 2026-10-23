@@ -76,8 +76,8 @@ try {
     const token = await tokenFor(role, email);
     const context = await browser.newContext({ locale: 'fr-FR', serviceWorkers: 'block', viewport: { width: 1440, height: 950 } });
     await context.addInitScript(token => {
-      localStorage.setItem('unipresence_token', token);
-      localStorage.setItem('lang', 'fr-FR');
+      localStorage.setItem('university_token', token);
+      localStorage.setItem('university_lang', 'fr-FR');
       // Les anciennes préférences ne doivent plus forcer une présentation.
       localStorage.setItem('up:vue:etudiants', 'cartes');
     }, token);

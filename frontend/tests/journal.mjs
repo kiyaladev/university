@@ -17,8 +17,8 @@ try {
       if (response.url().includes('/api/') && response.status() >= 400) errors.push(`${response.status()} ${response.url()}`);
     });
     await page.addInitScript(locale => {
-      localStorage.setItem('unipresence_token', 'journal-ui-test-token');
-      localStorage.setItem('lang', locale);
+      localStorage.setItem('university_token', 'journal-ui-test-token');
+      localStorage.setItem('university_lang', locale);
     }, locale);
     await page.route('**/api/auth/me', route => route.fulfill({
       status: 200,
