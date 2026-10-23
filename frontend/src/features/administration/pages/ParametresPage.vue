@@ -97,17 +97,11 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ServicesActifs from '../components/ServicesActifs.vue';
+import { parametresService, referenceParametres, type Parametre } from '../services/parametres';
 
 const $q = useQuasar();
 const { t } = useI18n();
-
-interface Parametre {
-  cle: string;
-  valeur: string;
-  description?: string | null;
-}
 
 const parametres = ref<Parametre[]>([]);
 /** Copie de référence : sert à détecter les modifications non enregistrées. */
@@ -185,11 +179,9 @@ const modifie = computed(() => parametres.value.some((p) => reference.value[p.cl
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/parametres');
+    const data = await parametresService.liste();
     parametres.value = data;
-    reference.value = Object.fromEntries((data as Parametre[]).map((p) => [p.cle, p.valeur]));
-  } catch {
-    /* notifié par l'intercepteur */
+    reference.value = referenceParametres(data);
   } finally {
     chargement.value = false;
   }
@@ -198,12 +190,10 @@ async function charger() {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const { data } = await api.put('/parametres', { parametres: parametres.value });
+    const data = await parametresService.enregistrer(parametres.value);
     parametres.value = data;
-    reference.value = Object.fromEntries((data as Parametre[]).map((p) => [p.cle, p.valeur]));
+    reference.value = referenceParametres(data);
     $q.notify({ type: 'positive', message: t('parametres.messages.saved') });
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

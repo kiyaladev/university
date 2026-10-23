@@ -254,13 +254,9 @@ async function supprimer(frais: FraisAvecLibelles) {
     danger: true,
   });
   if (!ok) return;
-  try {
-    await fraisService.supprimer(frais.id);
-    $q.notify({ type: 'positive', message: t('frais.messages.deleted') });
-    await liste.recharger();
-  } catch {
-    /* l'intercepteur axios affiche le motif */
-  }
+  await fraisService.supprimer(frais.id);
+  $q.notify({ type: 'positive', message: t('frais.messages.deleted') });
+  await liste.recharger();
 }
 
 onMounted(async () => {

@@ -147,9 +147,12 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_BADGE, dateHeureLisible, dateLisible } from '@/shared/utils/libelles';
+import {
+  verificationService,
+  type ResultatVerificationBadge,
+} from '@/features/public/services/verification';
 
 /**
  * Page publique de vérification d'un badge d'accès, jumelle de celle des
@@ -157,21 +160,6 @@ import { LIBELLE_TYPE_BADGE, dateHeureLisible, dateLisible } from '@/shared/util
  * (https://…/#/verification-badge?badge=…&k=UP-BADGE-…) : sans elle, tout scan
  * de badge tombait sur la page « introuvable ».
  */
-interface ResultatVerification {
-  valide: boolean;
-  raison?: string;
-  badge?: {
-    numero?: string;
-    type?: string;
-    porteur?: string | null;
-    fonction?: string | null;
-    organisation?: string | null;
-    zonesAccess?: string | null;
-    dateDelivrance?: string | null;
-    dateValidite?: string | null;
-  };
-}
-
 const route = useRoute();
 const { t } = useI18n();
 /** Noms des paramètres d'URL lus dans le QR : identifiants techniques, non traduits. */
@@ -179,7 +167,7 @@ const PARAMETRES_QR = { badge: 'badge', k: 'k' } as const;
 
 const identifiant = ref('');
 const codeQr = ref('');
-const resultat = ref<ResultatVerification | null>(null);
+const resultat = ref<ResultatVerificationBadge | null>(null);
 const verificationEnCours = ref(false);
 
 // Ouverture directe depuis le QR : les paramètres sont déjà dans l'URL.
@@ -214,11 +202,7 @@ async function verifier() {
   resultat.value = null;
   try {
     // Silencieux : le verdict (y compris l'échec) s'affiche dans le panneau de résultat.
-    const { data } = await api.get('/badges/verifier', {
-      silencieux: true,
-      params: { badge: identifiant.value.trim(), k: codeQr.value.trim() },
-    });
-    resultat.value = data;
+    resultat.value = await verificationService.badge(identifiant.value, codeQr.value);
   } catch {
     resultat.value = {
       valide: false,

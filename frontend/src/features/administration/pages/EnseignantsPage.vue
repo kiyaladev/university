@@ -179,88 +179,17 @@
       </template>
     </q-table>
 
-    <div v-else class="grille-cartes">
-      <q-card v-for="e in ens.lignes" :key="e.id" flat bordered class="carte grille-cartes__carte">
-        <q-card-section>
-          <div class="row items-center q-mb-xs">
-            <PastilleStatut domaine="enseignant" :statut="e.statut" />
-            <q-badge v-if="!e.actif" color="grey-7">{{ $t('enseignants.table.inactive') }}</q-badge>
-            <q-space />
-            <div class="text-caption text-grey-7">{{ e.matricule }}</div>
-          </div>
-          <div class="text-subtitle1 text-weight-medium">{{ e.nom }} {{ e.prenom }}</div>
-          <div class="text-caption text-grey-7">{{ e.grade || $t('enseignants.cards.gradeNonRenseigne') }}</div>
-          <div class="text-caption text-grey-7">
-            {{ e.departement?.nom ?? $t('enseignants.cards.sansDepartement') }}
-          </div>
-          <div class="text-caption text-grey-7 q-mt-sm">
-            <q-icon name="call" size="14px" /> {{ e.telephone || '—' }}
-            <span class="q-ml-sm">
-              <q-icon
-                :name="e.user ? 'check_circle' : 'remove_circle_outline'"
-                :color="e.user ? 'positive' : 'grey-5'"
-                size="14px"
-              />
-              {{ e.user ? $t('enseignants.cards.compteActif') : $t('enseignants.cards.sansCompte') }}
-            </span>
-          </div>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right">
-          <q-btn
-            v-if="auth.peutPlanifier"
-            flat
-            dense
-            no-caps
-            icon="edit"
-            :label="$t('common.actions.edit')"
-            @click="ouvrir(e)"
-          />
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              no-caps
-              icon="assignment_ind"
-              :label="$t('enseignants.cards.charges')"
-              @click="voirCharges(e)"
-            />
-            <q-btn
-              v-close-popup
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="verified_user"
-              :label="$t('enseignants.cards.attestation')"
-              @click="ouvrirMoyens(e)"
-            />
-          </actions-secondaires>
-        </q-card-actions>
-      </q-card>
-      <etat-vide v-if="!ens.lignes.length && !ens.chargement" icone="person" :titre="messageVide">
-        <template #action>
-          <q-btn
-            v-if="auth.peutPlanifier && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('enseignants.emptyState.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('enseignants.emptyState.clearFilters')"
-            @click="reinitialiser"
-          />
-        </template>
-      </etat-vide>
-    </div>
+    <cartes-enseignants
+      v-else
+      :enseignants="ens.lignes"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :chargement="ens.chargement"
+      @ouvrir="ouvrir"
+      @voir-charges="voirCharges"
+      @ouvrir-moyens="ouvrirMoyens"
+      @reinitialiser="reinitialiser"
+    />
 
     <barre-pagination
       v-if="ens.lignes.length"
@@ -278,95 +207,7 @@
     />
 
     <!-- Moyens d'attestation : code personnel et empreinte -->
-    <q-dialog v-model="dialogMoyens">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t('enseignants.moyensDialog.title') }}</div>
-          <div class="text-caption text-grey-7">
-            {{
-              $t('enseignants.moyensDialog.subtitle', { nom: enseignantMoyens?.nom, prenom: enseignantMoyens?.prenom })
-            }}
-          </div>
-        </q-card-section>
-
-        <q-linear-progress v-if="chargementMoyens" indeterminate color="primary" />
-
-        <q-list v-if="!chargementMoyens" separator>
-          <q-item>
-            <q-item-section avatar><q-icon name="dialpad" color="secondary" /></q-item-section>
-            <q-item-section>
-              <q-item-label>{{ $t('enseignants.moyensDialog.codePersonnel.label') }}</q-item-label>
-              <q-item-label caption>
-                {{
-                  moyens?.codePin
-                    ? $t('enseignants.moyensDialog.codePersonnel.defined')
-                    : $t('enseignants.moyensDialog.codePersonnel.undefined')
-                }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-btn
-                flat
-                dense
-                no-caps
-                :label="
-                  moyens?.codePin
-                    ? $t('enseignants.moyensDialog.codePersonnel.reset')
-                    : $t('enseignants.moyensDialog.codePersonnel.generate')
-                "
-                @click="reinitialiserPin"
-              />
-            </q-item-section>
-          </q-item>
-
-          <q-item>
-            <q-item-section avatar><q-icon name="fingerprint" color="accent" /></q-item-section>
-            <q-item-section>
-              <q-item-label>{{ $t('enseignants.moyensDialog.empreinte.label') }}</q-item-label>
-              <q-item-label caption>
-                {{
-                  moyens?.empreinte
-                    ? t('enseignants.moyensDialog.empreinte.enrolled', { doigt: moyens.empreinteDoigt })
-                    : passerellePrete
-                      ? $t('enseignants.moyensDialog.empreinte.notEnrolledReady')
-                      : $t('enseignants.moyensDialog.empreinte.notEnrolledNoReader')
-                }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-btn
-                flat
-                dense
-                no-caps
-                :label="
-                  moyens?.empreinte
-                    ? $t('enseignants.moyensDialog.empreinte.reenroll')
-                    : $t('enseignants.moyensDialog.empreinte.enroll')
-                "
-                :disable="!passerellePrete"
-                :loading="enrolementEnCours"
-                @click="enrolerEmpreinte"
-              >
-                <q-tooltip v-if="!passerellePrete">
-                  {{ $t('enseignants.moyensDialog.empreinte.pluginTooltip') }}
-                </q-tooltip>
-              </q-btn>
-            </q-item-section>
-          </q-item>
-        </q-list>
-
-        <q-banner v-if="codeGenere" class="note--valide q-ma-md">
-          <template #avatar><q-icon name="key" /></template>
-          {{ $t('enseignants.moyensDialog.newCodeLabel') }} <strong class="text-h6">{{ codeGenere }}</strong
-          ><br />
-          <span class="text-caption">{{ $t('enseignants.moyensDialog.newCodeHint') }}</span>
-        </q-banner>
-
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-moyens-enseignant v-model:ouvert="dialogMoyens" :enseignant="enseignantMoyens" />
   </q-page>
 </template>
 
@@ -378,11 +219,11 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { isAxiosError } from 'axios';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import DialogueEnseignant from '../components/DialogueEnseignant.vue';
+import DialogueEnseignant from '@/features/administration/components/DialogueEnseignant.vue';
+import CartesEnseignants from '@/features/administration/components/CartesEnseignants.vue';
+import DialogueMoyensEnseignant from '@/features/administration/components/DialogueMoyensEnseignant.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -396,17 +237,16 @@ import {
   aujourdhui,
   decalerJours,
   montantLisible,
-  passerelleConfiguree,
-  urlPasserelle,
 } from '@/shared/utils/libelles';
-import type { Departement, Enseignant, MoyensAttestation, ChipFiltre } from '@/types';
+import type { Departement, Enseignant, ChipFiltre } from '@/types';
+import { enseignantsService } from '@/features/administration/services/enseignants';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
-const { confirmer, supprimerAvecConfirmation } = useConfirmation();
+const { confirmer } = useConfirmation();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
 const departements = ref<Departement[]>([]);
@@ -421,26 +261,14 @@ const ens = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/enseignants', {
-          params: {
-            ...pageApi(p),
-            search: texteApi(f.recherche),
-            departementId: f.departementId || undefined,
-            statut: f.statut || undefined,
-          },
-        })
-        .then((r) => r.data),
+      enseignantsService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        departementId: f.departementId || undefined,
+        statut: f.statut || undefined,
+      }),
   }),
 );
-
-const dialogMoyens = ref(false);
-const chargementMoyens = ref(false);
-const enseignantMoyens = ref<Enseignant | null>(null);
-const moyens = ref<MoyensAttestation | null>(null);
-const passerellePrete = ref(false);
-const enrolementEnCours = ref(false);
-const codeGenere = ref('');
 
 const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 const optionsStatuts = STATUTS_ENSEIGNANT.map((s) => ({
@@ -522,115 +350,12 @@ function voirCharges(e: Enseignant) {
 }
 
 // ------------------------------------------------- moyens d'attestation
+const dialogMoyens = ref(false);
+const enseignantMoyens = ref<Enseignant | null>(null);
 
-async function ouvrirMoyens(e: Enseignant) {
+function ouvrirMoyens(e: Enseignant) {
   enseignantMoyens.value = e;
-  codeGenere.value = '';
-  moyens.value = null;
   dialogMoyens.value = true;
-  chargementMoyens.value = true;
-
-  try {
-    const { data } = await api.get(`/attestation/enseignants/${e.id}/moyens`);
-    moyens.value = data;
-  } catch {
-    dialogMoyens.value = false;
-    return;
-  } finally {
-    chargementMoyens.value = false;
-  }
-
-  // Le lecteur d'empreintes est branché sur le poste, pas sur le serveur.
-  if (!passerelleConfiguree()) {
-    passerellePrete.value = false;
-    return;
-  }
-  try {
-    const r = await fetch(`${urlPasserelle()}/etat`, { signal: AbortSignal.timeout(2500) });
-    passerellePrete.value = (await r.json()).pret === true;
-  } catch {
-    passerellePrete.value = false;
-  }
-}
-
-async function reinitialiserPin() {
-  const ok = await confirmer({
-    titre: t('enseignants.messages.resetPinTitle'),
-    message: t('enseignants.messages.resetPinMessage'),
-    ok: t('enseignants.messages.generate'),
-  });
-  if (!ok) return;
-  try {
-    const { data } = await api.post(`/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`);
-    codeGenere.value = data.code;
-    moyens.value = { ...moyens.value!, codePin: true };
-  } catch {
-    /* notifié par l'intercepteur */
-  }
-}
-
-/**
- * Le consentement se recueille devant l'enseignant, avant la lecture. Le refus
- * est un droit sans conséquence : le code personnel et la signature restent des
- * moyens de plein exercice.
- */
-function recueillirConsentement(): Promise<boolean> {
-  return new Promise((resolve) => {
-    $q.dialog({
-      title: t('enseignants.messages.consentTitle'),
-      html: false,
-      message: t('enseignants.messages.consentMessage'),
-      cancel: { label: t('enseignants.messages.consentRefuse'), flat: true, noCaps: true },
-      ok: { label: t('enseignants.messages.consentAccept'), color: 'primary', unelevated: true, noCaps: true },
-      persistent: true,
-    })
-      .onOk(() => resolve(true))
-      .onCancel(() => resolve(false));
-  });
-}
-
-async function enrolerEmpreinte() {
-  if (!(await recueillirConsentement())) {
-    $q.notify({
-      type: 'info',
-      message: t('enseignants.messages.enrolementAborted'),
-      icon: 'pin',
-    });
-    return;
-  }
-
-  enrolementEnCours.value = true;
-  try {
-    const id = enseignantMoyens.value!.id;
-    const reponse = await fetch(`${urlPasserelle()}/enroler`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enseignantId: id }),
-      signal: AbortSignal.timeout(30000),
-    });
-    const capture = await reponse.json();
-    if (!reponse.ok) throw new Error(capture.erreur ?? t('enseignants.messages.enrolementReadFailed'));
-
-    await api.put(`/attestation/enseignants/${id}/empreinte`, {
-      template: capture.template,
-      doigt: 'index droit',
-      horodatage: capture.horodatage,
-      signature: capture.signature,
-      qualite: capture.qualite,
-      consentement: true,
-    });
-
-    $q.notify({ type: 'positive', message: t('enseignants.messages.enrolementSuccess', { qualite: capture.qualite }) });
-    moyens.value = { ...moyens.value!, empreinte: true, empreinteDoigt: 'index droit' };
-  } catch (e: any) {
-    // L'erreur de l'API est notifiée par l'intercepteur ; reste la passerelle
-    // locale du lecteur (fetch, JSON illisible, capture refusée).
-    if (!isAxiosError(e)) {
-      $q.notify({ type: 'negative', message: e?.message ?? t('enseignants.messages.enrolementFailed') });
-    }
-  } finally {
-    enrolementEnCours.value = false;
-  }
 }
 
 function imprimerFiche(e: Enseignant) {
@@ -638,18 +363,22 @@ function imprimerFiche(e: Enseignant) {
   ouvrirFicheEnseignant(e.id, debut, aujourdhui());
 }
 
-function supprimer(e: Enseignant) {
-  void supprimerAvecConfirmation(
-    `/enseignants/${e.id}`,
-    `${e.nom} ${e.prenom}`,
-    () => Promise.all([ens.recharger(), referentiels.rafraichir('enseignants')]),
-    {
-      titre: t('enseignants.messages.deleteTitle'),
-      message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
-      ok: t('common.actions.delete'),
-      succes: t('enseignants.messages.deleteSuccess'),
-    },
-  );
+async function supprimer(e: Enseignant) {
+  const ok = await confirmer({
+    titre: t('enseignants.messages.deleteTitle'),
+    message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
+    ok: t('common.actions.delete'),
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await enseignantsService.supprimer(e.id);
+  } catch {
+    // L'intercepteur axios affiche le motif de l'échec.
+    return;
+  }
+  $q.notify({ type: 'positive', message: t('enseignants.messages.deleteSuccess') });
+  await Promise.all([ens.recharger(), referentiels.rafraichir('enseignants')]);
 }
 
 function reinitialiser() {
@@ -660,14 +389,3 @@ onMounted(async () => {
   departements.value = await referentiels.departements();
 });
 </script>
-
-<style scoped lang="scss">
-.grille-cartes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--up-3);
-}
-.grille-cartes__carte {
-  background: var(--up-plaque);
-}
-</style>

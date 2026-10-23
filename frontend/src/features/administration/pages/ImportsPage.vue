@@ -147,30 +147,18 @@ import { computed, ref } from 'vue';
 import { Dialog } from 'quasar';
 import { isAxiosError } from 'axios';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-
-type TypeImport = 'enseignants' | 'matieres' | 'salles' | 'creneaux';
-interface LigneErreur {
-  numero: number;
-  erreurs: string[];
-}
-interface Apercu {
-  type: TypeImport;
-  colonnesIgnorees?: string[];
-  lignesLues: number;
-  valides: number;
-  rejetees: number;
-  apercu: Array<{ numero: number; donnees: Record<string, unknown>; erreurs: string[] }>;
-  erreurs: LigneErreur[];
-}
-interface Rapport {
-  importees: number;
-  rejetees: number;
-  erreurs: LigneErreur[];
-  colonnesIgnorees?: string[];
-}
+import {
+  CONTENU_MAX,
+  estFichierCsv,
+  estFichierXlsx,
+  importsService,
+  tailleFichierAutorisee,
+  type Apercu,
+  type Rapport,
+  type TypeImport,
+} from '../services/imports';
 
 const { t } = useI18n();
 const { confirmer } = useConfirmation();
@@ -211,22 +199,22 @@ function telechargerModele() {
 async function contenuCsv(): Promise<string> {
   if (!type.value) throw new Error(t('imports.typeRequired'));
   if (!fichier.value) throw new Error(t('imports.fileRequired'));
-  const estXlsx = fichier.value.name.toLocaleLowerCase('fr').endsWith('.xlsx');
-  if (fichier.value.size > 5_000_000 || (!estXlsx && fichier.value.size > 1_000_000)) {
+  const xlsx = estFichierXlsx(fichier.value.name);
+  if (!tailleFichierAutorisee(fichier.value.size, xlsx)) {
     throw new Error(t('imports.contentTooLarge'));
   }
   let contenu: string;
-  if (estXlsx) {
+  if (xlsx) {
     const { convertirXlsxEnCsv } = await import('@/shared/utils/xlsx');
     contenu = await convertirXlsxEnCsv(fichier.value);
   } else {
-    if (!fichier.value.name.toLocaleLowerCase('fr').endsWith('.csv')) {
+    if (!estFichierCsv(fichier.value.name)) {
       throw new Error(t('imports.unsupportedFile'));
     }
     const { decoderCsv } = await import('@/shared/utils/csv');
     contenu = decoderCsv(await fichier.value.arrayBuffer());
   }
-  if (contenu.length > 1_000_000) throw new Error(t('imports.contentTooLarge'));
+  if (contenu.length > CONTENU_MAX) throw new Error(t('imports.contentTooLarge'));
   return contenu;
 }
 
@@ -235,15 +223,10 @@ async function previsualiser() {
   rapport.value = null;
   try {
     const contenu = await contenuCsv();
-    const { data } = await api.post<Apercu>(
-      '/imports/referentiels/previsualiser',
-      {
-        type: type.value,
-        contenu,
-      },
-      { timeout: 60_000 },
-    );
-    apercu.value = data;
+    apercu.value = await importsService.previsualiser({
+      type: type.value as TypeImport,
+      contenu,
+    });
   } catch (error: unknown) {
     apercu.value = null;
     signalerErreurLecture(error);
@@ -275,15 +258,10 @@ async function appliquer() {
   chargement.value = 'apply';
   try {
     const contenu = await contenuCsv();
-    const { data } = await api.post<Rapport>(
-      '/imports/referentiels/appliquer',
-      {
-        type: type.value,
-        contenu,
-      },
-      { timeout: 120_000 },
-    );
-    rapport.value = data;
+    rapport.value = await importsService.appliquer({
+      type: type.value as TypeImport,
+      contenu,
+    });
     apercu.value = null;
   } catch (error: unknown) {
     signalerErreurLecture(error);

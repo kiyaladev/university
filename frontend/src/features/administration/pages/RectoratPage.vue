@@ -312,12 +312,17 @@ import { useQuasar } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
 import Graphique from '@/shared/components/Graphique.vue';
 import { montantLisible, nombreLisible, pourcentLisible } from '@/shared/utils/libelles';
-import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRectorat } from '@/types';
+import type { AnneeAcademique, TableauBordPatrimoine, TableauBordRectorat } from '@/types';
 import { getAppLocale } from '@/boot/i18n';
+import {
+  evolutionMasseSalariale,
+  listeFeuillesPaie,
+  rectoratService,
+  type PointMasseSalariale,
+} from '@/features/administration/services/rectorat';
 
 /**
  * Les peintures des graphiques. Un même indicateur porte la même couleur ici et
@@ -422,12 +427,12 @@ async function charger() {
   const params = anneeId.value ? { anneeId: anneeId.value } : {};
   try {
     const [c, d, masses] = await Promise.all([
-      api.get('/rectorat/chiffres', { params }),
-      api.get('/patrimoine/dashboard', { params }),
-      evolutionMasseSalariale(),
+      rectoratService.chiffres(params),
+      rectoratService.patrimoine(params),
+      masseSalariale(),
     ]);
-    chiffres.value = c.data;
-    dashboard.value = d.data;
+    chiffres.value = c;
+    dashboard.value = d;
     evolutionMasse.value = masses;
   } catch {
     /* notifié par l'intercepteur */
@@ -436,46 +441,38 @@ async function charger() {
   }
 }
 
+/** Libellé court d'un mois (`AAAA-MM`) dans la langue active. */
+function libelleMois(cle: string): string {
+  const [annee, mois] = cle.split('-').map(Number);
+  return new Date(annee, mois - 1, 1).toLocaleDateString(getAppLocale(), { month: 'short', year: '2-digit' });
+}
+
+function libellerMois(points: PointMasseSalariale[]): { mois: string; total: number }[] {
+  return points.map((m) => ({ mois: libelleMois(m.cle), total: m.total }));
+}
+
 /**
- * L'API n'expose pas l'évolution mensuelle : on l'agrège à partir des feuilles
- * de paie sur les 12 derniers mois, plutôt que d'ouvrir une route de plus. Une
- * feuille compte à partir du moment où elle est validée — c'est là que son
+ * La courbe d'évolution de la masse salariale : l'API n'expose pas l'historique
+ * mensuel, on l'agrège à partir des feuilles de paie (voir le service).
+ * Une feuille compte à partir du moment où elle est validée — c'est là que son
  * montant est figé — et se range au mois de sa validation.
  */
-async function evolutionMasseSalariale(): Promise<{ mois: string; total: number }[]> {
-  const maintenant = new Date();
-  const mois: { key: string; label: string; total: number }[] = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(maintenant.getFullYear(), maintenant.getMonth() - i, 1);
-    mois.push({
-      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
-      label: d.toLocaleDateString(getAppLocale(), { month: 'short', year: '2-digit' }),
-      total: 0,
-    });
-  }
+async function masseSalariale(): Promise<{ mois: string; total: number }[]> {
+  const base = evolutionMasseSalariale([]);
   try {
-    const r = await api.get('/feuilles-paie', { params: { all: '1' } });
-    const feuilles: FeuillePaie[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? []);
-    for (const f of feuilles) {
-      const reference = f.valideeLe ?? f.payeeLe;
-      if (!reference) continue;
-      const dateRef = new Date(reference);
-      if (Number.isNaN(dateRef.getTime())) continue;
-      const key = `${dateRef.getFullYear()}-${String(dateRef.getMonth() + 1).padStart(2, '0')}`;
-      const m = mois.find((x) => x.key === key);
-      if (m) m.total += f.montantTotal ?? 0;
-    }
+    const feuilles = listeFeuillesPaie(await rectoratService.feuillesPaie());
+    return libellerMois(evolutionMasseSalariale(feuilles));
   } catch {
     // La courbe reste plate : l'écran de paie dira pourquoi.
+    return libellerMois(base);
   }
-  return mois.map((m) => ({ mois: m.label, total: m.total }));
 }
 
 async function genererBilan() {
   if (!anneeId.value) return;
   generation.value = true;
   try {
-    await api.post('/rectorat/bilan-mesrs/generer', { anneeId: anneeId.value });
+    await rectoratService.genererBilanMesrs(anneeId.value);
     // Le snapshot ne vit pas ici : on dit où il est parti, et on y emmène.
     $q.notify({
       type: 'positive',

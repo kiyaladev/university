@@ -223,7 +223,6 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -244,9 +243,7 @@ import type { Courrier, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-
-/** Les archives ne sont pas un type de courrier mais deux statuts de fin. */
-const STATUTS_ARCHIVE = ['CLASSE', 'ARCHIVE'];
+import { courrierService, listeCourrierArchive, type Onglet } from '../services/courrier';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -257,8 +254,6 @@ const modeVue = usePresentationListe();
 const dialogDetailOuvert = ref(false);
 const dialogCreationOuvert = ref(false);
 const courrierSelectionne = ref<Courrier | null>(null);
-
-type Onglet = 'ENTRANT' | 'SORTANT' | 'ARCHIVE';
 
 const onglet = ref<Onglet>('ENTRANT');
 const filtres = ref<Record<string, any>>({
@@ -288,19 +283,9 @@ const liste = reactive(
         dateFin: f.dateFin || undefined,
       };
       if (onglet.value === 'ARCHIVE') {
-        const statuts = f.statut ? [f.statut].filter((s) => STATUTS_ARCHIVE.includes(s)) : STATUTS_ARCHIVE;
-        const reponses = await Promise.all(
-          statuts.map((statut) => api.get('/courrier', { params: { ...commun, statut } })),
-        );
-        return {
-          data: reponses.flatMap((r) => r.data.data as Courrier[]),
-          total: reponses.reduce((t, r) => t + (r.data.total ?? 0), 0),
-        };
+        return listeCourrierArchive(commun, f.statut);
       }
-      const { data } = await api.get('/courrier', {
-        params: { ...commun, type: onglet.value, statut: f.statut || undefined },
-      });
-      return data;
+      return courrierService.liste({ ...commun, type: onglet.value, statut: f.statut || undefined });
     },
   }),
 );
@@ -424,13 +409,9 @@ async function cloturer(c: Courrier) {
     danger: true,
   });
   if (!ok) return;
-  try {
-    await api.post(`/courrier/${c.id}/cloturer`, {});
-    $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
-    await liste.recharger();
-  } catch {
-    /* notifié par l'intercepteur */
-  }
+  await courrierService.cloturer(c.id);
+  $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
+  await liste.recharger();
 }
 </script>
 

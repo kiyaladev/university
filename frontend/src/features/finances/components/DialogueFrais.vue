@@ -59,6 +59,7 @@ import { useI18n } from 'vue-i18n';
 import { useReferentielsStore } from '@/stores/referentiels';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { fraisService, type FraisAvecLibelles, type FraisSaisie } from '../services/frais';
+import { DEVISE } from '@/shared/utils/libelles';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ existant: FraisAvecLibelles | null }>();
@@ -71,7 +72,7 @@ const referentiels = useReferentielsStore();
 const annees = ref<Awaited<ReturnType<typeof referentiels.annees>>>([]);
 const promotions = ref<Awaited<ReturnType<typeof referentiels.promotions>>>([]);
 
-const form = ref<FraisSaisie>({ anneeId: '', promotionId: '', montant: 0, devise: 'GNF' });
+const form = ref<FraisSaisie>({ anneeId: '', promotionId: '', montant: 0, devise: DEVISE });
 const envoi = ref(false);
 
 const optionsAnnees = computed(() =>
@@ -100,14 +101,14 @@ watch(
         anneeId: props.existant.anneeId,
         promotionId: props.existant.promotionId,
         montant: Number(props.existant.montant),
-        devise: props.existant.devise ?? 'GNF',
+        devise: props.existant.devise ?? DEVISE,
       };
     } else {
       form.value = {
         anneeId: referentiels.anneeCourante?.id ?? '',
         promotionId: '',
         montant: 0,
-        devise: 'GNF',
+        devise: DEVISE,
       };
     }
   },
@@ -126,7 +127,7 @@ async function enregistrer() {
       anneeId: form.value.anneeId,
       promotionId: form.value.promotionId,
       montant,
-      devise: form.value.devise.trim() || 'GNF',
+      devise: form.value.devise.trim() || DEVISE,
     };
     if (props.existant) {
       await fraisService.modifier(props.existant.id, corps);
@@ -137,8 +138,6 @@ async function enregistrer() {
     }
     emit('enregistre');
     ouvert.value = false;
-  } catch {
-    /* l'intercepteur axios affiche le motif */
   } finally {
     envoi.value = false;
   }

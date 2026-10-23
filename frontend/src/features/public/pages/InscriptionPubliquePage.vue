@@ -42,273 +42,32 @@
       </ol>
 
       <!-- Étape 1 : identité -->
-      <q-form v-if="etape === 1" class="acces__form" @submit.prevent="continuerEtape1">
-        <span class="section-titre">{{ $t('inscriptionPublique.form.step1.sectionTitle') }}</span>
-        <p class="pochoir acces__aide">
-          {{ $t('inscriptionPublique.form.step1.help') }}
-        </p>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.nom"
-              outlined
-              dense
-              autocomplete="family-name"
-              :label="$t('inscriptionPublique.form.step1.nom.label')"
-              :rules="[(v) => !!v?.trim() || $t('inscriptionPublique.form.step1.nom.required')]"
-              lazy-rules
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.prenom"
-              outlined
-              dense
-              autocomplete="given-name"
-              :label="$t('inscriptionPublique.form.step1.prenom.label')"
-              :rules="[(v) => !!v?.trim() || $t('inscriptionPublique.form.step1.prenom.required')]"
-              lazy-rules
-            />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-4">
-            <q-select
-              v-model="form.sexe"
-              :options="optionsSexe"
-              emit-value
-              map-options
-              outlined
-              dense
-              clearable
-              :label="$t('inscriptionPublique.form.step1.sexe.label')"
-            />
-          </div>
-          <div class="col-12 col-sm-8">
-            <champ-date
-              v-model="form.dateNaissance"
-              :label="$t('inscriptionPublique.form.step1.dateNaissance.label')"
-            />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.lieuNaissance"
-              outlined
-              dense
-              :label="$t('inscriptionPublique.form.step1.lieuNaissance.label')"
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.telephone"
-              outlined
-              dense
-              type="tel"
-              inputmode="tel"
-              autocomplete="tel"
-              :label="$t('inscriptionPublique.form.step1.telephone.label')"
-              :placeholder="$t('inscriptionPublique.form.step1.telephone.placeholder')"
-              :hint="$t('inscriptionPublique.form.step1.telephone.hint')"
-              :rules="[
-                (v) => !!v?.trim() || $t('inscriptionPublique.form.step1.telephone.required'),
-                (v) =>
-                  !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
-              ]"
-              lazy-rules
-            />
-          </div>
-        </div>
-
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.email"
-              outlined
-              dense
-              type="email"
-              autocomplete="email"
-              :label="$t('inscriptionPublique.form.step1.email.label')"
-              :rules="[
-                (v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || $t('inscriptionPublique.form.step1.email.invalid'),
-              ]"
-              lazy-rules
-            />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-input
-              v-model="form.adresse"
-              outlined
-              dense
-              autocomplete="street-address"
-              :label="$t('inscriptionPublique.form.step1.adresse.label')"
-            />
-          </div>
-        </div>
-
-        <q-btn
-          type="submit"
-          color="primary"
-          class="full-width acces__bouton"
-          size="lg"
-          unelevated
-          no-caps
-          :label="$t('inscriptionPublique.form.step1.continue')"
-        />
-      </q-form>
+      <inscription-etape-identite v-if="etape === 1" v-model:form="form" @continue="continuerEtape1" />
 
       <!-- Étape 2 : promotion -->
-      <q-form v-else-if="etape === 2" class="acces__form" @submit.prevent="deposer">
-        <span class="section-titre">{{ $t('inscriptionPublique.form.step2.sectionTitle') }}</span>
-        <q-banner v-if="chargementAnnees" class="note--info">
-          <template #avatar><q-spinner size="20px" /></template>
-          {{ $t('inscriptionPublique.form.step2.loadingFilieres') }}
-        </q-banner>
-
-        <template v-else>
-          <champ-recherche
-            v-model="form.anneeId"
-            endpoint="/inscription-publique/annees"
-            :endpoint-detail="false"
-            :libelle-initial="libelleAnneeCourante"
-            :label-fn="(a) => a.libelle"
-            :label="$t('common.fields.academicYearRequired')"
-            :disable="annees.length <= 1"
-            @update:model-value="onAnneeChange"
-          />
-          <champ-recherche
-            v-model="form.promotionId"
-            :endpoint="endpointPromotions"
-            :label-fn="labelPromotion"
-            :disable="!form.anneeId"
-            :preload="false"
-            :label="$t('inscriptionPublique.form.step2.promotionLabel')"
-            :placeholder="$t('inscriptionPublique.form.step2.promotionPlaceholder')"
-            @update:model-value="onPromotionChange"
-          />
-
-          <div v-if="tarifCourant" class="plaque acces__tarif">
-            <div class="text-caption acces__tarif-libelle">{{ $t('inscriptionPublique.form.step2.tarifLabel') }}</div>
-            <div class="lettrage chiffres acces__tarif-montant">
-              {{ montantLisible(tarifCourant.montant) }} {{ tarifCourant.devise }}
-            </div>
-          </div>
-          <div v-else-if="form.promotionId && chargementTarif" class="text-caption text-grey-7">
-            <q-spinner size="16px" class="q-mr-xs" />
-            {{ $t('inscriptionPublique.form.step2.checkingTarif') }}
-          </div>
-        </template>
-
-        <q-banner v-if="messageDepotErreur" class="note--erreur" role="alert" aria-live="assertive">
-          <template #avatar><q-icon name="error" /></template>
-          {{ messageDepotErreur }}
-        </q-banner>
-
-        <p v-if="!chargementAnnees && !form.promotionId" class="pochoir acces__aide">
-          {{ $t('inscriptionPublique.form.step2.chooseHelp') }}
-        </p>
-
-        <div class="row q-col-gutter-sm">
-          <div class="col-6">
-            <q-btn
-              outline
-              class="full-width acces__bouton"
-              size="lg"
-              no-caps
-              icon="chevron_left"
-              :label="$t('inscriptionPublique.form.step2.back')"
-              @click="etape = 1"
-            />
-          </div>
-          <div class="col-6">
-            <q-btn
-              type="submit"
-              color="primary"
-              class="full-width acces__bouton"
-              size="lg"
-              unelevated
-              no-caps
-              :label="$t('inscriptionPublique.form.step2.submit')"
-              :loading="depotEnCours"
-              :disable="!form.promotionId"
-            />
-          </div>
-        </div>
-      </q-form>
+      <inscription-etape-promotion
+        v-else-if="etape === 2"
+        v-model:form="form"
+        :annees="annees"
+        :chargement-annees="chargementAnnees"
+        :tarif-courant="tarifCourant"
+        :chargement-tarif="chargementTarif"
+        :message-depot-erreur="messageDepotErreur"
+        :depot-en-cours="depotEnCours"
+        @annee-change="onAnneeChange"
+        @promotion-change="onPromotionChange"
+        @deposer="deposer"
+        @retour="etape = 1"
+      />
 
       <!-- Étape 3 : dossier déposé -->
-      <div v-else class="acces__resultat">
-        <div class="acces__resultat-tampon" aria-hidden="true">
-          <span class="pochoir">{{ $t('inscriptionPublique.form.step3.stampFolder') }}</span>
-          <span class="lettrage">{{ $t('inscriptionPublique.form.step3.stampDone') }}</span>
-        </div>
-
-        <p class="pochoir acces__resultat-ref">{{ $t('inscriptionPublique.form.step3.numeroLabel') }}</p>
-        <p class="lettrage chiffres acces__resultat-numero">{{ resultat?.numero }}</p>
-        <p class="pochoir acces__aide">
-          {{ $t('inscriptionPublique.form.step3.numeroHelp') }}
-        </p>
-
-        <div class="plaque acces__resultat-montant">
-          <div class="text-caption acces__resultat-libelle">{{ $t('inscriptionPublique.form.step3.fraisLabel') }}</div>
-          <div class="lettrage chiffres acces__resultat-somme">
-            {{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}
-          </div>
-        </div>
-
-        <p class="acces__resultat-message">
-          <i18n-t keypath="inscriptionPublique.form.step3.message" tag="span">
-            <template #montant
-              ><strong class="chiffres"
-                >{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong
-              ></template
-            >
-            <template #numero
-              ><strong class="chiffres">{{ NUMERO_COURT_MM }}</strong></template
-            >
-            <template #ref
-              ><strong>{{ resultat?.numero }}</strong></template
-            >
-          </i18n-t>
-        </p>
-
-        <q-banner v-if="resultat?.avertissement" class="note--alerte">
-          <template #avatar><q-icon name="warning" /></template>
-          {{ resultat.avertissement }}
-        </q-banner>
-
-        <div class="acces__resultat-actions">
-          <q-btn
-            color="primary"
-            class="acces__bouton"
-            size="lg"
-            unelevated
-            no-caps
-            icon="print"
-            :label="$t('inscriptionPublique.form.step3.print')"
-            @click="imprimerRecepisse"
-          />
-          <q-btn
-            outline
-            class="acces__bouton"
-            size="lg"
-            no-caps
-            icon="person_add"
-            :label="$t('inscriptionPublique.form.step3.another')"
-            @click="recommencer"
-          />
-        </div>
-
-        <p class="pochoir acces__resultat-lien">
-          {{ $t('inscriptionPublique.form.step3.validatedIntro') }}
-          <router-link to="/portail-connexion" class="acces__lien-lien">
-            {{ $t('inscriptionPublique.form.step3.enterSpace') }}
-          </router-link>
-        </p>
-      </div>
+      <inscription-etape-recapitulatif
+        v-else
+        :resultat="resultat"
+        :numero-court-mm="NUMERO_COURT_MM"
+        @imprimer="imprimerRecepisse"
+        @recommencer="recommencer"
+      />
 
       <q-separator class="acces__separateur" />
 
@@ -344,11 +103,16 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
-import ChampDate from '@/shared/components/ChampDate.vue';
-import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { CLE_BROUILLON_INSCRIPTION } from '@/shared/services/cles-stockage';
-import { montantLisible } from '@/shared/utils/libelles';
+import InscriptionEtapeIdentite from '@/features/public/components/InscriptionEtapeIdentite.vue';
+import InscriptionEtapePromotion from '@/features/public/components/InscriptionEtapePromotion.vue';
+import InscriptionEtapeRecapitulatif from '@/features/public/components/InscriptionEtapeRecapitulatif.vue';
+import {
+  inscriptionPubliqueService,
+  tarifCourant as tarifCourantDe,
+  type FormulaireInscription,
+  type ResultatDepot,
+} from '@/features/public/services/inscription-publique';
 import type { AnneeAcademique } from '@/types';
 
 /**
@@ -360,35 +124,12 @@ const NUMERO_COURT_MM = '60 431 431';
 
 const CLE_BROUILLON = CLE_BROUILLON_INSCRIPTION;
 
-interface PromotionOuverte {
-  id: string;
-  nom: string;
-  niveau: string;
-  filiere: { code: string; nom: string } | null;
-  frais: { montant: number; devise: string } | null;
-}
-
-interface ResultatDepot {
-  etudiantId: string;
-  inscriptionId: string;
-  numero: string;
-  montantFrais: number;
-  devise: string;
-  message: string;
-  avertissement?: string | null;
-}
-
 const { t } = useI18n();
 
 const libellesEtapes = computed(() => [
   t('common.fields.identity'),
   t('common.fields.filiere'),
   t('inscriptionPublique.form.steps.confirmation'),
-]);
-
-const optionsSexe = computed(() => [
-  { value: 'M', label: t('inscriptionPublique.form.step1.sexe.masculin') },
-  { value: 'F', label: t('inscriptionPublique.form.step1.sexe.feminin') },
 ]);
 
 const etape = ref(1);
@@ -399,10 +140,10 @@ const resultat = ref<ResultatDepot | null>(null);
 const annees = ref<AnneeAcademique[]>([]);
 const chargementAnnees = ref(true);
 
-const form = ref({
+const form = ref<FormulaireInscription>({
   nom: '',
   prenom: '',
-  sexe: null as string | null,
+  sexe: null,
   dateNaissance: '',
   lieuNaissance: '',
   telephone: '',
@@ -414,25 +155,6 @@ const form = ref({
 
 const tarifCourant = ref<{ montant: number; devise: string } | null>(null);
 const chargementTarif = ref(false);
-const endpointPromotions = computed(() =>
-  form.value.anneeId ? `/inscription-publique/annees/${form.value.anneeId}/promotions` : '/inscription-publique/annees',
-);
-
-/**
- * Libellé de l'année retenue. La route publique `/inscription-publique/annees`
- * n'a pas de variante par identifiant : c'est la page qui connaît l'année,
- * elle en donne le libellé au sélecteur.
- */
-const libelleAnneeCourante = computed(
-  () => annees.value.find((a) => a.id === form.value.anneeId)?.libelle ?? '',
-);
-
-const labelPromotion = (p: PromotionOuverte) =>
-  `${p.filiere ? p.filiere.nom + ' — ' : ''}${p.nom}${
-    p.frais
-      ? ` (${t('inscriptionPublique.form.step2.fraisLabel', { montant: montantLisible(p.frais.montant), devise: p.frais.devise })})`
-      : ''
-  }`;
 
 function persisterBrouillon() {
   if (etape.value === 3) return;
@@ -443,7 +165,7 @@ function persisterBrouillon() {
   }
 }
 
-function chargerBrouillon(): { etape: number; form: typeof form.value } | null {
+function chargerBrouillon(): { etape: number; form: FormulaireInscription } | null {
   try {
     const raw = sessionStorage.getItem(CLE_BROUILLON);
     if (!raw) return null;
@@ -469,8 +191,7 @@ watch(
 async function chargerAnnees() {
   chargementAnnees.value = true;
   try {
-    const { data } = await api.get('/inscription-publique/annees');
-    annees.value = Array.isArray(data) ? data : [];
+    annees.value = await inscriptionPubliqueService.annees();
     // Si l'année du brouillon n'existe plus, on retombe sur l'année active.
     if (form.value.anneeId && !annees.value.find((a) => a.id === form.value.anneeId)) {
       form.value.anneeId = '';
@@ -495,13 +216,8 @@ async function onPromotionChange() {
   if (!form.value.anneeId || !form.value.promotionId) return;
   chargementTarif.value = true;
   try {
-    const { data } = await api.get('/frais', {
-      params: { anneeId: form.value.anneeId, promotionId: form.value.promotionId },
-    });
-    const liste = Array.isArray(data) ? data : (data.data ?? []);
-    if (liste.length) {
-      tarifCourant.value = { montant: liste[0].montant, devise: liste[0].devise };
-    }
+    const frais = await inscriptionPubliqueService.frais(form.value.anneeId, form.value.promotionId);
+    tarifCourant.value = tarifCourantDe(frais);
   } catch {
     tarifCourant.value = null;
   } finally {
@@ -521,27 +237,23 @@ async function deposer() {
   messageDepotErreur.value = '';
   depotEnCours.value = true;
   try {
-    const { data } = await api.post(
-      '/inscription-publique',
-      {
-        nom: form.value.nom.trim(),
-        prenom: form.value.prenom.trim(),
-        sexe: form.value.sexe ?? undefined,
-        dateNaissance: form.value.dateNaissance || undefined,
-        lieuNaissance: form.value.lieuNaissance.trim() || undefined,
-        telephone: form.value.telephone.trim(),
-        email: form.value.email.trim() || undefined,
-        adresse: form.value.adresse.trim() || undefined,
-        anneeId: form.value.anneeId || undefined,
-        promotionId: form.value.promotionId,
-      },
-      { silencieux: true },
-    );
-    resultat.value = data as ResultatDepot;
+    resultat.value = await inscriptionPubliqueService.deposer({
+      nom: form.value.nom.trim(),
+      prenom: form.value.prenom.trim(),
+      sexe: form.value.sexe ?? undefined,
+      dateNaissance: form.value.dateNaissance || undefined,
+      lieuNaissance: form.value.lieuNaissance.trim() || undefined,
+      telephone: form.value.telephone.trim(),
+      email: form.value.email.trim() || undefined,
+      adresse: form.value.adresse.trim() || undefined,
+      anneeId: form.value.anneeId || undefined,
+      promotionId: form.value.promotionId,
+    });
     etape.value = 3;
     oublierBrouillon();
-  } catch (e: any) {
-    messageDepotErreur.value = e?.response?.data?.message ?? t('inscriptionPublique.form.step2.depotError');
+  } catch (e: unknown) {
+    const corps = (e as { response?: { data?: { message?: string } } } | null)?.response?.data;
+    messageDepotErreur.value = corps?.message ?? t('inscriptionPublique.form.step2.depotError');
   } finally {
     depotEnCours.value = false;
   }
@@ -704,95 +416,6 @@ onMounted(() => {
   border-color: var(--up-vert, $vert);
 }
 
-.acces__form {
-  display: grid;
-  gap: var(--up-3);
-}
-
-.acces__aide {
-  color: var(--up-encre-douce);
-  margin: -4px 0 0;
-}
-
-.acces__bouton {
-  min-height: 56px;
-}
-
-.acces__tarif {
-  padding: var(--up-3) var(--up-4);
-  display: grid;
-  gap: var(--up-1);
-}
-
-.acces__tarif-libelle {
-  color: var(--up-encre-douce);
-  letter-spacing: -0.01em;
-}
-
-.acces__tarif-montant {
-  font-size: 1.4rem;
-  color: $vert;
-}
-
-// -------------------------------------------------------------- résultat
-.acces__resultat {
-  display: grid;
-  gap: var(--up-4);
-}
-
-.acces__resultat-tampon {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--up-2);
-  align-self: start;
-  background: $vert-fond;
-  color: #{$vert};
-  border-radius: var(--up-pilule);
-  padding: var(--up-2) var(--up-3);
-}
-
-.acces__resultat-ref {
-  color: var(--up-encre-douce);
-  margin: 0;
-}
-
-.acces__resultat-numero {
-  font-size: clamp(1.8rem, 1.2rem + 2.2vw, 2.6rem);
-  margin: 0;
-}
-
-.acces__resultat-montant {
-  padding: var(--up-4);
-  display: grid;
-  gap: var(--up-2);
-}
-
-.acces__resultat-libelle {
-  color: var(--up-encre-douce);
-  letter-spacing: -0.01em;
-}
-
-.acces__resultat-somme {
-  font-size: clamp(1.6rem, 1rem + 2vw, 2.4rem);
-  color: $vert;
-}
-
-.acces__resultat-message {
-  font-size: 0.95rem;
-  line-height: 1.55;
-  margin: 0;
-  max-width: 46ch;
-}
-
-.acces__resultat-actions {
-  display: grid;
-  gap: var(--up-2);
-}
-
-.acces__resultat-lien {
-  margin: 0;
-}
-
 // -------------------------------------------------------- autres services
 .acces__separateur {
   margin: var(--up-4) 0 var(--up-3);
@@ -827,8 +450,7 @@ onMounted(() => {
 @media print {
   .enseigne,
   .acces__services,
-  .acces__separateur,
-  .acces__resultat-actions {
+  .acces__separateur {
     display: none;
   }
 

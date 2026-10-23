@@ -194,7 +194,6 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import type { ChartConfiguration } from 'chart.js';
-import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
@@ -202,6 +201,7 @@ import Graphique from '@/shared/components/Graphique.vue';
 import { dateHeureLisible, montantLisible, nombreLisible, pourcentLisible } from '@/shared/utils/libelles';
 import type { AnneeAcademique, StatistiqueMesrs } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { listeBilansMesrs, rectoratService } from '@/features/administration/services/rectorat';
 
 /**
  * Mêmes peintures que le Tableau de bord Rectorat pour les mêmes indicateurs :
@@ -423,8 +423,7 @@ async function charger() {
   chargement.value = true;
   try {
     const params = anneeId.value ? { anneeId: anneeId.value } : {};
-    const { data } = await api.get('/rectorat/bilan-mesrs', { params });
-    snapshots.value = Array.isArray(data) ? data : (data.data ?? []);
+    snapshots.value = listeBilansMesrs(await rectoratService.bilansMesrs(params));
   } catch {
     snapshots.value = [];
   } finally {

@@ -94,11 +94,11 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { STATUTS_ENSEIGNANT } from '@/shared/utils/libelles';
 import type { Departement, Enseignant } from '@/types';
+import { enseignantsService } from '@/features/administration/services/enseignants';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
@@ -155,8 +155,8 @@ async function enregistrer() {
       grade: form.value.grade || undefined,
       departementId: form.value.departementId || undefined,
     };
-    if (props.enseignant) await api.put(`/enseignants/${props.enseignant.id}`, payload);
-    else await api.post('/enseignants', payload);
+    if (props.enseignant) await enseignantsService.modifier(props.enseignant.id, payload);
+    else await enseignantsService.creer(payload);
     await referentiels.rafraichir('enseignants');
     $q.notify({ type: 'positive', message: t('enseignants.formDialog.saved') });
     emit('enregistre');

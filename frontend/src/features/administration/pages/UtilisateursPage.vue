@@ -323,8 +323,11 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
+import {
+  utilisateursService,
+  type UtilisateurSaisie,
+} from '@/features/administration/services/utilisateurs';
 import { useReferentielsStore } from '@/stores/referentiels';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -357,16 +360,12 @@ const liste = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/utilisateurs', {
-          params: {
-            ...pageApi(p),
-            search: texteApi(f.recherche),
-            role: f.role || undefined,
-            departementId: f.departementId || undefined,
-          },
-        })
-        .then((r) => r.data),
+      utilisateursService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        role: f.role || undefined,
+        departementId: f.departementId || undefined,
+      }),
   }),
 );
 
@@ -499,7 +498,7 @@ async function enregistrer() {
 
   enregistrement.value = true;
   try {
-    const payload: Record<string, unknown> = {
+    const payload: UtilisateurSaisie = {
       ...form.value,
       email,
       telephone: form.value.telephone || undefined,
@@ -508,8 +507,8 @@ async function enregistrer() {
     };
     if (!payload.password) delete payload.password;
 
-    if (utilisateurEdite.value) await api.put(`/utilisateurs/${utilisateurEdite.value.id}`, payload);
-    else await api.post('/utilisateurs', payload);
+    if (utilisateurEdite.value) await utilisateursService.modifier(utilisateurEdite.value.id, payload);
+    else await utilisateursService.creer(payload);
 
     $q.notify({ type: 'positive', message: t('utilisateurs.messages.saved') });
     dialogOuvert.value = false;

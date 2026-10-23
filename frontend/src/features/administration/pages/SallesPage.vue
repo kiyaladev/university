@@ -65,227 +65,40 @@
     <q-linear-progress v-if="sal.chargement" indeterminate color="primary" class="q-mb-sm" />
 
     <!-- Vue cartes : chaque plaque montre le QR tel qu'il sera affiché -->
-    <div v-if="modeVue === 'cartes'" class="row q-col-gutter-md">
-      <div v-for="s in sallesAffichees" :key="s.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section class="row items-start">
-            <div class="col">
-              <div class="text-h6">{{ s.code }}</div>
-              <div class="text-caption text-grey-7">{{ s.nom }}</div>
-              <div class="text-caption text-grey-7">{{ s.batiment ?? '—' }}</div>
-            </div>
-            <q-badge :color="s.actif ? 'positive' : 'grey-7'">
-              {{ s.actif ? $t('salles.card.active') : $t('salles.card.inactive') }}
-            </q-badge>
-          </q-card-section>
-
-          <q-card-section v-if="peutGerer" class="text-center q-pt-none">
-            <canvas :ref="(el) => enregistrerCanvas(el, s)" :aria-label="$t('salles.card.qrAria', { code: s.code })" />
-            <div class="text-caption text-grey-6 ellipsis">{{ s.qrToken }}</div>
-          </q-card-section>
-
-          <q-card-section class="q-pt-none text-caption">
-            <div><q-icon name="groups" size="14px" /> {{ s.capacite }} {{ $t('salles.card.capacitySuffix') }}</div>
-            <div v-if="s.latitude">
-              <q-icon name="my_location" size="14px" />
-              {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }}
-              {{ $t('common.units.radius', { n: s.rayonMetres }) }}
-            </div>
-            <div v-else class="text-grey-6">
-              <q-icon name="location_off" size="14px" /> {{ $t('salles.card.noGpsMark') }}
-            </div>
-          </q-card-section>
-
-          <q-separator />
-          <q-card-actions align="right">
-            <q-btn
-              flat
-              dense
-              round
-              icon="event_note"
-              :aria-label="$t('salles.roomActions.viewSessionsAria')"
-              @click="voirSeances(s)"
-            >
-              <q-tooltip>{{ $t('salles.roomActions.viewSessionsTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              flat
-              dense
-              round
-              icon="print"
-              :aria-label="$t('salles.roomActions.printPosterAria')"
-              @click="imprimerQr(s.id)"
-            >
-              <q-tooltip>{{ $t('salles.roomActions.printPosterTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutGerer"
-              flat
-              dense
-              round
-              icon="autorenew"
-              :aria-label="$t('salles.roomActions.regenerateAria')"
-              @click="regenerer(s)"
-            >
-              <q-tooltip>{{ $t('salles.roomActions.regenerateTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutGerer"
-              flat
-              dense
-              round
-              icon="edit"
-              :aria-label="$t('salles.roomActions.editAria')"
-              @click="ouvrir(s)"
-            >
-              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              v-if="peutSupprimer"
-              flat
-              dense
-              round
-              color="negative"
-              icon="delete"
-              :aria-label="$t('salles.roomActions.deleteAria')"
-              @click="supprimer(s)"
-            >
-              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-            </q-btn>
-          </q-card-actions>
-        </q-card>
-      </div>
-      <etat-vide
-        v-if="!sallesAffichees.length && !sal.chargement"
-        class="col-12"
-        icone="meeting_room"
-        :titre="messageVide"
-      >
-        <template #action>
-          <q-btn
-            v-if="peutGerer && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('salles.emptyState.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('common.actions.reset_filters')"
-            @click="reinitialiser"
-          />
-        </template>
-      </etat-vide>
-    </div>
+    <cartes-salles
+      v-if="modeVue === 'cartes'"
+      :salles="sallesAffichees"
+      :chargement="sal.chargement"
+      :peut-gerer="peutGerer"
+      :peut-supprimer="peutSupprimer"
+      :titre-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      @creer="ouvrir(null)"
+      @reinitialiser="reinitialiser"
+      @voir-seances="voirSeances"
+      @imprimer="imprimerQr"
+      @regenerer="regenerer"
+      @modifier="ouvrir"
+      @supprimer="supprimer"
+    />
 
     <!-- Vue tableau : pour comparer capacités, bâtiments et repères -->
-    <q-table
+    <tableau-salles
       v-else
-      flat
-      bordered
-      class="carte"
-      :rows="sallesAffichees"
-      :columns="colonnes"
-      row-key="id"
-      :loading="sal.chargement"
-      :pagination="{ rowsPerPage: 0 }"
-    >
-      <template #no-data>
-        <etat-vide icone="meeting_room" :titre="messageVide">
-          <template #action>
-            <q-btn
-              v-if="peutGerer && !filtresActifs"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('salles.emptyState.createFirst')"
-              @click="ouvrir(null)"
-            />
-            <q-btn
-              v-else-if="filtresActifs"
-              flat
-              no-caps
-              icon="refresh"
-              :label="$t('common.actions.reset_filters')"
-              @click="reinitialiser"
-            />
-          </template>
-        </etat-vide>
-      </template>
-
-      <template #body-cell-etat="p">
-        <q-td :props="p">
-          <q-badge :color="p.row.actif ? 'positive' : 'grey-7'">
-            {{ p.row.actif ? $t('salles.card.active') : $t('salles.card.inactive') }}
-          </q-badge>
-        </q-td>
-      </template>
-
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="event_note"
-            :aria-label="$t('salles.roomActions.viewSessionsAria')"
-            @click="voirSeances(p.row)"
-          >
-            <q-tooltip>{{ $t('salles.roomActions.viewSessionsTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="print"
-            :aria-label="$t('salles.roomActions.printPosterAria')"
-            @click="imprimerQr(p.row.id)"
-          >
-            <q-tooltip>{{ $t('salles.roomActions.printPosterTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            round
-            icon="autorenew"
-            :aria-label="$t('salles.roomActions.regenerateAria')"
-            @click="regenerer(p.row)"
-          >
-            <q-tooltip>{{ $t('salles.roomActions.regenerateTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutGerer"
-            flat
-            dense
-            round
-            icon="edit"
-            :aria-label="$t('salles.roomActions.editAria')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="peutSupprimer"
-            flat
-            dense
-            round
-            color="negative"
-            icon="delete"
-            :aria-label="$t('salles.roomActions.deleteAria')"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-          </q-btn>
-        </q-td>
-      </template>
-    </q-table>
+      :salles="sallesAffichees"
+      :chargement="sal.chargement"
+      :peut-gerer="peutGerer"
+      :peut-supprimer="peutSupprimer"
+      :titre-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      @creer="ouvrir(null)"
+      @reinitialiser="reinitialiser"
+      @voir-seances="voirSeances"
+      @imprimer="imprimerQr"
+      @regenerer="regenerer"
+      @modifier="ouvrir"
+      @supprimer="supprimer"
+    />
 
     <barre-pagination
       v-if="sallesFiltrees.length"
@@ -400,21 +213,21 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
-import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import QRCode from 'qrcode';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
+import CartesSalles from '@/features/administration/components/CartesSalles.vue';
+import TableauSalles from '@/features/administration/components/TableauSalles.vue';
+import { sallesService, type SalleSaisie } from '@/features/administration/services/salles';
 import type { Salle, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -542,41 +355,6 @@ const chips = computed(() => {
   return cs;
 });
 
-const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
-  { name: 'batiment', label: t('common.fields.building'), field: (r: Salle) => r.batiment || '—', align: 'left' },
-  { name: 'capacite', label: t('common.fields.capacity'), field: 'capacite', align: 'right', sortable: true },
-  {
-    name: 'repere',
-    label: t('salles.table.columns.gpsMark'),
-    field: (r: Salle) => (r.latitude ? `± ${r.rayonMetres} m` : '—'),
-    align: 'left',
-  },
-  { name: 'qr', label: t('salles.table.columns.qrToken'), field: 'qrToken', align: 'left' },
-  { name: 'etat', label: t('common.fields.state'), field: 'actif', align: 'left' },
-  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
-]);
-
-/** Dessine le QR de la salle dans sa carte. */
-const canvasParSalle = new Map<string, HTMLCanvasElement>();
-
-function enregistrerCanvas(el: any, salle: Salle) {
-  if (!el) {
-    canvasParSalle.delete(salle.id);
-    return;
-  }
-  canvasParSalle.set(salle.id, el as HTMLCanvasElement);
-  void QRCode.toCanvas(el as HTMLCanvasElement, salle.qrToken, { width: 132, margin: 1 });
-}
-
-function dessinerTousLesQr() {
-  for (const salle of sallesAffichees.value) {
-    const el = canvasParSalle.get(salle.id);
-    if (el) void QRCode.toCanvas(el, salle.qrToken, { width: 132, margin: 1 });
-  }
-}
-
 function ouvrir(s: Salle | null) {
   salleEditee.value = s;
   form.value = {
@@ -611,9 +389,9 @@ function positionActuelle() {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const payload = { ...form.value, batiment: form.value.batiment || undefined };
-    if (salleEditee.value) await api.put(`/salles/${salleEditee.value.id}`, payload);
-    else await api.post('/salles', payload);
+    const payload: SalleSaisie = { ...form.value, batiment: form.value.batiment || undefined };
+    if (salleEditee.value) await sallesService.modifier(salleEditee.value.id, payload);
+    else await sallesService.creer(payload);
     $q.notify({ type: 'positive', message: t('salles.messages.saved') });
     dialogOuvert.value = false;
     await sal.recharger();
@@ -632,7 +410,7 @@ async function regenerer(s: Salle) {
   });
   if (!ok) return;
   try {
-    await api.post(`/salles/${s.id}/qr`);
+    await sallesService.regenererQr(s.id);
     $q.notify({ type: 'positive', message: t('salles.messages.regenerated') });
     await sal.recharger();
   } catch {
@@ -663,12 +441,6 @@ watch(sallesFiltrees, (liste) => {
   const max = Math.max(1, Math.ceil(liste.length / pageSize.value));
   if (page.value > max) page.value = max;
 });
-
-// Les jetons changent (régénération) ou la page affichée change : on redessine.
-watch(
-  () => [modeVue.value, sallesAffichees.value.map((s) => `${s.id}:${s.qrToken}`).join('|')],
-  () => void nextTick(dessinerTousLesQr),
-);
 </script>
 
 <style scoped lang="scss"></style>

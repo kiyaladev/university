@@ -60,247 +60,40 @@
     </div>
 
     <!-- Vue tableau -->
-    <q-table
+    <tableau-feuilles-paie
       v-if="modeVue === 'tableau'"
-      flat
-      bordered
-      class="carte"
-      :rows="liste.lignes"
-      :columns="colonnes"
-      row-key="id"
-      :loading="liste.chargement"
-      :rows-per-page-options="[0]"
-      :hide-bottom="liste.chargement || liste.lignes.length > 0"
-      @row-click="ouvrirDetail"
-    >
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <PastilleStatut domaine="paie" :statut="p.row.statut" />
-        </q-td>
-      </template>
-      <template #body-cell-montantTotal="p">
-        <q-td :props="p" class="text-right text-weight-medium">
-          {{ montantLisible(p.row.montantTotal) }}
-        </q-td>
-      </template>
-      <template #body-cell-lignes="p">
-        <q-td :props="p" class="text-right">
-          {{ p.row.lignes?.length ?? 0 }}
-        </q-td>
-      </template>
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="visibility"
-            color="primary"
-            :aria-label="$t('paie.ariaLabels.detail', { libelle: p.row.libelle })"
-            @click.stop="ouvrirDetail(null, p.row)"
-          >
-            <q-tooltip>{{ $t('paie.tooltips.detail') }}</q-tooltip>
-          </q-btn>
-          <template v-if="peutCalculer(p.row)">
-            <q-btn
-              flat
-              dense
-              round
-              icon="refresh"
-              :aria-label="$t('paie.ariaLabels.recalculate', { libelle: p.row.libelle })"
-              @click.stop="recalculer(p.row)"
-            >
-              <q-tooltip>{{ $t('paie.tooltips.recalculate') }}</q-tooltip>
-            </q-btn>
-          </template>
-          <template v-if="peutValider(p.row)">
-            <q-btn
-              flat
-              dense
-              round
-              color="positive"
-              icon="verified"
-              :aria-label="$t('paie.ariaLabels.validate', { libelle: p.row.libelle })"
-              @click.stop="valider(p.row)"
-            >
-              <q-tooltip>{{ $t('paie.tooltips.validate') }}</q-tooltip>
-            </q-btn>
-          </template>
-          <template v-if="peutPayer(p.row)">
-            <q-btn
-              flat
-              dense
-              round
-              color="primary"
-              icon="payments"
-              :aria-label="$t('paie.ariaLabels.markPaid', { libelle: p.row.libelle })"
-              @click.stop="payer(p.row)"
-            >
-              <q-tooltip>{{ $t('paie.tooltips.markPaid') }}</q-tooltip>
-            </q-btn>
-          </template>
-          <q-btn
-            v-if="peutImprimer"
-            flat
-            dense
-            round
-            icon="print"
-            :aria-label="$t('paie.ariaLabels.print', { libelle: p.row.libelle })"
-            @click.stop="imprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('paie.tooltips.print') }}</q-tooltip>
-          </q-btn>
-          <template v-if="peutSupprimer(p.row)">
-            <q-btn
-              flat
-              dense
-              round
-              color="negative"
-              icon="delete"
-              :aria-label="$t('paie.ariaLabels.delete', { libelle: p.row.libelle })"
-              @click.stop="supprimer(p.row)"
-            >
-              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-            </q-btn>
-          </template>
-        </q-td>
-      </template>
-      <template #no-data>
-        <etat-vide
-          icone="payments"
-          :titre="$t('paie.emptyState.title')"
-          :aide="`${$t('paie.emptyState.description')} ${aDesFiltres ? $t('paie.emptyState.filtered') : ''}`.trim()"
-        >
-          <template #action>
-            <q-btn
-              v-if="aDesFiltres"
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="filter_alt_off"
-              :label="$t('common.actions.clearFilters')"
-              @click="liste.reinitialiser([])"
-            />
-            <q-btn
-              v-else-if="peutCreer"
-              unelevated
-              no-caps
-              color="primary"
-              icon="add"
-              :label="$t('paie.actions.createFirst')"
-              @click="dialogCreation = true"
-            />
-          </template>
-        </etat-vide>
-      </template>
-    </q-table>
+      :lignes="liste.lignes"
+      :chargement="liste.chargement"
+      :a-des-filtres="aDesFiltres"
+      :peut-creer="peutCreer"
+      :peut-imprimer="peutImprimer"
+      @detail="ouvrirDetail"
+      @recalculer="recalculer"
+      @valider="valider"
+      @payer="payer"
+      @imprimer="imprimer"
+      @supprimer="supprimer"
+      @reinitialiser="liste.reinitialiser([])"
+      @creer="dialogCreation = true"
+    />
 
     <!-- Vue cartes -->
-    <div v-else class="row q-col-gutter-md">
-      <div v-for="f in liste.lignes" :key="f.id" class="col-12 col-sm-6 col-md-4">
-        <q-card flat bordered class="carte carte-feuille full-height" @click="ouvrirDetail(null, f)">
-          <q-card-section>
-            <div class="row items-start no-wrap q-col-gutter-sm">
-              <div class="col">
-                <div class="text-h6">{{ f.libelle }}</div>
-                <div class="text-caption text-grey-7">
-                  {{ dateLisible(f.dateDebut) }} {{ $t('common.format.emptyValue') }} {{ dateLisible(f.dateFin) }}
-                </div>
-              </div>
-              <PastilleStatut domaine="paie" :statut="f.statut" />
-            </div>
-          </q-card-section>
-          <q-card-section>
-            <div class="row items-end justify-between">
-              <div>
-                <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
-                <div class="text-h6">{{ montantLisible(f.montantTotal) }} {{ $t('common.units.gnf') }}</div>
-              </div>
-              <div class="text-caption text-grey-7 text-right">
-                {{ $t('paie.card.lignesCount', { count: f.lignes?.length ?? 0 }) }}<br />
-                {{ f.creePar ? `${f.creePar.prenom} ${f.creePar.nom}` : '' }}
-              </div>
-            </div>
-          </q-card-section>
-          <q-card-actions align="right">
-            <template v-if="peutCalculer(f)">
-              <q-btn
-                flat
-                dense
-                no-caps
-                icon="refresh"
-                :label="$t('common.actions.recalculate')"
-                @click.stop="recalculer(f)"
-              />
-            </template>
-            <template v-if="peutValider(f)">
-              <q-btn
-                flat
-                dense
-                no-caps
-                color="positive"
-                icon="verified"
-                :label="$t('common.actions.validate')"
-                @click.stop="valider(f)"
-              />
-            </template>
-            <template v-if="peutPayer(f)">
-              <q-btn flat dense no-caps icon="payments" :label="$t('paie.actions.markPaid')" @click.stop="payer(f)" />
-            </template>
-            <q-btn
-              v-if="peutImprimer"
-              flat
-              dense
-              no-caps
-              icon="print"
-              :label="$t('common.actions.print')"
-              @click.stop="imprimer(f)"
-            />
-            <template v-if="peutSupprimer(f)">
-              <q-btn
-                flat
-                dense
-                round
-                color="negative"
-                icon="delete"
-                :aria-label="$t('paie.ariaLabels.delete', { libelle: f.libelle })"
-                @click.stop="supprimer(f)"
-              />
-            </template>
-          </q-card-actions>
-        </q-card>
-      </div>
-      <etat-vide
-        v-if="!liste.lignes.length && !liste.chargement"
-        class="col-12"
-        icone="payments"
-        :titre="$t('paie.emptyState.title')"
-        :aide="`${$t('paie.emptyState.description')} ${aDesFiltres ? $t('paie.emptyState.filtered') : ''}`.trim()"
-      >
-        <template #action>
-          <q-btn
-            v-if="aDesFiltres"
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="filter_alt_off"
-            :label="$t('common.actions.clearFilters')"
-            @click="liste.reinitialiser([])"
-          />
-          <q-btn
-            v-else-if="peutCreer"
-            unelevated
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('paie.actions.createFirst')"
-            @click="dialogCreation = true"
-          />
-        </template>
-      </etat-vide>
-    </div>
+    <cartes-feuilles-paie
+      v-else
+      :lignes="liste.lignes"
+      :chargement="liste.chargement"
+      :a-des-filtres="aDesFiltres"
+      :peut-creer="peutCreer"
+      :peut-imprimer="peutImprimer"
+      @detail="ouvrirDetail"
+      @recalculer="recalculer"
+      @valider="valider"
+      @payer="payer"
+      @imprimer="imprimer"
+      @supprimer="supprimer"
+      @reinitialiser="liste.reinitialiser([])"
+      @creer="dialogCreation = true"
+    />
 
     <barre-pagination
       v-model:page="liste.page"
@@ -310,74 +103,12 @@
     />
 
     <!-- Détail : lignes de la feuille -->
-    <q-dialog v-model="dialogDetail">
-      <q-card style="width: 900px; max-width: 95vw">
-        <q-card-section>
-          <div class="row items-start no-wrap q-col-gutter-md">
-            <div class="col">
-              <div class="text-h6">{{ detail?.libelle }}</div>
-              <div class="text-caption text-grey-7">
-                {{ detail ? `${dateLisible(detail.dateDebut)} — ${dateLisible(detail.dateFin)}` : '' }}
-              </div>
-            </div>
-            <PastilleStatut v-if="detail" domaine="paie" :statut="detail.statut" />
-          </div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-table
-            flat
-            dense
-            :rows="detail?.lignes ?? []"
-            :columns="colonnesLignes"
-            row-key="id"
-            :pagination="{ rowsPerPage: 0 }"
-          >
-            <template #body-cell-enseignant="p">
-              <q-td :props="p">
-                <div>{{ p.row.enseignant?.nom }} {{ p.row.enseignant?.prenom }}</div>
-                <div class="q-gutter-xs q-mt-xs">
-                  <q-chip dense size="xs" outline color="primary">{{ p.row.enseignant?.matricule }}</q-chip>
-                  <PastilleStatut domaine="enseignant" :statut="p.row.enseignant?.statut" />
-                </div>
-              </q-td>
-            </template>
-            <template #no-data>
-              <etat-vide
-                icone="receipt_long"
-                :titre="$t('paie.detail.lineEmptyTitle')"
-                :aide="$t('paie.detail.lineEmptyMessage')"
-              />
-            </template>
-            <template #bottom>
-              <div class="detail-total">
-                <div class="text-weight-medium">
-                  {{ $t('paie.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
-                </div>
-                <div class="text-weight-medium chiffres">
-                  {{ heuresLisibles(heuresTotal) }} {{ $t('paie.detail.completed') }}
-                </div>
-                <div class="text-weight-medium chiffres">
-                  {{ montantLisible(detail?.montantTotal) }} {{ $t('common.units.gnf') }}
-                </div>
-              </div>
-            </template>
-          </q-table>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn
-            v-if="peutImprimer"
-            flat
-            no-caps
-            icon="print"
-            :label="$t('paie.actions.printSheet')"
-            @click="detail && imprimer(detail)"
-          />
-          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-detail-feuille-paie
+      v-model:ouvert="dialogDetail"
+      :feuille="detail"
+      :peut-imprimer="peutImprimer"
+      @imprimer="imprimer"
+    />
 
     <dialogue-feuille-paie
       v-model="dialogCreation"
@@ -389,29 +120,30 @@
 </template>
 
 <script setup lang="ts">
-import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
+import { useQuasar } from 'quasar';
 
 import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueFeuillePaie from '../components/DialogueFeuillePaie.vue';
-import { LIBELLE_STATUT_PAIE, dateLisible, heuresLisibles, montantLisible } from '@/shared/utils/libelles';
+import DialogueDetailFeuillePaie from '../components/DialogueDetailFeuillePaie.vue';
+import TableauFeuillesPaie from '../components/TableauFeuillesPaie.vue';
+import CartesFeuillesPaie from '../components/CartesFeuillesPaie.vue';
+import { paieService, type ActionFeuillePaie } from '../services/paie';
+import { LIBELLE_STATUT_PAIE, montantLisible } from '@/shared/utils/libelles';
 import type { FeuillePaie } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
-const { confirmer, supprimerAvecConfirmation } = useConfirmation();
+const { confirmer } = useConfirmation();
 
 const modeVue = usePresentationListe();
 const dialogCreation = ref(false);
@@ -430,11 +162,7 @@ const liste = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/feuilles-paie', {
-          params: { ...pageApi(p), statut: f.statut || undefined, annee: f.annee || undefined },
-        })
-        .then((r) => r.data),
+      paieService.liste({ ...pageApi(p), statut: f.statut || undefined, annee: f.annee || undefined }),
   }),
 );
 
@@ -448,7 +176,7 @@ const optionsStatuts = ['BROUILLON', 'VALIDE', 'PAYE'].map((v) => ({
 }));
 
 const chipsFiltres = computed(() => {
-  const chips: Array<{ label: string; value: any }> = [];
+  const chips: Array<{ label: string; value: string }> = [];
   if (filtres.value.statut) {
     chips.push({
       label: t('paie.filters.statutChip', { value: LIBELLE_STATUT_PAIE[filtres.value.statut] }),
@@ -480,73 +208,7 @@ const optionsAnnees = computed(() => {
 
 const totalMontant = computed(() => liste.lignes.reduce((t, f) => t + (f.montantTotal ?? 0), 0));
 
-const heuresTotal = computed(() => (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0));
-
-const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'libelle', label: t('paie.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
-  {
-    name: 'periode',
-    label: t('common.fields.period'),
-    field: (r: FeuillePaie) => `${dateLisible(r.dateDebut)} — ${dateLisible(r.dateFin)}`,
-    align: 'left',
-  },
-  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
-  { name: 'lignes', label: t('paie.table.columns.lignes'), field: 'lignes', align: 'right' },
-  {
-    name: 'montantTotal',
-    label: t('paie.table.columns.montantTotal'),
-    field: 'montantTotal',
-    align: 'right',
-    sortable: true,
-  },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-]);
-
-// Toutes les grandeurs monétaires passent par le même formateur, et les heures
-// par le même : sans quoi une colonne dit « 12000 » quand la voisine dit
-// « 12 000 ».
-const colonnesLignes = computed<QTableColumn[]>(() => [
-  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignant', align: 'left' },
-  {
-    name: 'taux',
-    label: t('paie.table.lignesColumns.taux'),
-    field: (r: any) => montantLisible(r.tauxHoraire),
-    align: 'right',
-  },
-  {
-    name: 'heures',
-    label: t('paie.table.lignesColumns.heures'),
-    field: (r: any) => heuresLisibles(r.heuresReelles),
-    align: 'right',
-  },
-  {
-    name: 'volume',
-    label: t('paie.table.lignesColumns.volume'),
-    field: (r: any) => heuresLisibles(r.volumePrevu),
-    align: 'right',
-  },
-  {
-    name: 'brut',
-    label: t('paie.table.lignesColumns.brut'),
-    field: (r: any) => montantLisible(r.montantBrut),
-    align: 'right',
-  },
-  {
-    name: 'retenue',
-    label: t('paie.table.lignesColumns.retenue'),
-    field: (r: any) => montantLisible(r.retenue),
-    align: 'right',
-  },
-  {
-    name: 'montant',
-    label: t('paie.table.lignesColumns.montant'),
-    field: (r: any) => montantLisible(r.montantNet),
-    align: 'right',
-  },
-  { name: 'commentaire', label: t('paie.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },
-]);
-
-function ouvrirDetail(_event: unknown, f: FeuillePaie) {
+function ouvrirDetail(f: FeuillePaie) {
   detail.value = f;
   dialogDetail.value = true;
 }
@@ -559,7 +221,7 @@ async function avecNouvelleFeuille(f: FeuillePaie) {
 /** Action du cycle de vie après confirmation : la feuille rendue devient le détail. */
 async function agir(
   f: FeuillePaie,
-  action: 'calculer' | 'valider' | 'payer',
+  action: ActionFeuillePaie,
   dialogue: 'recalculate' | 'validate' | 'markPaid',
   succes: string,
 ) {
@@ -570,14 +232,10 @@ async function agir(
     couleur: dialogue === 'validate' ? 'positive' : 'primary',
   });
   if (!ok) return;
-  try {
-    const { data } = await api.post(`/feuilles-paie/${f.id}/${action}`);
-    $q.notify({ type: 'positive', message: t(succes) });
-    detail.value = data;
-    await liste.recharger();
-  } catch {
-    /* notifié par l'intercepteur */
-  }
+  const feuille = await paieService.action(f.id, action);
+  $q.notify({ type: 'positive', message: t(succes) });
+  detail.value = feuille;
+  await liste.recharger();
 }
 
 /** Recalcul idempotent des heures contrôlées de la période. */
@@ -589,46 +247,18 @@ function imprimer(f: FeuillePaie) {
   void ouvrirImpression(`/feuilles-paie/${f.id}/imprimer`);
 }
 
-function supprimer(f: FeuillePaie) {
-  void supprimerAvecConfirmation(
-    `/feuilles-paie/${f.id}`,
-    f.libelle,
-    () => {
-      if (detail.value?.id === f.id) dialogDetail.value = false;
-      return liste.recharger();
-    },
-    {
-      titre: t('paie.dialogs.delete.title'),
-      message: t('paie.dialogs.delete.message', { libelle: f.libelle }),
-      ok: t('paie.dialogs.delete.ok'),
-      succes: t('paie.messages.deleted'),
-    },
-  );
+async function supprimer(f: FeuillePaie) {
+  const ok = await confirmer({
+    titre: t('paie.dialogs.delete.title'),
+    message: t('paie.dialogs.delete.message', { libelle: f.libelle }),
+    ok: t('paie.dialogs.delete.ok'),
+    danger: true,
+  });
+  if (!ok) return;
+  // L'intercepteur axios affiche le motif d'un échec : on ne notifie que le succès.
+  await paieService.supprimer(f.id);
+  $q.notify({ type: 'positive', message: t('paie.messages.deleted') });
+  if (detail.value?.id === f.id) dialogDetail.value = false;
+  await liste.recharger();
 }
-
-// Droits d'action, par rôle et par statut du cycle de vie.
-const peutCalculer = (f: FeuillePaie) => auth.peut('paie.calculer') && f.statut === 'BROUILLON';
-const peutValider = (f: FeuillePaie) => auth.peut('paie.valider') && f.statut === 'BROUILLON';
-const peutPayer = (f: FeuillePaie) => auth.peut('paie.payer') && f.statut === 'VALIDE';
-const peutSupprimer = (f: FeuillePaie) => auth.peut('paie.supprimer') && f.statut === 'BROUILLON';
 </script>
-
-<style scoped lang="scss">
-.carte-feuille {
-  cursor: pointer;
-  transition: background var(--up-transition);
-
-  &:hover {
-    background: var(--up-craie);
-  }
-}
-
-.detail-total {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--up-2);
-  padding: 10px var(--up-3);
-  border-top: var(--up-filet);
-  background: var(--up-craie);
-}
-</style>

@@ -45,7 +45,7 @@
         v-model="form.departementId"
         endpoint="/departements"
         :label="$t('courrier.registrationDialog.department')"
-        :label-fn="(d: any) => `${d.code} — ${d.nom}`"
+        :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"
       />
       <div class="text-caption text-grey-7">
         {{
@@ -145,11 +145,12 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useAuthStore } from '@/stores/auth';
+import type { Departement } from '@/types';
+import { courrierService } from '../services/courrier';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [] }>();
@@ -211,7 +212,7 @@ function lireFichier(f: File | null) {
 async function enregistrer() {
   envoi.value = true;
   try {
-    await api.post('/courrier', {
+    await courrierService.creer({
       ...form.value,
       departementId: form.value.departementId || undefined,
       dateReception: form.value.dateReception || undefined,
@@ -222,8 +223,6 @@ async function enregistrer() {
     ouvert.value = false;
     form.value = formVide();
     fichier.value = null;
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }
