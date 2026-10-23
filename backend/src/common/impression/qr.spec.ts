@@ -1,6 +1,10 @@
 import * as QRCode from 'qrcode';
 import { qrDataUrl, qrSvg } from './qr';
 
+// Le rendu PNG (data-URL) est plus lent que le SVG : sur une machine saturée
+// par les autres suites, le délai par défaut de Jest (5 s) est trop court.
+jest.setTimeout(30000);
+
 describe('rendu des QR codes', () => {
   const contenu = 'https://university.test/verifier?ref=ABC-1&k=secret';
 

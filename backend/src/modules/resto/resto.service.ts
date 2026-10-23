@@ -44,6 +44,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -267,19 +268,11 @@ export class RestoService {
         });
       }
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE',
-          entite: 'Recharge',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: recharge.statut, solde: soldeAvant },
-            apres: { statut: dto.statut, solde: soldeApres },
-            montant: recharge.montant,
-            champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
-          }),
-        },
+      await journaliser(tx, user, reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE', 'Recharge', id, {
+        avant: { statut: recharge.statut, solde: soldeAvant },
+        apres: { statut: dto.statut, solde: soldeApres },
+        montant: recharge.montant,
+        champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
       });
     });
 
@@ -373,20 +366,12 @@ export class RestoService {
       });
 
       const maj = await tx.portefeuilleResto.findUnique({ where: { id: portefeuille.id }, select: { solde: true } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'REPAS_VALIDE',
-          entite: 'ConsommationResto',
-          entiteId: consommation.id,
-          details: JSON.stringify({
-            repas: dto.repas,
-            montant: dto.montant,
-            avant: { solde: portefeuille.solde },
-            apres: { solde: maj!.solde },
-            champsModifies: ['solde'],
-          }),
-        },
+      await journaliser(tx, user, 'REPAS_VALIDE', 'ConsommationResto', consommation.id, {
+        repas: dto.repas,
+        montant: dto.montant,
+        avant: { solde: portefeuille.solde },
+        apres: { solde: maj!.solde },
+        champsModifies: ['solde'],
       });
       return { consommation, solde: maj!.solde };
     });
@@ -499,20 +484,12 @@ export class RestoService {
         where: { id: consommation.portefeuilleId },
         data: { solde: { increment: consommation.montant } },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'REPAS_ANNULE',
-          entite: 'ConsommationResto',
-          entiteId: id,
-          details: JSON.stringify({
-            montant: consommation.montant,
-            motifFourni: Boolean(dto.motif),
-            avant: { statut: consommation.statut, solde: consommation.portefeuille.solde },
-            apres: { statut: maj!.statut, solde: portefeuille.solde },
-            champsModifies: ['statut', 'solde'],
-          }),
-        },
+      await journaliser(tx, user, 'REPAS_ANNULE', 'ConsommationResto', id, {
+        montant: consommation.montant,
+        motifFourni: Boolean(dto.motif),
+        avant: { statut: consommation.statut, solde: consommation.portefeuille.solde },
+        apres: { statut: maj!.statut, solde: portefeuille.solde },
+        champsModifies: ['statut', 'solde'],
       });
       return { maj: maj!, solde: portefeuille.solde };
     });
@@ -641,21 +618,13 @@ export class RestoService {
             solde = maj.solde;
           }
 
-          await tx.auditLog.create({
-            data: {
-              userId: args.user.id,
-              action: 'RECHARGE_CREEE',
-              entite: 'Recharge',
-              entiteId: recharge.id,
-              details: JSON.stringify({
-                reference: paiement.reference,
-                montant: args.montant,
-                statut: recharge.statut,
-                avant: { solde: soldeAvant },
-                apres: { solde: args.statutImmediat ? solde : soldeAvant },
-                champsModifies: args.statutImmediat ? ['paiement', 'recharge', 'solde'] : ['paiement', 'recharge'],
-              }),
-            },
+          await journaliser(tx, { id: args.user.id }, 'RECHARGE_CREEE', 'Recharge', recharge.id, {
+            reference: paiement.reference,
+            montant: args.montant,
+            statut: recharge.statut,
+            avant: { solde: soldeAvant },
+            apres: { solde: args.statutImmediat ? solde : soldeAvant },
+            champsModifies: args.statutImmediat ? ['paiement', 'recharge', 'solde'] : ['paiement', 'recharge'],
           });
 
           return { recharge, paiement, solde };

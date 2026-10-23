@@ -27,6 +27,7 @@ import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } f
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { Paginated, QueryDto } from '../../common/dto';
 import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
@@ -238,18 +239,18 @@ export class FormationsService {
             },
             select: { id: true, numero: true, statut: true },
           });
-          await tx.auditLog.create({
-            data: {
-              action: 'FORMATION_INSCRIPTION',
-              entite: 'InscriptionFormation',
-              entiteId: inscription.id,
-              details: JSON.stringify({
-                avant: null,
-                apres: { statut: inscription.statut, formationId, paiementId: paiement.id },
-              }),
-              ip: ip ?? null,
+          await journaliser(
+            tx,
+            null,
+            'FORMATION_INSCRIPTION',
+            'InscriptionFormation',
+            inscription.id,
+            {
+              avant: null,
+              apres: { statut: inscription.statut, formationId, paiementId: paiement.id },
             },
-          });
+            ip ?? null,
+          );
           return { inscription, paiement };
         });
 
@@ -394,14 +395,9 @@ export class FormationsService {
         },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CREE',
-          entite: 'Formation',
-          entiteId: formation.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(formation) }),
-        },
+      await journaliser(tx, user, 'FORMATION_CREE', 'Formation', formation.id, {
+        avant: null,
+        apres: this.instantaneAudit(formation),
       });
       return formation;
     });
@@ -450,17 +446,9 @@ export class FormationsService {
         },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_MODIFIEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_MODIFIEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -479,14 +467,9 @@ export class FormationsService {
         throw new ConflictException(t('formations.des_demandes_sont_deja_deposees_sur_cette_formation_annulez_'));
       }
       await tx.formation.delete({ where: { id } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_SUPPRIMEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(formation), apres: null }),
-        },
+      await journaliser(tx, user, 'FORMATION_SUPPRIMEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: null,
       });
     });
     return { id };
@@ -512,17 +495,9 @@ export class FormationsService {
         data: { statut: StatutFormation.PUBLIE },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_PUBLIEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_PUBLIEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -548,17 +523,9 @@ export class FormationsService {
         data: { statut: StatutFormation.COMPLET },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CLOTUREE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_CLOTUREE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -653,17 +620,9 @@ export class FormationsService {
       }
       const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
       if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CONFIRMEE',
-          entite: 'InscriptionFormation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
-            apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_CONFIRMEE', 'InscriptionFormation', id, {
+        avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
+        apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
       });
       return maj;
     });
@@ -704,17 +663,9 @@ export class FormationsService {
       if (transition.count !== 1) throw new ConflictException(t('formations.cette_demande_est_deja_annulee'));
       const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
       if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_INSCRIPTION_ANNULEE',
-          entite: 'InscriptionFormation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: avant.statut, formationId: avant.formationId },
-            apres: { statut: maj.statut, formationId: maj.formationId },
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_INSCRIPTION_ANNULEE', 'InscriptionFormation', id, {
+        avant: { statut: avant.statut, formationId: avant.formationId },
+        apres: { statut: maj.statut, formationId: maj.formationId },
       });
       return maj;
     });

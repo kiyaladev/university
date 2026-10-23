@@ -315,15 +315,7 @@ export class BadgesService {
     });
 
     if (!badge) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_BADGE_ECHEC',
-          entite: 'badges',
-          entiteId: id,
-          details: `Identifiant inconnu ${id}`,
-          ip,
-        },
-      });
+      await journaliser(this.prisma, null, 'VERIF_BADGE_ECHEC', 'badges', id, `Identifiant inconnu ${id}`, ip);
       return { valide: false, raison: 'Aucun badge ne correspond à cet identifiant.' };
     }
 
@@ -331,17 +323,15 @@ export class BadgesService {
     const statutEffectif = this.evaluerStatut(badge);
     const valide = jetonOk && statutEffectif === StatutBadge.ACTIF;
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: valide ? 'VERIF_BADGE_OK' : 'VERIF_BADGE_ECHEC',
-        entite: 'badges',
-        entiteId: badge.id,
-        details: valide
-          ? 'Vérification publique réussie'
-          : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${statutEffectif}`,
-        ip,
-      },
-    });
+    await journaliser(
+      this.prisma,
+      null,
+      valide ? 'VERIF_BADGE_OK' : 'VERIF_BADGE_ECHEC',
+      'badges',
+      badge.id,
+      valide ? 'Vérification publique réussie' : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${statutEffectif}`,
+      ip,
+    );
 
     if (!jetonOk) {
       return {

@@ -112,16 +112,15 @@ export class PortailService {
     }
 
     const utilisateur = await this.assurerCompteEtudiant(etudiant);
-    await this.prisma.auditLog.create({
-      data: {
-        userId: utilisateur.id,
-        action: 'LOGIN',
-        entite: 'User',
-        entiteId: utilisateur.id,
-        details: 'Connexion portail via code OTP',
-        ip,
-      },
-    });
+    await journaliser(
+      this.prisma,
+      { id: utilisateur.id },
+      'LOGIN',
+      'User',
+      utilisateur.id,
+      'Connexion portail via code OTP',
+      ip,
+    );
 
     return {
       token: await this.jwt.signAsync({ sub: utilisateur.id, role: Role.ETUDIANT }),

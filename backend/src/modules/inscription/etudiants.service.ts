@@ -1,4 +1,5 @@
 import { QueryDto } from '../../common/dto';
+import { journaliser } from '../../common/audit';
 /**
  * Étudiants : le registre central dont dépendent tous les autres modules.
  * Matricule séquentiel par année ("2026-0004"), jeton QR resto généré à la
@@ -174,14 +175,9 @@ export class EtudiantsService extends CrudService {
             },
             include: ETUDIANT_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user?.id,
-              action: 'ETUDIANT_CREE',
-              entite: 'Etudiant',
-              entiteId: etudiant.id,
-              details: JSON.stringify({ avant: null, apres: this.instantaneAudit(etudiant) }),
-            },
+          await journaliser(tx, user ?? null, 'ETUDIANT_CREE', 'Etudiant', etudiant.id, {
+            avant: null,
+            apres: this.instantaneAudit(etudiant),
           });
           return etudiant;
         });
@@ -234,18 +230,10 @@ export class EtudiantsService extends CrudService {
         },
         include: ETUDIANT_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'ETUDIANT_MODIFIE',
-          entite: 'Etudiant',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(actuel),
-            apres: this.instantaneAudit(maj),
-            champsModifies: Object.keys(donnees),
-          }),
-        },
+      await journaliser(tx, user, 'ETUDIANT_MODIFIE', 'Etudiant', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(donnees),
       });
       return maj;
     });
@@ -276,17 +264,9 @@ export class EtudiantsService extends CrudService {
         data: { actif: false },
         include: ETUDIANT_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user?.id,
-          action: 'ETUDIANT_DESACTIVE',
-          entite: 'Etudiant',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(avant),
-            apres: this.instantaneAudit(apres),
-          }),
-        },
+      await journaliser(tx, user ?? null, 'ETUDIANT_DESACTIVE', 'Etudiant', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(apres),
       });
     });
     return { id };

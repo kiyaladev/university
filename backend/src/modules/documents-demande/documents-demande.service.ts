@@ -29,6 +29,7 @@ import {
 import { AttestationsService } from '../attestations/attestations.service';
 import { randomUUID } from 'node:crypto';
 import { CrudService } from '../../common/crud.service';
+import { journaliser } from '../../common/audit';
 import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
 import { pagine, paginer } from '../../common/pagination';
@@ -296,18 +297,10 @@ export class DocumentsDemandeService extends CrudService {
           const tarif = await tx.tarifDemande.create({
             data: { type: dto.type, montant: dto.montant, delaiHeures: dto.delaiHeures },
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'TARIF_DEMANDE_CREE',
-              entite: 'TarifDemande',
-              entiteId: tarif.id,
-              details: JSON.stringify({
-                avant: null,
-                apres: this.instantaneTarif(tarif),
-                champsModifies: ['type', 'montant', 'delaiHeures'],
-              }),
-            },
+          await journaliser(tx, user, 'TARIF_DEMANDE_CREE', 'TarifDemande', tarif.id, {
+            avant: null,
+            apres: this.instantaneTarif(tarif),
+            champsModifies: ['type', 'montant', 'delaiHeures'],
           });
           return tarif;
         });
@@ -336,18 +329,10 @@ export class DocumentsDemandeService extends CrudService {
         ...(dto.delaiHeures != null ? { delaiHeures: dto.delaiHeures } : {}),
       };
       const apres = await tx.tarifDemande.update({ where: { id }, data });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'TARIF_DEMANDE_MODIFIE',
-          entite: 'TarifDemande',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneTarif(avant),
-            apres: this.instantaneTarif(apres),
-            champsModifies: Object.keys(data),
-          }),
-        },
+      await journaliser(tx, user, 'TARIF_DEMANDE_MODIFIE', 'TarifDemande', id, {
+        avant: this.instantaneTarif(avant),
+        apres: this.instantaneTarif(apres),
+        champsModifies: Object.keys(data),
       });
       return apres;
     });
@@ -395,18 +380,10 @@ export class DocumentsDemandeService extends CrudService {
             },
             include: DEMANDE_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'DEMANDE_DOC_OUVERTE',
-              entite: 'DemandeDocument',
-              entiteId: demande.id,
-              details: JSON.stringify({
-                avant: null,
-                apres: this.instantaneDemande(demande),
-                champsModifies: ['type', 'statut', 'frais', 'devise'],
-              }),
-            },
+          await journaliser(tx, user, 'DEMANDE_DOC_OUVERTE', 'DemandeDocument', demande.id, {
+            avant: null,
+            apres: this.instantaneDemande(demande),
+            champsModifies: ['type', 'statut', 'frais', 'devise'],
           });
           return demande;
         });
@@ -512,19 +489,11 @@ export class DocumentsDemandeService extends CrudService {
           }
           const apres = await tx.demandeDocument.findUnique({ where: { id: demande.id } });
           if (!apres) throw new NotFoundException(t('documents-demande.demande_introuvable'));
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'DEMANDE_DOC_PAIEMENT_INITIE',
-              entite: 'Paiement',
-              entiteId: cree.id,
-              details: JSON.stringify({
-                avant: this.instantaneDemande(avant),
-                apres: this.instantaneDemande(apres),
-                paiement: this.instantanePaiement(cree),
-                champsModifies: ['paiementId'],
-              }),
-            },
+          await journaliser(tx, user, 'DEMANDE_DOC_PAIEMENT_INITIE', 'Paiement', cree.id, {
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            paiement: this.instantanePaiement(cree),
+            champsModifies: ['paiementId'],
           });
           return cree;
         });
@@ -580,20 +549,12 @@ export class DocumentsDemandeService extends CrudService {
         data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
         include: includeDemandePour(user),
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DEMANDE_DOC_PAIEMENT_CONFIRME',
-          entite: 'Paiement',
-          entiteId: paiement.id,
-          details: JSON.stringify({
-            avant: this.instantaneDemande(demandeAvant),
-            apres: this.instantaneDemande(demandeApres),
-            paiementAvant: paiementAvant ? this.instantanePaiement(paiementAvant) : null,
-            paiementApres: this.instantanePaiement(paiement),
-            champsModifies: ['statut', 'traiteParId'],
-          }),
-        },
+      await journaliser(tx, user, 'DEMANDE_DOC_PAIEMENT_CONFIRME', 'Paiement', paiement.id, {
+        avant: this.instantaneDemande(demandeAvant),
+        apres: this.instantaneDemande(demandeApres),
+        paiementAvant: paiementAvant ? this.instantanePaiement(paiementAvant) : null,
+        paiementApres: this.instantanePaiement(paiement),
+        champsModifies: ['statut', 'traiteParId'],
       });
       return demandeApres;
     });
@@ -615,18 +576,10 @@ export class DocumentsDemandeService extends CrudService {
         data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: user.id },
         include: includeDemandePour(user),
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DEMANDE_DOC_TRAITEMENT',
-          entite: 'DemandeDocument',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneDemande(avant),
-            apres: this.instantaneDemande(apres),
-            champsModifies: ['statut', 'traiteParId'],
-          }),
-        },
+      await journaliser(tx, user, 'DEMANDE_DOC_TRAITEMENT', 'DemandeDocument', id, {
+        avant: this.instantaneDemande(avant),
+        apres: this.instantaneDemande(apres),
+        champsModifies: ['statut', 'traiteParId'],
       });
       return apres;
     });
@@ -716,24 +669,16 @@ export class DocumentsDemandeService extends CrudService {
             },
             include: includeDemandePour(user),
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'DEMANDE_DOC_PRETE',
-              entite: 'DemandeDocument',
-              entiteId: id,
-              details: JSON.stringify({
-                avant: this.instantaneDemande(avant),
-                apres: this.instantaneDemande(apres),
-                champsModifies: [
-                  'statut',
-                  'traiteParId',
-                  'notification',
-                  ...(attestationId && attestationId !== avant.attestationId ? ['attestationId'] : []),
-                ],
-                sms: 'meilleur-effort hors transaction',
-              }),
-            },
+          await journaliser(tx, user, 'DEMANDE_DOC_PRETE', 'DemandeDocument', id, {
+            avant: this.instantaneDemande(avant),
+            apres: this.instantaneDemande(apres),
+            champsModifies: [
+              'statut',
+              'traiteParId',
+              'notification',
+              ...(attestationId && attestationId !== avant.attestationId ? ['attestationId'] : []),
+            ],
+            sms: 'meilleur-effort hors transaction',
           });
           return apres;
         });
@@ -803,21 +748,13 @@ export class DocumentsDemandeService extends CrudService {
         data,
         include: includeDemandePour(user),
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DEMANDE_DOC_REMISE',
-          entite: 'DemandeDocument',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneDemande(avant),
-            apres: this.instantaneDemande(apres),
-            champsModifies: dto.noteRemise?.trim()
-              ? ['statut', 'remiseLe', 'traiteParId', 'notes']
-              : ['statut', 'remiseLe', 'traiteParId'],
-            noteRemiseFournie: Boolean(dto.noteRemise?.trim()),
-          }),
-        },
+      await journaliser(tx, user, 'DEMANDE_DOC_REMISE', 'DemandeDocument', id, {
+        avant: this.instantaneDemande(avant),
+        apres: this.instantaneDemande(apres),
+        champsModifies: dto.noteRemise?.trim()
+          ? ['statut', 'remiseLe', 'traiteParId', 'notes']
+          : ['statut', 'remiseLe', 'traiteParId'],
+        noteRemiseFournie: Boolean(dto.noteRemise?.trim()),
       });
       return apres;
     });
@@ -847,21 +784,11 @@ export class DocumentsDemandeService extends CrudService {
         data,
         include: includeDemandePour(user),
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DEMANDE_DOC_REJETEE',
-          entite: 'DemandeDocument',
-          entiteId: id,
-          // Le motif reste dans les notes de la demande : le journal n'en garde
-          // que la présence, un motif de rejet peut citer un justificatif.
-          details: JSON.stringify({
-            avant: this.instantaneDemande(avant),
-            apres: this.instantaneDemande(apres),
-            champsModifies: ['statut', 'notes'],
-            motifFourni: true,
-          }),
-        },
+      await journaliser(tx, user, 'DEMANDE_DOC_REJETEE', 'DemandeDocument', id, {
+        avant: this.instantaneDemande(avant),
+        apres: this.instantaneDemande(apres),
+        champsModifies: ['statut', 'notes'],
+        motifFourni: true,
       });
       return apres;
     });

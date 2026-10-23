@@ -6,6 +6,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { Prisma, StatutInscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { CrudService } from '../../common/crud.service';
 import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
@@ -99,15 +100,7 @@ export class FraisService extends CrudService {
           include: FRAIS_INCLUDE,
         });
         await this.propager(tx, f.promotionId, f.anneeId, f.montant);
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'FRAIS_CREE',
-            entite: 'Frais',
-            entiteId: f.id,
-            details: JSON.stringify({ avant: null, apres: this.instantane(f) }),
-          },
-        });
+        await journaliser(tx, user, 'FRAIS_CREE', 'Frais', f.id, { avant: null, apres: this.instantane(f) });
         return f;
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
@@ -131,14 +124,9 @@ export class FraisService extends CrudService {
         if (dto.montant !== undefined) {
           await this.propager(tx, f.promotionId, f.anneeId, f.montant);
         }
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'FRAIS_MODIFIE',
-            entite: 'Frais',
-            entiteId: id,
-            details: JSON.stringify({ avant: this.instantane(avant), apres: this.instantane(f) }),
-          },
+        await journaliser(tx, user, 'FRAIS_MODIFIE', 'Frais', id, {
+          avant: this.instantane(avant),
+          apres: this.instantane(f),
         });
         return f;
       },
@@ -154,15 +142,7 @@ export class FraisService extends CrudService {
         await exigerAnneeOuverte(tx, actuel.anneeId);
         await tx.frais.delete({ where: { id } });
         await this.propager(tx, actuel.promotionId, actuel.anneeId, 0);
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'FRAIS_SUPPRIME',
-            entite: 'Frais',
-            entiteId: id,
-            details: JSON.stringify({ avant: this.instantane(actuel), apres: null }),
-          },
-        });
+        await journaliser(tx, user, 'FRAIS_SUPPRIME', 'Frais', id, { avant: this.instantane(actuel), apres: null });
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );

@@ -483,15 +483,15 @@ export class AttestationsService {
     });
 
     if (!jetonOk) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_ATTESTATION_ECHEC',
-          entite: 'attestations',
-          entiteId: ref,
-          details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
-          ip,
-        },
-      });
+      await journaliser(
+        this.prisma,
+        null,
+        'VERIF_ATTESTATION_ECHEC',
+        'attestations',
+        ref,
+        `Jeton mismatch pour ${ref} (fraude probable ?)`,
+        ip,
+      );
       return {
         valide: false,
         raison:
@@ -523,15 +523,7 @@ export class AttestationsService {
   }
 
   private async tracerEchec(ref: string, ip?: string) {
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'VERIF_ATTESTATION_ECHEC',
-        entite: 'attestations',
-        entiteId: ref,
-        details: `Numéro inconnu ${ref}`,
-        ip,
-      },
-    });
+    await journaliser(this.prisma, null, 'VERIF_ATTESTATION_ECHEC', 'attestations', ref, `Numéro inconnu ${ref}`, ip);
   }
 
   /** Journal des scans d'une attestation (direction générale). */

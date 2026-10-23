@@ -514,20 +514,19 @@ export class ControleService {
         data: { statut: presente ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
-          entite: 'Controle',
-          entiteId: controle.id,
-          details: JSON.stringify({
-            seanceId: seance.id,
-            avant: existant ? this.etatAudit(existant) : null,
-            apres: this.etatAudit(controle),
-          }),
-          ip,
+      await journaliser(
+        tx,
+        user,
+        existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
+        'Controle',
+        controle.id,
+        {
+          seanceId: seance.id,
+          avant: existant ? this.etatAudit(existant) : null,
+          apres: this.etatAudit(controle),
         },
-      });
+        ip,
+      );
       return controle;
     });
   }

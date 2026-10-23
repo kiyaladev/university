@@ -360,15 +360,15 @@ export class CarteEtudianteService {
     });
 
     if (!carte) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_CARTE_ECHEC',
-          entite: 'cartes-etudiantes',
-          entiteId: id,
-          details: `Identifiant inconnu ${id}`,
-          ip,
-        },
-      });
+      await journaliser(
+        this.prisma,
+        null,
+        'VERIF_CARTE_ECHEC',
+        'cartes-etudiantes',
+        id,
+        `Identifiant inconnu ${id}`,
+        ip,
+      );
       return {
         valide: false,
         raison: 'Aucune carte ne correspond à cet identifiant.',
@@ -380,17 +380,17 @@ export class CarteEtudianteService {
     const expiree = Boolean(carte.dateValidite && new Date(carte.dateValidite).getTime() < Date.now());
     const valide = jetonOk && statutOk && !expiree;
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: valide ? 'VERIF_CARTE_OK' : 'VERIF_CARTE_ECHEC',
-        entite: 'cartes-etudiantes',
-        entiteId: carte.id,
-        details: valide
-          ? `Vérification publique réussie`
-          : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${carte.statut} / expiration ${expiree ? 'oui' : 'non'}`,
-        ip,
-      },
-    });
+    await journaliser(
+      this.prisma,
+      null,
+      valide ? 'VERIF_CARTE_OK' : 'VERIF_CARTE_ECHEC',
+      'cartes-etudiantes',
+      carte.id,
+      valide
+        ? `Vérification publique réussie`
+        : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${carte.statut} / expiration ${expiree ? 'oui' : 'non'}`,
+      ip,
+    );
 
     if (!jetonOk) {
       return {

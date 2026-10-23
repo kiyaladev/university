@@ -11,6 +11,7 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { ModePaiement, Prisma, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { Paginated } from '../../common/dto';
 import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
@@ -350,18 +351,10 @@ export class PaiementsService {
             }
           }
         }
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'PAIEMENT_SIMULE',
-            entite: 'Paiement',
-            entiteId: id,
-            details: JSON.stringify({
-              avant: instantanePaiement(paiement),
-              apres: instantanePaiement(p),
-              inscription: inscriptionAudit,
-            }),
-          },
+        await journaliser(tx, user, 'PAIEMENT_SIMULE', 'Paiement', id, {
+          avant: instantanePaiement(paiement),
+          apres: instantanePaiement(p),
+          inscription: inscriptionAudit,
         });
         return p;
       },
@@ -401,14 +394,9 @@ export class PaiementsService {
           throw new ConflictException(t('inscription.ce_paiement_est_deja_annule'));
         }
         const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'PAIEMENT_ANNULE',
-            entite: 'Paiement',
-            entiteId: id,
-            details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
-          },
+        await journaliser(tx, user, 'PAIEMENT_ANNULE', 'Paiement', id, {
+          avant: instantanePaiement(paiement),
+          apres: instantanePaiement(maj),
         });
         return maj;
       },
