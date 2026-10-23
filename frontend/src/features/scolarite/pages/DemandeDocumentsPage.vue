@@ -224,7 +224,7 @@
           <q-card-section class="q-pt-sm q-gutter-y-xs">
             <div class="row items-center">
               <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ dateHeureLisible(d.creeLe) }}</span>
+              <span class="text-caption">{{ dateHeureLisible(d.createdAt) }}</span>
             </div>
             <div class="row items-center">
               <q-icon name="payments" size="16px" class="q-mr-sm text-grey-6" />
@@ -385,7 +385,7 @@
             </div>
             <div>
               <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>
-              <span>{{ dateHeureLisible(demandeSelectionnee.creeLe) }}</span>
+              <span>{{ dateHeureLisible(demandeSelectionnee.createdAt) }}</span>
             </div>
             <div v-if="demandeSelectionnee.remiseLe">
               <span class="pochoir">{{ $t('demandeDocuments.detail.handedOverOn') }}</span>
@@ -570,9 +570,9 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'frais', label: t('demandeDocuments.table.columns.frais'), field: 'frais', align: 'right' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
-    name: 'creeLe',
+    name: 'createdAt',
     label: t('common.fields.createdOn'),
-    field: 'creeLe',
+    field: 'createdAt',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },

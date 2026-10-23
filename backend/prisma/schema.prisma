@@ -1006,6 +1006,10 @@ model Deliberation {
 
   creeParId    String?
   creePar      User?     @relation("DeliberationCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier de création du jury (utilisée par l'écran des délibérations),
+  // `createdAt` la date technique d'écriture de la ligne. Les harmoniser
+  // ferait perdre la distinction : à traiter dans une migration dédiée.
   creeLe       DateTime  @default(now())
   valideeParId String?
   valideePar   User?     @relation("DeliberationValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
@@ -1111,6 +1115,9 @@ model FeuillePaie {
 
   creeParId    String?
   creePar      User?     @relation("FeuillePaieCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier d'établissement de la feuille de paie, `createdAt` la date
+  // technique d'écriture de la ligne. Idem Deliberation.
   creeLe       DateTime  @default(now())
   valideeParId String?
   valideePar   User?     @relation("FeuillePaieValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
@@ -1412,7 +1419,9 @@ model ReservationSalle {
   refuseParId String?
   refusePar   User?                  @relation("ReservationRefuseePar", fields: [refuseParId], references: [id], onDelete: SetNull)
   refuseMotif String?
-  creeLe      DateTime               @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt   DateTime               @default(now()) @map("creeLe")
 
   @@index([salleId, dateJour])
 }
@@ -1459,7 +1468,9 @@ model Soutenance {
   assesseurs       String? // "Pr. X ; Dr. Y"
   note             Float?
   mention          String? // Félicitations, Très bien…
-  creeLe           DateTime       @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt        DateTime       @default(now()) @map("creeLe")
 }
 
 // ---------------------------------------------------------------------------
@@ -1913,7 +1924,9 @@ model Reclamation {
   // Délai d'escalade (en heures) — au bout de ce délai sans réponse, escalade
   delaiEscaladeHeures Int?                @default(48)
   escaladeLe          DateTime?
-  creeLe              DateTime            @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt           DateTime            @default(now()) @map("creeLe")
   fermeLe             DateTime?
   notes               String?
 
@@ -1936,9 +1949,12 @@ model MessageReclamation {
   nomAffichage  String?
   contenu       String
   joint         String?
-  creeLe        DateTime    @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime    @default(now()) @map("creeLe")
 
-  @@index([reclamationId, creeLe])
+  // Le nom de l'index est figé sur celui créé en base (colonne « creeLe »).
+  @@index([reclamationId, createdAt], map: "MessageReclamation_reclamationId_creeLe_idx")
 }
 
 // ------------------ Plateforme de Demande de Documents en Ligne ----
@@ -1979,7 +1995,9 @@ model DemandeDocument {
   notification  String? // "Le document est prêt à être retiré au guichet"
   traiteParId   String?
   traitePar     User?               @relation("DemandeDocumentTraitee", fields: [traiteParId], references: [id], onDelete: SetNull)
-  creeLe        DateTime            @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime            @default(now()) @map("creeLe")
   remiseLe      DateTime?
   notes         String?
   // Attestation vérifiable par QR émise au passage « prête » (types

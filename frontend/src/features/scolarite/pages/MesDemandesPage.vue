@@ -139,7 +139,7 @@
               <div class="text-uppercase text-caption text-grey-7">{{ d.numero }}</div>
               <div class="text-subtitle1 text-weight-medium">{{ libelleType(d.type) }}</div>
               <div class="text-caption text-grey-7">
-                {{ $t('mesDemandes.cards.createdOn', { date: dateHeureLisible(d.creeLe) }) }}
+                {{ $t('mesDemandes.cards.createdOn', { date: dateHeureLisible(d.createdAt) }) }}
               </div>
             </div>
             <PastilleStatut domaine="demande" :statut="d.statut" />
@@ -240,7 +240,7 @@
             </div>
             <div>
               <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>
-              <span>{{ dateHeureLisible(demandeSuivie.creeLe) }}</span>
+              <span>{{ dateHeureLisible(demandeSuivie.createdAt) }}</span>
             </div>
             <div v-if="demandeSuivie.remiseLe">
               <span class="pochoir">{{ $t('mesDemandes.dialog.deliveredAt') }}</span>
@@ -460,9 +460,9 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'frais', label: t('mesDemandes.table.columns.fees'), field: 'frais', align: 'right' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
-    name: 'creeLe',
+    name: 'createdAt',
     label: t('common.fields.createdOn'),
-    field: 'creeLe',
+    field: 'createdAt',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
   },

@@ -17,7 +17,7 @@ export interface MessageReclamation {
   nomAffichage?: string | null;
   contenu: string;
   joint?: string | null;
-  creeLe: string;
+  createdAt: string;
   auteur?: { id: string; nom: string; prenom: string; role: Role } | null;
 }
 
@@ -37,7 +37,7 @@ export interface Reclamation {
   assigneAId?: string | null;
   delaiEscaladeHeures?: number | null;
   escaladeLe?: string | null;
-  creeLe: string;
+  createdAt: string;
   fermeLe?: string | null;
   notes?: string | null;
   etudiant?: Etudiant | null;
@@ -81,7 +81,7 @@ export interface DemandeDocument {
   statut: StatutDemande;
   notification?: string | null;
   traiteParId?: string | null;
-  creeLe: string;
+  createdAt: string;
   remiseLe?: string | null;
   notes?: string | null;
   etudiant?: Etudiant | null;
