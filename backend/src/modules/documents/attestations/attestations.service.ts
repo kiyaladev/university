@@ -63,7 +63,7 @@ export class AttestationsService {
 
   // ------------------------------------------------------------- consultation
 
-  async liste(query: AttestationQueryDto) {
+  async lister(query: AttestationQueryDto) {
     const pagination = paginer(query);
 
     const where: Prisma.AttestationWhereInput = {
@@ -103,7 +103,7 @@ export class AttestationsService {
     return pagine(data, total, pagination);
   }
 
-  async findOne(id: string) {
+  async lire(id: string) {
     const attestation = await this.prisma.attestation.findUnique({
       where: { id },
       include: ATTESTATION_INCLUDE,
@@ -300,7 +300,7 @@ export class AttestationsService {
   // ------------------------------------------------------------------ gestion
 
   async modifier(id: string, dto: UpdateAttestationDto, user: AuthUser) {
-    const attestation = await this.findOne(id);
+    const attestation = await this.lire(id);
     await exigerAnneeOuverte(this.prisma, attestation.anneeId);
     if (attestation.statut === StatutAttestation.REVOQUE) {
       throw new BadRequestException(t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
@@ -518,7 +518,7 @@ export class AttestationsService {
 
   /** Journal des scans d'une attestation (direction générale). */
   async verifications(id: string) {
-    await this.findOne(id);
+    await this.lire(id);
     return this.prisma.verificationAttestation.findMany({
       where: { attestationId: id },
       orderBy: { verifieeLe: 'desc' },

@@ -44,8 +44,8 @@ export class BadgesController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: BadgeQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: BadgeQueryDto) {
+    return this.service.lister(query);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)

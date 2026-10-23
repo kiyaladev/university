@@ -92,7 +92,7 @@ export class BadgesService {
 
   // ----------------------------------------------------------- consultation
 
-  async liste(query: BadgeQueryDto) {
+  async lister(query: BadgeQueryDto) {
     const pagination = paginer(query);
 
     const where: Prisma.BadgeAccesWhereInput = {

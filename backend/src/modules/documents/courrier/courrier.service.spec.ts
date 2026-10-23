@@ -35,7 +35,7 @@ describe('Périmètre des courriers', () => {
 
   it('limite liste et total aux courriers créés ou adressés aux étapes du rôle', async () => {
     const { db, service } = prepare();
-    await service.liste({ dateDebut: '2026-01-01' } as any, scolarite);
+    await service.lister({ dateDebut: '2026-01-01' } as any, scolarite);
     const where = db.courrier.findMany.mock.calls[0][0].where;
     expect(where.OR).toEqual([
       { enregistreParId: 'sco' },
@@ -64,7 +64,7 @@ describe('Périmètre des courriers', () => {
 
   it('inclut un courrier sans date métier sur sa journée entière de création', async () => {
     const { db, service } = prepare();
-    await service.liste({ dateDebut: '2026-10-01', dateFin: '2026-10-06' } as any, admin);
+    await service.lister({ dateDebut: '2026-10-01', dateFin: '2026-10-06' } as any, admin);
     expect(db.courrier.findMany.mock.calls[0][0].where.AND[0].OR).toContainEqual({
       dateReception: null,
       dateEnvoi: null,
@@ -87,7 +87,7 @@ describe('Périmètre des courriers', () => {
 
   it('applique aussi le département à la liste et au compteur du chef', async () => {
     const { db, service } = prepare();
-    await service.liste({} as any, { ...chef, departementId: 'dep-a' });
+    await service.lister({} as any, { ...chef, departementId: 'dep-a' });
     const where = db.courrier.findMany.mock.calls[0][0].where;
     expect(where.departementId).toBe('dep-a');
     expect(db.courrier.count).toHaveBeenCalledWith({ where });

@@ -34,7 +34,7 @@ describe('CarteEtudianteController — droits par rôle', () => {
   });
 
   it('confie la gestion de la carte à l’administration et à la scolarité', () => {
-    expect(roles('liste')).toEqual([Role.ADMIN, Role.SCOLARITE]);
+    expect(roles('lister')).toEqual([Role.ADMIN, Role.SCOLARITE]);
     expect(roles('trouver')).toEqual([Role.ADMIN, Role.SCOLARITE]);
     expect(roles('creer')).toEqual([Role.ADMIN, Role.SCOLARITE]);
     expect(roles('modifier')).toEqual([Role.ADMIN, Role.SCOLARITE]);

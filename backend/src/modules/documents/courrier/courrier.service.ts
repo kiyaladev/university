@@ -135,7 +135,7 @@ export class CourrierService {
 
   // ------------------------------------------------------- lecture
 
-  async liste(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
+  async lister(query: CourrierQueryDto, user: AuthUser): Promise<Paginated<any>> {
     const pagination = paginer(query);
 
     const scope = this.filtreVisible(user);

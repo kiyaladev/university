@@ -44,7 +44,7 @@ describe('Lecture du registre des attestations', () => {
     };
     const service = new AttestationsService(prisma as any, {} as any);
 
-    await service.liste({} as any);
+    await service.lister({} as any);
 
     expect(prisma.attestation.findMany).toHaveBeenCalledWith(
       expect.objectContaining({

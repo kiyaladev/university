@@ -43,14 +43,14 @@ export class AttestationsController {
 
   @Roles(...LECTEURS)
   @Get()
-  liste(@Query() query: AttestationQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: AttestationQueryDto) {
+    return this.service.lister(query);
   }
 
   @Roles(...LECTEURS)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   @Roles(Role.SCOLARITE, Role.ADMIN)

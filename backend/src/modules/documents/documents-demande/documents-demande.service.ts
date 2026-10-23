@@ -116,7 +116,7 @@ export class DocumentsDemandeService extends CrudService {
 
   // ---------------------------------------------------------- lecture
 
-  async liste(
+  async lister(
     query: {
       page?: number;
       pageSize?: number;
@@ -181,7 +181,7 @@ export class DocumentsDemandeService extends CrudService {
     if (!user.etudiantId) {
       throw new NotFoundException(t('documents-demande.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
-    return this.liste({ ...query, etudiantId: user.etudiantId }, user);
+    return this.lister({ ...query, etudiantId: user.etudiantId }, user);
   }
 
   /**
@@ -499,7 +499,7 @@ export class DocumentsDemandeService extends CrudService {
     // Mode pilote : la simulation force la confirmation automatique.
     if (dto.simuler) {
       await this.confirmerPaiement(demande.id, { paiementId: paiement.id }, user);
-      return this.findOne(demande.id);
+      return this.lire(demande.id);
     }
 
     // Mobile Money : tentative de transmission à l'opérateur. L'appel réseau
@@ -509,7 +509,7 @@ export class DocumentsDemandeService extends CrudService {
       await this.tenterTransmissionMobileMoney(paiement, user.id);
     }
 
-    return this.findOne(demande.id);
+    return this.lire(demande.id);
   }
 
   /**
@@ -584,7 +584,7 @@ export class DocumentsDemandeService extends CrudService {
    * le guichet. La notification ne part que si l'étudiant a un téléphone.
    */
   async marquerPrete(id: string, dto: { message?: string }, user: AuthUser) {
-    const demande = await this.findOne(id);
+    const demande = await this.lire(id);
     if (!STATUTS_PAIEMENT_REQUIS.includes(demande.statut)) {
       throw new BadRequestException(t('documents-demande.demandeNonTraitee'));
     }
@@ -866,7 +866,7 @@ export class DocumentsDemandeService extends CrudService {
 
   /** Fiche A4 de la demande (le contrôleur a vérifié le jeton d'impression). */
   async documentImprimable(id: string): Promise<string> {
-    const [demande, etablissement] = await Promise.all([this.findOne(id), chargerEtablissement(this.prisma)]);
+    const [demande, etablissement] = await Promise.all([this.lire(id), chargerEtablissement(this.prisma)]);
     return demandeDocumentHtml(demande, etablissement);
   }
 }
