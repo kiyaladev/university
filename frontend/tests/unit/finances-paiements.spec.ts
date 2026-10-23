@@ -16,8 +16,8 @@ import {
   peutAnnulerPaiement,
   peutSimulerPaiement,
   ROUTE_SOURCE,
+  routeModule,
   sourceDe,
-  type SourcePaiement,
 } from '../../src/features/finances/services/paiements';
 import type { Paiement } from '../../src/types';
 
@@ -116,6 +116,13 @@ describe('features/finances/services/paiements', () => {
       RECETTE: '/recettes',
       DOCUMENT: '/demandes-docs',
     });
+  });
+
+  it('ne propose un module que si le rôle peut l’ouvrir', () => {
+    const ouverts = { FORMATION: true, RESTO: false };
+    expect(routeModule(paiement(), ouverts)).toBeNull();
+    expect(routeModule(paiement({ source: 'FORMATION' } as Partial<Paiement>), ouverts)).toBe('/formations-admin');
+    expect(routeModule(paiement({ source: 'RESTO' } as Partial<Paiement>), ouverts)).toBeNull();
   });
 
   it('aplatit la réponse des inscriptions', () => {

@@ -67,6 +67,18 @@ export function estInscription(paiement: Paiement): boolean {
   return sourceDe(paiement) === 'INSCRIPTION';
 }
 
+/**
+ * Lien vers le module qui gère le paiement, si l'utilisateur peut l'ouvrir.
+ * `modulesOuverts` dit, pour chaque portefeuille, si l'écran est accessible
+ * au rôle courant.
+ */
+export function routeModule(paiement: Paiement, modulesOuverts: Record<string, boolean>): string | null {
+  const source = sourceDe(paiement);
+  if (source === 'INSCRIPTION') return null;
+  if (!modulesOuverts[source]) return null;
+  return ROUTE_SOURCE[source];
+}
+
 /** Les inscriptions, que l'API les rende en tableau ou en `{ data }`. */
 export function listeInscriptions(reponse: ReponseInscriptions): Inscription[] {
   return Array.isArray(reponse) ? reponse : (reponse.data ?? []);

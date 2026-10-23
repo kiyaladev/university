@@ -113,173 +113,23 @@
       </template>
     </barre-filtres>
 
-    <q-table
+    <tableau-paiements
       v-if="modeVue === 'tableau'"
-      flat
-      bordered
-      class="carte"
-      :rows="paiementsFiltres"
-      :columns="colonnes"
-      row-key="id"
-      :loading="liste.chargement"
-      :pagination="{ rowsPerPage: 0 }"
-      :hide-bottom="liste.chargement || paiementsFiltres.length > 0"
-    >
-      <template #no-data>
-        <etat-vide icone="payments" :titre="messageVide">
-          <template #action>
-            <div class="q-gutter-sm">
-              <q-btn
-                v-if="filtresActifs"
-                outline
-                no-caps
-                icon="refresh"
-                :label="$t('common.actions.reset_filters')"
-                @click="reinitialiser"
-              />
-              <q-btn
-                v-if="peutCreer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('paiements.actions.new')"
-                @click="dialogPaiement = true"
-              />
-            </div>
-          </template>
-        </etat-vide>
-      </template>
-
-      <template #body-cell-etudiant="p">
-        <q-td :props="p">
-          <div>{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">
-            {{ p.row.etudiant?.matricule }}
-            <span v-if="p.row.inscription?.numero"> · {{ p.row.inscription.numero }}</span>
-          </div>
-        </q-td>
-      </template>
-
-      <template #body-cell-source="p">
-        <q-td :props="p">
-          <span class="champ badge-source" :class="`badge-source--${sourceDe(p.row).toLowerCase()}`">
-            {{ libelleSource(p.row) }}
-          </span>
-        </q-td>
-      </template>
-
-      <template #body-cell-montant="p">
-        <q-td :props="p" class="text-right text-weight-medium">
-          {{ montantLisible(p.row.montant) }} {{ p.row.devise }}
-        </q-td>
-      </template>
-
-      <template #body-cell-modep="p">
-        <q-td :props="p">
-          <div>{{ LIBELLE_MODE_PAIEMENT[p.row.mode] ?? p.row.mode }}</div>
-          <div class="text-caption text-grey-7">
-            {{ p.row.operateur ? (LIBELLE_OPERATEUR_MM[p.row.operateur] ?? p.row.operateur) : '—' }}
-          </div>
-        </q-td>
-      </template>
-
-      <template #body-cell-statut="p">
-        <q-td :props="p">
-          <PastilleStatut domaine="paiement" :statut="p.row.statut" />
-        </q-td>
-      </template>
-
-      <template #body-cell-horodatage="p">
-        <q-td :props="p">{{ dateHeureLisible(p.row.horodatage) }}</q-td>
-      </template>
-
-      <template #body-cell-actions="p">
-        <q-td :props="p" class="text-right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="info"
-            color="primary"
-            :aria-label="$t('paiements.table.actions.details')"
-            @click="ouvrirDetail(p.row)"
-          >
-            <q-tooltip>{{ $t('paiements.table.actions.details') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="p.row.inscription || p.row.inscriptionId"
-            flat
-            dense
-            round
-            icon="how_to_reg"
-            :aria-label="$t('paiements.table.actions.viewEnrollmentAria')"
-            @click="voirInscription(p.row)"
-          >
-            <q-tooltip>{{ $t('paiements.table.actions.viewEnrollmentTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="p.row.etudiant"
-            flat
-            dense
-            round
-            icon="person"
-            :aria-label="$t('paiements.table.actions.viewStudentAria')"
-            @click="voirEtudiant(p.row)"
-          >
-            <q-tooltip>{{ $t('paiements.table.actions.viewStudentTooltip') }}</q-tooltip>
-          </q-btn>
-          <q-btn
-            v-if="routeModule(p.row)"
-            flat
-            dense
-            round
-            icon="open_in_new"
-            color="primary"
-            :aria-label="$t('paiements.table.actions.openModule', { module: libelleSource(p.row) })"
-            @click="ouvrirModule(p.row)"
-          >
-            <q-tooltip>{{ $t('paiements.table.actions.openModule', { module: libelleSource(p.row) }) }}</q-tooltip>
-          </q-btn>
-          <template v-if="peutSimuler(p.row)">
-            <q-btn
-              flat
-              dense
-              round
-              color="positive"
-              icon="check"
-              :aria-label="$t('paiements.table.actions.confirmAria')"
-              @click="simuler(p.row, 'REUSSI')"
-            >
-              <q-tooltip>{{ $t('paiements.table.actions.confirmTooltip') }}</q-tooltip>
-            </q-btn>
-            <q-btn
-              flat
-              dense
-              round
-              color="negative"
-              icon="close"
-              :aria-label="$t('paiements.table.actions.markFailedAria')"
-              @click="simuler(p.row, 'ECHOUE')"
-            >
-              <q-tooltip>{{ $t('paiements.table.actions.markFailedTooltip') }}</q-tooltip>
-            </q-btn>
-          </template>
-          <q-btn
-            v-if="peutAnnuler(p.row)"
-            flat
-            dense
-            round
-            color="negative"
-            icon="block"
-            :aria-label="$t('paiements.table.actions.cancel')"
-            @click="ouvrirAnnulation(p.row)"
-          >
-            <q-tooltip>{{ $t('paiements.table.actions.cancel') }}</q-tooltip>
-          </q-btn>
-        </q-td>
-      </template>
-    </q-table>
+      :lignes="paiementsFiltres"
+      :chargement="liste.chargement"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :peut-creer="peutCreer"
+      :modules-ouverts="modulesOuverts"
+      @detail="ouvrirDetail"
+      @inscription="voirInscription"
+      @etudiant="voirEtudiant"
+      @module="ouvrirModule"
+      @simuler="simuler"
+      @annuler="ouvrirAnnulation"
+      @reinitialiser="reinitialiser"
+      @creer="dialogPaiement = true"
+    />
 
     <q-linear-progress
       :aria-label="$t('common.messages.loading')"
@@ -289,147 +139,22 @@
       class="q-mb-sm"
     />
 
-    <div v-else-if="modeVue === 'cartes'" class="paiements-cartes">
-      <q-card v-for="p in paiementsFiltres" :key="p.id" flat bordered class="carte paiements-cartes__carte">
-        <q-card-section>
-          <div class="row items-center q-mb-xs">
-            <PastilleStatut domaine="paiement" :statut="p.statut" />
-            <span class="champ badge-source q-ml-xs" :class="`badge-source--${sourceDe(p).toLowerCase()}`">
-              {{ libelleSource(p) }}
-            </span>
-            <q-space />
-            <div class="text-caption text-grey-7">{{ p.reference }}</div>
-          </div>
-          <div class="text-subtitle1 text-weight-medium">{{ p.etudiant?.nom }} {{ p.etudiant?.prenom }}</div>
-          <div class="text-caption text-grey-7">
-            {{ p.etudiant?.matricule }}
-            <span v-if="p.inscription?.numero"> · {{ p.inscription.numero }}</span>
-          </div>
-          <div class="row q-mt-sm q-col-gutter-sm">
-            <div class="col-6">
-              <div class="text-caption text-grey-7">{{ $t('paiements.cards.mode') }}</div>
-              <div class="text-weight-medium">
-                {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }}
-              </div>
-              <div class="text-caption text-grey-7">
-                {{ p.operateur ? (LIBELLE_OPERATEUR_MM[p.operateur] ?? p.operateur) : '—' }}
-              </div>
-            </div>
-            <div class="col-6 text-right">
-              <div class="text-caption text-grey-7">{{ $t('common.fields.amount') }}</div>
-              <div class="text-weight-medium lettrage chiffres">{{ montantLisible(p.montant) }} {{ p.devise }}</div>
-            </div>
-          </div>
-          <div class="text-caption text-grey-7 q-mt-xs">
-            {{ dateHeureLisible(p.horodatage) }}
-          </div>
-          <div v-if="p.transactionId" class="text-caption text-grey-7">
-            {{ $t('paiements.cards.transaction', { id: p.transactionId }) }}
-          </div>
-        </q-card-section>
-        <q-separator />
-        <q-card-actions align="right" class="q-gutter-xs">
-          <q-btn
-            flat
-            dense
-            color="primary"
-            icon="info"
-            no-caps
-            :label="$t('common.actions.details')"
-            @click="ouvrirDetail(p)"
-          />
-          <actions-secondaires>
-            <q-btn
-              v-close-popup
-              v-if="routeModule(p)"
-              flat
-              dense
-              color="primary"
-              icon="open_in_new"
-              no-caps
-              :label="$t('paiements.cards.openModule', { module: libelleSource(p) })"
-              @click="ouvrirModule(p)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="peutSimuler(p)"
-              flat
-              dense
-              color="positive"
-              icon="check"
-              no-caps
-              :label="$t('paiements.cards.success')"
-              @click="simuler(p, 'REUSSI')"
-            />
-            <q-btn
-              v-close-popup
-              v-if="peutSimuler(p)"
-              flat
-              dense
-              color="negative"
-              icon="close"
-              no-caps
-              :label="$t('paiements.cards.failed')"
-              @click="simuler(p, 'ECHOUE')"
-            />
-            <q-btn
-              v-close-popup
-              v-if="peutAnnuler(p)"
-              flat
-              dense
-              color="negative"
-              icon="block"
-              no-caps
-              :label="$t('common.actions.cancel')"
-              @click="ouvrirAnnulation(p)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="p.inscription || p.inscriptionId"
-              flat
-              dense
-              icon="how_to_reg"
-              no-caps
-              :label="$t('paiements.cards.enrollment')"
-              @click="voirInscription(p)"
-            />
-            <q-btn
-              v-close-popup
-              v-if="p.etudiant"
-              flat
-              dense
-              icon="person"
-              no-caps
-              :label="$t('common.fields.student')"
-              @click="voirEtudiant(p)"
-            />
-          </actions-secondaires>
-        </q-card-actions>
-      </q-card>
-      <etat-vide v-if="!paiementsFiltres.length" icone="payments" :titre="messageVide">
-        <template #action>
-          <div class="q-gutter-sm">
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('common.actions.reset_filters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutCreer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('paiements.actions.new')"
-              @click="dialogPaiement = true"
-            />
-          </div>
-        </template>
-      </etat-vide>
-    </div>
+    <cartes-paiements
+      v-else-if="modeVue === 'cartes'"
+      :lignes="paiementsFiltres"
+      :message-vide="messageVide"
+      :filtres-actifs="filtresActifs"
+      :peut-creer="peutCreer"
+      :modules-ouverts="modulesOuverts"
+      @detail="ouvrirDetail"
+      @inscription="voirInscription"
+      @etudiant="voirEtudiant"
+      @module="ouvrirModule"
+      @simuler="simuler"
+      @annuler="ouvrirAnnulation"
+      @reinitialiser="reinitialiser"
+      @creer="dialogPaiement = true"
+    />
 
     <barre-pagination
       v-if="liste.lignes.length"
@@ -442,143 +167,46 @@
     <dialogue-paiement v-model="dialogPaiement" @paye="liste.recharger()" />
 
     <!-- Détail d'une transaction -->
-    <q-dialog v-model="dialogDetail">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ detail?.reference }}</div>
-          <div class="text-caption text-grey-7">
-            {{
-              detail
-                ? `${LIBELLE_MODE_PAIEMENT[detail.mode] ?? detail.mode} · ${LIBELLE_STATUT_PAIEMENT[detail.statut] ?? detail.statut}`
-                : ''
-            }}
-          </div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <q-list separator dense>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.studentFile') }}</q-item-label>
-                <q-item-label>
-                  {{ detail?.etudiant ? `${detail.etudiant.nom} ${detail.etudiant.prenom}` : '—' }}
-                  {{ detail?.inscription?.numero ? ` · ${detail.inscription.numero}` : '' }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('common.fields.amount') }}</q-item-label>
-                <q-item-label>{{ montantLisible(detail?.montant) }} {{ detail?.devise }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.transaction') }}</q-item-label>
-                <q-item-label>{{ detail?.transactionId ?? $t('paiements.detail.transactionNone') }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.operatorPhone') }}</q-item-label>
-                <q-item-label>
-                  {{ detail?.operateur ? (LIBELLE_OPERATEUR_MM[detail.operateur] ?? detail.operateur) : '—' }}
-                  · {{ detail?.telephone ?? '—' }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('common.fields.motif') }}</q-item-label>
-                <q-item-label>{{ detail?.motif ?? '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.timestamp') }}</q-item-label>
-                <q-item-label>{{ detail ? dateHeureLisible(detail.horodatage) : '—' }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            <q-item>
-              <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.createdBy') }}</q-item-label>
-                <q-item-label>
-                  {{
-                    detail?.creePar
-                      ? `${detail.creePar.prenom} ${detail.creePar.nom}`
-                      : $t('paiements.detail.createdByFallback')
-                  }}
-                  {{
-                    detail?.completeLe
-                      ? $t('paiements.detail.completedOn', { date: dateHeureLisible(detail.completeLe) })
-                      : ''
-                  }}
-                  {{
-                    detail?.motifAnnulation
-                      ? $t('paiements.detail.cancelReason', { reason: detail.motifAnnulation })
-                      : ''
-                  }}
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-detail-paiement v-model:ouvert="dialogDetail" :paiement="detail" />
 
-    <!-- Annulation : le motif est exigé -->
-    <dialogue-formulaire
-      v-model="dialogAnnulation"
-      taille="s"
-      :titre="$t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference })"
-      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('common.format.emptyValue')} ${$t('paiements.dialogs.cancelSubtitle')}`"
+    <dialogue-annulation-paiement
+      v-model:ouvert="dialogAnnulation"
+      :paiement="paiementAnnuler"
       :envoi="annulationEnCours"
-      :libelle-valider="$t('paiements.dialogs.cancelConfirm')"
-      icone-valider="block"
-      couleur-valider="negative"
-      :desactive="motifAnnulation.trim().length < 3"
       @valider="confirmerAnnulation"
-    >
-      <q-input
-        v-model="motifAnnulation"
-        outlined
-        dense
-        type="textarea"
-        rows="3"
-        :label="$t('paiements.dialogs.cancelReasonLabel')"
-        autofocus
-      />
-    </dialogue-formulaire>
+    />
   </q-page>
 </template>
 
 <script setup lang="ts">
-import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
-import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
+import { useQuasar } from 'quasar';
 import { useAuthStore } from '@/stores/auth';
 import DialoguePaiement from '@/shared/components/DialoguePaiement.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
+import TableauPaiements from '../components/TableauPaiements.vue';
+import CartesPaiements from '../components/CartesPaiements.vue';
+import DialogueDetailPaiement from '../components/DialogueDetailPaiement.vue';
+import DialogueAnnulationPaiement from '../components/DialogueAnnulationPaiement.vue';
+import {
+  ROUTE_SOURCE,
+  listeInscriptions,
+  paiementsService,
+  routeModule,
+} from '../services/paiements';
 import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_PAIEMENT,
-  dateHeureLisible,
   dateLisible,
   montantLisible,
 } from '@/shared/utils/libelles';
@@ -618,18 +246,14 @@ const liste = reactive(
     filtres,
     clesLocales: ['operateur', 'motif', 'dateDebut', 'dateFin'],
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/paiements', {
-          params: {
-            ...pageApi(p),
-            search: texteApi(f.recherche),
-            statut: f.statut || undefined,
-            mode: f.mode || undefined,
-            inscriptionId: f.inscriptionId || undefined,
-            etudiantId: f.etudiantId || undefined,
-          },
-        })
-        .then((r) => r.data),
+      paiementsService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        statut: f.statut || undefined,
+        mode: f.mode || undefined,
+        inscriptionId: f.inscriptionId || undefined,
+        etudiantId: f.etudiantId || undefined,
+      }),
   }),
 );
 /** Contexte reçu en paramètre d'URL (`?inscription=…` ou `?etudiant=…`). */
@@ -641,44 +265,19 @@ const dialogDetail = ref(false);
 const detail = ref<Paiement | null>(null);
 const dialogAnnulation = ref(false);
 const paiementAnnuler = ref<Paiement | null>(null);
-const motifAnnulation = ref('');
 const annulationEnCours = ref(false);
 
-/** Portefeuille d'origine, calculé par `GET /paiements`. */
-type SourcePaiement = 'INSCRIPTION' | 'FORMATION' | 'RESTO' | 'RECETTE' | 'DOCUMENT';
-
-/** Écran de gestion de chaque portefeuille autre que les inscriptions. */
-const ROUTE_SOURCE: Record<Exclude<SourcePaiement, 'INSCRIPTION'>, string> = {
-  FORMATION: '/formations-admin',
-  RESTO: '/resto',
-  RECETTE: '/recettes',
-  DOCUMENT: '/demandes-docs',
-};
-
-const sourceDe = (p: Paiement): SourcePaiement => (p as Paiement & { source?: SourcePaiement }).source ?? 'INSCRIPTION';
-const libelleSource = (p: Paiement) => t(`paiements.sources.${sourceDe(p)}`);
-/** Seuls les paiements d'inscription se confirment ou s'annulent ici. */
-const estInscription = (p: Paiement) => sourceDe(p) === 'INSCRIPTION';
-
-/** Lien vers le module qui gère le paiement, si l'utilisateur peut l'ouvrir. */
-function routeModule(p: Paiement): string | null {
-  const source = sourceDe(p);
-  if (source === 'INSCRIPTION') return null;
-  const chemin = ROUTE_SOURCE[source];
-  const roles = router.resolve(chemin).meta.roles as Parameters<typeof auth.aRole>[0] | undefined;
-  if (roles && !auth.aRole(roles)) return null;
-  return chemin;
-}
-
-function ouvrirModule(p: Paiement) {
-  const chemin = routeModule(p);
-  if (chemin) void router.push(chemin);
-}
-
 const peutCreer = computed(() => auth.peut('paiements.creer'));
-const peutSimuler = (p: Paiement) => auth.peut('paiements.simuler') && estInscription(p) && p.statut === 'EN_ATTENTE';
-const peutAnnuler = (p: Paiement) =>
-  auth.peut('paiements.annuler') && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
+
+/** Écrans de gestion que le rôle courant a le droit d'ouvrir. */
+const modulesOuverts = computed(() => {
+  const ouverts: Record<string, boolean> = {};
+  for (const [source, chemin] of Object.entries(ROUTE_SOURCE)) {
+    const roles = router.resolve(chemin).meta.roles as Parameters<typeof auth.aRole>[0] | undefined;
+    ouverts[source] = !roles || auth.aRole(roles);
+  }
+  return ouverts;
+});
 
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({ value, label })),
@@ -687,25 +286,6 @@ const optionsModes = computed(() => Object.entries(LIBELLE_MODE_PAIEMENT).map(([
 const optionsOperateurs = computed(() =>
   Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({ value, label })),
 );
-
-const colonnes = computed<QTableColumn[]>(() => [
-  {
-    name: 'reference',
-    label: t('paiements.table.columns.reference'),
-    field: 'reference',
-    align: 'left',
-    sortable: true,
-  },
-  { name: 'source', label: t('paiements.table.columns.source'), field: 'source', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
-  { name: 'mode', label: t('paiements.table.columns.mode'), field: 'mode', align: 'left' },
-  { name: 'montant', label: t('common.fields.amount'), field: 'montant', align: 'right', sortable: true },
-  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
-  { name: 'motif', label: t('common.fields.motif'), field: 'motif', align: 'left' },
-  { name: 'transactionId', label: t('paiements.table.columns.transaction'), field: 'transactionId', align: 'left' },
-  { name: 'horodatage', label: t('common.fields.date'), field: 'horodatage', align: 'left' },
-  { name: 'actions', label: '', field: 'id', align: 'right' },
-]);
 
 /** Contexte d'arrivée, résumé en une phrase au-dessus du registre. */
 const libelleCible = computed(() => {
@@ -874,6 +454,11 @@ function voirEtudiant(p: Paiement) {
   void router.push({ path: '/etudiants', query: { recherche: p.etudiant.matricule } });
 }
 
+function ouvrirModule(p: Paiement) {
+  const chemin = routeModule(p, modulesOuverts.value);
+  if (chemin) void router.push(chemin);
+}
+
 async function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
   const ok = await confirmer({
     titre: statut === 'REUSSI' ? t('paiements.confirmDialog.title') : t('paiements.confirmDialog.titleFailed'),
@@ -887,11 +472,7 @@ async function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
     danger: statut === 'ECHOUE',
   });
   if (!ok) return;
-  try {
-    await api.post(`/paiements/${p.id}/simuler`, { statut });
-  } catch {
-    return; // l'intercepteur axios affiche le motif
-  }
+  await paiementsService.simuler(p.id, statut);
   $q.notify({
     type: 'positive',
     message: statut === 'REUSSI' ? t('paiements.messages.confirmed') : t('paiements.messages.markedFailed'),
@@ -901,21 +482,16 @@ async function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
 
 function ouvrirAnnulation(p: Paiement) {
   paiementAnnuler.value = p;
-  motifAnnulation.value = '';
   dialogAnnulation.value = true;
 }
 
-async function confirmerAnnulation() {
+async function confirmerAnnulation(motif: string) {
   annulationEnCours.value = true;
   try {
-    await api.post(`/paiements/${paiementAnnuler.value!.id}/annuler`, {
-      motif: motifAnnulation.value,
-    });
+    await paiementsService.annuler(paiementAnnuler.value!.id, motif);
     $q.notify({ type: 'warning', message: t('paiements.messages.cancelled') });
     dialogAnnulation.value = false;
     await liste.recharger();
-  } catch {
-    /* l'intercepteur axios affiche le motif */
   } finally {
     annulationEnCours.value = false;
   }
@@ -951,9 +527,8 @@ async function retirerCible() {
 /** `/paiements?inscription=<id>` — encaissements d'un dossier précis. */
 async function appliquerDossierCible(id: string) {
   try {
-    const { data } = await api.get('/inscriptions', { params: { all: '1' } });
-    const liste: Inscription[] = Array.isArray(data) ? data : (data.data ?? []);
-    dossierCible.value = liste.find((i) => i.id === id) ?? null;
+    const reponse = await paiementsService.inscriptions();
+    dossierCible.value = listeInscriptions(reponse).find((i) => i.id === id) ?? null;
   } catch {
     dossierCible.value = null;
   }
@@ -962,8 +537,7 @@ async function appliquerDossierCible(id: string) {
 /** `/paiements?etudiant=<id>` — tous les encaissements d'un étudiant. */
 async function appliquerEtudiantCible(id: string) {
   try {
-    const { data } = await api.get(`/etudiants/${id}`);
-    etudiantCible.value = data;
+    etudiantCible.value = await paiementsService.etudiant(id);
   } catch {
     etudiantCible.value = null;
   }
@@ -984,27 +558,5 @@ onMounted(() => {
 .paiements-kpi__valeur {
   font-size: 1.4rem;
   margin-top: 2px;
-}
-.paiements-cartes {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--up-3);
-}
-.paiements-cartes__carte {
-  background: var(--up-plaque);
-}
-
-.champ.badge-source {
-  display: inline-flex;
-  padding: 2px 10px;
-  font-size: 11px;
-  font-weight: 590;
-  white-space: nowrap;
-  background: #e8e8ed;
-  color: #33463f;
-}
-.badge-source--inscription {
-  background: #e3ecf7;
-  color: #15518f;
 }
 </style>
