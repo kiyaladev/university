@@ -41,6 +41,7 @@ const ROUTES: Record<string, string[]> = {
   'examens.creer': ['POST /examens'],
   'examens.demarrer': ['POST /examens/:id/demarrer'],
   'examens.terminer': ['POST /examens/:id/terminer'],
+  'examens.annuler': ['PUT /examens/:id/statut'],
   'tirage.gerer': ['GET /tirage', 'POST /tirage'],
   'evaluations.gerer': ['POST /evaluations', 'POST /evaluations/:id/cloturer'],
   'notes.saisir': ['PUT /notes/saisie'],

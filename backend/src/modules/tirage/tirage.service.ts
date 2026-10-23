@@ -78,10 +78,15 @@ export class TirageService {
       }),
       this.prisma.tirage.count({ where }),
     ]);
-    return pagine(data, total, pagination);
+    return pagine(data.map(masquerEmpreinte), total, pagination);
   }
 
   async trouver(id: string) {
+    return masquerEmpreinte(await this.charger(id));
+  }
+
+  /** Lecture interne, empreinte complète (bordereau). */
+  private async charger(id: string) {
     const tirage = await this.prisma.tirage.findUnique({
       where: { id },
       include: TIRAGE_INCLUDE,
@@ -122,7 +127,7 @@ export class TirageService {
         tirage.id,
         `Examen ${examen.codeExamen} — ${tirage.nbExemplaires} ex. — empreinte ${tirage.empreinteSource.slice(0, 12)}…`,
       );
-      return tirage;
+      return masquerEmpreinte(tirage);
     });
   }
 
@@ -141,10 +146,10 @@ export class TirageService {
       await exigerAnneeOuverte(tx, tirage.examen.anneeId);
       if (tirage.stade !== StadeTirage.PROGRAMME) {
         throw new BadRequestException(
-          `Tirage ${tirage.stade} : seul un tirage PROGRAMME peut être imprimé`,
+          t('tirage.impression_possible_uniquement_depuis_programme', { stade: tirage.stade }),
         );
       }
-      if (dto.empreinteSource.toLowerCase() !== tirage.empreinteSource) {
+      if (!empreintesEgales(dto.empreinteSource, tirage.empreinteSource)) {
         throw new BadRequestException(t('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr'));
       }
 
@@ -254,7 +259,8 @@ export class TirageService {
    * contrôleur avant l'appel.
    */
   async imprimerBordereau(id: string): Promise<string> {
-    const t = await this.trouver(id);
+    // Avant impression, le bordereau ne révèle pas non plus l'empreinte attendue.
+    const t = masquerEmpreinte(await this.charger(id));
     const empreinteCourte = (h: string | null | undefined) =>
       h ? `${h.slice(0, 16)}…` : '—';
 
@@ -304,6 +310,28 @@ const STYLE_BORDEREAU = `
   .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; margin-top: 60px; }
   .signature { width: auto; }
 `;
+
+/** Préfixe laissé visible d'une empreinte attendue (identification, pas comparaison). */
+const PREFIXE_EMPREINTE = 8;
+
+/**
+ * Tant que le tirage est PROGRAMME, l'empreinte source est la valeur que
+ * l'imprimeur doit retrouver sur le fichier réellement imprimé : la renvoyer
+ * en clair permettrait de la recopier et viderait le contrôle
+ * anti-substitution de son sens. Seul un court préfixe est exposé ; la
+ * comparaison complète se fait côté serveur dans `imprimer`.
+ */
+export function masquerEmpreinte<T extends { stade: StadeTirage; empreinteSource: string }>(tirage: T): T {
+  if (tirage.stade !== StadeTirage.PROGRAMME) return tirage;
+  return { ...tirage, empreinteSource: tirage.empreinteSource.slice(0, PREFIXE_EMPREINTE) };
+}
+
+/** Comparaison insensible à la casse et à durée constante des deux empreintes. */
+function empreintesEgales(fournie: string, attendue: string): boolean {
+  const a = Buffer.from(fournie.trim().toLowerCase());
+  const b = Buffer.from(attendue.trim().toLowerCase());
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
 
 /** Calcule un SHA-256 stable (hex) à partir d'un contenu ; exporté pour les
  *  seeds / outils de test. La longueur normalisée évite le moindre doute sur

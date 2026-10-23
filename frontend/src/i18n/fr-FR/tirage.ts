@@ -54,7 +54,7 @@ export default {
   },
   transitions: {
     IMPRIME:
-      'Confirmez l’empreinte SHA-256 du fichier source. Si elle ne correspond pas à celle enregistrée à la programmation, l’impression sera refusée.',
+      'Déposez le fichier que vous allez réellement imprimer, ou saisissez vous-même son empreinte SHA-256. Si elle ne correspond pas à celle enregistrée à la programmation, l’impression sera refusée.',
     MIS_SOUS_PLI:
       'Les exemplaires sont déclarés mis sous pli et scellés. Cette étape est enregistrée au journal et ne peut pas être annulée.',
     DISTRIBUE:
@@ -78,6 +78,12 @@ export default {
       required: 'Examen, date, nombre d’exemplaires et empreinte sont obligatoires.',
       invalidFingerprint: 'L’empreinte doit être un SHA-256 de 64 caractères hexadécimaux. Chargez le fichier pour la calculer.',
       saveFailed: 'Enregistrement impossible',
+    },
+    print: {
+      fileLabel: 'Fichier à imprimer',
+      fileHint: 'L’empreinte est calculée sur votre poste ; le fichier n’est pas envoyé.',
+      fingerprintLabel: 'Empreinte SHA-256 du fichier imprimé *',
+      fingerprintHint: 'Calculée depuis le fichier déposé, ou saisie à partir de l’outil d’impression.',
     },
     advance: {
       title: 'Passer au stade « {stade} »',

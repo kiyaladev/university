@@ -50,6 +50,8 @@ export const PERMISSIONS = {
   'examens.creer': ['ADMIN', 'SCOLARITE'],
   'examens.demarrer': ['ADMIN', 'SCOLARITE', 'CONTROLEUR'],
   'examens.terminer': ['ADMIN', 'SCOLARITE'],
+  /** Miroir du `@Roles` de `PUT /examens/:id/statut` (PLANIFIE → ANNULE). */
+  'examens.annuler': ['ADMIN', 'SCOLARITE'],
   'tirage.gerer': ['ADMIN', 'SCOLARITE'],
   'evaluations.gerer': ['ADMIN', 'SCOLARITE'],
   'notes.saisir': ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'],

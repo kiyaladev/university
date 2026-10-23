@@ -54,7 +54,7 @@ export default {
   },
   transitions: {
     IMPRIME:
-      'Confirm the SHA-256 fingerprint of the source file. If it does not match the one recorded at scheduling, printing will be refused.',
+      'Load the file you are actually going to print, or enter its SHA-256 fingerprint yourself. If it does not match the one recorded at scheduling, printing will be refused.',
     MIS_SOUS_PLI:
       'The copies are declared sealed in envelopes. This step is logged and cannot be undone.',
     DISTRIBUE:
@@ -78,6 +78,12 @@ export default {
       required: 'Exam, date, number of copies, and fingerprint are required.',
       invalidFingerprint: 'The fingerprint must be a 64-character SHA-256 hexadecimal value. Load the file to calculate it.',
       saveFailed: 'Unable to save the draw',
+    },
+    print: {
+      fileLabel: 'File to print',
+      fileHint: 'The fingerprint is calculated on your device; the file is not uploaded.',
+      fingerprintLabel: 'SHA-256 fingerprint of the printed file *',
+      fingerprintHint: 'Calculated from the loaded file, or entered from the printing tool.',
     },
     advance: {
       title: 'Move to stage “{stade}”',
