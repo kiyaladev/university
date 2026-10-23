@@ -14,14 +14,23 @@
 import { defineBoot } from '#q-app/wrappers';
 import { migrerCaches, migrerClesLocales } from '@/shared/services/cles-stockage';
 import { migrerBaseCrypto } from '@/shared/services/file-chiffree';
+import { prechargerFilesHorsLigne } from '@/shared/services/file-hors-ligne';
+import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
 
 export default defineBoot(async () => {
   // Les clés de stockage sont synchrones : la reprise est faite avant tout
   // le reste, pour qu'aucun service ne lise une clé abandonnée.
   migrerClesLocales();
   // Les clés de chiffrement de la base renommée sont recopiées, puis
-  // l'ancienne base est retirée : les files déjà écrites restent lisibles.
+  // l'ancienne base est retirée.
   await migrerBaseCrypto();
   // Les caches du service worker ne portent aucune donnée unique.
   await migrerCaches();
+  try {
+    await prechargerFilesHorsLigne(proprietaireDepuisToken(lireToken()));
+  } catch (error) {
+    // Une file illisible ne doit pas empêcher l'application de démarrer :
+    // elle sera signalée par le store qui la lit.
+    console.warn('Stockage local : file hors ligne illisible', error);
+  }
 });
