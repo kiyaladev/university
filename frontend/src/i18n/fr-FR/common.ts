@@ -199,6 +199,7 @@ export default {
   },
   search: {
     noResults: 'Aucun résultat',
+    loadError: 'Liste indisponible : le chargement a échoué.',
     advanced: 'Filtres',
     hideAdvanced: 'Masquer les filtres',
     defaultPlaceholder: 'Rechercher (matricule, nom, référence…)',

@@ -13,6 +13,7 @@
       <champ-recherche
         v-model="form.surveillantId"
         endpoint="/examens/surveillants"
+        :endpoint-detail="false"
         :label="$t('examens.fields.supervisor')"
         :label-fn="(u) => `${u.prenom} ${u.nom} — ${u.role}`"
         :clearable="true"
@@ -45,7 +46,7 @@
         <div class="col-6">
           <champ-recherche
             v-model="form.promotionId"
-            endpoint="/referentiel/promotions"
+            endpoint="/promotions"
             :label="$t('common.fields.promotionRequired')"
             :label-fn="(p) => `${p.nom} — ${p.niveau}`"
           />
@@ -55,7 +56,7 @@
         <div class="col-6">
           <champ-recherche
             v-model="form.anneeId"
-            endpoint="/referentiel/annees"
+            endpoint="/annees"
             :label="$t('common.fields.academicYearRequired')"
             :label-fn="(a) => a.libelle"
           />

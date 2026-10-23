@@ -199,6 +199,7 @@ export default {
   },
   search: {
     noResults: 'No results',
+    loadError: 'List unavailable: loading failed.',
     advanced: 'Filters',
     hideAdvanced: 'Hide filters',
     defaultPlaceholder: 'Search (student ID, name, reference…)',
