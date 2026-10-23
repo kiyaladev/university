@@ -41,17 +41,17 @@ export const AUCUN_DEPARTEMENT = '__aucun__';
  * @example filtreDepartement(chef, 'promotion.filiere')
  *   // { promotion: { filiere: { departementId: chef.departementId ?? '__aucun__' } } }
  */
-export function filtreDepartement(
+export function filtreDepartement<T extends Record<string, unknown> = Record<string, unknown>>(
   user: AuthUser | null | undefined,
   chemin = '',
   sentinelle: string = AUCUN_DEPARTEMENT,
-): Record<string, any> {
-  if (!user || !estChefDeDepartement(user)) return {};
-  let fragment: Record<string, any> = { departementId: user.departementId ?? sentinelle };
+): T {
+  if (!user || !estChefDeDepartement(user)) return {} as T;
+  let fragment: Record<string, unknown> = { departementId: user.departementId ?? sentinelle };
   for (const relation of chemin.split('.').filter(Boolean).reverse()) {
     fragment = { [relation]: fragment };
   }
-  return fragment;
+  return fragment as unknown as T;
 }
 
 /**

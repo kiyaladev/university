@@ -1,9 +1,13 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import type { JwtModuleOptions } from '@nestjs/jwt';
 import { JWT_SECRET_EXEMPLE } from './configuration';
 
 export { JWT_SECRET_EXEMPLE };
+
+/** Options de signature du module JWT, dont la durée de vie attendue. */
+type OptionsSignature = NonNullable<JwtModuleOptions['signOptions']>;
 
 /** Forme minimale du service de configuration, pour rester testable. */
 interface LectureConfig {
@@ -29,7 +33,7 @@ export function optionsJwt(config: LectureConfig) {
   return {
     secret: secret ?? JWT_SECRET_EXEMPLE,
     signOptions: {
-      expiresIn: (config.get<string>('JWT_EXPIRES_IN') ?? '12h') as any,
+      expiresIn: (config.get<string>('JWT_EXPIRES_IN') ?? '12h') as OptionsSignature['expiresIn'],
     },
   };
 }

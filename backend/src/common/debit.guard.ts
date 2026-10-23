@@ -37,11 +37,13 @@ export class DebitGuard extends ThrottlerGuard {
     return `${base}:${compte}`;
   }
 
-  protected getTracker(req: Record<string, any>): Promise<string> {
-    const userId = req.user?.id;
+  protected getTracker(req: Record<string, unknown>): Promise<string> {
+    const utilisateur = req.user as { id?: unknown } | undefined;
+    const userId = utilisateur?.id;
     if (typeof userId === 'string' && userId.length > 0) {
       return Promise.resolve('u:' + userId);
     }
-    return Promise.resolve('ip:' + (req.ip ?? req.socket?.remoteAddress ?? 'inconnu'));
+    const socket = req.socket as { remoteAddress?: string } | undefined;
+    return Promise.resolve('ip:' + String(req.ip ?? socket?.remoteAddress ?? 'inconnu'));
   }
 }

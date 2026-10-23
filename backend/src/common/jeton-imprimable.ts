@@ -30,7 +30,7 @@ export function verifierJetonImprimable(
   jwt: JwtService,
   req: Request,
   options?: Record<string, unknown>,
-): Record<string, any> {
+): Record<string, unknown> {
   try {
     return jwt.verify(jetonImprimable(req) ?? '', options);
   } catch {
