@@ -32,8 +32,12 @@ export interface PeriodeRapport {
 export interface SyntheseRapport {
   planifiees?: number;
   controlees?: number;
+  present?: number;
   absent?: number;
   retard?: number;
+  excuse?: number;
+  remplace?: number;
+  departAnticipe?: number;
   heuresPrevues?: number;
   heuresRealisees?: number;
   assurees?: number;
@@ -158,31 +162,78 @@ export interface RapportCouverture {
 }
 
 /** Une journée de présence, pour le tableau de bord. */
-export interface JourneeRapport {
+export interface JourneeRapport extends SyntheseRapport {
   date: string;
-  planifiees: number;
-  assurees: number;
-  absences: number;
-  retards: number;
-  tauxPresence?: number;
+  enAttente?: number;
+  /** L'évolution d'un jour compte les absences et les retards à part. */
+  absences?: number;
+  retards?: number;
 }
 
-/** Tableau de bord : la synthèse d'une période et de ses jours. */
+/** Une part de la répartition par statut de présence. */
+export interface PartRepartition {
+  statut: string;
+  valeur: number;
+}
+
+/** Une ligne du classement par département. */
+export interface LigneDepartement extends SyntheseRapport {
+  id: string;
+  nom: string;
+}
+
+/** Une ligne du classement des enseignants les plus absents. */
+export interface LigneEnseignantAbsent extends SyntheseRapport {
+  id: string;
+  nom: string;
+}
+
+/** Tableau de bord : la synthèse d'une période, du jour et des classements. */
 export interface RapportTableauBord {
   periode?: PeriodeRapport;
+  jour?: JourneeRapport;
   global?: SyntheseRapport;
-  jour?: SyntheseRapport;
   evolution?: JourneeRapport[];
-  parDepartement?: Array<{ id: string; nom: string } & SyntheseRapport>;
+  repartition?: PartRepartition[];
+  departements?: LigneDepartement[];
+  enseignantsAbsents?: LigneEnseignantAbsent[];
   justificatifsEnAttente?: number;
+}
+
+/** Ligne de salle : le terrain d'un contrôleur. */
+export interface LigneSalle extends SyntheseRapport {
+  salleId: string | null;
+  code: string;
+  nom: string;
+  batiment?: string | null;
+  capacite?: number;
+  effectifMoyen?: number;
+  tauxOccupation?: number;
+  derniereVisite?: string | null;
+}
+
+/** Rapport d'occupation des salles. */
+export interface RapportSalles {
+  periode?: PeriodeRapport;
+  total?: SyntheseRapport;
+  lignes: LigneSalle[];
 }
 
 /** Fiche personnelle d'un enseignant : ses séances sur la période. */
 export interface FicheEnseignant {
-  date: string;
-  total: number;
+  enseignant?: {
+    id: string;
+    matricule: string;
+    nom: string;
+    prenom: string;
+    grade?: string | null;
+    statut?: string | null;
+    departementId?: string | null;
+    departement?: { id: string; code: string; nom: string } | null;
+  } | null;
+  periode?: PeriodeRapport;
   synthese?: SyntheseRapport;
-  lignes: Array<{
+  seances: Array<{
     id: string;
     date: string;
     horaire: string;
@@ -192,6 +243,7 @@ export interface FicheEnseignant {
     statut: string;
     dureeMinutes: number;
     thematiqueTraitee?: string;
+    observation?: string;
   }>;
 }
 
@@ -204,7 +256,7 @@ export const rapportsService = {
     lire<RapportAssiduite>('/rapports/presence-enseignants', { ...params }),
 
   /** Occupation des salles sur la période. */
-  salles: (params: ParametresRapports = {}) => lire<RapportTableauBord>('/rapports/salles', { ...params }),
+  salles: (params: ParametresRapports = {}) => lire<RapportSalles>('/rapports/salles', { ...params }),
 
   /** Volume horaire : le contrat face au réalisé, par affectation. */
   volumeHoraire: (params: ParametresRapports = {}) =>
