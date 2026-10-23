@@ -64,7 +64,7 @@ const PREMIERE_HEURE = 7;
 const DERNIERE_HEURE = 20;
 const HAUTEUR_HEURE = 64;
 
-const props = defineProps<{ semaine: JourEmploiDuTemps[]; peutTenir: boolean }>();
+defineProps<{ semaine: JourEmploiDuTemps[]; peutTenir: boolean }>();
 const emit = defineEmits<{ ouvrir: [Creneau] }>();
 
 const { t } = useI18n();

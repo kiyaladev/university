@@ -167,10 +167,6 @@ const lectureEnCours = ref(false);
 const erreurEmpreinte = ref('');
 
 const enseignantId = computed(() => props.seance?.affectation?.enseignant?.id ?? '');
-const nomEnseignant = computed(() => {
-  const e = props.seance?.affectation?.enseignant;
-  return e ? `${e.nom} ${e.prenom}` : t('pointage.attestation.teacher');
-});
 
 /** Moyen effectivement retenu, du plus fort au plus faible (même ordre que l'API). */
 const modeRetenu = computed(() => {

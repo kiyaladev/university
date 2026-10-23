@@ -263,6 +263,7 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -281,6 +282,7 @@ import type { Enseignant, Justificatif, Seance } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
+const { confirmerAvecSaisie } = useConfirmation();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 
@@ -385,27 +387,22 @@ const colonnes = computed<QTableColumn[]>(() => [
 const libelleMotif = (type?: string | null) => TYPES_JUSTIFICATIF.find((x) => x.value === type)?.label ?? type ?? '—';
 
 /** Le message dit la conséquence : valider excuse l'absence dans les relevés. */
-function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
+async function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
   const valide = statut === 'VALIDE';
-  $q.dialog({
-    title: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
+  const commentaire = await confirmerAvecSaisie({
+    titre: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
     message: valide ? t('justificatifs.dialogs.validateMessage') : t('justificatifs.dialogs.rejectMessage'),
-    prompt: { model: '', type: 'text' },
-    ok: {
-      label: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
-      color: valide ? 'positive' : 'negative',
-      unelevated: true,
-      noCaps: true,
-    },
-    cancel: { label: t('justificatifs.dialogs.doNothing'), flat: true, noCaps: true },
-  }).onOk(async (commentaire: string) => {
-    await justificatifsService.traiter(j.id, statut, commentaire);
-    $q.notify({
-      type: 'positive',
-      message: valide ? t('justificatifs.messages.validated') : t('justificatifs.messages.rejected'),
-    });
-    await liste.recharger();
+    ok: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
+    couleur: valide ? 'positive' : 'negative',
+    libelleAnnuler: t('justificatifs.dialogs.doNothing'),
   });
+  if (commentaire === null) return;
+  await justificatifsService.traiter(j.id, statut, commentaire);
+  $q.notify({
+    type: 'positive',
+    message: valide ? t('justificatifs.messages.validated') : t('justificatifs.messages.rejected'),
+  });
+  await liste.recharger();
 }
 
 function lireFichier(f: File | null) {

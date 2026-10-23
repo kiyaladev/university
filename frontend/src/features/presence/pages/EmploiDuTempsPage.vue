@@ -178,7 +178,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
-import { useI18n } from 'vue-i18n';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
@@ -195,7 +194,6 @@ import { dureeHeuresCreneau } from '../utils/creneaux';
 import type { Creneau, Enseignant, Promotion, Salle } from '@/types';
 
 const $q = useQuasar();
-const { t } = useI18n();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 
