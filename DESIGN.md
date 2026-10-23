@@ -266,7 +266,7 @@ Sur un appareil Apple, `-apple-system` attrape SF Pro : rien à charger, et le t
 
 **La règle des chiffres alignés.** Toute grandeur, heure ou compteur porte `.chiffres` (`tabular-nums` + `tnum`), pour que les colonnes ne dansent pas d'une ligne à l'autre.
 
-**La règle du français écrit.** Les nombres, heures et pourcentages passent par `nombreLisible`, `heuresLisibles`, `pourcentLisible` de `src/utils/libelles.ts` ; les dates par le composant `ChampDate`, jamais par un `type="date"` natif qui affiche MM/JJ/AAAA hors locale française.
+**La règle du français écrit.** Les nombres, heures et pourcentages passent par `nombreLisible`, `heuresLisibles`, `pourcentLisible` de `src/shared/utils/libelles/` ; les dates par le composant `ChampDate`, jamais par un `type="date"` natif qui affiche MM/JJ/AAAA hors locale française.
 
 ## Layout
 

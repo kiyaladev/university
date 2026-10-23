@@ -41,7 +41,7 @@ PORT=5045 BIOMETRIE_SECRET="le-meme-que-l-api" bun run start
 > passerelle sans `PORT` échoue. Choisir un port libre et l’indiquer dans
 > l’application : l’URL de la passerelle se règle côté navigateur (clé
 > `unipresence_biometrie_url` du stockage local, défaut `http://127.0.0.1:5044`
-> dans `frontend/src/utils/libelles.ts`).
+> dans `frontend/src/shared/utils/biometrie.ts`).
 
 | Route | Rôle |
 | --- | --- |
