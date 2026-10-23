@@ -169,7 +169,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
   { name: 'prix', label: t('formationsAdmin.table.columns.price'), field: 'prix', align: 'right' },
   { name: 'duree', label: t('common.fields.duration'), field: 'dureeHeures', align: 'center' },
-  { name: 'capacite', label: t('common.fields.capacity'), field: 'capacite', align: 'center' },
+  { name: 'capacite', label: t('formationsAdmin.table.columns.capacity'), field: 'capacite', align: 'center' },
   { name: 'inscrits', label: t('formationsAdmin.table.columns.registered'), field: 'inscrits', align: 'center' },
   { name: 'recette', label: t('formationsAdmin.table.columns.revenue'), field: 'recette', align: 'right' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
