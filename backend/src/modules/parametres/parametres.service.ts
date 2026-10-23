@@ -5,6 +5,13 @@ import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
 import { UpdateParametresDto } from './parametres.dto';
 
+/**
+ * Préfixe des clés `Parametre` qui activent ou masquent un service
+ * (SERVICE_ACTIF_vod…). Elles ne s'écrivent que par ServicesActifsService :
+ * l'écran des paramètres génériques ne les montre ni ne les modifie.
+ */
+export const PREFIXE_SERVICE_ACTIF = 'SERVICE_ACTIF_';
+
 /** Règles de contrôle paramétrables par l'établissement. */
 export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: string }> = {
   NOM_ETABLISSEMENT: {
@@ -70,7 +77,7 @@ export class ParametresService {
       cle,
       valeur,
       description: PARAMETRES_DEFAUT[cle]?.description ?? null,
-    })).filter(p => !p.cle.startsWith('SERVICE_ACTIF_'));
+    })).filter(p => !p.cle.startsWith(PREFIXE_SERVICE_ACTIF));
   }
 
   /** Paramètre unique nécessaire au dialogue de pointage ; ne divulgue pas les seuils internes. */
@@ -102,7 +109,7 @@ export class ParametresService {
   }
 
   async enregistrer(dto: UpdateParametresDto, user?: AuthUser) {
-    if (dto.parametres.some(p => p.cle.startsWith('SERVICE_ACTIF_'))) {
+    if (dto.parametres.some(p => p.cle.startsWith(PREFIXE_SERVICE_ACTIF))) {
       throw new BadRequestException(t('common.servicesConfigurationEndpoint'));
     }
     await this.prisma.$transaction(async (tx) => {

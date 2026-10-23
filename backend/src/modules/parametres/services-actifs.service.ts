@@ -5,6 +5,7 @@ import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
+import { PREFIXE_SERVICE_ACTIF } from './parametres.service';
 
 /** Les services obligatoires portent aussi les archives et le rapprochement. */
 export const SERVICES = [
@@ -32,7 +33,7 @@ export const SERVICES = [
 ] as const;
 const IDS = SERVICES.map(s => s.id);
 const IDS_VALIDES = new Set<string>(IDS);
-const PREFIXE = 'SERVICE_ACTIF_';
+const PREFIXE = PREFIXE_SERVICE_ACTIF;
 
 export class ServiceActifDto {
   @IsIn(IDS) id: string;
@@ -45,24 +46,79 @@ export class ServicesActifsDto {
   services: ServiceActifDto[];
 }
 
+/**
+ * Durée de vie du cache des activations. La garde globale consulte
+ * l'activation à chaque requête : sans cache, chaque appel d'API coûtait une
+ * requête SQL de plus.
+ *
+ * Le cache vit en mémoire du processus. C'est suffisant tant que PM2 ne lance
+ * qu'une instance : l'écriture (enregistrer) l'invalide immédiatement. Si l'API
+ * passait un jour en mode cluster, les autres instances verraient le
+ * changement au plus tard après ce délai ; il faudrait alors un cache partagé
+ * (ou une notification) pour un effet immédiat partout.
+ */
+export const DUREE_CACHE_SERVICES_MS = 30_000;
+
 @Injectable()
 export class ServicesActifsService {
+  private cache: { valeurs: Map<string, string>; expireA: number } | null = null;
+  private chargement: Promise<Map<string, string>> | null = null;
+  /** Incrémentée à chaque écriture : un chargement lancé avant est jeté. */
+  private generation = 0;
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Valeurs brutes des clés SERVICE_ACTIF_*, servies depuis le cache si frais. */
+  private async valeurs(): Promise<Map<string, string>> {
+    if (this.cache && this.cache.expireA > Date.now()) return this.cache.valeurs;
+    if (this.chargement) return this.chargement;
+    const generation = this.generation;
+    const chargement = this.prisma.parametre
+      .findMany({ where: { cle: { startsWith: PREFIXE } }, select: { cle: true, valeur: true } })
+      .then(rows => {
+        const valeurs = new Map(rows.map(r => [r.cle, r.valeur]));
+        if (generation === this.generation) {
+          this.cache = { valeurs, expireA: Date.now() + DUREE_CACHE_SERVICES_MS };
+        }
+        return valeurs;
+      })
+      .finally(() => {
+        if (this.chargement === chargement) this.chargement = null;
+      });
+    this.chargement = chargement;
+    return chargement;
+  }
+
+  /** Oublie le cache : la prochaine lecture repart de la base. */
+  invalider() {
+    this.generation++;
+    this.cache = null;
+    this.chargement = null;
+  }
+
   async liste() {
-    const rows = await this.prisma.parametre.findMany({ where: { cle: { startsWith: PREFIXE } }, select: { cle: true, valeur: true } });
-    const valeurs = new Map(rows.map(r => [r.cle, r.valeur]));
+    const valeurs = await this.valeurs();
     // Les installations existantes gardent leurs accès jusqu'au choix ADMIN.
     return SERVICES.map(({ id, obligatoire, pilote }) => ({ id, obligatoire, pilote, actif: obligatoire || valeurs.get(PREFIXE + id) !== 'false' }));
   }
   async actif(id: string) {
     const service = SERVICES.find(s => s.id === id);
     if (!service || service.obligatoire) return true;
-    const row = await this.prisma.parametre.findUnique({ where: { cle: PREFIXE + id }, select: { valeur: true } });
-    return row?.valeur !== 'false';
+    return (await this.valeurs()).get(PREFIXE + id) !== 'false';
   }
   async enregistrer(dto: ServicesActifsDto, user: AuthUser) {
     if (dto.services.some(s => !IDS_VALIDES.has(s.id) || typeof s.actif !== 'boolean') || new Set(dto.services.map(s => s.id)).size !== dto.services.length) throw new BadRequestException(t('common.invalidServices'));
     if (dto.services.some(s => !s.actif && SERVICES.find(def => def.id === s.id)?.obligatoire)) throw new BadRequestException(t('common.requiredService'));
+    try {
+      await this.ecrire(dto, user);
+    } finally {
+      // Après le commit (ou l'échec) : aucune lecture ne garde l'état d'avant.
+      this.invalider();
+    }
+    return this.liste();
+  }
+
+  private async ecrire(dto: ServicesActifsDto, user: AuthUser) {
     await this.prisma.$transaction(async tx => {
       for (const service of dto.services) {
         const cle = PREFIXE + service.id;
@@ -79,6 +135,5 @@ export class ServicesActifsService {
         );
       }
     });
-    return this.liste();
   }
 }
