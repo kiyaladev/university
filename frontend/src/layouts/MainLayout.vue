@@ -361,7 +361,7 @@ function preparerInstallation() {
   window.addEventListener('appinstalled', () => {
     installable.value = false;
     invite = null;
-    $q.notify({ type: 'positive', message: t('layout.installed', { name: t('common.name') }) });
+    $q.notify({ type: 'positive', message: t('layout.installed', { name: t('common.app.name') }) });
   });
 }
 
