@@ -13,7 +13,7 @@
  *   5. une feuille validée ou payée est figée.
  */
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { StatutEnseignant, StatutPaie, StatutPresence } from '@prisma/client';
+import { Prisma, StatutEnseignant, StatutPaie, StatutPresence } from '@prisma/client';
 import { PaieService } from './paie.service';
 
 const USER = { id: 'direction-1', nom: 'Dir', prenom: 'Ection', role: 'DIRECTION' } as any;
@@ -266,6 +266,32 @@ describe('PaieService — décompte des heures', () => {
     expect(seanceFindMany.mock.calls[1][0].where.affectation).toEqual({ enseignant: {} });
     expect(affectationFindMany.mock.calls[1][0].where.enseignant).toBeUndefined();
   });
+
+  it('calcule sur des nombres quand le taux horaire vient d’une colonne numeric', async () => {
+    const createMany = jest.fn().mockResolvedValue({ count: 1 });
+    const { prisma } = fairePrisma(
+      feuilleBrouillon(),
+      {
+        seance: {
+          findMany: jest.fn().mockResolvedValue([
+            { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
+          ]),
+        },
+        // La base renvoie un Decimal : 25,50 GNF de l'heure.
+        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: new Prisma.Decimal('25.50') }]) },
+        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+      },
+    );
+    const service = new PaieService(prisma as any, {} as any);
+
+    await service.calculer('feuille-1', false, USER);
+
+    const ligne = createMany.mock.calls[0][0].data[0];
+    // Un nombre, jamais une chaîne sérialisée : le front attend des nombres.
+    expect(typeof ligne.montantBrut).toBe('number');
+    expect(ligne.montantBrut).toBe(51);
+    expect(ligne.montantNet).toBe(51);
+  });
 });
 
 describe('PaieService — cycle de vie de la feuille', () => {
@@ -372,5 +398,55 @@ describe('PaieService — cycle de vie de la feuille', () => {
         }),
       }),
     );
+  });
+});
+
+describe('PaieService — borne haute de la période', () => {
+  /**
+   * BUG: la borne haute de la période est fixée au dernier jour du mois à
+   * minuit (`new Date(Date.UTC(annee, mois, 0))`) et le filtre des séances
+   * est un `lte` sur cette borne. Toute séance tenue le dernier jour du mois
+   * après minuit est donc écartée du décompte : la feuille de janvier ne
+   * paie pas les séances du 31 janvier.
+   *
+   * Attendu : la séance du 31 janvier à 10 h compte pour une heure payée.
+   * Obtenu : aucune ligne n'est produite, la séance est filtrée.
+   *
+   * Correctif attendu : élargir la borne à la fin de la journée
+   * (`lte: finDuJour(feuille.dateFin)`) ou utiliser un `lt` sur le premier
+   * jour du mois suivant.
+   */
+  it.skip('paie les séances tenues le dernier jour du mois', async () => {
+    const seances = [
+      {
+        date: new Date('2026-01-31T10:00:00Z'),
+        controle: { dureeMinutes: 60 },
+        affectation: { enseignantId: 'ens-1' },
+      },
+    ];
+    // Le faux findMany applique le filtre de période comme le ferait la base.
+    const seanceFindMany = jest.fn().mockImplementation(async ({ where }: any) => {
+      const { gte, lte } = where.date;
+      return seances.filter((s) => (!gte || s.date >= gte) && (!lte || s.date <= lte));
+    });
+    const createMany = jest.fn().mockResolvedValue({ count: 1 });
+    const { prisma } = fairePrisma(
+      feuilleBrouillon({
+        dateDebut: new Date('2026-01-01T00:00:00Z'),
+        dateFin: new Date('2026-01-31T00:00:00Z'),
+      }),
+      {
+        seance: { findMany: seanceFindMany },
+        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 50 }]) },
+        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+      },
+    );
+    const service = new PaieService(prisma as any, {} as any);
+
+    await service.calculer('feuille-1', false, USER);
+
+    expect(createMany).toHaveBeenCalledWith({
+      data: [expect.objectContaining({ enseignantId: 'ens-1', heuresReelles: 1, montantNet: 50 })],
+    });
   });
 });

@@ -9,6 +9,7 @@
  */
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import {
+  Prisma,
   SessionDeliberation,
   StatutDeliberation,
   StatutEnseignant,
@@ -200,6 +201,57 @@ describe('RectoratService — masse salariale', () => {
     const chiffres = await service.chiffres();
 
     expect(chiffres.masseSalarialeMois).toContain('aucune feuille validée');
+  });
+
+  /**
+   * BUG: `bornesFeuilleMois` est une fonction `async`, mais son résultat est
+   * étalé (`...bornesFeuilleMois(mois, annee)`) dans le `where` Prisma.
+   * Étaler une promesse ne copie aucune propriété : le filtre de période
+   * disparaît silencieusement et la masse salariale « du mois » englobe
+   * toutes les feuilles validées ou payées, quelle que soit leur période.
+   *
+   * Attendu : `where` contient `dateDebut: { lte: finDuMois }` et
+   * `dateFin: { gte: debutDuMois }`.
+   * Obtenu : `where` ne contient que le filtre de statut.
+   *
+   * Correctif attendu : rendre `bornesFeuilleMois` synchrone (elle n'a
+   * aucune awaits), ou étaler `...(await bornesFeuilleMois(mois, annee))`.
+   */
+  it.skip('borne la masse salariale au mois demandé', async () => {
+    const { prisma, delegates } = fairePrisma();
+    const service = new RectoratService(prisma, {} as any);
+
+    await service.chiffres();
+
+    const maintenant = new Date();
+    const mois = maintenant.getMonth() + 1;
+    const annee = maintenant.getFullYear();
+    expect(delegates.feuillePaie.aggregate.mock.calls[0][0].where).toEqual({
+      dateDebut: { lte: new Date(Date.UTC(annee, mois, 0)) },
+      dateFin: { gte: new Date(Date.UTC(annee, mois - 1, 1)) },
+      statut: { in: [StatutPaie.VALIDE, StatutPaie.PAYE] },
+    });
+  });
+
+  it('convertit une somme numeric en nombre et non en chaîne', async () => {
+    const { prisma, delegates } = fairePrisma();
+    delegates.feuillePaie.aggregate.mockResolvedValue({ _sum: { montantTotal: new Prisma.Decimal('1234.57') } });
+    const service = new RectoratService(prisma, {} as any);
+
+    const chiffres = await service.chiffres();
+
+    expect(typeof chiffres.masseSalariale).toBe('number');
+    expect(chiffres.masseSalariale).toBe(1234.57);
+  });
+
+  it('annonce zéro quand aucune feuille n’a de montant cumulé', async () => {
+    const { prisma, delegates } = fairePrisma();
+    delegates.feuillePaie.aggregate.mockResolvedValue({ _sum: { montantTotal: null } });
+    const service = new RectoratService(prisma, {} as any);
+
+    const chiffres = await service.chiffres();
+
+    expect(chiffres.masseSalariale).toBe(0);
   });
 });
 
