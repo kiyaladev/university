@@ -1,10 +1,8 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('paiePage.title')" :subtitle="$t('paiePage.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutCreer" #actions>
         <q-btn
-          v-if="peutCreer"
           unelevated
           color="primary"
           no-caps
@@ -12,7 +10,6 @@
           :label="$t('paiePage.actions.newSheet')"
           @click="dialogCreation = true"
         />
-      </div>
       </template>
     </page-header>
 
@@ -20,7 +17,7 @@
       v-model="filtres"
       :recherche="false"
       :chips="chipsFiltres"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #actions>
         <q-btn
@@ -30,8 +27,8 @@
           color="primary"
           icon="refresh"
           :aria-label="$t('paiePage.ariaLabels.reload')"
-          :loading="chargement"
-          @click="charger"
+          :loading="liste.chargement"
+          @click="liste.recharger()"
         >
           <q-tooltip>{{ $t('paiePage.tooltips.reload') }}</q-tooltip>
         </q-btn>
@@ -61,7 +58,7 @@
     </filter-bar>
 
     <div class="text-caption text-grey-7 q-mb-sm">
-      {{ $t('paiePage.summary.sheetsCount', { count: pagination.total }) }} {{ $t('rectoratPage.subtitleFallback') }}
+      {{ $t('paiePage.summary.sheetsCount', { count: liste.total }) }} {{ $t('rectoratPage.subtitleFallback') }}
       {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : $t('paiePage.summary.allStatuses') }},
       {{ filtres.annee ?? $t('paiePage.summary.allYears') }} · {{ $t('paiePage.summary.totalShown') }}
       {{ montantLisible(totalMontant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
@@ -73,11 +70,12 @@
       flat
       bordered
       class="carte"
-      :rows="feuilles"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
-      :pagination="{ rowsPerPage: 20 }"
+      :loading="liste.chargement"
+      :rows-per-page-options="[0]"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="ouvrirDetail"
     >
       <template #body-cell-statut="p">
@@ -175,40 +173,40 @@
         </q-td>
       </template>
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="payments" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ $t('paiePage.emptyState.title') }}</div>
-          <div class="text-caption">
-            {{ $t('paiePage.emptyState.description') }}
-            {{ aDesFiltres ? $t('paiePage.emptyState.filtered') : '' }}
-          </div>
-          <q-btn
-            v-if="aDesFiltres"
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="filter_alt_off"
-            :label="$t('paiePage.actions.clearFilters')"
-            @click="reinitialiser"
-          />
-          <q-btn
-            v-else-if="peutCreer"
-            unelevated
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('paiePage.actions.createFirst')"
-            @click="dialogCreation = true"
-          />
-        </div>
+        <etat-vide
+          icone="payments"
+          :titre="$t('paiePage.emptyState.title')"
+          :aide="`${$t('paiePage.emptyState.description')} ${aDesFiltres ? $t('paiePage.emptyState.filtered') : ''}`.trim()"
+        >
+          <template #action>
+            <q-btn
+              v-if="aDesFiltres"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="filter_alt_off"
+              :label="$t('paiePage.actions.clearFilters')"
+              @click="liste.reinitialiser([])"
+            />
+            <q-btn
+              v-else-if="peutCreer"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('paiePage.actions.createFirst')"
+              @click="dialogCreation = true"
+            />
+          </template>
+        </etat-vide>
       </template>
     </q-table>
 
     <!-- Vue cartes -->
     <div v-else class="row q-col-gutter-md">
       <div
-        v-for="f in feuilles"
+        v-for="f in liste.lignes"
         :key="f.id"
         class="col-12 col-sm-6 col-md-4"
       >
@@ -271,14 +269,14 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!feuilles.length && !chargement" class="col-12">
-        <div class="etat-vide">
-          <q-icon name="payments" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ $t('paiePage.emptyState.title') }}</div>
-          <div class="text-caption">
-            {{ $t('paiePage.emptyState.description') }}
-            {{ aDesFiltres ? $t('paiePage.emptyState.filtered') : '' }}
-          </div>
+      <etat-vide
+        v-if="!liste.lignes.length && !liste.chargement"
+        class="col-12"
+        icone="payments"
+        :titre="$t('paiePage.emptyState.title')"
+        :aide="`${$t('paiePage.emptyState.description')} ${aDesFiltres ? $t('paiePage.emptyState.filtered') : ''}`.trim()"
+      >
+        <template #action>
           <q-btn
             v-if="aDesFiltres"
             flat
@@ -287,7 +285,7 @@
             color="primary"
             icon="filter_alt_off"
             :label="$t('paiePage.actions.clearFilters')"
-            @click="reinitialiser"
+            @click="liste.reinitialiser([])"
           />
           <q-btn
             v-else-if="peutCreer"
@@ -298,17 +296,15 @@
             :label="$t('paiePage.actions.createFirst')"
             @click="dialogCreation = true"
           />
-        </div>
-      </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="pagination.page = $event; charger()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; charger()"
     />
 
     <!-- Détail : lignes de la feuille -->
@@ -349,12 +345,7 @@
               </q-td>
             </template>
             <template #no-data>
-              <div class="etat-vide">
-                <div class="text-subtitle2">{{ $t('paiePage.detail.lineEmptyTitle') }}</div>
-                <div class="text-caption">
-                  {{ $t('paiePage.detail.lineEmptyMessage') }}
-                </div>
-              </div>
+              <etat-vide icone="receipt_long" :titre="$t('paiePage.detail.lineEmptyTitle')" :aide="$t('paiePage.detail.lineEmptyMessage')" />
             </template>
             <template #bottom>
               <div class="detail-total">
@@ -385,7 +376,7 @@
     <feuille-paie-dialog
       v-model="dialogCreation"
       :annees-existantes="anneesExistantes"
-      @cree="charger"
+      @enregistre="liste.recharger()"
       @calculer="avecNouvelleFeuille"
     />
   </q-page>
@@ -394,7 +385,10 @@
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -415,11 +409,9 @@ import { ouvrirImpression } from '../services/impression';
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 
 const modeVue = usePresentationListe();
-const feuilles = ref<FeuillePaie[]>([]);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const chargement = ref(false);
 const dialogCreation = ref(false);
 const dialogDetail = ref(false);
 const detail = ref<FeuillePaie | null>(null);
@@ -428,6 +420,21 @@ const detail = ref<FeuillePaie | null>(null);
 // désactivée parce que l'API des feuilles n'indexe rien d'autre que le couple
 // statut / année — un champ de recherche inerte serait un mensonge.
 const filtres = ref<Record<string, any>>({ statut: null, annee: null });
+
+/** Feuilles de paie : paginées côté serveur, filtres gardés dans l'URL. Un
+ *  changement de filtre repart de la première page. */
+const liste = reactive(
+  useListePaginee<FeuillePaie>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/feuilles-paie', {
+          params: { ...pageApi(p), statut: f.statut || undefined, annee: f.annee || undefined },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 const peutImprimer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
@@ -455,7 +462,7 @@ const chipsFiltres = computed(() => {
   return chips;
 });
 
-const anneesExistantes = computed(() => feuilles.value.map((f) => f.annee));
+const anneesExistantes = computed(() => liste.lignes.map((f) => f.annee));
 
 /** Cycle de vie d'une feuille, peint aux couleurs partagées avec le courrier. */
 const classeStatut = (s: string) =>
@@ -468,14 +475,14 @@ const optionsAnnees = computed(() => {
     courante - 1,
     courante - 2,
     ...anneesExistantes.value,
-    ...(filtres.value.annee ? [filtres.value.annee] : []),
+    ...(filtres.value.annee ? [Number(filtres.value.annee)] : []),
   ]);
   return [...annees]
     .sort((a, b) => b - a)
     .map((a) => ({ label: String(a), value: a }));
 });
 
-const totalMontant = computed(() => feuilles.value.reduce((t, f) => t + (f.montantTotal ?? 0), 0));
+const totalMontant = computed(() => liste.lignes.reduce((t, f) => t + (f.montantTotal ?? 0), 0));
 
 const heuresTotal = computed(() =>
   (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0),
@@ -545,32 +552,6 @@ const colonnesLignes = computed<QTableColumn[]>(() => [
   { name: 'commentaire', label: t('paiePage.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },
 ]);
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/feuilles-paie', {
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: filtres.value.statut || undefined,
-        annee: filtres.value.annee || undefined,
-      },
-    });
-    feuilles.value = data.data;
-    pagination.value.total = data.total;
-  } catch {
-    /* notifié par l'intercepteur */
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function reinitialiser() {
-  filtres.value = { statut: null, annee: null };
-  pagination.value.page = 1;
-  charger();
-}
-
 function ouvrirDetail(_event: unknown, f: FeuillePaie) {
   detail.value = f;
   dialogDetail.value = true;
@@ -581,81 +562,53 @@ async function avecNouvelleFeuille(f: FeuillePaie) {
   await recalculer(f);
 }
 
+/** Action du cycle de vie après confirmation : la feuille rendue devient le détail. */
+async function agir(
+  f: FeuillePaie,
+  action: 'calculer' | 'valider' | 'payer',
+  dialogue: 'recalculate' | 'validate' | 'markPaid',
+  succes: string,
+) {
+  const ok = await confirmer({
+    titre: t(`paiePage.dialogs.${dialogue}.title`),
+    message: t(`paiePage.dialogs.${dialogue}.message`, { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
+    ok: t(`paiePage.dialogs.${dialogue}.ok`),
+  });
+  if (!ok) return;
+  try {
+    const { data } = await api.post(`/feuilles-paie/${f.id}/${action}`);
+    $q.notify({ type: 'positive', message: t(succes) });
+    detail.value = data;
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  }
+}
+
 /** Recalcul idempotent des heures contrôlées de la période. */
-function recalculer(f: FeuillePaie) {
-  $q.dialog({
-    title: t('paiePage.dialogs.recalculate.title'),
-    message: t('paiePage.dialogs.recalculate.message', { libelle: f.libelle }),
-    cancel: true,
-    ok: { label: t('paiePage.dialogs.recalculate.ok'), color: 'primary', unelevated: true },
-  }).onOk(async () => {
-    try {
-      const { data } = await api.post(`/feuilles-paie/${f.id}/calculer`);
-      $q.notify({ type: 'positive', message: t('paiePage.messages.recalculated') });
-      detail.value = data;
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
-}
-
-function valider(f: FeuillePaie) {
-  $q.dialog({
-    title: t('paiePage.dialogs.validate.title'),
-    message: t('paiePage.dialogs.validate.message', { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
-    cancel: true,
-    ok: { label: t('paiePage.dialogs.validate.ok'), color: 'positive', unelevated: true },
-  }).onOk(async () => {
-    try {
-      const { data } = await api.post(`/feuilles-paie/${f.id}/valider`);
-      $q.notify({ type: 'positive', message: t('paiePage.messages.validated') });
-      detail.value = data;
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
-}
-
-function payer(f: FeuillePaie) {
-  $q.dialog({
-    title: t('paiePage.dialogs.markPaid.title'),
-    message: t('paiePage.dialogs.markPaid.message', { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
-    cancel: true,
-    ok: { label: t('paiePage.dialogs.markPaid.ok'), color: 'primary', unelevated: true },
-  }).onOk(async () => {
-    try {
-      const { data } = await api.post(`/feuilles-paie/${f.id}/payer`);
-      $q.notify({ type: 'positive', message: t('paiePage.messages.paid') });
-      detail.value = data;
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
-}
+const recalculer = (f: FeuillePaie) => agir(f, 'calculer', 'recalculate', 'paiePage.messages.recalculated');
+const valider = (f: FeuillePaie) => agir(f, 'valider', 'validate', 'paiePage.messages.validated');
+const payer = (f: FeuillePaie) => agir(f, 'payer', 'markPaid', 'paiePage.messages.paid');
 
 function imprimer(f: FeuillePaie) {
   void ouvrirImpression(`/feuilles-paie/${f.id}/imprimer`);
 }
 
 function supprimer(f: FeuillePaie) {
-  $q.dialog({
-    title: t('paiePage.dialogs.delete.title'),
-    message: t('paiePage.dialogs.delete.message', { libelle: f.libelle }),
-    cancel: true,
-    ok: { color: 'negative', label: t('paiePage.dialogs.delete.ok') },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/feuilles-paie/${f.id}`);
-      $q.notify({ type: 'positive', message: t('paiePage.messages.deleted') });
+  void supprimerAvecConfirmation(
+    `/feuilles-paie/${f.id}`,
+    f.libelle,
+    () => {
       if (detail.value?.id === f.id) dialogDetail.value = false;
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
+      return liste.recharger();
+    },
+    {
+      titre: t('paiePage.dialogs.delete.title'),
+      message: t('paiePage.dialogs.delete.message', { libelle: f.libelle }),
+      ok: t('paiePage.dialogs.delete.ok'),
+      succes: t('paiePage.messages.deleted'),
+    },
+  );
 }
 
 // Droits d'action, par rôle et par statut du cycle de vie.
@@ -666,17 +619,6 @@ const peutValider = (f: FeuillePaie) =>
 const peutPayer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'VALIDEE';
 const peutSupprimer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'BROUILLON';
 
-// Un changement de filtre repart de la première page : rester en page 4 d'une
-// liste qui n'en compte plus qu'une donne un écran vide sans raison visible.
-watch(
-  () => [filtres.value.statut, filtres.value.annee],
-  () => {
-    pagination.value.page = 1;
-    charger();
-  },
-);
-
-onMounted(charger);
 </script>
 
 <style scoped lang="scss">

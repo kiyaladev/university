@@ -1,13 +1,7 @@
 <template>
   <q-page class="resas">
-    <header class="resas__entete">
-      <div>
-        <h1 class="page-titre">{{ $t('reservations.title') }}</h1>
-        <p class="page-sous-titre">
-          {{ $t('reservations.subtitle') }}
-        </p>
-      </div>
-      <div class="resas__actions">
+    <page-header :title="$t('reservations.title')" :subtitle="$t('reservations.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutReserver"
           unelevated
@@ -27,8 +21,8 @@
         >
           <q-tooltip>{{ $t('reservations.actions.reload') }}</q-tooltip>
         </q-btn>
-      </div>
-    </header>
+      </template>
+    </page-header>
 
     <!-- Filtres -->
     <filter-bar
@@ -159,23 +153,19 @@
         </q-td>
       </template>
       <template #no-data>
-        <div class="full-width text-center text-grey-7 q-pa-lg">
-          <q-icon name="event_busy" size="38px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('reservations.emptyState.title') }}</div>
-          <div class="text-caption q-mt-xs">
-            {{ $t('reservations.emptyState.description') }}
-          </div>
-          <q-btn
-            v-if="peutReserver"
-            flat
-            no-caps
-            color="primary"
-            icon="event_available"
-            :label="$t('reservations.actions.reserve')"
-            class="q-mt-sm"
-            @click="dialogReservation = true"
-          />
-        </div>
+        <etat-vide icone="event_busy" :titre="$t('reservations.emptyState.title')" :aide="$t('reservations.emptyState.description')">
+          <template #action>
+            <q-btn
+              v-if="peutReserver"
+              flat
+              no-caps
+              color="primary"
+              icon="event_available"
+              :label="$t('reservations.actions.reserve')"
+              @click="dialogReservation = true"
+            />
+          </template>
+        </etat-vide>
       </template>
     </q-table>
 
@@ -196,6 +186,8 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import CalendarGrid from '../components/CalendarGrid.vue';
 import ChampDate from '../components/ChampDate.vue';
@@ -413,21 +405,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .resas {
   padding: var(--up-4) var(--up-3) var(--up-6);
-}
-
-.resas__entete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--up-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
-}
-
-.resas__actions {
-  display: flex;
-  gap: var(--up-2);
-  align-items: center;
 }
 
 .resas__legende {

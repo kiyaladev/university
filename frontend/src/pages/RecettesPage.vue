@@ -1,10 +1,8 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('recettes.title')" :subtitle="$t('recettes.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutCreer" #actions>
         <q-btn
-          v-if="peutCreer"
           unelevated
           color="primary"
           no-caps
@@ -12,7 +10,6 @@
           :label="$t('recettes.actions.issueRecette')"
           @click="ouvrirCreation"
         />
-      </div>
       </template>
     </page-header>
 
@@ -25,7 +22,7 @@
       v-model="filtres"
       :placeholder="$t('recettes.search.placeholder')"
       :chips="chipsFiltres"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #principaux>
         <q-select v-model="filtres.paiementStatut" :options="optionsPaiement" outlined dense clearable emit-value map-options :label="$t('recettes.filters.paiementStatut')" />
@@ -39,7 +36,7 @@
     </filter-bar>
 
     <div class="text-caption text-grey-7 q-mb-sm">
-      {{ $t('recettes.period.summary', { periode: periodeLisible, total }) }}
+      {{ $t('recettes.period.summary', { periode: periodeLisible, total: liste.total }) }}
     </div>
 
     <q-table
@@ -47,12 +44,12 @@
       flat
       bordered
       class="carte"
-      :rows="recettes"
+      :rows="liste.lignes"
       :columns="colonnesTableau"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || recettes.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => ouvrirDetail(row)"
     >
       <template #body-cell-type="p">
@@ -113,27 +110,16 @@
 </q-td>
       </template>
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="request_quote" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ $t('recettes.emptyState.title') }}</div>
-          <div class="text-caption">
-            {{ $t('recettes.emptyState.message') }}
-          </div>
-          <q-btn
-            v-if="peutCreer"
-            unelevated
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('recettes.actions.issueRecette')"
-            @click="ouvrirCreation"
-          />
-        </div>
+        <etat-vide icone="request_quote" :titre="$t('recettes.emptyState.title')" :aide="$t('recettes.emptyState.message')">
+          <template v-if="peutCreer" #action>
+            <q-btn unelevated no-caps color="primary" icon="add" :label="$t('recettes.actions.issueRecette')" @click="ouvrirCreation" />
+          </template>
+        </etat-vide>
       </template>
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-      <div v-for="r in recettes" :key="r.id" class="col-12 col-sm-6 col-md-4">
+      <div v-for="r in liste.lignes" :key="r.id" class="col-12 col-sm-6 col-md-4">
         <q-card flat bordered class="carte recette-carte full-height" @click="ouvrirDetail(r)">
           <q-card-section>
             <div class="row items-start no-wrap q-col-gutter-sm">
@@ -167,39 +153,30 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!recettes.length && !chargement" class="col-12">
-        <div class="etat-vide">
-          <q-icon name="request_quote" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ $t('recettes.emptyState.title') }}</div>
-          <div class="text-caption">
-            {{ $t('recettes.emptyState.message') }}
-          </div>
-          <q-btn
-            v-if="peutCreer"
-            unelevated
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('recettes.actions.issueRecette')"
-            @click="ouvrirCreation"
-          />
-        </div>
-      </div>
+      <etat-vide
+        v-if="!liste.lignes.length && !liste.chargement"
+        class="col-12"
+        icone="request_quote"
+        :titre="$t('recettes.emptyState.title')"
+        :aide="$t('recettes.emptyState.message')"
+      >
+        <template v-if="peutCreer" #action>
+          <q-btn unelevated no-caps color="primary" icon="add" :label="$t('recettes.actions.issueRecette')" @click="ouvrirCreation" />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      :page="filtres.page"
-      :page-size="filtres.pageSize"
-      :total="total"
-      @update:page="filtres.page = $event; charger()"
-      @update:page-size="filtres.pageSize = $event; filtres.page = 1; charger()"
-      @tous="chargerTout"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.max(liste.total, 200)"
     />
 
     <recette-dialog
       v-model="dialogOuvert"
       :existant="recetteEnEdition"
-      @cree="apresEnregistrement"
+      @enregistre="apresEnregistrement"
     />
   </q-page>
 </template>
@@ -208,11 +185,14 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import EtatVide from '../components/EtatVide.vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChampDate from '../components/ChampDate.vue';
@@ -229,11 +209,9 @@ import type { RecetteExterne, ChipFiltre } from '../types';
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 const modeVue = usePresentationListe();
-const recettes = ref<RecetteExterne[]>([]);
-const total = ref(0);
-const chargement = ref(false);
 const dialogOuvert = ref(false);
 const encaissementEnCours = ref(false);
 const dialogEncaissementOuvert = ref(false);
@@ -251,9 +229,28 @@ const filtres = ref<Record<string, any>>({
   paiementStatut: null as string | null,
   dateDebut: decalerJours(aujourdhui(), -30),
   dateFin: aujourdhui(),
-  page: 1,
-  pageSize: 20,
 });
+
+/** Recettes : paginées côté serveur, filtres gardés dans l'URL. */
+const liste = reactive(
+  useListePaginee<RecetteExterne>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/recettes', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            type: f.type || undefined,
+            paiementStatut: f.paiementStatut || undefined,
+            dateDebut: f.dateDebut || undefined,
+            dateFin: f.dateFin || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const peutEncaisser = peutCreer;
@@ -313,36 +310,6 @@ function libelleType(s: string) {
   return LIBELLE_TYPE_RECETTE[s] ?? s;
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/recettes', {
-      params: {
-        search: filtres.value.recherche || undefined,
-        type: filtres.value.type || undefined,
-        paiementStatut: filtres.value.paiementStatut || undefined,
-        dateDebut: filtres.value.dateDebut || undefined,
-        dateFin: filtres.value.dateFin || undefined,
-        page: filtres.value.page,
-        pageSize: filtres.value.pageSize,
-      },
-    });
-    recettes.value = data.data;
-    total.value = data.total;
-  } catch {
-    recettes.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  filtres.value.page = 1;
-  filtres.value.pageSize = Math.max(total.value, 200);
-  await charger();
-}
-
 async function chargerKpis() {
   if (!auth.aRole(['ADMIN', 'DIRECTION'])) return;
   try {
@@ -354,20 +321,7 @@ async function chargerKpis() {
 }
 
 async function apresEnregistrement() {
-  await Promise.all([charger(), chargerKpis()]);
-}
-
-function reinitialiser() {
-  filtres.value = {
-    recherche: '',
-    type: null,
-    paiementStatut: null,
-    dateDebut: decalerJours(aujourdhui(), -30),
-    dateFin: aujourdhui(),
-    page: 1,
-    pageSize: 20,
-  };
-  charger();
+  await Promise.all([liste.recharger(), chargerKpis()]);
 }
 
 function ouvrirCreation() {
@@ -384,50 +338,33 @@ function ouvrirDetail(r: RecetteExterne) {
 async function encaisser(r: RecetteExterne) {
   if (encaissementEnCours.value || dialogEncaissementOuvert.value) return;
   dialogEncaissementOuvert.value = true;
-  $q.dialog({
-    title: t('recettes.encaisserDialog.title'),
+  const ok = await confirmer({
+    titre: t('recettes.encaisserDialog.title'),
     message: t('recettes.encaisserDialog.message', {
       numero: r.numero,
       libelle: r.libelle,
       montant: montantLisible(r.montant),
       devise: r.devise,
     }),
-    cancel: true,
-    ok: { color: 'positive', label: t('recettes.encaisserDialog.ok'), unelevated: true },
-  }).onOk(async () => {
-    dialogEncaissementOuvert.value = false;
-    encaissementEnCours.value = true;
-    try {
-      await api.post(`/recettes/${r.id}/encaisser`, {});
-      $q.notify({ type: 'positive', message: t('recettes.messages.cashSuccess') });
-      await charger();
-      await chargerKpis();
-    } catch {
-      /* notifié par l'intercepteur */
-    } finally {
-      encaissementEnCours.value = false;
-    }
-  }).onCancel(() => {
-    dialogEncaissementOuvert.value = false;
+    ok: t('recettes.encaisserDialog.ok'),
   });
+  dialogEncaissementOuvert.value = false;
+  if (!ok) return;
+  encaissementEnCours.value = true;
+  try {
+    await api.post(`/recettes/${r.id}/encaisser`, {});
+    $q.notify({ type: 'positive', message: t('recettes.messages.cashSuccess') });
+    await liste.recharger();
+    await chargerKpis();
+  } catch {
+    /* notifié par l'intercepteur */
+  } finally {
+    encaissementEnCours.value = false;
+  }
 }
 
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.type,
-    filtres.value.paiementStatut,
-    filtres.value.dateDebut,
-    filtres.value.dateFin,
-  ],
-  () => {
-    filtres.value.page = 1;
-    charger();
-  },
-);
 onMounted(() => {
-  charger();
-  chargerKpis();
+  void chargerKpis();
 });
 </script>
 

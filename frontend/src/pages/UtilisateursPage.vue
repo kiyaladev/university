@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('utilisateurs.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('utilisateurs.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('utilisateurs.title')" :subtitle="$t('utilisateurs.subtitle')">
+      <template #actions>
         <q-btn
           unelevated
           color="primary"
@@ -16,8 +10,8 @@
           :label="$t('utilisateurs.actions.new')"
           @click="ouvrir(null)"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -54,34 +48,34 @@
       flat
       bordered
       class="carte"
-      :rows="utilisateurs"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="manage_accounts" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
-          <q-btn
-            v-if="!filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="person_add"
-            :label="$t('utilisateurs.actions.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('utilisateurs.actions.resetFilters')"
-            @click="reinitialiser"
-          />
-        </div>
+        <etat-vide icone="manage_accounts" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="!filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="person_add"
+              :label="$t('utilisateurs.actions.createFirst')"
+              @click="ouvrir(null)"
+            />
+            <q-btn
+              v-else
+              flat
+              no-caps
+              icon="refresh"
+              :label="$t('utilisateurs.actions.resetFilters')"
+              @click="reinitialiser"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-nom="p">
@@ -162,7 +156,7 @@
     </q-table>
 
     <div v-else class="grille-cartes">
-      <q-card v-for="u in utilisateurs" :key="u.id" flat bordered class="carte grille-cartes__carte">
+      <q-card v-for="u in liste.lignes" :key="u.id" flat bordered class="carte grille-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <q-chip dense color="primary" text-color="white">{{ LIBELLE_ROLE[u.role] }}</q-chip>
@@ -215,164 +209,151 @@
           />
         </q-card-actions>
       </q-card>
-      <div v-if="!utilisateurs.length && !chargement" class="etat-vide">
-        <q-icon name="manage_accounts" size="34px" />
-        <div class="pochoir">{{ messageVide }}</div>
-        <q-btn
-          v-if="!filtresActifs"
-          unelevated
-          color="primary"
-          no-caps
-          icon="person_add"
-          :label="$t('utilisateurs.actions.createFirst')"
-          @click="ouvrir(null)"
-        />
-        <q-btn
-          v-else
-          flat
-          no-caps
-          icon="refresh"
-          :label="$t('utilisateurs.actions.resetFilters')"
-          @click="reinitialiser"
-        />
-      </div>
+      <etat-vide v-if="!liste.lignes.length && !liste.chargement" icone="manage_accounts" :titre="messageVide">
+        <template #action>
+          <q-btn
+            v-if="!filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="person_add"
+            :label="$t('utilisateurs.actions.createFirst')"
+            @click="ouvrir(null)"
+          />
+          <q-btn
+            v-else
+            flat
+            no-caps
+            icon="refresh"
+            :label="$t('utilisateurs.actions.resetFilters')"
+            @click="reinitialiser"
+          />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="utilisateurs.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       @tous="chargerTout"
     />
 
-    <q-dialog v-model="dialogOuvert">
-      <q-card style="width: 520px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ utilisateurEdite ? $t('utilisateurs.dialog.editTitle') : $t('utilisateurs.dialog.newTitle') }}
-        </q-card-section>
-        <q-card-section>
-          <span class="section-titre">{{ $t('utilisateurs.dialog.sectionIdentity') }}</span>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-6">
-              <q-input
-                v-model="form.nom"
-                outlined
-                dense
-                :label="$t('utilisateurs.dialog.lastName')"
-                :error="erreurs.nom"
-                :error-message="$t('utilisateurs.dialog.lastNameRequired')"
-              />
-            </div>
-            <div class="col-12 col-sm-6">
-              <q-input
-                v-model="form.prenom"
-                outlined
-                dense
-                :label="$t('utilisateurs.dialog.firstName')"
-                :error="erreurs.prenom"
-                :error-message="$t('utilisateurs.dialog.firstNameRequired')"
-              />
-            </div>
-          </div>
+    <dialogue-formulaire
+      v-model="dialogOuvert"
+      :titre="utilisateurEdite ? $t('utilisateurs.dialog.editTitle') : $t('utilisateurs.dialog.newTitle')"
+      taille="s"
+      :envoi="enregistrement"
+      :libelle-valider="$t('utilisateurs.actions.save')"
+      @valider="enregistrer"
+    >
+      <span class="section-titre">{{ $t('utilisateurs.dialog.sectionIdentity') }}</span>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-6">
           <q-input
-            v-model="form.email"
+            v-model="form.nom"
             outlined
             dense
-            type="email"
-            :label="$t('utilisateurs.dialog.email')"
-            :hint="$t('utilisateurs.dialog.emailHint')"
-            :error="erreurs.email"
-            :error-message="$t('utilisateurs.dialog.emailInvalid')"
+            :label="$t('utilisateurs.dialog.lastName')"
+            :error="erreurs.nom"
+            :error-message="$t('utilisateurs.dialog.lastNameRequired')"
           />
+        </div>
+        <div class="col-12 col-sm-6">
           <q-input
-            v-model="form.password"
+            v-model="form.prenom"
             outlined
             dense
-            type="password"
-            autocomplete="new-password"
-            :label="
-              utilisateurEdite
-                ? $t('utilisateurs.dialog.passwordNew')
-                : $t('utilisateurs.dialog.passwordNewAccount')
-            "
-            :hint="$t('utilisateurs.dialog.passwordHint')"
-            :error="erreurs.password"
-            :error-message="$t('utilisateurs.dialog.passwordInvalid')"
+            :label="$t('utilisateurs.dialog.firstName')"
+            :error="erreurs.prenom"
+            :error-message="$t('utilisateurs.dialog.firstNameRequired')"
           />
+        </div>
+      </div>
+      <q-input
+        v-model="form.email"
+        outlined
+        dense
+        type="email"
+        :label="$t('utilisateurs.dialog.email')"
+        :hint="$t('utilisateurs.dialog.emailHint')"
+        :error="erreurs.email"
+        :error-message="$t('utilisateurs.dialog.emailInvalid')"
+      />
+      <q-input
+        v-model="form.password"
+        outlined
+        dense
+        type="password"
+        autocomplete="new-password"
+        :label="
+          utilisateurEdite
+            ? $t('utilisateurs.dialog.passwordNew')
+            : $t('utilisateurs.dialog.passwordNewAccount')
+        "
+        :hint="$t('utilisateurs.dialog.passwordHint')"
+        :error="erreurs.password"
+        :error-message="$t('utilisateurs.dialog.passwordInvalid')"
+      />
 
-          <span class="section-titre">{{ $t('utilisateurs.dialog.sectionRole') }}</span>
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-6">
-              <q-select
-                v-model="form.role"
-                :options="optionsRoles"
-                outlined
-                dense
-                emit-value
-                map-options
-                :label="$t('utilisateurs.dialog.role')"
-              />
-            </div>
-            <div class="col-12 col-sm-6">
-              <q-input v-model="form.telephone" outlined dense :label="$t('utilisateurs.dialog.phone')" />
-            </div>
-          </div>
+      <span class="section-titre">{{ $t('utilisateurs.dialog.sectionRole') }}</span>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-6">
           <q-select
-            v-model="form.departementId"
-            :options="optionsDepartements"
+            v-model="form.role"
+            :options="optionsRoles"
             outlined
             dense
-            clearable
             emit-value
             map-options
-            :label="$t('utilisateurs.dialog.department')"
+            :label="$t('utilisateurs.dialog.role')"
           />
-          <q-select
-            v-if="form.role === 'ENSEIGNANT'"
-            v-model="form.enseignantId"
-            :options="optionsEnseignants"
-            outlined
-            dense
-            clearable
-            emit-value
-            map-options
-            use-input
-            input-debounce="0"
-            :label="$t('utilisateurs.dialog.teacherRecord')"
-            :hint="$t('utilisateurs.dialog.teacherRecordHint')"
-            @filter="filtrerEnseignants"
-          />
-          <q-toggle
-            v-model="form.actif"
-            :label="$t('utilisateurs.dialog.active')"
-            :disable="!!utilisateurEdite && estMoi(utilisateurEdite)"
-          />
-          <div v-if="!!utilisateurEdite && estMoi(utilisateurEdite)" class="text-caption text-grey-7">
-            {{ $t('utilisateurs.dialog.cannotDisableSelf') }}
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('utilisateurs.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('utilisateurs.actions.save')"
-            :loading="enregistrement"
-            @click="enregistrer"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        </div>
+        <div class="col-12 col-sm-6">
+          <q-input v-model="form.telephone" outlined dense :label="$t('utilisateurs.dialog.phone')" />
+        </div>
+      </div>
+      <q-select
+        v-model="form.departementId"
+        :options="optionsDepartements"
+        outlined
+        dense
+        clearable
+        emit-value
+        map-options
+        :label="$t('utilisateurs.dialog.department')"
+      />
+      <q-select
+        v-if="form.role === 'ENSEIGNANT'"
+        v-model="form.enseignantId"
+        :options="optionsEnseignants"
+        outlined
+        dense
+        clearable
+        emit-value
+        map-options
+        use-input
+        input-debounce="0"
+        :label="$t('utilisateurs.dialog.teacherRecord')"
+        :hint="$t('utilisateurs.dialog.teacherRecordHint')"
+        @filter="filtrerEnseignants"
+      />
+      <q-toggle
+        v-model="form.actif"
+        :label="$t('utilisateurs.dialog.active')"
+        :disable="!!utilisateurEdite && estMoi(utilisateurEdite)"
+      />
+      <div v-if="!!utilisateurEdite && estMoi(utilisateurEdite)" class="text-caption text-grey-7">
+        {{ $t('utilisateurs.dialog.cannotDisableSelf') }}
+      </div>
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -380,6 +361,11 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import FilterBar from '../components/FilterBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import PaginationBar from '../components/PaginationBar.vue';
 import { LIBELLE_ROLE } from '../utils/libelles';
 import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '../types';
@@ -389,22 +375,34 @@ const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
+const { supprimerAvecConfirmation } = useConfirmation();
 
-const utilisateurs = ref<Utilisateur[]>([]);
 const departements = ref<Departement[]>([]);
 const enseignants = ref<Enseignant[]>([]);
 const optionsEnseignants = ref<{ label: string; value: string }[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const utilisateurEdite = ref<Utilisateur | null>(null);
 const enregistrement = ref(false);
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-
-const filtres = ref<Record<string, any>>({});
+const filtres = ref<Record<string, any>>({ recherche: '', role: null, departementId: null });
+const liste = reactive(
+  useListePaginee<Utilisateur>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/utilisateurs', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            role: f.role || undefined,
+            departementId: f.departementId || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const form = ref({
   nom: '',
@@ -553,7 +551,7 @@ async function enregistrer() {
     $q.notify({ type: 'positive', message: t('utilisateurs.messages.saved') });
     dialogOuvert.value = false;
     // Le compte lié à un enseignant a pu changer : la liste partagée est périmée.
-    await Promise.all([charger(), chargerEnseignants(true)]);
+    await rechargerTout();
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -561,50 +559,24 @@ async function enregistrer() {
   }
 }
 
+/** Le compte lié à un enseignant a pu changer : la liste partagée est périmée. */
+function rechargerTout() {
+  return Promise.all([liste.recharger(), chargerEnseignants(true)]);
+}
+
 function supprimer(u: Utilisateur) {
   if (estMoi(u)) return;
-  $q.dialog({
-    title: t('utilisateurs.confirmDelete.title'),
+  void supprimerAvecConfirmation(`/utilisateurs/${u.id}`, u.email, rechargerTout, {
+    titre: t('utilisateurs.confirmDelete.title'),
     message: t('utilisateurs.confirmDelete.message', { name: `${u.prenom} ${u.nom}`, email: u.email }),
-    cancel: { label: t('utilisateurs.actions.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('utilisateurs.actions.delete'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/utilisateurs/${u.id}`);
-      $q.notify({ type: 'positive', message: t('utilisateurs.messages.deleted') });
-      await Promise.all([charger(), chargerEnseignants(true)]);
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('utilisateurs.actions.delete'),
+    succes: t('utilisateurs.messages.deleted'),
   });
 }
 
-function parametres(tout = false) {
-  const params: Record<string, any> = tout
-    ? { all: '1' }
-    : { page: page.value, pageSize: pageSize.value };
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.role) params.role = filtres.value.role;
-  if (filtres.value.departementId) params.departementId = filtres.value.departementId;
-  return params;
-}
-
-async function charger(tout = false) {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/utilisateurs', { params: parametres(tout) });
-    utilisateurs.value = data.data ?? [];
-    total.value = data.total ?? utilisateurs.value.length;
-  } catch {
-    utilisateurs.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function chargerTout() {
-  page.value = 1;
-  return charger(true);
+/** « Tout afficher » de la barre de pagination : toutes les lignes d'un coup. */
+async function chargerTout() {
+  liste.lignes = await liste.chargerTout();
 }
 
 async function chargerEnseignants(force = false) {
@@ -616,9 +588,7 @@ async function chargerEnseignants(force = false) {
 }
 
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  liste.reinitialiser([]);
 }
 
 watch(
@@ -628,18 +598,9 @@ watch(
   },
 );
 
-watch(
-  () => [filtres.value.recherche, filtres.value.role, filtres.value.departementId],
-  () => {
-    page.value = 1;
-    void charger();
-  },
-);
-
 onMounted(async () => {
   departements.value = await referentiels.departements();
   await chargerEnseignants();
-  await charger();
 });
 </script>
 

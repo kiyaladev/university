@@ -26,9 +26,9 @@
     <div class="text-caption text-grey-7 q-mb-md">
       {{
         $t('paiements.summary', {
-          count: paiements.length,
-          total,
-          plural: paiements.length > 1 ? 's' : '',
+          count: liste.lignes.length,
+          total: liste.total,
+          plural: liste.lignes.length > 1 ? 's' : '',
         })
       }}
     </div>
@@ -108,34 +108,34 @@
       :rows="paiementsFiltres"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
-      :hide-bottom="chargement || paiementsFiltres.length > 0"
+      :hide-bottom="liste.chargement || paiementsFiltres.length > 0"
     >
       <template #no-data>
-        <div class="paiements-vide">
-          <q-icon name="payments" size="42px" class="q-mb-sm" />
-          <div>{{ messageVide }}</div>
-          <div class="q-mt-sm q-gutter-sm">
-            <q-btn
-              v-if="filtresActifs"
-              outline
-              no-caps
-              icon="refresh"
-              :label="$t('paiements.actions.resetFilters')"
-              @click="reinitialiser"
-            />
-            <q-btn
-              v-if="peutCreer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('paiements.actions.new')"
-              @click="dialogPaiement = true"
-            />
-          </div>
-        </div>
+        <etat-vide icone="payments" :titre="messageVide">
+          <template #action>
+            <div class="q-gutter-sm">
+              <q-btn
+                v-if="filtresActifs"
+                outline
+                no-caps
+                icon="refresh"
+                :label="$t('paiements.actions.resetFilters')"
+                @click="reinitialiser"
+              />
+              <q-btn
+                v-if="peutCreer"
+                unelevated
+                color="primary"
+                no-caps
+                icon="add"
+                :label="$t('paiements.actions.new')"
+                @click="dialogPaiement = true"
+              />
+            </div>
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-etudiant="p">
@@ -271,7 +271,7 @@
     </q-table>
 
     <q-linear-progress :aria-label="$t('common.messages.loading')"
-      v-if="modeVue === 'cartes' && chargement"
+      v-if="modeVue === 'cartes' && liste.chargement"
       indeterminate
       color="primary"
       class="q-mb-sm"
@@ -400,42 +400,40 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!paiementsFiltres.length" class="paiements-vide">
-        <q-icon name="payments" size="42px" class="q-mb-sm" />
-        <div>{{ messageVide }}</div>
-        <div class="q-mt-sm q-gutter-sm">
-          <q-btn
-            v-if="filtresActifs"
-            outline
-            no-caps
-            icon="refresh"
-            :label="$t('paiements.actions.resetFilters')"
-            @click="reinitialiser"
-          />
-          <q-btn
-            v-if="peutCreer"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('paiements.actions.new')"
-            @click="dialogPaiement = true"
-          />
-        </div>
-      </div>
+      <etat-vide v-if="!paiementsFiltres.length" icone="payments" :titre="messageVide">
+        <template #action>
+          <div class="q-gutter-sm">
+            <q-btn
+              v-if="filtresActifs"
+              outline
+              no-caps
+              icon="refresh"
+              :label="$t('paiements.actions.resetFilters')"
+              @click="reinitialiser"
+            />
+            <q-btn
+              v-if="peutCreer"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('paiements.actions.new')"
+              @click="dialogPaiement = true"
+            />
+          </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="paiements.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.min(Math.max(liste.total, 1), 1000)"
     />
 
-    <paiement-dialog v-model="dialogPaiement" @paye="charger" />
+    <paiement-dialog v-model="dialogPaiement" @paye="liste.recharger()" />
 
     <!-- Détail d'une transaction -->
     <q-dialog v-model="dialogDetail">
@@ -509,41 +507,28 @@
     </q-dialog>
 
     <!-- Annulation : le motif est exigé -->
-    <q-dialog v-model="dialogAnnulation">
-      <q-card style="width: 460px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference }) }}</div>
-          <div class="text-caption text-grey-7">
-            {{ paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : '' }} {{ $t('rectoratPage.subtitleFallback') }}
-            {{ $t('paiements.dialogs.cancelSubtitle') }}
-          </div>
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="motifAnnulation"
-            outlined
-            dense
-            type="textarea"
-            rows="3"
-            :label="$t('paiements.dialogs.cancelReasonLabel')"
-            autofocus
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('paiements.dialogs.close')" v-close-popup />
-          <q-btn
-            color="negative"
-            unelevated
-            no-caps
-            icon="block"
-            :label="$t('paiements.dialogs.cancelConfirm')"
-            :disable="motifAnnulation.trim().length < 3"
-            :loading="annulationEnCours"
-            @click="confirmerAnnulation"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogAnnulation"
+      taille="s"
+      :titre="$t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference })"
+      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('rectoratPage.subtitleFallback')} ${$t('paiements.dialogs.cancelSubtitle')}`"
+      :envoi="annulationEnCours"
+      :libelle-valider="$t('paiements.dialogs.cancelConfirm')"
+      icone-valider="block"
+      couleur-valider="negative"
+      :desactive="motifAnnulation.trim().length < 3"
+      @valider="confirmerAnnulation"
+    >
+      <q-input
+        v-model="motifAnnulation"
+        outlined
+        dense
+        type="textarea"
+        rows="3"
+        :label="$t('paiements.dialogs.cancelReasonLabel')"
+        autofocus
+      />
+    </dialogue-formulaire>
   </q-page>
 </template>
 
@@ -551,7 +536,11 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -577,18 +566,49 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
-const paiements = ref<Paiement[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-/** Tant que les filtres d'ouverture ne sont pas posés, le watcher ne recharge pas. */
-const pret = ref(false);
+/** `?inscription=<id>` ou `?etudiant=<id>` : registre ciblé dès l'ouverture. */
+const cibleUrl = (cle: string) => (typeof route.query[cle] === 'string' && route.query[cle]) || null;
+const inscriptionUrl = cibleUrl('inscription');
 
-const filtres = ref<Record<string, any>>({});
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  statut: null,
+  mode: null,
+  operateur: null,
+  motif: '',
+  inscriptionId: inscriptionUrl,
+  etudiantId: inscriptionUrl ? null : cibleUrl('etudiant'),
+  dateDebut: null,
+  dateFin: null,
+});
+
+/**
+ * Registre paginé côté serveur. L'opérateur, le motif et les dates ne sont
+ * pas compris par `GET /paiements` : ils filtrent la page affichée.
+ */
+const liste = reactive(
+  useListePaginee<Paiement>({
+    filtres,
+    clesLocales: ['operateur', 'motif', 'dateDebut', 'dateFin'],
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/paiements', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            statut: f.statut || undefined,
+            mode: f.mode || undefined,
+            inscriptionId: f.inscriptionId || undefined,
+            etudiantId: f.etudiantId || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 /** Contexte reçu en paramètre d'URL (`?inscription=…` ou `?etudiant=…`). */
 const dossierCible = ref<Inscription | null>(null);
 const etudiantCible = ref<Etudiant | null>(null);
@@ -779,11 +799,11 @@ const chips = computed(() => {
 });
 
 const kpis = computed(() => {
-  const liste = paiements.value;
+  const lignes = liste.lignes;
   let totalEncaisse = 0;
   let enAttente = 0;
   let echoues = 0;
-  for (const p of liste) {
+  for (const p of lignes) {
     if (p.statut === 'REUSSI') totalEncaisse += p.montant;
     if (p.statut === 'EN_ATTENTE') enAttente++;
     if (p.statut === 'ECHOUE') echoues++;
@@ -793,23 +813,23 @@ const kpis = computed(() => {
 
 /** Filtrage client pour les critères que le backend ne gère pas encore. */
 const paiementsFiltres = computed(() => {
-  let liste = paiements.value;
+  let lignes = liste.lignes;
   if (filtres.value.operateur) {
-    liste = liste.filter((p) => p.operateur === filtres.value.operateur);
+    lignes = lignes.filter((p) => p.operateur === filtres.value.operateur);
   }
   if (filtres.value.motif) {
     const needle = String(filtres.value.motif).toLowerCase();
-    liste = liste.filter((p) => (p.motif ?? '').toLowerCase().includes(needle));
+    lignes = lignes.filter((p) => (p.motif ?? '').toLowerCase().includes(needle));
   }
   if (filtres.value.dateDebut) {
     const d = new Date(filtres.value.dateDebut).getTime();
-    liste = liste.filter((p) => new Date(p.horodatage).getTime() >= d);
+    lignes = lignes.filter((p) => new Date(p.horodatage).getTime() >= d);
   }
   if (filtres.value.dateFin) {
     const d = new Date(filtres.value.dateFin).getTime() + 86_400_000 - 1;
-    liste = liste.filter((p) => new Date(p.horodatage).getTime() <= d);
+    lignes = lignes.filter((p) => new Date(p.horodatage).getTime() <= d);
   }
-  return liste;
+  return lignes;
 });
 
 function ouvrirDetail(p: Paiement) {
@@ -838,9 +858,9 @@ function voirEtudiant(p: Paiement) {
   void router.push({ path: '/etudiants', query: { recherche: p.etudiant.matricule } });
 }
 
-function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
-  $q.dialog({
-    title:
+async function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
+  const ok = await confirmer({
+    titre:
       statut === 'REUSSI'
         ? t('paiements.confirmDialog.title')
         : t('paiements.confirmDialog.titleFailed'),
@@ -852,20 +872,20 @@ function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
           ? t('paiements.confirmDialog.outcomeSuccess')
           : t('paiements.confirmDialog.outcomeFailed'),
     }),
-    ok: {
-      color: statut === 'REUSSI' ? 'positive' : 'negative',
-      label: t('paiements.confirmDialog.confirmLabel'),
-      unelevated: true,
-    },
-    cancel: true,
-  }).onOk(async () => {
-    await api.post(`/paiements/${p.id}/simuler`, { statut });
-    $q.notify({
-      type: 'positive',
-      message: statut === 'REUSSI' ? t('paiements.messages.confirmed') : t('paiements.messages.markedFailed'),
-    });
-    await charger();
+    ok: t('paiements.confirmDialog.confirmLabel'),
+    danger: statut === 'ECHOUE',
   });
+  if (!ok) return;
+  try {
+    await api.post(`/paiements/${p.id}/simuler`, { statut });
+  } catch {
+    return; // l'intercepteur axios affiche le motif
+  }
+  $q.notify({
+    type: 'positive',
+    message: statut === 'REUSSI' ? t('paiements.messages.confirmed') : t('paiements.messages.markedFailed'),
+  });
+  await liste.recharger();
 }
 
 function ouvrirAnnulation(p: Paiement) {
@@ -882,98 +902,43 @@ async function confirmerAnnulation() {
     });
     $q.notify({ type: 'warning', message: t('paiements.messages.cancelled') });
     dialogAnnulation.value = false;
-    await charger();
+    await liste.recharger();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     annulationEnCours.value = false;
   }
 }
 
-/** Paramètres réellement compris par `GET /paiements`. */
-function paramsServeur(): Record<string, any> {
-  const params: Record<string, any> = { all: '1' };
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.statut) params.statut = filtres.value.statut;
-  if (filtres.value.mode) params.mode = filtres.value.mode;
-  if (filtres.value.inscriptionId) params.inscriptionId = filtres.value.inscriptionId;
-  if (filtres.value.etudiantId) params.etudiantId = filtres.value.etudiantId;
-  return params;
-}
-
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/paiements', {
-      params: { ...paramsServeur(), page: page.value, pageSize: pageSize.value },
-    });
-    paiements.value = data.data ?? [];
-    total.value = data.total ?? paiements.value.length;
-  } catch {
-    paiements.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/paiements', {
-      params: { ...paramsServeur(), pageSize: 1000 },
-    });
-    paiements.value = data.data ?? [];
-    total.value = paiements.value.length;
-    pageSize.value = Math.max(paiements.value.length, 1);
-    page.value = 1;
-  } catch {
-    paiements.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
 function reinitialiser() {
-  filtres.value = {};
   dossierCible.value = null;
   etudiantCible.value = null;
+  // Pas `liste.reinitialiser()` : l'état initial porte la cible de l'URL.
+  filtres.value = {
+    recherche: '',
+    statut: null,
+    mode: null,
+    operateur: null,
+    motif: '',
+    inscriptionId: null,
+    etudiantId: null,
+    dateDebut: null,
+    dateFin: null,
+  };
   void router.replace({ path: '/paiements' });
-  page.value = 1;
-  void charger();
 }
 
 /** Lève le ciblage venu de l'URL sans toucher aux autres filtres. */
 async function retirerCible() {
-  // Le drapeau évite que chaque retrait de filtre déclenche sa propre requête.
-  pret.value = false;
   dossierCible.value = null;
   etudiantCible.value = null;
-  delete filtres.value.inscriptionId;
-  delete filtres.value.etudiantId;
+  // Une seule affectation : une seule requête.
+  filtres.value = { ...filtres.value, inscriptionId: null, etudiantId: null };
   await router.replace({ path: '/paiements' });
-  page.value = 1;
-  pret.value = true;
-  await charger();
 }
-
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.statut,
-    filtres.value.mode,
-    filtres.value.inscriptionId,
-    filtres.value.etudiantId,
-  ],
-  () => {
-    if (!pret.value) return;
-    page.value = 1;
-    void charger();
-  },
-);
 
 /** `/paiements?inscription=<id>` — encaissements d'un dossier précis. */
 async function appliquerDossierCible(id: string) {
-  filtres.value.inscriptionId = id;
   try {
     const { data } = await api.get('/inscriptions', { params: { all: '1' } });
     const liste: Inscription[] = Array.isArray(data) ? data : data.data ?? [];
@@ -985,7 +950,6 @@ async function appliquerDossierCible(id: string) {
 
 /** `/paiements?etudiant=<id>` — tous les encaissements d'un étudiant. */
 async function appliquerEtudiantCible(id: string) {
-  filtres.value.etudiantId = id;
   try {
     const { data } = await api.get(`/etudiants/${id}`);
     etudiantCible.value = data;
@@ -994,13 +958,10 @@ async function appliquerEtudiantCible(id: string) {
   }
 }
 
-onMounted(async () => {
-  const dossier = route.query.inscription as string | undefined;
-  const etudiant = route.query.etudiant as string | undefined;
-  if (dossier) await appliquerDossierCible(dossier);
-  else if (etudiant) await appliquerEtudiantCible(etudiant);
-  pret.value = true;
-  await charger();
+// Le filtre est déjà posé ; on ne charge ici que le libellé du bandeau.
+onMounted(() => {
+  if (filtres.value.inscriptionId) void appliquerDossierCible(filtres.value.inscriptionId);
+  else if (filtres.value.etudiantId) void appliquerEtudiantCible(filtres.value.etudiantId);
 });
 </script>
 
@@ -1020,14 +981,6 @@ onMounted(async () => {
 }
 .paiements-cartes__carte {
   background: var(--up-plaque);
-}
-
-// État vide : on nomme la cause et on offre la sortie.
-.paiements-vide {
-  grid-column: 1 / -1;
-  padding: var(--up-5);
-  text-align: center;
-  color: var(--up-encre-douce);
 }
 
 .champ.badge-statut {

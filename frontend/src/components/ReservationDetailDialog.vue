@@ -149,6 +149,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { useConfirmation } from '../composables/useConfirmation';
 import ChampDate from './ChampDate.vue';
 import { dateHeureLisible, LIBELLE_STATUT_RESERVATION } from '../utils/libelles';
 import type { ReservationSalle, Salle } from '../types';
@@ -171,6 +172,7 @@ const emit = defineEmits<{ 'update:modelValue': [boolean]; change: [] }>();
 const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
+const { confirmer } = useConfirmation();
 
 const enCours = ref('');
 const erreur = ref('');
@@ -263,25 +265,25 @@ async function modifier() {
 }
 
 async function annuler() {
-  $q.dialog({
-    title: t('reservations.detailDialog.cancelTitle'),
+  const ok = await confirmer({
+    titre: t('reservations.detailDialog.cancelTitle'),
     message: t('reservations.detailDialog.cancelMessage'),
-    cancel: true,
-    ok: { label: t('reservations.detailDialog.cancelReservation'), color: 'negative' },
-  }).onOk(async () => {
-    enCours.value = 'annuler';
-    erreur.value = '';
-    try {
-      await api.delete(`/reservations/${props.reservation!.id}`, { silencieux: true });
-      $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
-      emit('change');
-      emit('update:modelValue', false);
-    } catch (e: any) {
-      erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.cancelFailed');
-    } finally {
-      enCours.value = '';
-    }
+    ok: t('reservations.detailDialog.cancelReservation'),
+    danger: true,
   });
+  if (!ok) return;
+  enCours.value = 'annuler';
+  erreur.value = '';
+  try {
+    await api.delete(`/reservations/${props.reservation!.id}`, { silencieux: true });
+    $q.notify({ type: 'positive', message: t('reservations.detailDialog.cancelled') });
+    emit('change');
+    emit('update:modelValue', false);
+  } catch (e: any) {
+    erreur.value = e.response?.data?.message ?? t('reservations.detailDialog.cancelFailed');
+  } finally {
+    enCours.value = '';
+  }
 }
 </script>
 
