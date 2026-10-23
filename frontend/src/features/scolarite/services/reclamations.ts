@@ -20,6 +20,11 @@ export const reclamationsService = {
     return lister<Reclamation>('/reclamations', params);
   },
 
+  /** Réclamations de l'étudiant connecté (vue étudiante). */
+  mesReclamations(params: ParametresListe = {}) {
+    return lister<Reclamation>('/reclamations/me', params);
+  },
+
   /** Fiche d'une réclamation, avec ses messages. */
   lire(id: string) {
     return lire<Reclamation>(`/reclamations/${id}`);

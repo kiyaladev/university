@@ -350,7 +350,6 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
@@ -367,7 +366,9 @@ import {
   montantLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type { DemandeDocument, ModePaiement, StatutDemande, TypeDemandeDocument } from '@/types';
+import { demandesDocumentsService } from '../services/documents-demande';
+import type { ModePaiement } from '@/types';
+import type { DemandeDocument, StatutDemande, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -411,11 +412,11 @@ const liste = reactive(
     filtres,
     actif: () => auth.utilisateur?.role === 'ETUDIANT',
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/documents-demande/mes', {
-          params: { ...pageApi(p), statut: f.statut || undefined, search: texteApi(f.recherche) },
-        })
-        .then((r) => r.data),
+      demandesDocumentsService.mesDemandes({
+        ...pageApi(p),
+        statut: f.statut || undefined,
+        search: texteApi(f.recherche),
+      }),
   }),
 );
 const modeVue = usePresentationListe();
@@ -503,7 +504,7 @@ async function payer() {
       body.operateur = formPaiement.value.operateur;
       body.telephone = formPaiement.value.telephone.trim();
     }
-    await api.post(`/documents-demande/${demandeAPayer.value.id}/payer`, body, {
+    await demandesDocumentsService.payer(demandeAPayer.value.id, body, {
       silencieux: true,
     });
     $q.notify({

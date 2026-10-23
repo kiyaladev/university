@@ -207,7 +207,6 @@ import { usePresentationListe } from '@/shared/composables/usePresentationListe'
 import { computed, reactive, ref } from 'vue';
 import { type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
@@ -216,6 +215,7 @@ import DialogueDetailReclamation from '../components/DialogueDetailReclamation.v
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
+import { reclamationsService } from '../services/reclamations';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_STATUT_RECLAMATION,
@@ -223,7 +223,7 @@ import {
   dateHeureLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type { PrioriteReclamation, Reclamation, TypeReclamation } from '@/types';
+import type { PrioriteReclamation, Reclamation, TypeReclamation } from '../types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -239,18 +239,15 @@ const liste = reactive(
   useListePaginee<Reclamation>({
     filtres,
     actif: () => auth.utilisateur?.role === 'ETUDIANT',
+    // La vue étudiante est `/reclamations/me`, exposée par le service de domaine.
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/reclamations/me', {
-          params: {
-            ...pageApi(p),
-            statut: f.statut || undefined,
-            type: f.type || undefined,
-            priorite: f.priorite || undefined,
-            search: texteApi(f.recherche),
-          },
-        })
-        .then((r) => r.data),
+      reclamationsService.mesReclamations({
+        ...pageApi(p),
+        statut: f.statut || undefined,
+        type: f.type || undefined,
+        priorite: f.priorite || undefined,
+        search: texteApi(f.recherche),
+      }),
   }),
 );
 const modeVue = usePresentationListe();

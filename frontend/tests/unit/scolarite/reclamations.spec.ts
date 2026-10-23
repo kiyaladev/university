@@ -28,6 +28,16 @@ describe('features/scolarite/services/reclamations', () => {
     expect(api.get).toHaveBeenCalledWith('/reclamations', { params: { statut: 'OUVERT', page: 1, pageSize: 20 } });
   });
 
+  it('liste les réclamations de l’étudiant connecté', async () => {
+    const page = { data: [{ id: 'r1' }], total: 1, page: 1, pageSize: 20 };
+    api.get.mockResolvedValue({ data: page });
+
+    const resultat = await reclamationsService.mesReclamations({ statut: 'OUVERT', page: 1, pageSize: 20 });
+
+    expect(resultat).toBe(page);
+    expect(api.get).toHaveBeenCalledWith('/reclamations/me', { params: { statut: 'OUVERT', page: 1, pageSize: 20 } });
+  });
+
   it('lit une réclamation, le tableau de bord et les agents', async () => {
     api.get.mockResolvedValue({ data: { id: 'r1' } });
 
@@ -53,7 +63,11 @@ describe('features/scolarite/services/reclamations', () => {
 
     await reclamationsService.ajouterMessage('r1', 'Merci de vérifier mon dossier');
 
-    expect(api.post).toHaveBeenCalledWith('/reclamations/r1/messages', { contenu: 'Merci de vérifier mon dossier' }, {});
+    expect(api.post).toHaveBeenCalledWith(
+      '/reclamations/r1/messages',
+      { contenu: 'Merci de vérifier mon dossier' },
+      {},
+    );
   });
 
   it('change le statut, avec son commentaire optionnel', async () => {
@@ -63,7 +77,12 @@ describe('features/scolarite/services/reclamations', () => {
     await reclamationsService.changerStatut('r1', 'REJETE', 'Hors délai');
 
     expect(api.put).toHaveBeenNthCalledWith(1, '/reclamations/r1/statut', { statut: 'EN_COURS' }, {});
-    expect(api.put).toHaveBeenNthCalledWith(2, '/reclamations/r1/statut', { statut: 'REJETE', commentaire: 'Hors délai' }, {});
+    expect(api.put).toHaveBeenNthCalledWith(
+      2,
+      '/reclamations/r1/statut',
+      { statut: 'REJETE', commentaire: 'Hors délai' },
+      {},
+    );
   });
 
   it('assigne, escalade et clôture une réclamation', async () => {

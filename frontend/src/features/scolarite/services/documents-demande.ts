@@ -17,12 +17,7 @@ export interface TableauBordDemandes {
 }
 
 /** Actions de workflow d'une demande. */
-export type ActionDemandeDocument =
-  | 'confirmer-paiement'
-  | 'lancer-traitement'
-  | 'prete'
-  | 'remettre'
-  | 'rejeter';
+export type ActionDemandeDocument = 'confirmer-paiement' | 'lancer-traitement' | 'prete' | 'remettre' | 'rejeter';
 
 export const demandesDocumentsService = {
   /** Registre paginé des demandes. */
