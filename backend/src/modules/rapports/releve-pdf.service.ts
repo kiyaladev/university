@@ -237,7 +237,7 @@ export class RelevePdfService {
           document
             .font('Helvetica')
             .fontSize(7)
-            .fillColor(P.encreTertiaire)
+            .fillColor(P.encreDouce)
             .text('—', x + 3, y + 8, { width: LARGEURS[i] - 6, align: 'center' });
         }
         x += LARGEURS[i];

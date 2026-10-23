@@ -52,11 +52,11 @@ const STYLE = `
   .badge-type.VIP { background: ${P.jauneFond}; color: ${P.jauneTexte}; }
   .badge-type.TECHNICIEN { background: ${P.grisFond}; color: ${P.encreDouce}; }
   .identite { display: flex; gap: 14px; margin-top: 14px; align-items: center; }
-  .photo { width: 90px; height: 110px; object-fit: cover; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; display:flex; align-items:center; justify-content:center; color: ${P.encreTertiaire}; font-size:11px; }
+  .photo { width: 90px; height: 110px; object-fit: cover; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; display:flex; align-items:center; justify-content:center; color: ${P.encreDouce}; font-size:11px; }
   .nom { font-size: 19px; font-weight: 700; line-height: 1.2; }
   .orga { color: ${P.encreDouce}; font-size: 12px; margin-top: 4px; }
   .dates { margin-top: 10px; font-size: 11px; }
-  .numero { font-size: 11px; letter-spacing: .6px; color: ${P.encreTertiaire}; margin-top: 10px; }
+  .numero { font-size: 11px; letter-spacing: .6px; color: ${P.encreDouce}; margin-top: 10px; }
   .qr { margin-top: 14px; }
   .qr svg { width: 110px; height: 110px; }
   .revoque { font-size: 12px; padding: 6px; }

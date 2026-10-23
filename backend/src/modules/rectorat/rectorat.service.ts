@@ -562,6 +562,6 @@ const STYLE_BILAN = `
   .cle .pochoir { font-size: 11px; color: ${P.encreDouce}; text-transform: uppercase; letter-spacing: .3px; }
   .cle strong { font-size: 15px; font-variant-numeric: tabular-nums; }
   table { margin-top: 6px; }
-  .vide { text-align: center; color: ${P.encreTertiaire}; font-style: italic; }
+  .vide { text-align: center; color: ${P.encreDouce}; font-style: italic; }
   .encadre { margin-top: 16px; padding: 8px 10px; border: 1px solid ${P.grisFilet}; background: ${P.grisFond}; font-size: 11px; }
 `;

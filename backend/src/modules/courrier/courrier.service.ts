@@ -554,7 +554,7 @@ export class CourrierService {
       <th>#</th><th>Rôle</th><th>Valideur</th>
       <th>Statut</th><th>Date</th><th>Paraphe</th>
     </tr></thead>
-    <tbody>${circuits || `<tr><td colspan="6" style="color:${P.encreTertiaire}">Aucun circuit</td></tr>`}</tbody>
+    <tbody>${circuits || `<tr><td colspan="6" style="color:${P.encreDouce}">Aucun circuit</td></tr>`}</tbody>
   </table>
   ${c.notes ? `<p style="margin-top:12px;"><b>Notes :</b> ${echapper(c.notes)}</p>` : ''}
   <div class="signatures">

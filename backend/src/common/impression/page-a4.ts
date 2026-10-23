@@ -16,7 +16,14 @@
 import { echapper } from './echappement';
 import type { Etablissement } from './etablissement';
 
-/** Palette d'impression, relevée sur DESIGN.md (frontmatter `colors`). */
+/**
+ * Palette d'impression, relevée sur DESIGN.md (frontmatter `colors`).
+ *
+ * `encreTertiaire` (#86868B) ne porte que des filets et des traits : sur du
+ * blanc il ne tient que 3,6:1, trop peu pour du texte. Toute mention lisible
+ * (pied de page, numéro de badge, « aucun … ») prend `encreDouce` (#6E6E73,
+ * 5,1:1), qui reste un gris de la même famille.
+ */
 export const PALETTE_IMPRESSION = {
   encre: '#1D1D1F',
   encreDouce: '#6E6E73',
@@ -96,7 +103,7 @@ export function styleImpression(orientation: OrientationA4 = 'portrait', marge =
   .ABSENT { background: ${P.rougeFond}; color: ${P.rouge}; }
   .EXCUSE { background: ${P.rougeFond}; color: ${P.excuse}; }
   .REMPLACE, .DEPART_ANTICIPE { background: ${P.vertFond}; color: ${P.remplace}; }
-  .NON_CONTROLE { background: transparent; color: ${P.encreTertiaire}; }
+  .NON_CONTROLE { background: transparent; color: ${P.encreDouce}; }
   .qr { text-align: center; margin-top: 26px; }
   .verification { margin-top: 24px; border-top: 1px solid ${P.grisFilet}; padding-top: 12px; text-align: center; }
   .verification .mention { font-size: 11px; color: ${P.encreDouce}; margin-top: 8px; word-break: break-all; }
@@ -104,7 +111,7 @@ export function styleImpression(orientation: OrientationA4 = 'portrait', marge =
   .revoque { margin-top: 12px; border: 2px solid ${P.rouge}; color: ${P.rouge}; padding: 8px; text-align: center; font-weight: 700; letter-spacing: .6px; }
   .signatures { display: flex; justify-content: space-between; margin-top: 36px; }
   .signature { width: 30%; border-top: 1px solid ${P.encreTertiaire}; padding-top: 4px; text-align: center; color: ${P.encreDouce}; }
-  footer { margin-top: 22px; font-size: 11px; color: ${P.encreTertiaire}; display: flex; justify-content: space-between; border-top: 1px solid ${P.grisFilet}; padding-top: 6px; }
+  footer { margin-top: 22px; font-size: 11px; color: ${P.encreDouce}; display: flex; justify-content: space-between; border-top: 1px solid ${P.grisFilet}; padding-top: 6px; }
   @media print { body { padding: 8mm; } .no-print { display: none; } }
   @page { size: ${format}; margin: ${marge}; }
 `;
