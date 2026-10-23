@@ -103,10 +103,7 @@ describe('shared/services/file-chiffree', () => {
   });
 
   it('reprend la clé de chiffrement conservée dans l’ancienne base', async () => {
-    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
-      'encrypt',
-      'decrypt',
-    ]);
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
     localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
 
@@ -118,10 +115,7 @@ describe('shared/services/file-chiffree', () => {
   });
 
   it('recopie les clés de chiffrement de l’ancienne base et la conserve', async () => {
-    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
-      'encrypt',
-      'decrypt',
-    ]);
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
     await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
     localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
 
@@ -142,7 +136,6 @@ describe('shared/services/file-chiffree', () => {
 
     await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, 'autre-compte', [])).rejects.toThrow();
   });
-
 });
 
 describe('stores/pointages', () => {

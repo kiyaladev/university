@@ -80,7 +80,7 @@ export default {
     },
     emptyState: {
       title: 'Aucun envoi consigné',
-      detail: "Le registre garde la trace de chaque SMS envoyé par University.",
+      detail: 'Le registre garde la trace de chaque SMS envoyé par University.',
       noneMatchFilters: 'Aucun ne correspond aux filtres en cours.',
       startBroadcast: 'Diffusez un avis depuis l’onglet Diffusion pour commencer.',
       goToBroadcast: 'Aller à la diffusion',

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 if (!process.env.QA_ENV_FILE) throw Error('QA_ENV_FILE privé obligatoire');
@@ -33,7 +34,7 @@ try {
  for (const role of ['ADMIN', 'DIRECTION']) for (const locale of ['fr-FR', 'en-US']) for (const width of [320, 375, 1440]) {
   const token = session.sessions[role]; assert.equal((await request(token, 'GET', '/auth/me')).role, role);
   const context = await browser.newContext({ viewport: { width, height: 950 } });
-  await context.addInitScript(({ token, locale }) => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', locale); }, { token, locale });
+  await context.addInitScript(({ token, locale }) => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', locale); }, { token, locale });
   const page = await context.newPage(); page.setDefaultTimeout(60000); const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto(base + '/#/audit', { waitUntil: 'networkidle' });
   const en = locale === 'en-US';
@@ -65,6 +66,6 @@ try {
 finally {
  if (id) { await prisma.auditLog.deleteMany({ where: { entiteId: id } }); await prisma.salle.delete({ where: { id } }); }
  report.productionUntouched = true; report.scope = 'Journal réel QA au clavier ADMIN/DIRECTION FR/EN 320/375/1440 px ; ne remplace pas une recette lecteur d’écran';
- fs.writeFileSync('../audit/recommandations-2026-10-06/journal-clavier-reel-interface.json', JSON.stringify(report, null, 2) + '\n');
+ ecrirePreuve('journal-clavier-reel-interface.json', report);
  await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur, checks: report.checks.length }));
 }

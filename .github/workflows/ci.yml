@@ -77,8 +77,10 @@ jobs:
         working-directory: frontend
         run: bun run lint
 
-      # Le format n'est pas encore acquis partout (le frontend signale encore
-      # un fichier) : contrôle informatif tant que ce n'est pas vert.
+      # Le backend est au format Prettier ; le frontend signale encore huit
+      # fichiers, tous dans `frontend/src/features/` (refactorisation en cours
+      # parallèlement). Le contrôle reste donc informatif : il redeviendra
+      # bloquant quand le frontend sera vert.
       - name: Format backend (non bloquant)
         working-directory: backend
         continue-on-error: true

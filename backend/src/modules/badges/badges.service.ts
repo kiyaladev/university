@@ -56,11 +56,6 @@ export class BadgesService {
 
   // ---------------------------------------------------------------- calcul
 
-  /** Numéro séquentiel par année : "BADGE-AAAA-NNNNN". */
-  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.BADGE_ACCES, annee);
-  }
-
   private nouveauQrToken(): string {
     return `UP-BADGE-${randomBytes(12).toString('base64url')}`;
   }
@@ -153,7 +148,7 @@ export class BadgesService {
     return avecNumeroUnique(
       () =>
         this.prisma.$transaction(async (tx) => {
-          const numero = await this.prochainNumero(tx, annee);
+          const numero = await prochainNumeroSerie(tx, SERIES_NUMERO.BADGE_ACCES, annee);
           const badge = await tx.badgeAcces.create({
             data: {
               numero,

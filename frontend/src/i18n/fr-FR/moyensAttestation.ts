@@ -1,8 +1,7 @@
 /** Namespace `moyensAttestation` — moyens de preuve de présence des enseignants. */
 export default {
   title: 'Moyens de preuve',
-  subtitle:
-    "Appareils de contrôle enrôlés et moyens d'attestation des enseignants : code personnel et empreinte.",
+  subtitle: "Appareils de contrôle enrôlés et moyens d'attestation des enseignants : code personnel et empreinte.",
   devices: {
     title: 'Appareils de contrôle',
     subtitle: 'Un appareil enrôlé signe les lectures d’empreinte. On révoque celui qui est perdu.',
@@ -31,7 +30,7 @@ export default {
     defineCode: 'Définir le code',
     resetCode: 'Réinitialiser le code',
     removeCode: 'Retirer le code',
-    removeEmpreinte: "Retirer l’empreinte",
+    removeEmpreinte: 'Retirer l’empreinte',
   },
   codeDialog: {
     title: 'Définir le code personnel',
@@ -57,9 +56,8 @@ export default {
       'L’enseignant ne pourra plus attester sa présence par code. Il pourra encore le faire par signature ou par empreinte.',
   },
   removeEmpreinteDialog: {
-    title: "Retirer l’empreinte ?",
-    message:
-      'L’empreinte enrôlée est effacée. L’enseignant ne pourra plus attester sa présence par biométrie.',
+    title: 'Retirer l’empreinte ?',
+    message: 'L’empreinte enrôlée est effacée. L’enseignant ne pourra plus attester sa présence par biométrie.',
   },
   messages: {
     deviceRevoked: 'Appareil révoqué',

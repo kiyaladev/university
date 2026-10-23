@@ -44,7 +44,7 @@ try {
     try { await lireFileChiffree(cle, 'autre-compte', []); } catch { autreCompteRefuse = true; }
 
     const db = await new Promise((resolve, reject) => {
-      const demande = indexedDB.open('unipresence-file-crypto-v1', 1);
+      const demande = indexedDB.open('university-file-crypto-v1', 1);
       demande.onsuccess = () => resolve(demande.result);
       demande.onerror = () => reject(demande.error);
     });

@@ -68,11 +68,7 @@ describe('features/presence/services/pointages', () => {
 
     await pointagesService.modifier('c1', { statut: 'PRESENT', observation: 'Retard excusé' });
 
-    expect(api.put).toHaveBeenCalledWith(
-      '/controles/c1',
-      { statut: 'PRESENT', observation: 'Retard excusé' },
-      {},
-    );
+    expect(api.put).toHaveBeenCalledWith('/controles/c1', { statut: 'PRESENT', observation: 'Retard excusé' }, {});
   });
 
   it('supprime un pointage', async () => {

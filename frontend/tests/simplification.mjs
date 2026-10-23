@@ -38,8 +38,8 @@ async function open(role, locale = 'fr-FR', width = 1440, disabled = [], record 
   page.on('pageerror', error => errors.push(error.message));
   const token = `e30.${Buffer.from(JSON.stringify({ sub: role, exp: Math.floor(Date.now() / 1000) + 3600 })).toString('base64url')}.fixture`;
   await context.addInitScript(({ token, locale }) => {
-    localStorage.setItem('unipresence_token', token);
-    localStorage.setItem('lang', locale);
+    localStorage.setItem('university_token', token);
+    localStorage.setItem('university_lang', locale);
     // Old preferences must no longer force desktop tables on a phone.
     localStorage.setItem('up:vue:etudiants', 'tableau');
   }, { token, locale });

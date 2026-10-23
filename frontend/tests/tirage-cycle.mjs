@@ -35,7 +35,7 @@ try {
   const hash = createHash('sha256').update('Épreuve fictive').digest('hex');
   const tirage = await request(token, '/tirage', { examenId: exam.id, dateTirage: '2026-10-06', nbExemplaires: 2, empreinteSource: hash });
   const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+  await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
   const page = await context.newPage();
   const errors = [], transitions = [];
   page.on('pageerror', error => errors.push(error.message));

@@ -26,9 +26,9 @@ try {
   await page.locator('input[type=password]').fill('Passer@2026');
   await page.locator('button[type=submit]').click();
   await page.waitForURL(url => url.hash === '#/controle');
-  const sessionAvant = await page.evaluate(() => localStorage.getItem('unipresence_token'));
-  const ownerBefore = await page.evaluate(() => JSON.parse(atob(localStorage.getItem('unipresence_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub);
-  const ownerKey = `unipresence_file_pointages_${ownerBefore}`;
+  const sessionAvant = await page.evaluate(() => localStorage.getItem('university_token'));
+  const ownerBefore = await page.evaluate(() => JSON.parse(atob(localStorage.getItem('university_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub);
+  const ownerKey = `university_file_pointages_${ownerBefore}`;
   await page.evaluate(async () => {
     const maintenant = new Date().toISOString();
     const pinia = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia;
@@ -42,12 +42,12 @@ try {
   const adminKey = await page.evaluate(async () => {
     const pinia = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia;
     await pinia._s.get('auth').connexion('admin@unipresence.gn', 'Passer@2026');
-    const sub = JSON.parse(atob(localStorage.getItem('unipresence_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
-    const key = `unipresence_file_pointages_${sub}`;
+    const sub = JSON.parse(atob(localStorage.getItem('university_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
+    const key = `university_file_pointages_${sub}`;
     await pinia._s.get('pointages').mettreEnFile({ seanceId: 'admin-file-untouched', statut: 'ABSENT', horodatage: new Date().toISOString() });
     return key;
   });
-  const ownerAfter = await page.evaluate(() => JSON.parse(atob(localStorage.getItem('unipresence_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub);
+  const ownerAfter = await page.evaluate(() => JSON.parse(atob(localStorage.getItem('university_token').split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub);
   assert.notEqual(ownerAfter, ownerBefore, 'la session a changé pendant la requête');
   libererSync();
   await page.evaluate(() => window.__syncPromise);
@@ -55,7 +55,7 @@ try {
     const pinia = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia;
     const store = pinia._s.get('pointages');
     const admin = [...store.file];
-    localStorage.setItem('unipresence_token', sessionAvant);
+    localStorage.setItem('university_token', sessionAvant);
     await store.chargerProprietaire();
     return { owner: [...store.file], admin, ownerStock: localStorage.getItem(ownerKey), adminStock: localStorage.getItem(adminKey) };
   }, { ownerKey, adminKey, sessionAvant });

@@ -56,7 +56,8 @@ export interface EntreeNavigation {
   ordre: number;
   /**
    * `false` : l'écran n'a pas d'entrée propre, il est regroupé derrière
-   * `famille` (voir SIMPLIFICATION_2026_10_13.md, « Regrouper la navigation »).
+   * `famille` (voir docs/audits/2026-10-13-bilan-simplification.md,
+   * « Regrouper la navigation »).
    */
   menu?: false;
   /** Restreint l'entrée du menu à ces rôles ; la route reste ouverte à `roles`. */

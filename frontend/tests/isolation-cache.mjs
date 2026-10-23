@@ -32,11 +32,11 @@ try {
   assert.ok(administrative.data.some(row => 'tauxHoraire' in row));
   assert.ok(minimal.data.length && minimal.data.every(row => !('tauxHoraire' in row)));
   await page.waitForFunction(async () => {
-    const cache = await caches.open('unipresence-api-v2');
+    const cache = await caches.open('university-api-v2');
     const keys = await cache.keys();
     return keys.filter(key => new URL(key.url).pathname.endsWith('/enseignants')).length === 2;
   });
-  const keys = await page.evaluate(async () => (await (await caches.open('unipresence-api-v2')).keys()).map(key => key.url));
+  const keys = await page.evaluate(async () => (await (await caches.open('university-api-v2')).keys()).map(key => key.url));
   assert.ok(keys.every(key => !key.includes(admin) && !key.includes(student)));
   await context.setOffline(true);
   assert.deepEqual((await teachers(student)).data, minimal.data, 'Le cache étudiant conserve sa projection minimale');

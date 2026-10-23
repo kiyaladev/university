@@ -33,6 +33,25 @@ describe('Suppressions refusées par une clé étrangère RESTRICT', () => {
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
+  it('refuse la suppression d’une matière qui porte des évaluations', async () => {
+    // Evaluation.matiere est en RESTRICT : une matière évaluée ne se supprime
+    // pas, même sans note. La base refuse (P2003) ; l'utilisateur reçoit un
+    // 409 explicite, pas une 500.
+    const tx = {
+      matiere: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'matiere-2', code: 'MAT2' }),
+        delete: jest.fn().mockRejectedValue(refusFk()),
+      },
+      auditLog: { create: jest.fn() },
+    };
+    const service = new MatieresService({ $transaction: (fn: any) => fn(tx) } as any);
+
+    const erreur = await service.supprimer('matiere-2').catch((e) => e);
+    expect(erreur).toBeInstanceOf(ConflictException);
+    expect(erreur.message).toContain('Cette matière ne peut pas être supprimée');
+    expect(tx.auditLog.create).not.toHaveBeenCalled();
+  });
+
   it('refuse la suppression d’un enseignant qui a des lignes de paie', async () => {
     const tx = {
       enseignant: {

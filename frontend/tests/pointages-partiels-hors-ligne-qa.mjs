@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 const bcrypt = require('../../backend/node_modules/bcryptjs');
@@ -44,7 +45,7 @@ try {
  const token = (await auth.login({ email: controller.email, password }, 'QA-FIXTURE')).token;
  const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json(); assert.equal(me.id, controller.id);
  const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
- await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+ await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
  const page = await context.newPage(); page.setDefaultTimeout(60000);
  const erreurs = [], appelsSync = [];
  page.on('pageerror', e => erreurs.push(e.message));
@@ -57,7 +58,7 @@ try {
   await page.waitForFunction(() => document.querySelector('#q-app')?.__vue_app__?.config.globalProperties.$pinia?._s.get('seancesHorsLigne'), null, { timeout: 60000 });
   await page.goto(`${base}/#/controle`, { waitUntil: 'networkidle' });
   await page.getByRole('button', { name: 'Préparer hors ligne', exact: true }).click();
-  await page.waitForFunction(id => Boolean(localStorage.getItem('unipresence_tournee_preparee_' + id)), controller.id);
+  await page.waitForFunction(id => Boolean(localStorage.getItem('university_tournee_preparee_' + id)), controller.id);
   const cache = await page.evaluate(() => {
     const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
     return { affectations: store.affectationsCache.map(a => a.id), salles: store.sallesCache.map(s => s.id) };
@@ -82,7 +83,7 @@ try {
     const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('seancesHorsLigne');
     return { result: { id: store.file[0].idClient, enFile: true }, file: store.file,
       affectations: store.affectationsCache, salles: store.sallesCache,
-      visible: store.pourDate('2026-10-06'), storage: localStorage.getItem('unipresence_file_seances_' + userId) };
+      visible: store.pourDate('2026-10-06'), storage: localStorage.getItem('university_file_seances_' + userId) };
   }, controller.id);
   report.actualOfflineFormVerified = true;
   assert.equal(queued.result.enFile, true, 'la séance doit être mise en file hors ligne');
@@ -98,7 +99,7 @@ try {
     const store = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('pointages');
     await store.mettreEnFile({ seanceId: id, statut: 'PRESENT', heureArrivee: '18:00', heureFinReelle: '19:00', effectifPresent: 12, signatureBase64: signature, observation: 'Observation confidentielle QA', codePinEnseignant: '1234' });
     await store.mettreEnFile({ seanceId: invalidId, statut: 'ABSENT' });
-    const raw = localStorage.getItem('unipresence_file_pointages_' + owner);
+    const raw = localStorage.getItem('university_file_pointages_' + owner);
     return { raw, count: store.file.length, pin: store.file[0].codePinEnseignant };
   }, { id: queued.result.id, owner: controller.id, invalidId, signature });
   assert.equal(encryption.count, 2); assert.equal(encryption.pin, undefined);
@@ -180,6 +181,6 @@ finally {
   await prisma.anneeAcademique.delete({ where: { id: year.id } });
  }
  report.productionUntouched = true; report.physicalDevicePending = true; report.scope = 'Séance par formulaire puis présence signée et référence invalide via store chiffré, API QA réelle';
- fs.writeFileSync('../audit/recommandations-2026-10-06/pointages-partiels-hors-ligne-qa.json', JSON.stringify(report, null, 2) + '\n');
+ ecrirePreuve('pointages-partiels-hors-ligne-qa.json', report);
  await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
 }

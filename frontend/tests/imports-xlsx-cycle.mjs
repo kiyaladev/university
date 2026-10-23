@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { chromium } from 'playwright';
+import { ecrirePreuve } from './preuves.mjs';
 const require = createRequire(import.meta.url);
 const { PrismaClient } = require('../../backend/node_modules/@prisma/client');
 const bcrypt = require('../../backend/node_modules/bcryptjs');
@@ -36,7 +37,7 @@ try {
  const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json();
  assert.equal(me.role, 'SCOLARITE');
  const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
- await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+ await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
  const page = await context.newPage(); page.setDefaultTimeout(60000);
  const errors = []; page.on('pageerror', e => errors.push(e.message));
  await page.goto(base + '/#/imports', { waitUntil: 'networkidle' });
@@ -64,6 +65,6 @@ finally {
  await prisma.salle.deleteMany({ where: { code: tag } });
  report.fixturesRestantes = await prisma.salle.count({ where: { code: tag } });
  report.historicalFilesPending = true; report.productionUntouched = true;
- fs.writeFileSync('../audit/recommandations-2026-10-06/imports-xlsx-interface.json', JSON.stringify(report, null, 2) + '\n');
+ ecrirePreuve('imports-xlsx-interface.json', report);
  await browser.close(); await prisma.$disconnect(); console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
 }

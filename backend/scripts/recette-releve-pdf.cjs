@@ -22,6 +22,7 @@ const { optionsJwt } = require('../dist/common/jwt-config.module');
 const auth = new AuthService(db, new JwtService(optionsJwt({ get: (k) => env[k] })));
 
 const { createHash } = require('node:crypto');
+const { ecrirePreuve } = require('./preuves.cjs');
 const departments = [],
   users = [],
   numbers = [];
@@ -200,7 +201,7 @@ main()
     report.fixturesRestantes = await db.user.count({ where: { id: { in: users } } });
     report.physicalAndHumanValidationPending = true;
     report.productionUntouched = true;
-    fs.writeFileSync('../docs/audits/preuves/2026-10-06/releve-pdf-http.json', JSON.stringify(report, null, 2) + '\n');
+    ecrirePreuve('releve-pdf-http.json', report);
     await db.$disconnect();
     console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
   });

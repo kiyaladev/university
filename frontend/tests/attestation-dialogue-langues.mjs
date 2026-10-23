@@ -26,7 +26,7 @@ try {
     const me = await fetch(session.api + '/auth/me', { headers: { Authorization: `Bearer ${session.token}` } });
     assert.equal(me.status, 200);
     assert.equal((await me.json()).role, 'ADMIN');
-    await page.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, session.token);
+    await page.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, session.token);
   } else {
     await page.goto(base + '/#/connexion', { waitUntil: 'networkidle' });
     await page.locator('input[type=email]').fill('admin@unipresence.gn');

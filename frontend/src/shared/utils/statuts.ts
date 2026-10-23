@@ -375,8 +375,7 @@ export function jetonStatutActuel(valeur: string): string {
  */
 export function normaliserJetonsStatuts<T>(valeur: T): T {
   if (typeof valeur === 'string') return jetonStatutActuel(valeur) as unknown as T;
-  if (Array.isArray(valeur))
-    return valeur.map((element) => normaliserJetonsStatuts(element)) as unknown as T;
+  if (Array.isArray(valeur)) return valeur.map((element) => normaliserJetonsStatuts(element)) as unknown as T;
   if (valeur !== null && typeof valeur === 'object') {
     const prototype = Object.getPrototypeOf(valeur);
     if (prototype !== Object.prototype && prototype !== null) return valeur;

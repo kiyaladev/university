@@ -159,11 +159,6 @@ export class ReclamationsService extends CrudService {
     return { createurId: true, ...(user.role === Role.ETUDIANT ? { notes: true } : {}) };
   }
 
-  /** Numéro séquentiel par année : "REC-2026-00001". */
-  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.RECLAMATION, annee);
-  }
-
   /**
    * Projection minimale journalisée avant/après. Une réclamation est un dossier
    * de doléance : son sujet, sa description, ses messages, les notes internes et
@@ -390,7 +385,7 @@ export class ReclamationsService extends CrudService {
     return avecNumeroUnique(
       () =>
         this.prisma.$transaction(async (tx) => {
-          const numero = await this.prochainNumero(tx, annee);
+          const numero = await prochainNumeroSerie(tx, SERIES_NUMERO.RECLAMATION, annee);
           const reclamation = await tx.reclamation.create({
             data: {
               numero,

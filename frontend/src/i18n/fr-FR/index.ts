@@ -166,5 +166,4 @@ const messages = {
   vote: voteFR,
 };
 
-
 export default messages;

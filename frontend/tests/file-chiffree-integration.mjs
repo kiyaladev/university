@@ -29,7 +29,7 @@ try {
   const context = await browser.newContext({ locale: 'fr-FR' });
   const page = await context.newPage();
   const charge = Buffer.from(JSON.stringify({ sub: 'agent-test', role: 'ADMIN' })).toString('base64url');
-  await context.addInitScript(token => localStorage.setItem('unipresence_token', token), `e30.${charge}.signature-de-recette`);
+  await context.addInitScript(token => localStorage.setItem('university_token', token), `e30.${charge}.signature-de-recette`);
   const erreurs = [];
   page.on('pageerror', erreur => erreurs.push(erreur.message));
   page.on('console', message => { if (message.type() === 'error') erreurs.push(`console: ${message.text()}`); });
@@ -54,7 +54,7 @@ try {
     throw error;
   }
 
-  const cle = 'unipresence_file_pointages_agent-test';
+  const cle = 'university_file_pointages_agent-test';
   const stocke = await page.evaluate(async cle => {
     const pinia = document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia;
     const store = pinia._s.get('pointages');
@@ -67,7 +67,7 @@ try {
       horodatage: new Date().toISOString(),
     });
     const brut = localStorage.getItem(cle);
-    return { brut, file: store.file, owner: store.proprietaire, fileChargee: store.fileChargee, token: localStorage.getItem('unipresence_token'), profil: pinia._s.get('auth').utilisateur };
+    return { brut, file: store.file, owner: store.proprietaire, fileChargee: store.fileChargee, token: localStorage.getItem('university_token'), profil: pinia._s.get('auth').utilisateur };
   }, cle);
   assert.ok(stocke.brut?.startsWith('upf1:'), `la file doit être chiffrée avant son écriture: ${JSON.stringify(stocke)}`);
   assert.equal(stocke.brut.includes('SIGNATURE_DE_RECETTE_CONFIDENTIELLE'), false);

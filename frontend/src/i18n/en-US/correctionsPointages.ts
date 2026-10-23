@@ -1,8 +1,7 @@
 /** Namespace `correctionsPointages` — consultation et correction des pointages. */
 export default {
   title: 'Attendance corrections',
-  subtitle:
-    'The attendance records taken in the room. A correction only changes the edited fields and stays logged.',
+  subtitle: 'The attendance records taken in the room. A correction only changes the edited fields and stays logged.',
   filters: {
     from: 'From',
     to: 'To',

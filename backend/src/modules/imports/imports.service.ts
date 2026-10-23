@@ -189,15 +189,15 @@ export class ImportsService {
         where: { id: r.departementId },
         select: { id: true },
       });
-      if (!departement) erreurs.push('Le département indiqué n’existe pas.');
+      if (!departement) erreurs.push(t('imports.departementIntrouvable'));
     }
     if (type === TypeImportReferentiel.CRENEAUX) {
       const [affectation, salle] = await Promise.all([
         this.prisma.affectation.findUnique({ where: { id: r.affectationId }, select: { id: true } }),
         r.salleId ? this.prisma.salle.findUnique({ where: { id: r.salleId }, select: { id: true } }) : null,
       ]);
-      if (!affectation) erreurs.push('L’affectation indiquée n’existe pas.');
-      if (r.salleId && !salle) erreurs.push('La salle indiquée n’existe pas.');
+      if (!affectation) erreurs.push(t('imports.affectationIntrouvable'));
+      if (r.salleId && !salle) erreurs.push(t('imports.salleIntrouvable'));
       if (affectation && (!r.salleId || salle)) {
         try {
           await this.creneaux.verifierImport(r);
@@ -206,11 +206,7 @@ export class ImportsService {
           erreurs.push(
             ...(Array.isArray(response?.message)
               ? response.message
-              : [
-                  typeof response?.message === 'string'
-                    ? response.message
-                    : 'Le créneau ne respecte pas les règles de planification.',
-                ]),
+              : [typeof response?.message === 'string' ? response.message : t('imports.creneauHorsRegles')]),
           );
         }
       }
@@ -221,15 +217,15 @@ export class ImportsService {
   private async preparer(dto: ImportCsvDto) {
     const csv = lireCsv(dto.contenu);
     if (csv.erreurs.length) erreurCsv(csv.erreurs.join(' '));
-    if (csv.lignes.length > 2000) erreurCsv('Un fichier peut contenir au maximum 2 000 lignes de données.');
-    if (!csv.lignes.length) erreurCsv('Aucune ligne de données après l’en-tête.');
+    if (csv.lignes.length > 2000) erreurCsv(t('imports.tropDeLignes'));
+    if (!csv.lignes.length) erreurCsv(t('imports.aucuneLigne'));
 
     const config = CONFIG[dto.type];
     const header = new Set(csv.entetes.filter((cle): cle is string => Boolean(cle)));
     const manquantes = config.requis.filter((champ) => !header.has(champ));
     if (manquantes.length) {
       const noms = manquantes.map((cle) => COLONNES[cle]?.[0] ?? cle);
-      erreurCsv(`Colonnes obligatoires absentes : ${noms.join(', ')}.`);
+      erreurCsv(t('imports.colonnesObligatoiresAbsentes', { colonnes: noms.join(', ') }));
     }
     const vues = new Set<string>();
     const lignes: LignePreparee[] = csv.lignes.map((ligne) => {
@@ -242,7 +238,7 @@ export class ImportsService {
       const erreurs = messagesValidation(instance);
       const cle = config.cle(instance);
       if (cle) {
-        if (vues.has(cle)) erreurs.push('Doublon dans le fichier : cette clé apparaît sur une ligne précédente.');
+        if (vues.has(cle)) erreurs.push(t('imports.doublonDansLeFichier'));
         vues.add(cle);
       }
       return { numero: ligne.numero, donnees: instance as any, erreurs };
@@ -257,7 +253,7 @@ export class ImportsService {
         if (preparee.erreurs.length) continue;
         preparee.erreurs.push(...(await this.verifierReferences(dto.type, preparee)));
         if (!preparee.erreurs.length && (await this.dejaPresent(dto.type, preparee))) {
-          preparee.erreurs.push('Un enregistrement portant cette clé existe déjà.');
+          preparee.erreurs.push(t('imports.enregistrementExistant'));
         }
       }
     };

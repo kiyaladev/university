@@ -31,17 +31,17 @@ try {
   await page.getByRole('button', { name: 'Préparer hors ligne' }).click();
   await page.getByRole('status').filter({ hasText: 'Prête à' }).waitFor();
   const prepared = await page.evaluate(() => {
-    const token = localStorage.getItem('unipresence_token');
+    const token = localStorage.getItem('university_token');
     const owner = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).sub;
-    return JSON.parse(localStorage.getItem(`unipresence_tournee_preparee_${owner}`) || 'null');
+    return JSON.parse(localStorage.getItem(`university_tournee_preparee_${owner}`) || 'null');
   });
   assert.equal(prepared?.date, new Date().toLocaleDateString('sv-SE'));
   checks.push('Tournée du jour et heure de préparation affichées');
   await page.goto(base + '/#/controle', { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' }); // met aussi /auth/me en cache
-  const token = await page.evaluate(() => localStorage.getItem('unipresence_token'));
+  const token = await page.evaluate(() => localStorage.getItem('university_token'));
   const owner = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub;
-  const queueKey = `unipresence_file_pointages_${owner}`;
+  const queueKey = `university_file_pointages_${owner}`;
   await context.setOffline(true);
   for (const time of ['22:31', '22:41']) {
     const card = page.locator('article.seance').filter({ hasText: time });
@@ -81,12 +81,14 @@ try {
   // Les formats précédents pouvaient avoir laissé un code personnel dans
   // localStorage. La reprise conserve les lignes, enlève le secret et ne
   // rattache jamais la file sans propriétaire au compte connecté.
+  // Cette file sans propriétaire vit sous la clé
+  // « university_file_pointages_ancienne-file-sans-proprietaire ».
   await context.setOffline(true);
   await page.evaluate(({ legacyKey, ownerKey }) => {
     const row = { seanceId: 'fixture-ancienne-file', statut: 'ABSENT', codePinEnseignant: 'PIN-TEMOIN', horodatage: new Date().toISOString() };
     localStorage.setItem(legacyKey, JSON.stringify([row]));
     localStorage.setItem(ownerKey, JSON.stringify([row]));
-  }, { legacyKey: 'unipresence_file_pointages', ownerKey: queueKey });
+  }, { legacyKey: 'university_file_pointages_ancienne-file-sans-proprietaire', ownerKey: queueKey });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.q-page');
   await page.waitForFunction(() => document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('pointages').ancienneFile === 1);
@@ -94,10 +96,10 @@ try {
     legacy: localStorage.getItem(legacyKey),
     owner: localStorage.getItem(ownerKey),
     file: document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('pointages').file,
-  }), { legacyKey: 'unipresence_file_pointages', ownerKey: queueKey });
+  }), { legacyKey: 'university_file_pointages_ancienne-file-sans-proprietaire', ownerKey: queueKey });
   check('PIN supprimé de la file historique rattachée', migration.file.some(row => 'codePinEnseignant' in row), false);
   check('Ancienne file sans propriétaire conservée et chiffrée', [migration.legacy.startsWith('upf1:'), migration.owner.startsWith('upf1:'), await page.evaluate(() => document.querySelector('#q-app').__vue_app__.config.globalProperties.$pinia._s.get('pointages').ancienneFile)], [true, true, 1]);
-  await page.evaluate(({ legacyKey, ownerKey }) => { localStorage.removeItem(legacyKey); localStorage.removeItem(ownerKey); }, { legacyKey: 'unipresence_file_pointages', ownerKey: queueKey });
+  await page.evaluate(({ legacyKey, ownerKey }) => { localStorage.removeItem(legacyKey); localStorage.removeItem(ownerKey); }, { legacyKey: 'university_file_pointages_ancienne-file-sans-proprietaire', ownerKey: queueKey });
   const result = { date: new Date().toISOString(), environment: 'QA locale isolée', checks };
   fs.writeFileSync(report, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result));

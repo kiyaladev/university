@@ -130,16 +130,6 @@ export class AttestationsService {
     );
   }
 
-  /**
-   * Numéro séquentiel par année : "ATT-YYYY-00005". Le compteur se lit dans la
-   * base (il n'y a pas de table de séquence) ; deux émissions simultanées
-   * tentent le même numéro, la contrainte @unique départage et la création
-   * recommence avec le suivant.
-   */
-  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.ATTESTATION, annee);
-  }
-
   /** Le jeton encodé dans le QR : aléatoire, unique, impossible à deviner. */
   private nouveauQrToken(): string {
     return `UP-DOC-${randomBytes(12).toString('base64url')}`;
@@ -261,7 +251,11 @@ export class AttestationsService {
       );
     }
 
-    const numero = await this.prochainNumero(tx, numeroAnnee);
+    // Numéro séquentiel par année : "ATT-YYYY-00005". Le compteur se lit dans la
+    // base (il n'y a pas de table de séquence) ; deux émissions simultanées
+    // tentent le même numéro, la contrainte @unique départage et la création
+    // recommence avec le suivant.
+    const numero = await prochainNumeroSerie(tx, SERIES_NUMERO.ATTESTATION, numeroAnnee);
     const cree = await tx.attestation.create({
       data: {
         numero,

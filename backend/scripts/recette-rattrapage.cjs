@@ -19,6 +19,7 @@ const db = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 Object.assign(process.env, env);
 const { AuthService } = require('../dist/modules/auth/auth.service');
 const { optionsJwt } = require('../dist/common/jwt-config.module');
+const { ecrirePreuve } = require('./preuves.cjs');
 const auth = new AuthService(db, new JwtService(optionsJwt({ get: (k) => env[k] })));
 const tag = 'QA-RATTRAPAGE-' + randomUUID();
 const ids = { etudiant: [], inscription: [], evaluation: [], deliberation: [] };
@@ -228,7 +229,7 @@ async function main() {
     httpLoginRouteQualified: false,
     productionUntouched: true,
   };
-  fs.writeFileSync('../docs/audits/preuves/2026-10-06/rattrapage.json', JSON.stringify(proof, null, 2));
+  ecrirePreuve('rattrapage.json', proof);
   console.log(JSON.stringify(proof));
 }
 main()

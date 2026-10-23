@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -146,10 +147,7 @@ main()
     }
     report.productionUntouched = true;
     report.limites = ['Fichiers historiques et parcours XLSX navigateur non qualifiés par cette recette'];
-    fs.writeFileSync(
-      '../docs/audits/preuves/2026-10-06/imports-creneaux-http.json',
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    ecrirePreuve('imports-creneaux-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

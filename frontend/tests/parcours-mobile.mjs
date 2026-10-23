@@ -15,7 +15,7 @@ try {
     assert.equal(response.status, 201);
     const { token } = await response.json();
     const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
-    await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+    await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
     const page = await context.newPage();
     let errors = [];
     page.on('pageerror', e => errors.push(e.message));

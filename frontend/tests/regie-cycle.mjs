@@ -23,7 +23,7 @@ const browser = await chromium.launch();
 let receiptId, paymentId;
 try {
   const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); localStorage.setItem('up:vue:recettes', 'cartes'); }, session.token);
+  await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); localStorage.setItem('up:vue:recettes', 'cartes'); }, session.token);
   const page = await context.newPage();
   page.setDefaultTimeout(15000);
   const errors = [], apiFailures = [];

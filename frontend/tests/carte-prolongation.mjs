@@ -52,7 +52,7 @@ try {
   const future = futureDate.toISOString().slice(0, 10);
   for (const token of [owner, other, teacher, direction]) await call(token, 'PUT', '/cartes-etudiantes/' + card.id, { dateValidite: future }, 403);
   const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, school);
+  await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, school);
   const page = await context.newPage(); page.setDefaultTimeout(60000);
   const errors = [], apiFailures = [];
   page.on('pageerror', e => errors.push(e.message));

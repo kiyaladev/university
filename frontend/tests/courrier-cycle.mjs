@@ -37,7 +37,7 @@ try {
   const me = await (await fetch(api + '/auth/me', { headers: { Authorization: `Bearer ${token}` } })).json();
   assert.equal(me.id, (await prisma.user.findUniqueOrThrow({ where: { email: 'admin@unipresence.gn' } })).id);
   const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
-  await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);
+  await context.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, token);
   page = await context.newPage();
   page.setDefaultTimeout(60000);
   const errors = [];
@@ -86,7 +86,7 @@ try {
   assert.equal(headLogin.status, 201);
   const headToken = (await headLogin.json()).token;
   const headContext = await browser.newContext({ viewport: { width: 375, height: 900 } });
-  await headContext.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, headToken);
+  await headContext.addInitScript(token => { localStorage.setItem('university_token', token); localStorage.setItem('university_lang', 'fr-FR'); }, headToken);
   const headPage = await headContext.newPage();
   headPage.setDefaultTimeout(60000);
   let departmentRegistryRequests = 0;

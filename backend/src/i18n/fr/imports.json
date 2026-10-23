@@ -1,3 +1,15 @@
 {
-  "valeurInvalide": "La valeur de la colonne « {champ} » est invalide ou manquante."
+  "valeurInvalide": "La valeur de la colonne « {champ} » est invalide ou manquante.",
+  "guillemetsNonRefermes": "Guillemets CSV non refermés près de la ligne {ligne}.",
+  "fichierVide": "Le fichier est vide.",
+  "colonnesEnDouble": "Colonnes en double après normalisation : {colonnes}.",
+  "tropDeLignes": "Un fichier peut contenir au maximum 2 000 lignes de données.",
+  "aucuneLigne": "Aucune ligne de données après l’en-tête.",
+  "colonnesObligatoiresAbsentes": "Colonnes obligatoires absentes : {colonnes}.",
+  "doublonDansLeFichier": "Doublon dans le fichier : cette clé apparaît sur une ligne précédente.",
+  "enregistrementExistant": "Un enregistrement portant cette clé existe déjà.",
+  "departementIntrouvable": "Le département indiqué n’existe pas.",
+  "affectationIntrouvable": "L’affectation indiquée n’existe pas.",
+  "salleIntrouvable": "La salle indiquée n’existe pas.",
+  "creneauHorsRegles": "Le créneau ne respecte pas les règles de planification."
 }

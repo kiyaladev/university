@@ -151,12 +151,10 @@ export class ResidencesService extends CrudService {
         if (!residence) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
         const nb = residence._count.chambres;
         if (nb > 0) {
-          throw new BadRequestException(
-            t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', {
-              'residence.nom': residence.nom,
-              nb,
-            }),
-          );
+          // 409 et non 400 : la demande est licite, c'est l'état du parc qui
+          // la refuse. Le référentiel distingue ainsi « tu as mal demandé »
+          // de « ce que tu supprimes est encore utilisé ».
+          throw new ConflictException(t('cites.residenceNonVide', { nom: residence.nom, nb }));
         }
         await tx.residence.delete({ where: { id } });
         await journaliser(tx, user ?? null, 'RESIDENCE_SUPPRIMEE', 'Residence', id, {
@@ -264,12 +262,9 @@ export class ChambresService extends CrudService {
         if (!chambre) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
         const nb = chambre._count.attributions;
         if (nb > 0) {
-          throw new BadRequestException(
-            t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', {
-              'chambre.code': chambre.code,
-              nb,
-            }),
-          );
+          // 409 et non 400 : une chambre qui porte un historique d'attributions
+          // se conserve, elle ne se supprime pas.
+          throw new ConflictException(t('cites.chambreNonVide', { code: chambre.code, nb }));
         }
         await tx.chambre.delete({ where: { id } });
         await journaliser(tx, user ?? null, 'CHAMBRE_SUPPRIMEE', 'Chambre', id, {
