@@ -20,7 +20,7 @@ function estDecorateur(noeud: ts.Decorator, nom: string): boolean {
 }
 
 describe('métadonnées des routes imprimables protégées', () => {
-  it('conserve authentification et rôles sur chaque vraie méthode ProtectedDocument', () => {
+  it('conserve authentification et rôles sur chaque vraie méthode ProtectedDocument', async () => {
     const routes: Array<{ fichier: string; classe: string; methode: string; scoped: boolean }> = [];
 
     for (const fichier of fichiersTs(RACINE_MODULES)) {
@@ -42,7 +42,7 @@ describe('métadonnées des routes imprimables protégées', () => {
 
     expect(routes).toHaveLength(25);
     for (const route of routes) {
-      const module = require(route.fichier);
+      const module = await import(route.fichier);
       const controleur = module[route.classe];
       expect(controleur).toBeDefined();
       const handler = controleur.prototype[route.methode];

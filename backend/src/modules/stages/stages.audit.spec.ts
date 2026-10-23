@@ -1,6 +1,8 @@
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Role, StatutEncadrement, TypeEncadrement } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { AuthUser } from '../../common/decorators';
 import { StagesService } from './stages.service';
 
@@ -563,8 +565,13 @@ describe('StagesService — journal d’audit avant/après', () => {
     // Le catalogue est indexé par clé nue : le préfixe de namespace est posé
     // par nestjs-i18n au chargement.
     const cle = CLE_CONFLIT.replace('stages.', '');
-    const fr = require('../../i18n/fr/stages.json');
-    const en = require('../../i18n/en/stages.json');
+    const catalogue = (langue: string) =>
+      JSON.parse(fs.readFileSync(path.join(__dirname, '../../i18n', langue, 'stages.json'), 'utf8')) as Record<
+        string,
+        unknown
+      >;
+    const fr = catalogue('fr');
+    const en = catalogue('en');
     expect(fr[cle]).toBeTruthy();
     expect(en[cle]).toBeTruthy();
   });

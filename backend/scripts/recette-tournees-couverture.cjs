@@ -103,6 +103,9 @@ async function main() {
     controleurId: controllers[0],
     departementId: department.id,
   };
+  // L'affectation groupée est journalisée sous la clé « période » (debut_fin) :
+  // cette trace doit être purgée avec celles des séances en fin de recette.
+  slot = `${dto.dateDebut}_${dto.dateFin}`;
   const preview = (await call(school, 'GET', '/seances/tournee-apercu?' + new URLSearchParams(dto))).data;
   assert.equal(preview.seancesAffectables, 1);
   await call(school, 'POST', '/seances/tournee', dto, 201);
@@ -137,7 +140,7 @@ main()
     if (year) {
       const ss = await db.seance.findMany({ where: { anneeId: year.id }, select: { id: true } });
       await db.auditLog.deleteMany({
-        where: { entiteId: { in: [year.id, ...(slot ? [slot.id] : []), ...ss.map((s) => s.id)] } },
+        where: { entiteId: { in: [year.id, ...(slot ? [slot] : []), ...ss.map((s) => s.id)] } },
       });
       await db.controle.deleteMany({ where: { seance: { anneeId: year.id } } });
       await db.seance.deleteMany({ where: { anneeId: year.id } });

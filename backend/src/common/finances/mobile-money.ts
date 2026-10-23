@@ -25,7 +25,7 @@ export interface PaiementATransmettre {
   motif: string | null;
 }
 
-export interface OptionsTransmissionMobileMoney {
+export interface OptionsTransmissionMobileMoney<P = Prisma.PaiementGetPayload<Prisma.PaiementDefaultArgs>> {
   prisma: Pick<PrismaService, '$transaction' | 'auditLog'>;
   mobileMoney: Pick<MobileMoneyService, 'demanderPaiement'>;
   /** Acteur inscrit au journal. */
@@ -33,7 +33,7 @@ export interface OptionsTransmissionMobileMoney {
   /** Logger de l'appelant : les messages gardent leur contexte d'origine. */
   logger: Pick<Logger, 'warn' | 'error'>;
   /** Instantané d'audit avant/après du rattachement de la référence. */
-  instantane: (paiement: any) => unknown;
+  instantane: (paiement: P) => unknown;
   /** Relations rechargées avec le paiement rattaché (aucune par défaut). */
   include?: Prisma.PaiementInclude;
   /**

@@ -5,6 +5,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser, DOCUMENT_SCOPE_KEY, DocumentScopeOptions } from './decorators';
 import { t } from './i18n';
 
+/** Delegate Prisma du modèle visé par le décorateur, résolu à l'exécution. */
+interface DelegateDocument {
+  findFirst(args: { where: Record<string, unknown>; select: { id: true } }): Promise<{ id: string } | null>;
+}
+
 @Injectable()
 export class DocumentScopeGuard implements CanActivate {
   constructor(
@@ -31,7 +36,7 @@ export class DocumentScopeGuard implements CanActivate {
           ? user.departementId
           : user.enseignantId;
     if (!owner || typeof request.params.id !== 'string') throw new NotFoundException(t('common.notFound'));
-    const delegate = (this.prisma as any)[scope.model];
+    const delegate = (this.prisma as unknown as Record<string, DelegateDocument | undefined>)[scope.model];
     if (!delegate || typeof delegate.findFirst !== 'function') throw new NotFoundException(t('common.notFound'));
     // `id` is used by a few profile documents where the resource itself is the
     // owner's identity. Check equality before querying; never let an ownership
@@ -42,7 +47,12 @@ export class DocumentScopeGuard implements CanActivate {
       if (!record) throw new NotFoundException(t('common.notFound'));
       return true;
     }
-    const condition = field.split('.').reduceRight((value, key) => ({ [key]: value }), owner as any);
+    const condition = field
+      .split('.')
+      .reduceRight<Record<string, unknown>>(
+        (value, key) => ({ [key]: value }),
+        owner as unknown as Record<string, unknown>,
+      );
     const record = await delegate.findFirst({
       where: { ...condition, id: request.params.id },
       select: { id: true },

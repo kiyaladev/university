@@ -42,6 +42,10 @@ export interface CrudOptions {
 /**
  * Service CRUD générique sur un modèle Prisma. Les services métier en héritent
  * et ne redéfinissent que ce qui leur est spécifique.
+ *
+ * Le type du modèle reste `any` par défaut : les services qui l'héritent sans
+ * le préciser s'appuient sur le delegate Prisma résolu à l'exécution, dont la
+ * forme exacte n'est connue qu'au moment de l'appel.
  */
 export class CrudService<T = any> {
   constructor(
@@ -50,6 +54,10 @@ export class CrudService<T = any> {
     protected readonly options: CrudOptions = {},
   ) {}
 
+  /**
+   * Delegate Prisma du modèle configuré : il est résolu à l'exécution, le type
+   * exact dépend du modèle et n'est connu qu'au moment de l'appel.
+   */
   protected get delegate(): any {
     return (this.prisma as any)[this.model];
   }
@@ -62,7 +70,7 @@ export class CrudService<T = any> {
     };
   }
 
-  async findAll(query: QueryDto = {}, where: Record<string, any> = {}): Promise<Paginated<T>> {
+  async findAll(query: QueryDto = {}, where: Record<string, unknown> = {}): Promise<Paginated<T>> {
     const pagination = paginer(query);
     const fullWhere = { ...where, ...this.searchWhere(query.search) };
 
@@ -87,7 +95,7 @@ export class CrudService<T = any> {
 
   /** Traduit `?sort=&order=` en un `orderBy` validé contre le schéma du modèle. */
   protected orderByDe(query: QueryDto): Record<string, unknown> | Record<string, unknown>[] | undefined {
-    const defaut = this.options.orderBy as any;
+    const defaut = this.options.orderBy as Record<string, unknown> | Record<string, unknown>[] | undefined;
     if (!query.sort) return defaut;
 
     const autorises = this.sortFields();
@@ -124,7 +132,7 @@ export class CrudService<T = any> {
     return item;
   }
 
-  async create(data: any): Promise<T> {
+  async create(data: unknown): Promise<T> {
     return this.delegate.create({
       data,
       include: this.options.include,
@@ -132,7 +140,7 @@ export class CrudService<T = any> {
     });
   }
 
-  async update(id: string, data: any): Promise<T> {
+  async update(id: string, data: unknown): Promise<T> {
     await this.findOne(id);
     return this.delegate.update({
       where: { id },
