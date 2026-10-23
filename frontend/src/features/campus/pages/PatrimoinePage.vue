@@ -735,7 +735,7 @@ const eq = reactive(
           actif: f.actif || undefined,
           enReparation: f.enReparation || undefined,
         })
-        .then((r) => r.data),
+        .then((r) => r),
   }),
 );
 
@@ -746,7 +746,7 @@ const cat = reactive(
     charger: () =>
       patrimoineService
         .listeCategories()
-        .then(({ data }) => ({ data: Array.isArray(data) ? data : (data.data ?? []) })),
+        .then((reponse) => ({ data: Array.isArray(reponse) ? reponse : (reponse.data ?? []) })),
   }),
 );
 
@@ -757,8 +757,8 @@ const rep = reactive(
     pageSize: 0,
     immediat: false,
     charger: () =>
-      patrimoineService.listeReparations({}).then(({ data }) => ({
-        data: (data ?? [])
+      patrimoineService.listeReparations({}).then((reparations) => ({
+        data: (reparations ?? [])
           .filter((r) => r.statut === 'EN_COURS' || r.statut === 'DECLARE')
           .sort((a, b) => new Date(a.dateDeclaration).getTime() - new Date(b.dateDeclaration).getTime()),
       })),
@@ -874,7 +874,7 @@ function libelleStatutReparation(s: StatutReparation): string {
 /** Les trois chiffres d'en-tête, ceux-là mêmes que reprend le Rectorat. */
 async function chargerSynthese() {
   try {
-    const { data } = await patrimoineService.tableauDeBord();
+    const data = await patrimoineService.tableauDeBord();
     synthese.value = data;
   } catch {
     synthese.value = null;
@@ -983,7 +983,7 @@ async function voirDetails(e: EquipementPatrimoine) {
   dialogDetails.value = true;
   reparationsDetail.value = [];
   try {
-    const { data } = await patrimoineService.reparationsEquipement(e.id);
+    const data = await patrimoineService.reparationsEquipement(e.id);
     reparationsDetail.value = data;
   } catch {
     /* l'intercepteur axios affiche le motif ; la fiche reste lisible */

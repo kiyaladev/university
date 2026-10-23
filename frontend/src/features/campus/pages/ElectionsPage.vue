@@ -45,7 +45,7 @@ const liste = reactive(
           ...(f.type ? { type: f.type } : {}),
           ...(texteApi(f.recherche) ? { search: texteApi(f.recherche) } : {}),
         })
-        .then((r) => r.data),
+        .then((r) => r),
   }),
 );
 
@@ -153,7 +153,7 @@ async function ouvrirResultats(e: Election) {
   chargementResultats.value = true;
   dialogResultats.value = true;
   try {
-    const { data } = await electionsService.resultats(e.id);
+    const data = await electionsService.resultats(e.id);
     resultats.value = data;
   } catch {
     /* notifié par l'intercepteur */

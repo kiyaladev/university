@@ -1,0 +1,135 @@
+import type { ReservationSalle, TypeRepas } from '@/types';
+
+/**
+ * Types du domaine « campus » qui n'existent pas encore dans `src/types` :
+ * ils sont propres aux écrans du domaine et restent ici, à côté de leurs
+ * services, plutôt que redéclarés dans chaque `.vue`.
+ */
+
+/** Étudiant tel qu'il apparaît dans un portefeuille de restauration. */
+export interface EtudiantPortefeuille {
+  id: string;
+  matricule: string;
+  nom: string;
+  prenom: string;
+  telephone?: string | null;
+}
+
+/** Portefeuille de restauration d'un étudiant. */
+export interface PortefeuilleResto {
+  id: string;
+  etudiant: EtudiantPortefeuille;
+  solde: number;
+  devise?: string | null;
+  bloque?: boolean;
+}
+
+/** Consommation d'un repas au restaurant universitaire. */
+export interface ConsommationResto {
+  id: string;
+  repas: TypeRepas;
+  montant: number;
+  statut: string;
+  consommeLe: string;
+  cantine?: string | null;
+  etudiant?: string | null;
+  portefeuille?: { etudiant?: EtudiantPortefeuille | null } | null;
+}
+
+/** Recharge d'un portefeuille (avec son paiement). */
+export interface RechargeResto {
+  id: string;
+  montant: number;
+  rechargeLe: string;
+  statut: string;
+  paiement?: { mode?: string | null; reference?: string | null; statut?: string | null } | null;
+  portefeuille?: { etudiant?: EtudiantPortefeuille | null } | null;
+}
+
+/** Réponse du guichet : la validation d'un repas. */
+export interface ResultatValidationRepas {
+  etudiant?: EtudiantPortefeuille | null;
+  consommation?: ConsommationResto | null;
+  solde?: number;
+  etudiantId?: string | null;
+  soldeInsuffisant?: boolean;
+  code?: string;
+  message?: string;
+}
+
+/** Réponse d'une recharge de portefeuille. */
+export interface ResultatRecharge {
+  immediat: boolean;
+  solde: number;
+  paiement?: { reference?: string | null; mode?: string | null } | null;
+}
+
+/** Ligne unifiée du journal des transactions (recharges + consommations). */
+export interface LigneTransaction {
+  cle: string;
+  id: string;
+  repas?: TypeRepas;
+  type: 'REPAS' | 'RECHARGE';
+  date: string;
+  libelle: string;
+  etudiant: string;
+  montant: number;
+  statut: string;
+  annulable: boolean;
+}
+
+/** Ressource de la médiathèque (VOD). */
+export interface RessourceCatalogue {
+  id: string;
+  titre: string;
+  description?: string | null;
+  type: string;
+  url: string;
+  thumbnailUrl?: string | null;
+  matiereId?: string | null;
+  enseignantId?: string | null;
+  dureeSecondes?: number | null;
+  public: boolean;
+  statut?: string | null;
+  createdAt?: string | null;
+  /** Vue enregistrée par l'étudiant (pour le lecteur). */
+  vue?: { position?: number | null; terminee?: boolean } | null;
+}
+
+/** Séance d'une réservation, telle que renvoyée par le calendrier. */
+export interface SeanceCalendrier {
+  id: string;
+  titre?: string | null;
+  heureDebut?: string | null;
+  heureFin?: string | null;
+  salleId?: string | null;
+  reservationId?: string | null;
+  statut?: string | null;
+  responsable?: string | null;
+  organisme?: string | null;
+  [cle: string]: unknown;
+}
+
+/** Jour du calendrier de réservation. */
+export interface JourCalendrier {
+  date: string;
+  seances?: SeanceCalendrier[];
+  [cle: string]: unknown;
+}
+
+/** Réservation lue en détail (demandeur et décideur joints par le serveur). */
+export type ReservationDetail = ReservationSalle & {
+  demandeurId?: string | null;
+  refuseParId?: string | null;
+  refusePar?: { id: string; nom: string; prenom: string } | null;
+};
+
+/** Étudiant proposé dans le dialogue de recharge. */
+export interface EtudiantOption {
+  id: string;
+  matricule: string;
+  nom: string;
+  prenom: string;
+  solde: number;
+  libelle: string;
+}
