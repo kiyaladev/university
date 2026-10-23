@@ -39,7 +39,11 @@ describe('features/scolarite/services/deliberations', () => {
 
     await deliberationsService.creer({ anneeId: 'a1', promotionId: 'p1', session: 'NORMALE' });
 
-    expect(api.post).toHaveBeenCalledWith('/deliberations', { anneeId: 'a1', promotionId: 'p1', session: 'NORMALE' }, {});
+    expect(api.post).toHaveBeenCalledWith(
+      '/deliberations',
+      { anneeId: 'a1', promotionId: 'p1', session: 'NORMALE' },
+      {},
+    );
   });
 
   it('calcule puis valide une délibération', async () => {

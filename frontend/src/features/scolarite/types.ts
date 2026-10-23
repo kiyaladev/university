@@ -7,6 +7,7 @@
  */
 
 import type { Departement, Role } from '@/types/referentiels';
+import type { TravailEncadre } from '@/types/campus';
 import type {
   DecisionJury,
   Deliberation,
@@ -122,7 +123,7 @@ export interface SoutenanceCalendrier {
   mention?: string | null;
   salle?: { id: string; code: string; nom: string } | null;
   president?: { id: string; nom: string; prenom: string } | null;
-  travailEncadre?: { id: string; intitule: string } | null;
+  travailEncadre?: TravailEncadre | null;
 }
 
 /** Une transition de statut proposée dans le menu d'un travail encadré. */
