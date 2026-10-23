@@ -1,4 +1,5 @@
 import { creer, lister, modifier, supprimer } from '@/shared/services/http';
+import { PERMISSIONS } from '@/navigation/permissions';
 import type { Liste } from '@/types';
 
 /**
@@ -46,11 +47,11 @@ export interface FraisSaisie {
   devise?: string;
 }
 
-/** Rôle autorisé à créer, modifier et supprimer un tarif. */
-export const ROLES_GESTION_FRAIS = ['ADMIN', 'SCOLARITE'] as const;
+/** Rôles autorisés à créer, modifier et supprimer un tarif (droit `frais.gerer`). */
+export const ROLES_GESTION_FRAIS = PERMISSIONS['frais.gerer'];
 
-/** Rôle autorisé à supprimer un tarif (l'API ne l'ouvre qu'à l'administration). */
-export const ROLES_SUPPRESSION_FRAIS = ['ADMIN'] as const;
+/** Rôles autorisés à supprimer un tarif (droit `frais.supprimer`). */
+export const ROLES_SUPPRESSION_FRAIS = PERMISSIONS['frais.supprimer'];
 
 export const fraisService = {
   /** Tarifs filtrés par année et/ou promotion. */

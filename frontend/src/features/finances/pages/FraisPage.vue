@@ -142,8 +142,6 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { montantLisible } from '@/shared/utils/libelles';
 import DialogueFrais from '../components/DialogueFrais.vue';
 import {
-  ROLES_GESTION_FRAIS,
-  ROLES_SUPPRESSION_FRAIS,
   fraisService,
   filtresFrais,
   ligneFrais,
@@ -193,8 +191,8 @@ const optionsPromotions = computed(() =>
 );
 
 /** Les `@Roles` de l'API : administration et scolarité gèrent, l'administration seule supprime. */
-const peutGerer = computed(() => auth.aRole([...ROLES_GESTION_FRAIS]));
-const peutSupprimer = computed(() => auth.aRole([...ROLES_SUPPRESSION_FRAIS]));
+const peutGerer = computed(() => auth.peut('frais.gerer'));
+const peutSupprimer = computed(() => auth.peut('frais.supprimer'));
 
 const filtresActifs = computed(() => !!filtres.value.anneeId || !!filtres.value.promotionId);
 

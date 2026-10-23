@@ -223,8 +223,6 @@ import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { dateHeureLisible } from '@/shared/utils/libelles';
 import {
-  ROLES_GESTION_APPAREILS,
-  ROLES_GESTION_MOYENS,
   appareilActif,
   attestationService,
   type AppareilAttestation,
@@ -250,9 +248,9 @@ const codeGenere = ref('');
 const envoiCode = ref(false);
 
 /** L'API réserve les appareils à l'administration et à la direction. */
-const peutVoirAppareils = computed(() => auth.aRole([...ROLES_GESTION_APPAREILS]));
+const peutVoirAppareils = computed(() => auth.peut('attestation.appareils'));
 /** Les moyens d'un enseignant : administration, scolarité, chef de département, direction. */
-const peutGererMoyens = computed(() => auth.aRole([...ROLES_GESTION_MOYENS]));
+const peutGererMoyens = computed(() => auth.peut('attestation.moyens'));
 
 const colonnesAppareils = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('moyensAttestation.devices.columns.device'), field: 'libelle', align: 'left' },

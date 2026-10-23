@@ -1,4 +1,5 @@
 import { creer, lire, modifier, supprimer } from '@/shared/services/http';
+import { PERMISSIONS } from '@/navigation/permissions';
 
 /**
  * Moyens de preuve de présence des enseignants (`/attestation`).
@@ -57,11 +58,11 @@ export interface GabaritEmpreinte {
   doigt?: string | null;
 }
 
-/** Administration et direction : gestion des appareils de contrôle. */
-export const ROLES_GESTION_APPAREILS = ['ADMIN', 'DIRECTION'] as const;
+/** Administration et direction : gestion des appareils de contrôle (droit `attestation.appareils`). */
+export const ROLES_GESTION_APPAREILS = PERMISSIONS['attestation.appareils'];
 
-/** Rôles qui gèrent les moyens d'un enseignant. */
-export const ROLES_GESTION_MOYENS = ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'] as const;
+/** Rôles qui gèrent les moyens d'un enseignant (droit `attestation.moyens`). */
+export const ROLES_GESTION_MOYENS = PERMISSIONS['attestation.moyens'];
 
 export const attestationService = {
   /** Appareils de contrôle enrôlés. */

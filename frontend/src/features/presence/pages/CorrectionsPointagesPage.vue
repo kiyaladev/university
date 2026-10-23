@@ -173,12 +173,7 @@ import {
   optionsDepuis,
 } from '@/shared/utils/libelles';
 import DialogueCorrectionPointage from '../components/DialogueCorrectionPointage.vue';
-import {
-  ROLES_SUPPRESSION_POINTAGES,
-  peutCorriger,
-  pointagesService,
-  type ParametresPointages,
-} from '../services/pointages';
+import { peutCorriger, pointagesService, type ParametresPointages } from '../services/pointages';
 import type { Controle, ChipFiltre } from '@/types';
 
 const auth = useAuthStore();
@@ -225,7 +220,7 @@ const optionsMethode = computed(() => [
 ]);
 
 /** L'API réserve la suppression à l'administration et à la direction. */
-const peutSupprimer = computed(() => auth.aRole([...ROLES_SUPPRESSION_POINTAGES]));
+const peutSupprimer = computed(() => auth.peut('pointages.supprimer'));
 
 const filtresActifs = computed(
   () => !!filtres.value.dateDebut || !!filtres.value.dateFin || !!filtres.value.statut || !!filtres.value.methode,
@@ -294,11 +289,7 @@ function nomEnseignant(controle: Controle): string {
  * proposer une action qui serait refusée.
  */
 function modifiable(controle: Controle): boolean {
-  return peutCorriger(
-    controle,
-    auth.utilisateur?.role ? [auth.utilisateur.role] : [],
-    auth.utilisateur?.id,
-  );
+  return peutCorriger(controle, auth.peut('pointages.corriger'), auth.utilisateur?.role, auth.utilisateur?.id);
 }
 
 /** Couleur du badge de statut, calée sur les tons de présence. */
