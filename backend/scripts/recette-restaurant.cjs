@@ -12,7 +12,7 @@ assert.ok(['127.0.0.1', 'localhost'].includes(database.hostname));
 assert.equal(env.PORT, '15041');
 const api = 'http://127.0.0.1:15041/api';
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
-let userId, etudiantId;
+let userId, etudiantId, walletId, mealId;
 async function request(token, method, route, body, status = 200) {
   const response = await fetch(api + route, {
     method,
@@ -60,6 +60,7 @@ async function main() {
   etudiantId = student.id;
   const studentToken = await login(user.email, 'Etu#2026');
   const wallet = await request(studentToken, 'GET', '/portail/resto/me');
+  walletId = wallet.id;
   assert.equal(wallet.solde, 0);
   await request(studentToken, 'GET', '/resto/portefeuilles', null, 403);
   const cash = await request(
@@ -81,6 +82,7 @@ async function main() {
   const meal = await prisma.consommationResto.findFirstOrThrow({
     where: { portefeuilleId: wallet.id, statut: 'VALIDE' },
   });
+  mealId = meal.id;
   await request(studentToken, 'POST', `/resto/consommations/${meal.id}/annuler`, {}, 403);
   const refunds = await simultaneous(admin, `/resto/consommations/${meal.id}/annuler`, { motif: 'Annulation fictive' });
   assert.deepEqual(refunds.map((r) => r.status).sort(), [201, 400]);
@@ -160,7 +162,28 @@ main()
     process.exitCode = 1;
   })
   .finally(async () => {
-    if (etudiantId) await prisma.etudiant.delete({ where: { id: etudiantId } });
+    // Le portefeuille, les recharges, les consommations et les paiements
+    // référencent l'étudiant (Restrict) : on les supprime du plus petit au
+    // plus grand avant l'étudiant et son compte.
+    if (walletId) {
+      const recharges = await prisma.recharge.findMany({
+        where: { portefeuilleId: walletId },
+        select: { id: true, paiementId: true },
+      });
+      await prisma.consommationResto.deleteMany({ where: { portefeuilleId: walletId } });
+      await prisma.recharge.deleteMany({ where: { portefeuilleId: walletId } });
+      await prisma.paiement.deleteMany({
+        where: { id: { in: recharges.map((r) => r.paiementId).filter(Boolean) } },
+      });
+      await prisma.auditLog.deleteMany({
+        where: { entiteId: { in: [...recharges.map((r) => r.id), ...(mealId ? [mealId] : [])] } },
+      });
+      await prisma.portefeuilleResto.delete({ where: { id: walletId } });
+    }
+    if (etudiantId) {
+      await prisma.notification.deleteMany({ where: { etudiantId } });
+      await prisma.etudiant.delete({ where: { id: etudiantId } });
+    }
     if (userId) await prisma.user.delete({ where: { id: userId } });
     await prisma.$disconnect();
   });

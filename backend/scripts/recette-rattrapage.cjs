@@ -239,6 +239,9 @@ main()
   })
   .finally(async () => {
     if (promotion) {
+      // Les notes référencent leur évaluation ET leur inscription
+      // (Restrict) : elles doivent partir avant les deux.
+      await db.note.deleteMany({ where: { inscriptionId: { in: ids.inscription } } });
       await db.deliberation.deleteMany({ where: { promotionId: promotion.id } });
       await db.evaluation.deleteMany({ where: { promotionId: promotion.id } });
     }

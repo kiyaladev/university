@@ -11,7 +11,7 @@ assert.ok(['127.0.0.1', 'localhost'].includes(database.hostname));
 assert.equal(env.PORT, '15041');
 const api = 'http://127.0.0.1:15041/api';
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
-let studentId, snapshotId;
+let studentId, inscriptionId, snapshotId;
 async function request(token, method, route, body, status = 200) {
   const response = await fetch(api + route, {
     method,
@@ -44,6 +44,7 @@ async function main() {
   const inscription = await prisma.inscription.create({
     data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDE' },
   });
+  inscriptionId = inscription.id;
   const current = await request(direction, 'GET', route);
   assert.equal(current.effectifTotal, before.effectifTotal + 1);
   assert.equal(
@@ -99,6 +100,8 @@ main()
   })
   .finally(async () => {
     if (snapshotId) await prisma.statistiqueMesrs.delete({ where: { id: snapshotId } });
+    // L'inscription référence l'étudiant (Restrict) : elle part d'abord.
+    if (inscriptionId) await prisma.inscription.delete({ where: { id: inscriptionId } });
     if (studentId) await prisma.etudiant.delete({ where: { id: studentId } });
     await prisma.$disconnect();
   });
