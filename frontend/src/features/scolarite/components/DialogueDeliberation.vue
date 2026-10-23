@@ -78,11 +78,11 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
 import ChoixSemestre from './ChoixSemestre.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import type { AnneeAcademique, Matiere, Promotion, SessionDeliberation } from '@/types';
+import { deliberationsService } from '../services/deliberations';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
@@ -152,7 +152,7 @@ watch(ouvert, (o) => {
 async function creer() {
   enregistrement.value = true;
   try {
-    await api.post('/deliberations', {
+    await deliberationsService.creer({
       anneeId: form.value.anneeId,
       promotionId: form.value.promotionId,
       session: form.value.session,

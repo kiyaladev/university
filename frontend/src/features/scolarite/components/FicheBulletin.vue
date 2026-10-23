@@ -9,28 +9,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { LIBELLE_DECISION_JURY, dateLisible } from '@/shared/utils/libelles';
 import { ouvrirImpression } from '@/shared/services/impression';
-
-interface Ligne {
-  matiere: string;
-  code?: string;
-  credits: number;
-  moyenne: number; // /20
-  decision?: string;
-}
-
-interface Bulletin {
-  etudiant: { matricule: string; nom: string; prenom: string };
-  promotion: string;
-  annee: string;
-  session: string; // libellé déjà résolu : « Session normale » / « Rattrapage »
-  dateDeliberation?: string;
-  lignes: Ligne[];
-  moyenneGenerale: number;
-  decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT' | null;
-  mention?: string;
-  rang?: number;
-  effectif?: number;
-}
+import type { Bulletin } from '@/features/scolarite/types';
 
 const props = defineProps<{
   bulletin: Bulletin;
