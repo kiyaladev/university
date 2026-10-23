@@ -46,7 +46,7 @@ export class AuthService {
 
     if (user?.verrouilleJusqua && user.verrouilleJusqua > new Date()) {
       const minutes = Math.ceil((user.verrouilleJusqua.getTime() - Date.now()) / 60000);
-      throw new UnauthorizedException(`Trop de tentatives : compte bloqué pendant encore ${minutes} minute(s).`);
+      throw new UnauthorizedException(t('auth.trop_de_tentatives_compte_bloque', { minutes }));
     }
 
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {

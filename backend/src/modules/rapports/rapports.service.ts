@@ -4,6 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma, StatutPresence, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { t } from '../../common/i18n';
 import { dureeMinutes, isoDate, pct, round2, toDateOnly } from '../../common/utils';
 import { toMontant } from '../../common/finances/montant';
 import { RapportQueryDto } from './rapports.dto';
@@ -158,10 +159,12 @@ export class RapportsService {
         : new Date(fin.getTime() - (PERIODE_RAPPORT_DEFAUT_JOURS - 1) * JOUR_MS));
     const jours = Math.floor((fin.getTime() - debut.getTime()) / JOUR_MS) + 1;
     if (jours < 1) {
-      throw new BadRequestException('La date de début doit précéder ou égaler la date de fin.');
+      throw new BadRequestException(t('rapports.la_date_de_debut_doit_preceder_ou_egaler_la_date_de_fin'));
     }
     if (jours > PERIODE_RAPPORT_MAX_JOURS) {
-      throw new BadRequestException(`La période d’un rapport ne peut dépasser ${PERIODE_RAPPORT_MAX_JOURS} jours.`);
+      throw new BadRequestException(
+        t('rapports.la_periode_ne_peut_depasser_n_jours', { jours: PERIODE_RAPPORT_MAX_JOURS }),
+      );
     }
     const date: Prisma.DateTimeFilter = { gte: debut, lte: fin };
 

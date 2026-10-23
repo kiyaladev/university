@@ -328,7 +328,9 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException(`L'élection est ${election.statut} : on ne peut l'ouvrir que depuis BROUILLON.`);
+        throw new BadRequestException(
+          t('elections.on_ne_peut_ouvrir_l_election_que_depuis_brouillon', { statut: election.statut }),
+        );
       }
       if (election.candidats.length === 0) {
         throw new BadRequestException(t('elections.declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin'));
@@ -449,7 +451,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException("Les candidats ne se retirent qu'avant l'ouverture du scrutin.");
+        throw new BadRequestException(t('elections.les_candidats_ne_se_retirent_qu_avant_l_ouverture'));
       }
       const candidat = await tx.candidatElection.findUnique({
         where: { id: candidatId },
@@ -511,7 +513,7 @@ export class ElectionsService {
             }
             if (dto.bulletin.length > election.nbSieges) {
               throw new BadRequestException(
-                `Vous pouvez choisir au plus ${election.nbSieges} candidat(s) (sièges à pourvoir).`,
+                t('elections.vous_pouvez_choisir_au_plus_n_candidats', { sieges: election.nbSieges }),
               );
             }
             const doublons = new Set<string>();

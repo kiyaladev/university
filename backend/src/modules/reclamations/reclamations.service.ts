@@ -454,7 +454,7 @@ export class ReclamationsService extends CrudService {
       });
       if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (STATUTS_CLOS.includes(reclamation.statut)) {
-        throw new BadRequestException("Cette réclamation est close : aucun message supplémentaire n'est accepté.");
+        throw new BadRequestException(t('reclamations.cette_reclamation_est_close_aucun_message_supplement'));
       }
       const nombreMessages = await tx.messageReclamation.count({ where: { reclamationId: id } });
       if (nombreMessages >= MAX_MESSAGES_PAR_RECLAMATION) {
@@ -643,7 +643,7 @@ export class ReclamationsService extends CrudService {
       });
       if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (!STATUTS_CLOS.includes(reclamation.statut)) {
-        throw new BadRequestException("Pour clôturer, passez d'abord la réclamation à l'état RESOLU, FERME ou REJETE.");
+        throw new BadRequestException(t('reclamations.pour_cloturer_passez_d_abord_la_reclamation_a_l_etat'));
       }
       const stamp = `[${new Date().toISOString().slice(0, 16).replace('T', ' ')} ${user.prenom} ${user.nom}] CLÔTURE — ${note}`;
       const data: Prisma.ReclamationUpdateInput = {

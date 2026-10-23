@@ -336,7 +336,9 @@ export class CourrierService {
   async parapher(id: string, circuitId: string, dto: ParapherCourrierDto, user: AuthUser) {
     const courrier = await this.trouver(id, user);
     if (courrier.statut !== StatutCourrier.EN_CIRCUIT) {
-      throw new BadRequestException(`Courrier ${courrier.statut} : seul un courrier EN_CIRCUIT peut être paraphé`);
+      throw new BadRequestException(
+        t('courrier.seul_un_courrier_en_circuit_peut_etre_paraphe', { statut: courrier.statut }),
+      );
     }
     const etape = await this.prisma.circuitCourrier.findUnique({
       where: { id: circuitId },

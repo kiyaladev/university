@@ -7,5 +7,7 @@
   "equipement_numeroinventaire_n_a_pas_de_reparation_en_cours": "{equipement.numeroInventaire} n'a pas de réparation en cours.",
   "categorie_cat_libelle_cat_count_as_any_equipements_equipemen": "Catégorie « {cat.libelle} » : {(cat._count as any).equipements} équipement(s) y sont rattachés. Réaffectez-les avant de supprimer.",
   "equipement_numeroinventaire_reparations_reparation_s_consign": "{equipement.numeroInventaire} : {reparations} réparation(s) consignée(s). Désactivez l'équipement plutôt que de le supprimer.",
-  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} a déjà une réparation en cours ({ouverte.statut})."
+  "equipement_numeroinventaire_a_deja_une_reparation_en_cours_o": "{equipement.numeroInventaire} a déjà une réparation en cours ({ouverte.statut}).",
+  "un_equipement_porte_deja_le_numero_de_serie": "Un équipement porte déjà le numéro de série {numero}",
+  "un_equipement_porte_deja_le_numero_d_inventaire": "Un équipement porte déjà le numéro d’inventaire {numero}"
 }
