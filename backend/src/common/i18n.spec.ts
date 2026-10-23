@@ -84,11 +84,75 @@ describe('catalogues i18n — parité fr/en', () => {
   it('aucune clé ne pointe une valeur vide', () => {
     for (const langue of ['fr', 'en']) {
       for (const [cle, [fichier, valeur]] of catalogues(langue)) {
-        expect({ langue, fichier, cle, valeur }).toEqual(
-          expect.objectContaining({ valeur: expect.any(String) }),
-        );
+        expect({ langue, fichier, cle, valeur }).toEqual(expect.objectContaining({ valeur: expect.any(String) }));
         expect(String(valeur).trim()).not.toBe('');
       }
     }
+  });
+});
+
+/**
+ * Une clé introuvable ne se voit pas à la compilation : le repli de `t()`
+ * renvoie la clé elle-même, et l'utilisateur lit
+ * `stages.ce_travail_n_a_pas_d_encadrant` dans une notification. Le test
+ * relit donc le code et vérifie que chaque clé appelée existe.
+ */
+describe('catalogues i18n — les clés appelées existent', () => {
+  const racine = path.join(__dirname, '..');
+
+  /** Fichiers TypeScript du code applicatif (hors tests). */
+  const sources = (): string[] => {
+    const fichiers: string[] = [];
+    const parcourir = (dossier: string) => {
+      for (const entree of fs.readdirSync(dossier, { withFileTypes: true })) {
+        if (entree.name === 'i18n' || entree.name === 'node_modules') continue;
+        const chemin = path.join(dossier, entree.name);
+        if (entree.isDirectory()) parcourir(chemin);
+        else if (entree.name.endsWith('.ts') && !entree.name.endsWith('.spec.ts')) fichiers.push(chemin);
+      }
+    };
+    parcourir(racine);
+    return fichiers;
+  };
+
+  /** Clés `t('namespace.cle')` appelées par le code. */
+  const clesAppelees = (): Set<string> => {
+    const cles = new Set<string>();
+    for (const fichier of sources()) {
+      const texte = fs.readFileSync(fichier, 'utf8');
+      for (const trouve of texte.matchAll(/\bt\(\s*['"]([a-zA-Z0-9_-]+\.[a-zA-Z0-9_.-]+)['"]/g)) {
+        cles.add(trouve[1]);
+      }
+    }
+    return cles;
+  };
+
+  /** Une clé existe-t-elle dans le catalogue de la langue ? */
+  const existe = (langue: string, cle: string): boolean => {
+    const [namespace, ...segments] = cle.split('.');
+    const fichier = path.join(racine, 'i18n', langue, `${namespace}.json`);
+    if (!fs.existsSync(fichier)) return false;
+    let valeur: unknown = JSON.parse(fs.readFileSync(fichier, 'utf8'));
+    for (const segment of segments) {
+      if (!valeur || typeof valeur !== 'object' || !(segment in (valeur as Record<string, unknown>))) {
+        return false;
+      }
+      valeur = (valeur as Record<string, unknown>)[segment];
+    }
+    return typeof valeur === 'string';
+  };
+
+  it('chaque clé appelée par le code existe en fr et en', () => {
+    const cles = clesAppelees();
+    expect(cles.size).toBeGreaterThan(100);
+
+    const absentes: string[] = [];
+    for (const cle of cles) {
+      for (const langue of ['fr', 'en']) {
+        if (!existe(langue, cle)) absentes.push(`${cle} (${langue})`);
+      }
+    }
+
+    expect(absentes).toEqual([]);
   });
 });

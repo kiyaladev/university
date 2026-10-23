@@ -2,12 +2,17 @@ import {
   ArgumentsHost,
   BadRequestException,
   ConflictException,
+  Controller,
+  Get,
   Logger,
+  Module,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { HttpAdapterHost } from '@nestjs/core';
+import { APP_FILTER, HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Prisma } from '@prisma/client';
 import { ErreurHttpFilter, normaliserErreur } from './erreur-http.filter';
+import { PrismaExceptionFilter } from '../prisma-exception.filter';
 
 describe('ErreurHttpFilter — format d’erreur unique', () => {
   const response = {};
@@ -88,9 +93,7 @@ describe('ErreurHttpFilter — format d’erreur unique', () => {
     const journal = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
     filter.catch(new Error('Secret interne à ne pas exposer'), host);
 
-    expect(corpsEnvoye()).toEqual(
-      expect.objectContaining({ statusCode: 500, error: 'Internal Server Error' }),
-    );
+    expect(corpsEnvoye()).toEqual(expect.objectContaining({ statusCode: 500, error: 'Internal Server Error' }));
     expect(JSON.stringify(corpsEnvoye())).not.toContain('Secret interne');
     journal.mockRestore();
   });
@@ -115,5 +118,68 @@ describe('normaliserErreur — cas limites', () => {
     const corps = normaliserErreur(new BadRequestException());
 
     expect(corps).toEqual({ statusCode: 400, message: 'Bad Request', error: 'Bad Request' });
+  });
+});
+
+/**
+ * Le filtre doit être en tête de la file des filtres globaux : en
+ * production, le filtre Prisma est enregistré par le mécanisme APP_FILTER,
+ * donc avant celui de `main.ts`, et c'est nevertheless le filtre d'erreur
+ * unique qui doit répondre.
+ */
+describe('ErreurHttpFilter — en conditions réelles', () => {
+  @Controller('test')
+  class TestController {
+    @Get('ko')
+    ko() {
+      throw new BadRequestException('Saisie invalide');
+    }
+
+    @Get('liste')
+    liste() {
+      throw new BadRequestException(['A requis', 'B invalide']);
+    }
+  }
+
+  @Module({
+    controllers: [TestController],
+    providers: [{ provide: APP_FILTER, useClass: PrismaExceptionFilter }],
+  })
+  class TestModule {}
+
+  let app: NestExpressApplication;
+  let base: string;
+
+  beforeAll(async () => {
+    app = await NestFactory.create<NestExpressApplication>(TestModule, { bodyParser: false });
+    app.useBodyParser('json', { limit: '8mb' });
+    app.useGlobalFilters(new ErreurHttpFilter(app.get(HttpAdapterHost)));
+    await app.listen(0, '127.0.0.1');
+    base = (await app.getUrl()).replace('[::1]', '127.0.0.1');
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('répond au format unique sur une vraie requête', async () => {
+    const reponse = await fetch(`${base}/test/ko`);
+
+    expect(reponse.status).toBe(400);
+    expect(await reponse.json()).toEqual({
+      statusCode: 400,
+      message: 'Saisie invalide',
+      error: 'Bad Request',
+    });
+  });
+
+  it('répond un tableau de messages sur une vraie requête', async () => {
+    const reponse = await fetch(`${base}/test/liste`);
+
+    expect(await reponse.json()).toEqual({
+      statusCode: 400,
+      message: ['A requis', 'B invalide'],
+      error: 'Bad Request',
+    });
   });
 });

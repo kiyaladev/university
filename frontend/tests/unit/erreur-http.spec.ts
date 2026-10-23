@@ -40,7 +40,11 @@ describe('shared/utils/erreur-http', () => {
 
   describe('completerMessageErreur', () => {
     it('ajoute le message de l’ancien format sans effacer les autres champs', () => {
-      const corps = completerMessageErreur({ statutCode: 400, erreur: 'ValidationFailed', messages: ['Champ A requis'] });
+      const corps = completerMessageErreur({
+        statutCode: 400,
+        erreur: 'ValidationFailed',
+        messages: ['Champ A requis'],
+      });
 
       expect(corps).toEqual({
         statutCode: 400,
