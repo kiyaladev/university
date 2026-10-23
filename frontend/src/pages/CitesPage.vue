@@ -237,9 +237,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <span class="champ champ-statut champ-statut--dense" :class="classeStatutChambre(p.row.statut)">
-              <span class="pochoir">{{ LIBELLE_STATUT_CHAMBRE[p.row.statut] ?? p.row.statut }}</span>
-            </span>
+            <PastilleStatut domaine="chambre" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-loyer="p">
@@ -289,9 +287,7 @@
                 <div class="text-uppercase text-caption text-grey-7">{{ c.residence?.code ?? '—' }}</div>
                 <div class="text-subtitle1 text-weight-medium">{{ c.code }}</div>
               </div>
-              <span class="champ champ-statut champ-statut--dense" :class="classeStatutChambre(c.statut)">
-                <span class="pochoir">{{ LIBELLE_STATUT_CHAMBRE[c.statut] ?? c.statut }}</span>
-              </span>
+              <PastilleStatut domaine="chambre" :statut="c.statut" />
             </q-card-section>
             <q-card-section class="q-pt-none q-gutter-y-xs">
               <div class="row items-center">
@@ -422,9 +418,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <span class="champ champ-statut champ-statut--dense" :class="classeStatutAttribution(p.row.statut)">
-              <span class="pochoir">{{ LIBELLE_STATUT_ATTRIBUTION[p.row.statut] ?? p.row.statut }}</span>
-            </span>
+            <PastilleStatut domaine="attribution" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-actions="p">
@@ -463,9 +457,7 @@
                   {{ a.etudiant?.nom }} {{ a.etudiant?.prenom }}
                 </div>
               </div>
-              <span class="champ champ-statut champ-statut--dense" :class="classeStatutAttribution(a.statut)">
-                <span class="pochoir">{{ LIBELLE_STATUT_ATTRIBUTION[a.statut] ?? a.statut }}</span>
-              </span>
+              <PastilleStatut domaine="attribution" :statut="a.statut" />
             </q-card-section>
             <q-card-section class="q-pt-none q-gutter-y-xs">
               <div class="row items-center">
@@ -597,6 +589,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
@@ -973,22 +966,6 @@ function voirAttributionsDe(c: Chambre) {
 }
 
 // ------------------------------------------------------------------ labels
-const classeStatutChambre = (s: string) =>
-  ({
-    LIBRE: 'champ--present',
-    RESERVEE: 'champ--retard',
-    OCCUPEE: 'champ--attente',
-    MAINTENANCE: 'champ--absent',
-  })[s] ?? 'champ--attente';
-
-const classeStatutAttribution = (s: string) =>
-  ({
-    EN_ATTENTE: 'champ--attente',
-    ACCORDEE: 'champ--present',
-    REFUSEE: 'champ--absent',
-    RETIREE: 'champ--retard',
-  })[s] ?? 'champ--attente';
-
 const couleurScore = (score: number) =>
   (score >= 70 ? 'positive' : score >= 40 ? 'warning' : 'negative');
 

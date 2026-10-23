@@ -80,9 +80,7 @@
     >
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="classeStatut(p.row.statut)">
-            {{ LIBELLE_STATUT_PAIE[p.row.statut] }}
-          </span>
+          <PastilleStatut domaine="paie" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-montantTotal="p">
@@ -219,9 +217,7 @@
                   {{ dateLisible(f.dateDebut) }} {{ $t('rectoratPage.subtitleFallback') }} {{ dateLisible(f.dateFin) }}
                 </div>
               </div>
-              <span class="champ badge-statut" :class="classeStatut(f.statut)">
-                {{ LIBELLE_STATUT_PAIE[f.statut] }}
-              </span>
+              <PastilleStatut domaine="paie" :statut="f.statut" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -318,9 +314,7 @@
                 {{ detail ? `${dateLisible(detail.dateDebut)} — ${dateLisible(detail.dateFin)}` : '' }}
               </div>
             </div>
-            <span v-if="detail" class="champ badge-statut" :class="classeStatut(detail.statut)">
-              {{ LIBELLE_STATUT_PAIE[detail.statut] }}
-            </span>
+            <PastilleStatut v-if="detail" domaine="paie" :statut="detail.statut" />
           </div>
         </q-card-section>
 
@@ -338,9 +332,7 @@
                 <div>{{ p.row.enseignant?.nom }} {{ p.row.enseignant?.prenom }}</div>
                 <div class="q-gutter-xs q-mt-xs">
                   <q-chip dense size="xs" outline color="primary">{{ p.row.enseignant?.matricule }}</q-chip>
-                  <q-chip dense size="xs" :color="p.row.enseignant?.statut === 'VACATAIRE' ? 'accent' : 'secondary'">
-                    {{ p.row.enseignant?.statut }}
-                  </q-chip>
+                  <PastilleStatut domaine="enseignant" :statut="p.row.enseignant?.statut" />
                 </div>
               </q-td>
             </template>
@@ -383,6 +375,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
 import EtatVide from '../components/EtatVide.vue';
@@ -463,10 +456,6 @@ const chipsFiltres = computed(() => {
 });
 
 const anneesExistantes = computed(() => liste.lignes.map((f) => f.annee));
-
-/** Cycle de vie d'une feuille, peint aux couleurs partagées avec le courrier. */
-const classeStatut = (s: string) =>
-  s === 'BROUILLON' ? 'champ--brouillon' : s === 'VALIDEE' ? 'champ--validee' : 'champ--close';
 
 const optionsAnnees = computed(() => {
   const courante = new Date().getFullYear();
@@ -622,8 +611,6 @@ const peutSupprimer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 
 </script>
 
 <style scoped lang="scss">
-@use '../css/champs-admin' as *;
-
 .carte-feuille {
   cursor: pointer;
   transition: background var(--up-transition);

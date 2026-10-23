@@ -67,9 +67,3 @@ export const LIBELLE_STATUT_CARTE: Record<StatutCarteEtudiante, string> = tradui
   EMISE: 'Émise',
   REVOQUEE: 'Révoquée',
 });
-
-/** Classes de pastille de la carte : le registre et « Ma carte » se colorent pareil. */
-export const CLASSE_STATUT_CARTE: Record<StatutCarteEtudiante, string> = {
-  EMISE: 'badge--ok',
-  REVOQUEE: 'badge--ko',
-};

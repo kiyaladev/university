@@ -361,4 +361,15 @@ export default {
     M2: 'M2',
     DOCTORAT: 'Doctorate',
   },
+  statut_election: {
+    BROUILLON: 'Draft',
+    OUVERTE: 'Open',
+    CLOSE: 'Closed',
+    PROCLAMEE: 'Proclaimed',
+    ANNULEE: 'Cancelled',
+  },
+  statut_recette: {
+    ENCAISSEE: 'Collected',
+    A_ENCAISSER: 'To be collected',
+  },
 };

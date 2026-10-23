@@ -30,9 +30,7 @@
 
       <page-header :title="$t('plagiatDetail.title')" :subtitle="$t('plagiatDetail.subtitle')">
         <template #actions>
-          <q-chip :color="couleurStatut(suspicion.statut)" text-color="white" dense size="md" :icon="iconeStatut(suspicion.statut)">
-            {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
-          </q-chip>
+          <PastilleStatut domaine="suspicion" :statut="suspicion.statut" :icone="iconeStatut(suspicion.statut)" />
         </template>
       </page-header>
 
@@ -275,13 +273,14 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
-import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT, dateHeureLisible } from '../utils/libelles';
+import { LIBELLE_TYPE_DOCUMENT, dateHeureLisible } from '../utils/libelles';
 import PageHeader from '../components/PageHeader.vue';
 import EtatVide from '../components/EtatVide.vue';
 import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '../types';
@@ -304,9 +303,6 @@ const decisionEnCours = ref(false);
 const id = computed(() => String(route.params.id ?? ''));
 
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
-
-const couleurStatut = (s: SuspicionPlagiat['statut']) =>
-  ({ EN_ATTENTE: 'orange', ACQUITTE: 'positive', CONFIRME: 'negative' }[s]);
 
 const iconeStatut = (s: SuspicionPlagiat['statut']) =>
   ({ EN_ATTENTE: 'hourglass_empty', ACQUITTE: 'thumb_down', CONFIRME: 'gavel' }[s]);

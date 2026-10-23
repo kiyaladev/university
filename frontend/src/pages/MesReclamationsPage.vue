@@ -100,9 +100,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="reclamation-statut" :class="`statut-${p.row.statut}`">
-            <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-          </span>
+          <PastilleStatut domaine="reclamation" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-priorite="p">
@@ -138,9 +136,7 @@
               <div class="text-caption text-grey-7">{{ libelleType(r.type) }}</div>
             </div>
             <div class="column items-end q-gutter-xs">
-              <span class="reclamation-statut" :class="`statut-${r.statut}`">
-                <span class="pochoir">{{ libelleStatut(r.statut) }}</span>
-              </span>
+              <PastilleStatut domaine="reclamation" :statut="r.statut" />
               <span class="reclamation-prio" :class="`prio-${r.priorite}`">
                 <span class="pochoir">{{ libellePriorite(r.priorite) }}</span>
               </span>
@@ -194,6 +190,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, reactive, ref } from 'vue';
@@ -218,7 +215,6 @@ import {
 import type {
   PrioriteReclamation,
   Reclamation,
-  StatutReclamation,
   TypeReclamation,
 } from '../types';
 
@@ -273,9 +269,6 @@ const plaques = computed(() => [
   { cle: 'RESOLUE', libelle: t('mesReclamations.stats.labels.resolved') },
 ]);
 
-function libelleStatut(s: string) {
-  return LIBELLE_STATUT_RECLAMATION[s as StatutReclamation] ?? s;
-}
 function libelleType(t: string) {
   return LIBELLE_TYPE_RECLAMATION[t as TypeReclamation] ?? t;
 }
@@ -343,24 +336,6 @@ $rouge: #CE1126;
   }
 }
 
-.reclamation-statut {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  min-height: 24px;
-  color: var(--up-encre);
-  border-radius: var(--up-rayon-sm);
-  font-size: 11px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-
-  &.statut-OUVERTE { background: $jaune-fond; color: $jaune-texte; }
-  &.statut-EN_COURS { background: $vert-fond; color: $vert-lien; }
-  &.statut-EN_ATTENTE_REPONSE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
-  &.statut-RESOLUE { background: $vert-fond; color: #{$vert}; }
-  &.statut-FERMEE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
-  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
-}
 
 .reclamation-carte { background: var(--up-plaque); }
 

@@ -364,4 +364,15 @@ export default {
     M2: 'M2',
     DOCTORAT: 'Doctorat',
   },
+  statut_election: {
+    BROUILLON: 'Brouillon',
+    OUVERTE: 'Ouverte',
+    CLOSE: 'Close',
+    PROCLAMEE: 'Proclamée',
+    ANNULEE: 'Annulée',
+  },
+  statut_recette: {
+    ENCAISSEE: 'Encaissée',
+    A_ENCAISSER: 'À encaisser',
+  },
 };

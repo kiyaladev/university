@@ -8,6 +8,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ICONE_STATUT_PRESENCE, LIBELLE_STATUT_PRESENCE } from '../utils/libelles';
+import { CLASSE_CHAMP_PRESENCE } from '../utils/statuts';
+import type { StatutPresence } from '../types';
 
 /**
  * Un statut de présence est un champ peint, jamais une pastille posée sur du
@@ -18,16 +20,7 @@ const props = withDefaults(defineProps<{ statut: string; dense?: boolean }>(), {
 });
 
 const classe = computed(
-  () =>
-    ({
-      PRESENT: 'present',
-      RETARD: 'retard',
-      ABSENT: 'absent',
-      EXCUSE: 'excuse',
-      REMPLACE: 'remplace',
-      DEPART_ANTICIPE: 'depart',
-      NON_CONTROLE: 'neutre',
-    })[props.statut] ?? 'neutre',
+  () => CLASSE_CHAMP_PRESENCE[props.statut as StatutPresence] ?? 'neutre',
 );
 </script>
 

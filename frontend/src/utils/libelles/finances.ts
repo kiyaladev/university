@@ -35,3 +35,12 @@ export const LIBELLE_TYPE_RECETTE: Record<string, string> = traduireLibelles('ty
   PRESTATION_CONSEIL: 'Prestation de conseil',
   AUTRE: 'Autre',
 });
+
+/**
+ * Recette propre : le registre ne connaît que deux états, dérivés de la
+ * présence d'un paiement rattaché.
+ */
+export const LIBELLE_STATUT_RECETTE: Record<'ENCAISSEE' | 'A_ENCAISSER', string> = traduireLibelles('statut_recette', {
+  ENCAISSEE: 'Encaissée',
+  A_ENCAISSER: 'À encaisser',
+});

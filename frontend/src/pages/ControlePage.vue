@@ -294,7 +294,8 @@ import {
   dureeLisible,
   maintenantHHmm,
 } from '../utils/libelles';
-import type { Salle, Seance } from '../types';
+import type { Salle, Seance, StatutPresence } from '../types';
+import { CLASSE_CHAMP_PRESENCE } from '../utils/statuts';
 import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
@@ -405,14 +406,7 @@ const seancesFiltrees = computed(() => {
 });
 
 const classeStatut = (statut: string) =>
-  ({
-    PRESENT: 'present',
-    RETARD: 'retard',
-    ABSENT: 'absent',
-    EXCUSE: 'excuse',
-    REMPLACE: 'remplace',
-    DEPART_ANTICIPE: 'depart',
-  })[statut] ?? 'attente';
+  CLASSE_CHAMP_PRESENCE[statut as StatutPresence] ?? 'attente';
 
 /** Séance en cours à l'instant où le contrôleur regarde son panneau. */
 function estEnCours(s: Seance) {

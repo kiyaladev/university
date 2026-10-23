@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -52,12 +53,6 @@ const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 
 const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_BADGE);
 const OPTIONS_STATUT = optionsDepuis(LIBELLE_STATUT_BADGE);
-
-const CLASSE_STATUT: Record<string, string> = {
-  ACTIF: 'badge--ok',
-  EXPIRE: 'badge--attention',
-  ANNULE: 'badge--ko',
-};
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'numero', label: t('badges.table.columns.number'), field: 'numero', align: 'left' },
@@ -219,9 +214,7 @@ function statutEffectif(b: BadgeAcces): string {
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut" :class="CLASSE_STATUT[statutEffectif(p.row)]">
-            <span class="pochoir">{{ LIBELLE_STATUT_BADGE[statutEffectif(p.row)] }}</span>
-          </span>
+          <PastilleStatut domaine="badge" :statut="statutEffectif(p.row)" />
           <div v-if="p.row.statut === 'ANNULE' && p.row.motif" class="text-caption text-grey-7">
             {{ p.row.motif }}
           </div>
@@ -281,9 +274,7 @@ function statutEffectif(b: BadgeAcces): string {
               <div class="text-weight-bold">{{ b.prenom }} {{ b.nom }}</div>
               <div class="text-caption text-grey-7">{{ b.organisation ?? '—' }}</div>
             </div>
-            <span class="champ champ-statut" :class="CLASSE_STATUT[statutEffectif(b)]">
-              <span class="pochoir">{{ LIBELLE_STATUT_BADGE[statutEffectif(b)] }}</span>
-            </span>
+            <PastilleStatut domaine="badge" :statut="statutEffectif(b)" />
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
@@ -395,14 +386,4 @@ function statutEffectif(b: BadgeAcces): string {
   height: 100%;
   background: var(--up-plaque);
 }
-
-/* Pastille de statut : même gabarit que sur les cartes étudiantes. */
-.champ-statut {
-  display: inline-flex;
-  padding: 3px 8px;
-  min-height: 24px;
-}
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
-.badge--attention { background: #fff6ef; color: #b64400; }
 </style>

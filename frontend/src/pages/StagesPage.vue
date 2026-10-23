@@ -176,9 +176,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <q-chip :color="couleurStatut(p.row.statut)" text-color="white" dense square>
-              {{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}
-            </q-chip>
+            <PastilleStatut domaine="stage" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-rapport="p">
@@ -266,7 +264,7 @@
                   <q-item-label>{{ c.label }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-badge :color="couleurStatut(c.statut)" :label="c.nb" />
+                  <PastilleStatut domaine="stage" :statut="c.statut" :libelle="String(c.nb)" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -442,9 +440,7 @@
             <q-item>
               <q-item-section>{{ $t('stages.detail.fields.status') }}</q-item-section>
               <q-item-section side>
-                <q-chip :color="couleurStatut(detail.statut)" text-color="white" dense square>
-                  {{ LIBELLE_STATUT_ENCADREMENT[detail.statut] }}
-                </q-chip>
+                <PastilleStatut domaine="stage" :statut="detail.statut" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -458,6 +454,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import SoutenanceDialog from '../components/SoutenanceDialog.vue';
 import TravailDialog from '../components/TravailDialog.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
@@ -594,9 +591,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'soutenance', label: t('stages.table.columns.defense'), field: 'soutenance', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-const couleurStatut = (s: string) =>
-  ({ SOUTENU: 'positive', ABANDONNE: 'negative', EN_COURS: 'primary', VALIDE: 'secondary' })[s] ?? 'grey-7';
 
 const compteurs = computed(() => {
   const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];

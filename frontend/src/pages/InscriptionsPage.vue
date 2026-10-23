@@ -124,9 +124,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="classeStatut(p.row.statut)">
-            {{ LIBELLE_STATUT_INSCRIPTION[p.row.statut] ?? p.row.statut }}
-          </span>
+          <PastilleStatut domaine="inscription" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -246,9 +244,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <span class="champ badge-statut" :class="classeStatut(d.statut)">
-              {{ LIBELLE_STATUT_INSCRIPTION[d.statut] ?? d.statut }}
-            </span>
+            <PastilleStatut domaine="inscription" :statut="d.statut" />
             <q-space />
             <div class="text-caption text-grey-7">{{ d.numero }}</div>
           </div>
@@ -484,6 +480,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -607,15 +604,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'dateInscription', label: t('inscriptions.table.columns.enrolledOn'), field: 'dateInscription', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-const classeStatut = (s: string) =>
-  ({
-    BROUILLON: 'champ--brouillon',
-    EN_ATTENTE_PAIEMENT: 'champ--attente-paiement',
-    PAYEE: 'champ--payee',
-    VALIDEE: 'champ--validee',
-    ANNULEE: 'champ--annulee',
-  })[s] ?? 'champ--brouillon';
 
 /** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
 const filtresActifs = computed(() =>
@@ -865,18 +853,4 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.champ--brouillon { background: #e8e8ed; color: #33463f; }
-.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
-.champ--payee { background: #007a4d; color: #fff; }
-.champ--validee { background: #0066cc; color: #fff; }
-.champ--annulee { background: #ce1126; color: #fff; }
 </style>
