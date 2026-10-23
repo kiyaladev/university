@@ -12,391 +12,75 @@
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
       <!-- ------------------------------------------------------- Années -->
       <q-tab-panel name="annees" class="q-pa-none">
-        <barre-filtres v-model="filtres.annees" :placeholder="$t('structure.search.annees')">
-          <template #actions>
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('structure.actions.newAnnee')"
-              @click="ouvrirAnnee(null)"
-            />
-          </template>
-        </barre-filtres>
-
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="annees"
-          :columns="colonnesAnnees"
-          row-key="id"
-          :loading="chargement"
-          :filter="filtres.annees.recherche"
-          :pagination="{ rowsPerPage: 10 }"
-        >
-          <template #no-data>
-            <etat-vide icone="event" :titre="messageVide('annees', t('structure.emptyState.annees'))">
-              <template v-if="peutGerer" #action>
-                <q-btn
-                  unelevated
-                  color="primary"
-                  no-caps
-                  icon="add"
-                  :label="$t('structure.actions.createAnnee')"
-                  @click="ouvrirAnnee(null)"
-                />
-              </template>
-            </etat-vide>
-          </template>
-          <template #body-cell-active="p">
-            <q-td :props="p">
-              <q-chip v-if="p.row.active" dense color="positive" text-color="white">{{
-                $t('structure.table.active')
-              }}</q-chip>
-              <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                flat
-                dense
-                round
-                icon="groups"
-                :aria-label="$t('structure.ariaLabels.seePromotionsOfAnnee')"
-                @click="voirPromotionsDeLAnnee(p.row)"
-              >
-                <q-tooltip>{{ $t('structure.tooltips.seesPromotions') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutGerer"
-                flat
-                dense
-                round
-                icon="edit"
-                :aria-label="$t('structure.ariaLabels.editAnnee')"
-                @click="ouvrirAnnee(p.row)"
-              >
-                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutSupprimer"
-                flat
-                dense
-                round
-                color="negative"
-                icon="delete"
-                :aria-label="$t('structure.ariaLabels.deleteAnnee')"
-                @click="supprimer('annees', p.row.libelle, p.row.id)"
-              >
-                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
+        <panneau-structure-annees
+          :annees="annees"
+          :chargement="chargement"
+          :filtre="filtres.annees"
+          :titre-vide="messageVide('annees', t('structure.emptyState.annees'))"
+          :peut-gerer="peutGerer"
+          :peut-supprimer="peutSupprimer"
+          @update:filtre="filtres.annees = $event"
+          @nouvelle="ouvrirAnnee(null)"
+          @modifier="ouvrirAnnee"
+          @supprimer="supprimer('annees', $event.libelle, $event.id)"
+          @voir-promotions="voirPromotionsDeLAnnee"
+        />
       </q-tab-panel>
 
       <!-- -------------------------------------------------- Départements -->
       <q-tab-panel name="departements" class="q-pa-none">
-        <barre-filtres v-model="filtres.departements" :placeholder="$t('structure.search.departements')">
-          <template #actions>
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('structure.actions.newDepartement')"
-              @click="ouvrirDepartement(null)"
-            />
-          </template>
-        </barre-filtres>
-
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="departements"
-          :columns="colonnesDepartements"
-          row-key="id"
-          :loading="chargement"
-          :filter="filtres.departements.recherche"
-          :pagination="{ rowsPerPage: 15 }"
-        >
-          <template #no-data>
-            <etat-vide icone="apartment" :titre="messageVide('departements', t('structure.emptyState.departements'))">
-              <template v-if="peutGerer" #action>
-                <q-btn
-                  unelevated
-                  color="primary"
-                  no-caps
-                  icon="add"
-                  :label="$t('structure.actions.createDepartement')"
-                  @click="ouvrirDepartement(null)"
-                />
-              </template>
-            </etat-vide>
-          </template>
-          <template #body-cell-filieres="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                flat
-                dense
-                no-caps
-                :label="String(p.row._count?.filieres ?? 0)"
-                :disable="!(p.row._count?.filieres ?? 0)"
-                :aria-label="$t('structure.ariaLabels.seeFilieresOfDepartement')"
-                @click="voirFilieresDuDepartement(p.row)"
-              >
-                <q-tooltip v-if="p.row._count?.filieres">{{ $t('structure.tooltips.seeFilieres') }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                v-if="peutGerer"
-                flat
-                dense
-                round
-                icon="edit"
-                :aria-label="$t('structure.ariaLabels.editDepartement')"
-                @click="ouvrirDepartement(p.row)"
-              >
-                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutSupprimer"
-                flat
-                dense
-                round
-                color="negative"
-                icon="delete"
-                :aria-label="$t('structure.ariaLabels.deleteDepartement')"
-                @click="supprimer('departements', p.row.nom, p.row.id)"
-              >
-                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
+        <panneau-structure-departements
+          :departements="departements"
+          :chargement="chargement"
+          :filtre="filtres.departements"
+          :titre-vide="messageVide('departements', t('structure.emptyState.departements'))"
+          :peut-gerer="peutGerer"
+          :peut-supprimer="peutSupprimer"
+          @update:filtre="filtres.departements = $event"
+          @nouvelle="ouvrirDepartement(null)"
+          @modifier="ouvrirDepartement"
+          @supprimer="supprimer('departements', $event.nom, $event.id)"
+          @voir-filieres="voirFilieresDuDepartement"
+        />
       </q-tab-panel>
 
       <!-- ------------------------------------------------------ Filières -->
       <q-tab-panel name="filieres" class="q-pa-none">
-        <barre-filtres
-          v-model="filtres.filieres"
+        <panneau-structure-filieres
+          :filieres="filieresFiltrees"
+          :chargement="chargement"
+          :filtre="filtres.filieres"
           :chips="chipsFilieres"
-          :placeholder="$t('structure.search.filieres')"
-          @reinitialiser="filtres.filieres = {}"
-        >
-          <template #avances>
-            <q-select
-              v-model="filtres.filieres.departementId"
-              :options="optionsDepartements"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :label="$t('common.fields.department')"
-            />
-          </template>
-          <template #actions>
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('structure.actions.newFiliere')"
-              @click="ouvrirFiliere(null)"
-            />
-          </template>
-        </barre-filtres>
-
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="filieresFiltrees"
-          :columns="colonnesFilieres"
-          row-key="id"
-          :loading="chargement"
-          :filter="filtres.filieres.recherche"
-          :pagination="{ rowsPerPage: 15 }"
-        >
-          <template #no-data>
-            <etat-vide icone="account_tree" :titre="messageVide('filieres', t('structure.emptyState.filieres'))">
-              <template v-if="peutGerer" #action>
-                <q-btn
-                  unelevated
-                  color="primary"
-                  no-caps
-                  icon="add"
-                  :label="$t('structure.actions.createFiliere')"
-                  @click="ouvrirFiliere(null)"
-                />
-              </template>
-            </etat-vide>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                flat
-                dense
-                round
-                icon="groups"
-                :aria-label="$t('structure.ariaLabels.seePromotionsOfFiliere')"
-                @click="voirPromotionsDeLaFiliere(p.row)"
-              >
-                <q-tooltip>{{ $t('structure.tooltips.seesPromotions') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutGerer"
-                flat
-                dense
-                round
-                icon="edit"
-                :aria-label="$t('structure.ariaLabels.editFiliere')"
-                @click="ouvrirFiliere(p.row)"
-              >
-                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutSupprimer"
-                flat
-                dense
-                round
-                color="negative"
-                icon="delete"
-                :aria-label="$t('structure.ariaLabels.deleteFiliere')"
-                @click="supprimer('filieres', p.row.nom, p.row.id)"
-              >
-                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
+          :options-departements="optionsDepartements"
+          :titre-vide="messageVide('filieres', t('structure.emptyState.filieres'))"
+          :peut-gerer="peutGerer"
+          :peut-supprimer="peutSupprimer"
+          @update:filtre="filtres.filieres = $event"
+          @nouvelle="ouvrirFiliere(null)"
+          @modifier="ouvrirFiliere"
+          @supprimer="supprimer('filieres', $event.nom, $event.id)"
+          @voir-promotions="voirPromotionsDeLaFiliere"
+        />
       </q-tab-panel>
 
       <!-- ---------------------------------------------------- Promotions -->
       <q-tab-panel name="promotions" class="q-pa-none">
-        <barre-filtres
-          v-model="filtres.promotions"
+        <panneau-structure-promotions
+          :promotions="promotionsFiltrees"
+          :chargement="chargement"
+          :filtre="filtres.promotions"
           :chips="chipsPromotions"
-          :placeholder="$t('structure.search.promotions')"
-          @reinitialiser="filtres.promotions = {}"
-        >
-          <template #avances>
-            <q-select
-              v-model="filtres.promotions.filiereId"
-              :options="optionsFilieres"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :label="$t('common.fields.filiere')"
-            />
-            <q-select
-              v-model="filtres.promotions.anneeId"
-              :options="optionsAnnees"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              :label="$t('common.fields.academicYear')"
-            />
-            <q-select
-              v-model="filtres.promotions.niveau"
-              :options="NIVEAUX"
-              outlined
-              dense
-              clearable
-              :label="$t('common.fields.level')"
-            />
-          </template>
-          <template #actions>
-            <q-btn
-              v-if="peutGerer"
-              unelevated
-              color="primary"
-              no-caps
-              icon="add"
-              :label="$t('structure.actions.newPromotion')"
-              @click="ouvrirPromotion(null)"
-            />
-          </template>
-        </barre-filtres>
-
-        <q-table
-          flat
-          bordered
-          class="carte"
-          :rows="promotionsFiltrees"
-          :columns="colonnesPromotions"
-          row-key="id"
-          :loading="chargement"
-          :filter="filtres.promotions.recherche"
-          :pagination="{ rowsPerPage: 15 }"
-        >
-          <template #no-data>
-            <etat-vide icone="groups" :titre="messageVide('promotions', t('structure.emptyState.promotions'))">
-              <template v-if="peutGerer" #action>
-                <q-btn
-                  unelevated
-                  color="primary"
-                  no-caps
-                  icon="add"
-                  :label="$t('structure.actions.createPromotion')"
-                  @click="ouvrirPromotion(null)"
-                />
-              </template>
-            </etat-vide>
-          </template>
-          <template #body-cell-actions="p">
-            <q-td :props="p" class="text-right">
-              <q-btn
-                flat
-                dense
-                round
-                icon="assignment_ind"
-                :aria-label="$t('structure.ariaLabels.seeChargesOfPromotion')"
-                @click="voirChargesDeLaPromotion(p.row)"
-              >
-                <q-tooltip>{{ $t('structure.tooltips.seesCharges') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutGerer"
-                flat
-                dense
-                round
-                icon="edit"
-                :aria-label="$t('structure.ariaLabels.editPromotion')"
-                @click="ouvrirPromotion(p.row)"
-              >
-                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-              </q-btn>
-              <q-btn
-                v-if="peutSupprimer"
-                flat
-                dense
-                round
-                color="negative"
-                icon="delete"
-                :aria-label="$t('structure.ariaLabels.deletePromotion')"
-                @click="supprimer('promotions', p.row.nom, p.row.id)"
-              >
-                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
+          :options-filieres="optionsFilieres"
+          :options-annees="optionsAnnees"
+          :titre-vide="messageVide('promotions', t('structure.emptyState.promotions'))"
+          :peut-gerer="peutGerer"
+          :peut-supprimer="peutSupprimer"
+          @update:filtre="filtres.promotions = $event"
+          @nouvelle="ouvrirPromotion(null)"
+          @modifier="ouvrirPromotion"
+          @supprimer="supprimer('promotions', $event.nom, $event.id)"
+          @voir-charges="voirChargesDeLaPromotion"
+        />
       </q-tab-panel>
     </q-tab-panels>
 
@@ -563,23 +247,23 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useQuasar, type QTableColumn } from 'quasar';
+import { useQuasar } from 'quasar';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
-import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import { NIVEAUX, dateLisible } from '@/shared/utils/libelles';
-import type { AnneeAcademique, Departement, Filiere, Promotion, ChipFiltre } from '@/types';
-
-/** Le backend joint l'année académique aux promotions. */
-interface PromotionListee extends Promotion {
-  annee?: AnneeAcademique | null;
-}
+import { NIVEAUX } from '@/shared/utils/libelles';
+import PanneauStructureAnnees from '@/features/administration/components/PanneauStructureAnnees.vue';
+import PanneauStructureDepartements from '@/features/administration/components/PanneauStructureDepartements.vue';
+import PanneauStructureFilieres from '@/features/administration/components/PanneauStructureFilieres.vue';
+import PanneauStructurePromotions from '@/features/administration/components/PanneauStructurePromotions.vue';
+import {
+  structureService,
+  type PromotionListee,
+} from '@/features/administration/services/structure';
+import type { AnneeAcademique, Departement, Filiere, Niveau, ChipFiltre } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -620,7 +304,7 @@ const promotionEditee = ref<PromotionListee | null>(null);
 const formAnnee = ref({ libelle: '', dateDebut: '', dateFin: '', active: false });
 const formDepartement = ref({ code: '', nom: '', faculte: '' });
 const formFiliere = ref({ code: '', nom: '', departementId: '' });
-const formPromotion = ref({ nom: '', niveau: 'L1', effectif: 0, filiereId: '', anneeId: '' });
+const formPromotion = ref({ nom: '', niveau: 'L1' as Niveau, effectif: 0, filiereId: '', anneeId: '' });
 
 const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 const optionsFilieres = computed(() =>
@@ -703,81 +387,6 @@ function messageVide(cle: string, parDefaut: string) {
   return actif ? t('structure.emptyState.noResults') : parDefaut;
 }
 
-const colonnesAnnees = computed<QTableColumn[]>(() => [
-  { name: 'libelle', label: t('common.fields.year'), field: 'libelle', align: 'left', sortable: true },
-  {
-    name: 'debut',
-    label: t('common.fields.start'),
-    field: (r: AnneeAcademique) => dateLisible(r.dateDebut),
-    align: 'left',
-  },
-  {
-    name: 'fin',
-    label: t('common.fields.end'),
-    field: (r: AnneeAcademique) => dateLisible(r.dateFin),
-    align: 'left',
-  },
-  { name: 'active', label: t('common.fields.status'), field: 'active', align: 'left' },
-  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
-]);
-
-const colonnesDepartements = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
-  {
-    name: 'faculte',
-    label: t('structure.table.columns.faculte'),
-    field: (r: Departement) => r.faculte || '—',
-    align: 'left',
-  },
-  {
-    name: 'enseignants',
-    label: t('common.fields.teachers'),
-    field: (r: Departement) => r._count?.enseignants ?? 0,
-    align: 'right',
-    sortable: true,
-  },
-  {
-    name: 'filieres',
-    label: t('structure.table.columns.filieres'),
-    field: (r: Departement) => r._count?.filieres ?? 0,
-    align: 'right',
-    sortable: true,
-  },
-  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
-]);
-
-const colonnesFilieres = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
-  {
-    name: 'departement',
-    label: t('common.fields.department'),
-    field: (r: Filiere) => r.departement?.nom ?? '—',
-    align: 'left',
-  },
-  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
-]);
-
-const colonnesPromotions = computed<QTableColumn[]>(() => [
-  { name: 'nom', label: t('structure.table.columns.promotion'), field: 'nom', align: 'left', sortable: true },
-  { name: 'niveau', label: t('common.fields.level'), field: 'niveau', align: 'left', sortable: true },
-  {
-    name: 'filiere',
-    label: t('common.fields.filiere'),
-    field: (r: PromotionListee) => r.filiere?.nom ?? '—',
-    align: 'left',
-  },
-  {
-    name: 'annee',
-    label: t('common.fields.year'),
-    field: (r: PromotionListee) => r.annee?.libelle ?? '—',
-    align: 'left',
-  },
-  { name: 'effectif', label: t('common.fields.headcount'), field: 'effectif', align: 'right', sortable: true },
-  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
-]);
-
 // ------------------------------------------------------------ liaisons
 
 /** Le département se lit par ses filières : on bascule d'onglet en filtrant. */
@@ -842,11 +451,14 @@ function ouvrirPromotion(p: PromotionListee | null) {
   dialogPromotion.value = true;
 }
 
-/** Enregistrement commun : validation faite, appel, notification, rechargement. */
-async function envoyer(url: string, edition: boolean, payload: unknown, messageOk: string) {
+/**
+ * Enregistrement commun : validation faite, appel, notification, rechargement.
+ * L'appel est délégué au service ; en cas d'échec, le formulaire reste ouvert.
+ */
+async function envoyer(appelle: () => Promise<unknown>, messageOk: string) {
   enregistrement.value = true;
   try {
-    await (edition ? api.put(url, payload) : api.post(url, payload));
+    await appelle();
     $q.notify({ type: 'positive', message: messageOk });
     await referentiels.rafraichir();
     await charger();
@@ -859,30 +471,53 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
 }
 
 async function enregistrerAnnee() {
-  const url = anneeEditee.value ? `/annees/${anneeEditee.value.id}` : '/annees';
-  if (await envoyer(url, !!anneeEditee.value, formAnnee.value, t('structure.messages.anneeSaved'))) {
+  const edition = anneeEditee.value;
+  const ok = await envoyer(
+    () => (edition ? structureService.modifierAnnee(edition.id, formAnnee.value) : structureService.creerAnnee(formAnnee.value)),
+    t('structure.messages.anneeSaved'),
+  );
+  if (ok) {
     dialogAnnee.value = false;
   }
 }
 
 async function enregistrerDepartement() {
+  const edition = departementEdite.value;
   const payload = { ...formDepartement.value, faculte: formDepartement.value.faculte || undefined };
-  const url = departementEdite.value ? `/departements/${departementEdite.value.id}` : '/departements';
-  if (await envoyer(url, !!departementEdite.value, payload, t('structure.messages.departementSaved'))) {
+  const ok = await envoyer(
+    () =>
+      edition
+        ? structureService.modifierDepartement(edition.id, payload)
+        : structureService.creerDepartement(payload),
+    t('structure.messages.departementSaved'),
+  );
+  if (ok) {
     dialogDepartement.value = false;
   }
 }
 
 async function enregistrerFiliere() {
-  const url = filiereEditee.value ? `/filieres/${filiereEditee.value.id}` : '/filieres';
-  if (await envoyer(url, !!filiereEditee.value, formFiliere.value, t('structure.messages.filiereSaved'))) {
+  const edition = filiereEditee.value;
+  const ok = await envoyer(
+    () =>
+      edition ? structureService.modifierFiliere(edition.id, formFiliere.value) : structureService.creerFiliere(formFiliere.value),
+    t('structure.messages.filiereSaved'),
+  );
+  if (ok) {
     dialogFiliere.value = false;
   }
 }
 
 async function enregistrerPromotion() {
-  const url = promotionEditee.value ? `/promotions/${promotionEditee.value.id}` : '/promotions';
-  if (await envoyer(url, !!promotionEditee.value, formPromotion.value, t('structure.messages.promotionSaved'))) {
+  const edition = promotionEditee.value;
+  const ok = await envoyer(
+    () =>
+      edition
+        ? structureService.modifierPromotion(edition.id, formPromotion.value)
+        : structureService.creerPromotion(formPromotion.value),
+    t('structure.messages.promotionSaved'),
+  );
+  if (ok) {
     dialogPromotion.value = false;
   }
 }
@@ -912,12 +547,12 @@ async function charger() {
     const [a, d, f, p] = await Promise.all([
       referentiels.annees(),
       referentiels.departements(),
-      api.get('/filieres', { params: { all: '1' } }),
+      structureService.filieres(),
       referentiels.promotions(),
     ]);
     annees.value = a;
     departements.value = d;
-    filieres.value = f.data.data;
+    filieres.value = f.data;
     promotions.value = p as PromotionListee[];
   } catch {
     /* notifié par l'intercepteur */
