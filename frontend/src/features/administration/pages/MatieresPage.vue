@@ -256,9 +256,9 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
+import { matieresService, type MatiereSaisie } from '@/features/administration/services/matieres';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
@@ -287,11 +287,11 @@ const mat = reactive(
     filtres,
     syncUrl: true,
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/matieres', {
-          params: { ...pageApi(p), search: texteApi(f.recherche), departementId: f.departementId || undefined },
-        })
-        .then((r) => r.data),
+      matieresService.liste({
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        departementId: f.departementId || undefined,
+      }),
   }),
 );
 
@@ -376,9 +376,9 @@ watch(dialogOuvert, (ouvert) => {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    const payload = { ...form.value, departementId: form.value.departementId || undefined };
-    if (matiereEditee.value) await api.put(`/matieres/${matiereEditee.value.id}`, payload);
-    else await api.post('/matieres', payload);
+    const payload: MatiereSaisie = { ...form.value, departementId: form.value.departementId || undefined };
+    if (matiereEditee.value) await matieresService.modifier(matiereEditee.value.id, payload);
+    else await matieresService.creer(payload);
     $q.notify({ type: 'positive', message: t('matieres.messages.saved') });
     dialogOuvert.value = false;
     await Promise.all([mat.recharger(), referentiels.rafraichir('matieres')]);
