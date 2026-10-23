@@ -23,7 +23,7 @@
           :label="$t('verificationCarte.form.identifierLabel')"
           :hint="$t('verificationCarte.form.identifierHint')"
         />
-        <qr-scanner
+        <lecteur-qr
           v-model="codeQr"
           :label="$t('verificationCarte.form.qrLabel')"
           :hint="$t('verificationCarte.form.qrHint')"
@@ -114,12 +114,12 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { getAppLocale } from '@/boot/i18n';
-import QrScanner from '@/shared/components/QrScanner.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur la carte
  * (https://…/verification-carte?carte=…&k=UP-CARTE-…) ou par saisie manuelle.
- * Le composant QrScanner ne restitue que le contenu brut scanné : on y
+ * Le composant LecteurQr ne restitue que le contenu brut scanné : on y
  * extrait les paramètres « carte » et « k », exactement comme le ferait le
  * navigateur pour l'URL complète.
  */

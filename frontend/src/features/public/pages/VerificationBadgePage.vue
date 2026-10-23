@@ -22,7 +22,7 @@
           :label="$t('verificationBadge.form.identifiantLabel')"
           :hint="$t('verificationBadge.form.identifiantHint')"
         />
-        <qr-scanner
+        <lecteur-qr
           v-model="codeQr"
           :label="$t('verificationBadge.form.qrLabel')"
           :hint="$t('verificationBadge.form.qrHint')"
@@ -126,7 +126,7 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import QrScanner from '@/shared/components/QrScanner.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_BADGE, dateHeureLisible, dateLisible } from '@/shared/utils/libelles';
 
 /**

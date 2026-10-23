@@ -29,7 +29,7 @@
     <!-- TRAVAUX : liste et suivi                          -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'travaux'" name="travaux" class="q-pa-none q-mt-md">
-      <filter-bar
+      <barre-filtres
         v-model="filtresTravaux"
         :chips="chipsTravaux"
         :placeholder="$t('stages.filters.searchPlaceholderWorks')"
@@ -46,14 +46,14 @@
             clearable
             :label="$t('common.fields.type')"
           />
-          <autocomplete-async
+          <champ-recherche
             v-model="filtresTravaux.encadrantId"
             endpoint="/enseignants"
             :label-fn="(e) => `${e.nom} ${e.prenom} (${e.matricule})`"
             :label="$t('stages.filters.supervisor')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <!-- Compteurs par statut -->
       <div class="row q-col-gutter-sm q-mb-md">
@@ -304,7 +304,7 @@
         </div>
       </div>
 
-      <filter-bar
+      <barre-filtres
         v-model="filtresSoutenances"
         :chips="chipsSoutenances"
         :placeholder="$t('stages.filters.searchPlaceholderDefenses')"
@@ -322,9 +322,9 @@
             :label="$t('stages.filters.workStatus')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
-      <calendar-grid
+      <grille-calendrier
         :evenements="evenementsSoutenances"
         :compact="false"
       />
@@ -363,10 +363,10 @@
     </q-tab-panel>
 
     <!-- Dialog création / édition -->
-    <travail-dialog v-model="dialogTravail" :travail="travailEdite" @enregistre="charger" />
+    <dialogue-travail v-model="dialogTravail" :travail="travailEdite" @enregistre="charger" />
 
     <!-- Dialog soutenance (planification ou constat du jury) -->
-    <soutenance-dialog
+    <dialogue-soutenance
       v-if="travailSoutenance"
       v-model="dialogSoutenance"
       :travail="travailSoutenance"
@@ -455,12 +455,12 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import SoutenanceDialog from '../components/SoutenanceDialog.vue';
-import TravailDialog from '../components/TravailDialog.vue';
+import DialogueSoutenance from '../components/DialogueSoutenance.vue';
+import DialogueTravail from '../components/DialogueTravail.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import CalendarGrid from '@/shared/components/CalendarGrid.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import GrilleCalendrier from '@/shared/components/GrilleCalendrier.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
@@ -613,7 +613,7 @@ function chipsCommuns(f: Record<string, any>): ChipFiltre[] {
   return cs;
 }
 
-/** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
+/** Chips des filtres actifs : sans elles, BarreFiltres masque « Réinitialiser ». */
 const chipsTravaux = computed(() => {
   const f = filtresTravaux.value;
   const cs = chipsCommuns(f);

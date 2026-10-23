@@ -9,7 +9,7 @@
     @valider="enregistrer"
   >
     <div class="q-gutter-md">
-      <autocomplete-async
+      <champ-recherche
         v-model="form.examenId"
         endpoint="/examens"
         :label="t('tirage.dialogs.schedule.examLabel')"
@@ -54,7 +54,7 @@ import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 

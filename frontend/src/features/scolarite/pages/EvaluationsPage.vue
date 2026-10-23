@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('evaluations.title')" :subtitle="$t('evaluations.subtitle')">
+    <en-tete-page :title="$t('evaluations.title')" :subtitle="$t('evaluations.subtitle')">
       <template v-if="peutGererEvaluation()" #actions>
         <q-btn
           unelevated
@@ -11,9 +11,9 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('evaluations.filters.search_placeholder')"
@@ -40,7 +40,7 @@
           map-options
           :label="$t('evaluations.filters.promotion')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.matiereId"
           endpoint="/matieres"
           :label="$t('common.fields.subject')"
@@ -68,7 +68,7 @@
           :label="$t('evaluations.filters.status')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -298,7 +298,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="ev.lignes.length"
       v-model:page="ev.page"
       v-model:page-size="ev.pageSize"
@@ -306,7 +306,7 @@
       @tous="ev.toutAfficher()"
     />
 
-    <evaluation-dialog
+    <dialogue-evaluation
       v-model="dialogOuvert"
       :evaluation="evaluationEditee"
       :annees="annees"
@@ -398,8 +398,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -409,11 +409,11 @@ import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import EvaluationDialog from '../components/EvaluationDialog.vue';
+import DialogueEvaluation from '../components/DialogueEvaluation.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import {
   LIBELLE_STATUT_EVALUATION,
   LIBELLE_TYPE_EVALUATION,

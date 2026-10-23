@@ -15,7 +15,7 @@ import { useRoute, useRouter, type LocationQuery } from 'vue-router';
  *         .then((r) => r.data),
  *   }));
  *
- *   <pagination-bar v-model:page="tickets.page" v-model:page-size="tickets.pageSize" :total="tickets.total" :show-all="false" />
+ *   <barre-pagination v-model:page="tickets.page" v-model:page-size="tickets.pageSize" :total="tickets.total" :show-all="false" />
  *   <q-table :rows="tickets.lignes" :loading="tickets.chargement" … />
  *
  * - `reactive(...)` déballe les refs pour le gabarit ; on peut aussi
@@ -30,7 +30,7 @@ import { useRoute, useRouter, type LocationQuery } from 'vue-router';
  *   `router.replace` de la liste elle-même sont reconnus et ignorés : pas de
  *   boucle URL → filtres → URL.
  * - `toutAfficher()` : une seule page contenant tout (`pageSize = total`,
- *   borné à 1 000 comme l'API) — branché sur `@tous` de `<pagination-bar>`.
+ *   borné à 1 000 comme l'API) — branché sur `@tous` de `<barre-pagination>`.
  * - API non paginée (`pageSize: 0`) : `charger` reçoit `tout: true`, la liste
  *   arrive entière et la page garde son filtrage local (`:rows-per-page-options="[0]"`
  *   ou `:pagination="{ rowsPerPage: 20 }"` du q-table). Les clés de `clesLocales`

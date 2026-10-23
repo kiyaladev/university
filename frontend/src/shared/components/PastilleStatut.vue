@@ -11,7 +11,7 @@ import { libelleStatut, tonStatut, type DomaineStatut } from '@/shared/utils/sta
 
 /**
  * Pastille de statut, la même dans tous les registres : le libellé vient de
- * utils/libelles, le ton de la table unique utils/statuts. La couleur vit dans
+ * shared/utils/libelles, le ton de la table unique shared/utils/statuts. La couleur vit dans
  * le texte, sur un fond très dilué (DESIGN.md, « la règle du fond dilué »).
  *
  * `libelle` ne sert qu'aux rares écrans qui disent le statut autrement (une

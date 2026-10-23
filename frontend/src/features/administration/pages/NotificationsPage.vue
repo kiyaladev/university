@@ -1,6 +1,6 @@
 <template>
   <q-page class="notifications">
-    <page-header :title="$t('notifications.header.title')" :subtitle="$t('notifications.header.subtitle')">
+    <en-tete-page :title="$t('notifications.header.title')" :subtitle="$t('notifications.header.subtitle')">
       <template v-if="stats" #actions>
         <q-chip square color="warning" text-color="dark" icon="sms">
           {{ $t('notifications.header.queued', { n: stats.EN_ATTENTE }) }}
@@ -9,7 +9,7 @@
           </q-tooltip>
         </q-chip>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="diffusion" icon="campaign" :label="$t('notifications.tabs.diffusion')" no-caps />
@@ -162,7 +162,7 @@
     <!-- HISTORIQUE                                                        -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'historique'" name="historique" class="q-pa-none q-mt-md">
-      <filter-bar
+      <barre-filtres
         v-model="filtresHistorique"
         :placeholder="$t('notifications.history.searchPlaceholder')"
         :recherche="true"
@@ -182,7 +182,7 @@
           <champ-date v-model="filtresHistorique.dateDebut" :label="$t('common.actions.from')" />
           <champ-date v-model="filtresHistorique.dateFin" :label="$t('common.actions.to')" />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <div class="text-caption text-grey-7 q-mb-sm">
         {{ $t('notifications.history.countLabel', { n: hist.total, periode: legendePeriode }) }}
@@ -197,7 +197,7 @@
           <div class="text-caption text-grey-7 q-mb-sm">
             {{ $t('notifications.history.chart.subtitle') }}
           </div>
-          <chart-canvas
+          <graphique
             :config="chartConfig"
             :hauteur="220"
             role="img"
@@ -293,7 +293,7 @@
         </template>
       </q-table>
 
-      <pagination-bar
+      <barre-pagination
         v-model:page="hist.page"
         v-model:page-size="hist.pageSize"
         :total="hist.total"
@@ -319,10 +319,10 @@ import {
 import type { Notification, StatutNotification } from '@/types';
 import { useAuthStore } from '@/stores/auth';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import ChartCanvas from '@/shared/components/ChartCanvas.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import Graphique from '@/shared/components/Graphique.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('bulletins.title')" :subtitle="$t('bulletins.subtitle')">
+    <en-tete-page :title="$t('bulletins.title')" :subtitle="$t('bulletins.subtitle')">
       <template #actions>
         <q-btn
           outline
@@ -20,9 +20,9 @@
           @click="imprimerTous"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('bulletins.filters.search')"
@@ -49,7 +49,7 @@
           map-options
           :label="$t('bulletins.filters.promotion')"
         />
-        <semestre-select
+        <choix-semestre
           v-model="filtres.session"
           type="session"
           :label="$t('bulletins.filters.session')"
@@ -66,7 +66,7 @@
           :label="$t('bulletins.filters.decision')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <!-- Aperçu d'un bulletin : on quitte la liste le temps de la lecture -->
     <div v-if="bulletinSelectionne" class="bulletins-apercu">
@@ -87,7 +87,7 @@
           />
         </div>
       </div>
-      <bulletin-card :bulletin="bulletinSelectionne" :chemin-impression="cheminBulletinCourant" />
+      <fiche-bulletin :bulletin="bulletinSelectionne" :chemin-impression="cheminBulletinCourant" />
     </div>
 
     <template v-else>
@@ -256,7 +256,7 @@
           <etat-vide v-if="!lignesPage.length" class="plaque" icone="school" :titre="$t('bulletins.table.emptyState')" />
         </div>
 
-        <pagination-bar
+        <barre-pagination
           v-if="lignesFiltrees.length"
           :page="page"
           :page-size="pageSize"
@@ -273,8 +273,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -285,10 +285,10 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import BulletinCard from '../components/BulletinCard.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import SemestreSelect from '../components/SemestreSelect.vue';
+import FicheBulletin from '../components/FicheBulletin.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChoixSemestre from '../components/ChoixSemestre.vue';
 import { ouvrirImpression, ouvrirImpressions } from '@/shared/services/impression';
 import {
   LIBELLE_DECISION_JURY,

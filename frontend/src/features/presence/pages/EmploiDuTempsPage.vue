@@ -1,6 +1,6 @@
 <template>
   <q-page class="edt">
-    <page-header :title="$t('emploiDuTemps.title')" :subtitle="$t('emploiDuTemps.subtitle')">
+    <en-tete-page :title="$t('emploiDuTemps.title')" :subtitle="$t('emploiDuTemps.subtitle')">
       <template #actions>
         <q-btn
           v-if="auth.peutPlanifier"
@@ -30,7 +30,7 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Semaine affichée : la grille montre ce qui vaut cette semaine-là -->
     <div class="edt__semaine">
@@ -257,13 +257,13 @@
       </li>
     </ol>
 
-    <creneau-dialog
+    <dialogue-creneau
       v-model="dialogOuvert"
       :creneau="creneauEdite"
       :salles="salles"
       @enregistre="charger"
     />
-    <generation-dialog v-model="dialogGeneration" />
+    <dialogue-generation v-model="dialogGeneration" />
   </q-page>
 </template>
 
@@ -274,9 +274,9 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import PageHeader from '@/shared/components/PageHeader.vue';
-import CreneauDialog from '../components/CreneauDialog.vue';
-import GenerationDialog from '../components/GenerationDialog.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
+import DialogueCreneau from '../components/DialogueCreneau.vue';
+import DialogueGeneration from '../components/DialogueGeneration.vue';
 import { LIBELLE_TYPE_COURS, decalerJours, heuresLisibles } from '@/shared/utils/libelles';
 import type { Creneau, Enseignant, Promotion, Salle } from '@/types';
 

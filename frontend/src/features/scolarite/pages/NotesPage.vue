@@ -1,6 +1,6 @@
 <template>
   <q-page class="notes-page">
-    <page-header :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
+    <en-tete-page :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
       <template v-if="evaluationActive" #actions>
         <q-badge
           :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
@@ -13,12 +13,12 @@
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <div class="carte q-pa-md q-mb-md">
       <div class="row q-col-gutter-md items-end">
         <div v-if="!evaluationActive" class="col-12 col-md-8">
-          <autocomplete-async
+          <champ-recherche
             v-model="selEvaluationId"
             endpoint="/evaluations"
             :label="$t('notes.form.evaluationLabel')"
@@ -103,14 +103,14 @@
 </template>
 
 <script setup lang="ts">
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import NotesSaisieMasse from '../components/NotesSaisieMasse.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';

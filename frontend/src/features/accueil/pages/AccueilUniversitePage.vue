@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="t('accueilUniversity.title')" :subtitle="t('accueilUniversity.subtitle')" />
+    <en-tete-page :title="t('accueilUniversity.title')" :subtitle="t('accueilUniversity.subtitle')" />
     <div class="row q-col-gutter-md">
       <section v-for="groupe in groupes" :key="groupe.id" class="col-12 col-md-8">
         <q-card flat bordered class="full-height">
@@ -22,7 +22,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useServicesActifsStore } from '@/stores/servicesActifs';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { titreRoute } from '@/shared/utils/titreRoute';
 import { tachesAccueil } from '@/navigation/menu';
 const { t } = useI18n();

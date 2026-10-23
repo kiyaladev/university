@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { api } from '@/boot/axios';
 import { OPTIONS_TYPE_ELECTION } from '../services/elections';
@@ -110,14 +110,14 @@ async function soumettre() {
         dense
       />
       <div class="row q-col-gutter-md">
-        <autocomplete-async
+        <champ-recherche
           v-model="formulaire.promotionId"
           endpoint="/promotions"
           :label-fn="(p: Promotion) => `${p.nom} (${p.filiere?.code ?? ''})`"
           :label="$t('elections.dialogs.electionForm.promotion')"
           class="col"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="formulaire.departementId"
           endpoint="/departements"
           :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"

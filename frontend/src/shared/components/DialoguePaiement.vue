@@ -16,7 +16,7 @@
 
         <template v-if="typePaiement === 'inscription'">
           <span class="section-titre">{{ $t('paiements.filters.enrollment') }}</span>
-          <autocomplete-async
+          <champ-recherche
             v-model="form.inscriptionId"
             endpoint="/inscriptions"
             :label-fn="(i) => `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''} (${LIBELLE_STATUT_INSCRIPTION[i.statut] ?? i.statut})`"
@@ -57,7 +57,7 @@
 
         <template v-else>
           <span class="section-titre">{{ $t('paiements.dialog.fields.beneficiary') }}</span>
-          <autocomplete-async
+          <champ-recherche
             v-model="form.etudiantId"
             endpoint="/etudiants"
             :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
@@ -173,7 +173,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from './AutocompleteAsync.vue';
+import ChampRecherche from './ChampRecherche.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,

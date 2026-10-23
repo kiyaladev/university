@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('common.fields.enrollments')" :subtitle="$t('inscriptions.subtitle')">
+    <en-tete-page :title="$t('common.fields.enrollments')" :subtitle="$t('inscriptions.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutGerer"
@@ -12,7 +12,7 @@
           @click="dialogInscription = true"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Arrivée depuis la fiche d'un étudiant : le ciblage est annoncé et se lève. -->
     <q-banner v-if="etudiantCible && filtres.etudiant" dense class="note--info q-mb-md">
@@ -24,7 +24,7 @@
       </template>
     </q-banner>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('inscriptions.filters.searchPlaceholder')"
@@ -68,7 +68,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('inscriptions.filters.enrolledFrom')" />
         <champ-date v-model="filtres.dateFin" :label="$t('inscriptions.filters.enrolledUntil')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -365,7 +365,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -373,14 +373,14 @@
       @tous="liste.toutAfficher()"
     />
 
-    <inscription-dialog v-model="dialogInscription" @enregistre="liste.recharger()" />
-    <paiement-dialog
+    <dialogue-inscription v-model="dialogInscription" @enregistre="liste.recharger()" />
+    <dialogue-paiement
       v-model="dialogPaiement"
       :inscription-id="paiementInscriptionId"
       :montant-initial="paiementMontantInitial"
       @paye="liste.recharger()"
     />
-    <etudiant-dialog
+    <dialogue-etudiant
       v-model="dialogFicheEtudiant"
       :etudiant="etudiantEdite"
       @enregistre="liste.recharger()"
@@ -482,8 +482,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -491,11 +491,11 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import InscriptionDialog from '../components/InscriptionDialog.vue';
-import PaiementDialog from '@/shared/components/PaiementDialog.vue';
-import EtudiantDialog from '../components/EtudiantDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import DialogueInscription from '../components/DialogueInscription.vue';
+import DialoguePaiement from '@/shared/components/DialoguePaiement.vue';
+import DialogueEtudiant from '../components/DialogueEtudiant.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';

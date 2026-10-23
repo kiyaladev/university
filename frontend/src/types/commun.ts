@@ -1,7 +1,7 @@
 /** Types communs : puces de filtre et réponse paginée de l’API. */
 
 /**
- * Puce de rappel d'un filtre actif, affichée par `components/FilterBar.vue`.
+ * Puce de rappel d'un filtre actif, affichée par `shared/components/BarreFiltres.vue`.
  *
  * `cle` nomme le filtre d'où vient la puce : sans elle, la barre ne sait pas
  * quoi effacer au clic sur la croix et n'affiche donc pas de croix du tout.

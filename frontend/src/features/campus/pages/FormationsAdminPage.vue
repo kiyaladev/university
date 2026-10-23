@@ -1,17 +1,17 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('formationsAdmin.title')" :subtitle="$t('formationsAdmin.subtitle')">
+    <en-tete-page :title="$t('formationsAdmin.title')" :subtitle="$t('formationsAdmin.subtitle')">
       <template #actions>
         <q-btn flat no-caps icon="public" :label="$t('formationsAdmin.actions.seeShowcase')" to="/formations">
           <q-tooltip>{{ $t('formationsAdmin.actions.seeShowcaseTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn unelevated color="primary" no-caps icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- La recherche du serveur balaie titre, catégorie et lieu : un seul champ
          suffit, le filtre avancé ne porte que le statut réellement supporté. -->
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('formationsAdmin.filters.searchPlaceholder')"
@@ -29,7 +29,7 @@
           :label="$t('common.fields.status')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <!-- Statistiques -->
     <div class="row q-col-gutter-md q-mb-md">
@@ -391,7 +391,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -399,24 +399,24 @@
       @tous="liste.toutAfficher()"
     />
 
-    <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="liste.recharger()" />
+    <dialogue-formation v-model="dialogFormation" :formation="formationEnCours" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation, type OptionsConfirmation } from '@/shared/composables/useConfirmation';
 import { formationsService, type FormationDashboard } from '@/shared/services/formations';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import FormationDialog from '../components/FormationDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueFormation from '../components/DialogueFormation.vue';
 import {
   LIBELLE_STATUT_FORMATION,
   dateLisible,
@@ -457,7 +457,7 @@ const optionsStatuts = Object.entries(LIBELLE_STATUT_FORMATION).map(([value, lab
   label,
 }));
 
-/** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
+/** Chips des filtres actifs : sans elles, BarreFiltres masque « Réinitialiser ». */
 const chips = computed(() => {
   const f = filtres.value;
   const cs: ChipFiltre[] = [];

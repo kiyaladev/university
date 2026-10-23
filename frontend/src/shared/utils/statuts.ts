@@ -259,7 +259,7 @@ const TONS_STATUT = {
 
 export type DomaineStatut = keyof typeof TONS_STATUT;
 
-/** Libellés de chaque domaine : ceux de utils/libelles, jamais redits ici. */
+/** Libellés de chaque domaine : ceux de shared/utils/libelles, jamais redits ici. */
 export const LIBELLES_STATUT: Record<DomaineStatut, Record<string, string>> = {
   paiement: LIBELLE_STATUT_PAIEMENT,
   inscription: LIBELLE_STATUT_INSCRIPTION,

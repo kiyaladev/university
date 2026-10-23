@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="procedures" />
-    <page-header :title="$t('mesDemandes.title')" :subtitle="$t('mesDemandes.subtitle')">
+    <en-tete-page :title="$t('mesDemandes.title')" :subtitle="$t('mesDemandes.subtitle')">
       <template #actions>
         <q-btn
           unelevated
@@ -12,7 +12,7 @@
           @click="creationOuverte = true"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
       {{ $t('mesDemandes.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesDemandes.banner.goToRegistry') }) }}
@@ -31,7 +31,7 @@
       <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-if="!rolePasBon"
       v-model="filtres"
       :placeholder="$t('mesDemandes.filters.searchPlaceholder')"
@@ -50,9 +50,9 @@
           :label="$t('common.fields.status')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
-    <pagination-bar
+    <barre-pagination
       v-if="!rolePasBon"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -193,7 +193,7 @@
       </etat-vide>
     </div>
 
-    <demande-document-dialog v-model="creationOuverte" @enregistre="liste.recharger()" />
+    <dialogue-demande-document v-model="creationOuverte" @enregistre="liste.recharger()" />
 
     <!-- Suivi d'une demande : mêmes étapes que côté scolarité -->
     <q-dialog v-model="suiviOuvert">
@@ -206,7 +206,7 @@
           <PastilleStatut domaine="demande" :statut="demandeSuivie.statut" />
         </q-card-section>
         <q-card-section v-if="demandeSuivie" class="q-pt-none">
-          <workflow-stepper
+          <etapes-circuit
             :etapes="ETAPES_DEMANDE"
             :actuel="demandeSuivie.statut"
             :readonly="true"
@@ -337,20 +337,20 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import DemandeDocumentDialog from '../components/DemandeDocumentDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueDemandeDocument from '../components/DialogueDemandeDocument.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
-import WorkflowStepper from '@/shared/components/WorkflowStepper.vue';
+import EtapesCircuit from '@/shared/components/EtapesCircuit.vue';
 import {
   LIBELLE_STATUT_DEMANDE,
   LIBELLE_STATUT_PAIEMENT,

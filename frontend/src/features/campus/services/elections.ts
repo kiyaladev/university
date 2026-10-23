@@ -18,7 +18,7 @@ export interface ParametresListeElections {
 
 /**
  * Le libellé d'un statut d'élection vit désormais avec les autres dans
- * utils/libelles (et sa couleur dans utils/statuts) : réexporté ici pour les
+ * shared/utils/libelles (et sa couleur dans shared/utils/statuts) : réexporté ici pour les
  * écrans qui l'importaient depuis le service.
  */
 export { LIBELLE_STATUT_ELECTION } from '@/shared/utils/libelles';

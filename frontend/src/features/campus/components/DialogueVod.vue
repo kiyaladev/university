@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { api } from '@/boot/axios';
 import type { CoursVOD, Enseignant, Inscription, Matiere, TypeRessourceVOD } from '@/types';
@@ -139,13 +139,13 @@ async function soumettre() {
         dense
         :placeholder="$t('vodPage.formDialog.thumbnailUrlPlaceholder')"
       />
-      <autocomplete-async
+      <champ-recherche
         v-model="formulaire.matiereId"
         endpoint="/matieres"
         :label-fn="(m: Matiere) => `${m.code} — ${m.intitule}`"
         :label="$t('common.fields.subject')"
       />
-      <autocomplete-async
+      <champ-recherche
         v-model="formulaire.enseignantId"
         endpoint="/enseignants"
         :label-fn="(e: Enseignant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
@@ -163,7 +163,7 @@ async function soumettre() {
         <q-toggle v-model="formulaire.public" :label="$t('vodPage.formDialog.publicResource')" class="col-12 col-sm-6" />
       </div>
       <template v-if="!formulaire.public">
-        <autocomplete-async
+        <champ-recherche
           v-if="auth.estAdmin"
           v-model="formulaire.inscriptionId"
           endpoint="/inscriptions"

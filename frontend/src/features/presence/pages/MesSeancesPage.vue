@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('mesSeances.title')" :subtitle="$t('mesSeances.subtitle')">
+    <en-tete-page :title="$t('mesSeances.title')" :subtitle="$t('mesSeances.subtitle')">
       <template #actions>
         <div class="row q-gutter-sm items-center">
           <champ-date v-model="dateDebut" :label="$t('common.actions.from')" style="width: 152px" />
@@ -23,7 +23,7 @@
           />
         </div>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <section class="plaque releve-chiffres">
       <div v-for="k in kpis" :key="k.libelle" class="releve-chiffres__cellule">
@@ -99,7 +99,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useImpressionFicheEnseignant } from '@/shared/composables/useImpressionFicheEnseignant';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import {
   aujourdhui,

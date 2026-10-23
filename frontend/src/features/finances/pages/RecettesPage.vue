@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('recettes.title')" :subtitle="$t('recettes.subtitle')">
+    <en-tete-page :title="$t('recettes.title')" :subtitle="$t('recettes.subtitle')">
       <template v-if="peutCreer" #actions>
         <q-btn
           unelevated
@@ -11,14 +11,14 @@
           @click="ouvrirCreation"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <div v-if="kpis" class="resume-liste" role="status">
       <span>{{ $t('recettes.kpis.totalMois.title') }} : <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('common.units.gnf') }}</strong></span>
       <span>{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} : <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('common.units.gnf') }}</strong></span>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('recettes.search.placeholder')"
       :chips="chipsFiltres"
@@ -33,7 +33,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
         <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <div class="text-caption text-grey-7 q-mb-sm">
       {{ $t('recettes.period.summary', { periode: periodeLisible, total: liste.total }) }}
@@ -162,14 +162,14 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
       @tous="liste.toutAfficher()"
     />
 
-    <recette-dialog
+    <dialogue-recette
       v-model="dialogOuvert"
       :existant="recetteEnEdition"
       @enregistre="apresEnregistrement"
@@ -180,8 +180,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -190,10 +190,10 @@ import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import RecetteDialog from '../components/RecetteDialog.vue';
+import DialogueRecette from '../components/DialogueRecette.vue';
 import {
   LIBELLE_TYPE_RECETTE,
   aujourdhui,

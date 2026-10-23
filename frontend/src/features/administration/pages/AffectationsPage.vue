@@ -1,12 +1,12 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('affectations.title')" :subtitle="$t('affectations.subtitle')">
+    <en-tete-page :title="$t('affectations.title')" :subtitle="$t('affectations.subtitle')">
       <template v-if="auth.peutPlanifier" #actions>
         <q-btn unelevated color="primary" no-caps icon="add" :label="$t('affectations.actions.new')" @click="ouvrir(null)" />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('affectations.filters.searchPlaceholder')"
@@ -60,7 +60,7 @@
           :label="$t('common.fields.academicYear')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -204,7 +204,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="aff.lignes.length"
       v-model:page="aff.page"
       v-model:page-size="aff.pageSize"
@@ -283,16 +283,16 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';

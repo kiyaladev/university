@@ -40,7 +40,7 @@
         :label="$t('courrier.table.columns.objet')"
         :rules="[requis]"
       />
-      <autocomplete-async
+      <champ-recherche
         v-if="auth.utilisateur?.role !== 'CHEF_DEPARTEMENT'"
         v-model="form.departementId"
         endpoint="/departements"
@@ -102,7 +102,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useAuthStore } from '@/stores/auth';
 

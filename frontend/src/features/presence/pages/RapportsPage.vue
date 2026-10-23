@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="presence" />
-    <page-header :title="$t('rapports.title')" :subtitle="$t('rapports.subtitle')" />
+    <en-tete-page :title="$t('rapports.title')" :subtitle="$t('rapports.subtitle')" />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm items-center">
@@ -347,7 +347,7 @@
           <div class="text-caption text-grey-7 q-mt-xs q-mb-md">
             {{ $t('rapports.releveSigne.weekRange', { end: dateLisible(semaineFin) }) }}
           </div>
-          <signature-pad v-model="signatureChef" :label="$t('rapports.releveSigne.signatureLabel')" />
+          <zone-signature v-model="signatureChef" :label="$t('rapports.releveSigne.signatureLabel')" />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="generationReleve" @click="dialogReleve = false" />
@@ -360,7 +360,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -373,7 +373,7 @@ import { useReferentielsStore } from '@/stores/referentiels';
 import { useImpressionFicheEnseignant } from '@/shared/composables/useImpressionFicheEnseignant';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
 import ChampStatut from '../components/ChampStatut.vue';
-import SignaturePad from '../components/SignaturePad.vue';
+import ZoneSignature from '../components/ZoneSignature.vue';
 import {
   STATUTS_ENSEIGNANT,
   aujourdhui,

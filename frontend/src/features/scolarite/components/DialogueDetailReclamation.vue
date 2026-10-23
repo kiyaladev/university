@@ -35,7 +35,7 @@
 
       <q-card-section v-if="reclamation" class="q-pt-none col-grow scroll">
         <!-- Stepper du cycle de vie -->
-        <workflow-stepper
+        <etapes-circuit
           :etapes="ETAPES_RECLAMATION"
           :actuel="reclamation.statut"
           :transitions="transitionsAutorisees"
@@ -201,7 +201,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
-import WorkflowStepper, { type Transition } from '@/shared/components/WorkflowStepper.vue';
+import EtapesCircuit, { type Transition } from '@/shared/components/EtapesCircuit.vue';
 import { useAuthStore } from '@/stores/auth';
 import {
   LIBELLE_PRIORITE_RECLAMATION,

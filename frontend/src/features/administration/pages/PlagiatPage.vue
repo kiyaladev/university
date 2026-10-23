@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('plagiatPage.title')" :subtitle="$t('plagiatPage.subtitle')">
+    <en-tete-page :title="$t('plagiatPage.title')" :subtitle="$t('plagiatPage.subtitle')">
       <template #actions>
         <q-btn
           outline
@@ -21,7 +21,7 @@
           @click="lancerRecalcul"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- KPIs : chiffres globaux renvoyés par le moteur, tous statuts confondus -->
     <div class="row q-col-gutter-md q-mb-md">
@@ -75,7 +75,7 @@
       </template>
     </q-banner>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('plagiatPage.filters.searchPlaceholder')"
@@ -92,7 +92,7 @@
           clearable
           :label="$t('plagiatPage.filters.scoreMin')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.documentId"
           endpoint="/documents"
           :label-fn="(d) => `${d.titre}${d.auteurs ? ' — ' + d.auteurs : ''}`"
@@ -103,7 +103,7 @@
         <champ-date v-model="filtres.dateMin" :label="$t('plagiatPage.filters.detectedFrom')" />
         <champ-date v-model="filtres.dateMax" :label="$t('plagiatPage.filters.detectedTo')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <!-- Top 5 documents les plus dupliqués -->
     <q-banner v-if="topDocuments.length" dense class="carte q-mb-md">
@@ -216,7 +216,7 @@
 
       <div v-else class="row q-col-gutter-md">
         <div v-for="s in suspicionsPage" :key="s.id" class="col-12 col-sm-6 col-lg-4">
-          <plagiat-card
+          <fiche-plagiat
             :suspicion="s"
             :show-actions="peutDecider"
             @voir="voirDetail"
@@ -226,7 +226,7 @@
         </div>
       </div>
 
-      <pagination-bar
+      <barre-pagination
         :page="page"
         :page-size="pageSize"
         :total="suspicionsFiltrees.length"
@@ -280,18 +280,18 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import PlagiatCard from '../components/PlagiatCard.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import FichePlagiat from '../components/FichePlagiat.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';

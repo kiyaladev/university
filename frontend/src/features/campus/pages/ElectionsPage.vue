@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { useListePaginee, texteApi } from '@/shared/composables/useListePaginee';
 import { useConfirmation, type CouleurConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, reactive, ref, watch } from 'vue';
@@ -8,12 +8,12 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 
 import { useAuthStore } from '@/stores/auth';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import ElectionDialog from '../components/ElectionDialog.vue';
-import CandidatDialog from '../components/CandidatDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueElection from '../components/DialogueElection.vue';
+import DialogueCandidat from '../components/DialogueCandidat.vue';
 import {
   LIBELLE_STATUT_ELECTION,
   LIBELLE_TYPE_ELECTION,
@@ -224,7 +224,7 @@ watch(onglet, () => {
 
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('elections.title')" :subtitle="$t('elections.subtitle')">
+    <en-tete-page :title="$t('elections.title')" :subtitle="$t('elections.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutVoter"
@@ -246,7 +246,7 @@ watch(onglet, () => {
           @click="ouvrirEdition()"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau q-mb-md">
       <q-tab
@@ -259,7 +259,7 @@ watch(onglet, () => {
       />
     </q-tabs>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('elections.filters.searchPlaceholder')"
@@ -277,7 +277,7 @@ watch(onglet, () => {
           :label="$t('elections.filters.type')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -485,7 +485,7 @@ watch(onglet, () => {
       />
     </template>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -493,7 +493,7 @@ watch(onglet, () => {
       :show-all="false"
     />
 
-    <election-dialog v-model="dialogEdition" :election="electionEnEdition" @enregistre="liste.recharger()" />
+    <dialogue-election v-model="dialogEdition" :election="electionEnEdition" @enregistre="liste.recharger()" />
 
     <q-dialog v-model="dialogCandidats">
       <q-card style="min-width: 640px; max-width: 95vw">
@@ -557,7 +557,7 @@ watch(onglet, () => {
       </q-card>
     </q-dialog>
 
-    <candidat-dialog
+    <dialogue-candidat
       v-if="electionCandidats"
       v-model="dialogCandidat"
       :election="electionCandidats"

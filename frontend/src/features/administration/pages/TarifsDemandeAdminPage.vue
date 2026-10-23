@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('tarifsDemandeAdmin.title')" :subtitle="$t('tarifsDemandeAdmin.subtitle')">
+    <en-tete-page :title="$t('tarifsDemandeAdmin.title')" :subtitle="$t('tarifsDemandeAdmin.subtitle')">
       <template v-if="!rolePasBon" #actions>
         <q-btn
           outline
@@ -24,7 +24,7 @@
           </q-tooltip>
         </q-btn>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-banner v-if="rolePasBon" class="note--erreur q-mb-md">
       {{ $t('tarifsDemandeAdmin.errors.role_forbidden', { role: auth.utilisateur?.role }) }}
@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { computed, onMounted, ref } from 'vue';

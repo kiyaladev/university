@@ -23,7 +23,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: '',
         name: 'connexion',
-        component: () => import('@/features/public/pages/LoginPage.vue'),
+        component: () => import('@/features/public/pages/ConnexionPage.vue'),
         meta: { public: true, titre: 'nav.connexion' },
       },
     ],
@@ -117,23 +117,23 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: 'suivi-presences', name: 'suivi-presences', component: () => import('@/features/accueil/pages/AccueilUniversityPage.vue'),
+      { path: 'suivi-presences', name: 'suivi-presences', component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
         meta: ecran('/suivi-presences') },
-      { path: 'documents', name: 'documents', component: () => import('@/features/accueil/pages/AccueilUniversityPage.vue'),
+      { path: 'documents', name: 'documents', component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
         meta: ecran('/documents') },
       { path: 'bilan', redirect: '/rectorat' },
       { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
       {
         path: '',
         name: 'tableau-de-bord',
-        component: () => import('@/features/accueil/pages/AccueilUniversityPage.vue'),
+        component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
         /** Registre de contrôle : l'étudiant est renvoyé vers son espace (voir la garde). */
         meta: ecran('/'),
       },
       {
         path: 'synthese-presences',
         name: 'synthese-presences',
-        component: () => import('@/features/presence/pages/DashboardPage.vue'),
+        component: () => import('@/features/presence/pages/TableauBordPage.vue'),
         meta: ecran('/synthese-presences'),
       },
       {
@@ -359,7 +359,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'helpdesk',
         name: 'helpdesk',
-        component: () => import('@/features/campus/pages/HelpdeskPage.vue'),
+        component: () => import('@/features/campus/pages/AssistancePage.vue'),
         meta: ecran('/helpdesk'),
       },
       {
@@ -507,7 +507,7 @@ const routes: RouteRecordRaw[] = [
      * déjà connecté, qui n'en a que faire.
      */
     path: '/:catchAll(.*)*',
-    component: () => import('@/features/accueil/pages/ErrorNotFound.vue'),
+    component: () => import('@/features/accueil/pages/IntrouvablePage.vue'),
     meta: { public: true, titre: 'nav.introuvable' },
   },
 ];

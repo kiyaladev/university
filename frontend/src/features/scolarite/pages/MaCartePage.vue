@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '@/boot/axios';
 import { getAppLocale } from '@/boot/i18n';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
@@ -106,7 +106,7 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('maCarte.title')" :subtitle="$t('maCarte.subtitle')" />
+    <en-tete-page :title="$t('maCarte.title')" :subtitle="$t('maCarte.subtitle')" />
 
     <q-card v-if="chargement" class="carte q-pa-md">
       <q-spinner /> {{ $t('maCarte.loading') }}

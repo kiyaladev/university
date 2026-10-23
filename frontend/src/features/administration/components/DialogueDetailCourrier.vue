@@ -17,7 +17,7 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          <workflow-stepper
+          <etapes-circuit
             :etapes="etapesWorkflow"
             :actuel="etapeActuelle"
             :readonly="!peutCloturer"
@@ -109,7 +109,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import WorkflowStepper from '@/shared/components/WorkflowStepper.vue';
+import EtapesCircuit from '@/shared/components/EtapesCircuit.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import {

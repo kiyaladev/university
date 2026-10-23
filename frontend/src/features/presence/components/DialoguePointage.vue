@@ -141,7 +141,7 @@
           :caption="resumePreuves"
         >
           <div class="q-pt-md q-gutter-md">
-            <qr-scanner v-model="form.qrToken" />
+            <lecteur-qr v-model="form.qrToken" />
 
             <div class="row items-center q-col-gutter-sm">
               <div class="col">
@@ -204,7 +204,7 @@ import { useReferentielsStore } from '@/stores/referentiels';
 import { usePointagesStore } from '@/stores/pointages';
 import { dureeLisible, maintenantHHmm, LIBELLE_STATUT_PRESENCE } from '@/shared/utils/libelles';
 import type { Enseignant, Pointage, Seance, StatutPresence } from '@/types';
-import QrScanner from '@/shared/components/QrScanner.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
 import AttestationEnseignant from './AttestationEnseignant.vue';
 
 const props = defineProps<{ modelValue: boolean; seance: Seance | null }>();

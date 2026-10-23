@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('tirage.title')" :subtitle="$t('tirage.subtitle')">
+    <en-tete-page :title="$t('tirage.title')" :subtitle="$t('tirage.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutCreer"
@@ -20,7 +20,7 @@
           @click="router.push({ name: 'examens' })"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
       <template #avatar><q-icon name="filter_alt" color="primary" /></template>
@@ -31,14 +31,14 @@
       </template>
     </q-banner>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('tirage.search.placeholder')"
       :chips="chipsFiltres"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.examenId"
           endpoint="/examens"
           :label="$t('tirage.filters.examen')"
@@ -56,7 +56,7 @@
           :label="$t('tirage.filters.stade')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table :grid="$q.screen.lt.md"
       flat
@@ -139,7 +139,7 @@
       </template>
     </q-table>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.total"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -147,8 +147,8 @@
       @tous="liste.toutAfficher()"
     />
 
-    <tirage-dialog v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
-    <impression-tirage-dialog v-model="dialogImpressionOuvert" :tirage-id="tirageAImprimer" @enregistre="apresImpression" />
+    <dialogue-tirage v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
+    <dialogue-impression-tirage v-model="dialogImpressionOuvert" :tirage-id="tirageAImprimer" @enregistre="apresImpression" />
   </q-page>
 </template>
 
@@ -162,12 +162,12 @@ import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import TirageDialog from '../components/TirageDialog.vue';
-import ImpressionTirageDialog from '../components/ImpressionTirageDialog.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import DialogueTirage from '../components/DialogueTirage.vue';
+import DialogueImpressionTirage from '../components/DialogueImpressionTirage.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';

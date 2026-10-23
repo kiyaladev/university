@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { api } from '@/boot/axios';
 import type { CandidatElection, Election, Enseignant, Etudiant } from '@/types';
@@ -93,13 +93,13 @@ async function soumettre() {
         <q-input v-model="formulaire.prenom" :label="$t('common.fields.firstName')" outlined dense class="col" />
         <q-input v-model="formulaire.nom" :label="$t('common.fields.lastName')" outlined dense class="col" />
       </div>
-      <autocomplete-async
+      <champ-recherche
         v-model="formulaire.etudiantId"
         endpoint="/etudiants"
         :label-fn="(e: Etudiant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
         :label="$t('elections.dialogs.candidateForm.linkedStudent')"
       />
-      <autocomplete-async
+      <champ-recherche
         v-model="formulaire.enseignantId"
         endpoint="/enseignants"
         :label-fn="(e: Enseignant) => `${e.matricule} — ${e.prenom} ${e.nom}`"

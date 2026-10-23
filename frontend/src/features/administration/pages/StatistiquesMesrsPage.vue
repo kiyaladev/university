@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="bilan" />
-    <page-header :title="$t('statistiquesMesrs.title')" :subtitle="$t('statistiquesMesrs.subtitle')">
+    <en-tete-page :title="$t('statistiquesMesrs.title')" :subtitle="$t('statistiquesMesrs.subtitle')">
       <template #actions>
         <div class="col-auto row q-gutter-sm">
           <q-select
@@ -32,7 +32,7 @@
           </q-btn>
         </div>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <etat-vide
       v-if="!snapshots.length && !chargement"
@@ -108,7 +108,7 @@
         </div>
       </q-card-section>
       <q-card-section>
-        <chart-canvas
+        <graphique
           v-if="configEvolution"
           :config="configEvolution"
           :hauteur="320"
@@ -184,7 +184,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -194,7 +194,7 @@ import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import ChartCanvas from '@/shared/components/ChartCanvas.vue';
+import Graphique from '@/shared/components/Graphique.vue';
 import {
   dateHeureLisible,
   montantLisible,

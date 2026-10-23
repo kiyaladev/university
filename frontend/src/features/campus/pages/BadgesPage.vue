@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import BadgeDialog from '../components/BadgeDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueBadge from '../components/DialogueBadge.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
@@ -140,7 +140,7 @@ function statutEffectif(b: BadgeAcces): string {
 
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('badges.title')" :subtitle="$t('badges.subtitle')">
+    <en-tete-page :title="$t('badges.title')" :subtitle="$t('badges.subtitle')">
       <template v-if="peutEditer" #actions>
         <q-btn
           unelevated
@@ -151,9 +151,9 @@ function statutEffectif(b: BadgeAcces): string {
           @click="ouvrirEdition()"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar v-model="filtres" :placeholder="$t('badges.filters.searchPlaceholder')">
+    <barre-filtres v-model="filtres" :placeholder="$t('badges.filters.searchPlaceholder')">
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -176,9 +176,9 @@ function statutEffectif(b: BadgeAcces): string {
           clearable
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
-    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -330,7 +330,7 @@ function statutEffectif(b: BadgeAcces): string {
       <etat-vide v-if="!liste.chargement && !liste.lignes.length" class="col-12" icone="how_to_reg" :titre="$t('badges.emptyState.message')" />
     </div>
 
-    <badge-dialog v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="liste.recharger()" />
+    <dialogue-badge v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="liste.recharger()" />
 
     <dialogue-formulaire
       v-model="dialogAnnulation"

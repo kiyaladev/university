@@ -27,7 +27,7 @@
       :label="$t('common.fields.promotionRequired')"
       class="q-mt-sm"
     />
-    <semestre-select
+    <choix-semestre
       v-model="form.session"
       type="session"
       :label="$t('deliberations.createDialog.session')"
@@ -80,7 +80,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
-import SemestreSelect from './SemestreSelect.vue';
+import ChoixSemestre from './ChoixSemestre.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import type {
   AnneeAcademique,

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('paie.title')" :subtitle="$t('paie.subtitle')">
+    <en-tete-page :title="$t('paie.title')" :subtitle="$t('paie.subtitle')">
       <template v-if="peutCreer" #actions>
         <q-btn
           unelevated
@@ -11,9 +11,9 @@
           @click="dialogCreation = true"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :recherche="false"
       :chips="chipsFiltres"
@@ -55,7 +55,7 @@
           :label="$t('common.fields.year')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <div class="text-caption text-grey-7 q-mb-sm">
       {{ $t('paie.summary.sheetsCount', { count: liste.total }) }} {{ $t('common.format.emptyValue') }}
@@ -296,7 +296,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
@@ -365,7 +365,7 @@
       </q-card>
     </q-dialog>
 
-    <feuille-paie-dialog
+    <dialogue-feuille-paie
       v-model="dialogCreation"
       :annees-existantes="anneesExistantes"
       @enregistre="liste.recharger()"
@@ -376,8 +376,8 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
@@ -387,9 +387,9 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import FeuillePaieDialog from '../components/FeuillePaieDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueFeuillePaie from '../components/DialogueFeuillePaie.vue';
 import {
   LIBELLE_STATUT_PAIE,
   dateLisible,

@@ -1,6 +1,6 @@
 <template>
   <q-page class="scan-page q-pa-md">
-    <page-header :title="$t('scanExamen.title')" :subtitle="$t('scanExamen.subtitle')">
+    <en-tete-page :title="$t('scanExamen.title')" :subtitle="$t('scanExamen.subtitle')">
       <template #actions>
         <q-btn
           flat
@@ -10,7 +10,7 @@
           @click="router.push({ name: 'examens' })"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Aucun examen ouvert : on dit pourquoi et on donne la sortie -->
     <etat-vide
@@ -103,7 +103,7 @@
 
         <q-card-section class="row q-col-gutter-md items-end">
           <div class="col-12 col-md">
-            <qr-scanner
+            <lecteur-qr
           v-model="reference"
           :label="$t('scanExamen.form.cardLabel')"
           :hint="$t('scanExamen.form.cardHint')"
@@ -169,8 +169,8 @@ import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import QrScanner from '@/shared/components/QrScanner.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { LIBELLE_TYPE_EXAMEN, dateLisible, pourcentLisible } from '@/shared/utils/libelles';
 import type { Examen, ScanExamen } from '@/types';

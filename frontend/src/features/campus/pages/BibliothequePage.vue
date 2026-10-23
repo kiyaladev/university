@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('bibliotheque.title')" :subtitle="$t('bibliotheque.subtitle')">
+    <en-tete-page :title="$t('bibliotheque.title')" :subtitle="$t('bibliotheque.subtitle')">
       <template #actions>
         <q-btn
           flat
@@ -31,7 +31,7 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Recherche globale + auto-complétion preview -->
     <div class="row q-col-gutter-md q-mb-md items-start">
@@ -87,7 +87,7 @@
       </div>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :recherche="false"
@@ -104,7 +104,7 @@
           map-options
           :label="$t('common.fields.type')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.departementId"
           endpoint="/departements"
           :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
@@ -130,7 +130,7 @@
           :label="$t('bibliotheque.filters.publication')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <div v-if="chargement && !documents.length" class="row justify-center q-py-xl">
       <q-spinner color="primary" size="40px" />
@@ -331,7 +331,7 @@
       </div>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="documents.length"
       v-model:page="page"
       v-model:page-size="pageSize"
@@ -339,7 +339,7 @@
       @tous="chargerTout"
     />
 
-    <document-dialog
+    <dialogue-document
       v-model="dialogOuvert"
       :document="documentEdite"
       @enregistre="premierePage"
@@ -372,7 +372,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, ref } from 'vue';
@@ -380,12 +380,12 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { bibliothequeService, normaliserDocuments } from '@/shared/services/bibliotheque';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import DocumentDialog from '../components/DocumentDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import DialogueDocument from '../components/DialogueDocument.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
 import type { DocumentDepot, ChipFiltre } from '@/types';
@@ -469,7 +469,7 @@ const statutsPublics = computed(() => [
   { value: '0', label: t('bibliotheque.filters.unpublished') },
 ]);
 
-/** Chips des filtres actifs : sans elles, FilterBar masque « Réinitialiser ». */
+/** Chips des filtres actifs : sans elles, BarreFiltres masque « Réinitialiser ». */
 const chips = computed(() => {
   const f = filtres.value;
   const cs: ChipFiltre[] = [];

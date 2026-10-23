@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="t('accueilScolarite.title')" :subtitle="t('accueilScolarite.subtitle')" />
+    <en-tete-page :title="t('accueilScolarite.title')" :subtitle="t('accueilScolarite.subtitle')" />
     <q-banner v-if="erreur" class="bg-red-1 text-negative q-mb-md" role="alert">{{ erreur }}</q-banner>
     <div class="row q-col-gutter-md q-mb-lg">
       <div v-for="queue in files" :key="queue.to" class="col-12 col-md-4">
@@ -30,7 +30,7 @@
   </q-page>
 </template>
 <script setup lang="ts">
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';

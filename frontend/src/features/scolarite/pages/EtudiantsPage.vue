@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('common.fields.students')" :subtitle="$t('etudiants.subtitle')">
+    <en-tete-page :title="$t('common.fields.students')" :subtitle="$t('etudiants.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutGerer"
@@ -12,16 +12,16 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('etudiants.filters.searchPlaceholder')"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.promotionId"
           endpoint="/promotions"
           :label-fn="(p) => p.nom"
@@ -51,7 +51,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('etudiants.filters.registeredFrom')" />
         <champ-date v-model="filtres.dateFin" :label="$t('etudiants.filters.registeredTo')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -366,7 +366,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -374,7 +374,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <etudiant-dialog
+    <dialogue-etudiant
       v-model="dialogOuvert"
       :etudiant="etudiantEdite"
       @enregistre="liste.recharger()"
@@ -467,8 +467,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -477,10 +477,10 @@ import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import EtudiantDialog from '../components/EtudiantDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import DialogueEtudiant from '../components/DialogueEtudiant.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';

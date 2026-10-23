@@ -1,6 +1,6 @@
 <template>
   <q-page class="registre">
-    <page-header :title="$t('common.fields.sessions')" :subtitle="$t('seances.subtitle')">
+    <en-tete-page :title="$t('common.fields.sessions')" :subtitle="$t('seances.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutAffecterControleur"
@@ -21,7 +21,7 @@
         />
         <q-btn outline no-caps icon="print" :label="$t('common.actions.print')" @click="imprimer" />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Période : les trois lectures courantes en un geste -->
     <div class="registre__periode">
@@ -286,13 +286,13 @@
       </ol>
     </section>
 
-    <seance-dialog
+    <dialogue-seance
       v-model="dialogSeance"
       :seance="seanceEditee"
       :salles="salles"
       @enregistre="apresCreation"
     />
-    <pointage-dialog v-model="dialogPointage" :seance="seanceSelectionnee" @enregistre="charger" />
+    <dialogue-pointage v-model="dialogPointage" :seance="seanceSelectionnee" @enregistre="charger" />
 
     <!-- Détail du contrôle consigné -->
     <q-dialog :model-value="!!detail" @update:model-value="detail = null">
@@ -516,12 +516,12 @@ import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import PageHeader from '@/shared/components/PageHeader.vue';
-import SeanceDialog from '../components/SeanceDialog.vue';
-import PointageDialog from '../components/PointageDialog.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
+import DialogueSeance from '../components/DialogueSeance.vue';
+import DialoguePointage from '../components/DialoguePointage.vue';
 import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import {
   LIBELLE_ATTESTATION,
   LIBELLE_STATUT_JUSTIFICATIF,

@@ -80,7 +80,7 @@
         </i18n-t>
       </q-banner>
 
-      <filter-bar
+      <barre-filtres
         v-model="filtres"
         :chips="chipsTickets"
         :placeholder="$t('helpdesk.filters.searchTickets')"
@@ -120,16 +120,16 @@
             map-options
             :label="$t('common.fields.priority')"
           />
-          <autocomplete-async
+          <champ-recherche
             v-model="filtres.equipementId"
             endpoint="/equipements"
             :label-fn="(e) => `${e.libelle}${e.emplacement ? ' — ' + e.emplacement : ''}`"
             :label="$t('helpdesk.filters.equipment')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
-      <pagination-bar
+      <barre-pagination
         v-model:page="gestion.page"
         v-model:page-size="gestion.pageSize"
         :total="gestion.total"
@@ -281,7 +281,7 @@
         </div>
       </div>
 
-      <filter-bar
+      <barre-filtres
         v-model="filtresEquip"
         :chips="chipsEquipements"
         :placeholder="$t('helpdesk.filters.searchEquipment')"
@@ -302,7 +302,7 @@
             :label="$t('common.fields.state')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <q-table
         v-if="presentation === 'tableau'"
@@ -473,21 +473,21 @@
       </q-card>
     </q-dialog>
 
-    <ticket-dialog
+    <dialogue-ticket
       v-model="declarerOuvert"
       :equipement="equipementScanne"
       :equipements="equip.lignes"
       :categorie-initiale="categorieInitiale"
       @enregistre="onDeclare"
     />
-    <equipement-dialog v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="equip.recharger()" />
+    <dialogue-equipement v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="equip.recharger()" />
 
     <!-- Scanner QR -->
     <q-dialog v-model="scanEquipement">
       <q-card style="width: 480px; max-width: 95vw">
         <q-card-section class="text-h6">{{ $t('helpdesk.scanDialog.title') }}</q-card-section>
         <q-card-section>
-          <qr-scanner
+          <lecteur-qr
             v-model="codeScanne"
             :label="$t('helpdesk.scanDialog.label')"
             :hint="$t('helpdesk.scanDialog.hint')"
@@ -506,7 +506,7 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
@@ -516,12 +516,12 @@ import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import QrScanner from '@/shared/components/QrScanner.vue';
-import TicketDialog from '../components/TicketDialog.vue';
-import EquipementDialog from '../components/EquipementDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
+import DialogueTicket from '../components/DialogueTicket.vue';
+import DialogueEquipement from '../components/DialogueEquipement.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import {
   LIBELLE_CATEGORIE_INCIDENT,

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('structure.title')" :subtitle="$t('structure.subtitle')" />
+    <en-tete-page :title="$t('structure.title')" :subtitle="$t('structure.subtitle')" />
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="annees" icon="event" :label="$t('structure.tabs.annees')" no-caps />
@@ -12,7 +12,7 @@
     <q-tab-panels v-model="onglet" animated class="bg-transparent q-mt-md">
       <!-- ------------------------------------------------------- Années -->
       <q-tab-panel name="annees" class="q-pa-none">
-        <filter-bar v-model="filtres.annees" :placeholder="$t('structure.search.annees')">
+        <barre-filtres v-model="filtres.annees" :placeholder="$t('structure.search.annees')">
           <template #actions>
             <q-btn
               v-if="peutGerer"
@@ -24,7 +24,7 @@
               @click="ouvrirAnnee(null)"
             />
           </template>
-        </filter-bar>
+        </barre-filtres>
 
         <q-table
           flat
@@ -101,7 +101,7 @@
 
       <!-- -------------------------------------------------- Départements -->
       <q-tab-panel name="departements" class="q-pa-none">
-        <filter-bar v-model="filtres.departements" :placeholder="$t('structure.search.departements')">
+        <barre-filtres v-model="filtres.departements" :placeholder="$t('structure.search.departements')">
           <template #actions>
             <q-btn
               v-if="peutGerer"
@@ -113,7 +113,7 @@
               @click="ouvrirDepartement(null)"
             />
           </template>
-        </filter-bar>
+        </barre-filtres>
 
         <q-table
           flat
@@ -189,7 +189,7 @@
 
       <!-- ------------------------------------------------------ Filières -->
       <q-tab-panel name="filieres" class="q-pa-none">
-        <filter-bar
+        <barre-filtres
           v-model="filtres.filieres"
           :chips="chipsFilieres"
           :placeholder="$t('structure.search.filieres')"
@@ -218,7 +218,7 @@
               @click="ouvrirFiliere(null)"
             />
           </template>
-        </filter-bar>
+        </barre-filtres>
 
         <q-table
           flat
@@ -287,7 +287,7 @@
 
       <!-- ---------------------------------------------------- Promotions -->
       <q-tab-panel name="promotions" class="q-pa-none">
-        <filter-bar
+        <barre-filtres
           v-model="filtres.promotions"
           :chips="chipsPromotions"
           :placeholder="$t('structure.search.promotions')"
@@ -334,7 +334,7 @@
               @click="ouvrirPromotion(null)"
             />
           </template>
-        </filter-bar>
+        </barre-filtres>
 
         <q-table
           flat
@@ -568,8 +568,8 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-// `utils/libelles` lit les traductions dans boot/i18n, qui dépend de
+// `shared/utils/libelles` lit les traductions dans boot/i18n, qui dépend de
 // l'application Quasar : un catalogue vide suffit (libellés français).
 vi.mock('../../src/boot/i18n', () => ({
   getAppLocale: () => 'fr-FR',

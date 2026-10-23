@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="documents" />
-    <page-header :title="$t('attestations.title')" :subtitle="$t('attestations.subtitle')">
+    <en-tete-page :title="$t('attestations.title')" :subtitle="$t('attestations.subtitle')">
       <template #actions>
 <div class="col-auto">
         <q-btn
@@ -25,9 +25,9 @@
         />
       </div>
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('attestations.filters.searchPlaceholder')"
@@ -75,7 +75,7 @@
           :label="$t('attestations.filters.promotion')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -246,7 +246,7 @@
       />
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.total"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -254,7 +254,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <attestation-dialog
+    <dialogue-attestation
       v-model="dialogEmission"
       :prefill="prefillEmission"
       @enregistre="recharger"
@@ -390,8 +390,8 @@
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useRoute, useRouter } from 'vue-router';
@@ -402,9 +402,9 @@ import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import AttestationDialog from '../components/AttestationDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import DialogueAttestation from '../components/DialogueAttestation.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import {

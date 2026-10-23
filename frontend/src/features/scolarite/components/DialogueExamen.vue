@@ -10,7 +10,7 @@
   >
     <div class="q-gutter-md">
       <q-input v-model="form.intitule" outlined dense :label="$t('common.fields.intitule')" />
-      <autocomplete-async
+      <champ-recherche
         v-model="form.surveillantId"
         endpoint="/examens/surveillants"
         :label="$t('examens.fields.supervisor')"
@@ -27,7 +27,7 @@
       </div>
       <div class="row q-col-gutter-md">
         <div class="col-6">
-          <autocomplete-async
+          <champ-recherche
             v-model="form.matiereId"
             endpoint="/matieres"
             :label="$t('common.fields.subjectRequired')"
@@ -35,7 +35,7 @@
           />
         </div>
         <div class="col-6">
-          <autocomplete-async
+          <champ-recherche
             v-model="form.promotionId"
             endpoint="/referentiel/promotions"
             :label="$t('common.fields.promotionRequired')"
@@ -45,7 +45,7 @@
       </div>
       <div class="row q-col-gutter-md">
         <div class="col-6">
-          <autocomplete-async
+          <champ-recherche
             v-model="form.anneeId"
             endpoint="/referentiel/annees"
             :label="$t('common.fields.academicYearRequired')"
@@ -53,7 +53,7 @@
           />
         </div>
         <div class="col-6">
-          <autocomplete-async
+          <champ-recherche
             v-model="form.salleId"
             endpoint="/salles"
             :label="$t('common.fields.classroom')"
@@ -82,7 +82,7 @@ import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_TYPE_EXAMEN } from '@/shared/utils/libelles';

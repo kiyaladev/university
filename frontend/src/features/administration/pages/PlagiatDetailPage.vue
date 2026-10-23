@@ -28,11 +28,11 @@
         class="q-mb-md"
       />
 
-      <page-header :title="$t('plagiatDetail.title')" :subtitle="$t('plagiatDetail.subtitle')">
+      <en-tete-page :title="$t('plagiatDetail.title')" :subtitle="$t('plagiatDetail.subtitle')">
         <template #actions>
           <PastilleStatut domaine="suspicion" :statut="suspicion.statut" :icone="iconeStatut(suspicion.statut)" />
         </template>
-      </page-header>
+      </en-tete-page>
 
       <q-card flat bordered class="carte q-mb-md">
         <q-card-section class="row items-center">
@@ -281,7 +281,7 @@ import { useRoute } from 'vue-router';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { LIBELLE_TYPE_DOCUMENT, dateHeureLisible } from '@/shared/utils/libelles';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '@/types';
 

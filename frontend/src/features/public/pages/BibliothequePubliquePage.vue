@@ -222,7 +222,7 @@
           </template>
         </q-table>
 
-        <pagination-bar
+        <barre-pagination
           v-if="documents.length"
           v-model:page="page"
           v-model:page-size="pageSize"
@@ -239,7 +239,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 /**
  * Bibliothèque publique (vitrine) : aucune garde d'authentification. Le même
  * fonds que l'écran de gestion `/bibliotheque-gestion`, mais restreint côté
@@ -251,7 +251,7 @@ import { usePresentationListe } from '@/shared/composables/presentationListe';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { bibliothequeService, normaliserDocuments } from '@/shared/services/bibliotheque';

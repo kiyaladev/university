@@ -260,14 +260,14 @@
         :loading="preparationEnCours" @click="preparerTournee" />
     </div>
 
-    <seance-dialog
+    <dialogue-seance
       v-model="dialogSeance"
       :salles="salles"
       :date-imposee="date"
       @enregistre="apresCreation"
     />
 
-    <pointage-dialog v-model="dialogOuvert" :seance="seanceSelectionnee" @enregistre="charger" />
+    <dialogue-pointage v-model="dialogOuvert" :seance="seanceSelectionnee" @enregistre="charger" />
   </q-page>
 </template>
 
@@ -282,8 +282,8 @@ import { usePointagesStore } from '@/stores/pointages';
 import { useSeancesStore } from '@/stores/seances';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import PointageDialog from '../components/PointageDialog.vue';
-import SeanceDialog from '../components/SeanceDialog.vue';
+import DialoguePointage from '../components/DialoguePointage.vue';
+import DialogueSeance from '../components/DialogueSeance.vue';
 import {
   ICONE_ATTESTATION,
   LIBELLE_ATTESTATION,

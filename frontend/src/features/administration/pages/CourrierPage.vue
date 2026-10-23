@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('courrier.title')" :subtitle="$t('courrier.subtitle')">
+    <en-tete-page :title="$t('courrier.title')" :subtitle="$t('courrier.subtitle')">
       <template v-if="peutCreer" #actions>
         <q-btn
           unelevated
@@ -11,7 +11,7 @@
           @click="ouvrirCreation"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-tabs v-model="onglet" dense no-caps align="left" class="onglets-panneau q-mb-md" narrow-indicator>
       <q-tab name="ENTRANT" :label="$t('courrier.tabs.entrant')" icon="inbox" />
@@ -19,7 +19,7 @@
       <q-tab name="ARCHIVE" :label="$t('courrier.tabs.archive')" icon="inventory_2" />
     </q-tabs>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('courrier.filters.searchPlaceholder')"
       :chips="chipsFiltres"
@@ -39,7 +39,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
         <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <div class="text-caption text-grey-7 q-mb-sm">
       {{ ligneResume }}
@@ -190,20 +190,20 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
       @tous="liste.toutAfficher()"
     />
 
-    <courrier-detail-dialog
+    <dialogue-detail-courrier
       v-model="dialogDetailOuvert"
       :courrier-id="courrierSelectionne?.id ?? null"
       @modifie="liste.recharger()"
     />
 
-    <courrier-circuit-dialog
+    <dialogue-circuit-courrier
       v-model="dialogCreationOuvert"
       @enregistre="liste.recharger()"
     />
@@ -212,20 +212,20 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import CourrierDetailDialog from '../components/CourrierDetailDialog.vue';
-import CourrierCircuitDialog from '../components/CourrierCircuitDialog.vue';
+import DialogueDetailCourrier from '../components/DialogueDetailCourrier.vue';
+import DialogueCircuitCourrier from '../components/DialogueCircuitCourrier.vue';
 import {
   LIBELLE_STATUT_COURRIER,
   LIBELLE_TYPE_COURRIER,

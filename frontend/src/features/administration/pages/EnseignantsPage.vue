@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('common.fields.teachers')" :subtitle="$t('enseignants.header.subtitle')">
+    <en-tete-page :title="$t('common.fields.teachers')" :subtitle="$t('enseignants.header.subtitle')">
       <template v-if="auth.peutPlanifier" #actions>
         <q-btn
           unelevated
@@ -11,9 +11,9 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('enseignants.filters.searchPlaceholder')"
@@ -41,7 +41,7 @@
           :label="$t('common.fields.status')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -240,7 +240,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="ens.lignes.length"
       v-model:page="ens.page"
       v-model:page-size="ens.pageSize"
@@ -248,7 +248,7 @@
       @tous="ens.toutAfficher()"
     />
 
-    <enseignant-dialog
+    <dialogue-enseignant
       v-model="dialogOuvert"
       :enseignant="enseignantEdite"
       :departements="departements"
@@ -336,7 +336,7 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -345,10 +345,10 @@ import { isAxiosError } from 'axios';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import EnseignantDialog from '../components/EnseignantDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import DialogueEnseignant from '../components/DialogueEnseignant.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';

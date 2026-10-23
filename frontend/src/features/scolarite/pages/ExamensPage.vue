@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('examens.title')" :subtitle="$t('examens.subtitle')">
+    <en-tete-page :title="$t('examens.title')" :subtitle="$t('examens.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutCreer"
@@ -29,9 +29,9 @@
           @click="allerTirage(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('examens.filters.searchPlaceholder')"
       :chips="chipsFiltres"
@@ -48,19 +48,19 @@
           map-options
           :label="$t('examens.filters.type')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.matiereId"
           endpoint="/matieres"
           :label="$t('common.fields.subject')"
           :label-fn="(m) => `${m.code} — ${m.intitule}`"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.promotionId"
           endpoint="/referentiel/promotions"
           :label="$t('examens.filters.promotion')"
           :label-fn="(p) => `${p.nom} — ${p.niveau}`"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.anneeId"
           endpoint="/referentiel/annees"
           :label="$t('common.fields.academicYear')"
@@ -69,7 +69,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('examens.filters.dateFrom')" />
         <champ-date v-model="filtres.dateFin" :label="$t('examens.filters.dateTo')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-tabs v-model="onglet" dense no-caps align="left" class="onglets-panneau q-mb-md">
       <q-tab name="PLANIFIE" :label="LIBELLE_STATUT_EXAMEN.PLANIFIE" icon="event" />
@@ -287,7 +287,7 @@
       </div>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="ex.total"
       v-model:page="ex.page"
       v-model:page-size="ex.pageSize"
@@ -295,7 +295,7 @@
       @tous="ex.toutAfficher()"
     />
 
-    <examen-dialog v-model="dialogOuvert" @enregistre="ex.recharger()" />
+    <dialogue-examen v-model="dialogOuvert" @enregistre="ex.recharger()" />
 
     <!-- Fiche de l'examen : les trois maillons de la chaîne au même endroit -->
     <q-dialog v-model="dialogFiche" :maximized="$q.screen.lt.md">
@@ -402,7 +402,7 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -411,13 +411,13 @@ import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { pageApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import ExamenDialog from '../components/ExamenDialog.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import DialogueExamen from '../components/DialogueExamen.vue';
 import {
   LIBELLE_STATUT_EXAMEN,
   LIBELLE_TYPE_EXAMEN,

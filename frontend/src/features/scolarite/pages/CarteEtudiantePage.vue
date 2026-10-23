@@ -2,17 +2,17 @@
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, nextTick, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import CarteDialog from '../components/CarteDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueCarte from '../components/DialogueCarte.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
@@ -140,7 +140,7 @@ function ouvrirEmission() {
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="documents" />
-    <page-header :title="$t('carteEtudiante.title')" :subtitle="$t('carteEtudiante.subtitle')">
+    <en-tete-page :title="$t('carteEtudiante.title')" :subtitle="$t('carteEtudiante.subtitle')">
       <template v-if="peutEmettre" #actions>
         <q-btn
           unelevated
@@ -151,7 +151,7 @@ function ouvrirEmission() {
           @click="ouvrirEmission"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
       {{ $t('carteEtudiante.studentBanner.message') }}
@@ -160,9 +160,9 @@ function ouvrirEmission() {
       </template>
     </q-banner>
 
-    <filter-bar v-model="filtres" :placeholder="$t('carteEtudiante.filters.searchPlaceholder')" />
+    <barre-filtres v-model="filtres" :placeholder="$t('carteEtudiante.filters.searchPlaceholder')" />
 
-    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <!-- Vue tableau -->
     <q-table
@@ -299,7 +299,7 @@ function ouvrirEmission() {
     </div>
 
     <!-- Dialog émission / édition -->
-    <carte-dialog v-model="dialogEmission" :carte="carteEnEdition" @enregistre="liste.recharger()" />
+    <dialogue-carte v-model="dialogEmission" :carte="carteEnEdition" @enregistre="liste.recharger()" />
 
     <!-- Dialog révocation -->
     <dialogue-formulaire

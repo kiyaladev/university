@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { api } from '@/boot/axios';
 import type { CarteEtudiante, Etudiant } from '@/types';
@@ -83,7 +83,7 @@ async function soumettre() {
     @valider="soumettre"
   >
     <div class="q-gutter-md">
-      <autocomplete-async
+      <champ-recherche
         v-if="!enEdition"
         v-model="formulaire.etudiantId"
         endpoint="/etudiants"

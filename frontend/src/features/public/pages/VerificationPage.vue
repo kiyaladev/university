@@ -23,7 +23,7 @@
           :label="$t('verification.form.numeroLabel')"
           :hint="$t('verification.form.numeroHint')"
         />
-        <qr-scanner
+        <lecteur-qr
           v-model="codeQr"
           :label="$t('verification.form.qrLabel')"
           :hint="$t('verification.form.qrHint')"
@@ -128,13 +128,13 @@ import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { getAppLocale } from '@/boot/i18n';
-import QrScanner from '@/shared/components/QrScanner.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
 
 /**
  * Page publique de vérification : atteinte par le QR imprimé sur le document
  * (https://…/verification?ref=ATT-…&k=UP-DOC-…) ou par saisie manuelle.
- * Le composant QrScanner ne restitue que le contenu brut scanné : on y
+ * Le composant LecteurQr ne restitue que le contenu brut scanné : on y
  * extrait les paramètres « ref » et « k », exactement comme le ferait le
  * navigateur pour l'URL complète.
  */

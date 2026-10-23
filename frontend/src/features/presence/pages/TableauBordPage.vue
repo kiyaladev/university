@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="presence" />
-    <page-header
+    <en-tete-page
       :title="$t('dashboard.title')"
       :subtitle="$t('dashboard.subtitle', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) })"
     >
@@ -31,7 +31,7 @@
           <q-tooltip>{{ $t('dashboard.actions.refreshTooltip') }}</q-tooltip>
         </q-btn>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Situation du jour : ce que la tournée a déjà couvert -->
     <section class="bandeau jour">
@@ -101,7 +101,7 @@
             <div class="text-caption">{{ $t('dashboard.charts.evolutionSubtitle') }}</div>
           </q-card-section>
           <q-card-section>
-            <chart-canvas v-if="d" :config="configEvolution" :hauteur="260" />
+            <graphique v-if="d" :config="configEvolution" :hauteur="260" />
             <p v-else class="pochoir carte__vide">{{ $t('dashboard.charts.noData') }}</p>
           </q-card-section>
         </q-card>
@@ -114,7 +114,7 @@
             <div class="text-caption">{{ $t('dashboard.charts.distributionSubtitle') }}</div>
           </q-card-section>
           <q-card-section>
-            <chart-canvas v-if="d" :config="configRepartition" :hauteur="260" />
+            <graphique v-if="d" :config="configRepartition" :hauteur="260" />
             <p v-else class="pochoir carte__vide">{{ $t('dashboard.charts.noData') }}</p>
           </q-card-section>
         </q-card>
@@ -221,7 +221,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -232,7 +232,7 @@ import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { useSeancesStore } from '@/stores/seances';
-import ChartCanvas from '@/shared/components/ChartCanvas.vue';
+import Graphique from '@/shared/components/Graphique.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
 import {
   LIBELLE_STATUT_PRESENCE,

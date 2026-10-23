@@ -18,7 +18,7 @@ beforeEach(() => {
   api.delete.mockReset();
 });
 
-describe('services/http', () => {
+describe('shared/services/http', () => {
   it('lister passe filtres et options, et rend le corps paginé', async () => {
     const page = { data: [{ id: 'a' }], total: 1, page: 1, pageSize: 50 };
     api.get.mockResolvedValue({ data: page });

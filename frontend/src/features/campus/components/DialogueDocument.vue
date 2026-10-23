@@ -54,7 +54,7 @@
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <autocomplete-async
+            <champ-recherche
               v-model="form.departementId"
               endpoint="/departements"
               :label-fn="(d) => `${d.code ? d.code + ' — ' : ''}${d.nom}`"
@@ -63,7 +63,7 @@
             />
           </div>
           <div class="col-12 col-sm-6">
-            <autocomplete-async
+            <champ-recherche
               v-model="form.enseignantId"
               endpoint="/enseignants"
               :label-fn="(e) => `${e.prenom} ${e.nom}${e.matricule ? ' — ' + e.matricule : ''}`"
@@ -75,7 +75,7 @@
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <autocomplete-async
+            <champ-recherche
               v-model="form.etudiantId"
               endpoint="/etudiants"
               :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
@@ -199,7 +199,7 @@ import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
 import type { DocumentDepot, SuspicionPlagiat } from '@/types';
 

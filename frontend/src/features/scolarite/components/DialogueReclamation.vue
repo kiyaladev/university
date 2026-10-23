@@ -75,7 +75,7 @@
     />
 
     <span class="section-titre">{{ $t('reclamations.dialog.create.department') }}</span>
-    <autocomplete-async
+    <champ-recherche
       v-model="form.departementId"
       endpoint="/departements"
       :label-fn="(d) => `${d.code} — ${d.nom}`"
@@ -123,7 +123,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_PRIORITE_RECLAMATION, LIBELLE_TYPE_RECLAMATION } from '@/shared/utils/libelles';
 import type { PrioriteReclamation, Reclamation, TypeReclamation } from '@/types';

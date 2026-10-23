@@ -43,7 +43,7 @@
         />
       </div>
       <div class="col-12 col-sm-6">
-        <autocomplete-async
+        <champ-recherche
           v-model="form.categorieId"
           :label="$t('patrimoine.equipmentDialog.fields.category')"
           endpoint="/patrimoine/categories"
@@ -56,7 +56,7 @@
     <span class="section-titre">{{ $t('patrimoine.equipmentDialog.sections.assignment') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <autocomplete-async
+        <champ-recherche
           v-model="form.departementId"
           :label="$t('common.fields.department')"
           endpoint="/departements"
@@ -65,7 +65,7 @@
         />
       </div>
       <div class="col-12 col-sm-6">
-        <autocomplete-async
+        <champ-recherche
           v-model="form.salleId"
           :label="$t('common.fields.classroom')"
           endpoint="/salles"
@@ -115,7 +115,7 @@ import { ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import type { EquipementPatrimoine } from '@/types';

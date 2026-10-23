@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('utilisateurs.title')" :subtitle="$t('utilisateurs.subtitle')">
+    <en-tete-page :title="$t('utilisateurs.title')" :subtitle="$t('utilisateurs.subtitle')">
       <template #actions>
         <q-btn
           unelevated
@@ -11,9 +11,9 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('utilisateurs.filters.searchPlaceholder')"
@@ -41,7 +41,7 @@
           :label="$t('common.fields.department')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -232,7 +232,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -352,7 +352,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
@@ -360,13 +360,13 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
 import { LIBELLE_ROLE } from '@/shared/utils/libelles';
 import type { Departement, Enseignant, Role, Utilisateur, ChipFiltre } from '@/types';
 

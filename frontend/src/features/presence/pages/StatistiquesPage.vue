@@ -1,7 +1,7 @@
 <template>
   <q-page class="stats">
     <section-navigation section="presence" />
-    <page-header :title="$t('statistiques.title')" :subtitle="$t('statistiques.subtitle')">
+    <en-tete-page :title="$t('statistiques.title')" :subtitle="$t('statistiques.subtitle')">
       <template #actions>
         <div class="stats__periode">
           <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" @update:model-value="raccourciActif = ''" />
@@ -18,7 +18,7 @@
           </q-btn>
         </div>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <div class="stats__raccourcis">
       <button
@@ -350,7 +350,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -358,7 +358,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { useImpressionFicheEnseignant } from '@/shared/composables/useImpressionFicheEnseignant';
 import {
   aujourdhui,

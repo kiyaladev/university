@@ -29,7 +29,7 @@
     <!-- RÉSIDENCES                                                       -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'residences'" name="residences" class="q-pa-none q-mt-md">
-      <filter-bar
+      <barre-filtres
         v-model="filtresResidences"
         :chips="chipsResidences"
         :placeholder="$t('cites.residences.filters.placeholder')"
@@ -66,7 +66,7 @@
             clearable
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <!-- Vue tableau -->
       <q-table
@@ -181,14 +181,14 @@
     <!-- CHAMBRES                                                         -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'chambres'" name="chambres" class="q-pa-none q-mt-md">
-      <filter-bar
+      <barre-filtres
         v-model="filtresChambres"
         :chips="chipsChambres"
         :placeholder="$t('cites.chambres.filters.placeholder')"
         @reinitialiser="ch.reinitialiser()"
       >
         <template #avances>
-          <autocomplete-async
+          <champ-recherche
             v-model="filtresChambres.residenceId"
             endpoint="/residences"
             :label-fn="(r) => `${r.code} — ${r.nom}`"
@@ -215,9 +215,9 @@
             :label="$t('common.fields.status')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
-      <pagination-bar v-model:page="ch.page" v-model:page-size="ch.pageSize" :total="ch.total" :show-all="false" />
+      <barre-pagination v-model:page="ch.page" v-model:page-size="ch.pageSize" :total="ch.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
@@ -329,7 +329,7 @@
     <!-- ATTRIBUTIONS                                                     -->
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'attributions'" name="attributions" class="q-pa-none q-mt-md">
-      <filter-bar
+      <barre-filtres
         v-model="filtresAttributions"
         :chips="chipsAttributions"
         :recherche="false"
@@ -356,7 +356,7 @@
             clearable
             :label="$t('common.fields.status')"
           />
-          <autocomplete-async
+          <champ-recherche
             v-model="filtresAttributions.residenceId"
             endpoint="/residences"
             :label-fn="(r) => `${r.code} — ${r.nom}`"
@@ -371,9 +371,9 @@
             @keydown.enter="att.recharger()"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
-      <pagination-bar v-model:page="att.page" v-model:page-size="att.pageSize" :total="att.total" :show-all="false" />
+      <barre-pagination v-model:page="att.page" v-model:page-size="att.pageSize" :total="att.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
@@ -511,11 +511,11 @@
     </q-tab-panel>
 
     <!-- Dialogues -->
-    <residence-dialog v-model="residenceDialog" :residence="residenceEditee" @enregistre="res.recharger()" />
-    <chambre-dialog v-model="chambreDialog" :chambre="chambreEditee" :residences="res.lignes" @enregistre="ch.recharger()" />
+    <dialogue-residence v-model="residenceDialog" :residence="residenceEditee" @enregistre="res.recharger()" />
+    <dialogue-chambre v-model="chambreDialog" :chambre="chambreEditee" :residences="res.lignes" @enregistre="ch.recharger()" />
     <!-- `ouvrirCourant` charge tout le parc avant d'ouvrir ce dialogue :
          l'attribution doit pouvoir viser une chambre hors de la page affichée. -->
-    <attribution-dialog
+    <dialogue-attribution
       v-model="attributionDialog"
       :chambres="chambresDialogue"
       :annees="annees"
@@ -590,7 +590,7 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, onMounted, reactive, ref } from 'vue';
@@ -598,13 +598,13 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import ResidenceDialog from '../components/ResidenceDialog.vue';
-import ChambreDialog from '../components/ChambreDialog.vue';
-import AttributionDialog from '../components/AttributionDialog.vue';
+import DialogueResidence from '../components/DialogueResidence.vue';
+import DialogueChambre from '../components/DialogueChambre.vue';
+import DialogueAttribution from '../components/DialogueAttribution.vue';
 import {
   LIBELLE_CATEGORIE_CHAMBRE,
   LIBELLE_STATUT_ATTRIBUTION,
@@ -714,7 +714,7 @@ const optionsStatutsAttribution = Object.entries(LIBELLE_STATUT_ATTRIBUTION).map
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
 // ------------------------------------------------------------------ chips
-// FilterBar masque « Réinitialiser » tant qu'aucun chip personnalisé n'existe :
+// BarreFiltres masque « Réinitialiser » tant qu'aucun chip personnalisé n'existe :
 // chaque onglet décrit donc ses filtres actifs.
 function chipRecherche(f: Record<string, any>): ChipFiltre[] {
   return f.recherche

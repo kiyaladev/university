@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="t('audit.title')" :subtitle="t('audit.subtitle')" />
+    <en-tete-page :title="t('audit.title')" :subtitle="t('audit.subtitle')" />
     <q-form class="row q-col-gutter-sm q-mb-md" @submit="rechercher">
       <q-input v-model="saisie.entite" outlined dense class="col-12 col-sm-4" :label="t('audit.entity')" />
       <q-input v-model="saisie.action" outlined dense class="col-12 col-sm-4" :label="t('audit.action')" />
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';

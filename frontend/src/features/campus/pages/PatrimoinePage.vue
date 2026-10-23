@@ -78,21 +78,21 @@
 
     <!-- ============================== Équipements -->
     <template v-if="onglet === 'equipements'">
-      <filter-bar
+      <barre-filtres
         v-model="filtres"
         :placeholder="$t('patrimoine.equipments.searchPlaceholder')"
         :recherche="true"
         @reinitialiser="eq.reinitialiser()"
       >
         <template #avances>
-          <autocomplete-async
+          <champ-recherche
             v-model="filtres.categorieId"
             :label="$t('common.fields.category')"
             endpoint="/patrimoine/categories"
             :label-fn="(c) => `${c.libelle} (${c.code})`"
             preload
           />
-          <autocomplete-async
+          <champ-recherche
             v-model="filtres.departementId"
             :label="$t('common.fields.department')"
             endpoint="/departements"
@@ -126,7 +126,7 @@
             :label="$t('common.fields.state')"
           />
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <q-table
         v-if="presentation === 'tableau'"
@@ -369,7 +369,7 @@
         </etat-vide>
       </div>
 
-      <pagination-bar v-model:page="eq.page" v-model:page-size="eq.pageSize" :total="eq.total" :show-all="false" />
+      <barre-pagination v-model:page="eq.page" v-model:page-size="eq.pageSize" :total="eq.total" :show-all="false" />
     </template>
 
     <!-- ============================== Catégories -->
@@ -507,7 +507,7 @@
       </q-card>
     </template>
 
-    <patrimoine-dialog
+    <dialogue-patrimoine
       v-model="dialogEquipement"
       :equipement="equipementEdite"
       @enregistre="apresEquipement"
@@ -550,7 +550,7 @@
       />
     </dialogue-formulaire>
 
-    <reparation-dialog
+    <dialogue-reparation
       v-model="dialogReparation"
       :mode="modeReparation"
       :equipement="equipementReparation"
@@ -620,7 +620,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
@@ -630,13 +630,13 @@ import QRCode from 'qrcode';
 
 import { patrimoineService } from '../services/patrimoine';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import PatrimoineDialog from '../components/PatrimoineDialog.vue';
-import ReparationDialog from '../components/ReparationDialog.vue';
+import DialoguePatrimoine from '../components/DialoguePatrimoine.vue';
+import DialogueReparation from '../components/DialogueReparation.vue';
 import { dateLisible, montantLisible, nombreLisible } from '@/shared/utils/libelles';
 import { ouvrirImpression } from '@/shared/services/impression';
 import type {

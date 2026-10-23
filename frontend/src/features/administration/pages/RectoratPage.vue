@@ -109,7 +109,7 @@
             <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('common.fields.enrollments')" to="/inscriptions" />
           </q-card-section>
           <q-card-section>
-            <chart-canvas
+            <graphique
               v-if="aDesPromotions"
               :config="configPromotions"
               :hauteur="300"
@@ -138,7 +138,7 @@
             <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectorat.payrollChart.payroll')" to="/paie" />
           </q-card-section>
           <q-card-section>
-            <chart-canvas
+            <graphique
               v-if="configMasse"
               :config="configMasse"
               :hauteur="300"
@@ -250,7 +250,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
-import ChartCanvas from '@/shared/components/ChartCanvas.vue';
+import Graphique from '@/shared/components/Graphique.vue';
 import { montantLisible, nombreLisible, pourcentLisible } from '@/shared/utils/libelles';
 import type { AnneeAcademique, FeuillePaie, TableauBordPatrimoine, TableauBordRectorat } from '@/types';
 import { getAppLocale } from '@/boot/i18n';

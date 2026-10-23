@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('reclamations.title')" :subtitle="$t('reclamations.subtitle')">
+    <en-tete-page :title="$t('reclamations.title')" :subtitle="$t('reclamations.subtitle')">
       <template #actions>
         <q-btn
           unelevated
@@ -11,7 +11,7 @@
           @click="creationOuverte = true"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <div class="row q-col-gutter-md q-mb-md">
       <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('reclamations.search.placeholder')"
       :recherche="true"
@@ -63,7 +63,7 @@
           map-options
           :label="$t('common.fields.priority')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.departementId"
           endpoint="/departements"
           :label-fn="(d) => `${d.code} — ${d.nom}`"
@@ -86,9 +86,9 @@
           :label="$t('reclamations.filters.escalade')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
-    <pagination-bar
+    <barre-pagination
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
@@ -255,8 +255,8 @@
       />
     </div>
 
-    <reclamation-dialog v-model="creationOuverte" @enregistre="onChange" />
-    <reclamation-detail-dialog
+    <dialogue-reclamation v-model="creationOuverte" @enregistre="onChange" />
+    <dialogue-detail-reclamation
       v-model="detailOuvert"
       :reclamation="reclamationSelectionnee"
       :membres-staff="membresStaff"
@@ -270,18 +270,18 @@
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import ReclamationDialog from '../components/ReclamationDialog.vue';
-import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import DialogueReclamation from '../components/DialogueReclamation.vue';
+import DialogueDetailReclamation from '../components/DialogueDetailReclamation.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import {

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')" />
+    <en-tete-page :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')" />
 
     <section aria-labelledby="regles-presence">
     <h2 id="regles-presence" class="text-h6">{{ $t('parametres.attendanceRules') }}</h2>
@@ -86,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';

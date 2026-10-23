@@ -1,6 +1,6 @@
 <template>
   <q-page class="resas">
-    <page-header :title="$t('reservations.title')" :subtitle="$t('reservations.subtitle')">
+    <en-tete-page :title="$t('reservations.title')" :subtitle="$t('reservations.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutReserver"
@@ -22,17 +22,17 @@
           <q-tooltip>{{ $t('common.actions.reload') }}</q-tooltip>
         </q-btn>
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Filtres -->
-    <filter-bar
+    <barre-filtres
       v-model="filtresReservations"
       :chips="chips"
       :recherche="false"
       @reinitialiser="reinitialiser"
     >
       <template #avances>
-        <autocomplete-async
+        <champ-recherche
           v-model="filtresReservations.salleId"
           endpoint="/salles"
           :label-fn="(s) => $t('reservations.filters.roomOption', { code: s.code, name: s.nom, capacity: s.capacite })"
@@ -52,7 +52,7 @@
         />
         <q-btn flat dense no-caps icon="calendar_month" :label="$t('reservations.actions.thisMonth')" @click="cadrerLeMois" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <!-- Légende -->
     <div class="resas__legende">
@@ -74,7 +74,7 @@
     </div>
 
     <!-- Vue calendrier mensuel -->
-    <calendar-grid
+    <grille-calendrier
       v-if="modeVue === 'calendrier'"
       :evenements="evenementsCalendrier"
       :mois-initial="moisCalendrier"
@@ -167,8 +167,8 @@
       </template>
     </q-table>
 
-    <reservation-dialog v-model="dialogReservation" :salles="salles" @enregistre="charger" />
-    <reservation-detail-dialog
+    <dialogue-reservation v-model="dialogReservation" :salles="salles" @enregistre="charger" />
+    <dialogue-detail-reservation
       v-model="dialogDetail"
       :reservation="reservationChoisie"
       :salles="salles"
@@ -184,14 +184,14 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import CalendarGrid from '@/shared/components/CalendarGrid.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import GrilleCalendrier from '@/shared/components/GrilleCalendrier.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import ReservationDialog from '../components/ReservationDialog.vue';
-import ReservationDetailDialog from '../components/ReservationDetailDialog.vue';
+import DialogueReservation from '../components/DialogueReservation.vue';
+import DialogueDetailReservation from '../components/DialogueDetailReservation.vue';
 import {
   LIBELLE_STATUT_RESERVATION,
   aujourdhui,
@@ -204,7 +204,7 @@ const { t } = useI18n();
 
 const peutReserver = computed(() => auth.peut('reservations.reserver'));
 
-/** Une seule source pour les libellés de statut : utils/libelles.ts. */
+/** Une seule source pour les libellés de statut : shared/utils/libelles. */
 const LEGENDE = LIBELLE_STATUT_RESERVATION;
 
 /** Séance d'emploi du temps telle que la renvoie `/reservations/calendrier`. */

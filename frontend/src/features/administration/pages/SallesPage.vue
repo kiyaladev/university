@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('salles.title')" :subtitle="$t('salles.subtitle')">
+    <en-tete-page :title="$t('salles.title')" :subtitle="$t('salles.subtitle')">
       <template v-if="peutGerer" #actions>
         <q-btn
           outline
@@ -21,9 +21,9 @@
           @click="ouvrir(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('salles.filters.searchPlaceholder')"
@@ -60,7 +60,7 @@
           :label="$t('salles.filters.gpsMark')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-linear-progress v-if="sal.chargement" indeterminate color="primary" class="q-mb-sm" />
 
@@ -281,7 +281,7 @@
       </template>
     </q-table>
 
-    <pagination-bar
+    <barre-pagination
       v-if="sallesFiltrees.length"
       :page="page"
       :page-size="pageSize"
@@ -376,7 +376,7 @@
 </template>
 
 <script setup lang="ts">
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -385,9 +385,9 @@ import QRCode from 'qrcode';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';

@@ -160,7 +160,7 @@
         </q-banner>
 
         <template v-else>
-          <autocomplete-async
+          <champ-recherche
             v-model="form.anneeId"
             endpoint="/inscription-publique/annees"
             :label-fn="(a) => a.libelle"
@@ -168,7 +168,7 @@
             :disable="annees.length <= 1"
             @update:model-value="onAnneeChange"
           />
-          <autocomplete-async
+          <champ-recherche
             v-model="form.promotionId"
             :endpoint="endpointPromotions"
             :label-fn="labelPromotion"
@@ -327,7 +327,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import { montantLisible } from '@/shared/utils/libelles';
 import type { AnneeAcademique } from '@/types';
 

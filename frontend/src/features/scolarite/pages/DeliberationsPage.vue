@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('deliberations.title')" :subtitle="$t('deliberations.subtitle')">
+    <en-tete-page :title="$t('deliberations.title')" :subtitle="$t('deliberations.subtitle')">
       <template v-if="peutSaisir || peutVoirBulletins" #actions>
         <q-btn
           v-if="peutSaisir"
@@ -21,9 +21,9 @@
           @click="allerBulletins(null)"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('deliberations.filters.search')"
@@ -50,7 +50,7 @@
           map-options
           :label="$t('deliberations.filters.promotion')"
         />
-        <semestre-select
+        <choix-semestre
           v-model="filtres.session"
           type="session"
           :label="$t('deliberations.filters.session')"
@@ -67,7 +67,7 @@
           :label="$t('common.fields.status')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table :grid="$q.screen.lt.md"
       flat
@@ -249,7 +249,7 @@
       </template>
     </q-table>
 
-    <pagination-bar
+    <barre-pagination
       v-if="totalFiltre"
       :page="page"
       :page-size="pageSize"
@@ -259,7 +259,7 @@
       @update:page-size="(v) => { pageSize = v; page = 1; }"
     />
 
-    <deliberation-dialog
+    <dialogue-deliberation
       v-model="dialogOuvert"
       :annees="annees"
       :promotions="promotions"
@@ -341,7 +341,7 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -352,10 +352,10 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
-import DeliberationDialog from '../components/DeliberationDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import SemestreSelect from '../components/SemestreSelect.vue';
+import DialogueDeliberation from '../components/DialogueDeliberation.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChoixSemestre from '../components/ChoixSemestre.vue';
 import {
   LIBELLE_SESSION_DELIBERATION,
   LIBELLE_STATUT_DELIBERATION,

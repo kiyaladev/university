@@ -8,7 +8,7 @@
     @valider="enregistrer"
   >
     <span class="section-titre">{{ $t('common.fields.student') }}</span>
-    <autocomplete-async
+    <champ-recherche
       v-model="form.etudiantId"
       endpoint="/etudiants"
       :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
@@ -19,7 +19,7 @@
     <span class="section-titre">{{ $t('common.fields.track') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <autocomplete-async
+        <champ-recherche
           v-model="form.anneeId"
           endpoint="/annees"
           :label-fn="(a) => a.libelle"
@@ -28,7 +28,7 @@
         />
       </div>
       <div class="col-12 col-sm-6">
-        <autocomplete-async
+        <champ-recherche
           v-model="form.promotionId"
           endpoint="/promotions"
           :label-fn="(p) => p.nom"
@@ -64,7 +64,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { montantLisible } from '@/shared/utils/libelles';
 

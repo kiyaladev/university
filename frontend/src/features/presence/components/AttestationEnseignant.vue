@@ -35,7 +35,7 @@
     <q-tab-panels v-model="onglet" animated class="moyens-panneaux">
       <!-- ------------------------------------------------------ signature -->
       <q-tab-panel name="signature">
-        <signature-pad
+        <zone-signature
           :model-value="modele.signatureBase64 ?? null"
           :label="t('pointage.attestation.signatureHelp')"
           @update:model-value="(v) => maj({ signatureBase64: v ?? undefined })"
@@ -133,7 +133,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { usePointagesStore } from '@/stores/pointages';
-import SignaturePad from './SignaturePad.vue';
+import ZoneSignature from './ZoneSignature.vue';
 import { CLE_PASSERELLE, LIBELLE_ATTESTATION, urlPasserelle } from '@/shared/utils/libelles';
 import { etatLecteur, verifierEmpreinte } from '@/shared/services/empreinte';
 

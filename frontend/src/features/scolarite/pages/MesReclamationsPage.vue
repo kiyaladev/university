@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="procedures" />
-    <page-header :title="$t('mesReclamations.title')" :subtitle="$t('mesReclamations.subtitle')">
+    <en-tete-page :title="$t('mesReclamations.title')" :subtitle="$t('mesReclamations.subtitle')">
       <template #actions>
         <q-btn
           unelevated
@@ -12,7 +12,7 @@
           @click="creationOuverte = true"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
       {{ $t('mesReclamations.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesReclamations.banner.goToRegistry') }) }}
@@ -31,7 +31,7 @@
       <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-if="!rolePasBon"
       v-model="filtres"
       :placeholder="$t('mesReclamations.filters.searchPlaceholder')"
@@ -72,9 +72,9 @@
           :label="$t('common.fields.priority')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
-    <pagination-bar
+    <barre-pagination
       v-if="!rolePasBon"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -180,8 +180,8 @@
       </etat-vide>
     </div>
 
-    <reclamation-dialog v-model="creationOuverte" @enregistre="liste.recharger()" />
-    <reclamation-detail-dialog
+    <dialogue-reclamation v-model="creationOuverte" @enregistre="liste.recharger()" />
+    <dialogue-detail-reclamation
       v-model="detailOuvert"
       :reclamation="reclamationSelectionnee"
       @change="liste.recharger()"
@@ -192,17 +192,17 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { computed, reactive, ref } from 'vue';
 import { type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import ReclamationDialog from '../components/ReclamationDialog.vue';
-import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueReclamation from '../components/DialogueReclamation.vue';
+import DialogueDetailReclamation from '../components/DialogueDetailReclamation.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import {

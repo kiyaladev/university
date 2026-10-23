@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('justificatifs.title')" :subtitle="$t('justificatifs.subtitle')">
+    <en-tete-page :title="$t('justificatifs.title')" :subtitle="$t('justificatifs.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutDeposer"
@@ -12,7 +12,7 @@
           @click="ouvrirDepot"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Un enseignant ne dépose pas lui-même : il doit savoir par où passer. -->
     <q-banner v-if="!peutDeposer" class="note--info q-mb-md">
@@ -255,7 +255,7 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useListePaginee } from '@/shared/composables/useListePaginee';

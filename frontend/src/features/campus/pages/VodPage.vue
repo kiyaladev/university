@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 /**
  * Catalogue VOD. Deux publics, un seul écran :
  *
@@ -18,11 +18,11 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import VodDialog from '../components/VodDialog.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import DialogueVod from '../components/DialogueVod.vue';
 import {
   LIBELLE_STATUT_VOD,
   LIBELLE_TYPE_RESSOURCE_VOD,
@@ -223,7 +223,7 @@ function avancement(v: RessourceCatalogue): number {
 
 <template>
   <q-page class="q-pa-md">
-    <page-header
+    <en-tete-page
       :title="$t('vodPage.title')"
       :subtitle="estEtudiant ? $t('vodPage.subtitle.student') : $t('vodPage.subtitle.staff')"
     >
@@ -237,9 +237,9 @@ function avancement(v: RessourceCatalogue): number {
           @click="ouvrirEdition()"
         />
       </template>
-    </page-header>
+    </en-tete-page>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('vodPage.filters.searchPlaceholder')"
@@ -268,7 +268,7 @@ function avancement(v: RessourceCatalogue): number {
           clearable
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -464,7 +464,7 @@ function avancement(v: RessourceCatalogue): number {
     </div>
 
     <!-- La collecte étudiante arrive d'un bloc : rien à paginer. -->
-    <pagination-bar
+    <barre-pagination
       v-if="!estEtudiant && ressources.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -472,7 +472,7 @@ function avancement(v: RessourceCatalogue): number {
       :show-all="false"
     />
 
-    <vod-dialog v-if="peutEditer" v-model="dialogEdition" :vod="vodEnEdition" @enregistre="liste.recharger()" />
+    <dialogue-vod v-if="peutEditer" v-model="dialogEdition" :vod="vodEnEdition" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 

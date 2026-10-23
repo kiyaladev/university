@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="documents" />
-    <page-header :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')" />
+    <en-tete-page :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')" />
 
     <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
       {{ $t('demandeDocuments.studentBanner.message') }}
@@ -14,7 +14,7 @@
       <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :placeholder="$t('demandeDocuments.filters.searchPlaceholder')"
       :recherche="true"
@@ -44,16 +44,16 @@
           map-options
           :label="$t('common.fields.type')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
           :label="$t('common.fields.student')"
         />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
-    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -301,7 +301,7 @@
           <PastilleStatut domaine="demande" :statut="demandeSelectionnee.statut" />
         </q-card-section>
         <q-card-section v-if="demandeSelectionnee" class="q-pt-none">
-          <workflow-stepper
+          <etapes-circuit
             :etapes="ETAPES_DEMANDE"
             :actuel="demandeSelectionnee.statut"
             :readonly="true"
@@ -433,8 +433,8 @@
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import SectionNavigation from '@/shared/components/SectionNavigation.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -442,10 +442,10 @@ import { useRouter } from 'vue-router';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
-import WorkflowStepper from '@/shared/components/WorkflowStepper.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import EtapesCircuit from '@/shared/components/EtapesCircuit.vue';
 import {
   LIBELLE_STATUT_DEMANDE,
   LIBELLE_STATUT_PAIEMENT,

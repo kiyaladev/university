@@ -37,7 +37,7 @@
               <span class="pochoir pochoir--brut">{{ $t('resto.guichet.onlineNote') }}</span>
             </header>
 
-            <qr-scanner
+            <lecteur-qr
               v-model="reference"
               :label="$t('resto.guichet.studentLabel')"
               :hint="$t('resto.guichet.studentHint')"
@@ -151,14 +151,14 @@
     <q-tab-panel v-if="onglet === 'portefeuilles'" name="portefeuilles" class="q-pa-none q-mt-md">
       <!-- Le serveur ne filtre que sur l'étudiant (matricule, nom, prénom) :
            pas de filtre avancé qui ne serait pas appliqué. -->
-      <filter-bar
+      <barre-filtres
         v-model="filtresPortefeuilles"
         :chips="chipsPortefeuilles"
         :placeholder="$t('resto.wallets.searchPlaceholder')"
         @reinitialiser="pf.reinitialiser()"
       />
 
-      <pagination-bar v-model:page="pf.page" v-model:page-size="pf.pageSize" :total="pf.total" :show-all="false" />
+      <barre-pagination v-model:page="pf.page" v-model:page-size="pf.pageSize" :total="pf.total" :show-all="false" />
 
       <!-- Vue tableau -->
       <q-table
@@ -242,7 +242,7 @@
         <q-tab name="consommations" icon="restaurant" :label="$t('resto.transactions.tabs.consommations')" no-caps />
       </q-tabs>
 
-      <filter-bar
+      <barre-filtres
         v-model="filtresTransactions"
         :chips="chipsTransactions"
         :recherche="false"
@@ -278,7 +278,7 @@
             <q-tooltip>{{ $t('resto.transactions.actions.refresh') }}</q-tooltip>
           </q-btn>
         </template>
-      </filter-bar>
+      </barre-filtres>
 
       <!-- KPIs : toujours calculés sur la période entière, quel que soit l'onglet -->
       <div class="row q-col-gutter-sm q-mb-md items-center">
@@ -365,13 +365,13 @@
       </q-table>
     </q-tab-panel>
 
-    <recharge-dialog v-if="peutRecharger" v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @enregistre="apresRecharge" />
+    <dialogue-recharge v-if="peutRecharger" v-model="dialogRecharge" :etudiant="rechargeEtudiantId" @enregistre="apresRecharge" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { computed, reactive, ref } from 'vue';
@@ -379,12 +379,12 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import QrScanner from '@/shared/components/QrScanner.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import LecteurQr from '@/shared/components/LecteurQr.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import RechargeDialog from '../components/RechargeDialog.vue';
+import DialogueRecharge from '../components/DialogueRecharge.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_STATUT_PAIEMENT,

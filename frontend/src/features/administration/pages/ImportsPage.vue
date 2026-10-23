@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md page-imports">
-    <page-header :title="t('imports.title')" :subtitle="t('imports.subtitle')" />
+    <en-tete-page :title="t('imports.title')" :subtitle="t('imports.subtitle')" />
 
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-md items-start">
@@ -138,7 +138,7 @@ import { Dialog } from 'quasar';
 import { isAxiosError } from 'axios';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 
 type TypeImport = 'enseignants' | 'matieres' | 'salles' | 'creneaux';

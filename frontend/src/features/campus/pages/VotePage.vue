@@ -13,7 +13,7 @@ import {
 } from '../services/elections';
 import { useAuthStore } from '@/stores/auth';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import type { CandidatElection, Election, ResultatElection } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
@@ -197,7 +197,7 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('vote.title')" :subtitle="$t('vote.subtitle')" />
+    <en-tete-page :title="$t('vote.title')" :subtitle="$t('vote.subtitle')" />
 
     <div v-if="chargement" class="etat-vide">
       <q-spinner color="primary" size="36px" />

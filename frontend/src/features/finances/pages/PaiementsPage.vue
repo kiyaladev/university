@@ -1,11 +1,11 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('common.fields.payments')" :subtitle="$t('paiements.subtitle')">
+    <en-tete-page :title="$t('common.fields.payments')" :subtitle="$t('paiements.subtitle')">
       <template #actions>
         <q-btn v-if="peutCreer" unelevated color="primary" no-caps icon="add"
           :label="$t('paiements.actions.new')" @click="dialogPaiement = true" />
       </template>
-    </page-header>
+    </en-tete-page>
 
     <!-- Arrivée depuis un dossier ou une fiche étudiant : le ciblage est annoncé. -->
     <q-banner v-if="libelleCible" dense class="note--info q-mb-md">
@@ -33,7 +33,7 @@
       }}
     </div>
 
-    <filter-bar
+    <barre-filtres
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('paiements.filters.searchPlaceholder')"
@@ -81,14 +81,14 @@
           :label="$t('common.fields.motif')"
           :placeholder="$t('paiements.filters.reasonPlaceholder')"
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.inscriptionId"
           endpoint="/inscriptions"
           :label-fn="(i) => `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''}`"
           :label="$t('paiements.filters.enrollment')"
           clearable
         />
-        <autocomplete-async
+        <champ-recherche
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
@@ -98,7 +98,7 @@
         <champ-date v-model="filtres.dateDebut" :label="$t('paiements.filters.from')" />
         <champ-date v-model="filtres.dateFin" :label="$t('paiements.filters.to')" />
       </template>
-    </filter-bar>
+    </barre-filtres>
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -421,7 +421,7 @@
       </etat-vide>
     </div>
 
-    <pagination-bar
+    <barre-pagination
       v-if="liste.lignes.length"
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
@@ -429,7 +429,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <paiement-dialog v-model="dialogPaiement" @paye="liste.recharger()" />
+    <dialogue-paiement v-model="dialogPaiement" @paye="liste.recharger()" />
 
     <!-- Détail d'une transaction -->
     <q-dialog v-model="dialogDetail">
@@ -531,8 +531,8 @@
 <script setup lang="ts">
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
-import { usePresentationListe } from '@/shared/composables/presentationListe';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import { usePresentationListe } from '@/shared/composables/usePresentationListe';
+import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
@@ -543,10 +543,10 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import PaiementDialog from '@/shared/components/PaiementDialog.vue';
-import FilterBar from '@/shared/components/FilterBar.vue';
-import PaginationBar from '@/shared/components/PaginationBar.vue';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import DialoguePaiement from '@/shared/components/DialoguePaiement.vue';
+import BarreFiltres from '@/shared/components/BarreFiltres.vue';
+import BarrePagination from '@/shared/components/BarrePagination.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import {
   LIBELLE_MODE_PAIEMENT,

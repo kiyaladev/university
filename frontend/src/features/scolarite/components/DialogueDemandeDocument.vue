@@ -57,7 +57,7 @@
     />
 
     <span class="section-titre">{{ t('demandeDocuments.createDialog.enrollmentSection') }}</span>
-    <autocomplete-async
+    <champ-recherche
       v-if="inscriptions.length"
       v-model="form.inscriptionId"
       endpoint="/inscriptions"
@@ -81,7 +81,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import AutocompleteAsync from '@/shared/components/AutocompleteAsync.vue';
+import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_TYPE_DEMANDE, montantLisible } from '@/shared/utils/libelles';
 import type { DemandeDocument, Inscription, TarifDemande, TypeDemandeDocument } from '@/types';
