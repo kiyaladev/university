@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-23T15:32:12.243Z",
+  "statut": "valide",
+  "sync": {
+    "recus": 1,
+    "synchronisees": 1,
+    "echecs": [],
+    "resultats": [
+      {
+        "idClient": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "ok": true,
+        "id": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "dejaCreee": false
+      }
+    ]
+  },
+  "syncRejeu": {
+    "recus": 1,
+    "synchronisees": 1,
+    "echecs": [],
+    "resultats": [
+      {
+        "idClient": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "ok": true,
+        "id": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "dejaCreee": true
+      }
+    ]
+  },
+  "syncDivergent": {
+    "recus": 1,
+    "synchronisees": 0,
+    "echecs": [
+      {
+        "idClient": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "ok": false,
+        "erreur": "Cette référence de séance hors ligne est déjà utilisée pour d’autres données."
+      }
+    ],
+    "resultats": [
+      {
+        "idClient": "a7881f66-42f4-4476-a7c4-40a84dafe335",
+        "ok": false,
+        "erreur": "Cette référence de séance hors ligne est déjà utilisée pour d’autres données."
+      }
+    ]
+  },
+  "generations": [
+    {
+      "creneaux": 1,
+      "candidates": 2,
+      "creees": 2,
+      "ignorees": 0,
+      "periode": {
+        "debut": "2026-10-01",
+        "fin": "2026-10-31"
+      }
+    },
+    {
+      "creneaux": 1,
+      "candidates": 2,
+      "creees": 0,
+      "ignorees": 2,
+      "periode": {
+        "debut": "2026-10-01",
+        "fin": "2026-10-31"
+      }
+    }
+  ],
+  "datesPersistantes": [
+    "2026-10-12",
+    "2026-10-26"
+  ],
+  "observations": [
+    "Création scolarité, refus étudiant/enseignant",
+    "Collision de créneau et heures invalides refusées",
+    "Bornes et jour exclu respectés",
+    "Génération rejouée sans doublon ni seconde trace",
+    "Registre étudiant refusé, enseignant tiers sans lecture",
+    "Modification et annulation persistées",
+    "Synchronisation UUID rejouée, contenu divergent refusé",
+    "Créneau, génération, modification et suppression bloqués après clôture",
+    "Journal sans thématique ni motif libre"
+  ],
+  "fixturesRestantes": 0,
+  "productionUntouched": true,
+  "limites": [
+    "Formulaires navigateur et acceptation humaine non qualifiés par cette recette",
+    "Synchronisation des pointages et appareil terrain non qualifiés par cette recette"
+  ]
+}
