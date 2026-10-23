@@ -21,7 +21,7 @@ function preparer() {
         {
           id: 'rec-1',
           numero: 'REC-2026-00001',
-          creeLe: new Date('2026-10-01T08:00:00.000Z'),
+          createdAt: new Date('2026-10-01T08:00:00.000Z'),
           delaiEscaladeHeures: 48,
           type: TypeReclamation.INSCRIPTION,
           priorite: PrioriteReclamation.NORMALE,

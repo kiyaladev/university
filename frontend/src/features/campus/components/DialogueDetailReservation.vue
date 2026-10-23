@@ -33,7 +33,7 @@
           </span>
           <span v-else>—</span>
           <span class="pochoir">{{ $t('reservations.detailDialog.requestedOn') }}</span>
-          <span>{{ dateHeureLisible(reservation.creeLe) }}</span>
+          <span>{{ dateHeureLisible(reservation.createdAt) }}</span>
         </div>
 
         <!-- L'emploi du temps se lit, il ne se décide pas ici : sans action

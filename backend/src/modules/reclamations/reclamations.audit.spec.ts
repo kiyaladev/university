@@ -111,7 +111,7 @@ describe('Journal avant/après des réclamations', () => {
     assigneA: null,
     delaiEscaladeHeures: 48,
     escaladeLe: null,
-    creeLe: new Date('2026-10-01T08:00:00.000Z'),
+    createdAt: new Date('2026-10-01T08:00:00.000Z'),
     fermeLe: null,
     _count: { messages: 1 },
     etudiant: {
@@ -137,7 +137,7 @@ describe('Journal avant/après des réclamations', () => {
     assigneARole: null,
     delaiEscaladeHeures: 48,
     escaladeLe: null,
-    creeLe: new Date('2026-10-01T08:00:00.000Z').toISOString(),
+    createdAt: new Date('2026-10-01T08:00:00.000Z').toISOString(),
     fermeLe: null,
     nombreMessages: 1,
     sujetFourni: true,
@@ -181,7 +181,7 @@ describe('Journal avant/après des réclamations', () => {
           nomAffichage: 'Ibrahima Bassène',
           contenu: 'Votre dossier a été réexaminé',
           joint: null,
-          creeLe: new Date('2026-10-02T10:00:00.000Z'),
+          createdAt: new Date('2026-10-02T10:00:00.000Z'),
         }),
       },
       user: {
@@ -318,7 +318,7 @@ describe('Journal avant/après des réclamations', () => {
       auteurId: 'admin-1',
       auteurRole: Role.ADMIN,
       auteurAnonyme: false,
-      creeLe: new Date('2026-10-02T10:00:00.000Z').toISOString(),
+      createdAt: new Date('2026-10-02T10:00:00.000Z').toISOString(),
       contenuFourni: true,
       pieceJointeFournie: true,
     });
@@ -339,7 +339,7 @@ describe('Journal avant/après des réclamations', () => {
       nomAffichage: 'Anonyme',
       contenu: 'Je relance ma demande',
       joint: null,
-      creeLe: new Date('2026-10-02T12:00:00.000Z'),
+      createdAt: new Date('2026-10-02T12:00:00.000Z'),
     });
 
     await service.posterMessage('rec-1', { contenu: 'Je relance ma demande' } as any, etudiant);
@@ -458,14 +458,14 @@ describe('Journal avant/après des réclamations', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     const maintenant = new Date('2026-10-03T09:00:00.000Z');
     jest.useFakeTimers().setSystemTime(maintenant);
-    prisma.reclamation.findUnique.mockResolvedValue(dossier({ creeLe: new Date('2026-10-03T08:00:00.000Z') }));
+    prisma.reclamation.findUnique.mockResolvedValue(dossier({ createdAt: new Date('2026-10-03T08:00:00.000Z') }));
     tx.reclamation.update.mockResolvedValue(
       dossier({
         escaladeLe: maintenant,
         assigneA: null,
       }),
     );
-    tx.reclamation.findUnique.mockResolvedValue(dossier({ creeLe: new Date('2026-10-03T08:00:00.000Z') }));
+    tx.reclamation.findUnique.mockResolvedValue(dossier({ createdAt: new Date('2026-10-03T08:00:00.000Z') }));
 
     try {
       await service.escalader('rec-1', admin);
@@ -545,7 +545,7 @@ describe('Journal avant/après des réclamations', () => {
       {
         id: 'rec-1',
         numero: 'REC-2026-00001',
-        creeLe: new Date('2026-10-01T08:00:00.000Z'),
+        createdAt: new Date('2026-10-01T08:00:00.000Z'),
         delaiEscaladeHeures: 48,
         type: TypeReclamation.INSCRIPTION,
         priorite: PrioriteReclamation.NORMALE,
@@ -604,7 +604,7 @@ describe('Journal avant/après des réclamations', () => {
       {
         id: 'rec-1',
         numero: 'REC-2026-00001',
-        creeLe: new Date('2026-10-01T08:00:00.000Z'),
+        createdAt: new Date('2026-10-01T08:00:00.000Z'),
         delaiEscaladeHeures: 48,
         type: TypeReclamation.INSCRIPTION,
         priorite: PrioriteReclamation.NORMALE,

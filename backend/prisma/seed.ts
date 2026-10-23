@@ -2,7 +2,7 @@
  * Jeu de données de démonstration : une faculté guinéenne type, son emploi du
  * temps, et six semaines de contrôles déjà effectués.
  *
- *   bun run seed        (ou : npx ts-node prisma/seed.ts)
+ *   bun run seed        (ou : npx ts-node -r tsconfig-paths/register prisma/seed.ts)
  */
 import {
   CandidatElection,
@@ -54,6 +54,8 @@ const heure = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${S
 async function main() {
   if (process.env.NODE_ENV === 'production') throw new Error('Le seed de démonstration est interdit en production.');
   console.log('→ Nettoyage…');
+  // L'ordre de suppression suit les règles onDelete du schéma : une table
+  // référencée en RESTRICT doit être vidée avant celle qui la référence.
   // Modules récents : suppression en cascade pour idempotence
   await prisma.vueVOD.deleteMany();
   await prisma.coursVOD.deleteMany();
@@ -86,6 +88,11 @@ async function main() {
   await prisma.seance.deleteMany();
   await prisma.creneau.deleteMany();
   await prisma.affectation.deleteMany();
+  // Evaluation.matiereId est en RESTRICT : les notes et les évaluations
+  // partent avant les matières, sinon la suppression d'une matière évaluée
+  // serait refusée par la base.
+  await prisma.note.deleteMany();
+  await prisma.evaluation.deleteMany();
   await prisma.matiere.deleteMany();
   await prisma.ticketSupport.deleteMany();
   await prisma.equipementCampus.deleteMany();
@@ -100,8 +107,6 @@ async function main() {
   await prisma.attestation.deleteMany();
   await prisma.deliberationLigne.deleteMany();
   await prisma.deliberation.deleteMany();
-  await prisma.note.deleteMany();
-  await prisma.evaluation.deleteMany();
   await prisma.paiement.deleteMany();
   await prisma.inscription.deleteMany();
   await prisma.inscriptionFormation.deleteMany();
@@ -109,6 +114,9 @@ async function main() {
   await prisma.soutenance.deleteMany();
   await prisma.travailEncadre.deleteMany();
   await prisma.reservationSalle.deleteMany();
+  // Frais référence une promotion (RESTRICT) : les frais sont vidés avant
+  // les promotions, sinon la suppression des promotions serait refusée.
+  await prisma.frais.deleteMany();
   await prisma.promotion.deleteMany();
   await prisma.filiere.deleteMany();
   await prisma.enseignant.deleteMany();
@@ -1003,13 +1011,13 @@ async function main() {
               contenu:
                 'Bonjour, j\u2019ai composé mon CC le 12 mai mais la note n\u2019apparaît pas dans mon bulletin. Merci de vérifier.',
               nomAffichage: 'Sory DOUMBOUYA',
-              creeLe: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
             },
             {
               contenu: 'Bonjour, nous vérifions avec l\u2019enseignant et revenons vers vous sous 48h.',
               auteurId: scolariteUser.id,
               nomAffichage: 'Scolarité',
-              creeLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
             },
           ],
         },
@@ -1436,7 +1444,7 @@ async function main() {
     });
     for (const ens of vacataires) {
       const heures = Math.round((8 + Math.random() * 16) * 10) / 10;
-      const montantNet = heures * ens.tauxHoraire;
+      const montantNet = heures * Number(ens.tauxHoraire);
       await prisma.lignePaie.create({
         data: {
           feuilleId: feuille.id,
@@ -2256,7 +2264,7 @@ async function main() {
         reclamationId: r.id,
         contenu: 'Avez-vous des nouvelles de ma demande ? Cordialement.',
         nomAffichage: r.anonyme ? 'Étudiant' : r.nomAuteur || 'Étudiant',
-        creeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       },
     });
   }
@@ -2586,7 +2594,7 @@ async function main() {
             {
               contenu: `Bonjour, j'ai un problème: ${sujet.toLowerCase()}.`,
               nomAffichage: `${etu.nom} ${etu.prenom}`,
-              creeLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+              createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
             },
           ],
         },

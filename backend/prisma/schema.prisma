@@ -11,6 +11,24 @@ datasource db {
 }
 
 // ---------------------------------------------------------------------------
+// Objets SQL hors schéma Prisma
+//
+// Prisma ne sait pas représenter certains objets PostgreSQL. Ils sont posés
+// à la main par une migration, ne sont pas visibles dans `migrate diff` et
+// disparaîtraient d'un `migrate dev` ou d'un `migrate reset` mal appliqué. La
+// liste complète, avec la migration d'origine, est tenue dans
+// docs/decisions/donnees.md :
+//
+//  - "AnneeAcademique_active_key"        : index UNIQUE partiel
+//    (WHERE "active" = true) — 20261002233000_unique_active_annee
+//  - "TicketSupport_un_seul_inventaire"  : contrainte CHECK — 20261023100000
+//  - "DocumentDepot_recherche_trigger()"  : fonction + trigger tsvector
+//    — 20260815220000_bibliotheque_recherche
+//  - extensions "pg_trgm" et "btree_gin"   — 20260815220000_bibliotheque_recherche
+//
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
 // Énumérations
 // ---------------------------------------------------------------------------
 
@@ -374,6 +392,11 @@ model AnneeAcademique {
   libelle   String   @unique // "2025-2026"
   dateDebut DateTime @db.Date
   dateFin   DateTime @db.Date
+  // Objet SQL hors schéma : index UNIQUE partiel "AnneeAcademique_active_key"
+  // (WHERE "active" = true), posé par la migration
+  // 20261002233000_unique_active_annee. Prisma ne sait pas exprimer un
+  // index partiel : il n'apparaît pas dans ce schéma et `migrate diff` ne le
+  // voit pas. Il garantit qu'une seule année académique est active.
   active    Boolean  @default(false)
   cloturee  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -449,6 +472,8 @@ model Promotion {
 
   @@unique([nom, anneeId])
   @@index([anneeId])
+  // Les promotions sont listées par filière (structure LMD).
+  @@index([filiereId])
 }
 
 model Salle {
@@ -602,6 +627,9 @@ model Creneau {
   seances Seance[]
 
   @@index([jourSemaine])
+  // Les créneaux sont filtrés par affectation (emploi du temps d'un enseignant
+  // ou d'une promotion) et supprimés avec elle.
+  @@index([affectationId])
 }
 
 // ---------------------------------------------------------------------------
@@ -644,6 +672,9 @@ model Seance {
   @@index([date, statut])
   @@index([controleurAssigneId, date])
   @@index([salleId, date])
+  // Le planning et le contrôle des années ouvertes filtrent les séances par
+  // année académique.
+  @@index([anneeId])
 }
 
 /// Le pointage : ce que le contrôleur consignait auparavant dans son registre.
@@ -920,7 +951,12 @@ model Evaluation {
   type        TypeEvaluation   @default(CC)
   coefficient Float            @default(1) // pondération de l'épreuve au sein de la matière
   matiereId   String
-  matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Cascade)
+  // RESTRICT : les notes (Note.evaluationId) sont déjà en RESTRICT. En
+  // CASCADE, la suppression d'une matière effaçait ses évaluations et
+  // échouait à mi-chemin sur les notes : le référentiel matières traduisait
+  // alors l'échec en 409, mais la base restait à moitié modifiée. En RESTRICT,
+  // la suppression est refusée d'emblée et atomiquement.
+  matiere     Matiere          @relation(fields: [matiereId], references: [id], onDelete: Restrict)
   anneeId     String
   annee       AnneeAcademique  @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
@@ -970,6 +1006,10 @@ model Deliberation {
 
   creeParId    String?
   creePar      User?     @relation("DeliberationCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier de création du jury (utilisée par l'écran des délibérations),
+  // `createdAt` la date technique d'écriture de la ligne. Les harmoniser
+  // ferait perdre la distinction : à traiter dans une migration dédiée.
   creeLe       DateTime  @default(now())
   valideeParId String?
   valideePar   User?     @relation("DeliberationValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
@@ -981,6 +1021,8 @@ model Deliberation {
   lignes DeliberationLigne[]
 
   @@unique([anneeId, promotionId, session])
+  // Les délibérations sont listées par promotion (jury d'une promotion).
+  @@index([promotionId])
 }
 
 /// Ligne de résultat d'un étudiant à une délibération.
@@ -1052,6 +1094,8 @@ model VerificationAttestation {
   verifieeLe    DateTime    @default(now())
 
   @@index([verifieeLe])
+  // Le journal des vérifications est relu par attestation (QR public).
+  @@index([attestationId])
 }
 
 // ---------------------------------------------------------------------------
@@ -1071,6 +1115,9 @@ model FeuillePaie {
 
   creeParId    String?
   creePar      User?     @relation("FeuillePaieCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
+  // Exception assumée : ce modèle porte les deux champs. `creeLe` est la date
+  // métier d'établissement de la feuille de paie, `createdAt` la date
+  // technique d'écriture de la ligne. Idem Deliberation.
   creeLe       DateTime  @default(now())
   valideeParId String?
   valideePar   User?     @relation("FeuillePaieValideePar", fields: [valideeParId], references: [id], onDelete: SetNull)
@@ -1153,7 +1200,10 @@ model Chambre {
   id          String           @id @default(uuid())
   code        String           @unique // "R1-101"
   residenceId String
-  residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Cascade)
+  // RESTRICT : supprimer une résidence ne doit pas effacer les chambres et,
+  // par cascade, l'historique d'attribution de logement. Le service cités
+  // refuse déjà la suppression d'une résidence non vide (400).
+  residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Restrict)
   categorie   CategorieChambre @default(CHAMBRE_PARTAGEE)
   lits        Int              @default(2)
   loyer       Decimal          @default(0) @db.Decimal(14, 2)
@@ -1172,9 +1222,14 @@ model Chambre {
 model AttributionLogement {
   id         String           @id @default(uuid())
   chambreId  String
-  chambre    Chambre          @relation(fields: [chambreId], references: [id], onDelete: Cascade)
+  // RESTRICT : une attribution est l'historique de l'occupation d'une chambre
+  // (critères sociaux, date d'attribution, retrait). En CASCADE, supprimer
+  // une chambre effaçait ce justificatif.
+  chambre    Chambre          @relation(fields: [chambreId], references: [id], onDelete: Restrict)
   etudiantId String
-  etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Cascade)
+  // RESTRICT : cohérent avec les autres relations vers Etudiant (inscription,
+  // paiement, demande de document…), toutes en RESTRICT.
+  etudiant   Etudiant         @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   anneeId    String?
   annee      AnneeAcademique? @relation(fields: [anneeId], references: [id], onDelete: Restrict)
 
@@ -1215,7 +1270,10 @@ model DocumentDepot {
   /// Texte intégral extrait du PDF (recherche plein texte PostgreSQL).
   contenuTexte  String?
   /// Vecteur de recherche tsvector pour PostgreSQL FTS (français).
-  /// Mis à jour par trigger `tsvector_update_trigger` (migration).
+  /// Mis à jour par le trigger `DocumentDepot_recherche_update` (migration
+  /// 20260815220000_bibliotheque_recherche) ; les index qui l'exploitent sont
+  /// déclarés en bas de modèle et recréés par la migration
+  /// 20261024020000_index_recherche.
   recherche     Unsupported("tsvector")?
   /// Hash SHA-256 du fichier pour la détection de doublons (anti-plagiat basique).
   empreinteHash String?
@@ -1248,6 +1306,20 @@ model DocumentDepot {
   @@index([public])
   @@index([empreinteHash])
   @@index([departementId])
+  // Recherche de la bibliothèque : `recherche @@ to_tsquery` (index GIN
+  // plein texte) et similarités par trigrammes sur le titre, le résumé et le
+  // texte extrait. Ces index avait été supprimés par la migration
+  // 20260815230000_modules_universite_avancee sans être recréés : la
+  // recherche plein texte ne s'appuyait donc sur aucun index. Ils sont
+  // déclarés ici pour que `migrate dev` ne les supprime plus, et recréés
+  // par la migration 20261024020000_index_recherche. Le nom d'index est
+  // figé (`map:`) sur celui créé à l'origine par la migration
+  // 20260815220000_bibliotheque_recherche.
+  @@index([recherche], type: Gin)
+  @@index([motsClefs], type: Gin)
+  @@index([contenuTexte(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_contenuTexte_trgm")
+  @@index([titre(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_titre_trgm")
+  @@index([resume(ops: raw("gin_trgm_ops"))], type: Gin, map: "DocumentDepot_resume_trgm")
 }
 
 /// Suspicion de doublon : pair de documents dont la similarité dépasse un
@@ -1347,7 +1419,9 @@ model ReservationSalle {
   refuseParId String?
   refusePar   User?                  @relation("ReservationRefuseePar", fields: [refuseParId], references: [id], onDelete: SetNull)
   refuseMotif String?
-  creeLe      DateTime               @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt   DateTime               @default(now()) @map("creeLe")
 
   @@index([salleId, dateJour])
 }
@@ -1394,7 +1468,9 @@ model Soutenance {
   assesseurs       String? // "Pr. X ; Dr. Y"
   note             Float?
   mention          String? // Félicitations, Très bien…
-  creeLe           DateTime       @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt        DateTime       @default(now()) @map("creeLe")
 }
 
 // ---------------------------------------------------------------------------
@@ -1848,7 +1924,9 @@ model Reclamation {
   // Délai d'escalade (en heures) — au bout de ce délai sans réponse, escalade
   delaiEscaladeHeures Int?                @default(48)
   escaladeLe          DateTime?
-  creeLe              DateTime            @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt           DateTime            @default(now()) @map("creeLe")
   fermeLe             DateTime?
   notes               String?
 
@@ -1871,9 +1949,12 @@ model MessageReclamation {
   nomAffichage  String?
   contenu       String
   joint         String?
-  creeLe        DateTime    @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime    @default(now()) @map("creeLe")
 
-  @@index([reclamationId, creeLe])
+  // Le nom de l'index est figé sur celui créé en base (colonne « creeLe »).
+  @@index([reclamationId, createdAt], map: "MessageReclamation_reclamationId_creeLe_idx")
 }
 
 // ------------------ Plateforme de Demande de Documents en Ligne ----
@@ -1914,7 +1995,9 @@ model DemandeDocument {
   notification  String? // "Le document est prêt à être retiré au guichet"
   traiteParId   String?
   traitePar     User?               @relation("DemandeDocumentTraitee", fields: [traiteParId], references: [id], onDelete: SetNull)
-  creeLe        DateTime            @default(now())
+  // Colonne conservée « creeLe » en base : le champ Prisma suit la
+  // convention `createdAt` du reste du modèle.
+  createdAt     DateTime            @default(now()) @map("creeLe")
   remiseLe      DateTime?
   notes         String?
   // Attestation vérifiable par QR émise au passage « prête » (types

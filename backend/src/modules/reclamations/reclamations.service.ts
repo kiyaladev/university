@@ -89,7 +89,7 @@ export const RECLAMATION_INCLUDE = {
 const RECLAMATION_DETAIL_INCLUDE = {
   ...RECLAMATION_INCLUDE,
   messages: {
-    orderBy: { creeLe: 'desc' as const },
+    orderBy: { createdAt: 'desc' as const },
     take: 20,
     include: {
       auteur: { select: { id: true, nom: true, prenom: true, role: true } },
@@ -105,7 +105,7 @@ export class ReclamationsService extends CrudService {
 
   constructor(prisma: PrismaService) {
     super(prisma, 'reclamation', {
-      orderBy: { creeLe: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: RECLAMATION_INCLUDE,
       omit: { createurId: true },
       label: 'Réclamation',
@@ -189,7 +189,7 @@ export class ReclamationsService extends CrudService {
       assigneARole: reclamation.assigneA?.role ?? null,
       delaiEscaladeHeures: reclamation.delaiEscaladeHeures ?? null,
       escaladeLe: reclamation.escaladeLe ?? null,
-      creeLe: reclamation.creeLe ?? null,
+      createdAt: reclamation.createdAt ?? null,
       fermeLe: reclamation.fermeLe ?? null,
       nombreMessages: reclamation._count?.messages ?? null,
       // Présence des contenus libres, jamais leur texte. Le bloc-notes interne
@@ -263,7 +263,7 @@ export class ReclamationsService extends CrudService {
         where,
         include: RECLAMATION_INCLUDE,
         omit: this.omissionPour(user),
-        orderBy: [{ priorite: 'desc' }, { creeLe: 'desc' }],
+        orderBy: [{ priorite: 'desc' }, { createdAt: 'desc' }],
         skip: pagination.skip,
         take: pagination.take,
       }),
@@ -333,7 +333,7 @@ export class ReclamationsService extends CrudService {
         where: {
           statut: { in: STATUTS_OUVERTS },
           escaladeLe: null,
-          creeLe: { lt: ilYA48h },
+          createdAt: { lt: ilYA48h },
         },
       }),
     ]);
@@ -490,7 +490,7 @@ export class ReclamationsService extends CrudService {
             auteurId: cree.auteurId ?? null,
             auteurRole: cree.auteur?.role ?? null,
             auteurAnonyme: cree.auteurId === null,
-            creeLe: cree.creeLe ?? null,
+            createdAt: cree.createdAt ?? null,
             contenuFourni: Boolean(contenu),
             pieceJointeFournie: Boolean(dto.joint),
           },
@@ -597,7 +597,7 @@ export class ReclamationsService extends CrudService {
       if (STATUTS_CLOS.includes(reclamation.statut))
         throw new BadRequestException(t('reclamations.cette_reclamation_est_close_escalader_n_a_plus_de_sens'));
       const delaiHeures = reclamation.delaiEscaladeHeures ?? 48;
-      const echeance = new Date(reclamation.creeLe.getTime() + delaiHeures * 3600 * 1000);
+      const echeance = new Date(reclamation.createdAt.getTime() + delaiHeures * 3600 * 1000);
       const depasse = Date.now() >= echeance.getTime();
       if (reclamation.escaladeLe) throw this.conflitConcurrent();
       if (!depasse && user.role !== Role.ADMIN) {
@@ -683,7 +683,7 @@ export class ReclamationsService extends CrudService {
       select: {
         id: true,
         numero: true,
-        creeLe: true,
+        createdAt: true,
         delaiEscaladeHeures: true,
         type: true,
         priorite: true,
@@ -693,7 +693,7 @@ export class ReclamationsService extends CrudService {
       },
     });
     const depassees = toutes.filter(
-      (r) => maintenant >= r.creeLe.getTime() + (r.delaiEscaladeHeures ?? 48) * 3600 * 1000,
+      (r) => maintenant >= r.createdAt.getTime() + (r.delaiEscaladeHeures ?? 48) * 3600 * 1000,
     );
     if (!depassees.length) return { escaladees: 0, numeros: [] };
 

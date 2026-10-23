@@ -66,7 +66,7 @@
           </div>
           <div>
             <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.createdOn') }}</span>
-            <span>{{ dateHeureLisible(reclamation.creeLe) }}</span>
+            <span>{{ dateHeureLisible(reclamation.createdAt) }}</span>
           </div>
           <div v-if="reclamation.escaladeLe">
             <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalatedOn') }}</span>
@@ -118,7 +118,7 @@
                     {{ libelleRoleCourt(m.auteur.role) }}
                   </span>
                 </q-item-label>
-                <q-item-label caption>{{ dateHeureLisible(m.creeLe) }}</q-item-label>
+                <q-item-label caption>{{ dateHeureLisible(m.createdAt) }}</q-item-label>
                 <div class="q-mt-xs" style="white-space: pre-wrap">{{ m.contenu }}</div>
                 <div v-if="m.joint" class="q-mt-xs">
                   <a :href="m.joint" target="_blank" rel="noopener">

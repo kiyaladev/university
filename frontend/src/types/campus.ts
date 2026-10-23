@@ -129,7 +129,7 @@ export interface ReservationSalle {
   responsable?: string | null;
   statut: StatutReservationSalle;
   refuseMotif?: string | null;
-  creeLe: string;
+  createdAt: string;
   salle?: Salle;
   demandeurId?: string | null;
   demandeur?: { id: string; nom: string; prenom: string } | null;

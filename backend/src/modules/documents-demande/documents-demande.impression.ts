@@ -32,7 +32,7 @@ export function demandeDocumentHtml(demande: any, etablissement: Etablissement):
 <tr><th>Inscription</th><td>${inscription}</td></tr>
 <tr><th>Statut</th><td>${echapper(demande.statut)}</td></tr>
 <tr><th>Frais</th><td>${echapper(demande.frais)} ${echapper(demande.devise)}</td></tr>
-<tr><th>Créée le</th><td>${echapper(demande.creeLe)}</td></tr>
+<tr><th>Créée le</th><td>${echapper(demande.createdAt)}</td></tr>
 </tbody></table>`,
   });
 }

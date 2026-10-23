@@ -106,7 +106,7 @@ export class DocumentsDemandeService extends CrudService {
     private readonly attestations?: AttestationsService,
   ) {
     super(prisma, 'demandeDocument', {
-      orderBy: { creeLe: 'desc' },
+      orderBy: { createdAt: 'desc' },
       include: DEMANDE_INCLUDE,
       label: 'Demande de document',
     });
@@ -174,7 +174,7 @@ export class DocumentsDemandeService extends CrudService {
       this.prisma.demandeDocument.findMany({
         where,
         include: includeDemandePour(user),
-        orderBy: { creeLe: 'desc' },
+        orderBy: { createdAt: 'desc' },
         ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
       }),
       this.prisma.demandeDocument.count({ where }),
@@ -243,7 +243,7 @@ export class DocumentsDemandeService extends CrudService {
       this.prisma.demandeDocument.count({
         where: {
           statut: StatutDemande.PRET,
-          creeLe: { lt: ilYA7j },
+          createdAt: { lt: ilYA7j },
         },
       }),
     ]);

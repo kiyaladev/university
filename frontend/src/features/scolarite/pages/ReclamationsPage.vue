@@ -143,7 +143,7 @@
       </template>
       <template #body-cell-activite="p">
         <q-td :props="p">
-          <div>{{ dateHeureLisible(p.row.creeLe) }}</div>
+          <div>{{ dateHeureLisible(p.row.createdAt) }}</div>
           <div v-if="p.row.escaladeLe" class="text-caption text-warning">
             <q-icon name="priority_high" size="14px" />
             {{ $t('reclamations.fields.escaladeeLe', { date: dateHeureLisible(p.row.escaladeLe) }) }}
@@ -222,7 +222,7 @@
             </div>
             <div class="row items-center">
               <q-icon name="event" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ dateHeureLisible(r.creeLe) }}</span>
+              <span class="text-caption">{{ dateHeureLisible(r.createdAt) }}</span>
             </div>
             <div v-if="r.escaladeLe" class="row items-center text-warning">
               <q-icon name="priority_high" size="16px" class="q-mr-sm" />
@@ -370,7 +370,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'priorite', label: t('common.fields.priority'), field: 'priorite', align: 'left' },
   { name: 'auteur', label: t('reclamations.table.columns.auteur'), field: 'auteur', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
-  { name: 'activite', label: t('reclamations.table.columns.activite'), field: 'creeLe', align: 'left' },
+  { name: 'activite', label: t('reclamations.table.columns.activite'), field: 'createdAt', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
