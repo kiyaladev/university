@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decoderCsv } from '../../src/utils/csv';
+import { decoderCsv } from '../../src/shared/utils/csv';
 
 describe('decoderCsv', () => {
   it('lit l’UTF-8 courant', () => {

@@ -3,6 +3,7 @@
 import { defineConfig } from '#q-app/wrappers';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export default defineConfig((ctx) => {
   const inclureMediasDemo = ctx.dev || Boolean(process.env.QA_BUILD_DIR && process.env.INCLUDE_DEMO_MEDIA === 'true');
@@ -18,6 +19,9 @@ export default defineConfig((ctx) => {
     extras: ['roboto-font', 'material-icons', 'material-icons-outlined'],
 
     build: {
+      // `@/` désigne src/ : vite le résout, et Quasar le recopie dans les `paths`
+      // du tsconfig généré (.quasar/tsconfig.json) que lit vue-tsc.
+      alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
       afterBuild({ quasarConf }) {
         if (!inclureMediasDemo) rmSync(join(quasarConf.build.distDir, 'media', 'demonstration'), { recursive: true, force: true });
       },

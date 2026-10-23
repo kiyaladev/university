@@ -8,8 +8,8 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
-import { lireToken } from '../services/session';
-import { ecrireFileChiffree, lireFileChiffree } from '../services/file-chiffree';
+import { lireToken } from '@/shared/services/session';
+import { ecrireFileChiffree, lireFileChiffree } from '@/shared/services/file-chiffree';
 import type { Pointage } from '../types';
 
 const CLE_FILE = 'unipresence_file_pointages';

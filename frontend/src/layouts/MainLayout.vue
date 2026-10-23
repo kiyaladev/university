@@ -177,13 +177,13 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useServicesActifsStore } from '../stores/servicesActifs';
-import PointagesEnAttente from '../components/PointagesEnAttente.vue';
+import PointagesEnAttente from '@/features/presence/components/PointagesEnAttente.vue';
 import { usePointagesStore } from '../stores/pointages';
 import { useSeancesStore } from '../stores/seances';
-import { LIBELLE_ROLE } from '../utils/libelles';
-import { surAndroid } from '../services/empreinte';
+import { LIBELLE_ROLE } from '@/shared/utils/libelles';
+import { surAndroid } from '@/shared/services/empreinte';
 import { api } from '../boot/axios';
-import { titreRoute } from '../utils/titreRoute';
+import { titreRoute } from '@/shared/utils/titreRoute';
 import { FAMILLES, menuPour, raccourcisPour } from '../navigation/menu';
 import { getAppLocale, setAppLocale, type AppLocale } from '../boot/i18n';
 

@@ -13,7 +13,7 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ replace: routeur.replace }),
 }));
 
-import { useListePaginee, type ParamsListe } from '../../src/composables/useListePaginee';
+import { useListePaginee, type ParamsListe } from '../../src/shared/composables/useListePaginee';
 
 type Filtres = { recherche: string; statut: string | null };
 

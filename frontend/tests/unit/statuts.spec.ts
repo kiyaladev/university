@@ -15,8 +15,8 @@ import {
   libelleStatut,
   tonStatut,
   type DomaineStatut,
-} from '../../src/utils/statuts';
-import { LIBELLE_STATUT_PRESENCE } from '../../src/utils/libelles';
+} from '../../src/shared/utils/statuts';
+import { LIBELLE_STATUT_PRESENCE } from '../../src/shared/utils/libelles';
 
 const domaines = Object.keys(LIBELLES_STATUT) as DomaineStatut[];
 

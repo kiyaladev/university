@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
-import { enrolerAppareilSiNecessaire } from '../services/empreinte';
-import { ecrireToken, effacerToken, lireToken } from '../services/session';
+import { enrolerAppareilSiNecessaire } from '@/shared/services/empreinte';
+import { ecrireToken, effacerToken, lireToken } from '@/shared/services/session';
 import { useReferentielsStore } from './referentiels';
 import type { Role, Utilisateur } from '../types';
 import { roleAutorise, type Permission } from '../navigation/permissions';

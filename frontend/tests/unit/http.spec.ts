@@ -9,7 +9,7 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import { creer, lire, lister, modifier, supprimer } from '../../src/services/http';
+import { creer, lire, lister, modifier, supprimer } from '../../src/shared/services/http';
 
 beforeEach(() => {
   api.get.mockReset();

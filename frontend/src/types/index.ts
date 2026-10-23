@@ -8,6 +8,6 @@ export * from './presence';
 export * from './registre';
 export * from './campus';
 export * from './administration';
-export * from './reclamations';
+export * from '@/features/scolarite/types';
 export * from './transverses';
 export * from './rectorat';

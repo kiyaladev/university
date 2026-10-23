@@ -25,8 +25,8 @@ import {
   montantLisible,
   optionsDepuis,
   pourcentLisible,
-} from '../../src/utils/libelles';
-import { accueilParRole } from '../../src/utils/accueil';
+} from '../../src/shared/utils/libelles';
+import { accueilParRole } from '../../src/shared/utils/accueil';
 
 /** Les séparateurs de milliers varient (espace fine insécable…) : on les unifie. */
 const espaces = (s: string) => s.replace(/\s/g, ' ');

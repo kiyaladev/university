@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { computed, reactive } from 'vue';
-import { lister } from '../services/http';
+import { lister } from '@/shared/services/http';
 import type {
   AnneeAcademique,
   Departement,

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
-import { lireToken } from '../services/session';
+import { lireToken } from '@/shared/services/session';
 import type { Affectation, Salle, Seance, TypeCours } from '../types';
 
 export interface NouvelleSeance {

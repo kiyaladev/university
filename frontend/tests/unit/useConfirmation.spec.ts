@@ -37,7 +37,7 @@ vi.mock('vue-i18n', () => ({
 }));
 vi.mock('../../src/boot/axios', () => ({ api }));
 
-import { useConfirmation } from '../../src/composables/useConfirmation';
+import { useConfirmation } from '../../src/shared/composables/useConfirmation';
 
 function repondre(r: Reponse) {
   etat.reponse = r;
