@@ -85,8 +85,8 @@ import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { dateLisible, montantLisible } from '@/shared/utils/libelles';
+import { paieService } from '../services/paie';
 import type { FeuillePaie } from '@/types';
 
 /*
@@ -136,12 +136,10 @@ watch(ouvert, (o) => {
 async function creer() {
   enregistrement.value = true;
   try {
-    const { data } = await api.post('/feuilles-paie', form.value);
-    creee.value = data;
-    $q.notify({ type: 'positive', message: t('paie.dialogs.createDialog.created', { label: data.libelle }) });
-    emit('enregistre', data);
-  } catch {
-    /* notifié par l'intercepteur */
+    const feuille = await paieService.creer(form.value);
+    creee.value = feuille;
+    $q.notify({ type: 'positive', message: t('paie.dialogs.createDialog.created', { label: feuille.libelle }) });
+    emit('enregistre', feuille);
   } finally {
     enregistrement.value = false;
   }

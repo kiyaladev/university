@@ -79,10 +79,11 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { aujourdhui, DEVISE, LIBELLE_TYPE_RECETTE } from '@/shared/utils/libelles';
+import { recettesService } from '../services/recettes';
+import type { TypeRecette } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
@@ -104,7 +105,7 @@ const optionsTypes = computed(() =>
 
 const form = ref({
   numero: '',
-  type: 'PRESTATION_FORMATION',
+  type: 'PRESTATION_FORMATION' as TypeRecette,
   libelle: '',
   description: '',
   montant: 0,
@@ -170,16 +171,14 @@ async function enregistrer() {
       factureNum: form.value.factureNum.trim() || null,
     };
     if (props.existant) {
-      await api.put(`/recettes/${props.existant.id}`, payload);
+      await recettesService.modifier(props.existant.id, payload);
       $q.notify({ type: 'positive', message: t('recettes.formDialog.updated') });
     } else {
-      await api.post('/recettes', { numero: form.value.numero.trim(), ...payload });
+      await recettesService.creer({ numero: form.value.numero.trim(), ...payload });
       $q.notify({ type: 'positive', message: t('recettes.formDialog.created') });
     }
     emit('enregistre');
     ouvert.value = false;
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     envoi.value = false;
   }
