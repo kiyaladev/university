@@ -17,6 +17,7 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { api } from '@/boot/axios';
 import { urlPasserelle, passerelleConfiguree } from '@/shared/utils/libelles';
+import { CLE_APPAREIL } from '@/shared/services/cles-stockage';
 
 export interface EtatLecteur {
   disponible: boolean;
@@ -55,8 +56,6 @@ const Empreinte = registerPlugin<GreffonEmpreinte>('Empreinte');
 
 /** L'application tourne-t-elle dans l'APK Android ? */
 export const surAndroid = () => Capacitor.isNativePlatform();
-
-const CLE_APPAREIL = 'unipresence_appareil_enrole';
 
 /**
  * Au premier usage, l'appareil réclame sa clé de signature au serveur. La clé

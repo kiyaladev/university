@@ -1,6 +1,6 @@
 /**
  * Initialisation de vue-i18n. On lit la préférence langue depuis LocalStorage
- * (clé « lang »), avec repli sur fr-FR. La langue active est exposée à Quasar
+ * (clé CLE_LANGUE, ancienne clé « lang » en repli), avec repli sur fr-FR. La langue active est exposée à Quasar
  * pour que la chrome (pagination, dates natives) suive, et l'attribut `lang`
  * du <html> est mis à jour en conséquence.
  *
@@ -13,14 +13,18 @@ import francais from 'quasar/lang/fr';
 import anglais from 'quasar/lang/en-US';
 import { createI18n } from 'vue-i18n';
 import { chargerMessages, type AppLocale } from '../i18n';
+import { CLE_LANGUE, CLE_LANGUE_LEGACY } from '@/shared/services/cles-stockage';
 
 export type { AppLocale };
 
-const STORAGE_KEY = 'lang';
+const STORAGE_KEY = CLE_LANGUE;
 
 function detectLocale(): AppLocale {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    // La langue est lue dès l'import du module, donc avant la reprise des
+    // clés de stockage (voir boot/stockage.ts) : l'ancien nom de la clé est
+    // encore consulté par défaut.
+    const stored = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(CLE_LANGUE_LEGACY);
     if (stored === 'fr-FR' || stored === 'en-US') return stored;
   } catch {
     /* localStorage indisponible : on consulte le navigateur */

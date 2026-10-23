@@ -9,89 +9,50 @@ vi.mock('quasar', () => ({ Notify: { create: vi.fn() } }));
 vi.mock('../../src/boot/i18n', () => ({ i18n: { global: { t: (cle: string) => cle } } }));
 vi.mock('../../src/stores/seances', () => ({ useSeancesStore: () => ({ synchroniser: vi.fn() }) }));
 
+import { creerIndexedDbFaux, creerStockageFaux, jetonPour } from './stockage-outil';
+
 const PROPRIETAIRE = 'agent-test';
-const CLE_FILE = 'unipresence_file_pointages';
+const CLE_FILE = 'university_file_pointages';
 const CLE_FILE_PROPRIETAIRE = `${CLE_FILE}_${PROPRIETAIRE}`;
+const BASE_LEGACY = 'unipresence-file-crypto-v1';
 
-interface FauxRequete {
-  onsuccess: (() => void) | null;
-  onerror: (() => void) | null;
-  onupgradeneeded?: (() => void) | null;
-  result: unknown;
-  error: unknown;
+/** Écrit une clé de chiffrement dans une base IndexedDB (base de l'appareil). */
+async function ecrireCleDansBase(base: string, proprietaire: string, cle: CryptoKey): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const requete = indexedDB.open(base, 1);
+    requete.onupgradeneeded = () => {
+      if (!requete.result.objectStoreNames.contains('cles'))
+        requete.result.createObjectStore('cles', { keyPath: 'proprietaire' });
+    };
+    requete.onsuccess = () => {
+      const db = requete.result;
+      const tx = db.transaction('cles', 'readwrite');
+      tx.objectStore('cles').put({ proprietaire, cle });
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+    };
+  });
 }
 
-/**
- * IndexedDB minimal : le service y conserve la clé AES-GCM du compte, avec la
- * seule exigence d'`extractable: false` — la clé n'est jamais lisible.
- */
-function creerIndexedDbFaux() {
-  const bases = new Map<string, Map<string, Map<string, unknown>>>();
-  return {
-    open(base: string) {
-      const requete: FauxRequete = { onsuccess: null, onerror: null, result: null, error: null };
-      queueMicrotask(() => {
-        const magasins = bases.get(base) ?? new Map<string, Map<string, unknown>>();
-        bases.set(base, magasins);
-        requete.result = {
-          objectStoreNames: { contains: (nom: string) => magasins.has(nom) },
-          createObjectStore: (nom: string) => {
-            magasins.set(nom, new Map<string, unknown>());
-            return nom;
-          },
-          transaction: (nom: string) => {
-            const tx = {
-              oncomplete: null as (() => void) | null,
-              onerror: null as (() => void) | null,
-              onabort: null as (() => void) | null,
-              objectStore: () => ({
-                get(cle: string) {
-                  const lecture: FauxRequete = { onsuccess: null, onerror: null, result: undefined, error: null };
-                  queueMicrotask(() => {
-                    lecture.result = magasins.get(nom)?.get(cle);
-                    lecture.onsuccess?.();
-                  });
-                  return lecture;
-                },
-                put(valeur: { proprietaire: string }) {
-                  magasins.get(nom)?.set(valeur.proprietaire, valeur);
-                },
-              }),
-            };
-            setTimeout(() => tx.oncomplete?.(), 0);
-            return tx;
-          },
-          close: () => undefined,
-        };
-        requete.onupgradeneeded?.();
-        requete.onsuccess?.();
-      });
-      return requete;
-    },
-  };
-}
-
-function creerLocalStorageFaux() {
-  const valeurs = new Map<string, string>();
-  return {
-    getItem: (cle: string) => valeurs.get(cle) ?? null,
-    setItem: (cle: string, valeur: string) => {
-      valeurs.set(cle, valeur);
-    },
-    removeItem: (cle: string) => {
-      valeurs.delete(cle);
-    },
-    clear: () => valeurs.clear(),
-  };
+/** Chiffre une file avec une clé donnée, comme le fait le service. */
+async function chiffrerAvec(cle: CryptoKey, valeur: unknown): Promise<string> {
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const chiffre = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: nonce },
+    cle,
+    new TextEncoder().encode(JSON.stringify(valeur)),
+  );
+  const enBase64 = (octets: Uint8Array) => Buffer.from(octets).toString('base64');
+  return `upf1:${enBase64(nonce)}:${enBase64(new Uint8Array(chiffre))}`;
 }
 
 beforeEach(async () => {
-  vi.stubGlobal('localStorage', creerLocalStorageFaux());
+  vi.stubGlobal('localStorage', creerStockageFaux());
+  vi.stubGlobal('sessionStorage', creerStockageFaux());
   vi.stubGlobal('indexedDB', creerIndexedDbFaux());
-  localStorage.setItem(
-    'unipresence_token',
-    `e30.${Buffer.from(JSON.stringify({ sub: PROPRIETAIRE })).toString('base64')}.signature-de-recette`,
-  );
+  localStorage.setItem('university_token', jetonPour(PROPRIETAIRE));
   api.post.mockReset();
   // Chaque scénario repart d'une application neuve : le cache de clé du
   // service et l'instance Pinia ne doivent pas survivre d'un test à l'autre.
@@ -141,12 +102,47 @@ describe('shared/services/file-chiffree', () => {
     expect(stocke).not.toContain('ancienne');
   });
 
+  it('reprend la clé de chiffrement conservée dans l’ancienne base', async () => {
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
+    localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
+
+    const { lireFileChiffree } = await import('../../src/shared/services/file-chiffree');
+
+    await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [])).resolves.toEqual([
+      { seanceId: 'seance-1' },
+    ]);
+  });
+
+  it('recopie les clés de chiffrement de l’ancienne base et la conserve', async () => {
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
+    localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
+
+    const { migrerBaseCrypto, lireFileChiffree } = await import('../../src/shared/services/file-chiffree');
+
+    await expect(migrerBaseCrypto()).resolves.toBe(1);
+    const bases = await indexedDB.databases();
+    expect(bases.map((base) => base.name)).toContain(BASE_LEGACY);
+    // La file reste déchiffrable : rien n'est perdu.
+    await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [])).resolves.toEqual([
+      { seanceId: 'seance-1' },
+    ]);
+  });
+
   it('refuse la lecture d’une file chiffrée par un autre compte', async () => {
     const { ecrireFileChiffree, lireFileChiffree } = await import('../../src/shared/services/file-chiffree');
     await ecrireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [{ seanceId: 'seance-1' }]);
 
     await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, 'autre-compte', [])).rejects.toThrow();
   });
+
 });
 
 describe('stores/pointages', () => {

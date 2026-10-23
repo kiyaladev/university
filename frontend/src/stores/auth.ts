@@ -2,7 +2,9 @@ import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
 import { enrolerAppareilSiNecessaire } from '@/shared/services/empreinte';
 import { ecrireToken, effacerToken, lireToken } from '@/shared/services/session';
+import { CACHE_API, CACHE_API_ANCIEN } from '@/shared/services/cles-stockage';
 import { useReferentielsStore } from './referentiels';
+import { useSeancesStore } from './seances';
 import type { Role, Utilisateur } from '../types';
 import { roleAutorise, type Permission } from '../navigation/permissions';
 
@@ -53,6 +55,7 @@ export const useAuthStore = defineStore('auth', {
         this.token = data.token;
         this.utilisateur = data.user;
         ecrireToken(data.token);
+        await this.chargerFileHorsLigne();
 
         // Dans l'application Android, l'appareil réclame sa clé de signature
         // dès la première session : c'est elle qui rendra ses lectures
@@ -84,10 +87,25 @@ export const useAuthStore = defineStore('auth', {
         useReferentielsStore().vider();
         this.token = data.token;
         ecrireToken(data.token);
+        await this.chargerFileHorsLigne();
         await this.chargerProfil();
         return this.utilisateur;
       } finally {
         this.chargement = false;
+      }
+    },
+
+    /**
+     * La file des séances hors ligne est chiffrée : elle doit être relue pour
+     * le compte qui vient d'entrer, avant que l'interface ne l'affiche. Une
+     * file illisible n'empêche pas la connexion : elle sera signalée par la
+     * page qui la consulte.
+     */
+    async chargerFileHorsLigne() {
+      try {
+        await useSeancesStore().initialiser();
+      } catch {
+        /* la file sera signalée à la lecture */
       }
     },
 
@@ -116,7 +134,7 @@ export const useAuthStore = defineStore('auth', {
       useReferentielsStore().vider();
       effacerToken();
       if ('caches' in window) {
-        void Promise.all(['unipresence-api', 'unipresence-api-v2'].map((name) => caches.delete(name)));
+        void Promise.all([CACHE_API_ANCIEN, CACHE_API].map((name) => caches.delete(name)));
       }
     },
   },

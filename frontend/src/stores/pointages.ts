@@ -8,24 +8,21 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
-import { lireToken } from '@/shared/services/session';
-import { ecrireFileChiffree, lireFileChiffree } from '@/shared/services/file-chiffree';
-import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
+import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
+import { CLE_FILE_POINTAGES, clePour } from '@/shared/services/cles-stockage';
+import { OPTIONS_POINTAGES, ecrireFileHorsLigne, lireFileHorsLigne } from '@/shared/services/file-hors-ligne';
 import type { Pointage } from '../types';
 
-const CLE_FILE = 'unipresence_file_pointages';
+const CLE_FILE = CLE_FILE_POINTAGES;
+
 function proprietaire(): string {
-  try {
-    const token = lireToken();
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return payload.sub || '';
-  } catch {
-    return '';
-  }
+  return proprietaireDepuisToken(lireToken());
 }
+
 function cleFile(owner: string): string {
-  return `${CLE_FILE}_${owner}`;
+  return clePour(CLE_FILE, owner);
 }
+
 function lireErreurs(owner: string): Record<string, string> {
   try {
     return JSON.parse(localStorage.getItem(`${cleFile(owner)}_erreurs`) || '{}');
@@ -33,42 +30,10 @@ function lireErreurs(owner: string): Record<string, string> {
     return {};
   }
 }
-function retirerPins(file: unknown[]): { file: Pointage[]; modifie: boolean } {
-  let modifie = false;
-  const securisee = file
-    .filter((pointage): pointage is Pointage => Boolean(pointage) && typeof pointage === 'object')
-    .map((pointage) => {
-      if (!('codePinEnseignant' in pointage)) return pointage;
-      const { codePinEnseignant: _pin, ...sansSecret } = pointage as Pointage & { codePinEnseignant?: string };
-      modifie = true;
-      return sansSecret as Pointage;
-    });
-  return { file: securisee, modifie };
-}
-/**
- * Au-delà de ce délai, un pointage n'a plus de chance d'être accepté et n'a
- * plus à rester sur l'appareil : un téléphone de contrôleur perdu ne doit pas
- * être un stock de preuves d'attestation.
- */
-const PEREMPTION_JOURS = 7;
 
 async function lireFile(owner: string): Promise<Pointage[]> {
   if (!owner) return [];
-  const file = await lireFileChiffree<unknown>(cleFile(owner), owner, []);
-  if (!Array.isArray(file)) throw new Error(i18n.global.t('filePointages.chiffrement.invalidFormat'));
-  const { file: sansSecrets, modifie: secretsRetires } = retirerPins(file);
-  const limite = Date.now() - PEREMPTION_JOURS * 24 * 3600 * 1000;
-  const retenus = sansSecrets.filter((p) => {
-    const t = p.horodatage ? new Date(p.horodatage).getTime() : Date.now();
-    return Number.isFinite(t) && t >= limite;
-  });
-  // Jetons d'état : la file peut dater d'avant l'harmonisation des statuts.
-  // On convertit à la lecture et on réécrit le fichier (migration de la file).
-  const convertis = normaliserJetonsStatuts(retenus) as Pointage[];
-  const jetonsConvertis = JSON.stringify(convertis) !== JSON.stringify(retenus);
-  if (secretsRetires || retenus.length !== file.length || jetonsConvertis)
-    await ecrireFileChiffree(cleFile(owner), owner, convertis);
-  return convertis;
+  return lireFileHorsLigne<Pointage>(CLE_FILE, owner, [], OPTIONS_POINTAGES);
 }
 
 export const usePointagesStore = defineStore('pointages', {
@@ -91,12 +56,15 @@ export const usePointagesStore = defineStore('pointages', {
   actions: {
     async initialiser() {
       await this.chargerProprietaire();
-      const legacy = await lireFileChiffree<unknown>(CLE_FILE, 'ancienne-file-sans-proprietaire', []);
-      if (Array.isArray(legacy)) {
-        const securisee = retirerPins(legacy);
-        this.ancienneFile = securisee.file.length;
-        if (securisee.modifie) await ecrireFileChiffree(CLE_FILE, 'ancienne-file-sans-proprietaire', securisee.file);
-      }
+      // Ancienne file, sans propriétaire : elle n'appartient plus à personne,
+      // mais son contenu est repris pour être chiffré et purgé de ses secrets.
+      const legacy = await lireFileHorsLigne<Pointage>(
+        CLE_FILE,
+        'ancienne-file-sans-proprietaire',
+        [],
+        OPTIONS_POINTAGES,
+      );
+      if (Array.isArray(legacy)) this.ancienneFile = legacy.length;
     },
 
     /**
@@ -144,7 +112,7 @@ export const usePointagesStore = defineStore('pointages', {
 
     async persister() {
       if (!this.proprietaire) throw new Error('Session requise pour conserver un pointage');
-      await ecrireFileChiffree(cleFile(this.proprietaire), this.proprietaire, this.file);
+      await ecrireFileHorsLigne(CLE_FILE, this.proprietaire, this.file);
       localStorage.setItem(`${cleFile(this.proprietaire)}_erreurs`, JSON.stringify(this.erreurs));
     },
 
@@ -241,7 +209,7 @@ export const usePointagesStore = defineStore('pointages', {
         await this.chargerProprietaire();
         const file = owner === this.proprietaire ? this.file : await lireFile(owner);
         const restants = file.filter((p) => acceptes.get(p.seanceId) !== JSON.stringify(p));
-        await ecrireFileChiffree(cleFile(owner), owner, restants);
+        await ecrireFileHorsLigne(CLE_FILE, owner, restants);
         const erreurs = Object.fromEntries((data.echecs ?? []).map((e: any) => [e.seanceId, e.erreur]));
         localStorage.setItem(`${cleFile(owner)}_erreurs`, JSON.stringify(erreurs));
         if (owner !== this.proprietaire) return data;

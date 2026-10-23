@@ -2,8 +2,15 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
-import { lireToken } from '@/shared/services/session';
-import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
+import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
+import { CLE_AFFECTATIONS, CLE_FILE_SEANCES, CLE_SALLES, clePour } from '@/shared/services/cles-stockage';
+import {
+  OPTIONS_SEANCES,
+  ecrireFileHorsLigne,
+  fileEnMemoire,
+  idClient,
+  lireFileHorsLigne,
+} from '@/shared/services/file-hors-ligne';
 import type { Affectation, Salle, Seance, TypeCours } from '../types';
 
 export interface NouvelleSeance {
@@ -23,55 +30,11 @@ interface SeanceEnFile extends NouvelleSeance {
   salle: Salle | null;
 }
 
-const CLE = 'unipresence_file_seances';
-const CLE_AFFECTATIONS = 'unipresence_affectations_tournee';
-const CLE_SALLES = 'unipresence_salles_tournee';
-const PEREMPTION_JOURS = 7;
 const AGE_AFFECTATIONS_MAX = 24 * 60 * 60 * 1000;
 
+/** Propriétaire du compte : c'est lui qui possède la file hors ligne. */
 function proprietaire(): string {
-  try {
-    const payload = JSON.parse(atob(lireToken().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return payload.sub || '';
-  } catch {
-    return '';
-  }
-}
-
-function clePour(prefixe: string, owner: string) {
-  return `${prefixe}_${owner}`;
-}
-
-function idClient(): string {
-  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  const octets = new Uint8Array(16);
-  globalThis.crypto.getRandomValues(octets);
-  octets[6] = (octets[6] & 0x0f) | 0x40;
-  octets[8] = (octets[8] & 0x3f) | 0x80;
-  const h = [...octets].map((v) => v.toString(16).padStart(2, '0')).join('');
-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-}
-
-function lireFile(owner: string): SeanceEnFile[] {
-  if (!owner) return [];
-  try {
-    const file: unknown = JSON.parse(localStorage.getItem(clePour(CLE, owner)) ?? '[]');
-    if (!Array.isArray(file)) return [];
-    const limite = Date.now() - PEREMPTION_JOURS * 24 * 60 * 60 * 1000;
-    const retenues = file.filter((s: any) => {
-      const date = new Date(s?.enfileeLe ?? '').getTime();
-      return Number.isFinite(date) && date >= limite && typeof s.idClient === 'string';
-    });
-    // Jetons d'état : la file peut dater d'avant l'harmonisation des statuts.
-    // On convertit à la lecture et on réécrit le fichier (migration de la
-    // file), faute de quoi le serveur refuserait la valeur.
-    const converties = normaliserJetonsStatuts(retenues) as SeanceEnFile[];
-    if (retenues.length !== file.length || JSON.stringify(converties) !== JSON.stringify(retenues))
-      localStorage.setItem(clePour(CLE, owner), JSON.stringify(converties));
-    return converties;
-  } catch {
-    return [];
-  }
+  return proprietaireDepuisToken(lireToken());
 }
 
 function lireAffectations(owner: string): Affectation[] {
@@ -101,34 +64,63 @@ function erreurTransport(e: any) {
 }
 
 export const useSeancesStore = defineStore('seancesHorsLigne', {
-  state: () => ({
-    proprietaire: proprietaire(),
-    file: lireFile(proprietaire()),
-    affectationsCache: lireAffectations(proprietaire()),
-    sallesCache: lireSalles(proprietaire()),
-    erreurs: {} as Record<string, string>,
-    enLigne: navigator.onLine,
-    synchronisation: false,
-    erreurReseauSignalee: false,
-  }),
+  state: () => {
+    const owner = proprietaire();
+    return {
+      proprietaire: owner,
+      // La file est chiffrée : elle a pu être déchiffrée avant le démarrage
+      // de l'interface, sinon elle est relue à la première demande.
+      file: fileEnMemoire<SeanceEnFile>(CLE_FILE_SEANCES, owner) ?? [],
+      affectationsCache: lireAffectations(owner),
+      sallesCache: lireSalles(owner),
+      erreurs: {} as Record<string, string>,
+      enLigne: navigator.onLine,
+      synchronisation: false,
+      erreurReseauSignalee: false,
+      fileChargee: false,
+    };
+  },
 
   getters: {
     enAttente: (s) => s.file.length,
   },
 
   actions: {
-    chargerProprietaire() {
+    /**
+     * Change de propriétaire sans attendre : un changement de compte ne doit
+     * jamais laisser la file de l'ancien compte en mémoire.
+     */
+    rafraichirProprietaire() {
       const owner = proprietaire();
       if (owner === this.proprietaire) return;
       this.proprietaire = owner;
-      this.file = lireFile(owner);
+      this.file = [];
       this.affectationsCache = lireAffectations(owner);
       this.sallesCache = lireSalles(owner);
       this.erreurs = {};
+      this.fileChargee = false;
+    },
+
+    /**
+     * Relit la file du compte courant. Le déchiffrement est asynchrone : la
+     * file est donc vide le temps de la lecture, et l'appelant qui veut la
+     * file complète doit attendre `initialiser()`.
+     */
+    async chargerProprietaire() {
+      this.rafraichirProprietaire();
+      if (this.fileChargee) return;
+      const owner = this.proprietaire;
+      this.file = owner ? await lireFileHorsLigne<SeanceEnFile>(CLE_FILE_SEANCES, owner, [], OPTIONS_SEANCES) : [];
+      this.fileChargee = true;
+    },
+
+    /** Point d'entrée explicite : la file est disponible une fois lisible. */
+    async initialiser() {
+      await this.chargerProprietaire();
     },
 
     enregistrerAffectations(affectations: Affectation[]) {
-      this.chargerProprietaire();
+      this.rafraichirProprietaire();
       if (!this.proprietaire) return;
       this.affectationsCache = affectations;
       localStorage.setItem(
@@ -141,7 +133,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
     },
 
     enregistrerSalles(salles: Salle[]) {
-      this.chargerProprietaire();
+      this.rafraichirProprietaire();
       if (!this.proprietaire) return;
       this.sallesCache = salles;
       localStorage.setItem(
@@ -153,13 +145,13 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       );
     },
 
-    persister() {
+    async persister() {
       if (!this.proprietaire) throw new Error('Session requise pour conserver une séance');
-      localStorage.setItem(clePour(CLE, this.proprietaire), JSON.stringify(this.file));
+      await ecrireFileHorsLigne(CLE_FILE_SEANCES, this.proprietaire, this.file);
     },
 
     async creer(payload: NouvelleSeance, affectation: Affectation, salle: Salle | null) {
-      this.chargerProprietaire();
+      await this.chargerProprietaire();
       if (!this.proprietaire) throw new Error(i18n.global.t('seances.offline.sessionRequired'));
       const entree: SeanceEnFile = {
         ...payload,
@@ -186,7 +178,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       }
 
       this.file = [...this.file, entree];
-      this.persister();
+      await this.persister();
       Notify.create({ type: 'info', icon: 'cloud_off', message: i18n.global.t('seances.offline.queued') });
       return { id: entree.idClient, enFile: true };
     },
@@ -197,7 +189,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
     },
 
     pourDate(date: string): Seance[] {
-      this.chargerProprietaire();
+      void this.chargerProprietaire().catch(() => undefined);
       return this.file
         .filter((s) => s.date.slice(0, 10) === date)
         .map(
@@ -220,7 +212,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
     },
 
     async synchroniser() {
-      this.chargerProprietaire();
+      await this.chargerProprietaire();
       if (!this.file.length || this.synchronisation || !navigator.onLine) return;
       this.synchronisation = true;
       const owner = this.proprietaire;
@@ -235,10 +227,13 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
             .filter((e) => resultats.some((r) => r.idClient === e.idClient && r.ok))
             .map((e) => [e.idClient, JSON.stringify(e)]),
         );
-        this.chargerProprietaire();
-        const file = owner === this.proprietaire ? this.file : lireFile(owner);
+        await this.chargerProprietaire();
+        const file =
+          owner === this.proprietaire
+            ? this.file
+            : await lireFileHorsLigne<SeanceEnFile>(CLE_FILE_SEANCES, owner, [], OPTIONS_SEANCES);
         const restantes = file.filter((e) => acceptees.get(e.idClient) !== JSON.stringify(e));
-        localStorage.setItem(clePour(CLE, owner), JSON.stringify(restantes));
+        await ecrireFileHorsLigne(CLE_FILE_SEANCES, owner, restantes);
         if (owner !== this.proprietaire) return data;
         this.file = restantes;
         this.erreurs = Object.fromEntries(resultats.filter((r) => !r.ok).map((r) => [r.idClient, r.erreur ?? '']));
@@ -264,10 +259,10 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
       }
     },
 
-    retirer(idClient: string) {
-      this.chargerProprietaire();
+    async retirer(idClient: string) {
+      await this.chargerProprietaire();
       this.file = this.file.filter((s) => s.idClient !== idClient);
-      this.persister();
+      await this.persister();
     },
   },
 });

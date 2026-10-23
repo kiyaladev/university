@@ -1,5 +1,8 @@
 /** Adresse de la passerelle biométrique locale (poste du contrôleur). */
-export const CLE_PASSERELLE = 'unipresence_biometrie_url';
+import { CLE_PASSERELLE } from '@/shared/services/cles-stockage';
+
+export { CLE_PASSERELLE };
+
 export const PASSERELLE_DEFAUT = 'http://127.0.0.1:5044';
 
 export const urlPasserelle = () => localStorage.getItem(CLE_PASSERELLE) || PASSERELLE_DEFAUT;

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Notify } from 'quasar';
 import { getAppLocale, i18n } from './i18n';
 import { effacerToken, lireToken } from '@/shared/services/session';
+import { CACHE_API_ANCIEN } from '@/shared/services/cles-stockage';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import { completerMessageErreur, extraireMessageErreur } from '@/shared/utils/erreur-http';
 
@@ -24,7 +25,7 @@ export const API_URL = process.env.API_URL || 'http://localhost:5031/api';
 const api = axios.create({ baseURL: API_URL, timeout: 20000 });
 
 export default defineBoot(({ router }) => {
-  if ('caches' in window) void caches.delete('unipresence-api');
+  if ('caches' in window) void caches.delete(CACHE_API_ANCIEN);
   api.interceptors.request.use((config) => {
     config.headers['Accept-Language'] = getAppLocale();
     const token = lireToken();

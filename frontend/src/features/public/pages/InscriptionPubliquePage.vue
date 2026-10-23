@@ -347,6 +347,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
+import { CLE_BROUILLON_INSCRIPTION } from '@/shared/services/cles-stockage';
 import { montantLisible } from '@/shared/utils/libelles';
 import type { AnneeAcademique } from '@/types';
 
@@ -357,7 +358,7 @@ import type { AnneeAcademique } from '@/types';
  */
 const NUMERO_COURT_MM = '60 431 431';
 
-const CLE_BROUILLON = 'unipresence_inscription_publique_brouillon';
+const CLE_BROUILLON = CLE_BROUILLON_INSCRIPTION;
 
 interface PromotionOuverte {
   id: string;
