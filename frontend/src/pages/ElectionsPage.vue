@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { useListePaginee, texteApi } from '../composables/useListePaginee';
 import { useConfirmation, type CouleurConfirmation } from '../composables/useConfirmation';
@@ -14,7 +15,6 @@ import PaginationBar from '../components/PaginationBar.vue';
 import ElectionDialog from '../components/ElectionDialog.vue';
 import CandidatDialog from '../components/CandidatDialog.vue';
 import {
-  CLASSE_STATUT_ELECTION,
   LIBELLE_STATUT_ELECTION,
   LIBELLE_TYPE_ELECTION,
   OPTIONS_TYPE_ELECTION,
@@ -311,9 +311,7 @@ watch(onglet, () => {
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut" :class="CLASSE_STATUT_ELECTION[p.row.statut]">
-            <span class="pochoir">{{ LIBELLE_STATUT_ELECTION[p.row.statut] }}</span>
-          </span>
+          <PastilleStatut domaine="election" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -409,9 +407,7 @@ watch(onglet, () => {
           <q-card flat bordered class="carte election-carte">
             <q-card-section>
               <div class="row items-center q-gutter-sm">
-                <span class="champ champ-statut" :class="CLASSE_STATUT_ELECTION[e.statut]">
-                  <span class="pochoir">{{ LIBELLE_STATUT_ELECTION[e.statut] }}</span>
-                </span>
+                <PastilleStatut domaine="election" :statut="e.statut" />
                 <q-chip dense square outline color="primary">
                   {{ LIBELLE_TYPE_ELECTION[e.type] ?? e.type }}
                 </q-chip>
@@ -637,11 +633,4 @@ watch(onglet, () => {
 <style scoped lang="scss">
 // Pas d'arrondi : une élection est une plaque du panneau comme les autres.
 .election-carte { height: 100%; }
-
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
-.badge--neutre { background: #f5f5f7; color: #6e6e73; }
-.badge--attention { background: #fff6ef; color: #b64400; }
-.badge--primaire { background: #e8eef5; color: #0d47a1; }
-
 </style>

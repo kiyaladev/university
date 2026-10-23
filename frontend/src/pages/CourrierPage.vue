@@ -68,9 +68,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="classeStatut(p.row.statut)">
-            {{ libelleStatut(p.row.statut) }}
-          </span>
+          <PastilleStatut domaine="courrier" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-circuits="p">
@@ -156,9 +154,7 @@
                   {{ c.type === 'ENTRANT' ? $t('courrierPage.card.from', { value: c.expediteur ?? '—' }) : $t('courrierPage.card.to', { value: c.destinataire ?? '—' }) }}
                 </div>
               </div>
-              <span class="champ badge-statut" :class="classeStatut(c.statut)">
-                {{ libelleStatut(c.statut) }}
-              </span>
+              <PastilleStatut domaine="courrier" :statut="c.statut" />
             </div>
           </q-card-section>
           <q-card-section class="q-pt-none">
@@ -215,6 +211,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -394,25 +391,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-/** Cycle de vie du courrier, peint aux couleurs partagées avec la paie. */
-function classeStatut(s: string) {
-  switch (s) {
-    case 'EN_CIRCUIT':
-      return 'champ--en-cours';
-    case 'TRAITE':
-      return 'champ--validee';
-    case 'CLASSE':
-    case 'ARCHIVE':
-      return 'champ--close';
-    default:
-      return 'champ--brouillon';
-  }
-}
-
-function libelleStatut(s: string) {
-  return LIBELLE_STATUT_COURRIER[s] ?? s;
-}
-
 function dateCourrier(c: Courrier): string {
   const d = c.dateReception ?? c.dateEnvoi ?? c.createdAt;
   return dateLisible(d);
@@ -450,8 +428,6 @@ async function cloturer(c: Courrier) {
 </script>
 
 <style scoped lang="scss">
-@use '../css/champs-admin' as *;
-
 .courrier-carte {
   cursor: pointer;
   transition: background var(--up-transition);

@@ -85,9 +85,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="demande-statut" :class="`statut-${p.row.statut}`">
-            <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-          </span>
+          <PastilleStatut domaine="demande" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-frais="p">
@@ -194,9 +192,7 @@
                 {{ d.etudiant.prenom }} {{ d.etudiant.nom }} · {{ d.etudiant.matricule }}
               </div>
             </div>
-            <span class="demande-statut" :class="`statut-${d.statut}`">
-              <span class="pochoir">{{ libelleStatut(d.statut) }}</span>
-            </span>
+            <PastilleStatut domaine="demande" :statut="d.statut" />
           </q-card-section>
           <q-card-section class="q-pt-sm q-gutter-y-xs">
             <div class="row items-center">
@@ -302,9 +298,7 @@
             <div class="text-h6">{{ demandeSelectionnee.numero }}</div>
             <div class="text-caption text-grey-7">{{ libelleType(demandeSelectionnee.type) }}</div>
           </div>
-          <span class="demande-statut" :class="`statut-${demandeSelectionnee.statut}`">
-            <span class="pochoir">{{ libelleStatut(demandeSelectionnee.statut) }}</span>
-          </span>
+          <PastilleStatut domaine="demande" :statut="demandeSelectionnee.statut" />
         </q-card-section>
         <q-card-section v-if="demandeSelectionnee" class="q-pt-none">
           <workflow-stepper
@@ -436,6 +430,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
@@ -461,7 +456,7 @@ import {
 } from '../utils/libelles';
 import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
-import type { DemandeDocument, StatutDemande, StatutPaiement, TypeDemandeDocument } from '../types';
+import type { DemandeDocument, StatutPaiement, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -525,9 +520,6 @@ const plaques = computed(() => [
   { cle: 'pretesNonRemises', libelle: t('demandeDocuments.plaques.readyOverdue'), alerte: true },
 ]);
 
-function libelleStatut(s: string) {
-  return LIBELLE_STATUT_DEMANDE[s as StatutDemande] ?? s;
-}
 function libelleType(t: string) {
   return LIBELLE_TYPE_DEMANDE[t as TypeDemandeDocument] ?? t;
 }
@@ -681,26 +673,6 @@ $rouge: #CE1126;
   font-weight: 590;
 }
 
-.demande-statut {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  min-height: 24px;
-  color: var(--up-encre);
-  border-radius: var(--up-rayon-sm);
-  font-size: 11px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-
-  &.statut-EN_ATTENTE_PAIEMENT { background: $jaune-fond; color: $jaune-texte; }
-  .pochoir { color: inherit; }
-
-  &.statut-PAYEE { background: #007a4d; color: white; }
-  &.statut-EN_TRAITEMENT { background: $vert-fond; color: $vert-lien; }
-  &.statut-PRETE { background: $vert-fond; color: #{$vert}; }
-  &.statut-REMISE { background: #0066cc; color: white; }
-  &.statut-REJETEE { background: $rouge-fond; color: #{$rouge}; }
-}
 
 .demande-meta {
   display: grid;

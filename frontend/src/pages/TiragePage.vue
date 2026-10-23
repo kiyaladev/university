@@ -122,7 +122,7 @@
       </template>
       <template #body-cell-stade="p">
         <q-td :props="p">
-          <q-badge :color="couleurStade(p.row.stade)" :label="libelleStade(p.row.stade)" />
+          <PastilleStatut domaine="tirage" :statut="p.row.stade" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -153,6 +153,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -270,25 +271,6 @@ const colonnesTableau = computed<QTableColumn[]>(() => [
   { name: 'stade', label: translate('tirage.table.columns.stade'), field: 'stade', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-function couleurStade(s: string) {
-  switch (s) {
-    case 'PROGRAMME':
-      return 'grey-7';
-    case 'IMPRIME':
-      return 'orange';
-    case 'MIS_SOUS_PLI':
-      return 'blue';
-    case 'DISTRIBUE':
-      return 'green';
-    case 'RECUPERE':
-      return 'teal';
-    case 'ANNULE':
-      return 'red';
-    default:
-      return 'grey-5';
-  }
-}
 
 function libelleStade(s: string) {
   return LIBELLE_STADE_TIRAGE[s] ?? s;

@@ -335,9 +335,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <span class="champ champ-statut champ-statut--dense" :class="classeStatut(p.row.statut)">
-              <span class="pochoir">{{ LIBELLE_STATUT_PAIEMENT[p.row.statut] ?? LIBELLE_STATUT_CONSOMMATION[p.row.statut] ?? p.row.statut }}</span>
-            </span>
+            <PastilleStatut :domaine="p.row.type === 'RECHARGE' ? 'paiement' : 'consommation'" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-actions="p">
@@ -372,6 +370,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
@@ -388,7 +387,6 @@ import EtatVide from '../components/EtatVide.vue';
 import RechargeDialog from '../components/RechargeDialog.vue';
 import {
   LIBELLE_MODE_PAIEMENT,
-  LIBELLE_STATUT_CONSOMMATION,
   LIBELLE_STATUT_PAIEMENT,
   LIBELLE_TYPE_REPAS,
   dateHeureLisible,
@@ -648,19 +646,6 @@ const chipsTransactions = computed(() => {
 
 function periodeAujourdhui() {
   filtresTransactions.value = { ...filtresTransactions.value, dateDebut: aujourdhui(), dateFin: aujourdhui() };
-}
-
-function classeStatut(s: string) {
-  return (
-    {
-      VALIDEE: 'champ--present',
-      REUSSI: 'champ--present',
-      EN_ATTENTE: 'champ--attente',
-      ECHOUE: 'champ--absent',
-      ANNULEE: 'champ--retard',
-      ANNULE: 'champ--retard',
-      REMBOURSE: 'champ--retard',
-    })[s] ?? 'champ--attente';
 }
 
 async function annulerRepas(ligne: LigneTransaction) {

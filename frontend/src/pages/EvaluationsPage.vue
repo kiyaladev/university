@@ -111,9 +111,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-badge :color="p.row.statut === 'OUVERTE' ? 'positive' : 'grey-6'">
-            {{ LIBELLE_STATUT_EVALUATION[p.row.statut] }}
-          </q-badge>
+          <PastilleStatut domaine="evaluation" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -211,10 +209,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <q-badge
-              :color="e.statut === 'OUVERTE' ? 'positive' : 'grey-6'"
-              :label="LIBELLE_STATUT_EVALUATION[e.statut]"
-            />
+            <PastilleStatut domaine="evaluation" :statut="e.statut" />
             <q-badge outline color="primary" class="q-ml-sm">
               {{ LIBELLE_TYPE_EVALUATION[e.type] }}
             </q-badge>
@@ -401,6 +396,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';

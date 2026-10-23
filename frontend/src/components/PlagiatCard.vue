@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 /**
  * Carte d'une suspicion de plagiat : affiche le score en gros, deux vignettes
  * (document A | document B) et expose les actions d'acquittement/confirmation.
@@ -41,12 +42,6 @@ const libelleScore = computed(() => {
   return 'Risque élevé';
 });
 
-const couleurStatut: Record<SuspicionPlagiat['statut'], string> = {
-  EN_ATTENTE: 'orange',
-  ACQUITTE: 'positive',
-  CONFIRME: 'negative',
-};
-
 function miniature(doc?: DocumentDepot | null) {
   if (!doc) return { titre: '—', auteurs: '', departement: null as string | null };
   return {
@@ -73,9 +68,7 @@ function miniature(doc?: DocumentDepot | null) {
         </div>
       </div>
       <div class="col-auto">
-        <q-badge :color="couleurStatut[suspicion.statut]" text-color="white">
-          {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
-        </q-badge>
+        <PastilleStatut domaine="suspicion" :statut="suspicion.statut" />
       </div>
     </q-card-section>
 

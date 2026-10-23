@@ -8,13 +8,7 @@
             {{ reservation?.salle?.code }} — {{ reservation?.salle?.nom }}
           </div>
         </div>
-        <q-badge
-          v-if="reservation"
-          class="detail-badge"
-          :class="`detail-badge--${reservation.statut.toLowerCase()}`"
-        >
-          {{ LIBELLE_STATUT_RESERVATION[reservation.statut] }}
-        </q-badge>
+        <PastilleStatut v-if="reservation" domaine="reservation" :statut="reservation.statut" />
       </q-card-section>
 
       <q-card-section v-if="reservation" class="q-pt-none">
@@ -144,6 +138,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -151,7 +146,7 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useConfirmation } from '../composables/useConfirmation';
 import ChampDate from './ChampDate.vue';
-import { dateHeureLisible, LIBELLE_STATUT_RESERVATION } from '../utils/libelles';
+import { dateHeureLisible } from '../utils/libelles';
 import type { ReservationSalle, Salle } from '../types';
 
 /** Champs renvoyés par l'API mais non inscrits dans types.ts (ajouts récents). */
@@ -293,17 +288,6 @@ async function annuler() {
   font-size: 0.92rem;
 
   .pochoir { color: var(--up-encre-douce); }
-}
-
-.detail-badge {
-  border-radius: var(--up-rayon-sm);
-  text-transform: none;
-  font-weight: 590;
-
-  &--en_attente { background: $jaune-fond; color: $jaune-texte; }
-  &--confirmee { background: $vert-fond; color: #{$vert}; }
-  &--refusee,
-  &--annulee { background: $rouge-fond; color: #{$rouge}; }
 }
 
 .detail-moi { color: var(--up-encre-douce); font-size: 0.8rem; }

@@ -71,9 +71,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-justificatif" :class="`champ--${champStatut(p.row.statut)}`">
-            <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-          </span>
+          <PastilleStatut domaine="justificatif" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -211,9 +209,7 @@
             <q-item>
               <q-item-section>{{ $t('justificatifs.detailDialog.status') }}</q-item-section>
               <q-item-section side>
-                <span class="champ champ-justificatif" :class="`champ--${champStatut(detail.statut)}`">
-                  <span class="pochoir">{{ libelleStatut(detail.statut) }}</span>
-                </span>
+                <PastilleStatut domaine="justificatif" :statut="detail.statut" />
               </q-item-section>
             </q-item>
             <q-item v-if="detail.commentaire">
@@ -257,6 +253,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ChampDate from '../components/ChampDate.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EtatVide from '../components/EtatVide.vue';
@@ -322,13 +319,6 @@ const liste = reactive(
 
 const form = ref({ seanceId: '', type: 'MALADIE', motif: '', piece: undefined as string | undefined });
 
-/** Le champ peint d'un justificatif reprend la grammaire des constats. */
-const CHAMP_STATUT_JUSTIFICATIF: Record<string, string> = {
-  EN_ATTENTE: 'retard',
-  VALIDE: 'present',
-  REJETE: 'absent',
-};
-
 const optionsStatuts = Object.entries(LIBELLE_STATUT_JUSTIFICATIF).map(([value, label]) => ({
   label,
   value,
@@ -392,8 +382,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-const champStatut = (s: string) => CHAMP_STATUT_JUSTIFICATIF[s] ?? 'attente';
-const libelleStatut = (s: string) => LIBELLE_STATUT_JUSTIFICATIF[s] ?? s;
 const libelleMotif = (type?: string | null) =>
   TYPES_JUSTIFICATIF.find((x) => x.value === type)?.label ?? type ?? '—';
 
@@ -489,13 +477,3 @@ async function deposer() {
   }
 }
 </script>
-
-<style scoped lang="scss">
-.champ-justificatif {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  min-height: 24px;
-  border: var(--up-filet);
-}
-</style>

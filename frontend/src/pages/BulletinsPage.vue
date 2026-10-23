@@ -151,11 +151,7 @@
 
           <template #body-cell-decision="p">
             <q-td :props="p" class="text-center">
-              <q-badge
-                v-if="p.row.decision"
-                :color="couleurDecision(p.row.decision)"
-                :label="LIBELLE_DECISION_JURY[p.row.decision] ?? p.row.decision"
-              />
+              <PastilleStatut v-if="p.row.decision" domaine="decision" :statut="p.row.decision" />
               <span v-else class="text-grey-7">{{ $t('bulletins.table.nonDelibere') }}</span>
             </q-td>
           </template>
@@ -216,11 +212,7 @@
           >
             <q-card-section>
               <div class="row items-center q-mb-xs">
-                <q-badge
-                  v-if="l.decision"
-                  :color="couleurDecision(l.decision)"
-                  :label="LIBELLE_DECISION_JURY[l.decision] ?? l.decision"
-                />
+                <PastilleStatut v-if="l.decision" domaine="decision" :statut="l.decision" />
                 <q-badge v-else color="grey-6" :label="$t('bulletins.table.nonDelibere')" />
                 <q-space />
                 <div class="text-caption text-grey-7">{{ l.matricule }}</div>
@@ -279,6 +271,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -443,10 +436,6 @@ const cheminBulletinCourant = computed(() => {
   if (!l?.deliberationId) return undefined;
   return `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`;
 });
-
-function couleurDecision(d: string): string {
-  return d === 'ADMIS' ? 'positive' : d === 'AJOURNE' ? 'warning' : 'negative';
-}
 
 /**
  * Le listing des délibérations ne porte pas ses lignes : chaque délibération

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -9,7 +10,6 @@ import PageHeader from '../components/PageHeader.vue';
 import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import EtatVide from '../components/EtatVide.vue';
 import { useAuthStore } from '../stores/auth';
-import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
@@ -151,9 +151,7 @@ onMounted(charger);
             {{ $t('maCarte.card.matricule') }} <code>{{ carte.etudiant?.matricule }}</code>
           </div>
           <div class="q-mt-sm">
-            <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[carte.statut]">
-              <span class="pochoir">{{ LIBELLE_STATUT_CARTE[carte.statut] }}</span>
-            </span>
+            <PastilleStatut domaine="carte" :statut="carte.statut" />
           </div>
         </div>
       </q-card-section>
@@ -254,15 +252,6 @@ onMounted(charger);
   max-width: 720px;
   margin: 0 auto;
 }
-
-/* Pastille de statut : même gabarit que sur l'écran de gestion. */
-.champ-statut {
-  display: inline-flex;
-  padding: 3px 8px;
-  min-height: 24px;
-}
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
 
 .url-verification code {
   word-break: break-all;

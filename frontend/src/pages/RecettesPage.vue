@@ -59,9 +59,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="p.row.paiementId ? 'champ--validee' : 'champ--brouillon'">
-            {{ p.row.paiementId ? $t('recettes.status.encaissee') : $t('recettes.status.aEncaisser') }}
-          </span>
+          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
         </q-td>
       </template>
       <template #body-cell-montant="p">
@@ -128,9 +126,7 @@
                 <div class="text-subtitle1 text-weight-bold">{{ r.libelle }}</div>
                 <div class="text-caption q-mt-xs">{{ libelleType(r.type) }} · {{ r.client ?? '—' }}</div>
               </div>
-              <span class="champ badge-statut" :class="r.paiementId ? 'champ--validee' : 'champ--brouillon'">
-                {{ r.paiementId ? $t('recettes.status.encaissee') : $t('recettes.status.aEncaisser') }}
-              </span>
+              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -182,6 +178,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -370,8 +367,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../css/champs-admin' as *;
-
 /* Même définition que les autres tableaux de bord de l'application. */
 .stat-chiffre {
   font-size: 2rem;

@@ -126,7 +126,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-badge :color="couleurStatut(p.row.statut)" :label="libelleStatut(p.row.statut)" />
+          <PastilleStatut domaine="examen" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -209,7 +209,7 @@
                   {{ e.matiere?.intitule ?? '—' }} · {{ e.promotion?.nom ?? '—' }}
                 </div>
               </div>
-              <q-badge :color="couleurStatut(e.statut)" :label="libelleStatut(e.statut)" />
+              <PastilleStatut domaine="examen" :statut="e.statut" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -311,7 +311,7 @@
             </div>
           </div>
           <div class="col-auto">
-            <q-badge :color="couleurStatut(examenFiche.statut)" :label="libelleStatut(examenFiche.statut)" />
+            <PastilleStatut domaine="examen" :statut="examenFiche.statut" />
           </div>
           <div class="col-auto">
             <q-btn flat round dense icon="close" :aria-label="$t('examens.sheet.closeAria')" v-close-popup />
@@ -400,6 +400,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, reactive, ref, watch } from 'vue';
@@ -556,21 +557,6 @@ const colonnesScans = computed<QTableColumn[]>(() => [
   { name: 'valide', label: t('examens.scansTable.columns.result'), field: 'valide', align: 'left' },
   { name: 'scanneur', label: t('examens.scansTable.columns.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
 ]);
-
-function couleurStatut(s: string) {
-  switch (s) {
-    case 'PLANIFIE':
-      return 'primary';
-    case 'EN_COURS':
-      return 'orange';
-    case 'TERMINE':
-      return 'positive';
-    case 'ANNULE':
-      return 'negative';
-    default:
-      return 'grey-5';
-  }
-}
 
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_EXAMEN[s] ?? s;

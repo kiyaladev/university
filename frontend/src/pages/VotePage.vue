@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import {
-  CLASSE_STATUT_ELECTION,
   LIBELLE_STATUT_ELECTION,
   LIBELLE_TYPE_ELECTION,
   dateElection,
@@ -255,9 +255,7 @@ onMounted(charger);
                   {{ $t('vote.list.closes_on', { date: dateElection(e.dateCloture) }) }}
                 </q-item-label>
                 <q-item-label>
-                  <span class="champ champ-statut" :class="CLASSE_STATUT_ELECTION[e.statut]">
-                    <span class="pochoir">{{ LIBELLE_STATUT_ELECTION[e.statut] }}</span>
-                  </span>
+                  <PastilleStatut domaine="election" :statut="e.statut" />
                 </q-item-label>
               </q-item-section>
             </q-item>
@@ -435,13 +433,6 @@ onMounted(charger);
   background: var(--up-chaux);
   font-weight: 590;
 }
-
-// Champs peints des statuts — mêmes teintes que l'écran de gestion.
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
-.badge--neutre { background: #f5f5f7; color: #6e6e73; }
-.badge--attention { background: #fff6ef; color: #b64400; }
-.badge--primaire { background: #e8eef5; color: #0d47a1; }
 
 .etat-vide__actions {
   display: flex;

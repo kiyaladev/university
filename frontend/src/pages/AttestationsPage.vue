@@ -118,9 +118,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-chip :color="p.row.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
-            {{ LIBELLE_STATUT_ATTESTATION[p.row.statut] ?? p.row.statut }}
-          </q-chip>
+          <PastilleStatut domaine="attestation" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -206,9 +204,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <q-chip :color="a.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
-              {{ LIBELLE_STATUT_ATTESTATION[a.statut] ?? a.statut }}
-            </q-chip>
+            <PastilleStatut domaine="attestation" :statut="a.statut" />
             <q-space />
             <div class="text-caption text-grey-7">{{ a.numero }}</div>
           </div>
@@ -391,6 +387,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';

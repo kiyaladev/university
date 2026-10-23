@@ -51,9 +51,7 @@
             </template>
             <template #body-cell-statut="p">
               <q-td :props="p">
-                <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
-                  <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-                </span>
+                <PastilleStatut domaine="ticket" :statut="p.row.statut" />
               </q-td>
             </template>
             <template #body-cell-priorite="p">
@@ -160,9 +158,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <span class="ticket-champ" :class="`ticket-champ--${p.row.statut}`">
-              <span class="pochoir">{{ libelleStatut(p.row.statut) }}</span>
-            </span>
+            <PastilleStatut domaine="ticket" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #no-data>
@@ -211,9 +207,7 @@
                 </div>
               </div>
               <div class="column items-end q-gutter-xs">
-                <span class="ticket-champ" :class="`ticket-champ--${t.statut}`">
-                  <span class="pochoir">{{ libelleStatut(t.statut) }}</span>
-                </span>
+                <PastilleStatut domaine="ticket" :statut="t.statut" />
                 <span class="ticket-champ" :class="`prio-champ--${t.priorite}`">
                   <span class="pochoir">{{ libellePriorite(t.priorite) }}</span>
                 </span>
@@ -410,9 +404,7 @@
         </q-card-section>
         <q-card-section v-if="ticketDetail" class="q-gutter-md">
           <div class="row q-gutter-x-md items-center">
-            <span class="ticket-champ" :class="`ticket-champ--${ticketDetail.statut}`">
-              <span class="pochoir">{{ libelleStatut(ticketDetail.statut) }}</span>
-            </span>
+            <PastilleStatut domaine="ticket" :statut="ticketDetail.statut" />
             <span class="ticket-champ" :class="`prio-champ--${ticketDetail.priorite}`">
               <span class="pochoir">{{ libellePriorite(ticketDetail.priorite) }}</span>
             </span>
@@ -514,6 +506,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
@@ -856,11 +849,6 @@ $rouge: #CE1126;
   min-height: 24px;
   color: var(--up-encre);
   border-radius: var(--up-rayon-sm);
-
-  &.ticket-champ--OUVERT { background: $jaune-fond; color: $jaune-texte; }
-  &.ticket-champ--EN_COURS { background: $vert-fond; color: $vert-lien; }
-  &.ticket-champ--RESOLU { background: $vert-fond; color: #{$vert}; }
-  &.ticket-champ--CLOTURE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
 
   &.prio-champ--BASSE {
     background: var(--up-gris-inerte);
