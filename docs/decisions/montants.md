@@ -325,28 +325,54 @@ effet de la conversion.
 
 ### 6.2 Déploiement du code et de la migration
 
-L’ordre est **migration d’abord, code ensuite**. L’API en production écrit
-des `Float` : tant que les colonnes sont en `numeric`, une écriture de
-l’ancien code (un `Float` vers une colonne `numeric`) fonctionne — Postgres
-convertit à l’insertion — mais une lecture par l’ancien code renverrait un
-`double precision` pour une colonne `numeric` : les agrégats et les
-comparaisons resteraient justes, mais les montants perdraient la garantie
-deux décimales.
+**Il ne faut pas laisser l’ancien code tourner contre la base convertie.**
+Le type Prisma attendu par le client et le type réel de la colonne doivent
+correspondre : l’ancien client attend un `double precision`, la colonne
+devient un `numeric`. Tant que les deux divergent, la désérialisation des
+montants par le moteur de requêtes n’est plus garantie — c’est le point
+le plus fragile de l’opération, et il n’apparaît dans aucune erreur de
+compilation.
 
-En pratique, la séquence retenue est :
+La séquence retenue est donc celle d’une **fenêtre de maintenance** : on
+arrête l’API, on convertit, on redémarre avec le nouveau code. L’API est
+de toute façon indisponible pendant l’`ALTER` (verrou `ACCESS EXCLUSIVE`
+sur chaque table modifiée).
 
 ```bash
-# 1. Sur la branche (le schéma porte déjà Decimal(14,2))
-cd backend && npx prisma migrate deploy     # applique 20261024000000_montants_exacts
-npx prisma generate
+# 1. Arrêt de l'API (fenêtre de maintenance)
+pm2 stop university-api
 
-# 2. Construit et redémarre l'API
-npm run build && pm2 restart university-api
+# 2. Migration de la base (transactionnelle, hors ligne)
+cd backend && npx prisma migrate deploy     # applique 20261024000000_montants_exacts
+
+# 3. Nouveau client Prisma + build, sur la branche mc/decimal
+npx prisma generate
+npm run build
+
+# 4. Redémarrage
+pm2 start university-api
 ```
 
-> `prisma migrate deploy` n:apply **que** les migrations non appliquées, dans
-> l’ordre. La migration est un fichier SQL unique, transactionnel, sans
-> donnée — elle ne peut rien détruire.
+> `prisma migrate deploy` n’applique **que** les migrations non appliquées,
+> dans l’ordre. La migration est un fichier SQL unique, transactionnel, sans
+> donnée — elle ne peut rien détruire. Si elle échoue (montant hors
+> échelle), elle est **annulée** et la base est inchangée : le retour arrière
+> consiste alors à ne rien faire.
+
+**Pourquoi pas « migration d’abord, code ensuite » ?** L’ancien code écrit
+des `Float` : une insertion dans une colonne `numeric` est acceptée par
+Postgres (qui convertit), mais la lecture, elle, dépend du type attendu par
+le client. Un déploiement sans arrêt de l’API laisserait donc une fenêtre
+où la conversion du type de colonne et celle du type attendu par le client
+sont désynchronisées. L’arrêt de l’API supprime cette fenêtre.
+
+Si l’on ne dispose pas d’une fenêtre de maintenance, l’ordre
+« code d’abord, migration ensuite » est également possible : le nouveau
+client (qui attend un `numeric`) lit alors des `double precision`. C’est
+moins sûr que l’arrêt de l’API, car les deux écarts sont alors possibles en
+sens inverse. Dans les deux cas, **le redéploiement du client Prisma
+(`prisma generate`) est obligatoire** : sans lui, le client conserve les
+types de l’ancien schéma.
 
 ### 6.3 Vérification
 
@@ -401,6 +427,8 @@ l’API avec le nouveau code avant d’avoir vérifié la sauvegarde.
 | `toLocaleString()` sans argument sur un `Decimal` | **élevée** | formatage audio ; corrigé sur les six impressions concernées |
 | Somme SQL re-castée en `double precision` | **élevée** | transtypage retiré dans `formations.service.ts` |
 | Code non recompilé après la migration | moyenne | `prisma generate` puis `npm run build` sont dans la procédure |
+| Type de colonne et type attendu par le client désynchronisés | **élevée** | arrêt de l’API pendant la migration (§6.2) : pas d’état mixte |
+| `Decimal` désérialisé par un client qui attend un `Float` | **élevée** | même parade : l’API est arrêtée pendant la conversion, puis redémarrée avec le nouveau client |
 
 ### Hors périmètre
 
