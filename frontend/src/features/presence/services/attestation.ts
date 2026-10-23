@@ -44,6 +44,19 @@ export interface ReinitialisationCodePin {
   message: string;
 }
 
+/**
+ * Gabarit biométrique d'un enseignant, transmis à la passerelle.
+ *
+ * Il ne quitte le serveur que pour la comparaison faite sur le poste de
+ * contrôle : le gabarit enrôlé n'est jamais renvoyé tel quel à l'écran.
+ */
+export interface GabaritEmpreinte {
+  /** Gabarit décodé, à passer à la passerelle. */
+  template: string;
+  /** Doigt ayant servi à l'enrôlement, pour le message d'accueil. */
+  doigt?: string | null;
+}
+
 /** Administration et direction : gestion des appareils de contrôle. */
 export const ROLES_GESTION_APPAREILS = ['ADMIN', 'DIRECTION'] as const;
 
@@ -57,9 +70,24 @@ export const attestationService = {
   /** Révoque un appareil : ses lectures d'empreinte ne sont plus acceptées. */
   revoquerAppareil: (id: string) => supprimer(`/attestation/appareils/${id}`),
 
-  /** Moyens d'attestation d'un enseignant. */
-  moyens: (enseignantId: string) =>
-    lire<MoyensAttestation>(`/attestation/enseignants/${enseignantId}/moyens`),
+  /** Moyens d'attestation d'un enseignant, pour la séance en cours. */
+  moyens: (enseignantId: string, seanceId?: string) =>
+    lire<MoyensAttestation>(
+      `/attestation/enseignants/${enseignantId}/moyens`,
+      seanceId ? { seanceId } : undefined,
+    ),
+
+  /**
+   * Gabarit biométrique de l'enseignant, pour la comparaison en salle.
+   *
+   * Silencieux : l'écran de pointage affiche l'échec dans son propre bandeau.
+   */
+  gabarit: (enseignantId: string, seanceId?: string) =>
+    lire<GabaritEmpreinte>(
+      `/attestation/enseignants/${enseignantId}/gabarit`,
+      seanceId ? { seanceId } : undefined,
+      { silencieux: true },
+    ),
 
   /** Fixe le code personnel de l'enseignant (4 à 6 chiffres). */
   definirCodePin: (enseignantId: string, code: string) =>
