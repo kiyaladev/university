@@ -282,7 +282,7 @@
           outlined
           dense
           :label="$t('portail.dialogResto.montantLabel')"
-          suffix="GNF"
+          :suffix="DEVISE"
           :hint="$t('portail.dialogResto.montantHint')"
           :error="!montantResto || montantResto < 500"
           :error-message="$t('portail.dialogResto.montantError')"
@@ -325,16 +325,17 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { getAppLocale } from '@/boot/i18n';
 import {
+  dateHeureLisible,
+  dateLisible,
+  DEVISE,
   LIBELLE_DECISION_JURY,
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
+  LIBELLE_SESSION_DELIBERATION,
   LIBELLE_STATUT_CONSOMMATION,
   LIBELLE_STATUT_PAIEMENT,
-  LIBELLE_SESSION_DELIBERATION,
   LIBELLE_TYPE_ATTESTATION,
   LIBELLE_TYPE_REPAS,
-  dateHeureLisible,
-  dateLisible,
   montantLisible,
 } from '@/shared/utils/libelles';
 

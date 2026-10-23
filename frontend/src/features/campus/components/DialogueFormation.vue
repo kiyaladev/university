@@ -62,7 +62,7 @@
       <div class="col-12 col-sm-4">
         <q-select
           v-model="form.devise"
-          :options="['GNF']"
+          :options="[DEVISE]"
           outlined
           dense
           emit-value
@@ -127,7 +127,7 @@ import { useQuasar } from 'quasar';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
 import type { Formation, StatutFormation } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -150,7 +150,7 @@ const form = ref({
   description: '',
   categorie: '',
   prix: 0 as number | null,
-  devise: 'GNF',
+  devise: DEVISE,
   dureeHeures: null as number | null,
   dateDebut: '',
   dateFin: '',
@@ -168,7 +168,7 @@ watch(ouvert, (o) => {
       description: f.description ?? '',
       categorie: f.categorie ?? '',
       prix: f.prix ?? 0,
-      devise: f.devise ?? 'GNF',
+      devise: f.devise ?? DEVISE,
       dureeHeures: f.dureeHeures ?? null,
       dateDebut: f.dateDebut ?? '',
       dateFin: f.dateFin ?? '',
@@ -182,7 +182,7 @@ watch(ouvert, (o) => {
       description: '',
       categorie: '',
       prix: 0,
-      devise: 'GNF',
+      devise: DEVISE,
       dureeHeures: null,
       dateDebut: '',
       dateFin: '',

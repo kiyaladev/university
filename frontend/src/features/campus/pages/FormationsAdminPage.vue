@@ -249,7 +249,7 @@
               <template #body-cell-paiement="r">
                 <q-td :props="r">
                   <div class="chiffres">
-                    {{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? 'GNF' }}
+                    {{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? DEVISE }}
                   </div>
                   <div class="text-caption text-grey-7">{{ r.row.paiement?.reference ?? '—' }}</div>
                 </q-td>
@@ -428,7 +428,7 @@
                 <template #body-cell-paiement="r">
                   <q-td :props="r">
                     <div class="chiffres">
-                      {{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? 'GNF' }}
+                      {{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? DEVISE }}
                     </div>
                     <div class="text-caption text-grey-7">{{ r.row.paiement?.reference ?? '—' }}</div>
                   </q-td>
@@ -533,7 +533,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueFormation from '../components/DialogueFormation.vue';
-import { LIBELLE_STATUT_FORMATION, dateLisible, montantLisible } from '@/shared/utils/libelles';
+import { dateLisible, DEVISE, LIBELLE_STATUT_FORMATION, montantLisible } from '@/shared/utils/libelles';
 import type { Etudiant, Formation, InscriptionFormation, Paiement, StatutFormation, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 

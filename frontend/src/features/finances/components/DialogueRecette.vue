@@ -82,7 +82,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_TYPE_RECETTE, aujourdhui } from '@/shared/utils/libelles';
+import { aujourdhui, DEVISE, LIBELLE_TYPE_RECETTE } from '@/shared/utils/libelles';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
@@ -108,7 +108,7 @@ const form = ref({
   libelle: '',
   description: '',
   montant: 0,
-  devise: 'GNF',
+  devise: DEVISE,
   date: aujourdhui(),
   client: '',
   factureNum: '',
@@ -125,7 +125,7 @@ watch(ouvert, (v) => {
       libelle: props.existant.libelle,
       description: props.existant.description ?? '',
       montant: props.existant.montant,
-      devise: props.existant.devise ?? 'GNF',
+      devise: props.existant.devise ?? DEVISE,
       date: props.existant.date?.slice(0, 10) ?? aujourdhui(),
       client: props.existant.client ?? '',
       factureNum: props.existant.factureNum ?? '',
@@ -137,7 +137,7 @@ watch(ouvert, (v) => {
       libelle: '',
       description: '',
       montant: 0,
-      devise: 'GNF',
+      devise: DEVISE,
       date: aujourdhui(),
       client: '',
       factureNum: '',
@@ -164,7 +164,7 @@ async function enregistrer() {
       libelle: form.value.libelle.trim(),
       description: form.value.description.trim() || null,
       montant,
-      devise: form.value.devise.trim() || 'GNF',
+      devise: form.value.devise.trim() || DEVISE,
       date: form.value.date,
       client: form.value.client.trim() || null,
       factureNum: form.value.factureNum.trim() || null,

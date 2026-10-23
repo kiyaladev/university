@@ -77,7 +77,7 @@
                   outlined
                   dense
                   :label="$t('resto.guichet.priceLabel')"
-                  suffix="GNF"
+                  :suffix="DEVISE"
                 />
               </div>
               <div class="col-6 col-sm-3">
@@ -463,12 +463,13 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialogueRecharge from '../components/DialogueRecharge.vue';
 import {
+  aujourdhui,
+  dateHeureLisible,
+  dateLisible,
+  DEVISE,
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_STATUT_PAIEMENT,
   LIBELLE_TYPE_REPAS,
-  dateHeureLisible,
-  dateLisible,
-  aujourdhui,
   montantLisible,
 } from '@/shared/utils/libelles';
 import type { TypeRepas, ChipFiltre } from '@/types';
@@ -511,7 +512,7 @@ const resultat = ref<{
 const optionsRepas = computed(() =>
   (Object.keys(PRIX_REPAS) as TypeRepas[]).map((r) => ({
     value: r,
-    label: `${LIBELLE_TYPE_REPAS[r]} — ${PRIX_REPAS[r] ? montantLisible(PRIX_REPAS[r]) + ' GNF' : t('resto.guichet.mealFree')}`,
+    label: `${LIBELLE_TYPE_REPAS[r]} — ${PRIX_REPAS[r] ? montantLisible(PRIX_REPAS[r], DEVISE) : t('resto.guichet.mealFree')}`,
   })),
 );
 

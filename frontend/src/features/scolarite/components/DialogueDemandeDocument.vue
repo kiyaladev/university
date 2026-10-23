@@ -23,7 +23,7 @@
           <q-item-section>
             <q-item-label>{{ scope.opt.label }}</q-item-label>
             <q-item-label v-if="scope.opt.montant != null" caption>
-              {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? 'GNF' }}
+              {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? DEVISE }}
               <span v-if="scope.opt.delaiHeures">
                 · {{ t('demandeDocuments.createDialog.delay', { hours: scope.opt.delaiHeures }) }}</span
               >
@@ -86,7 +86,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_TYPE_DEMANDE, montantLisible } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_TYPE_DEMANDE, montantLisible } from '@/shared/utils/libelles';
 import type { DemandeDocument, Inscription, TarifDemande, TypeDemandeDocument } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });

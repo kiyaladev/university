@@ -41,7 +41,7 @@
             </div>
             <div class="col-12 col-sm-4">
               <q-input
-                :model-value="`${montantLisible(dossierChoisi.montantFrais)} GNF`"
+                :model-value="montantLisible(dossierChoisi.montantFrais, DEVISE)"
                 outlined
                 dense
                 readonly
@@ -50,7 +50,7 @@
             </div>
             <div class="col-12 col-sm-4">
               <q-input
-                :model-value="`${montantLisible(resteAPayer)} GNF`"
+                :model-value="montantLisible(resteAPayer, DEVISE)"
                 outlined
                 dense
                 readonly
@@ -176,6 +176,7 @@ import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import ChampRecherche from './ChampRecherche.vue';
 import {
+  DEVISE,
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_INSCRIPTION,
@@ -205,7 +206,7 @@ const form = ref({
   inscriptionId: '',
   etudiantId: '',
   montant: null as number | null,
-  devise: 'GNF',
+  devise: DEVISE,
   mode: 'MOBILE_MONEY',
   operateur: 'ORANGE_MONEY',
   telephone: '',
@@ -273,7 +274,7 @@ watch(
       inscriptionId: retenuIns,
       etudiantId: props.etudiantId ?? '',
       montant: props.montantInitial ?? null,
-      devise: 'GNF',
+      devise: DEVISE,
       mode: 'MOBILE_MONEY',
       operateur: 'ORANGE_MONEY',
       telephone: '',

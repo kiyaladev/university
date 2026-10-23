@@ -636,7 +636,7 @@
                   ><q-item-section avatar><q-icon name="payments" /></q-item-section
                   ><q-item-section>{{
                     equipementDetail.valeurAcquisition != null
-                      ? `${montantLisible(equipementDetail.valeurAcquisition)} GNF`
+                      ? montantLisible(equipementDetail.valeurAcquisition, DEVISE)
                       : '—'
                   }}</q-item-section></q-item
                 >
@@ -694,7 +694,7 @@ import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import DialoguePatrimoine from '../components/DialoguePatrimoine.vue';
 import DialogueReparation from '../components/DialogueReparation.vue';
-import { dateLisible, montantLisible, nombreLisible } from '@/shared/utils/libelles';
+import { dateLisible, DEVISE, montantLisible, nombreLisible } from '@/shared/utils/libelles';
 import { ouvrirImpression } from '@/shared/services/impression';
 import type {
   CategoriePatrimoine,

@@ -112,7 +112,7 @@
         dense
         min="0"
         :label="$t('common.fields.amount')"
-        suffix="GNF"
+        :suffix="DEVISE"
         class="q-mb-md"
         :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.amount_required')]"
       />
@@ -138,7 +138,7 @@ import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
-import { LIBELLE_TYPE_DEMANDE, montantLisible, optionsDepuis } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_TYPE_DEMANDE, montantLisible, optionsDepuis } from '@/shared/utils/libelles';
 import type { TarifDemande, TypeDemandeDocument } from '@/types';
 
 const $q = useQuasar();
