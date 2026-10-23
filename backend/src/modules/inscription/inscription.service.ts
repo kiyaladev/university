@@ -22,6 +22,7 @@ import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from 
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { anneeNumero } from '../../common/numero';
+import { toMontant } from '../../common/finances/montant';
 import { CreateInscriptionDto, InscriptionPubliqueDto, InscriptionQueryDto } from './inscription.dto';
 
 export const INSCRIPTION_INCLUDE = {
@@ -298,7 +299,7 @@ export class InscriptionService {
             etudiantId: etudiant.id,
             inscriptionId: inscription.id,
             numero: inscription.numero,
-            montantFrais: inscription.montantFrais,
+            montantFrais: toMontant(inscription.montantFrais),
             devise: frais?.devise ?? 'GNF',
           };
         });
@@ -527,8 +528,9 @@ export class InscriptionService {
     const devise = await deviseDossier(this.prisma, inscription);
     const paye = (inscription.paiements ?? [])
       .filter((p) => p.statut === StatutPaiement.REUSSI && !p.demandeDocument && p.devise === devise)
-      .reduce((t, p) => t + p.montant, 0);
-    const restant = Math.max(0, inscription.montantFrais - paye);
+      .reduce((t, p) => t + toMontant(p.montant), 0);
+    const montantFrais = toMontant(inscription.montantFrais);
+    const restant = Math.max(0, montantFrais - paye);
     const statut = inscription.statut;
 
     return pageA4({
@@ -551,8 +553,8 @@ export class InscriptionService {
       <tr><th>Matricule (INE)</th><td>${echapper(inscription.etudiant.matricule)}</td></tr>
       <tr><th>Filière</th><td>${echapper(inscription.promotion.filiere?.nom ?? '—')}</td></tr>
       <tr><th>Promotion</th><td>${echapper(inscription.promotion.nom)}</td></tr>
-      <tr><th>Frais d'inscription</th><td>${inscription.montantFrais.toLocaleString('fr-FR')} ${echapper(devise)}</td></tr>
-      <tr><th>Montant réglé</th><td>${paye.toLocaleString('fr-FR')} ${echapper(devise)} (${paye >= inscription.montantFrais ? 'frais soldés' : `reste ${restant.toLocaleString('fr-FR')} ${echapper(devise)}`})</td></tr>
+      <tr><th>Frais d'inscription</th><td>${montantFrais.toLocaleString('fr-FR')} ${echapper(devise)}</td></tr>
+      <tr><th>Montant réglé</th><td>${paye.toLocaleString('fr-FR')} ${echapper(devise)} (${paye >= montantFrais ? 'frais soldés' : `reste ${restant.toLocaleString('fr-FR')} ${echapper(devise)}`})</td></tr>
       <tr><th>Date de validation</th><td>${inscription.valideeLe ? echapper(isoDate(inscription.valideeLe)) : '—'}</td></tr>
     </tbody>
   </table>

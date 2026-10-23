@@ -21,6 +21,7 @@ import { Paginated } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
 import { prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
+import { toMontant } from '../../common/finances/montant';
 import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
 
 /** Préfixe des références de paiement des recettes externes ("PAY-X-2026-00001"). */
@@ -127,7 +128,7 @@ export class RecettesService {
       if (!actuel) throw new NotFoundException(t('recettes.recette_introuvable'));
       const dateCible = dto.date !== undefined ? toDateOnly(dto.date) : actuel.date;
       const modifieMontantComptable =
-        (dto.montant !== undefined && dto.montant !== actuel.montant) ||
+        (dto.montant !== undefined && dto.montant !== toMontant(actuel.montant)) ||
         (dto.devise !== undefined && dto.devise !== actuel.devise) ||
         (dto.type !== undefined && dto.type !== actuel.type) ||
         dateCible.getTime() !== actuel.date.getTime();
@@ -281,7 +282,7 @@ export class RecettesService {
       numero: recette.numero,
       type: recette.type,
       libelle: recette.libelle,
-      montant: recette.montant,
+      montant: toMontant(recette.montant),
       devise: recette.devise,
       date: recette.date,
       paiementId: recette.paiementId,
@@ -332,7 +333,7 @@ export class RecettesService {
     }));
     for (const r of parMois) {
       const m = r.date.getUTCMonth();
-      moisCourants[m].total += r.montant ?? 0;
+      moisCourants[m].total += toMontant(r.montant);
     }
 
     return {
@@ -341,11 +342,11 @@ export class RecettesService {
       totalAnnee: moisCourants.reduce((total, ligne) => total + ligne.total, 0),
       parType: parType.map((p) => ({
         type: p.type,
-        total: p._sum.montant ?? 0,
+        total: toMontant(p._sum.montant),
         nb: p._count._all,
       })),
       parMois: moisCourants,
-      top3: top3.map((t) => ({ type: t.type, total: t._sum.montant ?? 0 })),
+      top3: top3.map((t) => ({ type: t.type, total: toMontant(t._sum.montant) })),
     };
   }
 

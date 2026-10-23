@@ -33,6 +33,7 @@ import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from 
 import { ParametresService } from '../parametres/parametres.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
+import { toMontant } from '../../common/finances/montant';
 import { t } from '../../common/i18n';
 import {
   CreateFormationDto,
@@ -254,11 +255,11 @@ export class FormationsService {
         return {
           inscriptionId: creation.inscription.id,
           numero: creation.inscription.numero,
-          montant: creation.paiement.montant,
+          montant: toMontant(creation.paiement.montant),
           devise: creation.paiement.devise,
           message:
             `Demande ${creation.inscription.numero} déposée. Réglez ` +
-            `${creation.paiement.montant.toLocaleString('fr-FR')} ${creation.paiement.devise} ` +
+            `${toMontant(creation.paiement.montant).toLocaleString('fr-FR')} ${creation.paiement.devise} ` +
             `par Mobile Money ; la confirmation se fait au guichet de la scolarité.`,
         };
       } catch (e: unknown) {
@@ -288,10 +289,10 @@ export class FormationsService {
         by: ['formationId'],
         _count: { _all: true },
       }),
-      this.prisma.$queryRaw<Array<{ formationId: string; nbPayes: bigint; recette: number }>>(Prisma.sql`
+      this.prisma.$queryRaw<Array<{ formationId: string; nbPayes: bigint; recette: Prisma.Decimal }>>(Prisma.sql`
         SELECT inscription."formationId" AS "formationId",
                COUNT(*)::bigint AS "nbPayes",
-               COALESCE(SUM(paiement."montant"), 0)::double precision AS "recette"
+               COALESCE(SUM(paiement."montant"), 0)::numeric AS "recette"
         FROM "Paiement" AS paiement
         INNER JOIN "InscriptionFormation" AS inscription
           ON inscription."paiementId" = paiement."id"
@@ -303,7 +304,7 @@ export class FormationsService {
     const inscritsMap = new Map(inscritsParFormation.map((g) => [g.formationId, g._count._all]));
 
     const paiementParFormation = new Map(
-      paiementsParFormation.map((p) => [p.formationId, { nbPayes: Number(p.nbPayes), recette: Number(p.recette) }]),
+      paiementsParFormation.map((p) => [p.formationId, { nbPayes: Number(p.nbPayes), recette: toMontant(p.recette) }]),
     );
 
     const parFormation = formations.map((f) => {
@@ -312,7 +313,7 @@ export class FormationsService {
         id: f.id,
         intitule: f.titre,
         statut: f.statut,
-        prix: f.prix,
+        prix: toMontant(f.prix),
         devise: f.devise,
         nbInscrits: inscritsMap.get(f.id) ?? 0,
         nbPayes: paiement.nbPayes,
@@ -795,7 +796,7 @@ export class FormationsService {
   </table>
   <div class="mention">
     Le présent document confirme l'inscription de la personne ci-dessus et
-    le règlement de ${inscription.paiement.montant.toLocaleString('fr-FR')} ${echapper(inscription.paiement.devise)}.
+    le règlement de ${toMontant(inscription.paiement.montant).toLocaleString('fr-FR')} ${echapper(inscription.paiement.devise)}.
     La validation pédagogique relève du bilan définitif établi par la scolarité,
     qui remet le document officiel du parcours après contrôle de son achèvement.
   </div>

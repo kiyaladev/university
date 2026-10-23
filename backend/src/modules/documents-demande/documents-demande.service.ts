@@ -37,6 +37,7 @@ import { demandeDocumentHtml } from './documents-demande.impression';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../common/finances';
+import { toMontant } from '../../common/finances/montant';
 
 const PREFIX_DEMANDE = 'DOC-';
 
@@ -255,7 +256,7 @@ export class DocumentsDemandeService extends CrudService {
     return {
       total,
       ...comptes,
-      recettes: paiements._sum.frais ?? 0,
+      recettes: toMontant(paiements._sum.frais),
       pretesNonRemises,
     };
   }
@@ -367,7 +368,7 @@ export class DocumentsDemandeService extends CrudService {
     )
       throw new NotFoundException(t('common.notFound'));
     const tarif = await this.tarifPour(dto.type);
-    const frais = tarif?.montant ?? 0;
+    const frais = toMontant(tarif?.montant);
     const devise = tarif?.devise ?? 'GNF';
     const annee = anneeNumero();
 
@@ -438,7 +439,7 @@ export class DocumentsDemandeService extends CrudService {
     if (demande.etudiantId !== user.etudiantId) {
       throw new BadRequestException(t('documents-demande.seul_le_demandeur_peut_payer_sa_propre_demande'));
     }
-    if (demande.frais <= 0) {
+    if (toMontant(demande.frais) <= 0) {
       throw new BadRequestException(
         t('documents-demande.cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_'),
       );
@@ -892,7 +893,7 @@ export class DocumentsDemandeService extends CrudService {
       numero: demande.numero,
       type: demande.type,
       statut: demande.statut,
-      frais: demande.frais,
+      frais: toMontant(demande.frais),
       devise: demande.devise,
       traiteParId: demande.traiteParId ?? null,
       remiseLe: demande.remiseLe ?? null,
@@ -904,7 +905,7 @@ export class DocumentsDemandeService extends CrudService {
   private instantanePaiement(paiement: any) {
     return {
       reference: paiement.reference,
-      montant: paiement.montant,
+      montant: toMontant(paiement.montant),
       devise: paiement.devise,
       mode: paiement.mode,
       statut: paiement.statut,
@@ -916,7 +917,7 @@ export class DocumentsDemandeService extends CrudService {
     return {
       id: tarif.id,
       type: tarif.type,
-      montant: tarif.montant,
+      montant: toMontant(tarif.montant),
       devise: tarif.devise,
       delaiHeures: tarif.delaiHeures,
     };

@@ -29,6 +29,7 @@ import {
   UpdateResidenceDto,
 } from './cites.dto';
 import { journaliser } from '../../common/audit';
+import { toMontant } from '../../common/finances/montant';
 
 const RESIDENCE_INCLUDE = {
   _count: { select: { chambres: true } },
@@ -154,7 +155,7 @@ export class ChambresService extends CrudService {
       residenceId: chambre.residenceId,
       categorie: chambre.categorie,
       lits: chambre.lits,
-      loyer: chambre.loyer,
+      loyer: toMontant(chambre.loyer),
       devise: chambre.devise,
       statut: chambre.statut,
     };

@@ -9,6 +9,7 @@ import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
+import { toMontant } from '../../common/finances/montant';
 import { CreateFraisDto, FraisQueryDto, UpdateFraisDto } from './inscription.dto';
 
 export const FRAIS_INCLUDE = {
@@ -46,18 +47,29 @@ export class FraisService extends CrudService {
     return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
   }
 
-  private instantane(frais: { id: string; anneeId: string; promotionId: string; montant: number; devise: string }) {
+  private instantane(frais: {
+    id: string;
+    anneeId: string;
+    promotionId: string;
+    montant: Prisma.Decimal | number;
+    devise: string;
+  }) {
     return {
       id: frais.id,
       anneeId: frais.anneeId,
       promotionId: frais.promotionId,
-      montant: frais.montant,
+      montant: toMontant(frais.montant),
       devise: frais.devise,
     };
   }
 
   /** Les dossiers EN_ATTENTE_PAIEMENT suivent le tarif officiel (instantané). */
-  private async propager(tx: Prisma.TransactionClient, promotionId: string, anneeId: string, montant: number) {
+  private async propager(
+    tx: Prisma.TransactionClient,
+    promotionId: string,
+    anneeId: string,
+    montant: Prisma.Decimal | number,
+  ) {
     await tx.inscription.updateMany({
       where: { promotionId, anneeId, statut: StatutInscription.EN_ATTENTE_PAIEMENT },
       data: { montantFrais: montant },

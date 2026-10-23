@@ -41,6 +41,7 @@ import {
 } from './patrimoine.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
+import { toMontant } from '../../common/finances/montant';
 
 const PREFIX_INVENTAIRE = 'PAT-';
 const QR_PREFIX = 'UP-PAT-';
@@ -589,20 +590,22 @@ export class PatrimoineService {
       .flatMap((g) => {
         const c = categoriesParId.get(g.categorieId);
         return c
-          ? [{ code: c.code, libelle: c.libelle, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }]
+          ? [{ code: c.code, libelle: c.libelle, nombre: g._count._all, valeur: toMontant(g._sum.valeurAcquisition) }]
           : [];
       })
       .sort((a, b) => b.nombre - a.nombre);
     const parDepartement = departements
       .flatMap((g) => {
         const d = g.departementId ? departementsParId.get(g.departementId) : undefined;
-        return d ? [{ code: d.code, nom: d.nom, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
+        return d
+          ? [{ code: d.code, nom: d.nom, nombre: g._count._all, valeur: toMontant(g._sum.valeurAcquisition) }]
+          : [];
       })
       .sort((a, b) => b.nombre - a.nombre);
 
     return {
       total: totaux._count._all,
-      valeur: Math.round(totaux._sum.valeurAcquisition ?? 0),
+      valeur: Math.round(toMontant(totaux._sum.valeurAcquisition)),
       enReparation,
       obsoletes,
       parCategorie,
@@ -650,7 +653,14 @@ export class PatrimoineService {
       errorCorrectionLevel: 'M',
     });
 
-    const valeur = equipement.valeurAcquisition ? `${equipement.valeurAcquisition.toLocaleString('fr-FR')} GNF` : '—';
+    // Le test porte sur la VALEUR, pas sur l'objet : un `Decimal(0)` est un
+    // objet, donc « vrai » — sans cette conversion, un équipement valué à
+    // zéro s'imprimerait « 0 GNF » au lieu du tiret d'absence de valeur.
+    const valeurAcquisition = toMontant(equipement.valeurAcquisition);
+    const valeur =
+      equipement.valeurAcquisition !== null && valeurAcquisition !== 0
+        ? `${valeurAcquisition.toLocaleString('fr-FR')} GNF`
+        : '—';
     const dateAquis = equipement.dateAcquisition
       ? new Date(equipement.dateAcquisition).toLocaleDateString('fr-FR')
       : '—';
@@ -746,7 +756,7 @@ export class PatrimoineService {
       departementId: equipement.departementId ?? null,
       salleId: equipement.salleId ?? null,
       dateAcquisition: equipement.dateAcquisition ?? null,
-      valeurAcquisition: equipement.valeurAcquisition ?? null,
+      valeurAcquisition: equipement.valeurAcquisition === null ? null : toMontant(equipement.valeurAcquisition),
       actif: equipement.actif,
       enReparation: equipement.enReparation,
       obsolescenceMois: equipement.obsolescenceMois ?? null,

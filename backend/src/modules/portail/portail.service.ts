@@ -15,6 +15,7 @@ import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OtpClient, numerique } from './otp.client';
 import { journaliser } from '../../common/audit';
+import { toMontant } from '../../common/finances/montant';
 
 /**
  * Portail étudiant : connexion par SMS (code OTP), profil complet et
@@ -246,7 +247,7 @@ export class PortailService {
     // plus récente.
     const inscription = etudiant.inscriptions.find((i) => i.annee?.active) ?? etudiant.inscriptions[0] ?? null;
 
-    let montantFrais = inscription?.montantFrais ?? 0;
+    let montantFrais = toMontant(inscription?.montantFrais);
     let devise = 'GNF';
     let paye = 0;
     if (inscription) {
@@ -259,7 +260,10 @@ export class PortailService {
         },
       });
       if (tarif) devise = tarif.devise;
-      if (!inscription.montantFrais && tarif) montantFrais = tarif.montant;
+      // `toMontant` et non la valeur brute : un `Decimal(0)` est un objet,
+      // donc « vrai » — sans la conversion, un dossier sans frais ne
+      // hériterait jamais du tarif de la promotion.
+      if (!toMontant(inscription.montantFrais) && tarif) montantFrais = toMontant(tarif.montant);
       // Comme au passage en PAYEE : ni frais documentaires, ni autre devise.
       paye = etudiant.paiements
         .filter(
@@ -269,7 +273,7 @@ export class PortailService {
             p.devise === devise &&
             (!p.inscriptionId || p.inscriptionId === inscription.id),
         )
-        .reduce((somme, p) => somme + p.montant, 0);
+        .reduce((somme, p) => somme + toMontant(p.montant), 0);
     }
     const solde = Math.max(0, montantFrais - paye);
     const taux = montantFrais > 0 ? Math.min(100, (paye / montantFrais) * 100) : 0;
