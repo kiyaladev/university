@@ -40,7 +40,7 @@ describe('journal des recettes externes', () => {
     };
     const service = new RecettesService(prisma);
 
-    await service.liste({} as any);
+    await service.lister({} as any);
 
     expect(prisma.recetteExterne.findMany.mock.calls[0][0].include.paiement).toEqual({
       select: { id: true, reference: true, montant: true, devise: true, statut: true },
@@ -323,7 +323,7 @@ describe('recherche des recettes', () => {
     const count = jest.fn().mockResolvedValue(0);
     const service = new RecettesService({ recetteExterne: { findMany, count } } as never);
 
-    await service.liste({ search: '  laboratoire  ', paiementStatut: 'A_ENCAISSER' });
+    await service.lister({ search: '  laboratoire  ', paiementStatut: 'A_ENCAISSER' });
 
     const where = findMany.mock.calls[0][0].where;
     expect(where.OR).toEqual([
@@ -342,7 +342,7 @@ describe('filtre des recettes à encaisser', () => {
     const count = jest.fn().mockResolvedValue(0);
     const service = new RecettesService({ recetteExterne: { findMany, count } } as never);
 
-    await service.liste({ paiementStatut: 'A_ENCAISSER' });
+    await service.lister({ paiementStatut: 'A_ENCAISSER' });
 
     expect(findMany.mock.calls[0][0].where.paiementId).toBeNull();
     expect(count.mock.calls[0][0].where.paiementId).toBeNull();

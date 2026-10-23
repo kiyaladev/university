@@ -23,13 +23,13 @@ export class RecettesController {
 
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get()
-  liste(@Query() query: RecetteQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: RecetteQueryDto) {
+    return this.service.lister(query);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get(':id')
-  detail(@Param('id') id: string) {
+  lire(@Param('id') id: string) {
     return this.service.trouver(id);
   }
 

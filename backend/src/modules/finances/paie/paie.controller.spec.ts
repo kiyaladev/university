@@ -14,8 +14,8 @@ const roles = (methode: string) => Reflect.getMetadata(ROLES_KEY, (PaieControlle
 
 describe('PaieController — droits par rôle', () => {
   it('ouvre la lecture des feuilles à la scolarité', () => {
-    expect(roles('liste')).toEqual([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]);
-    expect(roles('detail')).toEqual([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]);
+    expect(roles('lister')).toEqual([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]);
+    expect(roles('lire')).toEqual([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]);
     expect(roles('calculer')).toEqual([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE]);
   });
 

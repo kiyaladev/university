@@ -83,7 +83,7 @@ export class PaieService {
 
   // ---------------------------------------------------------------- lecture
 
-  async liste(query: FeuilleQueryDto): Promise<Paginated<any>> {
+  async lister(query: FeuilleQueryDto): Promise<Paginated<any>> {
     const pagination = paginer(query);
 
     const where: Prisma.FeuillePaieWhereInput = {
@@ -118,7 +118,7 @@ export class PaieService {
     return feuille;
   }
 
-  async detail(id: string) {
+  async lire(id: string) {
     return this.trouver(id);
   }
 

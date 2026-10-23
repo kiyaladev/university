@@ -438,7 +438,7 @@ describe('PaieService — recherche et paiement', () => {
     const prisma = { feuillePaie: { findMany, count } };
     const service = new PaieService(prisma as any, {} as any);
 
-    await service.liste({ statut: StatutPaie.VALIDE, annee: 2026, mois: 1, search: 'Janvier' } as any);
+    await service.lister({ statut: StatutPaie.VALIDE, annee: 2026, mois: 1, search: 'Janvier' } as any);
 
     const where = findMany.mock.calls[0][0].where;
     expect(where).toEqual({
@@ -489,6 +489,6 @@ describe('PaieService — recherche et paiement', () => {
     const { prisma } = fairePrisma(null);
     const service = new PaieService(prisma as any, {} as any);
 
-    await expect(service.detail('feuille-x')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.lire('feuille-x')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
