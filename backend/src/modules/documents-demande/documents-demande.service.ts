@@ -324,7 +324,7 @@ export class DocumentsDemandeService extends CrudService {
       } catch (e: any) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           throw new ConflictException(
-            `Un tarif existe déjà pour le type ${dto.type} : modifiez-le plutôt que d'en créer un nouveau.`,
+            t('documents-demande.tarifDejaExistant', { type: dto.type }),
           );
         }
         throw e;
@@ -385,7 +385,7 @@ export class DocumentsDemandeService extends CrudService {
     }
     if (dto.inscriptionId && !await this.prisma.inscription.findFirst({
       where: { id: dto.inscriptionId, etudiantId: user.etudiantId }, select: { id: true },
-    })) throw new NotFoundException();
+    })) throw new NotFoundException(t('common.notFound'));
     const tarif = await this.tarifPour(dto.type);
     const frais = tarif?.montant ?? 0;
     const devise = tarif?.devise ?? 'GNF';
@@ -463,7 +463,7 @@ export class DocumentsDemandeService extends CrudService {
     }
     if (demande.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
       throw new BadRequestException(
-        'Cette demande n\'est plus en attente de paiement.',
+        t('documents-demande.demandeNonEnAttentePaiement'),
       );
     }
     if (demande.paiementId) {
@@ -574,12 +574,12 @@ export class DocumentsDemandeService extends CrudService {
       if (!demandeAvant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
       if (demandeAvant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
         throw new BadRequestException(
-          'Cette demande n\'est plus en attente de paiement : elle est déjà traitée.',
+          t('documents-demande.demandeDejaTraitee'),
         );
       }
       if (!demandeAvant.paiementId) {
         throw new BadRequestException(
-          'Aucun paiement associé à cette demande : l\'étudiant doit d\'abord initier le paiement.',
+          t('documents-demande.aucunPaiementAssocie'),
         );
       }
       if (dto.paiementId && dto.paiementId !== demandeAvant.paiementId) {
@@ -661,7 +661,7 @@ export class DocumentsDemandeService extends CrudService {
     const demande = await this.findOne(id);
     if (!STATUTS_PAIEMENT_REQUIS.includes(demande.statut)) {
       throw new BadRequestException(
-        'Cette demande n\'est pas encore traitée — le paiement ou la prise en charge manque.',
+        t('documents-demande.demandeNonTraitee'),
       );
     }
     if (demande.statut === StatutDemande.PRETE || demande.statut === StatutDemande.REMISE) {

@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { JustificatifsService } from './justificatifs.module';
+import { JustificatifsService } from './justificatifs.service';
 
 describe('Mutations atomiques des justificatifs', () => {
   const admin: any = { id: 'admin-1', role: Role.ADMIN };

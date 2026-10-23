@@ -5,7 +5,7 @@ import {
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import {
   DecisionJury,
   Prisma,
@@ -76,7 +76,7 @@ export class NotificationsService {
     if (dto.tousInscrits) {
       const annee = await this.prisma.anneeAcademique.findFirst({ where: { active: true } });
       if (!annee) {
-        throw new BadRequestException(I18nContext.current()!.t('portail.aucune_annee_academique_active_impossible_de_cibler_les_insc'));
+        throw new BadRequestException(t('portail.aucune_annee_academique_active_impossible_de_cibler_les_insc'));
       }
       const lignes = await this.prisma.inscription.findMany({
         where: { anneeId: annee.id, statut: { not: StatutInscription.ANNULEE } },
@@ -94,12 +94,12 @@ export class NotificationsService {
           destinataireNom: `${l.etudiant.nom} ${l.etudiant.prenom}`.trim(),
         }));
       if (!cibles.length) {
-        throw new BadRequestException(I18nContext.current()!.t('portail.no_reachable_student'));
+        throw new BadRequestException(t('portail.no_reachable_student'));
       }
     } else {
       cibles = (dto.destinatairesTelephones ?? []).map((t) => ({ telephone: numerique(t) }));
       if (!cibles.length || !dto.message) {
-        throw new BadRequestException(I18nContext.current()!.t('portail.diffusion_needs_targets_and_message'));
+        throw new BadRequestException(t('portail.diffusion_needs_targets_and_message'));
       }
     }
 
@@ -133,9 +133,9 @@ export class NotificationsService {
         },
       },
     });
-    if (!deliberation) throw new NotFoundException(I18nContext.current()!.t('portail.deliberation_introuvable'));
+    if (!deliberation) throw new NotFoundException(t('portail.deliberation_introuvable'));
     if (deliberation.statut !== StatutDeliberation.VALIDEE) {
-      throw new ConflictException(I18nContext.current()!.t('portail.results_only_validated'));
+      throw new ConflictException(t('portail.results_only_validated'));
     }
 
     const libellePromotion = deliberation.promotion?.nom ?? 'Scolarité';
@@ -151,13 +151,12 @@ export class NotificationsService {
         const decision =
           c.ligne.decision === DecisionJury.ADMIS ? 'ADMIS' : 'AJOURNÉ';
         const rang = c.ligne.rang != null ? ` (rang ${c.ligne.rang})` : '';
-        const t = I18nContext.current()!;
-        const header = t.t('sms.resultsHeader', { args: { promotion: libellePromotion } });
-        const body = t.t('sms.resultsBody', { args: { name: c.nom, average: c.ligne.moyenne.toFixed(2) } });
+        const header = t('sms.resultsHeader', { promotion: libellePromotion });
+        const body = t('sms.resultsBody', { name: c.nom, average: c.ligne.moyenne.toFixed(2) });
         const decisionLabel = c.ligne.decision === DecisionJury.ADMIS
-          ? t.t('sms.resultsAdmis')
-          : t.t('sms.resultsAjourne');
-        const rankLabel = c.ligne.rang != null ? t.t('sms.resultsRank', { args: { rank: c.ligne.rang } }) : '';
+          ? t('sms.resultsAdmis')
+          : t('sms.resultsAjourne');
+        const rankLabel = c.ligne.rang != null ? t('sms.resultsRank', { rank: c.ligne.rang }) : '';
         const corps = `${header} : ${body} — ${decisionLabel}${rankLabel}`;
         return {
           telephone: c.telephone,
@@ -170,7 +169,7 @@ export class NotificationsService {
       });
 
     if (!cibles.length) {
-      throw new BadRequestException(I18nContext.current()!.t('portail.no_reachable_student_results'));
+      throw new BadRequestException(t('portail.no_reachable_student_results'));
     }
 
     return this.sms.envoyerPlusieurs(cibles);

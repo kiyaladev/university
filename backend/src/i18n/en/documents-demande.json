@@ -17,5 +17,10 @@
   "cette_demande_n_est_pas_marquee_comme_prete": "This request is not marked as ready.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "This request is not ready for processing: payment is pending or processing has already finished.",
   "attestation_deja_liee_a_une_autre_demande": "Certificate {numero} of the same type and year has already been issued for another request. Revoke it before issuing a new one.",
-  "attestation_service_indisponible": "Verifiable certificate issuance is unavailable: the request was not marked as ready."
+  "attestation_service_indisponible": "Verifiable certificate issuance is unavailable: the request was not marked as ready.",
+  "tarifDejaExistant": "A fee already exists for type {type}: edit it instead of creating a new one.",
+  "demandeNonEnAttentePaiement": "This request is no longer awaiting payment.",
+  "demandeDejaTraitee": "This request is no longer awaiting payment: it has already been processed.",
+  "aucunPaiementAssocie": "No payment is linked to this request: the student must first initiate the payment.",
+  "demandeNonTraitee": "This request has not been processed yet: payment or handling is missing."
 }

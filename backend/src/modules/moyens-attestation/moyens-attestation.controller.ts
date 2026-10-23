@@ -2,12 +2,12 @@ import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query }
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
-import { AttestationService } from './attestation.service';
+import { MoyensAttestationService } from './moyens-attestation.service';
 import {
   DefinirCodePinDto,
   EnrolerAppareilDto,
   EnrolerEmpreinteDto,
-} from './attestation.dto';
+} from './moyens-attestation.dto';
 
 /**
  * Moyens d'attestation d'un enseignant. Ils sont administrés par
@@ -19,8 +19,8 @@ const GESTION = [Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.DIRECTI
 @ApiTags('Attestation enseignant')
 @ApiBearerAuth()
 @Controller('attestation')
-export class AttestationController {
-  constructor(private readonly service: AttestationService) {}
+export class MoyensAttestationController {
+  constructor(private readonly service: MoyensAttestationService) {}
 
   /** Consulté par l'écran de pointage pour savoir quoi proposer au contrôleur. */
   @Roles(...GESTION, Role.CONTROLEUR)

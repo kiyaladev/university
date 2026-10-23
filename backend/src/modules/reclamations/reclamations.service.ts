@@ -27,7 +27,6 @@ import {
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma, PrioriteReclamation, Role, StatutReclamation, TypeReclamation } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
@@ -283,7 +282,7 @@ export class ReclamationsService extends CrudService {
     statut?: StatutReclamation;
   }, user: AuthUser) {
     if (!user.etudiantId) {
-      throw new NotFoundException(I18nContext.current()!.t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
+      throw new NotFoundException(t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
     return this.liste(query, user);
   }
@@ -308,7 +307,7 @@ export class ReclamationsService extends CrudService {
       omit: this.omissionPour(user),
     });
     if (!reclamation) {
-      throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      throw new NotFoundException(t('reclamations.reclamation_introuvable'));
     }
     return reclamation;
   }
@@ -374,7 +373,7 @@ export class ReclamationsService extends CrudService {
     const anonyme = dto.anonyme === true;
 
     if (user.role === Role.ETUDIANT && !user.etudiantId) {
-      throw new NotFoundException(I18nContext.current()!.t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
+      throw new NotFoundException(t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
 
     // L'anonymat est un choix de confidentialité : aucune fiche étudiante ni
@@ -429,7 +428,7 @@ export class ReclamationsService extends CrudService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('reclamations.numero_de_reclamation_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('reclamations.numero_de_reclamation_temporairement_indisponible_reessayez'));
   }
 
   /**
@@ -443,7 +442,7 @@ export class ReclamationsService extends CrudService {
   ) {
     const contenu = dto.contenu.trim();
     if (!contenu) {
-      throw new BadRequestException(I18nContext.current()!.t('reclamations.le_message_est_vide'));
+      throw new BadRequestException(t('reclamations.le_message_est_vide'));
     }
     return this.transactionSerializable(async (tx) => {
       const reclamation = await tx.reclamation.findFirst({
@@ -457,13 +456,13 @@ export class ReclamationsService extends CrudService {
         include: RECLAMATION_INCLUDE,
         omit: this.omissionPour(user),
       });
-      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (STATUTS_CLOS.includes(reclamation.statut)) {
         throw new BadRequestException('Cette réclamation est close : aucun message supplémentaire n\'est accepté.');
       }
       const nombreMessages = await tx.messageReclamation.count({ where: { reclamationId: id } });
       if (nombreMessages >= MAX_MESSAGES_PAR_RECLAMATION) {
-        throw new BadRequestException(I18nContext.current()!.t('reclamations.limite_messages_atteinte'));
+        throw new BadRequestException(t('reclamations.limite_messages_atteinte'));
       }
       const cree = await tx.messageReclamation.create({
         data: {
@@ -506,14 +505,14 @@ export class ReclamationsService extends CrudService {
     user: AuthUser,
   ) {
     if (STATUTS_CLOS.includes(dto.statut) && !dto.commentaire?.trim()) {
-      throw new BadRequestException(I18nContext.current()!.t('reclamations.une_note_est_obligatoire_pour_clore_resoudre_fermer_ou_rejet'));
+      throw new BadRequestException(t('reclamations.une_note_est_obligatoire_pour_clore_resoudre_fermer_ou_rejet'));
     }
 
     return this.transactionSerializable(async (tx) => {
       const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
-      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (!TRANSITIONS_AUTORISEES[reclamation.statut].includes(dto.statut)) {
-        throw new BadRequestException(I18nContext.current()!.t('reclamations.transition_de_statut_non_autorisee'));
+        throw new BadRequestException(t('reclamations.transition_de_statut_non_autorisee'));
       }
       const data: Prisma.ReclamationUpdateInput = { statut: dto.statut };
       if (dto.commentaire?.trim()) {
@@ -547,10 +546,10 @@ export class ReclamationsService extends CrudService {
   async assigner(id: string, dto: { assigneAId: string }, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
       const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
-      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
-      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(I18nContext.current()!.t('reclamations.reclamation_close_assignation_impossible'));
+      if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
+      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(t('reclamations.reclamation_close_assignation_impossible'));
       const assigne = await tx.user.findFirst({ where: { id: dto.assigneAId, actif: true, role: { in: ROLES_AGENTS } }, select: { id: true, nom: true, prenom: true } });
-      if (!assigne) throw new NotFoundException(I18nContext.current()!.t('reclamations.utilisateur_introuvable'));
+      if (!assigne) throw new NotFoundException(t('reclamations.utilisateur_introuvable'));
       const data: Prisma.ReclamationUpdateInput = {
         assigneA: { connect: { id: dto.assigneAId } },
         statut: reclamation.statut === StatutReclamation.OUVERTE ? StatutReclamation.EN_COURS : reclamation.statut,
@@ -584,14 +583,14 @@ export class ReclamationsService extends CrudService {
   async escalader(id: string, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
       const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
-      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
-      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(I18nContext.current()!.t('reclamations.cette_reclamation_est_close_escalader_n_a_plus_de_sens'));
+      if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
+      if (STATUTS_CLOS.includes(reclamation.statut)) throw new BadRequestException(t('reclamations.cette_reclamation_est_close_escalader_n_a_plus_de_sens'));
       const delaiHeures = reclamation.delaiEscaladeHeures ?? 48;
       const echeance = new Date(reclamation.creeLe.getTime() + delaiHeures * 3600 * 1000);
       const depasse = Date.now() >= echeance.getTime();
       if (reclamation.escaladeLe) throw this.conflitConcurrent();
       if (!depasse && user.role !== Role.ADMIN) {
-        throw new ForbiddenException(I18nContext.current()!.t('reclamations.l_escalade_automatique_n_est_possible_qu_apres_delaiheures', { args: { delaiHeures } }));
+        throw new ForbiddenException(t('reclamations.l_escalade_automatique_n_est_possible_qu_apres_delaiheures', { delaiHeures }));
       }
       const miseAJour = await tx.reclamation.update({
         where: { id, statut: reclamation.statut, escaladeLe: null },
@@ -624,12 +623,12 @@ export class ReclamationsService extends CrudService {
   ) {
     const note = dto.noteCloture?.trim();
     if (!note) {
-      throw new BadRequestException(I18nContext.current()!.t('reclamations.une_note_de_cloture_est_requise'));
+      throw new BadRequestException(t('reclamations.une_note_de_cloture_est_requise'));
     }
 
     return this.transactionSerializable(async (tx) => {
       const reclamation = await tx.reclamation.findUnique({ where: { id }, include: RECLAMATION_INCLUDE, omit: { createurId: true } });
-      if (!reclamation) throw new NotFoundException(I18nContext.current()!.t('reclamations.reclamation_introuvable'));
+      if (!reclamation) throw new NotFoundException(t('reclamations.reclamation_introuvable'));
       if (!STATUTS_CLOS.includes(reclamation.statut)) {
         throw new BadRequestException('Pour clôturer, passez d\'abord la réclamation à l\'état RESOLUE, FERMEE ou REJETEE.');
       }

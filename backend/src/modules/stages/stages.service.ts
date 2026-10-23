@@ -30,7 +30,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutEncadrement } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
@@ -142,7 +141,7 @@ export class StagesService extends CrudService {
       const annee = await this.prisma.anneeAcademique.findUnique({
         where: { id: query.anneeId },
       });
-      if (!annee) throw new BadRequestException(I18nContext.current()!.t('stages.annee_academique_introuvable'));
+      if (!annee) throw new BadRequestException(t('stages.annee_academique_introuvable'));
       const fin = new Date(annee.dateFin);
       fin.setUTCDate(fin.getUTCDate() + 1);
       where.createdAt = { gte: annee.dateDebut, lt: fin };
@@ -180,9 +179,9 @@ export class StagesService extends CrudService {
     // base CrudService qui crée avec les champs bruts.
     let donnees: any = { ...dto };
     if (user.role === Role.ETUDIANT) {
-      if (!user.etudiantId) throw new ForbiddenException(I18nContext.current()!.t('stages.aucune_fiche_etudiant_rattachee'));
+      if (!user.etudiantId) throw new ForbiddenException(t('stages.aucune_fiche_etudiant_rattachee'));
       if (dto.type && !['STAGE', 'RAPPORT'].includes(dto.type)) {
-        throw new ForbiddenException(I18nContext.current()!.t('stages.un_etudiant_ne_propose_que_des_stages_ou_des_rapports'));
+        throw new ForbiddenException(t('stages.un_etudiant_ne_propose_que_des_stages_ou_des_rapports'));
       }
       // Il devient l'étudiant du travail ; la proposition part en PROPOSE et
       // sans encadrant : c'est la scolarité qui attribue l'encadrement.
@@ -196,7 +195,7 @@ export class StagesService extends CrudService {
     } else {
       // Statut initial borné à PROPOSE / VALIDE : la suite appartient à la machine.
       if (donnees.statut && !['PROPOSE', 'VALIDE'].includes(donnees.statut)) {
-        throw new BadRequestException(I18nContext.current()!.t('stages.statut_initial_invalide_donnees_statut_creer_en_propose_puis', { args: { 'donnees.statut': donnees.statut } }));
+        throw new BadRequestException(t('stages.statut_initial_invalide_donnees_statut_creer_en_propose_puis', { 'donnees.statut': donnees.statut }));
       }
     }
     // La création et sa trace sont committées ensemble : un dossier
@@ -214,7 +213,7 @@ export class StagesService extends CrudService {
     this.autoriserPropriete(travail, user);
 
     if (dto.statut !== undefined && dto.statut !== travail.statut) {
-      throw new ForbiddenException(I18nContext.current()!.t('stages.le_statut_evolue_par_la_machine_a_etats_post_transition_pas_'));
+      throw new ForbiddenException(t('stages.le_statut_evolue_par_la_machine_a_etats_post_transition_pas_'));
     }
 
     // Le statut et le porteur sont écartés : le statut n'évolue que par
@@ -228,13 +227,13 @@ export class StagesService extends CrudService {
     // Un travail ne change pas de porteur par la PUT : l'étudiant est la clé
     // du périmètre (une erreur de saisie passe par la réaffectation en création).
     if (etudiantId !== undefined && etudiantId !== travail.etudiantId) {
-      throw new ForbiddenException(I18nContext.current()!.t('stages.le_porteur_d_un_travail_ne_se_change_pas_par_la_put'));
+      throw new ForbiddenException(t('stages.le_porteur_d_un_travail_ne_se_change_pas_par_la_put'));
     }
     // Changer d'encadrant relève de l'administration ou de la scolarité.
     if (encadrantId !== undefined && encadrantId !== travail.encadrantId) {
       if (![Role.ADMIN, Role.DIRECTION, Role.SCOLARITE].includes(user.role as any)) {
         throw new ForbiddenException(
-          I18nContext.current()!.t('stages.seule_l_administration_peut_changer_l_encadrant_d_un_travail_'),
+          t('stages.seule_l_administration_peut_changer_l_encadrant_d_un_travail_'),
         );
       }
     }
@@ -269,7 +268,7 @@ export class StagesService extends CrudService {
   async supprimer(id: string, user: AuthUser) {
     const travail: any = await this.findOne(id);
     if (![StatutEncadrement.PROPOSE, StatutEncadrement.VALIDE].includes(travail.statut)) {
-      throw new BadRequestException(I18nContext.current()!.t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { args: { 'travail.statut': travail.statut } }));
+      throw new BadRequestException(t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { 'travail.statut': travail.statut }));
     }
     return this.prisma.$transaction(async (tx) => {
       // L'état avant est relu dans la transaction : après la suppression, le
@@ -317,7 +316,7 @@ export class StagesService extends CrudService {
         data: { statut: cible },
       });
       if (prise.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('stages.ce_travail_a_change_d_etat_pendant_la_transition_recharge'));
+        throw new ConflictException(t('stages.ce_travail_a_change_d_etat_pendant_la_transition_recharge'));
       }
       const apres = await tx.travailEncadre.findUnique({ where: { id }, include: TRAVAIL_INCLUDE });
       await journaliser(
@@ -340,7 +339,7 @@ export class StagesService extends CrudService {
   private verifierTransition(travail: any, cible: StatutEncadrement, user: AuthUser): boolean {
     this.autoriserPropriete(travail, user);
     if (user.role === Role.ENSEIGNANT && !travail.encadrantId) {
-      throw new ForbiddenException(I18nContext.current()!.t('stages.ce_travail_n_a_pas_d_encadrant'));
+      throw new ForbiddenException(t('stages.ce_travail_n_a_pas_d_encadrant'));
     }
     if ((cible as StatutEncadrement) === travail.statut) return false;
 
@@ -352,7 +351,7 @@ export class StagesService extends CrudService {
     }
 
     if (cible === StatutEncadrement.VALIDE && !travail.encadrantId) {
-      throw new BadRequestException(I18nContext.current()!.t('stages.un_encadrant_doit_etre_designe_avant_la_validation_attribuez'));
+      throw new BadRequestException(t('stages.un_encadrant_doit_etre_designe_avant_la_validation_attribuez'));
     }
 
     if (cible === StatutEncadrement.SOUTENU) {
@@ -369,7 +368,7 @@ export class StagesService extends CrudService {
     }
 
     if (cible === StatutEncadrement.PROPOSE && user.role !== Role.ADMIN) {
-      throw new ForbiddenException(I18nContext.current()!.t('stages.la_reactivation_d_un_dossier_abandonne_est_reservee_a_l_admi'));
+      throw new ForbiddenException(t('stages.la_reactivation_d_un_dossier_abandonne_est_reservee_a_l_admi'));
     }
     return true;
   }
@@ -391,12 +390,12 @@ export class StagesService extends CrudService {
         // la note et les assesseurs ici n'était qu'une fuite de vie privée.
         select: { ...TRAVAIL_AUDIT_SELECT, soutenance: { select: { id: true } } },
       });
-      if (!travail) throw new BadRequestException(I18nContext.current()!.t('stages.travail_introuvable'));
+      if (!travail) throw new BadRequestException(t('stages.travail_introuvable'));
       if (travail.statut === StatutEncadrement.SOUTENU || travail.soutenance) {
-        throw new BadRequestException(I18nContext.current()!.t('stages.ce_travail_est_deja_soutenu'));
+        throw new BadRequestException(t('stages.ce_travail_est_deja_soutenu'));
       }
       if (travail.statut === StatutEncadrement.ABANDONNE) {
-        throw new BadRequestException(I18nContext.current()!.t('stages.ce_travail_est_abandonnee_reactivez_le_avant_de_planifier_un'));
+        throw new BadRequestException(t('stages.ce_travail_est_abandonnee_reactivez_le_avant_de_planifier_un'));
       }
       if (travail.statut !== StatutEncadrement.EN_COURS) {
         throw new BadRequestException(
@@ -404,7 +403,7 @@ export class StagesService extends CrudService {
         );
       }
       if (!travail.rapportRendu) {
-        throw new BadRequestException(I18nContext.current()!.t('stages.le_rapport_doit_etre_rendu_avant_de_planifier_la_soutenance'));
+        throw new BadRequestException(t('stages.le_rapport_doit_etre_rendu_avant_de_planifier_la_soutenance'));
       }
 
       // La soutenance enregistrée EST l'acte de passage en SOUTENU : on prend
@@ -415,7 +414,7 @@ export class StagesService extends CrudService {
         data: { statut: StatutEncadrement.SOUTENU },
       });
       if (prise.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('stages.ce_travail_a_change_d_etat_pendant_la_transition_recharge'));
+        throw new ConflictException(t('stages.ce_travail_a_change_d_etat_pendant_la_transition_recharge'));
       }
 
       const soutenance = await tx.soutenance.create({
@@ -456,9 +455,9 @@ export class StagesService extends CrudService {
         where: { id },
         select: SOUTENANCE_AUDIT_SELECT,
       });
-      if (!avant) throw new BadRequestException(I18nContext.current()!.t('stages.soutenance_introuvable'));
+      if (!avant) throw new BadRequestException(t('stages.soutenance_introuvable'));
       if (dto.note === undefined && dto.mention === undefined) {
-        throw new BadRequestException(I18nContext.current()!.t('stages.rien_a_enregistrer_une_note_ou_une_mention_attendue'));
+        throw new BadRequestException(t('stages.rien_a_enregistrer_une_note_ou_une_mention_attendue'));
       }
       const maj = await tx.soutenance.update({
         where: { id },
@@ -507,12 +506,12 @@ export class StagesService extends CrudService {
     if (ROLES_PILOTES.includes(user.role)) return;
     if (user.role === Role.ENSEIGNANT) {
       if (travail.encadrantId !== user.enseignantId) {
-        throw new ForbiddenException(I18nContext.current()!.t('stages.vous_n_encadrez_pas_ce_travail'));
+        throw new ForbiddenException(t('stages.vous_n_encadrez_pas_ce_travail'));
       }
       return;
     }
     if (user.role === Role.ETUDIANT && travail.etudiantId === user.etudiantId) return;
-    throw new ForbiddenException(I18nContext.current()!.t('stages.ce_travail_ne_vous_appartient_pas'));
+    throw new ForbiddenException(t('stages.ce_travail_ne_vous_appartient_pas'));
   }
 
   /** Même garde en lecture pour l'état terminal et la fiche détaillée. */
@@ -520,12 +519,12 @@ export class StagesService extends CrudService {
     if (ROLES_PILOTES.includes(user.role)) return;
     if (user.role === Role.ENSEIGNANT) {
       if (travail.encadrantId !== user.enseignantId) {
-        throw new ForbiddenException(I18nContext.current()!.t('stages.vous_n_encadrez_pas_ce_travail'));
+        throw new ForbiddenException(t('stages.vous_n_encadrez_pas_ce_travail'));
       }
       return;
     }
     if (user.role === Role.ETUDIANT && travail.etudiantId === user.etudiantId) return;
-    throw new ForbiddenException(I18nContext.current()!.t('stages.ce_travail_ne_vous_appartient_pas'));
+    throw new ForbiddenException(t('stages.ce_travail_ne_vous_appartient_pas'));
   }
 
   // ------------------------------------------------------------------

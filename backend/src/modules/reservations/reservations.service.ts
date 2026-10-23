@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutReservationSalle } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import { t } from '../../common/i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
@@ -122,7 +121,7 @@ export class ReservationsService extends CrudService {
   async consulter(id: string, user: AuthUser) {
     const reservation = await super.findOne(id);
     if (!this.gestionnaire(user) && reservation.demandeurId !== user.id) {
-      throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      throw new NotFoundException(t('reservations.reservation_introuvable'));
     }
     return reservation;
   }
@@ -130,12 +129,12 @@ export class ReservationsService extends CrudService {
   /** Journée universitaire : tout événement tient entre 07:00 et 22:00. */
   private verifierHeures(debut: string, fin: string) {
     if (dureeMinutes(debut, fin) <= 0) {
-      throw new BadRequestException(I18nContext.current()!.t('reservations.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
+      throw new BadRequestException(t('reservations.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
     }
     const d = toMinutes(debut)!;
     const f = toMinutes(fin)!;
     if (d < 7 * 60 || f > 22 * 60) {
-      throw new BadRequestException(I18nContext.current()!.t('reservations.les_reservations_sont_possibles_entre_07h00_et_22h00'));
+      throw new BadRequestException(t('reservations.les_reservations_sont_possibles_entre_07h00_et_22h00'));
     }
   }
 
@@ -172,7 +171,7 @@ export class ReservationsService extends CrudService {
 
     if (collision) {
       throw new ConflictException(
-        I18nContext.current()!.t('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_', { args: { debut: collision.heureDebut, fin: collision.heureFin } }),
+        t('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_', { debut: collision.heureDebut, fin: collision.heureFin }),
       );
     }
   }
@@ -226,12 +225,12 @@ export class ReservationsService extends CrudService {
       const existante: any = await tx.reservationSalle.findUnique({
         where: { id }, include: RESERVATION_INCLUDE,
       });
-      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
-        throw new ForbiddenException(I18nContext.current()!.t('reservations.seul_le_demandeur_ou_l_administrateur_peut_modifier'));
+        throw new ForbiddenException(t('reservations.seul_le_demandeur_ou_l_administrateur_peut_modifier'));
       }
       if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
-        throw new BadRequestException(I18nContext.current()!.t('reservations.une_reservation_deja_statuee_ne_peut_plus_etre_modifiee'));
+        throw new BadRequestException(t('reservations.une_reservation_deja_statuee_ne_peut_plus_etre_modifiee'));
       }
       await this.verifierConflit(
         dto.salleId ?? existante.salleId,
@@ -263,9 +262,9 @@ export class ReservationsService extends CrudService {
       const existante: any = await tx.reservationSalle.findUnique({
         where: { id }, include: RESERVATION_INCLUDE,
       });
-      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
-        throw new ForbiddenException(I18nContext.current()!.t('reservations.seul_le_demandeur_ou_l_administrateur_peut_annuler'));
+        throw new ForbiddenException(t('reservations.seul_le_demandeur_ou_l_administrateur_peut_annuler'));
       }
       await tx.reservationSalle.delete({ where: { id } });
       await journaliser(tx, user, 'RESERVATION_SUPPRIMEE', 'ReservationSalle', id, {
@@ -285,9 +284,9 @@ export class ReservationsService extends CrudService {
       const existante: any = await tx.reservationSalle.findUnique({
         where: { id }, include: RESERVATION_INCLUDE,
       });
-      if (!existante) throw new NotFoundException(I18nContext.current()!.t('reservations.reservation_introuvable'));
+      if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
-        throw new BadRequestException(I18nContext.current()!.t('reservations.cette_reservation_a_deja_ete_statuee'));
+        throw new BadRequestException(t('reservations.cette_reservation_a_deja_ete_statuee'));
       }
 
       const data: Prisma.ReservationSalleUpdateInput = { statut: dto.statut };
@@ -331,10 +330,10 @@ export class ReservationsService extends CrudService {
   async calendrier(query: CalendrierQueryDto, user: AuthUser) {
     const debut = toDateOnly(query.dateDebut);
     const fin = toDateOnly(query.dateFin);
-    if (fin < debut) throw new BadRequestException(I18nContext.current()!.t('reservations.periode_invalide'));
+    if (fin < debut) throw new BadRequestException(t('reservations.periode_invalide'));
     const nombreJours = Math.floor((fin.getTime() - debut.getTime()) / 86_400_000) + 1;
     if (nombreJours > MAX_JOURS_CALENDRIER) {
-      throw new BadRequestException(I18nContext.current()!.t('reservations.periode_trop_longue'));
+      throw new BadRequestException(t('reservations.periode_trop_longue'));
     }
 
     const salles = query.salleId

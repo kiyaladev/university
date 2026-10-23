@@ -20,7 +20,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import * as bcrypt from 'bcryptjs';
 import * as QRCode from 'qrcode';
 import { Prisma, StatutAttestation } from '@prisma/client';
@@ -28,7 +28,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import {
   CreateCarteEtudianteDto,
   CarteEtudianteQueryDto,
@@ -118,14 +118,14 @@ export class CarteEtudianteService {
       include: CARTE_INCLUDE,
       omit: CARTE_OMIT,
     });
-    if (!carte) throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.carte_introuvable'));
+    if (!carte) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
     return carte;
   }
 
   /** Carte de l'étudiant actuellement connecté (portail). */
   async maCarte(user: AuthUser) {
     if (!user.etudiantId) {
-      throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.aucun_profil_etudiant_n_est_lie_a_votre_compte'));
+      throw new BadRequestException(t('carte-etudiante.aucun_profil_etudiant_n_est_lie_a_votre_compte'));
     }
     const carte = await this.prisma.carteEtudiante.findUnique({
       where: { etudiantId: user.etudiantId },
@@ -133,7 +133,7 @@ export class CarteEtudianteService {
       omit: CARTE_OMIT,
     });
     if (!carte) {
-      throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.aucune_carte_n_a_encore_ete_emise_pour_votre_profil'));
+      throw new NotFoundException(t('carte-etudiante.aucune_carte_n_a_encore_ete_emise_pour_votre_profil'));
     }
     return carte;
   }
@@ -167,14 +167,14 @@ export class CarteEtudianteService {
     const etudiant = await this.prisma.etudiant.findUnique({
       where: { id: dto.etudiantId },
     });
-    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.etudiant_introuvable'));
+    if (!etudiant) throw new NotFoundException(t('carte-etudiante.etudiant_introuvable'));
 
     const existante = await this.prisma.carteEtudiante.findUnique({
       where: { etudiantId: dto.etudiantId },
       select: { id: true },
     });
     if (existante) {
-      throw new ConflictException(I18nContext.current()!.t('carte-etudiante.cet_etudiant_possede_deja_une_carte_existante_qrtoken_revoqu'));
+      throw new ConflictException(t('carte-etudiante.cet_etudiant_possede_deja_une_carte_existante_qrtoken_revoqu'));
     }
 
     const nipHash = dto.nip ? await bcrypt.hash(dto.nip, 10) : null;
@@ -213,9 +213,9 @@ export class CarteEtudianteService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.carte_introuvable'));
+      if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
       if (actuel.statut === StatutAttestation.REVOQUEE) {
-        throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.cette_carte_a_ete_revoquee_elle_ne_peut_plus_etre_modifiee'));
+        throw new BadRequestException(t('carte-etudiante.cette_carte_a_ete_revoquee_elle_ne_peut_plus_etre_modifiee'));
       }
       const data = {
         ...(dto.dateValidite !== undefined ? { dateValidite: new Date(dto.dateValidite) } : {}),
@@ -248,9 +248,9 @@ export class CarteEtudianteService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.carte_introuvable'));
+      if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
       if (actuel.statut === StatutAttestation.REVOQUEE) {
-        throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.cette_carte_est_deja_revoquee'));
+        throw new BadRequestException(t('carte-etudiante.cette_carte_est_deja_revoquee'));
       }
       const miseAJour = await tx.carteEtudiante.update({
         where: { id },
@@ -287,12 +287,12 @@ export class CarteEtudianteService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "CarteEtudiante" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.carteEtudiante.findUnique({ where: { id } });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('carte-etudiante.carte_introuvable'));
+      if (!actuel) throw new NotFoundException(t('carte-etudiante.carte_introuvable'));
       if (actuel.statut === StatutAttestation.REVOQUEE) {
-        throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.cette_carte_est_revoquee_nip_non_autorise'));
+        throw new BadRequestException(t('carte-etudiante.cette_carte_est_revoquee_nip_non_autorise'));
       }
       if (user.role !== 'ETUDIANT' || !user.etudiantId || user.etudiantId !== actuel.etudiantId) {
-        throw new BadRequestException(I18nContext.current()!.t('carte-etudiante.vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte'));
+        throw new BadRequestException(t('carte-etudiante.vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte'));
       }
       const miseAJour = await tx.carteEtudiante.update({ where: { id }, data: { nip: nipHash } });
       await journaliser(
@@ -349,7 +349,7 @@ export class CarteEtudianteService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('carte-etudiante.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('carte-etudiante.jeton_invalide_ou_expire'));
     }
 
     const carte = await this.trouver(id);

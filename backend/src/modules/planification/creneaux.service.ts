@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
 import { Prisma, Role, StatutInscription } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { AuthUser } from '../../common/decorators';
@@ -160,7 +159,7 @@ export class CreneauxService extends CrudService {
   }
 
   async findOne(id: string, user?: AuthUser) {
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException(t('common.unauthorized'));
     const creneau = await this.prisma.creneau.findFirst({
       where: { id, ...this.where({}, user) },
       include: user.role === Role.ETUDIANT ? CRENEAU_INCLUDE_ETUDIANT : CRENEAU_INCLUDE,
@@ -182,10 +181,10 @@ export class CreneauxService extends CrudService {
       : (base?.dateFin ? toDateOnly(base.dateFin) : null);
 
     if (debut && fin && dureeMinutes(debut, fin) <= 0) {
-      throw new BadRequestException(I18nContext.current()!.t('planification.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
+      throw new BadRequestException(t('planification.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
     }
     if (dateDebut && dateFin && dateFin < dateDebut) {
-      throw new BadRequestException(I18nContext.current()!.t('planification.la_fin_de_la_periode_doit_suivre_son_debut'));
+      throw new BadRequestException(t('planification.la_fin_de_la_periode_doit_suivre_son_debut'));
     }
 
     const jour = dto.jourSemaine ?? base?.jourSemaine;
@@ -202,7 +201,7 @@ export class CreneauxService extends CrudService {
       where: { id: affectationId, ...(scope ?? {}) },
       include: { annee: { select: { cloturee: true } } },
     });
-    if (!affectation) throw new BadRequestException(I18nContext.current()!.t('planification.affectation_introuvable'));
+    if (!affectation) throw new BadRequestException(t('planification.affectation_introuvable'));
     await exigerAnneeOuverte(db, affectation.anneeId);
 
     const memeJour = await db.creneau.findMany({
@@ -232,7 +231,7 @@ export class CreneauxService extends CrudService {
 
     if (collision) {
       throw new BadRequestException(
-        I18nContext.current()!.t('planification.conflit_d_emploi_du_temps_jour_collision_heuredebut_collision', { args: { jour: JOURS[jour], debut: collision.heureDebut, fin: collision.heureFin } }),
+        t('planification.conflit_d_emploi_du_temps_jour_collision_heuredebut_collision', { jour: JOURS[jour], debut: collision.heureDebut, fin: collision.heureFin }),
       );
     }
   }
@@ -266,14 +265,14 @@ export class CreneauxService extends CrudService {
       const avant: any = await tx.creneau.findFirst({
         where: { id, ...this.where({}, user) }, include: CRENEAU_INCLUDE,
       });
-      if (!avant) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      if (!avant) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, avant.affectation.anneeId);
       await this.valider(dto, id, tx, user);
       const cible: any = dto.affectationId ? await tx.affectation.findFirst({
         where: { id: dto.affectationId, ...(this.where({}, user).affectation ?? {}) },
         select: { anneeId: true },
       }) : { anneeId: avant.affectation.anneeId };
-      if (!cible) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+      if (!cible) throw new NotFoundException(t('common.notFound'));
       if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
       const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
       await journaliser(
@@ -294,7 +293,7 @@ export class CreneauxService extends CrudService {
       where: { id, ...this.where({}, user) },
       include: CRENEAU_INCLUDE,
     });
-    if (!creneau) throw new NotFoundException(I18nContext.current()!.t('common.notFound'));
+    if (!creneau) throw new NotFoundException(t('common.notFound'));
     await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
     await tx.creneau.delete({ where: { id } });
     await journaliser(tx, user ?? null, 'CRENEAU_SUPPRIME', 'Creneau', id, { avant: this.instantaneAudit(creneau), apres: null });

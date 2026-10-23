@@ -10,7 +10,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -119,7 +119,7 @@ export class EtudiantsService extends CrudService {
 
   async detailPour(id: string, user: AuthUser) {
     const result = await this.lecture(user).findAll({ pageSize: 1 }, { AND: [{ id }, this.perimetre(user)] });
-    if (!result.data[0]) throw new NotFoundException();
+    if (!result.data[0]) throw new NotFoundException(t('common.notFound'));
     return result.data[0];
   }
 
@@ -138,10 +138,10 @@ export class EtudiantsService extends CrudService {
     const { creerCompte = false, motDePasse, ...donnees } = dto;
     if (creerCompte) {
       if (!donnees.email) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
+        throw new BadRequestException(t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
       }
       if (!motDePasse) {
-        throw new BadRequestException(I18nContext.current()!.t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
+        throw new BadRequestException(t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
       }
     }
 
@@ -153,7 +153,7 @@ export class EtudiantsService extends CrudService {
           if (creerCompte) {
             const existant = await tx.user.findUnique({ where: { email: donnees.email } });
             if (existant) {
-              throw new ConflictException(I18nContext.current()!.t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
+              throw new ConflictException(t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
             }
             compte = await tx.user.create({
               data: {
@@ -197,24 +197,24 @@ export class EtudiantsService extends CrudService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('inscription.matricule_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('inscription.matricule_temporairement_indisponible_reessayez'));
   }
 
   async modifier(id: string, dto: UpdateEtudiantDto, user: AuthUser) {
     const { creerCompte = false, motDePasse, ...donnees } = dto;
     return this.prisma.$transaction(async (tx) => {
       const actuel: any = await tx.etudiant.findUnique({ where: { id } });
-      if (!actuel) throw new NotFoundException();
+      if (!actuel) throw new NotFoundException(t('common.notFound'));
 
       let compteId = actuel.userId ?? null;
       if (creerCompte && !compteId) {
         const email = donnees.email ?? actuel.email;
-        if (!email) throw new BadRequestException(I18nContext.current()!.t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
+        if (!email) throw new BadRequestException(t('inscription.l_e_mail_est_requis_pour_creer_le_compte_etudiant'));
         if (!motDePasse) {
-          throw new BadRequestException(I18nContext.current()!.t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
+          throw new BadRequestException(t('inscription.le_mot_de_passe_est_requis_pour_creer_le_compte_etudiant'));
         }
         const existant = await tx.user.findUnique({ where: { email } });
-        if (existant) throw new ConflictException(I18nContext.current()!.t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
+        if (existant) throw new ConflictException(t('inscription.un_compte_existe_deja_avec_cet_e_mail'));
         const compte = await tx.user.create({
           data: {
             email,
@@ -275,7 +275,7 @@ export class EtudiantsService extends CrudService {
   async remove(id: string, user?: AuthUser) {
     await this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.etudiant.findUnique({ where: { id } });
-      if (!avant) throw new NotFoundException();
+      if (!avant) throw new NotFoundException(t('common.notFound'));
       const apres: any = await tx.etudiant.update({
         where: { id },
         data: { actif: false },

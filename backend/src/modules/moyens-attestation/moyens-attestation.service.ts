@@ -21,24 +21,22 @@ import { AttestationMode, Role } from '@prisma/client';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { AuthUser } from '../../common/decorators';
 import { chiffrer, dechiffrer } from '../../common/coffre';
 import {
   DefinirCodePinDto,
   EnrolerEmpreinteDto,
   PreuveEmpreinteDto,
-} from './attestation.dto';
+} from './moyens-attestation.dto';
 import { t } from '../../common/i18n';
+import { BIOMETRIE_SECRET_EXEMPLE } from '../../common/configuration';
 import { toDateOnly } from '../../common/utils';
 import { journaliser } from '../../common/audit';
 import { estChefDeDepartement } from '../../common/perimetre';
 
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
-
-/** Valeur d'exemple publique (`.env.example`) : refusée en production. */
-const BIOMETRIE_SECRET_EXEMPLE = 'change-me-biometrie';
 
 export interface PreuvesAttestation {
   signatureBase64?: string;
@@ -53,8 +51,8 @@ export interface ResultatAttestation {
 }
 
 @Injectable()
-export class AttestationService {
-  private readonly journal = new Logger(AttestationService.name);
+export class MoyensAttestationService {
+  private readonly journal = new Logger(MoyensAttestationService.name);
 
   constructor(
     private prisma: PrismaService,

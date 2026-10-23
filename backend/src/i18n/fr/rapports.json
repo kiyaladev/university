@@ -1,3 +1,10 @@
 {
-  "jeton_invalide_ou_expire": "Jeton invalide ou expiré"
+  "jeton_invalide_ou_expire": "Jeton invalide ou expiré",
+  "signaturePngInvalide": "La signature doit être une image PNG valide.",
+  "signatureResolutionExcessive": "La résolution de la signature dépasse la limite autorisée.",
+  "releveReserveChefDepartement": "Seul le chef du département concerné peut signer son relevé.",
+  "compteSignatureNonChef": "Le compte de signature ne dirige pas ce département ou n’est plus actif.",
+  "departementIntrouvable": "Département introuvable.",
+  "releveSemaineComplete": "Le relevé doit couvrir une semaine complète, du lundi au dimanche.",
+  "signatureNonIntegrable": "L’image de la signature ne peut pas être intégrée au PDF."
 }

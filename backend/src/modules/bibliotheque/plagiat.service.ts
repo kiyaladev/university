@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { PDFParse } from 'pdf-parse';
 import { StatutSuspicionPlagiat, SuspicionPlagiat } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -451,7 +451,7 @@ export class PlagiatService {
         acquittePar: { select: { id: true, nom: true, prenom: true, role: true } },
       },
     });
-    if (!suspicion) throw new NotFoundException(I18nContext.current()!.t('bibliotheque.suspicion_introuvable'));
+    if (!suspicion) throw new NotFoundException(t('bibliotheque.suspicion_introuvable'));
     // Le payload FTS (contenuTexte) et le data-url (fichier) sont trop lourds
     // pour figurer dans la réponse d'un détail : on les retire à la source.
     const copie = JSON.parse(JSON.stringify(suspicion)) as Record<string, unknown>;
@@ -487,12 +487,12 @@ export class PlagiatService {
   ): Promise<SuspicionPlagiat> {
     return this.prisma.$transaction(async (tx) => {
       const existante = await tx.suspicionPlagiat.findUnique({ where: { id } });
-      if (!existante) throw new NotFoundException(I18nContext.current()!.t('bibliotheque.suspicion_introuvable'));
+      if (!existante) throw new NotFoundException(t('bibliotheque.suspicion_introuvable'));
       if (
         decision !== StatutSuspicionPlagiat.ACQUITTE &&
         decision !== StatutSuspicionPlagiat.CONFIRME
       ) {
-        throw new BadRequestException(I18nContext.current()!.t('bibliotheque.decision_de_plagiat_invalide'));
+        throw new BadRequestException(t('bibliotheque.decision_de_plagiat_invalide'));
       }
       const avant = instantaneSuspicion(existante);
       const miseAJour = await tx.suspicionPlagiat.update({

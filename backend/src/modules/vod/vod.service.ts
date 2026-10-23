@@ -23,7 +23,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, Role, StatutVOD, TypeRessourceVOD } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import {
@@ -115,9 +115,9 @@ export class VodService {
       tx.seance.findUnique({ where: { id: seanceId }, select: { anneeId: true } }),
       tx.inscription.findUnique({ where: { id: inscriptionId }, select: { anneeId: true } }),
     ]);
-    if (!seance || !inscription) throw new NotFoundException();
+    if (!seance || !inscription) throw new NotFoundException(t('common.notFound'));
     if (seance.anneeId !== inscription.anneeId) {
-      throw new BadRequestException(I18nContext.current()!.t('vod.seance_inscription_annee_incoherente'));
+      throw new BadRequestException(t('vod.seance_inscription_annee_incoherente'));
     }
   }
 
@@ -138,13 +138,13 @@ export class VodService {
 
   async trouverPour(id: string, user: AuthUser) {
     const vod = await this.prisma.coursVOD.findFirst({ where: { id, AND: [this.lectureWhere(user)] }, include: VOD_INCLUDE });
-    if (!vod) throw new NotFoundException();
+    if (!vod) throw new NotFoundException(t('common.notFound'));
     return vod;
   }
 
   private async verifierEdition(id: string, user: AuthUser) {
     const vod = await this.trouver(id);
-    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException();
+    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException(t('common.forbidden'));
     return vod;
   }
 
@@ -152,12 +152,12 @@ export class VodService {
   private async verrouiller(tx: Prisma.TransactionClient, id: string) {
     await tx.$queryRaw`SELECT id FROM "CoursVOD" WHERE id = ${id} FOR UPDATE`;
     const vod = await tx.coursVOD.findUnique({ where: { id } });
-    if (!vod) throw new NotFoundException();
+    if (!vod) throw new NotFoundException(t('common.notFound'));
     return vod;
   }
 
   private verifierAuteur(vod: { creeParId: string | null }, user: AuthUser) {
-    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException();
+    if (user.role !== Role.ADMIN && vod.creeParId !== user.id) throw new ForbiddenException(t('common.forbidden'));
   }
 
   /** La lecture de statistiques ne doit pas révéler l'existence d'une VOD privée. */
@@ -166,7 +166,7 @@ export class VodService {
       where: { id, ...(user.role === Role.ADMIN ? {} : { creeParId: user.id }) },
       include: VOD_INCLUDE,
     });
-    if (!vod) throw new NotFoundException();
+    if (!vod) throw new NotFoundException(t('common.notFound'));
     return vod;
   }
 
@@ -210,7 +210,7 @@ export class VodService {
       where: { id },
       include: VOD_INCLUDE,
     });
-    if (!vod) throw new NotFoundException(I18nContext.current()!.t('vod.ressource_vod_introuvable'));
+    if (!vod) throw new NotFoundException(t('vod.ressource_vod_introuvable'));
     return vod;
   }
 
@@ -255,7 +255,7 @@ export class VodService {
   /** Catalogue des cours regardés par l'étudiant courant (portail). */
   async maCollecte(user: AuthUser) {
     if (!user.etudiantId) {
-      throw new BadRequestException(I18nContext.current()!.t('vod.aucun_profil_etudiant_n_est_lie_a_votre_compte'));
+      throw new BadRequestException(t('vod.aucun_profil_etudiant_n_est_lie_a_votre_compte'));
     }
     const inscriptions = await this.prisma.inscription.findMany({
       where: { etudiantId: user.etudiantId },
@@ -366,7 +366,7 @@ export class VodService {
       const avant = await this.verrouiller(tx, id);
       this.verifierAuteur(avant, user);
       if (avant.statut === StatutVOD.ARCHIVE) {
-        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_archivee'));
+        throw new BadRequestException(t('vod.cette_ressource_est_deja_archivee'));
       }
       await this.verifierAnneeLiee(
         tx,
@@ -395,7 +395,7 @@ export class VodService {
       const avant = await this.verrouiller(tx, id);
       this.verifierAuteur(avant, user);
       if (avant.statut !== StatutVOD.BROUILLON && avant.statut !== StatutVOD.HORS_LIGNE) {
-        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors', { args: { statut: avant.statut } }));
+        throw new BadRequestException(t('vod.cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors', { statut: avant.statut }));
       }
       const miseAJour = await tx.coursVOD.update({
         where: { id },
@@ -423,7 +423,7 @@ export class VodService {
       const avant = await this.verrouiller(tx, id);
       this.verifierAuteur(avant, user);
       if (avant.statut === StatutVOD.ARCHIVE) {
-        throw new BadRequestException(I18nContext.current()!.t('vod.cette_ressource_est_deja_archivee'));
+        throw new BadRequestException(t('vod.cette_ressource_est_deja_archivee'));
       }
       const miseAJour = await tx.coursVOD.update({
         where: { id },
@@ -466,7 +466,7 @@ export class VodService {
     return this.prisma.$transaction(async (tx) => {
       await this.verrouiller(tx, id);
       const accessible = await tx.coursVOD.findFirst({ where: { id, AND: [this.lectureWhere(user)] } });
-      if (!accessible) throw new NotFoundException();
+      if (!accessible) throw new NotFoundException(t('common.notFound'));
       await tx.vueVOD.create({
         data: {
           vodId: id,

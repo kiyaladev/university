@@ -16,13 +16,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { documents, AttestationImprimable } from './documents';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
@@ -35,7 +35,6 @@ import {
 } from './attestations.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
-import { t } from '../../common/i18n';
 
 export const ATTESTATION_INCLUDE = {
   etudiant: {
@@ -114,7 +113,7 @@ export class AttestationsService {
       where: { id },
       include: ATTESTATION_INCLUDE,
     });
-    if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+    if (!attestation) throw new NotFoundException(t('attestations.attestation_introuvable'));
     return attestation;
   }
 
@@ -125,8 +124,8 @@ export class AttestationsService {
       const annee = await client.anneeAcademique.findUnique({
         where: { id: anneeId },
       });
-      if (!annee) throw new BadRequestException(I18nContext.current()!.t('attestations.annee_academique_introuvable'));
-      if (annee.cloturee) throw new BadRequestException(I18nContext.current()!.t('common.academicYearClosed'));
+      if (!annee) throw new BadRequestException(t('attestations.annee_academique_introuvable'));
+      if (annee.cloturee) throw new BadRequestException(t('common.academicYearClosed'));
       return annee;
     }
     return (
@@ -169,13 +168,13 @@ export class AttestationsService {
     const etudiant = await this.prisma.etudiant.findUnique({
       where: { id: dto.etudiantId },
     });
-    if (!etudiant) throw new NotFoundException(I18nContext.current()!.t('attestations.etudiant_introuvable'));
+    if (!etudiant) throw new NotFoundException(t('attestations.etudiant_introuvable'));
 
     const inscriptionInitiale = dto.inscriptionId ? await this.prisma.inscription.findUnique({
       where: { id: dto.inscriptionId }, select: { anneeId: true },
     }) : null;
     if (dto.inscriptionId && !inscriptionInitiale) {
-      throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
+      throw new BadRequestException(t('attestations.inscription_introuvable'));
     }
     const annee = await this.anneeRetenue(dto.anneeId ?? inscriptionInitiale?.anneeId);
 
@@ -192,7 +191,7 @@ export class AttestationsService {
         throw e;
       }
     }
-    throw new ConflictException(I18nContext.current()!.t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+    throw new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
   }
 
   /**
@@ -213,7 +212,7 @@ export class AttestationsService {
       select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
     }) : null;
     if (dto.promotionId && !promotion) {
-      throw new BadRequestException(I18nContext.current()!.t('common.academicPromotionNotFound'));
+      throw new BadRequestException(t('common.academicPromotionNotFound'));
     }
     if (dto.promotionId && annee?.id) {
       await exigerPromotionMemeAnnee(tx, dto.promotionId, annee.id);
@@ -230,10 +229,10 @@ export class AttestationsService {
         where: { id: dto.inscriptionId },
         select: { etudiantId: true, anneeId: true, promotionId: true },
       });
-      if (!inscription) throw new BadRequestException(I18nContext.current()!.t('attestations.inscription_introuvable'));
+      if (!inscription) throw new BadRequestException(t('attestations.inscription_introuvable'));
       if (inscription.etudiantId !== dto.etudiantId || inscription.anneeId !== anneeIdRetenue
         || (dto.promotionId && inscription.promotionId !== dto.promotionId)) {
-        throw new BadRequestException(I18nContext.current()!.t('attestations.rattachement_incoherent'));
+        throw new BadRequestException(t('attestations.rattachement_incoherent'));
       }
       promotionIdRetenue = inscription.promotionId;
       await exigerPromotionMemeAnnee(tx, promotionIdRetenue, inscription.anneeId);
@@ -256,7 +255,7 @@ export class AttestationsService {
         throw new ConflictException(t('documents-demande.attestation_deja_liee_a_une_autre_demande', { numero: doublon.numero }));
       }
       throw new ConflictException(
-        I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }),
+        t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { numero: doublon.numero }),
       );
     }
 
@@ -302,10 +301,10 @@ export class AttestationsService {
     const attestation = await this.findOne(id);
     await exigerAnneeOuverte(this.prisma, attestation.anneeId);
     if (attestation.statut === StatutAttestation.REVOQUEE) {
-      throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
+      throw new BadRequestException(t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
     }
     if (dto.type == null && dto.motif == null) {
-      throw new BadRequestException(I18nContext.current()!.t('attestations.rien_a_modifier_renseignez_un_type_ou_un_motif'));
+      throw new BadRequestException(t('attestations.rien_a_modifier_renseignez_un_type_ou_un_motif'));
     }
 
     return this.prisma.$transaction(async (tx) => {
@@ -313,16 +312,16 @@ export class AttestationsService {
       await tx.$queryRaw`SELECT id FROM "Etudiant" WHERE id = ${attestation.etudiantId} FOR UPDATE`;
       await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
-      if (!actuel) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+      if (!actuel) throw new NotFoundException(t('attestations.attestation_introuvable'));
       if (actuel.statut === StatutAttestation.REVOQUEE) {
-        throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
+        throw new BadRequestException(t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
       }
       if (dto.type != null && dto.type !== actuel.type) {
         const doublon = await tx.attestation.findFirst({
           where: { id: { not: id }, etudiantId: actuel.etudiantId, anneeId: actuel.anneeId,
             type: dto.type, statut: StatutAttestation.EMISE },
         });
-        if (doublon) throw new ConflictException(I18nContext.current()!.t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { args: { numero: doublon.numero } }));
+        if (doublon) throw new ConflictException(t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { numero: doublon.numero }));
       }
       const miseAJour = await tx.attestation.update({
         where: { id },
@@ -350,9 +349,9 @@ export class AttestationsService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
       const attestation = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
-      if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+      if (!attestation) throw new NotFoundException(t('attestations.attestation_introuvable'));
       if (attestation.statut === StatutAttestation.REVOQUEE) {
-        throw new BadRequestException(I18nContext.current()!.t('attestations.cette_attestation_est_deja_revoquee'));
+        throw new BadRequestException(t('attestations.cette_attestation_est_deja_revoquee'));
       }
       const miseAJour = await tx.attestation.update({
         where: { id },
@@ -381,7 +380,7 @@ export class AttestationsService {
    * probant, elle se révoque, jamais elle ne s'efface.
    */
   async supprimerInterdit() {
-    throw new ForbiddenException(I18nContext.current()!.t('attestations.la_suppression_d_attestations_est_interdite_ces_documents_so'));
+    throw new ForbiddenException(t('attestations.la_suppression_d_attestations_est_interdite_ces_documents_so'));
   }
 
   // ------------------------------------------------------------- documentation
@@ -396,14 +395,14 @@ export class AttestationsService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('attestations.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('attestations.jeton_invalide_ou_expire'));
     }
 
     const attestation = await this.prisma.attestation.findUnique({
       where: { id },
       include: ATTESTATION_INCLUDE,
     });
-    if (!attestation) throw new NotFoundException(I18nContext.current()!.t('attestations.attestation_introuvable'));
+    if (!attestation) throw new NotFoundException(t('attestations.attestation_introuvable'));
 
     const urlVerification = this.urlVerification(baseUrl, attestation.numero, attestation.qrToken);
     const etablissement = await chargerEtablissement(this.prisma);

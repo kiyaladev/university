@@ -17,5 +17,10 @@
   "cette_demande_n_est_pas_marquee_comme_prete": "Cette demande n'est pas marquée comme prête.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé.",
   "attestation_deja_liee_a_une_autre_demande": "L’attestation {numero} de même type et de même année est déjà remise au titre d’une autre demande. Révoquez-la avant d’en émettre une nouvelle.",
-  "attestation_service_indisponible": "L’émission de l’attestation vérifiable est indisponible : la demande n’a pas été marquée prête."
+  "attestation_service_indisponible": "L’émission de l’attestation vérifiable est indisponible : la demande n’a pas été marquée prête.",
+  "tarifDejaExistant": "Un tarif existe déjà pour le type {type} : modifiez-le plutôt que d'en créer un nouveau.",
+  "demandeNonEnAttentePaiement": "Cette demande n'est plus en attente de paiement.",
+  "demandeDejaTraitee": "Cette demande n'est plus en attente de paiement : elle est déjà traitée.",
+  "aucunPaiementAssocie": "Aucun paiement associé à cette demande : l'étudiant doit d'abord initier le paiement.",
+  "demandeNonTraitee": "Cette demande n'est pas encore traitée — le paiement ou la prise en charge manque."
 }

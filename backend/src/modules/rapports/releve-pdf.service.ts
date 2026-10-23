@@ -5,11 +5,12 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement, PALETTE_IMPRESSION as P } from '../../common/impression';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { RapportsService } from './rapports.service';
 import { ReleveHebdomadaireDto } from './rapports.dto';
 import { journaliser } from '../../common/audit';
 import { estChefDeDepartement } from '../../common/perimetre';
+import { t } from '../../common/i18n';
 
 const LARGEURS = [40, 61, 118, 144, 49, 96, 62, 188];
 const STATUTS: Record<string, string> = {
@@ -25,12 +26,12 @@ function decoderSignature(data: string): Buffer {
     png.length < 33 || png.length > 768_000 || !png.subarray(0, 8).equals(signaturePng)
     || png.toString('ascii', 12, 16) !== 'IHDR'
   ) {
-    throw new BadRequestException('La signature doit être une image PNG valide.');
+    throw new BadRequestException(t('rapports.signaturePngInvalide'));
   }
   const largeur = png.readUInt32BE(16);
   const hauteur = png.readUInt32BE(20);
   if (!largeur || !hauteur || largeur > 4000 || hauteur > 4000 || largeur * hauteur > 8_000_000) {
-    throw new BadRequestException('La résolution de la signature dépasse la limite autorisée.');
+    throw new BadRequestException(t('rapports.signatureResolutionExcessive'));
   }
   return png;
 }
@@ -57,7 +58,7 @@ export class RelevePdfService {
 
   async generer(dto: ReleveHebdomadaireDto, user: AuthUser) {
     if (!estChefDeDepartement(user) || !user.departementId || user.departementId !== dto.departementId) {
-      throw new ForbiddenException('Seul le chef du département concerné peut signer son relevé.');
+      throw new ForbiddenException(t('rapports.releveReserveChefDepartement'));
     }
     const [chef, departement] = await Promise.all([
       this.prisma.user.findUnique({
@@ -67,15 +68,15 @@ export class RelevePdfService {
       this.prisma.departement.findUnique({ where: { id: dto.departementId }, select: { id: true, nom: true } }),
     ]);
     if (!chef || !chef.actif || chef.role !== Role.CHEF_DEPARTEMENT || chef.departementId !== dto.departementId) {
-      throw new ForbiddenException('Le compte de signature ne dirige pas ce département ou n’est plus actif.');
+      throw new ForbiddenException(t('rapports.compteSignatureNonChef'));
     }
-    if (!departement) throw new NotFoundException('Département introuvable.');
+    if (!departement) throw new NotFoundException(t('rapports.departementIntrouvable'));
 
     const debut = new Date(`${dto.dateDebut}T00:00:00Z`);
     const fin = new Date(`${dto.dateFin}T00:00:00Z`);
     const finAttendue = new Date(debut.getTime() + 6 * 86_400_000);
     if (debut.getUTCDay() !== 1 || dateIso(fin) !== dateIso(finAttendue)) {
-      throw new BadRequestException('Le relevé doit couvrir une semaine complète, du lundi au dimanche.');
+      throw new BadRequestException(t('rapports.releveSemaineComplete'));
     }
     const signatureChef = decoderSignature(dto.signatureBase64);
     const signatureHash = hash(signatureChef);
@@ -190,7 +191,7 @@ export class RelevePdfService {
     try {
       document.image(signatureChef, droite - 190, ySignature + 15, { fit: [150, 55], align: 'center', valign: 'center' });
     } catch {
-      throw new BadRequestException('L’image de la signature ne peut pas être intégrée au PDF.');
+      throw new BadRequestException(t('rapports.signatureNonIntegrable'));
     }
     document.moveTo(droite - 230, ySignature + 75).lineTo(droite, ySignature + 75).stroke(P.encre);
     document.font('Helvetica').fontSize(8).fillColor(P.encre)

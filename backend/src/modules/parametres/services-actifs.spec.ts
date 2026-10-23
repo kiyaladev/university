@@ -3,9 +3,11 @@ import { BadRequestException, Controller, Get, NotFoundException } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { ServicesActifsController, ServicesActifsDto, ServicesActifsGuard, ServicesActifsService } from './services-actifs.module';
+import { ServicesActifsController } from './services-actifs.controller';
+import { ServicesActifsGuard } from './services-actifs.guard';
+import { DUREE_CACHE_SERVICES_MS, ServicesActifsDto, ServicesActifsService } from './services-actifs.service';
 import { IS_PUBLIC_KEY, ROLES_KEY } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from './parametres.service';
 
 describe('Activation des services', () => {
   it('préserve les accès existants et rend les services essentiels non désactivables', async () => {
@@ -48,6 +50,52 @@ describe('Activation des services', () => {
     for (const services of [[{ id: 'vod', actif: 'false' }], [{ id: 'vod', actif: false }, { id: 'vod', actif: false }]]) {
       expect((await validate(plainToInstance(ServicesActifsDto, { services }, { enableImplicitConversion: true }))).length).toBeGreaterThan(0);
     }
+  });
+  it('met les activations en cache, invalide à l’écriture et expire après le TTL', async () => {
+    let valeur = 'false';
+    const tx = { parametre: { findUnique: jest.fn().mockResolvedValue({ valeur: 'false' }), upsert: jest.fn(async () => { valeur = 'true'; }) }, auditLog: { create: jest.fn() } };
+    const prisma = {
+      $transaction: jest.fn(callback => callback(tx)),
+      parametre: { findMany: jest.fn(async () => [{ cle: 'SERVICE_ACTIF_vod', valeur }]) },
+    };
+    const service = new ServicesActifsService(prisma as any);
+    const maintenant = jest.spyOn(Date, 'now').mockReturnValue(1_000_000);
+    try {
+      expect(await service.actif('vod')).toBe(false);
+      expect(await service.actif('vod')).toBe(false);
+      expect(await service.actif('presence')).toBe(true);
+      expect(prisma.parametre.findMany).toHaveBeenCalledTimes(1);
+
+      // Écriture : l'état suivant est relu tout de suite, sans attendre le TTL.
+      await service.enregistrer({ services: [{ id: 'vod', actif: true }] }, { id: 'admin' } as any);
+      expect(await service.actif('vod')).toBe(true);
+      const appels = prisma.parametre.findMany.mock.calls.length;
+
+      // Changement hors de ce processus : visible une fois le TTL écoulé.
+      valeur = 'false';
+      maintenant.mockReturnValue(1_000_000 + DUREE_CACHE_SERVICES_MS - 1);
+      expect(await service.actif('vod')).toBe(true);
+      maintenant.mockReturnValue(1_000_000 + DUREE_CACHE_SERVICES_MS + 1);
+      expect(await service.actif('vod')).toBe(false);
+      expect(prisma.parametre.findMany).toHaveBeenCalledTimes(appels + 1);
+    } finally {
+      maintenant.mockRestore();
+    }
+  });
+  it('mutualise les lectures simultanées et jette un chargement antérieur à une écriture', async () => {
+    let resoudre!: (rows: any[]) => void;
+    const prisma = { parametre: { findMany: jest.fn(() => new Promise<any[]>(r => { resoudre = r; })) } };
+    const service = new ServicesActifsService(prisma as any);
+    const a = service.actif('vod');
+    const b = service.actif('vod');
+    expect(prisma.parametre.findMany).toHaveBeenCalledTimes(1);
+    service.invalider();
+    resoudre([{ cle: 'SERVICE_ACTIF_vod', valeur: 'false' }]);
+    expect(await a).toBe(false);
+    expect(await b).toBe(false);
+    prisma.parametre.findMany.mockResolvedValue([] as any);
+    expect(await service.actif('vod')).toBe(true);
+    expect(prisma.parametre.findMany).toHaveBeenCalledTimes(2);
   });
   it('bloque les accès directs et les routes publiques, sans confondre portail et restauration', async () => {
     @Controller('portail/resto') class Resto { @Get('me') me() {} }

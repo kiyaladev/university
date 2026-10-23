@@ -1,9 +1,8 @@
-import { Controller, Get, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { ApiTags } from '@nestjs/swagger';
 import {
   AcceptLanguageResolver,
   HeaderResolver,
@@ -18,14 +17,15 @@ import { DebitGuard } from './common/debit.guard';
 import { DocumentScopeGuard } from './common/document-scope.guard';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 import { JwtConfigModule } from './common/jwt-config.module';
+import { validerConfiguration } from './common/configuration';
 import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
-import { Public } from './common/decorators';
+import { HealthController } from './common/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferentielModule } from './modules/referentiel/referentiel.module';
 import { PlanificationModule } from './modules/planification/planification.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { ControleModule } from './modules/controle/controle.module';
-import { AttestationModule } from './modules/attestation/attestation.module';
+import { MoyensAttestationModule } from './modules/moyens-attestation/moyens-attestation.module';
 import { JustificatifsModule } from './modules/justificatifs/justificatifs.module';
 import { RapportsModule } from './modules/rapports/rapports.module';
 import { ParametresModule } from './modules/parametres/parametres.module';
@@ -53,22 +53,12 @@ import { ElectionsModule } from './modules/elections/elections.module';
 import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.module';
 import { BadgesModule } from './modules/badges/badges.module';
 import { VodModule } from './modules/vod/vod.module';
-import { ServicesActifsModule, ServicesActifsGuard } from './modules/services-actifs/services-actifs.module';
-
-@ApiTags('Santé')
-@Controller()
-export class HealthController {
-  @Public()
-  @Get('health')
-  health() {
-    return { status: 'ok', service: 'university-api', date: new Date().toISOString() };
-  }
-}
+import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard';
 
 @Module({
   imports: [
-    ServicesActifsModule,
-    ConfigModule.forRoot({ isGlobal: true }),
+    // Variables vérifiées au démarrage : voir common/configuration.ts.
+    ConfigModule.forRoot({ isGlobal: true, validate: validerConfiguration }),
     // Secret et durée de vie des jetons, résolus après le chargement du .env.
     JwtConfigModule,
     ScheduleModule.forRoot(),
@@ -98,7 +88,7 @@ export class HealthController {
     PlanificationModule,
     ImportsModule,
     ControleModule,
-    AttestationModule,
+    MoyensAttestationModule,
     JustificatifsModule,
     RapportsModule,
     ParametresModule,

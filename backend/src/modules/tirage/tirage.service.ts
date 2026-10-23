@@ -14,7 +14,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import * as crypto from 'node:crypto';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Prisma, StadeTirage } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
@@ -86,7 +86,7 @@ export class TirageService {
       where: { id },
       include: TIRAGE_INCLUDE,
     });
-    if (!tirage) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
+    if (!tirage) throw new NotFoundException(t('tirage.tirage_introuvable'));
     return tirage;
   }
 
@@ -98,7 +98,7 @@ export class TirageService {
         where: { id: dto.examenId },
         select: { id: true, codeExamen: true, anneeId: true },
       });
-      if (!examen) throw new BadRequestException(I18nContext.current()!.t('tirage.examen_introuvable'));
+      if (!examen) throw new BadRequestException(t('tirage.examen_introuvable'));
       await exigerAnneeOuverte(tx, examen.anneeId);
 
       const tirage = await tx.tirage.create({
@@ -145,7 +145,7 @@ export class TirageService {
         );
       }
       if (dto.empreinteSource.toLowerCase() !== tirage.empreinteSource) {
-        throw new BadRequestException(I18nContext.current()!.t('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr'));
+        throw new BadRequestException(t('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr'));
       }
 
       const maj = await tx.tirage.update({
@@ -179,14 +179,14 @@ export class TirageService {
     stadeAttendu: StadeTirage,
   ) {
     if (dto.stade !== stadeAttendu) {
-      throw new BadRequestException(I18nContext.current()!.t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { args: { 'tirage.stade': stadeAttendu, 'dto.stade': dto.stade } }));
+      throw new BadRequestException(t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { 'tirage.stade': stadeAttendu, 'dto.stade': dto.stade }));
     }
     return this.prisma.$transaction(async (tx) => {
       const tirage = await this.trouverDans(tx, id);
       await exigerAnneeOuverte(tx, tirage.examen.anneeId);
       const cible = TRANSITIONS[tirage.stade];
       if (!cible || cible !== dto.stade) {
-        throw new BadRequestException(I18nContext.current()!.t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { args: { 'tirage.stade': tirage.stade, 'dto.stade': dto.stade } }));
+        throw new BadRequestException(t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { 'tirage.stade': tirage.stade, 'dto.stade': dto.stade }));
       }
       const maj = await tx.tirage.update({
         where: { id },
@@ -203,12 +203,12 @@ export class TirageService {
 
   private async trouverDans(db: Prisma.TransactionClient, id: string) {
     const initial = await db.tirage.findUnique({ where: { id }, include: TIRAGE_INCLUDE });
-    if (!initial) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
+    if (!initial) throw new NotFoundException(t('tirage.tirage_introuvable'));
     // Année puis tirage : même ordre que les autres écritures académiques.
     await exigerAnneeOuverte(db, initial.examen.anneeId);
     await db.$queryRaw`SELECT id FROM "Tirage" WHERE id = ${id} FOR UPDATE`;
     const tirage = await db.tirage.findUnique({ where: { id }, include: TIRAGE_INCLUDE });
-    if (!tirage) throw new NotFoundException(I18nContext.current()!.t('tirage.tirage_introuvable'));
+    if (!tirage) throw new NotFoundException(t('tirage.tirage_introuvable'));
     return tirage;
   }
 
@@ -234,7 +234,7 @@ export class TirageService {
       const tirage = await this.trouverDans(tx, id);
       await exigerAnneeOuverte(tx, tirage.examen.anneeId);
       if (tirage.stade !== StadeTirage.PROGRAMME) {
-        throw new BadRequestException(I18nContext.current()!.t('tirage.tirage_tirage_stade_annulation_possible_uniquement_depuis_program', { args: { stade: tirage.stade } }));
+        throw new BadRequestException(t('tirage.tirage_tirage_stade_annulation_possible_uniquement_depuis_program', { stade: tirage.stade }));
       }
       const maj = await tx.tirage.update({
         where: { id },

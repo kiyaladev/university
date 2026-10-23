@@ -1,6 +1,7 @@
 import { Role } from '@prisma/client';
 import { ROLES_KEY } from '../../common/decorators';
-import { ParametresController, ParametresService } from './parametres.module';
+import { ParametresController } from './parametres.controller';
+import { ParametresService } from './parametres.service';
 
 describe('ParametresService — règles de pointage minimales', () => {
   it('ne renvoie que l’exigence d’attestation au dialogue du contrôleur', async () => {

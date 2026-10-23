@@ -75,7 +75,7 @@ export class AffectationsService extends CrudService {
   private async exigerPerimetreAffectation(user: AuthUser, enseignantId?: string, db: any = this.prisma) {
     if (!estChefDeDepartement(user) && user.role !== Role.CONTROLEUR) return;
     if (!enseignantId) {
-      throw new ForbiddenException();
+      throw new ForbiddenException(t('common.forbidden'));
     }
     const enseignant = await db.enseignant.findUnique({
       where: { id: enseignantId },
@@ -117,7 +117,7 @@ export class AffectationsService extends CrudService {
     await this.exigerPerimetreAffectation(user, dto.enseignantId ?? actuelle.enseignantId);
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
-      if (!avant) throw new ForbiddenException();
+      if (!avant) throw new ForbiddenException(t('common.forbidden'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
       await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
@@ -141,7 +141,7 @@ export class AffectationsService extends CrudService {
     await exigerAnneeOuverte(this.prisma, actuelle.anneeId);
     return this.prisma.$transaction(async (tx) => {
       const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
-      if (!avant) throw new ForbiddenException();
+      if (!avant) throw new ForbiddenException(t('common.forbidden'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       // Contrôles et justificatifs sont des preuves (base de la paie) : une
       // affectation qui en porte ne se supprime pas. Les séances seulement
@@ -178,10 +178,10 @@ export class AffectationsService extends CrudService {
     const affectation: any = await this.findOne(id);
     if (estChefDeDepartement(user) || user.role === Role.CONTROLEUR) {
       if (!user.departementId || affectation.enseignant?.departementId !== user.departementId) {
-        throw new NotFoundException();
+        throw new NotFoundException(t('common.notFound'));
       }
     } else if (user.role === Role.ENSEIGNANT && affectation.enseignantId !== user.enseignantId) {
-      throw new NotFoundException();
+      throw new NotFoundException(t('common.notFound'));
     }
     return affectation;
   }

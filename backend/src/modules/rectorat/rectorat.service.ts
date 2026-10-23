@@ -56,7 +56,6 @@ import { AuthUser } from '../../common/decorators';
 import { isoDate, round2 } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
-import { I18nContext } from 'nestjs-i18n';
 import { journaliser } from '../../common/audit';
 
 @Injectable()
@@ -251,7 +250,7 @@ export class RectoratService {
    */
   async genererBilan(anneeId: string, user: AuthUser) {
     const annee = await this.prisma.anneeAcademique.findUnique({ where: { id: anneeId } });
-    if (!annee) throw new NotFoundException(I18nContext.current()!.t('rectorat.annee_academique_introuvable'));
+    if (!annee) throw new NotFoundException(t('rectorat.annee_academique_introuvable'));
 
     const chiffres = await this.chiffres(anneeId);
     const [parCategorie, parDepartement, enReparation, obsoletes] = await Promise.all([
@@ -308,7 +307,7 @@ export class RectoratService {
         generePar: { select: { id: true, nom: true, prenom: true } },
       },
     });
-    if (!snapshot) throw new NotFoundException(I18nContext.current()!.t('rectorat.bilan_mesrs_introuvable'));
+    if (!snapshot) throw new NotFoundException(t('rectorat.bilan_mesrs_introuvable'));
     return snapshot;
   }
 
@@ -386,7 +385,7 @@ export class RectoratService {
     try {
       this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('rectorat.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('rectorat.jeton_invalide_ou_expire'));
     }
 
     const snapshot = await this.trouverBilan(id);

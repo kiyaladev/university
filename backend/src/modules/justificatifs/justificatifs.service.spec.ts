@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { I18nContext } from 'nestjs-i18n';
-import { JustificatifsService } from './justificatifs.module';
+import { JustificatifsService } from './justificatifs.service';
 
 describe('Périmètre des justificatifs', () => {
   const enseignant = { role: Role.ENSEIGNANT, enseignantId: 'ens-1', departementId: null } as any;

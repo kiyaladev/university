@@ -3,7 +3,7 @@ import { BadRequestException } from '@nestjs/common';
 import { AttestationMode, Role } from '@prisma/client';
 import { createHash, createHmac } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
-import { AttestationService } from './attestation.service';
+import { MoyensAttestationService } from './moyens-attestation.service';
 import { AuthUser } from '../../common/decorators';
 import { dechiffrer, estChiffre, oublierCle } from '../../common/coffre';
 
@@ -72,7 +72,7 @@ function preparer(options: { enseignant?: any; seuil?: number; appareil?: any } 
     booleen: jest.fn(async (_cle: string, defaut: boolean) => defaut),
   } as any;
 
-  return { service: new AttestationService(prisma, parametres), prisma, enseignant };
+  return { service: new MoyensAttestationService(prisma, parametres), prisma, enseignant };
 }
 
 describe('Attestation — code personnel', () => {
@@ -234,7 +234,7 @@ describe('Attestation — purge biométrique', () => {
       }),
     };
     const parametres: any = { nombre: jest.fn(async (_cle: string, defaut: number) => defaut) };
-    return { service: new AttestationService(prisma, parametres), prisma, tx, base, audit };
+    return { service: new MoyensAttestationService(prisma, parametres), prisma, tx, base, audit };
   }
 
   it('purge les champs biométriques et journalise la purge dans une transaction', async () => {

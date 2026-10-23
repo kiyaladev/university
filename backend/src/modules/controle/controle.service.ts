@@ -23,8 +23,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { QueryDto } from '../../common/dto';
 import { distanceMetres, dureeMinutes, toDateOnly, toMinutes } from '../../common/utils';
-import { ParametresService } from '../parametres/parametres.module';
-import { AttestationService } from '../attestation/attestation.service';
+import { ParametresService } from '../parametres/parametres.service';
+import { MoyensAttestationService } from '../moyens-attestation/moyens-attestation.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
@@ -200,7 +200,7 @@ export class ControleService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private attestation: AttestationService,
+    private attestation: MoyensAttestationService,
   ) {}
 
   private peutVoirDetails(user?: AuthUser) {

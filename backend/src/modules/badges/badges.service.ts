@@ -14,13 +14,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { I18nContext } from 'nestjs-i18n';
+import { t } from '../../common/i18n';
 import { Prisma, StatutBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import {
   AnnulerBadgeDto,
   BadgeQueryDto,
@@ -153,7 +153,7 @@ export class BadgesService {
       where: { id },
       include: BADGE_INCLUDE,
     });
-    if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+    if (!badge) throw new NotFoundException(t('badges.badge_introuvable'));
     // Projection seulement : une lecture ne modifie pas le badge sans audit.
     return { ...badge, statut: this.evaluerStatut(badge) };
   }
@@ -209,7 +209,7 @@ export class BadgesService {
         throw e;
       }
     }
-    if (!badge) throw new BadRequestException(I18nContext.current()!.t('badges.impossible_de_generer_un_numero_de_badge'));
+    if (!badge) throw new BadRequestException(t('badges.impossible_de_generer_un_numero_de_badge'));
 
     return badge;
   }
@@ -218,9 +218,9 @@ export class BadgesService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
       const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
-      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (!badge) throw new NotFoundException(t('badges.badge_introuvable'));
       if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
-        throw new BadRequestException(I18nContext.current()!.t('badges.un_badge_annule_ne_se_modifie_plus'));
+        throw new BadRequestException(t('badges.un_badge_annule_ne_se_modifie_plus'));
       }
       const data: Prisma.BadgeAccesUpdateInput = {
         ...(dto.type !== undefined ? { type: dto.type } : {}),
@@ -262,9 +262,9 @@ export class BadgesService {
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
       const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
-      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (!badge) throw new NotFoundException(t('badges.badge_introuvable'));
       if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
-        throw new BadRequestException(I18nContext.current()!.t('badges.ce_badge_est_deja_annule'));
+        throw new BadRequestException(t('badges.ce_badge_est_deja_annule'));
       }
       const miseAJour = await tx.badgeAcces.update({
         where: { id },
@@ -290,24 +290,24 @@ export class BadgesService {
 
   async rallonger(id: string, dto: RallongerBadgeDto, user: AuthUser) {
     if (new Date(dto.dateValidite) <= new Date()) {
-      throw new BadRequestException(I18nContext.current()!.t('badges.la_nouvelle_date_doit_etre_dans_le_futur'));
+      throw new BadRequestException(t('badges.la_nouvelle_date_doit_etre_dans_le_futur'));
     }
     return this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM "BadgeAcces" WHERE id = ${id} FOR UPDATE`;
       const badge = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
-      if (!badge) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (!badge) throw new NotFoundException(t('badges.badge_introuvable'));
       if (this.evaluerStatut(badge) === StatutBadge.ANNULE) {
-        throw new BadRequestException(I18nContext.current()!.t('badges.un_badge_annule_ne_se_rallonge_pas_creez_en_un_nouveau'));
+        throw new BadRequestException(t('badges.un_badge_annule_ne_se_rallonge_pas_creez_en_un_nouveau'));
       }
       const ecriture = await tx.badgeAcces.updateMany({
         where: { id, statut: badge.statut },
         data: { dateValidite: new Date(dto.dateValidite), statut: StatutBadge.ACTIF },
       });
       if (ecriture.count !== 1) {
-        throw new ConflictException(I18nContext.current()!.t('badges.ecriture_concurrente_reessayez'));
+        throw new ConflictException(t('badges.ecriture_concurrente_reessayez'));
       }
       const miseAJour = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
-      if (!miseAJour) throw new NotFoundException(I18nContext.current()!.t('badges.badge_introuvable'));
+      if (!miseAJour) throw new NotFoundException(t('badges.badge_introuvable'));
       await journaliser(
         tx,
         user,
@@ -415,7 +415,7 @@ export class BadgesService {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
-      throw new UnauthorizedException(I18nContext.current()!.t('badges.jeton_invalide_ou_expire'));
+      throw new UnauthorizedException(t('badges.jeton_invalide_ou_expire'));
     }
     const badge = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, badge.id, badge.qrToken);
