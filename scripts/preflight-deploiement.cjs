@@ -55,7 +55,9 @@ async function inspecter() {
   const noms = new Set(appliquees.map(m => m.migration_name));
   const attendues = fs.readdirSync(path.join(backend, 'prisma/migrations'), { withFileTypes: true }).filter(f => f.isDirectory()).map(f => f.name);
   const enAttente = attendues.filter(n => !noms.has(n));
-  const externe = /^[a-zA-Z0-9_.@-]+:\/[^\s]+$/.test(config.UNIPRESENCE_BACKUP_REMOTE || '');
+  // Le nom de la variable suit le produit ; l'ancien nom reste accepté.
+  const destination = config.UNIVERSITY_BACKUP_REMOTE || config.UNIPRESENCE_BACKUP_REMOTE || '';
+  const externe = /^[a-zA-Z0-9_.@-]+:\/[^\s]+$/.test(destination);
   const blocages = [];
   if (!administrateursReels) blocages.push('Aucun administrateur actif avec un mot de passe hors démonstration.');
   if (comptesDemo) blocages.push(`${comptesDemo} comptes actifs conservent un mot de passe de démonstration.`);

@@ -94,7 +94,7 @@ main()
     }
     report.productionUntouched = true;
     report.physicalPrintAndScanPending = true;
-    fs.writeFileSync('../audit/recommandations-2026-10-06/salles-qr-http.json', JSON.stringify(report, null, 2) + '\n');
+    fs.writeFileSync('../docs/audits/preuves/2026-10-06/salles-qr-http.json', JSON.stringify(report, null, 2) + '\n');
     await db.$disconnect();
     console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
   });

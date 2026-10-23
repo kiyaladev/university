@@ -101,7 +101,7 @@ main()
     assert.equal(report.fixturesRestantes, 0);
     report.productionUntouched = true;
     fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/helpdesk-concurrence-http.json',
+      '../docs/audits/preuves/2026-10-06/helpdesk-concurrence-http.json',
       JSON.stringify(report, null, 2) + '\n',
     );
     await db.$disconnect();

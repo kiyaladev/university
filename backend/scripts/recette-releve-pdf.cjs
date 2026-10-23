@@ -200,10 +200,7 @@ main()
     report.fixturesRestantes = await db.user.count({ where: { id: { in: users } } });
     report.physicalAndHumanValidationPending = true;
     report.productionUntouched = true;
-    fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/releve-pdf-http.json',
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    fs.writeFileSync('../docs/audits/preuves/2026-10-06/releve-pdf-http.json', JSON.stringify(report, null, 2) + '\n');
     await db.$disconnect();
     console.log(JSON.stringify({ statut: report.statut, erreur: report.erreur }));
   });

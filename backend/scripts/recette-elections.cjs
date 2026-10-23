@@ -132,7 +132,7 @@ main()
       'Impression physique non qualifiée',
       'Route HTTP de connexion non qualifiée par cette fixture',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/elections.json', JSON.stringify(report, null, 2) + '\n');
+    fs.writeFileSync('../docs/audits/preuves/2026-10-06/elections.json', JSON.stringify(report, null, 2) + '\n');
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesSupprimees: report.fixturesSupprimees }),

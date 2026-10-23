@@ -122,7 +122,7 @@ main()
       'Import créneaux non qualifié par cette recette',
       'Fichiers historiques et décodeur XLSX navigateur à qualifier séparément',
     ];
-    fs.writeFileSync('../audit/recommandations-2026-10-06/imports-http.json', JSON.stringify(report, null, 2) + '\n');
+    fs.writeFileSync('../docs/audits/preuves/2026-10-06/imports-http.json', JSON.stringify(report, null, 2) + '\n');
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

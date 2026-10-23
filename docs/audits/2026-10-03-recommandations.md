@@ -24,19 +24,19 @@ Chaque point indique ce que ça coûte de ne **pas** le faire.
 
 ---
 
-La base active est à 12/20 migrations : 8 attendent leur planification en production. Les huit ont été appliquées à la restauration QA ; elle passe à 20/20 et l’index d’unicité des scans est présent, sans doublon historique. Aucune migration n’a été appliquée à la base active. Voir [le rapport de dérive](../../audit/recommandations/derive-deploiement.json).
+La base active est à 12/20 migrations : 8 attendent leur planification en production. Les huit ont été appliquées à la restauration QA ; elle passe à 20/20 et l’index d’unicité des scans est présent, sans doublon historique. Aucune migration n’a été appliquée à la base active. Voir [le rapport de dérive](preuves/2026-10-03/derive-deploiement.json).
 
 ## P0 — À faire avant qu'un vrai enseignant soit pointé
 
 ### 1. Sauvegarde de production — script et tâche basculés, copie hors serveur à configurer
 
-`/opt/apps/university/scripts/backup-db.sh` produit un dump PostgreSQL vérifié, conserve 30 jours, nomme l’archive d’après la base active et copie vers `UNIPRESENCE_BACKUP_REMOTE` si cette destination est configurée. Le cron lit maintenant ce paramètre dans `backend/.env` sans exécuter le fichier comme du code ; une variable d’environnement garde la priorité. L’exemple de configuration est documenté dans `backend/.env.example`, mais reste vide tant qu’aucune cible SSH n’est fournie. La restauration QA précédente a récupéré 10 enseignants, 107 séances et 67 contrôles, puis passé les huit migrations. Un nouveau dump de `university` a été créé le 3 octobre à 16:24 (66 tables, SHA-256 vérifié, permissions 0600) ([preuve](../../audit/recommandations/sauvegarde-locale-2026-10-03-1624.json)). `node scripts/backup-db.spec.mjs` vérifie la rétention, les permissions, le checksum, le refus des dumps trop petits, la propagation d’un échec distant et la lecture de la destination depuis la configuration cron, sans toucher à PostgreSQL. Il reste à configurer une destination hors serveur. La tâche quotidienne de 03:15 appelle désormais le script courant.
+`/opt/apps/university/scripts/backup-db.sh` produit un dump PostgreSQL vérifié, conserve 30 jours, nomme l’archive d’après la base active et copie vers `UNIPRESENCE_BACKUP_REMOTE` si cette destination est configurée. Le cron lit maintenant ce paramètre dans `backend/.env` sans exécuter le fichier comme du code ; une variable d’environnement garde la priorité. L’exemple de configuration est documenté dans `backend/.env.example`, mais reste vide tant qu’aucune cible SSH n’est fournie. La restauration QA précédente a récupéré 10 enseignants, 107 séances et 67 contrôles, puis passé les huit migrations. Un nouveau dump de `university` a été créé le 3 octobre à 16:24 (66 tables, SHA-256 vérifié, permissions 0600) ([preuve](preuves/2026-10-03/sauvegarde-locale-2026-10-03-1624.json)). `node scripts/backup-db.spec.mjs` vérifie la rétention, les permissions, le checksum, le refus des dumps trop petits, la propagation d’un échec distant et la lecture de la destination depuis la configuration cron, sans toucher à PostgreSQL. Il reste à configurer une destination hors serveur. La tâche quotidienne de 03:15 appelle désormais le script courant.
 
 ### 2. Limiter les tentatives de connexion — implémenté, CORS et proxy de confiance vérifiés
 
 La connexion applique une limite par adresse et compte, compte les échecs
 concurrents par incrément atomique et écrit état de verrouillage et `AuditLog`
-dans la même transaction ([preuve et limites](../../audit/recommandations/verrouillage-login-concurrent.json)) ;
+dans la même transaction ([preuve et limites](preuves/2026-10-03/verrouillage-login-concurrent.json)) ;
 les jetons sont invalidés après changement de mot de passe. Helmet et une
 liste CORS configurable sont actifs. `CORS_ORIGINS` autorise l’interface
 `https://university.naimba.com` ; l’API confirme cette origine et refuse les
@@ -52,7 +52,7 @@ rechargé ; `/api/docs` et `/api/docs-json` répondent 401 sans jeton et
 consentement et conserve sa date et l'identité de l'agent ; une tâche
 quotidienne efface les gabarits 90 jours après la désactivation de la fiche.
 La sélection, l'effacement et la trace de purge sont maintenant atomiques ; le
-gabarit lui-même ne figure jamais dans l'audit ([preuve](../../audit/recommandations/purge-biometrie-transaction.json)).
+gabarit lui-même ne figure jamais dans l'audit ([preuve](preuves/2026-10-03/purge-biometrie-transaction.json)).
 Il reste à faire valider que cette durée et la désactivation correspondent à
 la fin de conservation autorisée. Le PIN et la signature restent disponibles.
 
@@ -61,7 +61,7 @@ la fin de conservation autorisée. Le PIN et la signature restent disponibles.
 `stores/pointages.ts` retire le PIN, purge les entrées de plus de sept jours et
 chiffre la file avec AES-GCM. La clé non extractible est conservée dans
 IndexedDB ; migration, isolation par compte, synchronisation simulée et refus
-d'un contenu altéré sont testés ([preuve](../../audit/recommandations/file-chiffree.json)).
+d'un contenu altéré sont testés ([preuve](preuves/2026-10-03/file-chiffree.json)).
 Cela protège un dump de `localStorage`, mais une page compromise sur la même
 origine peut demander au navigateur de déchiffrer. La recette sur appareil réel
 reste à faire.
@@ -97,19 +97,19 @@ paiement d'une demande et son rattachement sont désormais atomiques ;
 les réparations et le basculement de l'équipement le sont aussi. Les
 modifications et désactivations étudiantes
 excluent coordonnées, date de naissance, QR et secrets de compte
-([preuve](../../audit/recommandations/journal-fiches-etudiantes.json),
-[extension du 3 octobre](../../audit/recommandations/audit-avant-apres-2026-10-03.json),
-[réclamations](../../audit/recommandations/journal-reclamations.json),
-[helpdesk](../../audit/recommandations/journal-helpdesk.json),
-[élections](../../audit/recommandations/journal-elections.json),
-[VOD](../../audit/recommandations/journal-vod.json)).
-La recette de l'écran Journal passe pour ADMIN et DIRECTION, en français et en anglais, à 1440 et 375 px, sur API simulée ([preuve UI](../../audit/recommandations/journal-interface-2026-10-03.json)). Les anciennes descriptions et les dépôts de vote ne sont pas exposés ;
+([preuve](preuves/2026-10-03/journal-fiches-etudiantes.json),
+[extension du 3 octobre](preuves/2026-10-03/audit-avant-apres-2026-10-03.json),
+[réclamations](preuves/2026-10-03/journal-reclamations.json),
+[helpdesk](preuves/2026-10-03/journal-helpdesk.json),
+[élections](preuves/2026-10-03/journal-elections.json),
+[VOD](preuves/2026-10-03/journal-vod.json)).
+La recette de l'écran Journal passe pour ADMIN et DIRECTION, en français et en anglais, à 1440 et 375 px, sur API simulée ([preuve UI](preuves/2026-10-03/journal-interface-2026-10-03.json)). Les anciennes descriptions et les dépôts de vote ne sont pas exposés ;
 les nouvelles projections restent réduites. Les consultations VOD n'entrent pas
 dans le journal. Le résumé des diffusions SMS passe par une liste blanche côté
 API, et le filtre de vote historique ainsi que le filtre acteur ont désormais
 des tests directs. Les libellés du SMS et du téléchargement documentaire sont
 vérifiés en français et en anglais, sur bureau et mobile
-([preuve UI : huit parcours](../../audit/recommandations/journal-sms-2026-10-03.json)). Il reste à y vérifier des entrées réellement produites par ces dix
+([preuve UI : huit parcours](preuves/2026-10-03/journal-sms-2026-10-03.json)). Il reste à y vérifier des entrées réellement produites par ces dix
 modules, puis à couvrir les autres modules sensibles.
 
 ### 6. Relevé PDF signé, par département et par semaine — implémenté, recette métier à faire
@@ -138,7 +138,7 @@ et salles sous le compte courant ; les créations de séance non programmée ont
 une file dédiée, synchronisée avant les pointages associés. Le parcours
 Chromium vérifie maintenant le Service Worker, la coupure réseau, la création
 UUID, le rechargement hors ligne, puis une synchronisation unique via une API
-locale simulée ([preuve](../../audit/recommandations/seances-hors-ligne.json)). Il
+locale simulée ([preuve](preuves/2026-10-03/seances-hors-ligne.json)). Il
 reste la validation avec l’API et le compte contrôleur QA, puis sur l’appareil
 du terrain.
 
@@ -151,7 +151,7 @@ les heures et dates numériques Excel sont converties, les colonnes inconnues
 sont signalées, et la lecture supporte UTF-8, Windows-1252 et UTF-16. L’aperçu
 signale doublons et références invalides avant l’application partielle des lignes
 valides. La recette sur les fichiers historiques réels reste à faire ; les cas
-limites vérifiés figurent dans [la preuve](../../audit/recommandations/imports-cas-limites-2026-10-03.json)
+limites vérifiés figurent dans [la preuve](preuves/2026-10-03/imports-cas-limites-2026-10-03.json)
 et l’état détaillé dans [SUIVI_RECOMMANDATIONS.md](2026-10-06-journal-recettes.md).
 
 ---
@@ -173,7 +173,7 @@ Le moment le moins cher est maintenant, avant Kankan.
 La clôture bloque maintenant les créations et corrections directes de
 pointage, ainsi que la suppression. Les principales écritures de scolarité,
 inscription, attestation, cité, planification et tirage vérifient aussi l'année.
-La revue relève les parcours indirects à trancher dans la [matrice des mutations](../../audit/recommandations/matrice-mutations-annee-2026-10-03.json).
+La revue relève les parcours indirects à trancher dans la [matrice des mutations](preuves/2026-10-03/matrice-mutations-annee-2026-10-03.json).
 Une correction historique ne peut pas encore être demandée via un flux dédié :
 il faut définir qui l'autorise, avec quel motif et quelle trace, avant de
 l'implémenter.
@@ -184,7 +184,7 @@ Les séances peuvent être attribuées une à une ou en groupe par période et
 département, après prévisualisation. Le rapport distingue les séances visitées,
 manquées ou reprises par un collègue, et mesure le taux réalisé par le contrôleur
 prévu. Les équipes doivent attribuer leurs tournées réelles pour obtenir des
-indicateurs fidèles ; voir [la preuve](../../audit/recommandations/couverture-controleurs.json).
+indicateurs fidèles ; voir [la preuve](preuves/2026-10-03/couverture-controleurs.json).
 
 ### 13. Tests là où le risque est réel — couverture renforcée, recette navigateur restante
 
@@ -226,7 +226,7 @@ fonctionnel et les validations terrain.
 - **Ajouter des écrans.** Il y a 67 pages dans `frontend/src/pages`. La
   navigation de la sidebar est regroupée en cinq rubriques repliables, avec
   raccourcis et recherche ; le parcours est vérifié sur sept rôles, y compris
-  sur mobile ([preuve](../../audit/recommandations/navigation.json)). Les manques
+  sur mobile ([preuve](preuves/2026-10-03/navigation.json)). Les manques
   restants sont des règles, des exports et de la robustesse.
 
 ---

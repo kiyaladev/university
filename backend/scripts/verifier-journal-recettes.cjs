@@ -9,7 +9,7 @@ const database = new URL(env.DATABASE_URL);
 assert.equal(database.pathname, '/university_recommandations_20261006');
 assert.ok(['localhost', '127.0.0.1'].includes(database.hostname));
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
-const root = path.resolve(__dirname, '../../audit/recommandations-2026-10-06');
+const root = path.resolve(__dirname, '../../docs/audits/preuves/2026-10-06');
 const report = {
   date: new Date().toISOString(),
   scope: 'Fixtures et preuves des recettes récentes du journal uniquement',

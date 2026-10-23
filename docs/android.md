@@ -173,14 +173,57 @@ pointe encore hors de ce projet.
 
 ### Publication
 
-`scripts/apk.sh` fait trois choses, dans l'ordre :
+`scripts/apk.sh` fait, dans l'ordre :
 
-1. il **vérifie l'identifiant** de l'APK produit (`aapt2 dump packagename`) et
+1. il calcule et applique le **numéro de version** (voir plus bas) ;
+2. il **vérifie l'identifiant** de l'APK produit (`aapt2 dump packagename`) et
    refuse de publier si ce n'est pas `gn.university.controle` ;
-2. il copie l'APK dans `/opt/apps/university/telechargement/university.apk` ;
-3. il **retire l'ancien `unipresence.apk`**, qui porte l'identifiant
+3. il **vérifie le numéro de version** porté par l'APK
+   (`aapt2 dump badging`) : une mise à jour par-dessus l'application installée
+   serait refusée si le `versionCode` n'avait pas augmenté ;
+4. il copie l'APK dans `/opt/apps/university/telechargement/university.apk` ;
+5. il **retire l'ancien `unipresence.apk`**, qui porte l'identifiant
    d'UniPrésence : le laisser downloadable, ce serait proposer d'installer
-   UniPrésence sous le nom d'University.
+   UniPrésence sous le nom d'University ;
+6. il **contrôle la publication** : `university.apk` est présent,
+   `unipresence.apk` a disparu, et l'URL annoncée
+   (`https://university.naimba.com/telechargement/university.apk`) est bien celle
+   du fichier déposé. Le script échoue sinon.
+
+### Le numéro de version (`versionCode`)
+
+Android n'installe une application par-dessus une autre que si le
+`versionCode` du nouvel APK est **strictement supérieur**. C'est le seul
+changement que l'utilisateur perçoit à chaque publication, et l'oubli du
+`versionCode` se paie un refus d'installation chez les contrôleurs.
+
+`scripts/apk.sh` le calcule donc automatiquement, à chaque publication :
+
+```
+versionCode = max(versionCode du dépôt + 1, date du jour (AAAAMMJJ),
+                   dernier numéro publié + 1)
+```
+
+- la **date** garantit un numéro lisible et croissant d'une publication à
+  l'autre ;
+- le **compteur** garantit qu'une seconde publication le même jour ne rejoue
+  pas le même numéro ;
+- la valeur **du dépôt** sert de plancher quand le compteur a été perdu.
+
+Le dernier numéro publié est mémorisé dans
+`/opt/apps/university/android-cle/version-code.txt` (hors du dépôt, `chmod
+600`, à côté de la clé) : le dépôt est réinitialisé entre deux publications,
+le compteur, non. Le compteur n'est mis à jour qu'**après** une publication
+vérifiée : une compilation interrompue ne « brûle » pas de numéro.
+
+Le `versionName` suit la date (`2026.10.23`), pour être lisible dans les
+réglages Android.
+
+Le fichier `frontend/src-capacitor/android/app/build.gradle` est modifié le
+temps de la compilation, puis **restauré** : le dépôt reste propre, seule la
+publication compte. Rien n'y change côté signature : le `versionCode` est
+indépendant de la clé, un APK signé par la bonne clé resteinstallable par
+-dessus sa version précédente.
 
 Reste à faire côté nginx : la `location /telechargement/` doit être déployée
 dans `/etc/nginx/sites-available/` (voir

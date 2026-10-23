@@ -2,6 +2,10 @@ node_modules/
 dist/
 .quasar/
 *.log
+
+# Worktrees d'agents (le dossier .claude/ du checkout de production en
+# contient) : jamais versionnés.
+.claude/
 .env
 .env.local
 coverage/
@@ -29,6 +33,6 @@ backups/
 
 # Captures d'écran et journaux des recettes : archivés hors dépôt
 # (/var/backups/university/audit-archive-AAAAMMJJ.tar.gz, voir docs/audits/README.md).
+# Les *.log sont ignorés par la règle globale ci-dessus.
+docs/audits/**/*.png
 audit/**/*.png
-audit/**/*.log
-!audit/simplification-2026-10-13/**

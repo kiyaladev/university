@@ -49,7 +49,17 @@ PORT=5045 BIOMETRIE_SECRET="le-meme-que-l-api" bun run start
 | `POST /enroler` `{enseignantId}` | capture le doigt de référence → gabarit signé |
 | `POST /verifier` `{enseignantId, template}` | compare le doigt posé au gabarit → score signé |
 
-Charge signée : `verification|<enseignantId>|<score>|<horodatage>`.
+Charge signée : `verification|<enseignantId>|<empreinte du gabarit>|<score>|<horodatage>`
+(et `enrolement|<enseignantId>|<gabarit>|<horodatage>` pour l’enrôlement),
+où l’empreinte du gabarit est son SHA-256. L’empreinte entre dans la signature
+pour que l’API vérifie que la comparaison a porté sur le gabarit qu’elle a
+enrôlé.
+
+**La passerelle n’envoie pas d’`appareilId`** : elle ne signe qu’avec le secret
+partagé `BIOMETRIE_SECRET`, ce qui est le chemin prévu pour un poste fixe. Le
+chemin **par appareil** (clé propre à chaque téléphone, révocable) est réservé
+à l’application Android, dont le greffon natif connaît l’identifiant d’appareil
+([android.md](android.md)).
 
 | Variable | Défaut | Rôle |
 | --- | --- | --- |

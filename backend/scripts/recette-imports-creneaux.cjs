@@ -147,7 +147,7 @@ main()
     report.productionUntouched = true;
     report.limites = ['Fichiers historiques et parcours XLSX navigateur non qualifiés par cette recette'];
     fs.writeFileSync(
-      '../audit/recommandations-2026-10-06/imports-creneaux-http.json',
+      '../docs/audits/preuves/2026-10-06/imports-creneaux-http.json',
       JSON.stringify(report, null, 2) + '\n',
     );
     await db.$disconnect();
