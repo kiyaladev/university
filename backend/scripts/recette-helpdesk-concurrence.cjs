@@ -3,6 +3,7 @@ const assert = require('node:assert/strict'),
   fs = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
+const { ecrirePreuve } = require('./preuves.cjs');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));
 const session = JSON.parse(fs.readFileSync(process.env.QA_SESSION_FILE));
@@ -100,10 +101,7 @@ main()
     report.fixturesRestantes = await db.ticketSupport.count({ where: { id: { in: tickets } } });
     assert.equal(report.fixturesRestantes, 0);
     report.productionUntouched = true;
-    fs.writeFileSync(
-      '../docs/audits/preuves/2026-10-06/helpdesk-concurrence-http.json',
-      JSON.stringify(report, null, 2) + '\n',
-    );
+    ecrirePreuve('helpdesk-concurrence-http.json', report);
     await db.$disconnect();
     console.log(
       JSON.stringify({ statut: report.statut, erreur: report.erreur, fixturesRestantes: report.fixturesRestantes }),

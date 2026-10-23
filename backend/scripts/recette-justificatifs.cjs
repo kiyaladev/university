@@ -18,6 +18,7 @@ assert.equal(session.database, url.pathname);
 Object.assign(process.env, env);
 const { AuthService } = require('../dist/modules/auth/auth.service');
 const { optionsJwt } = require('../dist/common/jwt-config.module');
+const { ecrirePreuve } = require('./preuves.cjs');
 const db = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 const auth = new AuthService(db, new JwtService(optionsJwt({ get: (k) => env[k] })));
 const tag = 'QA-JUSTIFICATIFS-' + randomUUID();
@@ -129,7 +130,7 @@ async function main() {
       rejectedDecisionWithExcusedControl: true,
       productionUntouched: true,
     };
-    fs.writeFileSync('../docs/audits/preuves/2026-10-06/justificatifs-regression.json', JSON.stringify(proof, null, 2));
+    ecrirePreuve('justificatifs-regression.json', proof);
     console.log(JSON.stringify(proof));
     return;
   }
@@ -240,7 +241,7 @@ async function main() {
     httpLoginRouteQualified: false,
     productionUntouched: true,
   };
-  fs.writeFileSync('../docs/audits/preuves/2026-10-06/justificatifs.json', JSON.stringify(proof, null, 2));
+  ecrirePreuve('justificatifs.json', proof);
   console.log(JSON.stringify(proof));
 }
 main()

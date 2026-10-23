@@ -21,7 +21,7 @@
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "audit:routes": "node scripts/inventaire-routes.cjs /tmp/university-inventaire-routes.json",
-    "audit:routes:suivi": "node scripts/inventaire-routes.cjs ../audit/recommandations/inventaire-routes.json",
+    "audit:routes:suivi": "node scripts/inventaire-routes.cjs",
     "test:qa:modules-pilotes": "node scripts/recette-modules-pilotes.cjs",
     "test:qa:restaurant": "node scripts/recette-restaurant.cjs",
     "test:qa:vod": "node scripts/recette-vod.cjs",
