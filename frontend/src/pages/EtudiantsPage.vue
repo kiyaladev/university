@@ -371,7 +371,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="toutAfficher"
+      @tous="liste.toutAfficher()"
     />
 
     <etudiant-dialog
@@ -768,11 +768,6 @@ function imprimerAttestation(e: EtudiantRegistre) {
 /** Certificat d'un dossier précis, depuis la liste des dossiers de l'étudiant. */
 function imprimerDossier(dossier: Inscription) {
   void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
-}
-
-/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
-function toutAfficher() {
-  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
 }
 
 /** Tous les filtres tombent, recherche comprise. */

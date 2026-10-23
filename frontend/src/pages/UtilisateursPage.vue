@@ -237,7 +237,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="chargerTout"
+      @tous="liste.toutAfficher()"
     />
 
     <dialogue-formulaire
@@ -572,11 +572,6 @@ function supprimer(u: Utilisateur) {
     ok: t('utilisateurs.actions.delete'),
     succes: t('utilisateurs.messages.deleted'),
   });
-}
-
-/** « Tout afficher » de la barre de pagination : toutes les lignes d'un coup. */
-async function chargerTout() {
-  liste.lignes = await liste.chargerTout();
 }
 
 async function chargerEnseignants(force = false) {

@@ -155,6 +155,8 @@ async function confirmerVote() {
     titre: t('vote.confirm_dialog.title'),
     message: t('vote.confirm_dialog.message', { names: noms }),
     ok: t('vote.confirm_dialog.confirm'),
+    libelleAnnuler: t('vote.confirm_dialog.cancel'),
+    persistent: true,
   });
   if (ok) await validerVote();
 }

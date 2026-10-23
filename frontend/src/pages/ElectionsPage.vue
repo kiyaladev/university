@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
 import { useListePaginee, texteApi } from '../composables/useListePaginee';
-import { useConfirmation } from '../composables/useConfirmation';
+import { useConfirmation, type CouleurConfirmation } from '../composables/useConfirmation';
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -134,6 +134,8 @@ async function supprimerCandidat(c: CandidatElection) {
     message: t('elections.dialogs.removeCandidate.message', { name: `${c.prenom} ${c.nom}` }),
     ok: t('elections.dialogs.removeCandidate.confirm'),
     danger: true,
+    libelleAnnuler: t('elections.dialogs.removeCandidate.cancel'),
+    persistent: true,
   });
   if (!ok) return;
   try {
@@ -166,6 +168,7 @@ function transitionInfo(action: ActionTransition): {
   titre: string;
   message: string;
   bouton: string;
+  couleur: CouleurConfirmation;
   succes: string;
 } {
   const cles: Record<ActionTransition, 'open' | 'close' | 'proclaim'> = {
@@ -178,13 +181,22 @@ function transitionInfo(action: ActionTransition): {
     titre: t(`elections.dialogs.transitions.${cle}.title`),
     message: t(`elections.dialogs.transitions.${cle}.message`),
     bouton: t(`elections.dialogs.transitions.${cle}.button`),
+    // La proclamation est solennelle : bouton ambre, comme avant la migration.
+    couleur: action === 'proclamer' ? 'warning' : 'primary',
     succes: t(`elections.dialogs.transitions.${cle}.success`),
   };
 }
 
 async function transition(id: string, action: ActionTransition) {
   const info = transitionInfo(action);
-  const ok = await confirmer({ titre: info.titre, message: info.message, ok: info.bouton });
+  const ok = await confirmer({
+    titre: info.titre,
+    message: info.message,
+    ok: info.bouton,
+    couleur: info.couleur,
+    libelleAnnuler: t('elections.dialogs.removeCandidate.cancel'),
+    persistent: true,
+  });
   if (!ok) return;
   try {
     await electionsService.transition(id, action);

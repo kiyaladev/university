@@ -7,6 +7,15 @@
  * Le composant NE pilote pas lui-même la requête : il expose un `modelValue`
  * de type Record et émet `update:modelValue` à chaque modification. Le parent
  * déclenche lui-même le rechargement de la liste quand le watcher réagit.
+ *
+ * Réinitialiser FUSIONNE dans l'objet de filtres, sans jamais le remplacer :
+ * les clés que la page gère hors de la barre (ciblage d'un étudiant, dates…)
+ * restent en place.
+ * - avec `defauts`, ces valeurs sont recopiées par-dessus les filtres ;
+ * - sans `defauts`, si la page écoute `@reinitialiser`, elle seule décide
+ *   (`liste.reinitialiser(...)`) et reçoit l'objet intact — clés de
+ *   `conserver` comprises ;
+ * - sinon, les clés des chips (`cle`) sont remises à `null`, recherche gardée.
  */
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -23,6 +32,10 @@ const props = withDefaults(defineProps<{
   chips?: ChipFiltre[];
   /** Affiche la recherche globale */
   recherche?: boolean;
+  /** Valeurs fusionnées dans les filtres par « Réinitialiser ». */
+  defauts?: Record<string, unknown> | undefined;
+  /** Écouteur `@reinitialiser` du parent (déclaré pour savoir s'il existe). */
+  onReinitialiser?: (() => unknown) | undefined;
   /** Slot right for custom actions */
 }>(), {
   modelValue: () => ({}),
@@ -32,7 +45,6 @@ const props = withDefaults(defineProps<{
 });
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, any>];
-  'reinitialiser': [];
 }>();
 const { t } = useI18n();
 
@@ -61,8 +73,14 @@ function retirerChip(chip: ChipFiltre) {
 }
 
 function reinit() {
-  emit('update:modelValue', { recherche: filtres.value.recherche ?? '' });
-  emit('reinitialiser');
+  if (props.defauts) {
+    emit('update:modelValue', { ...filtres.value, ...props.defauts });
+  } else if (!props.onReinitialiser) {
+    const nv = { ...filtres.value };
+    for (const chip of props.chips) if (chip.cle && chip.cle !== 'recherche') nv[chip.cle] = null;
+    emit('update:modelValue', nv);
+  }
+  props.onReinitialiser?.();
 }
 
 /**

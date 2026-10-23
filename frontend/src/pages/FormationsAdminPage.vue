@@ -408,7 +408,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="liste.recharger()" />

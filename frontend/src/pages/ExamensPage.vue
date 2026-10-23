@@ -273,7 +273,7 @@
       v-model:page="ex.page"
       v-model:page-size="ex.pageSize"
       :total="ex.total"
-      @tous="ex.pageSize = Math.max(ex.total, 200)"
+      @tous="ex.toutAfficher()"
     />
 
     <examen-dialog v-model="dialogOuvert" @enregistre="ex.recharger()" />
@@ -613,6 +613,7 @@ async function demarrer(e: Examen) {
     titre: t('examens.confirm.startTitle'),
     message: t('examens.confirm.startMessage', { code: e.codeExamen, title: e.intitule }),
     ok: t('examens.confirm.startAction'),
+    couleur: 'positive',
   });
   if (ok) await changerStatut(e, 'demarrer', 'EN_COURS', t('examens.messages.started'));
 }

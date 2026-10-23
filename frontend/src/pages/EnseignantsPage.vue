@@ -249,7 +249,7 @@
       v-model:page="ens.page"
       v-model:page-size="ens.pageSize"
       :total="ens.total"
-      @tous="toutAfficher"
+      @tous="ens.toutAfficher()"
     />
 
     <enseignant-dialog
@@ -620,11 +620,6 @@ function supprimer(e: Enseignant) {
       succes: t('enseignants.messages.deleteSuccess'),
     },
   );
-}
-
-/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
-function toutAfficher() {
-  ens.pageSize = Math.min(Math.max(ens.total, ens.pageSize), 1000);
 }
 
 function reinitialiser() {
