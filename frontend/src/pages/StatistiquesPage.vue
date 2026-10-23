@@ -1,29 +1,24 @@
 <template>
   <q-page class="stats">
     <section-navigation section="presence" />
-    <header class="stats__entete">
-      <div>
-        <h1 class="page-titre">{{ $t('statistiques.title') }}</h1>
-        <p class="page-sous-titre">
-          {{ $t('statistiques.subtitle') }}
-        </p>
-      </div>
-
-      <div class="stats__periode">
-        <champ-date v-model="filtres.dateDebut" :label="$t('statistiques.filters.from')" @update:model-value="raccourciActif = ''" />
-        <champ-date v-model="filtres.dateFin" :label="$t('statistiques.filters.to')" @update:model-value="raccourciActif = ''" />
-        <q-btn
-          round
-          color="primary"
-          icon="refresh"
-          :aria-label="$t('statistiques.filters.recalculateAria')"
-          :loading="chargement"
-          @click="charger"
-        >
-          <q-tooltip>{{ $t('statistiques.filters.recalculateTooltip') }}</q-tooltip>
-        </q-btn>
-      </div>
-    </header>
+    <page-header :title="$t('statistiques.title')" :subtitle="$t('statistiques.subtitle')">
+      <template #actions>
+        <div class="stats__periode">
+          <champ-date v-model="filtres.dateDebut" :label="$t('statistiques.filters.from')" @update:model-value="raccourciActif = ''" />
+          <champ-date v-model="filtres.dateFin" :label="$t('statistiques.filters.to')" @update:model-value="raccourciActif = ''" />
+          <q-btn
+            round
+            color="primary"
+            icon="refresh"
+            :aria-label="$t('statistiques.filters.recalculateAria')"
+            :loading="chargement"
+            @click="charger"
+          >
+            <q-tooltip>{{ $t('statistiques.filters.recalculateTooltip') }}</q-tooltip>
+          </q-btn>
+        </div>
+      </template>
+    </page-header>
 
     <div class="stats__raccourcis">
       <button
@@ -355,6 +350,7 @@
 
 <script setup lang="ts">
 import SectionNavigation from '../components/SectionNavigation.vue';
+import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -496,15 +492,6 @@ onMounted(charger);
 <style scoped lang="scss">
 .stats {
   padding: var(--up-4) var(--up-3) var(--up-6);
-}
-
-.stats__entete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--up-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
 }
 
 .stats__periode {
