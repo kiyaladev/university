@@ -223,8 +223,8 @@ présents (§5.1) et, au besoin, les recréer avec le SQL du §6.1.
 - `Deliberation` et `FeuillePaie` conservent leurs deux champs d'horodatage.
 - Les index partiels, CHECK, triggers et extensions déjà en base sont
   laissés en place.
-- `backend/src/common/numero.ts` et `modules/moyens-attestation` ne sont pas
-  touchés.
+- `backend/src/common/numero.ts` et `modules/presence/presence-preuves` ne sont
+  pas touchés.
 
 ---
 

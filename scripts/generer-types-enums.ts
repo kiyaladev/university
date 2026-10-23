@@ -246,9 +246,7 @@ async function principal(): Promise<void> {
 
   mkdirSync(dirname(FICHIER_SORTIE), { recursive: true });
   writeFileSync(FICHIER_SORTIE, contenu, 'utf8');
-  console.log(
-    `✔ ${enums.length} enums écrits dans ${FICHIER_SORTIE.slice(RACINE.length + 1)} (${source}).`,
-  );
+  console.log(`✔ ${enums.length} enums écrits dans ${FICHIER_SORTIE.slice(RACINE.length + 1)} (${source}).`);
 }
 
 await principal();
