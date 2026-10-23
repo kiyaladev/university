@@ -9,8 +9,16 @@ cd biometrie
 BIOMETRIE_SECRET="le-meme-que-l-api" bun run start     # http://127.0.0.1:5044
 ```
 
-> Prototype : seul le pilote simulateur existe. Sur le serveur de production,
-> le port 5044 est déjà pris par un autre service : lancer avec `PORT=<libre>`.
+> **État : simulateur seulement.** Le seul pilote livré est un simulateur ;
+> aucun lecteur réel n'a encore été branché ni qualifié. La passerelle ne
+> prouve donc rien en l'état : elle sert à dérouler la chaîne complète
+> (enrôlement, vérification, refus d'un doigt inconnu) et à préparer le
+> branchement d'un constructeur. Le mode de fonctionnement retenu sur le
+> terrain est l'application Android avec lecteur USB-OTG
+> ([docs/android.md](../docs/android.md)).
+>
+> Sur le serveur de production, le port 5044 est déjà pris par un autre
+> service : lancer avec `PORT=<libre>`.
 > Vue d'ensemble et statut : [docs/biometrie.md](../docs/biometrie.md).
 
 ## Pourquoi une passerelle plutôt que le navigateur
@@ -32,14 +40,39 @@ reconnue, score 99 ». La passerelle signe donc chaque résultat avec un secret
 partagé avec l'API (`BIOMETRIE_SECRET`, identique des deux côtés) :
 
 ```
-signature = HMAC_SHA256(secret, "verification|<enseignantId>|<score>|<horodatage>")
+enrôlement   = HMAC_SHA256(secret, "enrolement|<enseignantId>|<gabarit>|<horodatage>")
+vérification = HMAC_SHA256(secret, "verification|<enseignantId>|<empreinte du gabarit>|<score>|<horodatage>")
 ```
+
+L'**empreinte du gabarit** est le SHA-256 du gabarit comparé. Elle entre dans
+la signature pour que l'API vérifie que la comparaison a bien porté sur le
+gabarit qu'elle a enrôlé, et non sur un gabarit fourni par le client : sans
+elle, un client pourrait faire comparer un doigt à un gabarit de son choix.
 
 L'API rejette tout résultat mal signé, périmé de plus de 5 minutes, ou dont le
 score est inférieur au paramètre `EMPREINTE_SCORE_MIN`.
 
 **Ce qui circule** : un gabarit (minuties encodées) et un score. **Jamais**
 l'image du doigt — elle n'est ni transmise ni stockée.
+
+## Pas d'appareil : le chemin du secret partagé
+
+La passerelle **n'envoie pas d'`appareilId`** : elle n'a pas de clé propre à
+une machine, seulement le secret partagé `BIOMETRIE_SECRET`. Côté API, une
+preuve biométrique sans `appareilId` est donc vérifiée avec ce secret
+partagé — c'est le chemin prévu pour un poste fixe.
+
+Le chemin **par appareil** (une clé distincte par téléphone, révocable
+individuellement, `POST /attestation/appareils`) est réservé à l'application
+Android : c'est le greffon natif qui connaît l'identifiant d'appareil et
+signe avec la clé conservée dans le coffre chiffré d'Android. Voir
+[docs/android.md](../docs/android.md).
+
+Conséquence pratique : le secret partagé vit dans `backend/.env` sur le
+serveur. Il protège les preuves biométriques du chemin passerelle ; il doit
+donc être traité comme un secret, et l'API refuse en production une valeur
+absente ou égale à la valeur d'exemple.
+
 
 ## Brancher un vrai lecteur
 
@@ -63,6 +96,15 @@ doigt qui n'est pas celui de l'enseignant :
 
 ```bash
 DOIGT_SIMULE=inconnu bun run start
+```
+
+Tant que le pilote est le simulateur, un résultat signé ne prouve **aucune**
+présence : le simulateur rejoue le gabarit qu'on lui demande de comparer.
+
+## Vérification
+
+```bash
+cd biometrie && bun install --frozen-lockfile && bun run typecheck
 ```
 
 ## Variables d'environnement
