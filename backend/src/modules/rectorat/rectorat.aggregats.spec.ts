@@ -371,3 +371,37 @@ describe('RectoratService — snapshots MESRS', () => {
     );
   });
 });
+
+describe('RectoratService — édition du bilan', () => {
+  it('produit une page A4 à partir du snapshot, jeton valide', async () => {
+    const { prisma, delegates } = fairePrisma();
+    delegates.statistiqueMesrs.findUnique.mockResolvedValue({
+      id: 'bilan-1',
+      donnees: {
+        effectifTotal: 128,
+        tauxReussite: 67.5,
+        masseSalariale: 1234.57,
+        masseSalarialeMois: 'Octobre 2026',
+        nbEnseignants: 40,
+        nbVacataires: 12,
+        nbReclamationsEnCours: 3,
+        nbIncidentsHelpdesk24h: 1,
+        effectifParPromotion: [],
+      },
+      genereLe: new Date('2026-10-01T00:00:00Z'),
+      generePar: { nom: 'DIALLO', prenom: 'Mamadou' },
+      annee: { id: 'annee-1', libelle: '2025-2026' },
+    });
+    const jwt = { verify: jest.fn().mockResolvedValue({ sub: 'admin-1' }) };
+    const service = new RectoratService(prisma, jwt as any);
+
+    const html = await service.imprimerBilan('bilan-1', 'jeton-valide', 'http://localhost');
+
+    expect(jwt.verify).toHaveBeenCalledWith('jeton-valide');
+    expect(html).toContain('Bilan MESRS — 2025-2026');
+    expect(html).toContain('128');
+    expect(html).toContain('67,5 %');
+    // Le séparateur de milliers est une espace insécable fine : on tolère les deux.
+    expect(html).toMatch(/1\s235 GNF/);
+  });
+});

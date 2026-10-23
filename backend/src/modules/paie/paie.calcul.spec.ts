@@ -450,3 +450,65 @@ describe('PaieService — borne haute de la période', () => {
     });
   });
 });
+
+describe('PaieService — recherche et paiement', () => {
+  it('filtre la liste par statut, année, mois et libellé', async () => {
+    const findMany = jest.fn().mockResolvedValue([]);
+    const count = jest.fn().mockResolvedValue(0);
+    const prisma = { feuillePaie: { findMany, count } };
+    const service = new PaieService(prisma as any, {} as any);
+
+    await service.liste({ statut: StatutPaie.VALIDE, annee: 2026, mois: 1, search: 'Janvier' } as any);
+
+    const where = findMany.mock.calls[0][0].where;
+    expect(where).toEqual({
+      statut: StatutPaie.VALIDE,
+      annee: 2026,
+      mois: 1,
+      libelle: { contains: 'Janvier', mode: 'insensitive' },
+    });
+    expect(findMany.mock.calls[0][0].orderBy).toEqual([{ annee: 'desc' }, { mois: 'desc' }]);
+  });
+
+  it('paye une feuille validée et horodate le paiement', async () => {
+    const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+    const { prisma, tx } = fairePrisma(null, {
+      feuillePaie: {
+        findUnique: jest.fn().mockResolvedValue(feuilleBrouillon({ statut: StatutPaie.VALIDE, lignes: [] })),
+        updateMany,
+      },
+    });
+    const service = new PaieService(prisma as any, {} as any);
+
+    await service.payer('feuille-1', USER);
+
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: 'feuille-1', statut: StatutPaie.VALIDE, updatedAt: UPDATED_AT },
+      data: { statut: StatutPaie.PAYE, payeeLe: expect.any(Date) },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'PAIE_PAYEE', entiteId: 'feuille-1' }),
+      }),
+    );
+  });
+
+  it('refuse le paiement si la feuille a changé depuis sa lecture', async () => {
+    const { prisma } = fairePrisma(null, {
+      feuillePaie: {
+        findUnique: jest.fn().mockResolvedValue(feuilleBrouillon({ statut: StatutPaie.VALIDE, lignes: [] })),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+    });
+    const service = new PaieService(prisma as any, {} as any);
+
+    await expect(service.payer('feuille-1', USER)).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('signale une feuille de paie introuvable', async () => {
+    const { prisma } = fairePrisma(null);
+    const service = new PaieService(prisma as any, {} as any);
+
+    await expect(service.detail('feuille-x')).rejects.toBeInstanceOf(NotFoundException);
+  });
+});

@@ -301,3 +301,46 @@ describe('CarteEtudianteService — vérification publique', () => {
     );
   });
 });
+
+describe('CarteEtudianteService — modification administrative', () => {
+  it('met à jour la photo et la date de validité', async () => {
+    const { tx, service } = preparer();
+
+    await service.modifier('carte-1', { photoUrl: 'photo.jpg', dateValidite: '2030-01-01' } as any, SCOLARITE);
+
+    expect(tx.carteEtudiante.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'carte-1' },
+        data: { photoUrl: 'photo.jpg', dateValidite: new Date('2030-01-01') },
+      }),
+    );
+  });
+
+  it('rehache le NIP quand la scolarité le remplace', async () => {
+    const { tx, service } = preparer();
+
+    await service.modifier('carte-1', { nip: '4321' } as any, SCOLARITE);
+
+    const data = tx.carteEtudiante.update.mock.calls[0][0].data;
+    expect(data.nip).not.toBe('4321');
+    expect(await bcrypt.compare('4321', data.nip)).toBe(true);
+  });
+
+  it('ne touche pas au NIP quand la modification n’en parle pas', async () => {
+    const { tx, service } = preparer();
+
+    await service.modifier('carte-1', { photoUrl: 'photo.jpg' } as any, SCOLARITE);
+
+    expect(tx.carteEtudiante.update.mock.calls[0][0].data).not.toHaveProperty('nip');
+  });
+
+  it('signale une carte introuvable', async () => {
+    const { tx, service } = preparer(null);
+
+    await expect(service.modifier('carte-x', { photoUrl: 'photo.jpg' } as any, SCOLARITE)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+
+    expect(tx.carteEtudiante.update).not.toHaveBeenCalled();
+  });
+});

@@ -296,3 +296,43 @@ describe('BadgesService — vérification publique', () => {
     expect((resultat as any).badge).not.toHaveProperty('pieceIdentite');
   });
 });
+
+describe('BadgesService — modification', () => {
+  it('réactive un badge périmé quand on repousse sa date de validité', async () => {
+    const { tx, service } = preparer(badge({ statut: StatutBadge.EXPIRE, dateValidite: new Date('2020-01-01T00:00:00Z') }));
+    // La première écriture change les champs, la seconde recale le statut.
+    tx.badgeAcces.update
+      .mockResolvedValueOnce(badge({ statut: StatutBadge.EXPIRE, dateValidite: new Date('2031-01-01T00:00:00Z') }))
+      .mockResolvedValueOnce(badge({ statut: StatutBadge.ACTIF, dateValidite: new Date('2031-01-01T00:00:00Z') }));
+
+    const resultat = await service.modifier('badge-1', { dateValidite: '2031-01-01' } as any, USER);
+
+    expect(tx.badgeAcces.update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ data: { statut: StatutBadge.ACTIF } }),
+    );
+    expect(resultat.statut).toBe(StatutBadge.ACTIF);
+  });
+
+  it('laisse un badge actif actif', async () => {
+    const { tx, service } = preparer(badge());
+
+    const resultat = await service.modifier('badge-1', { fonction: 'Enseignant' } as any, USER);
+
+    expect(resultat.statut).toBe(StatutBadge.ACTIF);
+    // Une seule écriture : le statut n'a pas bougé, inutile de le réécrire.
+    expect(tx.badgeAcces.update).toHaveBeenCalledTimes(1);
+    expect(tx.badgeAcces.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ fonction: 'Enseignant' }) }),
+    );
+  });
+
+  it('signale un badge introuvable à la modification', async () => {
+    const { tx, service } = preparer(null);
+
+    await expect(service.modifier('badge-x', { fonction: 'Enseignant' } as any, USER)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+
+    expect(tx.badgeAcces.update).not.toHaveBeenCalled();
+  });
+});

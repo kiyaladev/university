@@ -19,7 +19,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
+import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import { FormationsService } from './formations.service';
 
 const USER = { id: 'admin-1', nom: 'Admin', prenom: 'Systeme', role: 'ADMIN' } as any;
@@ -296,9 +296,13 @@ describe('FormationsService — inscription publique', () => {
 
     const resultat = await service.inscriptionPublique('formation-1', DEMANDE as any);
 
+    // La reference du paiement et le numero du dossier suivent leur serie :
+    // « PAY-F-2026-00001 » et « FOR-2026-00001 », annee civile de l'emission.
+    const annee = String(new Date().getFullYear());
     expect(tx.paiement.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          reference: `PAY-F-${annee}-00001`,
           montant: 150000,
           devise: 'GNF',
           mode: 'MOBILE_MONEY',
@@ -310,6 +314,7 @@ describe('FormationsService — inscription publique', () => {
     expect(tx.inscriptionFormation.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
+          numero: `FOR-${annee}-00001`,
           formationId: 'formation-1',
           nomComplet: 'Aminata Barry',
           statut: StatutInscriptionFormation.EN_ATTENTE,
@@ -467,5 +472,38 @@ describe('FormationsService — confirmation imprimée', () => {
     await expect(service.certificat('ins-1', 'jeton', 'http://localhost')).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+});
+
+describe('FormationsService — tableau de bord', () => {
+  it('agrège inscrits, payants et recette par formation puis au total', async () => {
+    const { prisma } = preparer(StatutFormation.PUBLIE, { prix: new Prisma.Decimal('150000.00') });
+    prisma.formation.findMany.mockResolvedValue([
+      { id: 'formation-1', titre: 'Comptabilité générale', prix: new Prisma.Decimal('150000.00'), devise: 'GNF', statut: StatutFormation.PUBLIE },
+      { id: 'formation-2', titre: 'Audit', prix: new Prisma.Decimal('50000.00'), devise: 'GNF', statut: StatutFormation.BROUILLON },
+    ]);
+    prisma.inscriptionFormation.groupBy.mockResolvedValue([
+      { formationId: 'formation-1', _count: { _all: 7 } },
+      { formationId: 'formation-2', _count: { _all: 3 } },
+    ]);
+    prisma.$queryRaw.mockResolvedValue([
+      { formationId: 'formation-1', nbPayes: 5n, recette: new Prisma.Decimal('750000.00') },
+    ]);
+    const service = new FormationsService(prisma, {} as any, JWT);
+
+    const tableau = await service.dashboard();
+
+    expect(tableau.total).toBe(2);
+    expect(tableau.parFormation[0]).toMatchObject({
+      id: 'formation-1',
+      intitule: 'Comptabilité générale',
+      nbInscrits: 7,
+      nbPayes: 5,
+      recette: 750000,
+      prix: 150000,
+    });
+    // Une formation sans paiement : zéro payé, recette nulle.
+    expect(tableau.parFormation[1]).toMatchObject({ id: 'formation-2', nbInscrits: 3, nbPayes: 0, recette: 0 });
+    expect(tableau.totaux).toEqual({ inscrits: 10, payes: 5, recette: 750000 });
   });
 });
