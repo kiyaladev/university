@@ -100,7 +100,7 @@
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('common.fields.issuedOn') }}</td>
-                  <td>{{ dateLongue(detail.emiseLe) }}</td>
+                  <td>{{ dateLongueLisible(detail.emiseLe) }}</td>
                 </tr>
                 <tr v-if="resultat.verificationId">
                   <td class="ta-intitule">{{ $t('verification.result.table.reference') }}</td>
@@ -129,7 +129,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import { getAppLocale } from '@/boot/i18n';
+import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
 
@@ -215,14 +215,8 @@ async function verifier() {
   }
 }
 
-/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
-function dateLongue(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
 function dateHeure(v: Date): string {
-  return v.toLocaleString(getAppLocale(), {
+  return dateHeureLisible(v.toISOString(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

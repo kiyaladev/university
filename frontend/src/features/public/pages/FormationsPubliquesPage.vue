@@ -130,7 +130,7 @@
           <div class="text-h6">{{ $t('formationsPubliques.dialog.step1.title') }}</div>
           <div class="text-caption text-grey-7 q-mt-xs">
             <strong>{{ selection?.titre }}</strong> {{ $t('common.format.emptyValue') }}
-            {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
+            {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? DEVISE }}
           </div>
         </q-card-section>
         <q-card-section v-if="etape === 1">
@@ -185,7 +185,7 @@
             <div class="recapitulatif__ligne">
               <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.montantARegler') }}</span>
               <span class="lettrage chiffres recapitulatif__montant">
-                {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
+                {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? DEVISE }}
               </span>
             </div>
           </div>
@@ -286,7 +286,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { formationsService, type FormationVitrine, type ResultatDepotInscription } from '@/shared/services/formations';
-import { dateLisible, montantLisible } from '@/shared/utils/libelles';
+import { dateLisible, DEVISE, montantLisible } from '@/shared/utils/libelles';
 import EtatVide from '@/shared/components/EtatVide.vue';
 
 const { t } = useI18n();

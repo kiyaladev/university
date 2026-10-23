@@ -16,7 +16,11 @@ export default defineConfig((ctx) => {
 
     css: ['app.scss'],
 
-    extras: ['roboto-font', 'material-icons', 'material-icons-outlined'],
+    // Pas de Roboto : DESIGN.md impose la pile système (SF Pro par
+    // `-apple-system`, Inter Variable en relais). Roboto n'était référencé ni
+    // par la feuille de style ni par le HTML — elle ne pesait que sur le
+    // morceau principal.
+    extras: ['material-icons', 'material-icons-outlined'],
 
     build: {
       // `@/` désigne src/ : vite le résout, et Quasar le recopie dans les `paths`

@@ -129,8 +129,16 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
         meta: ecran('/documents'),
       },
-      { path: 'bilan', redirect: '/rectorat' },
-      { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
+      {
+        /** Rubrique « Bilan » : elle mène au rectorat (voir le manifeste). */
+        path: 'bilan',
+        redirect: '/rectorat',
+      },
+      {
+        /** Rubrique « Mes démarches » de l'étudiant : elle mène à ses demandes. */
+        path: 'mes-demarches',
+        redirect: '/demandes-docs/mes',
+      },
       {
         path: '',
         name: 'tableau-de-bord',
@@ -308,7 +316,7 @@ const routes: RouteRecordRaw[] = [
         path: 'plagiat/:id',
         name: 'plagiat-detail',
         component: () => import('@/features/administration/pages/PlagiatDetailPage.vue'),
-        meta: { titre: 'nav.plagiat-detail', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/plagiat/:id'),
       },
       {
         path: 'bulletins',
@@ -488,10 +496,7 @@ const routes: RouteRecordRaw[] = [
         path: 'vod/lecteur/:id',
         name: 'vod-lecteur',
         component: () => import('@/features/campus/pages/VodLecteurPage.vue'),
-        meta: {
-          titre: 'nav.vod-lecteur',
-          roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
-        },
+        meta: ecran('/vod/lecteur/:id'),
       },
       {
         path: 'elections',

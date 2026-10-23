@@ -3,15 +3,18 @@
  * (clé « lang »), avec repli sur fr-FR. La langue active est exposée à Quasar
  * pour que la chrome (pagination, dates natives) suive, et l'attribut `lang`
  * du <html> est mis à jour en conséquence.
+ *
+ * Les messages ne sont pas importés : la langue active est chargée à la
+ * demande (voir `src/i18n/index.ts`), l'autre quand l'on change de langue.
  */
 import { defineBoot } from '#q-app/wrappers';
 import { Lang } from 'quasar';
 import francais from 'quasar/lang/fr';
 import anglais from 'quasar/lang/en-US';
 import { createI18n } from 'vue-i18n';
-import messages from '../i18n';
+import { chargerMessages, type AppLocale } from '../i18n';
 
-export type AppLocale = 'fr-FR' | 'en-US';
+export type { AppLocale };
 
 const STORAGE_KEY = 'lang';
 
@@ -34,7 +37,9 @@ export const i18n = createI18n({
   globalInjection: true,
   locale: detectLocale(),
   fallbackLocale: 'fr-FR',
-  messages,
+  // Les messages arrivent par `setLocaleMessage` : la langue active est
+  // chargée avant le démarrage, l'autre à la demande.
+  messages: {},
 });
 
 function appliquerLangueQuasar(locale: AppLocale): void {
@@ -42,7 +47,16 @@ function appliquerLangueQuasar(locale: AppLocale): void {
   Lang.set(langue);
 }
 
-export function setAppLocale(locale: AppLocale): void {
+/** Charge les messages d'une langue s'ils ne le sont pas déjà. */
+async function chargerSiBesoin(locale: AppLocale): Promise<void> {
+  if (Object.keys(i18n.global.messages.value[locale] ?? {}).length) return;
+  i18n.global.setLocaleMessage(locale, await chargerMessages(locale));
+}
+
+export async function setAppLocale(locale: AppLocale): Promise<void> {
+  // On charge d'abord : changer de langue avant le chargement laisserait
+  // l'écran afficher des clés brutes.
+  await chargerSiBesoin(locale);
   i18n.global.locale.value = locale;
   appliquerLangueQuasar(locale);
   try {
@@ -59,9 +73,10 @@ export function getAppLocale(): AppLocale {
   return i18n.global.locale.value as AppLocale;
 }
 
-export default defineBoot(({ app }) => {
-  app.use(i18n);
+export default defineBoot(async ({ app }) => {
   const active = i18n.global.locale.value as AppLocale;
+  await chargerSiBesoin(active);
+  app.use(i18n);
   appliquerLangueQuasar(active);
   if (typeof document !== 'undefined') {
     document.documentElement.lang = active.split('-')[0];

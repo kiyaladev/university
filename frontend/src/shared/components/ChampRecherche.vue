@@ -41,6 +41,15 @@ const props = withDefaults(
     pageSize?: number;
     /** Valeur initiale : si on reçoit un id seul, on charge l'item pour avoir le label */
     preload?: boolean;
+    /**
+     * Route de relecture d'un élément déjà connu : par défaut `${endpoint}/{id}`.
+     * Passer `false` quand cette route n'existe pas (liste dérivée, comme
+     * `/examens/surveillants`) : le composant ne relit alors rien et s'appuie
+     * sur `libelleInitial`.
+     */
+    endpointDetail?: string | false;
+    /** Libellé de l'élément déjà sélectionné, quand il ne peut pas être relu. */
+    libelleInitial?: string;
   }>(),
   {
     valueField: 'id',
@@ -48,6 +57,8 @@ const props = withDefaults(
     serverSearch: false,
     pageSize: 50,
     preload: true,
+    endpointDetail: undefined,
+    libelleInitial: undefined,
   },
 );
 
@@ -58,6 +69,12 @@ const emit = defineEmits<{
 const options = ref<Option[]>([]);
 const { t: $t } = useI18n();
 const loading = ref(false);
+/**
+ * Message d'échec du dernier chargement. Une liste vide ne dit rien : sans
+ * elle, une adresse erronée (404) ou un serveur injoignable ressemblaient à
+ * un référentiel vide. On le dit sous le champ.
+ */
+const erreur = ref<string | null>(null);
 const recherche = ref('');
 const valeurCourante = ref<any>(props.modelValue ?? null);
 let timer: any = null;
@@ -76,10 +93,13 @@ onBeforeUnmount(() => {
 async function charger(rechercheLibre?: string) {
   const mien = ++requeteCourante;
   loading.value = true;
+  erreur.value = null;
   try {
     const params: any = { all: 1 };
     if (rechercheLibre) params.search = rechercheLibre;
-    const { data } = await api.get(props.endpoint, { params });
+    // `silencieux` : le composant affiche son propre message d'échec sous le
+    // champ, la notification globale ferait doublon.
+    const { data } = await api.get(props.endpoint, { params, silencieux: true });
     if (mien !== requeteCourante) return;
     const liste: any[] = Array.isArray(data) ? data : (data?.data ?? []);
     options.value = liste.map((item) => ({
@@ -90,6 +110,7 @@ async function charger(rechercheLibre?: string) {
   } catch {
     if (mien !== requeteCourante) return;
     options.value = [];
+    erreur.value = $t('common.search.loadError');
   } finally {
     if (mien === requeteCourante) loading.value = false;
   }
@@ -109,23 +130,32 @@ watch(
   async (v) => {
     valeurCourante.value = v;
     // Préchargement de l'item courant pour avoir le label affiché dans la zone
-    if (v && props.preload && !options.value.find((o) => o.value === v)) {
-      try {
-        const { data } = await api.get(`${props.endpoint}/${v}`);
-        const item = Array.isArray(data) ? data[0] : data;
-        if (item && item[props.valueField]) {
-          options.value = [
-            {
-              label: props.labelFn(item) || item[props.valueField],
-              value: item[props.valueField],
-              raw: item,
-            },
-            ...options.value,
-          ];
-        }
-      } catch {
-        /* silencieux : si l'item n'existe plus on l'ignore */
+    if (!v || !props.preload) return;
+    if (options.value.find((o) => o.value === v)) return;
+    // `endpointDetail: false` : la route de relecture n'existe pas (liste
+    // dérivée). On garde le libellé fourni par le parent, s'il y en a un.
+    if (props.endpointDetail === false) {
+      if (props.libelleInitial) {
+        options.value = [{ label: props.libelleInitial, value: v }, ...options.value];
       }
+      return;
+    }
+    const route = props.endpointDetail ?? props.endpoint;
+    try {
+      const { data } = await api.get(`${route}/${v}`, { silencieux: true });
+      const item = Array.isArray(data) ? data[0] : data;
+      if (item && item[props.valueField]) {
+        options.value = [
+          {
+            label: props.labelFn(item) || item[props.valueField],
+            value: item[props.valueField],
+            raw: item,
+          },
+          ...options.value,
+        ];
+      }
+    } catch {
+      /* silencieux : si l'item n'existe plus on l'ignore */
     }
   },
   { immediate: true },
@@ -155,10 +185,11 @@ watch(valeurCourante, (v) => {
   >
     <template #no-option>
       <q-item>
-        <q-item-section class="text-grey">
-          {{ loading ? $t('common.messages.loading') : $t('common.search.noResults') }}
+        <q-item-section :class="erreur ? 'text-negative' : 'text-grey'">
+          {{ erreur ?? (loading ? $t('common.messages.loading') : $t('common.search.noResults')) }}
         </q-item-section>
       </q-item>
     </template>
   </q-select>
+  <div v-if="erreur" class="text-negative text-caption q-mt-xs" role="alert">{{ erreur }}</div>
 </template>

@@ -4,9 +4,41 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, watch, ref } from 'vue';
-import { Chart, registerables, type ChartConfiguration } from 'chart.js';
+import {
+  ArcElement,
+  BarController,
+  BarElement,
+  CategoryScale,
+  Chart,
+  DoughnutController,
+  Legend,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  type ChartConfiguration,
+} from 'chart.js';
 
-Chart.register(...registerables);
+/**
+ * On n'enregistre que ce que les graphiques utilisent : barres, courbes et
+ * anneaux, l'échelle category et l'échelle linéaire, la légende et l'infobulle.
+ * Tout le reste (`registerables`) — radar, bulles, polaires, les plugins de
+ * titre et d'annotation… — alourdissait le morceau de Chart.js pour rien.
+ */
+Chart.register(
+  BarController,
+  BarElement,
+  LineController,
+  LineElement,
+  PointElement,
+  DoughnutController,
+  ArcElement,
+  CategoryScale,
+  LinearScale,
+  Legend,
+  Tooltip,
+);
 
 // Les graphiques suivent la même grammaire que le reste : fonte système, gris
 // #6E6E73 pour les échelles, grille d'un cheveu, pastilles de légende arrondies.

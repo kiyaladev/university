@@ -117,6 +117,7 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '@/boot/axios';
 import { useListePaginee } from '@/shared/composables/useListePaginee';
+import { dateHeureLisible } from '@/shared/utils/format';
 
 interface AuditRow {
   id: string;
@@ -128,7 +129,7 @@ interface AuditRow {
   user?: { nom: string; prenom: string; role: string };
 }
 const $q = useQuasar();
-const { t, locale } = useI18n();
+const { t } = useI18n();
 /** Saisie du formulaire ; elle ne s'applique qu'au clic sur « Rechercher ». */
 const saisie = ref({ entite: '', action: '', acteur: '', dateDebut: '', dateFin: '' });
 const filtres = ref({ ...saisie.value });
@@ -144,7 +145,7 @@ const libelleAction = (action: string) => {
   if (action === 'COMPTE_ETUDIANT_RATTACHE') return t('audit.studentPortalAccountLinked');
   return action;
 };
-const date = (value: string) => new Date(value).toLocaleString(locale.value);
+const date = (value: string) => dateHeureLisible(value);
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'date', label: t('audit.date'), field: 'createdAt', format: date, align: 'left' },
   { name: 'actor', label: t('audit.actor'), field: acteur, align: 'left' },

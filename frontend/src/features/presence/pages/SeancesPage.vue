@@ -401,7 +401,13 @@
 
               <template v-if="detail.controle.signatureBase64">
                 <dt class="pochoir">{{ $t('seances.detail.signature') }}</dt>
-                <dd><img :src="detail.controle.signatureBase64" class="signature-detail" /></dd>
+                <dd>
+                  <img
+                    :src="detail.controle.signatureBase64"
+                    class="signature-detail"
+                    :alt="$t('seances.detail.signatureAlt')"
+                  />
+                </dd>
               </template>
             </template>
           </dl>

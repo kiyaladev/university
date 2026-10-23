@@ -56,13 +56,13 @@
         />
         <champ-recherche
           v-model="filtres.promotionId"
-          endpoint="/referentiel/promotions"
+          endpoint="/promotions"
           :label="$t('examens.filters.promotion')"
           :label-fn="(p) => `${p.nom} — ${p.niveau}`"
         />
         <champ-recherche
           v-model="filtres.anneeId"
-          endpoint="/referentiel/annees"
+          endpoint="/annees"
           :label="$t('common.fields.academicYear')"
           :label-fn="(a) => a.libelle"
         />

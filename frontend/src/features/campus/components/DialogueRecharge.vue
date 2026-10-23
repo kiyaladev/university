@@ -43,7 +43,7 @@
           outlined
           dense
           :label="$t('resto.rechargeDialog.amount')"
-          suffix="GNF"
+          :suffix="DEVISE"
           :rules="[(v: number) => v >= 500 || $t('common.messages.errors.range')]"
         />
       </div>
@@ -90,7 +90,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { LIBELLE_MODE_PAIEMENT } from '@/shared/utils/libelles';
+import { DEVISE, LIBELLE_MODE_PAIEMENT, montantLisible } from '@/shared/utils/libelles';
 import { getAppLocale } from '@/boot/i18n';
 
 interface EtudiantOption {
@@ -206,7 +206,7 @@ async function charger(hard = false) {
       nom: p.etudiant.nom,
       prenom: p.etudiant.prenom,
       solde: p.solde,
-      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${p.solde.toLocaleString(getAppLocale())} GNF)`,
+      libelle: `${p.etudiant.matricule} — ${p.etudiant.nom} ${p.etudiant.prenom} (${montantLisible(p.solde, DEVISE)})`,
     }));
     optionsEtudiants.value = tousEtudiants.value;
   } catch {

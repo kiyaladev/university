@@ -1,4 +1,5 @@
 import type { Role } from '../types';
+import { PERSONNEL } from './roles';
 
 /**
  * Manifeste de navigation : une entrée par écran atteignable depuis le menu.
@@ -8,6 +9,10 @@ import type { Role } from '../types';
  * ordre), du service facultatif qui masque l'écran, des raccourcis du menu et
  * des tâches de l'accueil, et des « familles » (écrans regroupés derrière une
  * seule entrée du menu, qui l'allument quand on les visite).
+ *
+ * Une entrée peut déclarer `redirection` : elle ne renvoie alors vers aucun
+ * écran propre, elle adresse un autre écran du manifeste. C'est le cas des
+ * rubriques qui regroupent plusieurs écrans.
  */
 
 export type RubriqueId = 'presence' | 'registrar' | 'finance' | 'campus' | 'administration';
@@ -66,9 +71,13 @@ export interface EntreeNavigation {
   accueilDe?: Role[];
   /** Entrée du menu qui regroupe cet écran et s'allume quand on le visite. */
   famille?: string;
+  /**
+   * Adresse de l'écran vers lequel cette entrée redirige. Elle ne mène donc
+   * à aucun écran propre : la route correspondante est une redirection, et
+   * ses droits sont ceux de la cible.
+   */
+  redirection?: string;
 }
-
-const PERSONNEL: Role[] = ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'];
 
 export const MANIFESTE: readonly EntreeNavigation[] = [
   // ── Présences ──────────────────────────────────────────────────────────
@@ -109,7 +118,7 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     rubrique: 'presence',
     icone: 'event_note',
     ordre: 40,
-    roles: PERSONNEL,
+    roles: [...PERSONNEL],
     menuRoles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'],
     raccourciPour: { CHEF_DEPARTEMENT: 1 },
     tacheAccueilPour: { CHEF_DEPARTEMENT: 0 },
@@ -188,6 +197,7 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     icone: 'assignment',
     ordre: 20,
     roles: ['ETUDIANT'],
+    redirection: '/demandes-docs/mes',
   },
   {
     path: '/portail',
@@ -434,8 +444,27 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     icone: 'play_circle',
     service: 'vod',
     ordre: 10,
-    roles: ['ENSEIGNANT', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
+    /**
+     * Le contrôleur y entre aussi : la lecture d'une VOD publique est ouverte
+     * à tout utilisateur connecté côté API (`GET /vod` et `GET /vod/:id` n'ont
+     * pas de `@Roles`), et le lecteur `/vod/lecteur/:id` lui était déjà
+     * ouvert — l'écran et son lecteur ne peuvent pas en dire deux choses
+     * différentes.
+     */
+    roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
     titrePour: { ETUDIANT: 'layout.studentVideoCourses' },
+  },
+  /** Lecteur d'une vidéo : les mêmes rôles que le catalogue `/vod`. */
+  {
+    path: '/vod/lecteur/:id',
+    titre: 'nav.vod-lecteur',
+    rubrique: 'campus',
+    icone: 'play_circle',
+    service: 'vod',
+    ordre: 11,
+    roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
+    menu: false,
+    famille: '/vod',
   },
   {
     path: '/elections/vote',
@@ -444,7 +473,13 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     icone: 'how_to_vote',
     service: 'elections',
     ordre: 20,
-    roles: ['ETUDIANT', 'ENSEIGNANT', 'CONTROLEUR', 'ADMIN'],
+    /**
+     * Tout utilisateur connecté peut voter : `POST /elections/vote` n'a pas de
+     * `@Roles` et le service ne filtre que par l'ouverture du scrutin et
+     * l'unicité du bulletin. Le bulletin imprimable (`@ProtectedDocument`)
+     * cite d'ailleurs les sept rôles. On n'exclut donc personne.
+     */
+    roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT', 'ETUDIANT'],
   },
   {
     path: '/badges',
@@ -604,6 +639,19 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     ordre: 80,
     roles: ['ADMIN', 'DIRECTION'],
   },
+  /** Fiche d'un rapport de plagiat : mêmes droits que le registre `/plagiat`. */
+  {
+    path: '/plagiat/:id',
+    titre: 'nav.plagiat-detail',
+    rubrique: 'administration',
+    section: 'layout.groups.settings',
+    icone: 'find_in_page',
+    service: 'bibliotheque',
+    ordre: 81,
+    roles: ['ADMIN', 'DIRECTION'],
+    menu: false,
+    famille: '/plagiat',
+  },
   {
     path: '/audit',
     titre: 'nav.audit',
@@ -637,6 +685,7 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     roles: ['ADMIN', 'DIRECTION'],
     raccourciPour: { DIRECTION: 3 },
     tacheAccueilPour: { DIRECTION: 1 },
+    redirection: '/rectorat',
   },
   {
     path: '/rectorat',

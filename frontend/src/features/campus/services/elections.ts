@@ -1,6 +1,6 @@
 import { api } from '@/boot/axios';
 import type { Election, Liste, ResultatElection, StatutElection, TypeElection } from '@/types';
-import { getAppLocale } from '@/boot/i18n';
+import { dateCourteLisible, dateHeureLisible } from '@/shared/utils/format';
 
 export interface MonVote {
   aVote: boolean;
@@ -40,7 +40,7 @@ export function dateElection(v?: string | null): string {
   if (!v) return '—';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
+  return dateCourteLisible(v);
 }
 
 /** « 12 août, 14:30 » — ouverture / clôture d'un scrutin. */
@@ -48,7 +48,7 @@ export function dateHeureElection(v?: string | null): string {
   if (!v) return '—';
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return '—';
-  return d.toLocaleString(getAppLocale(), {
+  return dateHeureLisible(v, {
     day: '2-digit',
     month: 'short',
     hour: '2-digit',

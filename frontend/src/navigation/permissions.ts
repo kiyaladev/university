@@ -1,4 +1,5 @@
 import type { Role } from '../types';
+import { PERSONNEL } from './roles';
 
 /**
  * Matrice des droits d'action de l'interface. Elle ne fait que masquer des
@@ -17,7 +18,7 @@ import type { Role } from '../types';
  * Un droit qui n'apparaît dans aucun des deux est contrôlé par un service
  * (propriétaire, statut) ou par une route publique : son commentaire le dit.
  */
-const PERSONNEL: Role[] = ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'];
+
 
 export const PERMISSIONS = {
   // Présences et organisation
