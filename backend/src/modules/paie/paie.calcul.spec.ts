@@ -403,23 +403,14 @@ describe('PaieService — cycle de vie de la feuille', () => {
 
 describe('PaieService — borne haute de la période', () => {
   /**
-   * BUG: la borne haute de la période est fixée au dernier jour du mois à
-   * minuit (`new Date(Date.UTC(annee, mois, 0))`) et le filtre des séances
-   * est un `lte` sur cette borne. Toute séance tenue le dernier jour du mois
-   * après minuit est donc écartée du décompte : la feuille de janvier ne
-   * paie pas les séances du 31 janvier.
-   *
-   * Attendu : la séance du 31 janvier à 10 h compte pour une heure payée.
-   * Obtenu : aucune ligne n'est produite, la séance est filtrée.
-   *
-   * Correctif attendu : élargir la borne à la fin de la journée
-   * (`lte: finDuJour(feuille.dateFin)`) ou utiliser un `lt` sur le premier
-   * jour du mois suivant.
+   * `Seance.date` et les bornes de la feuille sont des colonnes `@db.Date` :
+   * une séance du dernier jour vaut minuit ce jour-là et tombe dans la borne
+   * `lte: dateFin`. Ce test garde ce comportement.
    */
-  it.skip('paie les séances tenues le dernier jour du mois', async () => {
+  it('paie les séances tenues le dernier jour du mois', async () => {
     const seances = [
       {
-        date: new Date('2026-01-31T10:00:00Z'),
+        date: new Date('2026-01-31T00:00:00Z'),
         controle: { dureeMinutes: 60 },
         affectation: { enseignantId: 'ens-1' },
       },

@@ -499,7 +499,7 @@ export class RectoratService {
  * finit le 31 du mois. On filtre par chevauchement plutôt que par egalite
  * exacte — les feuilles dont la période inclut le mois-en-cours.
  */
-async function bornesFeuilleMois(mois: number, annee: number): Promise<Prisma.FeuillePaieWhereInput> {
+function bornesFeuilleMois(mois: number, annee: number): Prisma.FeuillePaieWhereInput {
   const debut = new Date(Date.UTC(annee, mois - 1, 1));
   const fin = new Date(Date.UTC(annee, mois, 0));
   return {

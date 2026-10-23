@@ -203,21 +203,8 @@ describe('RectoratService — masse salariale', () => {
     expect(chiffres.masseSalarialeMois).toContain('aucune feuille validée');
   });
 
-  /**
-   * BUG: `bornesFeuilleMois` est une fonction `async`, mais son résultat est
-   * étalé (`...bornesFeuilleMois(mois, annee)`) dans le `where` Prisma.
-   * Étaler une promesse ne copie aucune propriété : le filtre de période
-   * disparaît silencieusement et la masse salariale « du mois » englobe
-   * toutes les feuilles validées ou payées, quelle que soit leur période.
-   *
-   * Attendu : `where` contient `dateDebut: { lte: finDuMois }` et
-   * `dateFin: { gte: debutDuMois }`.
-   * Obtenu : `where` ne contient que le filtre de statut.
-   *
-   * Correctif attendu : rendre `bornesFeuilleMois` synchrone (elle n'a
-   * aucune awaits), ou étaler `...(await bornesFeuilleMois(mois, annee))`.
-   */
-  it.skip('borne la masse salariale au mois demandé', async () => {
+  // Régression : la borne était une promesse étalée, donc ignorée.
+  it('borne la masse salariale au mois demandé', async () => {
     const { prisma, delegates } = fairePrisma();
     const service = new RectoratService(prisma, {} as any);
 
