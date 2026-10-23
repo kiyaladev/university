@@ -266,7 +266,8 @@ import { useListePaginee } from '@/shared/composables/useListePaginee';
 import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '@/boot/axios';
+import { justificatifsService } from '../services/justificatifs';
+import { seancesService } from '../services/seances';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import {
@@ -307,17 +308,13 @@ const liste = reactive(
     pageSize: 0,
     syncUrl: true,
     charger: ({ filtres: f }) =>
-      api
-        .get('/justificatifs', {
-          params: {
-            all: '1',
-            statut: f.statut || undefined,
-            type: f.type || undefined,
-            dateDebut: f.dateDebut,
-            dateFin: f.dateFin,
-          },
-        })
-        .then((r) => r.data),
+      justificatifsService.liste({
+        all: '1',
+        statut: f.statut || undefined,
+        type: f.type || undefined,
+        dateDebut: f.dateDebut,
+        dateFin: f.dateFin,
+      }),
   }),
 );
 
@@ -402,7 +399,7 @@ function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
     },
     cancel: { label: t('justificatifs.dialogs.doNothing'), flat: true, noCaps: true },
   }).onOk(async (commentaire: string) => {
-    await api.put(`/justificatifs/${j.id}/traiter`, { statut, commentaire });
+    await justificatifsService.traiter(j.id, statut, commentaire);
     $q.notify({
       type: 'positive',
       message: valide ? t('justificatifs.messages.validated') : t('justificatifs.messages.rejected'),
@@ -445,15 +442,13 @@ function filtrerEnseignants(saisie: string, maj: (fn: () => void) => void) {
 async function chargerSeancesJustifiables() {
   form.value.seanceId = '';
   if (!enseignantChoisi.value) return;
-  const { data } = await api.get('/seances', {
-    params: {
-      enseignantId: enseignantChoisi.value,
-      dateDebut: decalerJours(aujourdhui(), -90),
-      dateFin: aujourdhui(),
-      pageSize: 200,
-    },
+  const page = await seancesService.liste({
+    enseignantId: enseignantChoisi.value,
+    dateDebut: decalerJours(aujourdhui(), -90),
+    dateFin: aujourdhui(),
+    pageSize: 200,
   });
-  seancesJustifiables.value = data.data.filter(
+  seancesJustifiables.value = page.data.filter(
     (s: Seance) => !s.justificatif && (s.statut === 'NON_TENUE' || s.controle?.statut === 'ABSENT'),
   );
 }
@@ -468,7 +463,7 @@ async function deposer() {
   }
   enregistrement.value = true;
   try {
-    await api.post('/justificatifs', { ...form.value, enseignantId: enseignantChoisi.value });
+    await justificatifsService.deposer({ ...form.value, enseignantId: enseignantChoisi.value });
     $q.notify({ type: 'positive', message: t('justificatifs.messages.deposited') });
     dialogDepot.value = false;
     await liste.recharger();

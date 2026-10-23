@@ -71,7 +71,7 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { seancesService, type ResultatGeneration } from '../services/seances';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { aujourdhui, decalerJours } from '@/shared/utils/libelles';
 import type { AnneeAcademique } from '@/types';
@@ -88,7 +88,7 @@ const dateDebut = ref(aujourdhui());
 const dateFin = ref(decalerJours(aujourdhui(), 30));
 const joursExclus = ref('');
 const chargement = ref(false);
-const resultat = ref<any>(null);
+const resultat = ref<ResultatGeneration | null>(null);
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
@@ -101,7 +101,7 @@ async function generer() {
   }
   chargement.value = true;
   try {
-    const { data } = await api.post('/seances/generer', {
+    resultat.value = await seancesService.generer({
       anneeId: anneeId.value,
       dateDebut: dateDebut.value,
       dateFin: dateFin.value,
@@ -110,7 +110,6 @@ async function generer() {
         .map((j) => j.trim())
         .filter(Boolean),
     });
-    resultat.value = data;
     emit('enregistre');
   } finally {
     chargement.value = false;
