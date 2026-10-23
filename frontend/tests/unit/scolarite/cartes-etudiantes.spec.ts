@@ -34,6 +34,17 @@ describe('features/scolarite/services/cartes-etudiantes', () => {
     expect(api.get).toHaveBeenCalledWith('/cartes-etudiantes/me', { params: undefined });
   });
 
+  it('émet puis modifie une carte', async () => {
+    api.post.mockResolvedValue({ data: { id: 'c2' } });
+    api.put.mockResolvedValue({ data: { id: 'c2', dateValidite: '2027-09-30' } });
+
+    await cartesEtudiantesService.creer({ etudiantId: 'e1' });
+    await cartesEtudiantesService.modifier('c2', { dateValidite: '2027-09-30' });
+
+    expect(api.post).toHaveBeenCalledWith('/cartes-etudiantes', { etudiantId: 'e1' }, {});
+    expect(api.put).toHaveBeenCalledWith('/cartes-etudiantes/c2', { dateValidite: '2027-09-30' }, {});
+  });
+
   it('définit le NIP de la carte', async () => {
     api.post.mockResolvedValue({ data: { id: 'c1' } });
 

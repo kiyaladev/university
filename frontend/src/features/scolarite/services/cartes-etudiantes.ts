@@ -1,12 +1,22 @@
 /** Cartes étudiantes : émission, NIP, révocation. */
 
-import { creer, lire, lister, type ParametresListe } from '@/shared/services/http';
+import { creer, lire, lister, modifier, type ParametresListe } from '@/shared/services/http';
 import type { CarteEtudiante } from '@/types';
 
 export const cartesEtudiantesService = {
   /** Registre paginé des cartes. */
   liste(params: ParametresListe = {}) {
     return lister<CarteEtudiante>('/cartes-etudiantes', params);
+  },
+
+  /** Émet une carte étudiante. */
+  creer(payload: unknown) {
+    return creer<CarteEtudiante>('/cartes-etudiantes', payload);
+  },
+
+  /** Modifie une carte étudiante (validité, photo…). */
+  modifier(id: string, payload: unknown) {
+    return modifier<CarteEtudiante>(`/cartes-etudiantes/${id}`, payload);
   },
 
   /** Carte de l'étudiant connecté. */
