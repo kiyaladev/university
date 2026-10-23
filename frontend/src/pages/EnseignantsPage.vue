@@ -87,9 +87,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-chip dense :color="couleurStatut(p.row.statut)" text-color="white">
-            {{ LIBELLE_STATUT_ENSEIGNANT[p.row.statut] ?? p.row.statut }}
-          </q-chip>
+          <PastilleStatut domaine="enseignant" :statut="p.row.statut" />
           <q-badge v-if="!p.row.actif" color="grey-7" class="q-ml-xs">{{ $t('enseignants.table.inactive') }}</q-badge>
         </q-td>
       </template>
@@ -167,9 +165,7 @@
       <q-card v-for="e in ens.lignes" :key="e.id" flat bordered class="carte grille-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <q-chip dense :color="couleurStatut(e.statut)" text-color="white">
-              {{ LIBELLE_STATUT_ENSEIGNANT[e.statut] ?? e.statut }}
-            </q-chip>
+            <PastilleStatut domaine="enseignant" :statut="e.statut" />
             <q-badge v-if="!e.actif" color="grey-7">{{ $t('enseignants.table.inactive') }}</q-badge>
             <q-space />
             <div class="text-caption text-grey-7">{{ e.matricule }}</div>
@@ -249,7 +245,7 @@
       v-model:page="ens.page"
       v-model:page-size="ens.pageSize"
       :total="ens.total"
-      @tous="toutAfficher"
+      @tous="ens.toutAfficher()"
     />
 
     <enseignant-dialog
@@ -338,6 +334,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, reactive, ref } from 'vue';
@@ -424,9 +421,6 @@ const messageVide = computed(() =>
     ? t('enseignants.emptyState.filtered')
     : t('enseignants.emptyState.none'),
 );
-
-const couleurStatut = (s: string) =>
-  s === 'PERMANENT' ? 'primary' : s === 'VACATAIRE' ? 'accent' : 'secondary';
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
@@ -620,11 +614,6 @@ function supprimer(e: Enseignant) {
       succes: t('enseignants.messages.deleteSuccess'),
     },
   );
-}
-
-/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
-function toutAfficher() {
-  ens.pageSize = Math.min(Math.max(ens.total, ens.pageSize), 1000);
 }
 
 function reinitialiser() {

@@ -126,7 +126,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-badge :color="couleurStatut(p.row.statut)" :label="libelleStatut(p.row.statut)" />
+          <PastilleStatut domaine="examen" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -183,6 +183,15 @@
           >
             <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
           </q-btn>
+<q-btn v-close-popup
+            v-if="p.row.statut === 'PLANIFIE' && peutAnnuler"
+            flat
+            dense no-caps
+            icon="block"
+            color="negative"
+            :aria-label="$t('examens.actions.cancelExam')" :label="$t('examens.actions.cancelExam')"
+            @click.stop="annulerExamen(p.row)"
+          />
 </actions-secondaires>
 </q-td>
       </template>
@@ -200,7 +209,7 @@
                   {{ e.matiere?.intitule ?? '—' }} · {{ e.promotion?.nom ?? '—' }}
                 </div>
               </div>
-              <q-badge :color="couleurStatut(e.statut)" :label="libelleStatut(e.statut)" />
+              <PastilleStatut domaine="examen" :statut="e.statut" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -247,6 +256,16 @@
               @click.stop="allerTirage(e)"
             />
 <q-btn v-close-popup flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
+<q-btn v-close-popup
+              v-if="e.statut === 'PLANIFIE' && peutAnnuler"
+              flat
+              dense
+              no-caps
+              icon="block"
+              color="negative"
+              :label="$t('examens.actions.cancelExam')"
+              @click.stop="annulerExamen(e)"
+            />
 </actions-secondaires>
 </q-card-actions>
         </q-card>
@@ -273,7 +292,7 @@
       v-model:page="ex.page"
       v-model:page-size="ex.pageSize"
       :total="ex.total"
-      @tous="ex.pageSize = Math.max(ex.total, 200)"
+      @tous="ex.toutAfficher()"
     />
 
     <examen-dialog v-model="dialogOuvert" @enregistre="ex.recharger()" />
@@ -292,7 +311,7 @@
             </div>
           </div>
           <div class="col-auto">
-            <q-badge :color="couleurStatut(examenFiche.statut)" :label="libelleStatut(examenFiche.statut)" />
+            <PastilleStatut domaine="examen" :statut="examenFiche.statut" />
           </div>
           <div class="col-auto">
             <q-btn flat round dense icon="close" :aria-label="$t('examens.sheet.closeAria')" v-close-popup />
@@ -381,6 +400,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, reactive, ref, watch } from 'vue';
@@ -464,11 +484,12 @@ const ex = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutDemarrer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CONTROLEUR']));
-const peutTerminer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('examens.creer'));
+const peutDemarrer = computed(() => auth.peut('examens.demarrer'));
+const peutTerminer = computed(() => auth.peut('examens.terminer'));
+const peutAnnuler = computed(() => auth.peut('examens.annuler'));
 /** La route `tirage` est réservée à l'administration et à la scolarité. */
-const peutVoirTirage = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutVoirTirage = computed(() => auth.peut('tirage.gerer'));
 
 const optionsTypes = (['PARTIEL', 'FINAL', 'RATTRAPAGE', 'CONTROLE_CONTINU'] as const).map((value) => ({
   value,
@@ -537,21 +558,6 @@ const colonnesScans = computed<QTableColumn[]>(() => [
   { name: 'scanneur', label: t('common.fields.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
 ]);
 
-function couleurStatut(s: string) {
-  switch (s) {
-    case 'PLANIFIE':
-      return 'primary';
-    case 'EN_COURS':
-      return 'orange';
-    case 'TERMINE':
-      return 'positive';
-    case 'ANNULE':
-      return 'negative';
-    default:
-      return 'grey-5';
-  }
-}
-
 function libelleStatut(s: string) {
   return LIBELLE_STATUT_EXAMEN[s] ?? s;
 }
@@ -596,9 +602,11 @@ function allerScan(e: Examen | null) {
 }
 
 /** Passe l'examen à l'étape suivante, puis montre l'onglet où il se trouve désormais. */
-async function changerStatut(e: Examen, action: 'demarrer' | 'terminer', cible: StatutExamen, message: string) {
+async function changerStatut(e: Examen, action: 'demarrer' | 'terminer' | 'annuler', cible: StatutExamen, message: string) {
   try {
-    await api.post(`/examens/${e.id}/${action}`);
+    // L'annulation passe par `PUT /examens/:id/statut` (PLANIFIE → ANNULE seulement).
+    if (action === 'annuler') await api.put(`/examens/${e.id}/statut`, { statut: 'ANNULE' });
+    else await api.post(`/examens/${e.id}/${action}`);
   } catch {
     return; /* notifié par l'intercepteur */
   }
@@ -613,6 +621,7 @@ async function demarrer(e: Examen) {
     titre: t('examens.confirm.startTitle'),
     message: t('examens.confirm.startMessage', { code: e.codeExamen, title: e.intitule }),
     ok: t('common.actions.start'),
+    couleur: 'positive',
   });
   if (ok) await changerStatut(e, 'demarrer', 'EN_COURS', t('examens.messages.started'));
 }
@@ -625,6 +634,17 @@ async function terminer(e: Examen) {
     danger: true,
   });
   if (ok) await changerStatut(e, 'terminer', 'TERMINE', t('examens.messages.finished'));
+}
+
+/** Le backend n'accepte pas de motif : simple confirmation. */
+async function annulerExamen(e: Examen) {
+  const ok = await confirmer({
+    titre: t('examens.confirm.cancelTitle'),
+    message: t('examens.confirm.cancelMessage', { code: e.codeExamen, title: e.intitule }),
+    ok: t('examens.confirm.cancelAction'),
+    danger: true,
+  });
+  if (ok) await changerStatut(e, 'annuler', 'ANNULE', t('examens.messages.cancelled'));
 }
 </script>
 

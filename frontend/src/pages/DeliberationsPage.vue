@@ -171,9 +171,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-badge :color="p.row.statut === 'VALIDEE' ? 'positive' : 'warning'">
-            {{ LIBELLE_STATUT_DELIBERATION[p.row.statut] ?? p.row.statut }}
-          </q-badge>
+          <PastilleStatut domaine="deliberation" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -312,9 +310,7 @@
             </template>
             <template #body-cell-decision="p">
               <q-td :props="p">
-                <q-badge :color="couleurDecision(p.row.decision)">
-                  {{ LIBELLE_DECISION_JURY[p.row.decision] ?? p.row.decision }}
-                </q-badge>
+                <PastilleStatut domaine="decision" :statut="p.row.decision" />
               </q-td>
             </template>
             <template #body-cell-actions="p">
@@ -343,6 +339,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import PageHeader from '../components/PageHeader.vue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
@@ -360,7 +357,6 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import SemestreSelect from '../components/SemestreSelect.vue';
 import {
-  LIBELLE_DECISION_JURY,
   LIBELLE_SESSION_DELIBERATION,
   LIBELLE_STATUT_DELIBERATION,
   dateLisible,
@@ -372,7 +368,7 @@ import { ouvrirImpression } from '../services/impression';
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const peutVoirBulletins = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutVoirBulletins = computed(() => auth.peut('bulletins.voir'));
 const router = useRouter();
 const { t } = useI18n();
 const { confirmer } = useConfirmation();
@@ -382,9 +378,9 @@ interface DeliberationListe extends Deliberation {
   _count?: { lignes: number };
 }
 
-const peutSaisir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutSaisir = computed(() => auth.peut('deliberations.saisir'));
 /** Le jury : direction et administrateur figent les résultats. */
-const estJury = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const estJury = computed(() => auth.peut('deliberations.juger'));
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
@@ -504,10 +500,6 @@ const colonnesDetail = computed<QTableColumn[]>(() => [
 
 const detailLignes = computed<DeliberationLigne[]>(() => detail.value?.lignes ?? []);
 
-function couleurDecision(d: string): string {
-  return d === 'ADMIS' ? 'positive' : d === 'AJOURNE' ? 'warning' : 'negative';
-}
-
 function imprimerPv(d: DeliberationListe | null) {
   if (!d) return;
   void ouvrirImpression(`/deliberations/${d.id}/imprimer`);
@@ -542,6 +534,7 @@ async function agir(d: DeliberationListe, action: 'calculer' | 'valider', cle: '
     titre: t(`deliberations.dialogs.${cle}.title`),
     message: t(`deliberations.dialogs.${cle}.message`),
     ok: t(`deliberations.dialogs.${cle}.ok`),
+    couleur: cle === 'validate' ? 'positive' : 'primary',
   });
   if (!ok) return;
   try {

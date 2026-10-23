@@ -125,9 +125,9 @@ const { t } = useI18n();
 const { confirmer } = useConfirmation();
 
 /** Qui saisit les notes (direction comprise, elle arbitre) — cf. `PUT /notes/saisie`. */
-const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION']);
+const peutSaisir = () => auth.peut('notes.saisir');
 /** Clôturer fige le registre : réservé à la scolarité, comme côté API. */
-const peutCloturer = () => auth.aRole(['ADMIN', 'SCOLARITE']);
+const peutCloturer = () => auth.peut('evaluations.gerer');
 
 const selEvaluationId = ref<string | null>(null);
 const evaluationActive = ref<Evaluation | null>(null);

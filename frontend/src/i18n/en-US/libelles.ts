@@ -329,13 +329,15 @@ export default {
     VALIDE: 'Validated',
     REJETE: 'Rejected',
   },
-  jours: {
-    1: 'Monday',
-    2: 'Tuesday',
-    3: 'Wednesday',
-    4: 'Thursday',
-    5: 'Friday',
-    6: 'Saturday',
-    7: 'Sunday',
+  statut_election: {
+    BROUILLON: 'Draft',
+    OUVERTE: 'Open',
+    CLOSE: 'Closed',
+    PROCLAMEE: 'Proclaimed',
+    ANNULEE: 'Cancelled',
+  },
+  statut_recette: {
+    ENCAISSEE: 'Collected',
+    A_ENCAISSER: 'To be collected',
   },
 };

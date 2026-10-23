@@ -32,6 +32,24 @@ describe('Périmètre départemental des résultats scolaires', () => {
     expect(db.inscription.findMany).not.toHaveBeenCalled();
     expect(db.$transaction).toHaveBeenCalledTimes(1);
   });
+  it('filtre les évaluations sur le texte recherché sans perdre le périmètre', async () => {
+    const { db, service } = prepare();
+    await service.listerEvaluations({ search: '  algèbre ' } as any, chef);
+    const where = db.evaluation.findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject(scope);
+    expect(where.OR).toEqual([
+      { intitule: { contains: 'algèbre', mode: 'insensitive' } },
+      { matiere: { intitule: { contains: 'algèbre', mode: 'insensitive' } } },
+      { matiere: { code: { contains: 'algèbre', mode: 'insensitive' } } },
+      { promotion: { nom: { contains: 'algèbre', mode: 'insensitive' } } },
+    ]);
+    expect(db.evaluation.count).toHaveBeenCalledWith({ where });
+  });
+  it('ignore une recherche vide', async () => {
+    const { db, service } = prepare();
+    await service.listerEvaluations({ search: '   ' } as any, chef);
+    expect(db.evaluation.findMany.mock.calls[0][0].where.OR).toBeUndefined();
+  });
   it('un chef sans département ne reçoit aucun résultat global', async () => {
     const { db, service } = prepare();
     await service.listerEvaluations({} as any, { ...chef, departementId: null });

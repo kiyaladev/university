@@ -173,9 +173,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="classeStatut(p.row.statut)">
-            {{ LIBELLE_STATUT_PAIEMENT[p.row.statut] ?? p.row.statut }}
-          </span>
+          <PastilleStatut domaine="paiement" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -287,9 +285,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <span class="champ badge-statut" :class="classeStatut(p.statut)">
-              {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
-            </span>
+            <PastilleStatut domaine="paiement" :statut="p.statut" />
             <span class="champ badge-source q-ml-xs" :class="`badge-source--${sourceDe(p).toLowerCase()}`">
               {{ libelleSource(p) }}
             </span>
@@ -430,7 +426,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.min(Math.max(liste.total, 1), 1000)"
+      @tous="liste.toutAfficher()"
     />
 
     <paiement-dialog v-model="dialogPaiement" @paye="liste.recharger()" />
@@ -533,6 +529,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -653,11 +650,11 @@ function ouvrirModule(p: Paiement) {
   if (chemin) void router.push(chemin);
 }
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutCreer = computed(() => auth.peut('paiements.creer'));
 const peutSimuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && p.statut === 'EN_ATTENTE';
+  auth.peut('paiements.simuler') && estInscription(p) && p.statut === 'EN_ATTENTE';
 const peutAnnuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
+  auth.peut('paiements.annuler') && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
 
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({ value, label })),
@@ -681,15 +678,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'horodatage', label: t('common.fields.date'), field: 'horodatage', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-const classeStatut = (s: string) =>
-  ({
-    EN_ATTENTE: 'champ--attente-paiement',
-    REUSSI: 'champ--payee',
-    ECHOUE: 'champ--annulee',
-    ANNULE: 'champ--brouillon',
-    REMBOURSE: 'champ--brouillon',
-  })[s] ?? 'champ--brouillon';
 
 /** Contexte d'arrivée, résumé en une phrase au-dessus du registre. */
 const libelleCible = computed(() => {
@@ -982,19 +970,6 @@ onMounted(() => {
 .paiements-cartes__carte {
   background: var(--up-plaque);
 }
-
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.champ--brouillon { background: #e8e8ed; color: #33463f; }
-.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
-.champ--payee { background: #007a4d; color: #fff; }
-.champ--annulee { background: #ce1126; color: #fff; }
 
 .champ.badge-source {
   display: inline-flex;

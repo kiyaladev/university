@@ -13,9 +13,7 @@
               {{ $t(courrier.type === 'ENTRANT' ? 'courrier.detail.sender' : 'courrier.detail.recipient', { name: courrier.type === 'ENTRANT' ? courrier.expediteur ?? '—' : courrier.destinataire ?? '—' }) }}
             </div>
           </div>
-          <span class="champ badge-statut" :class="classeStatut(courrier.statut)">
-            {{ libelleStatut(courrier.statut) }}
-          </span>
+          <PastilleStatut domaine="courrier" :statut="courrier.statut" />
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -43,7 +41,7 @@
                 <td>{{ etape.roleValideur ?? '—' }}</td>
                 <td>{{ etape.valideur ? `${etape.valideur.prenom} ${etape.valideur.nom}` : '' }}</td>
                 <td>
-                  <q-badge :color="couleurStatut(etape.statut)" :label="libelleStatut(etape.statut)" />
+                  <PastilleStatut domaine="courrier" :statut="etape.statut" />
                 </td>
                 <td>{{ etape.parapheLe ? dateHeureLisible(etape.parapheLe) : '—' }}</td>
                 <td class="text-right">
@@ -105,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -114,7 +113,6 @@ import WorkflowStepper from './WorkflowStepper.vue';
 import DialogueFormulaire from './DialogueFormulaire.vue';
 import { useConfirmation } from '../composables/useConfirmation';
 import {
-  LIBELLE_STATUT_COURRIER,
   dateHeureLisible,
 } from '../utils/libelles';
 import type { CircuitCourrier, Courrier } from '../types';
@@ -145,56 +143,18 @@ const etapesWorkflow = computed(() => [
 ]);
 
 const etapeActuelle = computed(() => courrier.value?.statut ?? 'RECU');
-const peutCloturer = computed(() => auth.role === 'ADMIN' && courrier.value
+const peutCloturer = computed(() => auth.peut('courrier.cloturer') && courrier.value
   && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(courrier.value.statut));
 
 function peutParapher(etape: CircuitCourrier) {
   if (courrier.value?.statut !== 'EN_CIRCUIT' || etape.statut !== 'EN_CIRCUIT') return false;
   if (courrier.value.circuits.some(e => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
-  if (auth.aRole(['ADMIN', 'DIRECTION'])) return true;
+  if (auth.peut('courrier.parapherTout')) return true;
   const roles: Record<string, string[]> = {
     SCOLARITE: ['Secrétariat', 'Secrétariat général', 'Scolarité', 'Archives'],
     CHEF_DEPARTEMENT: ['Chef département', 'Chef de département'],
   };
   return (roles[auth.role || ''] || []).includes(etape.roleValideur || '');
-}
-
-/** Mêmes peintures que l'écran du courrier — voir `css/_champs-admin.scss`. */
-function classeStatut(s: string) {
-  switch (s) {
-    case 'EN_CIRCUIT':
-      return 'champ--en-cours';
-    case 'TRAITE':
-      return 'champ--validee';
-    case 'CLASSE':
-    case 'ARCHIVE':
-      return 'champ--close';
-    default:
-      return 'champ--brouillon';
-  }
-}
-
-function libelleStatut(s: string) {
-  return LIBELLE_STATUT_COURRIER[s] ?? s;
-}
-
-/**
- * Étape du circuit : les rôles Quasar sont déjà réglés sur les peintures du
- * panneau (accent = jaune de l'attente, secondary = vert de l'acquis,
- * primary = encre de la fin). Aucune teinte Material n'entre ici.
- */
-function couleurStatut(s: string) {
-  switch (s) {
-    case 'EN_CIRCUIT':
-      return 'accent';
-    case 'TRAITE':
-      return 'secondary';
-    case 'CLASSE':
-    case 'ARCHIVE':
-      return 'primary';
-    default:
-      return 'grey-7';
-  }
 }
 
 async function charger() {
@@ -272,9 +232,3 @@ watch(
   },
 );
 </script>
-
-<style scoped lang="scss">
-// Le champ de statut du courrier : une seule définition, partagée avec
-// CourrierPage et la paie.
-@use '../css/champs-admin' as *;
-</style>

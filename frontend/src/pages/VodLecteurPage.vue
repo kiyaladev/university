@@ -6,14 +6,12 @@
  * plein écran) qui pilote le même élément média.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { useQuasar } from 'quasar';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { CoursVOD } from '../types';
 import EtatVide from '../components/EtatVide.vue';
 
-const $q = useQuasar();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();

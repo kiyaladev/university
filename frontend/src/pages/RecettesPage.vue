@@ -59,9 +59,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="p.row.paiementId ? 'champ--validee' : 'champ--brouillon'">
-            {{ p.row.paiementId ? $t('recettes.status.encaissee') : $t('recettes.status.aEncaisser') }}
-          </span>
+          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
         </q-td>
       </template>
       <template #body-cell-montant="p">
@@ -128,9 +126,7 @@
                 <div class="text-subtitle1 text-weight-bold">{{ r.libelle }}</div>
                 <div class="text-caption q-mt-xs">{{ libelleType(r.type) }} · {{ r.client ?? '—' }}</div>
               </div>
-              <span class="champ badge-statut" :class="r.paiementId ? 'champ--validee' : 'champ--brouillon'">
-                {{ r.paiementId ? $t('recettes.status.encaissee') : $t('recettes.status.aEncaisser') }}
-              </span>
+              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
             </div>
           </q-card-section>
           <q-card-section>
@@ -170,7 +166,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <recette-dialog
@@ -182,6 +178,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -252,7 +249,7 @@ const liste = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('recettes.gerer'));
 const peutEncaisser = peutCreer;
 
 const optionsTypes = Object.entries(LIBELLE_TYPE_RECETTE).map(([value, label]) => ({
@@ -347,6 +344,7 @@ async function encaisser(r: RecetteExterne) {
       devise: r.devise,
     }),
     ok: t('recettes.encaisserDialog.ok'),
+    couleur: 'positive',
   });
   dialogEncaissementOuvert.value = false;
   if (!ok) return;
@@ -369,8 +367,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../css/champs-admin' as *;
-
 /* Même définition que les autres tableaux de bord de l'application. */
 .stat-chiffre {
   font-size: 2rem;

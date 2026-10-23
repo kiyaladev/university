@@ -320,9 +320,7 @@ const optionsDepartements = computed(() =>
   departements.value.map((x) => ({ label: x.nom, value: x.id })),
 );
 
-const peutVoirStatistiques = computed(() =>
-  auth.aRole(['CONTROLEUR', 'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT']),
-);
+const peutVoirStatistiques = computed(() => auth.peut('statistiques.voir'));
 
 /** Les liens sortants transportent la période lue ici : on retrouve le même
  *  cadrage sur le registre et sur les relevés, pas les valeurs par défaut. */

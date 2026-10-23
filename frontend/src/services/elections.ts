@@ -17,26 +17,11 @@ export interface ParametresListeElections {
 }
 
 /**
- * Libellés et couleurs du domaine « élections ». Ils ne vivent pas dans
- * utils/libelles.ts (module commun figé) : on les tient ici pour que la page
- * de gestion et la page de vote parlent exactement la même langue.
+ * Le libellé d'un statut d'élection vit désormais avec les autres dans
+ * utils/libelles (et sa couleur dans utils/statuts) : réexporté ici pour les
+ * écrans qui l'importaient depuis le service.
  */
-export const LIBELLE_STATUT_ELECTION: Record<StatutElection, string> = {
-  BROUILLON: 'Brouillon',
-  OUVERTE: 'Ouverte',
-  CLOSE: 'Close',
-  PROCLAMEE: 'Proclamée',
-  ANNULEE: 'Annulée',
-};
-
-/** Classes de champ peint, communes aux deux écrans (voir css/app.scss). */
-export const CLASSE_STATUT_ELECTION: Record<StatutElection, string> = {
-  BROUILLON: 'badge--neutre',
-  OUVERTE: 'badge--ok',
-  CLOSE: 'badge--attention',
-  PROCLAMEE: 'badge--primaire',
-  ANNULEE: 'badge--ko',
-};
+export { LIBELLE_STATUT_ELECTION } from '../utils/libelles';
 
 export const OPTIONS_TYPE_ELECTION: Array<{ value: TypeElection; label: string }> = [
   { value: 'DELEGUE_PROMOTION', label: 'Délégué de promotion' },

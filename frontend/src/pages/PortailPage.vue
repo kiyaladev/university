@@ -49,13 +49,7 @@
           <template v-if="profil.inscription">
             <div class="carte-portail__ligne">
               <span class="pochoir carte-portail__libelle">{{ $t('common.fields.status') }}</span>
-              <q-chip
-                :color="couleurInscription[profil.inscription.statut] ?? 'grey-8'"
-                text-color="white"
-                square
-              >
-                {{ LIBELLE_STATUT_INSCRIPTION[profil.inscription.statut] }}
-              </q-chip>
+              <PastilleStatut domaine="inscription" :statut="profil.inscription.statut" />
             </div>
             <div class="carte-portail__ligne">
               <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.promotion') }}</span>
@@ -309,6 +303,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
@@ -326,7 +321,6 @@ import {
   LIBELLE_MODE_PAIEMENT,
   LIBELLE_OPERATEUR_MM,
   LIBELLE_STATUT_CONSOMMATION,
-  LIBELLE_STATUT_INSCRIPTION,
   LIBELLE_STATUT_PAIEMENT,
   LIBELLE_SESSION_DELIBERATION,
   LIBELLE_TYPE_ATTESTATION,
@@ -441,14 +435,6 @@ const router = useRouter();
 const profil = ref<PortailProfil | null>(null);
 const resultats = ref<{ deliberations: LigneResultat[]; finale: LigneResultat | null } | null>(null);
 const erreur = ref('');
-
-const couleurInscription: Record<string, string> = {
-  VALIDEE: 'positive',
-  PAYEE: 'positive',
-  EN_ATTENTE_PAIEMENT: 'warning',
-  BROUILLON: 'grey-8',
-  ANNULEE: 'negative',
-};
 
 function tonResultat(decision: string) {
   return decision === 'ADMIS' ? 'carte-portail__admis' : 'carte-portail__ajourne';

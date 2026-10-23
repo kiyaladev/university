@@ -428,8 +428,8 @@ const sal = reactive(
 const salles = computed(() => sal.lignes);
 
 /** Créer/modifier/régénérer : ADMIN et SCOLARITE. Supprimer : ADMIN (cf. backend). */
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutSupprimer = computed(() => auth.estAdmin);
+const peutGerer = computed(() => auth.peut('salles.gerer'));
+const peutSupprimer = computed(() => auth.peut('salles.supprimer'));
 
 const form = ref({
   code: '',

@@ -11,6 +11,7 @@ export default {
     scanCards: 'Scanner les cartes',
     scanner: 'Scanner',
     drawShort: 'Tirage',
+    cancelExam: "Annuler l'examen",
   },
   fields: {
     supervisor: 'Surveillant affecté',
@@ -74,10 +75,15 @@ export default {
     finishMessage:
       'Clôturer {code} — {title} ? Le nombre de présents est figé : plus aucune carte ne pourra être scannée pour cette épreuve. Cette opération est définitive.',
     finishAction: 'Terminer définitivement',
+    cancelTitle: "Annuler l'examen",
+    cancelMessage:
+      'Annuler {code} — {title} ? L’épreuve passera au statut « Annulé » : elle ne pourra plus être démarrée ni scannée. Cette opération est définitive.',
+    cancelAction: 'Annuler définitivement',
   },
   messages: {
     started: 'Examen démarré',
     finished: 'Examen terminé',
     scheduled: 'Examen planifié',
+    cancelled: 'Examen annulé',
   },
 };

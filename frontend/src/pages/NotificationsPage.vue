@@ -219,14 +219,7 @@
       >
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <q-chip
-              :color="couleurStatut[p.row.statut] ?? 'grey-8'"
-              text-color="white"
-              square
-              size="sm"
-            >
-              {{ LIBELLE_STATUT_NOTIFICATION[p.row.statut] }}
-            </q-chip>
+            <PastilleStatut domaine="notification" :statut="p.row.statut" />
             <q-tooltip v-if="p.row.erreur" class="notif-erreur">
               {{ p.row.erreur }}
             </q-tooltip>
@@ -311,6 +304,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -563,12 +557,6 @@ const optionsStatuts = Object.entries(LIBELLE_STATUT_NOTIFICATION).map(([value, 
   value: value as StatutNotification,
   label,
 }));
-
-const couleurStatut: Record<string, string> = {
-  EN_ATTENTE: 'warning',
-  ENVOYEE: 'positive',
-  ECHOUE: 'negative',
-};
 
 const colonnes = computed<QTableColumn[]>(() => [
   {

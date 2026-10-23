@@ -64,9 +64,21 @@ export class ScolariteService {
 
   async listerEvaluations(query: EvaluationQueryDto, user: AuthUser): Promise<Paginated<any>> {
     const pagination = paginer(query);
+    const search = query.search?.trim();
 
     const where: Prisma.EvaluationWhereInput = {
       ...this.promotionAutorisee(user),
+      // Recherche libre : intitulé de l'épreuve, matière (code ou intitulé), promotion.
+      ...(search
+        ? {
+            OR: [
+              { intitule: { contains: search, mode: 'insensitive' } },
+              { matiere: { intitule: { contains: search, mode: 'insensitive' } } },
+              { matiere: { code: { contains: search, mode: 'insensitive' } } },
+              { promotion: { nom: { contains: search, mode: 'insensitive' } } },
+            ],
+          }
+        : {}),
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.promotionId ? { promotionId: query.promotionId } : {}),
       ...(query.matiereId ? { matiereId: query.matiereId } : {}),

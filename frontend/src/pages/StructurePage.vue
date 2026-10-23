@@ -600,8 +600,8 @@ const filieres = ref<Filiere[]>([]);
 const promotions = ref<PromotionListee[]>([]);
 
 /** Créer/modifier : ADMIN et SCOLARITE. Supprimer : ADMIN seul (cf. backend). */
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutSupprimer = computed(() => auth.estAdmin);
+const peutGerer = computed(() => auth.peut('structure.gerer'));
+const peutSupprimer = computed(() => auth.peut('structure.supprimer'));
 
 const filtres = ref<Record<string, Record<string, any>>>({
   annees: {},

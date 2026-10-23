@@ -209,7 +209,7 @@
       v-model:page="aff.page"
       v-model:page-size="aff.pageSize"
       :total="aff.total"
-      @tous="toutAfficher"
+      @tous="aff.toutAfficher()"
     />
 
     <dialogue-formulaire
@@ -360,7 +360,7 @@ const form = ref({
 });
 
 /** Supprimer une charge est réservé à l'administration et à la scolarité. */
-const peutSupprimer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutSupprimer = computed(() => auth.peut('affectations.supprimer'));
 
 const optionsPromotions = computed(() =>
   promotions.value.map((p) => ({ label: p.nom, value: p.id })),
@@ -516,11 +516,6 @@ function supprimer(a: Charge) {
     ok: t('common.actions.delete'),
     succes: t('affectations.messages.deleted'),
   });
-}
-
-/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
-function toutAfficher() {
-  aff.pageSize = Math.min(Math.max(aff.total, aff.pageSize), 1000);
 }
 
 function reinitialiser() {

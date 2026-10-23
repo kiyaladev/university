@@ -11,6 +11,7 @@ export default {
     scanCards: 'Scan cards',
     scanner: 'Scan',
     drawShort: 'Draw',
+    cancelExam: 'Cancel the exam',
   },
   fields: {
     supervisor: 'Assigned proctor',
@@ -74,10 +75,15 @@ export default {
     finishMessage:
       'Close {code} — {title}? The number of present students is now locked: no more cards can be scanned for this exam. This operation is final.',
     finishAction: 'Finish permanently',
+    cancelTitle: 'Cancel the exam',
+    cancelMessage:
+      'Cancel {code} — {title}? The exam will be marked “Cancelled”: it can no longer be started or scanned. This cannot be undone.',
+    cancelAction: 'Cancel permanently',
   },
   messages: {
     started: 'Exam started',
     finished: 'Exam finished',
     scheduled: 'Exam scheduled',
+    cancelled: 'Exam cancelled',
   },
 };

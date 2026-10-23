@@ -30,13 +30,7 @@
             />
           </div>
         </div>
-        <span
-          v-if="reclamation"
-          class="reclamation-champ"
-          :class="`reclamation-champ--${reclamation.statut}`"
-        >
-          {{ libelleStatut(reclamation.statut) }}
-        </span>
+        <PastilleStatut v-if="reclamation" domaine="reclamation" :statut="reclamation.statut" />
       </q-card-section>
 
       <q-card-section v-if="reclamation" class="q-pt-none col-grow scroll">
@@ -201,6 +195,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
@@ -254,7 +249,7 @@ const messageCourant = ref('');
 
 /** Le personnel voit les notes internes et les liens vers le dossier étudiant. */
 const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-const peutOuvrirDossier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutOuvrirDossier = computed(() => auth.peut('reclamations.ouvrirDossier'));
 
 const ETAPES_RECLAMATION = computed(() => [
   { identifiant: 'OUVERTE', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
@@ -459,13 +454,6 @@ $rouge: #CE1126;
   font-size: 11px;
   font-weight: 590;
   letter-spacing: -0.01em;
-
-  &--OUVERTE { background: $jaune-fond; color: $jaune-texte; }
-  &--EN_COURS { background: $vert-fond; color: $vert-lien; }
-  &--EN_ATTENTE_REPONSE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
-  &--RESOLUE { background: $vert-fond; color: #{$vert}; }
-  &--FERMEE { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
-  &--REJETEE { background: $rouge-fond; color: #{$rouge}; }
 
   &--prio {
     box-shadow: none;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 /**
  * Aperçu d'un bulletin semestriel d'étudiant : moyenne par UE pondérée par
  * les crédits, décision du jury (ADMIS/AJOURNÉ/DÉFAILLANT), rang dans la
@@ -38,15 +39,7 @@ const props = defineProps<{
 }>();
 const { t } = useI18n();
 
-/** Même code couleur que les listes de délibération et de bulletins. */
-const COULEUR: Record<string, string> = {
-  ADMIS: 'positive',
-  AJOURNE: 'warning',
-  DEFAILLANT: 'negative',
-};
-
 const totalCredits = computed(() => props.bulletin.lignes.reduce((acc, l) => acc + l.credits, 0));
-const couleur = computed(() => COULEUR[props.bulletin.decision ?? ''] ?? 'grey-7');
 const libelleDecision = computed(() =>
   props.bulletin.decision
     ? (LIBELLE_DECISION_JURY[props.bulletin.decision] ?? props.bulletin.decision)
@@ -66,7 +59,7 @@ function imprimer() {
         <div class="bulletin__nom">{{ bulletin.etudiant.prenom }} {{ bulletin.etudiant.nom }}</div>
         <div class="bulletin__meta">{{ $t('common.fields.matricule') }} {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} · {{ bulletin.annee }}</div>
       </div>
-      <q-badge :color="couleur" :label="libelleDecision" />
+      <PastilleStatut domaine="decision" :statut="bulletin.decision" :libelle="libelleDecision" />
     </q-card-section>
 
     <q-separator />

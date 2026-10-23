@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, getCurrentInstance, onMounted, onScopeDispose, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter, type LocationQuery } from 'vue-router';
 
 /**
@@ -24,7 +24,13 @@ import { useRoute, useRouter, type LocationQuery } from 'vue-router';
  *   `recherche` par défaut) attendent 300 ms de silence avant de requêter.
  * - `syncUrl` : les filtres sont relus de `route.query` à la création et y sont
  *   réécrits par `router.replace` — ils survivent au retour arrière. Plusieurs
- *   listes sur une même page se séparent par `prefixeUrl`.
+ *   listes sur une même page se séparent par `prefixeUrl`. Quand seule la query
+ *   change sur la même page (précédent / suivant entre deux états de filtres,
+ *   lien interne), filtres et page en sont relus puis la liste recharge. Les
+ *   `router.replace` de la liste elle-même sont reconnus et ignorés : pas de
+ *   boucle URL → filtres → URL.
+ * - `toutAfficher()` : une seule page contenant tout (`pageSize = total`,
+ *   borné à 1 000 comme l'API) — branché sur `@tous` de `<pagination-bar>`.
  * - API non paginée (`pageSize: 0`) : `charger` reçoit `tout: true`, la liste
  *   arrive entière et la page garde son filtrage local (`:rows-per-page-options="[0]"`
  *   ou `:pagination="{ rowsPerPage: 20 }"` du q-table). Les clés de `clesLocales`
@@ -76,6 +82,8 @@ export function texteApi(v: unknown): string | undefined {
 }
 
 const DELAI_TEXTE = 300;
+/** Plafond `pageSize` du back (`common/pagination.ts`). */
+const PAGE_MAX = 1000;
 
 function estVide(v: unknown) {
   return v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0);
@@ -104,16 +112,40 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
   const etat = ref({ page: 1, pageSize: options.pageSize || 20 });
 
   // ------------------------------------------------------------ URL → filtres
-  if (options.syncUrl) {
-    const cles = options.clesUrl ?? Object.keys(filtresInitiaux);
+  const clesLues = options.clesUrl ?? Object.keys(filtresInitiaux);
+  /** Clés d'URL que cette liste possède : on les réécrit, on laisse les autres. */
+  const clesGerees = new Set([...Object.keys(filtresInitiaux), ...clesLues, 'page']);
+
+  /** Filtres portés par une query ; une clé absente reprend sa valeur initiale. */
+  function lireQuery(query: LocationQuery) {
     const lus: Record<string, unknown> = {};
-    for (const cle of cles) {
-      const v = route.query[prefixe + cle];
-      if (typeof v === 'string' && v !== '') lus[cle] = v;
+    for (const cle of clesLues) {
+      const v = query[prefixe + cle];
+      if (typeof v !== 'string' || v === '') lus[cle] = (filtresInitiaux as Record<string, unknown>)[cle];
+      else lus[cle] = Array.isArray((filtresInitiaux as Record<string, unknown>)[cle]) ? v.split(',') : v;
     }
-    const page = Number(route.query[`${prefixe}page`]);
-    if (paginee && page > 1) etat.value.page = page;
-    if (Object.keys(lus).length) options.filtres.value = { ...options.filtres.value, ...lus };
+    const page = Number(query[`${prefixe}page`]);
+    return { lus, page: paginee && page > 1 ? page : 1 };
+  }
+
+  /** Part de la query qui appartient à cette liste, sous forme comparable. */
+  function tranche(query: LocationQuery): string {
+    const t: Record<string, unknown> = {};
+    for (const k of [...clesGerees].sort()) {
+      const v = query[prefixe + k];
+      if (v !== undefined && v !== null && v !== '') t[k] = v;
+    }
+    return JSON.stringify(t);
+  }
+
+  if (options.syncUrl) {
+    const { lus, page } = lireQuery(route.query);
+    etat.value.page = page;
+    // Seules les clés présentes dans l'URL écrasent les valeurs de la page.
+    const presents = Object.fromEntries(
+      Object.entries(lus).filter(([k]) => typeof route.query[prefixe + k] === 'string' && route.query[prefixe + k] !== ''),
+    );
+    if (Object.keys(presents).length) options.filtres.value = { ...options.filtres.value, ...presents };
   }
 
   // --------------------------------------------------------------- requêtes
@@ -149,10 +181,11 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     return res.data ?? [];
   }
 
-  /** Clés d'URL que cette liste possède : on les réécrit, on laisse les autres. */
-  const clesGerees = new Set([...Object.keys(filtresInitiaux), ...(options.clesUrl ?? []), 'page']);
-
   const cheminPage = route.path;
+  /** Tranche de query déjà connue : relue de l'URL ou écrite par la liste. */
+  let trancheConnue = tranche(route.query);
+  /** Tranches demandées à `router.replace` et pas encore vues revenir. */
+  const ecritures = new Set<string>();
 
   function ecrireUrl() {
     // Rien à écrire si la page a déjà été quittée (rechargement tardif).
@@ -164,8 +197,10 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     for (const [k, v] of Object.entries(filtres)) query[prefixe + k] = v;
     if (paginee && etat.value.page > 1) query[`${prefixe}page`] = String(etat.value.page);
     if (JSON.stringify(query) === JSON.stringify(route.query)) return;
+    trancheConnue = tranche(query);
+    ecritures.add(trancheConnue);
     // Le `scrollBehavior` du routeur garde la position quand seule la query change.
-    void router.replace({ query }).catch(() => undefined);
+    void router.replace({ query }).catch(() => ecritures.delete(tranche(query)));
   }
 
   function recharger() {
@@ -203,10 +238,38 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     { deep: true },
   );
 
-  onBeforeUnmount(() => {
+  // ------------------------------------------- query → filtres (même page)
+  if (options.syncUrl) {
+    watch(
+      () => route.query,
+      (query) => {
+        if (route.path !== cheminPage) return;
+        const t = tranche(query);
+        // Écho d'un `router.replace` de la liste, ou query d'une autre liste.
+        if (ecritures.delete(t) || t === trancheConnue) return;
+        trancheConnue = t;
+        ecritures.clear();
+        const { lus, page: pageLue } = lireQuery(query);
+        const nouveaux = { ...options.filtres.value, ...lus } as F;
+        if (minuterie) clearTimeout(minuterie);
+        minuterie = null;
+        // `precedent` à jour d'abord : l'observateur des filtres n'y verra rien
+        // de changé et ne repartira pas en page 1 ni ne réécrira l'URL.
+        precedent = normaliser(nouveaux);
+        options.filtres.value = nouveaux;
+        etat.value.page = pageLue;
+        void requeter();
+      },
+    );
+  }
+
+  onScopeDispose(() => {
     if (minuterie) clearTimeout(minuterie);
   });
-  if (options.immediat !== false) onMounted(() => void requeter());
+  if (options.immediat !== false) {
+    if (getCurrentInstance()) onMounted(() => void requeter());
+    else void requeter();
+  }
 
   // ------------------------------------------------------------- pagination
   const page = computed({
@@ -233,6 +296,11 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     },
   });
 
+  /** Une seule page avec toutes les lignes (bornée au plafond de l'API). */
+  function toutAfficher() {
+    pageSize.value = Math.min(Math.max(total.value, etat.value.pageSize, 1), PAGE_MAX);
+  }
+
   /** Remet les filtres à leur état initial, en gardant les clés de `conserver`. */
   function reinitialiser(conserver: string[] = ['recherche']) {
     const garde = Object.fromEntries(
@@ -250,6 +318,7 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     pagination,
     recharger,
     chargerTout,
+    toutAfficher,
     reinitialiser,
   };
 }

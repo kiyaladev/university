@@ -118,9 +118,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-chip :color="p.row.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
-            {{ LIBELLE_STATUT_ATTESTATION[p.row.statut] ?? p.row.statut }}
-          </q-chip>
+          <PastilleStatut domaine="attestation" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -206,9 +204,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <q-chip :color="a.statut === 'EMISE' ? 'secondary' : 'negative'" text-color="white" dense>
-              {{ LIBELLE_STATUT_ATTESTATION[a.statut] ?? a.statut }}
-            </q-chip>
+            <PastilleStatut domaine="attestation" :statut="a.statut" />
             <q-space />
             <div class="text-caption text-grey-7">{{ a.numero }}</div>
           </div>
@@ -255,7 +251,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <attestation-dialog
@@ -391,6 +387,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
@@ -476,8 +473,8 @@ const optionsPromotions = computed(() =>
     .map((p) => ({ label: p.nom, value: p.id })),
 );
 
-const peutEmettre = computed(() => auth.aRole(['SCOLARITE', 'ADMIN']));
-const peutRevoquer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutEmettre = computed(() => auth.peut('attestations.emettre'));
+const peutRevoquer = computed(() => auth.peut('attestations.revoquer'));
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];

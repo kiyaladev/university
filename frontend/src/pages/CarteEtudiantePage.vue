@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
@@ -15,7 +16,7 @@ import CarteDialog from '../components/CarteDialog.vue';
 import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import EtatVide from '../components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
-import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE, dateLisible } from '../utils/libelles';
+import { dateLisible } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
@@ -44,9 +45,9 @@ const liste = reactive(
 
 const modeVue = usePresentationListe();
 
-const peutEmettre = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutModifier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutRevoquer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutEmettre = computed(() => auth.peut('cartes.emettre'));
+const peutModifier = computed(() => auth.peut('cartes.modifier'));
+const peutRevoquer = computed(() => auth.peut('cartes.revoquer'));
 
 const dialogEmission = ref(false);
 const dialogRevocation = ref(false);
@@ -195,9 +196,7 @@ function ouvrirEmission() {
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[p.row.statut]">
-            <span class="pochoir">{{ LIBELLE_STATUT_CARTE[p.row.statut] ?? p.row.statut }}</span>
-          </span>
+          <PastilleStatut domaine="carte" :statut="p.row.statut" />
           <div v-if="p.row.motifRevocation" class="text-caption text-grey-7">
             {{ p.row.motifRevocation }}
           </div>
@@ -259,9 +258,7 @@ function ouvrirEmission() {
                 {{ $t('carteEtudiante.table.columns.matricule') }} <code>{{ c.etudiant?.matricule }}</code>
               </div>
             </div>
-            <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[c.statut]">
-              <span class="pochoir">{{ LIBELLE_STATUT_CARTE[c.statut] }}</span>
-            </span>
+            <PastilleStatut domaine="carte" :statut="c.statut" />
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
@@ -374,15 +371,6 @@ function ouvrirEmission() {
   height: 100%;
   background: var(--up-plaque);
 }
-
-/* Pastille de statut : même gabarit que sur « Ma carte étudiante ». */
-.champ-statut {
-  display: inline-flex;
-  padding: 3px 8px;
-  min-height: 24px;
-}
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
 
 .url-verification code {
   word-break: break-all;

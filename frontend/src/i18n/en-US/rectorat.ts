@@ -3,7 +3,6 @@ export default {
   title: "Institution overview",
   subtitle:
     "Current institution figures · year {annee}.",
-  subtitleFallback: '—',
   actions: {
     generateReport: 'Generate MESRS report',
     generateReportTooltip:

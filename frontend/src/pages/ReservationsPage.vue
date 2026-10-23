@@ -133,9 +133,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut champ-statut--dense" :class="`calendrier-couleur-${p.row.statut.toLowerCase()}`">
-            <span class="pochoir">{{ LIBELLE_STATUT_RESERVATION[p.row.statut] }}</span>
-          </span>
+          <PastilleStatut domaine="reservation" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -180,6 +178,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -198,13 +197,12 @@ import {
   aujourdhui,
   dateLisible,
 } from '../utils/libelles';
-import type { ReservationSalle, Role, Salle, ChipFiltre } from '../types';
+import type { ReservationSalle, Salle, ChipFiltre } from '../types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const ROLES_RESERVATION: Role[] = ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'];
-const peutReserver = computed(() => auth.aRole(ROLES_RESERVATION));
+const peutReserver = computed(() => auth.peut('reservations.reserver'));
 
 /** Une seule source pour les libellés de statut : utils/libelles.ts. */
 const LEGENDE = LIBELLE_STATUT_RESERVATION;
@@ -436,9 +434,4 @@ onMounted(() => {
   &--annulee::before { background: #86868b; }
   &--seance::before { background: var(--up-encre-douce); }
 }
-
-.calendrier-couleur-en_attente { background: rgba(239, 183, 0, 0.22); }
-.calendrier-couleur-confirmee { background: rgba(15, 122, 69, 0.14); }
-.calendrier-couleur-refusee,
-.calendrier-couleur-annulee { background: rgba(156, 163, 175, 0.18); }
 </style>

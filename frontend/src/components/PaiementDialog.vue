@@ -218,7 +218,8 @@ const optionsModes = computed(() =>
 const optionsOperateurs = computed(() =>
   Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({ value, label })),
 );
-const peutSimulerReussi = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+/** Même droit que `POST /paiements/:id/simuler` : la scolarité y recevait un 403. */
+const peutSimulerReussi = computed(() => auth.peut('paiements.simuler'));
 
 const dossierChoisi = computed(() =>
   inscriptions.value.find((i) => i.id === form.value.inscriptionId) ?? null,

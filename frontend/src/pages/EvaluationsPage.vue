@@ -111,9 +111,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <q-badge :color="p.row.statut === 'OUVERTE' ? 'positive' : 'grey-6'">
-            {{ LIBELLE_STATUT_EVALUATION[p.row.statut] }}
-          </q-badge>
+          <PastilleStatut domaine="evaluation" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -211,10 +209,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <q-badge
-              :color="e.statut === 'OUVERTE' ? 'positive' : 'grey-6'"
-              :label="LIBELLE_STATUT_EVALUATION[e.statut]"
-            />
+            <PastilleStatut domaine="evaluation" :statut="e.statut" />
             <q-badge outline color="primary" class="q-ml-sm">
               {{ LIBELLE_TYPE_EVALUATION[e.type] }}
             </q-badge>
@@ -308,7 +303,7 @@
       v-model:page="ev.page"
       v-model:page-size="ev.pageSize"
       :total="ev.total"
-      @tous="ev.pageSize = Math.max(ev.total, 1)"
+      @tous="ev.toutAfficher()"
     />
 
     <evaluation-dialog
@@ -401,6 +396,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -444,9 +440,8 @@ const { confirmer, supprimerAvecConfirmation } = useConfirmation();
  * — créer / modifier / clôturer / supprimer une évaluation : SCOLARITE, ADMIN ;
  * — saisir les notes (`PUT /notes/saisie`) : + DIRECTION et CHEF_DEPARTEMENT.
  */
-const peutGererEvaluation = () => auth.aRole(['ADMIN', 'SCOLARITE']);
-const peutSaisirNotes = () =>
-  auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']);
+const peutGererEvaluation = () => auth.peut('evaluations.gerer');
+const peutSaisirNotes = () => auth.peut('notes.saisir');
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);

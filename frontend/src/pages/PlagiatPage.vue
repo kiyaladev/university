@@ -171,9 +171,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <q-badge :color="couleurStatut(p.row.statut)" text-color="white">
-              {{ LIBELLE_STATUT_SUSPICION[p.row.statut] ?? p.row.statut }}
-            </q-badge>
+            <PastilleStatut domaine="suspicion" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-actions="p">
@@ -281,6 +279,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
@@ -298,7 +297,7 @@ import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import { useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
 import { useAuthStore } from '../stores/auth';
-import { LIBELLE_STATUT_SUSPICION, dateLisible, nombreLisible } from '../utils/libelles';
+import { dateLisible, nombreLisible } from '../utils/libelles';
 import type { SuspicionPlagiat, ChipFiltre } from '../types';
 
 const $q = useQuasar();
@@ -343,7 +342,7 @@ const liste = reactive(
 );
 const suspicions = computed(() => liste.lignes);
 
-const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutDecider = computed(() => auth.peut('plagiat.decider'));
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'score', label: t('common.fields.score'), field: 'score', align: 'center', sortable: true },
@@ -358,10 +357,6 @@ function couleurScore(score: number): string {
   if (score >= 80) return 'negative';
   if (score >= 50) return 'warning';
   return 'positive';
-}
-
-function couleurStatut(s: SuspicionPlagiat['statut']): string {
-  return { EN_ATTENTE: 'orange', ACQUITTE: 'positive', CONFIRME: 'negative' }[s];
 }
 
 const filtresActifs = computed(() =>

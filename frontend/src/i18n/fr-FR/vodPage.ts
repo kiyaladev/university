@@ -37,6 +37,7 @@ export default {
       progress: 'Où j’en suis',
       views: 'Vues',
     },
+    noSubject: '—',
   },
   card: {
     noTeacher: 'Sans enseignant',

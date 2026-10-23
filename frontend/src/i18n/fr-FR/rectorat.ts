@@ -3,7 +3,6 @@ export default {
   title: "Bilan de l’établissement",
   subtitle:
     "Situation actuelle de l’établissement · année {annee}.",
-  subtitleFallback: '—',
   actions: {
     generateReport: 'Générer le bilan MESRS',
     generateReportTooltip:

@@ -332,13 +332,15 @@ export default {
     VALIDE: 'Validé',
     REJETE: 'Rejeté',
   },
-  jours: {
-    1: 'Lundi',
-    2: 'Mardi',
-    3: 'Mercredi',
-    4: 'Jeudi',
-    5: 'Vendredi',
-    6: 'Samedi',
-    7: 'Dimanche',
+  statut_election: {
+    BROUILLON: 'Brouillon',
+    OUVERTE: 'Ouverte',
+    CLOSE: 'Close',
+    PROCLAMEE: 'Proclamée',
+    ANNULEE: 'Annulée',
+  },
+  statut_recette: {
+    ENCAISSEE: 'Encaissée',
+    A_ENCAISSER: 'À encaisser',
   },
 };

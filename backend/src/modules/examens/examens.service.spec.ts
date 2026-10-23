@@ -134,3 +134,52 @@ describe('Périmètre des examens et scans', () => {
     expect(db.auditLog.create).not.toHaveBeenCalled();
   });
 });
+
+describe('Annulation d’un examen (PUT /examens/:id/statut)', () => {
+  const admin = { id: 'admin-1', role: Role.ADMIN } as AuthUser;
+  const prepare = (statut: StatutExamen) => {
+    const examen = { id: 'exam-1', anneeId: 'year-1', codeExamen: 'EX-1', statut };
+    const db: any = {
+      examen: {
+        findUnique: jest.fn()
+          .mockResolvedValueOnce(examen)
+          .mockResolvedValueOnce(examen)
+          .mockResolvedValue({ ...examen, statut: StatutExamen.ANNULE }),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+      $transaction: jest.fn((operation: (tx: any) => unknown) => operation(db)),
+      anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ id: 'year-1', cloturee: false }) },
+      auditLog: { create: jest.fn() },
+    };
+    return { db, service: new ExamensService(db) };
+  };
+
+  it('annule un examen planifié et le journalise', async () => {
+    const { db, service } = prepare(StatutExamen.PLANIFIE);
+    const maj = await service.changerStatut('exam-1', StatutExamen.ANNULE, admin);
+    expect(maj.statut).toBe(StatutExamen.ANNULE);
+    expect(db.examen.updateMany).toHaveBeenCalledWith({
+      where: { id: 'exam-1', statut: StatutExamen.PLANIFIE },
+      data: { statut: StatutExamen.ANNULE },
+    });
+    expect(db.auditLog.create).toHaveBeenCalled();
+  });
+
+  it.each([StatutExamen.EN_COURS, StatutExamen.TERMINE, StatutExamen.ANNULE])(
+    'refuse d’annuler un examen %s',
+    async (statut) => {
+      const { db, service } = prepare(statut);
+      await expect(service.changerStatut('exam-1', StatutExamen.ANNULE, admin)).rejects.toBeInstanceOf(BadRequestException);
+      expect(db.examen.updateMany).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([StatutExamen.EN_COURS, StatutExamen.TERMINE, StatutExamen.PLANIFIE])(
+    'refuse toute autre cible (%s) que ANNULE sur cette route',
+    async (cible) => {
+      const { db, service } = prepare(StatutExamen.PLANIFIE);
+      await expect(service.changerStatut('exam-1', cible, admin)).rejects.toBeInstanceOf(BadRequestException);
+      expect(db.examen.updateMany).not.toHaveBeenCalled();
+    },
+  );
+});

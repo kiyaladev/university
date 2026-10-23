@@ -42,10 +42,6 @@ export default {
     type: 'Type : {type}',
     paiementStatut: 'Encaissement : {statut}',
   },
-  status: {
-    encaissee: 'Encaissée',
-    aEncaisser: 'À encaisser',
-  },
   period: {
     summary: '{periode} — {total} recette(s).',
     range: 'du {debut} au {fin}',

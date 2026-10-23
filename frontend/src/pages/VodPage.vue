@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 /**
  * Catalogue VOD. Deux publics, un seul écran :
@@ -62,9 +63,9 @@ const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: nu
 const modeVue = usePresentationListe();
 
 /** Écriture : les mêmes rôles que le backend (POST/PUT/publier/archiver). */
-const peutEditer = computed(() => auth.aRole(['ADMIN', 'ENSEIGNANT']));
+const peutEditer = computed(() => auth.peut('vod.editer'));
 function peutGererRessource(v: RessourceCatalogue) {
-  return peutEditer.value && (auth.aRole(['ADMIN']) || v.creeParId === auth.utilisateur?.id);
+  return peutEditer.value && (auth.peut('vod.gererToutes') || v.creeParId === auth.utilisateur?.id);
 }
 /** Un étudiant ne voit que sa collecte : ni statuts, ni actions. */
 const estEtudiant = computed(() => auth.aRole(['ETUDIANT']));
@@ -114,12 +115,6 @@ const ressources = computed<RessourceCatalogue[]>(() => {
 
 const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_RESSOURCE_VOD);
 const OPTIONS_STATUT = optionsDepuis(LIBELLE_STATUT_VOD);
-const CLASSE_STATUT: Record<string, string> = {
-  BROUILLON: 'badge--neutre',
-  EN_LIGNE: 'badge--ok',
-  HORS_LIGNE: 'badge--attention',
-  ARCHIVE: 'badge--ko',
-};
 
 /** La colonne « Statut » n'a pas de sens dans la collecte étudiante. */
 const colonnes = computed<QTableColumn[]>(() => [
@@ -303,7 +298,7 @@ function avancement(v: RessourceCatalogue): number {
             {{ p.row.matiere.code }}
             <q-tooltip>{{ p.row.matiere.intitule }}</q-tooltip>
           </span>
-          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
+          <span v-else class="text-grey-7">{{ $t('vodPage.table.noSubject') }}</span>
         </q-td>
       </template>
       <template #body-cell-enseignant="p">
@@ -323,9 +318,7 @@ function avancement(v: RessourceCatalogue): number {
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ champ-statut" :class="CLASSE_STATUT[p.row.statut]">
-            <span class="pochoir">{{ LIBELLE_STATUT_VOD[p.row.statut] ?? p.row.statut }}</span>
-          </span>
+          <PastilleStatut domaine="vod" :statut="p.row.statut" />
         </q-td>
       </template>
       <template #body-cell-actions="p">
@@ -393,9 +386,7 @@ function avancement(v: RessourceCatalogue): number {
           </div>
           <q-card-section>
             <div class="row items-center q-gutter-sm">
-              <span v-if="!estEtudiant && v.statut" class="champ champ-statut" :class="CLASSE_STATUT[v.statut]">
-                <span class="pochoir">{{ LIBELLE_STATUT_VOD[v.statut] ?? v.statut }}</span>
-              </span>
+              <PastilleStatut v-if="!estEtudiant && v.statut" domaine="vod" :statut="v.statut" />
               <q-chip dense outline color="primary">
                 {{ LIBELLE_TYPE_RESSOURCE_VOD[v.type] ?? v.type }}
               </q-chip>
@@ -500,8 +491,4 @@ function avancement(v: RessourceCatalogue): number {
   align-items: center;
   justify-content: center;
 }
-.badge--ok { background: #f1fbf2; color: #027a0b; }
-.badge--ko { background: #fff1f2; color: #c10000; }
-.badge--neutre { background: #f5f5f7; color: #6e6e73; }
-.badge--attention { background: #fff6ef; color: #b64400; }
 </style>

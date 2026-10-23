@@ -49,9 +49,7 @@
         <q-card-section class="text-h6">{{ creee.libelle }}</q-card-section>
         <q-card-section class="q-gutter-sm">
           <div class="row items-center q-gutter-sm">
-            <span class="champ champ--brouillon" style="min-width: 110px">
-              {{ LIBELLE_STATUT_PAIE[creee.statut] }}
-            </span>
+            <PastilleStatut domaine="paie" :statut="creee.statut" />
           </div>
           <div class="q-pt-sm">
             <div class="text-caption text-grey-7">{{ $t('common.fields.period') }}</div>
@@ -85,11 +83,12 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from './PastilleStatut.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
-import { LIBELLE_STATUT_PAIE, dateLisible, montantLisible } from '../utils/libelles';
+import { dateLisible, montantLisible } from '../utils/libelles';
 import type { FeuillePaie } from '../types';
 
 /*
@@ -160,8 +159,3 @@ async function creer() {
   }
 }
 </script>
-
-<style scoped lang="scss">
-// Le champ de statut de la feuille : même peinture que sur l'écran de la paie.
-@use '../css/champs-admin' as *;
-</style>

@@ -371,7 +371,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="toutAfficher"
+      @tous="liste.toutAfficher()"
     />
 
     <etudiant-dialog
@@ -411,9 +411,7 @@
             </template>
             <template #body-cell-statut="p">
               <q-td :props="p">
-                <span class="champ badge-statut" :class="classeStatutInscription(p.row.statut)">
-                  {{ LIBELLE_STATUT_INSCRIPTION[p.row.statut] ?? p.row.statut }}
-                </span>
+                <PastilleStatut domaine="inscription" :statut="p.row.statut" />
               </q-td>
             </template>
             <template #body-cell-montant="p">
@@ -467,6 +465,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -487,7 +486,6 @@ import EtatVide from '../components/EtatVide.vue';
 import { texteApi, useListePaginee } from '../composables/useListePaginee';
 import { useConfirmation } from '../composables/useConfirmation';
 import {
-  LIBELLE_STATUT_INSCRIPTION,
   dateLisible,
   montantLisible,
 } from '../utils/libelles';
@@ -555,10 +553,10 @@ const listeInscriptions = ref<Inscription[]>([]);
 const etudiantInscriptions = ref<EtudiantRegistre | null>(null);
 const chargementInscriptions = ref(false);
 
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
-const peutValiderVoir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']));
+const peutGerer = computed(() => auth.peut('etudiants.gerer'));
+const peutValiderVoir = computed(() => auth.peut('etudiants.voirValidation'));
 /** Le suivi financier n'est ouvert qu'aux écrans qui portent la route /paiements. */
-const peutVoirPaiements = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutVoirPaiements = computed(() => auth.peut('paiements.voir'));
 const peutGererCompte = (e: EtudiantRegistre) => auth.estAdmin || !e.user;
 
 const optionsActif = computed(() => [
@@ -591,15 +589,6 @@ const colonnesInscriptions = computed<QTableColumn[]>(() => [
   { name: 'date', label: t('etudiants.dialogInscriptions.columns.date'), field: (r) => dateLisible(r.createdAt), align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-const classeStatutInscription = (s: string) =>
-  ({
-    BROUILLON: 'champ--brouillon',
-    EN_ATTENTE_PAIEMENT: 'champ--attente-paiement',
-    PAYEE: 'champ--payee',
-    VALIDEE: 'champ--validee',
-    ANNULEE: 'champ--annulee',
-  })[s] ?? 'champ--brouillon';
 
 const dernierePromo = (e: EtudiantRegistre) => e.inscriptions?.[0]?.promotion?.nom ?? null;
 
@@ -770,11 +759,6 @@ function imprimerDossier(dossier: Inscription) {
   void ouvrirImpression(`/inscriptions/${dossier.id}/attestation-inscription`);
 }
 
-/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
-function toutAfficher() {
-  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
-}
-
 /** Tous les filtres tombent, recherche comprise. */
 function reinitialiser() {
   liste.reinitialiser([]);
@@ -799,18 +783,4 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.champ--brouillon { background: #e8e8ed; color: #33463f; }
-.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
-.champ--payee { background: #007a4d; }
-.champ--validee { background: #0066cc; }
-.champ--annulee { background: #ce1126; }
 </style>

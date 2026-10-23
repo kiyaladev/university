@@ -94,9 +94,7 @@
             <div class="text-caption text-grey-7">{{ p.row.categorie ?? '—' }}</div>
           </q-td>
           <q-td key="statut" :props="p" class="text-center">
-            <q-chip :color="couleurStatut(p.row.statut)" text-color="white" dense>
-              {{ LIBELLE_STATUT_FORMATION[p.row.statut] ?? p.row.statut }}
-            </q-chip>
+            <PastilleStatut domaine="formation" :statut="p.row.statut" />
           </q-td>
           <q-td key="prix" :props="p" class="text-right chiffres">
             <span v-if="p.row.prix > 0">{{ montantLisible(p.row.prix) }} {{ p.row.devise }}</span>
@@ -190,9 +188,7 @@
 
               <template #body-cell-statut="r">
                 <q-td :props="r">
-                  <q-chip :color="couleurInscription(r.row.statut)" text-color="white" dense>
-                    {{ LIBELLE_STATUT_INSCRIPTION_FORMATION[r.row.statut] ?? r.row.statut }}
-                  </q-chip>
+                  <PastilleStatut domaine="inscriptionFormation" :statut="r.row.statut" />
                 </q-td>
               </template>
 
@@ -207,9 +203,7 @@
 
               <template #body-cell-paiementStatut="r">
                 <q-td :props="r">
-                  <q-chip :color="couleurPaiement(r.row.paiement?.statut)" text-color="white" dense>
-                    {{ LIBELLE_STATUT_PAIEMENT[r.row.paiement?.statut ?? ''] ?? '—' }}
-                  </q-chip>
+                  <PastilleStatut domaine="paiement" :statut="r.row.paiement?.statut" />
                 </q-td>
               </template>
 
@@ -259,9 +253,7 @@
               <div class="text-uppercase text-caption text-grey-7">{{ f.categorie ?? '—' }}</div>
               <div class="text-subtitle1 text-weight-medium">{{ f.titre }}</div>
             </div>
-            <q-chip :color="couleurStatut(f.statut)" text-color="white" dense>
-              {{ LIBELLE_STATUT_FORMATION[f.statut] ?? f.statut }}
-            </q-chip>
+            <PastilleStatut domaine="formation" :statut="f.statut" />
           </q-card-section>
           <q-card-section class="text-center">
             <div class="text-h3 chiffres">{{ montantLisible(f.prix) }} <span class="text-h6">{{ f.devise }}</span></div>
@@ -345,16 +337,12 @@
                 </template>
                 <template #body-cell-statut="r">
                   <q-td :props="r">
-                    <q-chip :color="couleurInscription(r.row.statut)" text-color="white" dense>
-                      {{ LIBELLE_STATUT_INSCRIPTION_FORMATION[r.row.statut] ?? r.row.statut }}
-                    </q-chip>
+                    <PastilleStatut domaine="inscriptionFormation" :statut="r.row.statut" />
                   </q-td>
                 </template>
                 <template #body-cell-paiementStatut="r">
                   <q-td :props="r">
-                    <q-chip :color="couleurPaiement(r.row.paiement?.statut)" text-color="white" dense>
-                      {{ LIBELLE_STATUT_PAIEMENT[r.row.paiement?.statut ?? ''] ?? '—' }}
-                    </q-chip>
+                    <PastilleStatut domaine="paiement" :statut="r.row.paiement?.statut" />
                   </q-td>
                 </template>
                 <template #body-cell-actionsRegistre="r">
@@ -408,7 +396,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="liste.pageSize = Math.max(liste.total, 200)"
+      @tous="liste.toutAfficher()"
     />
 
     <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="liste.recharger()" />
@@ -416,6 +404,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -430,8 +419,6 @@ import PaginationBar from '../components/PaginationBar.vue';
 import FormationDialog from '../components/FormationDialog.vue';
 import {
   LIBELLE_STATUT_FORMATION,
-  LIBELLE_STATUT_INSCRIPTION_FORMATION,
-  LIBELLE_STATUT_PAIEMENT,
   dateLisible,
   montantLisible,
 } from '../utils/libelles';
@@ -536,19 +523,6 @@ async function chargerRegistre(f: Formation, force = false) {
       registreCharge.value[f.id] = false;
     }
   }
-}
-
-function couleurStatut(s: StatutFormation): string {
-  return s === 'PUBLIEE' ? 'secondary' : s === 'COMPLETE' ? 'warning' : 'grey-7';
-}
-
-function couleurInscription(s: string): string {
-  return s === 'CONFIRMEE' ? 'secondary' : s === 'ANNULEE' ? 'negative' : 'warning';
-}
-
-function couleurPaiement(s?: string): string {
-  if (!s) return 'grey-6';
-  return s === 'REUSSI' ? 'secondary' : s === 'ECHOUE' || s === 'ANNULE' ? 'negative' : 'warning';
 }
 
 function nomInscrit(i: InscriptionFormationDetail): string {

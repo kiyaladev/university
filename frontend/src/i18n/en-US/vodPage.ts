@@ -37,6 +37,7 @@ export default {
       progress: 'Progress',
       views: 'Views',
     },
+    noSubject: '—',
   },
   card: {
     noTeacher: 'No teacher',

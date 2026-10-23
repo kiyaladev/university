@@ -42,10 +42,6 @@ export default {
     type: 'Type: {type}',
     paiementStatut: 'Collection: {statut}',
   },
-  status: {
-    encaissee: 'Collected',
-    aEncaisser: 'To be collected',
-  },
   period: {
     summary: '{periode} — {total} item(s).',
     range: 'from {debut} to {fin}',

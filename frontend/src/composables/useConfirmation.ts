@@ -16,15 +16,34 @@ import { api } from '../boot/axios';
  * `supprimerAvecConfirmation` permet de garder ceux, plus précis, d'une page.
  * En cas d'échec du DELETE, l'intercepteur axios affiche le motif : on ne
  * notifie ici que le succès.
+ *
+ * Couleur du bouton : `danger` (rouge) pour détruire, sinon `couleur` —
+ * 'positive' pour une validation qui engage (feuille de paie, encaissement…),
+ * 'warning' pour une étape solennelle (proclamation). Par défaut 'primary'.
+ * `persistent` : un clic à côté ne ferme pas (dépôt d'un bulletin de vote…).
  */
+
+export type CouleurConfirmation = 'primary' | 'positive' | 'negative' | 'warning';
 
 export interface OptionsConfirmation {
   titre: string;
   message: string;
   /** Libellé du bouton de validation (par défaut « Confirmer »). */
   ok?: string;
-  /** Bouton rouge pour une action destructrice. */
+  /** Bouton rouge pour une action destructrice (prime sur `couleur`). */
   danger?: boolean;
+  /** Couleur du bouton de validation (par défaut 'primary'). */
+  couleur?: CouleurConfirmation;
+  /** Libellé du bouton d'annulation (par défaut « Annuler »). */
+  libelleAnnuler?: string;
+  /** Vrai : un clic hors du dialogue ne le ferme pas. Faux par défaut. */
+  persistent?: boolean;
+}
+
+export interface OptionsSaisie extends OptionsConfirmation {
+  libelleSaisie?: string;
+  /** Texte proposé dans le champ à l'ouverture (vide par défaut). */
+  valeurInitiale?: string | null | undefined;
 }
 
 export interface OptionsSuppression {
@@ -39,13 +58,17 @@ export function useConfirmation() {
   const $q = useQuasar();
   const { t } = useI18n();
 
-  function bouton(o: { ok?: string | undefined; danger?: boolean | undefined }) {
+  function bouton(o: OptionsConfirmation) {
     return {
       label: o.ok ?? t('common.actions.confirm'),
-      color: o.danger ? 'negative' : 'primary',
+      color: o.danger ? 'negative' : (o.couleur ?? 'primary'),
       unelevated: true,
       noCaps: true,
     };
+  }
+
+  function annuler(o: OptionsConfirmation) {
+    return { label: o.libelleAnnuler ?? t('common.actions.cancel'), flat: true, noCaps: true };
   }
 
   function confirmer(o: OptionsConfirmation): Promise<boolean> {
@@ -53,9 +76,9 @@ export function useConfirmation() {
       $q.dialog({
         title: o.titre,
         message: o.message,
-        cancel: { label: t('common.actions.cancel'), flat: true, noCaps: true },
+        cancel: annuler(o),
         ok: bouton(o),
-        persistent: false,
+        persistent: o.persistent ?? false,
       })
         .onOk(() => resolve(true))
         .onCancel(() => resolve(false))
@@ -64,14 +87,15 @@ export function useConfirmation() {
   }
 
   /** Variante avec un champ texte libre (motif…) : rend la saisie, ou `null` si annulé. */
-  function confirmerAvecSaisie(o: OptionsConfirmation & { libelleSaisie: string }): Promise<string | null> {
+  function confirmerAvecSaisie(o: OptionsSaisie): Promise<string | null> {
     return new Promise((resolve) => {
       $q.dialog({
         title: o.titre,
         message: o.message,
-        prompt: { model: '', type: 'text', label: o.libelleSaisie },
-        cancel: { label: t('common.actions.cancel'), flat: true, noCaps: true },
+        prompt: { model: o.valeurInitiale ?? '', type: 'text', ...(o.libelleSaisie ? { label: o.libelleSaisie } : {}) },
+        cancel: annuler(o),
         ok: bouton(o),
+        persistent: o.persistent ?? false,
       })
         .onOk((saisie: string) => resolve(saisie ?? ''))
         .onCancel(() => resolve(null))

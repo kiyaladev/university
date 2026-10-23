@@ -124,9 +124,7 @@
 
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <span class="champ badge-statut" :class="classeStatut(p.row.statut)">
-            {{ LIBELLE_STATUT_INSCRIPTION[p.row.statut] ?? p.row.statut }}
-          </span>
+          <PastilleStatut domaine="inscription" :statut="p.row.statut" />
         </q-td>
       </template>
 
@@ -246,9 +244,7 @@
       >
         <q-card-section>
           <div class="row items-center q-mb-xs">
-            <span class="champ badge-statut" :class="classeStatut(d.statut)">
-              {{ LIBELLE_STATUT_INSCRIPTION[d.statut] ?? d.statut }}
-            </span>
+            <PastilleStatut domaine="inscription" :statut="d.statut" />
             <q-space />
             <div class="text-caption text-grey-7">{{ d.numero }}</div>
           </div>
@@ -374,7 +370,7 @@
       v-model:page="liste.page"
       v-model:page-size="liste.pageSize"
       :total="liste.total"
-      @tous="toutAfficher"
+      @tous="liste.toutAfficher()"
     />
 
     <inscription-dialog v-model="dialogInscription" @enregistre="liste.recharger()" />
@@ -484,6 +480,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
@@ -582,9 +579,9 @@ const chargementEtudiant = ref(false);
 const etudiantEdite = ref<Etudiant | null>(null);
 const dialogFicheEtudiant = ref(false);
 
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutGerer = computed(() => auth.peut('inscriptions.gerer'));
 /** Encaisser, c'est créer un paiement : mêmes rôles que `POST /paiements`. */
-const peutEncaisser = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutEncaisser = computed(() => auth.peut('paiements.creer'));
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -607,15 +604,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'dateInscription', label: t('inscriptions.table.columns.enrolledOn'), field: 'dateInscription', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-const classeStatut = (s: string) =>
-  ({
-    BROUILLON: 'champ--brouillon',
-    EN_ATTENTE_PAIEMENT: 'champ--attente-paiement',
-    PAYEE: 'champ--payee',
-    VALIDEE: 'champ--validee',
-    ANNULEE: 'champ--annulee',
-  })[s] ?? 'champ--brouillon';
 
 /** Au moins un critère est posé : l'état vide se répare en réinitialisant. */
 const filtresActifs = computed(() =>
@@ -690,9 +678,9 @@ function resteAPayer(dossier: Inscription): number {
 }
 
 const peutValider = (d: Inscription) =>
-  auth.aRole(['SCOLARITE', 'ADMIN']) && d.statut === 'PAYEE';
+  auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
 const peutAnnuler = (d: Inscription) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && !['VALIDEE', 'ANNULEE'].includes(d.statut);
+  auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
 /** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
 const peutEncaisserDossier = (d: Inscription) =>
   peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
@@ -718,6 +706,7 @@ async function valider(dossier: Inscription) {
       nom: dossier.etudiant?.nom,
     }),
     ok: t('common.actions.validate'),
+    couleur: 'positive',
   });
   if (!ok) return;
   try {
@@ -785,11 +774,6 @@ function ouvrirModificationEtudiant() {
   etudiantEdite.value = etudiantApercu.value;
   dialogEtudiant.value = false;
   dialogFicheEtudiant.value = true;
-}
-
-/** « Tout afficher » : une seule page, bornée à 1 000 lignes par l'API. */
-function toutAfficher() {
-  liste.pageSize = Math.min(Math.max(liste.total, 1), 1000);
 }
 
 /** Tout tombe, recherche comprise ; un ciblage levé ramène à l'année en cours. */
@@ -865,18 +849,4 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-
-.champ.badge-statut {
-  display: inline-flex;
-  padding: 3px 12px;
-  font-size: 12px;
-  font-weight: 590;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.champ--brouillon { background: #e8e8ed; color: #33463f; }
-.champ--attente-paiement { background: #fcd116; color: #1d1d1f; }
-.champ--payee { background: #007a4d; color: #fff; }
-.champ--validee { background: #0066cc; color: #fff; }
-.champ--annulee { background: #ce1126; color: #fff; }
 </style>

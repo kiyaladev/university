@@ -457,11 +457,11 @@ const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
 /** Les mêmes rôles que le backend : PUT/POST /documents. */
-const peutDeposer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+const peutDeposer = computed(() => auth.peut('bibliotheque.deposer'));
 /** Modifier / (dé)publier suit le droit de dépôt ; supprimer reste à l'admin. */
 const peutGerer = computed(() => peutDeposer.value);
 /** Le tableau de bord anti-plagiat est réservé à l'admin et à la direction. */
-const peutVoirPlagiat = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutVoirPlagiat = computed(() => auth.peut('plagiat.decider'));
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({ value, label }));
 const statutsPublics = computed(() => [
@@ -519,7 +519,8 @@ function iconePlagiat(score: number): string {
 
 function surligner(texte: string): string {
   const echappe = texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const terme = (rechercheTexte.value || rechercheSelectionnee.value || '').toString().trim();
+  // `rechercheSelectionnee` est un identifiant de document, pas un terme.
+  const terme = rechercheTexte.value.trim();
   if (!terme) return echappe;
   const motif = terme.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return echappe.replace(new RegExp(`(${motif})`, 'gi'), '<mark>$1</mark>');
@@ -595,8 +596,9 @@ async function ouvrirApercu(doc: DocumentDepot) {
   apercuChargement.value = true;
   try {
     const { data } = await bibliothequeService.detail(doc.id);
+    // L'aperçu ne touche pas à la recherche : y recopier le titre créait une
+    // puce non décrochable et filtrait la liste au rechargement suivant.
     apercuTexte.value = (data?.contenuTexte ?? doc.contenuTexte ?? '').toString();
-    rechercheTexte.value = doc.titre;
   } catch {
     apercuTexte.value = '';
   } finally {

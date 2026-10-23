@@ -176,9 +176,7 @@
         </template>
         <template #body-cell-statut="p">
           <q-td :props="p">
-            <q-chip :color="couleurStatut(p.row.statut)" text-color="white" dense square>
-              {{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}
-            </q-chip>
+            <PastilleStatut domaine="stage" :statut="p.row.statut" />
           </q-td>
         </template>
         <template #body-cell-rapport="p">
@@ -266,7 +264,7 @@
                   <q-item-label>{{ c.label }}</q-item-label>
                 </q-item-section>
                 <q-item-section side>
-                  <q-badge :color="couleurStatut(c.statut)" :label="c.nb" />
+                  <PastilleStatut domaine="stage" :statut="c.statut" :libelle="String(c.nb)" />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -442,9 +440,7 @@
             <q-item>
               <q-item-section>{{ $t('common.fields.status') }}</q-item-section>
               <q-item-section side>
-                <q-chip :color="couleurStatut(detail.statut)" text-color="white" dense square>
-                  {{ LIBELLE_STATUT_ENCADREMENT[detail.statut] }}
-                </q-chip>
+                <PastilleStatut domaine="stage" :statut="detail.statut" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -458,6 +454,7 @@
 </template>
 
 <script setup lang="ts">
+import PastilleStatut from '../components/PastilleStatut.vue';
 import SoutenanceDialog from '../components/SoutenanceDialog.vue';
 import TravailDialog from '../components/TravailDialog.vue';
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
@@ -595,9 +592,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-const couleurStatut = (s: string) =>
-  ({ SOUTENU: 'positive', ABANDONNE: 'negative', EN_COURS: 'primary', VALIDE: 'secondary' })[s] ?? 'grey-7';
-
 const compteurs = computed(() => {
   const statuts: StatutEncadrement[] = ['PROPOSE', 'VALIDE', 'EN_COURS', 'SOUTENU', 'ABANDONNE'];
   return statuts.map((statut) => ({
@@ -638,11 +632,9 @@ const statsParType = computed(() => {
   }));
 });
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('stages.creer'));
 
-const peutTransitionner = computed(() =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT']),
-);
+const peutTransitionner = computed(() => auth.peut('stages.transitionner'));
 
 function basculerStatut(statut: StatutEncadrement) {
   filtresTravaux.value.statut = filtresTravaux.value.statut === statut ? null : statut;
@@ -660,15 +652,15 @@ function boutonsTransition(tr: TravailEncadre) {
 }
 
 function peutModifierRapport(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) || estEncadrant(tr);
+  return auth.peut('stages.modifierRapport') || estEncadrant(tr);
 }
 
 function peutPlanifierSoutenance(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && tr.statut === 'EN_COURS' && !tr.soutenance;
+  return auth.peut('stages.planifierSoutenance') && tr.statut === 'EN_COURS' && !tr.soutenance;
 }
 
 function peutConstatJury(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION']) && !!tr.soutenance;
+  return auth.peut('stages.constaterJury') && !!tr.soutenance;
 }
 
 function ouvrirCreation() {
