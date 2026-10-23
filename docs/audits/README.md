@@ -21,8 +21,8 @@ racine : `2026-10-02/`, `2026-10-06/`, `recommandations/`,
 
 Depuis le 23 octobre 2026, les **captures PNG et journaux `.log`** d’`audit/` ne
 sont plus versionnés (`.gitignore`), sauf dans `audit/simplification-2026-10-13/`.
-Les 244 PNG retirés pesaient 34,8 Mo (le dossier `audit/` passait de 38 Mo à
-environ 3,5 Mo de fichiers suivis). Aucun `.log` n’était versionné : les liens
+Les 244 PNG retirés pesaient 34,8 Mo : les fichiers suivis d’`audit/` passent
+de 414 fichiers et 38 Mo à 168 fichiers et 2,1 Mo (JSON, Markdown, texte). Aucun `.log` n’était versionné : les liens
 vers des `.log` dans les documents figés pointent vers des fichiers jamais
 publiés.
 
