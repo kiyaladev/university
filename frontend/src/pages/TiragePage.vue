@@ -210,7 +210,7 @@ const liste = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('tirage.gerer'));
 
 const ORDRES: StadeTirage[] = ['PROGRAMME', 'IMPRIME', 'MIS_SOUS_PLI', 'DISTRIBUE', 'RECUPERE', 'ANNULE'];
 

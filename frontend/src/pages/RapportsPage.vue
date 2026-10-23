@@ -390,9 +390,9 @@ import { ouvrirImpression, telechargerFichier } from '../services/impression';
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const peutVoirPaiement = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-const peutVoirCouverture = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-const peutSignerReleve = computed(() => auth.aRole(['CHEF_DEPARTEMENT']) && !!auth.utilisateur?.departementId);
+const peutVoirPaiement = computed(() => auth.peut('rapports.voirEtatPaiement'));
+const peutVoirCouverture = computed(() => auth.peut('rapports.voirCouverture'));
+const peutSignerReleve = computed(() => auth.peut('rapports.signerReleve') && !!auth.utilisateur?.departementId);
 const { t } = useI18n();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 

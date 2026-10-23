@@ -334,10 +334,8 @@ const optionsStatuts = Object.entries(LIBELLE_STATUT_JUSTIFICATIF).map(([value, 
   value,
 }));
 
-const peutArbitrer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT']));
-const peutDeposer = computed(() =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT']),
-);
+const peutArbitrer = computed(() => auth.peut('justificatifs.arbitrer'));
+const peutDeposer = computed(() => auth.peut('justificatifs.deposer'));
 
 const messageVide = computed(() =>
   filtres.value.statut || filtres.value.type

@@ -436,8 +436,8 @@ const liste = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
-const peutImprimer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutCreer = computed(() => auth.peut('paie.creer'));
+const peutImprimer = computed(() => auth.peut('paie.imprimer'));
 const aDesFiltres = computed(() => !!filtres.value.statut || !!filtres.value.annee);
 
 const optionsStatuts = ['BROUILLON', 'VALIDEE', 'PAYEE'].map((v) => ({
@@ -613,11 +613,11 @@ function supprimer(f: FeuillePaie) {
 
 // Droits d'action, par rôle et par statut du cycle de vie.
 const peutCalculer = (f: FeuillePaie) =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && f.statut === 'BROUILLON';
+  auth.peut('paie.calculer') && f.statut === 'BROUILLON';
 const peutValider = (f: FeuillePaie) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && f.statut === 'BROUILLON';
-const peutPayer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'VALIDEE';
-const peutSupprimer = (f: FeuillePaie) => auth.role === 'ADMIN' && f.statut === 'BROUILLON';
+  auth.peut('paie.valider') && f.statut === 'BROUILLON';
+const peutPayer = (f: FeuillePaie) => auth.peut('paie.payer') && f.statut === 'VALIDEE';
+const peutSupprimer = (f: FeuillePaie) => auth.peut('paie.supprimer') && f.statut === 'BROUILLON';
 
 </script>
 

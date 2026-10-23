@@ -804,10 +804,10 @@ const colonnesAttributions = computed<QTableColumn[]>(() => [
 ]);
 
 // ---------------------------------------------------------------- droits
-const peutGererResidences = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
-const peutGererChambres = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
-const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
-const peutCreerAttribution = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutGererResidences = computed(() => auth.peut('cites.gererResidences'));
+const peutGererChambres = computed(() => auth.peut('cites.gererChambres'));
+const peutDecider = computed(() => auth.peut('cites.decider'));
+const peutCreerAttribution = computed(() => auth.peut('cites.creerAttribution'));
 
 const peutGerer = computed(() =>
   onglet.value === 'residences' ? peutGererResidences.value

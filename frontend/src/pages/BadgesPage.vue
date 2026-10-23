@@ -48,7 +48,7 @@ const liste = reactive(
 
 const modeVue = usePresentationListe();
 
-const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutEditer = computed(() => auth.peut('badges.editer'));
 
 const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_BADGE);
 const OPTIONS_STATUT = optionsDepuis(LIBELLE_STATUT_BADGE);

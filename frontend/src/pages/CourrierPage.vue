@@ -305,9 +305,9 @@ watch(onglet, () => {
   liste.page = 1;
 });
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT']));
+const peutCreer = computed(() => auth.peut('courrier.creer'));
 const peutCloturer = (c: Courrier) =>
-  auth.role === 'ADMIN' && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(c.statut);
+  auth.peut('courrier.cloturer') && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(c.statut);
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_COURRIER).map(([value, label]) => ({
   value,

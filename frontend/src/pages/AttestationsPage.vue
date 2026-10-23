@@ -476,8 +476,8 @@ const optionsPromotions = computed(() =>
     .map((p) => ({ label: p.nom, value: p.id })),
 );
 
-const peutEmettre = computed(() => auth.aRole(['SCOLARITE', 'ADMIN']));
-const peutRevoquer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutEmettre = computed(() => auth.peut('attestations.emettre'));
+const peutRevoquer = computed(() => auth.peut('attestations.revoquer'));
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];

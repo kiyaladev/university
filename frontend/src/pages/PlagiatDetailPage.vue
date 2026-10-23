@@ -303,7 +303,7 @@ const decisionEnCours = ref(false);
 
 const id = computed(() => String(route.params.id ?? ''));
 
-const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutDecider = computed(() => auth.peut('plagiat.decider'));
 
 const couleurStatut = (s: SuspicionPlagiat['statut']) =>
   ({ EN_ATTENTE: 'orange', ACQUITTE: 'positive', CONFIRME: 'negative' }[s]);

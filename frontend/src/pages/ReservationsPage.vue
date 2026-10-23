@@ -198,13 +198,12 @@ import {
   aujourdhui,
   dateLisible,
 } from '../utils/libelles';
-import type { ReservationSalle, Role, Salle, ChipFiltre } from '../types';
+import type { ReservationSalle, Salle, ChipFiltre } from '../types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const ROLES_RESERVATION: Role[] = ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'];
-const peutReserver = computed(() => auth.aRole(ROLES_RESERVATION));
+const peutReserver = computed(() => auth.peut('reservations.reserver'));
 
 /** Une seule source pour les libellés de statut : utils/libelles.ts. */
 const LEGENDE = LIBELLE_STATUT_RESERVATION;

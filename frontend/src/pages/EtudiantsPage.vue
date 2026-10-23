@@ -555,10 +555,10 @@ const listeInscriptions = ref<Inscription[]>([]);
 const etudiantInscriptions = ref<EtudiantRegistre | null>(null);
 const chargementInscriptions = ref(false);
 
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
-const peutValiderVoir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']));
+const peutGerer = computed(() => auth.peut('etudiants.gerer'));
+const peutValiderVoir = computed(() => auth.peut('etudiants.voirValidation'));
 /** Le suivi financier n'est ouvert qu'aux écrans qui portent la route /paiements. */
-const peutVoirPaiements = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutVoirPaiements = computed(() => auth.peut('paiements.voir'));
 const peutGererCompte = (e: EtudiantRegistre) => auth.estAdmin || !e.user;
 
 const optionsActif = computed(() => [

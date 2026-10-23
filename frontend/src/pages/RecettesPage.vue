@@ -252,7 +252,7 @@ const liste = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('recettes.gerer'));
 const peutEncaisser = peutCreer;
 
 const optionsTypes = Object.entries(LIBELLE_TYPE_RECETTE).map(([value, label]) => ({

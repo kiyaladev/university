@@ -44,9 +44,9 @@ const liste = reactive(
 
 const modeVue = usePresentationListe();
 
-const peutEmettre = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutModifier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutRevoquer = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutEmettre = computed(() => auth.peut('cartes.emettre'));
+const peutModifier = computed(() => auth.peut('cartes.modifier'));
+const peutRevoquer = computed(() => auth.peut('cartes.revoquer'));
 
 const dialogEmission = ref(false);
 const dialogRevocation = ref(false);

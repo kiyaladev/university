@@ -343,7 +343,7 @@ const liste = reactive(
 );
 const suspicions = computed(() => liste.lignes);
 
-const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutDecider = computed(() => auth.peut('plagiat.decider'));
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'score', label: t('plagiatPage.table.columns.score'), field: 'score', align: 'center', sortable: true },

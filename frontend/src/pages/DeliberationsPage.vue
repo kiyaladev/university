@@ -372,7 +372,7 @@ import { ouvrirImpression } from '../services/impression';
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const peutVoirBulletins = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutVoirBulletins = computed(() => auth.peut('bulletins.voir'));
 const router = useRouter();
 const { t } = useI18n();
 const { confirmer } = useConfirmation();
@@ -382,9 +382,9 @@ interface DeliberationListe extends Deliberation {
   _count?: { lignes: number };
 }
 
-const peutSaisir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutSaisir = computed(() => auth.peut('deliberations.saisir'));
 /** Le jury : direction et administrateur figent les résultats. */
-const estJury = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const estJury = computed(() => auth.peut('deliberations.juger'));
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);

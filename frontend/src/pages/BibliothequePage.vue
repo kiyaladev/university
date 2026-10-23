@@ -457,11 +457,11 @@ const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
 /** Les mêmes rôles que le backend : PUT/POST /documents. */
-const peutDeposer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+const peutDeposer = computed(() => auth.peut('bibliotheque.deposer'));
 /** Modifier / (dé)publier suit le droit de dépôt ; supprimer reste à l'admin. */
 const peutGerer = computed(() => peutDeposer.value);
 /** Le tableau de bord anti-plagiat est réservé à l'admin et à la direction. */
-const peutVoirPlagiat = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
+const peutVoirPlagiat = computed(() => auth.peut('plagiat.decider'));
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([value, label]) => ({ value, label }));
 const statutsPublics = computed(() => [

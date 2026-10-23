@@ -540,7 +540,7 @@ const $q = useQuasar();
 const route = useRoute();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const peutAffecterControleur = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutAffecterControleur = computed(() => auth.peut('seances.affecterControleur'));
 const vue = usePresentationListe();
 const { t } = useI18n();
 

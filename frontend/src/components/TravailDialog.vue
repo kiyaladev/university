@@ -156,7 +156,12 @@ const encadrantsTous = ref<Enseignant[]>([]);
 const optionEncadrant = (e: Enseignant) => ({ label: `${e.nom} ${e.prenom} (${e.matricule})`, value: e.id });
 
 /** Un étudiant connecté est toujours le porteur : le champ se verrouille. */
-const peutChoisirEtudiant = computed(() => auth.role !== 'ETUDIANT');
+/**
+ * L'étudiant ne se choisit pas (il devient d'office le porteur) et le porteur
+ * ne change plus après la création : la `PUT` le refuse. Sans compte chargé,
+ * rien n'est autorisé (l'ancien `role !== 'ETUDIANT'` laissait passer `null`).
+ */
+const peutChoisirEtudiant = computed(() => auth.peut('travaux.choisirEtudiant') && !props.travail);
 
 watch(ouvert, (o) => {
   if (!o) return;

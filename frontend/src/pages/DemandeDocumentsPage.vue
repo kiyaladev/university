@@ -492,8 +492,8 @@ const filtres = ref<Record<string, any>>({
   type: null,
   etudiantId: undefined,
 });
-/** Même périmètre que GET /documents-demande côté API. */
-const peutVoir = () => auth.aRole(['ADMIN', 'SCOLARITE']);
+/** Même périmètre que l'écran /demandes-docs et que le traitement côté API. */
+const peutVoir = () => auth.peut('demandesDocuments.traiter');
 const liste = reactive(
   useListePaginee<DemandeDocument>({
     filtres,

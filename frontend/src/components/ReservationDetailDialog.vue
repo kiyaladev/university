@@ -190,13 +190,10 @@ const form = ref({
 const estProprietaire = computed(
   () => props.reservation?.demandeurId && props.reservation.demandeurId === auth.utilisateur?.id,
 );
-const estAdministrateur = computed(
-  () => auth.utilisateur?.role === 'ADMIN' || auth.utilisateur?.role === 'DIRECTION',
-);
-const peutDecider = computed(() => estAdministrateur.value);
+const peutDecider = computed(() => auth.peut('reservations.decider'));
 const estModifiable = computed(() => props.reservation?.statut === 'EN_ATTENTE');
 const peutModifier = computed(
-  () => estModifiable.value && (estProprietaire.value || auth.utilisateur?.role === 'ADMIN'),
+  () => estModifiable.value && (estProprietaire.value || auth.peut('reservations.modifierToutes')),
 );
 
 const optionsSalles = computed(() =>

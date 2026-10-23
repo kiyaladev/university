@@ -51,9 +51,9 @@ const liste = reactive(
 
 const modeVue = usePresentationListe();
 
-const peutEditer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutEditer = computed(() => auth.peut('elections.editer'));
 /** L'administrateur est aussi un électeur : il retrouve l'urne depuis ici. */
-const peutVoter = computed(() => auth.aRole(['ADMIN']));
+const peutVoter = computed(() => auth.peut('elections.voterDepuisGestion'));
 
 const ONGLETS = computed<Array<{ statut: StatutElection; label: string; icone: string }>>(() => [
   { statut: 'BROUILLON', label: t('elections.tabs.draft'), icone: 'edit_note' },

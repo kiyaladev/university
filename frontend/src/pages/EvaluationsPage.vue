@@ -444,9 +444,8 @@ const { confirmer, supprimerAvecConfirmation } = useConfirmation();
  * — créer / modifier / clôturer / supprimer une évaluation : SCOLARITE, ADMIN ;
  * — saisir les notes (`PUT /notes/saisie`) : + DIRECTION et CHEF_DEPARTEMENT.
  */
-const peutGererEvaluation = () => auth.aRole(['ADMIN', 'SCOLARITE']);
-const peutSaisirNotes = () =>
-  auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT']);
+const peutGererEvaluation = () => auth.peut('evaluations.gerer');
+const peutSaisirNotes = () => auth.peut('notes.saisir');
 
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);

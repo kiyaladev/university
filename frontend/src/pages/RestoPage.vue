@@ -412,8 +412,8 @@ const { t } = useI18n();
 const { confirmer } = useConfirmation();
 const presentation = usePresentationListe();
 
-const peutGuichet = computed(() => auth.aRole(['CONTROLEUR', 'ADMIN', 'SCOLARITE']));
-const peutRecharger = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutGuichet = computed(() => auth.peut('resto.guichet'));
+const peutRecharger = computed(() => auth.peut('resto.recharger'));
 
 const onglet = ref<'guichet' | 'portefeuilles' | 'transactions'>(
   peutGuichet.value ? 'guichet' : 'portefeuilles',
@@ -569,7 +569,7 @@ async function chargerFlux(f: Record<string, any>): Promise<{ data: LigneTransac
     // Le serveur ne filtre les recharges que par statut de paiement.
     api.get('/resto/recharges', { params: { ...periode, statut: f.statut || undefined } }),
   ]);
-  const peutAnnuler = auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']);
+  const peutAnnuler = auth.peut('resto.annuler');
   const lignes: LigneTransaction[] = [
     ...cons.data.data.map((c: any) => ({
       cle: `c-${c.id}`,

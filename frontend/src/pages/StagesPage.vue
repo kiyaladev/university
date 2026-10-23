@@ -638,11 +638,9 @@ const statsParType = computed(() => {
   }));
 });
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('stages.creer'));
 
-const peutTransitionner = computed(() =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT']),
-);
+const peutTransitionner = computed(() => auth.peut('stages.transitionner'));
 
 function basculerStatut(statut: StatutEncadrement) {
   filtresTravaux.value.statut = filtresTravaux.value.statut === statut ? null : statut;
@@ -660,15 +658,15 @@ function boutonsTransition(tr: TravailEncadre) {
 }
 
 function peutModifierRapport(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) || estEncadrant(tr);
+  return auth.peut('stages.modifierRapport') || estEncadrant(tr);
 }
 
 function peutPlanifierSoutenance(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']) && tr.statut === 'EN_COURS' && !tr.soutenance;
+  return auth.peut('stages.planifierSoutenance') && tr.statut === 'EN_COURS' && !tr.soutenance;
 }
 
 function peutConstatJury(tr: TravailEncadre) {
-  return auth.aRole(['ADMIN', 'DIRECTION']) && !!tr.soutenance;
+  return auth.peut('stages.constaterJury') && !!tr.soutenance;
 }
 
 function ouvrirCreation() {

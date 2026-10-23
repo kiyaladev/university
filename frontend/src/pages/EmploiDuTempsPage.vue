@@ -379,9 +379,7 @@ const creneauxDuJourActif = computed(
 );
 
 /** Miroir des rôles que le menu principal autorise sur `/seances`. */
-const peutVoirRegistre = computed(() =>
-  auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT']),
-);
+const peutVoirRegistre = computed(() => auth.peut('emploiDuTemps.voirRegistre'));
 
 const filtresActifs = computed(
   () => !!filtres.value.promotionId || !!filtres.value.enseignantId || !!filtres.value.salleId,

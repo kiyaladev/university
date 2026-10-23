@@ -254,7 +254,7 @@ const messageCourant = ref('');
 
 /** Le personnel voit les notes internes et les liens vers le dossier étudiant. */
 const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']));
-const peutOuvrirDossier = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutOuvrirDossier = computed(() => auth.peut('reclamations.ouvrirDossier'));
 
 const ETAPES_RECLAMATION = computed(() => [
   { identifiant: 'OUVERTE', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },

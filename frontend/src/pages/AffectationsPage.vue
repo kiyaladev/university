@@ -360,7 +360,7 @@ const form = ref({
 });
 
 /** Supprimer une charge est réservé à l'administration et à la scolarité. */
-const peutSupprimer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutSupprimer = computed(() => auth.peut('affectations.supprimer'));
 
 const optionsPromotions = computed(() =>
   promotions.value.map((p) => ({ label: p.nom, value: p.id })),

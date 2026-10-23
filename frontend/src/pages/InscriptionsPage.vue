@@ -582,9 +582,9 @@ const chargementEtudiant = ref(false);
 const etudiantEdite = ref<Etudiant | null>(null);
 const dialogFicheEtudiant = ref(false);
 
-const peutGerer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutGerer = computed(() => auth.peut('inscriptions.gerer'));
 /** Encaisser, c'est créer un paiement : mêmes rôles que `POST /paiements`. */
-const peutEncaisser = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutEncaisser = computed(() => auth.peut('paiements.creer'));
 
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 const optionsPromotions = computed(() =>
@@ -690,9 +690,9 @@ function resteAPayer(dossier: Inscription): number {
 }
 
 const peutValider = (d: Inscription) =>
-  auth.aRole(['SCOLARITE', 'ADMIN']) && d.statut === 'PAYEE';
+  auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
 const peutAnnuler = (d: Inscription) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && !['VALIDEE', 'ANNULEE'].includes(d.statut);
+  auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
 /** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
 const peutEncaisserDossier = (d: Inscription) =>
   peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;

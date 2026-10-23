@@ -464,11 +464,11 @@ const ex = reactive(
   }),
 );
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
-const peutDemarrer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CONTROLEUR']));
-const peutTerminer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutCreer = computed(() => auth.peut('examens.creer'));
+const peutDemarrer = computed(() => auth.peut('examens.demarrer'));
+const peutTerminer = computed(() => auth.peut('examens.terminer'));
 /** La route `tirage` est réservée à l'administration et à la scolarité. */
-const peutVoirTirage = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
+const peutVoirTirage = computed(() => auth.peut('tirage.gerer'));
 
 const optionsTypes = (['PARTIEL', 'FINAL', 'RATTRAPAGE', 'CONTROLE_CONTINU'] as const).map((value) => ({
   value,

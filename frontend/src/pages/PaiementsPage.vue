@@ -653,11 +653,11 @@ function ouvrirModule(p: Paiement) {
   if (chemin) void router.push(chemin);
 }
 
-const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
+const peutCreer = computed(() => auth.peut('paiements.creer'));
 const peutSimuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && p.statut === 'EN_ATTENTE';
+  auth.peut('paiements.simuler') && estInscription(p) && p.statut === 'EN_ATTENTE';
 const peutAnnuler = (p: Paiement) =>
-  auth.aRole(['ADMIN', 'DIRECTION']) && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
+  auth.peut('paiements.annuler') && estInscription(p) && !['REUSSI', 'ANNULE', 'REMBOURSE'].includes(p.statut);
 
 const optionsStatuts = computed(() =>
   Object.entries(LIBELLE_STATUT_PAIEMENT).map(([value, label]) => ({ value, label })),

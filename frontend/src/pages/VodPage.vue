@@ -62,9 +62,9 @@ const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: nu
 const modeVue = usePresentationListe();
 
 /** Écriture : les mêmes rôles que le backend (POST/PUT/publier/archiver). */
-const peutEditer = computed(() => auth.aRole(['ADMIN', 'ENSEIGNANT']));
+const peutEditer = computed(() => auth.peut('vod.editer'));
 function peutGererRessource(v: RessourceCatalogue) {
-  return peutEditer.value && (auth.aRole(['ADMIN']) || v.creeParId === auth.utilisateur?.id);
+  return peutEditer.value && (auth.peut('vod.gererToutes') || v.creeParId === auth.utilisateur?.id);
 }
 /** Un étudiant ne voit que sa collecte : ni statuts, ni actions. */
 const estEtudiant = computed(() => auth.aRole(['ETUDIANT']));
