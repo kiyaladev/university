@@ -143,7 +143,17 @@ export function verifierManifeste(router: Router): void {
     const resolue = router.resolve(e.path);
     const feuille = resolue.matched[resolue.matched.length - 1];
     if (!feuille || feuille.meta.public) erreurs.push(`${e.path} : aucune route connectée`);
-    else if (!feuille.redirect && (resolue.meta.titre !== e.titre || !memes(resolue.meta.roles, e.roles))) {
+    else if (e.redirection) {
+      // Une entrée qui redirige n'a pas d'écran propre : on vérifie qu'elle
+      // mène bien à l'écran annoncé, et que les droits de la cible sont les
+      // siens (l'étudiant redirected vers « Mes demandes » n'y entre pas).
+      if (feuille.redirect !== e.redirection) erreurs.push(`${e.path} : ne redirige pas vers ${e.redirection}`);
+      const cible = router.resolve(e.redirection);
+      const feuilleCible = cible.matched[cible.matched.length - 1];
+      if (!feuilleCible) erreurs.push(`${e.path} : redirection vers ${e.redirection} sans écran`);
+      else if (!memes(feuilleCible.meta.roles, e.roles))
+        erreurs.push(`${e.path} : rôles différents de ${e.redirection}`);
+    } else if (!feuille.redirect && (resolue.meta.titre !== e.titre || !memes(resolue.meta.roles, e.roles))) {
       erreurs.push(`${e.path} : meta de la route différente du manifeste (utiliser ecran('${e.path}'))`);
     }
     if (e.service && serviceDeRoute(e.path) !== e.service)
