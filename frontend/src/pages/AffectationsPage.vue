@@ -154,7 +154,7 @@
             </q-chip>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ a.annee?.libelle ?? '—' }} {{ $t('rectoratPage.subtitleFallback') }} {{ $t('affectations.cardView.contractualVolume') }}
+            {{ a.annee?.libelle ?? '—' }} {{ $t('rectorat.subtitleFallback') }} {{ $t('affectations.cardView.contractualVolume') }}
             <span class="chiffres">{{ a.volumeHorairePrevu }} h</span>
           </div>
         </q-card-section>

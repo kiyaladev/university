@@ -75,4 +75,5 @@ export default {
     saved: 'Paramètres enregistrés',
     saveError: 'Enregistrement impossible',
   },
+  attendanceRules: 'Règles de présence',
 };

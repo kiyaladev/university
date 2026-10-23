@@ -103,7 +103,7 @@
           <q-chip v-if="p.row.sexe" dense outline color="primary">
             {{ p.row.sexe === 'F' ? 'F' : 'M' }}
           </q-chip>
-          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
         </q-td>
       </template>
 
@@ -112,7 +112,7 @@
           <q-chip v-if="dernierePromo(p.row)" dense outline color="primary">
             {{ dernierePromo(p.row) }}
           </q-chip>
-          <span v-else class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
         </q-td>
       </template>
 
@@ -272,7 +272,7 @@
           </div>
           <div class="text-caption text-grey-7">
             <span v-if="e.telephone">{{ e.telephone }}</span>
-            <span v-else>{{ $t('rectoratPage.subtitleFallback') }}</span>
+            <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
           </div>
           <div class="q-mt-sm">
             <q-chip

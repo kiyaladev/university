@@ -24,7 +24,7 @@
 
     <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
       <template #avatar><q-icon name="filter_alt" color="primary" /></template>
-      {{ $t('tirage.banner.prefix') }} <strong>{{ examenFiltre.codeExamen }}</strong> {{ $t('rectoratPage.subtitleFallback') }}
+      {{ $t('tirage.banner.prefix') }} <strong>{{ examenFiltre.codeExamen }}</strong> {{ $t('rectorat.subtitleFallback') }}
       {{ examenFiltre.intitule }}.
       <template #action>
         <q-btn flat dense no-caps :label="$t('tirage.actions.viewAll')" @click="retirerFiltreExamen" />

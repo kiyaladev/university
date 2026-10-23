@@ -90,4 +90,6 @@ export default {
     loadError: 'Your record could not be loaded. Check your connection, then try again.',
     rechargeInfo: 'Top-up {reference} pending — follow the payment instructions',
   },
+  paymentHistory: 'Payment history',
+  otherServices: 'Other services',
 };

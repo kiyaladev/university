@@ -119,14 +119,14 @@
                 {{ $t('formationsAdmin.table.paidCount', { count: ligneDashboard(p.row.id)?.nbPayes }) }}
               </div>
             </template>
-            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
           </q-td>
           <q-td key="recette" :props="p" class="text-right chiffres">
             <template v-if="ligneDashboard(p.row.id)">
               {{ montantLisible(ligneDashboard(p.row.id)?.recette ?? 0) }}
               <span class="text-caption text-grey-7">{{ p.row.devise }}</span>
             </template>
-            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
           </q-td>
           <q-td key="actions" :props="p" class="text-right">
             <q-btn

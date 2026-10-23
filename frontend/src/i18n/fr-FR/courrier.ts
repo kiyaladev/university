@@ -1,4 +1,4 @@
-/** Namespace `courrierPage`. */
+/** Namespace `courrier`. */
 export default {
   title: 'Courrier administratif',
   subtitle:

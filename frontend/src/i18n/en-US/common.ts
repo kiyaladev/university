@@ -224,6 +224,7 @@ export default {
     installDone: 'UniPrésence is installed on this device',
     installShort: 'Install',
     confirm_logout_msg: 'You will be redirected to the login screen.',
+    otherActions: 'Other actions',
   },
   days: {
     1: 'Monday',

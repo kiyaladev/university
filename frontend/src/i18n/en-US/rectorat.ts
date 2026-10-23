@@ -1,4 +1,4 @@
-/** Namespace `rectoratPage` — Rectorate dashboard page. */
+/** Namespace `rectorat` — Rectorate dashboard page. */
 export default {
   title: "Institution overview",
   subtitle:

@@ -1,4 +1,4 @@
-/** Namespace `paiePage` — PaiePage.vue page (adjunct/hourly staff payroll, admin view). */
+/** Namespace `paie` — PaiePage.vue page (adjunct/hourly staff payroll, admin view). */
 export default {
   title: 'Adjunct staff payroll',
   subtitle:

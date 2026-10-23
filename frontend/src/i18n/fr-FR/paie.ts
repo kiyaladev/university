@@ -1,4 +1,4 @@
-/** Namespace `paiePage` — page PaiePage.vue (paie des vacataires, vue admin). */
+/** Namespace `paie` — page PaiePage.vue (paie des vacataires, vue admin). */
 export default {
   title: 'Paie des vacataires',
   subtitle:

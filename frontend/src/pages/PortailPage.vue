@@ -95,7 +95,7 @@
           </template>
           <p v-else class="carte-portail__aucun">{{ $t('portail.sections.frais.empty') }}</p>
         <!-- Paiements récents -->
-        <q-expansion-item :label="$t('simplification.history')" class="q-mt-md">
+        <q-expansion-item :label="$t('portail.paymentHistory')" class="q-mt-md">
           <ul v-if="profil.paiements.length" class="carte-portail__liste">
             <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
               <span class="carte-portail__item-texte">
@@ -252,7 +252,7 @@
             </router-link>
           </li>
         </ul>
-        <q-expansion-item v-if="services.length > 3" :label="$t('simplification.otherServices')">
+        <q-expansion-item v-if="services.length > 3" :label="$t('portail.otherServices')">
           <q-list>
             <q-item v-for="s in services.slice(3)" :key="s.vers" clickable :to="s.vers">
               <q-item-section avatar><q-icon :name="s.icone" /></q-item-section>
@@ -352,7 +352,7 @@ const services = computed(() => [
   {
     vers: '/mes-demarches',
     icone: 'description',
-    libelle: t('simplification.procedures'),
+    libelle: t('layout.sections.procedures'),
     aide: t('portail.services.demandesDocuments.help'),
   },
   {

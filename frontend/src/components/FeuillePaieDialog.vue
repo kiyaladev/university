@@ -3,7 +3,7 @@
     <q-card style="width: 480px; max-width: 95vw">
       <!-- Création : mois + année, le libellé et la période suivent. -->
       <template v-if="!creee">
-        <q-card-section class="text-h6">{{ $t('paiePage.createDialog.title') }}</q-card-section>
+        <q-card-section class="text-h6">{{ $t('paie.createDialog.title') }}</q-card-section>
         <q-card-section>
           <div class="section-titre">{{ $t('common.fields.period') }}</div>
           <div class="row q-col-gutter-md">
@@ -13,7 +13,7 @@
                 :options="optionsMois"
                 outlined
                 dense
-                :label="$t('paiePage.createDialog.month')"
+                :label="$t('paie.createDialog.month')"
               />
             </div>
             <div class="col-12 col-sm-6">
@@ -22,12 +22,12 @@
                 :options="optionsAnnees"
                 outlined
                 dense
-                :label="$t('paiePage.createDialog.year')"
+                :label="$t('paie.createDialog.year')"
               />
             </div>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ $t('paiePage.createDialog.periodHint', { label: libelle }) }}
+            {{ $t('paie.createDialog.periodHint', { label: libelle }) }}
           </div>
         </q-card-section>
 
@@ -36,7 +36,7 @@
           <q-btn
             color="primary"
             unelevated
-            :label="$t('paiePage.createDialog.create')"
+            :label="$t('paie.createDialog.create')"
             :loading="enregistrement"
             :disable="!form.mois || !form.annee"
             @click="creer"
@@ -60,11 +60,11 @@
             </div>
           </div>
           <div>
-            <div class="text-caption text-grey-7">{{ $t('paiePage.card.totalAmount') }}</div>
+            <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
             <div class="text-h6">{{ montantLisible(creee.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
           </div>
           <div class="text-caption text-grey-7">
-            {{ $t('paiePage.createDialog.draftHint') }}
+            {{ $t('paie.createDialog.draftHint') }}
           </div>
         </q-card-section>
 
@@ -74,7 +74,7 @@
             unelevated
             icon="calculate"
             no-caps
-            :label="$t('paiePage.createDialog.recalculateNow')"
+            :label="$t('paie.createDialog.recalculateNow')"
             @click="emit('calculer', creee)"
           />
           <q-btn flat :label="$t('common.actions.close')" v-close-popup />
@@ -151,7 +151,7 @@ async function creer() {
   try {
     const { data } = await api.post('/feuilles-paie', form.value);
     creee.value = data;
-    $q.notify({ type: 'positive', message: t('paiePage.createDialog.created', { label: data.libelle }) });
+    $q.notify({ type: 'positive', message: t('paie.createDialog.created', { label: data.libelle }) });
     emit('enregistre', data);
   } catch {
     /* notifié par l'intercepteur */

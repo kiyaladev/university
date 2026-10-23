@@ -1,19 +1,19 @@
 <template>
   <q-page class="notifications">
-    <page-header :title="$t('notificationsPage.header.title')" :subtitle="$t('notificationsPage.header.subtitle')">
+    <page-header :title="$t('notifications.header.title')" :subtitle="$t('notifications.header.subtitle')">
       <template v-if="stats" #actions>
         <q-chip square color="warning" text-color="dark" icon="sms">
-          {{ $t('notificationsPage.header.queued', { n: stats.EN_ATTENTE }) }}
+          {{ $t('notifications.header.queued', { n: stats.EN_ATTENTE }) }}
           <q-tooltip>
-            {{ $t('notificationsPage.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
+            {{ $t('notifications.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
           </q-tooltip>
         </q-chip>
       </template>
     </page-header>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-tab name="diffusion" icon="campaign" :label="$t('notificationsPage.tabs.diffusion')" no-caps />
-      <q-tab name="historique" icon="history" :label="$t('notificationsPage.tabs.historique')" no-caps />
+      <q-tab name="diffusion" icon="campaign" :label="$t('notifications.tabs.diffusion')" no-caps />
+      <q-tab name="historique" icon="history" :label="$t('notifications.tabs.historique')" no-caps />
     </q-tabs>
 
     <!-- ============================================================== -->
@@ -24,7 +24,7 @@
         <!-- Diffusion manuelle -->
         <q-form ref="formRef" @submit.prevent="confirmerEnvoi">
           <section class="plaque notif-bloc">
-            <h2 class="pochoir section-titre">{{ $t('notificationsPage.broadcast.generalNotice.title') }}</h2>
+            <h2 class="pochoir section-titre">{{ $t('notifications.broadcast.generalNotice.title') }}</h2>
 
             <q-select
               v-model="motif"
@@ -33,10 +33,10 @@
               dense
               emit-value
               map-options
-              :label="$t('notificationsPage.broadcast.generalNotice.motifLabel')"
+              :label="$t('notifications.broadcast.generalNotice.motifLabel')"
             />
 
-            <p class="pochoir notif-bloc__titre">{{ $t('notificationsPage.broadcast.generalNotice.recipientsLabel') }}</p>
+            <p class="pochoir notif-bloc__titre">{{ $t('notifications.broadcast.generalNotice.recipientsLabel') }}</p>
             <q-option-group
               v-model="destination"
               :options="optionsDestinataires"
@@ -50,7 +50,7 @@
               type="textarea"
               outlined
               dense
-              :label="$t('notificationsPage.broadcast.generalNotice.numbersLabel')"
+              :label="$t('notifications.broadcast.generalNotice.numbersLabel')"
               :rules="[
                 (v) =>
                   v
@@ -58,7 +58,7 @@
                         .split(/[\s,;]+/)
                         .filter(Boolean)
                         .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
-                      || t('notificationsPage.broadcast.generalNotice.numbersInvalid')
+                      || t('notifications.broadcast.generalNotice.numbersInvalid')
                     : true,
               ]"
             />
@@ -67,24 +67,24 @@
               v-model="message"
               type="textarea"
               outlined
-              :label="$t('notificationsPage.broadcast.generalNotice.messageLabel')"
+              :label="$t('notifications.broadcast.generalNotice.messageLabel')"
               maxlength="160"
               counter
-              :rules="[(v) => !!v || t('notificationsPage.broadcast.generalNotice.messageRequired')]"
+              :rules="[(v) => !!v || t('notifications.broadcast.generalNotice.messageRequired')]"
             >
-              <template #hint>{{ $t('notificationsPage.broadcast.generalNotice.messageHint') }}</template>
+              <template #hint>{{ $t('notifications.broadcast.generalNotice.messageHint') }}</template>
             </q-input>
 
             <q-banner dense class="note--info">
               <template #avatar><q-icon name="info" /></template>
               <div v-if="destination === 'tous'">
-                {{ $t('notificationsPage.broadcast.generalNotice.recipientsEstimated', { n: nbInscrits }) }}
+                {{ $t('notifications.broadcast.generalNotice.recipientsEstimated', { n: nbInscrits }) }}
               </div>
               <div v-else-if="destination === 'numeros'">
-                {{ $t('notificationsPage.broadcast.generalNotice.numbersEntered', { n: numerosComptes }) }}
+                {{ $t('notifications.broadcast.generalNotice.numbersEntered', { n: numerosComptes }) }}
               </div>
               <div v-else>
-                {{ $t('notificationsPage.broadcast.generalNotice.deliberationBroadcast') }}
+                {{ $t('notifications.broadcast.generalNotice.deliberationBroadcast') }}
               </div>
             </q-banner>
 
@@ -94,7 +94,7 @@
                 color="primary"
                 no-caps
                 icon="science"
-                :label="$t('notificationsPage.broadcast.generalNotice.testSend')"
+                :label="$t('notifications.broadcast.generalNotice.testSend')"
                 :loading="testEnvoi"
                 @click="testerEnvoi"
               />
@@ -103,7 +103,7 @@
                 color="primary"
                 no-caps
                 icon="send"
-                :label="$t('notificationsPage.broadcast.generalNotice.send')"
+                :label="$t('notifications.broadcast.generalNotice.send')"
                 :loading="envoi"
                 :disable="!formulaireValide"
                 @click="confirmerEnvoi"
@@ -114,9 +114,9 @@
 
         <!-- Résultats de délibération -->
         <section class="plaque notif-bloc">
-          <h2 class="section-titre">{{ $t('notificationsPage.broadcast.deliberationResults.title') }}</h2>
+          <h2 class="section-titre">{{ $t('notifications.broadcast.deliberationResults.title') }}</h2>
           <p class="notif-bloc__aide">
-            {{ $t('notificationsPage.broadcast.deliberationResults.help') }}
+            {{ $t('notifications.broadcast.deliberationResults.help') }}
           </p>
           <q-select
             v-model="deliberationId"
@@ -125,7 +125,7 @@
             dense
             emit-value
             map-options
-            :label="$t('notificationsPage.broadcast.deliberationResults.selectLabel')"
+            :label="$t('notifications.broadcast.deliberationResults.selectLabel')"
             :loading="chargementDeliberations"
           />
           <q-btn
@@ -133,7 +133,7 @@
             color="secondary"
             no-caps
             icon="fact_check"
-            :label="$t('notificationsPage.broadcast.deliberationResults.submit')"
+            :label="$t('notifications.broadcast.deliberationResults.submit')"
             :loading="envoiResultats"
             :disable="!deliberationId"
             @click="diffuserResultats"
@@ -144,15 +144,15 @@
       <!-- Résumé du dernier envoi -->
       <div v-if="resume" class="plaque notif-resume" :class="{ 'notif-resume--partiel': resume.echouees }">
         <div class="notif-resume__cellule">
-          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.recipients') }}</p>
+          <p class="pochoir">{{ $t('notifications.broadcast.summary.recipients') }}</p>
           <p class="lettrage chiffres">{{ resume.total }}</p>
         </div>
         <div class="notif-resume__cellule text-positive">
-          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.sent') }}</p>
+          <p class="pochoir">{{ $t('notifications.broadcast.summary.sent') }}</p>
           <p class="lettrage chiffres">{{ resume.envoyees }}</p>
         </div>
         <div class="notif-resume__cellule" :class="resume.echouees ? 'text-negative' : 'text-positive'">
-          <p class="pochoir">{{ $t('notificationsPage.broadcast.summary.failed') }}</p>
+          <p class="pochoir">{{ $t('notifications.broadcast.summary.failed') }}</p>
           <p class="lettrage chiffres">{{ resume.echouees }}</p>
         </div>
       </div>
@@ -164,7 +164,7 @@
     <q-tab-panel v-if="onglet === 'historique'" name="historique" class="q-pa-none q-mt-md">
       <filter-bar
         v-model="filtresHistorique"
-        :placeholder="$t('notificationsPage.history.searchPlaceholder')"
+        :placeholder="$t('notifications.history.searchPlaceholder')"
         :recherche="true"
         @reinitialiser="reinitialiserHistorique"
       >
@@ -177,25 +177,25 @@
             clearable
             emit-value
             map-options
-            :label="$t('notificationsPage.history.statutLabel')"
+            :label="$t('notifications.history.statutLabel')"
           />
-          <champ-date v-model="filtresHistorique.dateDebut" :label="$t('notificationsPage.history.dateFrom')" />
-          <champ-date v-model="filtresHistorique.dateFin" :label="$t('notificationsPage.history.dateTo')" />
+          <champ-date v-model="filtresHistorique.dateDebut" :label="$t('notifications.history.dateFrom')" />
+          <champ-date v-model="filtresHistorique.dateFin" :label="$t('notifications.history.dateTo')" />
         </template>
       </filter-bar>
 
       <div class="text-caption text-grey-7 q-mb-sm">
-        {{ $t('notificationsPage.history.countLabel', { n: hist.total, periode: legendePeriode }) }}
+        {{ $t('notifications.history.countLabel', { n: hist.total, periode: legendePeriode }) }}
       </div>
 
       <!-- Graphique de répartition -->
       <q-card v-if="chartConfig" flat bordered class="carte q-mb-md">
         <q-card-section>
           <div class="text-subtitle1 text-weight-medium">
-            {{ $t('notificationsPage.history.chart.title') }}
+            {{ $t('notifications.history.chart.title') }}
           </div>
           <div class="text-caption text-grey-7 q-mb-sm">
-            {{ $t('notificationsPage.history.chart.subtitle') }}
+            {{ $t('notifications.history.chart.subtitle') }}
           </div>
           <chart-canvas
             :config="chartConfig"
@@ -263,17 +263,17 @@
               round
               color="primary"
               icon="refresh"
-              :aria-label="t('notificationsPage.history.table.resendAria', { telephone: p.row.telephone })"
+              :aria-label="t('notifications.history.table.resendAria', { telephone: p.row.telephone })"
               :loading="renvoiEnCours === p.row.id"
               @click="renvoyer(p.row)"
             >
-              <q-tooltip>{{ $t('notificationsPage.history.table.resendTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('notifications.history.table.resendTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
 
         <template #no-data>
-          <etat-vide icone="sms" :titre="$t('notificationsPage.history.emptyState.title')" :aide="aideVideHistorique">
+          <etat-vide icone="sms" :titre="$t('notifications.history.emptyState.title')" :aide="aideVideHistorique">
             <template #action>
               <q-btn
                 v-if="aDesFiltresHistorique"
@@ -282,7 +282,7 @@
                 no-caps
                 color="primary"
                 icon="filter_alt_off"
-                :label="$t('notificationsPage.history.emptyState.clearFilters')"
+                :label="$t('notifications.history.emptyState.clearFilters')"
                 @click="reinitialiserHistorique"
               />
               <q-btn
@@ -292,7 +292,7 @@
                 no-caps
                 color="primary"
                 icon="campaign"
-                :label="$t('notificationsPage.history.emptyState.goToBroadcast')"
+                :label="$t('notifications.history.emptyState.goToBroadcast')"
                 @click="onglet = 'diffusion'"
               />
             </template>
@@ -363,18 +363,18 @@ const formulaireValide = computed(() => {
 
 // ----------------------------------------------------------------- diffusion
 const motifs = computed(() => [
-  { label: t('notificationsPage.broadcast.motifs.avis'), value: 'AVIS' },
-  { label: t('notificationsPage.broadcast.motifs.resultats'), value: 'RESULTATS' },
-  { label: t('notificationsPage.broadcast.motifs.inscription'), value: 'INSCRIPTION' },
-  { label: t('notificationsPage.broadcast.motifs.paiement'), value: 'PAIEMENT' },
-  { label: t('notificationsPage.broadcast.motifs.convocation'), value: 'CONVOCATION' },
-  { label: t('notificationsPage.broadcast.motifs.autre'), value: 'AUTRE' },
+  { label: t('notifications.broadcast.motifs.avis'), value: 'AVIS' },
+  { label: t('notifications.broadcast.motifs.resultats'), value: 'RESULTATS' },
+  { label: t('notifications.broadcast.motifs.inscription'), value: 'INSCRIPTION' },
+  { label: t('notifications.broadcast.motifs.paiement'), value: 'PAIEMENT' },
+  { label: t('notifications.broadcast.motifs.convocation'), value: 'CONVOCATION' },
+  { label: t('notifications.broadcast.motifs.autre'), value: 'AUTRE' },
 ]);
 
 const optionsDestinataires = computed(() => [
-  { label: t('notificationsPage.broadcast.recipientOptions.tous'), value: 'tous' },
-  { label: t('notificationsPage.broadcast.recipientOptions.numeros'), value: 'numeros' },
-  { label: t('notificationsPage.broadcast.recipientOptions.resultatsDeliberation'), value: 'resultatsDeliberation' },
+  { label: t('notifications.broadcast.recipientOptions.tous'), value: 'tous' },
+  { label: t('notifications.broadcast.recipientOptions.numeros'), value: 'numeros' },
+  { label: t('notifications.broadcast.recipientOptions.resultatsDeliberation'), value: 'resultatsDeliberation' },
 ]);
 
 const motif = ref('AVIS');
@@ -421,9 +421,9 @@ async function confirmerEnvoi() {
       ? numerosComptes.value
       : 0;
   const ok = await confirmer({
-    titre: t('notificationsPage.messages.confirmSendTitle'),
-    message: t('notificationsPage.messages.confirmSendMessage', { n: nbDestinaires }),
-    ok: t('notificationsPage.messages.confirmSendOk'),
+    titre: t('notifications.messages.confirmSendTitle'),
+    message: t('notifications.messages.confirmSendMessage', { n: nbDestinaires }),
+    ok: t('notifications.messages.confirmSendOk'),
   });
   if (ok) await envoyer();
 }
@@ -433,7 +433,7 @@ async function envoyer() {
   try {
     const numeros = destination.value === 'numeros' ? decouperNumeros(numerosSaisis.value) : [];
     if (destination.value === 'numeros' && !numeros.length) {
-      $q.notify({ type: 'warning', message: t('notificationsPage.messages.enterAtLeastOneNumber') });
+      $q.notify({ type: 'warning', message: t('notifications.messages.enterAtLeastOneNumber') });
       return;
     }
     const { data } = await api.post('/notifications', {
@@ -446,10 +446,10 @@ async function envoyer() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
-      message: t('notificationsPage.messages.sentSummary', {
+      message: t('notifications.messages.sentSummary', {
         envoyees: data.envoyees,
         echoueesSuffix: data.echouees
-          ? t('notificationsPage.messages.sentSummaryFailedSuffix', { n: data.echouees })
+          ? t('notifications.messages.sentSummaryFailedSuffix', { n: data.echouees })
           : '',
       }),
     });
@@ -464,7 +464,7 @@ async function envoyer() {
 
 async function testerEnvoi() {
   if (!message.value.trim()) {
-    $q.notify({ type: 'warning', message: t('notificationsPage.messages.enterMessageBeforeTest') });
+    $q.notify({ type: 'warning', message: t('notifications.messages.enterMessageBeforeTest') });
     return;
   }
   testEnvoi.value = true;
@@ -479,7 +479,7 @@ async function testerEnvoi() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: 'info',
-      message: t('notificationsPage.messages.testSentSummary', { total: data.total, envoyees: data.envoyees }),
+      message: t('notifications.messages.testSentSummary', { total: data.total, envoyees: data.envoyees }),
     });
   } catch {
     /* notifié par l'intercepteur */
@@ -523,7 +523,7 @@ async function diffuserResultats() {
     resume.value = { total: data.total, envoyees: data.envoyees, echouees: data.echouees };
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
-      message: t('notificationsPage.messages.resultsBroadcastSummary', {
+      message: t('notifications.messages.resultsBroadcastSummary', {
         envoyees: data.envoyees,
         echouees: data.echouees,
       }),
@@ -573,7 +573,7 @@ const couleurStatut: Record<string, string> = {
 const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: t('notificationsPage.history.table.columns.date'),
+    label: t('notifications.history.table.columns.date'),
     field: (r: Notification) => r.createdAt,
     format: (v: string) => dateHeureLisible(v),
     align: 'left',
@@ -581,21 +581,21 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'destinataire',
-    label: t('notificationsPage.history.table.columns.destinataire'),
+    label: t('notifications.history.table.columns.destinataire'),
     field: (r: Notification) => `${r.destinataireNom ?? ''} ${r.telephone}`,
     align: 'left',
   },
-  { name: 'motif', label: t('notificationsPage.history.table.columns.motif'), field: (r: Notification) => r.motif ?? '—', align: 'left' },
-  { name: 'statut', label: t('notificationsPage.history.table.columns.statut'), field: (r: Notification) => r.statut, align: 'left' },
+  { name: 'motif', label: t('notifications.history.table.columns.motif'), field: (r: Notification) => r.motif ?? '—', align: 'left' },
+  { name: 'statut', label: t('notifications.history.table.columns.statut'), field: (r: Notification) => r.statut, align: 'left' },
   {
     name: 'message',
-    label: t('notificationsPage.history.table.columns.message'),
+    label: t('notifications.history.table.columns.message'),
     field: (r: Notification) => r.message,
     align: 'left',
   },
   {
     name: 'envoyePar',
-    label: t('notificationsPage.history.table.columns.envoyePar'),
+    label: t('notifications.history.table.columns.envoyePar'),
     field: (r: Notification) => r.envoyePar?.prenom ?? '',
     align: 'left',
   },
@@ -614,24 +614,24 @@ const aDesFiltresHistorique = computed(() => {
 
 const aideVideHistorique = computed(
   () =>
-    `${t('notificationsPage.history.emptyState.detail')} ${
+    `${t('notifications.history.emptyState.detail')} ${
       aDesFiltresHistorique.value
-        ? t('notificationsPage.history.emptyState.noneMatchFilters')
-        : t('notificationsPage.history.emptyState.startBroadcast')
+        ? t('notifications.history.emptyState.noneMatchFilters')
+        : t('notifications.history.emptyState.startBroadcast')
     }`,
 );
 
 const legendePeriode = computed(() => {
   const f = filtresHistorique.value;
   if (f.dateDebut && f.dateFin) {
-    return t('notificationsPage.history.period.range', {
+    return t('notifications.history.period.range', {
       debut: dateLisible(f.dateDebut),
       fin: dateLisible(f.dateFin),
     });
   }
-  if (f.dateDebut) return t('notificationsPage.history.period.since', { debut: dateLisible(f.dateDebut) });
-  if (f.dateFin) return t('notificationsPage.history.period.until', { fin: dateLisible(f.dateFin) });
-  return t('notificationsPage.history.period.all');
+  if (f.dateDebut) return t('notifications.history.period.since', { debut: dateLisible(f.dateDebut) });
+  if (f.dateFin) return t('notifications.history.period.until', { fin: dateLisible(f.dateFin) });
+  return t('notifications.history.period.all');
 });
 
 function reinitialiserHistorique() {
@@ -658,8 +658,8 @@ async function renvoyer(n: Notification) {
     $q.notify({
       type: data.echouees ? 'warning' : 'positive',
       message: data.echouees
-        ? t('notificationsPage.messages.resendFailedAgain', { telephone: n.telephone })
-        : t('notificationsPage.messages.resendSuccess', { telephone: n.telephone }),
+        ? t('notifications.messages.resendFailedAgain', { telephone: n.telephone })
+        : t('notifications.messages.resendSuccess', { telephone: n.telephone }),
     });
     await chargerHistorique();
     await chargerStats();
@@ -706,7 +706,7 @@ const resumeRepartition = computed(() => {
     }),
     { attente: 0, envoyes: 0, echoues: 0 },
   );
-  return t('notificationsPage.history.chart.summaryAria', {
+  return t('notifications.history.chart.summaryAria', {
     envoyes: totaux.envoyes,
     echoues: totaux.echoues,
     attente: totaux.attente,
@@ -720,9 +720,9 @@ const chartConfig = computed<ChartConfiguration | null>(() => {
     data: {
       labels: repartition30j.value.map((r) => r.date.slice(5)),
       datasets: [
-        { label: t('notificationsPage.history.chart.series.enFile'), data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
-        { label: t('notificationsPage.history.chart.series.envoyes'), data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
-        { label: t('notificationsPage.history.chart.series.echoues'), data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
+        { label: t('notifications.history.chart.series.enFile'), data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
+        { label: t('notifications.history.chart.series.envoyes'), data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
+        { label: t('notifications.history.chart.series.echoues'), data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
       ],
     },
     options: {

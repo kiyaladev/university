@@ -224,7 +224,7 @@
                 <q-icon name="devices" size="16px" class="q-mr-sm text-grey-6" />
                 <span class="text-caption">
                   {{ t.equipement.libelle }}
-                  <span v-if="t.equipement.emplacement" class="text-grey-7">{{ $t('rectoratPage.subtitleFallback') }} {{ t.equipement.emplacement }}</span>
+                  <span v-if="t.equipement.emplacement" class="text-grey-7">{{ $t('rectorat.subtitleFallback') }} {{ t.equipement.emplacement }}</span>
                 </span>
               </div>
               <div v-if="t.utilisateur || t.declarantNom" class="row items-center">

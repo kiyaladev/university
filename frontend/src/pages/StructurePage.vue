@@ -56,7 +56,7 @@
               <q-chip v-if="p.row.active" dense color="positive" text-color="white">{{
                 $t('structure.table.active')
               }}</q-chip>
-              <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
+              <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
             </q-td>
           </template>
           <template #body-cell-actions="p">

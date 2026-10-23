@@ -72,7 +72,7 @@ const PERSONNEL: Role[] = ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'
 
 export const MANIFESTE: readonly EntreeNavigation[] = [
   // ── Présences ──────────────────────────────────────────────────────────
-  { path: '/suivi-presences', titre: 'simplification.presence', rubrique: 'presence', icone: 'insights', ordre: 10,
+  { path: '/suivi-presences', titre: 'layout.sections.presence', rubrique: 'presence', icone: 'insights', ordre: 10,
     roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'],
     raccourciPour: { DIRECTION: 1, ADMIN: 3, CHEF_DEPARTEMENT: 3 }, tacheAccueilPour: { DIRECTION: 0, CHEF_DEPARTEMENT: 3 } },
   { path: '/emploi-du-temps', titre: 'nav.emploi-du-temps', rubrique: 'presence', icone: 'calendar_month', ordre: 20,
@@ -99,11 +99,11 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], menu: false, famille: '/suivi-presences' },
 
   // ── Scolarité ──────────────────────────────────────────────────────────
-  { path: '/documents', titre: 'simplification.documents', rubrique: 'registrar', section: 'accueilUniversity.documents',
+  { path: '/documents', titre: 'layout.sections.documents', rubrique: 'registrar', section: 'accueilUniversity.documents',
     icone: 'description', ordre: 10, roles: ['ADMIN', 'DIRECTION', 'SCOLARITE'],
     raccourciPour: { SCOLARITE: 3 }, tacheAccueilPour: { ADMIN: 3 } },
   // Redirection vers « Mes demandes » : regroupe demandes et réclamations de l'étudiant.
-  { path: '/mes-demarches', titre: 'simplification.procedures', rubrique: 'registrar', section: 'layout.groups.documents',
+  { path: '/mes-demarches', titre: 'layout.sections.procedures', rubrique: 'registrar', section: 'layout.groups.documents',
     icone: 'assignment', ordre: 20, roles: ['ETUDIANT'] },
   { path: '/portail', titre: 'nav.portail', rubrique: 'registrar', section: 'accueilUniversity.dossiers', icone: 'person',
     ordre: 30, roles: ['ETUDIANT'], raccourciPour: { ETUDIANT: 0 }, accueilDe: ['ETUDIANT'] },
@@ -206,7 +206,7 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
   { path: '/statistiques-mesrs', titre: 'nav.statistiques-mesrs', rubrique: 'administration', section: 'layout.groups.settings',
     icone: 'analytics', service: 'rectorat', ordre: 100, roles: ['ADMIN', 'DIRECTION'], menu: false, famille: '/bilan' },
   // Redirection vers le rectorat : « Bilan de l'établissement » regroupe situation et archives.
-  { path: '/bilan', titre: 'simplification.bilan', rubrique: 'administration', section: 'layout.groups.settings',
+  { path: '/bilan', titre: 'layout.sections.bilan', rubrique: 'administration', section: 'layout.groups.settings',
     icone: 'account_balance', service: 'rectorat', ordre: 110, roles: ['ADMIN', 'DIRECTION'],
     raccourciPour: { DIRECTION: 3 }, tacheAccueilPour: { DIRECTION: 1 } },
   { path: '/rectorat', titre: 'nav.rectorat', rubrique: 'administration', section: 'layout.groups.settings',

@@ -228,7 +228,7 @@
           </div>
           <div class="text-subtitle1 text-weight-medium">{{ e.intitule }}</div>
           <div class="text-caption text-grey-7">
-            {{ e.matiere?.intitule }} {{ $t('rectoratPage.subtitleFallback') }} {{ e.promotion?.nom }}
+            {{ e.matiere?.intitule }} {{ $t('rectorat.subtitleFallback') }} {{ e.promotion?.nom }}
           </div>
           <div class="q-mt-sm">
             <q-badge outline color="primary" :label="libelleNotes(e)" />

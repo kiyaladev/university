@@ -1,4 +1,4 @@
-/** Namespace `notificationsPage` — NotificationsPage.vue (SMS broadcast). */
+/** Namespace `notifications` — NotificationsPage.vue (SMS broadcast). */
 export default {
   header: {
     title: 'SMS Notifications',

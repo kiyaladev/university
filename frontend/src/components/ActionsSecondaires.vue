@@ -11,7 +11,7 @@ function presente(nodes: VNode[]): boolean {
 
 </script>
 <template>
-  <q-btn v-if="presente(slots.default?.() ?? [])" flat dense no-caps icon="more_horiz" :label="t('simplification.more')" @click.stop>
+  <q-btn v-if="presente(slots.default?.() ?? [])" flat dense no-caps icon="more_horiz" :label="t('common.actions.otherActions')" @click.stop>
     <q-menu auto-close>
       <div class="actions-secondaires column q-pa-xs" @click.stop><slot /></div>
     </q-menu>

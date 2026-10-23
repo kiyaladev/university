@@ -22,9 +22,9 @@ const liens = computed(() => sections[props.section].filter(([to]) => {
 }));
 </script>
 <template>
-  <nav v-if="liens.length > 1" :aria-label="t(`simplification.${section}`)" class="q-mb-md">
+  <nav v-if="liens.length > 1" :aria-label="t(`layout.sections.${section}`)" class="q-mb-md">
     <q-tabs :model-value="route.path" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-route-tab v-for="[to, label] in liens" :key="to" :to="to" exact :label="t(`simplification.${label}`)"
+      <q-route-tab v-for="[to, label] in liens" :key="to" :to="to" exact :label="t(`layout.sections.${label}`)"
         no-caps />
     </q-tabs>
   </nav>

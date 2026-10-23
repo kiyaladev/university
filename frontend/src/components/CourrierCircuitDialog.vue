@@ -2,8 +2,8 @@
   <dialogue-formulaire
     v-model="ouvert"
     taille="l"
-    :titre="$t('courrierPage.actions.register')"
-    :sous-titre="$t('courrierPage.registrationDialog.subtitle')"
+    :titre="$t('courrier.actions.register')"
+    :sous-titre="$t('courrier.registrationDialog.subtitle')"
     :libelle-valider="$t('common.actions.register')"
     :envoi="envoi"
     @valider="enregistrer"
@@ -16,7 +16,7 @@
             outlined
             dense
             hide-bottom-space
-            :label="$t('courrierPage.registrationDialog.number')"
+            :label="$t('courrier.registrationDialog.number')"
             :rules="[requis]"
           />
         </div>
@@ -37,37 +37,37 @@
         outlined
         dense
         hide-bottom-space
-        :label="$t('courrierPage.table.columns.objet')"
+        :label="$t('courrier.table.columns.objet')"
         :rules="[requis]"
       />
       <autocomplete-async
         v-if="auth.utilisateur?.role !== 'CHEF_DEPARTEMENT'"
         v-model="form.departementId"
         endpoint="/departements"
-        :label="$t('courrierPage.registrationDialog.department')"
+        :label="$t('courrier.registrationDialog.department')"
         :label-fn="(d: any) => `${d.code} — ${d.nom}`"
       />
-      <div class="text-caption text-grey-7">{{ $t(auth.utilisateur?.role === 'CHEF_DEPARTEMENT' ? 'courrierPage.registrationDialog.ownDepartment' : 'courrierPage.registrationDialog.departmentHint') }}</div>
+      <div class="text-caption text-grey-7">{{ $t(auth.utilisateur?.role === 'CHEF_DEPARTEMENT' ? 'courrier.registrationDialog.ownDepartment' : 'courrier.registrationDialog.departmentHint') }}</div>
       <div class="row q-col-gutter-md">
         <div v-if="form.type === 'ENTRANT'" class="col-6">
-          <q-input v-model="form.expediteur" outlined dense :label="$t('courrierPage.registrationDialog.sender')" />
+          <q-input v-model="form.expediteur" outlined dense :label="$t('courrier.registrationDialog.sender')" />
         </div>
         <div v-else class="col-6">
-          <q-input v-model="form.destinataire" outlined dense :label="$t('notificationsPage.history.table.columns.destinataire')" />
+          <q-input v-model="form.destinataire" outlined dense :label="$t('notifications.history.table.columns.destinataire')" />
         </div>
         <div class="col-6">
-          <champ-date v-if="form.type === 'ENTRANT'" v-model="form.dateReception" :label="$t('courrierPage.registrationDialog.receivedOn')" />
-          <champ-date v-else v-model="form.dateEnvoi" :label="$t('courrierPage.registrationDialog.sentOn')" />
+          <champ-date v-if="form.type === 'ENTRANT'" v-model="form.dateReception" :label="$t('courrier.registrationDialog.receivedOn')" />
+          <champ-date v-else v-model="form.dateEnvoi" :label="$t('courrier.registrationDialog.sentOn')" />
         </div>
       </div>
-      <q-input v-model="form.numeroReference" outlined dense :label="$t('courrierPage.registrationDialog.archiveReference')" />
-      <q-file v-model="fichier" outlined dense :label="$t('courrierPage.registrationDialog.attachment')" accept="image/*,.pdf" @update:model-value="lireFichier">
+      <q-input v-model="form.numeroReference" outlined dense :label="$t('courrier.registrationDialog.archiveReference')" />
+      <q-file v-model="fichier" outlined dense :label="$t('courrier.registrationDialog.attachment')" accept="image/*,.pdf" @update:model-value="lireFichier">
         <template #prepend><q-icon name="attach_file" /></template>
       </q-file>
       <q-input v-model="form.notes" outlined dense type="textarea" rows="2" :label="$t('common.fields.notes')" />
 
       <div>
-        <div class="text-subtitle2 q-mb-sm">{{ $t('courrierPage.registrationDialog.routing') }}</div>
+        <div class="text-subtitle2 q-mb-sm">{{ $t('courrier.registrationDialog.routing') }}</div>
         <q-list bordered separator dense>
           <q-item v-for="(e, i) in form.circuit" :key="i">
             <q-item-section>
@@ -76,7 +76,7 @@
                   <q-input v-model.number="e.ordre" type="number" min="1" outlined dense label="#" />
                 </div>
                 <div class="col">
-                  <q-input v-model="e.roleValideur" outlined dense :label="$t('courrierPage.registrationDialog.approverRole')" />
+                  <q-input v-model="e.roleValideur" outlined dense :label="$t('courrier.registrationDialog.approverRole')" />
                 </div>
                 <div class="col-auto">
                   <q-btn flat round dense icon="delete" color="negative" :aria-label="$t('common.actions.delete')" @click="form.circuit.splice(i, 1)" />
@@ -86,11 +86,11 @@
           </q-item>
           <q-item v-if="!form.circuit.length">
             <q-item-section class="text-grey-7 text-caption">
-              {{ $t('courrierPage.registrationDialog.noRouting') }}
+              {{ $t('courrier.registrationDialog.noRouting') }}
             </q-item-section>
           </q-item>
         </q-list>
-        <q-btn flat dense icon="add" no-caps :label="$t('courrierPage.registrationDialog.addStep')" class="q-mt-sm" @click="ajouterEtape" />
+        <q-btn flat dense icon="add" no-caps :label="$t('courrier.registrationDialog.addStep')" class="q-mt-sm" @click="ajouterEtape" />
       </div>
     </div>
   </dialogue-formulaire>
@@ -115,8 +115,8 @@ const { t: $t } = useI18n();
 const requis = (v: string) => !!(v ?? '').trim() || $t('common.messages.errors.required');
 
 const optionsTypes = computed(() => [
-  { label: $t('courrierPage.registrationDialog.incoming'), value: 'ENTRANT' },
-  { label: $t('courrierPage.registrationDialog.outgoing'), value: 'SORTANT' },
+  { label: $t('courrier.registrationDialog.incoming'), value: 'ENTRANT' },
+  { label: $t('courrier.registrationDialog.outgoing'), value: 'SORTANT' },
 ]);
 
 const fichier = ref<File | null>(null);
@@ -172,7 +172,7 @@ async function enregistrer() {
       dateReception: form.value.dateReception || undefined,
       dateEnvoi: form.value.dateEnvoi || undefined,
     });
-    $q.notify({ type: 'positive', message: $t('courrierPage.registrationDialog.saved') });
+    $q.notify({ type: 'positive', message: $t('courrier.registrationDialog.saved') });
     emit('enregistre');
     ouvert.value = false;
     form.value = formVide();

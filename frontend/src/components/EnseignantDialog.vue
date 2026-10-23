@@ -64,7 +64,7 @@
       type="number"
       outlined
       dense
-      :label="$t('paiePage.table.lignesColumns.taux')"
+      :label="$t('paie.table.lignesColumns.taux')"
       :hint="$t('enseignants.formDialog.hourlyRateHint')"
     />
 

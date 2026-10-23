@@ -511,7 +511,7 @@
       v-model="dialogAnnulation"
       taille="s"
       :titre="$t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference })"
-      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('rectoratPage.subtitleFallback')} ${$t('paiements.dialogs.cancelSubtitle')}`"
+      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('rectorat.subtitleFallback')} ${$t('paiements.dialogs.cancelSubtitle')}`"
       :envoi="annulationEnCours"
       :libelle-valider="$t('paiements.dialogs.cancelConfirm')"
       icone-valider="block"

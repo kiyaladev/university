@@ -1,27 +1,27 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('courrierPage.title')" :subtitle="$t('courrierPage.subtitle')">
+    <page-header :title="$t('courrier.title')" :subtitle="$t('courrier.subtitle')">
       <template v-if="peutCreer" #actions>
         <q-btn
           unelevated
           color="primary"
           no-caps
           icon="add"
-          :label="$t('courrierPage.actions.register')"
+          :label="$t('courrier.actions.register')"
           @click="ouvrirCreation"
         />
       </template>
     </page-header>
 
     <q-tabs v-model="onglet" dense no-caps align="left" class="onglets-panneau q-mb-md" narrow-indicator>
-      <q-tab name="ENTRANT" :label="$t('courrierPage.tabs.entrant')" icon="inbox" />
-      <q-tab name="SORTANT" :label="$t('courrierPage.tabs.sortant')" icon="send" />
-      <q-tab name="ARCHIVE" :label="$t('courrierPage.tabs.archive')" icon="inventory_2" />
+      <q-tab name="ENTRANT" :label="$t('courrier.tabs.entrant')" icon="inbox" />
+      <q-tab name="SORTANT" :label="$t('courrier.tabs.sortant')" icon="send" />
+      <q-tab name="ARCHIVE" :label="$t('courrier.tabs.archive')" icon="inventory_2" />
     </q-tabs>
 
     <filter-bar
       v-model="filtres"
-      :placeholder="$t('courrierPage.filters.searchPlaceholder')"
+      :placeholder="$t('courrier.filters.searchPlaceholder')"
       :chips="chipsFiltres"
       @reinitialiser="liste.reinitialiser([])"
     >
@@ -34,10 +34,10 @@
           clearable
           emit-value
           map-options
-          :label="$t('courrierPage.filters.status')"
+          :label="$t('courrier.filters.status')"
         />
-        <champ-date v-model="filtres.dateDebut" :label="$t('courrierPage.filters.from')" />
-        <champ-date v-model="filtres.dateFin" :label="$t('courrierPage.filters.to')" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('courrier.filters.from')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('courrier.filters.to')" />
       </template>
     </filter-bar>
 
@@ -76,7 +76,7 @@
       <template #body-cell-circuits="p">
         <q-td :props="p">
           <q-chip dense size="xs" :color="p.row.circuits?.length ? 'secondary' : 'grey-5'">
-            {{ $t('courrierPage.table.steps', { count: p.row.circuits?.length ?? 0 }) }}
+            {{ $t('courrier.table.steps', { count: p.row.circuits?.length ?? 0 }) }}
           </q-chip>
         </q-td>
       </template>
@@ -88,20 +88,20 @@
             round
             icon="visibility"
             color="primary"
-            :aria-label="$t('courrierPage.actionsColumn.detailAria', { numero: p.row.numero })"
+            :aria-label="$t('courrier.actionsColumn.detailAria', { numero: p.row.numero })"
             @click.stop="ouvrirDetail(p.row)"
           >
-            <q-tooltip>{{ $t('courrierPage.actionsColumn.detailTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('courrier.actionsColumn.detailTooltip') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
             dense
             round
             icon="print"
-            :aria-label="$t('courrierPage.actionsColumn.printAria', { numero: p.row.numero })"
+            :aria-label="$t('courrier.actionsColumn.printAria', { numero: p.row.numero })"
             @click.stop="imprimer(p.row)"
           >
-            <q-tooltip>{{ $t('courrierPage.actionsColumn.printTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('courrier.actionsColumn.printTooltip') }}</q-tooltip>
           </q-btn>
           <template v-if="peutCloturer(p.row)">
             <q-btn
@@ -110,10 +110,10 @@
               round
               color="negative"
               icon="archive"
-              :aria-label="$t('courrierPage.actionsColumn.closeAria', { numero: p.row.numero })"
+              :aria-label="$t('courrier.actionsColumn.closeAria', { numero: p.row.numero })"
               @click.stop="cloturer(p.row)"
             >
-              <q-tooltip>{{ $t('courrierPage.actionsColumn.closeTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('courrier.actionsColumn.closeTooltip') }}</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -127,7 +127,7 @@
               no-caps
               color="primary"
               icon="add"
-              :label="$t('courrierPage.actions.register')"
+              :label="$t('courrier.actions.register')"
               @click="ouvrirCreation"
             />
           </template>
@@ -153,7 +153,7 @@
                 <div class="text-caption text-grey-7">{{ c.numero }}</div>
                 <div class="text-subtitle1 text-weight-bold">{{ c.objet }}</div>
                 <div class="text-caption q-mt-xs">
-                  {{ c.type === 'ENTRANT' ? $t('courrierPage.card.from', { value: c.expediteur ?? '—' }) : $t('courrierPage.card.to', { value: c.destinataire ?? '—' }) }}
+                  {{ c.type === 'ENTRANT' ? $t('courrier.card.from', { value: c.expediteur ?? '—' }) : $t('courrier.card.to', { value: c.destinataire ?? '—' }) }}
                 </div>
               </div>
               <span class="champ badge-statut" :class="classeStatut(c.statut)">
@@ -169,13 +169,13 @@
               </div>
               <div class="col-6 text-right">
                 <q-icon name="how_to_reg" size="14px" />
-                {{ $t('courrierPage.card.stamps', { count: c.circuits?.length ?? 0 }) }}
+                {{ $t('courrier.card.stamps', { count: c.circuits?.length ?? 0 }) }}
               </div>
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="print" :label="$t('courrierPage.card.print')" @click.stop="imprimer(c)" />
-            <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" :label="$t('courrierPage.card.close')" @click.stop="cloturer(c)" />
+            <q-btn flat dense no-caps icon="print" :label="$t('courrier.card.print')" @click.stop="imprimer(c)" />
+            <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" :label="$t('courrier.card.close')" @click.stop="cloturer(c)" />
           </q-card-actions>
         </q-card>
       </div>
@@ -187,7 +187,7 @@
             no-caps
             color="primary"
             icon="add"
-            :label="$t('courrierPage.actions.register')"
+            :label="$t('courrier.actions.register')"
             @click="ouvrirCreation"
           />
         </template>
@@ -318,14 +318,14 @@ const chipsFiltres = computed(() => {
   const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
     chips.push({
-      label: t('courrierPage.filters.searchChip', { value: filtres.value.recherche }),
+      label: t('courrier.filters.searchChip', { value: filtres.value.recherche }),
       value: filtres.value.recherche,
       defaut: true,
     });
   }
   if (filtres.value.statut) {
     chips.push({
-      label: t('courrierPage.filters.statusChip', {
+      label: t('courrier.filters.statusChip', {
         value: LIBELLE_STATUT_COURRIER[filtres.value.statut] ?? filtres.value.statut,
       }),
       value: filtres.value.statut,
@@ -336,18 +336,18 @@ const chipsFiltres = computed(() => {
 
 const libelleOnglet = computed(() =>
   onglet.value === 'ARCHIVE'
-    ? t('courrierPage.summary.archiveLabel')
-    : t('courrierPage.summary.tabLabel', { type: LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase() }),
+    ? t('courrier.summary.archiveLabel')
+    : t('courrier.summary.tabLabel', { type: LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase() }),
 );
 const periodeLisible = computed(() =>
-  t('courrierPage.summary.period', {
+  t('courrier.summary.period', {
     debut: dateLisible(filtres.value.dateDebut),
     fin: dateLisible(filtres.value.dateFin),
   }),
 );
 
 const ligneResume = computed(() =>
-  t('courrierPage.summary.line', {
+  t('courrier.summary.line', {
     onglet: libelleOnglet.value,
     periode: periodeLisible.value,
     total: liste.total,
@@ -356,41 +356,41 @@ const ligneResume = computed(() =>
 
 const titreVide = computed(() =>
   onglet.value === 'ARCHIVE'
-    ? t('courrierPage.emptyState.archiveTitle')
-    : t('courrierPage.emptyState.typeTitle', { type: LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase() }),
+    ? t('courrier.emptyState.archiveTitle')
+    : t('courrier.emptyState.typeTitle', { type: LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase() }),
 );
 const aideVide = computed(() =>
   onglet.value === 'ARCHIVE'
-    ? t('courrierPage.emptyState.archiveHint')
-    : t('courrierPage.emptyState.typeHint', {
+    ? t('courrier.emptyState.archiveHint')
+    : t('courrier.emptyState.typeHint', {
         type: LIBELLE_TYPE_COURRIER[onglet.value].toLowerCase(),
         periode: periodeLisible.value,
       }),
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('courrierPage.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
+  { name: 'numero', label: t('courrier.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'objet',
-    label: t('courrierPage.table.columns.objet'),
+    label: t('courrier.table.columns.objet'),
     field: 'objet',
     align: 'left',
   },
-  { name: 'type', label: t('courrierPage.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'type', label: t('courrier.table.columns.type'), field: 'type', align: 'left' },
   {
     name: 'correspondant',
-    label: t('courrierPage.table.columns.correspondant'),
+    label: t('courrier.table.columns.correspondant'),
     field: (r: Courrier) => (r.type === 'ENTRANT' ? r.expediteur : r.destinataire) ?? '—',
     align: 'left',
   },
   {
     name: 'date',
-    label: t('courrierPage.table.columns.date'),
+    label: t('courrier.table.columns.date'),
     field: (r: Courrier) => dateCourrier(r),
     align: 'left',
   },
-  { name: 'circuits', label: t('courrierPage.table.columns.circuit'), field: 'circuits', align: 'left' },
-  { name: 'statut', label: t('courrierPage.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'circuits', label: t('courrier.table.columns.circuit'), field: 'circuits', align: 'left' },
+  { name: 'statut', label: t('courrier.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -433,15 +433,15 @@ function imprimer(c: Courrier) {
 
 async function cloturer(c: Courrier) {
   const ok = await confirmer({
-    titre: t('courrierPage.dialogs.close.title'),
-    message: t('courrierPage.dialogs.close.message', { numero: c.numero }),
-    ok: t('courrierPage.dialogs.close.okLabel'),
+    titre: t('courrier.dialogs.close.title'),
+    message: t('courrier.dialogs.close.message', { numero: c.numero }),
+    ok: t('courrier.dialogs.close.okLabel'),
     danger: true,
   });
   if (!ok) return;
   try {
     await api.post(`/courrier/${c.id}/cloturer`, {});
-    $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
+    $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
     await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */

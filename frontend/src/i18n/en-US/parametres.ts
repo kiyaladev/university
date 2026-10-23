@@ -74,4 +74,5 @@ export default {
     saved: 'Settings saved',
     saveError: 'Unable to save',
   },
+  attendanceRules: 'Attendance rules',
 };

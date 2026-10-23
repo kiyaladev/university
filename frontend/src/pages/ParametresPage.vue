@@ -3,7 +3,7 @@
     <page-header :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')" />
 
     <section aria-labelledby="regles-presence">
-    <h2 id="regles-presence" class="text-h6">{{ $t('simplification.rules') }}</h2>
+    <h2 id="regles-presence" class="text-h6">{{ $t('parametres.attendanceRules') }}</h2>
 
     <div class="col-auto q-gutter-sm">
       <q-btn

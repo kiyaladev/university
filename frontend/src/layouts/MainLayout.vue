@@ -38,7 +38,7 @@
             </div>
             <q-separator />
             <q-list dense role="presentation">
-              <q-item-label header>{{ t('simplification.preferences') }}</q-item-label>
+              <q-item-label header>{{ t('layout.preferences') }}</q-item-label>
               <div class="column q-px-md q-pb-sm">
               <q-btn flat dense no-caps align="left" icon="translate" :label="t('layout.changerLangue')">
                 <q-tooltip>{{ t('layout.changerLangue') }}</q-tooltip>

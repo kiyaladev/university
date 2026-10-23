@@ -100,7 +100,7 @@ const developpe = ref(false);
         flat
         dense
         :icon="developpe ? 'tune' : 'tune'"
-        :label="developpe ? t('simplification.hideFilters') : t('simplification.filters')"
+        :label="developpe ? t('common.search.hideAdvanced') : t('common.search.advanced')"
         no-caps
         class="barre-filtres__avances"
         :class="{ 'barre-filtres__avances--actif': developpe }"

@@ -77,5 +77,6 @@ export default {
     "scan": "Scanner avec la caméra",
     "unavailable": "Caméra indisponible sur cet appareil",
     "denied": "Accès à la caméra refusé ou indisponible — saisissez le code à la main dans le champ ci-dessus."
-  }
+  },
+  addObservation: 'Ajouter une observation',
 };

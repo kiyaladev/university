@@ -158,7 +158,7 @@
             <span v-if="p.row.valeurAcquisition != null">
               {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
             </span>
-            <span v-else class="text-grey-6">{{ $t('rectoratPage.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
           </q-td>
         </template>
         <template #body-cell-etat="p">

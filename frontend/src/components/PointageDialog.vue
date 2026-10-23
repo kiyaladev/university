@@ -115,7 +115,7 @@
 
         <!-- Les observations restent facultatives ; les constats et leur envoi
              conservent le comportement métier du pointage existant. -->
-        <q-expansion-item :label="t('simplification.observations')" :default-opened="!!form.observation">
+        <q-expansion-item :label="t('pointage.addObservation')" :default-opened="!!form.observation">
         <q-input
           v-model="form.observation"
           outlined

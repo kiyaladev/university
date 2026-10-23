@@ -77,5 +77,6 @@ export default {
     "scan": "Scan with the camera",
     "unavailable": "Camera unavailable on this device",
     "denied": "Camera access denied or unavailable — enter the code manually in the field above."
-  }
+  },
+  addObservation: 'Add an observation',
 };

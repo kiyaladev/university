@@ -10,7 +10,7 @@
             <div class="text-caption text-grey-7">{{ courrier.numero }}</div>
             <div class="text-h6">{{ courrier.objet }}</div>
             <div class="text-caption q-mt-xs">
-              {{ $t(courrier.type === 'ENTRANT' ? 'courrierPage.detail.sender' : 'courrierPage.detail.recipient', { name: courrier.type === 'ENTRANT' ? courrier.expediteur ?? '—' : courrier.destinataire ?? '—' }) }}
+              {{ $t(courrier.type === 'ENTRANT' ? 'courrier.detail.sender' : 'courrier.detail.recipient', { name: courrier.type === 'ENTRANT' ? courrier.expediteur ?? '—' : courrier.destinataire ?? '—' }) }}
             </div>
           </div>
           <span class="champ badge-statut" :class="classeStatut(courrier.statut)">
@@ -31,9 +31,9 @@
               <tr>
                 <th class="text-left">#</th>
                 <th class="text-left">{{ $t('common.fields.role') }}</th>
-                <th class="text-left">{{ $t('courrierPage.detail.approver') }}</th>
+                <th class="text-left">{{ $t('courrier.detail.approver') }}</th>
                 <th class="text-left">{{ $t('common.fields.status') }}</th>
-                <th class="text-left">{{ $t('courrierPage.detail.stampedOn') }}</th>
+                <th class="text-left">{{ $t('courrier.detail.stampedOn') }}</th>
                 <th class="text-right">{{ $t('common.actions.actions') }}</th>
               </tr>
             </thead>
@@ -54,13 +54,13 @@
                     no-caps
                     icon="draw"
                     color="primary"
-                    :label="$t('courrierPage.detail.stamp')"
+                    :label="$t('courrier.detail.stamp')"
                     @click="ouvrirParapheDialog(etape)"
                   />
                 </td>
               </tr>
               <tr v-if="!(courrier.circuits ?? []).length">
-                <td colspan="6" class="text-center text-grey-7">{{ $t('courrierPage.detail.noWorkflow') }}</td>
+                <td colspan="6" class="text-center text-grey-7">{{ $t('courrier.detail.noWorkflow') }}</td>
               </tr>
             </tbody>
           </q-markup-table>
@@ -79,7 +79,7 @@
             color="negative"
             icon="archive"
             no-caps
-            :label="$t('courrierPage.actionsColumn.closeTooltip')"
+            :label="$t('courrier.actionsColumn.closeTooltip')"
             @click="cloturer"
           />
           <q-btn flat :label="$t('common.actions.close')" v-close-popup />
@@ -90,14 +90,14 @@
     <dialogue-formulaire
       v-model="dialogParaphe"
       taille="s"
-      :titre="$t('courrierPage.detail.stampStep', { order: etapeAParapher?.ordre })"
+      :titre="$t('courrier.detail.stampStep', { order: etapeAParapher?.ordre })"
       :sous-titre="etapeAParapher?.roleValideur ?? undefined"
       :libelle-valider="$t('common.actions.validate')"
       :envoi="envoi"
       @valider="validerParaphe"
     >
       <div class="q-gutter-md">
-        <q-input v-model="formParaphe.paraphe" outlined dense :label="$t('courrierPage.detail.signatureHash')" />
+        <q-input v-model="formParaphe.paraphe" outlined dense :label="$t('courrier.detail.signatureHash')" />
         <q-input v-model="formParaphe.commentaire" outlined dense type="textarea" rows="3" :label="$t('common.fields.comment')" />
       </div>
     </dialogue-formulaire>
@@ -137,11 +137,11 @@ const envoi = ref(false);
 const formParaphe = ref({ paraphe: '', commentaire: '' });
 
 const etapesWorkflow = computed(() => [
-  { identifiant: 'RECU', libelle: t('courrierPage.detail.status.received'), icone: 'inbox' },
-  { identifiant: 'EN_CIRCUIT', libelle: t('courrierPage.detail.status.inWorkflow'), icone: 'how_to_reg' },
-  { identifiant: 'TRAITE', libelle: t('courrierPage.detail.status.processed'), icone: 'task_alt' },
-  { identifiant: 'CLASSE', libelle: t('courrierPage.detail.status.filed'), icone: 'inventory_2' },
-  { identifiant: 'ARCHIVE', libelle: t('courrierPage.detail.status.archived'), icone: 'archive' },
+  { identifiant: 'RECU', libelle: t('courrier.detail.status.received'), icone: 'inbox' },
+  { identifiant: 'EN_CIRCUIT', libelle: t('courrier.detail.status.inWorkflow'), icone: 'how_to_reg' },
+  { identifiant: 'TRAITE', libelle: t('courrier.detail.status.processed'), icone: 'task_alt' },
+  { identifiant: 'CLASSE', libelle: t('courrier.detail.status.filed'), icone: 'inventory_2' },
+  { identifiant: 'ARCHIVE', libelle: t('courrier.detail.status.archived'), icone: 'archive' },
 ]);
 
 const etapeActuelle = computed(() => courrier.value?.statut ?? 'RECU');
@@ -221,7 +221,7 @@ async function validerParaphe() {
   envoi.value = true;
   try {
     await api.post(`/courrier/${courrier.value.id}/parapher/${etapeAParapher.value.id}`, formParaphe.value);
-    $q.notify({ type: 'positive', message: t('courrierPage.detail.stamped') });
+    $q.notify({ type: 'positive', message: t('courrier.detail.stamped') });
     dialogParaphe.value = false;
     await charger();
     emit('modifie');
@@ -236,7 +236,7 @@ function demanderTransition(cible: string) {
   if (cible === 'CLASSE' || cible === 'ARCHIVE') {
     void cloturer();
   } else {
-    $q.notify({ message: t('courrierPage.detail.stampOnStep'), type: 'info' });
+    $q.notify({ message: t('courrier.detail.stampOnStep'), type: 'info' });
   }
 }
 
@@ -244,15 +244,15 @@ async function cloturer() {
   const c = courrier.value;
   if (!c) return;
   const ok = await confirmer({
-    titre: t('courrierPage.detail.closeTitle'),
-    message: t('courrierPage.detail.closeMessage', { number: c.numero, next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
-    ok: t('courrierPage.detail.closeTitle'),
+    titre: t('courrier.detail.closeTitle'),
+    message: t('courrier.detail.closeMessage', { number: c.numero, next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
+    ok: t('courrier.detail.closeTitle'),
     danger: true,
   });
   if (!ok) return;
   try {
     await api.post(`/courrier/${c.id}/cloturer`, {});
-    $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
+    $q.notify({ type: 'positive', message: t('courrier.messages.closed') });
     await charger();
     emit('modifie');
   } catch {

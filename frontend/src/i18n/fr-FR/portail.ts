@@ -90,4 +90,6 @@ export default {
     loadError: 'Votre dossier n’a pas pu être chargé. Vérifiez votre connexion, puis réessayez.',
     rechargeInfo: 'Recharge {reference} en attente — suivez les instructions de paiement',
   },
+  paymentHistory: 'Historique des paiements',
+  otherServices: 'Autres services',
 };

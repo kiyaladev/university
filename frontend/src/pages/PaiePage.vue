@@ -1,13 +1,13 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('paiePage.title')" :subtitle="$t('paiePage.subtitle')">
+    <page-header :title="$t('paie.title')" :subtitle="$t('paie.subtitle')">
       <template v-if="peutCreer" #actions>
         <q-btn
           unelevated
           color="primary"
           no-caps
           icon="add"
-          :label="$t('paiePage.actions.newSheet')"
+          :label="$t('paie.actions.newSheet')"
           @click="dialogCreation = true"
         />
       </template>
@@ -26,11 +26,11 @@
           round
           color="primary"
           icon="refresh"
-          :aria-label="$t('paiePage.ariaLabels.reload')"
+          :aria-label="$t('paie.ariaLabels.reload')"
           :loading="liste.chargement"
           @click="liste.recharger()"
         >
-          <q-tooltip>{{ $t('paiePage.tooltips.reload') }}</q-tooltip>
+          <q-tooltip>{{ $t('paie.tooltips.reload') }}</q-tooltip>
         </q-btn>
       </template>
       <template #avances>
@@ -42,7 +42,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('paiePage.filters.statut')"
+          :label="$t('paie.filters.statut')"
         />
         <q-select
           v-model="filtres.annee"
@@ -52,15 +52,15 @@
           clearable
           emit-value
           map-options
-          :label="$t('paiePage.filters.annee')"
+          :label="$t('paie.filters.annee')"
         />
       </template>
     </filter-bar>
 
     <div class="text-caption text-grey-7 q-mb-sm">
-      {{ $t('paiePage.summary.sheetsCount', { count: liste.total }) }} {{ $t('rectoratPage.subtitleFallback') }}
-      {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : $t('paiePage.summary.allStatuses') }},
-      {{ filtres.annee ?? $t('paiePage.summary.allYears') }} · {{ $t('paiePage.summary.totalShown') }}
+      {{ $t('paie.summary.sheetsCount', { count: liste.total }) }} {{ $t('rectorat.subtitleFallback') }}
+      {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : $t('paie.summary.allStatuses') }},
+      {{ filtres.annee ?? $t('paie.summary.allYears') }} · {{ $t('paie.summary.totalShown') }}
       {{ montantLisible(totalMontant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
     </div>
 
@@ -103,10 +103,10 @@
             round
             icon="visibility"
             color="primary"
-            :aria-label="$t('paiePage.ariaLabels.detail', { libelle: p.row.libelle })"
+            :aria-label="$t('paie.ariaLabels.detail', { libelle: p.row.libelle })"
             @click.stop="ouvrirDetail(null, p.row)"
           >
-            <q-tooltip>{{ $t('paiePage.tooltips.detail') }}</q-tooltip>
+            <q-tooltip>{{ $t('paie.tooltips.detail') }}</q-tooltip>
           </q-btn>
           <template v-if="peutCalculer(p.row)">
             <q-btn
@@ -114,10 +114,10 @@
               dense
               round
               icon="refresh"
-              :aria-label="$t('paiePage.ariaLabels.recalculate', { libelle: p.row.libelle })"
+              :aria-label="$t('paie.ariaLabels.recalculate', { libelle: p.row.libelle })"
               @click.stop="recalculer(p.row)"
             >
-              <q-tooltip>{{ $t('paiePage.tooltips.recalculate') }}</q-tooltip>
+              <q-tooltip>{{ $t('paie.tooltips.recalculate') }}</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutValider(p.row)">
@@ -127,10 +127,10 @@
               round
               color="positive"
               icon="verified"
-              :aria-label="$t('paiePage.ariaLabels.validate', { libelle: p.row.libelle })"
+              :aria-label="$t('paie.ariaLabels.validate', { libelle: p.row.libelle })"
               @click.stop="valider(p.row)"
             >
-              <q-tooltip>{{ $t('paiePage.tooltips.validate') }}</q-tooltip>
+              <q-tooltip>{{ $t('paie.tooltips.validate') }}</q-tooltip>
             </q-btn>
           </template>
           <template v-if="peutPayer(p.row)">
@@ -140,10 +140,10 @@
               round
               color="primary"
               icon="payments"
-              :aria-label="$t('paiePage.ariaLabels.markPaid', { libelle: p.row.libelle })"
+              :aria-label="$t('paie.ariaLabels.markPaid', { libelle: p.row.libelle })"
               @click.stop="payer(p.row)"
             >
-              <q-tooltip>{{ $t('paiePage.tooltips.markPaid') }}</q-tooltip>
+              <q-tooltip>{{ $t('paie.tooltips.markPaid') }}</q-tooltip>
             </q-btn>
           </template>
           <q-btn
@@ -152,10 +152,10 @@
             dense
             round
             icon="print"
-            :aria-label="$t('paiePage.ariaLabels.print', { libelle: p.row.libelle })"
+            :aria-label="$t('paie.ariaLabels.print', { libelle: p.row.libelle })"
             @click.stop="imprimer(p.row)"
           >
-            <q-tooltip>{{ $t('paiePage.tooltips.print') }}</q-tooltip>
+            <q-tooltip>{{ $t('paie.tooltips.print') }}</q-tooltip>
           </q-btn>
           <template v-if="peutSupprimer(p.row)">
             <q-btn
@@ -164,10 +164,10 @@
               round
               color="negative"
               icon="delete"
-              :aria-label="$t('paiePage.ariaLabels.delete', { libelle: p.row.libelle })"
+              :aria-label="$t('paie.ariaLabels.delete', { libelle: p.row.libelle })"
               @click.stop="supprimer(p.row)"
             >
-              <q-tooltip>{{ $t('paiePage.tooltips.delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('paie.tooltips.delete') }}</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -175,8 +175,8 @@
       <template #no-data>
         <etat-vide
           icone="payments"
-          :titre="$t('paiePage.emptyState.title')"
-          :aide="`${$t('paiePage.emptyState.description')} ${aDesFiltres ? $t('paiePage.emptyState.filtered') : ''}`.trim()"
+          :titre="$t('paie.emptyState.title')"
+          :aide="`${$t('paie.emptyState.description')} ${aDesFiltres ? $t('paie.emptyState.filtered') : ''}`.trim()"
         >
           <template #action>
             <q-btn
@@ -186,7 +186,7 @@
               no-caps
               color="primary"
               icon="filter_alt_off"
-              :label="$t('paiePage.actions.clearFilters')"
+              :label="$t('paie.actions.clearFilters')"
               @click="liste.reinitialiser([])"
             />
             <q-btn
@@ -195,7 +195,7 @@
               no-caps
               color="primary"
               icon="add"
-              :label="$t('paiePage.actions.createFirst')"
+              :label="$t('paie.actions.createFirst')"
               @click="dialogCreation = true"
             />
           </template>
@@ -216,7 +216,7 @@
               <div class="col">
                 <div class="text-h6">{{ f.libelle }}</div>
                 <div class="text-caption text-grey-7">
-                  {{ dateLisible(f.dateDebut) }} {{ $t('rectoratPage.subtitleFallback') }} {{ dateLisible(f.dateFin) }}
+                  {{ dateLisible(f.dateDebut) }} {{ $t('rectorat.subtitleFallback') }} {{ dateLisible(f.dateFin) }}
                 </div>
               </div>
               <span class="champ badge-statut" :class="classeStatut(f.statut)">
@@ -227,24 +227,24 @@
           <q-card-section>
             <div class="row items-end justify-between">
               <div>
-                <div class="text-caption text-grey-7">{{ $t('paiePage.card.totalAmount') }}</div>
+                <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
                 <div class="text-h6">{{ montantLisible(f.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
               </div>
               <div class="text-caption text-grey-7 text-right">
-                {{ $t('paiePage.card.lignesCount', { count: f.lignes?.length ?? 0 }) }}<br />
+                {{ $t('paie.card.lignesCount', { count: f.lignes?.length ?? 0 }) }}<br />
                 {{ f.creePar ? `${f.creePar.prenom} ${f.creePar.nom}` : '' }}
               </div>
             </div>
           </q-card-section>
           <q-card-actions align="right">
             <template v-if="peutCalculer(f)">
-              <q-btn flat dense no-caps icon="refresh" :label="$t('paiePage.actions.recalculate')" @click.stop="recalculer(f)" />
+              <q-btn flat dense no-caps icon="refresh" :label="$t('paie.actions.recalculate')" @click.stop="recalculer(f)" />
             </template>
             <template v-if="peutValider(f)">
-              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('paiePage.actions.validate')" @click.stop="valider(f)" />
+              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('paie.actions.validate')" @click.stop="valider(f)" />
             </template>
             <template v-if="peutPayer(f)">
-              <q-btn flat dense no-caps icon="payments" :label="$t('paiePage.actions.markPaid')" @click.stop="payer(f)" />
+              <q-btn flat dense no-caps icon="payments" :label="$t('paie.actions.markPaid')" @click.stop="payer(f)" />
             </template>
             <q-btn
               v-if="peutImprimer"
@@ -252,7 +252,7 @@
               dense
               no-caps
               icon="print"
-              :label="$t('paiePage.actions.print')"
+              :label="$t('paie.actions.print')"
               @click.stop="imprimer(f)"
             />
             <template v-if="peutSupprimer(f)">
@@ -262,7 +262,7 @@
                 round
                 color="negative"
                 icon="delete"
-                :aria-label="$t('paiePage.ariaLabels.delete', { libelle: f.libelle })"
+                :aria-label="$t('paie.ariaLabels.delete', { libelle: f.libelle })"
                 @click.stop="supprimer(f)"
               />
             </template>
@@ -273,8 +273,8 @@
         v-if="!liste.lignes.length && !liste.chargement"
         class="col-12"
         icone="payments"
-        :titre="$t('paiePage.emptyState.title')"
-        :aide="`${$t('paiePage.emptyState.description')} ${aDesFiltres ? $t('paiePage.emptyState.filtered') : ''}`.trim()"
+        :titre="$t('paie.emptyState.title')"
+        :aide="`${$t('paie.emptyState.description')} ${aDesFiltres ? $t('paie.emptyState.filtered') : ''}`.trim()"
       >
         <template #action>
           <q-btn
@@ -284,7 +284,7 @@
             no-caps
             color="primary"
             icon="filter_alt_off"
-            :label="$t('paiePage.actions.clearFilters')"
+            :label="$t('paie.actions.clearFilters')"
             @click="liste.reinitialiser([])"
           />
           <q-btn
@@ -293,7 +293,7 @@
             no-caps
             color="primary"
             icon="add"
-            :label="$t('paiePage.actions.createFirst')"
+            :label="$t('paie.actions.createFirst')"
             @click="dialogCreation = true"
           />
         </template>
@@ -345,14 +345,14 @@
               </q-td>
             </template>
             <template #no-data>
-              <etat-vide icone="receipt_long" :titre="$t('paiePage.detail.lineEmptyTitle')" :aide="$t('paiePage.detail.lineEmptyMessage')" />
+              <etat-vide icone="receipt_long" :titre="$t('paie.detail.lineEmptyTitle')" :aide="$t('paie.detail.lineEmptyMessage')" />
             </template>
             <template #bottom>
               <div class="detail-total">
                 <div class="text-weight-medium">
-                  {{ $t('paiePage.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
+                  {{ $t('paie.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
                 </div>
-                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} {{ $t('paiePage.detail.completed') }}</div>
+                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} {{ $t('paie.detail.completed') }}</div>
                 <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
               </div>
             </template>
@@ -365,10 +365,10 @@
             flat
             no-caps
             icon="print"
-            :label="$t('paiePage.actions.printSheet')"
+            :label="$t('paie.actions.printSheet')"
             @click="detail && imprimer(detail)"
           />
-          <q-btn flat no-caps :label="$t('paiePage.actions.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('paie.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -449,13 +449,13 @@ const chipsFiltres = computed(() => {
   const chips: Array<{ label: string; value: any }> = [];
   if (filtres.value.statut) {
     chips.push({
-      label: t('paiePage.filters.statutChip', { value: LIBELLE_STATUT_PAIE[filtres.value.statut] }),
+      label: t('paie.filters.statutChip', { value: LIBELLE_STATUT_PAIE[filtres.value.statut] }),
       value: filtres.value.statut,
     });
   }
   if (filtres.value.annee) {
     chips.push({
-      label: t('paiePage.filters.anneeChip', { value: filtres.value.annee }),
+      label: t('paie.filters.anneeChip', { value: filtres.value.annee }),
       value: filtres.value.annee,
     });
   }
@@ -489,18 +489,18 @@ const heuresTotal = computed(() =>
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'libelle', label: t('paiePage.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
+  { name: 'libelle', label: t('paie.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
   {
     name: 'periode',
-    label: t('paiePage.table.columns.periode'),
+    label: t('paie.table.columns.periode'),
     field: (r: FeuillePaie) => `${dateLisible(r.dateDebut)} — ${dateLisible(r.dateFin)}`,
     align: 'left',
   },
-  { name: 'statut', label: t('paiePage.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
-  { name: 'lignes', label: t('paiePage.table.columns.lignes'), field: 'lignes', align: 'right' },
+  { name: 'statut', label: t('paie.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'lignes', label: t('paie.table.columns.lignes'), field: 'lignes', align: 'right' },
   {
     name: 'montantTotal',
-    label: t('paiePage.table.columns.montantTotal'),
+    label: t('paie.table.columns.montantTotal'),
     field: 'montantTotal',
     align: 'right',
     sortable: true,
@@ -512,44 +512,44 @@ const colonnes = computed<QTableColumn[]>(() => [
 // par le même : sans quoi une colonne dit « 12000 » quand la voisine dit
 // « 12 000 ».
 const colonnesLignes = computed<QTableColumn[]>(() => [
-  { name: 'enseignant', label: t('paiePage.table.lignesColumns.enseignant'), field: 'enseignant', align: 'left' },
+  { name: 'enseignant', label: t('paie.table.lignesColumns.enseignant'), field: 'enseignant', align: 'left' },
   {
     name: 'taux',
-    label: t('paiePage.table.lignesColumns.taux'),
+    label: t('paie.table.lignesColumns.taux'),
     field: (r: any) => montantLisible(r.tauxHoraire),
     align: 'right',
   },
   {
     name: 'heures',
-    label: t('paiePage.table.lignesColumns.heures'),
+    label: t('paie.table.lignesColumns.heures'),
     field: (r: any) => heuresLisibles(r.heuresReelles),
     align: 'right',
   },
   {
     name: 'volume',
-    label: t('paiePage.table.lignesColumns.volume'),
+    label: t('paie.table.lignesColumns.volume'),
     field: (r: any) => heuresLisibles(r.volumePrevu),
     align: 'right',
   },
   {
     name: 'brut',
-    label: t('paiePage.table.lignesColumns.brut'),
+    label: t('paie.table.lignesColumns.brut'),
     field: (r: any) => montantLisible(r.montantBrut),
     align: 'right',
   },
   {
     name: 'retenue',
-    label: t('paiePage.table.lignesColumns.retenue'),
+    label: t('paie.table.lignesColumns.retenue'),
     field: (r: any) => montantLisible(r.retenue),
     align: 'right',
   },
   {
     name: 'montant',
-    label: t('paiePage.table.lignesColumns.montant'),
+    label: t('paie.table.lignesColumns.montant'),
     field: (r: any) => montantLisible(r.montantNet),
     align: 'right',
   },
-  { name: 'commentaire', label: t('paiePage.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },
+  { name: 'commentaire', label: t('paie.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },
 ]);
 
 function ouvrirDetail(_event: unknown, f: FeuillePaie) {
@@ -570,9 +570,9 @@ async function agir(
   succes: string,
 ) {
   const ok = await confirmer({
-    titre: t(`paiePage.dialogs.${dialogue}.title`),
-    message: t(`paiePage.dialogs.${dialogue}.message`, { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
-    ok: t(`paiePage.dialogs.${dialogue}.ok`),
+    titre: t(`paie.dialogs.${dialogue}.title`),
+    message: t(`paie.dialogs.${dialogue}.message`, { libelle: f.libelle, montant: montantLisible(f.montantTotal) }),
+    ok: t(`paie.dialogs.${dialogue}.ok`),
   });
   if (!ok) return;
   try {
@@ -586,9 +586,9 @@ async function agir(
 }
 
 /** Recalcul idempotent des heures contrôlées de la période. */
-const recalculer = (f: FeuillePaie) => agir(f, 'calculer', 'recalculate', 'paiePage.messages.recalculated');
-const valider = (f: FeuillePaie) => agir(f, 'valider', 'validate', 'paiePage.messages.validated');
-const payer = (f: FeuillePaie) => agir(f, 'payer', 'markPaid', 'paiePage.messages.paid');
+const recalculer = (f: FeuillePaie) => agir(f, 'calculer', 'recalculate', 'paie.messages.recalculated');
+const valider = (f: FeuillePaie) => agir(f, 'valider', 'validate', 'paie.messages.validated');
+const payer = (f: FeuillePaie) => agir(f, 'payer', 'markPaid', 'paie.messages.paid');
 
 function imprimer(f: FeuillePaie) {
   void ouvrirImpression(`/feuilles-paie/${f.id}/imprimer`);
@@ -603,10 +603,10 @@ function supprimer(f: FeuillePaie) {
       return liste.recharger();
     },
     {
-      titre: t('paiePage.dialogs.delete.title'),
-      message: t('paiePage.dialogs.delete.message', { libelle: f.libelle }),
-      ok: t('paiePage.dialogs.delete.ok'),
-      succes: t('paiePage.messages.deleted'),
+      titre: t('paie.dialogs.delete.title'),
+      message: t('paie.dialogs.delete.message', { libelle: f.libelle }),
+      ok: t('paie.dialogs.delete.ok'),
+      succes: t('paie.messages.deleted'),
     },
   );
 }

@@ -1,5 +1,3 @@
-import simplificationFR from './fr-FR/simplification';
-import simplificationEN from './en-US/simplification';
 import filePointagesFR from './fr-FR/filePointages';
 import filePointagesEN from './en-US/filePointages';
 import accueilScolariteFR from './fr-FR/accueilScolarite';
@@ -50,8 +48,8 @@ import carteEtudianteFR from './fr-FR/carteEtudiante';
 import carteEtudianteEN from './en-US/carteEtudiante';
 import controleFR from './fr-FR/controle';
 import controleEN from './en-US/controle';
-import courrierPageFR from './fr-FR/courrierPage';
-import courrierPageEN from './en-US/courrierPage';
+import courrierFR from './fr-FR/courrier';
+import courrierEN from './en-US/courrier';
 import dashboardFR from './fr-FR/dashboard';
 import dashboardEN from './en-US/dashboard';
 import deliberationsFR from './fr-FR/deliberations';
@@ -96,10 +94,10 @@ import mesSeancesFR from './fr-FR/mesSeances';
 import mesSeancesEN from './en-US/mesSeances';
 import notesFR from './fr-FR/notes';
 import notesEN from './en-US/notes';
-import notificationsPageFR from './fr-FR/notificationsPage';
-import notificationsPageEN from './en-US/notificationsPage';
-import paiePageFR from './fr-FR/paiePage';
-import paiePageEN from './en-US/paiePage';
+import notificationsFR from './fr-FR/notifications';
+import notificationsEN from './en-US/notifications';
+import paieFR from './fr-FR/paie';
+import paieEN from './en-US/paie';
 import paiementsFR from './fr-FR/paiements';
 import paiementsEN from './en-US/paiements';
 import parametresFR from './fr-FR/parametres';
@@ -120,8 +118,8 @@ import recettesFR from './fr-FR/recettes';
 import recettesEN from './en-US/recettes';
 import reclamationsFR from './fr-FR/reclamations';
 import reclamationsEN from './en-US/reclamations';
-import rectoratPageFR from './fr-FR/rectoratPage';
-import rectoratPageEN from './en-US/rectoratPage';
+import rectoratFR from './fr-FR/rectorat';
+import rectoratEN from './en-US/rectorat';
 import reservationsFR from './fr-FR/reservations';
 import reservationsEN from './en-US/reservations';
 import restoFR from './fr-FR/resto';
@@ -160,7 +158,6 @@ import importsFR from './fr-FR/imports';
 import importsEN from './en-US/imports';
 
 const frFR = {
-  simplification: simplificationFR,
   accueilUniversity: accueilUniversityFR,
   servicesActifs: servicesActifsFR,
   accueilScolarite: accueilScolariteFR,
@@ -182,7 +179,7 @@ const frFR = {
   bulletins: bulletinsFR,
   carteEtudiante: carteEtudianteFR,
   controle: controleFR,
-  courrierPage: courrierPageFR,
+  courrier: courrierFR,
   dashboard: dashboardFR,
   deliberations: deliberationsFR,
   demandeDocuments: demandeDocumentsFR,
@@ -206,8 +203,8 @@ const frFR = {
   mesReclamations: mesReclamationsFR,
   mesSeances: mesSeancesFR,
   notes: notesFR,
-  notificationsPage: notificationsPageFR,
-  paiePage: paiePageFR,
+  notifications: notificationsFR,
+  paie: paieFR,
   paiements: paiementsFR,
   parametres: parametresFR,
   patrimoine: patrimoineFR,
@@ -218,7 +215,7 @@ const frFR = {
   rapports: rapportsFR,
   recettes: recettesFR,
   reclamations: reclamationsFR,
-  rectoratPage: rectoratPageFR,
+  rectorat: rectoratFR,
   reservations: reservationsFR,
   resto: restoFR,
   salles: sallesFR,
@@ -239,7 +236,6 @@ const frFR = {
 };
 
 const enUS = {
-  simplification: simplificationEN,
   accueilUniversity: accueilUniversityEN,
   servicesActifs: servicesActifsEN,
   accueilScolarite: accueilScolariteEN,
@@ -261,7 +257,7 @@ const enUS = {
   bulletins: bulletinsEN,
   carteEtudiante: carteEtudianteEN,
   controle: controleEN,
-  courrierPage: courrierPageEN,
+  courrier: courrierEN,
   dashboard: dashboardEN,
   deliberations: deliberationsEN,
   demandeDocuments: demandeDocumentsEN,
@@ -285,8 +281,8 @@ const enUS = {
   mesReclamations: mesReclamationsEN,
   mesSeances: mesSeancesEN,
   notes: notesEN,
-  notificationsPage: notificationsPageEN,
-  paiePage: paiePageEN,
+  notifications: notificationsEN,
+  paie: paieEN,
   paiements: paiementsEN,
   parametres: parametresEN,
   patrimoine: patrimoineEN,
@@ -297,7 +293,7 @@ const enUS = {
   rapports: rapportsEN,
   recettes: recettesEN,
   reclamations: reclamationsEN,
-  rectoratPage: rectoratPageEN,
+  rectorat: rectoratEN,
   reservations: reservationsEN,
   resto: restoEN,
   salles: sallesEN,

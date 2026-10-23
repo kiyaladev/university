@@ -1,4 +1,4 @@
-/** Namespace `rectoratPage` — page Tableau de bord Rectorat. */
+/** Namespace `rectorat` — page Tableau de bord Rectorat. */
 export default {
   title: "Bilan de l’établissement",
   subtitle:
