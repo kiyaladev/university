@@ -7,7 +7,7 @@
  * un effectif qui compte les inscriptions abandonnées, un taux de réussite
  * inventé quand aucune délibération n'est validée.
  */
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import {
   Prisma,
   SessionDeliberation,
@@ -347,20 +347,12 @@ describe('RectoratService — snapshots MESRS', () => {
       }),
     );
   });
-
-  it('refuse d’imprimer un bilan avec un jeton invalide', async () => {
-    const { prisma } = fairePrisma();
-    const jwt = { verify: jest.fn(() => { throw new Error('jeton invalide'); }) };
-    const service = new RectoratService(prisma, jwt as any);
-
-    await expect(service.imprimerBilan('bilan-1', 'jeton-bidon', 'http://localhost')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
-  });
+  // Le jeton du nouvel onglet est vérifié par la garde globale
+  // (common/protection-impression.spec.ts).
 });
 
 describe('RectoratService — édition du bilan', () => {
-  it('produit une page A4 à partir du snapshot, jeton valide', async () => {
+  it('produit une page A4 à partir du snapshot', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.statistiqueMesrs.findUnique.mockResolvedValue({
       id: 'bilan-1',
@@ -379,12 +371,10 @@ describe('RectoratService — édition du bilan', () => {
       generePar: { nom: 'DIALLO', prenom: 'Mamadou' },
       annee: { id: 'annee-1', libelle: '2025-2026' },
     });
-    const jwt = { verify: jest.fn().mockResolvedValue({ sub: 'admin-1' }) };
-    const service = new RectoratService(prisma, jwt as any);
+    const service = new RectoratService(prisma);
 
-    const html = await service.imprimerBilan('bilan-1', 'jeton-valide', 'http://localhost');
+    const html = await service.imprimerBilan('bilan-1', 'http://localhost');
 
-    expect(jwt.verify).toHaveBeenCalledWith('jeton-valide');
     expect(html).toContain('Bilan MESRS — 2025-2026');
     expect(html).toContain('128');
     expect(html).toContain('67,5 %');

@@ -180,9 +180,9 @@ describe('impression du bulletin électoral', () => {
 
       // Le jeton n'est plus revérifié ici : la garde globale `@ProtectedDocument`
       // contrôle la route avant le handler (voir common/protection-impression.spec.ts).
-      await expect(
-        service.imprimerBulletin('e-1', 'https://campus.test', gestionnaire),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.imprimerBulletin('e-1', 'https://campus.test', gestionnaire)).rejects.toThrow(
+        NotFoundException,
+      );
     },
   );
 });

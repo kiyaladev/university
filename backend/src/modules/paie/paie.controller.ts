@@ -10,9 +10,7 @@ import { PaieService } from './paie.service';
 @ApiBearerAuth()
 @Controller('feuilles-paie')
 export class PaieController {
-  constructor(
-    private readonly service: PaieService,
-  ) {}
+  constructor(private readonly service: PaieService) {}
 
   /** Liste paginée, filtrable par statut / année / mois. */
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)

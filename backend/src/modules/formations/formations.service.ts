@@ -14,7 +14,13 @@
  * Le nombre de places se lit sur les inscriptions CONFIRME : annuler une
  * demande libère la place, confirmer après COMPLET est refusé.
  */
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';

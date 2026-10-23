@@ -43,7 +43,10 @@ function fairePrisma(feuille: unknown, tx: Record<string, unknown> = {}) {
     affectation: { findMany: jest.fn().mockResolvedValue([]) },
     lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany: jest.fn() },
     enseignant: { findMany: jest.fn().mockResolvedValue([]) },
-    feuillePaie: { updateMany: jest.fn().mockResolvedValue({ count: 1 }), findUnique: jest.fn().mockResolvedValue(feuille) },
+    feuillePaie: {
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      findUnique: jest.fn().mockResolvedValue(feuille),
+    },
     auditLog: { create: jest.fn().mockResolvedValue({}) },
     ...tx,
   };
@@ -83,22 +86,19 @@ describe('PaieService — décompte des heures', () => {
 
   it('ne paie que les heures entières : 59 minutes valent zéro heure', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 59 }, affectation: { enseignantId: 'ens-1' } },
-          ]),
-        },
-        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 50 }]) },
-        lignePaie: {
-          findMany: jest.fn().mockResolvedValue([]),
-          deleteMany: jest.fn(),
-          createMany,
-        },
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ controle: { dureeMinutes: 59 }, affectation: { enseignantId: 'ens-1' } }]),
       },
-    );
+      enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 50 }]) },
+      lignePaie: {
+        findMany: jest.fn().mockResolvedValue([]),
+        deleteMany: jest.fn(),
+        createMany,
+      },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -110,19 +110,16 @@ describe('PaieService — décompte des heures', () => {
 
   it('additionne les minutes d’un enseignant avant de compter les heures', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 90 }, affectation: { enseignantId: 'ens-1' } },
-            { controle: { dureeMinutes: 90 }, affectation: { enseignantId: 'ens-1' } },
-          ]),
-        },
-        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 50 }]) },
-        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest.fn().mockResolvedValue([
+          { controle: { dureeMinutes: 90 }, affectation: { enseignantId: 'ens-1' } },
+          { controle: { dureeMinutes: 90 }, affectation: { enseignantId: 'ens-1' } },
+        ]),
       },
-    );
+      enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 50 }]) },
+      lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -135,31 +132,28 @@ describe('PaieService — décompte des heures', () => {
 
   it('cumule le volume contractuel et paie chaque enseignant sur son taux', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 2 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
-            { controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-2' } },
-          ]),
-        },
-        affectation: {
-          findMany: jest.fn().mockResolvedValue([
-            { enseignantId: 'ens-1', volumeHorairePrevu: 6 },
-            { enseignantId: 'ens-1', volumeHorairePrevu: 4 },
-            { enseignantId: 'ens-2', volumeHorairePrevu: 3 },
-          ]),
-        },
-        enseignant: {
-          findMany: jest.fn().mockResolvedValue([
-            { id: 'ens-1', tauxHoraire: 25 },
-            { id: 'ens-2', tauxHoraire: 40 },
-          ]),
-        },
-        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest.fn().mockResolvedValue([
+          { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
+          { controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-2' } },
+        ]),
       },
-    );
+      affectation: {
+        findMany: jest.fn().mockResolvedValue([
+          { enseignantId: 'ens-1', volumeHorairePrevu: 6 },
+          { enseignantId: 'ens-1', volumeHorairePrevu: 4 },
+          { enseignantId: 'ens-2', volumeHorairePrevu: 3 },
+        ]),
+      },
+      enseignant: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'ens-1', tauxHoraire: 25 },
+          { id: 'ens-2', tauxHoraire: 40 },
+        ]),
+      },
+      lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -191,25 +185,22 @@ describe('PaieService — décompte des heures', () => {
 
   it('porte au total de la feuille la somme des nets', async () => {
     const updateMany = jest.fn().mockResolvedValue({ count: 1 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
-            { controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-2' } },
-          ]),
-        },
-        enseignant: {
-          findMany: jest.fn().mockResolvedValue([
-            { id: 'ens-1', tauxHoraire: 25 },
-            { id: 'ens-2', tauxHoraire: 40 },
-          ]),
-        },
-        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany: jest.fn() },
-        feuillePaie: { updateMany, findUnique: jest.fn().mockResolvedValue(feuilleBrouillon()) },
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest.fn().mockResolvedValue([
+          { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
+          { controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-2' } },
+        ]),
       },
-    );
+      enseignant: {
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'ens-1', tauxHoraire: 25 },
+          { id: 'ens-2', tauxHoraire: 40 },
+        ]),
+      },
+      lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany: jest.fn() },
+      feuillePaie: { updateMany, findUnique: jest.fn().mockResolvedValue(feuilleBrouillon()) },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -219,24 +210,23 @@ describe('PaieService — décompte des heures', () => {
 
   it('conserve le commentaire d’une ligne au recalcul', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-1' } },
-          ]),
-        },
-        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 30 }]) },
-        lignePaie: {
-          findMany: jest.fn().mockResolvedValue([
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ controle: { dureeMinutes: 60 }, affectation: { enseignantId: 'ens-1' } }]),
+      },
+      enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: 30 }]) },
+      lignePaie: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([
             { enseignantId: 'ens-1', commentaire: 'Congé exceptionnel', tauxHoraire: 30, heuresReelles: 1 },
           ]),
-          deleteMany: jest.fn(),
-          createMany,
-        },
+        deleteMany: jest.fn(),
+        createMany,
       },
-    );
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -249,10 +239,10 @@ describe('PaieService — décompte des heures', () => {
   it('limite le calcul aux vacataires, sauf demande explicite de tous les enseignants', async () => {
     const seanceFindMany = jest.fn().mockResolvedValue([]);
     const affectationFindMany = jest.fn().mockResolvedValue([]);
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      { seance: { findMany: seanceFindMany }, affectation: { findMany: affectationFindMany } },
-    );
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: { findMany: seanceFindMany },
+      affectation: { findMany: affectationFindMany },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);
@@ -269,19 +259,18 @@ describe('PaieService — décompte des heures', () => {
 
   it('calcule sur des nombres quand le taux horaire vient d’une colonne numeric', async () => {
     const createMany = jest.fn().mockResolvedValue({ count: 1 });
-    const { prisma } = fairePrisma(
-      feuilleBrouillon(),
-      {
-        seance: {
-          findMany: jest.fn().mockResolvedValue([
-            { controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } },
-          ]),
-        },
-        // La base renvoie un Decimal : 25,50 GNF de l'heure.
-        enseignant: { findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: new Prisma.Decimal('25.50') }]) },
-        lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    const { prisma } = fairePrisma(feuilleBrouillon(), {
+      seance: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ controle: { dureeMinutes: 120 }, affectation: { enseignantId: 'ens-1' } }]),
       },
-    );
+      // La base renvoie un Decimal : 25,50 GNF de l'heure.
+      enseignant: {
+        findMany: jest.fn().mockResolvedValue([{ id: 'ens-1', tauxHoraire: new Prisma.Decimal('25.50') }]),
+      },
+      lignePaie: { findMany: jest.fn().mockResolvedValue([]), deleteMany: jest.fn(), createMany },
+    });
     const service = new PaieService(prisma as any, {} as any);
 
     await service.calculer('feuille-1', false, USER);

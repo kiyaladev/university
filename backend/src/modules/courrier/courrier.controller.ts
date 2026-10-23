@@ -17,9 +17,7 @@ import { CourrierService } from './courrier.service';
 @Controller('courrier')
 @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT)
 export class CourrierController {
-  constructor(
-    private readonly service: CourrierService,
-  ) {}
+  constructor(private readonly service: CourrierService) {}
 
   @Get()
   liste(@Query() query: CourrierQueryDto, @CurrentUser() user: AuthUser) {

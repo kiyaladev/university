@@ -156,10 +156,7 @@ describe('confirmation imprimée d’inscription à une formation', () => {
         }),
       },
     };
-    return new FormationsService(
-      prisma,
-      { valeur: jest.fn().mockResolvedValue('Établissement fictif') } as any,
-    );
+    return new FormationsService(prisma, { valeur: jest.fn().mockResolvedValue('Établissement fictif') } as any);
   }
   it('imprime le montant encaissé et une inscription, sans affirmer un achèvement pédagogique', async () => {
     const html = await servicePour().certificat('ins', 'http://localhost');
@@ -172,9 +169,7 @@ describe('confirmation imprimée d’inscription à une formation', () => {
   it.each([StatutPaiement.EN_ATTENTE, StatutPaiement.ANNULE, StatutPaiement.REMBOURSE])(
     'refuse le document si le paiement est %s',
     async (statut) => {
-      await expect(servicePour(statut).certificat('ins', 'http://localhost')).rejects.toBeInstanceOf(
-        ConflictException,
-      );
+      await expect(servicePour(statut).certificat('ins', 'http://localhost')).rejects.toBeInstanceOf(ConflictException);
     },
   );
 });

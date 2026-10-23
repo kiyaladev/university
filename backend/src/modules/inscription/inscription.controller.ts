@@ -182,9 +182,7 @@ export class PaiementsController {
 @Controller('inscriptions')
 @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ETUDIANT)
 export class InscriptionsController {
-  constructor(
-    private readonly service: InscriptionService,
-  ) {}
+  constructor(private readonly service: InscriptionService) {}
 
   @Get()
   liste(@Query() query: InscriptionQueryDto, @CurrentUser() user: AuthUser) {

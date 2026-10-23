@@ -111,7 +111,8 @@ function lireMatriceFront(source: string): Record<string, string[]> {
   const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   const liste = (texte: string) => [...texte.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]);
   const constantes: Record<string, string[]> = {};
-  const avecRoles = (existsSync(FICHIER_ROLES_FRONT) ? readFileSync(FICHIER_ROLES_FRONT, 'utf8') : '') + sansCommentaires;
+  const avecRoles =
+    (existsSync(FICHIER_ROLES_FRONT) ? readFileSync(FICHIER_ROLES_FRONT, 'utf8') : '') + sansCommentaires;
   for (const m of avecRoles.matchAll(/const (\w+): Role\[\] = \[([^\]]*)\]/g)) constantes[m[1]] = liste(m[2]);
   const corps = sansCommentaires.slice(sansCommentaires.indexOf('PERMISSIONS = {'));
   const matrice: Record<string, string[]> = {};

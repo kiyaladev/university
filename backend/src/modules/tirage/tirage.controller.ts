@@ -10,9 +10,7 @@ import { TirageService } from './tirage.service';
 @ApiBearerAuth()
 @Controller('tirage')
 export class TirageController {
-  constructor(
-    private readonly service: TirageService,
-  ) {}
+  constructor(private readonly service: TirageService) {}
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Get()

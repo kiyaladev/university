@@ -7,7 +7,13 @@
  * ET un jeton aléatoire (qrToken) : impossible de reconstruire le jeton depuis
  * le numéro, un document scanné n'a pas de jumeau forgé.
  */
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { t } from '../../common/i18n';
 import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';

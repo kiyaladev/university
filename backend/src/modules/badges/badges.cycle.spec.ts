@@ -16,7 +16,6 @@ import { StatutBadge } from '@prisma/client';
 import { BadgesService } from './badges.service';
 
 const USER = { id: 'scolarite-1', nom: 'Scol', prenom: 'Arite', role: 'SCOLARITE' } as any;
-const JWT = { verify: jest.fn().mockResolvedValue({ sub: 'scolarite-1' }) } as any;
 
 /** Badge type, valide et encore actif. */
 function badge(surcharge: Record<string, unknown> = {}) {
@@ -89,10 +88,7 @@ describe('BadgesService — émission', () => {
   it('attribue un jeton QR unique et distinct du numéro', async () => {
     const { tx, service } = preparer();
 
-    await service.creer(
-      { type: 'VIP', nom: 'SYLLAS', prenom: 'Ibrahima', dateValidite: '2030-01-01' } as any,
-      USER,
-    );
+    await service.creer({ type: 'VIP', nom: 'SYLLAS', prenom: 'Ibrahima', dateValidite: '2030-01-01' } as any, USER);
 
     const data = tx.badgeAcces.create.mock.calls[0][0].data;
     expect(data.qrToken).toMatch(/^UP-BADGE-/);
@@ -118,10 +114,7 @@ describe('BadgesService — émission', () => {
     tx.badgeAcces.create.mockRejectedValue(Object.assign(new Error('doublon'), { code: 'P2002' }));
 
     await expect(
-      service.creer(
-        { type: 'VISITEUR', nom: 'SYLLAS', prenom: 'Ibrahima', dateValidite: '2030-01-01' } as any,
-        USER,
-      ),
+      service.creer({ type: 'VISITEUR', nom: 'SYLLAS', prenom: 'Ibrahima', dateValidite: '2030-01-01' } as any, USER),
     ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(tx.badgeAcces.create).toHaveBeenCalledTimes(10);
@@ -138,9 +131,7 @@ describe('BadgesService — statut effectif', () => {
   });
 
   it('ne requalifie jamais un badge annulé en expiré', async () => {
-    const { service } = preparer(
-      badge({ statut: StatutBadge.ANNULE, dateValidite: new Date('2020-01-01T00:00:00Z') }),
-    );
+    const { service } = preparer(badge({ statut: StatutBadge.ANNULE, dateValidite: new Date('2020-01-01T00:00:00Z') }));
 
     const trouve = await service.trouver('badge-1');
 
@@ -211,9 +202,9 @@ describe('BadgesService — rallongement de validité', () => {
   it('refuse de rallonger un badge annulé', async () => {
     const { tx, service } = preparer(badge({ statut: StatutBadge.ANNULE }));
 
-    await expect(
-      service.rallonger('badge-1', { dateValidite: '2031-01-01' } as any, USER),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.rallonger('badge-1', { dateValidite: '2031-01-01' } as any, USER)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(tx.badgeAcces.updateMany).not.toHaveBeenCalled();
   });
@@ -299,7 +290,9 @@ describe('BadgesService — vérification publique', () => {
 
 describe('BadgesService — modification', () => {
   it('réactive un badge périmé quand on repousse sa date de validité', async () => {
-    const { tx, service } = preparer(badge({ statut: StatutBadge.EXPIRE, dateValidite: new Date('2020-01-01T00:00:00Z') }));
+    const { tx, service } = preparer(
+      badge({ statut: StatutBadge.EXPIRE, dateValidite: new Date('2020-01-01T00:00:00Z') }),
+    );
     // La première écriture change les champs, la seconde recale le statut.
     tx.badgeAcces.update
       .mockResolvedValueOnce(badge({ statut: StatutBadge.EXPIRE, dateValidite: new Date('2031-01-01T00:00:00Z') }))

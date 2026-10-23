@@ -13,17 +13,11 @@ import { TirageController } from './tirage.controller';
 const roles = (methode: string) => Reflect.getMetadata(ROLES_KEY, (TirageController.prototype as any)[methode]);
 
 describe('TirageController — droits par rôle', () => {
-  it.each([
-    'liste',
-    'detail',
-    'creer',
-    'imprimer',
-    'mettreSousPli',
-    'distribuer',
-    'recuperer',
-    'annuler',
-  ])('réserve %s à l’administration et à la scolarité', (methode) => {
-    expect(roles(methode)).toEqual([Role.ADMIN, Role.SCOLARITE]);
-    expect(roles(methode)).not.toContain(Role.DIRECTION);
-  });
+  it.each(['liste', 'detail', 'creer', 'imprimer', 'mettreSousPli', 'distribuer', 'recuperer', 'annuler'])(
+    'réserve %s à l’administration et à la scolarité',
+    (methode) => {
+      expect(roles(methode)).toEqual([Role.ADMIN, Role.SCOLARITE]);
+      expect(roles(methode)).not.toContain(Role.DIRECTION);
+    },
+  );
 });

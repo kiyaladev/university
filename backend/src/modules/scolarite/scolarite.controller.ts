@@ -113,9 +113,7 @@ export class NotesController {
 @ApiBearerAuth()
 @Controller('deliberations')
 export class DeliberationsController {
-  constructor(
-    private readonly service: ScolariteService,
-  ) {}
+  constructor(private readonly service: ScolariteService) {}
 
   @Roles(...NOTES)
   @Get()
@@ -163,11 +161,7 @@ export class DeliberationsController {
   @ProtectedDocument(...NOTES)
   @Get(':id/releve/:inscriptionId')
   @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
-  async releve(
-    @Param('id') id: string,
-    @Param('inscriptionId') inscriptionId: string,
-    @Res() res: Response,
-  ) {
+  async releve(@Param('id') id: string, @Param('inscriptionId') inscriptionId: string, @Res() res: Response) {
     res.type('html').send(await this.service.imprimerBulletin(id, inscriptionId));
   }
 }

@@ -15,7 +15,14 @@ import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, qrDataUrl, STYLE_ETIQUETTES } from '../../common/impression';
+import {
+  chargerEtablissement,
+  echapper,
+  pageA4,
+  PALETTE_IMPRESSION,
+  qrDataUrl,
+  STYLE_ETIQUETTES,
+} from '../../common/impression';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,

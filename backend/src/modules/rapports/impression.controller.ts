@@ -14,9 +14,7 @@ import { AffichesQrQueryDto, RapportImprimableQueryDto, perimetrePresence } from
 @ApiTags('Impression')
 @Controller('impression')
 export class ImpressionController {
-  constructor(
-    private readonly impression: ImpressionService,
-  ) {}
+  constructor(private readonly impression: ImpressionService) {}
 
   private async envoyer(res: Response, html: Promise<string>) {
     res.type('html').send(await html);
@@ -31,11 +29,7 @@ export class ImpressionController {
     Role.ENSEIGNANT,
   )
   @Get('registre')
-  async registre(
-    @Res() res: Response,
-    @Query() query: RapportImprimableQueryDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  async registre(@Res() res: Response, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     await this.envoyer(res, this.impression.registre(perimetrePresence(query, user)));
   }
 
@@ -53,21 +47,13 @@ export class ImpressionController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(
-    @Res() res: Response,
-    @Query() query: RapportImprimableQueryDto,
-    @CurrentUser() _user: AuthUser,
-  ) {
+  async paiement(@Res() res: Response, @Query() query: RapportImprimableQueryDto, @CurrentUser() _user: AuthUser) {
     await this.envoyer(res, this.impression.etatPaiement(query));
   }
 
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get('qr-salles')
-  async qr(
-    @Res() res: Response,
-    @Query() query: AffichesQrQueryDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  async qr(@Res() res: Response, @Query() query: AffichesQrQueryDto, @CurrentUser() user: AuthUser) {
     await this.envoyer(res, this.impression.affichesQr(user, query.salleId));
   }
 }

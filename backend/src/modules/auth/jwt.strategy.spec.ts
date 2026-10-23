@@ -127,9 +127,9 @@ describe('JwtStrategy — relecture du compte à chaque requête', () => {
       const { prisma } = fairePrisma(faireUtilisateur({ password: bcrypt.hashSync(MOT_DE_PASSE_DEMO, 4) }));
       const strategie = new JwtStrategy(prisma, configDeTest);
 
-      await expect(
-        strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) }),
-      ).rejects.toBeInstanceOf(UnauthorizedException);
+      await expect(strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) })).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
     } finally {
       process.env.NODE_ENV = nodeEnv;
     }
@@ -142,9 +142,9 @@ describe('JwtStrategy — relecture du compte à chaque requête', () => {
       const { prisma } = fairePrisma(faireUtilisateur());
       const strategie = new JwtStrategy(prisma, configDeTest);
 
-      await expect(
-        strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) }),
-      ).resolves.toMatchObject({ id: 'u-1' });
+      await expect(strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) })).resolves.toMatchObject({
+        id: 'u-1',
+      });
     } finally {
       process.env.NODE_ENV = nodeEnv;
     }

@@ -80,7 +80,7 @@ function preparer(stade: StadeTirage) {
 
 describe('TirageService — création', () => {
   it('refuse un tirage rattaché à un examen inconnu', async () => {
-    const { prisma, tx, service } = preparer(StadeTirage.PROGRAMME);
+    const { tx, service } = preparer(StadeTirage.PROGRAMME);
     tx.examen.findUnique.mockResolvedValue(null);
 
     await expect(
@@ -97,7 +97,12 @@ describe('TirageService — création', () => {
     const { tx, service } = preparer(StadeTirage.PROGRAMME);
 
     await service.creer(
-      { examenId: 'exam-1', dateTirage: '2026-09-01', nbExemplaires: 10, empreinteSource: EMPREINTE.toUpperCase() } as any,
+      {
+        examenId: 'exam-1',
+        dateTirage: '2026-09-01',
+        nbExemplaires: 10,
+        empreinteSource: EMPREINTE.toUpperCase(),
+      } as any,
       USER,
     );
 
@@ -172,9 +177,9 @@ describe('TirageService — transitions de séquence', () => {
   it('refuse de reprendre un tirage déjà récupéré', async () => {
     const { tx, service } = preparer(StadeTirage.RECUPERE);
 
-    await expect(
-      service.recuperer('tirage-1', { stade: StadeTirage.RECUPERE } as any, USER),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.recuperer('tirage-1', { stade: StadeTirage.RECUPERE } as any, USER)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(tx.tirage.update).not.toHaveBeenCalled();
   });
@@ -206,9 +211,9 @@ describe('TirageService — impression et annulation', () => {
   it('refuse d’imprimer un tirage qui n’est plus au stade PROGRAMME', async () => {
     const { tx, service } = preparer(StadeTirage.IMPRIME);
 
-    await expect(
-      service.imprimer('tirage-1', { empreinteSource: EMPREINTE } as any, USER),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.imprimer('tirage-1', { empreinteSource: EMPREINTE } as any, USER)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(tx.tirage.update).not.toHaveBeenCalled();
   });
@@ -275,7 +280,7 @@ describe('TirageService — recherche', () => {
   });
 
   it('masque l’empreinte d’un tirage encore programmé dans la liste', async () => {
-    const { prisma, service } = preparer(StadeTirage.PROGRAMME);
+    const { service } = preparer(StadeTirage.PROGRAMME);
 
     const page = await service.liste({} as any);
 
@@ -283,7 +288,7 @@ describe('TirageService — recherche', () => {
   });
 
   it('révèle l’empreinte complète une fois le tirage imprimé', async () => {
-    const { prisma, service } = preparer(StadeTirage.IMPRIME);
+    const { service } = preparer(StadeTirage.IMPRIME);
 
     const page = await service.liste({} as any);
 

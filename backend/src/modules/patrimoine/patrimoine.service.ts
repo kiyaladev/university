@@ -21,7 +21,14 @@ import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, qrDataUrl, STYLE_ETIQUETTES } from '../../common/impression';
+import {
+  chargerEtablissement,
+  echapper,
+  pageA4,
+  PALETTE_IMPRESSION,
+  qrDataUrl,
+  STYLE_ETIQUETTES,
+} from '../../common/impression';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
@@ -57,9 +64,7 @@ const REPARATION_INCLUDE = {
 
 @Injectable()
 export class PatrimoineService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   // ============================================================ Catégories
 

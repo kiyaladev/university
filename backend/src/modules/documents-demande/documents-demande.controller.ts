@@ -27,9 +27,7 @@ const ROLES_GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
 @ApiBearerAuth()
 @Controller('documents-demande')
 export class DocumentsDemandeController {
-  constructor(
-    private readonly service: DocumentsDemandeService,
-  ) {}
+  constructor(private readonly service: DocumentsDemandeService) {}
 
   // ---------- lecture : vues étudiant
 

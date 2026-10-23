@@ -34,10 +34,7 @@ describe('résolution publique des QR d’équipement', () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const count = jest.fn().mockResolvedValue(0);
     const findUnique = jest.fn().mockResolvedValue({ id: 'eq-1', libelle: 'Vidéoprojecteur' });
-    const service = new EquipementsService(
-      { equipementCampus: { findMany, count, findUnique } } as never,
-      {} as never,
-    );
+    const service = new EquipementsService({ equipementCampus: { findMany, count, findUnique } } as never, {} as never);
 
     await service.liste({});
     await service.findOne('eq-1');

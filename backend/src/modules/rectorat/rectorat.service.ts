@@ -56,9 +56,7 @@ import { toMontant } from '../../common/finances/montant';
 
 @Injectable()
 export class RectoratService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   // ---------------------------------------------------------- agrégats live
 

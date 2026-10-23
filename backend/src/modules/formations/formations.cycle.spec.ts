@@ -12,18 +12,11 @@
  *   - la confirmation d'une place passe le paiement à REUSSI puis
  *     l'inscription à CONFIRME, dans cet ordre, sous verrou.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import { FormationsService } from './formations.service';
 
 const USER = { id: 'admin-1', nom: 'Admin', prenom: 'Systeme', role: 'ADMIN' } as any;
-const JWT = { verify: jest.fn().mockResolvedValue({ sub: 'admin-1' }) } as any;
 
 /** Formation dans l'état demandé. */
 function formation(statut: StatutFormation, surcharge: Record<string, unknown> = {}) {

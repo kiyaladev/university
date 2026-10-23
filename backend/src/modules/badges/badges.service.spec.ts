@@ -200,10 +200,7 @@ describe('audit des mutations de badge', () => {
       },
       auditLog: { create: auditCreate },
     };
-    const service = new BadgesService(
-      { $transaction: jest.fn((operation) => operation(tx)) } as any,
-      {} as any,
-    );
+    const service = new BadgesService({ $transaction: jest.fn((operation) => operation(tx)) } as any, {} as any);
 
     await service.annuler('badge-2', { motif: 'motif confidentiel' } as any, { id: 'admin' } as any);
 
@@ -223,10 +220,7 @@ describe('audit des mutations de badge', () => {
       },
       auditLog: { create: auditCreate },
     };
-    const service = new BadgesService(
-      { $transaction: jest.fn((operation) => operation(tx)) } as any,
-      {} as any,
-    );
+    const service = new BadgesService({ $transaction: jest.fn((operation) => operation(tx)) } as any, {} as any);
 
     await expect(
       service.rallonger('badge-2', { dateValidite: '2099-01-01' } as any, { id: 'admin' } as any),

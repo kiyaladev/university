@@ -19,7 +19,6 @@ import { CarteEtudianteService } from './carte-etudiante.service';
 const ETUDIANT = { id: 'etu-1', etudiantId: 'etu-1', nom: 'BARRY', prenom: 'Aminata', role: 'ETUDIANT' } as any;
 const AUTRE_ETUDIANT = { id: 'etu-2', etudiantId: 'etu-2', nom: 'DIA', prenom: 'Sory', role: 'ETUDIANT' } as any;
 const SCOLARITE = { id: 'scolarite-1', nom: 'Scol', prenom: 'Arite', role: 'SCOLARITE' } as any;
-const JWT = { verify: jest.fn().mockResolvedValue({ sub: 'scolarite-1' }) } as any;
 
 /** Carte émise, active, sans expiration. */
 function carte(surcharge: Record<string, unknown> = {}) {
@@ -34,7 +33,15 @@ function carte(surcharge: Record<string, unknown> = {}) {
     photoUrl: null,
     dateEmission: new Date('2026-01-01T00:00:00Z'),
     dateValidite: null,
-    etudiant: { id: 'etu-1', matricule: '2026-0001', nom: 'BARRY', prenom: 'Aminata', sexe: 'F', dateNaissance: null, lieuNaissance: null },
+    etudiant: {
+      id: 'etu-1',
+      matricule: '2026-0001',
+      nom: 'BARRY',
+      prenom: 'Aminata',
+      sexe: 'F',
+      dateNaissance: null,
+      lieuNaissance: null,
+    },
     ...surcharge,
   };
 }
@@ -70,9 +77,7 @@ describe('CarteEtudianteService — émission', () => {
     const { prisma, tx, service } = preparer();
     prisma.etudiant.findUnique.mockResolvedValue(null);
 
-    await expect(service.creer({ etudiantId: 'etu-x' } as any, SCOLARITE)).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(service.creer({ etudiantId: 'etu-x' } as any, SCOLARITE)).rejects.toBeInstanceOf(NotFoundException);
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.carteEtudiante.create).not.toHaveBeenCalled();
@@ -82,9 +87,7 @@ describe('CarteEtudianteService — émission', () => {
     const { prisma, tx, service } = preparer();
     prisma.carteEtudiante.findUnique.mockResolvedValue({ id: 'carte-1' });
 
-    await expect(service.creer({ etudiantId: 'etu-1' } as any, SCOLARITE)).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(service.creer({ etudiantId: 'etu-1' } as any, SCOLARITE)).rejects.toBeInstanceOf(ConflictException);
 
     expect(tx.carteEtudiante.create).not.toHaveBeenCalled();
   });
@@ -117,9 +120,7 @@ describe('CarteEtudianteService — carte du portail', () => {
   it('refuse la carte du portail à un compte sans profil étudiant', async () => {
     const { prisma, service } = preparer();
 
-    await expect(service.maCarte({ ...SCOLARITE, etudiantId: null })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(service.maCarte({ ...SCOLARITE, etudiantId: null })).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.carteEtudiante.findUnique).not.toHaveBeenCalled();
   });
@@ -128,9 +129,7 @@ describe('CarteEtudianteService — carte du portail', () => {
     const { prisma, service } = preparer();
     prisma.carteEtudiante.findUnique.mockResolvedValue(null);
 
-    await expect(service.maCarte({ ...ETUDIANT, etudiantId: 'etu-1' })).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(service.maCarte({ ...ETUDIANT, etudiantId: 'etu-1' })).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('charge la carte par profil étudiant, pas par identifiant de carte', async () => {

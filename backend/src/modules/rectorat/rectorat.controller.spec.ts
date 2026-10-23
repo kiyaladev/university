@@ -10,8 +10,7 @@ import { Role } from '@prisma/client';
 import { ROLES_KEY } from '../../common/decorators';
 import { RectoratController } from './rectorat.controller';
 
-const roles = (methode: string) =>
-  Reflect.getMetadata(ROLES_KEY, (RectoratController.prototype as any)[methode]);
+const roles = (methode: string) => Reflect.getMetadata(ROLES_KEY, (RectoratController.prototype as any)[methode]);
 
 describe('RectoratController — droits par rôle', () => {
   it.each(['dashboard', 'chiffres', 'bilans'])('restreint %s à l’administration et à la direction', (methode) => {
