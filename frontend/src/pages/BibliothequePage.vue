@@ -1,11 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('bibliotheque.title') }}</h1>
-        <div class="page-sous-titre">{{ $t('bibliotheque.subtitle') }}</div>
-      </div>
-      <div class="col-auto row q-gutter-xs">
+    <page-header :title="$t('bibliotheque.title')" :subtitle="$t('bibliotheque.subtitle')">
+      <template #actions>
         <q-btn
           flat
           no-caps
@@ -34,8 +30,8 @@
           :label="$t('bibliotheque.actions.depositDocument')"
           @click="ouvrir(null)"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- Recherche globale + auto-complétion preview -->
     <div class="row q-col-gutter-md q-mb-md items-start">
@@ -140,23 +136,16 @@
       <q-spinner color="primary" size="40px" />
     </div>
 
-    <div v-else-if="!documents.length" class="plaque q-pa-lg text-center text-grey-7">
-      <q-icon name="library_books" size="38px" color="grey-5" />
-      <div class="q-mt-sm">{{ $t('bibliotheque.emptyState.title') }}</div>
-      <div class="text-caption q-mt-xs">
-        {{ $t('bibliotheque.emptyState.hint') }}
-      </div>
-      <q-btn
-        v-if="peutDeposer"
-        flat
-        no-caps
-        color="primary"
-        icon="add"
-        :label="$t('bibliotheque.actions.depositDocument')"
-        class="q-mt-sm"
-        @click="ouvrir(null)"
-      />
-    </div>
+    <etat-vide
+      v-else-if="!documents.length"
+      icone="library_books"
+      :titre="$t('bibliotheque.emptyState.title')"
+      :aide="$t('bibliotheque.emptyState.hint')"
+    >
+      <template v-if="peutDeposer" #action>
+        <q-btn flat no-caps color="primary" icon="add" :label="$t('bibliotheque.actions.depositDocument')" @click="ouvrir(null)" />
+      </template>
+    </etat-vide>
 
     <q-table
       v-else-if="mode === 'tableau'"
@@ -344,18 +333,16 @@
 
     <pagination-bar
       v-if="documents.length"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      @update:page="(v) => { pagination.page = v; charger(false); }"
-      @update:page-size="(v) => { pagination.pageSize = v; charger(true); }"
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      :total="total"
       @tous="chargerTout"
     />
 
     <document-dialog
       v-model="dialogOuvert"
       :document="documentEdite"
-      @enregistre="charger(true)"
+      @enregistre="premierePage"
     />
 
     <!-- Dialog : aperçu du contenu extrait -->
@@ -386,11 +373,15 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import DocumentDialog from '../components/DocumentDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
@@ -403,10 +394,8 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 
-const documents = ref<DocumentDepot[]>([]);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 12, total: 0 });
 const rechercheSelectionnee = ref<string | null>(null);
 const rechercheTexte = ref('');
 const suggestions = ref<DocumentDepot[]>([]);
@@ -419,6 +408,41 @@ const filtres = ref<Record<string, any>>({
   anneeEdition: null,
   public: '',
 });
+
+/**
+ * Liste paginée côté serveur. Le terme de recherche (`rechercheTexte`) vit
+ * hors des filtres : il ne relance la liste que lorsqu'une suggestion est
+ * choisie.
+ */
+const {
+  lignes: documents,
+  chargement,
+  total,
+  page,
+  pageSize,
+} = useListePaginee<DocumentDepot>({
+  filtres,
+  pageSize: 12,
+  syncUrl: true,
+  charger: async ({ page: p, pageSize: n, filtres: f }) => {
+    const { data } = await bibliothequeService.liste({
+      page: p,
+      pageSize: n,
+      search: rechercheTexte.value || undefined,
+      type: f.type || undefined,
+      departementId: f.departementId || undefined,
+      anneeEdition: f.anneeEdition || undefined,
+      public: f.public === '1' ? 'true' : f.public === '0' ? 'false' : undefined,
+    });
+    const resultat = normaliserDocuments(data);
+    return { data: resultat.liste, total: resultat.total };
+  },
+});
+
+/** Retour en page 1 et rechargement (le setter de `page` relance la requête). */
+function premierePage() {
+  page.value = 1;
+}
 
 const mode = usePresentationListe();
 const dialogOuvert = ref(false);
@@ -501,41 +525,17 @@ function surligner(texte: string): string {
   return echappe.replace(new RegExp(`(${motif})`, 'gi'), '<mark>$1</mark>');
 }
 
-async function charger(reinit = true) {
-  if (reinit) pagination.value.page = 1;
-  chargement.value = true;
-  try {
-    const params: Record<string, unknown> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-    };
-    if (rechercheTexte.value) params.search = rechercheTexte.value;
-    const f = filtres.value;
-    if (f.type) params.type = f.type;
-    if (f.departementId) params.departementId = f.departementId;
-    if (f.anneeEdition) params.anneeEdition = f.anneeEdition;
-    if (f.public === '1') params.public = 'true';
-    if (f.public === '0') params.public = 'false';
-
-    const { data } = await bibliothequeService.liste(params);
-    const resultat = normaliserDocuments(data);
-    documents.value = resultat.liste;
-    pagination.value.total = resultat.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await charger(true);
+function chargerTout() {
+  pageSize.value = Math.max(total.value, 200) || 200;
 }
 
 function reinitialiser() {
+  const avaitTerme = !!rechercheTexte.value;
   rechercheSelectionnee.value = null;
   rechercheTexte.value = '';
   filtres.value = { type: '', departementId: '', anneeEdition: null, public: '' };
+  // Le terme n'est pas un filtre : son effacement ne relance rien tout seul.
+  if (avaitTerme) premierePage();
 }
 
 async function rechercherSuggestions(terme: string, miseAJour: (cb: () => void) => void) {
@@ -560,13 +560,13 @@ async function rechercherSuggestions(terme: string, miseAJour: (cb: () => void) 
 function surSelectionSuggestion(id: string | null) {
   if (!id) {
     rechercheTexte.value = '';
-    void charger(true);
+    premierePage();
     return;
   }
   const doc = documents.value.find((d) => d.id === id) ?? suggestions.value.find((d) => d.id === id);
   if (doc) rechercheTexte.value = doc.titre;
   else rechercheTexte.value = '';
-  void charger(true);
+  premierePage();
 }
 
 async function telecharger(doc: DocumentDepot) {
@@ -608,36 +608,35 @@ function voirScore(doc: DocumentDepot) {
   void router.push({ path: '/plagiat', query: { documentId: doc.id } });
 }
 
-function basculerPublic(doc: DocumentDepot) {
-  $q.dialog({
-    title: doc.public ? t('bibliotheque.dialogs.publish.unpublishTitle') : t('bibliotheque.dialogs.publish.publishTitle'),
+async function basculerPublic(doc: DocumentDepot) {
+  const ok = await confirmer({
+    titre: doc.public ? t('bibliotheque.dialogs.publish.unpublishTitle') : t('bibliotheque.dialogs.publish.publishTitle'),
     message: doc.public
       ? t('bibliotheque.dialogs.publish.unpublishMessage', { titre: doc.titre })
       : t('bibliotheque.dialogs.publish.publishMessage', { titre: doc.titre }),
-    cancel: true,
-    ok: { color: 'primary', label: doc.public ? t('bibliotheque.dialogs.publish.unpublishOk') : t('bibliotheque.dialogs.publish.publishOk') },
-  }).onOk(async () => {
+    ok: doc.public ? t('bibliotheque.dialogs.publish.unpublishOk') : t('bibliotheque.dialogs.publish.publishOk'),
+  });
+  if (!ok) return;
+  try {
     await bibliothequeService.modifier(doc.id, { public: !doc.public });
-    doc.public = !doc.public;
-    $q.notify({
-      type: 'positive',
-      message: doc.public
-        ? t('bibliotheque.messages.published')
-        : t('bibliotheque.messages.unpublished'),
-    });
+  } catch {
+    return; // l'intercepteur axios affiche le motif
+  }
+  doc.public = !doc.public;
+  $q.notify({
+    type: 'positive',
+    message: doc.public
+      ? t('bibliotheque.messages.published')
+      : t('bibliotheque.messages.unpublished'),
   });
 }
 
 function supprimer(doc: DocumentDepot) {
-  $q.dialog({
-    title: t('bibliotheque.dialogs.delete.title'),
+  void supprimerAvecConfirmation(`/documents/${doc.id}`, doc.titre, premierePage, {
+    titre: t('bibliotheque.dialogs.delete.title'),
     message: t('bibliotheque.dialogs.delete.message', { titre: doc.titre }),
-    cancel: true,
-    ok: { color: 'negative', label: t('bibliotheque.dialogs.delete.ok') },
-  }).onOk(async () => {
-    await bibliothequeService.supprimer(doc.id);
-    $q.notify({ type: 'warning', message: t('bibliotheque.messages.deleted') });
-    await charger(true);
+    ok: t('bibliotheque.dialogs.delete.ok'),
+    succes: t('bibliotheque.messages.deleted'),
   });
 }
 
@@ -647,35 +646,33 @@ function ouvrir(doc: DocumentDepot | null) {
 }
 
 async function lancerRecalcul() {
-  $q.dialog({
-    title: t('bibliotheque.dialogs.recalculate.title'),
+  const ok = await confirmer({
+    titre: t('bibliotheque.dialogs.recalculate.title'),
     message: t('bibliotheque.dialogs.recalculate.message'),
-    cancel: true,
-    ok: { color: 'negative', label: t('bibliotheque.dialogs.recalculate.ok'), unelevated: true },
-  }).onOk(async () => {
-    recalculEnCours.value = true;
-    try {
-      const { data } = await bibliothequeService.recalculerPlagiat();
-      const total = (data?.total ?? data?.suspicionsCreees ?? data?.data?.total) as number | undefined;
-      const docAnalyses = (data?.documentsAnalyses ?? data?.data?.documentsAnalyses) as number | undefined;
-      dernierRecap.value = {
-        titre: t('bibliotheque.messages.analysisSummaryTitle'),
-        message: t('bibliotheque.messages.analysisSummaryLine', {
-          analysed: docAnalyses ?? '?',
-          suspicions: total ?? '?',
-        }),
-      };
-      $q.notify({ type: 'positive', message: t('bibliotheque.messages.analysisDone') });
-      await charger(true);
-    } finally {
-      recalculEnCours.value = false;
-    }
+    ok: t('bibliotheque.dialogs.recalculate.ok'),
+    danger: true,
   });
+  if (!ok) return;
+  recalculEnCours.value = true;
+  try {
+    const { data } = await bibliothequeService.recalculerPlagiat();
+    const total = (data?.total ?? data?.suspicionsCreees ?? data?.data?.total) as number | undefined;
+    const docAnalyses = (data?.documentsAnalyses ?? data?.data?.documentsAnalyses) as number | undefined;
+    dernierRecap.value = {
+      titre: t('bibliotheque.messages.analysisSummaryTitle'),
+      message: t('bibliotheque.messages.analysisSummaryLine', {
+        analysed: docAnalyses ?? '?',
+        suspicions: total ?? '?',
+      }),
+    };
+    $q.notify({ type: 'positive', message: t('bibliotheque.messages.analysisDone') });
+    premierePage();
+  } catch {
+    /* l'intercepteur axios affiche le motif */
+  } finally {
+    recalculEnCours.value = false;
+  }
 }
-
-watch(filtres, () => charger(true), { deep: true });
-
-onMounted(() => charger(true));
 </script>
 
 <style scoped>

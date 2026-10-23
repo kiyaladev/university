@@ -263,51 +263,42 @@
       </nav>
 
       <!-- Dialogue de rechargement du portefeuille resto -->
-      <q-dialog v-model="dialogResto">
-        <q-card style="width: 400px; max-width: 95vw">
-          <q-card-section class="text-h6">{{ $t('portail.dialogResto.title') }}</q-card-section>
-          <q-card-section>
-            <q-input
-              v-model.number="montantResto"
-              type="number"
-              min="500"
-              step="500"
-              outlined
-              dense
-              :label="$t('portail.dialogResto.montantLabel')"
-              suffix="GNF"
-              :hint="$t('portail.dialogResto.montantHint')"
-              :error="!montantResto || montantResto < 500"
-              :error-message="$t('portail.dialogResto.montantError')"
-            />
-            <q-select
-              v-model="operateurResto"
-              :options="optionsOperateursResto"
-              emit-value
-              map-options
-              :label="$t('portail.dialogResto.operateurLabel')"
-              outlined
-              dense
-              class="q-mt-md"
-            />
-            <p class="pochoir carte-portail__vide q-mt-md">
-              {{ $t('portail.dialogResto.note') }}
-            </p>
-          </q-card-section>
-          <q-card-actions align="right">
-            <q-btn v-close-popup flat no-caps :label="$t('portail.actions.cancel')" />
-            <q-btn
-              color="primary"
-              unelevated
-              no-caps
-              :label="$t('portail.dialogResto.submit')"
-              :loading="rechargementResto"
-              :disable="!montantResto || montantResto < 500"
-              @click="rechargerResto"
-            />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
+      <dialogue-formulaire
+        v-model="dialogResto"
+        :titre="$t('portail.dialogResto.title')"
+        taille="s"
+        :envoi="rechargementResto"
+        :libelle-valider="$t('portail.dialogResto.submit')"
+        :desactive="!montantResto || montantResto < 500"
+        @valider="rechargerResto"
+      >
+        <q-input
+          v-model.number="montantResto"
+          type="number"
+          min="500"
+          step="500"
+          outlined
+          dense
+          :label="$t('portail.dialogResto.montantLabel')"
+          suffix="GNF"
+          :hint="$t('portail.dialogResto.montantHint')"
+          :error="!montantResto || montantResto < 500"
+          :error-message="$t('portail.dialogResto.montantError')"
+        />
+        <q-select
+          v-model="operateurResto"
+          :options="optionsOperateursResto"
+          emit-value
+          map-options
+          :label="$t('portail.dialogResto.operateurLabel')"
+          outlined
+          dense
+          class="q-mt-md"
+        />
+        <p class="pochoir carte-portail__vide q-mt-md">
+          {{ $t('portail.dialogResto.note') }}
+        </p>
+      </dialogue-formulaire>
     </template>
 
     <div v-else class="portail__chargement">
@@ -327,6 +318,7 @@ import { useAuthStore } from '../stores/auth';
 import { useServicesActifsStore } from '../stores/servicesActifs';
 const modules = useServicesActifsStore();
 import BarreTaux from '../components/BarreTaux.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_DECISION_JURY,
@@ -571,6 +563,8 @@ async function rechargerResto() {
       type: 'info',
       message: t('portail.messages.rechargeInfo', { reference: data.paiement.reference }),
     });
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     rechargementResto.value = false;
   }

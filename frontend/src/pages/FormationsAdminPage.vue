@@ -1,17 +1,13 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('formationsAdmin.title') }}</h1>
-        <div class="page-sous-titre">{{ $t('formationsAdmin.subtitle') }}</div>
-      </div>
-      <div class="col-auto row q-gutter-xs">
+    <page-header :title="$t('formationsAdmin.title')" :subtitle="$t('formationsAdmin.subtitle')">
+      <template #actions>
         <q-btn flat no-caps icon="public" :label="$t('formationsAdmin.actions.seeShowcase')" to="/formations">
           <q-tooltip>{{ $t('formationsAdmin.actions.seeShowcaseTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn unelevated color="primary" no-caps icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- La recherche du serveur balaie titre, catégorie et lieu : un seul champ
          suffit, le filtre avancé ne porte que le statut réellement supporté. -->
@@ -19,7 +15,7 @@
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('formationsAdmin.filters.searchPlaceholder')"
-      @reinitialiser="reinitialiserFiltres"
+      @reinitialiser="liste.reinitialiser()"
     >
       <template #avances>
         <q-select
@@ -76,30 +72,19 @@
       flat
       bordered
       class="carte"
-      :rows="formations"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || formations.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <div class="full-width text-center text-grey-7 q-pa-lg">
-          <q-icon name="workspace_premium" size="38px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('formationsAdmin.emptyState.title') }}</div>
-          <div class="text-caption q-mt-xs">
-            {{ $t('formationsAdmin.emptyState.description') }}
-          </div>
-          <q-btn
-            flat
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('formationsAdmin.actions.newFormation')"
-            class="q-mt-sm"
-            @click="ouvrirNouvelle"
-          />
-        </div>
+        <etat-vide icone="workspace_premium" :titre="$t('formationsAdmin.emptyState.title')" :aide="$t('formationsAdmin.emptyState.description')">
+          <template #action>
+            <q-btn flat no-caps color="primary" icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body="p">
@@ -264,10 +249,10 @@
 
     <!-- Vue cartes -->
     <div v-else class="row q-col-gutter-md">
-      <div v-if="chargement" class="col-12 q-pa-md text-center">
+      <div v-if="liste.chargement" class="col-12 q-pa-md text-center">
         <q-spinner color="primary" />
       </div>
-      <div v-for="f in formations" :key="f.id" class="col-12 col-md-6 col-xl-4">
+      <div v-for="f in liste.lignes" :key="f.id" class="col-12 col-md-6 col-xl-4">
         <q-card flat bordered class="carte">
           <q-card-section class="row items-center q-pb-none">
             <div class="col">
@@ -405,47 +390,41 @@
           </q-slide-transition>
         </q-card>
       </div>
-      <div v-if="!chargement && !formations.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="workspace_premium" size="42px" color="grey-5" />
-        <div class="q-mt-sm">{{ $t('formationsAdmin.emptyState.title') }}</div>
-        <div class="text-caption q-mt-xs">
-          {{ $t('formationsAdmin.emptyState.description') }}
-        </div>
-        <q-btn
-          flat
-          no-caps
-          color="primary"
-          icon="add"
-          :label="$t('formationsAdmin.actions.newFormation')"
-          class="q-mt-sm"
-          @click="ouvrirNouvelle"
-        />
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="workspace_premium"
+        :titre="$t('formationsAdmin.emptyState.title')"
+        :aide="$t('formationsAdmin.emptyState.description')"
+      >
+        <template #action>
+          <q-btn flat no-caps color="primary" icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="formations.length"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      @update:page="(v) => { pagination.page = v; requeter(); }"
-      @update:page-size="(v) => { pagination.pageSize = v; pagination.page = 1; requeter(); }"
-      @tous="chargerTout"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.max(liste.total, 200)"
     />
 
-    <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="requeter" />
+    <formation-dialog v-model="dialogFormation" :formation="formationEnCours" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
-import { api } from '../boot/axios';
-
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation, type OptionsConfirmation } from '../composables/useConfirmation';
 import { formationsService, type FormationDashboard } from '../services/formations';
-import { useAuthStore } from '../stores/auth';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import FormationDialog from '../components/FormationDialog.vue';
@@ -465,16 +444,25 @@ interface InscriptionFormationDetail extends InscriptionFormation {
   paiement?: Pick<Paiement, 'id' | 'reference' | 'montant' | 'devise' | 'statut'> | null;
 }
 
-const auth = useAuthStore();
 const $q = useQuasar();
 const { t } = useI18n();
+const { confirmer: demander, supprimerAvecConfirmation } = useConfirmation();
 
-const formations = ref<Formation[]>([]);
 const dashboard = ref<FormationDashboard | null>(null);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 
-const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({ recherche: '', statut: null });
+// Le backend n'accepte que `search` (titre, catégorie, lieu) et `statut` :
+// tout autre paramètre serait silencieusement ignoré.
+const liste = reactive(
+  useListePaginee<Formation>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      formationsService
+        .liste({ ...pageApi(p), search: texteApi(f.recherche), statut: f.statut || undefined })
+        .then((r) => r.data),
+  }),
+);
 const mode = usePresentationListe();
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_FORMATION).map(([value, label]) => ({
@@ -598,76 +586,84 @@ function ouvrirModification(f: Formation) {
   dialogFormation.value = true;
 }
 
-function reinitialiserFiltres() {
-  filtres.value = { recherche: filtres.value.recherche ?? '' };
+/** Une action sur une formation ou une demande change les chiffres et la liste. */
+const rechargerTout = () => Promise.all([chargerDashboard(), liste.recharger()]);
+
+/** Demande confirmation, lance l'action, notifie, puis recharge. */
+async function confirmerPuis(
+  o: OptionsConfirmation,
+  action: () => Promise<unknown>,
+  notification: { type: string; message: string },
+) {
+  if (!(await demander(o))) return;
+  try {
+    await action();
+  } catch {
+    return; // l'intercepteur axios affiche le motif
+  }
+  $q.notify(notification);
+  await rechargerTout();
 }
 
 function publier(f: Formation) {
-  $q.dialog({
-    title: t('formationsAdmin.dialogs.publish.title'),
-    message: t('formationsAdmin.dialogs.publish.message', { title: f.titre }),
-    cancel: true,
-    ok: { color: 'secondary', label: t('formationsAdmin.dialogs.publish.confirm') },
-  }).onOk(async () => {
-    await formationsService.publier(f.id);
-    $q.notify({ type: 'positive', message: t('formationsAdmin.messages.published') });
-    await Promise.all([chargerDashboard(), requeter()]);
-  });
+  void confirmerPuis(
+    {
+      titre: t('formationsAdmin.dialogs.publish.title'),
+      message: t('formationsAdmin.dialogs.publish.message', { title: f.titre }),
+      ok: t('formationsAdmin.dialogs.publish.confirm'),
+    },
+    () => formationsService.publier(f.id),
+    { type: 'positive', message: t('formationsAdmin.messages.published') },
+  );
 }
 
 function cloturer(f: Formation) {
-  $q.dialog({
-    title: t('formationsAdmin.dialogs.close.title'),
-    message: t('formationsAdmin.dialogs.close.message', { title: f.titre }),
-    cancel: true,
-    ok: { color: 'warning', label: t('formationsAdmin.dialogs.close.confirm') },
-  }).onOk(async () => {
-    await formationsService.cloturer(f.id);
-    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.closed') });
-    await Promise.all([chargerDashboard(), requeter()]);
-  });
+  void confirmerPuis(
+    {
+      titre: t('formationsAdmin.dialogs.close.title'),
+      message: t('formationsAdmin.dialogs.close.message', { title: f.titre }),
+      ok: t('formationsAdmin.dialogs.close.confirm'),
+    },
+    () => formationsService.cloturer(f.id),
+    { type: 'warning', message: t('formationsAdmin.messages.closed') },
+  );
 }
 
 function supprimer(f: Formation) {
-  $q.dialog({
-    title: t('formationsAdmin.dialogs.delete.title'),
+  void supprimerAvecConfirmation(`/formations/${f.id}`, f.titre, rechargerTout, {
+    titre: t('formationsAdmin.dialogs.delete.title'),
     message: t('formationsAdmin.dialogs.delete.message', { title: f.titre }),
-    cancel: true,
-    ok: { color: 'negative', label: t('formationsAdmin.dialogs.delete.confirm') },
-  }).onOk(async () => {
-    await formationsService.supprimer(f.id);
-    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.draftDeleted') });
-    await Promise.all([chargerDashboard(), requeter()]);
+    ok: t('formationsAdmin.dialogs.delete.confirm'),
+    succes: t('formationsAdmin.messages.draftDeleted'),
   });
 }
 
 function confirmer(i: InscriptionFormationDetail) {
-  $q.dialog({
-    title: t('formationsAdmin.dialogs.confirmPayment.title'),
-    message: t('formationsAdmin.dialogs.confirmPayment.message', {
-      reference: i.paiement?.reference ?? t('formationsAdmin.dialogs.confirmPayment.paymentFallback'),
-      numero: i.numero,
-    }),
-    cancel: true,
-    ok: { color: 'secondary', label: t('formationsAdmin.dialogs.confirmPayment.confirm') },
-  }).onOk(async () => {
-    await formationsService.confirmerInscription(i.id);
-    $q.notify({ type: 'positive', message: t('formationsAdmin.messages.registrationConfirmed', { numero: i.numero }) });
-    await Promise.all([chargerDashboard(), requeter()]);
-  });
+  void confirmerPuis(
+    {
+      titre: t('formationsAdmin.dialogs.confirmPayment.title'),
+      message: t('formationsAdmin.dialogs.confirmPayment.message', {
+        reference: i.paiement?.reference ?? t('formationsAdmin.dialogs.confirmPayment.paymentFallback'),
+        numero: i.numero,
+      }),
+      ok: t('formationsAdmin.dialogs.confirmPayment.confirm'),
+    },
+    () => formationsService.confirmerInscription(i.id),
+    { type: 'positive', message: t('formationsAdmin.messages.registrationConfirmed', { numero: i.numero }) },
+  );
 }
 
 function annuler(i: InscriptionFormationDetail) {
-  $q.dialog({
-    title: t('formationsAdmin.dialogs.cancelRequest.title'),
-    message: t('formationsAdmin.dialogs.cancelRequest.message', { numero: i.numero }),
-    cancel: t('formationsAdmin.dialogs.cancelRequest.cancel'),
-    ok: { color: 'negative', label: t('formationsAdmin.dialogs.cancelRequest.confirm') },
-  }).onOk(async () => {
-    await formationsService.annulerInscription(i.id);
-    $q.notify({ type: 'warning', message: t('formationsAdmin.messages.registrationCancelled', { numero: i.numero }) });
-    await Promise.all([chargerDashboard(), requeter()]);
-  });
+  void confirmerPuis(
+    {
+      titre: t('formationsAdmin.dialogs.cancelRequest.title'),
+      message: t('formationsAdmin.dialogs.cancelRequest.message', { numero: i.numero }),
+      ok: t('formationsAdmin.dialogs.cancelRequest.confirm'),
+      danger: true,
+    },
+    () => formationsService.annulerInscription(i.id),
+    { type: 'warning', message: t('formationsAdmin.messages.registrationCancelled', { numero: i.numero }) },
+  );
 }
 
 function imprimerCertificat(i: InscriptionFormationDetail) {
@@ -678,10 +674,10 @@ function imprimerCertificat(i: InscriptionFormationDetail) {
 const stats = computed(() => {
   const d = dashboard.value;
   if (!d) {
-    return { nbFormes: 0, recette: 0, tauxRemplissage: 0, total: formations.value.length };
+    return { nbFormes: 0, recette: 0, tauxRemplissage: 0, total: liste.lignes.length };
   }
-  const totalPlaces = formations.value.reduce((acc, f) => acc + (f.capacite ?? 0), 0);
-  const placesOccupees = formations.value.reduce((acc, f) => {
+  const totalPlaces = liste.lignes.reduce((acc, f) => acc + (f.capacite ?? 0), 0);
+  const placesOccupees = liste.lignes.reduce((acc, f) => {
     if (!f.capacite) return acc;
     const occupe = d.parFormation.find((p) => p.id === f.id)?.nbInscrits ?? 0;
     return acc + Math.min(occupe, f.capacite);
@@ -704,43 +700,7 @@ async function chargerDashboard() {
   }
 }
 
-async function requeter() {
-  chargement.value = true;
-  try {
-    const f = filtres.value;
-    // Le backend n'accepte que `search` (titre, catégorie, lieu) et `statut` :
-    // tout autre paramètre serait silencieusement ignoré.
-    const params: Record<string, unknown> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-      search: (f.recherche ?? '').toString().trim() || undefined,
-      statut: f.statut || undefined,
-    };
-    const { data } = await formationsService.liste(params);
-    formations.value = data.data;
-    pagination.value.total = data.total;
-    for (const formation of formations.value) {
-      registres.value[formation.id] ??= [];
-    }
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await requeter();
-}
-
-watch(filtres, () => {
-  pagination.value.page = 1;
-  void requeter();
-}, { deep: true });
-
-onMounted(async () => {
-  await Promise.all([chargerDashboard(), requeter()]);
-});
+onMounted(() => void chargerDashboard());
 </script>
 
 <style scoped lang="scss">

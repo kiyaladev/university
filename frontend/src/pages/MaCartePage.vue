@@ -4,6 +4,10 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '../boot/axios';
+import { getAppLocale } from '../boot/i18n';
+import PageHeader from '../components/PageHeader.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import EtatVide from '../components/EtatVide.vue';
 import { useAuthStore } from '../stores/auth';
 import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
@@ -91,9 +95,10 @@ function imprimer() {
   void ouvrirImpression(`/cartes-etudiantes/${carte.value.id}/imprimer`);
 }
 
-function dateFr(v?: string | null): string {
+/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
+function dateLongue(v?: string | null): string {
   if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
 onMounted(charger);
@@ -101,43 +106,35 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('maCarte.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('maCarte.subtitle') }}
-        </div>
-      </div>
-    </div>
+    <page-header :title="$t('maCarte.title')" :subtitle="$t('maCarte.subtitle')" />
 
     <q-card v-if="chargement" class="carte q-pa-md">
       <q-spinner /> {{ $t('maCarte.loading') }}
     </q-card>
 
-    <q-card v-else-if="!carte" class="carte ma-carte q-pa-md text-center">
-      <q-icon name="badge" size="42px" color="grey-5" />
-      <div class="text-subtitle1 q-mt-sm">{{ $t('maCarte.noCard.title') }}</div>
-      <div class="text-body2 text-grey-8 q-mt-xs">
-        {{ $t('maCarte.noCard.description') }}
-      </div>
-      <div class="row justify-center q-gutter-sm q-mt-md">
-        <q-btn
-          unelevated
-          color="primary"
-          no-caps
-          icon="description"
-          :label="$t('maCarte.noCard.requestDocument')"
-          :to="{ name: 'mes-demandes-docs' }"
-        />
-        <q-btn
-          outline
-          color="primary"
-          no-caps
-          icon="support_agent"
-          :label="$t('maCarte.noCard.openComplaint')"
-          :to="{ name: 'mes-reclamations' }"
-        />
-      </div>
+    <q-card v-else-if="!carte" class="carte ma-carte">
+      <etat-vide icone="badge" :titre="$t('maCarte.noCard.title')" :aide="$t('maCarte.noCard.description')">
+        <template #action>
+          <div class="row justify-center q-gutter-sm">
+            <q-btn
+              unelevated
+              color="primary"
+              no-caps
+              icon="description"
+              :label="$t('maCarte.noCard.requestDocument')"
+              :to="{ name: 'mes-demandes-docs' }"
+            />
+            <q-btn
+              outline
+              color="primary"
+              no-caps
+              icon="support_agent"
+              :label="$t('maCarte.noCard.openComplaint')"
+              :to="{ name: 'mes-reclamations' }"
+            />
+          </div>
+        </template>
+      </etat-vide>
     </q-card>
 
     <q-card v-else class="carte ma-carte">
@@ -174,11 +171,11 @@ onMounted(charger);
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('maCarte.card.issuedOn') }}</div>
-            <div class="text-body1">{{ dateFr(carte.dateEmission) }}</div>
+            <div class="text-body1">{{ dateLongue(carte.dateEmission) }}</div>
           </div>
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('maCarte.card.validUntil') }}</div>
-            <div class="text-body1">{{ dateFr(carte.dateValidite) }}</div>
+            <div class="text-body1">{{ dateLongue(carte.dateValidite) }}</div>
           </div>
         </div>
       </q-card-section>
@@ -222,37 +219,33 @@ onMounted(charger);
       </q-card-actions>
     </q-card>
 
-    <q-dialog v-model="nipDialog">
-      <q-card style="min-width: 420px">
-        <q-card-section>
-          <div class="text-h6">{{ $t('maCarte.dialog.title') }}</div>
-          <div class="text-caption text-grey-7">
-            {{ $t('maCarte.dialog.description') }}
-          </div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <q-input
-            v-model="nipValeur"
-            :label="$t('maCarte.dialog.nipLabel')"
-            outlined
-            dense
-            mask="######"
-            :hint="$t('maCarte.dialog.nipHint')"
-          />
-          <q-input
-            v-model="nipConfirmation"
-            :label="$t('maCarte.dialog.confirmLabel')"
-            outlined
-            dense
-            mask="######"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('maCarte.dialog.cancel')" no-caps @click="nipDialog = false" />
-          <q-btn unelevated color="primary" no-caps :label="$t('maCarte.dialog.save')" :disable="!nipValeur || !nipConfirmation" @click="confirmerNip" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="nipDialog"
+      :titre="$t('maCarte.dialog.title')"
+      :sous-titre="$t('maCarte.dialog.description')"
+      taille="s"
+      :libelle-valider="$t('maCarte.dialog.save')"
+      :desactive="!nipValeur || !nipConfirmation"
+      @valider="confirmerNip"
+    >
+      <div class="q-gutter-md">
+        <q-input
+          v-model="nipValeur"
+          :label="$t('maCarte.dialog.nipLabel')"
+          outlined
+          dense
+          mask="######"
+          :hint="$t('maCarte.dialog.nipHint')"
+        />
+        <q-input
+          v-model="nipConfirmation"
+          :label="$t('maCarte.dialog.confirmLabel')"
+          outlined
+          dense
+          mask="######"
+        />
+      </div>
+    </dialogue-formulaire>
   </q-page>
 </template>
 

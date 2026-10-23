@@ -23,21 +23,20 @@
 
         <div class="q-mb-md">
           <q-input
-            v-model="recherche"
+            v-model="filtre.recherche"
             dense
             outlined
             clearable
-            debounce="350"
             :placeholder="$t('bibliothequePublique.search.placeholder')"
             class="biblio-recherche"
           >
             <template #prepend><q-icon name="search" /></template>
             <template #append>
               <q-icon
-                v-if="recherche"
+                v-if="filtre.recherche"
                 name="close"
                 class="cursor-pointer"
-                @click="recherche = ''"
+                @click="filtre.recherche = ''"
               />
             </template>
           </q-input>
@@ -89,33 +88,29 @@
           <q-spinner color="primary" size="40px" />
         </div>
 
-        <div
-          v-else-if="!documents.length"
-          class="plaque q-pa-lg text-center text-grey-7"
+        <etat-vide
+          v-else-if="!documents.length && filtrageActif"
+          icone="search_off"
+          :titre="$t('bibliothequePublique.emptyState.filteredTitle')"
+          :aide="$t('bibliothequePublique.emptyState.filteredHint')"
         >
-          <q-icon :name="filtrageActif ? 'search_off' : 'library_books'" size="38px" color="grey-5" />
-          <div v-if="filtrageActif" class="q-mt-sm">
-            <div>{{ $t('bibliothequePublique.emptyState.filteredTitle') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('bibliothequePublique.emptyState.filteredHint') }}
-            </div>
+          <template #action>
             <q-btn
               flat
               no-caps
               color="primary"
               icon="refresh"
               :label="$t('bibliothequePublique.emptyState.clearSearch')"
-              class="q-mt-sm"
               @click="reinitialiser"
             />
-          </div>
-          <div v-else class="q-mt-sm">
-            <div>{{ $t('bibliothequePublique.emptyState.noDocsTitle') }}</div>
-            <div class="text-caption q-mt-xs">
-              {{ $t('bibliothequePublique.emptyState.noDocsHint') }}
-            </div>
-          </div>
-        </div>
+          </template>
+        </etat-vide>
+        <etat-vide
+          v-else-if="!documents.length"
+          icone="library_books"
+          :titre="$t('bibliothequePublique.emptyState.noDocsTitle')"
+          :aide="$t('bibliothequePublique.emptyState.noDocsHint')"
+        />
 
         <q-list v-else-if="mode === 'cartes'" bordered separator class="plaque q-mb-md">
           <q-item v-for="doc in documents" :key="doc.id" class="q-pa-md">
@@ -229,12 +224,10 @@
 
         <pagination-bar
           v-if="documents.length"
-          :page="page"
-          :page-size="pageSize"
+          v-model:page="page"
+          v-model:page-size="pageSize"
           :total="total"
           :show-all="false"
-          @update:page="(v) => { page = v; charger(); }"
-          @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
         />
 
         <div class="text-center text-caption text-grey-7 q-pb-lg">
@@ -255,10 +248,12 @@ import { usePresentationListe } from '../composables/presentationListe';
  * FTS refuse un appel sans `q`. L'extrait renvoyé par le backend est surligné
  * via <mark> pour donner du contexte au visiteur.
  */
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import PaginationBar from '../components/PaginationBar.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { useListePaginee } from '../composables/useListePaginee';
 import { bibliothequeService, normaliserDocuments } from '../services/bibliotheque';
 import { LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
 import type { Departement, DocumentDepot } from '../types';
@@ -267,39 +262,58 @@ interface OptionSimple { label: string; value: string }
 
 const { t } = useI18n();
 
-const documents = ref<DocumentDepot[]>([]);
 const departements = ref<Departement[]>([]);
 const chargementDepartements = ref(false);
-const chargement = ref(false);
-const total = ref(0);
-const page = ref(1);
-const pageSize = ref(10);
-/** `clearable` remet la valeur à null : le type l'assume. */
-const recherche = ref<string | null>('');
 const mode = usePresentationListe();
 
+/** `clearable` remet la recherche à null : le type l'assume. */
 const filtre = ref<{
+  recherche: string | null;
   type: string | null;
   departementId: string | null;
   anneeEdition: number | null;
 }>({
+  recherche: '',
   type: '',
   departementId: '',
   anneeEdition: null,
 });
 
+/**
+ * Toute modification d'un critère ramène à la première page ; la saisie
+ * libre attend 300 ms de silence. Erreurs silencieuses : la vitrine ne crie pas.
+ */
+const {
+  lignes: documents,
+  chargement,
+  total,
+  page,
+  pageSize,
+} = useListePaginee<DocumentDepot, typeof filtre.value>({
+  filtres: filtre,
+  pageSize: 10,
+  charger: async ({ page: p, pageSize: n, filtres: f }) => {
+    const params: Record<string, unknown> = { page: p, pageSize: n, public: 'true' };
+    if (f.type) params.type = f.type;
+    if (f.departementId) params.departementId = f.departementId;
+    if (f.anneeEdition) params.anneeEdition = f.anneeEdition;
+    const { data } = await bibliothequeService.rechercher(f.recherche ?? '', params, true);
+    const resultat = normaliserDocuments(data);
+    return { data: resultat.liste, total: resultat.total };
+  },
+});
+
 /** Un visiteur a-t-il restreint la liste ? Distingue les deux états vides. */
 const filtrageActif = computed(
   () =>
-    !!recherche.value?.trim() ||
+    !!filtre.value.recherche?.trim() ||
     !!filtre.value.type ||
     !!filtre.value.departementId ||
     !!filtre.value.anneeEdition,
 );
 
 function reinitialiser() {
-  recherche.value = '';
-  filtre.value = { type: '', departementId: '', anneeEdition: null };
+  filtre.value = { recherche: '', type: '', departementId: '', anneeEdition: null };
 }
 
 const typesDocument = Object.entries(LIBELLE_TYPE_DOCUMENT).map(([v, l]) => ({ value: v, label: l }));
@@ -330,41 +344,13 @@ function surligner(texte: string): string {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  const terme = recherche.value?.trim() ?? '';
+  const terme = filtre.value.recherche?.trim() ?? '';
   if (!terme) return echappe;
   // Échapper les caractères regex du terme.
   const motif = terme.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`(${motif})`, 'gi');
   return echappe.replace(regex, '<mark>$1</mark>');
 }
-
-async function charger() {
-  chargement.value = true;
-  try {
-    const params: Record<string, unknown> = {
-      page: page.value,
-      pageSize: pageSize.value,
-      public: 'true',
-    };
-    if (filtre.value.type) params.type = filtre.value.type;
-    if (filtre.value.departementId) params.departementId = filtre.value.departementId;
-    if (filtre.value.anneeEdition) params.anneeEdition = filtre.value.anneeEdition;
-
-    const { data } = await bibliothequeService.rechercher(
-      recherche.value ?? '',
-      params,
-      true,
-    );
-    const resultat = normaliserDocuments(data);
-    documents.value = resultat.liste;
-    total.value = resultat.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-/** Toute modification d'un critère ramène à la première page. */
-watch([recherche, filtre], () => { page.value = 1; void charger(); }, { deep: true });
 
 async function telecharger(doc: DocumentDepot) {
   if (!doc.fichier) return;
@@ -390,10 +376,11 @@ onMounted(async () => {
   try {
     const { data } = await api.get('/departements/public', { silencieux: true });
     departements.value = Array.isArray(data) ? data : (data.data ?? []);
+  } catch {
+    /* silencieux : le filtre par département reste simplement vide */
   } finally {
     chargementDepartements.value = false;
   }
-  await charger();
 });
 </script>
 

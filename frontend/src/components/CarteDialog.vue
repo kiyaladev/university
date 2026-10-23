@@ -3,18 +3,19 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { api } from '../boot/axios';
 import type { CarteEtudiante, Etudiant } from '../types';
 
 const $q = useQuasar();
 const { t } = useI18n();
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   carte?: CarteEtudiante | null;
 }>();
 
-const emit = defineEmits<{ 'update:modelValue': [v: boolean]; enregistre: [carte: CarteEtudiante] }>();
+const emit = defineEmits<{ enregistre: [carte: CarteEtudiante] }>();
 
 const formulaire = ref({
   etudiantId: null as string | null,
@@ -26,7 +27,7 @@ const formulaire = ref({
 const enregistrement = ref(false);
 
 watch(
-  () => props.modelValue,
+  ouvert,
   (visible) => {
     if (visible) {
       formulaire.value = {
@@ -63,83 +64,73 @@ async function soumettre() {
       message: t(enEdition.value ? 'carteEtudiante.formDialog.updated' : 'carteEtudiante.formDialog.issued'),
     });
     emit('enregistre', data);
-    emit('update:modelValue', false);
+    ouvert.value = false;
   } catch {
     /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
 }
-
-function fermer() {
-  emit('update:modelValue', false);
-}
 </script>
 
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 520px; max-width: 92vw">
-      <q-card-section class="row items-center">
-        <div class="text-h6">{{ titre }}</div>
-        <q-space />
-        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
-      </q-card-section>
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="titre"
+    taille="s"
+    :envoi="enregistrement"
+    :libelle-valider="$t(enEdition ? 'common.actions.save' : 'carteEtudiante.actions.issue')"
+    @valider="soumettre"
+  >
+    <div class="q-gutter-md">
+      <autocomplete-async
+        v-if="!enEdition"
+        v-model="formulaire.etudiantId"
+        endpoint="/etudiants"
+        :label-fn="(e: Etudiant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
+        :label="$t('common.fields.student')"
+      />
+      <q-input
+        v-else
+        :model-value="carte?.etudiant ? `${carte.etudiant.matricule} — ${carte.etudiant.prenom} ${carte.etudiant.nom}` : ''"
+        :label="$t('common.fields.student')"
+        readonly
+        outlined
+        dense
+      />
 
-      <q-card-section class="q-pt-none q-gutter-md">
-        <autocomplete-async
-          v-if="!enEdition"
-          v-model="formulaire.etudiantId"
-          endpoint="/etudiants"
-          :label-fn="(e: Etudiant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
-          :label="$t('common.fields.student')"
-        />
-        <q-input
-          v-else
-          :model-value="carte?.etudiant ? `${carte.etudiant.matricule} — ${carte.etudiant.prenom} ${carte.etudiant.nom}` : ''"
-          :label="$t('common.fields.student')"
-          readonly
-          outlined
-          dense
-        />
+      <q-input
+        v-model="formulaire.dateValidite"
+        type="date"
+        :label="$t('carteEtudiante.formDialog.validityLabel')"
+        outlined
+        dense
+      />
 
-        <q-input
-          v-model="formulaire.dateValidite"
-          type="date"
-          :label="$t('carteEtudiante.formDialog.validityLabel')"
-          outlined
-          dense
-        />
+      <q-input
+        v-model="formulaire.photoUrl"
+        :label="$t('carteEtudiante.formDialog.photoLabel')"
+        outlined
+        dense
+      />
 
-        <q-input
-          v-model="formulaire.photoUrl"
-          :label="$t('carteEtudiante.formDialog.photoLabel')"
-          outlined
-          dense
-        />
+      <q-banner v-if="enEdition" class="note--info">
+        {{ $t('carteEtudiante.formDialog.revokeHint') }}
+      </q-banner>
 
-        <q-banner v-if="enEdition" class="note--info">
-          {{ $t('carteEtudiante.formDialog.revokeHint') }}
-        </q-banner>
+      <q-banner v-if="!enEdition" class="note--info">
+        {{ $t('carteEtudiante.formDialog.pinHint') }}
+      </q-banner>
 
-        <q-banner v-if="!enEdition" class="note--info">
-          {{ $t('carteEtudiante.formDialog.pinHint') }}
-        </q-banner>
-
-        <q-input
-          v-if="!enEdition"
-          v-model="formulaire.nip"
-          :label="$t('carteEtudiante.formDialog.initialPinLabel')"
-          outlined
-          dense
-          mask="######"
-          :hint="$t('carteEtudiante.formDialog.pinHintOptional')"
-        />
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="$t(enEdition ? 'common.actions.save' : 'carteEtudiante.actions.issue')" @click="soumettre" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      <q-input
+        v-if="!enEdition"
+        v-model="formulaire.nip"
+        :label="$t('carteEtudiante.formDialog.initialPinLabel')"
+        outlined
+        dense
+        mask="######"
+        :hint="$t('carteEtudiante.formDialog.pinHintOptional')"
+      />
+    </div>
+  </dialogue-formulaire>
 </template>

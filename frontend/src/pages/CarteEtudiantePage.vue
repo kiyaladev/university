@@ -3,36 +3,44 @@ import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { useRoute } from 'vue-router';
 import QRCode from 'qrcode';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import CarteDialog from '../components/CarteDialog.vue';
-import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE } from '../utils/libelles';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { CLASSE_STATUT_CARTE, LIBELLE_STATUT_CARTE, dateLisible } from '../utils/libelles';
 import type { CarteEtudiante } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
-const route = useRoute();
 const { t } = useI18n();
-
-const cartes = ref<CarteEtudiante[]>([]);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
 
 /**
  * Liaison depuis les autres écrans du dossier (demandes de documents,
  * réclamations) : `/cartes-etudiantes?etudiantId=…` ouvre directement la ou
- * les cartes de l'étudiant concerné.
+ * les cartes de l'étudiant concerné (relu de l'URL par `syncUrl`).
  */
-const etudiantId = ref<string>(String(route.query.etudiantId ?? ''));
+const filtres = ref<Record<string, any>>({ recherche: '', etudiantId: '' });
+const liste = reactive(
+  useListePaginee<CarteEtudiante>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/cartes-etudiantes', {
+          params: { ...pageApi(p), search: texteApi(f.recherche), etudiantId: f.etudiantId || undefined },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const modeVue = usePresentationListe();
 
@@ -106,44 +114,15 @@ async function confirmerRevocation() {
     });
     $q.notify({ type: 'warning', message: t('carteEtudiante.messages.revoked') });
     dialogRevocation.value = false;
-    await charger();
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
   }
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const params: Record<string, unknown> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-    };
-    const recherche = filtres.value.recherche;
-    if (recherche) params.search = recherche;
-    if (etudiantId.value) params.etudiantId = etudiantId.value;
-    const { data } = await api.get('/cartes-etudiantes', { params });
-    cartes.value = data.data;
-    pagination.value.total = data.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function recharger() {
-  pagination.value.page = 1;
-  void charger();
-}
-
 /** Retire le filtre « un seul étudiant » posé par un lien entrant. */
 function retirerFiltreEtudiant() {
-  etudiantId.value = '';
-  recharger();
-}
-
-function dateFr(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR');
+  filtres.value = { ...filtres.value, etudiantId: '' };
 }
 
 function ouvrirModification(c: CarteEtudiante) {
@@ -155,18 +134,14 @@ function ouvrirEmission() {
   carteEnEdition.value = null;
   dialogEmission.value = true;
 }
-
-onMounted(charger);
 </script>
 
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="documents" />
     <page-header :title="$t('carteEtudiante.title')" :subtitle="$t('carteEtudiante.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutEmettre" #actions>
         <q-btn
-          v-if="peutEmettre"
           unelevated
           color="primary"
           no-caps
@@ -174,32 +149,19 @@ onMounted(charger);
           :label="$t('carteEtudiante.actions.issue')"
           @click="ouvrirEmission"
         />
-      </div>
       </template>
     </page-header>
 
-    <q-banner v-if="etudiantId" class="note--info q-mb-md">
+    <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
       {{ $t('carteEtudiante.studentBanner.message') }}
       <template #action>
         <q-btn flat no-caps :label="$t('carteEtudiante.studentBanner.seeAll')" @click="retirerFiltreEtudiant" />
       </template>
     </q-banner>
 
-    <filter-bar
-      v-model="filtres"
-      :placeholder="$t('carteEtudiante.filters.searchPlaceholder')"
-      @update:model-value="recharger"
-    >
-    </filter-bar>
+    <filter-bar v-model="filtres" :placeholder="$t('carteEtudiante.filters.searchPlaceholder')" />
 
-    <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-all="false"
-      @update:page="pagination.page = $event; charger()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; charger()"
-    />
+    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <!-- Vue tableau -->
     <q-table
@@ -207,17 +169,15 @@ onMounted(charger);
       flat
       bordered
       class="carte"
-      :rows="cartes"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || cartes.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('carteEtudiante.emptyState.message') }}
-        </div>
+        <etat-vide icone="badge" :titre="$t('carteEtudiante.emptyState.message')" />
       </template>
       <template #body-cell-etudiant="p">
         <q-td :props="p">
@@ -228,10 +188,10 @@ onMounted(charger);
         <q-td :props="p"><code>{{ p.row.etudiant?.matricule ?? '—' }}</code></q-td>
       </template>
       <template #body-cell-emission="p">
-        <q-td :props="p">{{ dateFr(p.row.dateEmission) }}</q-td>
+        <q-td :props="p">{{ dateLisible(p.row.dateEmission) }}</q-td>
       </template>
       <template #body-cell-validite="p">
-        <q-td :props="p">{{ dateFr(p.row.dateValidite) }}</q-td>
+        <q-td :props="p">{{ dateLisible(p.row.dateValidite) }}</q-td>
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -286,7 +246,7 @@ onMounted(charger);
 
     <!-- Vue cartes -->
     <div v-else class="row q-col-gutter-md">
-      <div v-for="c in cartes" :key="c.id" class="col-12 col-sm-6 col-md-4">
+      <div v-for="c in liste.lignes" :key="c.id" class="col-12 col-sm-6 col-md-4">
         <q-card class="carte-carte">
           <q-card-section class="row items-center q-gutter-sm">
             <q-avatar size="56px" color="grey-3" text-color="primary">
@@ -305,8 +265,8 @@ onMounted(charger);
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
-            {{ $t('carteEtudiante.card.issuedOn', { date: dateFr(c.dateEmission) }) }}<br>
-            {{ $t('carteEtudiante.card.validUntil', { date: dateFr(c.dateValidite) }) }}
+            {{ $t('carteEtudiante.card.issuedOn', { date: dateLisible(c.dateEmission) }) }}<br>
+            {{ $t('carteEtudiante.card.validUntil', { date: dateLisible(c.dateValidite) }) }}
             <div v-if="c.motifRevocation" class="text-grey-7 q-mt-xs">
               {{ $t('carteEtudiante.card.revocationReason', { motif: c.motifRevocation }) }}
             </div>
@@ -338,57 +298,36 @@ onMounted(charger);
 </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !cartes.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="badge" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('carteEtudiante.emptyState.message') }}
-        </div>
-      </div>
+      <etat-vide v-if="!liste.chargement && !liste.lignes.length" class="col-12" icone="badge" :titre="$t('carteEtudiante.emptyState.message')" />
     </div>
 
     <!-- Dialog émission / édition -->
-    <carte-dialog v-model="dialogEmission" :carte="carteEnEdition" @enregistre="charger" />
+    <carte-dialog v-model="dialogEmission" :carte="carteEnEdition" @enregistre="liste.recharger()" />
 
     <!-- Dialog révocation -->
-    <q-dialog v-model="dialogRevocation">
-      <q-card style="min-width: 420px">
-        <q-card-section class="row items-center">
-          <div class="col">
-            <div class="text-h6">{{ $t('carteEtudiante.revokeDialog.title') }}</div>
-            <div v-if="carteRevocation?.etudiant" class="text-caption text-grey-7">
-              {{ carteRevocation.etudiant.prenom }} {{ carteRevocation.etudiant.nom }} ·
-              {{ carteRevocation.etudiant.matricule }}
-            </div>
-          </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('carteEtudiante.revokeDialog.close')" @click="dialogRevocation = false" />
-        </q-card-section>
-        <q-card-section>
-          <q-banner class="note--alerte q-mb-md">
-            {{ $t('carteEtudiante.revokeDialog.warning') }}
-          </q-banner>
-          <q-input
-            v-model="motifRevocation"
-            :label="$t('carteEtudiante.revokeDialog.motifLabel')"
-            :hint="$t('carteEtudiante.revokeDialog.motifHint')"
-            outlined
-            dense
-            type="textarea"
-            autogrow
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('carteEtudiante.revokeDialog.cancel')" no-caps @click="dialogRevocation = false" />
-          <q-btn
-            unelevated
-            color="negative"
-            no-caps
-            :label="$t('carteEtudiante.revokeDialog.confirm')"
-            :disable="motifRevocation.trim().length < 3"
-            @click="confirmerRevocation"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogRevocation"
+      :titre="$t('carteEtudiante.revokeDialog.title')"
+      :sous-titre="carteRevocation?.etudiant ? `${carteRevocation.etudiant.prenom} ${carteRevocation.etudiant.nom} · ${carteRevocation.etudiant.matricule}` : undefined"
+      taille="s"
+      :libelle-valider="$t('carteEtudiante.revokeDialog.confirm')"
+      couleur-valider="negative"
+      :desactive="motifRevocation.trim().length < 3"
+      @valider="confirmerRevocation"
+    >
+      <q-banner class="note--alerte q-mb-md">
+        {{ $t('carteEtudiante.revokeDialog.warning') }}
+      </q-banner>
+      <q-input
+        v-model="motifRevocation"
+        :label="$t('carteEtudiante.revokeDialog.motifLabel')"
+        :hint="$t('carteEtudiante.revokeDialog.motifHint')"
+        outlined
+        dense
+        type="textarea"
+        autogrow
+      />
+    </dialogue-formulaire>
 
     <!-- Dialog détail + QR -->
     <q-dialog v-model="dialogDetail">

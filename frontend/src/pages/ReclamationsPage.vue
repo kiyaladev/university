@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('reclamations.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('reclamations.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('reclamations.title')" :subtitle="$t('reclamations.subtitle')">
+      <template #actions>
         <q-btn
           unelevated
           color="primary"
@@ -16,8 +10,8 @@
           :label="$t('reclamations.actions.newReclamation')"
           @click="creationOuverte = true"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <div class="row q-col-gutter-md q-mb-md">
       <div v-for="s in plaques" :key="s.cle" class="col-6 col-md-3">
@@ -36,7 +30,7 @@
       v-model="filtres"
       :placeholder="$t('reclamations.search.placeholder')"
       :recherche="true"
-      @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #avances>
         <q-select
@@ -95,13 +89,10 @@
     </filter-bar>
 
     <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="pagination.page = $event; requeter()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; requeter()"
-      @tous="chargerTout"
     />
 
     <q-table
@@ -109,18 +100,16 @@
       flat
       bordered
       class="carte"
-      :rows="reclamations"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || reclamations.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => ouvrir(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('reclamations.emptyState.message') }}
-        </div>
+        <etat-vide icone="forum" :titre="$t('reclamations.emptyState.message')" />
       </template>
       <template #body-cell-numero="p">
         <q-td :props="p" class="text-weight-medium">{{ p.row.numero }}</q-td>
@@ -190,7 +179,7 @@
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-      <div v-for="r in reclamations" :key="r.id" class="col-12 col-md-6 col-xl-4">
+      <div v-for="r in liste.lignes" :key="r.id" class="col-12 col-md-6 col-xl-4">
         <q-card flat bordered class="carte reclamation-carte">
           <q-card-section class="row items-start q-pb-sm">
             <div class="col">
@@ -262,15 +251,15 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="forum" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('reclamations.emptyState.message') }}
-        </div>
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="forum"
+        :titre="$t('reclamations.emptyState.message')"
+      />
     </div>
 
-    <reclamation-dialog v-model="creationOuverte" @creee="onCreee" />
+    <reclamation-dialog v-model="creationOuverte" @enregistre="onChange" />
     <reclamation-detail-dialog
       v-model="detailOuvert"
       :reclamation="reclamationSelectionnee"
@@ -285,7 +274,7 @@
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -295,6 +284,9 @@ import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_STATUT_RECLAMATION,
@@ -323,13 +315,39 @@ const OPTIONS_ESCALADE = computed(() => [
   { label: t('reclamations.escaladeOptions.nonEscaladees'), value: 'non' },
 ]);
 
-const reclamations = ref<Reclamation[]>([]);
 const stats = ref<Record<string, number> | null>(null);
 const membresStaff = ref<Utilisateur[]>([]);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({
+  recherche: '',
+  statut: null,
+  type: null,
+  priorite: null,
+  departementId: null,
+  assigneAId: null,
+  escalade: null,
+});
+const liste = reactive(
+  useListePaginee<Reclamation>({
+    filtres,
+    actif: () => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']),
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/reclamations', {
+          params: {
+            ...pageApi(p),
+            statut: f.statut || undefined,
+            type: f.type || undefined,
+            priorite: f.priorite || undefined,
+            departementId: f.departementId || undefined,
+            assigneAId: f.assigneAId || undefined,
+            escalade: f.escalade || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 const modeVue = usePresentationListe();
-const chargement = ref(false);
 const creationOuverte = ref(false);
 const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
@@ -368,37 +386,6 @@ function ouvrir(r: Reclamation) {
   detailOuvert.value = true;
 }
 
-async function requeter() {
-  if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return;
-  chargement.value = true;
-  try {
-    const f = filtres.value;
-    const { data } = await api.get('/reclamations', {
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: f.statut || undefined,
-        type: f.type || undefined,
-        priorite: f.priorite || undefined,
-        departementId: f.departementId || undefined,
-        assigneAId: f.assigneAId || undefined,
-        escalade: f.escalade || undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-      },
-    });
-    reclamations.value = data.data;
-    pagination.value.total = data.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await requeter();
-}
-
 async function chargerStats() {
   // Même périmètre que /reclamations/dashboard côté API.
   if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return;
@@ -422,13 +409,8 @@ async function chargerStaff() {
   }
 }
 
-function onCreee() {
-  void requeter();
-  void chargerStats();
-}
-
 function onChange() {
-  void requeter();
+  void liste.recharger();
   void chargerStats();
 }
 
@@ -436,31 +418,14 @@ async function escalader(r: Reclamation) {
   try {
     await api.post(`/reclamations/${r.id}/escalader`);
     $q.notify({ type: 'warning', message: t('reclamations.messages.escalated', { numero: r.numero }) });
-    await requeter();
+    await liste.recharger();
     await chargerStats();
   } catch {
     /* notifié par l'intercepteur */
   }
 }
 
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.statut,
-    filtres.value.type,
-    filtres.value.priorite,
-    filtres.value.departementId,
-    filtres.value.assigneAId,
-    filtres.value.escalade,
-  ],
-  () => {
-    pagination.value.page = 1;
-    void requeter();
-  },
-);
-
 onMounted(() => {
-  void requeter();
   void chargerStats();
   void chargerStaff();
 });

@@ -2,7 +2,7 @@
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
@@ -11,11 +11,15 @@ import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import BadgeDialog from '../components/BadgeDialog.vue';
-import type { BadgeAcces, TypeBadge } from '../types';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import type { BadgeAcces } from '../types';
 import { ouvrirImpression } from '../services/impression';
 import {
   LIBELLE_STATUT_BADGE,
   LIBELLE_TYPE_BADGE,
+  dateLisible,
   optionsDepuis,
 } from '../utils/libelles';
 
@@ -23,10 +27,24 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const badges = ref<BadgeAcces[]>([]);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
+const liste = reactive(
+  useListePaginee<BadgeAcces>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/badges', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            type: f.type || undefined,
+            statut: f.statut || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const modeVue = usePresentationListe();
 
@@ -90,7 +108,7 @@ async function confirmerAnnulation() {
     });
     $q.notify({ type: 'warning', message: t('badges.messages.cancelled') });
     dialogAnnulation.value = false;
-    await charger();
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
   }
@@ -108,38 +126,10 @@ async function confirmerRallonge() {
     await api.post(`/badges/${badgeRallonge.value.id}/rallonger`, { dateValidite: dateRallonge.value });
     $q.notify({ type: 'positive', message: t('badges.messages.extended') });
     dialogRallonge.value = false;
-    await charger();
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
   }
-}
-
-async function charger() {
-  chargement.value = true;
-  try {
-    const params: Record<string, unknown> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-    };
-    if (filtres.value.recherche) params.search = filtres.value.recherche;
-    if (filtres.value.type) params.type = filtres.value.type;
-    if (filtres.value.statut) params.statut = filtres.value.statut;
-    const { data } = await api.get('/badges', { params });
-    badges.value = data.data;
-    pagination.value.total = data.total;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function recharger() {
-  pagination.value.page = 1;
-  void charger();
-}
-
-function dateFr(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR');
 }
 
 /**
@@ -151,17 +141,13 @@ function statutEffectif(b: BadgeAcces): string {
   if (b.statut === 'ANNULE') return 'ANNULE';
   return new Date(b.dateValidite) < new Date() ? 'EXPIRE' : 'ACTIF';
 }
-
-onMounted(charger);
 </script>
 
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('badges.title')" :subtitle="$t('badges.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutEditer" #actions>
         <q-btn
-          v-if="peutEditer"
           unelevated
           color="primary"
           no-caps
@@ -169,15 +155,10 @@ onMounted(charger);
           :label="$t('badges.actions.issueBadge')"
           @click="ouvrirEdition()"
         />
-      </div>
       </template>
     </page-header>
 
-    <filter-bar
-      v-model="filtres"
-      :placeholder="$t('badges.filters.searchPlaceholder')"
-      @update:model-value="recharger"
-    >
+    <filter-bar v-model="filtres" :placeholder="$t('badges.filters.searchPlaceholder')">
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -188,7 +169,6 @@ onMounted(charger);
           outlined
           dense
           clearable
-          @update:model-value="recharger"
         />
         <q-select
           v-model="filtres.statut"
@@ -199,36 +179,26 @@ onMounted(charger);
           outlined
           dense
           clearable
-          @update:model-value="recharger"
         />
       </template>
     </filter-bar>
 
-    <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-all="false"
-      @update:page="pagination.page = $event; charger()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; charger()"
-    />
+    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <q-table
       v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
-      :rows="badges"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || badges.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('badges.emptyState.message') }}
-        </div>
+        <etat-vide icone="how_to_reg" :titre="$t('badges.emptyState.message')" />
       </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ LIBELLE_TYPE_BADGE[p.row.type] ?? p.row.type }}</q-td>
@@ -244,7 +214,7 @@ onMounted(charger);
       </template>
       <template #body-cell-validite="p">
         <q-td :props="p">
-          {{ dateFr(p.row.dateDelivrance) }} → {{ dateFr(p.row.dateValidite) }}
+          {{ dateLisible(p.row.dateDelivrance) }} → {{ dateLisible(p.row.dateValidite) }}
         </q-td>
       </template>
       <template #body-cell-statut="p">
@@ -300,7 +270,7 @@ onMounted(charger);
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-      <div v-for="b in badges" :key="b.id" class="col-12 col-sm-6 col-md-4">
+<div v-for="b in liste.lignes" :key="b.id" class="col-12 col-sm-6 col-md-4">
         <q-card class="badge-carte">
           <q-card-section class="row items-center q-gutter-sm">
             <q-avatar size="56px" color="grey-3" text-color="primary">
@@ -321,9 +291,9 @@ onMounted(charger);
               {{ LIBELLE_TYPE_BADGE[b.type] ?? b.type }}
             </q-chip>
             <div class="q-mt-sm">
-              {{ $t('badges.card.issuedOn', { date: dateFr(b.dateDelivrance) }) }}<br>
+              {{ $t('badges.card.issuedOn', { date: dateLisible(b.dateDelivrance) }) }}<br>
               <i18n-t keypath="badges.card.validUntil" tag="span">
-                <template #date><strong>{{ dateFr(b.dateValidite) }}</strong></template>
+                <template #date><strong>{{ dateLisible(b.dateValidite) }}</strong></template>
               </i18n-t>
             </div>
             <div class="q-mt-sm"><code>{{ b.numero }}</code></div>
@@ -366,91 +336,55 @@ onMounted(charger);
 </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !badges.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="how_to_reg" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('badges.emptyState.message') }}
-        </div>
-      </div>
+      <etat-vide v-if="!liste.chargement && !liste.lignes.length" class="col-12" icone="how_to_reg" :titre="$t('badges.emptyState.message')" />
     </div>
 
-    <badge-dialog v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="charger" />
+    <badge-dialog v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="liste.recharger()" />
 
-    <q-dialog v-model="dialogAnnulation">
-      <q-card style="min-width: 420px">
-        <q-card-section class="row items-center">
-          <div class="col">
-            <div class="text-h6">{{ $t('badges.dialogs.cancel.title') }}</div>
-            <div v-if="badgeAnnulation" class="text-caption text-grey-7">
-              {{ badgeAnnulation.prenom }} {{ badgeAnnulation.nom }} · {{ badgeAnnulation.numero }}
-            </div>
-          </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('badges.aria.close')" @click="dialogAnnulation = false" />
-        </q-card-section>
-        <q-card-section>
-          <q-banner class="note--alerte q-mb-md">
-            {{ $t('badges.dialogs.cancel.warning') }}
-          </q-banner>
-          <q-input
-            v-model="motifAnnulation"
-            :label="$t('badges.dialogs.cancel.reasonLabel')"
-            :hint="$t('badges.dialogs.cancel.reasonHint')"
-            outlined
-            dense
-            type="textarea"
-            autogrow
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('badges.dialogs.cancel.cancelAction')" no-caps @click="dialogAnnulation = false" />
-          <q-btn
-            unelevated
-            color="negative"
-            no-caps
-            :label="$t('badges.dialogs.cancel.confirmAction')"
-            :disable="motifAnnulation.trim().length < 3"
-            @click="confirmerAnnulation"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogAnnulation"
+      :titre="$t('badges.dialogs.cancel.title')"
+      :sous-titre="badgeAnnulation ? `${badgeAnnulation.prenom} ${badgeAnnulation.nom} · ${badgeAnnulation.numero}` : undefined"
+      taille="s"
+      :libelle-valider="$t('badges.dialogs.cancel.confirmAction')"
+      couleur-valider="negative"
+      :desactive="motifAnnulation.trim().length < 3"
+      @valider="confirmerAnnulation"
+    >
+      <q-banner class="note--alerte q-mb-md">
+        {{ $t('badges.dialogs.cancel.warning') }}
+      </q-banner>
+      <q-input
+        v-model="motifAnnulation"
+        :label="$t('badges.dialogs.cancel.reasonLabel')"
+        :hint="$t('badges.dialogs.cancel.reasonHint')"
+        outlined
+        dense
+        type="textarea"
+        autogrow
+      />
+    </dialogue-formulaire>
 
-    <q-dialog v-model="dialogRallonge">
-      <q-card style="min-width: 420px">
-        <q-card-section class="row items-center">
-          <div class="col">
-            <div class="text-h6">{{ $t('badges.dialogs.extend.title') }}</div>
-            <div v-if="badgeRallonge" class="text-caption text-grey-7">
-              {{ badgeRallonge.prenom }} {{ badgeRallonge.nom }} · {{ badgeRallonge.numero }}
-            </div>
-          </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('badges.aria.close')" @click="dialogRallonge = false" />
-        </q-card-section>
-        <q-card-section>
-          <q-banner class="note--info q-mb-md">
-            {{ $t('badges.dialogs.extend.info') }}
-          </q-banner>
-          <q-input
-            v-model="dateRallonge"
-            type="date"
-            :label="$t('badges.dialogs.extend.newValidityDateLabel')"
-            outlined
-            dense
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('badges.dialogs.extend.cancelAction')" no-caps @click="dialogRallonge = false" />
-          <q-btn
-            unelevated
-            color="primary"
-            no-caps
-            :label="$t('badges.dialogs.extend.confirmAction')"
-            :disable="!dateRallonge"
-            @click="confirmerRallonge"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogRallonge"
+      :titre="$t('badges.dialogs.extend.title')"
+      :sous-titre="badgeRallonge ? `${badgeRallonge.prenom} ${badgeRallonge.nom} · ${badgeRallonge.numero}` : undefined"
+      taille="s"
+      :libelle-valider="$t('badges.dialogs.extend.confirmAction')"
+      :desactive="!dateRallonge"
+      @valider="confirmerRallonge"
+    >
+      <q-banner class="note--info q-mb-md">
+        {{ $t('badges.dialogs.extend.info') }}
+      </q-banner>
+      <q-input
+        v-model="dateRallonge"
+        type="date"
+        :label="$t('badges.dialogs.extend.newValidityDateLabel')"
+        outlined
+        dense
+      />
+    </dialogue-formulaire>
   </q-page>
 </template>
 

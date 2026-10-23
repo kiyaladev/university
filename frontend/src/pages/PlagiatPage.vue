@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('plagiatPage.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('plagiatPage.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('plagiatPage.title')" :subtitle="$t('plagiatPage.subtitle')">
+      <template #actions>
         <q-btn
           outline
           color="secondary"
@@ -16,8 +10,6 @@
           :label="$t('plagiatPage.actions.library')"
           @click="router.push({ name: 'bibliotheque' })"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           v-if="auth.estAdmin"
           unelevated
@@ -28,8 +20,8 @@
           :loading="recalculEnCours"
           @click="lancerRecalcul"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <!-- KPIs : chiffres globaux renvoyés par le moteur, tous statuts confondus -->
     <div class="row q-col-gutter-md q-mb-md">
@@ -124,33 +116,27 @@
       </ol>
     </q-banner>
 
-    <div v-if="chargement" class="row justify-center q-py-xl">
+    <div v-if="liste.chargement" class="row justify-center q-py-xl">
       <q-spinner color="primary" size="40px" />
     </div>
 
-    <div v-else-if="!suspicionsFiltrees.length" class="plaque q-pa-lg text-center text-grey-7">
-      <q-icon name="verified" size="38px" color="positive" />
-      <div class="q-mt-sm text-weight-medium">
-        {{ filtresActifs ? $t('plagiatPage.emptyState.filteredTitle') : $t('plagiatPage.emptyState.defaultTitle') }}
-      </div>
-      <div class="text-caption q-mt-xs">
-        {{
-          filtresActifs
-            ? $t('plagiatPage.emptyState.filteredHint')
-            : $t('plagiatPage.emptyState.defaultHint')
-        }}
-      </div>
-      <q-btn
-        v-if="filtresActifs"
-        flat
-        no-caps
-        color="primary"
-        icon="refresh"
-        :label="$t('plagiatPage.emptyState.resetFilters')"
-        class="q-mt-md"
-        @click="reinitialiser"
-      />
-    </div>
+    <etat-vide
+      v-else-if="!suspicionsFiltrees.length"
+      icone="verified"
+      :titre="filtresActifs ? $t('plagiatPage.emptyState.filteredTitle') : $t('plagiatPage.emptyState.defaultTitle')"
+      :aide="filtresActifs ? $t('plagiatPage.emptyState.filteredHint') : $t('plagiatPage.emptyState.defaultHint')"
+    >
+      <template v-if="filtresActifs" #action>
+        <q-btn
+          flat
+          no-caps
+          color="primary"
+          icon="refresh"
+          :label="$t('plagiatPage.emptyState.resetFilters')"
+          @click="reinitialiser"
+        />
+      </template>
+    </etat-vide>
 
     <template v-else>
       <q-table
@@ -253,59 +239,50 @@
     </template>
 
     <!-- Dialog de décision rapide (acquittement / confirmation) -->
-    <q-dialog v-model="decisionDialogOuvert">
-      <q-card v-if="decisionCourante" style="width: 540px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{ decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.titleAcquit') : $t('plagiatPage.dialog.titleConfirm') }}
-        </q-card-section>
-        <q-card-section class="q-pt-none text-caption text-grey-7">
+    <dialogue-formulaire
+      v-model="decisionDialogOuvert"
+      :titre="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.titleAcquit') : $t('plagiatPage.dialog.titleConfirm')"
+      :envoi="decisionEnCours"
+      :libelle-valider="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.acquitSubmit') : $t('plagiatPage.dialog.confirmSubmit')"
+      :couleur-valider="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
+      :desactive="decisionStatut === 'CONFIRME' && !decisionMotif.trim()"
+      @valider="validerDecision"
+    >
+      <template v-if="decisionCourante">
+        <div class="text-caption text-grey-7 q-mb-md">
           {{ $t('plagiatPage.dialog.scoreLabel') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('rectoratPage.subtitleFallback') }}
           {{ $t('plagiatPage.dialog.comparisonDocs', {
             documentA: decisionCourante.documentA?.titre ?? '—',
             documentB: decisionCourante.documentB?.titre ?? '—',
           }) }}
-        </q-card-section>
-        <q-card-section>
-          <q-banner dense :class="decisionStatut === 'CONFIRME' ? 'bg-red-1 text-red-10 q-mb-md' : 'carte q-mb-md'">
-            <template #avatar>
-              <q-icon :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'" :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'" />
-            </template>
-            <template v-if="decisionStatut === 'CONFIRME'">
-              {{ $t('plagiatPage.dialog.confirmWarning') }}
-            </template>
-            <template v-else>
-              {{ $t('plagiatPage.dialog.acquitWarning') }}
-            </template>
-          </q-banner>
-          <q-input
-            v-model="decisionMotif"
-            outlined
-            dense
-            type="textarea"
-            autogrow
-            :label="decisionStatut === 'CONFIRME' ? $t('plagiatPage.dialog.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('plagiatPage.dialog.cancel')" v-close-popup />
-          <q-btn
-            unelevated
-            no-caps
-            :color="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
-            :label="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.acquitSubmit') : $t('plagiatPage.dialog.confirmSubmit')"
-            :disable="decisionStatut === 'CONFIRME' && !decisionMotif.trim()"
-            :loading="decisionEnCours"
-            @click="validerDecision"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        </div>
+        <q-banner dense :class="decisionStatut === 'CONFIRME' ? 'bg-red-1 text-red-10 q-mb-md' : 'carte q-mb-md'">
+          <template #avatar>
+            <q-icon :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'" :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'" />
+          </template>
+          <template v-if="decisionStatut === 'CONFIRME'">
+            {{ $t('plagiatPage.dialog.confirmWarning') }}
+          </template>
+          <template v-else>
+            {{ $t('plagiatPage.dialog.acquitWarning') }}
+          </template>
+        </q-banner>
+        <q-input
+          v-model="decisionMotif"
+          outlined
+          dense
+          type="textarea"
+          autogrow
+          :label="decisionStatut === 'CONFIRME' ? $t('plagiatPage.dialog.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
+        />
+      </template>
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -315,6 +292,11 @@ import PaginationBar from '../components/PaginationBar.vue';
 import ChampDate from '../components/ChampDate.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import PlagiatCard from '../components/PlagiatCard.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import { useAuthStore } from '../stores/auth';
 import { LIBELLE_STATUT_SUSPICION, dateLisible, nombreLisible } from '../utils/libelles';
 import type { SuspicionPlagiat, ChipFiltre } from '../types';
@@ -324,6 +306,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const route = useRoute();
 const router = useRouter();
+const { confirmer: demanderConfirmation } = useConfirmation();
 
 const modeVue = usePresentationListe();
 
@@ -332,17 +315,33 @@ const modeVue = usePresentationListe();
  * compteurs globaux et top des documents — sans paramètre de filtre ni de
  * pagination : le tri, la recherche et la pagination sont donc faits ici.
  */
-const suspicions = ref<SuspicionPlagiat[]>([]);
 const kpis = ref({ total: 0, scoreMoyen: 0, enAttente: 0, acquittees: 0, confirmees: 0 });
 const topDocuments = ref<Array<{ id: string; titre: string; compte: number }>>([]);
 
-const chargement = ref(false);
 const page = ref(1);
 const pageSize = ref(12);
 const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
-const filtres = ref<Record<string, any>>({});
+// La bibliothèque renvoie ici avec le document à examiner.
+const filtres = ref<Record<string, any>>(
+  route.query.documentId ? { documentId: String(route.query.documentId) } : {},
+);
+
+const liste = reactive(
+  useListePaginee<SuspicionPlagiat>({
+    filtres,
+    pageSize: 0,
+    clesLocales: true,
+    charger: () =>
+      api.get('/documents/plagiat').then(({ data }) => {
+        lireTableauDeBord(data);
+        page.value = 1;
+        return { data: (data?.suspicions ?? []) as SuspicionPlagiat[] };
+      }),
+  }),
+);
+const suspicions = computed(() => liste.lignes);
 
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
@@ -432,38 +431,28 @@ const suspicionsPage = computed(() =>
   suspicionsFiltrees.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value),
 );
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/documents/plagiat');
-    suspicions.value = data?.suspicions ?? [];
-    kpis.value = {
-      total: data?.kpis?.total ?? 0,
-      scoreMoyen: data?.kpis?.scoreMoyen ?? 0,
-      enAttente: data?.kpis?.enAttente ?? 0,
-      acquittees: data?.kpis?.acquittees ?? 0,
-      confirmees: data?.kpis?.confirmees ?? 0,
-    };
+function lireTableauDeBord(data: any) {
+  kpis.value = {
+    total: data?.kpis?.total ?? 0,
+    scoreMoyen: data?.kpis?.scoreMoyen ?? 0,
+    enAttente: data?.kpis?.enAttente ?? 0,
+    acquittees: data?.kpis?.acquittees ?? 0,
+    confirmees: data?.kpis?.confirmees ?? 0,
+  };
 
-    // Le « top » est renvoyé sous forme de suspicions : on agrège par document.
-    const compteur = new Map<string, { id: string; titre: string; compte: number }>();
-    for (const s of (data?.topDix ?? []) as SuspicionPlagiat[]) {
-      for (const d of [s.documentA, s.documentB]) {
-        if (!d) continue;
-        const ex = compteur.get(d.id);
-        if (ex) ex.compte += 1;
-        else compteur.set(d.id, { id: d.id, titre: d.titre, compte: 1 });
-      }
+  // Le « top » est renvoyé sous forme de suspicions : on agrège par document.
+  const compteur = new Map<string, { id: string; titre: string; compte: number }>();
+  for (const s of (data?.topDix ?? []) as SuspicionPlagiat[]) {
+    for (const d of [s.documentA, s.documentB]) {
+      if (!d) continue;
+      const ex = compteur.get(d.id);
+      if (ex) ex.compte += 1;
+      else compteur.set(d.id, { id: d.id, titre: d.titre, compte: 1 });
     }
-    topDocuments.value = Array.from(compteur.values())
-      .sort((a, b) => b.compte - a.compte)
-      .slice(0, 5);
-  } catch {
-    suspicions.value = [];
-  } finally {
-    chargement.value = false;
-    page.value = 1;
   }
+  topDocuments.value = Array.from(compteur.values())
+    .sort((a, b) => b.compte - a.compte)
+    .slice(0, 5);
 }
 
 function reinitialiser() {
@@ -512,7 +501,7 @@ async function validerDecision() {
           : t('plagiatPage.messages.confirmed'),
     });
     decisionDialogOuvert.value = false;
-    await charger();
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
   } finally {
@@ -521,31 +510,31 @@ async function validerDecision() {
 }
 
 async function lancerRecalcul() {
-  $q.dialog({
-    title: t('plagiatPage.messages.recalculateDialogTitle'),
+  const ok = await demanderConfirmation({
+    titre: t('plagiatPage.messages.recalculateDialogTitle'),
     message: t('plagiatPage.messages.recalculateDialogMessage'),
-    cancel: true,
-    ok: { color: 'negative', label: t('plagiatPage.messages.recalculateDialogOk'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    recalculEnCours.value = true;
-    try {
-      const { data } = await api.post('/documents/recalculer-plagiat', {});
-      dernierRecap.value = {
-        titre: t('plagiatPage.messages.recalculateDoneTitle'),
-        message: t('plagiatPage.messages.recalculateDoneMessage', {
-          created: data?.creees ?? 0,
-          updated: data?.misesAJour ?? 0,
-          ignored: data?.ignorees ?? 0,
-        }),
-      };
-      $q.notify({ type: 'positive', message: t('plagiatPage.messages.recalculateSuccess') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    } finally {
-      recalculEnCours.value = false;
-    }
+    ok: t('plagiatPage.messages.recalculateDialogOk'),
+    danger: true,
   });
+  if (!ok) return;
+  recalculEnCours.value = true;
+  try {
+    const { data } = await api.post('/documents/recalculer-plagiat', {});
+    dernierRecap.value = {
+      titre: t('plagiatPage.messages.recalculateDoneTitle'),
+      message: t('plagiatPage.messages.recalculateDoneMessage', {
+        created: data?.creees ?? 0,
+        updated: data?.misesAJour ?? 0,
+        ignored: data?.ignorees ?? 0,
+      }),
+    };
+    $q.notify({ type: 'positive', message: t('plagiatPage.messages.recalculateSuccess') });
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  } finally {
+    recalculEnCours.value = false;
+  }
 }
 
 watch(
@@ -555,11 +544,6 @@ watch(
   },
 );
 
-onMounted(async () => {
-  // La bibliothèque renvoie ici avec le document à examiner.
-  if (route.query.documentId) filtres.value.documentId = String(route.query.documentId);
-  await charger();
-});
 </script>
 
 <style scoped>

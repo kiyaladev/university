@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { useListePaginee, texteApi } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 
 import { useAuthStore } from '../stores/auth';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ElectionDialog from '../components/ElectionDialog.vue';
@@ -23,13 +27,27 @@ import { ouvrirImpression } from '../services/impression';
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 const onglet = ref<StatutElection>('BROUILLON');
 
-const elections = ref<Election[]>([]);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({ recherche: '', type: null });
+const liste = reactive(
+  useListePaginee<Election>({
+    filtres,
+    syncUrl: true,
+    charger: ({ page, pageSize, filtres: f }) =>
+      electionsService
+        .liste({
+          page,
+          pageSize,
+          statut: onglet.value,
+          ...(f.type ? { type: f.type } : {}),
+          ...(texteApi(f.recherche) ? { search: texteApi(f.recherche) } : {}),
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const modeVue = usePresentationListe();
 
@@ -108,29 +126,23 @@ function ouvrirCandidat(c?: CandidatElection) {
   dialogCandidat.value = true;
 }
 
-function supprimerCandidat(c: CandidatElection) {
+async function supprimerCandidat(c: CandidatElection) {
   const election = electionCandidats.value;
   if (!election) return;
-  $q.dialog({
-    title: t('elections.dialogs.removeCandidate.title'),
+  const ok = await confirmer({
+    titre: t('elections.dialogs.removeCandidate.title'),
     message: t('elections.dialogs.removeCandidate.message', { name: `${c.prenom} ${c.nom}` }),
-    cancel: { label: t('elections.dialogs.removeCandidate.cancel'), flat: true, noCaps: true },
-    ok: {
-      label: t('elections.dialogs.removeCandidate.confirm'),
-      color: 'negative',
-      unelevated: true,
-      noCaps: true,
-    },
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await electionsService.supprimerCandidat(election.id, c.id);
-      candidatsListe.value = candidatsListe.value.filter((x) => x.id !== c.id);
-      $q.notify({ type: 'positive', message: t('elections.messages.candidateRemoved') });
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('elections.dialogs.removeCandidate.confirm'),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await electionsService.supprimerCandidat(election.id, c.id);
+    candidatsListe.value = candidatsListe.value.filter((x) => x.id !== c.id);
+    $q.notify({ type: 'positive', message: t('elections.messages.candidateRemoved') });
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
 
 async function ouvrirResultats(e: Election) {
@@ -154,7 +166,6 @@ function transitionInfo(action: ActionTransition): {
   titre: string;
   message: string;
   bouton: string;
-  couleur: string;
   succes: string;
 } {
   const cles: Record<ActionTransition, 'open' | 'close' | 'proclaim'> = {
@@ -162,67 +173,26 @@ function transitionInfo(action: ActionTransition): {
     clore: 'close',
     proclamer: 'proclaim',
   };
-  const couleurs: Record<ActionTransition, string> = {
-    ouvrir: 'primary',
-    clore: 'primary',
-    proclamer: 'amber-8',
-  };
   const cle = cles[action];
   return {
     titre: t(`elections.dialogs.transitions.${cle}.title`),
     message: t(`elections.dialogs.transitions.${cle}.message`),
     bouton: t(`elections.dialogs.transitions.${cle}.button`),
-    couleur: couleurs[action],
     succes: t(`elections.dialogs.transitions.${cle}.success`),
   };
 }
 
-function transition(id: string, action: ActionTransition) {
+async function transition(id: string, action: ActionTransition) {
   const info = transitionInfo(action);
-  $q.dialog({
-    title: info.titre,
-    message: info.message,
-    cancel: { label: t('elections.dialogs.removeCandidate.cancel'), flat: true, noCaps: true },
-    ok: { label: info.bouton, color: info.couleur, unelevated: true, noCaps: true },
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await electionsService.transition(id, action);
-      $q.notify({ type: 'positive', message: info.succes });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
-}
-
-async function charger() {
-  chargement.value = true;
+  const ok = await confirmer({ titre: info.titre, message: info.message, ok: info.bouton });
+  if (!ok) return;
   try {
-    const { data } = await electionsService.liste({
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-      statut: onglet.value,
-      ...(filtres.value.type ? { type: filtres.value.type } : {}),
-      ...(filtres.value.recherche ? { search: filtres.value.recherche } : {}),
-    });
-    elections.value = data.data;
-    pagination.value.total = data.total;
+    await electionsService.transition(id, action);
+    $q.notify({ type: 'positive', message: info.succes });
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
-  } finally {
-    chargement.value = false;
   }
-}
-
-function recharger() {
-  pagination.value.page = 1;
-  void charger();
-}
-
-function reinitialiser() {
-  filtres.value = { recherche: '' };
-  recharger();
 }
 
 /** Bulletin papier A4, dans un onglet neuf. */
@@ -234,21 +204,16 @@ function nbCandidats(e: Election): number {
   return e._count?.candidats ?? e.candidats?.length ?? 0;
 }
 
-watch(onglet, () => recharger());
-watch(() => [filtres.value.recherche, filtres.value.type], () => recharger());
-onMounted(charger);
+// Changer d'onglet ramène en page 1 (le setter de `page` relance la requête).
+watch(onglet, () => {
+  liste.page = 1;
+});
 </script>
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('elections.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('elections.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto row q-gutter-sm items-center">
+    <page-header :title="$t('elections.title')" :subtitle="$t('elections.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutVoter"
           flat
@@ -268,8 +233,8 @@ onMounted(charger);
           :label="$t('elections.actions.new')"
           @click="ouvrirEdition()"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau q-mb-md">
       <q-tab
@@ -286,7 +251,7 @@ onMounted(charger);
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('elections.filters.searchPlaceholder')"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #avances>
         <q-select
@@ -307,20 +272,18 @@ onMounted(charger);
       flat
       bordered
       class="carte"
-      :rows="elections"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || elections.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="how_to_vote" size="36px" color="grey-7" />
-          <span class="pochoir">
-            {{ $t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }) }}
-          </span>
-        </div>
+        <etat-vide
+          icone="how_to_vote"
+          :titre="$t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() })"
+        />
       </template>
 
       <template #body-cell-type="p">
@@ -425,12 +388,12 @@ onMounted(charger);
     </q-table>
 
     <template v-else>
-      <div v-if="chargement && !elections.length" class="etat-vide">
+      <div v-if="liste.chargement && !liste.lignes.length" class="etat-vide">
         <q-spinner color="primary" size="28px" />
         <span class="pochoir">{{ $t('elections.emptyState.loading') }}</span>
       </div>
-      <div v-else-if="elections.length" class="row q-col-gutter-md">
-        <div v-for="e in elections" :key="e.id" class="col-12 col-sm-6 col-md-4">
+      <div v-else-if="liste.lignes.length" class="row q-col-gutter-md">
+        <div v-for="e in liste.lignes" :key="e.id" class="col-12 col-sm-6 col-md-4">
           <q-card flat bordered class="carte election-carte">
             <q-card-section>
               <div class="row items-center q-gutter-sm">
@@ -507,25 +470,22 @@ onMounted(charger);
           </q-card>
         </div>
       </div>
-      <div v-else-if="!chargement" class="etat-vide">
-        <q-icon name="how_to_vote" size="36px" color="grey-7" />
-        <span class="pochoir">
-          {{ $t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() }) }}
-        </span>
-      </div>
+      <etat-vide
+        v-else-if="!liste.chargement"
+        icone="how_to_vote"
+        :titre="$t('elections.emptyState.filtered', { status: LIBELLE_STATUT_ELECTION[onglet].toLowerCase() })"
+      />
     </template>
 
     <pagination-bar
-      v-if="elections.length"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-if="liste.lignes.length"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="(v) => { pagination.page = v; charger(); }"
-      @update:page-size="(v) => { pagination.pageSize = v; pagination.page = 1; charger(); }"
     />
 
-    <election-dialog v-model="dialogEdition" :election="electionEnEdition" @enregistre="charger" />
+    <election-dialog v-model="dialogEdition" :election="electionEnEdition" @enregistre="liste.recharger()" />
 
     <q-dialog v-model="dialogCandidats">
       <q-card style="min-width: 640px; max-width: 95vw">
@@ -540,12 +500,7 @@ onMounted(charger);
             {{ $t('elections.dialogs.candidates.lockedBanner', { status: LIBELLE_STATUT_ELECTION[electionCandidats?.statut ?? 'BROUILLON'].toLowerCase() }) }}
           </q-banner>
 
-          <div v-if="!candidatsListe.length" class="etat-vide">
-            <q-icon name="groups" size="36px" color="grey-7" />
-            <span class="pochoir">
-              {{ $t('elections.dialogs.candidates.emptyState') }}
-            </span>
-          </div>
+          <etat-vide v-if="!candidatsListe.length" icone="groups" :titre="$t('elections.dialogs.candidates.emptyState')" />
 
           <q-list v-else bordered separator>
             <q-item v-for="c in candidatsListe" :key="c.id">
@@ -619,9 +574,8 @@ onMounted(charger);
           <span class="pochoir">{{ $t('elections.dialogs.results.loading') }}</span>
         </q-card-section>
 
-        <q-card-section v-else-if="!resultats" class="etat-vide">
-          <q-icon name="bar_chart" size="36px" color="grey-7" />
-          <span class="pochoir">{{ $t('elections.dialogs.results.unavailable') }}</span>
+        <q-card-section v-else-if="!resultats">
+          <etat-vide icone="bar_chart" :titre="$t('elections.dialogs.results.unavailable')" />
         </q-card-section>
 
         <q-card-section v-else>

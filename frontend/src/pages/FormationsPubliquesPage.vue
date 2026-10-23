@@ -47,10 +47,11 @@
         {{ $t('formationsPubliques.catalogue.loading') }}
       </q-banner>
 
-      <q-banner v-if="!chargement && !formations.length" class="note--info">
-        <template #avatar><q-icon name="storefront" /></template>
-        {{ $t('formationsPubliques.catalogue.empty') }}
-      </q-banner>
+      <etat-vide
+        v-if="!chargement && !formations.length"
+        icone="storefront"
+        :titre="$t('formationsPubliques.catalogue.empty')"
+      />
 
       <div class="vitrine__grille">
         <article v-for="f in formations" :key="f.id" class="plaque carte-formation">
@@ -272,6 +273,7 @@ import {
   type ResultatDepotInscription,
 } from '../services/formations';
 import { dateLisible, montantLisible } from '../utils/libelles';
+import EtatVide from '../components/EtatVide.vue';
 
 const { t } = useI18n();
 
@@ -299,6 +301,8 @@ async function charger() {
   try {
     const { data } = await formationsService.publiques();
     formations.value = Array.isArray(data) ? data : [];
+  } catch {
+    /* l'intercepteur axios affiche le motif ; le catalogue reste vide */
   } finally {
     chargement.value = false;
   }
