@@ -94,11 +94,11 @@
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('common.fields.issuedOn') }}</td>
-                  <td>{{ dateLongue(resultat.carte.dateEmission) }}</td>
+                  <td>{{ dateLongueLisible(resultat.carte.dateEmission) }}</td>
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('verificationCarte.result.table.validUntil') }}</td>
-                  <td>{{ dateLongue(resultat.carte.dateValidite) }}</td>
+                  <td>{{ dateLongueLisible(resultat.carte.dateValidite) }}</td>
                 </tr>
               </tbody>
             </table>
@@ -123,7 +123,7 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '@/boot/axios';
-import { getAppLocale } from '@/boot/i18n';
+import { dateHeureLisible, dateLongueLisible } from '@/shared/utils/format';
 import LecteurQr from '@/shared/components/LecteurQr.vue';
 
 /**
@@ -202,14 +202,8 @@ async function verifier() {
   }
 }
 
-/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
-function dateLongue(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
 function dateHeure(v: Date): string {
-  return v.toLocaleString(getAppLocale(), {
+  return dateHeureLisible(v.toISOString(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

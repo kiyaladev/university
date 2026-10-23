@@ -5,13 +5,13 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
 import { api } from '@/boot/axios';
-import { getAppLocale } from '@/boot/i18n';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { useAuthStore } from '@/stores/auth';
 import type { CarteEtudiante } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { dateLongueLisible } from '@/shared/utils/format';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -95,12 +95,6 @@ function imprimer() {
   void ouvrirImpression(`/cartes-etudiantes/${carte.value.id}/imprimer`);
 }
 
-/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
-function dateLongue(v?: string | null): string {
-  if (!v) return '—';
-  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
-}
-
 onMounted(charger);
 </script>
 
@@ -167,11 +161,11 @@ onMounted(charger);
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('common.fields.issuedOn') }}</div>
-            <div class="text-body1">{{ dateLongue(carte.dateEmission) }}</div>
+            <div class="text-body1">{{ dateLongueLisible(carte.dateEmission) }}</div>
           </div>
           <div class="col-12 col-md-6">
             <div class="text-caption text-grey-7">{{ $t('maCarte.card.validUntil') }}</div>
-            <div class="text-body1">{{ dateLongue(carte.dateValidite) }}</div>
+            <div class="text-body1">{{ dateLongueLisible(carte.dateValidite) }}</div>
           </div>
         </div>
       </q-card-section>
