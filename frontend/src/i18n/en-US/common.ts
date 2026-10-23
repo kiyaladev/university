@@ -199,7 +199,7 @@ export default {
   },
   search: {
     noResults: 'No results',
-    advanced: "Filters",
+    advanced: 'Filters',
     hideAdvanced: 'Hide filters',
     defaultPlaceholder: 'Search (student ID, name, reference…)',
   },

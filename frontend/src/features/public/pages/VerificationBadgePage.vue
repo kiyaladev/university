@@ -2,8 +2,22 @@
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
-        <q-btn flat dense no-caps icon="badge" :label="$t('verificationBadge.nav.verifyCard')" to="/verification-carte" />
-        <q-btn flat dense no-caps icon="fact_check" :label="$t('verificationBadge.nav.verifyAttestation')" to="/verification" />
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="badge"
+          :label="$t('verificationBadge.nav.verifyCard')"
+          to="/verification-carte"
+        />
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="fact_check"
+          :label="$t('verificationBadge.nav.verifyAttestation')"
+          to="/verification"
+        />
       </div>
       <div class="text-center q-my-lg">
         <h1 class="lettrage page-titre">{{ $t('verificationBadge.title') }}</h1>
@@ -29,8 +43,12 @@
         />
         <div class="text-caption text-grey-7 q-mt-xs">
           <i18n-t keypath="verificationBadge.form.qrParamsHint" tag="span">
-            <template #badge><code>{{ PARAMETRES_QR.badge }}</code></template>
-            <template #k><code>{{ PARAMETRES_QR.k }}</code></template>
+            <template #badge
+              ><code>{{ PARAMETRES_QR.badge }}</code></template
+            >
+            <template #k
+              ><code>{{ PARAMETRES_QR.k }}</code></template
+            >
           </i18n-t>
         </div>
         <div class="row justify-end q-mt-md">
@@ -64,7 +82,9 @@
           <div v-if="resultat.valide && resultat.badge" class="q-mt-md text-left">
             <p class="q-mb-sm">
               <i18n-t keypath="verificationBadge.result.intro" tag="span">
-                <template #numero><strong>{{ resultat.badge.numero }}</strong></template>
+                <template #numero
+                  ><strong>{{ resultat.badge.numero }}</strong></template
+                >
               </i18n-t>
             </p>
             <table class="table-verification">
@@ -75,7 +95,9 @@
                 </tr>
                 <tr>
                   <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.numero') }}</td>
-                  <td><code>{{ resultat.badge.numero }}</code></td>
+                  <td>
+                    <code>{{ resultat.badge.numero }}</code>
+                  </td>
                 </tr>
                 <tr>
                   <td class="pochoir ta-intitule">{{ $t('common.fields.type') }}</td>

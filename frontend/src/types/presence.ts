@@ -1,6 +1,16 @@
 /** Contrôle de présence : séances, contrôles, justificatifs, pointage et attestation. */
 
-import type { Affectation, Enseignant, Role, Salle, StatutJustificatif, StatutPresence, StatutSeance, TypeCours, TypeJustificatif } from './referentiels';
+import type {
+  Affectation,
+  Enseignant,
+  Role,
+  Salle,
+  StatutJustificatif,
+  StatutPresence,
+  StatutSeance,
+  TypeCours,
+  TypeJustificatif,
+} from './referentiels';
 
 export interface Controle {
   id: string;

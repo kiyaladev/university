@@ -72,7 +72,11 @@
         <q-select
           v-model="filtres.assigneAId"
           :options="membresStaff.map((u) => ({ value: u.id, label: `${u.prenom} ${u.nom} (${u.role})` }))"
-          outlined dense clearable emit-value map-options
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
           :label="$t('reclamations.filters.assigneA')"
         />
         <q-select
@@ -132,9 +136,7 @@
       <template #body-cell-auteur="p">
         <q-td :props="p">
           <span v-if="p.row.anonyme">{{ $t('reclamations.fields.anonyme') }}</span>
-          <span v-else-if="p.row.etudiant">
-            {{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}
-          </span>
+          <span v-else-if="p.row.etudiant"> {{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }} </span>
           <span v-else-if="p.row.nomAuteur">{{ p.row.nomAuteur }}</span>
           <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
@@ -161,7 +163,12 @@
             <q-tooltip>{{ $t('reclamations.tooltips.detail') }}</q-tooltip>
           </q-btn>
           <q-btn
-            v-if="auth.aRole(['ADMIN', 'DIRECTION']) && p.row.statut !== 'FERMEE' && p.row.statut !== 'REJETEE' && p.row.statut !== 'RESOLUE'"
+            v-if="
+              auth.aRole(['ADMIN', 'DIRECTION']) &&
+              p.row.statut !== 'FERMEE' &&
+              p.row.statut !== 'REJETEE' &&
+              p.row.statut !== 'RESOLUE'
+            "
             flat
             dense
             round
@@ -226,16 +233,14 @@
           </q-card-section>
           <q-separator />
           <q-card-actions align="right" class="q-px-md">
+            <q-btn flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click="ouvrir(r)" />
             <q-btn
-              flat
-              dense
-              no-caps
-              icon="visibility"
-              :label="$t('common.actions.detail')"
-              @click="ouvrir(r)"
-            />
-            <q-btn
-              v-if="auth.aRole(['ADMIN', 'DIRECTION']) && r.statut !== 'FERMEE' && r.statut !== 'REJETEE' && r.statut !== 'RESOLUE'"
+              v-if="
+                auth.aRole(['ADMIN', 'DIRECTION']) &&
+                r.statut !== 'FERMEE' &&
+                r.statut !== 'REJETEE' &&
+                r.statut !== 'RESOLUE'
+              "
               flat
               dense
               no-caps
@@ -291,12 +296,7 @@ import {
   dateHeureLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type {
-  PrioriteReclamation,
-  Reclamation,
-  TypeReclamation,
-  Utilisateur,
-} from '@/types';
+import type { PrioriteReclamation, Reclamation, TypeReclamation, Utilisateur } from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -394,7 +394,7 @@ async function chargerStaff() {
   if (!auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE'])) return;
   try {
     const { data } = await api.get('/reclamations/agents');
-    membresStaff.value = (Array.isArray(data) ? data : data.data ?? []).filter((u: Utilisateur) =>
+    membresStaff.value = (Array.isArray(data) ? data : (data.data ?? [])).filter((u: Utilisateur) =>
       ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'].includes(u.role),
     );
   } catch {
@@ -425,11 +425,11 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$chaux-claire: #FFFFFF;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
+$encre: #1d1d1f;
+$chaux-claire: #ffffff;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .stat-chiffre {
   font-size: 2rem;
@@ -452,20 +452,33 @@ $rouge: #CE1126;
     color: var(--up-encre);
     border: var(--up-filet);
   }
-  &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
-  &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
+  &.prio-NORMALE {
+    background: $jaune-fond;
+    color: $jaune-texte;
+  }
+  &.prio-HAUTE {
+    background: $rouge-fond;
+    color: #{$rouge};
+  }
   &.prio-URGENTE {
-    background: $rouge-fond; color: #{$rouge};
+    background: $rouge-fond;
+    color: #{$rouge};
     color: var(--up-encre);
     animation: clignote 1.4s ease-in-out infinite;
   }
 }
 
-
-.reclamation-carte { background: var(--up-plaque); }
+.reclamation-carte {
+  background: var(--up-plaque);
+}
 
 @keyframes clignote {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 </style>

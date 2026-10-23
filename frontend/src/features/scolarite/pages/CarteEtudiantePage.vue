@@ -162,7 +162,12 @@ function ouvrirEmission() {
 
     <barre-filtres v-model="filtres" :placeholder="$t('carteEtudiante.filters.searchPlaceholder')" />
 
-    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      :show-all="false"
+    />
 
     <!-- Vue tableau -->
     <q-table
@@ -186,7 +191,9 @@ function ouvrirEmission() {
         </q-td>
       </template>
       <template #body-cell-matricule="p">
-        <q-td :props="p"><code>{{ p.row.etudiant?.matricule ?? '—' }}</code></q-td>
+        <q-td :props="p"
+          ><code>{{ p.row.etudiant?.matricule ?? '—' }}</code></q-td
+        >
       </template>
       <template #body-cell-emission="p">
         <q-td :props="p">{{ dateLisible(p.row.dateEmission) }}</q-td>
@@ -204,42 +211,59 @@ function ouvrirEmission() {
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
-            flat no-caps
+          <q-btn
+            flat
+            no-caps
             dense
             icon="qr_code_2"
-            :aria-label="$t('carteEtudiante.actionsColumn.qrAria')" :label="$t('carteEtudiante.actionsColumn.qrAria')"
+            :aria-label="$t('carteEtudiante.actionsColumn.qrAria')"
+            :label="$t('carteEtudiante.actionsColumn.qrAria')"
             @click="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('carteEtudiante.actionsColumn.qrTooltip') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup flat no-caps dense icon="print" :aria-label="$t('carteEtudiante.actionsColumn.printAria')" :label="$t('carteEtudiante.actionsColumn.printAria')" @click="imprimer(p.row)">
-            <q-tooltip>{{ $t('common.actions.print') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutModifier && p.row.statut === 'EMISE'"
-            flat no-caps
-            dense
-            icon="edit"
-            :aria-label="$t('carteEtudiante.actionsColumn.editAria')" :label="$t('carteEtudiante.actionsColumn.editAria')"
-            @click="ouvrirModification(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'EMISE' && peutRevoquer"
-            flat no-caps
-            dense
-            icon="block"
-            color="negative"
-            :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')" :label="$t('carteEtudiante.actionsColumn.revokeAria')"
-            @click="ouvrirRevocation(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.revoke') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              no-caps
+              dense
+              icon="print"
+              :aria-label="$t('carteEtudiante.actionsColumn.printAria')"
+              :label="$t('carteEtudiante.actionsColumn.printAria')"
+              @click="imprimer(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.print') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutModifier && p.row.statut === 'EMISE'"
+              flat
+              no-caps
+              dense
+              icon="edit"
+              :aria-label="$t('carteEtudiante.actionsColumn.editAria')"
+              :label="$t('carteEtudiante.actionsColumn.editAria')"
+              @click="ouvrirModification(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'EMISE' && peutRevoquer"
+              flat
+              no-caps
+              dense
+              icon="block"
+              color="negative"
+              :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')"
+              :label="$t('carteEtudiante.actionsColumn.revokeAria')"
+              @click="ouvrirRevocation(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.revoke') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -262,40 +286,62 @@ function ouvrirEmission() {
           </q-card-section>
           <q-separator />
           <q-card-section class="text-caption">
-            {{ $t('carteEtudiante.card.issuedOn', { date: dateLisible(c.dateEmission) }) }}<br>
+            {{ $t('carteEtudiante.card.issuedOn', { date: dateLisible(c.dateEmission) }) }}<br />
             {{ $t('carteEtudiante.card.validUntil', { date: dateLisible(c.dateValidite) }) }}
             <div v-if="c.motifRevocation" class="text-grey-7 q-mt-xs">
               {{ $t('carteEtudiante.card.revocationReason', { motif: c.motifRevocation }) }}
             </div>
           </q-card-section>
           <q-card-actions align="right">
-<q-btn flat dense icon="qr_code_2" :label="$t('carteEtudiante.cardActions.qr')" no-caps @click="ouvrirDetail(c)" />
-<actions-secondaires>
-<q-btn v-close-popup flat dense icon="print" :label="$t('common.actions.print')" no-caps @click="imprimer(c)" />
-<q-btn v-close-popup
-              v-if="peutModifier && c.statut === 'EMISE'"
+            <q-btn
               flat
               dense
-              icon="edit"
-              :label="$t('common.actions.edit')"
+              icon="qr_code_2"
+              :label="$t('carteEtudiante.cardActions.qr')"
               no-caps
-              @click="ouvrirModification(c)"
+              @click="ouvrirDetail(c)"
             />
-<q-btn v-close-popup
-              v-if="c.statut === 'EMISE' && peutRevoquer"
-              flat
-              dense
-              icon="block"
-              color="negative"
-              :label="$t('common.actions.revoke')"
-              no-caps
-              @click="ouvrirRevocation(c)"
-            />
-</actions-secondaires>
-</q-card-actions>
+            <actions-secondaires>
+              <q-btn
+                v-close-popup
+                flat
+                dense
+                icon="print"
+                :label="$t('common.actions.print')"
+                no-caps
+                @click="imprimer(c)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="peutModifier && c.statut === 'EMISE'"
+                flat
+                dense
+                icon="edit"
+                :label="$t('common.actions.edit')"
+                no-caps
+                @click="ouvrirModification(c)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="c.statut === 'EMISE' && peutRevoquer"
+                flat
+                dense
+                icon="block"
+                color="negative"
+                :label="$t('common.actions.revoke')"
+                no-caps
+                @click="ouvrirRevocation(c)"
+              />
+            </actions-secondaires>
+          </q-card-actions>
         </q-card>
       </div>
-      <etat-vide v-if="!liste.chargement && !liste.lignes.length" class="col-12" icone="badge" :titre="$t('carteEtudiante.emptyState.message')" />
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="badge"
+        :titre="$t('carteEtudiante.emptyState.message')"
+      />
     </div>
 
     <!-- Dialog émission / édition -->
@@ -305,7 +351,11 @@ function ouvrirEmission() {
     <dialogue-formulaire
       v-model="dialogRevocation"
       :titre="$t('carteEtudiante.revokeDialog.title')"
-      :sous-titre="carteRevocation?.etudiant ? `${carteRevocation.etudiant.prenom} ${carteRevocation.etudiant.nom} · ${carteRevocation.etudiant.matricule}` : undefined"
+      :sous-titre="
+        carteRevocation?.etudiant
+          ? `${carteRevocation.etudiant.prenom} ${carteRevocation.etudiant.nom} · ${carteRevocation.etudiant.matricule}`
+          : undefined
+      "
       taille="s"
       :libelle-valider="$t('carteEtudiante.revokeDialog.confirm')"
       couleur-valider="negative"
@@ -349,7 +399,13 @@ function ouvrirEmission() {
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps icon="content_copy" :label="$t('carteEtudiante.detailDialog.copyLink')" @click="copierUrlVerification" />
+          <q-btn
+            flat
+            no-caps
+            icon="content_copy"
+            :label="$t('carteEtudiante.detailDialog.copyLink')"
+            @click="copierUrlVerification"
+          />
           <q-btn
             unelevated
             color="primary"

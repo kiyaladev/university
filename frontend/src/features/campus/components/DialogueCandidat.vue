@@ -30,26 +30,25 @@ const formulaire = ref({
 
 const enregistrement = ref(false);
 
-watch(
-  ouvert,
-  (visible) => {
-    if (visible) {
-      const c = props.candidat;
-      formulaire.value = {
-        nom: c?.nom ?? '',
-        prenom: c?.prenom ?? '',
-        etudiantId: c?.etudiantId ?? null,
-        enseignantId: c?.enseignantId ?? null,
-        photoUrl: c?.photoUrl ?? '',
-        programme: c?.programme ?? '',
-        ordre: c?.ordre ?? (props.election.candidats?.length ?? 0),
-      };
-    }
-  },
-);
+watch(ouvert, (visible) => {
+  if (visible) {
+    const c = props.candidat;
+    formulaire.value = {
+      nom: c?.nom ?? '',
+      prenom: c?.prenom ?? '',
+      etudiantId: c?.etudiantId ?? null,
+      enseignantId: c?.enseignantId ?? null,
+      photoUrl: c?.photoUrl ?? '',
+      programme: c?.programme ?? '',
+      ordre: c?.ordre ?? props.election.candidats?.length ?? 0,
+    };
+  }
+});
 
 const enEdition = computed(() => Boolean(props.candidat?.id));
-const titre = computed(() => (enEdition.value ? t('elections.dialogs.candidateForm.titleEdit') : t('elections.dialogs.candidateForm.titleNew')));
+const titre = computed(() =>
+  enEdition.value ? t('elections.dialogs.candidateForm.titleEdit') : t('elections.dialogs.candidateForm.titleNew'),
+);
 
 async function soumettre() {
   if (!formulaire.value.nom || !formulaire.value.prenom) {
@@ -68,7 +67,12 @@ async function soumettre() {
     if (formulaire.value.photoUrl) payload.photoUrl = formulaire.value.photoUrl;
     if (formulaire.value.programme) payload.programme = formulaire.value.programme;
     const { data: res } = await api.post(`/elections/${props.election.id}/candidats`, payload);
-    $q.notify({ type: 'positive', message: enEdition.value ? t('elections.dialogs.candidateForm.saved') : t('elections.dialogs.candidateForm.added') });
+    $q.notify({
+      type: 'positive',
+      message: enEdition.value
+        ? t('elections.dialogs.candidateForm.saved')
+        : t('elections.dialogs.candidateForm.added'),
+    });
     emit('enregistre', res);
     ouvert.value = false;
   } catch {

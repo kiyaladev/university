@@ -15,7 +15,12 @@
     </en-tete-page>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
-      {{ $t('mesReclamations.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesReclamations.banner.goToRegistry') }) }}
+      {{
+        $t('mesReclamations.banner.wrongRole', {
+          role: auth.utilisateur?.role,
+          registry: $t('mesReclamations.banner.goToRegistry'),
+        })
+      }}
       <template #action>
         <q-btn
           flat
@@ -28,7 +33,9 @@
     </q-banner>
 
     <div v-if="!rolePasBon" class="resume-liste" role="status">
-      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
+      <span v-for="s in plaques" :key="s.cle"
+        >{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span
+      >
     </div>
 
     <barre-filtres
@@ -149,11 +156,15 @@
             </div>
             <div class="row items-center">
               <q-icon name="chat" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ $t('mesReclamations.cards.messagesCount', { count: r._count?.messages ?? 0 }) }}</span>
+              <span class="text-caption">{{
+                $t('mesReclamations.cards.messagesCount', { count: r._count?.messages ?? 0 })
+              }}</span>
             </div>
             <div v-if="r.escaladeLe" class="row items-center text-warning">
               <q-icon name="priority_high" size="16px" class="q-mr-sm" />
-              <span class="text-caption">{{ $t('mesReclamations.cards.escalatedOn', { date: dateHeureLisible(r.escaladeLe) }) }}</span>
+              <span class="text-caption">{{
+                $t('mesReclamations.cards.escalatedOn', { date: dateHeureLisible(r.escaladeLe) })
+              }}</span>
             </div>
           </q-card-section>
           <q-card-actions align="right">
@@ -212,11 +223,7 @@ import {
   dateHeureLisible,
   optionsDepuis,
 } from '@/shared/utils/libelles';
-import type {
-  PrioriteReclamation,
-  Reclamation,
-  TypeReclamation,
-} from '@/types';
+import type { PrioriteReclamation, Reclamation, TypeReclamation } from '@/types';
 
 const auth = useAuthStore();
 const { t } = useI18n();
@@ -296,15 +303,14 @@ function ouvrir(r: Reclamation) {
   reclamationSelectionnee.value = r;
   detailOuvert.value = true;
 }
-
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$chaux-claire: #FFFFFF;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
+$encre: #1d1d1f;
+$chaux-claire: #ffffff;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .stat-chiffre {
   font-size: 2rem;
@@ -327,20 +333,33 @@ $rouge: #CE1126;
     color: var(--up-encre);
     border: var(--up-filet);
   }
-  &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
-  &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
+  &.prio-NORMALE {
+    background: $jaune-fond;
+    color: $jaune-texte;
+  }
+  &.prio-HAUTE {
+    background: $rouge-fond;
+    color: #{$rouge};
+  }
   &.prio-URGENTE {
-    background: $rouge-fond; color: #{$rouge};
+    background: $rouge-fond;
+    color: #{$rouge};
     color: var(--up-encre);
     animation: clignote 1.4s ease-in-out infinite;
   }
 }
 
-
-.reclamation-carte { background: var(--up-plaque); }
+.reclamation-carte {
+  background: var(--up-plaque);
+}
 
 @keyframes clignote {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 </style>

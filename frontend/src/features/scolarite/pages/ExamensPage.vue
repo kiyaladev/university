@@ -131,69 +131,86 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="visibility"
             color="primary"
-            :aria-label="$t('examens.table.tooltips.openSheetAria')" :label="$t('examens.table.tooltips.openSheetAria')"
+            :aria-label="$t('examens.table.tooltips.openSheetAria')"
+            :label="$t('examens.table.tooltips.openSheetAria')"
             @click.stop="ouvrirFiche(p.row)"
           >
             <q-tooltip>{{ $t('examens.table.tooltips.openSheet') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'PLANIFIE' && peutDemarrer"
-            flat
-            dense no-caps
-            icon="play_arrow"
-            color="positive"
-            :aria-label="$t('examens.table.tooltips.start')" :label="$t('examens.table.tooltips.start')"
-            @click.stop="demarrer(p.row)"
-          >
-            <q-tooltip>{{ $t('examens.table.tooltips.start') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'EN_COURS' && peutTerminer"
-            flat
-            dense no-caps
-            icon="stop"
-            color="negative"
-            :aria-label="$t('examens.table.tooltips.finish')" :label="$t('examens.table.tooltips.finish')"
-            @click.stop="terminer(p.row)"
-          >
-            <q-tooltip>{{ $t('examens.table.tooltips.finish') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="qr_code_scanner"
-            :aria-label="$t('examens.table.tooltips.scanCardsAria')" :label="$t('examens.table.tooltips.scanCardsAria')"
-            @click.stop="allerScan(p.row)"
-          >
-            <q-tooltip>{{ $t('examens.table.tooltips.scanCards') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutVoirTirage"
-            flat
-            dense no-caps
-            icon="local_printshop"
-            :aria-label="$t('examens.table.tooltips.drawAria')" :label="$t('examens.table.tooltips.drawAria')"
-            @click.stop="allerTirage(p.row)"
-          >
-            <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'PLANIFIE' && peutAnnuler"
-            flat
-            dense no-caps
-            icon="block"
-            color="negative"
-            :aria-label="$t('examens.actions.cancelExam')" :label="$t('examens.actions.cancelExam')"
-            @click.stop="annulerExamen(p.row)"
-          />
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'PLANIFIE' && peutDemarrer"
+              flat
+              dense
+              no-caps
+              icon="play_arrow"
+              color="positive"
+              :aria-label="$t('examens.table.tooltips.start')"
+              :label="$t('examens.table.tooltips.start')"
+              @click.stop="demarrer(p.row)"
+            >
+              <q-tooltip>{{ $t('examens.table.tooltips.start') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'EN_COURS' && peutTerminer"
+              flat
+              dense
+              no-caps
+              icon="stop"
+              color="negative"
+              :aria-label="$t('examens.table.tooltips.finish')"
+              :label="$t('examens.table.tooltips.finish')"
+              @click.stop="terminer(p.row)"
+            >
+              <q-tooltip>{{ $t('examens.table.tooltips.finish') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="qr_code_scanner"
+              :aria-label="$t('examens.table.tooltips.scanCardsAria')"
+              :label="$t('examens.table.tooltips.scanCardsAria')"
+              @click.stop="allerScan(p.row)"
+            >
+              <q-tooltip>{{ $t('examens.table.tooltips.scanCards') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutVoirTirage"
+              flat
+              dense
+              no-caps
+              icon="local_printshop"
+              :aria-label="$t('examens.table.tooltips.drawAria')"
+              :label="$t('examens.table.tooltips.drawAria')"
+              @click.stop="allerTirage(p.row)"
+            >
+              <q-tooltip>{{ $t('examens.table.tooltips.draw') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'PLANIFIE' && peutAnnuler"
+              flat
+              dense
+              no-caps
+              icon="block"
+              color="negative"
+              :aria-label="$t('examens.actions.cancelExam')"
+              :label="$t('examens.actions.cancelExam')"
+              @click.stop="annulerExamen(p.row)"
+            />
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -205,9 +222,7 @@
               <div class="col">
                 <div class="text-caption text-grey-7">{{ e.codeExamen }}</div>
                 <div class="text-subtitle1 text-weight-bold">{{ e.intitule }}</div>
-                <div class="text-caption">
-                  {{ e.matiere?.intitule ?? '—' }} · {{ e.promotion?.nom ?? '—' }}
-                </div>
+                <div class="text-caption">{{ e.matiere?.intitule ?? '—' }} · {{ e.promotion?.nom ?? '—' }}</div>
               </div>
               <PastilleStatut domaine="examen" :statut="e.statut" />
             </div>
@@ -215,7 +230,9 @@
           <q-card-section>
             <div class="row q-col-gutter-sm text-caption">
               <div class="col-6"><q-icon name="event" size="14px" /> {{ dateLisible(e.dateExamen) }}</div>
-              <div class="col-6 text-right"><q-icon name="schedule" size="14px" /> {{ e.heureDebut }}–{{ e.heureFin }}</div>
+              <div class="col-6 text-right">
+                <q-icon name="schedule" size="14px" /> {{ e.heureDebut }}–{{ e.heureFin }}
+              </div>
               <div class="col-6"><q-icon name="meeting_room" size="14px" /> {{ e.salle?.code ?? '—' }}</div>
               <div class="col-6 text-right">
                 <q-chip dense size="sm" :color="e.nbPresents >= e.nbInscrits ? 'positive' : 'primary'">
@@ -225,7 +242,7 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-<q-btn
+            <q-btn
               v-if="e.statut === 'PLANIFIE' && peutDemarrer"
               flat
               dense
@@ -235,39 +252,50 @@
               :label="$t('common.actions.start')"
               @click.stop="demarrer(e)"
             />
-<actions-secondaires>
-<q-btn v-close-popup
-              v-if="e.statut === 'EN_COURS' && peutTerminer"
-              flat
-              dense
-              no-caps
-              icon="stop"
-              color="negative"
-              :label="$t('examens.actions.finish')"
-              @click.stop="terminer(e)"
-            />
-<q-btn v-close-popup
-              v-if="peutVoirTirage"
-              flat
-              dense
-              no-caps
-              icon="local_printshop"
-              :label="$t('examens.actions.drawShort')"
-              @click.stop="allerTirage(e)"
-            />
-<q-btn v-close-popup flat dense no-caps icon="qr_code_scanner" :label="$t('examens.actions.scanner')" @click.stop="allerScan(e)" />
-<q-btn v-close-popup
-              v-if="e.statut === 'PLANIFIE' && peutAnnuler"
-              flat
-              dense
-              no-caps
-              icon="block"
-              color="negative"
-              :label="$t('examens.actions.cancelExam')"
-              @click.stop="annulerExamen(e)"
-            />
-</actions-secondaires>
-</q-card-actions>
+            <actions-secondaires>
+              <q-btn
+                v-close-popup
+                v-if="e.statut === 'EN_COURS' && peutTerminer"
+                flat
+                dense
+                no-caps
+                icon="stop"
+                color="negative"
+                :label="$t('examens.actions.finish')"
+                @click.stop="terminer(e)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="peutVoirTirage"
+                flat
+                dense
+                no-caps
+                icon="local_printshop"
+                :label="$t('examens.actions.drawShort')"
+                @click.stop="allerTirage(e)"
+              />
+              <q-btn
+                v-close-popup
+                flat
+                dense
+                no-caps
+                icon="qr_code_scanner"
+                :label="$t('examens.actions.scanner')"
+                @click.stop="allerScan(e)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="e.statut === 'PLANIFIE' && peutAnnuler"
+                flat
+                dense
+                no-caps
+                icon="block"
+                color="negative"
+                :label="$t('examens.actions.cancelExam')"
+                @click.stop="annulerExamen(e)"
+              />
+            </actions-secondaires>
+          </q-card-actions>
         </q-card>
       </div>
       <div v-if="!examensFiltres.length" class="col-12">
@@ -305,8 +333,7 @@
             <div class="text-caption text-grey-7">{{ examenFiche.codeExamen }}</div>
             <div class="text-h6">{{ examenFiche.intitule }}</div>
             <div class="text-caption text-grey-7">
-              {{ libelleType(examenFiche.type) }} ·
-              {{ examenFiche.matiere?.intitule ?? '—' }} ·
+              {{ libelleType(examenFiche.type) }} · {{ examenFiche.matiere?.intitule ?? '—' }} ·
               {{ examenFiche.promotion?.nom ?? '—' }}
             </div>
           </div>
@@ -334,9 +361,7 @@
             </div>
             <div class="col-6 col-sm-3">
               <div class="text-grey-7">{{ $t('examens.sheet.presentsOverEnrolled') }}</div>
-              <div class="text-weight-medium chiffres">
-                {{ examenFiche.nbPresents }} / {{ examenFiche.nbInscrits }}
-              </div>
+              <div class="text-weight-medium chiffres">{{ examenFiche.nbPresents }} / {{ examenFiche.nbInscrits }}</div>
             </div>
           </div>
         </q-card-section>
@@ -384,7 +409,10 @@
             </template>
             <template #body-cell-valide="p">
               <q-td :props="p">
-                <q-badge :color="p.row.valide ? 'positive' : 'negative'" :label="p.row.valide ? $t('examens.sheet.validated') : $t('examens.sheet.rejected')" />
+                <q-badge
+                  :color="p.row.valide ? 'positive' : 'negative'"
+                  :label="p.row.valide ? $t('examens.sheet.validated') : $t('examens.sheet.rejected')"
+                />
                 <div v-if="p.row.motifRejet" class="text-caption text-grey-7">{{ p.row.motifRejet }}</div>
               </q-td>
             </template>
@@ -522,7 +550,9 @@ const chipsFiltres = computed(() => {
  * que le champ ne reste pas décoratif.
  */
 const examensFiltres = computed(() => {
-  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  const q = String(filtres.value.recherche ?? '')
+    .toLowerCase()
+    .trim();
   if (!q) return ex.lignes;
   return ex.lignes.filter((e) =>
     [e.codeExamen, e.intitule, e.matiere?.intitule, e.promotion?.nom]
@@ -542,8 +572,18 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'intitule', label: t('common.fields.intitule'), field: 'intitule', align: 'left' },
   { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   { name: 'creneau', label: t('examens.table.columns.slot'), field: 'dateExamen', align: 'left', sortable: true },
-  { name: 'matiere', label: t('common.fields.subject'), field: (r: Examen) => r.matiere?.intitule ?? '—', align: 'left' },
-  { name: 'promotion', label: t('examens.table.columns.promotion'), field: (r: Examen) => r.promotion?.nom ?? '—', align: 'left' },
+  {
+    name: 'matiere',
+    label: t('common.fields.subject'),
+    field: (r: Examen) => r.matiere?.intitule ?? '—',
+    align: 'left',
+  },
+  {
+    name: 'promotion',
+    label: t('examens.table.columns.promotion'),
+    field: (r: Examen) => r.promotion?.nom ?? '—',
+    align: 'left',
+  },
   { name: 'salle', label: t('common.fields.room'), field: (r: Examen) => r.salle?.code ?? '—', align: 'left' },
   { name: 'presence', label: t('examens.table.columns.present'), field: 'nbPresents', align: 'right' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
@@ -551,11 +591,31 @@ const colonnes = computed<QTableColumn[]>(() => [
 ]);
 
 const colonnesScans = computed<QTableColumn[]>(() => [
-  { name: 'heure', label: t('examens.scansTable.columns.time'), field: (r: ScanExamen) => dateHeureLisible(r.heureScan), align: 'left' },
-  { name: 'porteur', label: t('examens.scansTable.columns.holder'), field: (r: ScanExamen) => `${r.prenomPorteur ?? ''} ${r.nomPorteur ?? ''}`.trim() || '—', align: 'left' },
-  { name: 'matricule', label: t('examens.scansTable.columns.registrationNumber'), field: (r: ScanExamen) => r.matriculeSaisi ?? '—', align: 'left' },
+  {
+    name: 'heure',
+    label: t('examens.scansTable.columns.time'),
+    field: (r: ScanExamen) => dateHeureLisible(r.heureScan),
+    align: 'left',
+  },
+  {
+    name: 'porteur',
+    label: t('examens.scansTable.columns.holder'),
+    field: (r: ScanExamen) => `${r.prenomPorteur ?? ''} ${r.nomPorteur ?? ''}`.trim() || '—',
+    align: 'left',
+  },
+  {
+    name: 'matricule',
+    label: t('examens.scansTable.columns.registrationNumber'),
+    field: (r: ScanExamen) => r.matriculeSaisi ?? '—',
+    align: 'left',
+  },
   { name: 'valide', label: t('common.fields.result'), field: 'valide', align: 'left' },
-  { name: 'scanneur', label: t('common.fields.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
+  {
+    name: 'scanneur',
+    label: t('common.fields.operator'),
+    field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'),
+    align: 'left',
+  },
 ]);
 
 function libelleStatut(s: string) {
@@ -602,7 +662,12 @@ function allerScan(e: Examen | null) {
 }
 
 /** Passe l'examen à l'étape suivante, puis montre l'onglet où il se trouve désormais. */
-async function changerStatut(e: Examen, action: 'demarrer' | 'terminer' | 'annuler', cible: StatutExamen, message: string) {
+async function changerStatut(
+  e: Examen,
+  action: 'demarrer' | 'terminer' | 'annuler',
+  cible: StatutExamen,
+  message: string,
+) {
   try {
     // L'annulation passe par `PUT /examens/:id/statut` (PLANIFIE → ANNULE seulement).
     if (action === 'annuler') await api.put(`/examens/${e.id}/statut`, { statut: 'ANNULE' });

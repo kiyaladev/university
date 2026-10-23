@@ -68,8 +68,7 @@ const erreur = ref('');
 let flux: MediaStream | null = null;
 let boucle: number | null = null;
 
-const scannerDisponible =
-  'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
+const scannerDisponible = 'BarcodeDetector' in window && !!navigator.mediaDevices?.getUserMedia;
 
 async function demarrer() {
   erreur.value = '';
@@ -98,8 +97,7 @@ async function demarrer() {
       }
     }, 400);
   } catch {
-    erreur.value =
-      t('pointage.qr.denied');
+    erreur.value = t('pointage.qr.denied');
     camera.value = false;
   }
 }

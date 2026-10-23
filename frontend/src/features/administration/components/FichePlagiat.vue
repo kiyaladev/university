@@ -12,21 +12,24 @@ import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/
 import type { DocumentDepot, SuspicionPlagiat } from '@/types';
 import { getAppLocale } from '@/boot/i18n';
 
-const props = withDefaults(defineProps<{
-  suspicion: SuspicionPlagiat;
-  /** Affiche les boutons « Acquitter / Confirmer ». */
-  showActions?: boolean;
-  /** Lien cliqué (utile pour ouvrir la page détail). */
-  clickable?: boolean;
-}>(), {
-  showActions: false,
-  clickable: true,
-});
+const props = withDefaults(
+  defineProps<{
+    suspicion: SuspicionPlagiat;
+    /** Affiche les boutons « Acquitter / Confirmer ». */
+    showActions?: boolean;
+    /** Lien cliqué (utile pour ouvrir la page détail). */
+    clickable?: boolean;
+  }>(),
+  {
+    showActions: false,
+    clickable: true,
+  },
+);
 
 const emit = defineEmits<{
-  'voir': [SuspicionPlagiat];
-  'acquitter': [SuspicionPlagiat];
-  'confirmer': [SuspicionPlagiat];
+  voir: [SuspicionPlagiat];
+  acquitter: [SuspicionPlagiat];
+  confirmer: [SuspicionPlagiat];
 }>();
 
 const score = computed(() => Math.round(props.suspicion.score ?? 0));
@@ -120,13 +123,38 @@ function miniature(doc?: DocumentDepot | null) {
     <q-card-actions class="q-px-md">
       <div class="text-caption text-grey-7">
         <q-icon name="event" size="14px" class="q-mr-xs" />
-        {{ $t('plagiatDetail.score.detectedOn') }} {{ new Date(suspicion.detecteLe).toLocaleDateString(getAppLocale()) }}
+        {{ $t('plagiatDetail.score.detectedOn') }}
+        {{ new Date(suspicion.detecteLe).toLocaleDateString(getAppLocale()) }}
       </div>
       <q-space />
-      <q-btn v-if="clickable" flat dense no-caps icon="open_in_new" :label="$t('common.actions.detail')" @click.stop="emit('voir', suspicion)" />
+      <q-btn
+        v-if="clickable"
+        flat
+        dense
+        no-caps
+        icon="open_in_new"
+        :label="$t('common.actions.detail')"
+        @click.stop="emit('voir', suspicion)"
+      />
       <template v-if="showActions && suspicion.statut === 'EN_ATTENTE'">
-        <q-btn flat dense no-caps color="positive" icon="thumb_down" :label="$t('plagiatDetail.decision.acquitAction')" @click.stop="emit('acquitter', suspicion)" />
-        <q-btn flat dense no-caps color="negative" icon="gavel" :label="$t('common.actions.confirm')" @click.stop="emit('confirmer', suspicion)" />
+        <q-btn
+          flat
+          dense
+          no-caps
+          color="positive"
+          icon="thumb_down"
+          :label="$t('plagiatDetail.decision.acquitAction')"
+          @click.stop="emit('acquitter', suspicion)"
+        />
+        <q-btn
+          flat
+          dense
+          no-caps
+          color="negative"
+          icon="gavel"
+          :label="$t('common.actions.confirm')"
+          @click.stop="emit('confirmer', suspicion)"
+        />
       </template>
     </q-card-actions>
   </q-card>
@@ -152,9 +180,15 @@ function miniature(doc?: DocumentDepot | null) {
   font-weight: 600;
   margin-left: 2px;
 }
-.plagiat-carte__score--positive { color: var(--q-positive); }
-.plagiat-carte__score--warning { color: var(--q-warning); }
-.plagiat-carte__score--negative { color: var(--q-negative); }
+.plagiat-carte__score--positive {
+  color: var(--q-positive);
+}
+.plagiat-carte__score--warning {
+  color: var(--q-warning);
+}
+.plagiat-carte__score--negative {
+  color: var(--q-negative);
+}
 
 .plagiat-carte__vignette {
   background: var(--up-chaux);

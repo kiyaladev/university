@@ -49,9 +49,7 @@
         <q-td :props="p">{{ libelleType(p.row.type) }}</q-td>
       </template>
       <template #body-cell-montant="p">
-        <q-td :props="p" class="text-right chiffres">
-          {{ montantLisible(p.row.montant) }} {{ p.row.devise }}
-        </q-td>
+        <q-td :props="p" class="text-right chiffres"> {{ montantLisible(p.row.montant) }} {{ p.row.devise }} </q-td>
       </template>
       <template #body-cell-delaiHeures="p">
         <q-td :props="p" class="text-right chiffres">
@@ -60,7 +58,14 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn flat dense round icon="edit" :aria-label="$t('tarifsDemandeAdmin.table.edit_aria')" @click="ouvrir(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="edit"
+            :aria-label="$t('tarifsDemandeAdmin.table.edit_aria')"
+            @click="ouvrir(p.row)"
+          >
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
         </q-td>
@@ -164,13 +169,9 @@ function libelleType(t: string) {
   return LIBELLE_TYPE_DEMANDE[t as TypeDemandeDocument] ?? t;
 }
 
-const optionsTypeCreation = computed(() =>
-  TYPES_DOCUMENT.filter((t) => !tarifs.value.some((x) => x.type === t.value)),
-);
+const optionsTypeCreation = computed(() => TYPES_DOCUMENT.filter((t) => !tarifs.value.some((x) => x.type === t.value)));
 
-const formulaireValide = computed(
-  () => !!form.value.type && form.value.montant > 0 && form.value.delaiHeures > 0,
-);
+const formulaireValide = computed(() => !!form.value.type && form.value.montant > 0 && form.value.delaiHeures > 0);
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
@@ -222,7 +223,7 @@ async function charger() {
   chargement.value = true;
   try {
     const { data } = await api.get('/documents-demande/tarifs');
-    tarifs.value = Array.isArray(data) ? data : data.data ?? [];
+    tarifs.value = Array.isArray(data) ? data : (data.data ?? []);
   } catch {
     /* l'intercepteur axios affiche le motif */
   } finally {

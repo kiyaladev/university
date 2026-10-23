@@ -1,1 +1,8 @@
-export default { title: 'University home', subtitle: 'Find your institution’s records, attendance and operations.', attendance: 'Attendance overview', dossiers: 'Student records', resultats: 'Assessments and results', documents: 'Student documents', };
+export default {
+  title: 'University home',
+  subtitle: 'Find your institution’s records, attendance and operations.',
+  attendance: 'Attendance overview',
+  dossiers: 'Student records',
+  resultats: 'Assessments and results',
+  documents: 'Student documents',
+};

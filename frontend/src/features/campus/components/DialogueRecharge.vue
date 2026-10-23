@@ -26,7 +26,9 @@
       @filter="filtrerEtudiants"
     >
       <template #no-option>
-        <q-item><q-item-section class="text-grey-7">{{ $t('resto.rechargeDialog.noWallet') }}</q-item-section></q-item>
+        <q-item
+          ><q-item-section class="text-grey-7">{{ $t('resto.rechargeDialog.noWallet') }}</q-item-section></q-item
+        >
       </template>
     </q-select>
 

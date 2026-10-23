@@ -47,8 +47,7 @@ export default {
     delivered: 'Delivered',
   },
   statusExplanations: {
-    EN_ATTENTE_PAIEMENT:
-      'Pay the fee to start processing. Without payment, the request stays pending.',
+    EN_ATTENTE_PAIEMENT: 'Pay the fee to start processing. Without payment, the request stays pending.',
     PAYEE: 'Fee received. The registrar will take your request in charge.',
     EN_TRAITEMENT: 'The registrar is preparing your document.',
     PRETE: "Your document is ready: come to the registrar's front desk with your ID card.",
@@ -74,7 +73,8 @@ export default {
     rejectionReason: 'Reason for rejection',
   },
   paymentDialog: {
-    mobileMoneyNote: 'Approve the request on your phone. Payment remains pending until collection is confirmed; your document will then be processed.',
+    mobileMoneyNote:
+      'Approve the request on your phone. Payment remains pending until collection is confirmed; your document will then be processed.',
     title: 'Pay for the request',
     mode: 'Payment method',
     phoneLabel: 'Mobile Money number',
@@ -84,7 +84,8 @@ export default {
   },
   messages: {
     phoneRequired: 'Enter a valid Mobile Money number.',
-    mobileMoneyPending: 'Payment request recorded. Wait for collection to be confirmed before the document is processed.',
+    mobileMoneyPending:
+      'Payment request recorded. Wait for collection to be confirmed before the document is processed.',
     paymentInitiatedPending: 'Payment initiated: come to the front desk, the registrar will confirm it.',
     paymentFailed: 'Payment failed',
   },

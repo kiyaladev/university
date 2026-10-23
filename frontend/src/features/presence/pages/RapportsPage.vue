@@ -75,7 +75,14 @@
           <div class="text-caption text-grey-7">{{ $t('rapports.releveSigne.description') }}</div>
         </div>
         <div class="col-12 col-sm-auto">
-          <q-btn color="primary" unelevated icon="draw" no-caps :label="$t('rapports.releveSigne.action')" @click="dialogReleve = true" />
+          <q-btn
+            color="primary"
+            unelevated
+            icon="draw"
+            no-caps
+            :label="$t('rapports.releveSigne.action')"
+            @click="dialogReleve = true"
+          />
         </div>
       </q-card-section>
     </q-card>
@@ -83,7 +90,13 @@
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="assiduite" icon="how_to_reg" :label="$t('rapports.tabs.assiduite')" no-caps />
       <q-tab name="volume" icon="timelapse" :label="$t('rapports.tabs.volume')" no-caps />
-      <q-tab v-if="peutVoirCouverture" name="controleurs" icon="route" :label="$t('rapports.tabs.controleurs')" no-caps />
+      <q-tab
+        v-if="peutVoirCouverture"
+        name="controleurs"
+        icon="route"
+        :label="$t('rapports.tabs.controleurs')"
+        no-caps
+      />
       <q-tab v-if="peutVoirPaiement" name="paiement" icon="payments" :label="$t('rapports.tabs.paiement')" no-caps />
       <q-tab name="registre" icon="menu_book" :label="$t('rapports.tabs.registre')" no-caps />
     </q-tabs>
@@ -103,11 +116,13 @@
         >
           <template #top-right>
             <div class="text-caption text-grey-7">
-              {{ $t('rapports.assiduite.total', {
-                planifiees: assiduite?.total?.planifiees ?? 0,
-                presence: pourcentLisible(assiduite?.total?.tauxPresence),
-                heures: heuresLisibles(assiduite?.total?.heuresRealisees),
-              }) }}
+              {{
+                $t('rapports.assiduite.total', {
+                  planifiees: assiduite?.total?.planifiees ?? 0,
+                  presence: pourcentLisible(assiduite?.total?.tauxPresence),
+                  heures: heuresLisibles(assiduite?.total?.heuresRealisees),
+                })
+              }}
             </div>
           </template>
           <template #body-cell-taux="p">
@@ -130,9 +145,20 @@
             </q-td>
           </template>
           <template #no-data>
-            <etat-vide icone="how_to_reg" :titre="$t('rapports.assiduite.emptyState.title')" :aide="$t('rapports.assiduite.emptyState.message')">
+            <etat-vide
+              icone="how_to_reg"
+              :titre="$t('rapports.assiduite.emptyState.title')"
+              :aide="$t('rapports.assiduite.emptyState.message')"
+            >
               <template #action>
-                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.assiduite.emptyState.action')" to="/emploi-du-temps" />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="event"
+                  :label="$t('rapports.assiduite.emptyState.action')"
+                  to="/emploi-du-temps"
+                />
               </template>
             </etat-vide>
           </template>
@@ -159,9 +185,20 @@
             </q-td>
           </template>
           <template #no-data>
-            <etat-vide icone="timelapse" :titre="$t('rapports.volume.emptyState.title')" :aide="$t('rapports.volume.emptyState.message')">
+            <etat-vide
+              icone="timelapse"
+              :titre="$t('rapports.volume.emptyState.title')"
+              :aide="$t('rapports.volume.emptyState.message')"
+            >
               <template #action>
-                <q-btn flat no-caps color="primary" icon="assignment_ind" :label="$t('rapports.volume.emptyState.action')" to="/affectations" />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="assignment_ind"
+                  :label="$t('rapports.volume.emptyState.action')"
+                  to="/affectations"
+                />
               </template>
             </etat-vide>
           </template>
@@ -181,7 +218,9 @@
           </q-card-section>
         </q-card>
         <q-table
-          flat bordered class="carte"
+          flat
+          bordered
+          class="carte"
           :rows="couverture?.lignes ?? []"
           :columns="colonnesControleurs"
           row-key="controleurId"
@@ -195,9 +234,20 @@
             <q-td :props="p"><barre-taux :valeur="p.row.tauxParAssigne" /></q-td>
           </template>
           <template #no-data>
-            <etat-vide icone="route" :titre="$t('rapports.controleurs.emptyTitle')" :aide="$t('rapports.controleurs.emptyHelp')">
+            <etat-vide
+              icone="route"
+              :titre="$t('rapports.controleurs.emptyTitle')"
+              :aide="$t('rapports.controleurs.emptyHelp')"
+            >
               <template #action>
-                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.controleurs.emptyAction')" to="/seances" />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="event"
+                  :label="$t('rapports.controleurs.emptyAction')"
+                  to="/seances"
+                />
               </template>
             </etat-vide>
           </template>
@@ -239,7 +289,9 @@
                 :label="$t('rapports.actions.printPaiement')"
                 @click="imprimerPaiement"
               >
-                <q-tooltip>{{ periodeLisible }}{{ statutEnseignant ? ` — ${statutEnseignant.toLowerCase()}s` : '' }}</q-tooltip>
+                <q-tooltip
+                  >{{ periodeLisible }}{{ statutEnseignant ? ` — ${statutEnseignant.toLowerCase()}s` : '' }}</q-tooltip
+                >
               </q-btn>
             </div>
           </q-card-section>
@@ -263,16 +315,33 @@
               <q-td colspan="100%">
                 <div class="text-caption text-grey-8">
                   <span v-for="d in p.row.detail" :key="d.libelle" class="q-mr-md">
-                    {{ $t('rapports.paiement.detailLine', { libelle: d.libelle, heures: heuresLisibles(d.heures), seances: d.seances }) }}
+                    {{
+                      $t('rapports.paiement.detailLine', {
+                        libelle: d.libelle,
+                        heures: heuresLisibles(d.heures),
+                        seances: d.seances,
+                      })
+                    }}
                   </span>
                 </div>
               </q-td>
             </q-tr>
           </template>
           <template #no-data>
-            <etat-vide icone="payments" :titre="$t('rapports.paiement.emptyState.title')" :aide="$t('rapports.paiement.emptyState.message')">
+            <etat-vide
+              icone="payments"
+              :titre="$t('rapports.paiement.emptyState.title')"
+              :aide="$t('rapports.paiement.emptyState.message')"
+            >
               <template #action>
-                <q-btn flat no-caps color="primary" icon="fact_check" :label="$t('rapports.paiement.emptyState.action')" to="/controle" />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="fact_check"
+                  :label="$t('rapports.paiement.emptyState.action')"
+                  to="/controle"
+                />
               </template>
             </etat-vide>
           </template>
@@ -288,11 +357,13 @@
                 {{ $t('rapports.registre.subtitle') }}
               </div>
               <div class="text-subtitle2">
-                {{ $t('rapports.registre.summary', {
-                  total: registre?.total ?? 0,
-                  controlees: registre?.synthese?.controlees ?? 0,
-                  absences: registre?.synthese?.absent ?? 0,
-                }) }}
+                {{
+                  $t('rapports.registre.summary', {
+                    total: registre?.total ?? 0,
+                    controlees: registre?.synthese?.controlees ?? 0,
+                    absences: registre?.synthese?.absent ?? 0,
+                  })
+                }}
               </div>
             </div>
             <div class="col-auto">
@@ -326,9 +397,20 @@
             </q-td>
           </template>
           <template #no-data>
-            <etat-vide icone="menu_book" :titre="$t('rapports.registre.emptyState.title')" :aide="$t('rapports.registre.emptyState.message')">
+            <etat-vide
+              icone="menu_book"
+              :titre="$t('rapports.registre.emptyState.title')"
+              :aide="$t('rapports.registre.emptyState.message')"
+            >
               <template #action>
-                <q-btn flat no-caps color="primary" icon="event" :label="$t('rapports.registre.emptyState.action')" to="/seances" />
+                <q-btn
+                  flat
+                  no-caps
+                  color="primary"
+                  icon="event"
+                  :label="$t('rapports.registre.emptyState.action')"
+                  to="/seances"
+                />
               </template>
             </etat-vide>
           </template>
@@ -350,8 +432,22 @@
           <zone-signature v-model="signatureChef" :label="$t('rapports.releveSigne.signatureLabel')" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="generationReleve" @click="dialogReleve = false" />
-          <q-btn color="primary" unelevated no-caps icon="picture_as_pdf" :loading="generationReleve" :label="$t('rapports.releveSigne.generate')" @click="genererReleve" />
+          <q-btn
+            flat
+            no-caps
+            :label="$t('common.actions.cancel')"
+            :disable="generationReleve"
+            @click="dialogReleve = false"
+          />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            icon="picture_as_pdf"
+            :loading="generationReleve"
+            :label="$t('rapports.releveSigne.generate')"
+            @click="genererReleve"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -445,12 +541,16 @@ async function genererReleve() {
   try {
     // Silencieux : en `blob`, le message du serveur est illisible pour
     // l'intercepteur ; le message local du catch est plus parlant.
-    const response = await api.post('/impression/releve-hebdomadaire', {
-      departementId: auth.utilisateur.departementId,
-      dateDebut: semaineDebut.value,
-      dateFin: semaineFin.value,
-      signatureBase64: signatureChef.value,
-    }, { responseType: 'blob', silencieux: true });
+    const response = await api.post(
+      '/impression/releve-hebdomadaire',
+      {
+        departementId: auth.utilisateur.departementId,
+        dateDebut: semaineDebut.value,
+        dateFin: semaineFin.value,
+        signatureBase64: signatureChef.value,
+      },
+      { responseType: 'blob', silencieux: true },
+    );
     const url = URL.createObjectURL(response.data);
     const lien = document.createElement('a');
     lien.href = url;
@@ -474,29 +574,42 @@ const filtres = ref({
   promotionId: null as string | null,
 });
 
-const optionsDepartements = computed(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
-const optionsPromotions = computed(() =>
-  promotions.value.map((p) => ({ label: p.nom, value: p.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
+const optionsPromotions = computed(() => promotions.value.map((p) => ({ label: p.nom, value: p.id })));
 
 const libelleOnglet = computed(() => {
   const cles = ['assiduite', 'volume', 'paiement', 'registre'];
   return cles.includes(onglet.value) ? t(`rapports.onglets.${onglet.value}`) : t('rapports.onglets.defaut');
 });
-const periodeLisible = computed(
-  () => t('rapports.period.range', { debut: dateLisible(filtres.value.dateDebut), fin: dateLisible(filtres.value.dateFin) }),
+const periodeLisible = computed(() =>
+  t('rapports.period.range', { debut: dateLisible(filtres.value.dateDebut), fin: dateLisible(filtres.value.dateFin) }),
 );
 
 const colonnesAssiduite = computed<QTableColumn[]>(() => [
   { name: 'matricule', label: t('rapports.assiduite.table.columns.matricule'), field: 'matricule', align: 'left' },
   { name: 'nom', label: t('common.fields.teacher'), field: 'nom', align: 'left', sortable: true },
-  { name: 'departement', label: t('rapports.assiduite.table.columns.departement'), field: 'departement', align: 'left' },
-  { name: 'planifiees', label: t('rapports.assiduite.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
+  {
+    name: 'departement',
+    label: t('rapports.assiduite.table.columns.departement'),
+    field: 'departement',
+    align: 'left',
+  },
+  {
+    name: 'planifiees',
+    label: t('rapports.assiduite.table.columns.planifiees'),
+    field: 'planifiees',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'controlees', label: t('rapports.assiduite.table.columns.controlees'), field: 'controlees', align: 'right' },
   { name: 'assurees', label: t('rapports.assiduite.table.columns.assurees'), field: 'assurees', align: 'right' },
-  { name: 'retard', label: t('rapports.assiduite.table.columns.retard'), field: 'retard', align: 'right', sortable: true },
+  {
+    name: 'retard',
+    label: t('rapports.assiduite.table.columns.retard'),
+    field: 'retard',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
   {
     name: 'heures',
@@ -513,10 +626,22 @@ const colonnesVolume = computed<QTableColumn[]>(() => [
   { name: 'matiere', label: t('common.fields.subject'), field: 'matiere', align: 'left' },
   { name: 'promotion', label: t('rapports.volume.table.columns.promotion'), field: 'promotion', align: 'left' },
   { name: 'prevu', label: t('rapports.volume.table.columns.prevu'), field: 'volumeHorairePrevu', align: 'right' },
-  { name: 'realise', label: t('rapports.volume.table.columns.realise'), field: 'heuresRealisees', align: 'right', sortable: true },
+  {
+    name: 'realise',
+    label: t('rapports.volume.table.columns.realise'),
+    field: 'heuresRealisees',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'reste', label: t('rapports.volume.table.columns.reste'), field: 'reste', align: 'right' },
   { name: 'seances', label: t('common.fields.sessions'), field: 'planifiees', align: 'right' },
-  { name: 'avancement', label: t('rapports.volume.table.columns.avancement'), field: 'tauxContrat', align: 'left', sortable: true },
+  {
+    name: 'avancement',
+    label: t('rapports.volume.table.columns.avancement'),
+    field: 'tauxContrat',
+    align: 'left',
+    sortable: true,
+  },
 ]);
 
 const colonnesPaiement = computed<QTableColumn[]>(() => [
@@ -557,13 +682,53 @@ const colonnesRegistre = computed<QTableColumn[]>(() => [
 
 const colonnesControleurs = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('rapports.controleurs.columns.controller'), field: 'nom', align: 'left', sortable: true },
-  { name: 'seancesPassees', label: t('rapports.controleurs.columns.assigned'), field: 'seancesPassees', align: 'right', sortable: true },
-  { name: 'visitees', label: t('rapports.controleurs.columns.visited'), field: 'visitees', align: 'right', sortable: true },
-  { name: 'nonVisitees', label: t('rapports.controleurs.columns.missed'), field: 'nonVisitees', align: 'right', sortable: true },
-  { name: 'realiseesParAssigne', label: t('rapports.controleurs.columns.byAssigned'), field: 'realiseesParAssigne', align: 'right' },
-  { name: 'realiseesParUnAutre', label: t('rapports.controleurs.columns.coveredByPeer'), field: 'realiseesParUnAutre', align: 'right' },
-  { name: 'tauxCouverture', label: t('rapports.controleurs.columns.coverage'), field: (r: any) => pourcentLisible(r.tauxCouverture), align: 'left', sortable: true },
-  { name: 'tauxParAssigne', label: t('rapports.controleurs.columns.ownRate'), field: (r: any) => pourcentLisible(r.tauxParAssigne), align: 'left', sortable: true },
+  {
+    name: 'seancesPassees',
+    label: t('rapports.controleurs.columns.assigned'),
+    field: 'seancesPassees',
+    align: 'right',
+    sortable: true,
+  },
+  {
+    name: 'visitees',
+    label: t('rapports.controleurs.columns.visited'),
+    field: 'visitees',
+    align: 'right',
+    sortable: true,
+  },
+  {
+    name: 'nonVisitees',
+    label: t('rapports.controleurs.columns.missed'),
+    field: 'nonVisitees',
+    align: 'right',
+    sortable: true,
+  },
+  {
+    name: 'realiseesParAssigne',
+    label: t('rapports.controleurs.columns.byAssigned'),
+    field: 'realiseesParAssigne',
+    align: 'right',
+  },
+  {
+    name: 'realiseesParUnAutre',
+    label: t('rapports.controleurs.columns.coveredByPeer'),
+    field: 'realiseesParUnAutre',
+    align: 'right',
+  },
+  {
+    name: 'tauxCouverture',
+    label: t('rapports.controleurs.columns.coverage'),
+    field: (r: any) => pourcentLisible(r.tauxCouverture),
+    align: 'left',
+    sortable: true,
+  },
+  {
+    name: 'tauxParAssigne',
+    label: t('rapports.controleurs.columns.ownRate'),
+    field: (r: any) => pourcentLisible(r.tauxParAssigne),
+    align: 'left',
+    sortable: true,
+  },
 ]);
 
 function parametres() {
@@ -585,9 +750,7 @@ function chemin(base: string, suffixe: string, extra: Record<string, string | un
 }
 
 const extraStatutEnseignant = () =>
-  onglet.value === 'paiement' || statutEnseignant.value
-    ? { statutEnseignant: statutEnseignant.value }
-    : {};
+  onglet.value === 'paiement' || statutEnseignant.value ? { statutEnseignant: statutEnseignant.value } : {};
 
 /** Export CSV de l'onglet affiché, filtres et période inclus. */
 function exporter() {
@@ -604,8 +767,7 @@ const imprimerPaiement = () => {
   const { chemin: c, params } = chemin('impression', 'etat-paiement', extraStatutEnseignant());
   void ouvrirImpression(c, params);
 };
-const imprimerFiche = (id: string) =>
-  ouvrirFicheEnseignant(id, filtres.value.dateDebut, filtres.value.dateFin);
+const imprimerFiche = (id: string) => ouvrirFicheEnseignant(id, filtres.value.dateDebut, filtres.value.dateFin);
 
 async function charger() {
   chargement.value = true;
@@ -614,11 +776,15 @@ async function charger() {
     const [a, v, pa, r, c] = await Promise.all([
       api.get('/rapports/presence-enseignants', { params: p }),
       api.get('/rapports/volume-horaire', { params: p }),
-      peutVoirPaiement.value ? api.get('/rapports/etat-paiement', {
-        params: { ...p, statutEnseignant: statutEnseignant.value || undefined },
-      }) : Promise.resolve({ data: null }),
+      peutVoirPaiement.value
+        ? api.get('/rapports/etat-paiement', {
+            params: { ...p, statutEnseignant: statutEnseignant.value || undefined },
+          })
+        : Promise.resolve({ data: null }),
       api.get('/rapports/registre', { params: p }),
-      peutVoirCouverture.value ? api.get('/rapports/couverture-controleurs', { params: p }) : Promise.resolve({ data: null }),
+      peutVoirCouverture.value
+        ? api.get('/rapports/couverture-controleurs', { params: p })
+        : Promise.resolve({ data: null }),
     ]);
     assiduite.value = a.data;
     volume.value = v.data;
@@ -647,5 +813,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

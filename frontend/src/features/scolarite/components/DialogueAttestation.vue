@@ -29,7 +29,11 @@
       @filter="filtrerEtudiants"
     >
       <template #no-option>
-        <q-item><q-item-section class="text-grey-7">{{ $t('attestations.issueDialog.studentEmpty') }}</q-item-section></q-item>
+        <q-item
+          ><q-item-section class="text-grey-7">{{
+            $t('attestations.issueDialog.studentEmpty')
+          }}</q-item-section></q-item
+        >
       </template>
     </q-select>
 
@@ -156,9 +160,7 @@ const optionsInscriptions = computed(() =>
   })),
 );
 
-const formulaireValide = computed(
-  () => !!form.value.etudiantId && !!form.value.type,
-);
+const formulaireValide = computed(() => !!form.value.etudiantId && !!form.value.type);
 
 const enregistrement = ref(false);
 
@@ -217,7 +219,10 @@ async function chargerInscriptions() {
 watch(
   () => form.value.anneeId,
   () => {
-    if (!form.value.anneeId || (form.value.promotionId && !optionsPromotions.value.some((p) => p.value === form.value.promotionId))) {
+    if (
+      !form.value.anneeId ||
+      (form.value.promotionId && !optionsPromotions.value.some((p) => p.value === form.value.promotionId))
+    ) {
       form.value.promotionId = null;
     }
   },
@@ -282,9 +287,7 @@ async function appliquerPrefill() {
     form.value.etudiantId = p.etudiantId;
     try {
       const { data } = await api.get(`/etudiants/${p.etudiantId}`);
-      optionsEtudiants.value = [
-        { label: `${data.nom} ${data.prenom} — ${data.matricule}`, value: data.id },
-      ];
+      optionsEtudiants.value = [{ label: `${data.nom} ${data.prenom} — ${data.matricule}`, value: data.id }];
     } catch {
       optionsEtudiants.value = [];
     }
@@ -293,10 +296,7 @@ async function appliquerPrefill() {
 }
 
 async function chargerReferentiels() {
-  [annees.value, promotions.value] = await Promise.all([
-    referentiels.annees(),
-    referentiels.promotions(),
-  ]);
+  [annees.value, promotions.value] = await Promise.all([referentiels.annees(), referentiels.promotions()]);
   // Même résultat que `/annees/active`, sans requête supplémentaire.
   const active = referentiels.anneeCourante;
   if (active?.id) {

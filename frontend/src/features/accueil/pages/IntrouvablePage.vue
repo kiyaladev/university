@@ -9,7 +9,9 @@
     <h1 class="lettrage introuvable__titre">{{ $t('errorNotFound.title') }}</h1>
     <p class="introuvable__texte">
       <i18n-t keypath="errorNotFound.text" tag="span">
-        <template #adresse><strong class="introuvable__adresse">{{ adresse }}</strong></template>
+        <template #adresse
+          ><strong class="introuvable__adresse">{{ adresse }}</strong></template
+        >
       </i18n-t>
     </p>
 
@@ -38,11 +40,31 @@
     <nav class="introuvable__services" :aria-label="$t('errorNotFound.services.ariaLabel')">
       <p class="pochoir introuvable__services-titre">{{ $t('errorNotFound.services.title') }}</p>
       <ul class="introuvable__liens">
-        <li><router-link to="/s-inscrire" class="introuvable__lien">{{ $t('errorNotFound.services.preinscription') }}</router-link></li>
-        <li><router-link to="/formations" class="introuvable__lien">{{ $t('errorNotFound.services.formationContinue') }}</router-link></li>
-        <li><router-link to="/bibliotheque" class="introuvable__lien">{{ $t('errorNotFound.services.bibliotheque') }}</router-link></li>
-        <li><router-link to="/verification" class="introuvable__lien">{{ $t('errorNotFound.services.verification') }}</router-link></li>
-        <li><router-link to="/verification-carte" class="introuvable__lien">{{ $t('errorNotFound.services.verificationCarte') }}</router-link></li>
+        <li>
+          <router-link to="/s-inscrire" class="introuvable__lien">{{
+            $t('errorNotFound.services.preinscription')
+          }}</router-link>
+        </li>
+        <li>
+          <router-link to="/formations" class="introuvable__lien">{{
+            $t('errorNotFound.services.formationContinue')
+          }}</router-link>
+        </li>
+        <li>
+          <router-link to="/bibliotheque" class="introuvable__lien">{{
+            $t('errorNotFound.services.bibliotheque')
+          }}</router-link>
+        </li>
+        <li>
+          <router-link to="/verification" class="introuvable__lien">{{
+            $t('errorNotFound.services.verification')
+          }}</router-link>
+        </li>
+        <li>
+          <router-link to="/verification-carte" class="introuvable__lien">{{
+            $t('errorNotFound.services.verificationCarte')
+          }}</router-link>
+        </li>
       </ul>
     </nav>
   </main>
@@ -87,7 +109,9 @@ function seDeconnecter() {
 }
 
 // Hors enseigne, la page pose elle-même le filet du drapeau.
-.introuvable::before { @include filetDrapeau; }
+.introuvable::before {
+  @include filetDrapeau;
+}
 
 .introuvable__code {
   margin: 0;
@@ -141,6 +165,9 @@ function seDeconnecter() {
   text-decoration: none;
 
   &:hover,
-  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
+  &:focus-visible {
+    color: var(--up-encre);
+    text-decoration: underline;
+  }
 }
 </style>

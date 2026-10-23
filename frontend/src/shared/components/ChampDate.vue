@@ -31,10 +31,11 @@ import { computed, ref } from 'vue';
  * et affiche 07/14/2026 sur un appareil anglophone : dans un produit qui ne
  * parle que français, la date se saisit ici au calendrier, en JJ/MM/AAAA.
  */
-const props = withDefaults(
-  defineProps<{ modelValue: string; label?: string; dense?: boolean; disable?: boolean }>(),
-  { label: '', dense: true, disable: false },
-);
+const props = withDefaults(defineProps<{ modelValue: string; label?: string; dense?: boolean; disable?: boolean }>(), {
+  label: '',
+  dense: true,
+  disable: false,
+});
 const emit = defineEmits<{ 'update:modelValue': [string] }>();
 
 const ouvert = ref(false);
@@ -57,10 +58,17 @@ function ouvrir() {
 
 <style scoped lang="scss">
 // Cible tactile : le contrôleur et la scolarité travaillent au doigt.
-.champ-date :deep(.q-field__control) { min-height: 48px; cursor: pointer; }
-.champ-date :deep(.q-field__native) { cursor: pointer; }
+.champ-date :deep(.q-field__control) {
+  min-height: 48px;
+  cursor: pointer;
+}
+.champ-date :deep(.q-field__native) {
+  cursor: pointer;
+}
 
 // Le champ est en lecture seule pour forcer le calendrier, mais il s'actionne :
 // il garde donc le filet plein du panneau, pas le pointillé des champs inertes.
-.champ-date :deep(.q-field__control::before) { border-style: solid !important; }
+.champ-date :deep(.q-field__control::before) {
+  border-style: solid !important;
+}
 </style>

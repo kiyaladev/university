@@ -88,8 +88,7 @@ export default {
     transitions: {
       open: {
         title: 'Open the ballot',
-        message:
-          'The ballot becomes accessible to voters and the candidate list is locked. Continue?',
+        message: 'The ballot becomes accessible to voters and the candidate list is locked. Continue?',
         button: 'Open',
         success: 'Ballot opened.',
       },
@@ -101,8 +100,7 @@ export default {
       },
       proclaim: {
         title: 'Proclaim the results',
-        message:
-          'This action is irreversible: the results become official, locked and visible to voters. Continue?',
+        message: 'This action is irreversible: the results become official, locked and visible to voters. Continue?',
         button: 'Proclaim',
         success: 'Results proclaimed.',
       },

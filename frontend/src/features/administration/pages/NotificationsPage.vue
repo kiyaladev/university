@@ -37,12 +37,7 @@
             />
 
             <p class="pochoir notif-bloc__titre">{{ $t('notifications.broadcast.generalNotice.recipientsLabel') }}</p>
-            <q-option-group
-              v-model="destination"
-              :options="optionsDestinataires"
-              dense
-              class="q-mb-sm"
-            />
+            <q-option-group v-model="destination" :options="optionsDestinataires" dense class="q-mb-sm" />
 
             <q-input
               v-if="destination === 'numeros'"
@@ -57,8 +52,8 @@
                     ? v
                         .split(/[\s,;]+/)
                         .filter(Boolean)
-                        .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n))
-                      || t('notifications.broadcast.generalNotice.numbersInvalid')
+                        .every((n: string) => /^\+?[\d\s().-]{6,20}$/.test(n)) ||
+                      t('notifications.broadcast.generalNotice.numbersInvalid')
                     : true,
               ]"
             />
@@ -197,12 +192,7 @@
           <div class="text-caption text-grey-7 q-mb-sm">
             {{ $t('notifications.history.chart.subtitle') }}
           </div>
-          <graphique
-            :config="chartConfig"
-            :hauteur="220"
-            role="img"
-            :aria-label="resumeRepartition"
-          />
+          <graphique :config="chartConfig" :hauteur="220" role="img" :aria-label="resumeRepartition" />
         </q-card-section>
       </q-card>
 
@@ -381,11 +371,12 @@ const resume = ref<{ total: number; envoyees: number; echouees: number } | null>
 
 const nbInscrits = ref(0);
 
-const numerosComptes = computed(() =>
-  numerosSaisis.value
-    .split(/[\s,;]+/)
-    .map((t) => t.trim())
-    .filter(Boolean).length,
+const numerosComptes = computed(
+  () =>
+    numerosSaisis.value
+      .split(/[\s,;]+/)
+      .map((t) => t.trim())
+      .filter(Boolean).length,
 );
 
 function decouperNumeros(texte: string): string[] {
@@ -409,11 +400,8 @@ async function chargerNbInscrits() {
 async function confirmerEnvoi() {
   const valide = await formRef.value?.validate();
   if (valide === false) return;
-  const nbDestinaires = destination.value === 'tous'
-    ? nbInscrits.value
-    : destination.value === 'numeros'
-      ? numerosComptes.value
-      : 0;
+  const nbDestinaires =
+    destination.value === 'tous' ? nbInscrits.value : destination.value === 'numeros' ? numerosComptes.value : 0;
   const ok = await confirmer({
     titre: t('notifications.messages.confirmSendTitle'),
     message: t('notifications.messages.confirmSendMessage', { n: nbDestinaires }),
@@ -442,9 +430,7 @@ async function envoyer() {
       type: data.echouees ? 'warning' : 'positive',
       message: t('notifications.messages.sentSummary', {
         envoyees: data.envoyees,
-        echoueesSuffix: data.echouees
-          ? t('notifications.messages.sentSummaryFailedSuffix', { n: data.echouees })
-          : '',
+        echoueesSuffix: data.echouees ? t('notifications.messages.sentSummaryFailedSuffix', { n: data.echouees }) : '',
       }),
     });
     await chargerHistorique();
@@ -708,9 +694,21 @@ const chartConfig = computed<ChartConfiguration | null>(() => {
     data: {
       labels: repartition30j.value.map((r) => r.date.slice(5)),
       datasets: [
-        { label: t('notifications.history.chart.series.enFile'), data: repartition30j.value.map((r) => r.EN_ATTENTE), backgroundColor: PEINTURE_ATTENTE },
-        { label: t('notifications.history.chart.series.envoyes'), data: repartition30j.value.map((r) => r.ENVOYEE), backgroundColor: PEINTURE_ENVOYE },
-        { label: t('notifications.history.chart.series.echoues'), data: repartition30j.value.map((r) => r.ECHOUE), backgroundColor: PEINTURE_ECHEC },
+        {
+          label: t('notifications.history.chart.series.enFile'),
+          data: repartition30j.value.map((r) => r.EN_ATTENTE),
+          backgroundColor: PEINTURE_ATTENTE,
+        },
+        {
+          label: t('notifications.history.chart.series.envoyes'),
+          data: repartition30j.value.map((r) => r.ENVOYEE),
+          backgroundColor: PEINTURE_ENVOYE,
+        },
+        {
+          label: t('notifications.history.chart.series.echoues'),
+          data: repartition30j.value.map((r) => r.ECHOUE),
+          backgroundColor: PEINTURE_ECHEC,
+        },
       ],
     },
     options: {
@@ -775,17 +773,25 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
 
-  & > * + * { border-left: var(--up-filet); }
+  & > * + * {
+    border-left: var(--up-filet);
+  }
 
-  &--partiel { border-color: $rouge; }
+  &--partiel {
+    border-color: $rouge;
+  }
 }
 
 .notif-resume__cellule {
   padding: var(--up-3);
   text-align: center;
 
-  p { margin: 0; }
-  .lettrage { font-size: 1.8rem; }
+  p {
+    margin: 0;
+  }
+  .lettrage {
+    font-size: 1.8rem;
+  }
 }
 
 .notifications__qui {
@@ -815,5 +821,4 @@ onMounted(() => {
   text-transform: none;
   letter-spacing: 0;
 }
-
 </style>

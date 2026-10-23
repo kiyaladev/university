@@ -41,26 +41,23 @@ const formulaire = ref({
 
 const enregistrement = ref(false);
 
-watch(
-  ouvert,
-  (visible) => {
-    if (visible) {
-      const v = props.vod;
-      formulaire.value = {
-        titre: v?.titre ?? '',
-        description: v?.description ?? '',
-        type: (v?.type as TypeRessourceVOD) ?? 'VIDEO',
-        matiereId: v?.matiereId ?? null,
-        enseignantId: v?.enseignantId ?? null,
-        inscriptionId: v?.inscriptionId ?? null,
-        url: v?.url ?? '',
-        thumbnailUrl: v?.thumbnailUrl ?? '',
-        dureeSecondes: v?.dureeSecondes ?? null,
-        public: v?.public ?? true,
-      };
-    }
-  },
-);
+watch(ouvert, (visible) => {
+  if (visible) {
+    const v = props.vod;
+    formulaire.value = {
+      titre: v?.titre ?? '',
+      description: v?.description ?? '',
+      type: (v?.type as TypeRessourceVOD) ?? 'VIDEO',
+      matiereId: v?.matiereId ?? null,
+      enseignantId: v?.enseignantId ?? null,
+      inscriptionId: v?.inscriptionId ?? null,
+      url: v?.url ?? '',
+      thumbnailUrl: v?.thumbnailUrl ?? '',
+      dureeSecondes: v?.dureeSecondes ?? null,
+      public: v?.public ?? true,
+    };
+  }
+});
 
 const enEdition = computed(() => Boolean(props.vod?.id));
 const titre = computed(() => t(enEdition.value ? 'vodPage.formDialog.editTitle' : 'vodPage.formDialog.newTitle'));
@@ -89,7 +86,10 @@ async function soumettre() {
       ...(auth.estAdmin ? { inscriptionId: formulaire.value.inscriptionId } : {}),
     };
     const { data } = methode === 'put' ? await api.put(url, payload) : await api.post(url, payload);
-    $q.notify({ type: 'positive', message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created') });
+    $q.notify({
+      type: 'positive',
+      message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created'),
+    });
     emit('enregistre', data);
     ouvert.value = false;
   } catch {
@@ -110,12 +110,7 @@ async function soumettre() {
     @valider="soumettre"
   >
     <div class="q-gutter-md">
-      <q-input
-        v-model="formulaire.titre"
-        :label="$t('common.fields.title')"
-        outlined
-        dense
-      />
+      <q-input v-model="formulaire.titre" :label="$t('common.fields.title')" outlined dense />
       <q-select
         v-model="formulaire.type"
         :options="OPTIONS_TYPE"
@@ -160,7 +155,11 @@ async function soumettre() {
           dense
           class="col-12 col-sm-6"
         />
-        <q-toggle v-model="formulaire.public" :label="$t('vodPage.formDialog.publicResource')" class="col-12 col-sm-6" />
+        <q-toggle
+          v-model="formulaire.public"
+          :label="$t('vodPage.formDialog.publicResource')"
+          class="col-12 col-sm-6"
+        />
       </div>
       <template v-if="!formulaire.public">
         <champ-recherche
@@ -168,11 +167,20 @@ async function soumettre() {
           v-model="formulaire.inscriptionId"
           endpoint="/inscriptions"
           server-search
-          :label-fn="(i: Inscription) => `${i.numero} — ${i.etudiant?.prenom ?? ''} ${i.etudiant?.nom ?? ''} — ${i.annee?.libelle ?? ''} ${i.promotion?.nom ?? ''}`"
+          :label-fn="
+            (i: Inscription) =>
+              `${i.numero} — ${i.etudiant?.prenom ?? ''} ${i.etudiant?.nom ?? ''} — ${i.annee?.libelle ?? ''} ${i.promotion?.nom ?? ''}`
+          "
           :label="$t('vodPage.formDialog.privateEnrollment')"
         />
         <div class="text-caption text-grey-7">
-          {{ $t(auth.estAdmin ? 'vodPage.formDialog.privateEnrollmentHint' : 'vodPage.formDialog.privateEnrollmentManaged') }}
+          {{
+            $t(
+              auth.estAdmin
+                ? 'vodPage.formDialog.privateEnrollmentHint'
+                : 'vodPage.formDialog.privateEnrollmentManaged',
+            )
+          }}
         </div>
       </template>
       <q-input

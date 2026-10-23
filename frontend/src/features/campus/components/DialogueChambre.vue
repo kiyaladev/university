@@ -1,14 +1,25 @@
 <template>
   <dialogue-formulaire
     v-model="ouvert"
-    :titre="chambre ? $t('cites.chambres.dialogs.form.titleEdit', { code: chambre.code }) : $t('cites.chambres.dialogs.form.titleNew')"
+    :titre="
+      chambre
+        ? $t('cites.chambres.dialogs.form.titleEdit', { code: chambre.code })
+        : $t('cites.chambres.dialogs.form.titleNew')
+    "
     :envoi="enregistrement"
     @valider="enregistrer"
   >
     <span class="section-titre">{{ $t('common.fields.identification') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-5">
-        <q-input v-model="form.code" outlined dense :label="$t('common.fields.codeRequired')" placeholder="R1-101" :rules="[requis]" />
+        <q-input
+          v-model="form.code"
+          outlined
+          dense
+          :label="$t('common.fields.codeRequired')"
+          placeholder="R1-101"
+          :rules="[requis]"
+        />
       </div>
       <div class="col-12 col-sm-7">
         <q-select
@@ -37,7 +48,14 @@
         />
       </div>
       <div class="col-12 col-sm-3">
-        <q-input v-model.number="form.lits" type="number" min="1" outlined dense :label="$t('cites.chambres.table.columns.lits')" />
+        <q-input
+          v-model.number="form.lits"
+          type="number"
+          min="1"
+          outlined
+          dense
+          :label="$t('cites.chambres.table.columns.lits')"
+        />
       </div>
       <div class="col-12 col-sm-3">
         <q-select
@@ -109,9 +127,7 @@ const form = ref({
   statut: 'LIBRE',
 });
 
-const optionsResidences = computed(() =>
-  props.residences.map((r) => ({ label: `${r.code} — ${r.nom}`, value: r.id })),
-);
+const optionsResidences = computed(() => props.residences.map((r) => ({ label: `${r.code} — ${r.nom}`, value: r.id })));
 // `emit-value` : sans lui, le select rendait l'objet { value, label } et c'est
 // lui qui partait au serveur à la place du code.
 const optionsCategories = Object.entries(LIBELLE_CATEGORIE_CHAMBRE).map(([value, label]) => ({ value, label }));

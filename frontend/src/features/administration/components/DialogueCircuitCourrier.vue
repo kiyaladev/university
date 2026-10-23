@@ -47,7 +47,15 @@
         :label="$t('courrier.registrationDialog.department')"
         :label-fn="(d: any) => `${d.code} — ${d.nom}`"
       />
-      <div class="text-caption text-grey-7">{{ $t(auth.utilisateur?.role === 'CHEF_DEPARTEMENT' ? 'courrier.registrationDialog.ownDepartment' : 'courrier.registrationDialog.departmentHint') }}</div>
+      <div class="text-caption text-grey-7">
+        {{
+          $t(
+            auth.utilisateur?.role === 'CHEF_DEPARTEMENT'
+              ? 'courrier.registrationDialog.ownDepartment'
+              : 'courrier.registrationDialog.departmentHint',
+          )
+        }}
+      </div>
       <div class="row q-col-gutter-md">
         <div v-if="form.type === 'ENTRANT'" class="col-6">
           <q-input v-model="form.expediteur" outlined dense :label="$t('courrier.registrationDialog.sender')" />
@@ -56,12 +64,28 @@
           <q-input v-model="form.destinataire" outlined dense :label="$t('common.fields.recipient')" />
         </div>
         <div class="col-6">
-          <champ-date v-if="form.type === 'ENTRANT'" v-model="form.dateReception" :label="$t('courrier.registrationDialog.receivedOn')" />
+          <champ-date
+            v-if="form.type === 'ENTRANT'"
+            v-model="form.dateReception"
+            :label="$t('courrier.registrationDialog.receivedOn')"
+          />
           <champ-date v-else v-model="form.dateEnvoi" :label="$t('courrier.registrationDialog.sentOn')" />
         </div>
       </div>
-      <q-input v-model="form.numeroReference" outlined dense :label="$t('courrier.registrationDialog.archiveReference')" />
-      <q-file v-model="fichier" outlined dense :label="$t('courrier.registrationDialog.attachment')" accept="image/*,.pdf" @update:model-value="lireFichier">
+      <q-input
+        v-model="form.numeroReference"
+        outlined
+        dense
+        :label="$t('courrier.registrationDialog.archiveReference')"
+      />
+      <q-file
+        v-model="fichier"
+        outlined
+        dense
+        :label="$t('courrier.registrationDialog.attachment')"
+        accept="image/*,.pdf"
+        @update:model-value="lireFichier"
+      >
         <template #prepend><q-icon name="attach_file" /></template>
       </q-file>
       <q-input v-model="form.notes" outlined dense type="textarea" rows="2" :label="$t('common.fields.notes')" />
@@ -76,10 +100,23 @@
                   <q-input v-model.number="e.ordre" type="number" min="1" outlined dense label="#" />
                 </div>
                 <div class="col">
-                  <q-input v-model="e.roleValideur" outlined dense :label="$t('courrier.registrationDialog.approverRole')" />
+                  <q-input
+                    v-model="e.roleValideur"
+                    outlined
+                    dense
+                    :label="$t('courrier.registrationDialog.approverRole')"
+                  />
                 </div>
                 <div class="col-auto">
-                  <q-btn flat round dense icon="delete" color="negative" :aria-label="$t('common.actions.delete')" @click="form.circuit.splice(i, 1)" />
+                  <q-btn
+                    flat
+                    round
+                    dense
+                    icon="delete"
+                    color="negative"
+                    :aria-label="$t('common.actions.delete')"
+                    @click="form.circuit.splice(i, 1)"
+                  />
                 </div>
               </div>
             </q-item-section>
@@ -90,7 +127,15 @@
             </q-item-section>
           </q-item>
         </q-list>
-        <q-btn flat dense icon="add" no-caps :label="$t('courrier.registrationDialog.addStep')" class="q-mt-sm" @click="ajouterEtape" />
+        <q-btn
+          flat
+          dense
+          icon="add"
+          no-caps
+          :label="$t('courrier.registrationDialog.addStep')"
+          class="q-mt-sm"
+          @click="ajouterEtape"
+        />
       </div>
     </div>
   </dialogue-formulaire>

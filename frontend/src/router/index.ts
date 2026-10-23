@@ -1,10 +1,5 @@
 import { defineRouter } from '#q-app/wrappers';
-import {
-  createMemoryHistory,
-  createRouter,
-  createWebHashHistory,
-  createWebHistory,
-} from 'vue-router';
+import { createMemoryHistory, createRouter, createWebHashHistory, createWebHistory } from 'vue-router';
 import { Notify } from 'quasar';
 import routes from './routes';
 import { useAuthStore } from '../stores/auth';
@@ -76,8 +71,11 @@ export default defineRouter(function () {
       return accueil(auth.utilisateur.role);
     }
     if (to.name === 'suivi-presences') {
-      return ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'].includes(auth.utilisateur.role) ? '/synthese-presences'
-        : auth.utilisateur.role === 'CONTROLEUR' ? '/statistiques' : '/rapports';
+      return ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'].includes(auth.utilisateur.role)
+        ? '/synthese-presences'
+        : auth.utilisateur.role === 'CONTROLEUR'
+          ? '/statistiques'
+          : '/rapports';
     }
     if (to.name === 'documents') return auth.utilisateur.role === 'DIRECTION' ? '/attestations' : '/demandes-docs';
     return true;

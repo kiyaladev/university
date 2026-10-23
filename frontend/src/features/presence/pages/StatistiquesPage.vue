@@ -4,8 +4,16 @@
     <en-tete-page :title="$t('statistiques.title')" :subtitle="$t('statistiques.subtitle')">
       <template #actions>
         <div class="stats__periode">
-          <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" @update:model-value="raccourciActif = ''" />
-          <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" @update:model-value="raccourciActif = ''" />
+          <champ-date
+            v-model="filtres.dateDebut"
+            :label="$t('common.actions.from')"
+            @update:model-value="raccourciActif = ''"
+          />
+          <champ-date
+            v-model="filtres.dateFin"
+            :label="$t('common.actions.to')"
+            @update:model-value="raccourciActif = ''"
+          />
           <q-btn
             round
             color="primary"
@@ -47,9 +55,7 @@
         <section v-if="salles?.total" class="plaque releve">
           <div class="releve__ligne">
             <p class="pochoir">{{ $t('statistiques.salles.summary.visited') }}</p>
-            <p class="lettrage avec-unite chiffres releve__valeur">
-              {{ sallesVisitees }}/{{ salles.lignes.length }}
-            </p>
+            <p class="lettrage avec-unite chiffres releve__valeur">{{ sallesVisitees }}/{{ salles.lignes.length }}</p>
           </div>
           <div class="releve__ligne">
             <p class="pochoir">{{ $t('statistiques.salles.summary.controlled') }}</p>
@@ -360,31 +366,21 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { useImpressionFicheEnseignant } from '@/shared/composables/useImpressionFicheEnseignant';
-import {
-  aujourdhui,
-  dateLisible,
-  decalerJours,
-  heuresLisibles,
-  pourcentLisible,
-} from '@/shared/utils/libelles';
+import { aujourdhui, dateLisible, decalerJours, heuresLisibles, pourcentLisible } from '@/shared/utils/libelles';
 
 const $q = useQuasar();
 const route = useRoute();
 const { t } = useI18n();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
-const onglet = ref<'salles' | 'enseignants'>(
-  route.query.onglet === 'enseignants' ? 'enseignants' : 'salles',
-);
+const onglet = ref<'salles' | 'enseignants'>(route.query.onglet === 'enseignants' ? 'enseignants' : 'salles');
 const vue = usePresentationListe();
 const chargement = ref(false);
 const salles = ref<any>(null);
 const enseignants = ref<any>(null);
 
 const filtres = ref({
-  dateDebut: route.query.dateDebut
-    ? String(route.query.dateDebut)
-    : decalerJours(aujourdhui(), -29),
+  dateDebut: route.query.dateDebut ? String(route.query.dateDebut) : decalerJours(aujourdhui(), -29),
   dateFin: route.query.dateFin ? String(route.query.dateFin) : aujourdhui(),
 });
 
@@ -417,43 +413,72 @@ const lienSeancesEnseignant = (enseignantId: string) => ({
   query: { enseignantId, dateDebut: filtres.value.dateDebut, dateFin: filtres.value.dateFin },
 });
 
-const sallesVisitees = computed(
-  () => (salles.value?.lignes ?? []).filter((l: any) => l.controlees > 0).length,
-);
+const sallesVisitees = computed(() => (salles.value?.lignes ?? []).filter((l: any) => l.controlees > 0).length);
 
 const colonnesSalles = computed<QTableColumn[]>(() => [
   { name: 'salle', label: t('common.fields.room'), field: 'code', align: 'left', sortable: true },
   { name: 'planifiees', label: t('common.fields.sessions'), field: 'planifiees', align: 'right', sortable: true },
-  { name: 'controlees', label: t('statistiques.salles.table.columns.controlees'), field: 'controlees', align: 'right', sortable: true },
+  {
+    name: 'controlees',
+    label: t('statistiques.salles.table.columns.controlees'),
+    field: 'controlees',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
-  { name: 'effectif', label: t('statistiques.salles.table.columns.effectif'), field: 'effectifMoyen', align: 'right', sortable: true },
-  { name: 'occupation', label: t('statistiques.salles.table.columns.occupation'), field: 'tauxOccupation', align: 'left', sortable: true },
+  {
+    name: 'effectif',
+    label: t('statistiques.salles.table.columns.effectif'),
+    field: 'effectifMoyen',
+    align: 'right',
+    sortable: true,
+  },
+  {
+    name: 'occupation',
+    label: t('statistiques.salles.table.columns.occupation'),
+    field: 'tauxOccupation',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'presence', label: t('common.fields.attendance'), field: 'tauxPresence', align: 'left', sortable: true },
-  { name: 'visite', label: t('statistiques.salles.table.columns.visite'), field: 'derniereVisite', align: 'left', sortable: true },
+  {
+    name: 'visite',
+    label: t('statistiques.salles.table.columns.visite'),
+    field: 'derniereVisite',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'registre', label: '', field: 'salleId', align: 'right' },
 ]);
 
 // Sur téléphone, on garde ce que le contrôleur cherche : où il est passé, ce
 // qu'il y a constaté.
 const colonnesSallesVisibles = computed(() =>
-  $q.screen.lt.md
-    ? ['salle', 'controlees', 'absent', 'presence']
-    : colonnesSalles.value.map((c) => String(c.name)),
+  $q.screen.lt.md ? ['salle', 'controlees', 'absent', 'presence'] : colonnesSalles.value.map((c) => String(c.name)),
 );
 
 const colonnesEnseignantsVisibles = computed(() =>
-  $q.screen.lt.md
-    ? ['nom', 'absent', 'presence']
-    : colonnesEnseignants.value.map((c) => String(c.name)),
+  $q.screen.lt.md ? ['nom', 'absent', 'presence'] : colonnesEnseignants.value.map((c) => String(c.name)),
 );
 
 const colonnesEnseignants = computed<QTableColumn[]>(() => [
-  { name: 'matricule', label: t('statistiques.enseignants.table.columns.matricule'), field: 'matricule', align: 'left' },
+  {
+    name: 'matricule',
+    label: t('statistiques.enseignants.table.columns.matricule'),
+    field: 'matricule',
+    align: 'left',
+  },
   { name: 'nom', label: t('common.fields.teacher'), field: 'nom', align: 'left', sortable: true },
   { name: 'departement', label: t('common.fields.department'), field: 'departement', align: 'left' },
   { name: 'planifiees', label: t('common.fields.sessions'), field: 'planifiees', align: 'right', sortable: true },
   { name: 'assurees', label: t('statistiques.enseignants.table.columns.assurees'), field: 'assurees', align: 'right' },
-  { name: 'retard', label: t('statistiques.enseignants.table.columns.retard'), field: 'retard', align: 'right', sortable: true },
+  {
+    name: 'retard',
+    label: t('statistiques.enseignants.table.columns.retard'),
+    field: 'retard',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
   {
     name: 'heures',
@@ -485,8 +510,6 @@ async function charger() {
 
 watch(filtres, charger, { deep: true });
 onMounted(charger);
-
-
 </script>
 
 <style scoped lang="scss">
@@ -518,9 +541,13 @@ onMounted(charger);
   gap: var(--up-2);
 }
 
-.stats__nom-salle { display: block; }
+.stats__nom-salle {
+  display: block;
+}
 
-.stats__batiment { color: var(--up-encre-douce); }
+.stats__batiment {
+  color: var(--up-encre-douce);
+}
 
 .releve {
   display: grid;
@@ -534,8 +561,12 @@ onMounted(charger);
   gap: var(--up-3);
   padding: var(--up-3);
 
-  &:nth-child(2n) { border-left: var(--up-filet); }
-  &:nth-child(n + 3) { border-top: var(--up-filet); }
+  &:nth-child(2n) {
+    border-left: var(--up-filet);
+  }
+  &:nth-child(n + 3) {
+    border-top: var(--up-filet);
+  }
 }
 
 .releve__valeur {
@@ -622,7 +653,9 @@ onMounted(charger);
     letter-spacing: -0.01em;
   }
 
-  .lettrage { font-size: 1.25rem; }
+  .lettrage {
+    font-size: 1.25rem;
+  }
 }
 
 .fiche__taux {
@@ -630,8 +663,13 @@ onMounted(charger);
   align-items: center;
   gap: var(--up-2);
 
-  .pochoir { color: var(--up-encre-douce); min-width: 76px; }
-  > :last-child { flex: 1; }
+  .pochoir {
+    color: var(--up-encre-douce);
+    min-width: 76px;
+  }
+  > :last-child {
+    flex: 1;
+  }
 }
 
 .fiche__pied {
@@ -660,11 +698,23 @@ onMounted(charger);
 }
 
 @media (max-width: 599px) {
-  .cartes { grid-template-columns: 1fr; }
-  .stats__barre { align-items: stretch; }
-  .stats__periode { width: 100%; }
-  .releve { grid-template-columns: 1fr; }
-  .releve__ligne:nth-child(2n) { border-left: 0; }
-  .releve__ligne + .releve__ligne { border-top: var(--up-filet); }
+  .cartes {
+    grid-template-columns: 1fr;
+  }
+  .stats__barre {
+    align-items: stretch;
+  }
+  .stats__periode {
+    width: 100%;
+  }
+  .releve {
+    grid-template-columns: 1fr;
+  }
+  .releve__ligne:nth-child(2n) {
+    border-left: 0;
+  }
+  .releve__ligne + .releve__ligne {
+    border-top: var(--up-filet);
+  }
 }
 </style>

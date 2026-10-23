@@ -80,8 +80,7 @@ export default {
       'Tous les documents déposés seront comparés deux à deux : l’opération peut prendre plusieurs minutes. Les décisions déjà prises ne sont pas remises en cause.',
     recalculateDialogOk: 'Lancer le recalcul',
     recalculateDoneTitle: 'Recalcul terminé',
-    recalculateDoneMessage:
-      '{created} suspicion(s) créée(s), {updated} mise(s) à jour, {ignored} ignorée(s).',
+    recalculateDoneMessage: '{created} suspicion(s) créée(s), {updated} mise(s) à jour, {ignored} ignorée(s).',
     recalculateSuccess: 'Recalcul anti-plagiat terminé',
   },
 };

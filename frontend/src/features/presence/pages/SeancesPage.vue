@@ -145,8 +145,14 @@
           :label="$t('seances.emptyState.expand30')"
           @click="elargirA30Jours"
         />
-        <q-btn v-if="auth.peutPlanifier" outline no-caps icon="calendar_month"
-          :label="$t('nav.emploi-du-temps')" to="/emploi-du-temps" />
+        <q-btn
+          v-if="auth.peutPlanifier"
+          outline
+          no-caps
+          icon="calendar_month"
+          :label="$t('nav.emploi-du-temps')"
+          to="/emploi-du-temps"
+        />
       </div>
     </div>
 
@@ -199,7 +205,7 @@
     </q-table>
 
     <!-- Une journée, un bloc : le registre se lit par jour, pas ligne à ligne -->
-    <section v-for="jour in (vue === 'cartes' ? journees : [])" :key="jour.date" class="journee">
+    <section v-for="jour in vue === 'cartes' ? journees : []" :key="jour.date" class="journee">
       <header class="journee__tete">
         <h2 class="lettrage journee__date">{{ jour.libelle }}</h2>
         <span class="pochoir pochoir--brut journee__compte chiffres">
@@ -235,16 +241,20 @@
                 <span v-if="s.salle" class="plaque-salle">{{ s.salle.code }}</span>
               </p>
               <p v-if="s.controle" class="pochoir pochoir--brut ligne__constat chiffres">
-                {{ s.controle.heureArrivee ?? '—' }} → {{ s.controle.heureFinReelle ?? '—' }}
-                · {{ dureeLisible(s.controle.dureeMinutes) }}
-                <span v-if="s.controle.effectifPresent"> · {{ s.controle.effectifPresent }} {{ $t('seances.card.studentsSuffix') }}</span>
+                {{ s.controle.heureArrivee ?? '—' }} → {{ s.controle.heureFinReelle ?? '—' }} ·
+                {{ dureeLisible(s.controle.dureeMinutes) }}
+                <span v-if="s.controle.effectifPresent">
+                  · {{ s.controle.effectifPresent }} {{ $t('seances.card.studentsSuffix') }}</span
+                >
                 · {{ s.controle.controleur?.prenom }} {{ s.controle.controleur?.nom }}
               </p>
             </div>
 
             <div class="ligne__etat">
               <champ-statut :statut="s.controle?.statut ?? 'NON_CONTROLE'" />
-              <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">{{ $t('seances.card.cancelledBadge') }}</q-badge>
+              <q-badge v-if="s.statut === 'ANNULEE'" color="grey-7" class="q-mt-xs">{{
+                $t('seances.card.cancelledBadge')
+              }}</q-badge>
 
               <div class="ligne__boutons">
                 <q-btn
@@ -286,12 +296,7 @@
       </ol>
     </section>
 
-    <dialogue-seance
-      v-model="dialogSeance"
-      :seance="seanceEditee"
-      :salles="salles"
-      @enregistre="apresCreation"
-    />
+    <dialogue-seance v-model="dialogSeance" :seance="seanceEditee" :salles="salles" @enregistre="apresCreation" />
     <dialogue-pointage v-model="dialogPointage" :seance="seanceSelectionnee" @enregistre="charger" />
 
     <!-- Détail du contrôle consigné -->
@@ -304,13 +309,12 @@
                au lieu de se marcher dessus. -->
           <dl class="fiche-detail">
             <dt class="pochoir">{{ $t('common.fields.teacher') }}</dt>
-            <dd>
-              {{ detail.affectation?.enseignant?.nom }} {{ detail.affectation?.enseignant?.prenom }}
-            </dd>
+            <dd>{{ detail.affectation?.enseignant?.nom }} {{ detail.affectation?.enseignant?.prenom }}</dd>
 
             <dt class="pochoir">{{ $t('seances.detail.subjectPromotion') }}</dt>
             <dd>
-              {{ detail.affectation?.matiere?.intitule }} {{ $t('common.format.emptyValue') }} {{ detail.affectation?.promotion?.nom }}
+              {{ detail.affectation?.matiere?.intitule }} {{ $t('common.format.emptyValue') }}
+              {{ detail.affectation?.promotion?.nom }}
             </dd>
 
             <dt class="pochoir">{{ $t('seances.detail.courseType') }}</dt>
@@ -327,10 +331,17 @@
 
             <dt class="pochoir">{{ $t('seances.detail.assignedController') }}</dt>
             <dd class="row items-center q-gutter-sm">
-              <span>{{ detail.controleurAssigne ? `${detail.controleurAssigne.prenom} ${detail.controleurAssigne.nom}` : $t('seances.detail.noAssignedController') }}</span>
+              <span>{{
+                detail.controleurAssigne
+                  ? `${detail.controleurAssigne.prenom} ${detail.controleurAssigne.nom}`
+                  : $t('seances.detail.noAssignedController')
+              }}</span>
               <q-btn
                 v-if="peutAffecterControleur"
-                flat dense no-caps icon="assignment_ind"
+                flat
+                dense
+                no-caps
+                icon="assignment_ind"
                 :label="$t('seances.detail.assignController')"
                 @click="ouvrirAffectationControleur(detail)"
               />
@@ -360,8 +371,9 @@
 
               <dt class="pochoir">{{ $t('seances.detail.actualSchedule') }}</dt>
               <dd class="chiffres">
-                {{ detail.controle.heureArrivee ?? '—' }} → {{ detail.controle.heureFinReelle ?? '—' }}
-                ({{ dureeLisible(detail.controle.dureeMinutes) }})
+                {{ detail.controle.heureArrivee ?? '—' }} → {{ detail.controle.heureFinReelle ?? '—' }} ({{
+                  dureeLisible(detail.controle.dureeMinutes)
+                }})
               </dd>
 
               <dt class="pochoir">{{ $t('seances.detail.studentsPresent') }}</dt>
@@ -375,8 +387,8 @@
 
               <dt class="pochoir">{{ $t('seances.detail.checkedBy') }}</dt>
               <dd>
-                {{ detail.controle.controleur?.prenom }} {{ detail.controle.controleur?.nom }}
-                · <span class="chiffres">{{ dateHeureLisible(detail.controle.horodatage) }}</span>
+                {{ detail.controle.controleur?.prenom }} {{ detail.controle.controleur?.nom }} ·
+                <span class="chiffres">{{ dateHeureLisible(detail.controle.horodatage) }}</span>
               </dd>
 
               <dt class="pochoir">{{ $t('seances.detail.attestation') }}</dt>
@@ -441,14 +453,31 @@
           <q-select
             v-model="controleurChoisi"
             :options="optionsControleurs"
-            outlined dense clearable emit-value map-options
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
             :label="$t('seances.detail.assignedController')"
             :loading="chargementControleurs"
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="sauvegardeAffectation" @click="dialogAffectationControleur = false" />
-          <q-btn color="primary" unelevated no-caps :label="$t('common.actions.save')" :loading="sauvegardeAffectation" @click="enregistrerAffectationControleur" />
+          <q-btn
+            flat
+            no-caps
+            :label="$t('common.actions.cancel')"
+            :disable="sauvegardeAffectation"
+            @click="dialogAffectationControleur = false"
+          />
+          <q-btn
+            color="primary"
+            unelevated
+            no-caps
+            :label="$t('common.actions.save')"
+            :loading="sauvegardeAffectation"
+            @click="enregistrerAffectationControleur"
+          />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -461,41 +490,76 @@
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div class="row q-col-gutter-md q-mb-md">
-            <div class="col-6"><champ-date v-model="tournee.dateDebut" :label="$t('common.actions.from')" @update:model-value="tourneeApercu = null" /></div>
-            <div class="col-6"><champ-date v-model="tournee.dateFin" :label="$t('common.actions.to')" @update:model-value="tourneeApercu = null" /></div>
+            <div class="col-6">
+              <champ-date
+                v-model="tournee.dateDebut"
+                :label="$t('common.actions.from')"
+                @update:model-value="tourneeApercu = null"
+              />
+            </div>
+            <div class="col-6">
+              <champ-date
+                v-model="tournee.dateFin"
+                :label="$t('common.actions.to')"
+                @update:model-value="tourneeApercu = null"
+              />
+            </div>
           </div>
           <q-select
-            v-model="tournee.departementId" :options="optionsDepartements"
-            outlined dense clearable emit-value map-options
+            v-model="tournee.departementId"
+            :options="optionsDepartements"
+            outlined
+            dense
+            clearable
+            emit-value
+            map-options
             :label="$t('seances.tournee.departmentOptional')"
             @update:model-value="tourneeApercu = null"
           />
           <q-select
-            v-model="tournee.controleurId" :options="optionsControleurs"
-            outlined dense emit-value map-options
+            v-model="tournee.controleurId"
+            :options="optionsControleurs"
+            outlined
+            dense
+            emit-value
+            map-options
             :label="$t('seances.detail.assignedController')"
             @update:model-value="tourneeApercu = null"
             class="q-mt-md"
           />
           <q-banner v-if="tourneeApercu" rounded class="bg-blue-1 text-blue-10 q-mt-md">
-            {{ $t('seances.tournee.preview', {
-              affectables: tourneeApercu.seancesAffectables,
-              closed: tourneeApercu.ignoreesAnneeCloturee,
-            }) }}
+            {{
+              $t('seances.tournee.preview', {
+                affectables: tourneeApercu.seancesAffectables,
+                closed: tourneeApercu.ignoreesAnneeCloturee,
+              })
+            }}
           </q-banner>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="chargementTournee || sauvegardeTournee" @click="dialogTournee = false" />
+          <q-btn
+            flat
+            no-caps
+            :label="$t('common.actions.cancel')"
+            :disable="chargementTournee || sauvegardeTournee"
+            @click="dialogTournee = false"
+          />
           <q-btn
             v-if="!tourneeApercu"
-            outline color="primary" no-caps icon="manage_search"
+            outline
+            color="primary"
+            no-caps
+            icon="manage_search"
             :loading="chargementTournee"
             :label="$t('common.actions.preview')"
             @click="previsualiserTournee"
           />
           <q-btn
             v-else
-            color="primary" unelevated no-caps icon="assignment_ind"
+            color="primary"
+            unelevated
+            no-caps
+            icon="assignment_ind"
             :loading="sauvegardeTournee"
             :disable="tourneeApercu.seancesAffectables === 0"
             :label="$t('seances.tournee.assignAction', { count: tourneeApercu.seancesAffectables })"
@@ -565,8 +629,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'enseignant',
     label: t('common.fields.teacher'),
-    field: (r: Seance) =>
-      `${r.affectation?.enseignant?.nom ?? ''} ${r.affectation?.enseignant?.prenom ?? ''}`.trim(),
+    field: (r: Seance) => `${r.affectation?.enseignant?.nom ?? ''} ${r.affectation?.enseignant?.prenom ?? ''}`.trim(),
     align: 'left',
     sortable: true,
   },
@@ -591,7 +654,13 @@ const colonnes = computed<QTableColumn[]>(() => [
     field: (r: Seance) => (r.controle ? dureeLisible(r.controle.dureeMinutes) : '—'),
     align: 'right',
   },
-  { name: 'etat', label: t('seances.table.columns.status'), field: (r: Seance) => r.controle?.statut ?? '', align: 'left', sortable: true },
+  {
+    name: 'etat',
+    label: t('seances.table.columns.status'),
+    field: (r: Seance) => r.controle?.statut ?? '',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -599,9 +668,7 @@ const colonnes = computed<QTableColumn[]>(() => [
 // 390 px sans déborder, et la ligne entière ouvre le détail — d'où l'on peut
 // pointer. Garder la colonne d'actions poussait l'état hors de l'écran.
 const colonnesVisibles = computed(() =>
-  $q.screen.lt.md
-    ? ['heure', 'enseignant', 'etat']
-    : colonnes.value.map((c) => String(c.name)),
+  $q.screen.lt.md ? ['heure', 'enseignant', 'etat'] : colonnes.value.map((c) => String(c.name)),
 );
 
 const seances = ref<Seance[]>([]);
@@ -657,9 +724,7 @@ const optionsStatuts = Object.entries(LIBELLE_STATUT_SEANCE).map(([value, label]
   value,
 }));
 
-const optionsSalles = computed(() =>
-  salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
-);
+const optionsSalles = computed(() => salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
 const etiquetteFiltres = computed(() => {
   const actifs = [
@@ -669,9 +734,7 @@ const etiquetteFiltres = computed(() => {
     recherche.value && t('seances.filters.activeSearch'),
     seulementAPointer.value && t('seances.filters.activeUnchecked'),
   ].filter(Boolean);
-  return actifs.length
-    ? t('seances.filters.labelActive', { list: actifs.join(', ') })
-    : t('seances.filters.label');
+  return actifs.length ? t('seances.filters.labelActive', { list: actifs.join(', ') }) : t('seances.filters.label');
 });
 
 const filtresActifs = computed(
@@ -800,7 +863,8 @@ async function ouvrirAffectationGroupee() {
       referentiels.departements(),
     ]);
     optionsControleurs.value = controleurs.data.map((u: { id: string; nom: string; prenom: string }) => ({
-      value: u.id, label: `${u.prenom} ${u.nom}`,
+      value: u.id,
+      label: `${u.prenom} ${u.nom}`,
     }));
     optionsDepartements.value = departements.map((d) => ({ value: d.id, label: d.nom }));
     if (!tournee.value.controleurId) tournee.value.controleurId = optionsControleurs.value[0]?.value ?? '';
@@ -818,12 +882,14 @@ async function previsualiserTournee() {
   }
   chargementTournee.value = true;
   try {
-    const { data } = await api.get('/seances/tournee-apercu', { params: {
-      dateDebut: tournee.value.dateDebut,
-      dateFin: tournee.value.dateFin,
-      controleurId: tournee.value.controleurId,
-      departementId: tournee.value.departementId || undefined,
-    } });
+    const { data } = await api.get('/seances/tournee-apercu', {
+      params: {
+        dateDebut: tournee.value.dateDebut,
+        dateFin: tournee.value.dateFin,
+        controleurId: tournee.value.controleurId,
+        departementId: tournee.value.departementId || undefined,
+      },
+    });
     tourneeApercu.value = data;
   } catch {
     /* notifié par l'intercepteur */
@@ -978,10 +1044,7 @@ onMounted(async () => {
   await charger();
   // Les référentiels n'alimentent que des listes déroulantes : ils ne doivent
   // pas retarder l'affichage du registre.
-  [salles.value, enseignants.value] = await Promise.all([
-    referentiels.salles(),
-    referentiels.enseignants(),
-  ]);
+  [salles.value, enseignants.value] = await Promise.all([referentiels.salles(), referentiels.enseignants()]);
 });
 </script>
 
@@ -1071,7 +1134,9 @@ onMounted(async () => {
 .registre__releve-cellule {
   padding: var(--up-3);
 
-  & + & { border-left: var(--up-filet); }
+  & + & {
+    border-left: var(--up-filet);
+  }
 }
 
 .registre__releve-valeur {
@@ -1080,7 +1145,9 @@ onMounted(async () => {
 }
 
 // ----------------------------------------------------------------- journée
-.journee + .journee { margin-top: var(--up-5); }
+.journee + .journee {
+  margin-top: var(--up-5);
+}
 
 .journee__tete {
   display: flex;
@@ -1096,10 +1163,14 @@ onMounted(async () => {
 .journee__date {
   font-size: 1.15rem;
   margin: 0;
-  &::first-letter { text-transform: uppercase; }
+  &::first-letter {
+    text-transform: uppercase;
+  }
 }
 
-.journee__compte { color: var(--up-encre-douce); }
+.journee__compte {
+  color: var(--up-encre-douce);
+}
 
 .journee__liste {
   list-style: none;
@@ -1116,7 +1187,9 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.ligne--annulee { opacity: 0.6; }
+.ligne--annulee {
+  opacity: 0.6;
+}
 
 .ligne__heure {
   flex-direction: column;
@@ -1131,9 +1204,15 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.ligne__enseignant { font-size: 1.02rem; margin: 0; }
+.ligne__enseignant {
+  font-size: 1.02rem;
+  margin: 0;
+}
 
-.ligne__matiere { margin: 3px 0 0; font-size: 0.92rem; }
+.ligne__matiere {
+  margin: 3px 0 0;
+  font-size: 0.92rem;
+}
 
 .ligne__type {
   border: 1px solid var(--up-encre);
@@ -1167,7 +1246,9 @@ onMounted(async () => {
   gap: var(--up-1);
 }
 
-.signature-detail { max-height: 90px; }
+.signature-detail {
+  max-height: 90px;
+}
 
 .registre__vide {
   display: flex;
@@ -1179,7 +1260,10 @@ onMounted(async () => {
   text-align: center;
 }
 
-.registre__vide-titre { font-size: 1.3rem; color: var(--up-encre); }
+.registre__vide-titre {
+  font-size: 1.3rem;
+  color: var(--up-encre);
+}
 
 .registre__vide-actions {
   display: flex;
@@ -1190,9 +1274,15 @@ onMounted(async () => {
 }
 
 @media (max-width: 767px) {
-  .registre__releve { grid-template-columns: repeat(2, 1fr); }
-  .registre__releve-cellule:nth-child(2n + 1) { border-left: 0; }
-  .registre__releve-cellule:nth-child(n + 3) { border-top: var(--up-filet); }
+  .registre__releve {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .registre__releve-cellule:nth-child(2n + 1) {
+    border-left: 0;
+  }
+  .registre__releve-cellule:nth-child(n + 3) {
+    border-top: var(--up-filet);
+  }
 }
 
 @media (max-width: 599px) {
@@ -1201,7 +1291,9 @@ onMounted(async () => {
     grid-template-rows: auto auto;
   }
 
-  .ligne__heure { grid-row: 1 / span 2; }
+  .ligne__heure {
+    grid-row: 1 / span 2;
+  }
 
   .ligne__etat {
     grid-column: 2;

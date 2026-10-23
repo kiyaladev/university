@@ -26,11 +26,12 @@ export default {
   },
   guidance: {
     choisirPromotion: 'Choisissez une promotion',
-    text: 'Les bulletins se lisent promotion par promotion. Ouvrez « Filtres avancés » pour sélectionner l\'année et la promotion, ou partez d\'une délibération.',
+    text: "Les bulletins se lisent promotion par promotion. Ouvrez « Filtres avancés » pour sélectionner l'année et la promotion, ou partez d'une délibération.",
     voirDeliberations: 'Voir les délibérations',
   },
   banners: {
-    infoImprimables: '{nbImprimables} étudiant(s) délibéré(s) sur {total} inscrit(s) affiché(s). Seuls les étudiants portés à une délibération ont un bulletin.',
+    infoImprimables:
+      '{nbImprimables} étudiant(s) délibéré(s) sur {total} inscrit(s) affiché(s). Seuls les étudiants portés à une délibération ont un bulletin.',
     aucuneDeliberation: 'Aucune délibération pour ce filtre : les bulletins ne pourront pas être édités.',
     creerDeliberation: 'Créer la délibération',
   },
@@ -75,7 +76,8 @@ export default {
   dialogs: {
     imprimerPromotion: {
       title: 'Imprimer toute la promotion',
-      message: "{n} bulletin(s) vont s'ouvrir dans autant d'onglets. Autorisez les fenêtres surgissantes si votre navigateur les bloque.",
+      message:
+        "{n} bulletin(s) vont s'ouvrir dans autant d'onglets. Autorisez les fenêtres surgissantes si votre navigateur les bloque.",
       ok: 'Ouvrir les bulletins',
     },
   },

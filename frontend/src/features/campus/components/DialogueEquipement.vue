@@ -7,11 +7,23 @@
     @valider="enregistrer"
   >
     <span class="section-titre">{{ $t('common.fields.identification') }}</span>
-    <q-input v-model="form.libelle" outlined dense :label="$t('common.fields.labelRequired')" class="q-mb-md"
+    <q-input
+      v-model="form.libelle"
+      outlined
+      dense
+      :label="$t('common.fields.labelRequired')"
+      class="q-mb-md"
       :hint="$t('helpdesk.equipmentDialog.exampleLabel')"
-      :rules="[(v: string) => (v ?? '').trim().length >= 2 || $t('common.messages.errors.tooShort')]" />
-    <q-input v-model="form.emplacement" outlined dense :label="$t('helpdesk.table.columns.location')"
-      :hint="$t('helpdesk.equipmentDialog.exampleLocation')" class="q-mb-md" />
+      :rules="[(v: string) => (v ?? '').trim().length >= 2 || $t('common.messages.errors.tooShort')]"
+    />
+    <q-input
+      v-model="form.emplacement"
+      outlined
+      dense
+      :label="$t('helpdesk.table.columns.location')"
+      :hint="$t('helpdesk.equipmentDialog.exampleLocation')"
+      class="q-mb-md"
+    />
     <q-toggle v-model="form.actif" :label="$t('helpdesk.equipmentDialog.inService')" />
   </dialogue-formulaire>
 </template>

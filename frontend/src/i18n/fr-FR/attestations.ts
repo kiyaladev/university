@@ -9,7 +9,8 @@ export default {
     qr: 'QR',
   },
   issueDialog: {
-    subtitle: "Document officiel vérifiable par QR code — la même année, le même type et le même étudiant ne donnent qu'une attestation active.",
+    subtitle:
+      "Document officiel vérifiable par QR code — la même année, le même type et le même étudiant ne donnent qu'une attestation active.",
     studentHint: 'Tapez au moins 2 lettres : nom, prénom ou matricule',
     studentEmpty: 'Aucun étudiant trouvé',
     type: "Type d'attestation *",

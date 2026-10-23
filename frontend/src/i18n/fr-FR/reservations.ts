@@ -33,7 +33,7 @@ export default {
   emptyState: {
     title: 'Aucune réservation sur cette période.',
     description:
-      'Élargissez les dates, ou déposez une demande : elle part en « en attente » jusqu\'à l\'arbitrage de la scolarité.',
+      "Élargissez les dates, ou déposez une demande : elle part en « en attente » jusqu'à l'arbitrage de la scolarité.",
   },
   chips: {
     room: 'Salle : {code}',

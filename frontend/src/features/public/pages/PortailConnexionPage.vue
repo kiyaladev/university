@@ -35,8 +35,8 @@
         <p class="acces__intro">
           {{ $t('portailConnexion.step1.intro') }}
           <router-link to="/connexion" class="acces__lien-lien">
-            {{ $t('portailConnexion.step1.introLink') }}
-          </router-link>.
+            {{ $t('portailConnexion.step1.introLink') }} </router-link
+          >.
         </p>
 
         <q-input
@@ -77,7 +77,9 @@
         <q-banner class="note--info" role="status" aria-live="polite">
           <template #avatar><q-icon name="sms" /></template>
           <i18n-t keypath="portailConnexion.step2.smsSent" tag="span">
-            <template #telephone><strong class="chiffres">{{ telephone }}</strong></template>
+            <template #telephone
+              ><strong class="chiffres">{{ telephone }}</strong></template
+            >
           </i18n-t>
         </q-banner>
 
@@ -111,8 +113,23 @@
         />
 
         <div class="acces__retour">
-          <q-btn flat dense no-caps icon="chevron_left" :label="$t('portailConnexion.step2.changeNumber')" @click="reinitialiser" />
-          <q-btn flat dense no-caps icon="refresh" :label="$t('portailConnexion.step2.resendCode')" :loading="envoi" @click="demanderCode" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="chevron_left"
+            :label="$t('portailConnexion.step2.changeNumber')"
+            @click="reinitialiser"
+          />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="refresh"
+            :label="$t('portailConnexion.step2.resendCode')"
+            :loading="envoi"
+            @click="demanderCode"
+          />
         </div>
       </q-form>
 
@@ -170,7 +187,7 @@ const codeDemande = ref(false);
 
 function messageErreur(e: any): string {
   const donnees = e?.response?.data?.message;
-  return Array.isArray(donnees) ? donnees.join(' · ') : donnees ?? t('portailConnexion.messages.genericError');
+  return Array.isArray(donnees) ? donnees.join(' · ') : (donnees ?? t('portailConnexion.messages.genericError'));
 }
 
 function reinitialiser() {
@@ -266,8 +283,13 @@ async function entrer() {
   border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: var(--up-encre-tertiaire); }
-  dd { margin: 3px 0 0; font-size: 0.92rem; }
+  dt {
+    color: var(--up-encre-tertiaire);
+  }
+  dd {
+    margin: 3px 0 0;
+    font-size: 0.92rem;
+  }
 }
 
 // ---------------------------------------------------------------- accès
@@ -300,7 +322,9 @@ async function entrer() {
   gap: var(--up-3);
 }
 
-.acces__bouton { min-height: 56px; }
+.acces__bouton {
+  min-height: 56px;
+}
 
 .acces__erreur {
   background: $rouge-fond;
@@ -321,7 +345,9 @@ async function entrer() {
   gap: var(--up-2);
 }
 
-.acces__separateur { margin: var(--up-4) 0 var(--up-3); }
+.acces__separateur {
+  margin: var(--up-4) 0 var(--up-3);
+}
 
 .acces__services-titre {
   margin: 0 0 var(--up-2);
@@ -342,7 +368,10 @@ async function entrer() {
   text-decoration: none;
 
   &:hover,
-  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
+  &:focus-visible {
+    color: var(--up-encre);
+    text-decoration: underline;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -355,8 +384,12 @@ async function entrer() {
     gap: var(--up-3);
   }
 
-  .enseigne__faits { display: none; }
+  .enseigne__faits {
+    display: none;
+  }
 
-  .acces__plaque { padding: var(--up-5) var(--up-4) var(--up-6); }
+  .acces__plaque {
+    padding: var(--up-5) var(--up-4) var(--up-6);
+  }
 }
 </style>

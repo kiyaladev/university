@@ -23,11 +23,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueVod from '../components/DialogueVod.vue';
-import {
-  LIBELLE_STATUT_VOD,
-  LIBELLE_TYPE_RESSOURCE_VOD,
-  optionsDepuis,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_VOD, LIBELLE_TYPE_RESSOURCE_VOD, optionsDepuis } from '@/shared/utils/libelles';
 import type { CoursVOD, StatutVOD, TypeRessourceVOD, ChipFiltre } from '@/types';
 
 /**
@@ -145,9 +141,10 @@ const chips = computed(() => {
   if (f.recherche) {
     cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
   }
-  if (f.type) cs.push({ label: LIBELLE_TYPE_RESSOURCE_VOD[f.type] ?? f.type, value: f.type, icone: 'movie', cle: 'type'});
+  if (f.type)
+    cs.push({ label: LIBELLE_TYPE_RESSOURCE_VOD[f.type] ?? f.type, value: f.type, icone: 'movie', cle: 'type' });
   if (f.statut) {
-    cs.push({ label: LIBELLE_STATUT_VOD[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut'});
+    cs.push({ label: LIBELLE_STATUT_VOD[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut' });
   }
   return cs;
 });
@@ -218,7 +215,6 @@ function avancement(v: RessourceCatalogue): number {
   if (!v.dureeSecondes || !v.dernierePosition) return 0;
   return Math.min(100, Math.round((v.dernierePosition / v.dureeSecondes) * 100));
 }
-
 </script>
 
 <template>
@@ -285,7 +281,14 @@ function avancement(v: RessourceCatalogue): number {
       <template #no-data>
         <etat-vide icone="play_circle_outline" :titre="messageVide">
           <template v-if="peutEditer" #action>
-            <q-btn flat no-caps color="primary" icon="add" :label="$t('vodPage.actions.newResource')" @click="ouvrirEdition()" />
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('vodPage.actions.newResource')"
+              @click="ouvrirEdition()"
+            />
           </template>
         </etat-vide>
       </template>
@@ -418,7 +421,11 @@ function avancement(v: RessourceCatalogue): number {
               unelevated
               color="primary"
               icon="play_arrow"
-              :label="estEtudiant && avancement(v) > 0 && !v.termine ? $t('common.actions.resume') : $t('vodPage.actions.player')"
+              :label="
+                estEtudiant && avancement(v) > 0 && !v.termine
+                  ? $t('common.actions.resume')
+                  : $t('vodPage.actions.player')
+              "
               no-caps
               @click="lecteur(v)"
             />
@@ -456,9 +463,21 @@ function avancement(v: RessourceCatalogue): number {
           </q-card-actions>
         </q-card>
       </div>
-      <etat-vide v-if="!liste.chargement && !ressources.length" class="col-12" icone="play_circle_outline" :titre="messageVide">
+      <etat-vide
+        v-if="!liste.chargement && !ressources.length"
+        class="col-12"
+        icone="play_circle_outline"
+        :titre="messageVide"
+      >
         <template v-if="peutEditer" #action>
-          <q-btn flat no-caps color="primary" icon="add" :label="$t('vodPage.actions.newResource')" @click="ouvrirEdition()" />
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            icon="add"
+            :label="$t('vodPage.actions.newResource')"
+            @click="ouvrirEdition()"
+          />
         </template>
       </etat-vide>
     </div>

@@ -49,12 +49,7 @@
           map-options
           :label="$t('bulletins.filters.promotion')"
         />
-        <choix-semestre
-          v-model="filtres.session"
-          type="session"
-          :label="$t('bulletins.filters.session')"
-          clearable
-        />
+        <choix-semestre v-model="filtres.session" type="session" :label="$t('bulletins.filters.session')" clearable />
         <q-select
           v-model="filtres.decision"
           :options="optionsDecisions"
@@ -121,7 +116,13 @@
           <template #avatar><q-icon name="warning" color="warning" /></template>
           {{ $t('bulletins.banners.aucuneDeliberation') }}
           <template #action>
-            <q-btn flat dense no-caps :label="$t('bulletins.banners.creerDeliberation')" @click="router.push({ name: 'deliberations' })" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              :label="$t('bulletins.banners.creerDeliberation')"
+              @click="router.push({ name: 'deliberations' })"
+            />
           </template>
         </q-banner>
 
@@ -162,42 +163,54 @@
 
           <template #body-cell-actions="p">
             <q-td :props="p" class="text-right">
-<q-btn
+              <q-btn
                 flat
-                dense no-caps
+                dense
+                no-caps
                 icon="visibility"
-                :aria-label="$t('bulletins.table.ariaLabels.voirBulletin')" :label="$t('bulletins.table.ariaLabels.voirBulletin')"
+                :aria-label="$t('bulletins.table.ariaLabels.voirBulletin')"
+                :label="$t('bulletins.table.ariaLabels.voirBulletin')"
                 @click.stop="selectionner(p.row)"
               >
                 <q-tooltip>{{ $t('bulletins.table.tooltips.voirBulletin') }}</q-tooltip>
               </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-                flat
-                dense no-caps
-                icon="picture_as_pdf"
-                :color="p.row.deliberationId ? 'primary' : 'grey-5'"
-                :disable="!p.row.deliberationId"
-                :aria-label="$t('bulletins.table.ariaLabels.imprimerBulletin')" :label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
-                @click.stop="imprimerUn(p.row)"
-              >
-                <q-tooltip>
-                  {{ p.row.deliberationId ? $t('bulletins.table.tooltips.imprimerOfficiel') : $t('bulletins.table.tooltips.aucuneDeliberationEtudiant') }}
-                </q-tooltip>
-              </q-btn>
-<q-btn v-close-popup
-                v-if="p.row.decision === 'ADMIS'"
-                flat
-                dense no-caps
-                icon="verified_user"
-                color="secondary"
-                :aria-label="$t('bulletins.table.ariaLabels.emettreAttestation')" :label="$t('bulletins.table.ariaLabels.emettreAttestation')"
-                @click.stop="allerAttestation(p.row)"
-              >
-                <q-tooltip>{{ $t('bulletins.table.tooltips.emettreAttestation') }}</q-tooltip>
-              </q-btn>
-</actions-secondaires>
-</q-td>
+              <actions-secondaires>
+                <q-btn
+                  v-close-popup
+                  flat
+                  dense
+                  no-caps
+                  icon="picture_as_pdf"
+                  :color="p.row.deliberationId ? 'primary' : 'grey-5'"
+                  :disable="!p.row.deliberationId"
+                  :aria-label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
+                  :label="$t('bulletins.table.ariaLabels.imprimerBulletin')"
+                  @click.stop="imprimerUn(p.row)"
+                >
+                  <q-tooltip>
+                    {{
+                      p.row.deliberationId
+                        ? $t('bulletins.table.tooltips.imprimerOfficiel')
+                        : $t('bulletins.table.tooltips.aucuneDeliberationEtudiant')
+                    }}
+                  </q-tooltip>
+                </q-btn>
+                <q-btn
+                  v-close-popup
+                  v-if="p.row.decision === 'ADMIS'"
+                  flat
+                  dense
+                  no-caps
+                  icon="verified_user"
+                  color="secondary"
+                  :aria-label="$t('bulletins.table.ariaLabels.emettreAttestation')"
+                  :label="$t('bulletins.table.ariaLabels.emettreAttestation')"
+                  @click.stop="allerAttestation(p.row)"
+                >
+                  <q-tooltip>{{ $t('bulletins.table.tooltips.emettreAttestation') }}</q-tooltip>
+                </q-btn>
+              </actions-secondaires>
+            </q-td>
           </template>
         </q-table>
 
@@ -220,7 +233,8 @@
               <div class="text-subtitle1 text-weight-medium">{{ l.nom }} {{ l.prenom }}</div>
               <div class="row items-baseline q-gutter-md q-mt-sm">
                 <div class="chiffres text-h6">
-                  {{ l.moyenne !== null ? l.moyenne.toFixed(2) : '—' }}<span class="text-caption">{{ $t('common.units.outOf20') }}</span>
+                  {{ l.moyenne !== null ? l.moyenne.toFixed(2) : '—'
+                  }}<span class="text-caption">{{ $t('common.units.outOf20') }}</span>
                 </div>
                 <div class="text-caption text-grey-7">
                   {{ $t('bulletins.cards.rang', { rang: l.rang ?? '—' }) }}{{ l.mention ? ` · ${l.mention}` : '' }}
@@ -229,31 +243,45 @@
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-<q-btn flat dense no-caps icon="visibility" :label="$t('bulletins.cards.bulletin')" @click.stop="selectionner(l)" />
-<actions-secondaires>
-<q-btn v-close-popup
+              <q-btn
                 flat
                 dense
                 no-caps
-                icon="picture_as_pdf"
-                :label="$t('common.actions.print')"
-                :disable="!l.deliberationId"
-                @click.stop="imprimerUn(l)"
+                icon="visibility"
+                :label="$t('bulletins.cards.bulletin')"
+                @click.stop="selectionner(l)"
               />
-<q-btn v-close-popup
-                v-if="l.decision === 'ADMIS'"
-                flat
-                dense
-                no-caps
-                color="secondary"
-                icon="verified_user"
-                :label="$t('bulletins.cards.attestation')"
-                @click.stop="allerAttestation(l)"
-              />
-</actions-secondaires>
-</q-card-actions>
+              <actions-secondaires>
+                <q-btn
+                  v-close-popup
+                  flat
+                  dense
+                  no-caps
+                  icon="picture_as_pdf"
+                  :label="$t('common.actions.print')"
+                  :disable="!l.deliberationId"
+                  @click.stop="imprimerUn(l)"
+                />
+                <q-btn
+                  v-close-popup
+                  v-if="l.decision === 'ADMIS'"
+                  flat
+                  dense
+                  no-caps
+                  color="secondary"
+                  icon="verified_user"
+                  :label="$t('bulletins.cards.attestation')"
+                  @click.stop="allerAttestation(l)"
+                />
+              </actions-secondaires>
+            </q-card-actions>
           </q-card>
-          <etat-vide v-if="!lignesPage.length" class="plaque" icone="school" :titre="$t('bulletins.table.emptyState')" />
+          <etat-vide
+            v-if="!lignesPage.length"
+            class="plaque"
+            icone="school"
+            :titre="$t('bulletins.table.emptyState')"
+          />
         </div>
 
         <barre-pagination
@@ -263,7 +291,12 @@
           :total="lignesFiltrees.length"
           :show-all="false"
           @update:page="(v) => (page = v)"
-          @update:page-size="(v) => { pageSize = v; page = 1; }"
+          @update:page-size="
+            (v) => {
+              pageSize = v;
+              page = 1;
+            }
+          "
         />
       </template>
     </template>
@@ -290,17 +323,16 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChoixSemestre from '../components/ChoixSemestre.vue';
 import { ouvrirImpression, ouvrirImpressions } from '@/shared/services/impression';
-import {
-  LIBELLE_DECISION_JURY,
-  LIBELLE_SESSION_DELIBERATION,
-} from '@/shared/utils/libelles';
+import { LIBELLE_DECISION_JURY, LIBELLE_SESSION_DELIBERATION } from '@/shared/utils/libelles';
 import type {
   AnneeAcademique,
   Deliberation,
   DeliberationLigne,
   Inscription,
   Promotion,
-  SessionDeliberation, ChipFiltre } from '@/types';
+  SessionDeliberation,
+  ChipFiltre,
+} from '@/types';
 
 /** Une ligne du listing : l'inscrit, enrichi de sa décision de jury s'il en a une. */
 interface LigneBulletin {
@@ -377,26 +409,43 @@ const optionsDecisions = Object.entries(LIBELLE_DECISION_JURY).map(([value, labe
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    cs.push({ label: t('bulletins.chips.search', { value: filtres.value.recherche }), value: filtres.value.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('bulletins.chips.search', { value: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: t('bulletins.chips.annee', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({
+      label: t('bulletins.chips.annee', { value: a?.libelle ?? '?' }),
+      value: filtres.value.anneeId,
+      icone: 'calendar_today',
+    });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: t('bulletins.chips.promo', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
+    cs.push({
+      label: t('bulletins.chips.promo', { value: p?.nom ?? '?' }),
+      value: filtres.value.promotionId,
+      icone: 'school',
+    });
   }
   if (filtres.value.session) {
     cs.push({
-      label: t('bulletins.chips.session', { value: LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session }),
+      label: t('bulletins.chips.session', {
+        value: LIBELLE_SESSION_DELIBERATION[filtres.value.session] ?? filtres.value.session,
+      }),
       value: filtres.value.session,
       icone: 'flag',
     });
   }
   if (filtres.value.decision) {
     cs.push({
-      label: t('bulletins.chips.decision', { value: LIBELLE_DECISION_JURY[filtres.value.decision] ?? filtres.value.decision }),
+      label: t('bulletins.chips.decision', {
+        value: LIBELLE_DECISION_JURY[filtres.value.decision] ?? filtres.value.decision,
+      }),
       value: filtres.value.decision,
       icone: 'gavel',
     });
@@ -406,7 +455,13 @@ const chips = computed(() => {
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'matricule', label: t('common.fields.studentId'), field: 'matricule', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('common.fields.student'), field: (r) => `${r.nom} ${r.prenom}`, align: 'left', sortable: true },
+  {
+    name: 'etudiant',
+    label: t('common.fields.student'),
+    field: (r) => `${r.nom} ${r.prenom}`,
+    align: 'left',
+    sortable: true,
+  },
   { name: 'moyenne', label: t('bulletins.table.columns.moyenne'), field: 'moyenne', align: 'center', sortable: true },
   { name: 'decision', label: t('common.fields.decision'), field: 'decision', align: 'center' },
   { name: 'mention', label: t('bulletins.table.columns.mention'), field: (r) => r.mention ?? '—', align: 'left' },
@@ -416,7 +471,9 @@ const colonnes = computed<QTableColumn[]>(() => [
 
 /** Recherche texte + décision : filtrés ici, la source ne sait pas le faire. */
 const lignesFiltrees = computed(() => {
-  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  const q = String(filtres.value.recherche ?? '')
+    .toLowerCase()
+    .trim();
   return lignes.value.filter((l) => {
     if (filtres.value.decision && l.decision !== filtres.value.decision) return false;
     if (!q) return true;
@@ -524,9 +581,9 @@ function selectionner(row: LigneBulletin) {
     annee: annee?.libelle ?? '—',
     session: deliberation
       ? (LIBELLE_SESSION_DELIBERATION[deliberation.session] ?? deliberation.session)
-      : (filtres.value.session
-          ? LIBELLE_SESSION_DELIBERATION[filtres.value.session as SessionDeliberation]
-          : LIBELLE_SESSION_DELIBERATION.NORMALE),
+      : filtres.value.session
+        ? LIBELLE_SESSION_DELIBERATION[filtres.value.session as SessionDeliberation]
+        : LIBELLE_SESSION_DELIBERATION.NORMALE,
     dateDeliberation: deliberation?.valideeLe ?? deliberation?.creeLe,
     lignes: [],
     moyenneGenerale: row.moyenne ?? 0,
@@ -562,9 +619,7 @@ async function imprimerTous() {
     ok: t('bulletins.dialogs.imprimerPromotion.ok'),
   });
   if (!ok) return;
-  void ouvrirImpressions(
-    imprimables.map((l) => `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`),
-  );
+  void ouvrirImpressions(imprimables.map((l) => `/deliberations/${l.deliberationId}/releve/${l.inscriptionId}`));
 }
 
 /** Bulletin → attestation : la page Attestations ouvre l'émission préremplie. */
@@ -590,10 +645,7 @@ function reinitialiser() {
 }
 
 // Changer de promotion, d'année ou de session ferme l'aperçu en cours.
-watch(
-  () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session],
-  fermerApercu,
-);
+watch(() => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session], fermerApercu);
 // Nouvelle liste ou nouveau filtre local : retour à la première page.
 watch(
   () => [bl.lignes, filtres.value.recherche, filtres.value.decision],
@@ -603,10 +655,7 @@ watch(
 );
 
 onMounted(async () => {
-  [annees.value, promotions.value] = await Promise.all([
-    referentiels.annees(),
-    referentiels.promotions(),
-  ]);
+  [annees.value, promotions.value] = await Promise.all([referentiels.annees(), referentiels.promotions()]);
 });
 </script>
 

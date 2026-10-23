@@ -53,9 +53,7 @@
           </div>
           <div class="q-pt-sm">
             <div class="text-caption text-grey-7">{{ $t('common.fields.period') }}</div>
-            <div class="text-body1">
-              {{ dateLisible(creee.dateDebut) }} – {{ dateLisible(creee.dateFin) }}
-            </div>
+            <div class="text-body1">{{ dateLisible(creee.dateDebut) }} – {{ dateLisible(creee.dateFin) }}</div>
           </div>
           <div>
             <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
@@ -120,15 +118,8 @@ const optionsMois = computed(() =>
 /** Années présentes, les deux précédentes et l'année courante. */
 const optionsAnnees = computed(() => {
   const courante = new Date().getFullYear();
-  const annees = new Set<number>([
-    courante,
-    courante - 1,
-    courante - 2,
-    ...(props.anneesExistantes ?? []),
-  ]);
-  return [...annees]
-    .sort((a, b) => b - a)
-    .map((a) => ({ label: String(a), value: a }));
+  const annees = new Set<number>([courante, courante - 1, courante - 2, ...(props.anneesExistantes ?? [])]);
+  return [...annees].sort((a, b) => b - a).map((a) => ({ label: String(a), value: a }));
 });
 
 const libelle = computed(() => {
@@ -136,14 +127,11 @@ const libelle = computed(() => {
   return `${t(`common.months.${form.value.mois}`)} ${form.value.annee ?? '…'}`;
 });
 
-watch(
-  ouvert,
-  (o) => {
-    if (!o) return;
-    form.value = { mois: null, annee: new Date().getFullYear() };
-    creee.value = null;
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  form.value = { mois: null, annee: new Date().getFullYear() };
+  creee.value = null;
+});
 
 async function creer() {
   enregistrement.value = true;

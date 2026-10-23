@@ -2,7 +2,7 @@
 export default {
   title: 'Internships & theses',
   subtitle:
-    "Topic proposed → approved → supervised → report submitted → defended. Tracked by the registrar and the direction; teachers manage their supervisions, students manage their own work (via the portal).",
+    'Topic proposed → approved → supervised → report submitted → defended. Tracked by the registrar and the direction; teachers manage their supervisions, students manage their own work (via the portal).',
   actions: {
     new: 'New work',
   },
@@ -109,14 +109,12 @@ export default {
     transition: {
       title: 'Move to "{label}"',
       abandonMessage: 'The file remains viewable but leaves the process. Confirm the abandonment?',
-      defendedMessage:
-        'A submitted report and a recorded defense are required before moving to DEFENDED.',
+      defendedMessage: 'A submitted report and a recorded defense are required before moving to DEFENDED.',
       defaultMessage: 'Confirm this transition?',
     },
     delete: {
       title: 'Delete this work?',
-      message:
-        '{title} — file deletion reserved for administrators, PROPOSED / APPROVED states only.',
+      message: '{title} — file deletion reserved for administrators, PROPOSED / APPROVED states only.',
     },
   },
   notifications: {

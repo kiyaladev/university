@@ -99,65 +99,83 @@
             :color="p.row.user ? 'positive' : 'grey-5'"
           />
           <q-tooltip>
-            {{ p.row.user ? t('enseignants.table.accountTooltip', { email: p.row.user.email }) : $t('enseignants.table.noAccount') }}
+            {{
+              p.row.user
+                ? t('enseignants.table.accountTooltip', { email: p.row.user.email })
+                : $t('enseignants.table.noAccount')
+            }}
           </q-tooltip>
         </q-td>
       </template>
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="auth.peutPlanifier"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="edit"
-            :aria-label="$t('enseignants.table.actionsAria.modifier')" :label="$t('enseignants.table.actionsAria.modifier')"
+            :aria-label="$t('enseignants.table.actionsAria.modifier')"
+            :label="$t('enseignants.table.actionsAria.modifier')"
             @click="ouvrir(p.row)"
           >
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="assignment_ind"
-            :aria-label="$t('enseignants.table.actionsAria.charges')" :label="$t('enseignants.table.actionsAria.charges')"
-            @click="voirCharges(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.charges') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            color="primary"
-            icon="verified_user"
-            :aria-label="$t('enseignants.table.actionsAria.moyens')" :label="$t('enseignants.table.actionsAria.moyens')"
-            @click="ouvrirMoyens(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.moyens') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="assessment"
-            :aria-label="$t('enseignants.table.actionsAria.fiche')" :label="$t('enseignants.table.actionsAria.fiche')"
-            @click="imprimerFiche(p.row)"
-          >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.fiche') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="auth.estAdmin"
-            flat
-            dense no-caps
-            color="negative"
-            icon="delete"
-            :aria-label="$t('enseignants.table.actionsAria.supprimer')" :label="$t('enseignants.table.actionsAria.supprimer')"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="assignment_ind"
+              :aria-label="$t('enseignants.table.actionsAria.charges')"
+              :label="$t('enseignants.table.actionsAria.charges')"
+              @click="voirCharges(p.row)"
+            >
+              <q-tooltip>{{ $t('enseignants.table.actionsTooltip.charges') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="verified_user"
+              :aria-label="$t('enseignants.table.actionsAria.moyens')"
+              :label="$t('enseignants.table.actionsAria.moyens')"
+              @click="ouvrirMoyens(p.row)"
+            >
+              <q-tooltip>{{ $t('enseignants.table.actionsTooltip.moyens') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="assessment"
+              :aria-label="$t('enseignants.table.actionsAria.fiche')"
+              :label="$t('enseignants.table.actionsAria.fiche')"
+              @click="imprimerFiche(p.row)"
+            >
+              <q-tooltip>{{ $t('enseignants.table.actionsTooltip.fiche') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="auth.estAdmin"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="delete"
+              :aria-label="$t('enseignants.table.actionsAria.supprimer')"
+              :label="$t('enseignants.table.actionsAria.supprimer')"
+              @click="supprimer(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -172,7 +190,9 @@
           </div>
           <div class="text-subtitle1 text-weight-medium">{{ e.nom }} {{ e.prenom }}</div>
           <div class="text-caption text-grey-7">{{ e.grade || $t('enseignants.cards.gradeNonRenseigne') }}</div>
-          <div class="text-caption text-grey-7">{{ e.departement?.nom ?? $t('enseignants.cards.sansDepartement') }}</div>
+          <div class="text-caption text-grey-7">
+            {{ e.departement?.nom ?? $t('enseignants.cards.sansDepartement') }}
+          </div>
           <div class="text-caption text-grey-7 q-mt-sm">
             <q-icon name="call" size="14px" /> {{ e.telephone || '—' }}
             <span class="q-ml-sm">
@@ -187,7 +207,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right">
-<q-btn
+          <q-btn
             v-if="auth.peutPlanifier"
             flat
             dense
@@ -196,26 +216,28 @@
             :label="$t('common.actions.edit')"
             @click="ouvrir(e)"
           />
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense
-            no-caps
-            icon="assignment_ind"
-            :label="$t('enseignants.cards.charges')"
-            @click="voirCharges(e)"
-          />
-<q-btn v-close-popup
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="verified_user"
-            :label="$t('enseignants.cards.attestation')"
-            @click="ouvrirMoyens(e)"
-          />
-</actions-secondaires>
-</q-card-actions>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="assignment_ind"
+              :label="$t('enseignants.cards.charges')"
+              @click="voirCharges(e)"
+            />
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="verified_user"
+              :label="$t('enseignants.cards.attestation')"
+              @click="ouvrirMoyens(e)"
+            />
+          </actions-secondaires>
+        </q-card-actions>
       </q-card>
       <etat-vide v-if="!ens.lignes.length && !ens.chargement" icone="person" :titre="messageVide">
         <template #action>
@@ -261,7 +283,9 @@
         <q-card-section>
           <div class="text-h6">{{ $t('enseignants.moyensDialog.title') }}</div>
           <div class="text-caption text-grey-7">
-            {{ $t('enseignants.moyensDialog.subtitle', { nom: enseignantMoyens?.nom, prenom: enseignantMoyens?.prenom }) }}
+            {{
+              $t('enseignants.moyensDialog.subtitle', { nom: enseignantMoyens?.nom, prenom: enseignantMoyens?.prenom })
+            }}
           </div>
         </q-card-section>
 
@@ -273,7 +297,11 @@
             <q-item-section>
               <q-item-label>{{ $t('enseignants.moyensDialog.codePersonnel.label') }}</q-item-label>
               <q-item-label caption>
-                {{ moyens?.codePin ? $t('enseignants.moyensDialog.codePersonnel.defined') : $t('enseignants.moyensDialog.codePersonnel.undefined') }}
+                {{
+                  moyens?.codePin
+                    ? $t('enseignants.moyensDialog.codePersonnel.defined')
+                    : $t('enseignants.moyensDialog.codePersonnel.undefined')
+                }}
               </q-item-label>
             </q-item-section>
             <q-item-section side>
@@ -281,7 +309,11 @@
                 flat
                 dense
                 no-caps
-                :label="moyens?.codePin ? $t('enseignants.moyensDialog.codePersonnel.reset') : $t('enseignants.moyensDialog.codePersonnel.generate')"
+                :label="
+                  moyens?.codePin
+                    ? $t('enseignants.moyensDialog.codePersonnel.reset')
+                    : $t('enseignants.moyensDialog.codePersonnel.generate')
+                "
                 @click="reinitialiserPin"
               />
             </q-item-section>
@@ -306,7 +338,11 @@
                 flat
                 dense
                 no-caps
-                :label="moyens?.empreinte ? $t('enseignants.moyensDialog.empreinte.reenroll') : $t('enseignants.moyensDialog.empreinte.enroll')"
+                :label="
+                  moyens?.empreinte
+                    ? $t('enseignants.moyensDialog.empreinte.reenroll')
+                    : $t('enseignants.moyensDialog.empreinte.enroll')
+                "
                 :disable="!passerellePrete"
                 :loading="enrolementEnCours"
                 @click="enrolerEmpreinte"
@@ -321,7 +357,8 @@
 
         <q-banner v-if="codeGenere" class="note--valide q-ma-md">
           <template #avatar><q-icon name="key" /></template>
-          {{ $t('enseignants.moyensDialog.newCodeLabel') }} <strong class="text-h6">{{ codeGenere }}</strong><br />
+          {{ $t('enseignants.moyensDialog.newCodeLabel') }} <strong class="text-h6">{{ codeGenere }}</strong
+          ><br />
           <span class="text-caption">{{ $t('enseignants.moyensDialog.newCodeHint') }}</span>
         </q-banner>
 
@@ -405,9 +442,7 @@ const passerellePrete = ref(false);
 const enrolementEnCours = ref(false);
 const codeGenere = ref('');
 
-const optionsDepartements = computed(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 const optionsStatuts = STATUTS_ENSEIGNANT.map((s) => ({
   label: LIBELLE_STATUT_ENSEIGNANT[s] ?? s,
   value: s,
@@ -417,9 +452,7 @@ const filtresActifs = computed(() =>
   Boolean(filtres.value.recherche || filtres.value.departementId || filtres.value.statut),
 );
 const messageVide = computed(() =>
-  filtresActifs.value
-    ? t('enseignants.emptyState.filtered')
-    : t('enseignants.emptyState.none'),
+  filtresActifs.value ? t('enseignants.emptyState.filtered') : t('enseignants.emptyState.none'),
 );
 
 const chips = computed(() => {
@@ -454,7 +487,12 @@ const chips = computed(() => {
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('enseignants.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
-  { name: 'grade', label: t('enseignants.table.columns.grade'), field: (r: Enseignant) => r.grade || '—', align: 'left' },
+  {
+    name: 'grade',
+    label: t('enseignants.table.columns.grade'),
+    field: (r: Enseignant) => r.grade || '—',
+    align: 'left',
+  },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   {
     name: 'departement',
@@ -523,9 +561,7 @@ async function reinitialiserPin() {
   });
   if (!ok) return;
   try {
-    const { data } = await api.post(
-      `/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`,
-    );
+    const { data } = await api.post(`/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`);
     codeGenere.value = data.code;
     moyens.value = { ...moyens.value!, codePin: true };
   } catch {

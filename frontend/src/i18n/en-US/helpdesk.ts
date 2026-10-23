@@ -1,24 +1,23 @@
 /** Namespace `helpdesk`. */
 export default {
   title: 'IT assistance',
-  subtitle:
-    "Report an IT problem and track its resolution.",
+  subtitle: 'Report an IT problem and track its resolution.',
   actions: {
-    declareIncident: "Report a problem",
+    declareIncident: 'Report a problem',
     scanEquipment: 'Scan equipment QR',
     newEquipment: 'New equipment',
   },
   tabs: {
-    myTickets: "My reports",
-    management: "Incident management",
-    equipment: "Support equipment",
+    myTickets: 'My reports',
+    management: 'Incident management',
+    equipment: 'Support equipment',
   },
   myTicketsTable: {
     titleAll: 'All reports',
     titleMine: 'My reports',
     emptyAll: 'No ticket reported.',
     emptyMine: "You haven't reported any incident.",
-    emptyHint: "Use “Report a problem” or scan the equipment QR code.",
+    emptyHint: 'Use “Report a problem” or scan the equipment QR code.',
   },
   filters: {
     searchTickets: 'Search (No., description…)',
@@ -45,8 +44,7 @@ export default {
       RESOLU: 'Resolved',
       CLOTURE: 'Closed',
     },
-    resolutionRate:
-      'Same-day resolution rate: {taux} ({resolus} over the last 24 hours)',
+    resolutionRate: 'Same-day resolution rate: {taux} ({resolus} over the last 24 hours)',
     resolvedCount: '{n} resolved | {n} resolved | {n} resolved',
   },
   gestionTable: {

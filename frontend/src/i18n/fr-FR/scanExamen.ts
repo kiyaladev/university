@@ -12,8 +12,7 @@ export default {
   },
   emptyState: {
     title: 'Aucun examen en cours',
-    description:
-      "Le scan des cartes n'est possible qu'une fois l'épreuve démarrée depuis la page Examens.",
+    description: "Le scan des cartes n'est possible qu'une fois l'épreuve démarrée depuis la page Examens.",
   },
   stats: {
     presentsOverEnrolled: 'Présents / inscrits',
@@ -37,7 +36,6 @@ export default {
     unknownCard: 'carte inconnue',
   },
   messages: {
-    examNotStarted:
-      "Cet examen n'est pas démarré : les scans seront refusés tant qu'il n'est pas lancé.",
+    examNotStarted: "Cet examen n'est pas démarré : les scans seront refusés tant qu'il n'est pas lancé.",
   },
 };

@@ -39,7 +39,7 @@ export default {
         statut: 'Status',
       },
       aria: {
-        voirChambres: 'View this hall\'s rooms',
+        voirChambres: "View this hall's rooms",
         modifier: 'Edit hall',
         supprimer: 'Delete hall',
       },
@@ -91,7 +91,7 @@ export default {
         loyer: 'Rent',
       },
       aria: {
-        voirAttributions: 'View this room\'s allocations',
+        voirAttributions: "View this room's allocations",
         modifier: 'Edit room',
         supprimer: 'Delete room',
       },

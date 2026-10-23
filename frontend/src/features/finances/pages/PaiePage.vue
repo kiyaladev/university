@@ -13,12 +13,7 @@
       </template>
     </en-tete-page>
 
-    <barre-filtres
-      v-model="filtres"
-      :recherche="false"
-      :chips="chipsFiltres"
-      @reinitialiser="liste.reinitialiser([])"
-    >
+    <barre-filtres v-model="filtres" :recherche="false" :chips="chipsFiltres" @reinitialiser="liste.reinitialiser([])">
       <template #actions>
         <q-btn
           flat
@@ -203,11 +198,7 @@
 
     <!-- Vue cartes -->
     <div v-else class="row q-col-gutter-md">
-      <div
-        v-for="f in liste.lignes"
-        :key="f.id"
-        class="col-12 col-sm-6 col-md-4"
-      >
+      <div v-for="f in liste.lignes" :key="f.id" class="col-12 col-sm-6 col-md-4">
         <q-card flat bordered class="carte carte-feuille full-height" @click="ouvrirDetail(null, f)">
           <q-card-section>
             <div class="row items-start no-wrap q-col-gutter-sm">
@@ -234,10 +225,25 @@
           </q-card-section>
           <q-card-actions align="right">
             <template v-if="peutCalculer(f)">
-              <q-btn flat dense no-caps icon="refresh" :label="$t('common.actions.recalculate')" @click.stop="recalculer(f)" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="refresh"
+                :label="$t('common.actions.recalculate')"
+                @click.stop="recalculer(f)"
+              />
             </template>
             <template v-if="peutValider(f)">
-              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('common.actions.validate')" @click.stop="valider(f)" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="positive"
+                icon="verified"
+                :label="$t('common.actions.validate')"
+                @click.stop="valider(f)"
+              />
             </template>
             <template v-if="peutPayer(f)">
               <q-btn flat dense no-caps icon="payments" :label="$t('paie.actions.markPaid')" @click.stop="payer(f)" />
@@ -337,15 +343,23 @@
               </q-td>
             </template>
             <template #no-data>
-              <etat-vide icone="receipt_long" :titre="$t('paie.detail.lineEmptyTitle')" :aide="$t('paie.detail.lineEmptyMessage')" />
+              <etat-vide
+                icone="receipt_long"
+                :titre="$t('paie.detail.lineEmptyTitle')"
+                :aide="$t('paie.detail.lineEmptyMessage')"
+              />
             </template>
             <template #bottom>
               <div class="detail-total">
                 <div class="text-weight-medium">
                   {{ $t('paie.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
                 </div>
-                <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} {{ $t('paie.detail.completed') }}</div>
-                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} {{ $t('common.units.gnf') }}</div>
+                <div class="text-weight-medium chiffres">
+                  {{ heuresLisibles(heuresTotal) }} {{ $t('paie.detail.completed') }}
+                </div>
+                <div class="text-weight-medium chiffres">
+                  {{ montantLisible(detail?.montantTotal) }} {{ $t('common.units.gnf') }}
+                </div>
               </div>
             </template>
           </q-table>
@@ -390,12 +404,7 @@ import { useAuthStore } from '@/stores/auth';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueFeuillePaie from '../components/DialogueFeuillePaie.vue';
-import {
-  LIBELLE_STATUT_PAIE,
-  dateLisible,
-  heuresLisibles,
-  montantLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_PAIE, dateLisible, heuresLisibles, montantLisible } from '@/shared/utils/libelles';
 import type { FeuillePaie } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -466,16 +475,12 @@ const optionsAnnees = computed(() => {
     ...anneesExistantes.value,
     ...(filtres.value.annee ? [Number(filtres.value.annee)] : []),
   ]);
-  return [...annees]
-    .sort((a, b) => b - a)
-    .map((a) => ({ label: String(a), value: a }));
+  return [...annees].sort((a, b) => b - a).map((a) => ({ label: String(a), value: a }));
 });
 
 const totalMontant = computed(() => liste.lignes.reduce((t, f) => t + (f.montantTotal ?? 0), 0));
 
-const heuresTotal = computed(() =>
-  (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0),
-);
+const heuresTotal = computed(() => (detail.value?.lignes ?? []).reduce((t, l) => t + (l.heuresReelles ?? 0), 0));
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('paie.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
@@ -602,13 +607,10 @@ function supprimer(f: FeuillePaie) {
 }
 
 // Droits d'action, par rôle et par statut du cycle de vie.
-const peutCalculer = (f: FeuillePaie) =>
-  auth.peut('paie.calculer') && f.statut === 'BROUILLON';
-const peutValider = (f: FeuillePaie) =>
-  auth.peut('paie.valider') && f.statut === 'BROUILLON';
+const peutCalculer = (f: FeuillePaie) => auth.peut('paie.calculer') && f.statut === 'BROUILLON';
+const peutValider = (f: FeuillePaie) => auth.peut('paie.valider') && f.statut === 'BROUILLON';
 const peutPayer = (f: FeuillePaie) => auth.peut('paie.payer') && f.statut === 'VALIDEE';
 const peutSupprimer = (f: FeuillePaie) => auth.peut('paie.supprimer') && f.statut === 'BROUILLON';
-
 </script>
 
 <style scoped lang="scss">
@@ -629,5 +631,4 @@ const peutSupprimer = (f: FeuillePaie) => auth.peut('paie.supprimer') && f.statu
   border-top: var(--up-filet);
   background: var(--up-craie);
 }
-
 </style>

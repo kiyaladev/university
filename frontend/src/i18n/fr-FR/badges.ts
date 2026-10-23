@@ -18,7 +18,7 @@ export default {
     },
   },
   card: {
-    issuedOn: "Délivré le {date}",
+    issuedOn: 'Délivré le {date}',
     validUntil: "Valable jusqu'au {date}",
     cancelReason: "Motif d'annulation : {reason}",
   },
@@ -32,8 +32,7 @@ export default {
     cancelBadge: 'Annuler le badge',
   },
   emptyState: {
-    message:
-      'Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un intervenant attendu.',
+    message: 'Aucun badge pour ces critères. Émettez-en un pour un visiteur ou un intervenant attendu.',
   },
   dialogs: {
     form: {
@@ -54,7 +53,7 @@ export default {
     cancel: {
       title: 'Annuler le badge',
       warning:
-        "Action irréversible : un badge annulé ne peut plus être réactivé ni prolongé. Émettez-en un nouveau si besoin.",
+        'Action irréversible : un badge annulé ne peut plus être réactivé ni prolongé. Émettez-en un nouveau si besoin.',
       reasonLabel: "Motif d'annulation",
       reasonHint: '3 caractères minimum.',
       confirmAction: 'Annuler définitivement',

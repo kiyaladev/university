@@ -72,8 +72,7 @@ export default {
       libelleHint: 'ex. 2025-2026',
       libelleError: 'Le libellé est obligatoire',
       active: 'Année en cours',
-      activeHint:
-        'L’année en cours est celle proposée par défaut dans les charges et les promotions.',
+      activeHint: 'L’année en cours est celle proposée par défaut dans les charges et les promotions.',
     },
     departement: {
       editTitle: 'Modifier le département',

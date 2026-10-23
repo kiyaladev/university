@@ -58,8 +58,7 @@ export function dateHeureElection(v?: string | null): string {
 
 /** Message d'erreur exploitable : le back renvoie parfois un tableau. */
 export function messageErreurElection(e: unknown, defaut: string): string {
-  const message = (e as { response?: { data?: { message?: string | string[] } } })?.response?.data
-    ?.message;
+  const message = (e as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message;
   if (Array.isArray(message)) return message.join(' · ');
   return message ?? defaut;
 }
@@ -72,16 +71,13 @@ export const electionsService = {
   liste: (params: ParametresListeElections, silencieux = false) =>
     api.get<Liste<Election>>('/elections', { params, silencieux }),
   actives: (silencieux = false) => api.get<Election[]>('/elections/actives', { silencieux }),
-  trouver: (id: string, silencieux = false) =>
-    api.get<Election>(`/elections/${id}`, { silencieux }),
+  trouver: (id: string, silencieux = false) => api.get<Election>(`/elections/${id}`, { silencieux }),
   monVote: (electionId: string, silencieux = false) =>
     api.get<MonVote>(`/elections/${electionId}/mon-vote`, { silencieux }),
   resultats: (id: string, silencieux = false) =>
     api.get<ResultatElection>(`/elections/${id}/resultats`, { silencieux }),
-  voter: (
-    payload: { electionId: string; bulletin: Array<{ candidatId: string }> },
-    silencieux = false,
-  ) => api.post<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
+  voter: (payload: { electionId: string; bulletin: Array<{ candidatId: string }> }, silencieux = false) =>
+    api.post<{ scrutinId: string; nbVotes: number }>('/elections/vote', payload, { silencieux }),
   transition: (id: string, action: 'ouvrir' | 'clore' | 'proclamer') =>
     api.post<Election>(`/elections/${id}/${action}`),
   supprimerCandidat: (electionId: string, candidatId: string) =>

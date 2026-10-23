@@ -39,7 +39,9 @@
     <section class="vitrine__catalogue">
       <div class="vitrine__catalogue-tete">
         <h2 class="lettrage vitrine__titre">{{ $t('formationsPubliques.catalogue.title') }}</h2>
-        <p class="pochoir vitrine__compte">{{ $t('formationsPubliques.catalogue.count', { count: formations.length }) }}</p>
+        <p class="pochoir vitrine__compte">
+          {{ $t('formationsPubliques.catalogue.count', { count: formations.length }) }}
+        </p>
       </div>
 
       <q-banner v-if="chargement" class="note--info">
@@ -57,14 +59,20 @@
         <article v-for="f in formations" :key="f.id" class="plaque carte-formation">
           <div class="carte-formation__tete">
             <span v-if="f.categorie" class="pochoir carte-formation__categorie">{{ f.categorie }}</span>
-            <span v-else class="pochoir carte-formation__categorie">{{ $t('formationsPubliques.catalogue.card.categorieDefaut') }}</span>
+            <span v-else class="pochoir carte-formation__categorie">{{
+              $t('formationsPubliques.catalogue.card.categorieDefaut')
+            }}</span>
             <!-- `placesRestantes` vaut null/undefined quand la capacité est libre. -->
             <span
               v-if="f.placesRestantes != null"
               class="pochoir carte-formation__places"
               :class="{ 'carte-formation__places--dernieres': f.placesRestantes <= 5 }"
             >
-              {{ f.placesRestantes === 0 ? $t('formationsPubliques.catalogue.card.complet') : $t('formationsPubliques.catalogue.card.placesRestantes', { n: f.placesRestantes }) }}
+              {{
+                f.placesRestantes === 0
+                  ? $t('formationsPubliques.catalogue.card.complet')
+                  : $t('formationsPubliques.catalogue.card.placesRestantes', { n: f.placesRestantes })
+              }}
             </span>
           </div>
 
@@ -87,7 +95,9 @@
           </dl>
 
           <div class="carte-formation__prix">
-            <span class="pochoir carte-formation__prix-libelle">{{ $t('formationsPubliques.catalogue.card.investissement') }}</span>
+            <span class="pochoir carte-formation__prix-libelle">{{
+              $t('formationsPubliques.catalogue.card.investissement')
+            }}</span>
             <span class="lettrage chiffres carte-formation__montant">
               {{ montantLisible(f.prix) }}
               <small class="carte-formation__devise">{{ f.devise }}</small>
@@ -100,7 +110,11 @@
             size="lg"
             unelevated
             no-caps
-            :label="f.prix > 0 ? $t('formationsPubliques.catalogue.card.inscrirePayant') : $t('formationsPubliques.catalogue.card.inscrireGratuit')"
+            :label="
+              f.prix > 0
+                ? $t('formationsPubliques.catalogue.card.inscrirePayant')
+                : $t('formationsPubliques.catalogue.card.inscrireGratuit')
+            "
             :disable="f.placesRestantes === 0"
             @click="ouvrirInscription(f)"
           />
@@ -203,7 +217,9 @@
             <p class="recapitulatif__paiement-texte">
               <i18n-t keypath="formationsPubliques.dialog.step3.paiementTexte" tag="span">
                 <template #numero>{{ resultat.numero }}</template>
-                <template #confirmee><strong>{{ $t('formationsPubliques.dialog.step3.confirmee') }}</strong></template>
+                <template #confirmee
+                  ><strong>{{ $t('formationsPubliques.dialog.step3.confirmee') }}</strong></template
+                >
               </i18n-t>
             </p>
           </div>
@@ -211,7 +227,9 @@
           <q-banner class="note--info">
             <template #avatar><q-icon name="hourglass_top" /></template>
             <i18n-t keypath="formationsPubliques.dialog.step3.statutInfo" tag="span">
-              <template #statut><strong>{{ $t('formationsPubliques.dialog.step3.enAttentePaiement') }}</strong></template>
+              <template #statut
+                ><strong>{{ $t('formationsPubliques.dialog.step3.enAttentePaiement') }}</strong></template
+              >
             </i18n-t>
           </q-banner>
         </q-card-section>
@@ -267,11 +285,7 @@
  */
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import {
-  formationsService,
-  type FormationVitrine,
-  type ResultatDepotInscription,
-} from '@/shared/services/formations';
+import { formationsService, type FormationVitrine, type ResultatDepotInscription } from '@/shared/services/formations';
 import { dateLisible, montantLisible } from '@/shared/utils/libelles';
 import EtatVide from '@/shared/components/EtatVide.vue';
 
@@ -291,9 +305,7 @@ const form = ref({ nomComplet: '', telephone: '', email: '', matricule: '' });
 
 /** Les deux champs obligatoires du dépôt : contrôlés dès l'étape 1. */
 const identiteValide = computed(
-  () =>
-    form.value.nomComplet.trim().length >= 2 &&
-    form.value.telephone.trim().length >= 6,
+  () => form.value.nomComplet.trim().length >= 2 && form.value.telephone.trim().length >= 6,
 );
 
 async function charger() {
@@ -414,8 +426,13 @@ onMounted(charger);
   border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: var(--up-encre-tertiaire); }
-  dd { margin: 3px 0 0; font-size: 0.92rem; }
+  dt {
+    color: var(--up-encre-tertiaire);
+  }
+  dd {
+    margin: 3px 0 0;
+    font-size: 0.92rem;
+  }
 }
 
 // -------------------------------------------------------------- catalogue
@@ -511,8 +528,13 @@ onMounted(charger);
   border-top: var(--up-filet-fin);
   padding-top: var(--up-3);
 
-  dt { color: var(--up-encre-douce); }
-  dd { margin: 2px 0 0; font-size: 0.95rem; }
+  dt {
+    color: var(--up-encre-douce);
+  }
+  dd {
+    margin: 2px 0 0;
+    font-size: 0.95rem;
+  }
 }
 
 .carte-formation__prix {
@@ -537,7 +559,10 @@ onMounted(charger);
   letter-spacing: -0.01em;
 }
 
-.carte-formation__cta { min-height: 52px; margin-top: auto; }
+.carte-formation__cta {
+  min-height: 52px;
+  margin-top: auto;
+}
 
 // ------------------------------------------------------------- récapitulatif
 .recapitulatif {
@@ -552,7 +577,9 @@ onMounted(charger);
   gap: var(--up-3);
   align-items: baseline;
 
-  .pochoir { color: var(--up-encre-douce); }
+  .pochoir {
+    color: var(--up-encre-douce);
+  }
 }
 
 .recapitulatif__valeur {
@@ -618,8 +645,15 @@ onMounted(charger);
 }
 
 @media (max-width: 1023px) {
-  .vitrine__enseigne { padding: var(--up-5) var(--up-4); gap: var(--up-3); }
-  .vitrine__faits { display: none; }
-  .vitrine__catalogue { padding: var(--up-5) var(--up-4); }
+  .vitrine__enseigne {
+    padding: var(--up-5) var(--up-4);
+    gap: var(--up-3);
+  }
+  .vitrine__faits {
+    display: none;
+  }
+  .vitrine__catalogue {
+    padding: var(--up-5) var(--up-4);
+  }
 }
 </style>

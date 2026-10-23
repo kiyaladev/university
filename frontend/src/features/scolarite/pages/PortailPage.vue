@@ -36,11 +36,9 @@
             {{ $t('portail.header.matricule', { matricule: profil.etudiant.matricule }) }}
           </p>
         </div>
-
       </header>
 
       <!-- Tout ce que l'étudiant peut faire, au même endroit -->
-
 
       <div class="portail__grille">
         <!-- Inscription -->
@@ -88,27 +86,26 @@
             <barre-taux :valeur="profil.frais.taux" :seuil-bas="60" :seuil-haut="90" class="carte-portail__jauge" />
           </template>
           <p v-else class="carte-portail__aucun">{{ $t('portail.sections.frais.empty') }}</p>
-        <!-- Paiements récents -->
-        <q-expansion-item :label="$t('portail.paymentHistory')" class="q-mt-md">
-          <ul v-if="profil.paiements.length" class="carte-portail__liste">
-            <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
-              <span class="carte-portail__item-texte">
-                <span class="lettrage carte-portail__item-titre">
-                  {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
+          <!-- Paiements récents -->
+          <q-expansion-item :label="$t('portail.paymentHistory')" class="q-mt-md">
+            <ul v-if="profil.paiements.length" class="carte-portail__liste">
+              <li v-for="p in profil.paiements.slice(0, 5)" :key="p.id" class="carte-portail__ligne">
+                <span class="carte-portail__item-texte">
+                  <span class="lettrage carte-portail__item-titre">
+                    {{ LIBELLE_STATUT_PAIEMENT[p.statut] ?? p.statut }}
+                  </span>
+                  <span class="pochoir pochoir--brut carte-portail__date chiffres">
+                    {{ p.reference }} · {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }} ·
+                    {{ dateLisible(p.horodatage) }}
+                  </span>
                 </span>
-                <span class="pochoir pochoir--brut carte-portail__date chiffres">
-                  {{ p.reference }} · {{ LIBELLE_MODE_PAIEMENT[p.mode] ?? p.mode }} ·
-                  {{ dateLisible(p.horodatage) }}
+                <span class="chiffres carte-portail__montant-petit">
+                  {{ montantLisible(p.montant) }} {{ p.devise }}
                 </span>
-              </span>
-              <span class="chiffres carte-portail__montant-petit">
-                {{ montantLisible(p.montant) }} {{ p.devise }}
-              </span>
-            </li>
-          </ul>
-          <p v-else class="carte-portail__aucune">{{ $t('portail.sections.paiements.empty') }}</p>
-        </q-expansion-item>
-
+              </li>
+            </ul>
+            <p v-else class="carte-portail__aucune">{{ $t('portail.sections.paiements.empty') }}</p>
+          </q-expansion-item>
         </section>
 
         <!-- Résultats -->
@@ -137,7 +134,9 @@
               {{ LIBELLE_SESSION_DELIBERATION[resultats.finale.session] }} ·
               {{ resultats.finale.promotion }}
               <span v-if="resultats.finale.mention"> · {{ resultats.finale.mention }}</span>
-              <span v-if="resultats.finale.rang" class="chiffres"> · {{ $t('portail.sections.resultat.rank', { rang: resultats.finale.rang }) }}</span>
+              <span v-if="resultats.finale.rang" class="chiffres">
+                · {{ $t('portail.sections.resultat.rank', { rang: resultats.finale.rang }) }}</span
+              >
             </p>
           </template>
           <p v-else class="carte-portail__aucune">
@@ -146,7 +145,10 @@
         </section>
 
         <!-- Attestations -->
-        <q-expansion-item class="plaque carte-portail carte-portail--large" :label="$t('portail.sections.attestations.title')">
+        <q-expansion-item
+          class="plaque carte-portail carte-portail--large"
+          :label="$t('portail.sections.attestations.title')"
+        >
           <ul v-if="profil.attestations.length" class="carte-portail__liste">
             <li
               v-for="a in profil.attestations"
@@ -158,7 +160,9 @@
                 <span class="lettrage carte-portail__item-titre">{{ LIBELLE_TYPE_ATTESTATION[a.type] }}</span>
                 <span class="pochoir pochoir--brut chiffres carte-portail__date">
                   {{ a.numero }} · {{ dateLisible(a.emiseLe) }}
-                  <span v-if="a.statut === 'REVOQUEE'" class="text-negative"> · {{ $t('portail.sections.attestations.revoked') }}</span>
+                  <span v-if="a.statut === 'REVOQUEE'" class="text-negative">
+                    · {{ $t('portail.sections.attestations.revoked') }}</span
+                  >
                 </span>
               </span>
               <q-btn
@@ -177,19 +181,23 @@
           <p v-else class="carte-portail__aucune">
             {{ $t('portail.sections.attestations.empty') }}
             <router-link to="/demandes-docs/mes" class="carte-portail__lien">
-              {{ $t('portail.sections.attestations.emptyLink') }}
-            </router-link>.
+              {{ $t('portail.sections.attestations.emptyLink') }} </router-link
+            >.
           </p>
           <p class="carte-portail__note">
             {{ $t('portail.sections.attestations.note') }}
             <router-link to="/verification" class="carte-portail__lien">
-              {{ $t('portail.sections.attestations.noteLink') }}
-            </router-link>.
+              {{ $t('portail.sections.attestations.noteLink') }} </router-link
+            >.
           </p>
         </q-expansion-item>
 
         <!-- Portefeuille resto — section appendée (module resto) -->
-        <q-expansion-item v-if="resto" class="plaque carte-portail carte-portail--large" :label="$t('portail.sections.resto.title')">
+        <q-expansion-item
+          v-if="resto"
+          class="plaque carte-portail carte-portail--large"
+          :label="$t('portail.sections.resto.title')"
+        >
           <div class="carte-portail__recap">
             <span class="lettrage chiffres carte-portail__montant">
               {{ montantLisible(resto.solde) }}
@@ -336,39 +344,41 @@ const { t } = useI18n();
  * Tout ce que l'étudiant peut faire depuis son espace. Chaque cible est une
  * route réelle de router/routes.ts ouverte au rôle ETUDIANT (ou publique).
  */
-const services = computed(() => [
-  { vers: '/emploi-du-temps', icone: 'calendar_month', libelle: t('nav.emploi-du-temps'), aide: '' },
-  {
-    vers: '/ma-carte',
-    icone: 'badge',
-    libelle: t('portail.services.maCarte.label'),
-    aide: t('portail.services.maCarte.help'),
-  },
-  {
-    vers: '/mes-demarches',
-    icone: 'description',
-    libelle: t('layout.sections.procedures'),
-    aide: t('portail.services.demandesDocuments.help'),
-  },
-  {
-    vers: '/elections/vote',
-    icone: 'how_to_vote',
-    libelle: t('portail.services.vote.label'),
-    aide: t('portail.services.vote.help'),
-  },
-  {
-    vers: '/bibliotheque',
-    icone: 'menu_book',
-    libelle: t('portail.services.bibliotheque.label'),
-    aide: t('portail.services.bibliotheque.help'),
-  },
-  {
-    vers: '/formations',
-    icone: 'workspace_premium',
-    libelle: t('portail.services.formations.label'),
-    aide: t('portail.services.formations.help'),
-  },
-].filter(service => modules.autorise(service.vers)));
+const services = computed(() =>
+  [
+    { vers: '/emploi-du-temps', icone: 'calendar_month', libelle: t('nav.emploi-du-temps'), aide: '' },
+    {
+      vers: '/ma-carte',
+      icone: 'badge',
+      libelle: t('portail.services.maCarte.label'),
+      aide: t('portail.services.maCarte.help'),
+    },
+    {
+      vers: '/mes-demarches',
+      icone: 'description',
+      libelle: t('layout.sections.procedures'),
+      aide: t('portail.services.demandesDocuments.help'),
+    },
+    {
+      vers: '/elections/vote',
+      icone: 'how_to_vote',
+      libelle: t('portail.services.vote.label'),
+      aide: t('portail.services.vote.help'),
+    },
+    {
+      vers: '/bibliotheque',
+      icone: 'menu_book',
+      libelle: t('portail.services.bibliotheque.label'),
+      aide: t('portail.services.bibliotheque.help'),
+    },
+    {
+      vers: '/formations',
+      icone: 'workspace_premium',
+      libelle: t('portail.services.formations.label'),
+      aide: t('portail.services.formations.help'),
+    },
+  ].filter((service) => modules.autorise(service.vers)),
+);
 
 interface PaiementPortail {
   id: string;
@@ -466,9 +476,7 @@ async function charger() {
     resultats.value = r.data;
   } catch (e: any) {
     const message = e?.response?.data?.message;
-    erreur.value = Array.isArray(message)
-      ? message.join(' · ')
-      : (message ?? t('portail.messages.loadError'));
+    erreur.value = Array.isArray(message) ? message.join(' · ') : (message ?? t('portail.messages.loadError'));
   }
 }
 
@@ -516,9 +524,7 @@ function lignesResto(donnees: any): LigneResto[] {
     montant: -c.montant,
     statut: LIBELLE_STATUT_CONSOMMATION[c.statut] ?? c.statut,
   }));
-  return [...recharges, ...consommations]
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, 8);
+  return [...recharges, ...consommations].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 8);
 }
 
 async function chargerResto() {
@@ -559,7 +565,7 @@ async function rechargerResto() {
 
 onMounted(() => {
   void charger();
-  if (modules.services.find(s => s.id === 'restauration')?.actif !== false) void chargerResto();
+  if (modules.services.find((s) => s.id === 'restauration')?.actif !== false) void chargerResto();
 });
 </script>
 
@@ -601,7 +607,9 @@ onMounted(() => {
   padding: var(--up-4);
   margin-bottom: var(--up-4);
 
-  .section-titre { margin: 0 0 var(--up-3); }
+  .section-titre {
+    margin: 0 0 var(--up-3);
+  }
 }
 
 .portail__services-liste {
@@ -638,14 +646,18 @@ onMounted(() => {
   flex: 1;
 }
 
-.portail__service-titre { font-size: 0.98rem; }
+.portail__service-titre {
+  font-size: 0.98rem;
+}
 
 .portail__service-aide {
   font-size: 0.82rem;
   color: var(--up-encre-douce);
 }
 
-.portail__service-fleche { color: var(--up-encre-douce); }
+.portail__service-fleche {
+  color: var(--up-encre-douce);
+}
 
 .portail__grille {
   display: grid;
@@ -747,8 +759,12 @@ onMounted(() => {
   color: var(--up-encre-douce);
 }
 
-.carte-portail__admis { color: $vert; }
-.carte-portail__ajourne { color: $rouge; }
+.carte-portail__admis {
+  color: $vert;
+}
+.carte-portail__ajourne {
+  color: $rouge;
+}
 
 .carte-portail__resultat-details {
   margin: 0;
@@ -792,7 +808,9 @@ onMounted(() => {
   text-decoration: underline;
 
   &:hover,
-  &:focus-visible { color: var(--up-encre); }
+  &:focus-visible {
+    color: var(--up-encre);
+  }
 }
 
 // ------------------------------------------------- autres rôles & chargement

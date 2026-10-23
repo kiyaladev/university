@@ -24,28 +24,41 @@
       <div class="col-12 col-sm-6">
         <div class="row q-col-gutter-sm">
           <div class="col-6">
-            <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="t('reservations.createDialog.startLabel')" />
+            <q-input
+              v-model="form.heureDebut"
+              outlined
+              dense
+              mask="##:##"
+              :label="t('reservations.createDialog.startLabel')"
+            />
           </div>
           <div class="col-6">
-            <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="t('reservations.createDialog.endLabel')" />
+            <q-input
+              v-model="form.heureFin"
+              outlined
+              dense
+              mask="##:##"
+              :label="t('reservations.createDialog.endLabel')"
+            />
           </div>
         </div>
       </div>
     </div>
 
     <q-input v-model="form.motif" outlined dense :label="t('reservations.createDialog.reasonLabel')" />
-    <q-input v-model="form.organisme" outlined dense :label="$t('reservations.table.columns.organization')" :hint="t('reservations.createDialog.organizationHint')" />
+    <q-input
+      v-model="form.organisme"
+      outlined
+      dense
+      :label="$t('reservations.table.columns.organization')"
+      :hint="t('reservations.createDialog.organizationHint')"
+    />
     <q-input v-model="form.responsable" outlined dense :label="t('reservations.createDialog.responsibleLabel')" />
 
     <q-banner v-if="conflits.length" dense class="note--avis q-mt-sm">
       <template #avatar><q-icon name="warning" size="22px" /></template>
       <div class="text-weight-bold">{{ t('reservations.createDialog.conflictTitle') }}</div>
-      <div
-        v-for="c in conflits"
-        :key="c.id"
-        class="conflit-ligne"
-        :class="`conflit-ligne--${c.statut.toLowerCase()}`"
-      >
+      <div v-for="c in conflits" :key="c.id" class="conflit-ligne" :class="`conflit-ligne--${c.statut.toLowerCase()}`">
         {{ c.heureDebut }}–{{ c.heureFin }} · {{ c.motif }}
         <span v-if="c.organisme">({{ c.organisme }})</span>
         — {{ LIBELLE_STATUT_RESERVATION[c.statut].toLowerCase() }}
@@ -90,9 +103,7 @@ const form = ref({
   responsable: '',
 });
 
-const optionsSalles = computed(() =>
-  props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
-);
+const optionsSalles = computed(() => props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
 const minutes = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
 
@@ -111,45 +122,44 @@ async function verifierConflits() {
     const f = minutes(form.value.heureFin);
     conflits.value = (data.data as ReservationSalle[]).filter(
       (r) =>
-        (r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRMEE') &&
-        d < minutes(r.heureFin) &&
-        minutes(r.heureDebut) < f,
+        (r.statut === 'EN_ATTENTE' || r.statut === 'CONFIRMEE') && d < minutes(r.heureFin) && minutes(r.heureDebut) < f,
     );
   } catch {
     conflits.value = [];
   }
 }
 
-watch(
-  () => [form.value.salleId, form.value.dateJour, form.value.heureDebut, form.value.heureFin],
-  verifierConflits,
-);
+watch(() => [form.value.salleId, form.value.dateJour, form.value.heureDebut, form.value.heureFin], verifierConflits);
 
 watch(ouvert, (o) => {
-    if (!o) return;
-    erreur.value = '';
-    conflits.value = [];
-    form.value = {
-      salleId: props.salles[0]?.id ?? '',
-      dateJour: aujourdhui(),
-      heureDebut: '14:00',
-      heureFin: '16:00',
-      motif: '',
-      organisme: '',
-      responsable: '',
-    };
-    void verifierConflits();
+  if (!o) return;
+  erreur.value = '';
+  conflits.value = [];
+  form.value = {
+    salleId: props.salles[0]?.id ?? '',
+    dateJour: aujourdhui(),
+    heureDebut: '14:00',
+    heureFin: '16:00',
+    motif: '',
+    organisme: '',
+    responsable: '',
+  };
+  void verifierConflits();
 });
 
 async function enregistrer() {
   enregistrement.value = true;
   erreur.value = '';
   try {
-    await api.post('/reservations', {
-      ...form.value,
-      organisme: form.value.organisme || undefined,
-      responsable: form.value.responsable || undefined,
-    }, { silencieux: true });
+    await api.post(
+      '/reservations',
+      {
+        ...form.value,
+        organisme: form.value.organisme || undefined,
+        responsable: form.value.responsable || undefined,
+      },
+      { silencieux: true },
+    );
     $q.notify({ type: 'positive', message: t('reservations.createDialog.sent') });
     emit('enregistre');
     ouvert.value = false;
@@ -178,8 +188,12 @@ async function enregistrer() {
   font-weight: 600;
   color: var(--up-encre);
 
-  &--en_attente { color: var(--up-jaune-fonce); }
-  &--confirmee { color: $vert; }
+  &--en_attente {
+    color: var(--up-jaune-fonce);
+  }
+  &--confirmee {
+    color: $vert;
+  }
 }
 
 .conflit-aide {

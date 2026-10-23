@@ -46,12 +46,9 @@ export default {
   transitions: {
     IMPRIME:
       'Load the file you are actually going to print, or enter its SHA-256 fingerprint yourself. If it does not match the one recorded at scheduling, printing will be refused.',
-    MIS_SOUS_PLI:
-      'The copies are declared sealed in envelopes. This step is logged and cannot be undone.',
-    DISTRIBUE:
-      'The envelopes are declared delivered to the exam center. This step is logged and cannot be undone.',
-    RECUPERE:
-      'The scripts are declared collected: the draw is closed. This step is final.',
+    MIS_SOUS_PLI: 'The copies are declared sealed in envelopes. This step is logged and cannot be undone.',
+    DISTRIBUE: 'The envelopes are declared delivered to the exam center. This step is logged and cannot be undone.',
+    RECUPERE: 'The scripts are declared collected: the draw is closed. This step is final.',
   },
   dialogs: {
     schedule: {
@@ -67,7 +64,8 @@ export default {
       printRouteLabel: 'Printing route (e.g. Room 1 → Room 2 → …)',
       submit: 'Schedule',
       required: 'Exam, date, number of copies, and fingerprint are required.',
-      invalidFingerprint: 'The fingerprint must be a 64-character SHA-256 hexadecimal value. Load the file to calculate it.',
+      invalidFingerprint:
+        'The fingerprint must be a 64-character SHA-256 hexadecimal value. Load the file to calculate it.',
     },
     print: {
       fileLabel: 'File to print',
@@ -80,8 +78,7 @@ export default {
     },
     cancel: {
       title: 'Cancel the draw',
-      message:
-        'Permanently cancel the draw for {examen}? The scheduled copies will not be printed.',
+      message: 'Permanently cancel the draw for {examen}? The scheduled copies will not be printed.',
       thisExam: 'this exam',
     },
   },

@@ -10,11 +10,7 @@
   >
     <span class="section-titre">{{ $t('reclamations.dialog.create.type') }}</span>
     <div class="row q-col-gutter-sm">
-      <div
-        v-for="t in TYPES"
-        :key="t.value"
-        class="col-6 col-sm-4"
-      >
+      <div v-for="t in TYPES" :key="t.value" class="col-6 col-sm-4">
         <q-btn
           flat
           no-caps
@@ -82,11 +78,7 @@
       :label="$t('common.fields.department')"
     />
 
-    <q-toggle
-      v-model="form.anonyme"
-      class="q-mt-md"
-      :label="$t('reclamations.dialog.create.anonymous')"
-    >
+    <q-toggle v-model="form.anonyme" class="q-mt-md" :label="$t('reclamations.dialog.create.anonymous')">
       <q-tooltip>
         {{ $t('reclamations.dialog.create.anonymousHint') }}
       </q-tooltip>
@@ -186,23 +178,20 @@ const valide = computed(() => {
   return sujetOk && descOk && typeOk && anonymeOk;
 });
 
-watch(
-  ouvert,
-  (o) => {
-    if (!o) return;
-    erreur.value = '';
-    form.value = {
-      type: '',
-      sujet: '',
-      description: '',
-      priorite: 'NORMALE',
-      anonyme: false,
-      departementId: null,
-      nomAuteur: '',
-      emailAuteur: '',
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  erreur.value = '';
+  form.value = {
+    type: '',
+    sujet: '',
+    description: '',
+    priorite: 'NORMALE',
+    anonyme: false,
+    departementId: null,
+    nomAuteur: '',
+    emailAuteur: '',
+  };
+});
 
 async function envoyer() {
   if (!valide.value) return;

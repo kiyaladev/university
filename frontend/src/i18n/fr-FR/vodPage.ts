@@ -21,8 +21,10 @@ export default {
     duration: 'Durée (secondes)',
     publicResource: 'Ressource publique',
     privateEnrollment: 'Inscription bénéficiaire (facultatif)',
-    privateEnrollmentHint: 'Une inscription donne accès à cet étudiant uniquement. Sans inscription, la ressource privée reste réservée à son auteur, à l’enseignant lié et à la gestion.',
-    privateEnrollmentManaged: 'L’administration peut affecter cette ressource privée à une inscription. Sans affectation, elle reste réservée à son auteur, à l’enseignant lié et à la gestion.',
+    privateEnrollmentHint:
+      'Une inscription donne accès à cet étudiant uniquement. Sans inscription, la ressource privée reste réservée à son auteur, à l’enseignant lié et à la gestion.',
+    privateEnrollmentManaged:
+      'L’administration peut affecter cette ressource privée à une inscription. Sans affectation, elle reste réservée à son auteur, à l’enseignant lié et à la gestion.',
     required: 'Le titre et l’URL sont obligatoires.',
     updated: 'Ressource mise à jour.',
     created: 'Ressource créée.',
@@ -58,8 +60,7 @@ export default {
   },
   emptyState: {
     filtered: 'Aucune ressource ne correspond à ces critères.',
-    student:
-      'Aucun cours en ligne pour vos inscriptions : vos enseignants n’ont pas encore publié de replay.',
+    student: 'Aucun cours en ligne pour vos inscriptions : vos enseignants n’ont pas encore publié de replay.',
     staff: 'Aucune ressource au catalogue : déposez un replay, un podcast ou une transcription.',
   },
   dialogs: {

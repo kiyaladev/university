@@ -1,12 +1,10 @@
 /** Namespace `rectorat` — Rectorate dashboard page. */
 export default {
-  title: "Institution overview",
-  subtitle:
-    "Current institution figures · year {annee}.",
+  title: 'Institution overview',
+  subtitle: 'Current institution figures · year {annee}.',
   actions: {
     generateReport: 'Generate MESRS report',
-    generateReportTooltip:
-      "Save the current figures in archived reports.",
+    generateReportTooltip: 'Save the current figures in archived reports.',
   },
   kpis: {
     totalHeadcount: 'Total headcount',
@@ -58,6 +56,6 @@ export default {
   loading: 'Loading dashboard…',
   messages: {
     reportGenerated: 'MESRS report {annee} generated and archived.',
-    viewSnapshots: "View archived reports",
+    viewSnapshots: 'View archived reports',
   },
 };

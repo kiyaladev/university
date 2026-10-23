@@ -107,10 +107,7 @@ export async function capturerPourEnrolement(enseignantId: string): Promise<Capt
   return capture;
 }
 
-export async function verifierEmpreinte(
-  enseignantId: string,
-  gabarit: string,
-): Promise<VerificationEmpreinte> {
+export async function verifierEmpreinte(enseignantId: string, gabarit: string): Promise<VerificationEmpreinte> {
   if (surAndroid()) return Empreinte.verifier({ enseignantId, gabarit });
 
   const reponse = await fetch(`${urlPasserelle()}/verifier`, {

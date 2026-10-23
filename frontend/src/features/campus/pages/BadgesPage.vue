@@ -17,12 +17,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { pageApi, texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import type { BadgeAcces } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
-import {
-  LIBELLE_STATUT_BADGE,
-  LIBELLE_TYPE_BADGE,
-  dateLisible,
-  optionsDepuis,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_BADGE, LIBELLE_TYPE_BADGE, dateLisible, optionsDepuis } from '@/shared/utils/libelles';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -178,7 +173,12 @@ function statutEffectif(b: BadgeAcces): string {
       </template>
     </barre-filtres>
 
-    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      :show-all="false"
+    />
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -208,9 +208,7 @@ function statutEffectif(b: BadgeAcces): string {
         <q-td :props="p">{{ p.row.organisation ?? '—' }}</q-td>
       </template>
       <template #body-cell-validite="p">
-        <q-td :props="p">
-          {{ dateLisible(p.row.dateDelivrance) }} → {{ dateLisible(p.row.dateValidite) }}
-        </q-td>
+        <q-td :props="p"> {{ dateLisible(p.row.dateDelivrance) }} → {{ dateLisible(p.row.dateValidite) }} </q-td>
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -222,48 +220,65 @@ function statutEffectif(b: BadgeAcces): string {
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn flat no-caps dense icon="print" :aria-label="$t('badges.aria.printBadge')" :label="$t('badges.aria.printBadge')" @click="imprimer(p.row)">
+          <q-btn
+            flat
+            no-caps
+            dense
+            icon="print"
+            :aria-label="$t('badges.aria.printBadge')"
+            :label="$t('badges.aria.printBadge')"
+            @click="imprimer(p.row)"
+          >
             <q-tooltip>{{ $t('common.actions.print') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="peutEditer"
-            flat no-caps
-            dense
-            icon="edit"
-            :aria-label="$t('badges.aria.editBadge')" :label="$t('badges.aria.editBadge')"
-            @click="ouvrirEdition(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutEditer && p.row.statut !== 'ANNULE'"
-            flat no-caps
-            dense
-            icon="schedule"
-            :aria-label="$t('badges.aria.extendBadge')" :label="$t('badges.aria.extendBadge')"
-            @click="ouvrirRallonge(p.row)"
-          >
-            <q-tooltip>{{ $t('badges.tooltips.extend') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutEditer && p.row.statut !== 'ANNULE'"
-            flat no-caps
-            dense
-            icon="block"
-            color="negative"
-            :aria-label="$t('badges.aria.cancelBadge')" :label="$t('badges.aria.cancelBadge')"
-            @click="ouvrirAnnulation(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.cancel') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="peutEditer"
+              flat
+              no-caps
+              dense
+              icon="edit"
+              :aria-label="$t('badges.aria.editBadge')"
+              :label="$t('badges.aria.editBadge')"
+              @click="ouvrirEdition(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutEditer && p.row.statut !== 'ANNULE'"
+              flat
+              no-caps
+              dense
+              icon="schedule"
+              :aria-label="$t('badges.aria.extendBadge')"
+              :label="$t('badges.aria.extendBadge')"
+              @click="ouvrirRallonge(p.row)"
+            >
+              <q-tooltip>{{ $t('badges.tooltips.extend') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutEditer && p.row.statut !== 'ANNULE'"
+              flat
+              no-caps
+              dense
+              icon="block"
+              color="negative"
+              :aria-label="$t('badges.aria.cancelBadge')"
+              :label="$t('badges.aria.cancelBadge')"
+              @click="ouvrirAnnulation(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.cancel') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-<div v-for="b in liste.lignes" :key="b.id" class="col-12 col-sm-6 col-md-4">
+      <div v-for="b in liste.lignes" :key="b.id" class="col-12 col-sm-6 col-md-4">
         <q-card class="badge-carte">
           <q-card-section class="row items-center q-gutter-sm">
             <q-avatar size="56px" color="grey-3" text-color="primary">
@@ -282,52 +297,64 @@ function statutEffectif(b: BadgeAcces): string {
               {{ LIBELLE_TYPE_BADGE[b.type] ?? b.type }}
             </q-chip>
             <div class="q-mt-sm">
-              {{ $t('badges.card.issuedOn', { date: dateLisible(b.dateDelivrance) }) }}<br>
+              {{ $t('badges.card.issuedOn', { date: dateLisible(b.dateDelivrance) }) }}<br />
               <i18n-t keypath="badges.card.validUntil" tag="span">
-                <template #date><strong>{{ dateLisible(b.dateValidite) }}</strong></template>
+                <template #date
+                  ><strong>{{ dateLisible(b.dateValidite) }}</strong></template
+                >
               </i18n-t>
             </div>
-            <div class="q-mt-sm"><code>{{ b.numero }}</code></div>
+            <div class="q-mt-sm">
+              <code>{{ b.numero }}</code>
+            </div>
             <div v-if="b.statut === 'ANNULE' && b.motif" class="q-mt-sm text-grey-7">
               {{ $t('badges.card.cancelReason', { reason: b.motif }) }}
             </div>
           </q-card-section>
           <q-card-actions align="right">
-<q-btn flat dense icon="print" :label="$t('common.actions.print')" no-caps @click="imprimer(b)" />
-<actions-secondaires>
-<q-btn v-close-popup
-              v-if="peutEditer"
-              flat
-              dense
-              icon="edit"
-              :label="$t('badges.actions.edit')"
-              no-caps
-              @click="ouvrirEdition(b)"
-            />
-<q-btn v-close-popup
-              v-if="peutEditer && b.statut !== 'ANNULE'"
-              flat
-              dense
-              icon="schedule"
-              :label="$t('badges.actions.extend')"
-              no-caps
-              @click="ouvrirRallonge(b)"
-            />
-<q-btn v-close-popup
-              v-if="peutEditer && b.statut !== 'ANNULE'"
-              flat
-              dense
-              icon="block"
-              color="negative"
-              :label="$t('common.actions.cancel')"
-              no-caps
-              @click="ouvrirAnnulation(b)"
-            />
-</actions-secondaires>
-</q-card-actions>
+            <q-btn flat dense icon="print" :label="$t('common.actions.print')" no-caps @click="imprimer(b)" />
+            <actions-secondaires>
+              <q-btn
+                v-close-popup
+                v-if="peutEditer"
+                flat
+                dense
+                icon="edit"
+                :label="$t('badges.actions.edit')"
+                no-caps
+                @click="ouvrirEdition(b)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="peutEditer && b.statut !== 'ANNULE'"
+                flat
+                dense
+                icon="schedule"
+                :label="$t('badges.actions.extend')"
+                no-caps
+                @click="ouvrirRallonge(b)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="peutEditer && b.statut !== 'ANNULE'"
+                flat
+                dense
+                icon="block"
+                color="negative"
+                :label="$t('common.actions.cancel')"
+                no-caps
+                @click="ouvrirAnnulation(b)"
+              />
+            </actions-secondaires>
+          </q-card-actions>
         </q-card>
       </div>
-      <etat-vide v-if="!liste.chargement && !liste.lignes.length" class="col-12" icone="how_to_reg" :titre="$t('badges.emptyState.message')" />
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="how_to_reg"
+        :titre="$t('badges.emptyState.message')"
+      />
     </div>
 
     <dialogue-badge v-model="dialogEdition" :badge="badgeEnEdition" @enregistre="liste.recharger()" />
@@ -335,7 +362,9 @@ function statutEffectif(b: BadgeAcces): string {
     <dialogue-formulaire
       v-model="dialogAnnulation"
       :titre="$t('badges.dialogs.cancel.title')"
-      :sous-titre="badgeAnnulation ? `${badgeAnnulation.prenom} ${badgeAnnulation.nom} · ${badgeAnnulation.numero}` : undefined"
+      :sous-titre="
+        badgeAnnulation ? `${badgeAnnulation.prenom} ${badgeAnnulation.nom} · ${badgeAnnulation.numero}` : undefined
+      "
       taille="s"
       :libelle-valider="$t('badges.dialogs.cancel.confirmAction')"
       couleur-valider="negative"

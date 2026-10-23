@@ -26,11 +26,11 @@ export default {
     qrAria: 'QR code for room {code}',
   },
   roomActions: {
-    viewSessionsAria: 'View the room\'s sessions',
+    viewSessionsAria: "View the room's sessions",
     viewSessionsTooltip: 'Its sessions',
     printPosterAria: 'Print the room poster',
     printPosterTooltip: 'Poster for this room',
-    regenerateAria: 'Regenerate the room\'s QR code',
+    regenerateAria: "Regenerate the room's QR code",
     regenerateTooltip: 'Regenerate the QR code',
     editAria: 'Edit the room',
     deleteAria: 'Delete the room',

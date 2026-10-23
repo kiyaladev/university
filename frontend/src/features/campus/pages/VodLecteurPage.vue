@@ -73,8 +73,12 @@ function basculerLecture() {
   }
 }
 
-function surLecture() { enLecture.value = true; }
-function surPause() { enLecture.value = false; }
+function surLecture() {
+  enLecture.value = true;
+}
+function surPause() {
+  enLecture.value = false;
+}
 
 function surTimeUpdate() {
   if (!mediaRef.value) return;
@@ -102,7 +106,9 @@ async function signalerVue(termine: boolean) {
       dureeSecondes: Math.floor(dureeMax.value),
       termine,
     });
-  } catch { /* silencieux */ }
+  } catch {
+    /* silencieux */
+  }
 }
 
 function changerVitesse(v: number) {
@@ -121,7 +127,9 @@ async function basculerPleinEcran() {
       if (document.exitFullscreen) await document.exitFullscreen();
       pleinEcran.value = false;
     }
-  } catch { /* silencieux */ }
+  } catch {
+    /* silencieux */
+  }
 }
 
 function surFin() {
@@ -138,25 +146,32 @@ function formaterDuree(secondes: number): string {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-watch(() => route.params.id, () => { if (route.params.id) charger(); });
+watch(
+  () => route.params.id,
+  () => {
+    if (route.params.id) charger();
+  },
+);
 onMounted(charger);
-onBeforeUnmount(() => { void signalerVue(false); });
+onBeforeUnmount(() => {
+  void signalerVue(false);
+});
 </script>
 
 <template>
   <q-page class="q-pa-md lecteur-page">
     <q-btn flat icon="arrow_back" :label="$t('vodLecteur.retourCatalogue')" no-caps @click="retour" />
 
-    <q-card v-if="chargement" class="q-pa-md q-mt-md">
-      <q-spinner /> {{ $t('vodLecteur.chargement') }}
-    </q-card>
+    <q-card v-if="chargement" class="q-pa-md q-mt-md"> <q-spinner /> {{ $t('vodLecteur.chargement') }} </q-card>
 
     <q-card v-else-if="vod" class="lecteur-carte q-mt-md">
       <q-card-section>
         <h1 class="text-h6 q-my-none">{{ vod.titre }}</h1>
         <div class="text-caption text-grey-7">
           {{ vod.enseignant ? `${vod.enseignant.prenom} ${vod.enseignant.nom}` : '' }}
-          <span v-if="vod.matiere"> · {{ vod.matiere.code }} {{ $t('common.format.emptyValue') }} {{ vod.matiere.intitule }}</span>
+          <span v-if="vod.matiere">
+            · {{ vod.matiere.code }} {{ $t('common.format.emptyValue') }} {{ vod.matiere.intitule }}</span
+          >
         </div>
       </q-card-section>
 
@@ -214,9 +229,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
           >
             <q-tooltip>{{ enLecture ? $t('vodLecteur.pause') : $t('vodLecteur.lecture') }}</q-tooltip>
           </q-btn>
-          <span class="text-caption">
-            {{ formaterDuree(dureeActuelle) }} / {{ formaterDuree(dureeMax) }}
-          </span>
+          <span class="text-caption"> {{ formaterDuree(dureeActuelle) }} / {{ formaterDuree(dureeMax) }} </span>
           <q-space />
           <q-select
             :model-value="vitesse"
@@ -235,7 +248,9 @@ onBeforeUnmount(() => { void signalerVue(false); });
             :aria-label="pleinEcran ? $t('vodLecteur.pleinEcran.quitter') : $t('vodLecteur.pleinEcran.entrer')"
             @click="basculerPleinEcran"
           >
-            <q-tooltip>{{ pleinEcran ? $t('vodLecteur.pleinEcran.quitter') : $t('vodLecteur.pleinEcran.court') }}</q-tooltip>
+            <q-tooltip>{{
+              pleinEcran ? $t('vodLecteur.pleinEcran.quitter') : $t('vodLecteur.pleinEcran.court')
+            }}</q-tooltip>
           </q-btn>
         </div>
       </q-card-section>
@@ -246,9 +261,20 @@ onBeforeUnmount(() => { void signalerVue(false); });
     </q-card>
 
     <q-card v-else class="lecteur-carte q-mt-md">
-      <etat-vide icone="videocam_off" :titre="$t('vodLecteur.introuvable.message')" :aide="$t('vodLecteur.introuvable.detail')">
+      <etat-vide
+        icone="videocam_off"
+        :titre="$t('vodLecteur.introuvable.message')"
+        :aide="$t('vodLecteur.introuvable.detail')"
+      >
         <template #action>
-          <q-btn flat no-caps color="primary" icon="arrow_back" :label="$t('vodLecteur.retourCatalogue')" @click="retour" />
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            icon="arrow_back"
+            :label="$t('vodLecteur.retourCatalogue')"
+            @click="retour"
+          />
         </template>
       </etat-vide>
     </q-card>

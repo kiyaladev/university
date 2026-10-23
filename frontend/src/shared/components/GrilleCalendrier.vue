@@ -16,16 +16,19 @@ interface Evenement {
   onClick?: () => void | Promise<void>;
 }
 
-const props = withDefaults(defineProps<{
-  evenements?: Evenement[];
-  /** Date initiale au format YYYY-MM (par défaut : mois courant) */
-  moisInitial?: string;
-  /** Masque les jours du mois précédent/suivant */
-  compact?: boolean;
-}>(), {
-  evenements: () => [],
-  compact: true,
-});
+const props = withDefaults(
+  defineProps<{
+    evenements?: Evenement[];
+    /** Date initiale au format YYYY-MM (par défaut : mois courant) */
+    moisInitial?: string;
+    /** Masque les jours du mois précédent/suivant */
+    compact?: boolean;
+  }>(),
+  {
+    evenements: () => [],
+    compact: true,
+  },
+);
 
 function dateLocaleIso(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -47,13 +50,17 @@ const moisSuivant = computed(() => {
 
 const libelleMois = computed(() => {
   const [annee, moisN] = mois.value.split('-').map(Number);
-  return new Intl.DateTimeFormat(locale.value, { month: 'long', timeZone: 'UTC' })
-    .format(new Date(Date.UTC(annee, moisN - 1, 1)));
+  return new Intl.DateTimeFormat(locale.value, { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(annee, moisN - 1, 1)),
+  );
 });
-const jours = computed(() => Array.from({ length: 7 }, (_, index) =>
-  new Intl.DateTimeFormat(locale.value, { weekday: 'short', timeZone: 'UTC' })
-    .format(new Date(Date.UTC(2024, 0, 1 + index))),
-));
+const jours = computed(() =>
+  Array.from({ length: 7 }, (_, index) =>
+    new Intl.DateTimeFormat(locale.value, { weekday: 'short', timeZone: 'UTC' }).format(
+      new Date(Date.UTC(2024, 0, 1 + index)),
+    ),
+  ),
+);
 
 const grille = computed(() => {
   const [annee, moisN] = mois.value.split('-').map(Number);
@@ -96,13 +103,32 @@ function aujourdhui() {
 <template>
   <div class="cal">
     <div class="cal__entete">
-      <q-btn flat round dense icon="chevron_left" :aria-label="t('reservations.calendar.previousMonth')" @click="mois = moisPrecedent" />
-      <div class="cal__titre" aria-live="polite">
-        {{ libelleMois }} {{ mois.split('-')[0] }}
-      </div>
-      <q-btn flat round dense icon="chevron_right" :aria-label="t('reservations.calendar.nextMonth')" @click="mois = moisSuivant" />
+      <q-btn
+        flat
+        round
+        dense
+        icon="chevron_left"
+        :aria-label="t('reservations.calendar.previousMonth')"
+        @click="mois = moisPrecedent"
+      />
+      <div class="cal__titre" aria-live="polite">{{ libelleMois }} {{ mois.split('-')[0] }}</div>
+      <q-btn
+        flat
+        round
+        dense
+        icon="chevron_right"
+        :aria-label="t('reservations.calendar.nextMonth')"
+        @click="mois = moisSuivant"
+      />
       <q-space />
-      <q-btn flat dense icon="today" :label="$t('reservations.actions.today')" no-caps @click="mois = aujourdhui().slice(0, 7)" />
+      <q-btn
+        flat
+        dense
+        icon="today"
+        :label="$t('reservations.actions.today')"
+        no-caps
+        @click="mois = aujourdhui().slice(0, 7)"
+      />
     </div>
     <div class="cal__grille">
       <div v-for="j in jours" :key="j" class="cal__jh">{{ j }}</div>
@@ -120,7 +146,7 @@ function aujourdhui() {
         <div v-if="!props.compact" class="cal__liste">
           <component
             :is="ev.onClick ? 'button' : 'div'"
-            v-for="ev in (evenementsParJour[cellule.iso] ?? [])"
+            v-for="ev in evenementsParJour[cellule.iso] ?? []"
             :key="ev.id"
             class="cal__event"
             :type="ev.onClick ? 'button' : undefined"
@@ -141,7 +167,9 @@ function aujourdhui() {
           >
             {{ i + 1 }}
           </span>
-          <span v-if="(evenementsParJour[cellule.iso] ?? []).length > 3" class="cal__pastille cal__pastille--plus">+{{ (evenementsParJour[cellule.iso] ?? []).length - 3 }}</span>
+          <span v-if="(evenementsParJour[cellule.iso] ?? []).length > 3" class="cal__pastille cal__pastille--plus"
+            >+{{ (evenementsParJour[cellule.iso] ?? []).length - 3 }}</span
+          >
         </div>
       </div>
     </div>

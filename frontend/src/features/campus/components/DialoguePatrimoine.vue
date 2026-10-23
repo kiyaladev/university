@@ -3,7 +3,9 @@
     v-model="ouvert"
     taille="l"
     :titre="equipement ? $t('patrimoine.equipmentDialog.title.edit') : $t('patrimoine.equipmentDialog.title.new')"
-    :sous-titre="equipement ? $t('patrimoine.equipmentDialog.subtitle.edit') : $t('patrimoine.equipmentDialog.subtitle.new')"
+    :sous-titre="
+      equipement ? $t('patrimoine.equipmentDialog.subtitle.edit') : $t('patrimoine.equipmentDialog.subtitle.new')
+    "
     :envoi="enregistrement"
     :desactive="!form.categorieId"
     @valider="enregistrer"

@@ -143,7 +143,9 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
     etat.value.page = page;
     // Seules les clés présentes dans l'URL écrasent les valeurs de la page.
     const presents = Object.fromEntries(
-      Object.entries(lus).filter(([k]) => typeof route.query[prefixe + k] === 'string' && route.query[prefixe + k] !== ''),
+      Object.entries(lus).filter(
+        ([k]) => typeof route.query[prefixe + k] === 'string' && route.query[prefixe + k] !== '',
+      ),
     );
     if (Object.keys(presents).length) options.filtres.value = { ...options.filtres.value, ...presents };
   }
@@ -211,8 +213,7 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
   // ------------------------------------------------------ filtres → requête
   let precedent = normaliser(options.filtres.value);
   let minuterie: ReturnType<typeof setTimeout> | null = null;
-  const estLocale = (cle: string) =>
-    options.clesLocales === true || (options.clesLocales ?? []).includes(cle);
+  const estLocale = (cle: string) => options.clesLocales === true || (options.clesLocales ?? []).includes(cle);
 
   watch(
     options.filtres,
@@ -303,9 +304,7 @@ export function useListePaginee<T, F extends object = Record<string, any>>(optio
 
   /** Remet les filtres à leur état initial, en gardant les clés de `conserver`. */
   function reinitialiser(conserver: string[] = ['recherche']) {
-    const garde = Object.fromEntries(
-      conserver.map((k) => [k, (options.filtres.value as Record<string, unknown>)[k]]),
-    );
+    const garde = Object.fromEntries(conserver.map((k) => [k, (options.filtres.value as Record<string, unknown>)[k]]));
     options.filtres.value = { ...filtresInitiaux, ...garde } as F;
   }
 

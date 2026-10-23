@@ -2,14 +2,15 @@
 export default {
   title: 'Attestations',
   subtitle:
-    "Official documents verifiable via QR code — every public scan is logged, nothing is erased, everything can be revoked.",
+    'Official documents verifiable via QR code — every public scan is logged, nothing is erased, everything can be revoked.',
   actions: {
     bulletins: 'Transcripts',
     issue: 'Issue an attestation',
     qr: 'QR',
   },
   issueDialog: {
-    subtitle: 'Official document verifiable by QR code — only one active attestation is allowed for the same student, type, and academic year.',
+    subtitle:
+      'Official document verifiable by QR code — only one active attestation is allowed for the same student, type, and academic year.',
     studentHint: 'Type at least 2 letters: name, first name, or student ID',
     studentEmpty: 'No student found',
     type: 'Attestation type *',
@@ -63,7 +64,7 @@ export default {
   revocation: {
     title: 'Revoke {numero}',
     warning:
-      "The QR code will no longer vouch for the document: the authenticity of the revocation is itself verifiable online. This action is final.",
+      'The QR code will no longer vouch for the document: the authenticity of the revocation is itself verifiable online. This action is final.',
     motifLabel: 'Revocation reason *',
     motifHint: 'Minimum three characters — this reason is shown during public verifications',
     confirm: 'Revoke permanently',

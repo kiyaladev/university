@@ -10,7 +10,11 @@
             <div class="text-caption text-grey-7">{{ courrier.numero }}</div>
             <div class="text-h6">{{ courrier.objet }}</div>
             <div class="text-caption q-mt-xs">
-              {{ $t(courrier.type === 'ENTRANT' ? 'courrier.detail.sender' : 'courrier.detail.recipient', { name: courrier.type === 'ENTRANT' ? courrier.expediteur ?? '—' : courrier.destinataire ?? '—' }) }}
+              {{
+                $t(courrier.type === 'ENTRANT' ? 'courrier.detail.sender' : 'courrier.detail.recipient', {
+                  name: courrier.type === 'ENTRANT' ? (courrier.expediteur ?? '—') : (courrier.destinataire ?? '—'),
+                })
+              }}
             </div>
           </div>
           <PastilleStatut domaine="courrier" :statut="courrier.statut" />
@@ -96,7 +100,14 @@
     >
       <div class="q-gutter-md">
         <q-input v-model="formParaphe.paraphe" outlined dense :label="$t('courrier.detail.signatureHash')" />
-        <q-input v-model="formParaphe.commentaire" outlined dense type="textarea" rows="3" :label="$t('common.fields.comment')" />
+        <q-input
+          v-model="formParaphe.commentaire"
+          outlined
+          dense
+          type="textarea"
+          rows="3"
+          :label="$t('common.fields.comment')"
+        />
       </div>
     </dialogue-formulaire>
   </q-dialog>
@@ -112,9 +123,7 @@ import { useAuthStore } from '@/stores/auth';
 import EtapesCircuit from '@/shared/components/EtapesCircuit.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import {
-  dateHeureLisible,
-} from '@/shared/utils/libelles';
+import { dateHeureLisible } from '@/shared/utils/libelles';
 import type { CircuitCourrier, Courrier } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -143,12 +152,16 @@ const etapesWorkflow = computed(() => [
 ]);
 
 const etapeActuelle = computed(() => courrier.value?.statut ?? 'RECU');
-const peutCloturer = computed(() => auth.peut('courrier.cloturer') && courrier.value
-  && ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(courrier.value.statut));
+const peutCloturer = computed(
+  () =>
+    auth.peut('courrier.cloturer') &&
+    courrier.value &&
+    ['EN_CIRCUIT', 'TRAITE', 'CLASSE'].includes(courrier.value.statut),
+);
 
 function peutParapher(etape: CircuitCourrier) {
   if (courrier.value?.statut !== 'EN_CIRCUIT' || etape.statut !== 'EN_CIRCUIT') return false;
-  if (courrier.value.circuits.some(e => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
+  if (courrier.value.circuits.some((e) => e.ordre < etape.ordre && e.statut !== 'TRAITE')) return false;
   if (auth.peut('courrier.parapherTout')) return true;
   const roles: Record<string, string[]> = {
     SCOLARITE: ['Secrétariat', 'Secrétariat général', 'Scolarité', 'Archives'],
@@ -205,7 +218,10 @@ async function cloturer() {
   if (!c) return;
   const ok = await confirmer({
     titre: t('common.actions.closeOut'),
-    message: t('courrier.detail.closeMessage', { number: c.numero, next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
+    message: t('courrier.detail.closeMessage', {
+      number: c.numero,
+      next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE',
+    }),
     ok: t('common.actions.closeOut'),
     danger: true,
   });

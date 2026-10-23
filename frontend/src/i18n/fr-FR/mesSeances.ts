@@ -23,7 +23,6 @@ export default {
     seances: 'Aucune séance sur cette période. Élargissez les dates pour remonter plus loin.',
   },
   messages: {
-    noTeacherFile:
-      'Votre compte n’est rattaché à aucun dossier d’enseignant : la fiche est indisponible.',
+    noTeacherFile: 'Votre compte n’est rattaché à aucun dossier d’enseignant : la fiche est indisponible.',
   },
 };

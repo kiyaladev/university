@@ -220,7 +220,15 @@ onMounted(charger);
     >
       <template #action>
         <div class="etat-vide__actions">
-          <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" :label="$t('vote.empty_state.my_space')" to="/portail" />
+          <q-btn
+            v-if="estEtudiant"
+            unelevated
+            color="primary"
+            no-caps
+            icon="person"
+            :label="$t('vote.empty_state.my_space')"
+            to="/portail"
+          />
           <q-btn flat no-caps icon="refresh" :label="$t('common.actions.refresh')" @click="charger" />
         </div>
       </template>
@@ -248,10 +256,12 @@ onMounted(charger);
               @click="selectionnerElection(e)"
             >
               <q-item-section>
-                <q-item-label><strong>{{ e.titre }}</strong></q-item-label>
+                <q-item-label
+                  ><strong>{{ e.titre }}</strong></q-item-label
+                >
                 <q-item-label caption>
-                  {{ LIBELLE_TYPE_ELECTION[e.type] ?? e.type }} ·
-                  {{ e.nbSieges }} {{ e.nbSieges > 1 ? $t('vote.list.seats') : $t('vote.list.seat') }} ·
+                  {{ LIBELLE_TYPE_ELECTION[e.type] ?? e.type }} · {{ e.nbSieges }}
+                  {{ e.nbSieges > 1 ? $t('vote.list.seats') : $t('vote.list.seat') }} ·
                   {{ $t('vote.list.closes_on', { date: dateElection(e.dateCloture) }) }}
                 </q-item-label>
                 <q-item-label>
@@ -270,7 +280,12 @@ onMounted(charger);
             <div class="text-h6">{{ electionActive.titre }}</div>
             <div class="text-caption text-grey-7">
               {{ LIBELLE_TYPE_ELECTION[electionActive.type] ?? electionActive.type }} ·
-              {{ $t('vote.detail.period', { debut: dateHeureElection(electionActive.dateOuverture), fin: dateHeureElection(electionActive.dateCloture) }) }}
+              {{
+                $t('vote.detail.period', {
+                  debut: dateHeureElection(electionActive.dateOuverture),
+                  fin: dateHeureElection(electionActive.dateCloture),
+                })
+              }}
             </div>
           </q-card-section>
 
@@ -301,7 +316,11 @@ onMounted(charger);
           <q-card-section v-else-if="!scrutinOuvert">
             <q-banner class="note--info">
               <template #avatar><q-icon name="lock" /></template>
-              {{ $t('vote.detail.closed_notice', { statut: LIBELLE_STATUT_ELECTION[electionActive.statut].toLowerCase() }) }}
+              {{
+                $t('vote.detail.closed_notice', {
+                  statut: LIBELLE_STATUT_ELECTION[electionActive.statut].toLowerCase(),
+                })
+              }}
             </q-banner>
           </q-card-section>
 
@@ -317,14 +336,21 @@ onMounted(charger);
             <q-card-section class="q-pt-none">
               <div class="text-caption text-grey-7 q-mb-sm">
                 <strong>{{ electionActive.nbSieges }}</strong>
-                {{ $t('vote.detail.seats_to_fill', { n: electionActive.nbSieges, plural: electionActive.nbSieges > 1 ? 's' : '' }) }}
+                {{
+                  $t('vote.detail.seats_to_fill', {
+                    n: electionActive.nbSieges,
+                    plural: electionActive.nbSieges > 1 ? 's' : '',
+                  })
+                }}
                 <span v-if="selections.length">
-                  {{ $t('vote.detail.selection_status', {
-                    selected: selections.length,
-                    selectedPlural: selections.length > 1 ? 's' : '',
-                    remaining: restantASelectionner,
-                    remainingPlural: restantASelectionner > 1 ? 's' : '',
-                  }) }}
+                  {{
+                    $t('vote.detail.selection_status', {
+                      selected: selections.length,
+                      selectedPlural: selections.length > 1 ? 's' : '',
+                      remaining: restantASelectionner,
+                      remainingPlural: restantASelectionner > 1 ? 's' : '',
+                    })
+                  }}
                 </span>
               </div>
 
@@ -341,16 +367,20 @@ onMounted(charger);
                   </q-item-section>
                   <q-item-section avatar>
                     <q-avatar>
-                      <img v-if="c.photoUrl" :src="c.photoUrl" :alt="`${c.prenom} ${c.nom}`">
+                      <img v-if="c.photoUrl" :src="c.photoUrl" :alt="`${c.prenom} ${c.nom}`" />
                       <q-icon v-else name="person" />
                     </q-avatar>
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label><strong>{{ c.prenom }} {{ c.nom }}</strong></q-item-label>
+                    <q-item-label
+                      ><strong>{{ c.prenom }} {{ c.nom }}</strong></q-item-label
+                    >
                     <q-item-label v-if="c.programme" caption>{{ c.programme }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
-                    <span class="text-caption text-grey-7 chiffres">{{ $t('vote.detail.candidate_number', { n: c.ordre }) }}</span>
+                    <span class="text-caption text-grey-7 chiffres">{{
+                      $t('vote.detail.candidate_number', { n: c.ordre })
+                    }}</span>
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -396,11 +426,13 @@ onMounted(charger);
           <q-card-section>
             <div class="text-h6">{{ $t('vote.results.title') }}</div>
             <div class="text-caption text-grey-7">
-              {{ $t('vote.results.summary', {
-                ballots: resultats.participation.nbBulletins,
-                votes: resultats.participation.voixTotales,
-                seats: resultats.participation.siegesPourvoir,
-              }) }}
+              {{
+                $t('vote.results.summary', {
+                  ballots: resultats.participation.nbBulletins,
+                  votes: resultats.participation.voixTotales,
+                  seats: resultats.participation.siegesPourvoir,
+                })
+              }}
             </div>
           </q-card-section>
           <q-list bordered separator>
@@ -418,7 +450,9 @@ onMounted(charger);
                     {{ $t('vote.results.elected') }}
                   </q-chip>
                 </q-item-label>
-                <q-item-label caption class="chiffres">{{ $t('vote.results.votes_count', { n: c.voix }) }}</q-item-label>
+                <q-item-label caption class="chiffres">{{
+                  $t('vote.results.votes_count', { n: c.voix })
+                }}</q-item-label>
               </q-item-section>
             </q-item>
           </q-list>

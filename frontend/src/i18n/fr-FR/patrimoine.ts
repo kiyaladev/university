@@ -1,6 +1,6 @@
 /** Namespace `patrimoine` — page PatrimoinePage.vue (inventaire du matériel). */
 export default {
-  title: "Inventaire et réparations",
+  title: 'Inventaire et réparations',
   subtitle:
     "L'inventaire des équipements de l'université. Chaque pièce porte un QR d'inventaire, une valeur d'acquisition et un carnet de réparations qui la suit de sa mise en service à sa réforme.",
   actions: {

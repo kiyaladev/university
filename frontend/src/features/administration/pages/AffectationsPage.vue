@@ -2,7 +2,14 @@
   <q-page class="q-pa-md">
     <en-tete-page :title="$t('affectations.title')" :subtitle="$t('affectations.subtitle')">
       <template v-if="auth.peutPlanifier" #actions>
-        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('affectations.actions.new')" @click="ouvrir(null)" />
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          :label="$t('affectations.actions.new')"
+          @click="ouvrir(null)"
+        />
       </template>
     </en-tete-page>
 
@@ -154,7 +161,8 @@
             </q-chip>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ a.annee?.libelle ?? '—' }} {{ $t('common.format.emptyValue') }} {{ $t('affectations.cardView.contractualVolume') }}
+            {{ a.annee?.libelle ?? '—' }} {{ $t('common.format.emptyValue') }}
+            {{ $t('affectations.cardView.contractualVolume') }}
             <span class="chiffres">{{ $t('common.units.hours', { n: a.volumeHorairePrevu }) }}</span>
           </div>
         </q-card-section>
@@ -362,18 +370,16 @@ const form = ref({
 /** Supprimer une charge est réservé à l'administration et à la scolarité. */
 const peutSupprimer = computed(() => auth.peut('affectations.supprimer'));
 
-const optionsPromotions = computed(() =>
-  promotions.value.map((p) => ({ label: p.nom, value: p.id })),
-);
+const optionsPromotions = computed(() => promotions.value.map((p) => ({ label: p.nom, value: p.id })));
 const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
 const filtresActifs = computed(() =>
   Boolean(
     filtres.value.recherche ||
-      filtres.value.enseignantId ||
-      filtres.value.matiereId ||
-      filtres.value.promotionId ||
-      filtres.value.anneeId,
+    filtres.value.enseignantId ||
+    filtres.value.matiereId ||
+    filtres.value.promotionId ||
+    filtres.value.anneeId,
   ),
 );
 const messageVide = computed(() =>
@@ -484,8 +490,7 @@ watch(
   () => form.value.matiereId,
   (id) => {
     if (!affectationEditee.value && id) {
-      form.value.volumeHorairePrevu =
-        matieres.value.find((m) => m.id === id)?.volumeHoraireTotal ?? 0;
+      form.value.volumeHorairePrevu = matieres.value.find((m) => m.id === id)?.volumeHoraireTotal ?? 0;
     }
   },
 );

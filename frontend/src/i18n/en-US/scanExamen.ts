@@ -1,8 +1,7 @@
 /** Namespace `scanExamen` — Scan exams page. */
 export default {
   title: 'Scan exams',
-  subtitle:
-    'Scan the student card QR code — or enter the ID number — to confirm attendance at the current exam.',
+  subtitle: 'Scan the student card QR code — or enter the ID number — to confirm attendance at the current exam.',
   actions: {
     backToExamens: 'Back to exams',
     seePlannedExams: 'View scheduled exams',
@@ -12,8 +11,7 @@ export default {
   },
   emptyState: {
     title: 'No exam in progress',
-    description:
-      'Scanning cards is only possible once the exam has been started from the Exams page.',
+    description: 'Scanning cards is only possible once the exam has been started from the Exams page.',
   },
   stats: {
     presentsOverEnrolled: 'Present / enrolled',
@@ -37,7 +35,6 @@ export default {
     unknownCard: 'unknown card',
   },
   messages: {
-    examNotStarted:
-      'This exam has not started: scans will be refused until it is launched.',
+    examNotStarted: 'This exam has not started: scans will be refused until it is launched.',
   },
 };

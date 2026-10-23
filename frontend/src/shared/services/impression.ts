@@ -16,10 +16,7 @@ import { jetonPresent, lireToken } from './session';
  * une promesse est bloqué comme pop-up, ce qui ferait perdre l'impression
  * sans aucun message.
  */
-export async function ouvrirImpression(
-  chemin: string,
-  params: Record<string, string | undefined> = {},
-): Promise<void> {
+export async function ouvrirImpression(chemin: string, params: Record<string, string | undefined> = {}): Promise<void> {
   if (!jetonPresent()) {
     Notify.create({ type: 'negative', message: 'Session expirée : reconnectez-vous.' });
     return;
@@ -106,9 +103,7 @@ export async function ouvrirImpressions(
     );
 
     const styles = [...new Set(corps.map(stylesDe).filter(Boolean))].join('\n');
-    const contenu = corps
-      .map((html) => `<section class="doc">${corpsDe(html)}</section>`)
-      .join('\n');
+    const contenu = corps.map((html) => `<section class="doc">${corpsDe(html)}</section>`).join('\n');
 
     const page = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><title>Bulletins</title>

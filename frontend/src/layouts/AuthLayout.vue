@@ -23,17 +23,18 @@
         </nav>
 
         <!-- Sur téléphone, la même liste tient dans un seul bouton. -->
-        <q-btn flat dense no-caps icon="menu" :label="$t('layout.publicNav.menu')" class="lt-md" :aria-label="$t('layout.publicNav.services')">
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="menu"
+          :label="$t('layout.publicNav.menu')"
+          class="lt-md"
+          :aria-label="$t('layout.publicNav.services')"
+        >
           <q-menu>
             <q-list style="min-width: 230px">
-              <q-item
-                v-for="l in liens"
-                :key="l.vers"
-                clickable
-                v-close-popup
-                :to="l.vers"
-                exact
-              >
+              <q-item v-for="l in liens" :key="l.vers" clickable v-close-popup :to="l.vers" exact>
                 <q-item-section avatar><q-icon :name="l.icone" /></q-item-section>
                 <q-item-section>
                   <q-item-label>{{ l.libelle }}</q-item-label>
@@ -54,7 +55,9 @@
       <div class="auth-pied__contenu">
         <span class="pochoir">{{ $t('layout.publicNav.footer') }}</span>
         <q-space />
-        <router-link to="/connexion" class="pochoir auth-pied__lien">{{ $t('layout.publicNav.personalArea') }}</router-link>
+        <router-link to="/connexion" class="pochoir auth-pied__lien">{{
+          $t('layout.publicNav.personalArea')
+        }}</router-link>
       </div>
     </q-footer>
   </q-layout>
@@ -74,51 +77,58 @@ import { useServicesActifsStore } from '../stores/servicesActifs';
  */
 const { t } = useI18n();
 const services = useServicesActifsStore();
-const liens = computed(() => [
-  { libelle: t('layout.publicNav.staffLogin'), vers: '/connexion', icone: 'login', aide: t('layout.publicNav.staffLoginHelp') },
-  {
-    libelle: t('layout.publicNav.studentPortal'),
-    vers: '/portail-connexion',
-    icone: 'person',
-    aide: t('layout.publicNav.smsLogin'),
-  },
-  {
-    libelle: t('layout.publicNav.preRegistration'),
-    vers: '/s-inscrire',
-    icone: 'how_to_reg',
-    aide: t('layout.publicNav.submitApplication'),
-  },
-  {
-    libelle: t('layout.publicNav.library'),
-    vers: '/bibliotheque',
-    icone: 'local_library',
-    aide: t('layout.publicNav.digitalCollection'),
-  },
-  {
-    libelle: t('layout.publicNav.training'),
-    vers: '/formations',
-    icone: 'workspace_premium',
-    aide: t('layout.publicNav.trainingCatalog'),
-  },
-  {
-    libelle: t('layout.publicNav.verifyCertificate'),
-    vers: '/verification',
-    icone: 'verified',
-    aide: t('layout.publicNav.verifyByCode'),
-  },
-  {
-    libelle: t('layout.publicNav.verifyCard'),
-    vers: '/verification-carte',
-    icone: 'badge',
-    aide: t('layout.publicNav.verifyStudentCard'),
-  },
-  {
-    libelle: t('layout.publicNav.verifyBadge'),
-    vers: '/verification-badge',
-    icone: 'how_to_reg',
-    aide: t('layout.publicNav.verifyAccessBadge'),
-  },
-].filter(lien => services.autorise(lien.vers)));
+const liens = computed(() =>
+  [
+    {
+      libelle: t('layout.publicNav.staffLogin'),
+      vers: '/connexion',
+      icone: 'login',
+      aide: t('layout.publicNav.staffLoginHelp'),
+    },
+    {
+      libelle: t('layout.publicNav.studentPortal'),
+      vers: '/portail-connexion',
+      icone: 'person',
+      aide: t('layout.publicNav.smsLogin'),
+    },
+    {
+      libelle: t('layout.publicNav.preRegistration'),
+      vers: '/s-inscrire',
+      icone: 'how_to_reg',
+      aide: t('layout.publicNav.submitApplication'),
+    },
+    {
+      libelle: t('layout.publicNav.library'),
+      vers: '/bibliotheque',
+      icone: 'local_library',
+      aide: t('layout.publicNav.digitalCollection'),
+    },
+    {
+      libelle: t('layout.publicNav.training'),
+      vers: '/formations',
+      icone: 'workspace_premium',
+      aide: t('layout.publicNav.trainingCatalog'),
+    },
+    {
+      libelle: t('layout.publicNav.verifyCertificate'),
+      vers: '/verification',
+      icone: 'verified',
+      aide: t('layout.publicNav.verifyByCode'),
+    },
+    {
+      libelle: t('layout.publicNav.verifyCard'),
+      vers: '/verification-carte',
+      icone: 'badge',
+      aide: t('layout.publicNav.verifyStudentCard'),
+    },
+    {
+      libelle: t('layout.publicNav.verifyBadge'),
+      vers: '/verification-badge',
+      icone: 'how_to_reg',
+      aide: t('layout.publicNav.verifyAccessBadge'),
+    },
+  ].filter((lien) => services.autorise(lien.vers)),
+);
 </script>
 
 <style scoped lang="scss">
@@ -210,6 +220,8 @@ body.body--dark .auth-entete {
   color: var(--up-vert-lien);
   text-decoration: none;
 
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 }
 </style>

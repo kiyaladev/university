@@ -2,7 +2,7 @@
 export default {
   title: 'Attendance reports',
   subtitle:
-    "Line-by-line statements from the attendance register, over a chosen period: who taught what, how many hours, how much to pay. This is the supporting document — printable and exportable. Day-to-day tracking indicators are in Statistics, the annual summary in the Rectorat dashboard.",
+    'Line-by-line statements from the attendance register, over a chosen period: who taught what, how many hours, how much to pay. This is the supporting document — printable and exportable. Day-to-day tracking indicators are in Statistics, the annual summary in the Rectorat dashboard.',
   filters: {
     promotion: 'Class',
   },

@@ -11,7 +11,8 @@ export default {
   },
   empty_state: {
     title: 'No election at the moment',
-    message: 'No election is open and no result has been proclaimed yet. You will be notified when the next election opens.',
+    message:
+      'No election is open and no result has been proclaimed yet. You will be notified when the next election opens.',
     my_space: 'My space',
   },
   list: {

@@ -71,7 +71,14 @@
       <div class="text-weight-medium">{{ dernierRecap.titre }}</div>
       <div class="text-caption">{{ dernierRecap.message }}</div>
       <template #action>
-        <q-btn flat dense no-caps :label="$t('plagiatPage.banner.dismiss')" :aria-label="$t('plagiatPage.banner.dismissAria')" @click="dernierRecap = null" />
+        <q-btn
+          flat
+          dense
+          no-caps
+          :label="$t('plagiatPage.banner.dismiss')"
+          :aria-label="$t('plagiatPage.banner.dismissAria')"
+          @click="dernierRecap = null"
+        />
       </template>
     </q-banner>
 
@@ -111,7 +118,8 @@
       <div class="text-caption text-weight-medium q-mb-xs">{{ $t('plagiatPage.topDocuments.title') }}</div>
       <ol class="q-pl-md q-mb-none">
         <li v-for="d in topDocuments" :key="d.id" class="text-caption">
-          {{ d.titre }} {{ $t('common.format.emptyValue') }} <span class="text-grey-9">{{ $t('plagiatPage.topDocuments.count', { count: d.compte }) }}</span>
+          {{ d.titre }} {{ $t('common.format.emptyValue') }}
+          <span class="text-grey-9">{{ $t('plagiatPage.topDocuments.count', { count: d.compte }) }}</span>
         </li>
       </ol>
     </q-banner>
@@ -232,31 +240,46 @@
         :total="suspicionsFiltrees.length"
         :show-all="false"
         @update:page="(v) => (page = v)"
-        @update:page-size="(v) => { pageSize = v; page = 1; }"
+        @update:page-size="
+          (v) => {
+            pageSize = v;
+            page = 1;
+          }
+        "
       />
     </template>
 
     <!-- Dialog de décision rapide (acquittement / confirmation) -->
     <dialogue-formulaire
       v-model="decisionDialogOuvert"
-      :titre="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.titleAcquit') : $t('plagiatPage.dialog.titleConfirm')"
+      :titre="
+        decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.titleAcquit') : $t('plagiatPage.dialog.titleConfirm')
+      "
       :envoi="decisionEnCours"
-      :libelle-valider="decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.acquitSubmit') : $t('plagiatPage.dialog.confirmSubmit')"
+      :libelle-valider="
+        decisionStatut === 'ACQUITTE' ? $t('plagiatPage.dialog.acquitSubmit') : $t('plagiatPage.dialog.confirmSubmit')
+      "
       :couleur-valider="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
       :desactive="decisionStatut === 'CONFIRME' && !decisionMotif.trim()"
       @valider="validerDecision"
     >
       <template v-if="decisionCourante">
         <div class="text-caption text-grey-7 q-mb-md">
-          {{ $t('common.fields.score') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('common.format.emptyValue') }}
-          {{ $t('plagiatPage.dialog.comparisonDocs', {
-            documentA: decisionCourante.documentA?.titre ?? '—',
-            documentB: decisionCourante.documentB?.titre ?? '—',
-          }) }}
+          {{ $t('common.fields.score') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong>
+          {{ $t('common.format.emptyValue') }}
+          {{
+            $t('plagiatPage.dialog.comparisonDocs', {
+              documentA: decisionCourante.documentA?.titre ?? '—',
+              documentB: decisionCourante.documentB?.titre ?? '—',
+            })
+          }}
         </div>
         <q-banner dense :class="decisionStatut === 'CONFIRME' ? 'bg-red-1 text-red-10 q-mb-md' : 'carte q-mb-md'">
           <template #avatar>
-            <q-icon :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'" :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'" />
+            <q-icon
+              :name="decisionStatut === 'CONFIRME' ? 'warning' : 'info'"
+              :color="decisionStatut === 'CONFIRME' ? 'negative' : 'primary'"
+            />
           </template>
           <template v-if="decisionStatut === 'CONFIRME'">
             {{ $t('plagiatPage.dialog.confirmWarning') }}
@@ -271,7 +294,9 @@
           dense
           type="textarea"
           autogrow
-          :label="decisionStatut === 'CONFIRME' ? $t('common.fields.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
+          :label="
+            decisionStatut === 'CONFIRME' ? $t('common.fields.motifRequired') : $t('plagiatPage.dialog.motifOptional')
+          "
         />
       </template>
     </dialogue-formulaire>
@@ -323,9 +348,7 @@ const recalculEnCours = ref(false);
 const dernierRecap = ref<{ titre: string; message: string } | null>(null);
 
 // La bibliothèque renvoie ici avec le document à examiner.
-const filtres = ref<Record<string, any>>(
-  route.query.documentId ? { documentId: String(route.query.documentId) } : {},
-);
+const filtres = ref<Record<string, any>>(route.query.documentId ? { documentId: String(route.query.documentId) } : {});
 
 const liste = reactive(
   useListePaginee<SuspicionPlagiat>({
@@ -348,7 +371,13 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'score', label: t('common.fields.score'), field: 'score', align: 'center', sortable: true },
   { name: 'documentA', label: t('plagiatPage.table.columns.documentA'), field: 'documentAId', align: 'left' },
   { name: 'documentB', label: t('plagiatPage.table.columns.documentB'), field: 'documentBId', align: 'left' },
-  { name: 'detecteLe', label: t('plagiatPage.table.columns.detectedOn'), field: (r) => dateLisible(r.detecteLe), align: 'center', sortable: true },
+  {
+    name: 'detecteLe',
+    label: t('plagiatPage.table.columns.detectedOn'),
+    field: (r) => dateLisible(r.detecteLe),
+    align: 'center',
+    sortable: true,
+  },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -362,57 +391,76 @@ function couleurScore(score: number): string {
 const filtresActifs = computed(() =>
   Boolean(
     filtres.value.recherche ||
-      filtres.value.documentId ||
-      filtres.value.dateMin ||
-      filtres.value.dateMax ||
-      (filtres.value.scoreMin ?? null) !== null,
+    filtres.value.documentId ||
+    filtres.value.dateMin ||
+    filtres.value.dateMax ||
+    (filtres.value.scoreMin ?? null) !== null,
   ),
 );
 
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    cs.push({ label: t('plagiatPage.chips.search', { value: filtres.value.recherche }), value: filtres.value.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('plagiatPage.chips.search', { value: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if ((filtres.value.scoreMin ?? null) !== null && filtres.value.scoreMin !== '') {
-    cs.push({ label: t('plagiatPage.chips.scoreMin', { value: filtres.value.scoreMin }), value: filtres.value.scoreMin, icone: 'speed' });
+    cs.push({
+      label: t('plagiatPage.chips.scoreMin', { value: filtres.value.scoreMin }),
+      value: filtres.value.scoreMin,
+      icone: 'speed',
+    });
   }
   if (filtres.value.documentId) {
-    cs.push({ label: t('plagiatPage.chips.targetedDocument'), value: filtres.value.documentId, icone: 'description', cle: 'documentId'});
+    cs.push({
+      label: t('plagiatPage.chips.targetedDocument'),
+      value: filtres.value.documentId,
+      icone: 'description',
+      cle: 'documentId',
+    });
   }
   if (filtres.value.dateMin) {
-    cs.push({ label: t('plagiatPage.chips.since', { date: dateLisible(filtres.value.dateMin) }), value: filtres.value.dateMin, icone: 'event' });
+    cs.push({
+      label: t('plagiatPage.chips.since', { date: dateLisible(filtres.value.dateMin) }),
+      value: filtres.value.dateMin,
+      icone: 'event',
+    });
   }
   if (filtres.value.dateMax) {
-    cs.push({ label: t('plagiatPage.chips.until', { date: dateLisible(filtres.value.dateMax) }), value: filtres.value.dateMax, icone: 'event' });
+    cs.push({
+      label: t('plagiatPage.chips.until', { date: dateLisible(filtres.value.dateMax) }),
+      value: filtres.value.dateMax,
+      icone: 'event',
+    });
   }
   return cs;
 });
 
 const suspicionsFiltrees = computed(() => {
-  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  const q = String(filtres.value.recherche ?? '')
+    .toLowerCase()
+    .trim();
   const scoreMin = Number(filtres.value.scoreMin ?? NaN);
   const debut = filtres.value.dateMin ? new Date(String(filtres.value.dateMin)).getTime() : null;
-  const fin = filtres.value.dateMax
-    ? new Date(String(filtres.value.dateMax)).getTime() + 86_400_000 - 1
-    : null;
+  const fin = filtres.value.dateMax ? new Date(String(filtres.value.dateMax)).getTime() + 86_400_000 - 1 : null;
 
   return suspicions.value.filter((s) => {
     if (!Number.isNaN(scoreMin) && (s.score ?? 0) < scoreMin) return false;
-    if (filtres.value.documentId
-      && s.documentAId !== filtres.value.documentId
-      && s.documentBId !== filtres.value.documentId) return false;
+    if (
+      filtres.value.documentId &&
+      s.documentAId !== filtres.value.documentId &&
+      s.documentBId !== filtres.value.documentId
+    )
+      return false;
     const detecteLeTs = new Date(s.detecteLe).getTime();
     if (debut !== null && detecteLeTs < debut) return false;
     if (fin !== null && detecteLeTs > fin) return false;
     if (q) {
-      const texte = [
-        s.documentA?.titre,
-        s.documentA?.auteurs,
-        s.documentB?.titre,
-        s.documentB?.auteurs,
-        s.commentaire,
-      ]
+      const texte = [s.documentA?.titre, s.documentA?.auteurs, s.documentB?.titre, s.documentB?.auteurs, s.commentaire]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
@@ -491,9 +539,7 @@ async function validerDecision() {
     $q.notify({
       type: 'positive',
       message:
-        decisionStatut.value === 'ACQUITTE'
-          ? t('plagiatPage.messages.acquitted')
-          : t('plagiatPage.messages.confirmed'),
+        decisionStatut.value === 'ACQUITTE' ? t('plagiatPage.messages.acquitted') : t('plagiatPage.messages.confirmed'),
     });
     decisionDialogOuvert.value = false;
     await liste.recharger();
@@ -533,12 +579,17 @@ async function lancerRecalcul() {
 }
 
 watch(
-  () => [filtres.value.recherche, filtres.value.scoreMin, filtres.value.documentId, filtres.value.dateMin, filtres.value.dateMax],
+  () => [
+    filtres.value.recherche,
+    filtres.value.scoreMin,
+    filtres.value.documentId,
+    filtres.value.dateMin,
+    filtres.value.dateMax,
+  ],
   () => {
     page.value = 1;
   },
 );
-
 </script>
 
 <style scoped>

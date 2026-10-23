@@ -19,7 +19,10 @@
           <champ-recherche
             v-model="form.inscriptionId"
             endpoint="/inscriptions"
-            :label-fn="(i) => `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''} (${LIBELLE_STATUT_INSCRIPTION[i.statut] ?? i.statut})`"
+            :label-fn="
+              (i) =>
+                `${i.numero} — ${i.etudiant?.nom ?? ''} ${i.etudiant?.prenom ?? ''} (${LIBELLE_STATUT_INSCRIPTION[i.statut] ?? i.statut})`
+            "
             :label="$t('paiements.dialog.fields.enrollment')"
             :placeholder="$t('paiements.dialog.fields.enrollmentPlaceholder')"
             @update:model-value="remplirDossier"
@@ -27,7 +30,9 @@
           <div v-if="dossierChoisi" class="row q-col-gutter-md">
             <div class="col-12 col-sm-4">
               <q-input
-                :model-value="dossierChoisi.etudiant ? `${dossierChoisi.etudiant.nom} ${dossierChoisi.etudiant.prenom}` : ''"
+                :model-value="
+                  dossierChoisi.etudiant ? `${dossierChoisi.etudiant.nom} ${dossierChoisi.etudiant.prenom}` : ''
+                "
                 outlined
                 dense
                 readonly
@@ -89,11 +94,7 @@
               :label="$t('paiements.dialog.fields.amount')"
               :error="montantExcessif"
               :error-message="$t('paiements.dialog.fields.excessiveAmount', { amount: montantLisible(resteAPayer) })"
-              :hint="
-                resteAPayer !== null
-                  ? $t('paiements.dialog.fields.balanceHint')
-                  : undefined
-              "
+              :hint="resteAPayer !== null ? $t('paiements.dialog.fields.balanceHint') : undefined"
             />
           </div>
         </div>
@@ -212,31 +213,23 @@ const form = ref({
   motif: '',
 });
 
-const optionsModes = computed(() =>
-  Object.entries(LIBELLE_MODE_PAIEMENT).map(([value, label]) => ({ value, label })),
-);
+const optionsModes = computed(() => Object.entries(LIBELLE_MODE_PAIEMENT).map(([value, label]) => ({ value, label })));
 const optionsOperateurs = computed(() =>
   Object.entries(LIBELLE_OPERATEUR_MM).map(([value, label]) => ({ value, label })),
 );
 /** Même droit que `POST /paiements/:id/simuler` : la scolarité y recevait un 403. */
 const peutSimulerReussi = computed(() => auth.peut('paiements.simuler'));
 
-const dossierChoisi = computed(() =>
-  inscriptions.value.find((i) => i.id === form.value.inscriptionId) ?? null,
-);
+const dossierChoisi = computed(() => inscriptions.value.find((i) => i.id === form.value.inscriptionId) ?? null);
 
 /** Déjà encaissé sur le dossier : seuls les paiements réussis comptent. */
 function montantPaye(dossier: Inscription): number {
-  return (dossier.paiements ?? [])
-    .filter((p) => p.statut === 'REUSSI')
-    .reduce((t, p) => t + p.montant, 0);
+  return (dossier.paiements ?? []).filter((p) => p.statut === 'REUSSI').reduce((t, p) => t + p.montant, 0);
 }
 
 /** Reste dû : le montant proposé par défaut, jamais le total des frais. */
 const resteAPayer = computed(() =>
-  dossierChoisi.value
-    ? Math.max(0, dossierChoisi.value.montantFrais - montantPaye(dossierChoisi.value))
-    : null,
+  dossierChoisi.value ? Math.max(0, dossierChoisi.value.montantFrais - montantPaye(dossierChoisi.value)) : null,
 );
 
 const telephoneOuNom = computed(() =>
@@ -244,18 +237,14 @@ const telephoneOuNom = computed(() =>
 );
 
 /** Un règlement partiel est permis, mais jamais au-delà du reste dû. */
-const montantExcessif = computed(
-  () => resteAPayer.value !== null && (form.value.montant ?? 0) > resteAPayer.value,
-);
+const montantExcessif = computed(() => resteAPayer.value !== null && (form.value.montant ?? 0) > resteAPayer.value);
 
-const montantValide = computed(
-  () => !!form.value.montant && form.value.montant > 0 && !montantExcessif.value,
-);
+const montantValide = computed(() => !!form.value.montant && form.value.montant > 0 && !montantExcessif.value);
 
 async function charger() {
   try {
     const { data } = await api.get('/inscriptions', { params: { all: '1' } });
-    inscriptions.value = Array.isArray(data) ? data : data.data ?? [];
+    inscriptions.value = Array.isArray(data) ? data : (data.data ?? []);
   } catch {
     inscriptions.value = [];
   }

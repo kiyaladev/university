@@ -57,13 +57,7 @@
       </div>
     </div>
 
-    <q-input
-      v-model="form.adresse"
-      outlined
-      dense
-      :label="$t('common.fields.address')"
-      class="champ-bloc"
-    />
+    <q-input v-model="form.adresse" outlined dense :label="$t('common.fields.address')" class="champ-bloc" />
 
     <span class="section-titre">{{ $t('common.fields.matricule') }}</span>
     <!--
@@ -82,7 +76,8 @@
     <div class="plaque etudiant-dialog__renvoi">
       <div class="text-caption">
         <template v-if="promotionActuelle">
-          {{ $t('etudiants.dialogForm.currentCohort') }} <strong>{{ promotionActuelle }}</strong>.
+          {{ $t('etudiants.dialogForm.currentCohort') }} <strong>{{ promotionActuelle }}</strong
+          >.
         </template>
         <template v-else>{{ $t('etudiants.dialogForm.noCohort') }}</template>
         {{ $t('etudiants.dialogForm.cohortChangeHint') }}
@@ -98,10 +93,7 @@
     </div>
 
     <span class="section-titre">{{ $t('inscriptions.studentDialog.portalAccount') }}</span>
-    <q-toggle
-      v-model="form.creerCompte"
-      :label="$t('etudiants.dialogForm.createPortalAccount')"
-    />
+    <q-toggle v-model="form.creerCompte" :label="$t('etudiants.dialogForm.createPortalAccount')" />
     <div v-if="form.creerCompte" class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
         <q-input
@@ -121,9 +113,7 @@
           type="password"
           :label="$t('utilisateurs.dialog.passwordNewAccount')"
           :hint="$t('etudiants.dialogForm.passwordHint')"
-          :rules="[
-            (v) => !form.creerCompte || (v && v.length >= 8) || $t('etudiants.dialogForm.passwordMinLength'),
-          ]"
+          :rules="[(v) => !form.creerCompte || (v && v.length >= 8) || $t('etudiants.dialogForm.passwordMinLength')]"
           lazy-rules
         />
       </div>
@@ -186,7 +176,10 @@ const form = ref({
 });
 
 const formulaireValide = computed(
-  () => !!form.value.nom.trim() && !!form.value.prenom.trim() && (!form.value.creerCompte || form.value.motDePasse.length >= 8),
+  () =>
+    !!form.value.nom.trim() &&
+    !!form.value.prenom.trim() &&
+    (!form.value.creerCompte || form.value.motDePasse.length >= 8),
 );
 
 watch(ouvert, (o) => {

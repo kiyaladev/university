@@ -78,7 +78,8 @@ export default {
       numeroLabel: 'N° de dossier',
       numeroHelp: 'Notez ce numéro : il vous sera demandé à la scolarité et pour tout suivi.',
       fraisLabel: 'Frais d’inscription à régler',
-      message: 'Envoyez {montant} au {numero} par Mobile Money, en mentionnant la référence {ref} en motif. Dès réception du paiement, la scolarité validera votre inscription. Vous accéderez ensuite à votre espace avec un code envoyé par SMS au numéro que vous avez indiqué.',
+      message:
+        'Envoyez {montant} au {numero} par Mobile Money, en mentionnant la référence {ref} en motif. Dès réception du paiement, la scolarité validera votre inscription. Vous accéderez ensuite à votre espace avec un code envoyé par SMS au numéro que vous avez indiqué.',
       print: 'Imprimer ce récépissé',
       another: 'Préinscrire un autre candidat',
       validatedIntro: 'Une fois votre inscription validée :',

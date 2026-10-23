@@ -3,14 +3,7 @@
     <!-- L'en-tête public (AuthLayout) porte déjà les liens du site : ici on ne
          garde que l'entrée vers l'espace de travail, utile au personnel. -->
     <div class="row justify-end q-mb-sm">
-      <q-btn
-        flat
-        dense
-        no-caps
-        icon="login"
-        :label="$t('common.actions.login')"
-        to="/connexion"
-      />
+      <q-btn flat dense no-caps icon="login" :label="$t('common.actions.login')" to="/connexion" />
     </div>
     <div class="row justify-center">
       <div class="col-12 col-md-10 col-lg-9">
@@ -32,12 +25,7 @@
           >
             <template #prepend><q-icon name="search" /></template>
             <template #append>
-              <q-icon
-                v-if="filtre.recherche"
-                name="close"
-                class="cursor-pointer"
-                @click="filtre.recherche = ''"
-              />
+              <q-icon v-if="filtre.recherche" name="close" class="cursor-pointer" @click="filtre.recherche = ''" />
             </template>
           </q-input>
         </div>
@@ -80,8 +68,7 @@
               :max="2100"
             />
           </div>
-          <div class="col-6 col-sm-4 text-right">
-          </div>
+          <div class="col-6 col-sm-4 text-right"></div>
         </div>
 
         <div v-if="chargement && !documents.length" class="row justify-center q-py-xl">
@@ -134,7 +121,9 @@
                   <span v-for="(m, i) in doc.motsClefs.slice(0, 4)" :key="m + i">
                     {{ m }}<span v-if="i < Math.min(doc.motsClefs.length, 4) - 1"> · </span>
                   </span>
-                  <span v-if="doc.motsClefs.length > 4">{{ $t('common.units.moreCount', { n: doc.motsClefs.length - 4 }) }}</span>
+                  <span v-if="doc.motsClefs.length > 4">{{
+                    $t('common.units.moreCount', { n: doc.motsClefs.length - 4 })
+                  }}</span>
                 </span>
                 <q-space />
                 <span
@@ -156,9 +145,7 @@
               <div class="row items-center q-mt-sm text-caption text-grey-7">
                 <div class="col">
                   <div v-if="doc.departement">{{ doc.departement.nom }}</div>
-                  <div v-if="doc.enseignant">
-                    {{ doc.enseignant.prenom }} {{ doc.enseignant.nom }}
-                  </div>
+                  <div v-if="doc.enseignant">{{ doc.enseignant.prenom }} {{ doc.enseignant.nom }}</div>
                 </div>
                 <div class="col-auto">
                   <q-btn
@@ -168,7 +155,11 @@
                     no-caps
                     icon="download"
                     :label="$t('common.actions.download')"
-                    :title="doc.tailleKo ? $t('bibliothequePublique.card.sizeMo', { size: (doc.tailleKo / 1024).toFixed(1) }) : undefined"
+                    :title="
+                      doc.tailleKo
+                        ? $t('bibliothequePublique.card.sizeMo', { size: (doc.tailleKo / 1024).toFixed(1) })
+                        : undefined
+                    "
                     @click="telecharger(doc)"
                   />
                 </div>
@@ -258,7 +249,10 @@ import { bibliothequeService, normaliserDocuments } from '@/shared/services/bibl
 import { LIBELLE_TYPE_DOCUMENT } from '@/shared/utils/libelles';
 import type { Departement, DocumentDepot } from '@/types';
 
-interface OptionSimple { label: string; value: string }
+interface OptionSimple {
+  label: string;
+  value: string;
+}
 
 const { t } = useI18n();
 
@@ -326,7 +320,12 @@ const colonnesTableau = computed(() => [
   { name: 'departement', label: t('common.fields.department'), field: 'departement', align: 'left' as const },
   { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' as const },
   { name: 'annee', label: t('common.fields.year'), field: 'anneeEdition', align: 'center' as const },
-  { name: 'telechargements', label: t('bibliothequePublique.table.columns.downloads'), field: 'telechargements', align: 'right' as const },
+  {
+    name: 'telechargements',
+    label: t('bibliothequePublique.table.columns.downloads'),
+    field: 'telechargements',
+    align: 'right' as const,
+  },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
 ]);
 
@@ -340,10 +339,7 @@ function anneeDocument(doc: DocumentDepot): number {
  * réintroduire de HTML non échappé.
  */
 function surligner(texte: string): string {
-  const echappe = texte
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const echappe = texte.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const terme = filtre.value.recherche?.trim() ?? '';
   if (!terme) return echappe;
   // Échapper les caractères regex du terme.
@@ -413,7 +409,7 @@ onMounted(async () => {
    variable Sass `$jaune` qui s'y trouvait n'y était jamais résolue, et le
    surlignage n'avait donc aucun fond. */
 .doc-extrait :deep(mark) {
-  background: #FFF6C2;
+  background: #fff6c2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

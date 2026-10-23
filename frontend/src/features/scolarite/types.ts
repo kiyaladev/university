@@ -4,23 +4,11 @@ import type { Departement, Role } from '@/types/referentiels';
 import type { Etudiant, ModePaiement, StatutPaiement } from '@/types/registre';
 
 export type TypeReclamation =
-  | 'NOTE_MANQUANTE'
-  | 'ERREUR_SAISIE'
-  | 'INSCRIPTION'
-  | 'ENSEIGNEMENT'
-  | 'SCOLARITE'
-  | 'TECHNIQUE'
-  | 'AUTRE';
+  'NOTE_MANQUANTE' | 'ERREUR_SAISIE' | 'INSCRIPTION' | 'ENSEIGNEMENT' | 'SCOLARITE' | 'TECHNIQUE' | 'AUTRE';
 
 export type PrioriteReclamation = 'BASSE' | 'NORMALE' | 'HAUTE' | 'URGENTE';
 
-export type StatutReclamation =
-  | 'OUVERTE'
-  | 'EN_COURS'
-  | 'EN_ATTENTE_REPONSE'
-  | 'RESOLUE'
-  | 'FERMEE'
-  | 'REJETEE';
+export type StatutReclamation = 'OUVERTE' | 'EN_COURS' | 'EN_ATTENTE_REPONSE' | 'RESOLUE' | 'FERMEE' | 'REJETEE';
 
 export interface MessageReclamation {
   id: string;
@@ -68,13 +56,7 @@ export type TypeDemandeDocument =
   | 'CERTIFICAT_SCOLARITE'
   | 'AUTRE';
 
-export type StatutDemande =
-  | 'EN_ATTENTE_PAIEMENT'
-  | 'PAYEE'
-  | 'EN_TRAITEMENT'
-  | 'PRETE'
-  | 'REMISE'
-  | 'REJETEE';
+export type StatutDemande = 'EN_ATTENTE_PAIEMENT' | 'PAYEE' | 'EN_TRAITEMENT' | 'PRETE' | 'REMISE' | 'REJETEE';
 
 export interface TarifDemande {
   id: string;

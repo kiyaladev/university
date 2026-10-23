@@ -28,8 +28,7 @@ export default {
     },
     deliberationResults: {
       title: 'Deliberation results',
-      help:
-        'Every student marked PASSED or DEFERRED in the deliberation receives their average and decision by SMS, at the number on file. Only deliberations validated by the board can be broadcast.',
+      help: 'Every student marked PASSED or DEFERRED in the deliberation receives their average and decision by SMS, at the number on file. Only deliberations validated by the board can be broadcast.',
       selectLabel: 'Validated deliberation',
       submit: 'Broadcast results',
     },
@@ -68,8 +67,7 @@ export default {
         envoyes: 'Sent',
         echoues: 'Failed',
       },
-      summaryAria:
-        'Breakdown of sends over 30 days: {envoyes} sent, {echoues} failed, {attente} queued.',
+      summaryAria: 'Breakdown of sends over 30 days: {envoyes} sent, {echoues} failed, {attente} queued.',
     },
     table: {
       columns: {

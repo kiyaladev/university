@@ -86,13 +86,21 @@
             />
           </div>
           <div class="col-12 col-sm-8">
-            <champ-date v-model="form.dateNaissance" :label="$t('inscriptionPublique.form.step1.dateNaissance.label')" />
+            <champ-date
+              v-model="form.dateNaissance"
+              :label="$t('inscriptionPublique.form.step1.dateNaissance.label')"
+            />
           </div>
         </div>
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
-            <q-input v-model="form.lieuNaissance" outlined dense :label="$t('inscriptionPublique.form.step1.lieuNaissance.label')" />
+            <q-input
+              v-model="form.lieuNaissance"
+              outlined
+              dense
+              :label="$t('inscriptionPublique.form.step1.lieuNaissance.label')"
+            />
           </div>
           <div class="col-12 col-sm-6">
             <q-input
@@ -107,7 +115,8 @@
               :hint="$t('inscriptionPublique.form.step1.telephone.hint')"
               :rules="[
                 (v) => !!v?.trim() || $t('inscriptionPublique.form.step1.telephone.required'),
-                (v) => !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
+                (v) =>
+                  !v || v.replace(/\D/g, '').length >= 8 || $t('inscriptionPublique.form.step1.telephone.minLength'),
               ]"
               lazy-rules
             />
@@ -250,9 +259,17 @@
 
         <p class="acces__resultat-message">
           <i18n-t keypath="inscriptionPublique.form.step3.message" tag="span">
-            <template #montant><strong class="chiffres">{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong></template>
-            <template #numero><strong class="chiffres">{{ NUMERO_COURT_MM }}</strong></template>
-            <template #ref><strong>{{ resultat?.numero }}</strong></template>
+            <template #montant
+              ><strong class="chiffres"
+                >{{ montantLisible(resultat?.montantFrais) }} {{ resultat?.devise }}</strong
+              ></template
+            >
+            <template #numero
+              ><strong class="chiffres">{{ NUMERO_COURT_MM }}</strong></template
+            >
+            <template #ref
+              ><strong>{{ resultat?.numero }}</strong></template
+            >
           </i18n-t>
         </p>
 
@@ -408,10 +425,7 @@ const labelPromotion = (p: PromotionOuverte) =>
 function persisterBrouillon() {
   if (etape.value === 3) return;
   try {
-    sessionStorage.setItem(
-      CLE_BROUILLON,
-      JSON.stringify({ etape: etape.value, form: form.value }),
-    );
+    sessionStorage.setItem(CLE_BROUILLON, JSON.stringify({ etape: etape.value, form: form.value }));
   } catch {
     /* sessionStorage indisponible : on accepte de perdre le brouillon */
   }
@@ -451,8 +465,7 @@ async function chargerAnnees() {
     }
     // L'année active d'abord, sinon la première ouverte.
     if (!form.value.anneeId) {
-      form.value.anneeId =
-        annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
+      form.value.anneeId = annees.value.find((a) => a.active)?.id ?? annees.value[0]?.id ?? '';
     }
   } finally {
     chargementAnnees.value = false;
@@ -473,7 +486,7 @@ async function onPromotionChange() {
     const { data } = await api.get('/frais', {
       params: { anneeId: form.value.anneeId, promotionId: form.value.promotionId },
     });
-    const liste = Array.isArray(data) ? data : data.data ?? [];
+    const liste = Array.isArray(data) ? data : (data.data ?? []);
     if (liste.length) {
       tarifCourant.value = { montant: liste[0].montant, devise: liste[0].devise };
     }
@@ -496,24 +509,27 @@ async function deposer() {
   messageDepotErreur.value = '';
   depotEnCours.value = true;
   try {
-    const { data } = await api.post('/inscription-publique', {
-      nom: form.value.nom.trim(),
-      prenom: form.value.prenom.trim(),
-      sexe: form.value.sexe ?? undefined,
-      dateNaissance: form.value.dateNaissance || undefined,
-      lieuNaissance: form.value.lieuNaissance.trim() || undefined,
-      telephone: form.value.telephone.trim(),
-      email: form.value.email.trim() || undefined,
-      adresse: form.value.adresse.trim() || undefined,
-      anneeId: form.value.anneeId || undefined,
-      promotionId: form.value.promotionId,
-    }, { silencieux: true });
+    const { data } = await api.post(
+      '/inscription-publique',
+      {
+        nom: form.value.nom.trim(),
+        prenom: form.value.prenom.trim(),
+        sexe: form.value.sexe ?? undefined,
+        dateNaissance: form.value.dateNaissance || undefined,
+        lieuNaissance: form.value.lieuNaissance.trim() || undefined,
+        telephone: form.value.telephone.trim(),
+        email: form.value.email.trim() || undefined,
+        adresse: form.value.adresse.trim() || undefined,
+        anneeId: form.value.anneeId || undefined,
+        promotionId: form.value.promotionId,
+      },
+      { silencieux: true },
+    );
     resultat.value = data as ResultatDepot;
     etape.value = 3;
     oublierBrouillon();
   } catch (e: any) {
-    messageDepotErreur.value =
-      e?.response?.data?.message ?? t('inscriptionPublique.form.step2.depotError');
+    messageDepotErreur.value = e?.response?.data?.message ?? t('inscriptionPublique.form.step2.depotError');
   } finally {
     depotEnCours.value = false;
   }
@@ -601,8 +617,13 @@ onMounted(() => {
   border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: var(--up-encre-tertiaire); }
-  dd { margin: 3px 0 0; font-size: 0.92rem; }
+  dt {
+    color: var(--up-encre-tertiaire);
+  }
+  dd {
+    margin: 3px 0 0;
+    font-size: 0.92rem;
+  }
 }
 
 // ---------------------------------------------------------------- plaque
@@ -681,7 +702,9 @@ onMounted(() => {
   margin: -4px 0 0;
 }
 
-.acces__bouton { min-height: 56px; }
+.acces__bouton {
+  min-height: 56px;
+}
 
 .acces__tarif {
   padding: var(--up-3) var(--up-4);
@@ -754,10 +777,14 @@ onMounted(() => {
   gap: var(--up-2);
 }
 
-.acces__resultat-lien { margin: 0; }
+.acces__resultat-lien {
+  margin: 0;
+}
 
 // -------------------------------------------------------- autres services
-.acces__separateur { margin: var(--up-4) 0 var(--up-3); }
+.acces__separateur {
+  margin: var(--up-4) 0 var(--up-3);
+}
 
 .acces__services-titre {
   margin: 0 0 var(--up-2);
@@ -778,7 +805,10 @@ onMounted(() => {
   text-decoration: none;
 
   &:hover,
-  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
+  &:focus-visible {
+    color: var(--up-encre);
+    text-decoration: underline;
+  }
 }
 
 // À l'impression du récépissé, seule la plaque du dossier a du sens.
@@ -786,9 +816,14 @@ onMounted(() => {
   .enseigne,
   .acces__services,
   .acces__separateur,
-  .acces__resultat-actions { display: none; }
+  .acces__resultat-actions {
+    display: none;
+  }
 
-  .acces { display: block; background: #fff; }
+  .acces {
+    display: block;
+    background: #fff;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -801,8 +836,12 @@ onMounted(() => {
     gap: var(--up-3);
   }
 
-  .enseigne__faits { display: none; }
+  .enseigne__faits {
+    display: none;
+  }
 
-  .acces__plaque { padding: var(--up-5) var(--up-4) var(--up-6); }
+  .acces__plaque {
+    padding: var(--up-5) var(--up-4) var(--up-6);
+  }
 }
 </style>

@@ -6,8 +6,7 @@ export default {
     record: 'Enregistrer un justificatif',
   },
   banner: {
-    info:
-      'Un justificatif s’enregistre auprès de la scolarité, sur présentation de la pièce. Vous retrouvez ici l’état de vos demandes.',
+    info: 'Un justificatif s’enregistre auprès de la scolarité, sur présentation de la pièce. Vous retrouvez ici l’état de vos demandes.',
   },
   filters: {
     sessionsFrom: 'Séances du',
@@ -49,8 +48,7 @@ export default {
   dialogs: {
     validateTitle: 'Valider le justificatif',
     rejectTitle: 'Rejeter le justificatif',
-    validateMessage:
-      'La séance passera en « absence excusée » dans les statistiques. Commentaire (facultatif) :',
+    validateMessage: 'La séance passera en « absence excusée » dans les statistiques. Commentaire (facultatif) :',
     rejectMessage: 'L’absence restera constatée telle quelle. Motif du rejet (facultatif) :',
     doNothing: 'Ne rien faire',
   },

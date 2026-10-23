@@ -73,9 +73,11 @@ export default {
       title: 'Nouvelle feuille de paie',
       month: 'Mois *',
       year: 'Année *',
-      periodHint: 'La feuille « {label} » couvre du premier au dernier jour du mois. Les heures contrôlées depuis UniPrésence sont ensuite agrégées ligne par ligne.',
+      periodHint:
+        'La feuille « {label} » couvre du premier au dernier jour du mois. Les heures contrôlées depuis UniPrésence sont ensuite agrégées ligne par ligne.',
       create: 'Créer la feuille',
-      draftHint: 'La feuille est en brouillon : recalculez-la pour agréger les heures contrôlées, puis faites-la valider par la direction.',
+      draftHint:
+        'La feuille est en brouillon : recalculez-la pour agréger les heures contrôlées, puis faites-la valider par la direction.',
       recalculateNow: 'Recalculer maintenant',
       created: 'Feuille « {label} » créée',
       createFailed: 'Création impossible',
@@ -88,8 +90,7 @@ export default {
     },
     validate: {
       title: 'Valider la feuille',
-      message:
-        'Valider « {libelle} » pour {montant} GNF ? Les montants seront figés : plus aucun recalcul possible.',
+      message: 'Valider « {libelle} » pour {montant} GNF ? Les montants seront figés : plus aucun recalcul possible.',
       ok: 'Valider',
     },
     markPaid: {

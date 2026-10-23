@@ -89,7 +89,7 @@ const form = ref({
   thematique: '',
 });
 
-const sallesDisponibles = computed(() => props.salles.length ? props.salles : seancesHorsLigne.sallesCache);
+const sallesDisponibles = computed(() => (props.salles.length ? props.salles : seancesHorsLigne.sallesCache));
 const optionsSalles = computed(() =>
   sallesDisponibles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
 );
@@ -115,22 +115,19 @@ async function filtrer(saisie: string, maj: (fn: () => void) => void) {
   });
 }
 
-watch(
-  ouvert,
-  (o) => {
-    if (!o) return;
-    const s = props.seance;
-    form.value = {
-      affectationId: s?.affectationId ?? '',
-      date: s?.date?.slice(0, 10) ?? props.dateImposee ?? aujourdhui(),
-      heureDebut: s?.heureDebut ?? '08:00',
-      heureFin: s?.heureFin ?? '10:00',
-      type: s?.type ?? 'CM',
-      salleId: s?.salleId ?? null,
-      thematique: s?.thematique ?? '',
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  const s = props.seance;
+  form.value = {
+    affectationId: s?.affectationId ?? '',
+    date: s?.date?.slice(0, 10) ?? props.dateImposee ?? aujourdhui(),
+    heureDebut: s?.heureDebut ?? '08:00',
+    heureFin: s?.heureFin ?? '10:00',
+    type: s?.type ?? 'CM',
+    salleId: s?.salleId ?? null,
+    thematique: s?.thematique ?? '',
+  };
+});
 
 async function enregistrer() {
   enregistrement.value = true;
@@ -146,19 +143,25 @@ async function enregistrer() {
           const { data: chargees } = await api.get('/affectations', { params: { all: '1' } });
           affectations.value = chargees.data ?? [];
           seancesHorsLigne.enregistrerAffectations(affectations.value);
-        } catch { /* Une saisie hors ligne continue avec le cache local. */ }
+        } catch {
+          /* Une saisie hors ligne continue avec le cache local. */
+        }
       }
-      const selection = affectations.value.find(a => a.id === form.value.affectationId);
+      const selection = affectations.value.find((a) => a.id === form.value.affectationId);
       // Pas d'exception ici : aucun gestionnaire global ne l'afficherait.
       if (!selection) {
         $q.notify({ type: 'warning', message: t('seances.offline.assignmentUnavailable') });
         return;
       }
-      const salle = sallesDisponibles.value.find(s => s.id === form.value.salleId) ?? null;
-      const resultat = await seancesHorsLigne.creer({
-        ...payload,
-        type: form.value.type as TypeCours,
-      }, selection, salle);
+      const salle = sallesDisponibles.value.find((s) => s.id === form.value.salleId) ?? null;
+      const resultat = await seancesHorsLigne.creer(
+        {
+          ...payload,
+          type: form.value.type as TypeCours,
+        },
+        selection,
+        salle,
+      );
       data = {
         id: resultat.id,
         affectationId: selection.id,

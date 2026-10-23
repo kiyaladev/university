@@ -46,12 +46,10 @@
     <q-card flat bordered class="apercu-bulletin">
       <q-card-section class="apercu-bulletin__entete">
         <div>
-          <div class="apercu-bulletin__nom">
-            {{ apercu.etudiant.prenom }} {{ apercu.etudiant.nom }}
-          </div>
+          <div class="apercu-bulletin__nom">{{ apercu.etudiant.prenom }} {{ apercu.etudiant.nom }}</div>
           <div class="apercu-bulletin__meta">
-            {{ $t('common.fields.matricule') }} {{ apercu.etudiant.matricule }} ·
-            {{ apercu.promotion }} · {{ apercu.annee }}
+            {{ $t('common.fields.matricule') }} {{ apercu.etudiant.matricule }} · {{ apercu.promotion }} ·
+            {{ apercu.annee }}
           </div>
         </div>
         <q-badge color="grey-6" :label="$t('deliberations.createDialog.previewDecision')" />
@@ -60,7 +58,9 @@
         <div class="apercu-bulletin__ligne" v-for="m in apercu.lignes" :key="m.code">
           <div class="apercu-bulletin__matiere">
             <div class="text-weight-medium">{{ m.intitule }}</div>
-            <div class="text-caption text-grey-7">{{ m.code }} · {{ $t('common.units.credits', { n: m.credits }) }}</div>
+            <div class="text-caption text-grey-7">
+              {{ m.code }} · {{ $t('common.units.credits', { n: m.credits }) }}
+            </div>
           </div>
           <div class="apercu-bulletin__moyenne chiffres">—</div>
         </div>
@@ -82,12 +82,7 @@ import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
 import ChoixSemestre from './ChoixSemestre.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import type {
-  AnneeAcademique,
-  Matiere,
-  Promotion,
-  SessionDeliberation,
-} from '@/types';
+import type { AnneeAcademique, Matiere, Promotion, SessionDeliberation } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
@@ -115,23 +110,17 @@ const optionsPromotions = computed(() =>
     .map((p) => ({ label: p.nom, value: p.id })),
 );
 
-const promotionSelectionnee = computed(() =>
-  props.promotions.find((p) => p.id === form.value.promotionId) ?? null,
-);
-const anneeSelectionnee = computed(() =>
-  props.annees.find((a) => a.id === form.value.anneeId) ?? null,
-);
+const promotionSelectionnee = computed(() => props.promotions.find((p) => p.id === form.value.promotionId) ?? null);
+const anneeSelectionnee = computed(() => props.annees.find((a) => a.id === form.value.anneeId) ?? null);
 
 const apercu = computed(() => {
   const p = promotionSelectionnee.value;
   const a = anneeSelectionnee.value;
-  const lignes = (props.matieres ?? [])
-    .slice(0, 4)
-    .map((m) => ({
-      intitule: m.intitule,
-      code: m.code,
-      credits: m.credits,
-    }));
+  const lignes = (props.matieres ?? []).slice(0, 4).map((m) => ({
+    intitule: m.intitule,
+    code: m.code,
+    credits: m.credits,
+  }));
   if (!lignes.length) {
     lignes.push(
       { intitule: t('deliberations.createDialog.sampleSubject', { number: 1 }), code: 'MAT1', credits: 3 },

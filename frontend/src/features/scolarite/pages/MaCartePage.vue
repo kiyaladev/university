@@ -108,9 +108,7 @@ onMounted(charger);
   <q-page class="q-pa-md">
     <en-tete-page :title="$t('maCarte.title')" :subtitle="$t('maCarte.subtitle')" />
 
-    <q-card v-if="chargement" class="carte q-pa-md">
-      <q-spinner /> {{ $t('maCarte.loading') }}
-    </q-card>
+    <q-card v-if="chargement" class="carte q-pa-md"> <q-spinner /> {{ $t('maCarte.loading') }} </q-card>
 
     <q-card v-else-if="!carte" class="carte ma-carte">
       <etat-vide icone="badge" :titre="$t('maCarte.noCard.title')" :aide="$t('maCarte.noCard.description')">
@@ -144,9 +142,7 @@ onMounted(charger);
           <q-icon v-else name="person" size="48px" />
         </q-avatar>
         <div class="col">
-          <div class="text-h6">
-            {{ carte.etudiant?.prenom }} {{ carte.etudiant?.nom }}
-          </div>
+          <div class="text-h6">{{ carte.etudiant?.prenom }} {{ carte.etudiant?.nom }}</div>
           <div class="text-caption">
             {{ $t('common.fields.studentId') }} <code>{{ carte.etudiant?.matricule }}</code>
           </div>
@@ -161,7 +157,9 @@ onMounted(charger);
       <q-banner v-if="!carteUtilisable" class="note--erreur">
         <template #avatar><q-icon name="block" /></template>
         {{ $t('maCarte.card.revoked.text') }}
-        <span v-if="carte.motifRevocation">{{ $t('maCarte.card.revoked.reasonSuffix', { reason: carte.motifRevocation }) }}</span>
+        <span v-if="carte.motifRevocation">{{
+          $t('maCarte.card.revoked.reasonSuffix', { reason: carte.motifRevocation })
+        }}</span>
         {{ $t('maCarte.card.revoked.requestDuplicate') }}
       </q-banner>
 
@@ -189,7 +187,14 @@ onMounted(charger);
           <code>{{ urlVerification }}</code>
         </div>
         <div class="row justify-center q-gutter-sm q-mt-sm">
-          <q-btn flat dense no-caps icon="content_copy" :label="$t('maCarte.card.copyLink')" @click="copierUrlVerification" />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="content_copy"
+            :label="$t('maCarte.card.copyLink')"
+            @click="copierUrlVerification"
+          />
           <q-btn
             flat
             dense
@@ -213,7 +218,14 @@ onMounted(charger);
           :disable="!carteUtilisable"
           @click="ouvrirDialogNip"
         />
-        <q-btn flat no-caps icon="print" :label="$t('maCarte.card.print')" :disable="!carteUtilisable" @click="imprimer" />
+        <q-btn
+          flat
+          no-caps
+          icon="print"
+          :label="$t('maCarte.card.print')"
+          :disable="!carteUtilisable"
+          @click="imprimer"
+        />
       </q-card-actions>
     </q-card>
 
@@ -235,13 +247,7 @@ onMounted(charger);
           mask="######"
           :hint="$t('maCarte.dialog.nipHint')"
         />
-        <q-input
-          v-model="nipConfirmation"
-          :label="$t('maCarte.dialog.confirmLabel')"
-          outlined
-          dense
-          mask="######"
-        />
+        <q-input v-model="nipConfirmation" :label="$t('maCarte.dialog.confirmLabel')" outlined dense mask="######" />
       </div>
     </dialogue-formulaire>
   </q-page>

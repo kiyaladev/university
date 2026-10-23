@@ -78,7 +78,8 @@ export default {
       numeroLabel: 'Application number',
       numeroHelp: 'Write down this number: you will be asked for it at the registrar’s office and for any follow-up.',
       fraisLabel: 'Registration fees to pay',
-      message: 'Send {montant} to {numero} via Mobile Money, mentioning reference {ref} as the memo. As soon as the payment is received, the registrar’s office will validate your enrollment. You will then be able to access your account with a code sent by SMS to the number you provided.',
+      message:
+        'Send {montant} to {numero} via Mobile Money, mentioning reference {ref} as the memo. As soon as the payment is received, the registrar’s office will validate your enrollment. You will then be able to access your account with a code sent by SMS to the number you provided.',
       print: 'Print this receipt',
       another: 'Register another applicant',
       validatedIntro: 'Once your enrollment is validated:',

@@ -151,9 +151,7 @@
                 :aria-label="$t('structure.ariaLabels.seeFilieresOfDepartement')"
                 @click="voirFilieresDuDepartement(p.row)"
               >
-                <q-tooltip v-if="p.row._count?.filieres">{{
-                  $t('structure.tooltips.seeFilieres')
-                }}</q-tooltip>
+                <q-tooltip v-if="p.row._count?.filieres">{{ $t('structure.tooltips.seeFilieres') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -436,7 +434,9 @@
     <!-- Formulaire département -->
     <dialogue-formulaire
       v-model="dialogDepartement"
-      :titre="departementEdite ? $t('structure.dialogs.departement.editTitle') : $t('structure.dialogs.departement.newTitle')"
+      :titre="
+        departementEdite ? $t('structure.dialogs.departement.editTitle') : $t('structure.dialogs.departement.newTitle')
+      "
       taille="s"
       :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
@@ -457,12 +457,7 @@
         :label="$t('common.fields.nameRequired')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.departement.nomError')]"
       />
-      <q-input
-        v-model="formDepartement.faculte"
-        outlined
-        dense
-        :label="$t('structure.dialogs.departement.faculte')"
-      />
+      <q-input v-model="formDepartement.faculte" outlined dense :label="$t('structure.dialogs.departement.faculte')" />
     </dialogue-formulaire>
 
     <!-- Formulaire filière -->
@@ -503,7 +498,9 @@
     <!-- Formulaire promotion -->
     <dialogue-formulaire
       v-model="dialogPromotion"
-      :titre="promotionEditee ? $t('structure.dialogs.promotion.editTitle') : $t('structure.dialogs.promotion.newTitle')"
+      :titre="
+        promotionEditee ? $t('structure.dialogs.promotion.editTitle') : $t('structure.dialogs.promotion.newTitle')
+      "
       taille="s"
       :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
@@ -625,9 +622,7 @@ const formDepartement = ref({ code: '', nom: '', faculte: '' });
 const formFiliere = ref({ code: '', nom: '', departementId: '' });
 const formPromotion = ref({ nom: '', niveau: 'L1', effectif: 0, filiereId: '', anneeId: '' });
 
-const optionsDepartements = computed(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 const optionsFilieres = computed(() =>
   filieres.value.map((f) => ({ label: `${f.nom} (${f.departement?.code ?? ''})`, value: f.id })),
 );
@@ -842,8 +837,7 @@ function ouvrirPromotion(p: PromotionListee | null) {
     niveau: p?.niveau ?? 'L1',
     effectif: p?.effectif ?? 0,
     filiereId: p?.filiereId ?? filtres.value.promotions.filiereId ?? '',
-    anneeId:
-      p?.anneeId ?? filtres.value.promotions.anneeId ?? referentiels.anneeCourante?.id ?? '',
+    anneeId: p?.anneeId ?? filtres.value.promotions.anneeId ?? referentiels.anneeCourante?.id ?? '',
   };
   dialogPromotion.value = true;
 }
@@ -873,9 +867,7 @@ async function enregistrerAnnee() {
 
 async function enregistrerDepartement() {
   const payload = { ...formDepartement.value, faculte: formDepartement.value.faculte || undefined };
-  const url = departementEdite.value
-    ? `/departements/${departementEdite.value.id}`
-    : '/departements';
+  const url = departementEdite.value ? `/departements/${departementEdite.value.id}` : '/departements';
   if (await envoyer(url, !!departementEdite.value, payload, t('structure.messages.departementSaved'))) {
     dialogDepartement.value = false;
   }
@@ -937,5 +929,4 @@ async function charger() {
 onMounted(charger);
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

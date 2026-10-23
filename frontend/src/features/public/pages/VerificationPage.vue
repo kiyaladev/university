@@ -23,15 +23,15 @@
           :label="$t('verification.form.numeroLabel')"
           :hint="$t('verification.form.numeroHint')"
         />
-        <lecteur-qr
-          v-model="codeQr"
-          :label="$t('verification.form.qrLabel')"
-          :hint="$t('verification.form.qrHint')"
-        />
+        <lecteur-qr v-model="codeQr" :label="$t('verification.form.qrLabel')" :hint="$t('verification.form.qrHint')" />
         <div class="text-caption text-grey-7 q-mt-xs">
           <i18n-t keypath="verification.form.qrParamsHint" tag="span">
-            <template #ref><code>{{ PARAMETRES_QR.ref }}</code></template>
-            <template #k><code>{{ PARAMETRES_QR.k }}</code></template>
+            <template #ref
+              ><code>{{ PARAMETRES_QR.ref }}</code></template
+            >
+            <template #k
+              ><code>{{ PARAMETRES_QR.k }}</code></template
+            >
           </i18n-t>
         </div>
         <div class="row justify-end q-mt-md">
@@ -66,7 +66,9 @@
           <div v-if="resultat.valide && detail" class="q-mt-md text-left">
             <p class="q-mb-sm">
               <i18n-t keypath="verification.result.intro" tag="span">
-                <template #numero><strong>{{ detail.numero }}</strong></template>
+                <template #numero
+                  ><strong>{{ detail.numero }}</strong></template
+                >
               </i18n-t>
             </p>
             <table class="table-verification">

@@ -75,20 +75,12 @@ export const formationsService = {
       silencieux: true,
     }),
 
-  liste: (params: Record<string, unknown> = {}) =>
-    api.get<PaginatedFormations>('/formations', { params }),
-  dashboard: () =>
-    api.get<FormationDashboard>('/formations/dashboard'),
-  publier: (id: string) =>
-    api.post<void>(`/formations/${id}/publier`),
-  cloturer: (id: string) =>
-    api.post<void>(`/formations/${id}/cloturer`),
-  supprimer: (id: string) =>
-    api.delete<void>(`/formations/${id}`),
-  inscriptions: (formationId: string) =>
-    api.get(`/formations/${formationId}/inscriptions`),
-  confirmerInscription: (id: string) =>
-    api.post<void>(`/formations/inscriptions/${id}/confirmer`),
-  annulerInscription: (id: string) =>
-    api.post<void>(`/formations/inscriptions/${id}/annuler`),
+  liste: (params: Record<string, unknown> = {}) => api.get<PaginatedFormations>('/formations', { params }),
+  dashboard: () => api.get<FormationDashboard>('/formations/dashboard'),
+  publier: (id: string) => api.post<void>(`/formations/${id}/publier`),
+  cloturer: (id: string) => api.post<void>(`/formations/${id}/cloturer`),
+  supprimer: (id: string) => api.delete<void>(`/formations/${id}`),
+  inscriptions: (formationId: string) => api.get(`/formations/${formationId}/inscriptions`),
+  confirmerInscription: (id: string) => api.post<void>(`/formations/inscriptions/${id}/confirmer`),
+  annulerInscription: (id: string) => api.post<void>(`/formations/inscriptions/${id}/annuler`),
 };

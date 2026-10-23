@@ -4,9 +4,7 @@
       <q-card-section class="row items-center no-wrap">
         <div class="col text-h6">
           {{ reservation?.motif }}
-          <div class="text-subtitle2 text-grey-7">
-            {{ reservation?.salle?.code }} — {{ reservation?.salle?.nom }}
-          </div>
+          <div class="text-subtitle2 text-grey-7">{{ reservation?.salle?.code }} — {{ reservation?.salle?.nom }}</div>
         </div>
         <PastilleStatut v-if="reservation" domaine="reservation" :statut="reservation.statut" />
       </q-card-section>
@@ -47,12 +45,7 @@
         <!-- Décision de l'administration : confirmer ou refuser proprement. -->
         <div v-if="peutDecider" class="q-mt-md">
           <span class="section-titre">{{ $t('common.fields.decision') }}</span>
-          <q-input
-            v-model="decisionMotif"
-            outlined
-            dense
-            :label="$t('reservations.detailDialog.refusalReason')"
-          />
+          <q-input v-model="decisionMotif" outlined dense :label="$t('reservations.detailDialog.refusalReason')" />
           <div class="row q-gutter-sm q-mt-sm">
             <q-btn
               unelevated
@@ -191,12 +184,9 @@ const peutModifier = computed(
   () => estModifiable.value && (estProprietaire.value || auth.peut('reservations.modifierToutes')),
 );
 
-const optionsSalles = computed(() =>
-  props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
-);
+const optionsSalles = computed(() => props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
-const nomComplet = (u?: { nom: string; prenom: string } | null) =>
-  u ? `${u.prenom} ${u.nom}` : '';
+const nomComplet = (u?: { nom: string; prenom: string } | null) => (u ? `${u.prenom} ${u.nom}` : '');
 
 watch(
   () => props.modelValue,
@@ -222,10 +212,14 @@ async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
   enCours.value = statut === 'CONFIRMEE' ? 'confirmer' : 'refuser';
   erreur.value = '';
   try {
-    await api.post(`/reservations/${id}/decider`, {
-      statut,
-      ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
-    }, { silencieux: true });
+    await api.post(
+      `/reservations/${id}/decider`,
+      {
+        statut,
+        ...(decisionMotif.value ? { motif: decisionMotif.value } : {}),
+      },
+      { silencieux: true },
+    );
     $q.notify({
       type: statut === 'CONFIRMEE' ? 'positive' : 'warning',
       message: t(statut === 'CONFIRMEE' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
@@ -242,11 +236,15 @@ async function modifier() {
   enCours.value = 'modifier';
   erreur.value = '';
   try {
-    await api.put(`/reservations/${props.reservation!.id}`, {
-      ...form.value,
-      organisme: form.value.organisme || undefined,
-      responsable: form.value.responsable || undefined,
-    }, { silencieux: true });
+    await api.put(
+      `/reservations/${props.reservation!.id}`,
+      {
+        ...form.value,
+        organisme: form.value.organisme || undefined,
+        responsable: form.value.responsable || undefined,
+      },
+      { silencieux: true },
+    );
     $q.notify({ type: 'positive', message: t('reservations.detailDialog.updated') });
     emit('change');
   } catch (e: any) {
@@ -287,10 +285,15 @@ async function annuler() {
   column-gap: var(--up-3);
   font-size: 0.92rem;
 
-  .pochoir { color: var(--up-encre-douce); }
+  .pochoir {
+    color: var(--up-encre-douce);
+  }
 }
 
-.detail-moi { color: var(--up-encre-douce); font-size: 0.8rem; }
+.detail-moi {
+  color: var(--up-encre-douce);
+  font-size: 0.8rem;
+}
 
 .detail-section {
   border-top: var(--up-filet-fin);

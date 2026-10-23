@@ -50,7 +50,14 @@
           :hint="$t('bibliotheque.dialog.fields.authorsHint')"
         />
 
-        <q-input v-model="form.resume" outlined dense type="textarea" autogrow :label="$t('bibliotheque.dialog.fields.abstract')" />
+        <q-input
+          v-model="form.resume"
+          outlined
+          dense
+          type="textarea"
+          autogrow
+          :label="$t('bibliotheque.dialog.fields.abstract')"
+        />
 
         <div class="row q-col-gutter-md">
           <div class="col-12 col-sm-6">
@@ -98,12 +105,7 @@
           @keydown.enter.prevent="ajouterMotCle"
         >
           <template #append>
-            <q-icon
-              v-if="motCleSaisi"
-              name="add_circle"
-              class="cursor-pointer"
-              @click="ajouterMotCle"
-            >
+            <q-icon v-if="motCleSaisi" name="add_circle" class="cursor-pointer" @click="ajouterMotCle">
               <q-tooltip>{{ $t('common.actions.add') }}</q-tooltip>
             </q-icon>
           </template>
@@ -154,11 +156,7 @@
         </div>
       </q-card-section>
 
-      <q-banner
-        v-if="!form.public && suspicionDetectee"
-        dense
-        class="bg-orange-1 text-orange-10 q-mx-md q-mb-md"
-      >
+      <q-banner v-if="!form.public && suspicionDetectee" dense class="bg-orange-1 text-orange-10 q-mx-md q-mb-md">
         <template #avatar><q-icon name="warning" color="orange" /></template>
         <div class="text-weight-medium">{{ $t('bibliotheque.dialog.plagiarism.title') }}</div>
         <div class="q-mt-xs text-caption">
@@ -232,10 +230,12 @@ const motCleSaisi = ref('');
 const MAX_FICHIER_OCTETS = 8 * 1024 * 1024;
 const maxFichierLisible = computed(() => $t('bibliotheque.dialog.file.maxSizeValue', { count: 8 }));
 
-const typesDocument = computed(() => Object.keys(LIBELLE_TYPE_DOCUMENT).map((value) => ({
-  value,
-  label: $t(`libelles.type_document.${value}`),
-})));
+const typesDocument = computed(() =>
+  Object.keys(LIBELLE_TYPE_DOCUMENT).map((value) => ({
+    value,
+    label: $t(`libelles.type_document.${value}`),
+  })),
+);
 
 const form = ref({
   titre: '',
@@ -347,8 +347,7 @@ async function enregistrer() {
     const data = reponse.data;
 
     // Le backend peut renvoyer des suspicions de plagiat nouvellement créées.
-    const suspicions: SuspicionPlagiat[] | undefined =
-      data?.suspicionsPlagiat ?? data?.data?.suspicionsPlagiat;
+    const suspicions: SuspicionPlagiat[] | undefined = data?.suspicionsPlagiat ?? data?.data?.suspicionsPlagiat;
     if (Array.isArray(suspicions) && suspicions.length && !suspicionDetectee.value) {
       // On retient la suspicion la plus haute pour alerter avant publication.
       const top = suspicions.slice().sort((a, b) => b.score - a.score)[0];

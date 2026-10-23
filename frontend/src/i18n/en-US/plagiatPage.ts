@@ -35,8 +35,7 @@ export default {
     filteredTitle: 'No suspicion matches these criteria.',
     defaultTitle: 'No suspicion pending arbitration.',
     filteredHint: 'Broaden the criteria to review the arbitration queue.',
-    defaultHint:
-      'New submissions are compared automatically; run a full recalculation after a bulk import.',
+    defaultHint: 'New submissions are compared automatically; run a full recalculation after a bulk import.',
   },
   table: {
     columns: {
@@ -80,8 +79,7 @@ export default {
       'All submitted documents will be compared pairwise: this operation may take several minutes. Decisions already made are not reconsidered.',
     recalculateDialogOk: 'Start recalculation',
     recalculateDoneTitle: 'Recalculation complete',
-    recalculateDoneMessage:
-      '{created} suspicion(s) created, {updated} updated, {ignored} ignored.',
+    recalculateDoneMessage: '{created} suspicion(s) created, {updated} updated, {ignored} ignored.',
     recalculateSuccess: 'Anti-plagiarism recalculation complete',
   },
 };

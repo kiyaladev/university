@@ -15,7 +15,12 @@
     </en-tete-page>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
-      {{ $t('mesDemandes.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesDemandes.banner.goToRegistry') }) }}
+      {{
+        $t('mesDemandes.banner.wrongRole', {
+          role: auth.utilisateur?.role,
+          registry: $t('mesDemandes.banner.goToRegistry'),
+        })
+      }}
       <template #action>
         <q-btn
           flat
@@ -28,7 +33,9 @@
     </q-banner>
 
     <div v-if="!rolePasBon" class="resume-liste" role="status">
-      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
+      <span v-for="s in plaques" :key="s.cle"
+        >{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span
+      >
     </div>
 
     <barre-filtres
@@ -161,7 +168,14 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="visibility" :label="$t('mesDemandes.actions.track')" @click="ouvrirSuivi(d)" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              icon="visibility"
+              :label="$t('mesDemandes.actions.track')"
+              @click="ouvrirSuivi(d)"
+            />
             <q-btn
               v-if="d.statut === 'EN_ATTENTE_PAIEMENT' && d.frais > 0"
               unelevated
@@ -206,11 +220,7 @@
           <PastilleStatut domaine="demande" :statut="demandeSuivie.statut" />
         </q-card-section>
         <q-card-section v-if="demandeSuivie" class="q-pt-none">
-          <etapes-circuit
-            :etapes="ETAPES_DEMANDE"
-            :actuel="demandeSuivie.statut"
-            :readonly="true"
-          />
+          <etapes-circuit :etapes="ETAPES_DEMANDE" :actuel="demandeSuivie.statut" :readonly="true" />
           <q-banner class="note--info q-mt-md">
             {{ EXPLICATION_STATUT[demandeSuivie.statut] }}
           </q-banner>
@@ -218,9 +228,7 @@
           <div class="demande-meta q-mt-md">
             <div>
               <span class="pochoir">{{ $t('mesDemandes.dialog.fees') }}</span>
-              <span class="chiffres">
-                {{ montantLisible(demandeSuivie.frais) }} {{ demandeSuivie.devise }}
-              </span>
+              <span class="chiffres"> {{ montantLisible(demandeSuivie.frais) }} {{ demandeSuivie.devise }} </span>
             </div>
             <div>
               <span class="pochoir">{{ $t('common.fields.payment') }}</span>
@@ -278,58 +286,58 @@
       icone-valider="payments"
       @valider="payer"
     >
-    <template v-if="demandeAPayer">
-      <div class="row q-col-gutter-md items-center q-mb-md">
-        <div class="col">
-          <div class="text-uppercase text-caption text-grey-7">{{ demandeAPayer.numero }}</div>
-          <div class="text-subtitle1 text-weight-medium">{{ libelleType(demandeAPayer.type) }}</div>
+      <template v-if="demandeAPayer">
+        <div class="row q-col-gutter-md items-center q-mb-md">
+          <div class="col">
+            <div class="text-uppercase text-caption text-grey-7">{{ demandeAPayer.numero }}</div>
+            <div class="text-subtitle1 text-weight-medium">{{ libelleType(demandeAPayer.type) }}</div>
+          </div>
+          <div class="col-auto text-h5 chiffres">
+            {{ montantLisible(demandeAPayer.frais) }} {{ demandeAPayer.devise }}
+          </div>
         </div>
-        <div class="col-auto text-h5 chiffres">
-          {{ montantLisible(demandeAPayer.frais) }} {{ demandeAPayer.devise }}
-        </div>
-      </div>
-      <q-select
-        v-model="formPaiement.mode"
-        :options="OPTIONS_PAIEMENT"
-        outlined
-        dense
-        emit-value
-        map-options
-        :label="$t('mesDemandes.paymentDialog.mode')"
-        class="q-mb-md"
-      />
-      <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
         <q-select
-          v-model="formPaiement.operateur"
-          :options="OPTIONS_OPERATEUR"
+          v-model="formPaiement.mode"
+          :options="OPTIONS_PAIEMENT"
           outlined
           dense
           emit-value
           map-options
-          :label="$t('common.fields.operator')"
-          class="q-mb-sm"
+          :label="$t('mesDemandes.paymentDialog.mode')"
+          class="q-mb-md"
         />
-        <q-input
-          v-model="formPaiement.telephone"
-          outlined
-          dense
-          :label="$t('mesDemandes.paymentDialog.phoneLabel')"
-          :hint="$t('mesDemandes.paymentDialog.phoneHint')"
-        />
-      </template>
-      <q-banner class="note--info q-mt-md">
         <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
-          {{ $t('mesDemandes.paymentDialog.mobileMoneyNote') }}
+          <q-select
+            v-model="formPaiement.operateur"
+            :options="OPTIONS_OPERATEUR"
+            outlined
+            dense
+            emit-value
+            map-options
+            :label="$t('common.fields.operator')"
+            class="q-mb-sm"
+          />
+          <q-input
+            v-model="formPaiement.telephone"
+            outlined
+            dense
+            :label="$t('mesDemandes.paymentDialog.phoneLabel')"
+            :hint="$t('mesDemandes.paymentDialog.phoneHint')"
+          />
         </template>
-        <template v-else>
-          {{ $t('mesDemandes.paymentDialog.pendingNote') }}
-        </template>
+        <q-banner class="note--info q-mt-md">
+          <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
+            {{ $t('mesDemandes.paymentDialog.mobileMoneyNote') }}
+          </template>
+          <template v-else>
+            {{ $t('mesDemandes.paymentDialog.pendingNote') }}
+          </template>
+        </q-banner>
+      </template>
+      <q-banner v-if="erreurPaiement" dense class="note--erreur q-mt-md">
+        <template #avatar><q-icon name="warning" /></template>
+        {{ erreurPaiement }}
       </q-banner>
-    </template>
-    <q-banner v-if="erreurPaiement" dense class="note--erreur q-mt-md">
-      <template #avatar><q-icon name="warning" /></template>
-      {{ erreurPaiement }}
-    </q-banner>
     </dialogue-formulaire>
   </q-page>
 </template>
@@ -512,14 +520,13 @@ async function payer() {
     enregistrementPaiement.value = false;
   }
 }
-
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
+$encre: #1d1d1f;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .stat-chiffre {
   font-size: 2rem;
@@ -550,5 +557,4 @@ $rouge: #CE1126;
   border-radius: var(--up-rayon-sm);
   font-size: 0.95rem;
 }
-
 </style>

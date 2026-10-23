@@ -11,21 +11,43 @@ const router = useRouter();
 const auth = useAuthStore();
 const services = useServicesActifsStore();
 const sections = {
-  presence: [['/synthese-presences', 'summary'], ['/statistiques', 'statistics'], ['/rapports', 'reports']],
-  documents: [['/demandes-docs', 'requests'], ['/attestations', 'issued'], ['/cartes-etudiantes', 'cards']],
-  bilan: [['/rectorat', 'current'], ['/statistiques-mesrs', 'archives']],
-  procedures: [['/demandes-docs/mes', 'myRequests'], ['/reclamations/mes', 'myComplaints']],
+  presence: [
+    ['/synthese-presences', 'summary'],
+    ['/statistiques', 'statistics'],
+    ['/rapports', 'reports'],
+  ],
+  documents: [
+    ['/demandes-docs', 'requests'],
+    ['/attestations', 'issued'],
+    ['/cartes-etudiantes', 'cards'],
+  ],
+  bilan: [
+    ['/rectorat', 'current'],
+    ['/statistiques-mesrs', 'archives'],
+  ],
+  procedures: [
+    ['/demandes-docs/mes', 'myRequests'],
+    ['/reclamations/mes', 'myComplaints'],
+  ],
 };
-const liens = computed(() => sections[props.section].filter(([to]) => {
-  const roles = router.resolve(to).meta.roles;
-  return services.autorise(to) && (!roles || !!auth.role && roles.includes(auth.role));
-}));
+const liens = computed(() =>
+  sections[props.section].filter(([to]) => {
+    const roles = router.resolve(to).meta.roles;
+    return services.autorise(to) && (!roles || (!!auth.role && roles.includes(auth.role)));
+  }),
+);
 </script>
 <template>
   <nav v-if="liens.length > 1" :aria-label="t(`layout.sections.${section}`)" class="q-mb-md">
     <q-tabs :model-value="route.path" dense align="left" class="onglets-panneau" narrow-indicator>
-      <q-route-tab v-for="[to, label] in liens" :key="to" :to="to" exact :label="t(`layout.sections.${label}`)"
-        no-caps />
+      <q-route-tab
+        v-for="[to, label] in liens"
+        :key="to"
+        :to="to"
+        exact
+        :label="t(`layout.sections.${label}`)"
+        no-caps
+      />
     </q-tabs>
   </nav>
 </template>

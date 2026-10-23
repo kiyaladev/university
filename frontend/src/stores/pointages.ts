@@ -14,21 +14,34 @@ import type { Pointage } from '../types';
 
 const CLE_FILE = 'unipresence_file_pointages';
 function proprietaire(): string {
-  try { const token = lireToken(); const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return payload.sub || ''; }
-  catch { return ''; }
+  try {
+    const token = lireToken();
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload.sub || '';
+  } catch {
+    return '';
+  }
 }
-function cleFile(owner: string): string { return `${CLE_FILE}_${owner}`; }
+function cleFile(owner: string): string {
+  return `${CLE_FILE}_${owner}`;
+}
 function lireErreurs(owner: string): Record<string, string> {
-  try { return JSON.parse(localStorage.getItem(`${cleFile(owner)}_erreurs`) || '{}'); } catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem(`${cleFile(owner)}_erreurs`) || '{}');
+  } catch {
+    return {};
+  }
 }
 function retirerPins(file: unknown[]): { file: Pointage[]; modifie: boolean } {
   let modifie = false;
-  const securisee = file.filter((pointage): pointage is Pointage => Boolean(pointage) && typeof pointage === 'object').map((pointage) => {
-    if (!('codePinEnseignant' in pointage)) return pointage;
-    const { codePinEnseignant: _pin, ...sansSecret } = pointage as Pointage & { codePinEnseignant?: string };
-    modifie = true;
-    return sansSecret as Pointage;
-  });
+  const securisee = file
+    .filter((pointage): pointage is Pointage => Boolean(pointage) && typeof pointage === 'object')
+    .map((pointage) => {
+      if (!('codePinEnseignant' in pointage)) return pointage;
+      const { codePinEnseignant: _pin, ...sansSecret } = pointage as Pointage & { codePinEnseignant?: string };
+      modifie = true;
+      return sansSecret as Pointage;
+    });
   return { file: securisee, modifie };
 }
 /**
@@ -214,12 +227,14 @@ export const usePointagesStore = defineStore('pointages', {
         // Silencieux : la file reste intacte et le catch prévient une seule fois.
         const { data } = await api.post('/controles/sync', { pointages: envoyes }, { silencieux: true });
         const echecs = new Set((data.echecs ?? []).map((e: any) => e.seanceId));
-        const acceptes = new Map(envoyes.filter(p => !echecs.has(p.seanceId)).map(p => [p.seanceId, JSON.stringify(p)]));
+        const acceptes = new Map(
+          envoyes.filter((p) => !echecs.has(p.seanceId)).map((p) => [p.seanceId, JSON.stringify(p)]),
+        );
         // Une modification ajoutée pendant l'envoi doit rester à synchroniser.
         // Un changement de compte ne doit jamais déplacer la file vers ce compte.
         await this.chargerProprietaire();
         const file = owner === this.proprietaire ? this.file : await lireFile(owner);
-        const restants = file.filter(p => acceptes.get(p.seanceId) !== JSON.stringify(p));
+        const restants = file.filter((p) => acceptes.get(p.seanceId) !== JSON.stringify(p));
         await ecrireFileChiffree(cleFile(owner), owner, restants);
         const erreurs = Object.fromEntries((data.echecs ?? []).map((e: any) => [e.seanceId, e.erreur]));
         localStorage.setItem(`${cleFile(owner)}_erreurs`, JSON.stringify(erreurs));
@@ -229,16 +244,21 @@ export const usePointagesStore = defineStore('pointages', {
         this.erreurs = erreurs;
         this.erreurReseauSignalee = false;
 
-        if (data.synchronises || erreursChangees) Notify.create({
-          type: data.synchronises ? 'positive' : 'warning',
-          message: i18n.global.t('filePointages.synced', { synced: data.synchronises, total: data.recus }),
-          caption: data.echecs?.length ? i18n.global.t('filePointages.failed', { n: data.echecs.length }) : undefined,
-          icon: 'cloud_done',
-        });
+        if (data.synchronises || erreursChangees)
+          Notify.create({
+            type: data.synchronises ? 'positive' : 'warning',
+            message: i18n.global.t('filePointages.synced', { synced: data.synchronises, total: data.recus }),
+            caption: data.echecs?.length ? i18n.global.t('filePointages.failed', { n: data.echecs.length }) : undefined,
+            icon: 'cloud_done',
+          });
         return data;
       } catch (error: any) {
         // La file reste intacte ; l'écouteur online n'émet pas de rejet non traité.
-        if (!this.erreurReseauSignalee) Notify.create({ type: 'warning', message: error.response?.data?.message || i18n.global.t('filePointages.unavailable') });
+        if (!this.erreurReseauSignalee)
+          Notify.create({
+            type: 'warning',
+            message: error.response?.data?.message || i18n.global.t('filePointages.unavailable'),
+          });
         this.erreurReseauSignalee = true;
         return { indisponible: true };
       } finally {
@@ -259,7 +279,7 @@ export const usePointagesStore = defineStore('pointages', {
 
     async retirer(seanceId: string) {
       await this.chargerProprietaire();
-      this.file = this.file.filter(pointage => pointage.seanceId !== seanceId);
+      this.file = this.file.filter((pointage) => pointage.seanceId !== seanceId);
       delete this.erreurs[seanceId];
       await this.persister();
     },

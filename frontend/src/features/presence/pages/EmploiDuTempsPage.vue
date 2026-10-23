@@ -34,7 +34,14 @@
 
     <!-- Semaine affichée : la grille montre ce qui vaut cette semaine-là -->
     <div class="edt__semaine">
-      <q-btn flat dense round icon="chevron_left" :aria-label="$t('emploiDuTemps.week.previous')" @click="decalerSemaine(-1)">
+      <q-btn
+        flat
+        dense
+        round
+        icon="chevron_left"
+        :aria-label="$t('emploiDuTemps.week.previous')"
+        @click="decalerSemaine(-1)"
+      >
         <q-tooltip>{{ $t('emploiDuTemps.week.previous') }}</q-tooltip>
       </q-btn>
       <button
@@ -47,7 +54,14 @@
         <span class="lettrage chiffres edt__semaine-dates">{{ libelleSemaine }}</span>
         <q-tooltip>{{ $t('emploiDuTemps.week.backToCurrentTooltip') }}</q-tooltip>
       </button>
-      <q-btn flat dense round icon="chevron_right" :aria-label="$t('emploiDuTemps.week.next')" @click="decalerSemaine(1)">
+      <q-btn
+        flat
+        dense
+        round
+        icon="chevron_right"
+        :aria-label="$t('emploiDuTemps.week.next')"
+        @click="decalerSemaine(1)"
+      >
         <q-tooltip>{{ $t('emploiDuTemps.week.next') }}</q-tooltip>
       </q-btn>
       <span class="pochoir edt__semaine-note">
@@ -141,11 +155,7 @@
       <q-icon name="calendar_month" size="42px" />
       <span class="lettrage edt__etat-vide-titre">{{ $t('emploiDuTemps.emptyState.title') }}</span>
       <span class="pochoir edt__etat-vide-mention">
-        {{
-          filtresActifs
-            ? $t('emploiDuTemps.emptyState.filtered')
-            : $t('emploiDuTemps.emptyState.default')
-        }}
+        {{ filtresActifs ? $t('emploiDuTemps.emptyState.filtered') : $t('emploiDuTemps.emptyState.default') }}
       </span>
       <div class="edt__etat-vide-actions">
         <q-btn
@@ -181,7 +191,9 @@
         <div class="grille__tete">
           <span class="lettrage grille__tete-nom">{{ j.libelle }}</span>
           <span class="pochoir pochoir--brut grille__tete-charge chiffres">
-            {{ $t('emploiDuTemps.week.dayHeader', { count: j.creneaux.length, hours: heuresLisibles(heuresDuJour(j)) }) }}
+            {{
+              $t('emploiDuTemps.week.dayHeader', { count: j.creneaux.length, hours: heuresLisibles(heuresDuJour(j)) })
+            }}
           </span>
         </div>
 
@@ -257,12 +269,7 @@
       </li>
     </ol>
 
-    <dialogue-creneau
-      v-model="dialogOuvert"
-      :creneau="creneauEdite"
-      :salles="salles"
-      @enregistre="charger"
-    />
+    <dialogue-creneau v-model="dialogOuvert" :creneau="creneauEdite" :salles="salles" @enregistre="charger" />
     <dialogue-generation v-model="dialogGeneration" />
   </q-page>
 </template>
@@ -289,10 +296,7 @@ const referentiels = useReferentielsStore();
 const PREMIERE_HEURE = 7;
 const DERNIERE_HEURE = 20;
 const HAUTEUR_HEURE = 64;
-const heures = Array.from(
-  { length: DERNIERE_HEURE - PREMIERE_HEURE + 1 },
-  (_, i) => PREMIERE_HEURE + i,
-);
+const heures = Array.from({ length: DERNIERE_HEURE - PREMIERE_HEURE + 1 }, (_, i) => PREMIERE_HEURE + i);
 const hauteurTotale = (DERNIERE_HEURE - PREMIERE_HEURE) * HAUTEUR_HEURE;
 
 const semaine = ref<{ jour: number; libelle: string; creneaux: Creneau[] }[]>([]);
@@ -351,15 +355,18 @@ const ecranEtroit = computed(() => $q.screen.lt.md);
 
 const optionsPromotions = computed(() => {
   if (auth.role === 'ETUDIANT') {
-    const visibles = new Map(semaine.value.flatMap(jour => jour.creneaux.flatMap(c =>
-      c.affectation?.promotion ? [[c.affectation.promotion.id, c.affectation.promotion] as const] : [])));
+    const visibles = new Map(
+      semaine.value.flatMap((jour) =>
+        jour.creneaux.flatMap((c) =>
+          c.affectation?.promotion ? [[c.affectation.promotion.id, c.affectation.promotion] as const] : [],
+        ),
+      ),
+    );
     return [...visibles.entries()].map(([id, p]) => ({ label: p.nom, value: id }));
   }
-  return promotions.value.map(p => ({ label: p.nom, value: p.id }));
+  return promotions.value.map((p) => ({ label: p.nom, value: p.id }));
 });
-const optionsSalles = computed(() =>
-  salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
-);
+const optionsSalles = computed(() => salles.value.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
 const minutes = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
 const dureeH = (c: Creneau) => (minutes(c.heureFin) - minutes(c.heureDebut)) / 60;
@@ -374,9 +381,7 @@ const jourLePlusCharge = computed(() => {
   return trie && heuresDuJour(trie) ? trie.libelle : '—';
 });
 
-const creneauxDuJourActif = computed(
-  () => semaine.value.find((j) => j.jour === jourActif.value)?.creneaux ?? [],
-);
+const creneauxDuJourActif = computed(() => semaine.value.find((j) => j.jour === jourActif.value)?.creneaux ?? []);
 
 /** Miroir des rôles que le menu principal autorise sur `/seances`. */
 const peutVoirRegistre = computed(() => auth.peut('emploiDuTemps.voirRegistre'));
@@ -517,10 +522,14 @@ onMounted(async () => {
   cursor: pointer;
   color: var(--up-encre);
 
-  &:hover { background: var(--up-craie); }
+  &:hover {
+    background: var(--up-craie);
+  }
 }
 
-.edt__semaine-dates { font-size: 1.05rem; }
+.edt__semaine-dates {
+  font-size: 1.05rem;
+}
 
 .edt__semaine-note {
   color: var(--up-encre-douce);
@@ -528,7 +537,9 @@ onMounted(async () => {
 }
 
 @media (max-width: 767px) {
-  .edt__semaine-note { display: none; }
+  .edt__semaine-note {
+    display: none;
+  }
 }
 
 .edt__filtres {
@@ -548,7 +559,9 @@ onMounted(async () => {
 .edt__releve-cellule {
   padding: var(--up-3);
 
-  & + & { border-left: var(--up-filet); }
+  & + & {
+    border-left: var(--up-filet);
+  }
 }
 
 .edt__releve-valeur {
@@ -565,7 +578,9 @@ onMounted(async () => {
   overflow-x: auto;
 }
 
-.grille__axe { border-right: var(--up-filet); }
+.grille__axe {
+  border-right: var(--up-filet);
+}
 
 .grille__coin {
   height: 54px;
@@ -580,14 +595,18 @@ onMounted(async () => {
   color: var(--up-encre-douce);
   border-bottom: var(--up-filet-fin);
 
-  &:last-child { border-bottom: 0; }
+  &:last-child {
+    border-bottom: 0;
+  }
 }
 
 .grille__jour {
   min-width: 152px;
   border-right: var(--up-filet-fin);
 
-  &:last-child { border-right: 0; }
+  &:last-child {
+    border-right: 0;
+  }
 }
 
 // L'en-tête de colonne était un bandeau d'encre : sept aplats sombres en haut
@@ -604,11 +623,17 @@ onMounted(async () => {
   justify-content: center;
 }
 
-.grille__tete-nom { font-size: 1rem; }
+.grille__tete-nom {
+  font-size: 1rem;
+}
 
-.grille__tete-charge { color: var(--up-encre-douce); }
+.grille__tete-charge {
+  color: var(--up-encre-douce);
+}
 
-.grille__colonne { position: relative; }
+.grille__colonne {
+  position: relative;
+}
 
 .grille__ligne {
   position: absolute;
@@ -633,20 +658,23 @@ onMounted(async () => {
   border: var(--up-filet);
   transition: filter var(--up-transition);
 
-  &:hover { filter: brightness(0.96); }
-  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -4px; }
+  &:hover {
+    filter: brightness(0.96);
+  }
+  &:focus-visible {
+    outline: 2px solid #{$vert-action};
+    outline-offset: -4px;
+  }
 }
 
 .creneau--inactif {
   opacity: 0.55;
-  background-image: repeating-linear-gradient(
-    -45deg,
-    rgba(16, 37, 30, 0.1) 0 6px,
-    transparent 6px 12px
-  );
+  background-image: repeating-linear-gradient(-45deg, rgba(16, 37, 30, 0.1) 0 6px, transparent 6px 12px);
 }
 
-.creneau__heure { color: var(--up-encre-douce); }
+.creneau__heure {
+  color: var(--up-encre-douce);
+}
 
 .creneau__matiere {
   font-size: 0.82rem;
@@ -706,7 +734,9 @@ onMounted(async () => {
   align-items: center;
   gap: 2px;
 
-  & + & { border-left-width: 0; }
+  & + & {
+    border-left-width: 0;
+  }
 
   &--actif {
     background: var(--up-plaque);
@@ -715,7 +745,9 @@ onMounted(async () => {
   }
 }
 
-.edt__jour-compte { font-size: 13px; }
+.edt__jour-compte {
+  font-size: 13px;
+}
 
 .edt__liste {
   list-style: none;
@@ -737,8 +769,13 @@ onMounted(async () => {
   font: inherit;
   color: var(--up-encre);
 
-  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -4px; }
-  &:disabled { cursor: default; }
+  &:focus-visible {
+    outline: 2px solid #{$vert-action};
+    outline-offset: -4px;
+  }
+  &:disabled {
+    cursor: default;
+  }
 }
 
 .creneau-ligne__heure {
@@ -754,9 +791,16 @@ onMounted(async () => {
   min-width: 0;
 }
 
-.creneau-ligne__matiere { display: block; font-size: 1rem; }
+.creneau-ligne__matiere {
+  display: block;
+  font-size: 1rem;
+}
 
-.creneau-ligne__enseignant { display: block; margin-top: 3px; font-size: 0.9rem; }
+.creneau-ligne__enseignant {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.9rem;
+}
 
 .creneau-ligne__meta {
   margin-top: 6px;
@@ -785,9 +829,14 @@ onMounted(async () => {
   background: var(--up-plaque);
 }
 
-.edt__etat-vide-titre { font-size: 1.3rem; color: var(--up-encre); }
+.edt__etat-vide-titre {
+  font-size: 1.3rem;
+  color: var(--up-encre);
+}
 
-.edt__etat-vide-mention { max-width: 52ch; }
+.edt__etat-vide-mention {
+  max-width: 52ch;
+}
 
 .edt__etat-vide-actions {
   display: flex;
@@ -800,9 +849,15 @@ onMounted(async () => {
 @media (max-width: 767px) {
   /* Un filtre par ligne : les libellés « Promotion », « Enseignant »
      n’ont plus à se tronquer, et le rafraîchi reste à portée de pouce. */
-  .edt__filtres { grid-template-columns: minmax(0, 1fr) auto; }
-  .edt__filtres > .q-field { grid-column: 1; }
-  .edt__releve { grid-template-columns: 1fr; }
+  .edt__filtres {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .edt__filtres > .q-field {
+    grid-column: 1;
+  }
+  .edt__releve {
+    grid-template-columns: 1fr;
+  }
 
   .edt__releve-cellule + .edt__releve-cellule {
     border-left: 0;

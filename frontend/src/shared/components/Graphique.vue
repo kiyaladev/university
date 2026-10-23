@@ -37,10 +37,7 @@ Chart.defaults.elements.bar.borderRadius = 6;
 
 /** Enveloppe minimale de Chart.js : le graphique se reconstruit à chaque
  *  changement de configuration. */
-const props = withDefaults(
-  defineProps<{ config: ChartConfiguration; hauteur?: number }>(),
-  { hauteur: 240 },
-);
+const props = withDefaults(defineProps<{ config: ChartConfiguration; hauteur?: number }>(), { hauteur: 240 });
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 let chart: Chart | null = null;

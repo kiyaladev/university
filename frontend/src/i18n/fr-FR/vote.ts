@@ -1,8 +1,7 @@
 /** Namespace `vote`. */
 export default {
   title: 'Voter',
-  subtitle:
-    'Les scrutins ouverts à votre voix, et les résultats des scrutins proclamés. Votre bulletin est anonyme.',
+  subtitle: 'Les scrutins ouverts à votre voix, et les résultats des scrutins proclamés. Votre bulletin est anonyme.',
   loading: 'Chargement des scrutins…',
   errors: {
     load: 'Impossible de charger les scrutins.',

@@ -14,8 +14,14 @@
     </en-tete-page>
 
     <div v-if="kpis" class="resume-liste" role="status">
-      <span>{{ $t('recettes.kpis.totalMois.title') }} : <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('common.units.gnf') }}</strong></span>
-      <span>{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} : <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('common.units.gnf') }}</strong></span>
+      <span
+        >{{ $t('recettes.kpis.totalMois.title') }} :
+        <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('common.units.gnf') }}</strong></span
+      >
+      <span
+        >{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} :
+        <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('common.units.gnf') }}</strong></span
+      >
     </div>
 
     <barre-filtres
@@ -25,10 +31,28 @@
       @reinitialiser="liste.reinitialiser([])"
     >
       <template #principaux>
-        <q-select v-model="filtres.paiementStatut" :options="optionsPaiement" outlined dense clearable emit-value map-options :label="$t('recettes.filters.paiementStatut')" />
+        <q-select
+          v-model="filtres.paiementStatut"
+          :options="optionsPaiement"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          :label="$t('recettes.filters.paiementStatut')"
+        />
       </template>
       <template #avances>
-        <q-select v-model="filtres.type" :options="optionsTypes" outlined dense clearable emit-value map-options :label="$t('common.fields.type')" />
+        <q-select
+          v-model="filtres.type"
+          :options="optionsTypes"
+          outlined
+          dense
+          clearable
+          emit-value
+          map-options
+          :label="$t('common.fields.type')"
+        />
 
         <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
         <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
@@ -69,17 +93,19 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="visibility"
             color="primary"
-            :aria-label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })" :label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })"
+            :aria-label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })"
+            :label="$t('recettes.ariaLabels.detail', { numero: p.row.numero })"
             @click.stop="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('recettes.tooltips.detail') }}</q-tooltip>
           </q-btn>
-<q-btn
+          <q-btn
             v-if="!p.row.paiementId && peutEncaisser"
             flat
             dense
@@ -90,27 +116,39 @@
             :disable="encaissementEnCours || dialogEncaissementOuvert"
             @click.stop="encaisser(p.row)"
           />
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="p.row.paiementId"
-            flat
-            dense
-            no-caps
-            color="primary"
-            icon="receipt_long"
-            :label="$t('recettes.actions.viewPayment')"
-            to="/paiements"
-            @click.stop
-          >
-            <q-tooltip>{{ $t('recettes.tooltips.voirPaiement') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="p.row.paiementId"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="receipt_long"
+              :label="$t('recettes.actions.viewPayment')"
+              to="/paiements"
+              @click.stop
+            >
+              <q-tooltip>{{ $t('recettes.tooltips.voirPaiement') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
       <template #no-data>
-        <etat-vide icone="request_quote" :titre="$t('recettes.emptyState.title')" :aide="$t('recettes.emptyState.message')">
+        <etat-vide
+          icone="request_quote"
+          :titre="$t('recettes.emptyState.title')"
+          :aide="$t('recettes.emptyState.message')"
+        >
           <template v-if="peutCreer" #action>
-            <q-btn unelevated no-caps color="primary" icon="add" :label="$t('recettes.actions.issueRecette')" @click="ouvrirCreation" />
+            <q-btn
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('recettes.actions.issueRecette')"
+              @click="ouvrirCreation"
+            />
           </template>
         </etat-vide>
       </template>
@@ -134,7 +172,17 @@
             <div class="text-h6 chiffres">{{ montantLisible(r.montant) }} {{ r.devise }}</div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn v-if="!r.paiementId && peutEncaisser" flat dense no-caps color="positive" icon="payments" :label="$t('recettes.actions.cash')" :disable="encaissementEnCours || dialogEncaissementOuvert" @click.stop="encaisser(r)" />
+            <q-btn
+              v-if="!r.paiementId && peutEncaisser"
+              flat
+              dense
+              no-caps
+              color="positive"
+              icon="payments"
+              :label="$t('recettes.actions.cash')"
+              :disable="encaissementEnCours || dialogEncaissementOuvert"
+              @click.stop="encaisser(r)"
+            />
             <q-btn
               v-else-if="r.paiementId"
               flat
@@ -157,7 +205,14 @@
         :aide="$t('recettes.emptyState.message')"
       >
         <template v-if="peutCreer" #action>
-          <q-btn unelevated no-caps color="primary" icon="add" :label="$t('recettes.actions.issueRecette')" @click="ouvrirCreation" />
+          <q-btn
+            unelevated
+            no-caps
+            color="primary"
+            icon="add"
+            :label="$t('recettes.actions.issueRecette')"
+            @click="ouvrirCreation"
+          />
         </template>
       </etat-vide>
     </div>
@@ -169,11 +224,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <dialogue-recette
-      v-model="dialogOuvert"
-      :existant="recetteEnEdition"
-      @enregistre="apresEnregistrement"
-    />
+    <dialogue-recette v-model="dialogOuvert" :existant="recetteEnEdition" @enregistre="apresEnregistrement" />
   </q-page>
 </template>
 
@@ -194,13 +245,7 @@ import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueRecette from '../components/DialogueRecette.vue';
-import {
-  LIBELLE_TYPE_RECETTE,
-  aujourdhui,
-  dateLisible,
-  decalerJours,
-  montantLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_TYPE_RECETTE, aujourdhui, dateLisible, decalerJours, montantLisible } from '@/shared/utils/libelles';
 import type { RecetteExterne, ChipFiltre } from '@/types';
 
 const $q = useQuasar();
@@ -265,7 +310,8 @@ const optionsPaiement = computed(() => [
 
 const periodeLisible = computed(() => {
   const { dateDebut, dateFin } = filtres.value;
-  if (dateDebut && dateFin) return t('recettes.period.range', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) });
+  if (dateDebut && dateFin)
+    return t('recettes.period.range', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) });
   if (dateDebut) return t('recettes.period.from', { debut: dateLisible(dateDebut) });
   if (dateFin) return t('recettes.period.until', { fin: dateLisible(dateFin) });
   return t('recettes.period.all');
@@ -274,10 +320,17 @@ const periodeLisible = computed(() => {
 const chipsFiltres = computed(() => {
   const chips: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    chips.push({ label: t('recettes.chips.search', { texte: filtres.value.recherche }), value: filtres.value.recherche, defaut: true });
+    chips.push({
+      label: t('recettes.chips.search', { texte: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      defaut: true,
+    });
   }
   if (filtres.value.type) {
-    chips.push({ label: t('recettes.chips.type', { type: libelleType(filtres.value.type) }), value: filtres.value.type });
+    chips.push({
+      label: t('recettes.chips.type', { type: libelleType(filtres.value.type) }),
+      value: filtres.value.type,
+    });
   }
   if (filtres.value.paiementStatut) {
     chips.push({
@@ -382,5 +435,4 @@ onMounted(() => {
     background: var(--up-craie);
   }
 }
-
 </style>

@@ -1,7 +1,7 @@
 /** Namespace `inscriptions` — page Inscriptions (dossiers de l'année). */
 export default {
   subtitle:
-    "Dossiers de l’année : encaisser les frais par Mobile Money ou au guichet, valider les dossiers réglés, imprimer les certificats.",
+    'Dossiers de l’année : encaisser les frais par Mobile Money ou au guichet, valider les dossiers réglés, imprimer les certificats.',
   actions: {
     new: 'Nouvelle inscription au guichet',
   },
@@ -86,8 +86,7 @@ export default {
   dialogs: {
     validate: {
       title: 'Valider le dossier',
-      message:
-        'Valider {numero} ({prenom} {nom}) ? Les frais sont réglés, le dossier devient définitif.',
+      message: 'Valider {numero} ({prenom} {nom}) ? Les frais sont réglés, le dossier devient définitif.',
     },
     cancel: {
       title: 'Annuler le dossier',

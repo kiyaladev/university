@@ -3,27 +3,27 @@
     <section-navigation section="documents" />
     <en-tete-page :title="$t('attestations.title')" :subtitle="$t('attestations.subtitle')">
       <template #actions>
-<div class="col-auto">
-        <q-btn
-          outline
-          color="secondary"
-          no-caps
-          icon="school"
-          :label="$t('attestations.actions.bulletins')"
-          @click="router.push({ name: 'bulletins' })"
-        />
-      </div>
-      <div class="col-auto">
-        <q-btn
-          v-if="peutEmettre"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('attestations.actions.issue')"
-          @click="ouvrirEmission()"
-        />
-      </div>
+        <div class="col-auto">
+          <q-btn
+            outline
+            color="secondary"
+            no-caps
+            icon="school"
+            :label="$t('attestations.actions.bulletins')"
+            @click="router.push({ name: 'bulletins' })"
+          />
+        </div>
+        <div class="col-auto">
+          <q-btn
+            v-if="peutEmettre"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('attestations.actions.issue')"
+            @click="ouvrirEmission()"
+          />
+        </div>
       </template>
     </en-tete-page>
 
@@ -158,38 +158,46 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="qr_code_2"
-            :aria-label="$t('attestations.actionsColumn.detailAria')" :label="$t('attestations.actionsColumn.detailAria')"
+            :aria-label="$t('attestations.actionsColumn.detailAria')"
+            :label="$t('attestations.actionsColumn.detailAria')"
             @click.stop="ouvrirDetail(p.row)"
           >
             <q-tooltip>{{ $t('attestations.actionsColumn.detailTooltip') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="print"
-            :aria-label="$t('attestations.actionsColumn.printAria')" :label="$t('attestations.actionsColumn.printAria')"
-            @click.stop="imprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('attestations.actionsColumn.printTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutRevoquer && p.row.statut === 'EMISE'"
-            flat
-            dense no-caps
-            color="negative"
-            icon="block"
-            :aria-label="$t('attestations.actionsColumn.revokeAria')" :label="$t('attestations.actionsColumn.revokeAria')"
-            @click.stop="revoquer(p.row)"
-          >
-            <q-tooltip>{{ $t('attestations.actionsColumn.revokeTooltip') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="print"
+              :aria-label="$t('attestations.actionsColumn.printAria')"
+              :label="$t('attestations.actionsColumn.printAria')"
+              @click.stop="imprimer(p.row)"
+            >
+              <q-tooltip>{{ $t('attestations.actionsColumn.printTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutRevoquer && p.row.statut === 'EMISE'"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="block"
+              :aria-label="$t('attestations.actionsColumn.revokeAria')"
+              :label="$t('attestations.actionsColumn.revokeAria')"
+              @click.stop="revoquer(p.row)"
+            >
+              <q-tooltip>{{ $t('attestations.actionsColumn.revokeTooltip') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -208,35 +216,51 @@
             <q-space />
             <div class="text-caption text-grey-7">{{ a.numero }}</div>
           </div>
-          <div class="text-subtitle1 text-weight-medium">
-            {{ a.etudiant?.nom }} {{ a.etudiant?.prenom }}
-          </div>
+          <div class="text-subtitle1 text-weight-medium">{{ a.etudiant?.nom }} {{ a.etudiant?.prenom }}</div>
           <div class="text-caption text-grey-7">{{ a.etudiant?.matricule }}</div>
           <div class="q-mt-sm text-caption">
-            {{ LIBELLE_TYPE_ATTESTATION[a.type] ?? a.type }} ·
-            {{ a.annee?.libelle ?? '—' }}{{ a.promotion?.nom ? ` · ${a.promotion.nom}` : '' }}
+            {{ LIBELLE_TYPE_ATTESTATION[a.type] ?? a.type }} · {{ a.annee?.libelle ?? '—'
+            }}{{ a.promotion?.nom ? ` · ${a.promotion.nom}` : '' }}
           </div>
           <div class="text-caption text-grey-7 q-mt-xs">
-            {{ $t('attestations.card.issuedOn', { date: dateLisible(a.emiseLe), count: a._count?.verifications ?? 0 }) }}
+            {{
+              $t('attestations.card.issuedOn', { date: dateLisible(a.emiseLe), count: a._count?.verifications ?? 0 })
+            }}
           </div>
         </q-card-section>
         <q-separator />
         <q-card-actions align="right">
-<q-btn flat dense no-caps icon="qr_code_2" :label="$t('attestations.actions.qr')" @click.stop="ouvrirDetail(a)" />
-<actions-secondaires>
-<q-btn v-close-popup flat dense no-caps icon="print" :label="$t('common.actions.print')" @click.stop="imprimer(a)" />
-<q-btn v-close-popup
-            v-if="peutRevoquer && a.statut === 'EMISE'"
+          <q-btn
             flat
             dense
             no-caps
-            color="negative"
-            icon="block"
-            :label="$t('common.actions.revoke')"
-            @click.stop="revoquer(a)"
+            icon="qr_code_2"
+            :label="$t('attestations.actions.qr')"
+            @click.stop="ouvrirDetail(a)"
           />
-</actions-secondaires>
-</q-card-actions>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="print"
+              :label="$t('common.actions.print')"
+              @click.stop="imprimer(a)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutRevoquer && a.statut === 'EMISE'"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="block"
+              :label="$t('common.actions.revoke')"
+              @click.stop="revoquer(a)"
+            />
+          </actions-secondaires>
+        </q-card-actions>
       </q-card>
       <etat-vide
         v-if="!liste.chargement && !liste.lignes.length"
@@ -254,11 +278,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <dialogue-attestation
-      v-model="dialogEmission"
-      :prefill="prefillEmission"
-      @enregistre="recharger"
-    />
+    <dialogue-attestation v-model="dialogEmission" :prefill="prefillEmission" @enregistre="recharger" />
 
     <!-- Détail d'une attestation : QR peint sur le panneau -->
     <q-dialog v-model="dialogDetail">
@@ -266,8 +286,9 @@
         <q-card-section>
           <div class="text-h6">{{ detail?.numero }}</div>
           <div class="page-sous-titre q-mt-xs">
-            {{ detail ? LIBELLE_TYPE_ATTESTATION[detail.type] ?? detail.type : '' }} {{ $t('common.format.emptyValue') }}
-            {{ detail ? LIBELLE_STATUT_ATTESTATION[detail.statut] ?? detail.statut : '' }}
+            {{ detail ? (LIBELLE_TYPE_ATTESTATION[detail.type] ?? detail.type) : '' }}
+            {{ $t('common.format.emptyValue') }}
+            {{ detail ? (LIBELLE_STATUT_ATTESTATION[detail.statut] ?? detail.statut) : '' }}
           </div>
         </q-card-section>
         <q-card-section class="text-center">
@@ -282,19 +303,28 @@
             </div>
             <div v-if="detail.motif">{{ $t('attestations.detail.motif', { motif: detail.motif }) }}</div>
             <div>
-              {{ $t('attestations.detail.parcours', {
-                annee: detail.annee?.libelle ?? '—',
-                promotion: detail.promotion?.nom ? ` · ${detail.promotion.nom}` : '',
-              }) }}
+              {{
+                $t('attestations.detail.parcours', {
+                  annee: detail.annee?.libelle ?? '—',
+                  promotion: detail.promotion?.nom ? ` · ${detail.promotion.nom}` : '',
+                })
+              }}
             </div>
             <div class="q-mt-sm">
-              {{ $t('attestations.detail.issuedOnBy', {
-                date: dateLisible(detail.emiseLe),
-                who: detail.emisePar ? `${detail.emisePar.prenom} ${detail.emisePar.nom}` : '—',
-              }) }}
+              {{
+                $t('attestations.detail.issuedOnBy', {
+                  date: dateLisible(detail.emiseLe),
+                  who: detail.emisePar ? `${detail.emisePar.prenom} ${detail.emisePar.nom}` : '—',
+                })
+              }}
             </div>
             <div v-if="detail.statut === 'REVOQUEE'" class="text-negative">
-              {{ $t('attestations.detail.revokedOnBy', { date: dateLisible(detail.revoqueeLe), motif: detail.motifRevocation }) }}
+              {{
+                $t('attestations.detail.revokedOnBy', {
+                  date: dateLisible(detail.revoqueeLe),
+                  motif: detail.motifRevocation,
+                })
+              }}
             </div>
           </div>
         </q-card-section>
@@ -365,12 +395,20 @@
                     dense
                     :color="v.resultat ? 'secondary' : 'negative'"
                     text-color="white"
-                    :label="v.resultat ? $t('attestations.verificationsDialog.valid') : $t('attestations.verificationsDialog.failed')"
+                    :label="
+                      v.resultat
+                        ? $t('attestations.verificationsDialog.valid')
+                        : $t('attestations.verificationsDialog.failed')
+                    "
                     class="q-mr-sm"
                   />
                   {{ dateHeureLisible(v.verifieeLe) }}
                 </q-item-label>
-                <q-item-label caption>{{ $t('attestations.verificationsDialog.ip', { ip: v.ip ?? $t('attestations.verificationsDialog.ipUnknown') }) }}</q-item-label>
+                <q-item-label caption>{{
+                  $t('attestations.verificationsDialog.ip', {
+                    ip: v.ip ?? $t('attestations.verificationsDialog.ipUnknown'),
+                  })
+                }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item v-if="!verifications.length">
@@ -479,29 +517,46 @@ const peutRevoquer = computed(() => auth.peut('attestations.revoquer'));
 const chips = computed(() => {
   const cs: ChipFiltre[] = [];
   if (filtres.value.recherche) {
-    cs.push({ label: t('attestations.filters.searchChip', { value: filtres.value.recherche }), value: filtres.value.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('attestations.filters.searchChip', { value: filtres.value.recherche }),
+      value: filtres.value.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (filtres.value.type) {
     cs.push({
-      label: t('attestations.filters.typeChip', { value: LIBELLE_TYPE_ATTESTATION[filtres.value.type] ?? filtres.value.type }),
+      label: t('attestations.filters.typeChip', {
+        value: LIBELLE_TYPE_ATTESTATION[filtres.value.type] ?? filtres.value.type,
+      }),
       value: filtres.value.type,
       icone: 'description',
     });
   }
   if (filtres.value.statut) {
     cs.push({
-      label: t('attestations.filters.statusChip', { value: LIBELLE_STATUT_ATTESTATION[filtres.value.statut] ?? filtres.value.statut }),
+      label: t('attestations.filters.statusChip', {
+        value: LIBELLE_STATUT_ATTESTATION[filtres.value.statut] ?? filtres.value.statut,
+      }),
       value: filtres.value.statut,
       icone: 'verified',
     });
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: t('attestations.filters.yearChip', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({
+      label: t('attestations.filters.yearChip', { value: a?.libelle ?? '?' }),
+      value: filtres.value.anneeId,
+      icone: 'calendar_today',
+    });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: t('attestations.filters.promotionChip', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
+    cs.push({
+      label: t('attestations.filters.promotionChip', { value: p?.nom ?? '?' }),
+      value: filtres.value.promotionId,
+      icone: 'school',
+    });
   }
   return cs;
 });
@@ -509,10 +564,20 @@ const chips = computed(() => {
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
   { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
-  { name: 'etudiant', label: t('common.fields.student'), field: (r) => `${r.etudiant?.nom ?? ''} ${r.etudiant?.prenom ?? ''}`, align: 'left' },
+  {
+    name: 'etudiant',
+    label: t('common.fields.student'),
+    field: (r) => `${r.etudiant?.nom ?? ''} ${r.etudiant?.prenom ?? ''}`,
+    align: 'left',
+  },
   { name: 'parcours', label: t('attestations.table.columns.parcours'), field: 'anneeId', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
-  { name: 'verifications', label: t('attestations.table.columns.verifications'), field: (r) => r._count?.verifications ?? 0, align: 'center' },
+  {
+    name: 'verifications',
+    label: t('attestations.table.columns.verifications'),
+    field: (r) => r._count?.verifications ?? 0,
+    align: 'center',
+  },
   { name: 'emiseLe', label: t('common.fields.issuedOn'), field: 'emiseLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -623,10 +688,7 @@ async function recharger() {
 }
 
 async function chargerReferentiels() {
-  [annees.value, promotions.value] = await Promise.all([
-    referentiels.annees(),
-    referentiels.promotions(),
-  ]);
+  [annees.value, promotions.value] = await Promise.all([referentiels.annees(), referentiels.promotions()]);
 }
 
 onMounted(async () => {

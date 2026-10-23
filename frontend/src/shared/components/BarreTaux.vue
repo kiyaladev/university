@@ -20,11 +20,7 @@ const props = withDefaults(defineProps<{ valeur?: number | null; seuilBas?: numb
 
 const largeur = computed(() => Math.max(0, Math.min(100, props.valeur ?? 0)));
 const ton = computed(() =>
-  (props.valeur ?? 0) >= props.seuilHaut
-    ? 'vert'
-    : (props.valeur ?? 0) >= props.seuilBas
-      ? 'jaune'
-      : 'rouge',
+  (props.valeur ?? 0) >= props.seuilHaut ? 'vert' : (props.valeur ?? 0) >= props.seuilBas ? 'jaune' : 'rouge',
 );
 </script>
 
@@ -55,9 +51,15 @@ const ton = computed(() =>
   height: 100%;
   border-radius: var(--up-pilule);
 
-  &--vert { background: $vert; }
-  &--jaune { background: $jaune; }
-  &--rouge { background: $rouge; }
+  &--vert {
+    background: $vert;
+  }
+  &--jaune {
+    background: $jaune;
+  }
+  &--rouge {
+    background: $rouge;
+  }
 }
 
 .taux__valeur {

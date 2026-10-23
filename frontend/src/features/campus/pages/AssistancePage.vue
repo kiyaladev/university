@@ -8,8 +8,21 @@
         </div>
       </div>
       <div class="col-auto">
-        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.declareIncident')" @click="ouvrirDeclaration()" />
-        <q-btn flat no-caps icon="qr_code_scanner" :label="$t('helpdesk.actions.scanEquipment')" @click="scanEquipement = true" />
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          :label="$t('helpdesk.actions.declareIncident')"
+          @click="ouvrirDeclaration()"
+        />
+        <q-btn
+          flat
+          no-caps
+          icon="qr_code_scanner"
+          :label="$t('helpdesk.actions.scanEquipment')"
+          @click="scanEquipement = true"
+        />
       </div>
     </div>
 
@@ -24,8 +37,6 @@
     <!-- ============================================================== -->
     <q-tab-panel v-if="onglet === 'mes-tickets'" name="mes-tickets" class="q-pa-none q-mt-md">
       <div class="row q-col-gutter-md">
-
-
         <div class="col-12">
           <q-table
             flat
@@ -71,11 +82,15 @@
     <!-- ============================================================== -->
     <q-tab-panel v-if="dsi && onglet === 'gestion'" name="gestion" class="q-pa-none q-mt-md">
       <div class="resume-liste" role="status">
-        <span v-for="s in statutPlaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
+        <span v-for="s in statutPlaques" :key="s.cle"
+          >{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span
+        >
       </div>
       <q-banner v-if="dsi" class="note--info q-mb-md">
         <i18n-t keypath="helpdesk.stats.resolutionRate" tag="span">
-          <template #taux><strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong></template>
+          <template #taux
+            ><strong>{{ stats?.tauxResolution24h ?? 0 }} %</strong></template
+          >
           <template #resolus>{{ $t('helpdesk.stats.resolvedCount', stats?.resolus24h ?? 0) }}</template>
         </i18n-t>
       </q-banner>
@@ -99,7 +114,6 @@
           />
         </template>
         <template #avances>
-
           <q-select
             v-model="filtres.categorie"
             :options="optionsCategories"
@@ -161,16 +175,30 @@
           </q-td>
         </template>
         <template #no-data>
-          <etat-vide icone="support_agent" :titre="$t('helpdesk.gestionTable.emptyTitle')" :aide="$t('helpdesk.gestionTable.emptyHint')" />
+          <etat-vide
+            icone="support_agent"
+            :titre="$t('helpdesk.gestionTable.emptyTitle')"
+            :aide="$t('helpdesk.gestionTable.emptyHint')"
+          />
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="visibility" :aria-label="$t('helpdesk.gestionTable.viewTicket')" @click="ticketDetail = p.row">
+            <q-btn
+              flat
+              dense
+              round
+              icon="visibility"
+              :aria-label="$t('helpdesk.gestionTable.viewTicket')"
+              @click="ticketDetail = p.row"
+            >
               <q-tooltip>{{ $t('helpdesk.gestionTable.viewTicketTooltip') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'OUVERT' || p.row.statut === 'EN_COURS'"
-              flat dense round icon="autorenew"
+              flat
+              dense
+              round
+              icon="autorenew"
               :aria-label="$t('helpdesk.gestionTable.changeStatus')"
             >
               <q-tooltip>{{ $t('helpdesk.gestionTable.changeStatusTooltip') }}</q-tooltip>
@@ -217,7 +245,9 @@
                 <q-icon name="devices" size="16px" class="q-mr-sm text-grey-6" />
                 <span class="text-caption">
                   {{ t.equipement.libelle }}
-                  <span v-if="t.equipement.emplacement" class="text-grey-7">{{ $t('common.format.emptyValue') }} {{ t.equipement.emplacement }}</span>
+                  <span v-if="t.equipement.emplacement" class="text-grey-7"
+                    >{{ $t('common.format.emptyValue') }} {{ t.equipement.emplacement }}</span
+                  >
                 </span>
               </div>
               <div v-if="t.utilisateur || t.declarantNom" class="row items-center">
@@ -233,11 +263,23 @@
             </q-card-section>
             <q-separator />
             <q-card-actions class="q-px-md">
-              <q-btn flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click="ticketDetail = t" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="visibility"
+                :label="$t('common.actions.detail')"
+                @click="ticketDetail = t"
+              />
               <q-space />
               <q-btn
                 v-if="t.statut === 'OUVERT' || t.statut === 'EN_COURS'"
-                flat dense no-caps color="primary" icon="forward" :label="$t('common.fields.status')"
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="forward"
+                :label="$t('common.fields.status')"
               >
                 <q-menu>
                   <q-list dense style="min-width: 200px">
@@ -277,7 +319,14 @@
           </div>
         </div>
         <div class="col-auto">
-          <q-btn unelevated color="primary" no-caps icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('helpdesk.actions.newEquipment')"
+            @click="ouvrirEquipement(null)"
+          />
         </div>
       </div>
 
@@ -327,28 +376,70 @@
             <span class="text-caption ellipsis" style="max-width: 200px; display: inline-block; vertical-align: middle">
               {{ p.row.codeQr }}
             </span>
-            <q-btn flat dense round size="sm" icon="content_copy" :aria-label="$t('helpdesk.equipmentTab.copyCode')" @click="copier(p.row.codeQr)">
+            <q-btn
+              flat
+              dense
+              round
+              size="sm"
+              icon="content_copy"
+              :aria-label="$t('helpdesk.equipmentTab.copyCode')"
+              @click="copier(p.row.codeQr)"
+            >
               <q-tooltip>{{ $t('helpdesk.equipmentTab.copyCodeTooltip') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense round icon="print" :aria-label="$t('helpdesk.equipmentTab.printLabel')" @click="imprimerQr(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="print"
+              :aria-label="$t('helpdesk.equipmentTab.printLabel')"
+              @click="imprimerQr(p.row)"
+            >
               <q-tooltip>{{ $t('helpdesk.equipmentTab.printLabel') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="edit" :aria-label="$t('helpdesk.equipmentTab.editEquipment')" @click="ouvrirEquipement(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="edit"
+              :aria-label="$t('helpdesk.equipmentTab.editEquipment')"
+              @click="ouvrirEquipement(p.row)"
+            >
               <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('helpdesk.equipmentTab.deleteEquipment')" @click="supprimerEquipement(p.row)">
+            <q-btn
+              v-if="auth.estAdmin"
+              flat
+              dense
+              round
+              color="negative"
+              icon="delete"
+              :aria-label="$t('helpdesk.equipmentTab.deleteEquipment')"
+              @click="supprimerEquipement(p.row)"
+            >
               <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
         <template #no-data>
-          <etat-vide icone="qr_code_2" :titre="$t('helpdesk.equipmentTab.emptyTitle')" :aide="$t('helpdesk.equipmentTab.emptyHint')">
+          <etat-vide
+            icone="qr_code_2"
+            :titre="$t('helpdesk.equipmentTab.emptyTitle')"
+            :aide="$t('helpdesk.equipmentTab.emptyHint')"
+          >
             <template #action>
-              <q-btn flat no-caps color="primary" icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
+              <q-btn
+                flat
+                no-caps
+                color="primary"
+                icon="add"
+                :label="$t('helpdesk.actions.newEquipment')"
+                @click="ouvrirEquipement(null)"
+              />
             </template>
           </etat-vide>
         </template>
@@ -364,7 +455,11 @@
                 <div v-if="e.emplacement" class="text-caption text-grey-7">{{ e.emplacement }}</div>
               </div>
               <q-badge :color="e.actif ? 'positive' : 'grey-7'">
-                {{ e.actif ? $t('helpdesk.equipmentTab.activeCapitalized') : $t('helpdesk.equipmentTab.inactiveCapitalized') }}
+                {{
+                  e.actif
+                    ? $t('helpdesk.equipmentTab.activeCapitalized')
+                    : $t('helpdesk.equipmentTab.inactiveCapitalized')
+                }}
               </q-badge>
             </q-card-section>
             <q-card-section class="text-center">
@@ -387,9 +482,21 @@
             </q-card-actions>
           </q-card>
         </div>
-        <etat-vide v-if="!equip.chargement && !equip.lignes.length" class="col-12" icone="qr_code_2" :titre="$t('helpdesk.equipmentTab.emptyTitle')">
+        <etat-vide
+          v-if="!equip.chargement && !equip.lignes.length"
+          class="col-12"
+          icone="qr_code_2"
+          :titre="$t('helpdesk.equipmentTab.emptyTitle')"
+        >
           <template #action>
-            <q-btn flat no-caps color="primary" icon="add" :label="$t('helpdesk.actions.newEquipment')" @click="ouvrirEquipement(null)" />
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('helpdesk.actions.newEquipment')"
+              @click="ouvrirEquipement(null)"
+            />
           </template>
         </etat-vide>
       </div>
@@ -450,7 +557,11 @@
                 </q-item-section>
                 <q-item-section>
                   <q-item-label class="pochoir">
-                    {{ ticketDetail.statut === 'EN_COURS' ? $t('helpdesk.ticketDetailDialog.inProgress') : $t('helpdesk.ticketDetailDialog.resolved') }}
+                    {{
+                      ticketDetail.statut === 'EN_COURS'
+                        ? $t('helpdesk.ticketDetailDialog.inProgress')
+                        : $t('helpdesk.ticketDetailDialog.resolved')
+                    }}
                   </q-item-label>
                   <q-item-label caption>
                     {{ dateHeureLisible(ticketDetail.traiteLe) }} · {{ nomCourt(ticketDetail.traitePar) }}
@@ -480,7 +591,11 @@
       :categorie-initiale="categorieInitiale"
       @enregistre="onDeclare"
     />
-    <dialogue-equipement v-model="equipementDialogOuvert" :equipement="equipementEdite" @enregistre="equip.recharger()" />
+    <dialogue-equipement
+      v-model="equipementDialogOuvert"
+      :equipement="equipementEdite"
+      @enregistre="equip.recharger()"
+    />
 
     <!-- Scanner QR -->
     <q-dialog v-model="scanEquipement">
@@ -626,10 +741,17 @@ const chipsTickets = computed(() => {
   const f = filtres.value;
   const cs = chipRecherche(f.recherche);
   if (f.statut) cs.push({ label: libelleStatut(f.statut), value: f.statut, icone: 'flag', cle: 'statut' });
-  if (f.categorie) cs.push({ label: libelleCategorie(f.categorie), value: f.categorie, icone: 'category', cle: 'categorie' });
-  if (f.priorite) cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite' });
+  if (f.categorie)
+    cs.push({ label: libelleCategorie(f.categorie), value: f.categorie, icone: 'category', cle: 'categorie' });
+  if (f.priorite)
+    cs.push({ label: libellePriorite(f.priorite), value: f.priorite, icone: 'priority_high', cle: 'priorite' });
   if (f.equipementId) {
-    cs.push({ label: t('helpdesk.filters.equipmentFiltered'), value: f.equipementId, icone: 'devices', cle: 'equipementId' });
+    cs.push({
+      label: t('helpdesk.filters.equipmentFiltered'),
+      value: f.equipementId,
+      icone: 'devices',
+      cle: 'equipementId',
+    });
   }
   return cs;
 });
@@ -775,7 +897,13 @@ watch(
 async function changerStatut(ticket: TicketSupport, statut: StatutTicket) {
   try {
     await api.post(`/tickets/${ticket.id}/statut`, { statut });
-    $q.notify({ type: 'positive', message: t('helpdesk.messages.ticketStatusChanged', { numero: ticket.numero, statut: libelleStatut(statut).toLowerCase() }) });
+    $q.notify({
+      type: 'positive',
+      message: t('helpdesk.messages.ticketStatusChanged', {
+        numero: ticket.numero,
+        statut: libelleStatut(statut).toLowerCase(),
+      }),
+    });
     await Promise.all([mes.recharger(), gestion.recharger(), chargerStats()]);
   } catch {
     /* le boot axios affiche déjà le motif */
@@ -832,14 +960,12 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$chaux-claire: #FFFFFF;
-$blanc-craie: #FFFFFF;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
-
-
+$encre: #1d1d1f;
+$chaux-claire: #ffffff;
+$blanc-craie: #ffffff;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .ticket-champ {
   display: inline-flex;
@@ -855,8 +981,14 @@ $rouge: #CE1126;
     border: var(--up-filet);
     box-shadow: none;
   }
-  &.prio-champ--NORMALE { background: $jaune-fond; color: $jaune-texte; }
-  &.prio-champ--HAUTE { background: $rouge-fond; color: #{$rouge}; }
+  &.prio-champ--NORMALE {
+    background: $jaune-fond;
+    color: $jaune-texte;
+  }
+  &.prio-champ--HAUTE {
+    background: $rouge-fond;
+    color: #{$rouge};
+  }
 }
 
 .qr-canvas {

@@ -28,8 +28,7 @@ export const patrimoineService = {
   listeEquipements: (filtres: FiltresEquipements = {}) =>
     api.get<Liste<EquipementPatrimoine>>('/patrimoine/equipements', { params: filtres }),
   supprimerEquipement: (id: string) => api.delete(`/patrimoine/equipements/${id}`),
-  reparationsEquipement: (id: string) =>
-    api.get<ReparationMateriel[]>(`/patrimoine/equipements/${id}/reparations`),
+  reparationsEquipement: (id: string) => api.get<ReparationMateriel[]>(`/patrimoine/equipements/${id}/reparations`),
 
   // --- Catégories
   listeCategories: () =>

@@ -10,11 +10,23 @@
   >
     <span class="section-titre">{{ $t('helpdesk.ticketForm.equipmentSection') }}</span>
     <div v-if="equipementRetenu" class="row items-center q-gutter-sm q-mb-md">
-      <q-chip color="primary" text-color="white" :icon="(form.categorie && ICONE_CATEGORIE[form.categorie]) || 'qr_code_2'">
+      <q-chip
+        color="primary"
+        text-color="white"
+        :icon="(form.categorie && ICONE_CATEGORIE[form.categorie]) || 'qr_code_2'"
+      >
         {{ equipementRetenu.libelle }}
       </q-chip>
       <span class="text-caption text-grey-7">{{ equipementRetenu.emplacement ?? '—' }}</span>
-      <q-btn flat dense round size="sm" icon="close" :aria-label="$t('helpdesk.ticketForm.unlinkEquipment')" @click="form.equipementId = null">
+      <q-btn
+        flat
+        dense
+        round
+        size="sm"
+        icon="close"
+        :aria-label="$t('helpdesk.ticketForm.unlinkEquipment')"
+        @click="form.equipementId = null"
+      >
         <q-tooltip>{{ $t('helpdesk.ticketForm.unlinkEquipment') }}</q-tooltip>
       </q-btn>
     </div>

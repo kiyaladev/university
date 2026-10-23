@@ -5,19 +5,22 @@
  */
 import { computed } from 'vue';
 
-const props = withDefaults(defineProps<{
-  page: number;
-  pageSize: number;
-  total: number;
-  /** Active le mode "tout" pour exporter/imprimer d'un coup */
-  showAll?: boolean;
-}>(), {
-  showAll: true,
-});
+const props = withDefaults(
+  defineProps<{
+    page: number;
+    pageSize: number;
+    total: number;
+    /** Active le mode "tout" pour exporter/imprimer d'un coup */
+    showAll?: boolean;
+  }>(),
+  {
+    showAll: true,
+  },
+);
 const emit = defineEmits<{
   'update:page': [v: number];
   'update:pageSize': [v: number];
-  'tous': [];
+  tous: [];
 }>();
 
 const totalPages = computed(() => Math.max(1, Math.ceil(props.total / props.pageSize)));

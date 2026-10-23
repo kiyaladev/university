@@ -12,7 +12,8 @@ export default {
   createDialog: {
     session: 'Session *',
     sessionHint: 'En rattrapage, seuls les étudiants ajournés à la session normale sont repositionnés.',
-    draftHint: 'La délibération est créée en brouillon : les moyennes sont calculées automatiquement, puis le jury (direction) les valide.',
+    draftHint:
+      'La délibération est créée en brouillon : les moyennes sont calculées automatiquement, puis le jury (direction) les valide.',
     previewTitle: 'Aperçu du bulletin type',
     previewDecision: 'ADMIS / AJOURNÉ',
     previewHint: 'Les notes et la décision sont renseignées après calcul.',

@@ -24,8 +24,8 @@
 
     <q-banner v-if="examenFiltre" dense class="carte q-mb-md">
       <template #avatar><q-icon name="filter_alt" color="primary" /></template>
-      {{ $t('tirage.banner.prefix') }} <strong>{{ examenFiltre.codeExamen }}</strong> {{ $t('common.format.emptyValue') }}
-      {{ examenFiltre.intitule }}.
+      {{ $t('tirage.banner.prefix') }} <strong>{{ examenFiltre.codeExamen }}</strong>
+      {{ $t('common.format.emptyValue') }} {{ examenFiltre.intitule }}.
       <template #action>
         <q-btn flat dense no-caps :label="$t('tirage.actions.viewAll')" @click="retirerFiltreExamen" />
       </template>
@@ -58,7 +58,8 @@
       </template>
     </barre-filtres>
 
-    <q-table :grid="$q.screen.lt.md"
+    <q-table
+      :grid="$q.screen.lt.md"
       flat
       bordered
       class="carte q-mt-md"
@@ -68,30 +69,67 @@
       :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
-
-        <template #item="p">
-    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
-      <q-card-section>
-        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
-          <div class="text-caption text-grey-7">{{ c.label }}</div>
-          <template v-if="c.name === 'examen'">{{ p.row.examen?.codeExamen }} · {{ p.row.examen?.intitule }}</template>
-  <template v-else-if="c.name === 'empreinte'">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</template>
-  <template v-else-if="c.name === 'stade'">{{ libelleStade(p.row.stade) }}</template>
-  <span v-else>{{ c.value }}</span>
+      <template #item="p">
+        <div class="col-12 q-pb-sm">
+          <q-card flat bordered class="carte">
+            <q-card-section>
+              <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+                <div class="text-caption text-grey-7">{{ c.label }}</div>
+                <template v-if="c.name === 'examen'"
+                  >{{ p.row.examen?.codeExamen }} · {{ p.row.examen?.intitule }}</template
+                >
+                <template v-else-if="c.name === 'empreinte'"
+                  >{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</template
+                >
+                <template v-else-if="c.name === 'stade'">{{ libelleStade(p.row.stade) }}</template>
+                <span v-else>{{ c.value }}</span>
+              </div>
+            </q-card-section>
+            <q-card-actions align="right">
+              <q-btn
+                v-if="transitionSuivante(p.row.stade) && peutCreer"
+                flat
+                dense
+                no-caps
+                color="primary"
+                :label="labelSuivant(p.row.stade)"
+                @click.stop="avancer(p.row)"
+              />
+              <actions-secondaires>
+                <q-btn
+                  v-close-popup
+                  flat
+                  dense
+                  no-caps
+                  icon="print"
+                  :label="$t('tirage.tooltips.bordereau')"
+                  @click.stop="voirBordereau(p.row)"
+                />
+                <q-btn
+                  v-close-popup
+                  flat
+                  dense
+                  no-caps
+                  icon="quiz"
+                  :label="$t('tirage.tooltips.voirExamen')"
+                  @click.stop="allerExamen(p.row)"
+                />
+                <q-btn
+                  v-close-popup
+                  v-if="p.row.stade === 'PROGRAMME' && peutCreer"
+                  flat
+                  dense
+                  no-caps
+                  color="negative"
+                  icon="block"
+                  :label="$t('tirage.tooltips.annulerTirage')"
+                  @click.stop="annuler(p.row)"
+                />
+              </actions-secondaires>
+            </q-card-actions>
+          </q-card>
         </div>
-      </q-card-section>
-      <q-card-actions align="right">
-          <q-btn v-if="transitionSuivante(p.row.stade) && peutCreer" flat dense no-caps color="primary"
-            :label="labelSuivant(p.row.stade)" @click.stop="avancer(p.row)" />
-          <actions-secondaires>
-            <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('tirage.tooltips.bordereau')" @click.stop="voirBordereau(p.row)" />
-            <q-btn v-close-popup flat dense no-caps icon="quiz" :label="$t('tirage.tooltips.voirExamen')" @click.stop="allerExamen(p.row)" />
-            <q-btn v-close-popup v-if="p.row.stade === 'PROGRAMME' && peutCreer" flat dense no-caps color="negative" icon="block"
-              :label="$t('tirage.tooltips.annulerTirage')" @click.stop="annuler(p.row)" />
-          </actions-secondaires>
-        </q-card-actions>
-    </q-card></div>
-  </template>
+      </template>
       <template #no-data>
         <etat-vide icone="local_printshop" :titre="$t('tirage.emptyState.message')">
           <template v-if="peutCreer" #action>
@@ -127,13 +165,45 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn v-if="transitionSuivante(p.row.stade) && peutCreer" flat dense no-caps color="primary"
-            :label="labelSuivant(p.row.stade)" @click.stop="avancer(p.row)" />
+          <q-btn
+            v-if="transitionSuivante(p.row.stade) && peutCreer"
+            flat
+            dense
+            no-caps
+            color="primary"
+            :label="labelSuivant(p.row.stade)"
+            @click.stop="avancer(p.row)"
+          />
           <actions-secondaires>
-            <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('tirage.tooltips.bordereau')" @click.stop="voirBordereau(p.row)" />
-            <q-btn v-close-popup flat dense no-caps icon="quiz" :label="$t('tirage.tooltips.voirExamen')" @click.stop="allerExamen(p.row)" />
-            <q-btn v-close-popup v-if="p.row.stade === 'PROGRAMME' && peutCreer" flat dense no-caps color="negative" icon="block"
-              :label="$t('tirage.tooltips.annulerTirage')" @click.stop="annuler(p.row)" />
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="print"
+              :label="$t('tirage.tooltips.bordereau')"
+              @click.stop="voirBordereau(p.row)"
+            />
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="quiz"
+              :label="$t('tirage.tooltips.voirExamen')"
+              @click.stop="allerExamen(p.row)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="p.row.stade === 'PROGRAMME' && peutCreer"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="block"
+              :label="$t('tirage.tooltips.annulerTirage')"
+              @click.stop="annuler(p.row)"
+            />
           </actions-secondaires>
         </q-td>
       </template>
@@ -148,7 +218,11 @@
     />
 
     <dialogue-tirage v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
-    <dialogue-impression-tirage v-model="dialogImpressionOuvert" :tirage-id="tirageAImprimer" @enregistre="apresImpression" />
+    <dialogue-impression-tirage
+      v-model="dialogImpressionOuvert"
+      :tirage-id="tirageAImprimer"
+      @enregistre="apresImpression"
+    />
   </q-page>
 </template>
 
@@ -233,7 +307,9 @@ const chipsFiltres = computed(() => {
   }
   if (filtres.value.stade) {
     chips.push({
-      label: translate('tirage.chips.stade', { value: LIBELLE_STADE_TIRAGE[filtres.value.stade] ?? filtres.value.stade }),
+      label: translate('tirage.chips.stade', {
+        value: LIBELLE_STADE_TIRAGE[filtres.value.stade] ?? filtres.value.stade,
+      }),
       value: filtres.value.stade,
       icone: 'flag',
     });
@@ -253,7 +329,9 @@ const chipsFiltres = computed(() => {
  * aux lignes chargées, pour que le champ ne soit pas décoratif.
  */
 const tiragesFiltres = computed(() => {
-  const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
+  const q = String(filtres.value.recherche ?? '')
+    .toLowerCase()
+    .trim();
   if (!q) return liste.lignes;
   return liste.lignes.filter((t) =>
     [t.examen?.codeExamen, t.examen?.intitule, t.circuitImpression]
@@ -264,10 +342,20 @@ const tiragesFiltres = computed(() => {
 
 const colonnesTableau = computed<QTableColumn[]>(() => [
   { name: 'examen', label: translate('tirage.table.columns.examen'), field: 'examen', align: 'left' },
-  { name: 'date', label: translate('tirage.table.columns.date'), field: (r: Tirage) => dateHeureLisible(r.dateTirage), align: 'left' },
+  {
+    name: 'date',
+    label: translate('tirage.table.columns.date'),
+    field: (r: Tirage) => dateHeureLisible(r.dateTirage),
+    align: 'left',
+  },
   { name: 'exemplaires', label: translate('tirage.table.columns.exemplaires'), field: 'nbExemplaires', align: 'right' },
   { name: 'empreinte', label: translate('tirage.table.columns.empreinte'), field: 'empreinteSource', align: 'left' },
-  { name: 'imprimeur', label: translate('tirage.table.columns.imprimeur'), field: (r: Tirage) => (r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—'), align: 'left' },
+  {
+    name: 'imprimeur',
+    label: translate('tirage.table.columns.imprimeur'),
+    field: (r: Tirage) => (r.imprimeur ? `${r.imprimeur.prenom} ${r.imprimeur.nom}` : '—'),
+    align: 'left',
+  },
   { name: 'stade', label: translate('tirage.table.columns.stade'), field: 'stade', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -330,10 +418,13 @@ async function avancer(t: Tirage) {
   if (!stade) return;
 
   const routeSuivant =
-    stade === 'IMPRIME' ? 'imprimer' :
-    stade === 'MIS_SOUS_PLI' ? 'mettre-sous-pli' :
-    stade === 'DISTRIBUE' ? 'distribuer' :
-    'recuperer';
+    stade === 'IMPRIME'
+      ? 'imprimer'
+      : stade === 'MIS_SOUS_PLI'
+        ? 'mettre-sous-pli'
+        : stade === 'DISTRIBUE'
+          ? 'distribuer'
+          : 'recuperer';
 
   // PROGRAMME → IMPRIME : dialogue dédié, champ d'empreinte vide (le serveur
   // compare, l'empreinte attendue n'est pas exposée avant impression).

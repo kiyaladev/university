@@ -34,28 +34,27 @@ const formulaire = ref({
 
 const enregistrement = ref(false);
 
-watch(
-  ouvert,
-  (visible) => {
-    if (visible) {
-      const e = props.election;
-      formulaire.value = {
-        titre: e?.titre ?? '',
-        type: (e?.type as TypeElection) ?? 'DELEGUE_PROMOTION',
-        promotionId: e?.promotionId ?? null,
-        departementId: e?.departementId ?? null,
-        description: e?.description ?? '',
-        dateOuverture: e?.dateOuverture ? e.dateOuverture.slice(0, 16) : null,
-        dateCloture: e?.dateCloture ? e.dateCloture.slice(0, 16) : null,
-        nbSieges: e?.nbSieges ?? 1,
-        bulletin: e?.bulletin ?? '',
-      };
-    }
-  },
-);
+watch(ouvert, (visible) => {
+  if (visible) {
+    const e = props.election;
+    formulaire.value = {
+      titre: e?.titre ?? '',
+      type: (e?.type as TypeElection) ?? 'DELEGUE_PROMOTION',
+      promotionId: e?.promotionId ?? null,
+      departementId: e?.departementId ?? null,
+      description: e?.description ?? '',
+      dateOuverture: e?.dateOuverture ? e.dateOuverture.slice(0, 16) : null,
+      dateCloture: e?.dateCloture ? e.dateCloture.slice(0, 16) : null,
+      nbSieges: e?.nbSieges ?? 1,
+      bulletin: e?.bulletin ?? '',
+    };
+  }
+});
 
 const enEdition = computed(() => Boolean(props.election?.id));
-const titre = computed(() => (enEdition.value ? t('elections.dialogs.electionForm.titleEdit') : t('elections.dialogs.electionForm.titleNew')));
+const titre = computed(() =>
+  enEdition.value ? t('elections.dialogs.electionForm.titleEdit') : t('elections.dialogs.electionForm.titleNew'),
+);
 
 async function soumettre() {
   if (!formulaire.value.titre || !formulaire.value.dateOuverture || !formulaire.value.dateCloture) {
@@ -78,7 +77,12 @@ async function soumettre() {
     if (formulaire.value.description) payload.description = formulaire.value.description;
     if (formulaire.value.bulletin) payload.bulletin = formulaire.value.bulletin;
     const { data } = await api[methode](url, payload);
-    $q.notify({ type: 'positive', message: enEdition.value ? t('elections.dialogs.electionForm.saved') : t('elections.dialogs.electionForm.created') });
+    $q.notify({
+      type: 'positive',
+      message: enEdition.value
+        ? t('elections.dialogs.electionForm.saved')
+        : t('elections.dialogs.electionForm.created'),
+    });
     emit('enregistre', data);
     ouvert.value = false;
   } catch {

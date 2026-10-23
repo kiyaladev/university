@@ -25,12 +25,7 @@
     </en-tete-page>
 
     <!-- Filtres -->
-    <barre-filtres
-      v-model="filtresReservations"
-      :chips="chips"
-      :recherche="false"
-      @reinitialiser="reinitialiser"
-    >
+    <barre-filtres v-model="filtresReservations" :chips="chips" :recherche="false" @reinitialiser="reinitialiser">
       <template #avances>
         <champ-recherche
           v-model="filtresReservations.salleId"
@@ -42,15 +37,15 @@
         <champ-date v-model="filtresReservations.dateFin" :label="$t('common.actions.to')" />
       </template>
       <template #actions>
+        <q-btn flat dense no-caps icon="today" :label="$t('reservations.actions.today')" @click="cadrerAujourdhui" />
         <q-btn
           flat
           dense
           no-caps
-          icon="today"
-          :label="$t('reservations.actions.today')"
-          @click="cadrerAujourdhui"
+          icon="calendar_month"
+          :label="$t('reservations.actions.thisMonth')"
+          @click="cadrerLeMois"
         />
-        <q-btn flat dense no-caps icon="calendar_month" :label="$t('reservations.actions.thisMonth')" @click="cadrerLeMois" />
       </template>
     </barre-filtres>
 
@@ -82,7 +77,8 @@
     />
 
     <!-- Vue tableau liste -->
-    <q-table :grid="$q.screen.lt.md"
+    <q-table
+      :grid="$q.screen.lt.md"
       v-else
       flat
       bordered
@@ -94,31 +90,35 @@
       :rows-per-page-options="[0]"
       :hide-bottom="chargement || reservationsFiltrees.length > 0"
     >
-<template #item="p">
-    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
-      <q-card-section>
-        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
-          <div class="text-caption text-grey-7">{{ c.label }}</div>
-          <template v-if="c.name === 'creneau'">{{ dateLisible(p.row.dateJour) }} · {{ p.row.heureDebut }}–{{ p.row.heureFin }}</template>
-  <template v-else-if="c.name === 'salle'">{{ p.row.salle?.code }} · {{ p.row.salle?.nom }}</template>
-  <template v-else-if="c.name === 'statut'">{{ LIBELLE_STATUT_RESERVATION[p.row.statut] }}</template>
-  <span v-else>{{ c.value }}</span>
+      <template #item="p">
+        <div class="col-12 q-pb-sm">
+          <q-card flat bordered class="carte">
+            <q-card-section>
+              <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+                <div class="text-caption text-grey-7">{{ c.label }}</div>
+                <template v-if="c.name === 'creneau'"
+                  >{{ dateLisible(p.row.dateJour) }} · {{ p.row.heureDebut }}–{{ p.row.heureFin }}</template
+                >
+                <template v-else-if="c.name === 'salle'">{{ p.row.salle?.code }} · {{ p.row.salle?.nom }}</template>
+                <template v-else-if="c.name === 'statut'">{{ LIBELLE_STATUT_RESERVATION[p.row.statut] }}</template>
+                <span v-else>{{ c.value }}</span>
+              </div>
+            </q-card-section>
+            <q-card-actions align="right">
+              <q-btn
+                flat
+                dense
+                round
+                icon="visibility"
+                :aria-label="$t('reservations.table.viewDetail')"
+                @click="ouvrir(p.row)"
+              >
+                <q-tooltip>{{ $t('reservations.table.viewDetailTooltip') }}</q-tooltip>
+              </q-btn>
+            </q-card-actions>
+          </q-card>
         </div>
-      </q-card-section>
-      <q-card-actions align="right">
-          <q-btn
-            flat
-            dense
-            round
-            icon="visibility"
-            :aria-label="$t('reservations.table.viewDetail')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('reservations.table.viewDetailTooltip') }}</q-tooltip>
-          </q-btn>
-        </q-card-actions>
-    </q-card></div>
-  </template>
+      </template>
       <template #body-cell-creneau="p">
         <q-td :props="p">
           <div class="chiffres">{{ p.row.heureDebut }}–{{ p.row.heureFin }}</div>
@@ -151,7 +151,11 @@
         </q-td>
       </template>
       <template #no-data>
-        <etat-vide icone="event_busy" :titre="$t('reservations.emptyState.title')" :aide="$t('reservations.emptyState.description')">
+        <etat-vide
+          icone="event_busy"
+          :titre="$t('reservations.emptyState.title')"
+          :aide="$t('reservations.emptyState.description')"
+        >
           <template #action>
             <q-btn
               v-if="peutReserver"
@@ -192,11 +196,7 @@ import GrilleCalendrier from '@/shared/components/GrilleCalendrier.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueReservation from '../components/DialogueReservation.vue';
 import DialogueDetailReservation from '../components/DialogueDetailReservation.vue';
-import {
-  LIBELLE_STATUT_RESERVATION,
-  aujourdhui,
-  dateLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_RESERVATION, aujourdhui, dateLisible } from '@/shared/utils/libelles';
 import type { ReservationSalle, Salle, ChipFiltre } from '@/types';
 
 const auth = useAuthStore();
@@ -235,7 +235,7 @@ const dialogReservation = ref(false);
 const dialogDetail = ref(false);
 const reservationChoisie = ref<ReservationSalle | null>(null);
 const $q = useQuasar();
-const modeVue = computed(() => $q.screen.lt.md ? 'tableau' : 'calendrier');
+const modeVue = computed(() => ($q.screen.lt.md ? 'tableau' : 'calendrier'));
 
 /** Par défaut : le mois courant en entier — le calendrier affiche un mois. */
 function premierJourDuMois(iso = aujourdhui()): string {
@@ -252,9 +252,7 @@ const filtresReservations = ref<Record<string, any>>({
   dateFin: dernierJourDuMois(),
 });
 
-const moisCalendrier = computed(() =>
-  (filtresReservations.value.dateDebut || aujourdhui()).slice(0, 7),
-);
+const moisCalendrier = computed(() => (filtresReservations.value.dateDebut || aujourdhui()).slice(0, 7));
 
 /** La fenêtre est déjà filtrée par le serveur : on ne fait qu'aplatir et trier. */
 const reservationsFiltrees = computed(() =>
@@ -262,9 +260,7 @@ const reservationsFiltrees = computed(() =>
     .flatMap((j) => j.reservations)
     .slice()
     .sort((a, b) =>
-      a.dateJour === b.dateJour
-        ? a.heureDebut.localeCompare(b.heureDebut)
-        : a.dateJour.localeCompare(b.dateJour),
+      a.dateJour === b.dateJour ? a.heureDebut.localeCompare(b.heureDebut) : a.dateJour.localeCompare(b.dateJour),
     ),
 );
 
@@ -299,9 +295,7 @@ const evenementsCalendrier = computed(() => [
       id: `seance-${s.id}`,
       date: j.date,
       titre: `${s.heureDebut} ${libelleSeance(s)}`,
-      sousTitre: [nomSalle(s.salleId), s.affectation?.promotion?.nom]
-        .filter(Boolean)
-        .join(' — '),
+      sousTitre: [nomSalle(s.salleId), s.affectation?.promotion?.nom].filter(Boolean).join(' — '),
       couleur: COULEUR_SEANCE,
       icone: 'school',
     })),
@@ -317,8 +311,18 @@ const colonnesReservations = computed(() => [
   { name: 'creneau', label: t('reservations.table.columns.slot'), field: 'dateJour', align: 'left' as const },
   { name: 'salle', label: t('common.fields.room'), field: 'salle', align: 'left' as const },
   { name: 'motif', label: t('common.fields.motif'), field: 'motif', align: 'left' as const },
-  { name: 'organisme', label: t('reservations.table.columns.organization'), field: 'organisme', align: 'left' as const },
-  { name: 'responsable', label: t('reservations.table.columns.responsible'), field: 'responsable', align: 'left' as const },
+  {
+    name: 'organisme',
+    label: t('reservations.table.columns.organization'),
+    field: 'organisme',
+    align: 'left' as const,
+  },
+  {
+    name: 'responsable',
+    label: t('reservations.table.columns.responsible'),
+    field: 'responsable',
+    align: 'left' as const,
+  },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' as const },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
 ]);
@@ -428,10 +432,18 @@ onMounted(() => {
     border: 1px solid var(--up-encre);
   }
 
-  &--en_attente::before { background: #FCD116; }
-  &--confirmee::before { background: #007A4D; }
+  &--en_attente::before {
+    background: #fcd116;
+  }
+  &--confirmee::before {
+    background: #007a4d;
+  }
   &--refusee::before,
-  &--annulee::before { background: #86868b; }
-  &--seance::before { background: var(--up-encre-douce); }
+  &--annulee::before {
+    background: #86868b;
+  }
+  &--seance::before {
+    background: var(--up-encre-douce);
+  }
 }
 </style>

@@ -45,19 +45,42 @@ const texte = computed(() => props.libelle ?? libelleStatut(props.domaine, props
   white-space: nowrap;
   vertical-align: middle;
 
-  .q-icon { color: inherit; }
+  .q-icon {
+    color: inherit;
+  }
 }
 
-.pastille-statut--positif { background: var(--up-vert-fond); color: #{$vert}; }
-.pastille-statut--attention { background: var(--up-jaune-fond); color: $jaune-texte; }
-.pastille-statut--negatif { background: var(--up-rouge-fond); color: #{$rouge}; }
-.pastille-statut--neutre { background: var(--up-gris-inerte); color: var(--up-encre-douce); }
+.pastille-statut--positif {
+  background: var(--up-vert-fond);
+  color: #{$vert};
+}
+.pastille-statut--attention {
+  background: var(--up-jaune-fond);
+  color: $jaune-texte;
+}
+.pastille-statut--negatif {
+  background: var(--up-rouge-fond);
+  color: #{$rouge};
+}
+.pastille-statut--neutre {
+  background: var(--up-gris-inerte);
+  color: var(--up-encre-douce);
+}
 // Clos : gris, mais l'encre pleine — un dossier rangé, pas un brouillon.
-.pastille-statut--info { background: var(--up-gris-inerte); color: var(--up-encre); }
+.pastille-statut--info {
+  background: var(--up-gris-inerte);
+  color: var(--up-encre);
+}
 
 body.body--dark {
-  .pastille-statut--positif { color: #35C88A; }
-  .pastille-statut--attention { color: #F5CE3C; }
-  .pastille-statut--negatif { color: #F2637A; }
+  .pastille-statut--positif {
+    color: #35c88a;
+  }
+  .pastille-statut--attention {
+    color: #f5ce3c;
+  }
+  .pastille-statut--negatif {
+    color: #f2637a;
+  }
 }
 </style>

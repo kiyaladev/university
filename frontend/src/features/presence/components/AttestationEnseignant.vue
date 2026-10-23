@@ -84,7 +84,14 @@
             :label="t('pointage.attestation.gateway')"
             @blur="enregistrerAdresse"
           />
-          <q-btn flat no-caps icon="refresh" :label="t('pointage.attestation.findReader')" class="q-mt-sm" @click="sonderPasserelle" />
+          <q-btn
+            flat
+            no-caps
+            icon="refresh"
+            :label="t('pointage.attestation.findReader')"
+            class="q-mt-sm"
+            @click="sonderPasserelle"
+          />
         </div>
 
         <div v-else class="text-center q-pa-sm">
@@ -123,7 +130,6 @@
           </div>
         </div>
       </q-tab-panel>
-
     </q-tab-panels>
   </q-card>
 </template>
@@ -159,7 +165,6 @@ const passerelle = ref<{ etat: 'inconnue' | 'presente' | 'absente'; pilote?: str
 const adressePasserelle = ref(urlPasserelle());
 const lectureEnCours = ref(false);
 const erreurEmpreinte = ref('');
-
 
 const enseignantId = computed(() => props.seance?.affectation?.enseignant?.id ?? '');
 const nomEnseignant = computed(() => {
@@ -219,8 +224,7 @@ async function lireEmpreinte() {
     // Le seuil d'acceptation appartient au serveur : ici on ne fait que
     // prévenir tôt quand le doigt n'a manifestement pas été reconnu.
     if (lecture.score < SEUIL_INDICATIF) {
-      erreurEmpreinte.value =
-        t('pointage.attestation.notRecognised', { score: lecture.score });
+      erreurEmpreinte.value = t('pointage.attestation.notRecognised', { score: lecture.score });
       maj({ empreinte: undefined });
       return;
     }
@@ -234,13 +238,11 @@ async function lireEmpreinte() {
       },
     });
   } catch (e: any) {
-    erreurEmpreinte.value =
-      e?.response?.data?.message ?? e?.message ?? t('pointage.attestation.unavailable');
+    erreurEmpreinte.value = e?.response?.data?.message ?? e?.message ?? t('pointage.attestation.unavailable');
   } finally {
     lectureEnCours.value = false;
   }
 }
-
 
 // ------------------------------------------------------------- chargement
 
@@ -326,7 +328,12 @@ watch(
   animation: pulsation 1.1s ease-in-out infinite;
 }
 @keyframes pulsation {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 </style>

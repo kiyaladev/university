@@ -1,12 +1,10 @@
 /** Namespace `rectorat` — page Tableau de bord Rectorat. */
 export default {
-  title: "Bilan de l’établissement",
-  subtitle:
-    "Situation actuelle de l’établissement · année {annee}.",
+  title: 'Bilan de l’établissement',
+  subtitle: 'Situation actuelle de l’établissement · année {annee}.',
   actions: {
     generateReport: 'Générer le bilan MESRS',
-    generateReportTooltip:
-      "Enregistre les chiffres actuels dans les bilans archivés.",
+    generateReportTooltip: 'Enregistre les chiffres actuels dans les bilans archivés.',
   },
   kpis: {
     totalHeadcount: 'Effectif total',
@@ -58,6 +56,6 @@ export default {
   loading: 'Chargement du tableau de bord…',
   messages: {
     reportGenerated: 'Bilan MESRS {annee} généré et archivé.',
-    viewSnapshots: "Voir les bilans archivés",
+    viewSnapshots: 'Voir les bilans archivés',
   },
 };

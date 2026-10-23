@@ -61,7 +61,15 @@
 
     <span class="section-titre">{{ $t('common.fields.period') }}</span>
     <p class="periode__aide">
-      {{ t('emploiDuTemps.slotDialog.periodHint', { day: t(`common.days.${form.jourSemaine}`).toLowerCase(), from: t('common.pagination.from'), start: form.heureDebut, to: t('common.pagination.to'), end: form.heureFin }) }}
+      {{
+        t('emploiDuTemps.slotDialog.periodHint', {
+          day: t(`common.days.${form.jourSemaine}`).toLowerCase(),
+          from: t('common.pagination.from'),
+          start: form.heureDebut,
+          to: t('common.pagination.to'),
+          end: form.heureFin,
+        })
+      }}
     </p>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
@@ -116,10 +124,12 @@ const erreur = ref('');
 const affectations = ref<Affectation[]>([]);
 const optionsAffectations = ref<{ label: string; value: string }[]>([]);
 
-const optionsJours = computed(() => Array.from({ length: 7 }, (_, i) => ({
-  label: t(`common.days.${i + 1}`),
-  value: i + 1,
-})));
+const optionsJours = computed(() =>
+  Array.from({ length: 7 }, (_, i) => ({
+    label: t(`common.days.${i + 1}`),
+    value: i + 1,
+  })),
+);
 
 const form = ref({
   affectationId: '',
@@ -142,14 +152,11 @@ const raccourcisPeriode = computed(() => [
 
 function appliquerPeriode(r: { mois: number }) {
   const base = form.value.dateDebut ? new Date(form.value.dateDebut) : new Date();
-  const debut = r.mois === 0
-    ? new Date(base.getFullYear(), base.getMonth(), 1)
-    : new Date(base.getFullYear(), base.getMonth() + (r.mois === 1 ? 1 : 0), 1);
-  const fin = new Date(
-    debut.getFullYear(),
-    debut.getMonth() + (r.mois === 3 ? 3 : 1),
-    0,
-  );
+  const debut =
+    r.mois === 0
+      ? new Date(base.getFullYear(), base.getMonth(), 1)
+      : new Date(base.getFullYear(), base.getMonth() + (r.mois === 1 ? 1 : 0), 1);
+  const fin = new Date(debut.getFullYear(), debut.getMonth() + (r.mois === 3 ? 3 : 1), 0);
   const iso = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   form.value.dateDebut = iso(debut);
@@ -161,9 +168,7 @@ function viderPeriode() {
   form.value.dateFin = '';
 }
 
-const optionsSalles = computed(() =>
-  props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })),
-);
+const optionsSalles = computed(() => props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
 const libelle = (a: Affectation) =>
   `${a.enseignant?.nom} ${a.enseignant?.prenom} · ${a.matiere?.code} · ${a.promotion?.nom}`;
@@ -181,25 +186,22 @@ async function filtrer(saisie: string, maj: (fn: () => void) => void) {
   });
 }
 
-watch(
-  ouvert,
-  (o) => {
-    if (!o) return;
-    erreur.value = '';
-    const c = props.creneau;
-    form.value = {
-      affectationId: c?.affectationId ?? '',
-      jourSemaine: c?.jourSemaine ?? 1,
-      heureDebut: c?.heureDebut ?? '08:00',
-      heureFin: c?.heureFin ?? '10:00',
-      type: c?.type ?? 'CM',
-      salleId: c?.salleId ?? null,
-      actif: c?.actif ?? true,
-      dateDebut: c?.dateDebut ? c.dateDebut.slice(0, 10) : '',
-      dateFin: c?.dateFin ? c.dateFin.slice(0, 10) : '',
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  erreur.value = '';
+  const c = props.creneau;
+  form.value = {
+    affectationId: c?.affectationId ?? '',
+    jourSemaine: c?.jourSemaine ?? 1,
+    heureDebut: c?.heureDebut ?? '08:00',
+    heureFin: c?.heureFin ?? '10:00',
+    type: c?.type ?? 'CM',
+    salleId: c?.salleId ?? null,
+    actif: c?.actif ?? true,
+    dateDebut: c?.dateDebut ? c.dateDebut.slice(0, 10) : '',
+    dateFin: c?.dateFin ? c.dateFin.slice(0, 10) : '',
+  };
+});
 
 async function enregistrer() {
   enregistrement.value = true;
@@ -240,6 +242,9 @@ async function enregistrer() {
   padding: 3px var(--up-2);
   cursor: pointer;
 
-  &:hover { background: var(--up-gris-inerte); color: var(--up-encre); }
+  &:hover {
+    background: var(--up-gris-inerte);
+    color: var(--up-encre);
+  }
 }
 </style>

@@ -64,7 +64,7 @@ export default {
     titleComplete: 'Round complete',
     detail: '{pointees} session(s) checked out of {total} · {jour}',
     registre: 'Full register',
-    imprimer: 'Print today\'s register',
+    imprimer: "Print today's register",
   },
   fab: {
     aria: 'Open an unscheduled session',

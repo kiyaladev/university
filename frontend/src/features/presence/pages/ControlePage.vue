@@ -8,13 +8,33 @@
           <p class="pochoir bandeau__mention">{{ $t('controle.header.mention', { nom: auth.nomComplet }) }}</p>
         </div>
         <div class="bandeau__nav">
-          <q-btn flat dense round icon="chevron_left" :aria-label="$t('controle.header.navPrev')" @click="date = decalerJours(date, -1)" />
-          <q-btn flat dense no-caps icon="event" :label="date === aujourdhui() ? $t('controle.header.today') : $t('controle.header.otherDay')">
+          <q-btn
+            flat
+            dense
+            round
+            icon="chevron_left"
+            :aria-label="$t('controle.header.navPrev')"
+            @click="date = decalerJours(date, -1)"
+          />
+          <q-btn
+            flat
+            dense
+            no-caps
+            icon="event"
+            :label="date === aujourdhui() ? $t('controle.header.today') : $t('controle.header.otherDay')"
+          >
             <q-popup-proxy transition-show="scale" transition-hide="scale">
               <q-date v-model="date" mask="YYYY-MM-DD" minimal />
             </q-popup-proxy>
           </q-btn>
-          <q-btn flat dense round icon="chevron_right" :aria-label="$t('controle.header.navNext')" @click="date = decalerJours(date, 1)" />
+          <q-btn
+            flat
+            dense
+            round
+            icon="chevron_right"
+            :aria-label="$t('controle.header.navNext')"
+            @click="date = decalerJours(date, 1)"
+          />
         </div>
       </div>
 
@@ -28,14 +48,25 @@
         <span class="reste__mot">
           <span class="lettrage reste__unite">
             <template v-if="restantes">
-              {{ restantes > 1 ? $t('controle.remaining.roomsToVisitPlural') : $t('controle.remaining.roomsToVisitSingular') }}
+              {{
+                restantes > 1
+                  ? $t('controle.remaining.roomsToVisitPlural')
+                  : $t('controle.remaining.roomsToVisitSingular')
+              }}
             </template>
             <template v-else-if="total">{{ $t('controle.remaining.complete') }}</template>
             <template v-else>{{ $t('controle.remaining.none') }}</template>
           </span>
           <span v-if="total" class="pochoir pochoir--brut reste__detail chiffres">
-            {{ pointees }} {{ pointees > 1 ? $t('controle.remaining.pointeePlural') : $t('controle.remaining.pointeeSingular') }} {{ $t('controle.remaining.outOf') }} {{ total }}
-            <template v-if="absences"> · {{ absences }} {{ absences > 1 ? $t('controle.remaining.absencePlural') : $t('controle.remaining.absenceSingular') }}</template>
+            {{ pointees }}
+            {{ pointees > 1 ? $t('controle.remaining.pointeePlural') : $t('controle.remaining.pointeeSingular') }}
+            {{ $t('controle.remaining.outOf') }} {{ total }}
+            <template v-if="absences">
+              · {{ absences }}
+              {{
+                absences > 1 ? $t('controle.remaining.absencePlural') : $t('controle.remaining.absenceSingular')
+              }}</template
+            >
           </span>
         </span>
       </p>
@@ -53,7 +84,8 @@
         @click="triOuvert = !triOuvert"
       />
       <span v-if="recherche || filtreEtat !== 'toutes'" class="pochoir barre-tri__actif">
-        {{ seancesFiltrees.length }} {{ seancesFiltrees.length > 1 ? $t('controle.sort.activePlural') : $t('controle.sort.activeSingular') }}
+        {{ seancesFiltrees.length }}
+        {{ seancesFiltrees.length > 1 ? $t('controle.sort.activePlural') : $t('controle.sort.activeSingular') }}
       </span>
 
       <q-btn
@@ -98,13 +130,7 @@
     <q-banner v-if="!pointages.enLigne" class="hors-ligne">
       <template #avatar><q-icon name="cloud_off" size="24px" /></template>
       {{ $t('controle.offline.message') }}
-      <q-chip
-        v-if="pointages.enAttente > 0"
-        color="warning"
-        icon="cloud_sync"
-        text-color="dark"
-        class="q-ml-md"
-      >
+      <q-chip v-if="pointages.enAttente > 0" color="warning" icon="cloud_sync" text-color="dark" class="q-ml-md">
         {{ $t('controle.offline.pending', { n: pointages.enAttente }) }}
       </q-chip>
     </q-banner>
@@ -119,11 +145,7 @@
       <q-icon name="event_busy" size="42px" />
       <span class="lettrage etat-vide__titre">{{ $t('controle.emptyState.title') }}</span>
       <span class="pochoir etat-vide__mention">
-        {{
-          seances.length
-            ? $t('controle.emptyState.noneMatchFilter')
-            : $t('controle.emptyState.noneScheduled')
-        }}
+        {{ seances.length ? $t('controle.emptyState.noneMatchFilter') : $t('controle.emptyState.noneScheduled') }}
       </span>
       <div class="etat-vide__actions">
         <q-btn
@@ -156,7 +178,10 @@
 
     <ol v-else class="panneau">
       <li v-for="s in seancesFiltrees" :key="s.id">
-        <article class="plaque seance" :class="{ 'seance--en-cours': estEnCours(s), 'seance--annulee': s.statut === 'ANNULEE' }">
+        <article
+          class="plaque seance"
+          :class="{ 'seance--en-cours': estEnCours(s), 'seance--annulee': s.statut === 'ANNULEE' }"
+        >
           <div class="champ seance__heure" :class="{ 'seance__heure--en-cours': estEnCours(s) }">
             <span class="lettrage chiffres seance__debut">{{ s.heureDebut }}</span>
             <span class="pochoir chiffres seance__fin">{{ s.heureFin }}</span>
@@ -177,9 +202,11 @@
             </p>
 
             <p v-if="s.controle" class="pochoir pochoir--brut seance__constat chiffres">
-              {{ s.controle.heureArrivee ?? '—' }} → {{ s.controle.heureFinReelle ?? '—' }}
-              · {{ dureeLisible(s.controle.dureeMinutes) }}
-              <span v-if="s.controle.effectifPresent">{{ $t('controle.seance.studentCount', { n: s.controle.effectifPresent }) }}</span>
+              {{ s.controle.heureArrivee ?? '—' }} → {{ s.controle.heureFinReelle ?? '—' }} ·
+              {{ dureeLisible(s.controle.dureeMinutes) }}
+              <span v-if="s.controle.effectifPresent">{{
+                $t('controle.seance.studentCount', { n: s.controle.effectifPresent })
+              }}</span>
             </p>
             <p v-if="s.controle" class="pochoir seance__preuves">
               <q-icon
@@ -207,7 +234,9 @@
             </span>
             <span v-else class="lettrage seance__appel">{{ $t('controle.seance.pointer') }}</span>
             <span class="pochoir seance__sous-action">
-              {{ s.controle ? $t('controle.seance.correct') : $t('controle.seance.room', { code: s.salle?.code ?? '—' }) }}
+              {{
+                s.controle ? $t('controle.seance.correct') : $t('controle.seance.room', { code: s.salle?.code ?? '—' })
+              }}
             </span>
           </button>
 
@@ -222,9 +251,14 @@
     <footer v-if="seancesFiltrees.length" class="plaque fin-tournee">
       <div>
         <p class="lettrage fin-tournee__titre">
-          {{ restantes
-            ? $t('controle.footer.titleRemaining', { n: restantes, room: restantes > 1 ? $t('controle.footer.roomPlural') : $t('controle.footer.roomSingular') })
-            : $t('controle.footer.titleComplete') }}
+          {{
+            restantes
+              ? $t('controle.footer.titleRemaining', {
+                  n: restantes,
+                  room: restantes > 1 ? $t('controle.footer.roomPlural') : $t('controle.footer.roomSingular'),
+                })
+              : $t('controle.footer.titleComplete')
+          }}
         </p>
         <p class="pochoir pochoir--brut fin-tournee__detail">
           {{ $t('controle.footer.detail', { pointees, total, jour: jourLisible }) }}
@@ -232,40 +266,29 @@
       </div>
       <div class="fin-tournee__actions">
         <q-btn flat no-caps icon="event_note" :label="$t('controle.footer.registre')" :to="lienRegistreJour" />
-        <q-btn
-          outline
-          no-caps
-          icon="print"
-          :label="$t('controle.footer.imprimer')"
-          @click="imprimerRegistre"
-        />
+        <q-btn outline no-caps icon="print" :label="$t('controle.footer.imprimer')" @click="imprimerRegistre" />
       </div>
     </footer>
 
     <!-- Cible du pouce : toujours atteignable, même quand la tournée est finie -->
     <q-page-sticky position="bottom-right" :offset="[16, 20]">
-      <q-btn
-        fab
-        icon="add"
-        color="primary"
-        :aria-label="$t('controle.fab.aria')"
-        @click="ouvrirSeanceNonProgrammee"
-      >
+      <q-btn fab icon="add" color="primary" :aria-label="$t('controle.fab.aria')" @click="ouvrirSeanceNonProgrammee">
         <q-tooltip anchor="center left" self="center right">{{ $t('controle.fab.tooltip') }}</q-tooltip>
       </q-btn>
     </q-page-sticky>
 
     <div class="q-pa-md">
-      <q-btn outline no-caps icon="offline_pin" :label="$t('dashboard.actions.prepareRound')"
-        :loading="preparationEnCours" @click="preparerTournee" />
+      <q-btn
+        outline
+        no-caps
+        icon="offline_pin"
+        :label="$t('dashboard.actions.prepareRound')"
+        :loading="preparationEnCours"
+        @click="preparerTournee"
+      />
     </div>
 
-    <dialogue-seance
-      v-model="dialogSeance"
-      :salles="salles"
-      :date-imposee="date"
-      @enregistre="apresCreation"
-    />
+    <dialogue-seance v-model="dialogSeance" :salles="salles" :date-imposee="date" @enregistre="apresCreation" />
 
     <dialogue-pointage v-model="dialogOuvert" :seance="seanceSelectionnee" @enregistre="charger" />
   </q-page>
@@ -323,14 +346,19 @@ async function preparerTournee() {
     ]);
     seancesHorsLigne.enregistrerAffectations(affectations.data.data ?? []);
     seancesHorsLigne.enregistrerSalles(salles);
-    localStorage.setItem(`unipresence_tournee_preparee_${auth.utilisateur.id}`, JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }));
+    localStorage.setItem(
+      `unipresence_tournee_preparee_${auth.utilisateur.id}`,
+      JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }),
+    );
     $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });
   } catch (e) {
     // Les erreurs de l'API sont notifiées par l'intercepteur ; reste le stockage local.
     if (!isAxiosError(e)) {
       $q.notify({ type: 'negative', message: t('dashboard.actions.prepareFailed') });
     }
-  } finally { preparationEnCours.value = false; }
+  } finally {
+    preparationEnCours.value = false;
+  }
 }
 
 const date = ref(aujourdhui());
@@ -372,9 +400,7 @@ const tenues = computed(() => seances.value.filter((s) => s.statut !== 'ANNULEE'
 const total = computed(() => tenues.value.length);
 const pointees = computed(() => tenues.value.filter((s) => s.controle).length);
 const restantes = computed(() => total.value - pointees.value);
-const absences = computed(
-  () => tenues.value.filter((s) => s.controle?.statut === 'ABSENT').length,
-);
+const absences = computed(() => tenues.value.filter((s) => s.controle?.statut === 'ABSENT').length);
 
 const triOuvert = ref(false);
 
@@ -383,8 +409,8 @@ const etiquetteTri = computed(() => {
   const actif = filtres.value.find((f) => f.value === filtreEtat.value);
   return filtreEtat.value === 'toutes' && !recherche.value
     ? t('controle.sort.search')
-    : t('controle.sort.filterLabel', { label: actif?.label ?? '' })
-      + (recherche.value ? t('controle.sort.filterRechercheSuffix') : '');
+    : t('controle.sort.filterLabel', { label: actif?.label ?? '' }) +
+        (recherche.value ? t('controle.sort.filterRechercheSuffix') : '');
 });
 
 const seancesFiltrees = computed(() => {
@@ -406,8 +432,7 @@ const seancesFiltrees = computed(() => {
   });
 });
 
-const classeStatut = (statut: string) =>
-  CLASSE_CHAMP_PRESENCE[statut as StatutPresence] ?? 'attente';
+const classeStatut = (statut: string) => CLASSE_CHAMP_PRESENCE[statut as StatutPresence] ?? 'attente';
 
 /** Séance en cours à l'instant où le contrôleur regarde son panneau. */
 function estEnCours(s: Seance) {
@@ -459,12 +484,18 @@ async function charger() {
 watch(date, charger);
 
 onMounted(async () => {
-  try { await charger(); } catch { seances.value = seancesHorsLigne.pourDate(date.value); }
+  try {
+    await charger();
+  } catch {
+    seances.value = seancesHorsLigne.pourDate(date.value);
+  }
   // Les salles servent au formulaire de séance non programmée.
   try {
     salles.value = await referentiels.salles();
     seancesHorsLigne.enregistrerSalles(salles.value);
-  } catch { salles.value = seancesHorsLigne.sallesCache; }
+  } catch {
+    salles.value = seancesHorsLigne.sallesCache;
+  }
 });
 </script>
 
@@ -489,7 +520,9 @@ onMounted(async () => {
 .bandeau__jour {
   font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
   color: var(--up-encre);
-  &::first-letter { text-transform: uppercase; }
+  &::first-letter {
+    text-transform: uppercase;
+  }
 }
 
 .bandeau__mention {
@@ -528,14 +561,20 @@ onMounted(async () => {
   border: var(--up-filet);
 }
 
-.reste__mot { display: flex; flex-direction: column; gap: 3px; }
+.reste__mot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
 
 .reste__unite {
   font-size: clamp(1.05rem, 0.9rem + 1vw, 1.4rem);
   color: var(--up-encre);
 }
 
-.reste__detail { color: var(--up-encre-douce); }
+.reste__detail {
+  color: var(--up-encre-douce);
+}
 
 // ------------------------------------------------------------- filtres
 .barre-tri {
@@ -548,11 +587,18 @@ onMounted(async () => {
   min-height: 46px;
 }
 
-.barre-tri__bouton { color: var(--up-encre); }
+.barre-tri__bouton {
+  color: var(--up-encre);
+}
 
-.barre-tri__actif { color: var(--up-encre-douce); }
+.barre-tri__actif {
+  color: var(--up-encre-douce);
+}
 
-.barre-tri__releves { margin-left: auto; color: var(--up-encre); }
+.barre-tri__releves {
+  margin-left: auto;
+  color: var(--up-encre);
+}
 
 .filtres {
   display: flex;
@@ -563,9 +609,13 @@ onMounted(async () => {
   border-bottom: var(--up-filet);
 }
 
-.filtres__recherche { flex: 1 1 220px; }
+.filtres__recherche {
+  flex: 1 1 220px;
+}
 
-.filtres__etat { display: flex; }
+.filtres__etat {
+  display: flex;
+}
 
 .bouton-filtre {
   appearance: none;
@@ -575,9 +625,13 @@ onMounted(async () => {
   padding: 10px 12px;
   min-height: 44px;
   cursor: pointer;
-  transition: background var(--up-transition), color var(--up-transition);
+  transition:
+    background var(--up-transition),
+    color var(--up-transition);
 
-  & + & { border-left-width: 0; }
+  & + & {
+    border-left-width: 0;
+  }
 
   &--actif {
     background: var(--up-plaque);
@@ -611,7 +665,9 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.seance--annulee { opacity: 0.55; }
+.seance--annulee {
+  opacity: 0.55;
+}
 
 .seance__heure {
   flex-direction: column;
@@ -622,7 +678,9 @@ onMounted(async () => {
 
   // La séance se déroule à l'instant : un liséré bleu, la couleur de ce qui est
   // actif — pas une couleur de statut qu'on lui volerait.
-  &--en-cours { box-shadow: inset 0 0 0 2px #{$vert-action}; }
+  &--en-cours {
+    box-shadow: inset 0 0 0 2px #{$vert-action};
+  }
 }
 
 .seance__debut {
@@ -632,7 +690,9 @@ onMounted(async () => {
 
 .seance__fin {
   color: var(--up-encre-douce);
-  &::before { content: '→ '; }
+  &::before {
+    content: '→ ';
+  }
 }
 
 .seance__marque {
@@ -697,8 +757,13 @@ onMounted(async () => {
   font: inherit;
   transition: filter var(--up-transition);
 
-  &:hover { filter: brightness(1.08); }
-  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -4px; }
+  &:hover {
+    filter: brightness(1.08);
+  }
+  &:focus-visible {
+    outline: 2px solid #{$vert-action};
+    outline-offset: -4px;
+  }
 
   &--vierge {
     background: var(--up-gris-inerte);
@@ -706,11 +771,7 @@ onMounted(async () => {
   }
 
   &--annulee {
-    background: repeating-linear-gradient(
-      -45deg,
-      rgba(16, 37, 30, 0.13) 0 6px,
-      transparent 6px 12px
-    );
+    background: repeating-linear-gradient(-45deg, rgba(16, 37, 30, 0.13) 0 6px, transparent 6px 12px);
     color: var(--up-encre-douce);
     cursor: default;
   }
@@ -737,7 +798,10 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.fin-tournee__titre { font-size: 1.15rem; margin: 0; }
+.fin-tournee__titre {
+  font-size: 1.15rem;
+  margin: 0;
+}
 
 .fin-tournee__detail {
   margin: 4px 0 0;
@@ -754,9 +818,14 @@ onMounted(async () => {
 
 // --------------------------------------------------------------- vides
 
-.etat-vide__titre { font-size: 1.3rem; color: var(--up-encre); }
+.etat-vide__titre {
+  font-size: 1.3rem;
+  color: var(--up-encre);
+}
 
-.etat-vide__mention { max-width: 42ch; }
+.etat-vide__mention {
+  max-width: 42ch;
+}
 
 .etat-vide__actions {
   display: flex;
@@ -773,7 +842,9 @@ onMounted(async () => {
     grid-template-rows: auto auto;
   }
 
-  .seance__heure { grid-row: 1 / span 2; }
+  .seance__heure {
+    grid-row: 1 / span 2;
+  }
 
   .seance__action {
     grid-column: 2;
@@ -801,6 +872,8 @@ onMounted(async () => {
 
   .bandeau,
   .barre-tri,
-  .filtres { padding-inline: var(--up-4); }
+  .filtres {
+    padding-inline: var(--up-4);
+  }
 }
 </style>

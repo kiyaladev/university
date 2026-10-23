@@ -2,7 +2,14 @@
   <q-page class="q-pa-md row justify-center">
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
-        <q-btn flat dense no-caps icon="fact_check" :label="$t('verificationCarte.actions.verifyAttestation')" to="/verification" />
+        <q-btn
+          flat
+          dense
+          no-caps
+          icon="fact_check"
+          :label="$t('verificationCarte.actions.verifyAttestation')"
+          to="/verification"
+        />
         <q-btn flat dense no-caps icon="login" :label="$t('common.actions.login')" to="/connexion" />
       </div>
       <div class="text-center q-my-lg">
@@ -30,7 +37,8 @@
         />
         <div class="text-caption text-grey-7 q-mt-xs">
           {{ $t('verificationCarte.form.qrExplanationPrefix') }}
-          <code>{{ PARAMETRES_QR.carte }}</code> {{ $t('verificationCarte.form.qrExplanationAnd') }} <code>{{ PARAMETRES_QR.k }}</code>
+          <code>{{ PARAMETRES_QR.carte }}</code> {{ $t('verificationCarte.form.qrExplanationAnd') }}
+          <code>{{ PARAMETRES_QR.k }}</code>
           {{ $t('verificationCarte.form.qrExplanationSuffix') }}
         </div>
         <div class="row justify-end q-mt-md">
@@ -76,7 +84,9 @@
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('verificationCarte.result.table.cardNumber') }}</td>
-                  <td><code>{{ resultat.carte.identifiant }}</code></td>
+                  <td>
+                    <code>{{ resultat.carte.identifiant }}</code>
+                  </td>
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('common.fields.status') }}</td>

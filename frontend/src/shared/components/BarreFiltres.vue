@@ -21,28 +21,31 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import type { ChipFiltre } from '@/types';
 
-const props = withDefaults(defineProps<{
-  modelValue?: Record<string, any>;
-  placeholder?: string;
-  /**
-   * Rappel des filtres actifs. Un chip n'est décrochable que si le parent dit
-   * de quelle clé il provient (`cle`) — ou s'il s'agit du chip de recherche
-   * (`defaut`) : sans cela, la croix serait un bouton qui ne fait rien.
-   */
-  chips?: ChipFiltre[];
-  /** Affiche la recherche globale */
-  recherche?: boolean;
-  /** Valeurs fusionnées dans les filtres par « Réinitialiser ». */
-  defauts?: Record<string, unknown> | undefined;
-  /** Écouteur `@reinitialiser` du parent (déclaré pour savoir s'il existe). */
-  onReinitialiser?: (() => unknown) | undefined;
-  /** Slot right for custom actions */
-}>(), {
-  modelValue: () => ({}),
-  placeholder: undefined,
-  chips: () => [],
-  recherche: true,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: Record<string, any>;
+    placeholder?: string;
+    /**
+     * Rappel des filtres actifs. Un chip n'est décrochable que si le parent dit
+     * de quelle clé il provient (`cle`) — ou s'il s'agit du chip de recherche
+     * (`defaut`) : sans cela, la croix serait un bouton qui ne fait rien.
+     */
+    chips?: ChipFiltre[];
+    /** Affiche la recherche globale */
+    recherche?: boolean;
+    /** Valeurs fusionnées dans les filtres par « Réinitialiser ». */
+    defauts?: Record<string, unknown> | undefined;
+    /** Écouteur `@reinitialiser` du parent (déclaré pour savoir s'il existe). */
+    onReinitialiser?: (() => unknown) | undefined;
+    /** Slot right for custom actions */
+  }>(),
+  {
+    modelValue: () => ({}),
+    placeholder: undefined,
+    chips: () => [],
+    recherche: true,
+  },
+);
 const emit = defineEmits<{
   'update:modelValue': [value: Record<string, any>];
 }>();

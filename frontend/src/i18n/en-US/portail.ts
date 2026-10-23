@@ -8,8 +8,7 @@ export default {
   },
   otherRole: {
     title: 'Student area',
-    message:
-      'This view is reserved for student accounts, opened via SMS login from the student portal.',
+    message: 'This view is reserved for student accounts, opened via SMS login from the student portal.',
   },
   errorState: {
     title: 'Record unavailable',
@@ -72,8 +71,7 @@ export default {
     montantHint: 'Minimum 500 GNF',
     montantError: 'Enter an amount of at least 500 GNF',
     operateurLabel: 'Mobile Money operator',
-    note:
-      'You will pay via Mobile Money: a reference will be given to you for the transfer. The balance is credited once confirmed at the counter.',
+    note: 'You will pay via Mobile Money: a reference will be given to you for the transfer. The balance is credited once confirmed at the counter.',
     submit: 'Request payment',
   },
   loading: 'Loading your record…',

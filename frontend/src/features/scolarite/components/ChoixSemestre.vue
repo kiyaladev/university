@@ -7,18 +7,21 @@
 import { computed } from 'vue';
 import type { SessionDeliberation } from '@/types';
 
-const props = withDefaults(defineProps<{
-  modelValue?: string | null;
-  type: 'semestre' | 'session';
-  label?: string;
-  clearable?: boolean;
-  dense?: boolean;
-}>(), {
-  modelValue: null,
-  label: '',
-  clearable: false,
-  dense: true,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string | null;
+    type: 'semestre' | 'session';
+    label?: string;
+    clearable?: boolean;
+    dense?: boolean;
+  }>(),
+  {
+    modelValue: null,
+    label: '',
+    clearable: false,
+    dense: true,
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null];
@@ -33,9 +36,7 @@ const OPTIONS_SESSION = computed<Array<{ label: string; value: SessionDeliberati
   { label: 'Rattrapage', value: 'RATTRAPAGE' },
 ]);
 
-const options = computed(() =>
-  props.type === 'semestre' ? OPTIONS_SEMESTRE : OPTIONS_SESSION.value,
-);
+const options = computed(() => (props.type === 'semestre' ? OPTIONS_SEMESTRE : OPTIONS_SESSION.value));
 </script>
 
 <template>

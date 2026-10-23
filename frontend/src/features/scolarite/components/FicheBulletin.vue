@@ -57,7 +57,10 @@ function imprimer() {
     <q-card-section class="bulletin__entete">
       <div>
         <div class="bulletin__nom">{{ bulletin.etudiant.prenom }} {{ bulletin.etudiant.nom }}</div>
-        <div class="bulletin__meta">{{ $t('common.fields.matricule') }} {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} · {{ bulletin.annee }}</div>
+        <div class="bulletin__meta">
+          {{ $t('common.fields.matricule') }} {{ bulletin.etudiant.matricule }} · {{ bulletin.promotion }} ·
+          {{ bulletin.annee }}
+        </div>
       </div>
       <PastilleStatut domaine="decision" :statut="bulletin.decision" :libelle="libelleDecision" />
     </q-card-section>
@@ -82,8 +85,20 @@ function imprimer() {
         :columns="[
           { name: 'matiere', label: $t('common.fields.subject'), field: 'matiere', align: 'left' },
           { name: 'code', label: $t('common.fields.code'), field: 'code', align: 'left', style: 'width: 100px' },
-          { name: 'credits', label: $t('common.fields.credits'), field: 'credits', align: 'right', style: 'width: 80px' },
-          { name: 'moyenne', label: $t('bulletins.cards.columns.average'), field: 'moyenne', align: 'right', style: 'width: 110px' },
+          {
+            name: 'credits',
+            label: $t('common.fields.credits'),
+            field: 'credits',
+            align: 'right',
+            style: 'width: 80px',
+          },
+          {
+            name: 'moyenne',
+            label: $t('bulletins.cards.columns.average'),
+            field: 'moyenne',
+            align: 'right',
+            style: 'width: 110px',
+          },
         ]"
         :rows="bulletin.lignes"
         row-key="matiere"
@@ -93,7 +108,12 @@ function imprimer() {
       >
         <template #body-cell-moyenne="props">
           <q-td :props="props">
-            <span :class="{ 'text-negative': props.row.moyenne < 5, 'text-warning': props.row.moyenne >= 5 && props.row.moyenne < 10 }">
+            <span
+              :class="{
+                'text-negative': props.row.moyenne < 5,
+                'text-warning': props.row.moyenne >= 5 && props.row.moyenne < 10,
+              }"
+            >
               {{ props.row.moyenne.toFixed(2) }}
             </span>
           </q-td>
@@ -103,17 +123,24 @@ function imprimer() {
 
     <q-card-section class="bulletin__pied">
       <div>
-        <div v-if="totalCredits" class="bulletin__total">{{ $t('bulletins.cards.totalCredits') }} {{ totalCredits }}</div>
+        <div v-if="totalCredits" class="bulletin__total">
+          {{ $t('bulletins.cards.totalCredits') }} {{ totalCredits }}
+        </div>
         <div v-if="bulletin.dateDeliberation" class="bulletin__total">
-          {{ $t('bulletins.cards.deliberatedOn') }} {{ dateLisible(bulletin.dateDeliberation) }} · {{ bulletin.session }}
+          {{ $t('bulletins.cards.deliberatedOn') }} {{ dateLisible(bulletin.dateDeliberation) }} ·
+          {{ bulletin.session }}
         </div>
         <div class="bulletin__moyenne">
-          {{ $t('bulletins.cards.overallAverage') }} <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong>{{ $t('common.units.outOf20') }}
+          {{ $t('bulletins.cards.overallAverage') }} <strong>{{ bulletin.moyenneGenerale.toFixed(2) }}</strong
+          >{{ $t('common.units.outOf20') }}
         </div>
-        <div v-if="bulletin.mention" class="bulletin__mention">{{ $t('bulletins.cards.honors') }} {{ bulletin.mention }}</div>
+        <div v-if="bulletin.mention" class="bulletin__mention">
+          {{ $t('bulletins.cards.honors') }} {{ bulletin.mention }}
+        </div>
       </div>
       <div class="bulletin__rang" v-if="bulletin.rang">
-        {{ $t('bulletins.table.columns.rang') }} {{ bulletin.rang }}{{ bulletin.effectif ? ` / ${bulletin.effectif}` : '' }}
+        {{ $t('bulletins.table.columns.rang') }} {{ bulletin.rang
+        }}{{ bulletin.effectif ? ` / ${bulletin.effectif}` : '' }}
       </div>
       <q-btn
         v-if="cheminImpression"
@@ -177,7 +204,7 @@ function imprimer() {
 }
 .bulletin__mention {
   font-size: 12px;
-  color: var(--up-secondary, #007A4D);
+  color: var(--up-secondary, #007a4d);
   font-weight: 600;
   margin-top: 4px;
 }

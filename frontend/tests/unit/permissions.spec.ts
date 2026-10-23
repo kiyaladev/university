@@ -4,7 +4,13 @@ import { MANIFESTE } from '../../src/navigation/manifeste';
 import type { Role } from '../../src/types';
 
 const ROLES = [
-  'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT', 'ETUDIANT',
+  'ADMIN',
+  'DIRECTION',
+  'SCOLARITE',
+  'CHEF_DEPARTEMENT',
+  'CONTROLEUR',
+  'ENSEIGNANT',
+  'ETUDIANT',
 ] as const satisfies readonly Role[];
 // Échoue à la compilation si un rôle du type `Role` manque à la liste ci-dessus.
 const exhaustif: Exclude<Role, (typeof ROLES)[number]> extends never ? true : false = true;
@@ -55,7 +61,7 @@ describe('matrice des droits', () => {
   });
 
   it.each(Object.entries(ECRANS) as [Permission, string[]][])(
-    '%s : rôles admis sur l\'écran cible',
+    "%s : rôles admis sur l'écran cible",
     (permission, chemins) => {
       for (const chemin of chemins) {
         const ecran = MANIFESTE.find((e) => e.path === chemin);

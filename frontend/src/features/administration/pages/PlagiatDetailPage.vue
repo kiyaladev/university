@@ -73,7 +73,13 @@
                 <q-item>
                   <q-item-section avatar><q-icon name="storage" /></q-item-section>
                   <q-item-section>
-                    {{ suspicion.documentA?.tailleKo ? $t('plagiatDetail.documents.sizeInMo', { size: (suspicion.documentA.tailleKo / 1024).toFixed(1) }) : '—' }}
+                    {{
+                      suspicion.documentA?.tailleKo
+                        ? $t('plagiatDetail.documents.sizeInMo', {
+                            size: (suspicion.documentA.tailleKo / 1024).toFixed(1),
+                          })
+                        : '—'
+                    }}
                   </q-item-section>
                 </q-item>
                 <q-item>
@@ -117,7 +123,13 @@
                 <q-item>
                   <q-item-section avatar><q-icon name="storage" /></q-item-section>
                   <q-item-section>
-                    {{ suspicion.documentB?.tailleKo ? $t('plagiatDetail.documents.sizeInMo', { size: (suspicion.documentB.tailleKo / 1024).toFixed(1) }) : '—' }}
+                    {{
+                      suspicion.documentB?.tailleKo
+                        ? $t('plagiatDetail.documents.sizeInMo', {
+                            size: (suspicion.documentB.tailleKo / 1024).toFixed(1),
+                          })
+                        : '—'
+                    }}
                   </q-item-section>
                 </q-item>
                 <q-item>
@@ -204,7 +216,11 @@
                 autogrow
                 :label="$t('plagiatDetail.decision.motifLabel')"
                 :disable="!peutDecider || suspicion.statut !== 'EN_ATTENTE'"
-                :rules="decisionStatut === 'CONFIRME' ? [(v: string) => (v && v.trim().length > 0) || $t('plagiatDetail.decision.motifRequired')] : []"
+                :rules="
+                  decisionStatut === 'CONFIRME'
+                    ? [(v: string) => (v && v.trim().length > 0) || $t('plagiatDetail.decision.motifRequired')]
+                    : []
+                "
               />
 
               <div class="row justify-end q-mt-md">
@@ -214,7 +230,11 @@
                   no-caps
                   :color="decisionStatut === 'ACQUITTE' ? 'positive' : 'negative'"
                   :icon="decisionStatut === 'ACQUITTE' ? 'thumb_down' : 'gavel'"
-                  :label="decisionStatut === 'ACQUITTE' ? $t('plagiatDetail.decision.acquitAction') : $t('plagiatDetail.decision.confirmAction')"
+                  :label="
+                    decisionStatut === 'ACQUITTE'
+                      ? $t('plagiatDetail.decision.acquitAction')
+                      : $t('plagiatDetail.decision.confirmAction')
+                  "
                   :loading="decisionEnCours"
                   @click="validerDecision"
                 />
@@ -242,7 +262,11 @@
                   v-if="suspicion.acquitteLe"
                   :color="suspicion.statut === 'ACQUITTE' ? 'positive' : 'negative'"
                   :icon="suspicion.statut === 'ACQUITTE' ? 'thumb_down' : 'gavel'"
-                  :title="suspicion.statut === 'ACQUITTE' ? $t('plagiatDetail.journal.acquittal') : $t('plagiatDetail.journal.confirmation')"
+                  :title="
+                    suspicion.statut === 'ACQUITTE'
+                      ? $t('plagiatDetail.journal.acquittal')
+                      : $t('plagiatDetail.journal.confirmation')
+                  "
                   :subtitle="dateHeureLisible(suspicion.acquitteLe)"
                 >
                   <i18n-t
@@ -305,7 +329,7 @@ const id = computed(() => String(route.params.id ?? ''));
 const peutDecider = computed(() => auth.peut('plagiat.decider'));
 
 const iconeStatut = (s: SuspicionPlagiat['statut']) =>
-  ({ EN_ATTENTE: 'hourglass_empty', ACQUITTE: 'thumb_down', CONFIRME: 'gavel' }[s]);
+  ({ EN_ATTENTE: 'hourglass_empty', ACQUITTE: 'thumb_down', CONFIRME: 'gavel' })[s];
 
 const couleurScore = (score: number) => {
   if (score >= 80) return 'negative';
@@ -315,7 +339,6 @@ const couleurScore = (score: number) => {
 
 const libelleType = (type?: TypeDocument) =>
   LIBELLE_TYPE_DOCUMENT[type ?? 'AUTRE'] ?? t('plagiatDetail.documents.otherType');
-
 
 async function charger() {
   if (!id.value) return;
@@ -375,9 +398,7 @@ function surlignerCommun(texte: string): string {
   const mots = autres.toLowerCase().match(/[a-zà-ÿ]{5,}/g) ?? [];
   const uniques = Array.from(new Set(mots)).slice(0, 250);
   if (!uniques.length) return echappe;
-  const motif = uniques
-    .map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-    .join('|');
+  const motif = uniques.map((m) => m.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
   return echappe.replace(new RegExp(`\\b(${motif})\\b`, 'gi'), '<mark>$1</mark>');
 }
 
@@ -389,19 +410,17 @@ async function validerDecision() {
   }
   decisionEnCours.value = true;
   try {
-    const { data } = await api.post(
-      `/documents/plagiat/${suspicion.value.id}/acquitter`,
-      {
-        decision: decisionStatut.value,
-        commentaire: decisionMotif.value.trim() || undefined,
-      },
-    );
+    const { data } = await api.post(`/documents/plagiat/${suspicion.value.id}/acquitter`, {
+      decision: decisionStatut.value,
+      commentaire: decisionMotif.value.trim() || undefined,
+    });
     suspicion.value = { ...suspicion.value, ...data };
     $q.notify({
       type: 'positive',
-      message: decisionStatut.value === 'ACQUITTE'
-        ? t('plagiatDetail.messages.acquitted')
-        : t('plagiatDetail.messages.confirmed'),
+      message:
+        decisionStatut.value === 'ACQUITTE'
+          ? t('plagiatDetail.messages.acquitted')
+          : t('plagiatDetail.messages.confirmed'),
     });
   } catch {
     /* notifié par l'intercepteur */

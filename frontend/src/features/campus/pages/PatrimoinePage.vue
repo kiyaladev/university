@@ -64,13 +64,7 @@
       </div>
     </div>
 
-    <q-tabs
-      v-model="onglet"
-      dense
-      align="left"
-      narrow-indicator
-      class="onglets-panneau q-mb-md"
-    >
+    <q-tabs v-model="onglet" dense align="left" narrow-indicator class="onglets-panneau q-mb-md">
       <q-tab name="equipements" icon="inventory_2" :label="$t('patrimoine.tabs.equipments')" no-caps />
       <q-tab name="categories" icon="category" :label="$t('patrimoine.tabs.categories')" no-caps />
       <q-tab name="reparations" icon="build" :label="$t('patrimoine.tabs.repairs')" no-caps />
@@ -156,7 +150,8 @@
         <template #body-cell-valeur="p">
           <q-td :props="p" class="text-right chiffres">
             <span v-if="p.row.valeurAcquisition != null">
-              {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">{{ $t('common.units.gnf') }}</span>
+              {{ montantLisible(p.row.valeurAcquisition) }}
+              <span class="text-caption">{{ $t('common.units.gnf') }}</span>
             </span>
             <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
@@ -172,8 +167,8 @@
                 p.row.enReparation
                   ? $t('patrimoine.equipments.state.inRepair')
                   : p.row.actif
-                  ? $t('patrimoine.equipments.state.inService')
-                  : $t('patrimoine.equipments.state.outOfService')
+                    ? $t('patrimoine.equipments.state.inService')
+                    : $t('patrimoine.equipments.state.outOfService')
               }}
             </q-chip>
           </q-td>
@@ -237,7 +232,11 @@
           </q-td>
         </template>
         <template #no-data>
-          <etat-vide icone="inventory_2" :titre="$t('patrimoine.equipments.emptyState.title')" :aide="aideVideEquipements">
+          <etat-vide
+            icone="inventory_2"
+            :titre="$t('patrimoine.equipments.emptyState.title')"
+            :aide="aideVideEquipements"
+          >
             <template #action>
               <q-btn
                 v-if="aDesFiltres"
@@ -264,11 +263,7 @@
       </q-table>
 
       <div v-else class="row q-col-gutter-md">
-        <div
-          v-for="e in eq.lignes"
-          :key="e.id"
-          class="col-12 col-sm-6 col-md-4 col-lg-3"
-        >
+        <div v-for="e in eq.lignes" :key="e.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
           <q-card flat bordered class="carte full-height">
             <q-card-section>
               <div class="text-h6 ellipsis">{{ e.libelle }}</div>
@@ -291,26 +286,36 @@
               </div>
             </q-card-section>
             <q-card-section class="q-pt-none">
-              <q-chip
-                dense
-                :color="e.enReparation ? 'warning' : e.actif ? 'positive' : 'grey-7'"
-                text-color="white"
-              >
+              <q-chip dense :color="e.enReparation ? 'warning' : e.actif ? 'positive' : 'grey-7'" text-color="white">
                 {{
                   e.enReparation
                     ? $t('patrimoine.equipments.state.inRepair')
                     : e.actif
-                    ? $t('patrimoine.equipments.state.inService')
-                    : $t('patrimoine.equipments.state.outOfService')
+                      ? $t('patrimoine.equipments.state.inService')
+                      : $t('patrimoine.equipments.state.outOfService')
                 }}
               </q-chip>
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-              <q-btn flat dense round icon="visibility" :aria-label="$t('common.actions.details')" @click="voirDetails(e)">
+              <q-btn
+                flat
+                dense
+                round
+                icon="visibility"
+                :aria-label="$t('common.actions.details')"
+                @click="voirDetails(e)"
+              >
                 <q-tooltip>{{ $t('common.actions.details') }}</q-tooltip>
               </q-btn>
-              <q-btn flat dense round icon="print" :aria-label="$t('patrimoine.equipments.cards.labelTooltip')" @click="imprimerEtiquette(e)">
+              <q-btn
+                flat
+                dense
+                round
+                icon="print"
+                :aria-label="$t('patrimoine.equipments.cards.labelTooltip')"
+                @click="imprimerEtiquette(e)"
+              >
                 <q-tooltip>{{ $t('patrimoine.equipments.cards.labelTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
@@ -417,9 +422,20 @@
           </q-td>
         </template>
         <template #no-data>
-          <etat-vide icone="category" :titre="$t('patrimoine.categories.emptyState.title')" :aide="$t('patrimoine.categories.emptyState.description')">
+          <etat-vide
+            icone="category"
+            :titre="$t('patrimoine.categories.emptyState.title')"
+            :aide="$t('patrimoine.categories.emptyState.description')"
+          >
             <template v-if="auth.peutPlanifier" #action>
-              <q-btn unelevated no-caps color="primary" icon="add" :label="$t('patrimoine.categories.emptyState.createFirst')" @click="ouvrirCategorie(null)" />
+              <q-btn
+                unelevated
+                no-caps
+                color="primary"
+                icon="add"
+                :label="$t('patrimoine.categories.emptyState.createFirst')"
+                @click="ouvrirCategorie(null)"
+              />
             </template>
           </etat-vide>
         </template>
@@ -489,7 +505,11 @@
                 round
                 color="positive"
                 icon="check_circle"
-                :aria-label="$t('patrimoine.repairs.table.resolveAria', { name: p.row.equipement?.libelle ?? $t('patrimoine.repairs.table.fallbackEquipmentName') })"
+                :aria-label="
+                  $t('patrimoine.repairs.table.resolveAria', {
+                    name: p.row.equipement?.libelle ?? $t('patrimoine.repairs.table.fallbackEquipmentName'),
+                  })
+                "
                 @click="resoudreReparation(p.row)"
               >
                 <q-tooltip>{{ $t('patrimoine.repairs.table.resolveTooltip') }}</q-tooltip>
@@ -497,9 +517,21 @@
             </q-td>
           </template>
           <template #no-data>
-            <etat-vide icone="build" :titre="$t('patrimoine.repairs.emptyState.title')" :aide="$t('patrimoine.repairs.emptyState.description')">
+            <etat-vide
+              icone="build"
+              :titre="$t('patrimoine.repairs.emptyState.title')"
+              :aide="$t('patrimoine.repairs.emptyState.description')"
+            >
               <template #action>
-                <q-btn flat dense no-caps color="primary" icon="inventory_2" :label="$t('patrimoine.repairs.emptyState.goToEquipments')" @click="onglet = 'equipements'" />
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  icon="inventory_2"
+                  :label="$t('patrimoine.repairs.emptyState.goToEquipments')"
+                  @click="onglet = 'equipements'"
+                />
               </template>
             </etat-vide>
           </template>
@@ -507,16 +539,14 @@
       </q-card>
     </template>
 
-    <dialogue-patrimoine
-      v-model="dialogEquipement"
-      :equipement="equipementEdite"
-      @enregistre="apresEquipement"
-    />
+    <dialogue-patrimoine v-model="dialogEquipement" :equipement="equipementEdite" @enregistre="apresEquipement" />
 
     <dialogue-formulaire
       v-model="dialogCategorie"
       taille="s"
-      :titre="categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle')"
+      :titre="
+        categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle')
+      "
       :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrementCategorie"
       @valider="enregistrerCategorie"
@@ -577,12 +607,38 @@
             </div>
             <div class="col-12 col-sm-8">
               <q-list dense>
-                <q-item><q-item-section avatar><q-icon name="category" /></q-item-section><q-item-section>{{ equipementDetail.categorie?.libelle }}</q-item-section></q-item>
-                <q-item><q-item-section avatar><q-icon name="tag" /></q-item-section><q-item-section>{{ equipementDetail.numeroSerie }}</q-item-section></q-item>
-                <q-item><q-item-section avatar><q-icon name="apartment" /></q-item-section><q-item-section>{{ equipementDetail.departement?.nom ?? '—' }}</q-item-section></q-item>
-                <q-item><q-item-section avatar><q-icon name="meeting_room" /></q-item-section><q-item-section>{{ equipementDetail.salle ? `${equipementDetail.salle.code} — ${equipementDetail.salle.nom}` : '—' }}</q-item-section></q-item>
-                <q-item><q-item-section avatar><q-icon name="shopping_cart" /></q-item-section><q-item-section>{{ equipementDetail.dateAcquisition ? dateLisible(equipementDetail.dateAcquisition) : '—' }}</q-item-section></q-item>
-                <q-item><q-item-section avatar><q-icon name="payments" /></q-item-section><q-item-section>{{ equipementDetail.valeurAcquisition != null ? `${montantLisible(equipementDetail.valeurAcquisition)} GNF` : '—' }}</q-item-section></q-item>
+                <q-item
+                  ><q-item-section avatar><q-icon name="category" /></q-item-section
+                  ><q-item-section>{{ equipementDetail.categorie?.libelle }}</q-item-section></q-item
+                >
+                <q-item
+                  ><q-item-section avatar><q-icon name="tag" /></q-item-section
+                  ><q-item-section>{{ equipementDetail.numeroSerie }}</q-item-section></q-item
+                >
+                <q-item
+                  ><q-item-section avatar><q-icon name="apartment" /></q-item-section
+                  ><q-item-section>{{ equipementDetail.departement?.nom ?? '—' }}</q-item-section></q-item
+                >
+                <q-item
+                  ><q-item-section avatar><q-icon name="meeting_room" /></q-item-section
+                  ><q-item-section>{{
+                    equipementDetail.salle ? `${equipementDetail.salle.code} — ${equipementDetail.salle.nom}` : '—'
+                  }}</q-item-section></q-item
+                >
+                <q-item
+                  ><q-item-section avatar><q-icon name="shopping_cart" /></q-item-section
+                  ><q-item-section>{{
+                    equipementDetail.dateAcquisition ? dateLisible(equipementDetail.dateAcquisition) : '—'
+                  }}</q-item-section></q-item
+                >
+                <q-item
+                  ><q-item-section avatar><q-icon name="payments" /></q-item-section
+                  ><q-item-section>{{
+                    equipementDetail.valeurAcquisition != null
+                      ? `${montantLisible(equipementDetail.valeurAcquisition)} GNF`
+                      : '—'
+                  }}</q-item-section></q-item
+                >
               </q-list>
             </div>
           </div>
@@ -687,7 +743,9 @@ const cat = reactive(
     filtres: ref({}),
     pageSize: 0,
     charger: () =>
-      patrimoineService.listeCategories().then(({ data }) => ({ data: Array.isArray(data) ? data : data.data ?? [] })),
+      patrimoineService
+        .listeCategories()
+        .then(({ data }) => ({ data: Array.isArray(data) ? data : (data.data ?? []) })),
   }),
 );
 
@@ -759,7 +817,12 @@ const colonnesCategories = computed<QTableColumn[]>(() => [
     field: (r: CategoriePatrimoine) => r.dureeAmortissement ?? '—',
     align: 'right',
   },
-  { name: 'equipements', label: t('patrimoine.categories.table.columns.equipments'), field: 'equipements', align: 'right' },
+  {
+    name: 'equipements',
+    label: t('patrimoine.categories.table.columns.equipments'),
+    field: 'equipements',
+    align: 'right',
+  },
   { name: 'actif', label: t('common.fields.state'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -768,7 +831,12 @@ const colonnesReparations = computed<QTableColumn[]>(() => [
   { name: 'equipement', label: t('patrimoine.repairs.table.columns.equipment'), field: 'equipement', align: 'left' },
   { name: 'description', label: t('common.fields.description'), field: 'description', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
-  { name: 'declarLe', label: t('patrimoine.repairs.table.columns.declaredOn'), field: 'dateDeclaration', align: 'left' },
+  {
+    name: 'declarLe',
+    label: t('patrimoine.repairs.table.columns.declaredOn'),
+    field: 'dateDeclaration',
+    align: 'left',
+  },
   { name: 'delai', label: t('patrimoine.repairs.table.columns.delay'), field: 'delai', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -897,8 +965,7 @@ function ouvrirReparation(
  */
 function resoudreReparation(r: ReparationMateriel) {
   const equipement =
-    (r.equipement as EquipementPatrimoine | undefined) ??
-    eq.lignes.find((e) => e.id === r.equipementId);
+    (r.equipement as EquipementPatrimoine | undefined) ?? eq.lignes.find((e) => e.id === r.equipementId);
   if (!equipement) {
     $q.notify({ type: 'warning', message: t('patrimoine.messages.equipmentNotFound') });
     return;
@@ -941,5 +1008,4 @@ onMounted(() => {
   line-height: 1.1;
   font-weight: 590;
 }
-
 </style>

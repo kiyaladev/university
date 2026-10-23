@@ -101,13 +101,7 @@ import ChampStatut from '../components/ChampStatut.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
-import {
-  aujourdhui,
-  dateLisible,
-  decalerJours,
-  dureeLisible,
-  heuresLisibles,
-} from '@/shared/utils/libelles';
+import { aujourdhui, dateLisible, decalerJours, dureeLisible, heuresLisibles } from '@/shared/utils/libelles';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -193,7 +187,9 @@ onMounted(charger);
 .releve-chiffres__cellule {
   padding: var(--up-3);
 
-  & + & { border-left: var(--up-filet); }
+  & + & {
+    border-left: var(--up-filet);
+  }
 }
 
 .releve-chiffres__valeur {
@@ -202,9 +198,15 @@ onMounted(charger);
 }
 
 @media (max-width: 767px) {
-  .releve-chiffres { grid-template-columns: repeat(2, 1fr); }
-  .releve-chiffres__cellule:nth-child(2n + 1) { border-left: 0; }
-  .releve-chiffres__cellule:nth-child(n + 3) { border-top: var(--up-filet); }
+  .releve-chiffres {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .releve-chiffres__cellule:nth-child(2n + 1) {
+    border-left: 0;
+  }
+  .releve-chiffres__cellule:nth-child(n + 3) {
+    border-top: var(--up-filet);
+  }
 }
 
 .releve-plaques {
@@ -223,9 +225,15 @@ onMounted(charger);
   padding: var(--up-3);
 }
 
-.seance-relevee__quand { color: var(--up-encre-douce); margin: 0; }
+.seance-relevee__quand {
+  color: var(--up-encre-douce);
+  margin: 0;
+}
 
-.seance-relevee__matiere { font-size: 1.05rem; margin: 4px 0 0; }
+.seance-relevee__matiere {
+  font-size: 1.05rem;
+  margin: 4px 0 0;
+}
 
 .seance-relevee__lieu {
   margin: 5px 0 0;
@@ -251,7 +259,9 @@ onMounted(charger);
   flex: 0 0 auto;
 }
 
-.seance-relevee__duree { color: var(--up-encre-douce); }
+.seance-relevee__duree {
+  color: var(--up-encre-douce);
+}
 
 .seance-relevee__vide {
   padding: var(--up-5) var(--up-3);

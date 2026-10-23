@@ -1,7 +1,6 @@
 /** Namespace `etudiants` — Students page. */
 export default {
-  subtitle:
-    'Find student records and access their enrolments.',
+  subtitle: 'Find student records and access their enrolments.',
   actions: {
     new: 'New student',
     editAria: "Edit the student's record",

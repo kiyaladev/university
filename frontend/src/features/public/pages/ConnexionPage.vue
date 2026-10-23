@@ -26,8 +26,8 @@
       <p class="acces__intro">
         {{ $t('loginPage.access.intro') }}
         <router-link to="/portail-connexion" class="acces__lien-lien">
-          {{ $t('loginPage.access.studentPortalLink') }}
-        </router-link>.
+          {{ $t('loginPage.access.studentPortalLink') }} </router-link
+        >.
       </p>
 
       <q-form class="acces__form" @submit.prevent="connexion">
@@ -210,8 +210,13 @@ async function connexion() {
   border-top: var(--up-filet);
   padding-top: var(--up-3);
 
-  dt { color: var(--up-encre-tertiaire); }
-  dd { margin: 3px 0 0; font-size: 0.92rem; }
+  dt {
+    color: var(--up-encre-tertiaire);
+  }
+  dd {
+    margin: 3px 0 0;
+    font-size: 0.92rem;
+  }
 }
 
 // ---------------------------------------------------------------- accès
@@ -245,7 +250,9 @@ async function connexion() {
   gap: var(--up-3);
 }
 
-.acces__bouton { min-height: 56px; }
+.acces__bouton {
+  min-height: 56px;
+}
 
 // L'erreur se teinte. Un aplat rouge pleine largeur au moment d'une faute de
 // frappe est une punition, pas une information.
@@ -256,7 +263,9 @@ async function connexion() {
   border-radius: var(--up-rayon);
 }
 
-.acces__separateur { margin: var(--up-4) 0 var(--up-3); }
+.acces__separateur {
+  margin: var(--up-4) 0 var(--up-3);
+}
 
 .acces__services-titre {
   margin: 0 0 var(--up-2);
@@ -277,7 +286,10 @@ async function connexion() {
   text-decoration: underline;
 
   &:hover,
-  &:focus-visible { color: var(--up-encre); text-decoration: underline; }
+  &:focus-visible {
+    color: var(--up-encre);
+    text-decoration: underline;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -290,8 +302,12 @@ async function connexion() {
     gap: var(--up-3);
   }
 
-  .enseigne__faits { display: none; }
+  .enseigne__faits {
+    display: none;
+  }
 
-  .acces__plaque { padding: var(--up-5) var(--up-4) var(--up-6); }
+  .acces__plaque {
+    padding: var(--up-5) var(--up-4) var(--up-6);
+  }
 }
 </style>

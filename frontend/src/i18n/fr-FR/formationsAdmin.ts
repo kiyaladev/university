@@ -14,7 +14,8 @@ export default {
       edit: 'Modifier la formation',
       create: 'Nouvelle formation',
     },
-    subtitle: 'Toute formation naît en brouillon : rien ne se vend avant publication. Dès la première inscription confirmée, le titre et le prix se figent.',
+    subtitle:
+      'Toute formation naît en brouillon : rien ne se vend avant publication. Dès la première inscription confirmée, le titre et le prix se figent.',
     sections: {
       presentation: 'Présentation',
       price: 'Tarif',
@@ -95,8 +96,7 @@ export default {
   },
   emptyState: {
     title: 'Aucune formation pour ces critères.',
-    description:
-      'Une formation naît en brouillon, puis se publie pour apparaître sur la vitrine publique.',
+    description: 'Une formation naît en brouillon, puis se publie pour apparaître sur la vitrine publique.',
   },
   dialogs: {
     publish: {
@@ -111,7 +111,7 @@ export default {
     },
     delete: {
       title: 'Supprimer ce brouillon ?',
-      message: '« {title} » ne s\'est jamais vendu : sa suppression ne laisse aucune trace client.',
+      message: "« {title} » ne s'est jamais vendu : sa suppression ne laisse aucune trace client.",
     },
     confirmPayment: {
       title: 'Confirmer le paiement ?',

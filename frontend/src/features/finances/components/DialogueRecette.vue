@@ -14,7 +14,13 @@
       </q-banner>
       <div class="row q-col-gutter-md">
         <div class="col-12 col-sm-6">
-          <q-input v-model="form.numero" :disable="!!existant" outlined dense :label="$t('recettes.formDialog.number')" />
+          <q-input
+            v-model="form.numero"
+            :disable="!!existant"
+            outlined
+            dense
+            :label="$t('recettes.formDialog.number')"
+          />
         </div>
         <div class="col-12 col-sm-6">
           <q-select
@@ -30,16 +36,37 @@
         </div>
       </div>
       <q-input v-model="form.libelle" outlined dense :label="$t('common.fields.labelRequired')" />
-      <q-input v-model="form.description" outlined dense type="textarea" rows="2" :label="$t('common.fields.description')" />
+      <q-input
+        v-model="form.description"
+        outlined
+        dense
+        type="textarea"
+        rows="2"
+        :label="$t('common.fields.description')"
+      />
       <div class="row q-col-gutter-md">
         <div class="col-12 col-sm-4">
           <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('common.fields.dateRequired')" />
         </div>
         <div class="col-12 col-sm-4">
-          <q-input v-model.number="form.montant" :disable="champsComptablesFiges" type="number" min="0" outlined dense :label="$t('recettes.formDialog.amount')" />
+          <q-input
+            v-model.number="form.montant"
+            :disable="champsComptablesFiges"
+            type="number"
+            min="0"
+            outlined
+            dense
+            :label="$t('recettes.formDialog.amount')"
+          />
         </div>
         <div class="col-12 col-sm-4">
-          <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('common.fields.currency')" />
+          <q-input
+            v-model="form.devise"
+            :disable="champsComptablesFiges"
+            outlined
+            dense
+            :label="$t('common.fields.currency')"
+          />
         </div>
       </div>
       <q-input v-model="form.client" outlined dense :label="$t('recettes.table.columns.client')" />
@@ -68,10 +95,12 @@ const emit = defineEmits<{
 const $q = useQuasar();
 const { t } = useI18n();
 
-const optionsTypes = computed(() => Object.entries(LIBELLE_TYPE_RECETTE).map(([value, label]) => ({
-  value,
-  label,
-})));
+const optionsTypes = computed(() =>
+  Object.entries(LIBELLE_TYPE_RECETTE).map(([value, label]) => ({
+    value,
+    label,
+  })),
+);
 
 const form = ref({
   numero: '',
@@ -88,40 +117,43 @@ const form = ref({
 const envoi = ref(false);
 const champsComptablesFiges = computed(() => !!props.existant?.paiementId);
 
-watch(
-  ouvert,
-  (v) => {
-    if (v && props.existant) {
-      form.value = {
-        numero: props.existant.numero,
-        type: props.existant.type,
-        libelle: props.existant.libelle,
-        description: props.existant.description ?? '',
-        montant: props.existant.montant,
-        devise: props.existant.devise ?? 'GNF',
-        date: props.existant.date?.slice(0, 10) ?? aujourdhui(),
-        client: props.existant.client ?? '',
-        factureNum: props.existant.factureNum ?? '',
-      };
-    } else if (v && !props.existant) {
-      form.value = {
-        numero: '',
-        type: 'PRESTATION_FORMATION',
-        libelle: '',
-        description: '',
-        montant: 0,
-        devise: 'GNF',
-        date: aujourdhui(),
-        client: '',
-        factureNum: '',
-      };
-    }
-  },
-);
+watch(ouvert, (v) => {
+  if (v && props.existant) {
+    form.value = {
+      numero: props.existant.numero,
+      type: props.existant.type,
+      libelle: props.existant.libelle,
+      description: props.existant.description ?? '',
+      montant: props.existant.montant,
+      devise: props.existant.devise ?? 'GNF',
+      date: props.existant.date?.slice(0, 10) ?? aujourdhui(),
+      client: props.existant.client ?? '',
+      factureNum: props.existant.factureNum ?? '',
+    };
+  } else if (v && !props.existant) {
+    form.value = {
+      numero: '',
+      type: 'PRESTATION_FORMATION',
+      libelle: '',
+      description: '',
+      montant: 0,
+      devise: 'GNF',
+      date: aujourdhui(),
+      client: '',
+      factureNum: '',
+    };
+  }
+});
 
 async function enregistrer() {
   const montant = Number(form.value.montant);
-  if ((!props.existant && !form.value.numero) || !form.value.libelle || !Number.isFinite(montant) || montant < 0 || !form.value.date) {
+  if (
+    (!props.existant && !form.value.numero) ||
+    !form.value.libelle ||
+    !Number.isFinite(montant) ||
+    montant < 0 ||
+    !form.value.date
+  ) {
     $q.notify({ type: 'warning', message: t('common.messages.requiredFields') });
     return;
   }

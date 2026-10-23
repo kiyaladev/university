@@ -57,11 +57,7 @@
 
       <!-- Compteurs par statut -->
       <div class="row q-col-gutter-sm q-mb-md">
-        <div
-          v-for="c in compteurs"
-          :key="c.statut"
-          class="col-6 col-sm-4 col-lg-2"
-        >
+        <div v-for="c in compteurs" :key="c.statut" class="col-6 col-sm-4 col-lg-2">
           <q-card
             flat
             bordered
@@ -78,7 +74,8 @@
       </div>
 
       <!-- Vue tableau -->
-      <q-table :grid="$q.screen.lt.md"
+      <q-table
+        :grid="$q.screen.lt.md"
         flat
         bordered
         class="carte"
@@ -88,58 +85,144 @@
         :loading="trav.chargement"
         :pagination="{ rowsPerPage: 20 }"
       >
-
         <template #item="p">
-    <div class="col-12 q-pb-sm"><q-card flat bordered class="carte">
-      <q-card-section>
-        <div v-for="c in p.cols.filter(c => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
-          <div class="text-caption text-grey-7">{{ c.label }}</div>
-          <template v-if="c.name === 'intitule'">{{ p.row.intitule }}</template>
-  <template v-else-if="c.name === 'etudiant'">{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</template>
-  <template v-else-if="c.name === 'encadrant'">{{ p.row.encadrant?.nom }} {{ p.row.encadrant?.prenom }}</template>
-  <template v-else-if="c.name === 'statut'">{{ LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut }}</template>
-  <template v-else-if="c.name === 'periode'">{{ dateLisible(p.row.dateDebut) }} — {{ dateLisible(p.row.dateFin) }}</template>
-  <template v-else-if="c.name === 'rapport'">
-    <q-toggle :model-value="p.row.rapportRendu" :disable="['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)"
-      :label="p.row.rapportRendu ? $t('stages.table.report.done') : $t('stages.table.report.pending')"
-      @update:model-value="(v: boolean) => basculerRapport(p.row, v)" />
-  </template>
-  <template v-else-if="c.name === 'soutenance'">{{ p.row.soutenance ? dateHeureLisible(p.row.soutenance.date) : '—' }}</template>
-  <span v-else>{{ c.value }}</span>
-        </div>
-      </q-card-section>
-      <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="visibility" :label="$t('stages.table.actions.viewSheetTooltip')" @click="detail = p.row" />
-            <q-btn
-              v-for="b in boutonsTransition(p.row).slice(0, 1)" :key="b.statut"
-              flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
-              @click="transition(p.row, b.statut)"
-            />
-            <actions-secondaires>
-              <q-btn v-close-popup
-                v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-                flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrirEdition(p.row)"
-              />
-              <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
-              <q-btn v-close-popup
-                v-for="b in boutonsTransition(p.row).slice(1)" :key="b.statut"
-                flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
-                @click="transition(p.row, b.statut)"
-              />
-              <q-btn v-close-popup v-if="peutPlanifierSoutenance(p.row)" flat dense no-caps color="primary" icon="groups"
-                :label="$t('stages.table.actions.planDefense')" @click="ouvrirSoutenance(p.row)" />
-              <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
-                :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
-              <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-                flat dense no-caps color="negative" icon="delete" :label="$t('common.actions.delete')" @click="supprimer(p.row)" />
-            </actions-secondaires>
-          </q-card-actions>
-    </q-card></div>
-  </template>
+          <div class="col-12 q-pb-sm">
+            <q-card flat bordered class="carte">
+              <q-card-section>
+                <div v-for="c in p.cols.filter((c) => c.name !== 'actions')" :key="c.name" class="q-mb-sm">
+                  <div class="text-caption text-grey-7">{{ c.label }}</div>
+                  <template v-if="c.name === 'intitule'">{{ p.row.intitule }}</template>
+                  <template v-else-if="c.name === 'etudiant'"
+                    >{{ p.row.etudiant?.nom }} {{ p.row.etudiant?.prenom }}</template
+                  >
+                  <template v-else-if="c.name === 'encadrant'"
+                    >{{ p.row.encadrant?.nom }} {{ p.row.encadrant?.prenom }}</template
+                  >
+                  <template v-else-if="c.name === 'statut'">{{
+                    LIBELLE_STATUT_ENCADREMENT[p.row.statut] ?? p.row.statut
+                  }}</template>
+                  <template v-else-if="c.name === 'periode'"
+                    >{{ dateLisible(p.row.dateDebut) }} — {{ dateLisible(p.row.dateFin) }}</template
+                  >
+                  <template v-else-if="c.name === 'rapport'">
+                    <q-toggle
+                      :model-value="p.row.rapportRendu"
+                      :disable="['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)"
+                      :label="p.row.rapportRendu ? $t('stages.table.report.done') : $t('stages.table.report.pending')"
+                      @update:model-value="(v: boolean) => basculerRapport(p.row, v)"
+                    />
+                  </template>
+                  <template v-else-if="c.name === 'soutenance'">{{
+                    p.row.soutenance ? dateHeureLisible(p.row.soutenance.date) : '—'
+                  }}</template>
+                  <span v-else>{{ c.value }}</span>
+                </div>
+              </q-card-section>
+              <q-card-actions align="right">
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  icon="visibility"
+                  :label="$t('stages.table.actions.viewSheetTooltip')"
+                  @click="detail = p.row"
+                />
+                <q-btn
+                  v-for="b in boutonsTransition(p.row).slice(0, 1)"
+                  :key="b.statut"
+                  flat
+                  dense
+                  no-caps
+                  :color="b.couleur"
+                  :icon="b.icone"
+                  :label="b.libelle"
+                  @click="transition(p.row, b.statut)"
+                />
+                <actions-secondaires>
+                  <q-btn
+                    v-close-popup
+                    v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
+                    flat
+                    dense
+                    no-caps
+                    icon="edit"
+                    :label="$t('common.actions.edit')"
+                    @click="ouvrirEdition(p.row)"
+                  />
+                  <q-btn
+                    v-close-popup
+                    flat
+                    dense
+                    no-caps
+                    icon="print"
+                    :label="$t('stages.table.actions.print')"
+                    @click="imprimer(p.row)"
+                  />
+                  <q-btn
+                    v-close-popup
+                    v-for="b in boutonsTransition(p.row).slice(1)"
+                    :key="b.statut"
+                    flat
+                    dense
+                    no-caps
+                    :color="b.couleur"
+                    :icon="b.icone"
+                    :label="b.libelle"
+                    @click="transition(p.row, b.statut)"
+                  />
+                  <q-btn
+                    v-close-popup
+                    v-if="peutPlanifierSoutenance(p.row)"
+                    flat
+                    dense
+                    no-caps
+                    color="primary"
+                    icon="groups"
+                    :label="$t('stages.table.actions.planDefense')"
+                    @click="ouvrirSoutenance(p.row)"
+                  />
+                  <q-btn
+                    v-close-popup
+                    v-if="peutConstatJury(p.row)"
+                    flat
+                    dense
+                    no-caps
+                    color="deep-purple"
+                    icon="fact_check"
+                    :label="$t('stages.table.actions.juryReport')"
+                    @click="ouvrirJury(p.row)"
+                  />
+                  <q-btn
+                    v-close-popup
+                    v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
+                    flat
+                    dense
+                    no-caps
+                    color="negative"
+                    icon="delete"
+                    :label="$t('common.actions.delete')"
+                    @click="supprimer(p.row)"
+                  />
+                </actions-secondaires>
+              </q-card-actions>
+            </q-card>
+          </div>
+        </template>
         <template #no-data>
-          <etat-vide icone="work_off" :titre="$t('stages.table.emptyState.title')" :aide="$t('stages.table.emptyState.description')">
+          <etat-vide
+            icone="work_off"
+            :titre="$t('stages.table.emptyState.title')"
+            :aide="$t('stages.table.emptyState.description')"
+          >
             <template v-if="peutCreer" #action>
-              <q-btn flat no-caps color="primary" icon="add" :label="$t('stages.actions.new')" @click="ouvrirCreation" />
+              <q-btn
+                flat
+                no-caps
+                color="primary"
+                icon="add"
+                :label="$t('stages.actions.new')"
+                @click="ouvrirCreation"
+              />
             </template>
           </etat-vide>
         </template>
@@ -184,9 +267,7 @@
             <q-toggle
               :model-value="p.row.rapportRendu"
               color="positive"
-              :disable="
-                ['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)
-              "
+              :disable="['SOUTENU', 'ABANDONNE'].includes(p.row.statut) || !peutModifierRapport(p.row)"
               @update:model-value="(v: boolean) => basculerRapport(p.row, v)"
             />
             <div class="text-caption text-grey-7">
@@ -200,7 +281,8 @@
               <div>{{ dateHeureLisible(p.row.soutenance.date) }}</div>
               <div class="text-caption text-grey-7">
                 <template v-if="p.row.soutenance.note !== null">
-                  {{ p.row.soutenance.note }}{{ $t('common.units.outOf20') }}<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
+                  {{ p.row.soutenance.note }}{{ $t('common.units.outOf20')
+                  }}<template v-if="p.row.soutenance.mention"> · {{ p.row.soutenance.mention }}</template>
                 </template>
                 <span v-else>{{ $t('stages.table.defense.awaitingReport') }}</span>
               </div>
@@ -210,29 +292,90 @@
         </template>
         <template #body-cell-actions="p">
           <q-td :props="p" class="text-right">
-            <q-btn flat dense no-caps icon="visibility" :label="$t('stages.table.actions.viewSheetTooltip')" @click="detail = p.row" />
             <q-btn
-              v-for="b in boutonsTransition(p.row).slice(0, 1)" :key="b.statut"
-              flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
+              flat
+              dense
+              no-caps
+              icon="visibility"
+              :label="$t('stages.table.actions.viewSheetTooltip')"
+              @click="detail = p.row"
+            />
+            <q-btn
+              v-for="b in boutonsTransition(p.row).slice(0, 1)"
+              :key="b.statut"
+              flat
+              dense
+              no-caps
+              :color="b.couleur"
+              :icon="b.icone"
+              :label="b.libelle"
               @click="transition(p.row, b.statut)"
             />
             <actions-secondaires>
-              <q-btn v-close-popup
+              <q-btn
+                v-close-popup
                 v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-                flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrirEdition(p.row)"
+                flat
+                dense
+                no-caps
+                icon="edit"
+                :label="$t('common.actions.edit')"
+                @click="ouvrirEdition(p.row)"
               />
-              <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
-              <q-btn v-close-popup
-                v-for="b in boutonsTransition(p.row).slice(1)" :key="b.statut"
-                flat dense no-caps :color="b.couleur" :icon="b.icone" :label="b.libelle"
+              <q-btn
+                v-close-popup
+                flat
+                dense
+                no-caps
+                icon="print"
+                :label="$t('stages.table.actions.print')"
+                @click="imprimer(p.row)"
+              />
+              <q-btn
+                v-close-popup
+                v-for="b in boutonsTransition(p.row).slice(1)"
+                :key="b.statut"
+                flat
+                dense
+                no-caps
+                :color="b.couleur"
+                :icon="b.icone"
+                :label="b.libelle"
                 @click="transition(p.row, b.statut)"
               />
-              <q-btn v-close-popup v-if="peutPlanifierSoutenance(p.row)" flat dense no-caps color="primary" icon="groups"
-                :label="$t('stages.table.actions.planDefense')" @click="ouvrirSoutenance(p.row)" />
-              <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
-                :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
-              <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-                flat dense no-caps color="negative" icon="delete" :label="$t('common.actions.delete')" @click="supprimer(p.row)" />
+              <q-btn
+                v-close-popup
+                v-if="peutPlanifierSoutenance(p.row)"
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="groups"
+                :label="$t('stages.table.actions.planDefense')"
+                @click="ouvrirSoutenance(p.row)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="peutConstatJury(p.row)"
+                flat
+                dense
+                no-caps
+                color="deep-purple"
+                icon="fact_check"
+                :label="$t('stages.table.actions.juryReport')"
+                @click="ouvrirJury(p.row)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
+                flat
+                dense
+                no-caps
+                color="negative"
+                icon="delete"
+                :label="$t('common.actions.delete')"
+                @click="supprimer(p.row)"
+              />
             </actions-secondaires>
           </q-td>
         </template>
@@ -324,10 +467,7 @@
         </template>
       </barre-filtres>
 
-      <grille-calendrier
-        :evenements="evenementsSoutenances"
-        :compact="false"
-      />
+      <grille-calendrier :evenements="evenementsSoutenances" :compact="false" />
 
       <!-- Le serveur ne renvoie que la fenêtre des 7 jours : on le dit. -->
       <q-list separator bordered class="q-mt-md carte">
@@ -338,10 +478,13 @@
           <q-item-section>
             <q-item-label>
               {{ dateHeureLisible(s.date) }}
-              <span class="text-grey-7">· {{ s.salle ? `${s.salle.nom} (${s.salle.code})` : $t('stages.list.roomToBeSet') }}</span>
+              <span class="text-grey-7"
+                >· {{ s.salle ? `${s.salle.nom} (${s.salle.code})` : $t('stages.list.roomToBeSet') }}</span
+              >
             </q-item-label>
             <q-item-label caption>
-              {{ s.travailEncadre?.intitule }} {{ $t('common.format.emptyValue') }} {{ s.travailEncadre?.etudiant?.nom }}
+              {{ s.travailEncadre?.intitule }} {{ $t('common.format.emptyValue') }}
+              {{ s.travailEncadre?.etudiant?.nom }}
               {{ s.travailEncadre?.etudiant?.prenom }}
             </q-item-label>
           </q-item-section>
@@ -395,8 +538,7 @@
             <q-item>
               <q-item-section>{{ $t('common.fields.student') }}</q-item-section>
               <q-item-section side>
-                {{ detail.etudiant?.nom }} {{ detail.etudiant?.prenom }}
-                ({{ detail.etudiant?.matricule }})
+                {{ detail.etudiant?.nom }} {{ detail.etudiant?.prenom }} ({{ detail.etudiant?.matricule }})
               </q-item-section>
             </q-item>
             <q-item>
@@ -425,7 +567,9 @@
             </q-item>
             <q-item>
               <q-item-section>{{ $t('stages.detail.fields.reportSubmitted') }}</q-item-section>
-              <q-item-section side>{{ detail.rapportRendu ? $t('stages.detail.yes') : $t('stages.detail.no') }}</q-item-section>
+              <q-item-section side>{{
+                detail.rapportRendu ? $t('stages.detail.yes') : $t('stages.detail.no')
+              }}</q-item-section>
             </q-item>
             <q-item v-if="detail.soutenance">
               <q-item-section>{{ $t('stages.detail.fields.defense') }}</q-item-section>
@@ -478,10 +622,7 @@ import {
   dateLisible,
   aujourdhui,
 } from '@/shared/utils/libelles';
-import type {
-  StatutEncadrement,
-  TravailEncadre,
-  TypeEncadrement, ChipFiltre } from '@/types';
+import type { StatutEncadrement, TravailEncadre, TypeEncadrement, ChipFiltre } from '@/types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -569,14 +710,44 @@ interface BoutonTransition {
 }
 
 const BOUTONS_PAR_STATUT = computed<Record<StatutEncadrement, BoutonTransition[]>>(() => {
-  const abandon = { statut: 'ABANDONNE' as const, libelle: t('stages.transitions.abandon'), icone: 'flag', couleur: 'negative' };
+  const abandon = {
+    statut: 'ABANDONNE' as const,
+    libelle: t('stages.transitions.abandon'),
+    icone: 'flag',
+    couleur: 'negative',
+  };
   return {
-    PROPOSE: [{ statut: 'VALIDE', libelle: t('stages.transitions.validate'), icone: 'check', couleur: 'positive' }, abandon],
-    VALIDE: [{ statut: 'EN_COURS', libelle: t('stages.transitions.startSupervision'), icone: 'play_arrow', couleur: 'primary' }, abandon],
-    EN_COURS: [{ statut: 'SOUTENU', libelle: t('stages.transitions.moveToDefended'), icone: 'workspace_premium', couleur: 'positive' }, abandon],
+    PROPOSE: [
+      { statut: 'VALIDE', libelle: t('stages.transitions.validate'), icone: 'check', couleur: 'positive' },
+      abandon,
+    ],
+    VALIDE: [
+      {
+        statut: 'EN_COURS',
+        libelle: t('stages.transitions.startSupervision'),
+        icone: 'play_arrow',
+        couleur: 'primary',
+      },
+      abandon,
+    ],
+    EN_COURS: [
+      {
+        statut: 'SOUTENU',
+        libelle: t('stages.transitions.moveToDefended'),
+        icone: 'workspace_premium',
+        couleur: 'positive',
+      },
+      abandon,
+    ],
     SOUTENU: [],
     ABANDONNE: [
-      { statut: 'PROPOSE', libelle: t('stages.transitions.reactivate'), icone: 'restart_alt', couleur: 'primary', role: ['ADMIN'] },
+      {
+        statut: 'PROPOSE',
+        libelle: t('stages.transitions.reactivate'),
+        icone: 'restart_alt',
+        couleur: 'primary',
+        role: ['ADMIN'],
+      },
     ],
   };
 });
@@ -609,7 +780,8 @@ function chipsCommuns(f: Record<string, any>): ChipFiltre[] {
   const cs: ChipFiltre[] = [];
   if (f.recherche) cs.push({ label: `« ${f.recherche} »`, value: f.recherche, icone: 'search', defaut: true });
   if (f.type) cs.push({ label: LIBELLE_TYPE_ENCADREMENT[f.type] ?? f.type, value: f.type, icone: 'work', cle: 'type' });
-  if (f.statut) cs.push({ label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut' });
+  if (f.statut)
+    cs.push({ label: LIBELLE_STATUT_ENCADREMENT[f.statut] ?? f.statut, value: f.statut, icone: 'flag', cle: 'statut' });
   return cs;
 }
 
@@ -617,7 +789,13 @@ function chipsCommuns(f: Record<string, any>): ChipFiltre[] {
 const chipsTravaux = computed(() => {
   const f = filtresTravaux.value;
   const cs = chipsCommuns(f);
-  if (f.encadrantId) cs.push({ label: t('stages.filters.supervisorFiltered'), value: f.encadrantId, icone: 'person', cle: 'encadrantId' });
+  if (f.encadrantId)
+    cs.push({
+      label: t('stages.filters.supervisorFiltered'),
+      value: f.encadrantId,
+      icone: 'person',
+      cle: 'encadrantId',
+    });
   return cs;
 });
 
@@ -646,9 +824,7 @@ const estEncadrant = (tr: TravailEncadre) =>
 function boutonsTransition(tr: TravailEncadre) {
   if (!peutTransitionner.value) return [];
   if (auth.role === 'ENSEIGNANT' && !estEncadrant(tr)) return [];
-  return (BOUTONS_PAR_STATUT.value[tr.statut] ?? []).filter(
-    (b) => !b.role || auth.aRole(b.role as never),
-  );
+  return (BOUTONS_PAR_STATUT.value[tr.statut] ?? []).filter((b) => !b.role || auth.aRole(b.role as never));
 }
 
 function peutModifierRapport(tr: TravailEncadre) {
@@ -748,7 +924,8 @@ const soutenancesFiltrees = computed(() => {
     .filter((s) => {
       if (f.statut && s.travailEncadre?.statut !== f.statut) return false;
       if (q) {
-        const blob = `${s.travailEncadre?.intitule ?? ''} ${s.travailEncadre?.etudiant?.nom ?? ''} ${s.travailEncadre?.etudiant?.prenom ?? ''} ${s.salle?.nom ?? ''}`.toLowerCase();
+        const blob =
+          `${s.travailEncadre?.intitule ?? ''} ${s.travailEncadre?.etudiant?.nom ?? ''} ${s.travailEncadre?.etudiant?.prenom ?? ''} ${s.salle?.nom ?? ''}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;

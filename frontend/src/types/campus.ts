@@ -12,7 +12,8 @@ export type StatutConsommation = 'EN_ATTENTE' | 'VALIDEE' | 'ANNULEE';
 export type StatutReservationSalle = 'EN_ATTENTE' | 'CONFIRMEE' | 'REFUSEE' | 'ANNULEE';
 export type TypeEncadrement = 'STAGE' | 'MEMOIRE' | 'RAPPORT';
 export type StatutEncadrement = 'PROPOSE' | 'VALIDE' | 'EN_COURS' | 'SOUTENU' | 'ABANDONNE';
-export type CategorieIncident = 'VIDEO' | 'SON' | 'RESEAU' | 'ELECTRICITE' | 'MOBILIER' | 'INFORMATIQUE' | 'CLIMATISATION' | 'AUTRE';
+export type CategorieIncident =
+  'VIDEO' | 'SON' | 'RESEAU' | 'ELECTRICITE' | 'MOBILIER' | 'INFORMATIQUE' | 'CLIMATISATION' | 'AUTRE';
 export type PrioriteTicket = 'BASSE' | 'NORMALE' | 'HAUTE';
 export type StatutTicket = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'CLOTURE';
 export type StatutFormation = 'BROUILLON' | 'PUBLIEE' | 'COMPLETE';

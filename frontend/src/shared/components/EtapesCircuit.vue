@@ -98,7 +98,7 @@ const indexActuel = computed(() => props.etapes.findIndex((e) => e.identifiant =
   background: white;
 }
 .workflow__etape--actuelle {
-  border-color: var(--up-primary, #1D1D1F);
+  border-color: var(--up-primary, #1d1d1f);
   background: rgba(15, 122, 69, 0.06);
 }
 .workflow__etape--faite {

@@ -88,7 +88,8 @@
             <div><q-icon name="groups" size="14px" /> {{ s.capacite }} {{ $t('salles.card.capacitySuffix') }}</div>
             <div v-if="s.latitude">
               <q-icon name="my_location" size="14px" />
-              {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }} {{ $t('common.units.radius', { n: s.rayonMetres }) }}
+              {{ s.latitude.toFixed(4) }}, {{ s.longitude?.toFixed(4) }}
+              {{ $t('common.units.radius', { n: s.rayonMetres }) }}
             </div>
             <div v-else class="text-grey-6">
               <q-icon name="location_off" size="14px" /> {{ $t('salles.card.noGpsMark') }}
@@ -154,7 +155,12 @@
           </q-card-actions>
         </q-card>
       </div>
-      <etat-vide v-if="!sallesAffichees.length && !sal.chargement" class="col-12" icone="meeting_room" :titre="messageVide">
+      <etat-vide
+        v-if="!sallesAffichees.length && !sal.chargement"
+        class="col-12"
+        icone="meeting_room"
+        :titre="messageVide"
+      >
         <template #action>
           <q-btn
             v-if="peutGerer && !filtresActifs"
@@ -287,7 +293,12 @@
       :page-size="pageSize"
       :total="sallesFiltrees.length"
       @update:page="(v) => (page = v)"
-      @update:page-size="(v) => { pageSize = v; page = 1; }"
+      @update:page-size="
+        (v) => {
+          pageSize = v;
+          page = 1;
+        }
+      "
       @tous="pageSize = Math.max(sallesFiltrees.length, 1)"
     />
 
@@ -344,10 +355,22 @@
       </p>
       <div class="row q-col-gutter-md">
         <div class="col-4">
-          <q-input v-model.number="form.latitude" type="number" outlined dense :label="$t('salles.dialog.latitudeLabel')" />
+          <q-input
+            v-model.number="form.latitude"
+            type="number"
+            outlined
+            dense
+            :label="$t('salles.dialog.latitudeLabel')"
+          />
         </div>
         <div class="col-4">
-          <q-input v-model.number="form.longitude" type="number" outlined dense :label="$t('salles.dialog.longitudeLabel')" />
+          <q-input
+            v-model.number="form.longitude"
+            type="number"
+            outlined
+            dense
+            :label="$t('salles.dialog.longitudeLabel')"
+          />
         </div>
         <div class="col-4">
           <q-input
@@ -451,11 +474,7 @@ const optionsRepere = computed(() => [
   { label: t('salles.options.withoutGps'), value: 'sans' },
 ]);
 const optionsBatiments = computed(() =>
-  [
-    ...new Set(
-      salles.value.map((s) => s.batiment).filter((b): b is string => !!b),
-    ),
-  ].sort(),
+  [...new Set(salles.value.map((s) => s.batiment).filter((b): b is string => !!b))].sort(),
 );
 
 const sallesFiltrees = computed(() =>
@@ -498,19 +517,27 @@ const chips = computed(() => {
     });
   }
   if (filtres.value.batiment) {
-    cs.push({ label: t('salles.chips.building', { value: filtres.value.batiment }), value: filtres.value.batiment, icone: 'apartment' });
+    cs.push({
+      label: t('salles.chips.building', { value: filtres.value.batiment }),
+      value: filtres.value.batiment,
+      icone: 'apartment',
+    });
   }
   if (filtres.value.etat) {
     cs.push({
       label: filtres.value.etat === 'actif' ? t('salles.chips.stateUsable') : t('salles.chips.stateOutOfService'),
       value: filtres.value.etat,
-      icone: 'toggle_on', cle: 'etat'});
+      icone: 'toggle_on',
+      cle: 'etat',
+    });
   }
   if (filtres.value.repere) {
     cs.push({
       label: filtres.value.repere === 'avec' ? t('salles.chips.withGps') : t('salles.chips.withoutGps'),
       value: filtres.value.repere,
-      icone: 'my_location', cle: 'repere'});
+      icone: 'my_location',
+      cle: 'repere',
+    });
   }
   return cs;
 });
@@ -644,5 +671,4 @@ watch(
 );
 </script>
 
-<style scoped lang="scss">
-</style>
+<style scoped lang="scss"></style>

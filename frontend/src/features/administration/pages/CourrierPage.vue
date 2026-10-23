@@ -134,24 +134,19 @@
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-      <div
-        v-for="c in liste.lignes"
-        :key="c.id"
-        class="col-12 col-sm-6 col-md-4"
-      >
-        <q-card
-          flat
-          bordered
-          class="carte courrier-carte full-height"
-          @click="ouvrirDetail(c)"
-        >
+      <div v-for="c in liste.lignes" :key="c.id" class="col-12 col-sm-6 col-md-4">
+        <q-card flat bordered class="carte courrier-carte full-height" @click="ouvrirDetail(c)">
           <q-card-section>
             <div class="row items-start no-wrap q-col-gutter-sm">
               <div class="col">
                 <div class="text-caption text-grey-7">{{ c.numero }}</div>
                 <div class="text-subtitle1 text-weight-bold">{{ c.objet }}</div>
                 <div class="text-caption q-mt-xs">
-                  {{ c.type === 'ENTRANT' ? $t('courrier.card.from', { value: c.expediteur ?? '—' }) : $t('courrier.card.to', { value: c.destinataire ?? '—' }) }}
+                  {{
+                    c.type === 'ENTRANT'
+                      ? $t('courrier.card.from', { value: c.expediteur ?? '—' })
+                      : $t('courrier.card.to', { value: c.destinataire ?? '—' })
+                  }}
                 </div>
               </div>
               <PastilleStatut domaine="courrier" :statut="c.statut" />
@@ -171,11 +166,26 @@
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat dense no-caps icon="print" :label="$t('courrier.card.print')" @click.stop="imprimer(c)" />
-            <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" :label="$t('common.actions.closeOut')" @click.stop="cloturer(c)" />
+            <q-btn
+              v-if="peutCloturer(c)"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="archive"
+              :label="$t('common.actions.closeOut')"
+              @click.stop="cloturer(c)"
+            />
           </q-card-actions>
         </q-card>
       </div>
-      <etat-vide v-if="!liste.lignes.length && !liste.chargement" class="col-12" icone="mail" :titre="titreVide" :aide="aideVide">
+      <etat-vide
+        v-if="!liste.lignes.length && !liste.chargement"
+        class="col-12"
+        icone="mail"
+        :titre="titreVide"
+        :aide="aideVide"
+      >
         <template #action>
           <q-btn
             v-if="peutCreer"
@@ -203,10 +213,7 @@
       @modifie="liste.recharger()"
     />
 
-    <dialogue-circuit-courrier
-      v-model="dialogCreationOuvert"
-      @enregistre="liste.recharger()"
-    />
+    <dialogue-circuit-courrier v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 
@@ -436,5 +443,4 @@ async function cloturer(c: Courrier) {
     background: var(--up-craie);
   }
 }
-
 </style>

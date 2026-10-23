@@ -27,7 +27,11 @@
             @click="exporterCsv"
           >
             <q-tooltip>
-              {{ $t('statistiquesMesrs.actions.exportTooltip', { annee: anneeLibelle ?? $t('statistiquesMesrs.allYears') }) }}
+              {{
+                $t('statistiquesMesrs.actions.exportTooltip', {
+                  annee: anneeLibelle ?? $t('statistiquesMesrs.allYears'),
+                })
+              }}
             </q-tooltip>
           </q-btn>
         </div>
@@ -55,129 +59,129 @@
     </etat-vide>
 
     <template v-else>
-    <div class="row q-col-gutter-md q-mb-md">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ dernier?.effectifTotal ?? 0 }}</div>
-            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.effectif') }}</div>
-            <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ pourcentLisible(dernier?.tauxReussite) }}</div>
-            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.tauxReussite') }}</div>
-            <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">
-              {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span>
-            </div>
-            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.masseSalariale') }}</div>
-            <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card flat bordered class="carte full-height">
-          <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ snapshots.length }}</div>
-            <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.snapshotsArchived') }}</div>
-            <div class="text-caption text-grey-6">
-              {{ anneeLibelle ?? $t('statistiquesMesrs.allYears') }}
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-    </div>
-
-    <q-card flat bordered class="carte q-mb-md">
-      <q-card-section class="row items-center">
-        <div class="col">
-          <div class="text-subtitle2">{{ $t('statistiquesMesrs.chart.title') }}</div>
-          <div class="text-caption text-grey-7">
-            {{ $t('statistiquesMesrs.chart.subtitle') }}
-          </div>
+      <div class="row q-col-gutter-md q-mb-md">
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="carte full-height">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ dernier?.effectifTotal ?? 0 }}</div>
+              <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.effectif') }}</div>
+              <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
+            </q-card-section>
+          </q-card>
         </div>
-      </q-card-section>
-      <q-card-section>
-        <graphique
-          v-if="configEvolution"
-          :config="configEvolution"
-          :hauteur="320"
-          role="img"
-          :aria-label="resumeEvolution"
-        />
-      </q-card-section>
-    </q-card>
-
-    <q-card flat bordered class="carte">
-      <q-card-section class="row items-center">
-        <div class="col">
-          <div class="text-subtitle2">{{ $t('statistiquesMesrs.table.title') }}</div>
-          <div class="text-caption text-grey-7">
-            {{ $t('statistiquesMesrs.table.countLabel', { count: snapshots.length }) }}
-            <span v-if="anneeLibelle">{{ $t('statistiquesMesrs.table.filteredOn', { annee: anneeLibelle }) }}</span>
-            <span v-else>{{ $t('statistiquesMesrs.allYears') }}</span>
-          </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="carte full-height">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ pourcentLisible(dernier?.tauxReussite) }}</div>
+              <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.tauxReussite') }}</div>
+              <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
+            </q-card-section>
+          </q-card>
         </div>
-      </q-card-section>
-      <q-table
-        flat
-        bordered
-        class="carte"
-        :rows="snapshots"
-        :columns="colonnes"
-        row-key="id"
-        :loading="chargement"
-        :pagination="{ rowsPerPage: 20, sortBy: 'genereLe', descending: true }"
-      >
-        <template #body-cell-genereLe="p">
-          <q-td :props="p">
-            {{ dateHeureLisible(p.row.genereLe) }}
-          </q-td>
-        </template>
-        <template #body-cell-effectif="p">
-          <q-td :props="p" class="text-right chiffres">
-            {{ p.row.donnees?.effectifTotal != null ? nombreLisible(p.row.donnees.effectifTotal, 0) : '—' }}
-          </q-td>
-        </template>
-        <template #body-cell-taux="p">
-          <q-td :props="p" class="text-right">
-            {{ pourcentLisible(p.row.donnees?.tauxReussite) }}
-          </q-td>
-        </template>
-        <template #body-cell-masse="p">
-          <q-td :props="p" class="text-right chiffres">
-            {{ montantLisible(p.row.donnees?.masseSalariale) }}
-          </q-td>
-        </template>
-        <template #body-cell-annee="p">
-          <q-td :props="p">{{ p.row.annee?.libelle ?? '—' }}</q-td>
-        </template>
-        <template #body-cell-actions="p">
-          <q-td :props="p" class="text-right">
-            <q-btn
-              flat
-              dense
-              round
-              icon="print"
-              :aria-label="$t('statistiquesMesrs.table.printAria', { date: dateHeureLisible(p.row.genereLe) })"
-              @click="imprimer(p.row)"
-            >
-              <q-tooltip>{{ $t('statistiquesMesrs.table.printTooltip') }}</q-tooltip>
-            </q-btn>
-          </q-td>
-        </template>
-      </q-table>
-    </q-card>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="carte full-height">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">
+                {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span>
+              </div>
+              <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.masseSalariale') }}</div>
+              <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <q-card flat bordered class="carte full-height">
+            <q-card-section class="text-center">
+              <div class="stat-chiffre chiffres">{{ snapshots.length }}</div>
+              <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.snapshotsArchived') }}</div>
+              <div class="text-caption text-grey-6">
+                {{ anneeLibelle ?? $t('statistiquesMesrs.allYears') }}
+              </div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <q-card flat bordered class="carte q-mb-md">
+        <q-card-section class="row items-center">
+          <div class="col">
+            <div class="text-subtitle2">{{ $t('statistiquesMesrs.chart.title') }}</div>
+            <div class="text-caption text-grey-7">
+              {{ $t('statistiquesMesrs.chart.subtitle') }}
+            </div>
+          </div>
+        </q-card-section>
+        <q-card-section>
+          <graphique
+            v-if="configEvolution"
+            :config="configEvolution"
+            :hauteur="320"
+            role="img"
+            :aria-label="resumeEvolution"
+          />
+        </q-card-section>
+      </q-card>
+
+      <q-card flat bordered class="carte">
+        <q-card-section class="row items-center">
+          <div class="col">
+            <div class="text-subtitle2">{{ $t('statistiquesMesrs.table.title') }}</div>
+            <div class="text-caption text-grey-7">
+              {{ $t('statistiquesMesrs.table.countLabel', { count: snapshots.length }) }}
+              <span v-if="anneeLibelle">{{ $t('statistiquesMesrs.table.filteredOn', { annee: anneeLibelle }) }}</span>
+              <span v-else>{{ $t('statistiquesMesrs.allYears') }}</span>
+            </div>
+          </div>
+        </q-card-section>
+        <q-table
+          flat
+          bordered
+          class="carte"
+          :rows="snapshots"
+          :columns="colonnes"
+          row-key="id"
+          :loading="chargement"
+          :pagination="{ rowsPerPage: 20, sortBy: 'genereLe', descending: true }"
+        >
+          <template #body-cell-genereLe="p">
+            <q-td :props="p">
+              {{ dateHeureLisible(p.row.genereLe) }}
+            </q-td>
+          </template>
+          <template #body-cell-effectif="p">
+            <q-td :props="p" class="text-right chiffres">
+              {{ p.row.donnees?.effectifTotal != null ? nombreLisible(p.row.donnees.effectifTotal, 0) : '—' }}
+            </q-td>
+          </template>
+          <template #body-cell-taux="p">
+            <q-td :props="p" class="text-right">
+              {{ pourcentLisible(p.row.donnees?.tauxReussite) }}
+            </q-td>
+          </template>
+          <template #body-cell-masse="p">
+            <q-td :props="p" class="text-right chiffres">
+              {{ montantLisible(p.row.donnees?.masseSalariale) }}
+            </q-td>
+          </template>
+          <template #body-cell-annee="p">
+            <q-td :props="p">{{ p.row.annee?.libelle ?? '—' }}</q-td>
+          </template>
+          <template #body-cell-actions="p">
+            <q-td :props="p" class="text-right">
+              <q-btn
+                flat
+                dense
+                round
+                icon="print"
+                :aria-label="$t('statistiquesMesrs.table.printAria', { date: dateHeureLisible(p.row.genereLe) })"
+                @click="imprimer(p.row)"
+              >
+                <q-tooltip>{{ $t('statistiquesMesrs.table.printTooltip') }}</q-tooltip>
+              </q-btn>
+            </q-td>
+          </template>
+        </q-table>
+      </q-card>
     </template>
   </q-page>
 </template>
@@ -195,12 +199,7 @@ import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import Graphique from '@/shared/components/Graphique.vue';
-import {
-  dateHeureLisible,
-  montantLisible,
-  nombreLisible,
-  pourcentLisible,
-} from '@/shared/utils/libelles';
+import { dateHeureLisible, montantLisible, nombreLisible, pourcentLisible } from '@/shared/utils/libelles';
 import type { AnneeAcademique, StatistiqueMesrs } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -223,12 +222,8 @@ const anneeId = ref<string | null>(null);
 const snapshots = ref<StatistiqueMesrs[]>([]);
 const chargement = ref(false);
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
-);
-const anneeLibelle = computed(
-  () => annees.value.find((a) => a.id === anneeId.value)?.libelle ?? null,
-);
+const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
+const anneeLibelle = computed(() => annees.value.find((a) => a.id === anneeId.value)?.libelle ?? null);
 
 /**
  * Les snapshots rangés du plus ancien au plus récent : l'ordre de l'API n'est
@@ -236,9 +231,7 @@ const anneeLibelle = computed(
  * arrive — le graphique comme les vignettes en dépendent.
  */
 const ordonnes = computed(() =>
-  [...snapshots.value].sort(
-    (a, b) => new Date(a.genereLe).getTime() - new Date(b.genereLe).getTime(),
-  ),
+  [...snapshots.value].sort((a, b) => new Date(a.genereLe).getTime() - new Date(b.genereLe).getTime()),
 );
 
 const dernierSnapshot = computed(() => ordonnes.value[ordonnes.value.length - 1] ?? null);
@@ -273,7 +266,13 @@ function dateLisibleCourt(iso: string): string {
 }
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'genereLe', label: t('statistiquesMesrs.table.columns.genereLe'), field: 'genereLe', align: 'left', sortable: true },
+  {
+    name: 'genereLe',
+    label: t('statistiquesMesrs.table.columns.genereLe'),
+    field: 'genereLe',
+    align: 'left',
+    sortable: true,
+  },
   { name: 'annee', label: t('common.fields.year'), field: 'annee', align: 'left' },
   { name: 'effectif', label: t('common.fields.headcount'), field: 'effectif', align: 'right' },
   { name: 'taux', label: t('statistiquesMesrs.table.columns.taux'), field: 'taux', align: 'right' },
@@ -281,8 +280,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'generePar',
     label: t('statistiquesMesrs.table.columns.generePar'),
-    field: (r: StatistiqueMesrs) =>
-      r.generePar ? `${r.generePar.prenom} ${r.generePar.nom}` : '—',
+    field: (r: StatistiqueMesrs) => (r.generePar ? `${r.generePar.prenom} ${r.generePar.nom}` : '—'),
     align: 'left',
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
@@ -426,7 +424,7 @@ async function charger() {
   try {
     const params = anneeId.value ? { anneeId: anneeId.value } : {};
     const { data } = await api.get('/rectorat/bilan-mesrs', { params });
-    snapshots.value = Array.isArray(data) ? data : data.data ?? [];
+    snapshots.value = Array.isArray(data) ? data : (data.data ?? []);
   } catch {
     snapshots.value = [];
   } finally {
@@ -451,5 +449,4 @@ onMounted(async () => {
   line-height: 1.1;
   font-weight: 590;
 }
-
 </style>

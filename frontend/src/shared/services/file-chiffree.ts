@@ -31,7 +31,8 @@ function ouvrirBase(): Promise<IDBDatabase> {
 }
 
 async function obtenirCle(proprietaire: string): Promise<CryptoKey> {
-  if (!proprietaire || !globalThis.crypto?.subtle) throw new Error(i18n.global.t('filePointages.chiffrement.unavailable'));
+  if (!proprietaire || !globalThis.crypto?.subtle)
+    throw new Error(i18n.global.t('filePointages.chiffrement.unavailable'));
   const existante = ouvertures.get(proprietaire);
   if (existante) return existante;
 
@@ -52,7 +53,8 @@ async function obtenirCle(proprietaire: string): Promise<CryptoKey> {
             store.put({ proprietaire, cle: generee } satisfies EntreeCle);
           }
         };
-        tx.oncomplete = () => resultat ? resolve(resultat) : reject(new Error(i18n.global.t('filePointages.chiffrement.keyMissing')));
+        tx.oncomplete = () =>
+          resultat ? resolve(resultat) : reject(new Error(i18n.global.t('filePointages.chiffrement.keyMissing')));
         tx.onerror = () => reject(tx.error ?? new Error(i18n.global.t('filePointages.chiffrement.keySaveFailed')));
         tx.onabort = () => reject(tx.error ?? new Error(i18n.global.t('filePointages.chiffrement.keySaveAborted')));
       });
@@ -61,8 +63,12 @@ async function obtenirCle(proprietaire: string): Promise<CryptoKey> {
     }
   })();
   ouvertures.set(proprietaire, ouverture);
-  try { return await ouverture; }
-  catch (error) { ouvertures.delete(proprietaire); throw error; }
+  try {
+    return await ouverture;
+  } catch (error) {
+    ouvertures.delete(proprietaire);
+    throw error;
+  }
 }
 
 async function chargerCle(proprietaire: string): Promise<CryptoKey> {
@@ -74,7 +80,8 @@ async function chargerCle(proprietaire: string): Promise<CryptoKey> {
       const tx = db.transaction(STORE, 'readonly');
       const lecture = tx.objectStore(STORE).get(proprietaire);
       lecture.onsuccess = () => resolve(lecture.result as EntreeCle | undefined);
-      lecture.onerror = () => reject(lecture.error ?? new Error(i18n.global.t('filePointages.chiffrement.keyReadFailed')));
+      lecture.onerror = () =>
+        reject(lecture.error ?? new Error(i18n.global.t('filePointages.chiffrement.keyReadFailed')));
     });
     if (!entree?.cle) throw new Error(i18n.global.t('filePointages.chiffrement.decryptKeyMissing'));
     return entree.cle;
@@ -127,7 +134,8 @@ export async function lireFileChiffree<T>(cleStockage: string, proprietaire: str
   }
 
   const [nonceBase64, chiffreBase64, reste] = brut.slice(PREFIXE.length).split(':');
-  if (!nonceBase64 || !chiffreBase64 || reste) throw new Error(i18n.global.t('filePointages.chiffrement.invalidFormat'));
+  if (!nonceBase64 || !chiffreBase64 || reste)
+    throw new Error(i18n.global.t('filePointages.chiffrement.invalidFormat'));
   const clair = await crypto.subtle.decrypt(
     { name: 'AES-GCM', iv: bufferStable(decoderBase64(nonceBase64)) },
     await chargerCle(proprietaire),

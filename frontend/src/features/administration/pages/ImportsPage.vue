@@ -75,9 +75,15 @@
           {{ t('imports.ignoredColumns', { columns: apercu.colonnesIgnorees.join(', ') }) }}
         </q-banner>
         <div class="row q-col-gutter-sm q-mt-sm">
-          <div class="col-4"><q-badge color="grey-7">{{ t('imports.lines') }} : {{ apercu.lignesLues }}</q-badge></div>
-          <div class="col-4"><q-badge color="positive">{{ t('imports.valid') }} : {{ apercu.valides }}</q-badge></div>
-          <div class="col-4"><q-badge color="negative">{{ t('imports.rejected') }} : {{ apercu.rejetees }}</q-badge></div>
+          <div class="col-4">
+            <q-badge color="grey-7">{{ t('imports.lines') }} : {{ apercu.lignesLues }}</q-badge>
+          </div>
+          <div class="col-4">
+            <q-badge color="positive">{{ t('imports.valid') }} : {{ apercu.valides }}</q-badge>
+          </div>
+          <div class="col-4">
+            <q-badge color="negative">{{ t('imports.rejected') }} : {{ apercu.rejetees }}</q-badge>
+          </div>
         </div>
       </q-card-section>
       <q-card-section v-if="apercu.valides && !apercu.rejetees" class="q-pt-none">
@@ -97,7 +103,9 @@
           :rows-per-page-options="[10]"
         >
           <template #body-cell-donnees="p">
-            <q-td :props="p"><code>{{ JSON.stringify(p.row.donnees) }}</code></q-td>
+            <q-td :props="p"
+              ><code>{{ JSON.stringify(p.row.donnees) }}</code></q-td
+            >
           </template>
           <template #body-cell-erreurs="p">
             <q-td :props="p">
@@ -122,7 +130,9 @@
       <template #avatar><q-icon name="task_alt" /></template>
       {{ t('imports.done', { count: rapport.importees }) }}
       <span v-if="rapport.rejetees"> · {{ t('imports.rejected') }} : {{ rapport.rejetees }}</span>
-      <template #action><q-btn flat round icon="close" :aria-label="t('common.actions.close')" @click="rapport = null" /></template>
+      <template #action
+        ><q-btn flat round icon="close" :aria-label="t('common.actions.close')" @click="rapport = null"
+      /></template>
       <div v-if="rapport.erreurs.length" class="q-mt-sm">
         <div v-for="item in rapport.erreurs" :key="item.numero">
           {{ t('imports.line') }} {{ item.numero }} : {{ item.erreurs.join(' · ') }}
@@ -142,7 +152,10 @@ import EnTetePage from '@/shared/components/EnTetePage.vue';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 
 type TypeImport = 'enseignants' | 'matieres' | 'salles' | 'creneaux';
-interface LigneErreur { numero: number; erreurs: string[] }
+interface LigneErreur {
+  numero: number;
+  erreurs: string[];
+}
 interface Apercu {
   type: TypeImport;
   colonnesIgnorees?: string[];
@@ -152,7 +165,12 @@ interface Apercu {
   apercu: Array<{ numero: number; donnees: Record<string, unknown>; erreurs: string[] }>;
   erreurs: LigneErreur[];
 }
-interface Rapport { importees: number; rejetees: number; erreurs: LigneErreur[]; colonnesIgnorees?: string[] }
+interface Rapport {
+  importees: number;
+  rejetees: number;
+  erreurs: LigneErreur[];
+  colonnesIgnorees?: string[];
+}
 
 const { t } = useI18n();
 const { confirmer } = useConfirmation();
@@ -162,8 +180,12 @@ const apercu = ref<Apercu | null>(null);
 const rapport = ref<Rapport | null>(null);
 const chargement = ref<'' | 'preview' | 'apply'>('');
 
-const optionsType = computed(() => (['enseignants', 'matieres', 'salles', 'creneaux'] as const)
-  .map((value) => ({ value, label: t(`imports.types.${value}`) })));
+const optionsType = computed(() =>
+  (['enseignants', 'matieres', 'salles', 'creneaux'] as const).map((value) => ({
+    value,
+    label: t(`imports.types.${value}`),
+  })),
+);
 const colonnes = computed(() => [
   { name: 'numero', label: t('imports.line'), field: 'numero', align: 'left' as const },
   { name: 'donnees', label: t('imports.data'), field: 'donnees', align: 'left' as const },
@@ -213,10 +235,14 @@ async function previsualiser() {
   rapport.value = null;
   try {
     const contenu = await contenuCsv();
-    const { data } = await api.post<Apercu>('/imports/referentiels/previsualiser', {
-      type: type.value,
-      contenu,
-    }, { timeout: 60_000 });
+    const { data } = await api.post<Apercu>(
+      '/imports/referentiels/previsualiser',
+      {
+        type: type.value,
+        contenu,
+      },
+      { timeout: 60_000 },
+    );
     apercu.value = data;
   } catch (error: unknown) {
     apercu.value = null;
@@ -249,10 +275,14 @@ async function appliquer() {
   chargement.value = 'apply';
   try {
     const contenu = await contenuCsv();
-    const { data } = await api.post<Rapport>('/imports/referentiels/appliquer', {
-      type: type.value,
-      contenu,
-    }, { timeout: 120_000 });
+    const { data } = await api.post<Rapport>(
+      '/imports/referentiels/appliquer',
+      {
+        type: type.value,
+        contenu,
+      },
+      { timeout: 120_000 },
+    );
     rapport.value = data;
     apercu.value = null;
   } catch (error: unknown) {

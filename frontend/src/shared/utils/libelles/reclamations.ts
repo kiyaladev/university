@@ -1,6 +1,12 @@
 /** Réclamations et demandes de documents. */
 import { traduireLibelles } from './traduire';
-import type { PrioriteReclamation, StatutDemande, StatutReclamation, TypeDemandeDocument, TypeReclamation } from '@/types';
+import type {
+  PrioriteReclamation,
+  StatutDemande,
+  StatutReclamation,
+  TypeDemandeDocument,
+  TypeReclamation,
+} from '@/types';
 
 /**
  * Réclamations. Le même dossier se lit dans le registre de la scolarité, dans
@@ -29,12 +35,15 @@ export const LIBELLE_TYPE_RECLAMATION: Record<TypeReclamation, string> = traduir
 });
 
 /** Priorité propre aux réclamations : elle monte jusqu'à « Urgente », contrairement aux tickets helpdesk. */
-export const LIBELLE_PRIORITE_RECLAMATION: Record<PrioriteReclamation, string> = traduireLibelles('priorite_reclamation', {
-  BASSE: 'Basse',
-  NORMALE: 'Normale',
-  HAUTE: 'Haute',
-  URGENTE: 'Urgente',
-});
+export const LIBELLE_PRIORITE_RECLAMATION: Record<PrioriteReclamation, string> = traduireLibelles(
+  'priorite_reclamation',
+  {
+    BASSE: 'Basse',
+    NORMALE: 'Normale',
+    HAUTE: 'Haute',
+    URGENTE: 'Urgente',
+  },
+);
 
 /**
  * Demandes de documents. Une même demande s'affiche au guichet de la scolarité,

@@ -20,7 +20,14 @@
           <champ-date v-model="form.dateTirage" :label="t('tirage.dialogs.schedule.dateLabel')" />
         </div>
         <div class="col-6">
-          <q-input v-model.number="form.nbExemplaires" type="number" min="1" outlined dense :label="t('tirage.dialogs.schedule.copiesLabel')" />
+          <q-input
+            v-model.number="form.nbExemplaires"
+            type="number"
+            min="1"
+            outlined
+            dense
+            :label="t('tirage.dialogs.schedule.copiesLabel')"
+          />
         </div>
       </div>
       <q-input
@@ -42,7 +49,14 @@
           <q-tooltip>{{ t('tirage.dialogs.schedule.calculateFromFile') }}</q-tooltip>
         </template>
       </q-input>
-      <q-file v-model="fichierSource" outlined dense :label="t('tirage.dialogs.schedule.fileLabel')" accept="application/pdf,.pdf" @update:model-value="calculerDepuisFichier" />
+      <q-file
+        v-model="fichierSource"
+        outlined
+        dense
+        :label="t('tirage.dialogs.schedule.fileLabel')"
+        accept="application/pdf,.pdf"
+        @update:model-value="calculerDepuisFichier"
+      />
       <q-input v-model="form.circuitImpression" outlined dense :label="t('tirage.dialogs.schedule.printRouteLabel')" />
       <q-input v-model="form.notes" outlined dense type="textarea" rows="2" :label="t('common.fields.notes')" />
     </div>

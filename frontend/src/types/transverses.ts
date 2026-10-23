@@ -8,12 +8,7 @@ export type TypeBadge = 'VISITEUR' | 'INTERVENANT' | 'TECHNICIEN' | 'VIP';
 export type StatutBadge = 'ACTIF' | 'EXPIRE' | 'ANNULE';
 export type TypeRessourceVOD = 'AUDIO' | 'VIDEO' | 'NOTES' | 'TRANSCRIPTION';
 export type StatutVOD = 'BROUILLON' | 'EN_LIGNE' | 'HORS_LIGNE' | 'ARCHIVE';
-export type TypeElection =
-  | 'DELEGUE_PROMOTION'
-  | 'DELEGUE_DEPARTEMENT'
-  | 'PRESIDENT_UNIVERSITE'
-  | 'SYNDICAT'
-  | 'CLUB';
+export type TypeElection = 'DELEGUE_PROMOTION' | 'DELEGUE_DEPARTEMENT' | 'PRESIDENT_UNIVERSITE' | 'SYNDICAT' | 'CLUB';
 export type StatutElection = 'BROUILLON' | 'OUVERTE' | 'CLOSE' | 'PROCLAMEE' | 'ANNULEE';
 export type ModeVote = 'WEB' | 'KIOSQUE' | 'SMS';
 

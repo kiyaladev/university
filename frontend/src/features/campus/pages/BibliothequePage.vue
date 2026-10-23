@@ -2,13 +2,7 @@
   <q-page class="q-pa-md">
     <en-tete-page :title="$t('bibliotheque.title')" :subtitle="$t('bibliotheque.subtitle')">
       <template #actions>
-        <q-btn
-          flat
-          no-caps
-          icon="public"
-          :label="$t('bibliotheque.actions.viewShowcase')"
-          to="/bibliotheque"
-        >
+        <q-btn flat no-caps icon="public" :label="$t('bibliotheque.actions.viewShowcase')" to="/bibliotheque">
           <q-tooltip>{{ $t('bibliotheque.actions.viewShowcaseTooltip') }}</q-tooltip>
         </q-btn>
         <q-btn
@@ -87,12 +81,7 @@
       </div>
     </div>
 
-    <barre-filtres
-      v-model="filtres"
-      :chips="chips"
-      :recherche="false"
-      @reinitialiser="reinitialiser"
-    >
+    <barre-filtres v-model="filtres" :chips="chips" :recherche="false" @reinitialiser="reinitialiser">
       <template #avances>
         <q-select
           v-model="filtres.type"
@@ -143,7 +132,14 @@
       :aide="$t('bibliotheque.emptyState.hint')"
     >
       <template v-if="peutDeposer" #action>
-        <q-btn flat no-caps color="primary" icon="add" :label="$t('bibliotheque.actions.depositDocument')" @click="ouvrir(null)" />
+        <q-btn
+          flat
+          no-caps
+          color="primary"
+          icon="add"
+          :label="$t('bibliotheque.actions.depositDocument')"
+          @click="ouvrir(null)"
+        />
       </template>
     </etat-vide>
 
@@ -182,7 +178,9 @@
       </template>
       <template #body-cell-taille="p">
         <q-td :props="p" class="text-right">
-          <span v-if="p.row.tailleKo">{{ $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) }) }}</span>
+          <span v-if="p.row.tailleKo">{{
+            $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) })
+          }}</span>
           <span v-else>{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
@@ -193,7 +191,9 @@
             :color="p.row.public ? 'positive' : 'orange'"
             size="20px"
           >
-            <q-tooltip>{{ p.row.public ? $t('bibliotheque.status.published') : $t('bibliotheque.status.unpublished') }}</q-tooltip>
+            <q-tooltip>{{
+              p.row.public ? $t('bibliotheque.status.published') : $t('bibliotheque.status.unpublished')
+            }}</q-tooltip>
           </q-icon>
         </q-td>
       </template>
@@ -216,35 +216,76 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-          <q-btn v-if="p.row.fichier" flat dense round icon="download" :aria-label="$t('bibliotheque.actionsColumn.downloadAria')" @click="telecharger(p.row)">
+          <q-btn
+            v-if="p.row.fichier"
+            flat
+            dense
+            round
+            icon="download"
+            :aria-label="$t('bibliotheque.actionsColumn.downloadAria')"
+            @click="telecharger(p.row)"
+          >
             <q-tooltip>{{ $t('common.actions.download') }}</q-tooltip>
           </q-btn>
-          <q-btn flat dense round icon="visibility" :aria-label="$t('bibliotheque.actionsColumn.previewAria')" @click="ouvrirApercu(p.row)">
+          <q-btn
+            flat
+            dense
+            round
+            icon="visibility"
+            :aria-label="$t('bibliotheque.actionsColumn.previewAria')"
+            @click="ouvrirApercu(p.row)"
+          >
             <q-tooltip>{{ $t('bibliotheque.actionsColumn.previewTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="peutGerer" flat dense round icon="edit" :aria-label="$t('bibliotheque.actionsColumn.editAria')" @click="ouvrir(p.row)">
+          <q-btn
+            v-if="peutGerer"
+            flat
+            dense
+            round
+            icon="edit"
+            :aria-label="$t('bibliotheque.actionsColumn.editAria')"
+            @click="ouvrir(p.row)"
+          >
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGerer"
-            flat dense round
+            flat
+            dense
+            round
             :icon="p.row.public ? 'visibility_off' : 'visibility'"
             :color="p.row.public ? 'orange' : 'primary'"
-            :aria-label="p.row.public ? $t('bibliotheque.actionsColumn.unpublishAria') : $t('bibliotheque.actionsColumn.publishAria')"
+            :aria-label="
+              p.row.public
+                ? $t('bibliotheque.actionsColumn.unpublishAria')
+                : $t('bibliotheque.actionsColumn.publishAria')
+            "
             @click="basculerPublic(p.row)"
           >
             <q-tooltip>{{ p.row.public ? $t('common.actions.unpublish') : $t('common.actions.publish') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutVoirPlagiat && (p.row.indicePlagiat ?? 0) > 0"
-            flat dense round icon="policy"
+            flat
+            dense
+            round
+            icon="policy"
             :color="couleurPlagiat(p.row.indicePlagiat ?? 0)"
             :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
             @click="voirScore(p.row)"
           >
             <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('bibliotheque.actionsColumn.deleteAria')" @click="supprimer(p.row)">
+          <q-btn
+            v-if="auth.estAdmin"
+            flat
+            dense
+            round
+            color="negative"
+            icon="delete"
+            :aria-label="$t('bibliotheque.actionsColumn.deleteAria')"
+            @click="supprimer(p.row)"
+          >
             <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
           </q-btn>
         </q-td>
@@ -255,7 +296,13 @@
       <div v-for="doc in documents" :key="doc.id" class="col-12 col-sm-6 col-lg-4">
         <q-card class="carte carte-document q-pa-md full-height">
           <div class="row items-start no-wrap">
-            <q-chip dense outline color="primary" class="q-ma-none" :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type" />
+            <q-chip
+              dense
+              outline
+              color="primary"
+              class="q-ma-none"
+              :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type"
+            />
             <q-space />
             <q-icon v-if="!doc.public" name="visibility_off" color="orange" size="20px">
               <q-tooltip>{{ $t('bibliotheque.card.unpublished') }}</q-tooltip>
@@ -290,7 +337,9 @@
               <div>{{ doc.departement?.nom ?? '—' }}</div>
               <div>
                 {{ $t('bibliotheque.card.year', { year: anneeDocument(doc) }) }}
-                <template v-if="doc.tailleKo">· {{ $t('common.units.megabytes', { n: (doc.tailleKo / 1024).toFixed(1) }) }}</template>
+                <template v-if="doc.tailleKo"
+                  >· {{ $t('common.units.megabytes', { n: (doc.tailleKo / 1024).toFixed(1) }) }}</template
+                >
               </div>
             </div>
             <div class="col-auto" :title="$t('bibliotheque.card.downloads', { count: doc.telechargements })">
@@ -299,31 +348,75 @@
           </div>
 
           <div class="row q-mt-sm q-col-gutter-xs justify-end">
-            <q-btn v-if="doc.fichier" flat dense outline color="primary" icon="download" :label="$t('common.actions.download')" no-caps @click="telecharger(doc)" />
-            <q-btn flat dense outline icon="visibility" :label="$t('bibliotheque.actionsColumn.preview')" no-caps @click="ouvrirApercu(doc)" />
-            <q-btn v-if="peutGerer" flat dense round icon="edit" :aria-label="$t('bibliotheque.actionsColumn.editAria')" @click="ouvrir(doc)">
+            <q-btn
+              v-if="doc.fichier"
+              flat
+              dense
+              outline
+              color="primary"
+              icon="download"
+              :label="$t('common.actions.download')"
+              no-caps
+              @click="telecharger(doc)"
+            />
+            <q-btn
+              flat
+              dense
+              outline
+              icon="visibility"
+              :label="$t('bibliotheque.actionsColumn.preview')"
+              no-caps
+              @click="ouvrirApercu(doc)"
+            />
+            <q-btn
+              v-if="peutGerer"
+              flat
+              dense
+              round
+              icon="edit"
+              :aria-label="$t('bibliotheque.actionsColumn.editAria')"
+              @click="ouvrir(doc)"
+            >
               <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutGerer"
-              flat dense round
+              flat
+              dense
+              round
               :icon="doc.public ? 'visibility_off' : 'visibility'"
               :color="doc.public ? 'orange' : 'primary'"
-              :aria-label="doc.public ? $t('bibliotheque.actionsColumn.unpublishAria') : $t('bibliotheque.actionsColumn.publishAria')"
+              :aria-label="
+                doc.public
+                  ? $t('bibliotheque.actionsColumn.unpublishAria')
+                  : $t('bibliotheque.actionsColumn.publishAria')
+              "
               @click="basculerPublic(doc)"
             >
               <q-tooltip>{{ doc.public ? $t('common.actions.unpublish') : $t('common.actions.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutVoirPlagiat && (doc.indicePlagiat ?? 0) > 0"
-              flat dense round icon="policy"
+              flat
+              dense
+              round
+              icon="policy"
               :color="couleurPlagiat(doc.indicePlagiat ?? 0)"
               :aria-label="$t('bibliotheque.actionsColumn.viewScoreAria')"
               @click="voirScore(doc)"
             >
               <q-tooltip>{{ $t('bibliotheque.actionsColumn.viewScoreTooltip') }}</q-tooltip>
             </q-btn>
-            <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('bibliotheque.actionsColumn.deleteAria')" @click="supprimer(doc)">
+            <q-btn
+              v-if="auth.estAdmin"
+              flat
+              dense
+              round
+              color="negative"
+              icon="delete"
+              :aria-label="$t('bibliotheque.actionsColumn.deleteAria')"
+              @click="supprimer(doc)"
+            >
               <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </div>
@@ -339,11 +432,7 @@
       @tous="chargerTout"
     />
 
-    <dialogue-document
-      v-model="dialogOuvert"
-      :document="documentEdite"
-      @enregistre="premierePage"
-    />
+    <dialogue-document v-model="dialogOuvert" :document="documentEdite" @enregistre="premierePage" />
 
     <!-- Dialog : aperçu du contenu extrait -->
     <q-dialog v-model="apercuOuvert" maximized>
@@ -474,18 +563,35 @@ const chips = computed(() => {
   const f = filtres.value;
   const cs: ChipFiltre[] = [];
   if (f.type) {
-    cs.push({ label: LIBELLE_TYPE_DOCUMENT[f.type] ?? f.type, value: f.type, icone: 'category', cle: 'type'});
+    cs.push({ label: LIBELLE_TYPE_DOCUMENT[f.type] ?? f.type, value: f.type, icone: 'category', cle: 'type' });
   }
-  if (f.departementId) cs.push({ label: t('bibliotheque.filters.departmentFiltered'), value: f.departementId, icone: 'account_tree', cle: 'departementId'});
-  if (f.anneeEdition) cs.push({ label: t('bibliotheque.filters.yearChip', { year: f.anneeEdition }), value: f.anneeEdition, icone: 'event' });
+  if (f.departementId)
+    cs.push({
+      label: t('bibliotheque.filters.departmentFiltered'),
+      value: f.departementId,
+      icone: 'account_tree',
+      cle: 'departementId',
+    });
+  if (f.anneeEdition)
+    cs.push({
+      label: t('bibliotheque.filters.yearChip', { year: f.anneeEdition }),
+      value: f.anneeEdition,
+      icone: 'event',
+    });
   if (f.public) {
     cs.push({
       label: f.public === '1' ? t('bibliotheque.filters.published') : t('bibliotheque.filters.unpublished'),
       value: f.public,
-      icone: f.public === '1' ? 'visibility' : 'visibility_off', cle: 'public'});
+      icone: f.public === '1' ? 'visibility' : 'visibility_off',
+      cle: 'public',
+    });
   }
   if (rechercheTexte.value) {
-    cs.push({ label: t('bibliotheque.filters.searchChip', { value: rechercheTexte.value }), value: rechercheTexte.value, icone: 'search' });
+    cs.push({
+      label: t('bibliotheque.filters.searchChip', { value: rechercheTexte.value }),
+      value: rechercheTexte.value,
+      icone: 'search',
+    });
   }
   return cs;
 });
@@ -627,9 +733,7 @@ async function basculerPublic(doc: DocumentDepot) {
   doc.public = !doc.public;
   $q.notify({
     type: 'positive',
-    message: doc.public
-      ? t('bibliotheque.messages.published')
-      : t('bibliotheque.messages.unpublished'),
+    message: doc.public ? t('bibliotheque.messages.published') : t('bibliotheque.messages.unpublished'),
   });
 }
 
@@ -707,7 +811,7 @@ async function lancerRecalcul() {
    variable Sass `$jaune` qui s'y trouvait n'y était jamais résolue, et le
    surlignage n'avait donc aucun fond. */
 .doc-extrait :deep(mark) {
-  background: #FFF6C2;
+  background: #fff6c2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);
@@ -724,7 +828,7 @@ async function lancerRecalcul() {
   margin: 0;
 }
 .apercu-texte :deep(mark) {
-  background: #FFF6C2;
+  background: #fff6c2;
   padding: 0 2px;
   border-radius: 2px;
   color: var(--up-encre);

@@ -62,7 +62,7 @@ export default {
       formation: 'Course',
       participant: 'Participant',
       montantARegler: 'Amount due',
-      note: 'By submitting this request, you agree to pay the course fees via Mobile Money. Payment confirmation is handled at the registrar\'s office.',
+      note: "By submitting this request, you agree to pay the course fees via Mobile Money. Payment confirmation is handled at the registrar's office.",
       retour: 'Back',
       deposer: 'Submit my enrollment request',
     },
@@ -71,9 +71,11 @@ export default {
       deposee: 'Submitted',
       numeroDossier: 'Reference number',
       aReglerMobileMoney: 'To pay via Mobile Money',
-      paiementTexte: 'Go to the registrar\'s office to pay this amount (reference {numero}). Once payment is received, your enrollment will become {confirmee} and your spot will be reserved.',
+      paiementTexte:
+        "Go to the registrar's office to pay this amount (reference {numero}). Once payment is received, your enrollment will become {confirmee} and your spot will be reserved.",
       confirmee: 'confirmed',
-      statutInfo: 'Current status of your request: {statut} — you will receive your training certificate at the end of the course.',
+      statutInfo:
+        'Current status of your request: {statut} — you will receive your training certificate at the end of the course.',
       enAttentePaiement: 'awaiting payment',
       inscrireAutre: 'Enroll another participant',
     },

@@ -2,7 +2,7 @@
 export default {
   title: 'Adjunct staff payroll',
   subtitle:
-    "The path of a monthly sheet: it aggregates the hours recorded during attendance checks, management validates it — the amounts are then locked —, then admin staff mark it paid.",
+    'The path of a monthly sheet: it aggregates the hours recorded during attendance checks, management validates it — the amounts are then locked —, then admin staff mark it paid.',
   actions: {
     newSheet: 'New sheet',
     markPaid: 'Mark paid',
@@ -73,9 +73,11 @@ export default {
       title: 'New payroll sheet',
       month: 'Month *',
       year: 'Year *',
-      periodHint: 'The “{label}” sheet covers the first through the last day of the month. Checked hours from UniPrésence are then aggregated line by line.',
+      periodHint:
+        'The “{label}” sheet covers the first through the last day of the month. Checked hours from UniPrésence are then aggregated line by line.',
       create: 'Create sheet',
-      draftHint: 'The sheet is a draft: recalculate it to aggregate checked hours, then have it approved by management.',
+      draftHint:
+        'The sheet is a draft: recalculate it to aggregate checked hours, then have it approved by management.',
       recalculateNow: 'Recalculate now',
       created: 'Sheet “{label}” created',
       createFailed: 'Unable to create the sheet',

@@ -2,15 +2,18 @@
 import { traduireLibelles } from './traduire';
 import type { StatutPresence, StatutSeance, TypeCours } from '@/types';
 
-export const LIBELLE_STATUT_PRESENCE: Record<StatutPresence | 'NON_CONTROLE', string> = traduireLibelles('statut_presence', {
-  PRESENT: 'Présent',
-  RETARD: 'Retard',
-  ABSENT: 'Absent',
-  DEPART_ANTICIPE: 'Départ anticipé',
-  REMPLACE: 'Remplacé',
-  EXCUSE: 'Absence excusée',
-  NON_CONTROLE: 'Non contrôlé',
-});
+export const LIBELLE_STATUT_PRESENCE: Record<StatutPresence | 'NON_CONTROLE', string> = traduireLibelles(
+  'statut_presence',
+  {
+    PRESENT: 'Présent',
+    RETARD: 'Retard',
+    ABSENT: 'Absent',
+    DEPART_ANTICIPE: 'Départ anticipé',
+    REMPLACE: 'Remplacé',
+    EXCUSE: 'Absence excusée',
+    NON_CONTROLE: 'Non contrôlé',
+  },
+);
 
 export const ICONE_STATUT_PRESENCE: Record<string, string> = {
   PRESENT: 'check_circle',

@@ -42,8 +42,7 @@ export default {
   },
   deleteDialog: {
     title: 'Delete the subject',
-    message:
-      'Delete "{intitule}"? The teaching assignments carrying it will also be deleted.',
+    message: 'Delete "{intitule}"? The teaching assignments carrying it will also be deleted.',
   },
   messages: {
     saved: 'Subject saved',

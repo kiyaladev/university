@@ -19,7 +19,15 @@
       />
       <div class="row q-col-gutter-md">
         <div class="col-6">
-          <q-select v-model="form.type" :options="optionsTypes" outlined dense emit-value map-options :label="$t('common.fields.type')" />
+          <q-select
+            v-model="form.type"
+            :options="optionsTypes"
+            outlined
+            dense
+            emit-value
+            map-options
+            :label="$t('common.fields.type')"
+          />
         </div>
         <div class="col-6">
           <q-input v-model="form.codeExamen" outlined dense :label="$t('examens.fields.code')" />
@@ -115,7 +123,14 @@ const form = ref({
 const envoi = ref(false);
 
 async function enregistrer() {
-  if (!form.value.intitule || !form.value.codeExamen || !form.value.matiereId || !form.value.promotionId || !form.value.anneeId || !form.value.dateExamen) {
+  if (
+    !form.value.intitule ||
+    !form.value.codeExamen ||
+    !form.value.matiereId ||
+    !form.value.promotionId ||
+    !form.value.anneeId ||
+    !form.value.dateExamen
+  ) {
     $q.notify({ type: 'warning', message: t('common.messages.requiredFields') });
     return;
   }

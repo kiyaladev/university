@@ -188,9 +188,7 @@
           <q-list dense>
             <q-item>
               <q-item-section>{{ $t('common.fields.teacher') }}</q-item-section>
-              <q-item-section side>
-                {{ detail.enseignant?.nom }} {{ detail.enseignant?.prenom }}
-              </q-item-section>
+              <q-item-section side> {{ detail.enseignant?.nom }} {{ detail.enseignant?.prenom }} </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>{{ $t('common.fields.session') }}</q-item-section>
@@ -220,9 +218,7 @@
               <q-item-section>{{ $t('justificatifs.detailDialog.arbitratedBy') }}</q-item-section>
               <q-item-section side>
                 {{ detail.traitePar.prenom }} {{ detail.traitePar.nom }}
-                <span v-if="detail.traiteLe" class="chiffres">
-                  · {{ dateLisible(detail.traiteLe) }}
-                </span>
+                <span v-if="detail.traiteLe" class="chiffres"> · {{ dateLisible(detail.traiteLe) }} </span>
               </q-item-section>
             </q-item>
           </q-list>
@@ -233,7 +229,15 @@
               class="full-width"
               :alt="$t('justificatifs.detailDialog.fileAlt')"
             />
-            <q-btn v-else flat icon="download" no-caps :label="$t('justificatifs.detailDialog.openAttachment')" :href="detail.piece" target="_blank" />
+            <q-btn
+              v-else
+              flat
+              icon="download"
+              no-caps
+              :label="$t('justificatifs.detailDialog.openAttachment')"
+              :href="detail.piece"
+              target="_blank"
+            />
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -353,8 +357,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
     label: t('common.fields.session'),
-    field: (r: Justificatif) =>
-      `${dateLisible(r.seance?.date)} ${r.seance?.heureDebut ?? ''}`,
+    field: (r: Justificatif) => `${dateLisible(r.seance?.date)} ${r.seance?.heureDebut ?? ''}`,
     align: 'left',
     sortable: true,
   },
@@ -382,17 +385,14 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
-const libelleMotif = (type?: string | null) =>
-  TYPES_JUSTIFICATIF.find((x) => x.value === type)?.label ?? type ?? '—';
+const libelleMotif = (type?: string | null) => TYPES_JUSTIFICATIF.find((x) => x.value === type)?.label ?? type ?? '—';
 
 /** Le message dit la conséquence : valider excuse l'absence dans les relevés. */
 function traiter(j: Justificatif, statut: 'VALIDE' | 'REJETE') {
   const valide = statut === 'VALIDE';
   $q.dialog({
     title: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),
-    message: valide
-      ? t('justificatifs.dialogs.validateMessage')
-      : t('justificatifs.dialogs.rejectMessage'),
+    message: valide ? t('justificatifs.dialogs.validateMessage') : t('justificatifs.dialogs.rejectMessage'),
     prompt: { model: '', type: 'text' },
     ok: {
       label: valide ? t('justificatifs.dialogs.validateTitle') : t('justificatifs.dialogs.rejectTitle'),

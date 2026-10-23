@@ -106,30 +106,30 @@
 // gris (#1d1d1f) au lieu de descendre : en sombre, ce qui est plus clair est
 // plus proche.
 body.body--dark {
-  --up-encre: #F5F5F7;
-  --up-encre-douce: #A1A1A6;
-  --up-encre-tertiaire: #A1A1A6;
+  --up-encre: #f5f5f7;
+  --up-encre-douce: #a1a1a6;
+  --up-encre-tertiaire: #a1a1a6;
 
   --up-chaux: #000000;
-  --up-plaque: #1D1D1F;
-  --up-craie: #1D1D1F;
+  --up-plaque: #1d1d1f;
+  --up-craie: #1d1d1f;
   --up-gris-inerte: #333336;
 
   --up-vert-action: #{$vert-nuit};
   --up-vert-lien: #{$vert-nuit};
 
   --up-primary: #{$vert-nuit};
-  --up-secondary: #F5F5F7;
-  --up-vert: #35C88A;
-  --up-rouge: #F2637A;
-  --up-jaune: #F5CE3C;
+  --up-secondary: #f5f5f7;
+  --up-vert: #35c88a;
+  --up-rouge: #f2637a;
+  --up-jaune: #f5ce3c;
 
-  --up-vert-fond: rgba(0, 148, 96, 0.20);
+  --up-vert-fond: rgba(0, 148, 96, 0.2);
   --up-jaune-fond: rgba(252, 209, 22, 0.16);
   --up-rouge-fond: rgba(206, 17, 38, 0.22);
 
-  --up-craie-fixe: #F5F5F7;
-  --up-sur-bandeau: #86868B;
+  --up-craie-fixe: #f5f5f7;
+  --up-sur-bandeau: #86868b;
   --up-filet-bandeau: 1px solid rgba(255, 255, 255, 0.12);
 
   --up-filet: 1px solid #424245;
@@ -140,7 +140,7 @@ body.body--dark {
   --up-ombre-3: 0 12px 40px rgba(0, 0, 0, 0.6);
 
   background: #000000;
-  color: #F5F5F7;
+  color: #f5f5f7;
 }
 
 // --------------------------------------------------------------- fondations
@@ -211,7 +211,9 @@ body {
   letter-spacing: -0.003em;
 }
 
-.lettrage.avec-unite { text-transform: none; }
+.lettrage.avec-unite {
+  text-transform: none;
+}
 
 // Échelle de titres. Le corps, le poids et l'interligne bougent ensemble
 // (§15 : « build hierarchy from weight + size + leading as a set »).
@@ -244,7 +246,9 @@ a:not(.q-btn):not(.q-item):not(.q-tab) {
   color: var(--up-vert-lien);
   text-decoration: underline;
 
-  &:hover { text-decoration: underline; }
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 /**
@@ -267,7 +271,9 @@ a:not(.q-btn):not(.q-item):not(.q-tab) {
   // descendantes teignait aussi celle du bouton d'action placé sous la phrase :
   // une icône grise sur un aplat vert, à 1,30:1. Un sélecteur d'enfant direct
   // laisse les boutons porter leur propre couleur.
-  > .q-icon { color: var(--up-encre-tertiaire); }
+  > .q-icon {
+    color: var(--up-encre-tertiaire);
+  }
 
   .text-caption {
     max-width: 56ch;
@@ -284,7 +290,9 @@ a:not(.q-btn):not(.q-item):not(.q-tab) {
 }
 
 // Toute carte de l'application est une surface blanche posée sur le gris.
-.carte { background: var(--up-plaque); }
+.carte {
+  background: var(--up-plaque);
+}
 
 // La plaque : l'unité de surface. Elle ne se cerne plus d'un filet épais, elle
 // se détache par sa clarté et par un rayon.
@@ -310,14 +318,32 @@ a:not(.q-btn):not(.q-item):not(.q-tab) {
   background: var(--up-gris-inerte);
 }
 
-.champ--present { background: $vert-fond; color: #{$vert}; }
-.champ--retard { background: $jaune-fond; color: $jaune-texte; }
-.champ--absent { background: $rouge-fond; color: #{$rouge}; }
+.champ--present {
+  background: $vert-fond;
+  color: #{$vert};
+}
+.champ--retard {
+  background: $jaune-fond;
+  color: $jaune-texte;
+}
+.champ--absent {
+  background: $rouge-fond;
+  color: #{$rouge};
+}
 // Variantes : une nuance de la même famille. Remplacé reste un cours assuré,
 // départ anticipé reste un manquement d'horaire, excusé reste une absence.
-.champ--remplace { background: $vert-fond; color: $vert-clair; }
-.champ--depart { background: $jaune-fond; color: $jaune-texte; }
-.champ--excuse { background: $rouge-fond; color: $rouge-clair; }
+.champ--remplace {
+  background: $vert-fond;
+  color: $vert-clair;
+}
+.champ--depart {
+  background: $jaune-fond;
+  color: $jaune-texte;
+}
+.champ--excuse {
+  background: $rouge-fond;
+  color: $rouge-clair;
+}
 .champ--attente {
   background: transparent;
   color: var(--up-encre-tertiaire);
@@ -325,18 +351,41 @@ a:not(.q-btn):not(.q-item):not(.q-tab) {
 }
 
 body.body--dark {
-  .champ { background: rgba(255, 255, 255, 0.08); }
-  .champ--present, .champ--remplace { background: var(--up-vert-fond); color: #35C88A; }
-  .champ--retard, .champ--depart { background: var(--up-jaune-fond); color: #F5CE3C; }
-  .champ--absent, .champ--excuse { background: var(--up-rouge-fond); color: #F2637A; }
-  .champ--attente { background: transparent; color: var(--up-encre-tertiaire); }
+  .champ {
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .champ--present,
+  .champ--remplace {
+    background: var(--up-vert-fond);
+    color: #35c88a;
+  }
+  .champ--retard,
+  .champ--depart {
+    background: var(--up-jaune-fond);
+    color: #f5ce3c;
+  }
+  .champ--absent,
+  .champ--excuse {
+    background: var(--up-rouge-fond);
+    color: #f2637a;
+  }
+  .champ--attente {
+    background: transparent;
+    color: var(--up-encre-tertiaire);
+  }
 }
 
 // Le champ apparaît : §12 — « materialize, don't just fade ». La surface arrive
 // en montant très légèrement d'échelle, elle ne se dévoile plus au balayage.
 @keyframes peindre {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .se-peint {
@@ -346,7 +395,10 @@ body.body--dark {
 // §14 : mouvement réduit ne veut pas dire aucun retour — un fondu court remplace
 // le déplacement, et le dépassement disparaît partout.
 @media (prefers-reduced-motion: reduce) {
-  .se-peint { animation: peindre 160ms ease both; transform: none; }
+  .se-peint {
+    animation: peindre 160ms ease both;
+    transform: none;
+  }
 
   *,
   *::before,
@@ -385,25 +437,36 @@ body.body--dark {
 
 // §1 : le retour vit sur l'appui, pas sur le relâchement, et il est immédiat.
 .q-btn--actionable {
-  transition: transform 140ms cubic-bezier(0.32, 0.72, 0, 1),
+  transition:
+    transform 140ms cubic-bezier(0.32, 0.72, 0, 1),
     background-color var(--up-transition-rapide),
     opacity var(--up-transition-rapide);
 
-  &:active { transform: scale(0.97); }
+  &:active {
+    transform: scale(0.97);
+  }
 }
 
 .q-btn--unelevated.bg-primary,
 .q-btn--standard.bg-primary,
 .q-btn.text-white.bg-primary {
-  &:hover { background: $vert-survol !important; }
+  &:hover {
+    background: $vert-survol !important;
+  }
 }
 
 .q-btn--outline {
-  &::before { border-width: 1px; border-radius: var(--up-pilule); border-color: currentColor; }
+  &::before {
+    border-width: 1px;
+    border-radius: var(--up-pilule);
+    border-color: currentColor;
+  }
 }
 
 .q-btn--flat,
-.q-btn--round { border-bottom: 0; }
+.q-btn--round {
+  border-bottom: 0;
+}
 
 // Un bouton plat est un lien : vert, sans fond, il ne s'assombrit qu'à peine.
 .q-btn--flat:not(.q-btn--round):not([class*='text-']) {
@@ -416,13 +479,20 @@ body.body--dark {
   border-radius: var(--up-rayon);
   background: var(--up-chaux);
 
-  &::before { border: 1px solid transparent; border-radius: var(--up-rayon); }
-  &::after { border-radius: var(--up-rayon); }
+  &::before {
+    border: 1px solid transparent;
+    border-radius: var(--up-rayon);
+  }
+  &::after {
+    border-radius: var(--up-rayon);
+  }
 }
 
 body.body--dark .q-field--outlined .q-field__control {
   background: rgba(255, 255, 255, 0.06);
-  &::before { border-color: transparent; }
+  &::before {
+    border-color: transparent;
+  }
 }
 
 .q-field--outlined.q-field--focused .q-field__control {
@@ -436,7 +506,7 @@ body.body--dark .q-field--outlined .q-field__control {
 
 .q-field--outlined.q-field--error .q-field__control::before {
   border: 1px solid #{$rouge};
-  box-shadow: 0 0 0 3px rgba(206, 17, 38, 0.20);
+  box-shadow: 0 0 0 3px rgba(206, 17, 38, 0.2);
 }
 
 // L'intitulé d'un champ ne crie pas : c'est une phrase, en gris.
@@ -484,13 +554,34 @@ body.body--dark .q-field--outlined .q-field__control {
  * `!important` est nécessaire pour battre les classes utilitaires de Quasar.
  */
 $TEINTES: (
-  'positive': ($vert-fond, $vert),
-  'negative': ($rouge-fond, $rouge),
-  'warning':  ($jaune-fond, $jaune-texte),
-  'primary':  ($vert-fond, $vert-action),
-  'accent':   ($vert-fond, $vert-lien),
-  'info':     ($gris-inerte, $encre-douce),
-  'secondary':($gris-inerte, $encre),
+  'positive': (
+    $vert-fond,
+    $vert,
+  ),
+  'negative': (
+    $rouge-fond,
+    $rouge,
+  ),
+  'warning': (
+    $jaune-fond,
+    $jaune-texte,
+  ),
+  'primary': (
+    $vert-fond,
+    $vert-action,
+  ),
+  'accent': (
+    $vert-fond,
+    $vert-lien,
+  ),
+  'info': (
+    $gris-inerte,
+    $encre-douce,
+  ),
+  'secondary': (
+    $gris-inerte,
+    $encre,
+  ),
 );
 
 @each $nom, $paire in $TEINTES {
@@ -499,7 +590,9 @@ $TEINTES: (
     background: list.nth($paire, 1) !important;
     color: list.nth($paire, 2) !important;
 
-    .q-icon { color: inherit; }
+    .q-icon {
+      color: inherit;
+    }
   }
 }
 
@@ -512,23 +605,52 @@ $TEINTES: (
 }
 
 body.body--dark {
-  @each $nom, $teinte in ('positive': rgba(0, 148, 96, 0.20), 'negative': rgba(206, 17, 38, 0.22),
-                          'warning': rgba(252, 209, 22, 0.16), 'primary': rgba(0, 148, 96, 0.20),
-                          'accent': rgba(0, 148, 96, 0.20)) {
+  @each $nom,
+    $teinte
+      in (
+        'positive': rgba(0, 148, 96, 0.2),
+        'negative': rgba(206, 17, 38, 0.22),
+        'warning': rgba(252, 209, 22, 0.16),
+        'primary': rgba(0, 148, 96, 0.2),
+        'accent': rgba(0, 148, 96, 0.2)
+      )
+  {
     .q-chip.bg-#{$nom},
-    .q-badge.bg-#{$nom} { background: $teinte !important; }
+    .q-badge.bg-#{$nom} {
+      background: $teinte !important;
+    }
   }
 
-  .text-primary, .text-positive { color: #35C88A !important; }
-  .text-negative { color: #F2637A !important; }
+  .text-primary,
+  .text-positive {
+    color: #35c88a !important;
+  }
+  .text-negative {
+    color: #f2637a !important;
+  }
 
-  .q-chip.bg-positive, .q-badge.bg-positive { color: #35C88A !important; }
-  .q-chip.bg-negative, .q-badge.bg-negative { color: #F2637A !important; }
-  .q-chip.bg-warning, .q-badge.bg-warning { color: #F5CE3C !important; }
-  .q-chip.bg-primary, .q-chip.bg-accent,
-  .q-badge.bg-primary, .q-badge.bg-accent { color: #{$vert-nuit} !important; }
-  .q-chip.bg-info, .q-chip.bg-secondary,
-  .q-badge.bg-info, .q-badge.bg-secondary {
+  .q-chip.bg-positive,
+  .q-badge.bg-positive {
+    color: #35c88a !important;
+  }
+  .q-chip.bg-negative,
+  .q-badge.bg-negative {
+    color: #f2637a !important;
+  }
+  .q-chip.bg-warning,
+  .q-badge.bg-warning {
+    color: #f5ce3c !important;
+  }
+  .q-chip.bg-primary,
+  .q-chip.bg-accent,
+  .q-badge.bg-primary,
+  .q-badge.bg-accent {
+    color: #{$vert-nuit} !important;
+  }
+  .q-chip.bg-info,
+  .q-chip.bg-secondary,
+  .q-badge.bg-info,
+  .q-badge.bg-secondary {
     background: rgba(255, 255, 255, 0.1) !important;
     color: var(--up-encre) !important;
   }
@@ -566,14 +688,20 @@ body.body--dark {
   padding-bottom: var(--up-3);
 }
 
-.q-table tbody tr:last-child td { border-bottom: 0; }
+.q-table tbody tr:last-child td {
+  border-bottom: 0;
+}
 
 .q-table tbody tr {
   transition: background-color var(--up-transition-rapide);
-  &:hover { background: rgba(0, 0, 0, 0.025); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.025);
+  }
 }
 
-body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+body.body--dark .q-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
 
 .q-table__bottom {
   border-top: var(--up-filet-fin);
@@ -582,7 +710,9 @@ body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04);
 }
 
 // Un registre large se fait défiler, il ne se laisse pas rogner.
-.q-table__middle { overflow-x: auto; }
+.q-table__middle {
+  overflow-x: auto;
+}
 
 // Onglets : le segmented control d'Apple — une gouttière grise, une pastille
 // blanche qui glisse sous l'onglet actif.
@@ -600,9 +730,13 @@ body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04);
   letter-spacing: -0.01em;
   min-height: 30px;
   text-transform: none;
-  transition: background-color var(--up-transition-rapide), color var(--up-transition-rapide);
+  transition:
+    background-color var(--up-transition-rapide),
+    color var(--up-transition-rapide);
 
-  & + .q-tab { border-left: 0; }
+  & + .q-tab {
+    border-left: 0;
+  }
 
   &--active {
     background: var(--up-plaque);
@@ -611,11 +745,15 @@ body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04);
   }
 }
 
-.q-tab__indicator { display: none; }
+.q-tab__indicator {
+  display: none;
+}
 
 // Un panneau d'onglets n'est qu'un contenant : il ne pose pas de marge à la
 // place de ce qu'il contient.
-.q-tab-panel { padding: 0; }
+.q-tab-panel {
+  padding: 0;
+}
 
 /**
  * Le raccourci de période — « Aujourd'hui / 7 jours / 30 jours ». Deux écrans
@@ -636,11 +774,18 @@ body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04);
   font-weight: 500;
   letter-spacing: -0.01em;
   cursor: pointer;
-  transition: background-color var(--up-transition-rapide), color var(--up-transition-rapide);
+  transition:
+    background-color var(--up-transition-rapide),
+    color var(--up-transition-rapide);
 
-  & + & { border-left-width: 0; }
+  & + & {
+    border-left-width: 0;
+  }
 
-  &:hover { background: rgba(0, 0, 0, 0.04); color: var(--up-encre); }
+  &:hover {
+    background: rgba(0, 0, 0, 0.04);
+    color: var(--up-encre);
+  }
 
   &--actif,
   &--actif:hover {
@@ -650,10 +795,14 @@ body.body--dark .q-table tbody tr:hover { background: rgba(255, 255, 255, 0.04);
   }
 }
 
-body.body--dark .raccourci:hover { background: rgba(255, 255, 255, 0.06); }
+body.body--dark .raccourci:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
 
 @media (max-width: 599px) {
-  .raccourci { min-height: 38px; }
+  .raccourci {
+    min-height: 38px;
+  }
 }
 
 // Un dialogue est une feuille qui arrive par-dessus : rayon large, ombre
@@ -689,12 +838,18 @@ body.body--dark .raccourci:hover { background: rgba(255, 255, 255, 0.06); }
     color: var(--up-encre);
     font-weight: 590;
 
-    .q-icon { color: var(--up-vert-action); }
+    .q-icon {
+      color: var(--up-vert-action);
+    }
   }
 }
 
-.q-separator { background: #{$gris-filet}; }
-body.body--dark .q-separator { background: #424245; }
+.q-separator {
+  background: #{$gris-filet};
+}
+body.body--dark .q-separator {
+  background: #424245;
+}
 
 /**
  * `secondary` est un rôle *neutre* dans cette palette : c'est l'encre, la
@@ -705,14 +860,18 @@ body.body--dark .q-separator { background: #424245; }
  * fois pour tous les écrans.
  */
 body.body--dark {
-  .text-secondary { color: var(--up-encre) !important; }
-
-  .bg-secondary {
-    background: #F5F5F7 !important;
-    color: #1D1D1F !important;
+  .text-secondary {
+    color: var(--up-encre) !important;
   }
 
-  .q-btn--outline.text-secondary::before { border-color: currentColor; }
+  .bg-secondary {
+    background: #f5f5f7 !important;
+    color: #1d1d1f !important;
+  }
+
+  .q-btn--outline.text-secondary::before {
+    border-color: currentColor;
+  }
 }
 
 // Les notes : une surface douce et teintée, l'icône et le texte portent la
@@ -726,16 +885,40 @@ body.body--dark {
   letter-spacing: -0.012em;
 }
 
-.q-banner.note--valide { background: $vert-fond; color: #{$vert}; }
-.q-banner.note--info { background: var(--up-gris-inerte); color: var(--up-encre); }
-.q-banner.note--alerte { background: $jaune-fond; color: $jaune-texte; }
-.q-banner.note--erreur { background: $rouge-fond; color: #{$rouge}; }
+.q-banner.note--valide {
+  background: $vert-fond;
+  color: #{$vert};
+}
+.q-banner.note--info {
+  background: var(--up-gris-inerte);
+  color: var(--up-encre);
+}
+.q-banner.note--alerte {
+  background: $jaune-fond;
+  color: $jaune-texte;
+}
+.q-banner.note--erreur {
+  background: $rouge-fond;
+  color: #{$rouge};
+}
 
 body.body--dark {
-  .q-banner.note--valide { background: var(--up-vert-fond); color: #35C88A; }
-  .q-banner.note--info { background: rgba(255, 255, 255, 0.1); color: var(--up-encre); }
-  .q-banner.note--alerte { background: var(--up-jaune-fond); color: #F5CE3C; }
-  .q-banner.note--erreur { background: var(--up-rouge-fond); color: #F2637A; }
+  .q-banner.note--valide {
+    background: var(--up-vert-fond);
+    color: #35c88a;
+  }
+  .q-banner.note--info {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--up-encre);
+  }
+  .q-banner.note--alerte {
+    background: var(--up-jaune-fond);
+    color: #f5ce3c;
+  }
+  .q-banner.note--erreur {
+    background: var(--up-rouge-fond);
+    color: #f2637a;
+  }
 }
 
 .q-linear-progress {
@@ -744,10 +927,14 @@ body.body--dark {
 }
 
 // Languettes : le style vient de .q-tabs, la classe nomme l'intention.
-.onglets-panneau { background: var(--up-gris-inerte); }
+.onglets-panneau {
+  background: var(--up-gris-inerte);
+}
 
 // Ligne de détail d'un registre : à peine teintée.
-.ligne-detail { background: var(--up-chaux); }
+.ligne-detail {
+  background: var(--up-chaux);
+}
 
 // En-tête de colonne d'un panneau (jour de l'emploi du temps). Le bandeau
 // d'encre devient un intitulé gris posé sur la surface.
@@ -758,14 +945,18 @@ body.body--dark {
 
   .text-grey-6,
   .text-grey-7,
-  .text-caption { color: var(--up-encre-douce) !important; }
+  .text-caption {
+    color: var(--up-encre-douce) !important;
+  }
 }
 
 // Le menu déroulant est une petite feuille : §7 — il s'ouvre depuis ce qui l'a
 // appelé, il ne surgit pas du centre de l'écran.
 .q-menu {
   border-radius: var(--up-rayon);
-  box-shadow: var(--up-ombre-2), 0 0 0 1px rgba(0, 0, 0, 0.06) !important;
+  box-shadow:
+    var(--up-ombre-2),
+    0 0 0 1px rgba(0, 0, 0, 0.06) !important;
   background: var(--up-plaque);
 }
 
@@ -784,16 +975,26 @@ body.body--dark {
   background: rgba(29, 29, 31, 0.92) !important;
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  color: #F5F5F7 !important;
+  color: #f5f5f7 !important;
 
   // L'espèce se lit à l'icône, qui seule porte la couleur.
-  &--negative .q-notification__icon { color: #F2637A !important; }
-  &--positive .q-notification__icon { color: #35C88A !important; }
-  &--warning .q-notification__icon { color: #F5CE3C !important; }
-  &--info .q-notification__icon { color: #{$vert-nuit} !important; }
+  &--negative .q-notification__icon {
+    color: #f2637a !important;
+  }
+  &--positive .q-notification__icon {
+    color: #35c88a !important;
+  }
+  &--warning .q-notification__icon {
+    color: #f5ce3c !important;
+  }
+  &--info .q-notification__icon {
+    color: #{$vert-nuit} !important;
+  }
 }
 
-.q-notification__actions .q-btn { color: #{$vert-nuit}; }
+.q-notification__actions .q-btn {
+  color: #{$vert-nuit};
+}
 
 .q-tooltip {
   border-radius: var(--up-rayon-sm);
@@ -809,7 +1010,9 @@ body.body--dark {
 // Un formulaire respire : les champs sont espacés, les blocs le sont davantage,
 // et rien n'est cerné. La séparation se fait par le vide, pas par le trait.
 
-.q-card__section + .q-card__section { padding-top: var(--up-4); }
+.q-card__section + .q-card__section {
+  padding-top: var(--up-4);
+}
 
 .q-dialog .q-card__section > .q-input,
 .q-dialog .q-card__section > .q-select,
@@ -818,12 +1021,16 @@ body.body--dark {
 .q-dialog .q-card__section > .row {
   margin-bottom: var(--up-3);
 
-  &:last-child { margin-bottom: 0; }
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .q-dialog .q-card__section > .row.q-col-gutter-md {
   margin-left: calc(-1 * var(--up-3));
-  & > * { padding-left: var(--up-3); }
+  & > * {
+    padding-left: var(--up-3);
+  }
 }
 
 .q-field__bottom {
@@ -859,9 +1066,16 @@ body.body--dark {
 // Sur téléphone, un dialogue de formulaire occupe l'écran : les champs y sont
 // plus hauts que sur un bureau, jamais plus serrés.
 @media (max-width: 599px) {
-  .q-dialog .q-card__section { padding: var(--up-3); }
-  .q-card__actions { flex-direction: column-reverse; align-items: stretch; }
-  .q-card__actions .q-btn { width: 100%; }
+  .q-dialog .q-card__section {
+    padding: var(--up-3);
+  }
+  .q-card__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+  .q-card__actions .q-btn {
+    width: 100%;
+  }
 }
 
 // ------------------------------------------------------------- accessoires
@@ -954,14 +1168,22 @@ body.body--dark .q-footer.bandeau {
 
 // Cibles tactiles : le contrôleur travaille debout, à une main.
 @media (max-width: 599px) {
-  .q-btn { min-height: 44px; }
-  .q-item { min-height: 48px; }
+  .q-btn {
+    min-height: 44px;
+  }
+  .q-item {
+    min-height: 48px;
+  }
 
   .q-field--dense .q-field__control,
-  .q-field .q-field__control { min-height: 44px; }
+  .q-field .q-field__control {
+    min-height: 44px;
+  }
 }
 
-.q-table__container { max-width: 100%; }
+.q-table__container {
+  max-width: 100%;
+}
 
 // La barre de défilement d'un registre large : fine, grise, elle s'efface dans
 // la surface au lieu de la barrer.
@@ -970,8 +1192,12 @@ body.body--dark .q-footer.bandeau {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.28) transparent;
 
-  &::-webkit-scrollbar { height: 8px; }
-  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
   &::-webkit-scrollbar-thumb {
     background: rgba(0, 0, 0, 0.24);
     border-radius: var(--up-pilule);
@@ -980,13 +1206,17 @@ body.body--dark .q-footer.bandeau {
 
 body.body--dark .q-table__middle {
   scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
-  &::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.24); }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.24);
+  }
 }
 
 // Sur téléphone, une cellule tient sur une ligne et s'élide proprement quand
 // elle déborde : ni coupure au milieu d'un mot, ni registre qui s'élargit.
 @media (max-width: 767px) {
-  .q-table thead th { white-space: nowrap; }
+  .q-table thead th {
+    white-space: nowrap;
+  }
 
   .q-table tbody td {
     white-space: nowrap;
@@ -996,9 +1226,13 @@ body.body--dark .q-table__middle {
   }
 }
 
-
-.q-item__label--caption { color: var(--up-encre-douce); }
-.q-notification__caption { opacity: 1; color: #F5F5F7; }
+.q-item__label--caption {
+  color: var(--up-encre-douce);
+}
+.q-notification__caption {
+  opacity: 1;
+  color: #f5f5f7;
+}
 // Synthèse courte des listes : les dossiers restent le contenu principal.
 .resume-liste {
   display: flex;
@@ -1007,5 +1241,8 @@ body.body--dark .q-table__middle {
   margin: 8px 0 12px;
   color: var(--up-encre-douce);
   font-size: 13px;
-  strong { color: var(--up-encre); font-variant-numeric: tabular-nums; }
+  strong {
+    color: var(--up-encre);
+    font-variant-numeric: tabular-nums;
+  }
 }

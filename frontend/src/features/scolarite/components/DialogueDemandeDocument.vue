@@ -24,7 +24,9 @@
             <q-item-label>{{ scope.opt.label }}</q-item-label>
             <q-item-label v-if="scope.opt.montant != null" caption>
               {{ montantLisible(scope.opt.montant) }} {{ scope.opt.devise ?? 'GNF' }}
-              <span v-if="scope.opt.delaiHeures"> · {{ t('demandeDocuments.createDialog.delay', { hours: scope.opt.delaiHeures }) }}</span>
+              <span v-if="scope.opt.delaiHeures">
+                · {{ t('demandeDocuments.createDialog.delay', { hours: scope.opt.delaiHeures }) }}</span
+              >
             </q-item-label>
           </q-item-section>
         </q-item>
@@ -33,7 +35,8 @@
 
     <template v-if="tarifSelectionne">
       <q-banner class="note--info q-mt-sm">
-        {{ t('demandeDocuments.createDialog.fees') }} <strong>{{ montantLisible(tarifSelectionne.montant) }} {{ tarifSelectionne.devise }}</strong>
+        {{ t('demandeDocuments.createDialog.fees') }}
+        <strong>{{ montantLisible(tarifSelectionne.montant) }} {{ tarifSelectionne.devise }}</strong>
         <span v-if="tarifSelectionne.delaiHeures">
           — {{ t('demandeDocuments.createDialog.usualDelay', { hours: tarifSelectionne.delaiHeures }) }}</span
         >.
@@ -119,29 +122,24 @@ const optionsType = computed(() =>
   }),
 );
 
-const tarifSelectionne = computed(() =>
-  tarifs.value.find((t) => t.type === form.value.type) ?? null,
-);
+const tarifSelectionne = computed(() => tarifs.value.find((t) => t.type === form.value.type) ?? null);
 
-watch(
-  ouvert,
-  async (o) => {
-    if (!o) return;
-    erreur.value = '';
-    form.value = { type: null, motif: '', inscriptionId: null };
-    try {
-      const [tarifsRes, inscriptionsRes] = await Promise.all([
-        api.get('/documents-demande/tarifs'),
-        api.get('/inscriptions', { params: { all: '1' } }),
-      ]);
-      tarifs.value = Array.isArray(tarifsRes.data) ? tarifsRes.data : [];
-      inscriptions.value = Array.isArray(inscriptionsRes.data?.data) ? inscriptionsRes.data.data : [];
-    } catch {
-      tarifs.value = [];
-      inscriptions.value = [];
-    }
-  },
-);
+watch(ouvert, async (o) => {
+  if (!o) return;
+  erreur.value = '';
+  form.value = { type: null, motif: '', inscriptionId: null };
+  try {
+    const [tarifsRes, inscriptionsRes] = await Promise.all([
+      api.get('/documents-demande/tarifs'),
+      api.get('/inscriptions', { params: { all: '1' } }),
+    ]);
+    tarifs.value = Array.isArray(tarifsRes.data) ? tarifsRes.data : [];
+    inscriptions.value = Array.isArray(inscriptionsRes.data?.data) ? inscriptionsRes.data.data : [];
+  } catch {
+    tarifs.value = [];
+    inscriptions.value = [];
+  }
+});
 
 async function envoyer() {
   if (!form.value.type) return;

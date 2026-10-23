@@ -117,10 +117,18 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
-      { path: 'suivi-presences', name: 'suivi-presences', component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
-        meta: ecran('/suivi-presences') },
-      { path: 'documents', name: 'documents', component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
-        meta: ecran('/documents') },
+      {
+        path: 'suivi-presences',
+        name: 'suivi-presences',
+        component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
+        meta: ecran('/suivi-presences'),
+      },
+      {
+        path: 'documents',
+        name: 'documents',
+        component: () => import('@/features/accueil/pages/AccueilUniversitePage.vue'),
+        meta: ecran('/documents'),
+      },
       { path: 'bilan', redirect: '/rectorat' },
       { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
       {

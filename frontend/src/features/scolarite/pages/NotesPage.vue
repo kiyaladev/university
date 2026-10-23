@@ -6,10 +6,7 @@
           :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
           class="q-px-sm q-py-xs text-body2"
         >
-          <q-icon
-            :name="evaluationActive.statut === 'OUVERTE' ? 'lock_open' : 'lock'"
-            class="q-mr-xs"
-          />
+          <q-icon :name="evaluationActive.statut === 'OUVERTE' ? 'lock_open' : 'lock'" class="q-mr-xs" />
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
       </template>
@@ -24,7 +21,12 @@
             :label="$t('notes.form.evaluationLabel')"
             :placeholder="$t('notes.form.evaluationPlaceholder')"
             :label-fn="libelleEvaluation"
-            @update:model-value="(v, raw) => { if (raw) choisir(raw); else chargerDepuisId(v); }"
+            @update:model-value="
+              (v, raw) => {
+                if (raw) choisir(raw);
+                else chargerDepuisId(v);
+              }
+            "
           />
         </div>
         <div class="col-12 col-md-4 text-right q-gutter-sm">
@@ -131,15 +133,17 @@ const peutCloturer = () => auth.peut('evaluations.gerer');
 
 const selEvaluationId = ref<string | null>(null);
 const evaluationActive = ref<Evaluation | null>(null);
-const lignes = ref<Array<{
-  inscriptionId: string;
-  numero: string;
-  matricule: string;
-  nom: string;
-  prenom: string;
-  note: number | null;
-  present: boolean;
-}>>([]);
+const lignes = ref<
+  Array<{
+    inscriptionId: string;
+    numero: string;
+    matricule: string;
+    nom: string;
+    prenom: string;
+    note: number | null;
+    present: boolean;
+  }>
+>([]);
 const notesExistantes = ref<Note[]>([]);
 const chargementInitial = ref(true);
 

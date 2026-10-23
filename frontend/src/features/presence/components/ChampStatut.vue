@@ -19,9 +19,7 @@ const props = withDefaults(defineProps<{ statut: string; dense?: boolean }>(), {
   dense: false,
 });
 
-const classe = computed(
-  () => CLASSE_CHAMP_PRESENCE[props.statut as StatutPresence] ?? 'neutre',
-);
+const classe = computed(() => CLASSE_CHAMP_PRESENCE[props.statut as StatutPresence] ?? 'neutre');
 </script>
 
 <style scoped lang="scss">

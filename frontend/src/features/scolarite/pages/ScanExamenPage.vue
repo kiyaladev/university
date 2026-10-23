@@ -42,7 +42,12 @@
             </div>
             <div class="text-caption text-grey-7">
               {{ $t('scanExamen.stats.rate', { rate: pourcentLisible(tauxPresence) }) }}
-              · {{ examenCourant?.nbInscrits ? $t('scanExamen.stats.remaining', { count: nbRestant }) : $t('scanExamen.stats.noEnrolled') }}
+              ·
+              {{
+                examenCourant?.nbInscrits
+                  ? $t('scanExamen.stats.remaining', { count: nbRestant })
+                  : $t('scanExamen.stats.noEnrolled')
+              }}
             </div>
           </div>
           <div class="col-auto">
@@ -104,10 +109,10 @@
         <q-card-section class="row q-col-gutter-md items-end">
           <div class="col-12 col-md">
             <lecteur-qr
-          v-model="reference"
-          :label="$t('scanExamen.form.cardLabel')"
-          :hint="$t('scanExamen.form.cardHint')"
-        />
+              v-model="reference"
+              :label="$t('scanExamen.form.cardLabel')"
+              :hint="$t('scanExamen.form.cardHint')"
+            />
           </div>
           <div class="col-12 col-md-auto">
             <q-btn
@@ -124,25 +129,51 @@
         </q-card-section>
 
         <q-card-section v-if="dernierResultat" class="q-pt-none">
-          <q-banner :class="dernierResultat.dejaEnregistre ? 'bg-warning text-dark' : dernierResultat.valide ? 'bg-positive text-white' : 'bg-negative text-white'">
+          <q-banner
+            :class="
+              dernierResultat.dejaEnregistre
+                ? 'bg-warning text-dark'
+                : dernierResultat.valide
+                  ? 'bg-positive text-white'
+                  : 'bg-negative text-white'
+            "
+          >
             <template #avatar>
-              <q-icon :name="dernierResultat.dejaEnregistre ? 'info' : dernierResultat.valide ? 'check_circle' : 'cancel'" size="md" />
+              <q-icon
+                :name="dernierResultat.dejaEnregistre ? 'info' : dernierResultat.valide ? 'check_circle' : 'cancel'"
+                size="md"
+              />
             </template>
             <div class="text-weight-bold">
-              {{ dernierResultat.dejaEnregistre ? $t('scanExamen.result.alreadyRecorded') : dernierResultat.valide ? $t('scanExamen.result.validated') : $t('scanExamen.result.rejected') }}
+              {{
+                dernierResultat.dejaEnregistre
+                  ? $t('scanExamen.result.alreadyRecorded')
+                  : dernierResultat.valide
+                    ? $t('scanExamen.result.validated')
+                    : $t('scanExamen.result.rejected')
+              }}
               <span v-if="dernierResultat.matriculeSaisi"> · {{ dernierResultat.matriculeSaisi }}</span>
             </div>
             <div v-if="dernierResultat.valide">
               {{ dernierResultat.prenomPorteur }} {{ dernierResultat.nomPorteur }}
             </div>
             <div v-else>
-              {{ $t('scanExamen.result.reason', { reason: dernierResultat.motifRejet ?? $t('scanExamen.result.unknownCard') }) }}
+              {{
+                $t('scanExamen.result.reason', {
+                  reason: dernierResultat.motifRejet ?? $t('scanExamen.result.unknownCard'),
+                })
+              }}
             </div>
           </q-banner>
         </q-card-section>
       </q-card>
 
-      <q-card v-if="dernierResultat?.valide && !dernierResultat.dejaEnregistre" flat bordered class="carte-identite q-mb-md">
+      <q-card
+        v-if="dernierResultat?.valide && !dernierResultat.dejaEnregistre"
+        flat
+        bordered
+        class="carte-identite q-mb-md"
+      >
         <q-card-section class="text-center">
           <q-avatar size="120px" color="primary" text-color="white" class="q-mb-md">
             <q-icon name="person" size="80px" />

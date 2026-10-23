@@ -32,8 +32,7 @@ export default {
     cancelBadge: 'Cancel the badge',
   },
   emptyState: {
-    message:
-      'No badges match these criteria. Issue one for an expected visitor or guest speaker.',
+    message: 'No badges match these criteria. Issue one for an expected visitor or guest speaker.',
   },
   dialogs: {
     form: {

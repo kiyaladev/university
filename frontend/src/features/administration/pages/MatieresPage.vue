@@ -2,7 +2,14 @@
   <q-page class="q-pa-md">
     <en-tete-page :title="$t('matieres.title')" :subtitle="$t('matieres.subtitle')">
       <template v-if="auth.peutPlanifier" #actions>
-        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('matieres.actions.new')" @click="ouvrir(null)" />
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          :label="$t('matieres.actions.new')"
+          @click="ouvrir(null)"
+        />
       </template>
     </en-tete-page>
 
@@ -63,39 +70,47 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="auth.peutPlanifier"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="edit"
-            :aria-label="$t('matieres.actionsColumn.editAria')" :label="$t('matieres.actionsColumn.editAria')"
+            :aria-label="$t('matieres.actionsColumn.editAria')"
+            :label="$t('matieres.actionsColumn.editAria')"
             @click="ouvrir(p.row)"
           >
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="assignment_ind"
-            :aria-label="$t('matieres.actionsColumn.whoTeachesAria')" :label="$t('matieres.actionsColumn.whoTeachesAria')"
-            @click="voirCharges(p.row)"
-          >
-            <q-tooltip>{{ $t('matieres.actionsColumn.whoTeachesTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="auth.estAdmin"
-            flat
-            dense no-caps
-            color="negative"
-            icon="delete"
-            :aria-label="$t('matieres.actionsColumn.deleteAria')" :label="$t('matieres.actionsColumn.deleteAria')"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="assignment_ind"
+              :aria-label="$t('matieres.actionsColumn.whoTeachesAria')"
+              :label="$t('matieres.actionsColumn.whoTeachesAria')"
+              @click="voirCharges(p.row)"
+            >
+              <q-tooltip>{{ $t('matieres.actionsColumn.whoTeachesTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="auth.estAdmin"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="delete"
+              :aria-label="$t('matieres.actionsColumn.deleteAria')"
+              :label="$t('matieres.actionsColumn.deleteAria')"
+              @click="supprimer(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -110,7 +125,8 @@
           <div class="text-subtitle1 text-weight-medium">{{ m.intitule }}</div>
           <div class="text-caption text-grey-7">{{ m.departement?.nom ?? $t('matieres.card.noDepartment') }}</div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ $t('matieres.table.columns.volume') }} <span class="chiffres">{{ $t('common.units.hours', { n: m.volumeHoraireTotal }) }}</span>
+            {{ $t('matieres.table.columns.volume') }}
+            <span class="chiffres">{{ $t('common.units.hours', { n: m.volumeHoraireTotal }) }}</span>
           </div>
         </q-card-section>
         <q-separator />
@@ -287,13 +303,9 @@ const form = ref({
   departementId: null as string | null,
 });
 
-const optionsDepartements = computed(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 
-const filtresActifs = computed(() =>
-  Boolean(filtres.value.recherche || filtres.value.departementId),
-);
+const filtresActifs = computed(() => Boolean(filtres.value.recherche || filtres.value.departementId));
 const messageVide = computed(() =>
   filtresActifs.value ? t('matieres.emptyState.filtered') : t('matieres.emptyState.empty'),
 );

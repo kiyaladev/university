@@ -20,7 +20,13 @@
           />
         </div>
         <div class="col-12 col-sm-8">
-          <q-input v-model="form.intitule" outlined dense :label="$t('stages.dialogs.workDialog.title')" :rules="[requis]" />
+          <q-input
+            v-model="form.intitule"
+            outlined
+            dense
+            :label="$t('stages.dialogs.workDialog.title')"
+            :rules="[requis]"
+          />
         </div>
       </div>
 
@@ -73,7 +79,12 @@
           <q-input v-model="form.entreprise" outlined dense :label="$t('stages.detail.fields.company')" />
         </div>
         <div class="col-12 col-sm-6">
-          <q-input v-model="form.tuteurEntreprise" outlined dense :label="$t('stages.dialogs.workDialog.companyTutor')" />
+          <q-input
+            v-model="form.tuteurEntreprise"
+            outlined
+            dense
+            :label="$t('stages.dialogs.workDialog.companyTutor')"
+          />
         </div>
       </div>
 
@@ -180,10 +191,13 @@ watch(ouvert, (o) => {
     statut: tr?.statut ?? 'PROPOSE',
   };
   if (!encadrantsTous.value.length) {
-    void api.get('/enseignants', { params: { all: '1' } }).then(({ data }) => {
-      encadrantsTous.value = data.data;
-      optionsEncadrants.value = encadrantsTous.value.map(optionEncadrant);
-    }).catch(() => undefined);
+    void api
+      .get('/enseignants', { params: { all: '1' } })
+      .then(({ data }) => {
+        encadrantsTous.value = data.data;
+        optionsEncadrants.value = encadrantsTous.value.map(optionEncadrant);
+      })
+      .catch(() => undefined);
   }
 });
 
@@ -228,7 +242,10 @@ async function enregistrer() {
     if (props.travail) await api.put(`/travaux-encadres/${props.travail.id}`, payload);
     else await api.post('/travaux-encadres', payload);
 
-    $q.notify({ type: 'positive', message: t(props.travail ? 'stages.dialogs.workDialog.updated' : 'stages.dialogs.workDialog.created') });
+    $q.notify({
+      type: 'positive',
+      message: t(props.travail ? 'stages.dialogs.workDialog.updated' : 'stages.dialogs.workDialog.created'),
+    });
     emit('enregistre');
     ouvert.value = false;
   } catch {

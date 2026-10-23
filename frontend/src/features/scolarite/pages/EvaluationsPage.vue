@@ -127,86 +127,84 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="p.row.statut !== 'OUVERTE' || !peutSaisirNotes()"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="visibility"
-            :aria-label="$t('evaluations.table.view_notes_aria')" :label="$t('evaluations.table.view_notes_aria')"
+            :aria-label="$t('evaluations.table.view_notes_aria')"
+            :label="$t('evaluations.table.view_notes_aria')"
             @click="voirNotes(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.view_notes') }}</q-tooltip>
           </q-btn>
-<q-btn
+          <q-btn
             v-if="p.row.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="edit_note"
             color="primary"
-            :aria-label="$t('evaluations.table.enter_notes_aria')" :label="$t('evaluations.table.enter_notes_aria')"
+            :aria-label="$t('evaluations.table.enter_notes_aria')"
+            :label="$t('evaluations.table.enter_notes_aria')"
             @click="saisirNotes(p.row)"
           >
             <q-tooltip>{{ $t('evaluations.table.enter_notes') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
-            flat
-            dense no-caps
-            icon="lock"
-            :aria-label="$t('evaluations.table.close_evaluation_aria')" :label="$t('evaluations.table.close_evaluation_aria')"
-            @click="cloturer(p.row)"
-          >
-            <q-tooltip>{{ $t('evaluations.table.close_evaluation') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
-            flat
-            dense no-caps
-            icon="edit"
-            :aria-label="$t('evaluations.table.edit_evaluation_aria')" :label="$t('evaluations.table.edit_evaluation_aria')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('evaluations.table.edit_evaluation') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutGererEvaluation()"
-            flat
-            dense no-caps
-            color="negative"
-            icon="delete"
-            :aria-label="$t('evaluations.table.delete_aria')" :label="$t('evaluations.table.delete_aria')"
-            :disable="nombreNotes(p.row) > 0"
-            @click="supprimer(p.row)"
-          >
-            <q-tooltip>
-              {{
-                nombreNotes(p.row) > 0
-                  ? $t('evaluations.table.delete_locked')
-                  : $t('common.actions.delete')
-              }}
-            </q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
+              flat
+              dense
+              no-caps
+              icon="lock"
+              :aria-label="$t('evaluations.table.close_evaluation_aria')"
+              :label="$t('evaluations.table.close_evaluation_aria')"
+              @click="cloturer(p.row)"
+            >
+              <q-tooltip>{{ $t('evaluations.table.close_evaluation') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'OUVERTE' && peutGererEvaluation()"
+              flat
+              dense
+              no-caps
+              icon="edit"
+              :aria-label="$t('evaluations.table.edit_evaluation_aria')"
+              :label="$t('evaluations.table.edit_evaluation_aria')"
+              @click="ouvrir(p.row)"
+            >
+              <q-tooltip>{{ $t('evaluations.table.edit_evaluation') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutGererEvaluation()"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="delete"
+              :aria-label="$t('evaluations.table.delete_aria')"
+              :label="$t('evaluations.table.delete_aria')"
+              :disable="nombreNotes(p.row) > 0"
+              @click="supprimer(p.row)"
+            >
+              <q-tooltip>
+                {{ nombreNotes(p.row) > 0 ? $t('evaluations.table.delete_locked') : $t('common.actions.delete') }}
+              </q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
-    <q-linear-progress
-      v-if="modeVue === 'cartes' && ev.chargement"
-      indeterminate
-      color="primary"
-      class="q-mb-sm"
-    />
+    <q-linear-progress v-if="modeVue === 'cartes' && ev.chargement" indeterminate color="primary" class="q-mb-sm" />
 
     <div v-else-if="modeVue === 'cartes'" class="evaluations-cartes">
-      <q-card
-        v-for="e in ev.lignes"
-        :key="e.id"
-        flat
-        bordered
-        class="carte evaluations-cartes__carte"
-      >
+      <q-card v-for="e in ev.lignes" :key="e.id" flat bordered class="carte evaluations-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <PastilleStatut domaine="evaluation" :statut="e.statut" />
@@ -231,8 +229,16 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-<q-btn v-if="e.statut !== 'OUVERTE' || !peutSaisirNotes()" flat dense icon="visibility" no-caps :label="$t('evaluations.cards.notes_view')" @click="voirNotes(e)" />
-<q-btn
+          <q-btn
+            v-if="e.statut !== 'OUVERTE' || !peutSaisirNotes()"
+            flat
+            dense
+            icon="visibility"
+            no-caps
+            :label="$t('evaluations.cards.notes_view')"
+            @click="voirNotes(e)"
+          />
+          <q-btn
             v-if="e.statut === 'OUVERTE' && peutSaisirNotes()"
             flat
             dense
@@ -242,38 +248,41 @@
             :label="$t('evaluations.cards.notes_enter')"
             @click="saisirNotes(e)"
           />
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
-            flat
-            dense
-            icon="edit"
-            no-caps
-            :label="$t('common.actions.edit')"
-            @click="ouvrir(e)"
-          />
-<q-btn v-close-popup
-            v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
-            flat
-            dense
-            icon="lock"
-            no-caps
-            :label="$t('common.actions.closeOut')"
-            @click="cloturer(e)"
-          />
-<q-btn v-close-popup
-            v-if="peutGererEvaluation()"
-            flat
-            dense
-            color="negative"
-            icon="delete"
-            no-caps
-            :label="$t('common.actions.delete')"
-            :disable="nombreNotes(e) > 0"
-            @click="supprimer(e)"
-          />
-</actions-secondaires>
-</q-card-actions>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
+              flat
+              dense
+              icon="edit"
+              no-caps
+              :label="$t('common.actions.edit')"
+              @click="ouvrir(e)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="e.statut === 'OUVERTE' && peutGererEvaluation()"
+              flat
+              dense
+              icon="lock"
+              no-caps
+              :label="$t('common.actions.closeOut')"
+              @click="cloturer(e)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutGererEvaluation()"
+              flat
+              dense
+              color="negative"
+              icon="delete"
+              no-caps
+              :label="$t('common.actions.delete')"
+              :disable="nombreNotes(e) > 0"
+              @click="supprimer(e)"
+            />
+          </actions-secondaires>
+        </q-card-actions>
       </q-card>
       <etat-vide v-if="!ev.lignes.length" icone="fact_check" :titre="messageVide">
         <template #action>
@@ -324,13 +333,16 @@
               {{ $t('evaluations.notes_modal.title', { name: evaluationSelectionnee?.intitule }) }}
             </div>
             <div class="text-caption text-grey-7">
-              {{ $t('evaluations.notes_modal.subject_line', {
-                subject: evaluationSelectionnee?.matiere?.intitule,
-                promotion: evaluationSelectionnee?.promotion?.nom,
-                status: evaluationSelectionnee?.statut === 'OUVERTE'
-                  ? $t('evaluations.notes_modal.status_open')
-                  : $t('evaluations.notes_modal.status_closed'),
-              }) }}
+              {{
+                $t('evaluations.notes_modal.subject_line', {
+                  subject: evaluationSelectionnee?.matiere?.intitule,
+                  promotion: evaluationSelectionnee?.promotion?.nom,
+                  status:
+                    evaluationSelectionnee?.statut === 'OUVERTE'
+                      ? $t('evaluations.notes_modal.status_open')
+                      : $t('evaluations.notes_modal.status_closed'),
+                })
+              }}
             </div>
           </div>
           <q-btn
@@ -345,12 +357,7 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          <q-linear-progress
-            v-if="chargementNotes"
-            indeterminate
-            color="primary"
-            class="q-mb-sm"
-          />
+          <q-linear-progress v-if="chargementNotes" indeterminate color="primary" class="q-mb-sm" />
           <q-table
             v-else
             flat
@@ -414,18 +421,16 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
-import {
-  LIBELLE_STATUT_EVALUATION,
-  LIBELLE_TYPE_EVALUATION,
-  dateLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_EVALUATION, LIBELLE_TYPE_EVALUATION, dateLisible } from '@/shared/utils/libelles';
 import type {
   AnneeAcademique,
   Evaluation,
   Matiere,
   Promotion,
   StatutEvaluation,
-  TypeEvaluation, ChipFiltre } from '@/types';
+  TypeEvaluation,
+  ChipFiltre,
+} from '@/types';
 
 const $q = useQuasar();
 const route = useRoute();
@@ -490,26 +495,42 @@ const chips = computed(() => {
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: t('evaluations.chips.year', { v: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({
+      label: t('evaluations.chips.year', { v: a?.libelle ?? '?' }),
+      value: filtres.value.anneeId,
+      icone: 'calendar_today',
+    });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: t('evaluations.chips.promotion', { v: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
+    cs.push({
+      label: t('evaluations.chips.promotion', { v: p?.nom ?? '?' }),
+      value: filtres.value.promotionId,
+      icone: 'school',
+    });
   }
   if (filtres.value.matiereId) {
     const m = matieres.value.find((x) => x.id === filtres.value.matiereId);
-    cs.push({ label: t('evaluations.chips.subject', { v: m?.code ?? '?' }), value: filtres.value.matiereId, icone: 'menu_book' });
+    cs.push({
+      label: t('evaluations.chips.subject', { v: m?.code ?? '?' }),
+      value: filtres.value.matiereId,
+      icone: 'menu_book',
+    });
   }
   if (filtres.value.type) {
     cs.push({
-      label: t('evaluations.chips.type', { v: LIBELLE_TYPE_EVALUATION[filtres.value.type as TypeEvaluation] ?? filtres.value.type }),
+      label: t('evaluations.chips.type', {
+        v: LIBELLE_TYPE_EVALUATION[filtres.value.type as TypeEvaluation] ?? filtres.value.type,
+      }),
       value: filtres.value.type,
       icone: 'category',
     });
   }
   if (filtres.value.statut) {
     cs.push({
-      label: t('evaluations.chips.status', { v: LIBELLE_STATUT_EVALUATION[filtres.value.statut as StatutEvaluation] ?? filtres.value.statut }),
+      label: t('evaluations.chips.status', {
+        v: LIBELLE_STATUT_EVALUATION[filtres.value.statut as StatutEvaluation] ?? filtres.value.statut,
+      }),
       value: filtres.value.statut,
       icone: 'flag',
     });
@@ -610,15 +631,17 @@ function supprimer(e: Evaluation) {
 
 const dialogNotes = ref(false);
 const evaluationSelectionnee = ref<Evaluation | null>(null);
-const notesConsultation = ref<Array<{
-  inscriptionId: string;
-  matricule: string;
-  nom: string;
-  prenom: string;
-  numero: string;
-  note: number | null;
-  present: boolean;
-}>>([]);
+const notesConsultation = ref<
+  Array<{
+    inscriptionId: string;
+    matricule: string;
+    nom: string;
+    prenom: string;
+    numero: string;
+    note: number | null;
+    present: boolean;
+  }>
+>([]);
 const chargementNotes = ref(false);
 
 const colonnesNotesConsultation = computed<QTableColumn[]>(() => [
@@ -645,7 +668,7 @@ async function voirNotes(e: Evaluation) {
   chargementNotes.value = true;
   try {
     const { data } = await api.get(`/evaluations/${e.id}/etudiants`);
-    const liste = Array.isArray(data) ? data : data?.lignes ?? [];
+    const liste = Array.isArray(data) ? data : (data?.lignes ?? []);
     notesConsultation.value = liste.map((l: any) => ({
       inscriptionId: l.inscriptionId ?? l.id,
       matricule: l.matricule ?? '—',

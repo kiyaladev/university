@@ -26,7 +26,7 @@ export default {
   },
   emptyState: {
     message:
-      "Aucune demande pour ces critères. Les demandes sont créées par les étudiants depuis « Mes demandes de documents ».",
+      'Aucune demande pour ces critères. Les demandes sont créées par les étudiants depuis « Mes demandes de documents ».',
   },
   actionsColumn: {
     confirmPayment: 'Confirmer le paiement',
@@ -59,7 +59,8 @@ export default {
     delay: 'délai : {hours} h',
     fees: 'Frais :',
     usualDelay: 'délai habituel : {hours} h',
-    noFeeConfigured: 'Aucun tarif n’est paramétré pour ce type : la demande sera créée sans frais. Contactez la scolarité si nécessaire.',
+    noFeeConfigured:
+      'Aucun tarif n’est paramétré pour ce type : la demande sera créée sans frais. Contactez la scolarité si nécessaire.',
     reasonLabel: 'Motif de la demande',
     reasonPlaceholder: 'Ex. : besoin pour un dossier de bourse',
     enrollmentSection: 'Inscription concernée',

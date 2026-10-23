@@ -109,14 +109,12 @@ export default {
     transition: {
       title: 'Passer en « {label} »',
       abandonMessage: "Le dossier reste consultable mais sort du parcours. Confirmer l'abandon ?",
-      defendedMessage:
-        'Rapport rendu et soutenance enregistrée sont requis avant le passage en SOUTENU.',
+      defendedMessage: 'Rapport rendu et soutenance enregistrée sont requis avant le passage en SOUTENU.',
       defaultMessage: 'Confirmer cette transition ?',
     },
     delete: {
       title: 'Supprimer ce travail ?',
-      message:
-        "{title} — casse du dossier réservée à l'administration, états PROPOSE / VALIDE uniquement.",
+      message: "{title} — casse du dossier réservée à l'administration, états PROPOSE / VALIDE uniquement.",
     },
   },
   notifications: {

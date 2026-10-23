@@ -11,7 +11,9 @@
     </q-banner>
 
     <div class="resume-liste" role="status">
-      <span v-for="s in plaques" :key="s.cle">{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span>
+      <span v-for="s in plaques" :key="s.cle"
+        >{{ s.libelle }} : <strong>{{ stats?.[s.cle] ?? 0 }}</strong></span
+      >
     </div>
 
     <barre-filtres
@@ -33,7 +35,6 @@
         />
       </template>
       <template #avances>
-
         <q-select
           v-model="filtres.type"
           :options="OPTIONS_TYPES"
@@ -53,7 +54,12 @@
       </template>
     </barre-filtres>
 
-    <barre-pagination v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
+    <barre-pagination
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      :show-all="false"
+    />
 
     <q-table
       v-if="modeVue === 'tableau'"
@@ -113,71 +119,92 @@
       </template>
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="play_arrow"
-            :aria-label="$t('demandeDocuments.actionsColumn.startProcessing')" :label="$t('demandeDocuments.actionsColumn.startProcessing')"
+            :aria-label="$t('demandeDocuments.actionsColumn.startProcessing')"
+            :label="$t('demandeDocuments.actionsColumn.startProcessing')"
             :loading="enCours === 'traitement'"
             @click.stop="lancerTraitement(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.startProcessing') }}</q-tooltip>
           </q-btn>
-<q-btn
+          <q-btn
             v-if="['PAYEE', 'EN_TRAITEMENT'].includes(p.row.statut)"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="check_circle"
             color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.markReady')" :label="$t('demandeDocuments.actionsColumn.markReady')"
+            :aria-label="$t('demandeDocuments.actionsColumn.markReady')"
+            :label="$t('demandeDocuments.actionsColumn.markReady')"
             :loading="enCours === 'prete'"
             @click.stop="marquerPrete(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.markReady') }}</q-tooltip>
           </q-btn>
-<q-btn
+          <q-btn
             v-if="p.row.statut === 'PRETE'"
             flat
-            dense no-caps
+            dense
+            no-caps
             icon="assignment_turned_in"
             color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.handOver')" :label="$t('demandeDocuments.actionsColumn.handOver')"
+            :aria-label="$t('demandeDocuments.actionsColumn.handOver')"
+            :label="$t('demandeDocuments.actionsColumn.handOver')"
             :loading="enCours === 'remettre'"
             @click.stop="remettre(p.row)"
           >
             <q-tooltip>{{ $t('demandeDocuments.actionsColumn.handOver') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="p.row.statut === 'EN_ATTENTE_PAIEMENT'"
-            flat
-            dense no-caps
-            icon="verified"
-            color="positive"
-            :aria-label="$t('demandeDocuments.actionsColumn.confirmPayment')" :label="$t('demandeDocuments.actionsColumn.confirmPayment')"
-            :loading="enCours === 'confirmer'"
-            @click.stop="confirmerPaiement(p.row)"
-          >
-            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.confirmPayment') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
-            flat
-            dense no-caps
-            icon="block"
-            color="negative"
-            :aria-label="$t('common.actions.reject')" :label="$t('common.actions.reject')"
-            :loading="enCours === 'rejeter'"
-            @click.stop="rejeter(p.row)"
-          >
-            <q-tooltip>{{ $t('common.actions.reject') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup flat dense no-caps icon="visibility" :aria-label="$t('common.actions.detail')" :label="$t('common.actions.detail')" @click.stop="selectionner(p.row)">
-            <q-tooltip>{{ $t('common.actions.detail') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut === 'EN_ATTENTE_PAIEMENT'"
+              flat
+              dense
+              no-caps
+              icon="verified"
+              color="positive"
+              :aria-label="$t('demandeDocuments.actionsColumn.confirmPayment')"
+              :label="$t('demandeDocuments.actionsColumn.confirmPayment')"
+              :loading="enCours === 'confirmer'"
+              @click.stop="confirmerPaiement(p.row)"
+            >
+              <q-tooltip>{{ $t('demandeDocuments.actionsColumn.confirmPayment') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="p.row.statut !== 'REMISE' && p.row.statut !== 'REJETEE'"
+              flat
+              dense
+              no-caps
+              icon="block"
+              color="negative"
+              :aria-label="$t('common.actions.reject')"
+              :label="$t('common.actions.reject')"
+              :loading="enCours === 'rejeter'"
+              @click.stop="rejeter(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.reject') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="visibility"
+              :aria-label="$t('common.actions.detail')"
+              :label="$t('common.actions.detail')"
+              @click.stop="selectionner(p.row)"
+            >
+              <q-tooltip>{{ $t('common.actions.detail') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
@@ -222,7 +249,7 @@
           </q-card-section>
           <q-separator />
           <q-card-actions align="right" class="q-gutter-xs">
-<q-btn
+            <q-btn
               v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
@@ -232,7 +259,7 @@
               :loading="enCours === 'traitement'"
               @click.stop="lancerTraitement(d)"
             />
-<q-btn
+            <q-btn
               v-if="['PAYEE', 'EN_TRAITEMENT'].includes(d.statut)"
               flat
               dense
@@ -243,7 +270,7 @@
               :loading="enCours === 'prete'"
               @click.stop="marquerPrete(d)"
             />
-<q-btn
+            <q-btn
               v-if="d.statut === 'PRETE'"
               flat
               dense
@@ -254,32 +281,42 @@
               :loading="enCours === 'remettre'"
               @click.stop="remettre(d)"
             />
-<actions-secondaires>
-<q-btn v-close-popup
-              v-if="d.statut === 'EN_ATTENTE_PAIEMENT'"
-              flat
-              dense
-              no-caps
-              icon="verified"
-              color="positive"
-              :label="$t('common.actions.confirm')"
-              :loading="enCours === 'confirmer'"
-              @click.stop="confirmerPaiement(d)"
-            />
-<q-btn v-close-popup
-              v-if="d.statut !== 'REMISE' && d.statut !== 'REJETEE'"
-              flat
-              dense
-              no-caps
-              icon="block"
-              color="negative"
-              :label="$t('common.actions.reject')"
-              :loading="enCours === 'rejeter'"
-              @click.stop="rejeter(d)"
-            />
-<q-btn v-close-popup flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click.stop="selectionner(d)" />
-</actions-secondaires>
-</q-card-actions>
+            <actions-secondaires>
+              <q-btn
+                v-close-popup
+                v-if="d.statut === 'EN_ATTENTE_PAIEMENT'"
+                flat
+                dense
+                no-caps
+                icon="verified"
+                color="positive"
+                :label="$t('common.actions.confirm')"
+                :loading="enCours === 'confirmer'"
+                @click.stop="confirmerPaiement(d)"
+              />
+              <q-btn
+                v-close-popup
+                v-if="d.statut !== 'REMISE' && d.statut !== 'REJETEE'"
+                flat
+                dense
+                no-caps
+                icon="block"
+                color="negative"
+                :label="$t('common.actions.reject')"
+                :loading="enCours === 'rejeter'"
+                @click.stop="rejeter(d)"
+              />
+              <q-btn
+                v-close-popup
+                flat
+                dense
+                no-caps
+                icon="visibility"
+                :label="$t('common.actions.detail')"
+                @click.stop="selectionner(d)"
+              />
+            </actions-secondaires>
+          </q-card-actions>
         </q-card>
       </div>
       <etat-vide
@@ -301,16 +338,14 @@
           <PastilleStatut domaine="demande" :statut="demandeSelectionnee.statut" />
         </q-card-section>
         <q-card-section v-if="demandeSelectionnee" class="q-pt-none">
-          <etapes-circuit
-            :etapes="ETAPES_DEMANDE"
-            :actuel="demandeSelectionnee.statut"
-            :readonly="true"
-          />
+          <etapes-circuit :etapes="ETAPES_DEMANDE" :actuel="demandeSelectionnee.statut" :readonly="true" />
           <div class="demande-meta q-mt-md">
             <div>
               <span class="pochoir">{{ $t('common.fields.student') }}</span>
               <span v-if="demandeSelectionnee.etudiant">
-                {{ demandeSelectionnee.etudiant.prenom }} {{ demandeSelectionnee.etudiant.nom }} ({{ demandeSelectionnee.etudiant.matricule }})
+                {{ demandeSelectionnee.etudiant.prenom }} {{ demandeSelectionnee.etudiant.nom }} ({{
+                  demandeSelectionnee.etudiant.matricule
+                }})
                 <q-btn
                   flat
                   dense
@@ -336,7 +371,8 @@
             <div>
               <span class="pochoir">{{ $t('common.fields.payment') }}</span>
               <span v-if="demandeSelectionnee.paiement">
-                {{ demandeSelectionnee.paiement.reference }} · {{ libellePaiement(demandeSelectionnee.paiement.statut) }}
+                {{ demandeSelectionnee.paiement.reference }} ·
+                {{ libellePaiement(demandeSelectionnee.paiement.statut) }}
               </span>
               <span v-else class="text-grey-7">{{ $t('demandeDocuments.detail.paymentNotStarted') }}</span>
             </div>
@@ -635,7 +671,13 @@ async function remettre(d: DemandeDocument | null) {
     couleur: 'positive',
   });
   if (noteRemise === null) return;
-  await agir(d, 'remettre', 'remettre', { noteRemise: noteRemise.trim() || undefined }, t('demandeDocuments.messages.handedOver'));
+  await agir(
+    d,
+    'remettre',
+    'remettre',
+    { noteRemise: noteRemise.trim() || undefined },
+    t('demandeDocuments.messages.handedOver'),
+  );
 }
 
 async function rejeter(d: DemandeDocument | null) {
@@ -662,17 +704,16 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
+$encre: #1d1d1f;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .stat-chiffre {
   font-size: 2rem;
   line-height: 1.1;
   font-weight: 590;
 }
-
 
 .demande-meta {
   display: grid;

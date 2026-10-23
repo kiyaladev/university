@@ -43,9 +43,15 @@
         <p class="pochoir jour__legende">{{ $t('dashboard.today.legend') }}</p>
       </div>
 
-      <div class="jour__jauge" role="img" :aria-label="$t('dashboard.gauge.coverageAria', { percent: pourcentLisible(d?.jour.tauxControle) })">
+      <div
+        class="jour__jauge"
+        role="img"
+        :aria-label="$t('dashboard.gauge.coverageAria', { percent: pourcentLisible(d?.jour.tauxControle) })"
+      >
         <div class="jour__jauge-remplie se-peint" :style="{ width: `${d?.jour.tauxControle ?? 0}%` }" />
-        <span class="pochoir jour__taux chiffres">{{ $t('dashboard.gauge.coverageLabel', { percent: pourcentLisible(d?.jour.tauxControle) }) }}</span>
+        <span class="pochoir jour__taux chiffres">{{
+          $t('dashboard.gauge.coverageLabel', { percent: pourcentLisible(d?.jour.tauxControle) })
+        }}</span>
       </div>
 
       <q-btn
@@ -139,7 +145,13 @@
               <q-item-section>
                 <q-item-label>{{ dep.nom }}</q-item-label>
                 <q-item-label caption>
-                  {{ $t('dashboard.departments.itemDetail', { controlees: dep.controlees, absent: dep.absent, heures: heuresLisibles(dep.heuresRealisees) }) }}
+                  {{
+                    $t('dashboard.departments.itemDetail', {
+                      controlees: dep.controlees,
+                      absent: dep.absent,
+                      heures: heuresLisibles(dep.heuresRealisees),
+                    })
+                  }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side style="width: 140px">
@@ -179,7 +191,12 @@
               <q-item-section>
                 <q-item-label>{{ e.nom }}</q-item-label>
                 <q-item-label caption>
-                  {{ $t('dashboard.teachers.itemDetail', { count: e.planifiees, percent: pourcentLisible(e.tauxPresence) }) }}
+                  {{
+                    $t('dashboard.teachers.itemDetail', {
+                      count: e.planifiees,
+                      percent: pourcentLisible(e.tauxPresence),
+                    })
+                  }}
                 </q-item-label>
               </q-item-section>
               <q-item-section side>
@@ -310,15 +327,10 @@ const clePreparation = computed(() => {
 });
 const heurePreparation = computed(() => {
   if (!tourneePrepareeLe.value) return '';
-  return new Date(tourneePrepareeLe.value).toLocaleTimeString(
-    locale.value,
-    { hour: '2-digit', minute: '2-digit' },
-  );
+  return new Date(tourneePrepareeLe.value).toLocaleTimeString(locale.value, { hour: '2-digit', minute: '2-digit' });
 });
 
-const optionsDepartements = computed(() =>
-  departements.value.map((x) => ({ label: x.nom, value: x.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((x) => ({ label: x.nom, value: x.id })));
 
 const peutVoirStatistiques = computed(() => auth.peut('statistiques.voir'));
 
@@ -524,7 +536,9 @@ watch([dateDebut, dateFin, departementId], charger);
   flex-wrap: wrap;
 }
 
-.jour__mention { color: var(--up-encre-douce); }
+.jour__mention {
+  color: var(--up-encre-douce);
+}
 
 .jour__compte {
   font-size: clamp(2.2rem, 1.6rem + 3vw, 3.4rem);
@@ -537,7 +551,9 @@ watch([dateDebut, dateFin, departementId], charger);
   color: var(--up-encre-douce);
 }
 
-.jour__legende { color: var(--up-encre-douce); }
+.jour__legende {
+  color: var(--up-encre-douce);
+}
 
 .jour__jauge {
   flex: 1 1 240px;
@@ -578,7 +594,9 @@ watch([dateDebut, dateFin, departementId], charger);
   padding: var(--up-2) 0;
 }
 
-.releve { margin-bottom: var(--up-3); }
+.releve {
+  margin-bottom: var(--up-3);
+}
 
 .releve__ligne {
   display: flex;
@@ -587,10 +605,14 @@ watch([dateDebut, dateFin, departementId], charger);
   gap: var(--up-3);
   padding: var(--up-3);
 
-  & + & { border-top: var(--up-filet-fin); }
+  & + & {
+    border-top: var(--up-filet-fin);
+  }
 }
 
-.releve__libelle { color: var(--up-encre); }
+.releve__libelle {
+  color: var(--up-encre);
+}
 
 .releve__detail {
   color: var(--up-encre-douce);
@@ -611,8 +633,14 @@ watch([dateDebut, dateFin, departementId], charger);
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .releve__ligne + .releve__ligne { border-top: 0; }
-  .releve__ligne:nth-child(2n) { border-left: var(--up-filet); }
-  .releve__ligne:nth-child(n + 3) { border-top: var(--up-filet); }
+  .releve__ligne + .releve__ligne {
+    border-top: 0;
+  }
+  .releve__ligne:nth-child(2n) {
+    border-left: var(--up-filet);
+  }
+  .releve__ligne:nth-child(n + 3) {
+    border-top: var(--up-filet);
+  }
 }
 </style>

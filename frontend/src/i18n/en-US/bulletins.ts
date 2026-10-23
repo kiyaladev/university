@@ -30,7 +30,8 @@ export default {
     voirDeliberations: 'View grade boards',
   },
   banners: {
-    infoImprimables: '{nbImprimables} student(s) on the grade board out of {total} enrolled shown. Only students on a grade board have a report card.',
+    infoImprimables:
+      '{nbImprimables} student(s) on the grade board out of {total} enrolled shown. Only students on a grade board have a report card.',
     aucuneDeliberation: 'No grade board for this filter: report cards cannot be issued.',
     creerDeliberation: 'Create the grade board',
   },

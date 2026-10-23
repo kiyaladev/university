@@ -28,30 +28,35 @@ export interface LigneSaisie {
   presentOriginal: boolean;
 }
 
-const props = withDefaults(defineProps<{
-  evaluationId: string;
-  inscriptions: Array<{
-    inscriptionId: string;
-    numero: string;
-    matricule: string;
-    nom: string;
-    prenom: string;
-    note?: number | null;
-    present?: boolean;
-  }>;
-  notesExistantes?: Array<{ inscriptionId: string; note?: number | null; present?: boolean }>;
-  /** Lecture seule (évaluation clôturée, ou utilisateur non autorisé) */
-  lectureSeule?: boolean;
-  /** Raison affichée si lecture seule */
-  motifLectureSeule?: string;
-}>(), {
-  notesExistantes: () => [],
-  lectureSeule: false,
-  motifLectureSeule: '',
-});
+const props = withDefaults(
+  defineProps<{
+    evaluationId: string;
+    inscriptions: Array<{
+      inscriptionId: string;
+      numero: string;
+      matricule: string;
+      nom: string;
+      prenom: string;
+      note?: number | null;
+      present?: boolean;
+    }>;
+    notesExistantes?: Array<{ inscriptionId: string; note?: number | null; present?: boolean }>;
+    /** Lecture seule (évaluation clôturée, ou utilisateur non autorisé) */
+    lectureSeule?: boolean;
+    /** Raison affichée si lecture seule */
+    motifLectureSeule?: string;
+  }>(),
+  {
+    notesExistantes: () => [],
+    lectureSeule: false,
+    motifLectureSeule: '',
+  },
+);
 
 const emit = defineEmits<{
-  'enregistrer': [payload: { evaluationId: string; notes: Array<{ inscriptionId: string; note: number | null; present: boolean }> }];
+  enregistrer: [
+    payload: { evaluationId: string; notes: Array<{ inscriptionId: string; note: number | null; present: boolean }> },
+  ];
 }>();
 
 const lignes = ref<LigneSaisie[]>([]);
@@ -89,23 +94,14 @@ watch(
 onMounted(construireLignes);
 
 /** Une ligne est modifiée si sa note OU sa présence a bougé. */
-const estModifiee = (l: LigneSaisie) =>
-  l.note !== l.noteOriginale || l.present !== l.presentOriginal;
+const estModifiee = (l: LigneSaisie) => l.note !== l.noteOriginale || l.present !== l.presentOriginal;
 
 const lignesModifiees = computed(() => lignes.value.filter(estModifiee));
 
-const remplies = computed(
-  () => lignes.value.filter((l) => l.present && l.note !== null).length,
-);
-const presentes = computed(
-  () => lignes.value.filter((l) => l.present).length,
-);
-const absents = computed(
-  () => lignes.value.filter((l) => !l.present).length,
-);
-const progression = computed(() =>
-  lignes.value.length ? remplies.value / lignes.value.length : 0,
-);
+const remplies = computed(() => lignes.value.filter((l) => l.present && l.note !== null).length);
+const presentes = computed(() => lignes.value.filter((l) => l.present).length);
+const absents = computed(() => lignes.value.filter((l) => !l.present).length);
+const progression = computed(() => (lignes.value.length ? remplies.value / lignes.value.length : 0));
 
 function borner(l: LigneSaisie) {
   if (l.note === null || l.note === undefined) return;
@@ -175,15 +171,39 @@ const peutEditer = computed(() => !props.lectureSeule);
   <div class="saisie-masse">
     <div class="saisie-masse__entete">
       <div class="saisie-masse__stats">
-        <q-chip outline color="primary" icon="edit_note" :label="$t(lignes.length === 1 ? 'notes.bulk.studentOne' : 'notes.bulk.students', { count: lignes.length })" />
-        <q-chip outline color="positive" icon="check" :label="$t(remplies === 1 ? 'notes.bulk.gradedOne' : 'notes.bulk.graded', { count: remplies })" />
-        <q-chip outline color="secondary" icon="person" :label="$t(presentes === 1 ? 'notes.bulk.presentOne' : 'notes.bulk.present', { count: presentes })" />
-        <q-chip outline color="grey-7" icon="person_off" :label="$t(absents === 1 ? 'notes.bulk.absentOne' : 'notes.bulk.absentCount', { count: absents })" />
+        <q-chip
+          outline
+          color="primary"
+          icon="edit_note"
+          :label="$t(lignes.length === 1 ? 'notes.bulk.studentOne' : 'notes.bulk.students', { count: lignes.length })"
+        />
+        <q-chip
+          outline
+          color="positive"
+          icon="check"
+          :label="$t(remplies === 1 ? 'notes.bulk.gradedOne' : 'notes.bulk.graded', { count: remplies })"
+        />
+        <q-chip
+          outline
+          color="secondary"
+          icon="person"
+          :label="$t(presentes === 1 ? 'notes.bulk.presentOne' : 'notes.bulk.present', { count: presentes })"
+        />
+        <q-chip
+          outline
+          color="grey-7"
+          icon="person_off"
+          :label="$t(absents === 1 ? 'notes.bulk.absentOne' : 'notes.bulk.absentCount', { count: absents })"
+        />
         <q-chip
           v-if="lignesModifiees.length"
           color="warning"
           icon="edit"
-          :label="$t(lignesModifiees.length === 1 ? 'notes.bulk.modifiedOne' : 'notes.bulk.modifiedCount', { count: lignesModifiees.length })"
+          :label="
+            $t(lignesModifiees.length === 1 ? 'notes.bulk.modifiedOne' : 'notes.bulk.modifiedCount', {
+              count: lignesModifiees.length,
+            })
+          "
         />
       </div>
       <div class="saisie-masse__progression">
@@ -230,26 +250,23 @@ const peutEditer = computed(() => !props.lectureSeule);
         <div class="col-etu">
           <div class="text-weight-medium">{{ l.prenom }} {{ l.nom }}</div>
         </div>
-        <div
-          class="col-pres"
-          :data-cellule="`${idx}-present`"
-          @click="surFocus(idx, 'present')"
-        >
+        <div class="col-pres" :data-cellule="`${idx}-present`" @click="surFocus(idx, 'present')">
           <q-checkbox
             v-model="l.present"
             :disable="!peutEditer"
             dense
             color="primary"
             :aria-label="$t('notes.bulk.attendanceFor', { name: `${l.prenom} ${l.nom}` })"
-            @update:model-value="(v) => { l.present = !!v; if (!v) l.note = null; }"
+            @update:model-value="
+              (v) => {
+                l.present = !!v;
+                if (!v) l.note = null;
+              }
+            "
             @focus="surFocus(idx, 'present')"
           />
         </div>
-        <div
-          class="col-note"
-          :data-cellule="`${idx}-note`"
-          @click="surFocus(idx, 'note')"
-        >
+        <div class="col-note" :data-cellule="`${idx}-note`" @click="surFocus(idx, 'note')">
           <q-input
             v-model.number="l.note"
             :disable="!peutEditer || !l.present"
@@ -268,28 +285,10 @@ const peutEditer = computed(() => !props.lectureSeule);
           />
         </div>
         <div class="col-eta">
-          <q-badge
-            v-if="l.note === null && l.present"
-            color="warning"
-            :label="$t('notes.bulk.missing')"
-          />
-          <q-badge
-            v-else-if="!l.present"
-            color="grey-6"
-            :label="$t('notes.bulk.absent')"
-          />
-          <q-badge
-            v-else-if="estModifiee(l)"
-            color="warning"
-            icon="edit"
-            :label="$t('notes.bulk.modified')"
-          />
-          <q-badge
-            v-else
-            color="positive"
-            icon="task_alt"
-            :label="$t('notes.bulk.saved')"
-          />
+          <q-badge v-if="l.note === null && l.present" color="warning" :label="$t('notes.bulk.missing')" />
+          <q-badge v-else-if="!l.present" color="grey-6" :label="$t('notes.bulk.absent')" />
+          <q-badge v-else-if="estModifiee(l)" color="warning" icon="edit" :label="$t('notes.bulk.modified')" />
+          <q-badge v-else color="positive" icon="task_alt" :label="$t('notes.bulk.saved')" />
         </div>
       </div>
 

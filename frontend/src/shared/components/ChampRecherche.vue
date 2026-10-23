@@ -19,34 +19,37 @@ interface Option {
   raw?: any;
 }
 
-const props = withDefaults(defineProps<{
-  modelValue?: string | null;
-  endpoint: string;
-  /** Champ de l'option à utiliser comme identifiant (par défaut id) */
-  valueField?: string;
-  /** Fonction (item) => libellé affiché */
-  labelFn: (item: any) => string;
-  /** Libellé affiché au-dessus du champ */
-  label?: string;
-  /** Texte d'invite quand vide */
-  placeholder?: string;
-  /** Active le clear */
-  clearable?: boolean;
-  /** Désactive le champ */
-  disable?: boolean;
-  /** Permet de chercher en mode serveur (sinon on charge tout) */
-  serverSearch?: boolean;
-  /** Limite de résultats quand le serveur ne filtre pas */
-  pageSize?: number;
-  /** Valeur initiale : si on reçoit un id seul, on charge l'item pour avoir le label */
-  preload?: boolean;
-}>(), {
-  valueField: 'id',
-  clearable: true,
-  serverSearch: false,
-  pageSize: 50,
-  preload: true,
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string | null;
+    endpoint: string;
+    /** Champ de l'option à utiliser comme identifiant (par défaut id) */
+    valueField?: string;
+    /** Fonction (item) => libellé affiché */
+    labelFn: (item: any) => string;
+    /** Libellé affiché au-dessus du champ */
+    label?: string;
+    /** Texte d'invite quand vide */
+    placeholder?: string;
+    /** Active le clear */
+    clearable?: boolean;
+    /** Désactive le champ */
+    disable?: boolean;
+    /** Permet de chercher en mode serveur (sinon on charge tout) */
+    serverSearch?: boolean;
+    /** Limite de résultats quand le serveur ne filtre pas */
+    pageSize?: number;
+    /** Valeur initiale : si on reçoit un id seul, on charge l'item pour avoir le label */
+    preload?: boolean;
+  }>(),
+  {
+    valueField: 'id',
+    clearable: true,
+    serverSearch: false,
+    pageSize: 50,
+    preload: true,
+  },
+);
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | null, raw?: any];
@@ -101,23 +104,32 @@ function ouvrirFiltre(val: string, miseAJour: (cb: () => void) => void) {
   }, 300);
 }
 
-watch(() => props.modelValue, async (v) => {
-  valeurCourante.value = v;
-  // Préchargement de l'item courant pour avoir le label affiché dans la zone
-  if (v && props.preload && !options.value.find((o) => o.value === v)) {
-    try {
-      const { data } = await api.get(`${props.endpoint}/${v}`);
-      const item = Array.isArray(data) ? data[0] : data;
-      if (item && item[props.valueField]) {
-        options.value = [{
-          label: props.labelFn(item) || item[props.valueField],
-          value: item[props.valueField],
-          raw: item,
-        }, ...options.value];
+watch(
+  () => props.modelValue,
+  async (v) => {
+    valeurCourante.value = v;
+    // Préchargement de l'item courant pour avoir le label affiché dans la zone
+    if (v && props.preload && !options.value.find((o) => o.value === v)) {
+      try {
+        const { data } = await api.get(`${props.endpoint}/${v}`);
+        const item = Array.isArray(data) ? data[0] : data;
+        if (item && item[props.valueField]) {
+          options.value = [
+            {
+              label: props.labelFn(item) || item[props.valueField],
+              value: item[props.valueField],
+              raw: item,
+            },
+            ...options.value,
+          ];
+        }
+      } catch {
+        /* silencieux : si l'item n'existe plus on l'ignore */
       }
-    } catch { /* silencieux : si l'item n'existe plus on l'ignore */ }
-  }
-}, { immediate: true });
+    }
+  },
+  { immediate: true },
+);
 
 watch(valeurCourante, (v) => {
   if (v !== props.modelValue) emit('update:modelValue', v ?? null, options.value.find((o) => o.value === v)?.raw);

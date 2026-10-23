@@ -4,18 +4,68 @@ const TAILLE_FICHIER_MAX = 5 * 1024 * 1024;
 const TAILLE_DECOMPRESSEE_MAX = 16 * 1024 * 1024;
 const LIGNES_MAX = 2001;
 const ENTETES_IMPORT = new Set([
-  'matricule', 'nom', 'lastname', 'surname', 'prenom', 'first name', 'firstname',
-  'email', 'courriel', 'telephone', 'grade', 'statut', 'status', 'taux horaire', 'taux',
-  'departement id', 'departementid', 'code', 'intitule', 'matiere', 'libelle', 'volume horaire',
-  'volume horaire total', 'credits', 'credit', 'batiment', 'building', 'capacite',
-  'places', 'affectation id', 'affectationid', 'jour', 'jour semaine', 'jour de la semaine', 'joursemaine',
-  'heure debut', 'heure de debut', 'heure fin', 'heure de fin', 'heuredebut', 'heurefin', 'type', 'type cours',
-  'salle id', 'salleid', 'date debut', 'date de debut', 'date fin', 'date de fin', 'datedebut', 'datefin',
+  'matricule',
+  'nom',
+  'lastname',
+  'surname',
+  'prenom',
+  'first name',
+  'firstname',
+  'email',
+  'courriel',
+  'telephone',
+  'grade',
+  'statut',
+  'status',
+  'taux horaire',
+  'taux',
+  'departement id',
+  'departementid',
+  'code',
+  'intitule',
+  'matiere',
+  'libelle',
+  'volume horaire',
+  'volume horaire total',
+  'credits',
+  'credit',
+  'batiment',
+  'building',
+  'capacite',
+  'places',
+  'affectation id',
+  'affectationid',
+  'jour',
+  'jour semaine',
+  'jour de la semaine',
+  'joursemaine',
+  'heure debut',
+  'heure de debut',
+  'heure fin',
+  'heure de fin',
+  'heuredebut',
+  'heurefin',
+  'type',
+  'type cours',
+  'salle id',
+  'salleid',
+  'date debut',
+  'date de debut',
+  'date fin',
+  'date de fin',
+  'datedebut',
+  'datefin',
 ]);
 
 function normaliserEntete(entete: string): string {
-  return entete.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .trim().toLocaleLowerCase('fr').replace(/[_-]+/g, ' ').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ');
+  return entete
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('fr')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .replace(/\s+/g, ' ');
 }
 
 function indexEnteteImport(lignes: string[][]): number {
@@ -35,7 +85,10 @@ function verifierArchive(donnees: Uint8Array): void {
   const debutRecherche = Math.max(0, donnees.length - 65_557);
   let eocd = -1;
   for (let i = donnees.length - 22; i >= debutRecherche; i -= 1) {
-    if (vue.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    if (vue.getUint32(i, true) === 0x06054b50) {
+      eocd = i;
+      break;
+    }
   }
   if (eocd < 0) throw new Error('Le fichier ne contient pas une archive XLSX valide.');
   if (vue.getUint16(eocd + 4, true) !== 0 || vue.getUint16(eocd + 6, true) !== 0) {
@@ -82,12 +135,17 @@ async function extraireXml(donnees: Uint8Array): Promise<Record<string, string>>
   return new Promise((resolve, reject) => {
     const unzip = new Unzip((fichier) => {
       const nom = fichier.name;
-      if (![
-        'xl/sharedStrings.xml', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels',
-      ].includes(nom) && !/^xl\/worksheets\/sheet\d+\.xml$/.test(nom)) return;
+      if (
+        !['xl/sharedStrings.xml', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels'].includes(nom) &&
+        !/^xl\/worksheets\/sheet\d+\.xml$/.test(nom)
+      )
+        return;
       const morceaux: Uint8Array[] = [];
       fichier.ondata = (erreur, bloc, fin) => {
-        if (erreur) { reject(erreur); return; }
+        if (erreur) {
+          reject(erreur);
+          return;
+        }
         tailleSortie += bloc.length;
         if (tailleSortie > TAILLE_DECOMPRESSEE_MAX) {
           reject(new Error('Le classeur dépasse la limite de décompression autorisée.'));
@@ -98,7 +156,10 @@ async function extraireXml(donnees: Uint8Array): Promise<Record<string, string>>
           const longueur = morceaux.reduce((somme, morceau) => somme + morceau.length, 0);
           const xml = new Uint8Array(longueur);
           let offset = 0;
-          for (const morceau of morceaux) { xml.set(morceau, offset); offset += morceau.length; }
+          for (const morceau of morceaux) {
+            xml.set(morceau, offset);
+            offset += morceau.length;
+          }
           fichiers[nom] = new TextDecoder('utf-8', { fatal: true }).decode(xml);
         }
       };
@@ -109,13 +170,16 @@ async function extraireXml(donnees: Uint8Array): Promise<Record<string, string>>
     try {
       unzip.push(donnees, true);
       resolve(fichiers);
-    } catch (erreur) { reject(erreur); }
+    } catch (erreur) {
+      reject(erreur);
+    }
   });
 }
 
 function documentXml(xml: string, nom: string): XMLDocument {
   const document = new DOMParser().parseFromString(xml, 'application/xml');
-  if (document.getElementsByTagName('parsererror').length) throw new Error(`Le fichier XLSX contient un XML invalide (${nom}).`);
+  if (document.getElementsByTagName('parsererror').length)
+    throw new Error(`Le fichier XLSX contient un XML invalide (${nom}).`);
   return document;
 }
 
@@ -127,7 +191,8 @@ function premierFeuillet(fichiers: Record<string, string>): string {
   if (!fichiers['xl/workbook.xml'] || !fichiers['xl/_rels/workbook.xml.rels']) return 'xl/worksheets/sheet1.xml';
   const workbook = documentXml(fichiers['xl/workbook.xml'], 'workbook.xml');
   const relationId = elements(workbook, 'sheet')[0]?.getAttributeNS(
-    'http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id',
+    'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+    'id',
   );
   const relations = documentXml(fichiers['xl/_rels/workbook.xml.rels'], 'workbook.xml.rels');
   const relation = elements(relations, 'Relationship').find((e) => e.getAttribute('Id') === relationId);
@@ -140,7 +205,11 @@ function premierFeuillet(fichiers: Record<string, string>): string {
 }
 
 function chainePartagee(document: XMLDocument): string[] {
-  return elements(document, 'si').map((item) => elements(item, 't').map((t) => t.textContent ?? '').join(''));
+  return elements(document, 'si').map((item) =>
+    elements(item, 't')
+      .map((t) => t.textContent ?? '')
+      .join(''),
+  );
 }
 
 function colonneIndex(reference: string): number {
@@ -181,10 +250,13 @@ export async function convertirXlsxEnCsv(fichier: File): Promise<string> {
       prochaineColonne = index + 1;
       const type = cellule.getAttribute('t');
       let valeur = '';
-      if (type === 'inlineStr') valeur = elements(cellule, 't').map((t) => t.textContent ?? '').join('');
+      if (type === 'inlineStr')
+        valeur = elements(cellule, 't')
+          .map((t) => t.textContent ?? '')
+          .join('');
       else {
         const brut = elements(cellule, 'v')[0]?.textContent ?? '';
-        valeur = type === 's' ? partagees[Number(brut)] ?? '' : brut;
+        valeur = type === 's' ? (partagees[Number(brut)] ?? '') : brut;
       }
       cellules[index] = valeur;
     }
@@ -192,39 +264,76 @@ export async function convertirXlsxEnCsv(fichier: File): Promise<string> {
   });
   const indexEntetes = indexEnteteImport(valeursLignes);
   if (indexEntetes < 0) throw new Error('Aucune ligne d’en-tête reconnue dans les dix premières lignes de la feuille.');
-  if (lignes.length - indexEntetes > LIGNES_MAX) throw new Error('Un classeur peut contenir au maximum 2 000 lignes de données.');
+  if (lignes.length - indexEntetes > LIGNES_MAX)
+    throw new Error('Un classeur peut contenir au maximum 2 000 lignes de données.');
   const entetes = valeursLignes[indexEntetes] ?? [];
-  const colonnesDate = new Set(entetes.flatMap((entete, i) => {
-    const cle = normaliserEntete(entete ?? '');
-    return ['date debut', 'date de debut', 'date fin', 'date de fin', 'datedebut', 'datefin'].includes(cle.replace(/\s/g, ''))
-      || ['date debut', 'date de debut', 'date fin', 'date de fin'].includes(cle) ? [i] : [];
-  }));
-  const colonnesHeure = new Set(entetes.flatMap((entete, i) => {
-    const cle = normaliserEntete(entete ?? '');
-    return [
-      'heure debut', 'heure de debut', 'heure debut du cours', 'heure de debut du cours',
-      'heure fin', 'heure de fin', 'heure fin du cours', 'heure de fin du cours',
-      'heuredebut', 'heurefin', 'heuredebutcours', 'heurefincours',
-      'debut', 'fin', 'debutcours', 'fincours', 'starttime', 'endtime',
-    ].includes(cle.replace(/\s/g, ''))
-      || ['heure debut', 'heure de debut', 'heure debut du cours', 'heure de debut du cours',
-        'heure fin', 'heure de fin', 'heure fin du cours', 'heure de fin du cours'].includes(cle) ? [i] : [];
-  }));
+  const colonnesDate = new Set(
+    entetes.flatMap((entete, i) => {
+      const cle = normaliserEntete(entete ?? '');
+      return ['date debut', 'date de debut', 'date fin', 'date de fin', 'datedebut', 'datefin'].includes(
+        cle.replace(/\s/g, ''),
+      ) || ['date debut', 'date de debut', 'date fin', 'date de fin'].includes(cle)
+        ? [i]
+        : [];
+    }),
+  );
+  const colonnesHeure = new Set(
+    entetes.flatMap((entete, i) => {
+      const cle = normaliserEntete(entete ?? '');
+      return [
+        'heure debut',
+        'heure de debut',
+        'heure debut du cours',
+        'heure de debut du cours',
+        'heure fin',
+        'heure de fin',
+        'heure fin du cours',
+        'heure de fin du cours',
+        'heuredebut',
+        'heurefin',
+        'heuredebutcours',
+        'heurefincours',
+        'debut',
+        'fin',
+        'debutcours',
+        'fincours',
+        'starttime',
+        'endtime',
+      ].includes(cle.replace(/\s/g, '')) ||
+        [
+          'heure debut',
+          'heure de debut',
+          'heure debut du cours',
+          'heure de debut du cours',
+          'heure fin',
+          'heure de fin',
+          'heure fin du cours',
+          'heure de fin du cours',
+        ].includes(cle)
+        ? [i]
+        : [];
+    }),
+  );
   const origineExcel = Date.UTC(1899, 11, 30);
-  const contenu = valeursLignes.slice(indexEntetes).map((ligne, index) => {
-    if (index === 0) return ligne.map((v) => csvValeur(v ?? '')).join(';');
-    return entetes.map((_, colonne) => {
-      let valeur = ligne[colonne] ?? '';
-      if (colonnesDate.has(colonne) && /^\d+(?:\.\d+)?$/.test(valeur)) {
-        const date = new Date(origineExcel + Number(valeur) * 86_400_000);
-        valeur = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
-      }
-      if (colonnesHeure.has(colonne) && /^(?:0(?:\.\d+)?|0?\.\d+)$/.test(valeur)) {
-        const minutes = Math.min(1439, Math.round(Number(valeur) * 1440));
-        valeur = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-      }
-      return csvValeur(valeur);
-    }).join(';');
-  }).join('\r\n');
+  const contenu = valeursLignes
+    .slice(indexEntetes)
+    .map((ligne, index) => {
+      if (index === 0) return ligne.map((v) => csvValeur(v ?? '')).join(';');
+      return entetes
+        .map((_, colonne) => {
+          let valeur = ligne[colonne] ?? '';
+          if (colonnesDate.has(colonne) && /^\d+(?:\.\d+)?$/.test(valeur)) {
+            const date = new Date(origineExcel + Number(valeur) * 86_400_000);
+            valeur = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+          }
+          if (colonnesHeure.has(colonne) && /^(?:0(?:\.\d+)?|0?\.\d+)$/.test(valeur)) {
+            const minutes = Math.min(1439, Math.round(Number(valeur) * 1440));
+            valeur = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+          }
+          return csvValeur(valeur);
+        })
+        .join(';');
+    })
+    .join('\r\n');
   return `${'\r\n'.repeat(indexEntetes)}${contenu}`;
 }

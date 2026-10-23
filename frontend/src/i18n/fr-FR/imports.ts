@@ -7,7 +7,8 @@ export default {
   apply: 'Importer les lignes valides',
   confirm: 'Créer les {count} ligne(s) valides ? Les erreurs seront ignorées et signalées dans le rapport.',
   previewRequired: 'Prévisualisez le fichier avant de lancer l’import.',
-  separatorHelp: 'CSV : le séparateur point-virgule ou virgule est détecté automatiquement. XLSX : la première feuille est lue. Les colonnes peuvent être réordonnées ; leurs noms accentués sont reconnus.',
+  separatorHelp:
+    'CSV : le séparateur point-virgule ou virgule est détecté automatiquement. XLSX : la première feuille est lue. Les colonnes peuvent être réordonnées ; leurs noms accentués sont reconnus.',
   previewTitle: 'Résultat de la prévisualisation',
   lines: 'Lignes lues',
   valid: 'Prêtes à importer',

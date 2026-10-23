@@ -5,7 +5,14 @@
         <q-btn flat no-caps icon="public" :label="$t('formationsAdmin.actions.seeShowcase')" to="/formations">
           <q-tooltip>{{ $t('formationsAdmin.actions.seeShowcaseTooltip') }}</q-tooltip>
         </q-btn>
-        <q-btn unelevated color="primary" no-caps icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="add"
+          :label="$t('formationsAdmin.actions.newFormation')"
+          @click="ouvrirNouvelle"
+        />
       </template>
     </en-tete-page>
 
@@ -44,7 +51,9 @@
       <div class="col-12 col-md-3">
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span></div>
+            <div class="stat-chiffre chiffres">
+              {{ montantLisible(stats.recette) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span>
+            </div>
             <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.revenue') }}</div>
           </q-card-section>
         </q-card>
@@ -80,9 +89,20 @@
       :hide-bottom="liste.chargement || liste.lignes.length > 0"
     >
       <template #no-data>
-        <etat-vide icone="workspace_premium" :titre="$t('formationsAdmin.emptyState.title')" :aide="$t('formationsAdmin.emptyState.description')">
+        <etat-vide
+          icone="workspace_premium"
+          :titre="$t('formationsAdmin.emptyState.title')"
+          :aide="$t('formationsAdmin.emptyState.description')"
+        >
           <template #action>
-            <q-btn flat no-caps color="primary" icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
+            <q-btn
+              flat
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('formationsAdmin.actions.newFormation')"
+              @click="ouvrirNouvelle"
+            />
           </template>
         </etat-vide>
       </template>
@@ -129,7 +149,11 @@
           <q-td key="actions" :props="p" class="text-right">
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
-              flat dense round color="secondary" icon="publish"
+              flat
+              dense
+              round
+              color="secondary"
+              icon="publish"
               :aria-label="$t('formationsAdmin.table.aria.publish')"
               @click="publier(p.row)"
             >
@@ -137,21 +161,43 @@
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'PUBLIEE'"
-              flat dense round color="warning" icon="lock"
+              flat
+              dense
+              round
+              color="warning"
+              icon="lock"
               :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(p.row)"
             >
               <q-tooltip>{{ $t('common.actions.closeOut') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(p.row)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="edit"
+              :aria-label="$t('formationsAdmin.table.aria.edit')"
+              @click="ouvrirModification(p.row)"
+            >
               <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
-            <q-btn flat dense round icon="group" :aria-label="$t('formationsAdmin.table.aria.registrations')" @click="basculerRegistre(p)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="group"
+              :aria-label="$t('formationsAdmin.table.aria.registrations')"
+              @click="basculerRegistre(p)"
+            >
               <q-tooltip>{{ $t('formationsAdmin.table.tooltips.registrations') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="p.row.statut === 'BROUILLON'"
-              flat dense round color="negative" icon="delete_outline"
+              flat
+              dense
+              round
+              color="negative"
+              icon="delete_outline"
               :aria-label="$t('formationsAdmin.table.aria.delete')"
               @click="supprimer(p.row)"
             >
@@ -165,7 +211,15 @@
             <div class="row items-center q-mb-sm">
               <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: p.row.titre }) }}</div>
               <q-space />
-              <q-btn flat dense no-caps color="primary" :label="$t('common.actions.reload')" icon="refresh" @click="chargerRegistre(p.row, true)" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+                :label="$t('common.actions.reload')"
+                icon="refresh"
+                @click="chargerRegistre(p.row, true)"
+              />
             </div>
             <q-table
               flat
@@ -211,7 +265,11 @@
                 <q-td :props="r" class="text-right">
                   <q-btn
                     v-if="r.row.statut === 'EN_ATTENTE'"
-                    flat dense round color="secondary" icon="check_circle"
+                    flat
+                    dense
+                    round
+                    color="secondary"
+                    icon="check_circle"
                     :aria-label="$t('formationsAdmin.registry.aria.confirmPayment')"
                     @click="confirmer(r.row)"
                   >
@@ -219,7 +277,11 @@
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut !== 'ANNULEE'"
-                    flat dense round color="negative" icon="block"
+                    flat
+                    dense
+                    round
+                    color="negative"
+                    icon="block"
                     :aria-label="$t('formationsAdmin.registry.aria.cancelRequest')"
                     @click="annuler(r.row)"
                   >
@@ -227,7 +289,10 @@
                   </q-btn>
                   <q-btn
                     v-if="r.row.statut === 'CONFIRMEE'"
-                    flat dense round icon="print"
+                    flat
+                    dense
+                    round
+                    icon="print"
                     :aria-label="$t('formationsAdmin.registry.aria.printCertificate')"
                     @click="imprimerCertificat(r.row)"
                   >
@@ -256,27 +321,44 @@
             <PastilleStatut domaine="formation" :statut="f.statut" />
           </q-card-section>
           <q-card-section class="text-center">
-            <div class="text-h3 chiffres">{{ montantLisible(f.prix) }} <span class="text-h6">{{ f.devise }}</span></div>
+            <div class="text-h3 chiffres">
+              {{ montantLisible(f.prix) }} <span class="text-h6">{{ f.devise }}</span>
+            </div>
             <div class="text-caption text-grey-7 q-mt-sm">
               <span v-if="f.dureeHeures">{{ $t('common.units.hours', { n: f.dureeHeures }) }}</span>
               <span v-if="f.dateDebut"> · {{ datesLisible(f) }}</span>
             </div>
             <div class="q-mt-md">
-              <q-badge
-                :color="placesRestantes(f) > 0 ? 'positive' : 'negative'"
-                :label="placesRestantesStr(f)"
-              />
+              <q-badge :color="placesRestantes(f) > 0 ? 'positive' : 'negative'" :label="placesRestantesStr(f)" />
             </div>
           </q-card-section>
           <q-card-actions class="q-px-md">
-            <q-btn flat dense no-caps icon="group" :label="$t('formationsAdmin.actions.registrations')" @click="basculerRegistreCarte(f)" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              icon="group"
+              :label="$t('formationsAdmin.actions.registrations')"
+              @click="basculerRegistreCarte(f)"
+            />
             <q-space />
-            <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(f)">
+            <q-btn
+              flat
+              dense
+              round
+              icon="edit"
+              :aria-label="$t('formationsAdmin.table.aria.edit')"
+              @click="ouvrirModification(f)"
+            >
               <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
-              flat dense round color="secondary" icon="publish"
+              flat
+              dense
+              round
+              color="secondary"
+              icon="publish"
               :aria-label="$t('formationsAdmin.table.aria.publish')"
               @click="publier(f)"
             >
@@ -284,7 +366,11 @@
             </q-btn>
             <q-btn
               v-if="f.statut === 'PUBLIEE'"
-              flat dense round color="warning" icon="lock"
+              flat
+              dense
+              round
+              color="warning"
+              icon="lock"
               :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(f)"
             >
@@ -292,7 +378,11 @@
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
-              flat dense round color="negative" icon="delete_outline"
+              flat
+              dense
+              round
+              color="negative"
+              icon="delete_outline"
               :aria-label="$t('formationsAdmin.table.aria.delete')"
               @click="supprimer(f)"
             >
@@ -305,7 +395,15 @@
               <div class="row items-center q-mb-sm">
                 <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: f.titre }) }}</div>
                 <q-space />
-                <q-btn flat dense no-caps color="primary" :label="$t('common.actions.reload')" icon="refresh" @click="chargerRegistre(f, true)" />
+                <q-btn
+                  flat
+                  dense
+                  no-caps
+                  color="primary"
+                  :label="$t('common.actions.reload')"
+                  icon="refresh"
+                  @click="chargerRegistre(f, true)"
+                />
               </div>
               <q-table
                 flat
@@ -349,7 +447,11 @@
                   <q-td :props="r" class="text-right">
                     <q-btn
                       v-if="r.row.statut === 'EN_ATTENTE'"
-                      flat dense round color="secondary" icon="check_circle"
+                      flat
+                      dense
+                      round
+                      color="secondary"
+                      icon="check_circle"
                       :aria-label="$t('formationsAdmin.registry.aria.confirmPayment')"
                       @click="confirmer(r.row)"
                     >
@@ -357,7 +459,11 @@
                     </q-btn>
                     <q-btn
                       v-if="r.row.statut !== 'ANNULEE'"
-                      flat dense round color="negative" icon="block"
+                      flat
+                      dense
+                      round
+                      color="negative"
+                      icon="block"
                       :aria-label="$t('formationsAdmin.registry.aria.cancelRequest')"
                       @click="annuler(r.row)"
                     >
@@ -365,7 +471,10 @@
                     </q-btn>
                     <q-btn
                       v-if="r.row.statut === 'CONFIRMEE'"
-                      flat dense round icon="print"
+                      flat
+                      dense
+                      round
+                      icon="print"
                       :aria-label="$t('formationsAdmin.registry.aria.printCertificate')"
                       @click="imprimerCertificat(r.row)"
                     >
@@ -386,7 +495,14 @@
         :aide="$t('formationsAdmin.emptyState.description')"
       >
         <template #action>
-          <q-btn flat no-caps color="primary" icon="add" :label="$t('formationsAdmin.actions.newFormation')" @click="ouvrirNouvelle" />
+          <q-btn
+            flat
+            no-caps
+            color="primary"
+            icon="add"
+            :label="$t('formationsAdmin.actions.newFormation')"
+            @click="ouvrirNouvelle"
+          />
         </template>
       </etat-vide>
     </div>
@@ -417,11 +533,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import BarreFiltres from '@/shared/components/BarreFiltres.vue';
 import BarrePagination from '@/shared/components/BarrePagination.vue';
 import DialogueFormation from '../components/DialogueFormation.vue';
-import {
-  LIBELLE_STATUT_FORMATION,
-  dateLisible,
-  montantLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_FORMATION, dateLisible, montantLisible } from '@/shared/utils/libelles';
 import type { Etudiant, Formation, InscriptionFormation, Paiement, StatutFormation, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -462,13 +574,20 @@ const chips = computed(() => {
   const f = filtres.value;
   const cs: ChipFiltre[] = [];
   if (f.recherche) {
-    cs.push({ label: t('formationsAdmin.filters.searchChip', { query: f.recherche }), value: f.recherche, icone: 'search', defaut: true });
+    cs.push({
+      label: t('formationsAdmin.filters.searchChip', { query: f.recherche }),
+      value: f.recherche,
+      icone: 'search',
+      defaut: true,
+    });
   }
   if (f.statut) {
     cs.push({
       label: LIBELLE_STATUT_FORMATION[f.statut] ?? f.statut,
       value: f.statut,
-      icone: 'flag', cle: 'statut'});
+      icone: 'flag',
+      cle: 'statut',
+    });
   }
   return cs;
 });
@@ -538,7 +657,8 @@ function datesLisible(f: Formation): string {
 
 function placesRestantes(f: Formation): number {
   if (!f.capacite) return Number.POSITIVE_INFINITY;
-  const occupe = (f._count?.inscriptions ?? 0) - (registres.value[f.id]?.filter((r) => r.statut === 'ANNULEE').length ?? 0);
+  const occupe =
+    (f._count?.inscriptions ?? 0) - (registres.value[f.id]?.filter((r) => r.statut === 'ANNULEE').length ?? 0);
   return Math.max(0, f.capacite - occupe);
 }
 

@@ -26,22 +26,21 @@ const formulaire = ref({
 
 const enregistrement = ref(false);
 
-watch(
-  ouvert,
-  (visible) => {
-    if (visible) {
-      formulaire.value = {
-        etudiantId: props.carte?.etudiantId ?? null,
-        dateValidite: props.carte?.dateValidite?.slice(0, 10) ?? null,
-        photoUrl: props.carte?.photoUrl ?? null,
-        nip: null,
-      };
-    }
-  },
-);
+watch(ouvert, (visible) => {
+  if (visible) {
+    formulaire.value = {
+      etudiantId: props.carte?.etudiantId ?? null,
+      dateValidite: props.carte?.dateValidite?.slice(0, 10) ?? null,
+      photoUrl: props.carte?.photoUrl ?? null,
+      nip: null,
+    };
+  }
+});
 
 const enEdition = computed(() => Boolean(props.carte?.id));
-const titre = computed(() => t(enEdition.value ? 'carteEtudiante.formDialog.titleEdit' : 'carteEtudiante.formDialog.titleNew'));
+const titre = computed(() =>
+  t(enEdition.value ? 'carteEtudiante.formDialog.titleEdit' : 'carteEtudiante.formDialog.titleNew'),
+);
 
 async function soumettre() {
   if (!formulaire.value.etudiantId) {
@@ -92,7 +91,9 @@ async function soumettre() {
       />
       <q-input
         v-else
-        :model-value="carte?.etudiant ? `${carte.etudiant.matricule} — ${carte.etudiant.prenom} ${carte.etudiant.nom}` : ''"
+        :model-value="
+          carte?.etudiant ? `${carte.etudiant.matricule} — ${carte.etudiant.prenom} ${carte.etudiant.nom}` : ''
+        "
         :label="$t('common.fields.student')"
         readonly
         outlined
@@ -107,12 +108,7 @@ async function soumettre() {
         dense
       />
 
-      <q-input
-        v-model="formulaire.photoUrl"
-        :label="$t('carteEtudiante.formDialog.photoLabel')"
-        outlined
-        dense
-      />
+      <q-input v-model="formulaire.photoUrl" :label="$t('carteEtudiante.formDialog.photoLabel')" outlined dense />
 
       <q-banner v-if="enEdition" class="note--info">
         {{ $t('carteEtudiante.formDialog.revokeHint') }}

@@ -39,7 +39,13 @@
 
         <q-banner v-if="resultat" class="note--valide q-mt-md">
           <template #avatar><q-icon name="check_circle" /></template>
-          {{ $t('emploiDuTemps.generationDialog.result', { created: resultat.creees, candidates: resultat.candidates, skipped: resultat.ignorees }) }}
+          {{
+            $t('emploiDuTemps.generationDialog.result', {
+              created: resultat.creees,
+              candidates: resultat.candidates,
+              skipped: resultat.ignorees,
+            })
+          }}
         </q-banner>
       </q-card-section>
 
@@ -84,9 +90,7 @@ const joursExclus = ref('');
 const chargement = ref(false);
 const resultat = ref<any>(null);
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
-);
+const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
 async function generer() {
   // Sans année académique, le serveur refuse : on le dit ici plutôt que de

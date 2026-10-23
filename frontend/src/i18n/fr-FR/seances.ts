@@ -99,7 +99,8 @@ export default {
     dialogForm: {
       editTitle: 'Modifier la séance',
       unscheduledTitle: 'Séance non programmée',
-      unscheduledHint: 'Un cours trouvé en salle sans ligne à l’emploi du temps : ouvrez-le ici, il se pointe ensuite comme les autres.',
+      unscheduledHint:
+        'Un cours trouvé en salle sans ligne à l’emploi du temps : ouvrez-le ici, il se pointe ensuite comme les autres.',
       courseSection: 'Quel cours',
       assignment: 'Charge d’enseignement',
       assignmentHint: 'Enseignant · matière · promotion',
@@ -118,7 +119,8 @@ export default {
   },
   offline: {
     sessionRequired: 'Reconnectez-vous pour créer et synchroniser une séance.',
-    assignmentUnavailable: 'Les affectations ne sont pas disponibles hors ligne. Préparez la tournée avant de perdre le réseau.',
+    assignmentUnavailable:
+      'Les affectations ne sont pas disponibles hors ligne. Préparez la tournée avant de perdre le réseau.',
     rejected: 'Le serveur a refusé cette séance.',
     queued: 'Séance conservée sur cet appareil ; elle sera synchronisée automatiquement.',
     synced: '{ok}/{total} séance(s) synchronisée(s)',

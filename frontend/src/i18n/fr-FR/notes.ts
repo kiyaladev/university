@@ -56,7 +56,8 @@ export default {
     missing: 'manquante',
     modified: 'modifié',
     saved: 'enregistré',
-    empty: 'Aucun étudiant à noter : la feuille ne reprend que les dossiers d’inscription validés de cette promotion pour l’année de l’évaluation.',
+    empty:
+      'Aucun étudiant à noter : la feuille ne reprend que les dossiers d’inscription validés de cette promotion pour l’année de l’évaluation.',
     markAllPresent: 'Tous présents',
     markAllAbsent: 'Tous absents',
     saveAll: 'Enregistrer tout',

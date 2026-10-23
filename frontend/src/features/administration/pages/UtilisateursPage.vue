@@ -82,9 +82,7 @@
         <q-td :props="p">
           <div>
             {{ p.row.nom }} {{ p.row.prenom }}
-            <q-badge v-if="estMoi(p.row)" color="secondary" class="q-ml-xs">{{
-              $t('utilisateurs.table.you')
-            }}</q-badge>
+            <q-badge v-if="estMoi(p.row)" color="secondary" class="q-ml-xs">{{ $t('utilisateurs.table.you') }}</q-badge>
           </div>
           <div class="text-caption text-grey-7">{{ p.row.email }}</div>
         </q-td>
@@ -98,14 +96,9 @@
 
       <template #body-cell-actif="p">
         <q-td :props="p" class="text-center">
-          <q-icon
-            :name="p.row.actif ? 'check_circle' : 'block'"
-            :color="p.row.actif ? 'positive' : 'grey-7'"
-          />
+          <q-icon :name="p.row.actif ? 'check_circle' : 'block'" :color="p.row.actif ? 'positive' : 'grey-7'" />
           <q-tooltip>{{
-            p.row.actif
-              ? $t('utilisateurs.table.activeAccount')
-              : $t('utilisateurs.table.disabledAccount')
+            p.row.actif ? $t('utilisateurs.table.activeAccount') : $t('utilisateurs.table.disabledAccount')
           }}</q-tooltip>
         </q-td>
       </template>
@@ -123,14 +116,7 @@
           >
             <q-tooltip>{{ $t('utilisateurs.table.teacherRecordTooltip') }}</q-tooltip>
           </q-btn>
-          <q-btn
-            flat
-            dense
-            round
-            icon="edit"
-            :aria-label="$t('utilisateurs.actions.editAria')"
-            @click="ouvrir(p.row)"
-          >
+          <q-btn flat dense round icon="edit" :aria-label="$t('utilisateurs.actions.editAria')" @click="ouvrir(p.row)">
             <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
@@ -144,11 +130,7 @@
             @click="supprimer(p.row)"
           >
             <q-tooltip>
-              {{
-                estMoi(p.row)
-                  ? $t('utilisateurs.table.cannotDeleteSelf')
-                  : $t('common.actions.delete')
-              }}
+              {{ estMoi(p.row) ? $t('utilisateurs.table.cannotDeleteSelf') : $t('common.actions.delete') }}
             </q-tooltip>
           </q-btn>
         </q-td>
@@ -161,16 +143,11 @@
           <div class="row items-center q-mb-xs">
             <q-chip dense color="primary" text-color="white">{{ LIBELLE_ROLE[u.role] }}</q-chip>
             <q-space />
-            <q-icon
-              :name="u.actif ? 'check_circle' : 'block'"
-              :color="u.actif ? 'positive' : 'grey-7'"
-            />
+            <q-icon :name="u.actif ? 'check_circle' : 'block'" :color="u.actif ? 'positive' : 'grey-7'" />
           </div>
           <div class="text-subtitle1 text-weight-medium">
             {{ u.nom }} {{ u.prenom }}
-            <q-badge v-if="estMoi(u)" color="secondary" class="q-ml-xs">{{
-              $t('utilisateurs.table.you')
-            }}</q-badge>
+            <q-badge v-if="estMoi(u)" color="secondary" class="q-ml-xs">{{ $t('utilisateurs.table.you') }}</q-badge>
           </div>
           <div class="text-caption text-grey-7">{{ u.email }}</div>
           <div class="text-caption text-grey-7">{{ u.telephone || '—' }}</div>
@@ -189,14 +166,7 @@
             :label="$t('utilisateurs.actions.teacherRecord')"
             @click="voirFicheEnseignant(u)"
           />
-          <q-btn
-            flat
-            dense
-            no-caps
-            icon="edit"
-            :label="$t('common.actions.edit')"
-            @click="ouvrir(u)"
-          />
+          <q-btn flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrir(u)" />
           <q-btn
             flat
             dense
@@ -287,11 +257,7 @@
         dense
         type="password"
         autocomplete="new-password"
-        :label="
-          utilisateurEdite
-            ? $t('utilisateurs.dialog.passwordNew')
-            : $t('utilisateurs.dialog.passwordNewAccount')
-        "
+        :label="utilisateurEdite ? $t('utilisateurs.dialog.passwordNew') : $t('utilisateurs.dialog.passwordNewAccount')"
         :hint="$t('utilisateurs.dialog.passwordHint')"
         :error="erreurs.password"
         :error-message="$t('utilisateurs.dialog.passwordInvalid')"
@@ -418,9 +384,7 @@ const form = ref({
 const erreurs = ref({ nom: false, prenom: false, email: false, password: false });
 
 const optionsRoles = Object.entries(LIBELLE_ROLE).map(([value, label]) => ({ label, value }));
-const optionsDepartements = computed(() =>
-  departements.value.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed(() => departements.value.map((d) => ({ label: d.nom, value: d.id })));
 
 const estMoi = (u: Utilisateur) => u.id === auth.utilisateur?.id;
 
@@ -428,8 +392,7 @@ const estMoi = (u: Utilisateur) => u.id === auth.utilisateur?.id;
 const ficheEnseignant = (u: Utilisateur) => enseignants.value.find((e) => e.user?.id === u.id);
 
 /** L'API des comptes ne joint pas le département : on le résout localement. */
-const nomDepartement = (u: Utilisateur) =>
-  departements.value.find((d) => d.id === u.departementId)?.nom ?? '—';
+const nomDepartement = (u: Utilisateur) => departements.value.find((d) => d.id === u.departementId)?.nom ?? '—';
 
 const filtresActifs = computed(() =>
   Boolean(filtres.value.recherche || filtres.value.role || filtres.value.departementId),

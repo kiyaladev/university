@@ -125,9 +125,7 @@ const optionsChambres = computed(() =>
   })),
 );
 
-const optionsAnnees = computed(() =>
-  props.annees.map((a) => ({ label: a.libelle, value: a.id })),
-);
+const optionsAnnees = computed(() => props.annees.map((a) => ({ label: a.libelle, value: a.id })));
 
 watch(ouvert, (o) => {
   if (!o) return;
@@ -145,7 +143,11 @@ watch(ouvert, (o) => {
 function chambreChoisie(id: string | null) {
   const c = props.chambres.find((x) => x.id === id);
   if (c) {
-    $q.notify({ type: 'info', message: t('cites.attributions.dialog.rentNotice', { loyer: c.loyer, devise: c.devise }), icon: 'payments' });
+    $q.notify({
+      type: 'info',
+      message: t('cites.attributions.dialog.rentNotice', { loyer: c.loyer, devise: c.devise }),
+      icon: 'payments',
+    });
   }
 }
 

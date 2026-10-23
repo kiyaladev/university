@@ -73,8 +73,11 @@ export const LIBELLE_STATUT_FORMATION: Record<string, string> = traduireLibelles
   COMPLETE: 'Complète',
 });
 
-export const LIBELLE_STATUT_INSCRIPTION_FORMATION: Record<string, string> = traduireLibelles('statut_inscription_formation', {
-  EN_ATTENTE: 'En attente',
-  CONFIRMEE: 'Confirmée',
-  ANNULEE: 'Annulée',
-});
+export const LIBELLE_STATUT_INSCRIPTION_FORMATION: Record<string, string> = traduireLibelles(
+  'statut_inscription_formation',
+  {
+    EN_ATTENTE: 'En attente',
+    CONFIRMEE: 'Confirmée',
+    ANNULEE: 'Annulée',
+  },
+);

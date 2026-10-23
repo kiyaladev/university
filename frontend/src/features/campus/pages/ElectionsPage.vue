@@ -249,14 +249,7 @@ watch(onglet, () => {
     </en-tete-page>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau q-mb-md">
-      <q-tab
-        v-for="o in ONGLETS"
-        :key="o.statut"
-        :name="o.statut"
-        :label="o.label"
-        :icon="o.icone"
-        no-caps
-      />
+      <q-tab v-for="o in ONGLETS" :key="o.statut" :name="o.statut" :label="o.label" :icon="o.icone" no-caps />
     </q-tabs>
 
     <barre-filtres
@@ -414,7 +407,7 @@ watch(onglet, () => {
               </div>
               <div class="text-h6 q-mt-sm">{{ e.titre }}</div>
               <div class="text-caption text-grey-7">
-                {{ $t('common.actions.from') }} {{ dateHeureElection(e.dateOuverture) }}<br>
+                {{ $t('common.actions.from') }} {{ dateHeureElection(e.dateOuverture) }}<br />
                 {{ $t('elections.cardView.to') }} {{ dateHeureElection(e.dateCloture) }}
               </div>
               <div class="row q-mt-sm items-center">
@@ -427,13 +420,24 @@ watch(onglet, () => {
                 <q-icon name="groups" size="16px" class="q-mr-xs" />
                 <span class="text-caption">
                   {{ nbCandidats(e) }}
-                  {{ nbCandidats(e) > 1 ? $t('elections.cardView.candidatesPlural') : $t('elections.cardView.candidateSingular') }}
+                  {{
+                    nbCandidats(e) > 1
+                      ? $t('elections.cardView.candidatesPlural')
+                      : $t('elections.cardView.candidateSingular')
+                  }}
                 </span>
               </div>
             </q-card-section>
             <q-separator />
             <q-card-actions align="right" class="q-gutter-x-xs">
-              <q-btn flat dense no-caps icon="print" :label="$t('elections.cardView.actions.ballot')" @click="imprimerBulletin(e)" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                icon="print"
+                :label="$t('elections.cardView.actions.ballot')"
+                @click="imprimerBulletin(e)"
+              />
               <q-btn
                 v-if="peutEditer && e.statut === 'BROUILLON'"
                 flat
@@ -472,8 +476,23 @@ watch(onglet, () => {
                 :label="$t('elections.cardView.actions.proclaim')"
                 @click="transition(e.id, 'proclamer')"
               />
-              <q-btn flat dense icon="groups" no-caps :label="$t('elections.cardView.actions.candidates')" @click="ouvrirCandidats(e)" />
-              <q-btn v-if="e.statut === 'CLOSE' || e.statut === 'PROCLAMEE'" flat dense icon="bar_chart" no-caps :label="$t('elections.cardView.actions.results')" @click="ouvrirResultats(e)" />
+              <q-btn
+                flat
+                dense
+                icon="groups"
+                no-caps
+                :label="$t('elections.cardView.actions.candidates')"
+                @click="ouvrirCandidats(e)"
+              />
+              <q-btn
+                v-if="e.statut === 'CLOSE' || e.statut === 'PROCLAMEE'"
+                flat
+                dense
+                icon="bar_chart"
+                no-caps
+                :label="$t('elections.cardView.actions.results')"
+                @click="ouvrirResultats(e)"
+              />
             </q-card-actions>
           </q-card>
         </div>
@@ -500,30 +519,51 @@ watch(onglet, () => {
         <q-card-section class="row items-center">
           <div class="text-h6">{{ $t('elections.dialogs.candidates.title', { title: electionCandidats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="dialogCandidats = false" />
+          <q-btn
+            flat
+            round
+            dense
+            icon="close"
+            :aria-label="$t('common.actions.close')"
+            @click="dialogCandidats = false"
+          />
         </q-card-section>
         <q-card-section>
           <q-banner v-if="electionCandidats?.statut !== 'BROUILLON'" class="note--alerte q-mb-md">
             <template #avatar><q-icon name="lock" /></template>
-            {{ $t('elections.dialogs.candidates.lockedBanner', { status: LIBELLE_STATUT_ELECTION[electionCandidats?.statut ?? 'BROUILLON'].toLowerCase() }) }}
+            {{
+              $t('elections.dialogs.candidates.lockedBanner', {
+                status: LIBELLE_STATUT_ELECTION[electionCandidats?.statut ?? 'BROUILLON'].toLowerCase(),
+              })
+            }}
           </q-banner>
 
-          <etat-vide v-if="!candidatsListe.length" icone="groups" :titre="$t('elections.dialogs.candidates.emptyState')" />
+          <etat-vide
+            v-if="!candidatsListe.length"
+            icone="groups"
+            :titre="$t('elections.dialogs.candidates.emptyState')"
+          />
 
           <q-list v-else bordered separator>
             <q-item v-for="c in candidatsListe" :key="c.id">
               <q-item-section avatar>
                 <q-avatar>
-                  <img v-if="c.photoUrl" :src="c.photoUrl" :alt="`${c.prenom} ${c.nom}`">
+                  <img v-if="c.photoUrl" :src="c.photoUrl" :alt="`${c.prenom} ${c.nom}`" />
                   <q-icon v-else name="person" />
                 </q-avatar>
               </q-item-section>
               <q-item-section>
-                <q-item-label><strong>{{ c.prenom }} {{ c.nom }}</strong></q-item-label>
+                <q-item-label
+                  ><strong>{{ c.prenom }} {{ c.nom }}</strong></q-item-label
+                >
                 <q-item-label caption>
                   {{ $t('elections.dialogs.candidates.ballotNumber', { n: c.ordre }) }}
-                  <span v-if="c.etudiant">{{ $t('elections.dialogs.candidates.studentSuffix', { matricule: c.etudiant.matricule }) }}</span>
-                  <span v-if="c.enseignant">{{ $t('elections.dialogs.candidates.teacherSuffix', { matricule: c.enseignant.matricule }) }}</span>
+                  <span v-if="c.etudiant">{{
+                    $t('elections.dialogs.candidates.studentSuffix', { matricule: c.etudiant.matricule })
+                  }}</span>
+                  <span v-if="c.enseignant">{{
+                    $t('elections.dialogs.candidates.teacherSuffix', { matricule: c.enseignant.matricule })
+                  }}</span>
                 </q-item-label>
               </q-item-section>
               <q-item-section v-if="electionCandidats?.statut === 'BROUILLON' && peutEditer" side>
@@ -562,11 +602,13 @@ watch(onglet, () => {
       v-model="dialogCandidat"
       :election="electionCandidats"
       :candidat="candidatEnEdition"
-      @enregistre="(c) => {
-        const idx = candidatsListe.findIndex((x) => x.id === c.id);
-        if (idx >= 0) candidatsListe.splice(idx, 1, c);
-        else candidatsListe.push(c);
-      }"
+      @enregistre="
+        (c) => {
+          const idx = candidatsListe.findIndex((x) => x.id === c.id);
+          if (idx >= 0) candidatsListe.splice(idx, 1, c);
+          else candidatsListe.push(c);
+        }
+      "
     />
 
     <q-dialog v-model="dialogResultats">
@@ -574,7 +616,14 @@ watch(onglet, () => {
         <q-card-section class="row items-center">
           <div class="text-h6">{{ $t('elections.dialogs.results.title', { title: electionResultats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="dialogResultats = false" />
+          <q-btn
+            flat
+            round
+            dense
+            icon="close"
+            :aria-label="$t('common.actions.close')"
+            @click="dialogResultats = false"
+          />
         </q-card-section>
 
         <q-card-section v-if="chargementResultats" class="etat-vide">
@@ -620,7 +669,9 @@ watch(onglet, () => {
                     {{ $t('elections.dialogs.results.elected') }}
                   </q-chip>
                 </q-item-label>
-                <q-item-label caption class="chiffres">{{ c.voix }} {{ $t('elections.dialogs.results.votesSuffix') }}</q-item-label>
+                <q-item-label caption class="chiffres"
+                  >{{ c.voix }} {{ $t('elections.dialogs.results.votesSuffix') }}</q-item-label
+                >
               </q-item-section>
             </q-item>
           </q-list>
@@ -632,5 +683,7 @@ watch(onglet, () => {
 
 <style scoped lang="scss">
 // Pas d'arrondi : une élection est une plaque du panneau comme les autres.
-.election-carte { height: 100%; }
+.election-carte {
+  height: 100%;
+}
 </style>

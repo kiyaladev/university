@@ -14,9 +14,7 @@ import type { DocumentDepot } from '@/types';
  */
 
 /** Le backend renvoie `{ data, total }` ; certaines routes renvoient un tableau nu. */
-export type ReponseDocuments =
-  | { data?: DocumentDepot[]; total?: number }
-  | DocumentDepot[];
+export type ReponseDocuments = { data?: DocumentDepot[]; total?: number } | DocumentDepot[];
 
 export interface ResultatDocuments {
   liste: DocumentDepot[];
@@ -60,8 +58,7 @@ export const bibliothequeService = {
       silencieux,
     }),
 
-  modifier: (id: string, corps: Record<string, unknown>) =>
-    api.put<DocumentDepot>(`/documents/${id}`, corps),
+  modifier: (id: string, corps: Record<string, unknown>) => api.put<DocumentDepot>(`/documents/${id}`, corps),
 
   supprimer: (id: string) => api.delete<void>(`/documents/${id}`),
 

@@ -9,7 +9,13 @@
     <span class="section-titre">{{ $t('common.fields.identity') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.matricule" outlined dense :label="$t('enseignants.formDialog.matricule')" :rules="[requis]" />
+        <q-input
+          v-model="form.matricule"
+          outlined
+          dense
+          :label="$t('enseignants.formDialog.matricule')"
+          :rules="[requis]"
+        />
       </div>
       <div class="col-12 col-sm-6">
         <q-select
@@ -27,7 +33,13 @@
         <q-input v-model="form.nom" outlined dense :label="$t('common.fields.lastNameRequired')" :rules="[requis]" />
       </div>
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.prenom" outlined dense :label="$t('common.fields.firstNameRequired')" :rules="[requis]" />
+        <q-input
+          v-model="form.prenom"
+          outlined
+          dense
+          :label="$t('common.fields.firstNameRequired')"
+          :rules="[requis]"
+        />
       </div>
     </div>
 
@@ -43,7 +55,13 @@
     <span class="section-titre">{{ $t('enseignants.formDialog.assignmentAndPay') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.grade" outlined dense :label="$t('enseignants.table.columns.grade')" :hint="$t('enseignants.formDialog.gradeHint')" />
+        <q-input
+          v-model="form.grade"
+          outlined
+          dense
+          :label="$t('enseignants.table.columns.grade')"
+          :hint="$t('enseignants.formDialog.gradeHint')"
+        />
       </div>
       <div class="col-12 col-sm-6">
         <q-select
@@ -108,29 +126,24 @@ const form = ref({
   actif: true,
 });
 
-const optionsDepartements = computed(() =>
-  props.departements.map((d) => ({ label: d.nom, value: d.id })),
-);
+const optionsDepartements = computed(() => props.departements.map((d) => ({ label: d.nom, value: d.id })));
 
-watch(
-  ouvert,
-  (o) => {
-    if (!o) return;
-    const e = props.enseignant;
-    form.value = {
-      matricule: e?.matricule ?? '',
-      nom: e?.nom ?? '',
-      prenom: e?.prenom ?? '',
-      email: e?.email ?? '',
-      telephone: e?.telephone ?? '',
-      grade: e?.grade ?? '',
-      statut: e?.statut ?? 'PERMANENT',
-      tauxHoraire: e?.tauxHoraire ?? 0,
-      departementId: e?.departementId ?? null,
-      actif: e?.actif ?? true,
-    };
-  },
-);
+watch(ouvert, (o) => {
+  if (!o) return;
+  const e = props.enseignant;
+  form.value = {
+    matricule: e?.matricule ?? '',
+    nom: e?.nom ?? '',
+    prenom: e?.prenom ?? '',
+    email: e?.email ?? '',
+    telephone: e?.telephone ?? '',
+    grade: e?.grade ?? '',
+    statut: e?.statut ?? 'PERMANENT',
+    tauxHoraire: e?.tauxHoraire ?? 0,
+    departementId: e?.departementId ?? null,
+    actif: e?.actif ?? true,
+  };
+});
 
 async function enregistrer() {
   enregistrement.value = true;

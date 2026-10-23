@@ -3,9 +3,15 @@
     <q-card style="width: 760px; max-width: 96vw; max-height: 90vh" class="column">
       <q-card-section v-if="reclamation" class="row items-center no-wrap">
         <div class="col">
-          <div class="text-h6">{{ reclamation.numero }} {{ $t('common.format.emptyValue') }} {{ reclamation.sujet }}</div>
+          <div class="text-h6">
+            {{ reclamation.numero }} {{ $t('common.format.emptyValue') }} {{ reclamation.sujet }}
+          </div>
           <div class="text-caption text-grey-7">
-            {{ reclamation.etudiant ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom : (reclamation.nomAuteur || (reclamation.anonyme ? $t('reclamations.dialog.detail.anonymous') : '—')) }}
+            {{
+              reclamation.etudiant
+                ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom
+                : reclamation.nomAuteur || (reclamation.anonyme ? $t('reclamations.dialog.detail.anonymous') : '—')
+            }}
             <span v-if="reclamation.etudiant"> · {{ reclamation.etudiant.matricule }}</span>
             <span v-if="reclamation.departement"> · {{ reclamation.departement.nom }}</span>
           </div>
@@ -50,10 +56,7 @@
           </div>
           <div>
             <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.priority') }}</span>
-            <span
-              class="reclamation-champ reclamation-champ--prio"
-              :class="`prio-${reclamation.priorite}`"
-            >
+            <span class="reclamation-champ reclamation-champ--prio" :class="`prio-${reclamation.priorite}`">
               {{ libellePriorite(reclamation.priorite) }}
             </span>
           </div>
@@ -74,7 +77,9 @@
             <span>{{ dateHeureLisible(reclamation.fermeLe) }}</span>
           </div>
           <div v-if="reclamation.delaiEscaladeHeures">
-            <span class="pochoir reclamation-meta__libelle">{{ $t('reclamations.dialog.detail.escalationDelay') }}</span>
+            <span class="pochoir reclamation-meta__libelle">{{
+              $t('reclamations.dialog.detail.escalationDelay')
+            }}</span>
             <span>{{ $t('common.units.hours', { n: reclamation.delaiEscaladeHeures }) }}</span>
           </div>
         </div>
@@ -89,7 +94,11 @@
 
         <!-- Fil de messages -->
         <div class="q-mt-md">
-          <span class="section-titre">{{ $t('reclamations.dialog.detail.messageThread', { count: reclamation._count?.messages ?? reclamation.messages?.length ?? 0 }) }}</span>
+          <span class="section-titre">{{
+            $t('reclamations.dialog.detail.messageThread', {
+              count: reclamation._count?.messages ?? reclamation.messages?.length ?? 0,
+            })
+          }}</span>
           <q-list v-if="reclamation.messages?.length" separator>
             <q-item
               v-for="m in reclamation.messages"
@@ -140,11 +149,20 @@
           type="textarea"
           rows="2"
           :disable="!peutPoster"
-          :placeholder="peutPoster ? $t('reclamations.dialog.detail.replyPlaceholder') : $t('reclamations.dialog.detail.closedPlaceholder')"
+          :placeholder="
+            peutPoster
+              ? $t('reclamations.dialog.detail.replyPlaceholder')
+              : $t('reclamations.dialog.detail.closedPlaceholder')
+          "
         />
         <div class="row items-center q-mt-sm q-gutter-sm">
           <q-btn
-            v-if="estStaff && reclamation.statut !== 'FERMEE' && reclamation.statut !== 'REJETEE' && reclamation.statut !== 'RESOLUE'"
+            v-if="
+              estStaff &&
+              reclamation.statut !== 'FERMEE' &&
+              reclamation.statut !== 'REJETEE' &&
+              reclamation.statut !== 'RESOLUE'
+            "
             outline
             color="primary"
             no-caps
@@ -154,7 +172,12 @@
             @click="ouvrirAssigner"
           />
           <q-btn
-            v-if="auth.aRole(['ADMIN', 'DIRECTION']) && reclamation.statut !== 'FERMEE' && reclamation.statut !== 'REJETEE' && reclamation.statut !== 'RESOLUE'"
+            v-if="
+              auth.aRole(['ADMIN', 'DIRECTION']) &&
+              reclamation.statut !== 'FERMEE' &&
+              reclamation.statut !== 'REJETEE' &&
+              reclamation.statut !== 'RESOLUE'
+            "
             outline
             color="warning"
             no-caps
@@ -164,7 +187,10 @@
             @click="declencherEscalade"
           />
           <q-btn
-            v-if="auth.aRole(['ADMIN', 'DIRECTION']) && (reclamation.statut === 'RESOLUE' || reclamation.statut === 'FERMEE' || reclamation.statut === 'REJETEE')"
+            v-if="
+              auth.aRole(['ADMIN', 'DIRECTION']) &&
+              (reclamation.statut === 'RESOLUE' || reclamation.statut === 'FERMEE' || reclamation.statut === 'REJETEE')
+            "
             outline
             color="positive"
             no-caps
@@ -210,13 +236,7 @@ import {
   LIBELLE_TYPE_RECLAMATION,
   dateHeureLisible,
 } from '@/shared/utils/libelles';
-import type {
-  PrioriteReclamation,
-  Reclamation,
-  StatutReclamation,
-  TypeReclamation,
-  Utilisateur,
-} from '@/types';
+import type { PrioriteReclamation, Reclamation, StatutReclamation, TypeReclamation, Utilisateur } from '@/types';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -276,13 +296,35 @@ const transitionsAutorisees = computed<Transition[]>(() => {
   }
   if (props.reclamation.statut === 'EN_COURS') {
     possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: $t('reclamations.dialog.detail.awaitReply'), icone: 'forum' });
-    possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: $t('common.actions.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({
+      cible: 'RESOLUE',
+      label: $t('reclamations.dialog.detail.markResolved'),
+      icone: 'check_circle',
+      couleur: 'positive',
+    });
+    possibles.push({
+      cible: 'REJETEE',
+      label: $t('common.actions.reject'),
+      icone: 'block',
+      couleur: 'negative',
+      requireMotif: true,
+    });
   }
   if (props.reclamation.statut === 'EN_ATTENTE_REPONSE') {
     possibles.push({ cible: 'EN_COURS', label: $t('common.actions.resume'), icone: 'autorenew' });
-    possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: $t('common.actions.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({
+      cible: 'RESOLUE',
+      label: $t('reclamations.dialog.detail.markResolved'),
+      icone: 'check_circle',
+      couleur: 'positive',
+    });
+    possibles.push({
+      cible: 'REJETEE',
+      label: $t('common.actions.reject'),
+      icone: 'block',
+      couleur: 'negative',
+      requireMotif: true,
+    });
   }
   return possibles;
 });
@@ -437,12 +479,12 @@ function cloturer() {
 </script>
 
 <style scoped lang="scss">
-$encre: #1D1D1F;
-$chaux-claire: #FFFFFF;
-$blanc-craie: #FFFFFF;
-$vert: #007A4D;
-$jaune-fonce: #8A6300;
-$rouge: #CE1126;
+$encre: #1d1d1f;
+$chaux-claire: #ffffff;
+$blanc-craie: #ffffff;
+$vert: #007a4d;
+$jaune-fonce: #8a6300;
+$rouge: #ce1126;
 
 .reclamation-champ {
   display: inline-flex;
@@ -462,18 +504,30 @@ $rouge: #CE1126;
       color: var(--up-encre);
       border: var(--up-filet);
     }
-    &.prio-NORMALE { background: $jaune-fond; color: $jaune-texte; }
-    &.prio-HAUTE { background: $rouge-fond; color: #{$rouge}; }
+    &.prio-NORMALE {
+      background: $jaune-fond;
+      color: $jaune-texte;
+    }
+    &.prio-HAUTE {
+      background: $rouge-fond;
+      color: #{$rouge};
+    }
     &.prio-URGENTE {
-      background: $rouge-fond; color: #{$rouge};
+      background: $rouge-fond;
+      color: #{$rouge};
       animation: clignote 1.4s ease-in-out infinite;
     }
   }
 }
 
 @keyframes clignote {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }
 
 .reclamation-meta {

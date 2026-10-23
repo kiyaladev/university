@@ -52,7 +52,15 @@
             </div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="groups" :label="$t('rectorat.kpis.viewStudents')" to="/etudiants" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="groups"
+              :label="$t('rectorat.kpis.viewStudents')"
+              to="/etudiants"
+            />
           </q-card-actions>
         </q-card>
       </div>
@@ -64,7 +72,15 @@
             <div class="text-caption text-grey-6">{{ $t('rectorat.kpis.successRateDetail') }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="how_to_vote" :label="$t('rectorat.kpis.viewDeliberations')" to="/deliberations" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="how_to_vote"
+              :label="$t('rectorat.kpis.viewDeliberations')"
+              to="/deliberations"
+            />
           </q-card-actions>
         </q-card>
       </div>
@@ -78,7 +94,15 @@
             <div class="text-caption text-grey-6">{{ chiffres?.masseSalarialeMois ?? '—' }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectorat.kpis.viewPayroll')" to="/paie" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="payments"
+              :label="$t('rectorat.kpis.viewPayroll')"
+              to="/paie"
+            />
           </q-card-actions>
         </q-card>
       </div>
@@ -92,7 +116,15 @@
             <div class="text-caption text-grey-6">{{ $t('rectorat.kpis.pendingComplaintsDetail') }}</div>
           </q-card-section>
           <q-card-actions align="center">
-            <q-btn flat dense no-caps color="primary" icon="list_alt" :label="$t('rectorat.kpis.viewComplaints')" to="/reclamations" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="list_alt"
+              :label="$t('rectorat.kpis.viewComplaints')"
+              to="/reclamations"
+            />
           </q-card-actions>
         </q-card>
       </div>
@@ -106,7 +138,15 @@
               <div class="text-subtitle2">{{ $t('rectorat.headcountChart.title') }}</div>
               <div class="text-caption text-grey-7">{{ $t('rectorat.headcountChart.subtitle') }}</div>
             </div>
-            <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('common.fields.enrollments')" to="/inscriptions" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="how_to_reg"
+              :label="$t('common.fields.enrollments')"
+              to="/inscriptions"
+            />
           </q-card-section>
           <q-card-section>
             <graphique
@@ -122,7 +162,15 @@
               <div class="text-caption">
                 {{ $t('rectorat.headcountChart.emptyDescription') }}
               </div>
-              <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('rectorat.headcountChart.openEnrollments')" to="/inscriptions" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="how_to_reg"
+                :label="$t('rectorat.headcountChart.openEnrollments')"
+                to="/inscriptions"
+              />
             </div>
           </q-card-section>
         </q-card>
@@ -135,23 +183,33 @@
               <div class="text-subtitle2">{{ $t('rectorat.payrollChart.title') }}</div>
               <div class="text-caption text-grey-7">{{ $t('rectorat.payrollChart.subtitle') }}</div>
             </div>
-            <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectorat.payrollChart.payroll')" to="/paie" />
+            <q-btn
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="payments"
+              :label="$t('rectorat.payrollChart.payroll')"
+              to="/paie"
+            />
           </q-card-section>
           <q-card-section>
-            <graphique
-              v-if="configMasse"
-              :config="configMasse"
-              :hauteur="300"
-              role="img"
-              :aria-label="resumeMasse"
-            />
+            <graphique v-if="configMasse" :config="configMasse" :hauteur="300" role="img" :aria-label="resumeMasse" />
             <div v-else class="etat-vide">
               <q-icon name="payments" size="36px" />
               <div class="text-subtitle2 q-mt-sm">{{ $t('rectorat.payrollChart.emptyTitle') }}</div>
               <div class="text-caption">
                 {{ $t('rectorat.payrollChart.emptyDescription') }}
               </div>
-              <q-btn flat dense no-caps color="primary" icon="payments" :label="$t('rectorat.payrollChart.openPayroll')" to="/paie" />
+              <q-btn
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="payments"
+                :label="$t('rectorat.payrollChart.openPayroll')"
+                to="/paie"
+              />
             </div>
           </q-card-section>
         </q-card>
@@ -168,7 +226,9 @@
                     <q-avatar color="primary" text-color="white" icon="school" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ $t('rectorat.staffIncidents.teachers', { count: chiffres?.nbEnseignants ?? 0 }) }}</q-item-label>
+                    <q-item-label>{{
+                      $t('rectorat.staffIncidents.teachers', { count: chiffres?.nbEnseignants ?? 0 })
+                    }}</q-item-label>
                     <q-item-label caption>
                       {{
                         $t('rectorat.staffIncidents.teachersDetail', {
@@ -188,7 +248,11 @@
                   </q-item-section>
                   <q-item-section>
                     <q-item-label>
-                      {{ $t('rectorat.staffIncidents.helpdeskIncidents', { count: chiffres?.nbIncidentsHelpdesk24h ?? 0 }) }}
+                      {{
+                        $t('rectorat.staffIncidents.helpdeskIncidents', {
+                          count: chiffres?.nbIncidentsHelpdesk24h ?? 0,
+                        })
+                      }}
                     </q-item-label>
                     <q-item-label caption>
                       {{ $t('rectorat.staffIncidents.helpdeskIncidentsDetail') }}
@@ -275,9 +339,7 @@ const dashboard = ref<TableauBordPatrimoine | null>(null);
 const generation = ref(false);
 const chargement = ref(false);
 
-const optionsAnnees = computed(() =>
-  annees.value.map((a) => ({ label: a.libelle, value: a.id })),
-);
+const optionsAnnees = computed(() => annees.value.map((a) => ({ label: a.libelle, value: a.id })));
 
 const promotions = computed(() => (chiffres.value?.effectifParPromotion ?? []).slice(0, 24));
 const aDesPromotions = computed(() => promotions.value.length > 0);
@@ -393,7 +455,7 @@ async function evolutionMasseSalariale(): Promise<{ mois: string; total: number 
   }
   try {
     const r = await api.get('/feuilles-paie', { params: { all: '1' } });
-    const feuilles: FeuillePaie[] = Array.isArray(r.data) ? r.data : r.data?.data ?? [];
+    const feuilles: FeuillePaie[] = Array.isArray(r.data) ? r.data : (r.data?.data ?? []);
     for (const f of feuilles) {
       const reference = f.valideeLe ?? f.payeeLe;
       if (!reference) continue;
@@ -457,5 +519,4 @@ onMounted(async () => {
   line-height: 1.1;
   font-weight: 590;
 }
-
 </style>

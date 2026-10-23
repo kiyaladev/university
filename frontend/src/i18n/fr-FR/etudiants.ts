@@ -1,7 +1,6 @@
 /** Namespace `etudiants` — page Étudiants. */
 export default {
-  subtitle:
-    'Retrouvez les fiches des étudiants et accédez à leurs inscriptions.',
+  subtitle: 'Retrouvez les fiches des étudiants et accédez à leurs inscriptions.',
   actions: {
     new: 'Nouvel étudiant',
     editAria: "Modifier la fiche de l'étudiant",

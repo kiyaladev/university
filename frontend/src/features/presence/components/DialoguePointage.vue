@@ -1,17 +1,11 @@
 <template>
-  <q-dialog
-    :model-value="modelValue"
-    persistent
-    :maximized="$q.screen.lt.md"
-    @update:model-value="fermer"
-  >
+  <q-dialog :model-value="modelValue" persistent :maximized="$q.screen.lt.md" @update:model-value="fermer">
     <q-card class="fiche" style="width: 660px; max-width: 96vw">
       <header class="bandeau fiche__entete">
         <p class="lettrage fiche__matiere">{{ seance?.affectation?.matiere?.intitule }}</p>
         <p class="fiche__enseignant">{{ enseignantNom }}</p>
         <p class="pochoir fiche__meta chiffres">
-          {{ seance?.heureDebut }} – {{ seance?.heureFin }} ·
-          {{ seance?.affectation?.promotion?.nom }} ·
+          {{ seance?.heureDebut }} – {{ seance?.heureFin }} · {{ seance?.affectation?.promotion?.nom }} ·
           {{ seance?.salle?.code ?? t('pointage.noRoom') }} · {{ seance?.type }}
         </p>
       </header>
@@ -46,7 +40,14 @@
               :disable="absent"
             >
               <template #append>
-                <q-btn flat dense round icon="schedule" :aria-label="t('pointage.now')" @click="form.heureArrivee = maintenantHHmm()">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="schedule"
+                  :aria-label="t('pointage.now')"
+                  @click="form.heureArrivee = maintenantHHmm()"
+                >
                   <q-tooltip>{{ t('pointage.now') }}</q-tooltip>
                 </q-btn>
               </template>
@@ -62,7 +63,14 @@
               :disable="absent"
             >
               <template #append>
-                <q-btn flat dense round icon="schedule" :aria-label="t('pointage.now')" @click="form.heureFinReelle = maintenantHHmm()">
+                <q-btn
+                  flat
+                  dense
+                  round
+                  icon="schedule"
+                  :aria-label="t('pointage.now')"
+                  @click="form.heureFinReelle = maintenantHHmm()"
+                >
                   <q-tooltip>{{ t('pointage.now') }}</q-tooltip>
                 </q-btn>
               </template>
@@ -116,14 +124,14 @@
         <!-- Les observations restent facultatives ; les constats et leur envoi
              conservent le comportement métier du pointage existant. -->
         <q-expansion-item :label="t('pointage.addObservation')" :default-opened="!!form.observation">
-        <q-input
-          v-model="form.observation"
-          outlined
-          dense
-          type="textarea"
-          rows="2"
-          :label="t('pointage.observation')"
-        />
+          <q-input
+            v-model="form.observation"
+            outlined
+            dense
+            type="textarea"
+            rows="2"
+            :label="t('pointage.observation')"
+          />
         </q-expansion-item>
 
         <!-- L'enseignant atteste lui-même sa présence : c'est la pièce
@@ -135,11 +143,7 @@
           @update:model-value="(v) => Object.assign(form, v)"
         />
 
-        <q-expansion-item
-          icon="verified_user"
-          :label="t('pointage.proofs')"
-          :caption="resumePreuves"
-        >
+        <q-expansion-item icon="verified_user" :label="t('pointage.proofs')" :caption="resumePreuves">
           <div class="q-pt-md q-gutter-md">
             <lecteur-qr v-model="form.qrToken" />
 
@@ -156,9 +160,7 @@
                 />
               </div>
               <div class="col text-caption">
-                <span v-if="form.latitude">
-                  {{ form.latitude.toFixed(5) }}, {{ form.longitude?.toFixed(5) }}
-                </span>
+                <span v-if="form.latitude"> {{ form.latitude.toFixed(5) }}, {{ form.longitude?.toFixed(5) }} </span>
                 <span v-else class="text-grey-6">{{ t('pointage.noLocation') }}</span>
               </div>
             </div>
@@ -215,13 +217,15 @@ const referentiels = useReferentielsStore();
 const { t } = useI18n();
 const pointages = usePointagesStore();
 
-const statuts = computed(() => [
-  { value: 'PRESENT', icone: 'check_circle', champ: 'present' },
-  { value: 'RETARD', icone: 'schedule', champ: 'retard' },
-  { value: 'ABSENT', icone: 'cancel', champ: 'absent' },
-  { value: 'REMPLACE', icone: 'swap_horiz', champ: 'remplace' },
-  { value: 'DEPART_ANTICIPE', icone: 'logout', champ: 'depart' },
-].map(statut => ({ ...statut, label: LIBELLE_STATUT_PRESENCE[statut.value] })));
+const statuts = computed(() =>
+  [
+    { value: 'PRESENT', icone: 'check_circle', champ: 'present' },
+    { value: 'RETARD', icone: 'schedule', champ: 'retard' },
+    { value: 'ABSENT', icone: 'cancel', champ: 'absent' },
+    { value: 'REMPLACE', icone: 'swap_horiz', champ: 'remplace' },
+    { value: 'DEPART_ANTICIPE', icone: 'logout', champ: 'depart' },
+  ].map((statut) => ({ ...statut, label: LIBELLE_STATUT_PRESENCE[statut.value] })),
+);
 
 const vide = (): Pointage & { statut: StatutPresence } => ({
   seanceId: '',
@@ -255,8 +259,7 @@ const enseignantNom = computed(() => {
   return e ? `${e.nom} ${e.prenom}` : '';
 });
 
-const minutes = (h?: string) =>
-  h && /^\d{2}:\d{2}$/.test(h) ? Number(h.slice(0, 2)) * 60 + Number(h.slice(3)) : null;
+const minutes = (h?: string) => (h && /^\d{2}:\d{2}$/.test(h) ? Number(h.slice(0, 2)) * 60 + Number(h.slice(3)) : null);
 
 const dureeCalculee = computed(() => {
   const d = minutes(form.value.heureArrivee);
@@ -282,15 +285,10 @@ const resumePreuves = computed(() => {
 
 /** Une attestation est fournie dès qu'un des quatre moyens est renseigné. */
 const attestationFournie = computed(
-  () =>
-    !!form.value.empreinte ||
-    !!form.value.codePinEnseignant ||
-    !!form.value.signatureBase64,
+  () => !!form.value.empreinte || !!form.value.codePinEnseignant || !!form.value.signatureBase64,
 );
 
-const attestationManquante = computed(
-  () => attestationObligatoire.value && !absent.value && !attestationFournie.value,
-);
+const attestationManquante = computed(() => attestationObligatoire.value && !absent.value && !attestationFournie.value);
 
 /** Pré-remplit le formulaire à l'ouverture (ou reprend le contrôle existant). */
 /** Heure proposée par défaut : l'heure courante si le contrôle se fait pendant
@@ -310,8 +308,7 @@ watch(
     // Règle de l'établissement : l'attestation peut être exigée ou facultative.
     try {
       const { data } = await api.get('/parametres/pointage');
-      attestationObligatoire.value =
-        data.find((p: any) => p.cle === 'ATTESTATION_OBLIGATOIRE')?.valeur !== 'false';
+      attestationObligatoire.value = data.find((p: any) => p.cle === 'ATTESTATION_OBLIGATOIRE')?.valeur !== 'false';
     } catch {
       attestationObligatoire.value = true;
     }
@@ -465,7 +462,9 @@ function fermer(v: boolean) {
   grid-column: span 2;
 
   &:nth-child(4),
-  &:nth-child(5) { grid-column: span 3; }
+  &:nth-child(5) {
+    grid-column: span 3;
+  }
 }
 
 .constat {
@@ -481,24 +480,34 @@ function fermer(v: boolean) {
   gap: 3px;
   cursor: pointer;
   font: inherit;
-  transition: background var(--up-transition), color var(--up-transition);
+  transition:
+    background var(--up-transition),
+    color var(--up-transition);
 
-  &:focus-visible { outline: 2px solid #{$vert-action}; outline-offset: -5px; }
+  &:focus-visible {
+    outline: 2px solid #{$vert-action};
+    outline-offset: -5px;
+  }
 
   &--choisi {
     color: var(--up-encre);
-    background-image: repeating-linear-gradient(
-      92deg,
-      rgba(255, 255, 255, 0.06) 0 2px,
-      rgba(255, 255, 255, 0) 2px 5px
-    );
+    background-image: repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.06) 0 2px, rgba(255, 255, 255, 0) 2px 5px);
   }
 
-  &--present.constat--choisi { background-color: $vert; }
-  &--retard.constat--choisi { background-color: $jaune; color: $encre; }
-  &--absent.constat--choisi { background-color: $rouge; }
+  &--present.constat--choisi {
+    background-color: $vert;
+  }
+  &--retard.constat--choisi {
+    background-color: $jaune;
+    color: $encre;
+  }
+  &--absent.constat--choisi {
+    background-color: $rouge;
+  }
   &--remplace.constat--choisi,
-  &--depart.constat--choisi { background-color: $vert-clair; }
+  &--depart.constat--choisi {
+    background-color: $vert-clair;
+  }
 }
 
 .fiche__pied {
@@ -526,10 +535,17 @@ function fermer(v: boolean) {
   justify-content: flex-end;
 }
 
-.fiche__valider { min-height: 52px; padding-inline: var(--up-4); }
+.fiche__valider {
+  min-height: 52px;
+  padding-inline: var(--up-4);
+}
 
 @media (max-width: 599px) {
-  .fiche__actions { flex-direction: column-reverse; }
-  .fiche__valider { width: 100%; }
+  .fiche__actions {
+    flex-direction: column-reverse;
+  }
+  .fiche__valider {
+    width: 100%;
+  }
 }
 </style>

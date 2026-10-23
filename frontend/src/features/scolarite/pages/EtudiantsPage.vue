@@ -171,87 +171,90 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="peutValiderVoir"
             flat
-            dense no-caps
+            dense
+            no-caps
             color="primary"
             icon="how_to_reg"
-            :aria-label="$t('etudiants.actions.inscriptionsAria')" :label="$t('etudiants.actions.inscriptionsAria')"
+            :aria-label="$t('etudiants.actions.inscriptionsAria')"
+            :label="$t('etudiants.actions.inscriptionsAria')"
             @click="allerAuxInscriptions(p.row)"
           >
             <q-tooltip>{{ $t('etudiants.actions.inscriptionsTooltip') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="peutGerer"
-            flat
-            dense no-caps
-            icon="edit"
-            :aria-label="$t('etudiants.actions.editAria')" :label="$t('etudiants.actions.editAria')"
-            @click="ouvrir(p.row)"
-          >
-            <q-tooltip>{{ $t('etudiants.actions.editTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutVoirPaiements"
-            flat
-            dense no-caps
-            color="primary"
-            icon="payments"
-            :aria-label="$t('etudiants.actions.paiementsAria')" :label="$t('etudiants.actions.paiementsAria')"
-            @click="allerAuxPaiements(p.row)"
-          >
-            <q-tooltip>{{ $t('etudiants.actions.paiementsTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutValiderVoir"
-            flat
-            dense no-caps
-            color="primary"
-            icon="fact_check"
-            :aria-label="$t('etudiants.actions.evaluationsAria')" :label="$t('etudiants.actions.evaluationsAria')"
-            @click="allerAuxEvaluations(p.row)"
-          >
-            <q-tooltip>{{ $t('etudiants.actions.evaluationsTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutGerer"
-            flat
-            dense no-caps
-            color="primary"
-            icon="print"
-            :aria-label="$t('etudiants.actions.printAria')" :label="$t('etudiants.actions.printAria')"
-            @click="imprimerAttestation(p.row)"
-          >
-            <q-tooltip>
-              {{
-                derniereInscription(p.row)
-                  ? $t('etudiants.table.certificateTooltip')
-                  : $t('etudiants.table.noCertificateTooltip')
-              }}
-            </q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="peutGerer"
+              flat
+              dense
+              no-caps
+              icon="edit"
+              :aria-label="$t('etudiants.actions.editAria')"
+              :label="$t('etudiants.actions.editAria')"
+              @click="ouvrir(p.row)"
+            >
+              <q-tooltip>{{ $t('etudiants.actions.editTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutVoirPaiements"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="payments"
+              :aria-label="$t('etudiants.actions.paiementsAria')"
+              :label="$t('etudiants.actions.paiementsAria')"
+              @click="allerAuxPaiements(p.row)"
+            >
+              <q-tooltip>{{ $t('etudiants.actions.paiementsTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutValiderVoir"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="fact_check"
+              :aria-label="$t('etudiants.actions.evaluationsAria')"
+              :label="$t('etudiants.actions.evaluationsAria')"
+              @click="allerAuxEvaluations(p.row)"
+            >
+              <q-tooltip>{{ $t('etudiants.actions.evaluationsTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutGerer"
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="print"
+              :aria-label="$t('etudiants.actions.printAria')"
+              :label="$t('etudiants.actions.printAria')"
+              @click="imprimerAttestation(p.row)"
+            >
+              <q-tooltip>
+                {{
+                  derniereInscription(p.row)
+                    ? $t('etudiants.table.certificateTooltip')
+                    : $t('etudiants.table.noCertificateTooltip')
+                }}
+              </q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
-    <q-linear-progress
-      v-if="modeVue === 'cartes' && liste.chargement"
-      indeterminate
-      color="primary"
-      class="q-mb-sm"
-    />
+    <q-linear-progress v-if="modeVue === 'cartes' && liste.chargement" indeterminate color="primary" class="q-mb-sm" />
 
     <div v-else-if="modeVue === 'cartes'" class="etudiants-cartes">
-      <q-card
-        v-for="e in liste.lignes"
-        :key="e.id"
-        flat
-        bordered
-        class="carte etudiants-cartes__carte"
-      >
+      <q-card v-for="e in liste.lignes" :key="e.id" flat bordered class="carte etudiants-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <q-chip
@@ -267,28 +270,19 @@
             <q-space />
             <div class="text-caption text-grey-7">{{ e.matricule }}</div>
           </div>
-          <div class="text-subtitle1 text-weight-medium">
-            {{ e.nom }} {{ e.prenom }}
-          </div>
+          <div class="text-subtitle1 text-weight-medium">{{ e.nom }} {{ e.prenom }}</div>
           <div class="text-caption text-grey-7">
             <span v-if="e.telephone">{{ e.telephone }}</span>
             <span v-else>{{ $t('common.format.emptyValue') }}</span>
           </div>
           <div class="q-mt-sm">
-            <q-chip
-              v-if="dernierePromo(e)"
-              outline
-              color="primary"
-              dense
-              :label="dernierePromo(e)"
-              icon="school"
-            />
+            <q-chip v-if="dernierePromo(e)" outline color="primary" dense :label="dernierePromo(e)" icon="school" />
             <span v-else class="text-caption text-grey-7">{{ $t('etudiants.cards.noInscription') }}</span>
           </div>
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-<q-btn
+          <q-btn
             v-if="peutValiderVoir"
             flat
             dense
@@ -298,48 +292,52 @@
             :label="$t('common.fields.enrollments')"
             @click="allerAuxInscriptions(e)"
           />
-<actions-secondaires>
-<q-btn v-close-popup
-            v-if="peutGerer"
-            flat
-            dense
-            icon="edit"
-            no-caps
-            :label="$t('common.actions.edit')"
-            @click="ouvrir(e)"
-          />
-<q-btn v-close-popup
-            v-if="peutVoirPaiements"
-            flat
-            dense
-            color="primary"
-            icon="payments"
-            no-caps
-            :label="$t('common.fields.payments')"
-            @click="allerAuxPaiements(e)"
-          />
-<q-btn v-close-popup
-            v-if="peutValiderVoir"
-            flat
-            dense
-            color="primary"
-            icon="fact_check"
-            no-caps
-            :label="$t('etudiants.actions.evaluations')"
-            @click="allerAuxEvaluations(e)"
-          />
-<q-btn v-close-popup
-            v-if="peutGerer"
-            flat
-            dense
-            color="primary"
-            icon="print"
-            no-caps
-            :label="$t('etudiants.actions.print')"
-            @click="imprimerAttestation(e)"
-          />
-</actions-secondaires>
-</q-card-actions>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              v-if="peutGerer"
+              flat
+              dense
+              icon="edit"
+              no-caps
+              :label="$t('common.actions.edit')"
+              @click="ouvrir(e)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutVoirPaiements"
+              flat
+              dense
+              color="primary"
+              icon="payments"
+              no-caps
+              :label="$t('common.fields.payments')"
+              @click="allerAuxPaiements(e)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutValiderVoir"
+              flat
+              dense
+              color="primary"
+              icon="fact_check"
+              no-caps
+              :label="$t('etudiants.actions.evaluations')"
+              @click="allerAuxEvaluations(e)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutGerer"
+              flat
+              dense
+              color="primary"
+              icon="print"
+              no-caps
+              :label="$t('etudiants.actions.print')"
+              @click="imprimerAttestation(e)"
+            />
+          </actions-secondaires>
+        </q-card-actions>
       </q-card>
       <etat-vide v-if="!liste.lignes.length" icone="groups" :titre="messageVide">
         <template #action>
@@ -374,11 +372,7 @@
       @tous="liste.toutAfficher()"
     />
 
-    <dialogue-etudiant
-      v-model="dialogOuvert"
-      :etudiant="etudiantEdite"
-      @enregistre="liste.recharger()"
-    />
+    <dialogue-etudiant v-model="dialogOuvert" :etudiant="etudiantEdite" @enregistre="liste.recharger()" />
 
     <!-- Dialog : inscriptions de l'étudiant -->
     <q-dialog v-model="dialogInscriptions">
@@ -386,7 +380,11 @@
         <q-card-section class="row items-center">
           <div class="col">
             <div class="text-h6">
-              {{ $t('etudiants.dialogInscriptions.title', { name: `${etudiantInscriptions?.nom} ${etudiantInscriptions?.prenom}` }) }}
+              {{
+                $t('etudiants.dialogInscriptions.title', {
+                  name: `${etudiantInscriptions?.nom} ${etudiantInscriptions?.prenom}`,
+                })
+              }}
             </div>
             <div class="text-caption text-grey-7">
               {{ etudiantInscriptions?.matricule }}
@@ -485,10 +483,7 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
-import {
-  dateLisible,
-  montantLisible,
-} from '@/shared/utils/libelles';
+import { dateLisible, montantLisible } from '@/shared/utils/libelles';
 import type { Etudiant, Inscription, Promotion, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 
@@ -575,18 +570,34 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'telephone', label: t('common.fields.phone'), field: 'telephone', align: 'left' },
   { name: 'email', label: t('common.fields.emailShort'), field: 'email', align: 'left' },
   { name: 'comptes', label: t('etudiants.table.columns.account'), field: 'comptes', align: 'center' },
-  { name: 'inscriptions', label: t('common.fields.enrollments'), field: 'inscriptions', align: 'right', sortable: true },
+  {
+    name: 'inscriptions',
+    label: t('common.fields.enrollments'),
+    field: 'inscriptions',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'actif', label: t('common.fields.active'), field: 'actif', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesInscriptions = computed<QTableColumn[]>(() => [
   { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left' },
-  { name: 'promotion', label: t('etudiants.dialogInscriptions.columns.promotion'), field: (r) => r.promotion?.nom ?? '—', align: 'left' },
+  {
+    name: 'promotion',
+    label: t('etudiants.dialogInscriptions.columns.promotion'),
+    field: (r) => r.promotion?.nom ?? '—',
+    align: 'left',
+  },
   { name: 'annee', label: t('common.fields.year'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'montant', label: t('etudiants.dialogInscriptions.columns.amount'), field: 'montantFrais', align: 'right' },
-  { name: 'date', label: t('etudiants.dialogInscriptions.columns.date'), field: (r) => dateLisible(r.createdAt), align: 'left' },
+  {
+    name: 'date',
+    label: t('etudiants.dialogInscriptions.columns.date'),
+    field: (r) => dateLisible(r.createdAt),
+    align: 'left',
+  },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -598,9 +609,7 @@ const filtresActifs = computed(() =>
 );
 
 const messageVide = computed(() =>
-  filtresActifs.value
-    ? t('etudiants.emptyState.filtered')
-    : t('etudiants.emptyState.none'),
+  filtresActifs.value ? t('etudiants.emptyState.filtered') : t('etudiants.emptyState.none'),
 );
 
 const chips = computed(() => {
@@ -623,9 +632,12 @@ const chips = computed(() => {
   }
   if (filtres.value.actif) {
     cs.push({
-      label: filtres.value.actif === 'true' ? t('etudiants.options.status.active') : t('etudiants.options.status.inactive'),
+      label:
+        filtres.value.actif === 'true' ? t('etudiants.options.status.active') : t('etudiants.options.status.inactive'),
       value: filtres.value.actif,
-      icone: 'toggle_on', cle: 'actif'});
+      icone: 'toggle_on',
+      cle: 'actif',
+    });
   }
   if (filtres.value.sexe) {
     cs.push({
@@ -699,7 +711,7 @@ async function voirInscriptions(e: EtudiantRegistre) {
     const { data } = await api.get('/inscriptions', {
       params: { all: '1', etudiantId: e.id },
     });
-    listeInscriptions.value = Array.isArray(data) ? data : data.data ?? [];
+    listeInscriptions.value = Array.isArray(data) ? data : (data.data ?? []);
   } catch {
     listeInscriptions.value = [];
   } finally {
@@ -782,5 +794,4 @@ onMounted(async () => {
 .etudiants-cartes__carte {
   background: var(--up-plaque);
 }
-
 </style>

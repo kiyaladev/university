@@ -11,7 +11,9 @@
     <champ-recherche
       v-model="form.etudiantId"
       endpoint="/etudiants"
-      :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
+      :label-fn="
+        (e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`
+      "
       :label="$t('common.fields.studentRequired')"
       :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
     />
@@ -117,7 +119,7 @@ async function chargerTarif() {
         anneeId: form.value.anneeId || undefined,
       },
     });
-    const liste = Array.isArray(data) ? data : data.data ?? [];
+    const liste = Array.isArray(data) ? data : (data.data ?? []);
     if (liste.length) {
       tarifOfficiel.value = liste[0].montant;
       form.value.montantFrais = liste[0].montant;

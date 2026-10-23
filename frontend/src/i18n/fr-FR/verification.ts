@@ -18,8 +18,7 @@ export default {
   result: {
     valid: 'Attestation authentique',
     invalid: 'Attestation non valable',
-    intro:
-      "L'attestation {numero} existe bien dans le registre de l'établissement. Mentions vérifiées :",
+    intro: "L'attestation {numero} existe bien dans le registre de l'établissement. Mentions vérifiées :",
     table: {
       attestation: 'Attestation',
       attestationValue: '— n° {numero}',
@@ -27,8 +26,7 @@ export default {
       parcours: 'Parcours',
       reference: 'Référence de contrôle',
     },
-    checkedAt:
-      'Vérifié le {date} — cette consultation a été enregistrée dans le journal du document.',
+    checkedAt: 'Vérifié le {date} — cette consultation a été enregistrée dans le journal du document.',
   },
   footer:
     'La vérification est gratuite et ne requiert aucun compte. Une attestation révoquée ou un numéro inconnu ne prouve rien — méfiance.',

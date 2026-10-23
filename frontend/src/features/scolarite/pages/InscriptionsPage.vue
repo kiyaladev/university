@@ -81,7 +81,9 @@
       :loading="liste.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
-      <template #loading><q-linear-progress indeterminate color="primary" :aria-label="$t('common.messages.loading')" /></template>
+      <template #loading
+        ><q-linear-progress indeterminate color="primary" :aria-label="$t('common.messages.loading')"
+      /></template>
       <template #no-data>
         <etat-vide icone="how_to_reg" :titre="messageVide">
           <template #action>
@@ -158,76 +160,93 @@
 
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
-<q-btn
+          <q-btn
             v-if="peutEncaisserDossier(p.row)"
             flat
-            dense no-caps
+            dense
+            no-caps
             color="primary"
             icon="payments"
-            :aria-label="$t('inscriptions.table.actions.collectAria')" :label="$t('inscriptions.table.actions.collectAria')"
+            :aria-label="$t('inscriptions.table.actions.collectAria')"
+            :label="$t('inscriptions.table.actions.collectAria')"
             @click="encaisser(p.row)"
           >
             <q-tooltip>
               {{ $t('inscriptions.table.actions.collectTooltip', { amount: montantLisible(resteAPayer(p.row)) }) }}
             </q-tooltip>
           </q-btn>
-<q-btn
+          <q-btn
             v-if="peutValider(p.row)"
             flat
-            dense no-caps
+            dense
+            no-caps
             color="positive"
             icon="verified"
-            :aria-label="$t('inscriptions.table.actions.validateAria')" :label="$t('inscriptions.table.actions.validateAria')"
+            :aria-label="$t('inscriptions.table.actions.validateAria')"
+            :label="$t('inscriptions.table.actions.validateAria')"
             @click="valider(p.row)"
           >
             <q-tooltip>{{ $t('inscriptions.table.actions.validateTooltip') }}</q-tooltip>
           </q-btn>
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="receipt_long"
-            :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')" :label="$t('inscriptions.table.actions.viewPaymentsAria')"
-            @click="voirPaiements(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            v-if="peutAnnuler(p.row)"
-            flat
-            dense no-caps
-            color="negative"
-            icon="cancel"
-            :aria-label="$t('inscriptions.table.actions.cancelAria')" :label="$t('inscriptions.table.actions.cancelAria')"
-            @click="annuler(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.cancelTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            icon="print"
-            :aria-label="$t('inscriptions.table.actions.printAria')" :label="$t('inscriptions.table.actions.printAria')"
-            @click="imprimer(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.printTooltip') }}</q-tooltip>
-          </q-btn>
-<q-btn v-close-popup
-            flat
-            dense no-caps
-            color="primary"
-            icon="person"
-            :aria-label="$t('inscriptions.table.actions.viewStudentAria')" :label="$t('inscriptions.table.actions.viewStudentAria')"
-            @click="voirEtudiant(p.row)"
-          >
-            <q-tooltip>{{ $t('inscriptions.table.actions.viewStudentTooltip') }}</q-tooltip>
-          </q-btn>
-</actions-secondaires>
-</q-td>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="receipt_long"
+              :aria-label="$t('inscriptions.table.actions.viewPaymentsAria')"
+              :label="$t('inscriptions.table.actions.viewPaymentsAria')"
+              @click="voirPaiements(p.row)"
+            >
+              <q-tooltip>{{ $t('inscriptions.table.actions.viewPaymentsTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              v-if="peutAnnuler(p.row)"
+              flat
+              dense
+              no-caps
+              color="negative"
+              icon="cancel"
+              :aria-label="$t('inscriptions.table.actions.cancelAria')"
+              :label="$t('inscriptions.table.actions.cancelAria')"
+              @click="annuler(p.row)"
+            >
+              <q-tooltip>{{ $t('inscriptions.table.actions.cancelTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              icon="print"
+              :aria-label="$t('inscriptions.table.actions.printAria')"
+              :label="$t('inscriptions.table.actions.printAria')"
+              @click="imprimer(p.row)"
+            >
+              <q-tooltip>{{ $t('inscriptions.table.actions.printTooltip') }}</q-tooltip>
+            </q-btn>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              no-caps
+              color="primary"
+              icon="person"
+              :aria-label="$t('inscriptions.table.actions.viewStudentAria')"
+              :label="$t('inscriptions.table.actions.viewStudentAria')"
+              @click="voirEtudiant(p.row)"
+            >
+              <q-tooltip>{{ $t('inscriptions.table.actions.viewStudentTooltip') }}</q-tooltip>
+            </q-btn>
+          </actions-secondaires>
+        </q-td>
       </template>
     </q-table>
 
-    <q-linear-progress :aria-label="$t('common.messages.loading')"
+    <q-linear-progress
+      :aria-label="$t('common.messages.loading')"
       v-if="modeVue === 'cartes' && liste.chargement"
       indeterminate
       color="primary"
@@ -235,22 +254,14 @@
     />
 
     <div v-else-if="modeVue === 'cartes'" class="inscriptions-cartes">
-      <q-card
-        v-for="d in liste.lignes"
-        :key="d.id"
-        flat
-        bordered
-        class="carte inscriptions-cartes__carte"
-      >
+      <q-card v-for="d in liste.lignes" :key="d.id" flat bordered class="carte inscriptions-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <PastilleStatut domaine="inscription" :statut="d.statut" />
             <q-space />
             <div class="text-caption text-grey-7">{{ d.numero }}</div>
           </div>
-          <div class="text-subtitle1 text-weight-medium">
-            {{ d.etudiant?.nom }} {{ d.etudiant?.prenom }}
-          </div>
+          <div class="text-subtitle1 text-weight-medium">{{ d.etudiant?.nom }} {{ d.etudiant?.prenom }}</div>
           <div class="text-caption text-grey-7">
             {{ d.etudiant?.matricule }} · {{ d.promotion?.nom }} · {{ d.annee?.libelle }}
           </div>
@@ -267,10 +278,7 @@
             </div>
             <div class="col-4">
               <div class="text-caption text-grey-7">{{ $t('inscriptions.cards.balance') }}</div>
-              <div
-                class="text-weight-medium chiffres"
-                :class="{ 'text-negative': resteAPayer(d) > 0 }"
-              >
+              <div class="text-weight-medium chiffres" :class="{ 'text-negative': resteAPayer(d) > 0 }">
                 {{ montantLisible(resteAPayer(d)) }}
               </div>
             </div>
@@ -281,7 +289,7 @@
         </q-card-section>
         <q-separator />
         <q-card-actions align="right" class="q-gutter-xs">
-<q-btn
+          <q-btn
             v-if="peutEncaisserDossier(d)"
             flat
             dense
@@ -291,7 +299,7 @@
             :label="$t('inscriptions.cards.actions.collect')"
             @click="encaisser(d)"
           />
-<q-btn
+          <q-btn
             v-if="peutValider(d)"
             flat
             dense
@@ -301,44 +309,48 @@
             :label="$t('common.actions.validate')"
             @click="valider(d)"
           />
-<actions-secondaires>
-<q-btn v-close-popup
-            flat
-            dense
-            icon="receipt_long"
-            no-caps
-            :label="$t('common.fields.payments')"
-            @click="voirPaiements(d)"
-          />
-<q-btn v-close-popup
-            v-if="peutAnnuler(d)"
-            flat
-            dense
-            color="negative"
-            icon="cancel"
-            no-caps
-            :label="$t('common.actions.cancel')"
-            @click="annuler(d)"
-          />
-<q-btn v-close-popup
-            flat
-            dense
-            color="primary"
-            icon="print"
-            no-caps
-            :label="$t('inscriptions.cards.actions.certificate')"
-            @click="imprimer(d)"
-          />
-<q-btn v-close-popup
-            flat
-            dense
-            icon="person"
-            no-caps
-            :label="$t('common.fields.student')"
-            @click="voirEtudiant(d)"
-          />
-</actions-secondaires>
-</q-card-actions>
+          <actions-secondaires>
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              icon="receipt_long"
+              no-caps
+              :label="$t('common.fields.payments')"
+              @click="voirPaiements(d)"
+            />
+            <q-btn
+              v-close-popup
+              v-if="peutAnnuler(d)"
+              flat
+              dense
+              color="negative"
+              icon="cancel"
+              no-caps
+              :label="$t('common.actions.cancel')"
+              @click="annuler(d)"
+            />
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              color="primary"
+              icon="print"
+              no-caps
+              :label="$t('inscriptions.cards.actions.certificate')"
+              @click="imprimer(d)"
+            />
+            <q-btn
+              v-close-popup
+              flat
+              dense
+              icon="person"
+              no-caps
+              :label="$t('common.fields.student')"
+              @click="voirEtudiant(d)"
+            />
+          </actions-secondaires>
+        </q-card-actions>
       </q-card>
       <etat-vide v-if="!liste.lignes.length" icone="how_to_reg" :titre="messageVide">
         <template #action>
@@ -380,20 +392,14 @@
       :montant-initial="paiementMontantInitial"
       @paye="liste.recharger()"
     />
-    <dialogue-etudiant
-      v-model="dialogFicheEtudiant"
-      :etudiant="etudiantEdite"
-      @enregistre="liste.recharger()"
-    />
+    <dialogue-etudiant v-model="dialogFicheEtudiant" :etudiant="etudiantEdite" @enregistre="liste.recharger()" />
 
     <!-- Dialog : aperçu de l'étudiant -->
     <q-dialog v-model="dialogEtudiant">
       <q-card style="width: 520px; max-width: 95vw">
         <q-card-section class="row items-center">
           <div class="col">
-            <div class="text-h6">
-              {{ etudiantApercu?.nom }} {{ etudiantApercu?.prenom }}
-            </div>
+            <div class="text-h6">{{ etudiantApercu?.nom }} {{ etudiantApercu?.prenom }}</div>
             <div class="text-caption text-grey-7">
               {{ etudiantApercu?.matricule }}
             </div>
@@ -401,7 +407,12 @@
           <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
         </q-card-section>
         <q-card-section class="q-pt-none">
-          <q-linear-progress :aria-label="$t('common.messages.loading')" v-if="chargementEtudiant" indeterminate color="primary" />
+          <q-linear-progress
+            :aria-label="$t('common.messages.loading')"
+            v-if="chargementEtudiant"
+            indeterminate
+            color="primary"
+          />
           <div v-else-if="!etudiantApercu" class="text-center q-pa-md text-grey-7">
             {{ $t('inscriptions.studentDialog.unavailable') }}
           </div>
@@ -501,18 +512,16 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import { texteApi, useListePaginee } from '@/shared/composables/useListePaginee';
 import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { ouvrirImpression } from '@/shared/services/impression';
-import {
-  LIBELLE_STATUT_INSCRIPTION,
-  dateLisible,
-  montantLisible,
-} from '@/shared/utils/libelles';
+import { LIBELLE_STATUT_INSCRIPTION, dateLisible, montantLisible } from '@/shared/utils/libelles';
 import type {
   AnneeAcademique,
   Etudiant,
   Inscription,
   Paiement,
   Promotion,
-  StatutInscription, ChipFiltre } from '@/types';
+  StatutInscription,
+  ChipFiltre,
+} from '@/types';
 
 const $q = useQuasar();
 const { t } = useI18n();
@@ -598,10 +607,21 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
   { name: 'promotion', label: t('inscriptions.table.columns.promotion'), field: 'promotion', align: 'left' },
   { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
-  { name: 'montantFrais', label: t('inscriptions.table.columns.fees'), field: 'montantFrais', align: 'right', sortable: true },
+  {
+    name: 'montantFrais',
+    label: t('inscriptions.table.columns.fees'),
+    field: 'montantFrais',
+    align: 'right',
+    sortable: true,
+  },
   { name: 'paye', label: t('inscriptions.table.columns.paid'), field: 'paye', align: 'right' },
   { name: 'solde', label: t('inscriptions.table.columns.balance'), field: 'solde', align: 'right' },
-  { name: 'dateInscription', label: t('inscriptions.table.columns.enrolledOn'), field: 'dateInscription', align: 'left' },
+  {
+    name: 'dateInscription',
+    label: t('inscriptions.table.columns.enrolledOn'),
+    field: 'dateInscription',
+    align: 'left',
+  },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -616,9 +636,7 @@ const messageVide = computed(() => {
       name: `${etudiantCible.value.prenom} ${etudiantCible.value.nom}`,
     });
   }
-  return filtresActifs.value
-    ? t('inscriptions.emptyState.noMatch')
-    : t('inscriptions.emptyState.none');
+  return filtresActifs.value ? t('inscriptions.emptyState.noMatch') : t('inscriptions.emptyState.none');
 });
 
 const chips = computed(() => {
@@ -633,11 +651,19 @@ const chips = computed(() => {
   }
   if (filtres.value.anneeId) {
     const a = annees.value.find((x) => x.id === filtres.value.anneeId);
-    cs.push({ label: t('inscriptions.chips.year', { value: a?.libelle ?? '?' }), value: filtres.value.anneeId, icone: 'calendar_today' });
+    cs.push({
+      label: t('inscriptions.chips.year', { value: a?.libelle ?? '?' }),
+      value: filtres.value.anneeId,
+      icone: 'calendar_today',
+    });
   }
   if (filtres.value.promotionId) {
     const p = promotions.value.find((x) => x.id === filtres.value.promotionId);
-    cs.push({ label: t('inscriptions.chips.promotion', { value: p?.nom ?? '?' }), value: filtres.value.promotionId, icone: 'school' });
+    cs.push({
+      label: t('inscriptions.chips.promotion', { value: p?.nom ?? '?' }),
+      value: filtres.value.promotionId,
+      icone: 'school',
+    });
   }
   if (filtres.value.statut) {
     cs.push({
@@ -667,9 +693,7 @@ const chips = computed(() => {
 
 /** Somme réellement encaissée sur le dossier (seuls les paiements réussis comptent). */
 function montantPaye(dossier: Inscription): number {
-  return (dossier.paiements ?? [])
-    .filter((p: Paiement) => p.statut === 'REUSSI')
-    .reduce((t, p) => t + p.montant, 0);
+  return (dossier.paiements ?? []).filter((p: Paiement) => p.statut === 'REUSSI').reduce((t, p) => t + p.montant, 0);
 }
 
 /** Reste dû sur les frais d'inscription. */
@@ -677,13 +701,10 @@ function resteAPayer(dossier: Inscription): number {
   return Math.max(0, dossier.montantFrais - montantPaye(dossier));
 }
 
-const peutValider = (d: Inscription) =>
-  auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
-const peutAnnuler = (d: Inscription) =>
-  auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
+const peutValider = (d: Inscription) => auth.peut('inscriptions.valider') && d.statut === 'PAYEE';
+const peutAnnuler = (d: Inscription) => auth.peut('inscriptions.annuler') && !['VALIDEE', 'ANNULEE'].includes(d.statut);
 /** Un dossier annulé ne s'encaisse plus, un dossier soldé non plus. */
-const peutEncaisserDossier = (d: Inscription) =>
-  peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
+const peutEncaisserDossier = (d: Inscription) => peutEncaisser.value && d.statut !== 'ANNULEE' && resteAPayer(d) > 0;
 
 /** Encaissement : le dialogue s'ouvre sur le dossier, au montant restant dû. */
 function encaisser(row: Inscription) {
@@ -816,10 +837,7 @@ async function appliquerEtudiantCible(id: string) {
 
 onMounted(async () => {
   try {
-    [annees.value, promotions.value] = await Promise.all([
-      referentiels.annees(),
-      referentiels.promotions(),
-    ]);
+    [annees.value, promotions.value] = await Promise.all([referentiels.annees(), referentiels.promotions()]);
   } catch {
     annees.value = [];
     promotions.value = [];
@@ -848,5 +866,4 @@ onMounted(async () => {
 .inscriptions-cartes__carte {
   background: var(--up-plaque);
 }
-
 </style>

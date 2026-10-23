@@ -71,7 +71,13 @@
         />
       </div>
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.mention" outlined dense :label="$t('bulletins.table.columns.mention')" :hint="$t('stages.dialogs.defense.mentionHint')" />
+        <q-input
+          v-model="form.mention"
+          outlined
+          dense
+          :label="$t('bulletins.table.columns.mention')"
+          :hint="$t('stages.dialogs.defense.mentionHint')"
+        />
       </div>
     </div>
   </dialogue-formulaire>
@@ -130,14 +136,20 @@ watch(ouvert, (o) => {
     note: s?.note ?? null,
     mention: s?.mention ?? '',
   };
-  void api.get('/salles', { params: { all: '1' } }).then(({ data }) => {
-    optionsSalles.value = data.data.map((x: Salle) => ({ label: `${x.nom} (${x.code})`, value: x.id }));
-  }).catch(() => undefined);
+  void api
+    .get('/salles', { params: { all: '1' } })
+    .then(({ data }) => {
+      optionsSalles.value = data.data.map((x: Salle) => ({ label: `${x.nom} (${x.code})`, value: x.id }));
+    })
+    .catch(() => undefined);
   if (!encadrantsTous.value.length) {
-    void api.get('/enseignants', { params: { all: '1' } }).then(({ data }) => {
-      encadrantsTous.value = data.data;
-      optionsEncadrants.value = encadrantsTous.value.map(libelleEncadrant);
-    }).catch(() => undefined);
+    void api
+      .get('/enseignants', { params: { all: '1' } })
+      .then(({ data }) => {
+        encadrantsTous.value = data.data;
+        optionsEncadrants.value = encadrantsTous.value.map(libelleEncadrant);
+      })
+      .catch(() => undefined);
   }
 });
 

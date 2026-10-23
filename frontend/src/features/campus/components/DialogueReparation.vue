@@ -3,7 +3,9 @@
     v-model="ouvert"
     taille="s"
     :titre="$t(mode === 'declarer' ? 'helpdesk.repairDialog.declareTitle' : 'helpdesk.repairDialog.resolveTitle')"
-    :sous-titre="equipement ? `${equipement.numeroInventaire} — ${equipement.libelle}` : $t('helpdesk.repairDialog.equipment')"
+    :sous-titre="
+      equipement ? `${equipement.numeroInventaire} — ${equipement.libelle}` : $t('helpdesk.repairDialog.equipment')
+    "
     :libelle-valider="$t(mode === 'declarer' ? 'helpdesk.repairDialog.declare' : 'helpdesk.repairDialog.markResolved')"
     :envoi="enregistrement"
     @valider="valider"
@@ -31,7 +33,14 @@
           />
         </div>
         <div class="col-12 col-sm-5">
-          <q-input v-model.number="form.cout" type="number" min="0" outlined dense :label="$t('helpdesk.repairDialog.cost')" />
+          <q-input
+            v-model.number="form.cout"
+            type="number"
+            min="0"
+            outlined
+            dense
+            :label="$t('helpdesk.repairDialog.cost')"
+          />
         </div>
       </div>
       <div class="q-mt-sm">
