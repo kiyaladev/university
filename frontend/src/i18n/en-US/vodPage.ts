@@ -49,6 +49,7 @@ export default {
       views: 'Views',
       status: 'Status',
     },
+    noSubject: '—',
   },
   card: {
     noTeacher: 'No teacher',
