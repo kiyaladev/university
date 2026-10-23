@@ -4,7 +4,6 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import QRCode from 'qrcode';
-import { api } from '@/boot/axios';
 import EnTetePage from '@/shared/components/EnTetePage.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
@@ -12,6 +11,7 @@ import { useAuthStore } from '@/stores/auth';
 import type { CarteEtudiante } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
 import { dateLongueLisible } from '@/shared/utils/format';
+import { cartesEtudiantesService } from '../services/cartes-etudiantes';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -32,7 +32,7 @@ const carteUtilisable = computed(() => Boolean(carte.value && carte.value.statut
 async function charger() {
   chargement.value = true;
   try {
-    const { data } = await api.get('/cartes-etudiantes/me');
+    const data = await cartesEtudiantesService.maCarte();
     carte.value = data;
     urlVerification.value = `${window.location.origin}/#/verification-carte?carte=${encodeURIComponent(data.id)}&k=${encodeURIComponent(data.qrToken)}`;
     await nextTick();
@@ -82,7 +82,7 @@ async function confirmerNip() {
   }
   if (!carte.value) return;
   try {
-    await api.post(`/cartes-etudiantes/${carte.value.id}/nip`, { nip: nipValeur.value });
+    await cartesEtudiantesService.definirNip(carte.value.id, nipValeur.value);
     $q.notify({ type: 'positive', message: t('maCarte.messages.nipSaved') });
     nipDialog.value = false;
   } catch {

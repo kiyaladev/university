@@ -67,10 +67,10 @@
 import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { tirageService } from '../services/tirage';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [] }>();
@@ -117,7 +117,7 @@ async function enregistrer() {
   }
   envoi.value = true;
   try {
-    await api.post('/tirage', { ...form.value, empreinteSource: form.value.empreinteSource.trim().toLowerCase() });
+    await tirageService.creer({ ...form.value, empreinteSource: form.value.empreinteSource.trim().toLowerCase() });
     $q.notify({ type: 'positive', message: t('tirage.messages.scheduled') });
     emit('enregistre');
     ouvert.value = false;

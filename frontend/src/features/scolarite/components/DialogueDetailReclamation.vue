@@ -226,9 +226,9 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 import EtapesCircuit, { type Transition } from '@/shared/components/EtapesCircuit.vue';
 import { useAuthStore } from '@/stores/auth';
+import { useConfirmation } from '@/shared/composables/useConfirmation';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_ROLE,
@@ -236,7 +236,9 @@ import {
   LIBELLE_TYPE_RECLAMATION,
   dateHeureLisible,
 } from '@/shared/utils/libelles';
-import type { PrioriteReclamation, Reclamation, StatutReclamation, TypeReclamation, Utilisateur } from '@/types';
+import { reclamationsService } from '../services/reclamations';
+import type { PrioriteReclamation, Reclamation, StatutReclamation, TypeReclamation } from '../types';
+import type { Utilisateur } from '@/types';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -255,6 +257,7 @@ const $q = useQuasar();
 const { t: $t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
+const { confirmerAvecSaisie } = useConfirmation();
 
 /** Rebond vers le dossier de l'étudiant concerné, filtré sur lui. */
 function ouvrirDossier(nomRoute: 'demandes-docs' | 'cartes-etudiantes') {
@@ -358,12 +361,10 @@ async function posterMessage() {
   if (!props.reclamation || !messageCourant.value.trim()) return;
   enCours.value = 'message';
   try {
-    await api.post(`/reclamations/${props.reclamation.id}/messages`, {
-      contenu: messageCourant.value.trim(),
-    });
-    const maj = await api.get(`/reclamations/${props.reclamation.id}`);
-    props.reclamation.messages = (maj.data as Reclamation).messages;
-    props.reclamation.statut = (maj.data as Reclamation).statut;
+    await reclamationsService.ajouterMessage(props.reclamation.id, messageCourant.value.trim());
+    const maj = await reclamationsService.lire(props.reclamation.id);
+    props.reclamation.messages = maj.messages;
+    props.reclamation.statut = maj.statut;
     messageCourant.value = '';
     $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.messageSent') });
   } finally {
@@ -377,31 +378,28 @@ async function changerStatut(cible: StatutReclamation) {
   if (cible === 'REJETE') {
     // Le motif est celui saisi dans l'invite : il arrive par le callback,
     // jamais en relisant le DOM d'un dialogue déjà fermé.
-    const motif = await new Promise<string | null>((resolve) => {
-      $q.dialog({
-        title: $t('reclamations.dialog.detail.rejectTitle'),
-        message: $t('reclamations.dialog.detail.rejectPrompt'),
-        prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
-        cancel: true,
-        ok: { label: $t('common.actions.reject'), color: 'negative' },
-      })
-        .onOk((valeur: string) => resolve(valeur))
-        .onCancel(() => resolve(null));
+    const motif = await confirmerAvecSaisie({
+      titre: $t('reclamations.dialog.detail.rejectTitle'),
+      message: $t('reclamations.dialog.detail.rejectPrompt'),
+      ok: $t('common.actions.reject'),
+      danger: true,
     });
-    if (motif === null || !motif.trim()) return;
+    if (motif === null) return;
+    // Le motif est obligatoire (3 caractères au moins), comme côté API.
+    if (motif.trim().length < 3) {
+      $q.notify({ type: 'warning', message: $t('common.messages.errors.tooShort') });
+      return;
+    }
     commentaire = motif.trim();
   }
   enCours.value = 'statut';
   try {
-    const { data } = await api.put(`/reclamations/${props.reclamation.id}/statut`, {
-      statut: cible,
-      ...(commentaire ? { commentaire } : {}),
-    });
+    const data = await reclamationsService.changerStatut(props.reclamation.id, cible, commentaire);
     $q.notify({
       type: cible === 'REJETE' ? 'warning' : 'positive',
       message: $t('reclamations.dialog.detail.statusChanged', { status: libelleStatut(cible) }),
     });
-    emit('change', data as Reclamation);
+    emit('change', data);
     Object.assign(props.reclamation, data);
   } finally {
     enCours.value = '';
@@ -430,9 +428,9 @@ function ouvrirAssigner() {
     if (!props.reclamation || !assigneAId) return;
     enCours.value = 'assigner';
     try {
-      const { data } = await api.put(`/reclamations/${props.reclamation.id}/assigner`, { assigneAId });
+      const data = await reclamationsService.assigner(props.reclamation.id, assigneAId);
       $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.assigned') });
-      emit('assigne', data as Reclamation);
+      emit('assigne', data);
       Object.assign(props.reclamation, data);
     } finally {
       enCours.value = '';
@@ -444,9 +442,9 @@ async function declencherEscalade() {
   if (!props.reclamation) return;
   enCours.value = 'escalader';
   try {
-    const { data } = await api.post(`/reclamations/${props.reclamation.id}/escalader`);
+    const data = await reclamationsService.escalader(props.reclamation.id);
     $q.notify({ type: 'warning', message: $t('reclamations.dialog.detail.escalated') });
-    emit('escalade', data as Reclamation);
+    emit('escalade', data);
     Object.assign(props.reclamation, data);
   } finally {
     enCours.value = '';
@@ -455,21 +453,23 @@ async function declencherEscalade() {
 
 function cloturer() {
   if (!props.reclamation) return;
-  $q.dialog({
-    title: $t('reclamations.dialog.detail.closingNoteTitle'),
+  confirmerAvecSaisie({
+    titre: $t('reclamations.dialog.detail.closingNoteTitle'),
     message: $t('reclamations.dialog.detail.closingNotePrompt'),
-    prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
-    cancel: true,
-    ok: { label: $t('reclamations.dialog.detail.record'), color: 'positive' },
-  }).onOk(async (noteClotureValue: string) => {
-    if (!props.reclamation || !noteClotureValue.trim()) return;
+    ok: $t('reclamations.dialog.detail.record'),
+    couleur: 'positive',
+  }).then(async (noteClotureValue) => {
+    if (!props.reclamation || noteClotureValue === null) return;
+    // La note de clôture est obligatoire (3 caractères au moins), comme côté API.
+    if (noteClotureValue.trim().length < 3) {
+      $q.notify({ type: 'warning', message: $t('common.messages.errors.tooShort') });
+      return;
+    }
     enCours.value = 'cloturer';
     try {
-      const { data } = await api.post(`/reclamations/${props.reclamation.id}/cloturer`, {
-        noteCloture: noteClotureValue.trim(),
-      });
+      const data = await reclamationsService.cloturer(props.reclamation.id, noteClotureValue.trim());
       $q.notify({ type: 'positive', message: $t('reclamations.dialog.detail.closingNoteRecorded') });
-      emit('cloture', data as Reclamation);
+      emit('cloture', data);
       Object.assign(props.reclamation, data);
     } finally {
       enCours.value = '';

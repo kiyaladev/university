@@ -47,9 +47,9 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { empreinteSha256Fichier } from '@/shared/utils/empreinte';
+import { tirageService } from '../services/tirage';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ tirageId: string | null }>();
@@ -94,7 +94,7 @@ async function imprimer() {
   if (!props.tirageId) return;
   envoi.value = true;
   try {
-    await api.post(`/tirage/${props.tirageId}/imprimer`, { empreinteSource: saisie });
+    await tirageService.imprimer(props.tirageId, saisie);
     emit('enregistre');
     ouvert.value = false;
   } catch {

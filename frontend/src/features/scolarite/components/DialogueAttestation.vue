@@ -102,11 +102,13 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { LIBELLE_TYPE_ATTESTATION } from '@/shared/utils/libelles';
 import type { AnneeAcademique, Etudiant, Inscription, Promotion } from '@/types';
+import { attestationsService } from '../services/attestations';
+import { etudiantsService } from '../services/etudiants';
+import { inscriptionsService } from '../services/inscriptions';
 
 const $q = useQuasar();
 const referentiels = useReferentielsStore();
@@ -179,10 +181,7 @@ function reinitialiser() {
 async function filtrerEtudiants(texte: string, maj: (cb: () => void) => void) {
   rechercheEtudiants.value = true;
   try {
-    const { data } = await api.get('/etudiants', {
-      params: { search: texte ?? '', all: '1' },
-    });
-    etudiants.value = Array.isArray(data.data) ? data.data : [];
+    etudiants.value = await etudiantsService.tous({ search: texte ?? '', all: '1' });
     optionsEtudiants.value = etudiants.value.map((e) => ({
       label: `${e.nom} ${e.prenom} — ${e.matricule}`,
       value: e.id,
@@ -206,11 +205,14 @@ async function chargerInscriptions() {
   inscriptions.value = [];
   if (!etudiantId || !anneeId) return;
   try {
-    const { data } = await api.get('/inscriptions', {
-      params: { etudiantId, anneeId, ...(promotionId ? { promotionId } : {}), all: '1' },
+    const liste = await inscriptionsService.tous({
+      etudiantId,
+      anneeId,
+      ...(promotionId ? { promotionId } : {}),
+      all: '1',
     });
     if (chargement !== chargementInscriptions) return;
-    inscriptions.value = Array.isArray(data.data) ? data.data : [];
+    inscriptions.value = liste;
   } catch {
     if (chargement === chargementInscriptions) inscriptions.value = [];
   }
@@ -252,7 +254,7 @@ async function enregistrer() {
       promotionId: form.value.promotionId || undefined,
       inscriptionId: form.value.inscriptionId || undefined,
     };
-    await api.post('/attestations', payload);
+    await attestationsService.creer(payload);
     $q.notify({ type: 'positive', message: $t('attestations.issueDialog.issued') });
     emit('enregistre');
     dialogOuvert.value = false;
@@ -286,8 +288,10 @@ async function appliquerPrefill() {
   if (p.etudiantId) {
     form.value.etudiantId = p.etudiantId;
     try {
-      const { data } = await api.get(`/etudiants/${p.etudiantId}`);
-      optionsEtudiants.value = [{ label: `${data.nom} ${data.prenom} — ${data.matricule}`, value: data.id }];
+      const etudiant = await etudiantsService.lire(p.etudiantId);
+      optionsEtudiants.value = [
+        { label: `${etudiant.nom} ${etudiant.prenom} — ${etudiant.matricule}`, value: etudiant.id },
+      ];
     } catch {
       optionsEtudiants.value = [];
     }

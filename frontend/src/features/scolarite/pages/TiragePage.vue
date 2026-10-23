@@ -234,7 +234,6 @@ import { computed, onMounted, reactive, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
-import { api } from '@/boot/axios';
 
 import { useAuthStore } from '@/stores/auth';
 import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
@@ -250,6 +249,8 @@ import { useConfirmation } from '@/shared/composables/useConfirmation';
 import { LIBELLE_STADE_TIRAGE, dateHeureLisible } from '@/shared/utils/libelles';
 import type { Examen, StadeTirage, Tirage, ChipFiltre } from '@/types';
 import { ouvrirImpression } from '@/shared/services/impression';
+import { examensService } from '../services/examens';
+import { tirageService } from '../services/tirage';
 
 const $q = useQuasar();
 const auth = useAuthStore();
@@ -279,15 +280,11 @@ const liste = reactive(
     // `/tirage` ne filtre pas sur le texte : voir `tiragesFiltres`.
     clesLocales: ['recherche'],
     charger: ({ filtres: f, ...p }) =>
-      api
-        .get('/tirage', {
-          params: {
-            ...pageApi(p),
-            examenId: f.examenId || undefined,
-            stade: f.stade || undefined,
-          },
-        })
-        .then((r) => r.data),
+      tirageService.liste({
+        ...pageApi(p),
+        examenId: f.examenId || undefined,
+        stade: f.stade || undefined,
+      }),
   }),
 );
 
@@ -443,7 +440,7 @@ async function avancer(t: Tirage) {
   });
   if (!ok) return;
   try {
-    await api.post(`/tirage/${t.id}/${routeSuivant}`, { stade });
+    await tirageService.avancer(t.id, routeSuivant, stade);
     notifierStade(stade);
     await liste.recharger();
   } catch {
@@ -471,7 +468,7 @@ async function annuler(t: Tirage) {
   });
   if (!ok) return;
   try {
-    await api.post(`/tirage/${t.id}/annuler`);
+    await tirageService.annuler(t.id);
     $q.notify({ type: 'positive', message: translate('tirage.messages.cancelled') });
     await liste.recharger();
   } catch {
@@ -485,8 +482,7 @@ onMounted(async () => {
   const examenId = filtres.value.examenId;
   if (examenId) {
     try {
-      const { data } = await api.get(`/examens/${examenId}`);
-      examenFiltre.value = data;
+      examenFiltre.value = await examensService.lire(examenId);
     } catch {
       examenFiltre.value = null;
     }

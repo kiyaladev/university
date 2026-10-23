@@ -119,11 +119,13 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useAuthStore } from '@/stores/auth';
+import { useReferentielsStore } from '@/stores/referentiels';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import type { Enseignant, Etudiant, TravailEncadre } from '@/types';
+import { etudiantsService } from '../services/etudiants';
+import { travauxService } from '../services/travaux';
+import type { Enseignant, TravailEncadre } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{ travail?: TravailEncadre | null }>();
@@ -132,6 +134,7 @@ const emit = defineEmits<{ enregistre: [] }>();
 const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
+const referentiels = useReferentielsStore();
 const enregistrement = ref(false);
 /** Intitulé et étudiant : sans eux le serveur refuse, le formulaire le dit avant. */
 const requis = (v: string | null) => !!(v ?? '').trim() || t('stages.dialogs.workDialog.required');
@@ -191,10 +194,10 @@ watch(ouvert, (o) => {
     statut: tr?.statut ?? 'PROPOSE',
   };
   if (!encadrantsTous.value.length) {
-    void api
-      .get('/enseignants', { params: { all: '1' } })
-      .then(({ data }) => {
-        encadrantsTous.value = data.data;
+    void referentiels
+      .enseignants()
+      .then((enseignants) => {
+        encadrantsTous.value = enseignants;
         optionsEncadrants.value = encadrantsTous.value.map(optionEncadrant);
       })
       .catch(() => undefined);
@@ -202,11 +205,13 @@ watch(ouvert, (o) => {
 });
 
 async function filtrerEtudiants(saisie: string, maj: (fn: () => void) => void) {
-  const { data } = await api.get('/etudiants', {
-    params: { search: saisie || undefined, all: '1', pageSize: 30 },
+  const etudiants = await etudiantsService.tous({
+    search: saisie || undefined,
+    all: '1',
+    pageSize: 30,
   });
   maj(() => {
-    optionsEtudiants.value = data.data.map((e: Etudiant) => ({
+    optionsEtudiants.value = etudiants.map((e) => ({
       label: `${e.nom} ${e.prenom} (${e.matricule})`,
       value: e.id,
     }));
@@ -239,8 +244,8 @@ async function enregistrer() {
     };
     if (!props.travail) payload.statut = form.value.statut;
 
-    if (props.travail) await api.put(`/travaux-encadres/${props.travail.id}`, payload);
-    else await api.post('/travaux-encadres', payload);
+    if (props.travail) await travauxService.modifier(props.travail.id, payload);
+    else await travauxService.creer(payload);
 
     $q.notify({
       type: 'positive',

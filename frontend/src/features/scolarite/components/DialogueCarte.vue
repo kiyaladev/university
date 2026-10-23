@@ -4,7 +4,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { api } from '@/boot/axios';
+import { cartesEtudiantesService } from '../services/cartes-etudiantes';
 import type { CarteEtudiante, Etudiant } from '@/types';
 
 const $q = useQuasar();
@@ -49,15 +49,15 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const url = enEdition.value ? `/cartes-etudiantes/${props.carte!.id}` : '/cartes-etudiantes';
-    const methode = enEdition.value ? 'put' : 'post';
     const payload: Record<string, unknown> = {
       etudiantId: formulaire.value.etudiantId,
       dateValidite: formulaire.value.dateValidite || undefined,
       photoUrl: formulaire.value.photoUrl || undefined,
     };
     if (formulaire.value.nip) payload.nip = formulaire.value.nip;
-    const { data } = await api[methode](url, payload);
+    const data = enEdition.value
+      ? await cartesEtudiantesService.modifier(props.carte!.id, payload)
+      : await cartesEtudiantesService.creer(payload);
     $q.notify({
       type: 'positive',
       message: t(enEdition.value ? 'carteEtudiante.formDialog.updated' : 'carteEtudiante.formDialog.issued'),
