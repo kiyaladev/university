@@ -7,7 +7,6 @@
  * qui résout l'équipement en mode public (utile aux scans terrain).
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { PatrimoineController } from './patrimoine.controller';
 import { PatrimoineService } from './patrimoine.service';
 

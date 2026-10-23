@@ -115,7 +115,7 @@ export class ReclamationsService extends CrudService {
   private async transactionSerializable<T>(operation: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     try {
       return await this.prisma.$transaction(operation, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
         throw this.conflitConcurrent();
       }
@@ -423,7 +423,7 @@ export class ReclamationsService extends CrudService {
           });
           return reclamation;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
@@ -723,8 +723,8 @@ export class ReclamationsService extends CrudService {
         this.logger.log(`${resultat.escaladees} réclamation(s) escaladée(s) automatiquement : ${resultat.numeros.join(', ')}`);
       }
       return resultat;
-    } catch (error: any) {
-      this.logger.error(`Escalade automatique des réclamations interrompue : ${error?.message ?? error}`);
+    } catch (error: unknown) {
+      this.logger.error(`Escalade automatique des réclamations interrompue : ${(error as Error | null)?.message ?? error}`);
       return null;
     }
   }

@@ -1,6 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import type { AuthUser } from '../../common/decorators';
 import { ReservationsService } from './reservations.service';
 
@@ -37,7 +36,7 @@ describe('Périmètre des réservations', () => {
   });
 
   it('masque le détail direct d’une réservation appartenant à un tiers', async () => {
-    const { db, service } = prepare();
+    const { service } = prepare();
     await expect(service.consulter(otherReservation.id, teacher)).rejects.toThrow(NotFoundException);
   });
 

@@ -2,7 +2,6 @@ import { Body, Controller, Delete, Get, Ip, Param, Post, Put, Query } from '@nes
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
-import { QueryDto } from '../../common/dto';
 import { ControleService } from './controle.service';
 import { AuditQueryDto, ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 

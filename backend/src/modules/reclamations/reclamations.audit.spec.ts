@@ -230,7 +230,7 @@ describe('Journal avant/après des réclamations', () => {
   });
 
   it("consigne l'anonymat et l'absence de fiche rattachée, jamais l'identité déclarée", async () => {
-    const { service, prisma, tx, journal } = preparer();
+    const { service, tx, journal } = preparer();
     tx.reclamation.create.mockResolvedValue(dossier({
       anonyme: true, etudiantId: null, nomAuteur: 'Awa Ndiaye',
       emailAuteur: 'awa.ndiaye@exemple.test', etudiant: null,
@@ -252,7 +252,7 @@ describe('Journal avant/après des réclamations', () => {
   });
 
   it("journalise le message sans son texte ni sa pièce jointe", async () => {
-    const { service, prisma, tx, journal, mutations } = preparer();
+    const { service, prisma, journal, mutations } = preparer();
 
     await service.posterMessage('rec-1', {
       contenu: 'Votre dossier a été réexaminé',
@@ -289,7 +289,7 @@ describe('Journal avant/après des réclamations', () => {
   });
 
   it("marque l'auteur anonyme d'un fil sans le rattacher à un compte", async () => {
-    const { service, prisma, tx, journal } = preparer();
+    const { service, tx, journal } = preparer();
     tx.reclamation.findFirst.mockResolvedValue(dossier({ anonyme: true, etudiantId: null }));
     tx.messageReclamation.count.mockResolvedValue(0);
     tx.messageReclamation.create.mockResolvedValue({
@@ -379,7 +379,7 @@ describe('Journal avant/après des réclamations', () => {
   });
 
   it("journalise une réassignation sans prise en charge quand le dossier est déjà repris", async () => {
-    const { service, prisma, tx, journal } = preparer();
+    const { service, tx, journal } = preparer();
     tx.reclamation.findUnique.mockResolvedValue(dossier({
       statut: StatutReclamation.EN_COURS, assigneAId: 'scolarite-1',
       assigneA: { id: 'scolarite-1', nom: 'Sow', prenom: 'Fatou', role: Role.SCOLARITE },
@@ -576,7 +576,7 @@ describe('Journal avant/après des réclamations', () => {
   });
 
   it("n'écrit aucun journal lorsque la mutation échoue", async () => {
-    const { service, prisma, tx, flags, journal, mutations } = preparer();
+    const { service, tx, flags, journal, mutations } = preparer();
     tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
     flags.echecEcriture = 'update';
 

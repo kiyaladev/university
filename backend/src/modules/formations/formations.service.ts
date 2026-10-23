@@ -271,7 +271,7 @@ export class FormationsService {
             `${creation.paiement.montant.toLocaleString('fr-FR')} ${creation.paiement.devise} ` +
             `par Mobile Money ; la confirmation se fait au guichet de la scolarité.`,
         };
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }

@@ -25,7 +25,7 @@ async function call(token, method, path, body, expected = 200) {
  return { status: r.status, data: r.headers.get('content-type')?.includes('json') ? JSON.parse(text) : text };
 }
 async function main() {
- const { ADMIN: admin, SCOLARITE: school, ETUDIANT: student, ENSEIGNANT: teacherToken } = session.sessions;
+ const { ADMIN: admin, SCOLARITE: school, ETUDIANT: student } = session.sessions;
  assert.equal((await call(admin, 'GET', '/auth/me')).data.role, 'ADMIN');
  year = await db.anneeAcademique.create({ data: { libelle: tag, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-12-31') } });
  department = await db.departement.create({ data: { code: tag, nom: tag } });

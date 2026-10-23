@@ -1,6 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Role, StatutExamen } from '@prisma/client';
-import { I18nContext } from 'nestjs-i18n';
 import type { AuthUser } from '../../common/decorators';
 import { ExamensService } from './examens.service';
 

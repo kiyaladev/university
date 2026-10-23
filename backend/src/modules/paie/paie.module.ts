@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { PaieController } from './paie.controller';
 import { PaieService } from './paie.service';

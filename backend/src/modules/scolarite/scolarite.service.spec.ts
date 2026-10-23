@@ -2,7 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { ScolariteService } from './scolarite.service';
 import type { AuthUser } from '../../common/decorators';
-import { I18nContext } from 'nestjs-i18n';
 
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 

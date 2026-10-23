@@ -30,7 +30,7 @@ export class RapportsController {
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
-  @Get('etat-paiement') paiement(@Query() query: RapportQueryDto, @CurrentUser() user: AuthUser) {
+  @Get('etat-paiement') paiement(@Query() query: RapportQueryDto, @CurrentUser() _user: AuthUser) {
     return this.service.etatPaiement(query);
   }
 

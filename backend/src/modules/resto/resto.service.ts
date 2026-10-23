@@ -63,9 +63,6 @@ import {
   ValiderRepasDto,
 } from './resto.dto';
 
-/** Lecture & gestion du module : administration, direction, scolarité. */
-const GESTIONNAIRES = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE];
-
 /** Postes de guichet admis à valider un repas (jeton vérifié à la main). */
 const GUICHET: Role[] = [Role.CONTROLEUR, Role.ADMIN, Role.SCOLARITE];
 

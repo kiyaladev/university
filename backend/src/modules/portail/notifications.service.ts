@@ -3,7 +3,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import {
@@ -148,9 +147,6 @@ export class NotificationsService {
       }))
       .filter((c) => c.telephone.length >= 8)
       .map((c) => {
-        const decision =
-          c.ligne.decision === DecisionJury.ADMIS ? 'ADMIS' : 'AJOURNÉ';
-        const rang = c.ligne.rang != null ? ` (rang ${c.ligne.rang})` : '';
         const header = t('sms.resultsHeader', { promotion: libellePromotion });
         const body = t('sms.resultsBody', { name: c.nom, average: c.ligne.moyenne.toFixed(2) });
         const decisionLabel = c.ligne.decision === DecisionJury.ADMIS
@@ -227,12 +223,6 @@ export class NotificationsService {
         select: { id: true },
       });
       if (!annee) return 0;
-      const total = await this.prisma.inscription.count({
-        where: {
-          anneeId: annee.id,
-          statut: { in: ['EN_ATTENTE_PAIEMENT', 'PAYEE', 'VALIDEE'] },
-        },
-      });
       // Soustraire ceux sans téléphone (un envoi SMS échouerait)
       const avecNumero = await this.prisma.etudiant.count({
         where: {

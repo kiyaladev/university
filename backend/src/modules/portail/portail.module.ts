@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { PortailController } from './portail.controller';
 import { PortailService } from './portail.service';
 import { NotificationsController } from './notifications.controller';

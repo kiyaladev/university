@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
+import { CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import type { AuthUser } from '../../common/decorators';
 import { DocumentsDemandeService } from './documents-demande.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';

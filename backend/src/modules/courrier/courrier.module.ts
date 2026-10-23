@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { CourrierController } from './courrier.controller';
 import { CourrierService } from './courrier.service';
 

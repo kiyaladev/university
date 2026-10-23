@@ -1,6 +1,5 @@
 /** Rattrapage réel sur fixtures exclusivement QA ; aucune donnée d'exploitation modifiée. */
 const assert = require('node:assert/strict'), fs = require('node:fs');
-const { randomUUID } = require('node:crypto');
 const { PrismaClient } = require('@prisma/client');
 assert.ok(process.env.QA_ENV_FILE && process.env.QA_SESSION_FILE);
 const env = JSON.parse(fs.readFileSync(process.env.QA_ENV_FILE));

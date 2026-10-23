@@ -20,8 +20,6 @@ import {
   StatutPresence,
   StatutSeance,
   TypeCours,
-
-  TypeEvaluation,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
@@ -695,7 +693,6 @@ async function main() {
   const adminUser = users.find((u) => u.role === Role.ADMIN)!;
   const directionUser = users.find((u) => u.role === Role.DIRECTION)!;
   const scolariteUser = users.find((u) => u.role === Role.SCOLARITE)!;
-  const chefInfo = users.find((u) => u.role === Role.CHEF_DEPARTEMENT && u.departementId === info.id)!;
   const enseignant1 = await prisma.enseignant.findFirst({ where: { matricule: 'ENS-001' } });
   const enseignant2 = await prisma.enseignant.findFirst({ where: { matricule: 'ENS-002' } });
   const promoL1Info = allPromotions.find((p) => p.niveau === Niveau.L1 && p.filiere?.code === 'GL')!;
@@ -750,7 +747,7 @@ async function main() {
     inv++;
   }
   // Quelques réparations en cours
-  const reparation = await prisma.reparationMateriel.create({
+  await prisma.reparationMateriel.create({
     data: {
       equipementId: equipementsPatrimoine[0].id,
       description: 'Lampe grillée après 4000h d\u2019utilisation',
@@ -774,7 +771,7 @@ async function main() {
   });
 
   // ---- 2. Courrier administratif ----
-  const courrierEntrant = await prisma.courrier.create({
+  await prisma.courrier.create({
     data: {
       numero: 'COUR-2026-00001',
       type: 'ENTRANT',
@@ -793,7 +790,7 @@ async function main() {
       },
     },
   });
-  const courrierSortant = await prisma.courrier.create({
+  await prisma.courrier.create({
     data: {
       numero: 'COUR-2026-00002',
       type: 'SORTANT',
@@ -811,7 +808,7 @@ async function main() {
       },
     },
   });
-  const courrierArchive = await prisma.courrier.create({
+  await prisma.courrier.create({
     data: {
       numero: 'COUR-2026-00003',
       type: 'ENTRANT',
@@ -892,7 +889,7 @@ async function main() {
   }
 
   // ---- 4. Tirage épreuves ----
-  const tirage = await prisma.tirage.create({
+  await prisma.tirage.create({
     data: {
       examenId: partielAlgo.id,
       dateTirage: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
@@ -917,7 +914,7 @@ async function main() {
   });
 
   // ---- 5. Régie des recettes ----
-  const recettes = await Promise.all([
+  await Promise.all([
     prisma.recetteExterne.create({ data: { numero: 'REC-2026-00001', type: 'LOCATION_AMPHI', libelle: 'Location Amphithéâtre A — Colloque AUF', description: 'Colloque sous-régional 2 jours', montant: 2500000, date: dateOnly('2026-08-05'), client: 'Agence Universitaire de la Francophonie' } }),
     prisma.recetteExterne.create({ data: { numero: 'REC-2026-00002', type: 'ANALYSE_LABO', libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008', description: 'Spectrométrie IR + UV-Vis', montant: 850000, date: dateOnly('2026-08-08'), client: 'Compagnie Minière de Dinguiraye', factureNum: 'FA-2026-0021' } }),
     prisma.recetteExterne.create({ data: { numero: 'REC-2026-00003', type: 'PRESTATION_FORMATION', libelle: 'Formation continue Excel avancé — Cohorte 1', description: '24h sur 4 jours, 18 participants', montant: 1800000, date: dateOnly('2026-07-22'), client: 'Banque Centrale de Guinée' } }),
@@ -978,7 +975,7 @@ async function main() {
   }));
 
   // ---- 7. Demandes de documents en ligne ----
-  const tarifs = await Promise.all([
+  await Promise.all([
     prisma.tarifDemande.create({ data: { type: 'ATTESTATION_SCOLARITE', montant: 25000, delaiHeures: 24 } }),
     prisma.tarifDemande.create({ data: { type: 'ATTESTATION_FREQUENTATION', montant: 15000, delaiHeures: 24 } }),
     prisma.tarifDemande.create({ data: { type: 'RELEVE_NOTES', montant: 35000, delaiHeures: 48 } }),
@@ -1077,7 +1074,6 @@ async function main() {
       const ev = evaluations.find((e) => e.id === n.evaluationId)!;
       const m = allMatieres.find((mat) => mat.id === ev.matiereId)!;
       const code = m.code;
-      const credits = creditsParMatiere[code] ?? m.credits ?? 1;
       const cur = parUe.get(code) ?? { num: 0, den: 0 };
       cur.num += n.note * ev.coefficient;
       cur.den += ev.coefficient;
@@ -1193,7 +1189,7 @@ async function main() {
   await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[1].id, etudiantId: etudiants[1].id } });
   await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[2].id } });
 
-  const electionDelegueM1 = await prisma.election.create({
+  await prisma.election.create({
     data: {
       titre: 'Délégués de département — Mathématiques',
       type: 'DELEGUE_DEPARTEMENT',
@@ -1265,7 +1261,6 @@ async function main() {
   console.log('→ Boost massif des données...');
 
   // Recharger les références utiles
-  const allEnseignants = await prisma.enseignant.findMany();
   const allUsers = await prisma.user.findMany();
   const votantsGlobal = await prisma.user.findMany({ where: { role: 'ETUDIANT' } });
 
@@ -1403,7 +1398,6 @@ async function main() {
     arr.push(ins);
     inscriptionsByPromo.set(ins.promotionId, arr);
   }
-  let notesCreees2 = 0;
   for (const [promoId, evalList] of evalByPromo.entries()) {
     const insList = inscriptionsByPromo.get(promoId) ?? [];
     for (const ins of insList) {
@@ -1421,7 +1415,6 @@ async function main() {
               saisieLe: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
             },
           });
-          notesCreees2++;
         } catch {
           // duplicate (evalId, inscId) — skip
         }
@@ -1464,7 +1457,6 @@ async function main() {
   for (const { delib, promo } of deliberationsCreees) {
     const evalList = evalByPromo.get(promo.id) ?? [];
     if (evalList.length === 0) continue;
-    const insList = inscriptionsByPromo.get(promo.id) ?? [];
     const lignesMap = new Map<string, { num: number; den: number; parMatiere: Map<string, { num: number; den: number }> }>();
     // Pour chaque ligne de délibération, calculer la moyenne par UE
     const notesByEV = new Map<string, Map<string, number>>(); // evalId -> inscriptionId -> note
@@ -1866,7 +1858,6 @@ async function main() {
 
   // ---------- 19. +10 demandes documents ----------
   const allEtudiants2 = await prisma.etudiant.findMany();
-  const allEtudiants2Users = await prisma.user.findMany({ where: { role: 'ETUDIANT' } });
   for (let i = 0; i < 10; i++) {
     const etu = piocher(allEtudiants2);
     const type = piocher(['ATTESTATION_SCOLARITE', 'RELEVE_NOTES', 'DUPLICATA_CARTE', 'ATTESTATION_FREQUENTATION', 'ATTESTATION_REUSSITE']);
@@ -2135,7 +2126,7 @@ async function main() {
     const [type, sujet] = piocher(sujetsReclamation);
     const status = piocher(['OUVERTE', 'EN_COURS', 'EN_ATTENTE_REPONSE', 'RESOLUE', 'FERMEE']);
     const etu = piocher(allEtudiants2);
-    const rec = await prisma.reclamation.create({
+    await prisma.reclamation.create({
       data: {
         numero: `REC-CLAIM-${String(1000 + i).padStart(5, '0')}`,
         type: type as any,

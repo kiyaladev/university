@@ -9,7 +9,6 @@
  * /api/paiements exige un compte connecté, la vitrine n'en a pas.
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { FormationsController } from './formations.controller';
 import { FormationsService } from './formations.service';

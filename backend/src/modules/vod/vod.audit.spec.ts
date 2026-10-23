@@ -65,10 +65,6 @@ const PROFS = { id: 'user-prof', role: Role.ENSEIGNANT, enseignantId: 'prof-1' }
 const ADMIN = { id: 'admin-1', role: Role.ADMIN } as AuthUser;
 const ETUDIANT = { id: 'user-etu', role: Role.ETUDIANT, etudiantId: 'etudiant-1' } as AuthUser;
 
-function detailsDe(auditCreate: jest.Mock) {
-  return JSON.parse(auditCreate.mock.calls[0][0].data.details);
-}
-
 /** Projection attendue : rien d'autre que ces clés, ni valeur de contenu. */
 /**
  * Fausse transaction fidèle sur un point : les écritures ne deviennent

@@ -5,7 +5,6 @@
  * encadrements, l'étudiant que ses travaux (via le portail).
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { FicheService } from './fiche.service';
 import { SoutenancesController, TravauxEncadresController } from './stages.controller';

@@ -54,15 +54,6 @@ export function creneauVaut(creneau: Periode, jour: Date) {
   return periodesSeCroisent(creneau, { dateDebut: jour, dateFin: jour });
 }
 
-const jjmm = (d: Date) => isoDate(d).slice(8, 10) + '/' + isoDate(d).slice(5, 7);
-
-function libellePeriode(c: Periode) {
-  if (c.dateDebut && c.dateFin) return `, du ${jjmm(c.dateDebut)} au ${jjmm(c.dateFin)}`;
-  if (c.dateDebut) return `, à partir du ${jjmm(c.dateDebut)}`;
-  if (c.dateFin) return `, jusqu'au ${jjmm(c.dateFin)}`;
-  return '';
-}
-
 @Injectable()
 export class CreneauxService extends CrudService {
   constructor(prisma: PrismaService) {

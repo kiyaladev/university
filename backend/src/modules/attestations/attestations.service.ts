@@ -390,7 +390,7 @@ export class AttestationsService {
     id: string,
     token: string | undefined,
     baseUrl: string,
-    ip?: string,
+    _ip?: string,
   ): Promise<string> {
     try {
       await this.jwt.verify(token ?? '');

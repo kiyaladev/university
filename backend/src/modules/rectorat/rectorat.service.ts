@@ -381,7 +381,7 @@ export class RectoratService {
    * nouvel onglet, le jeton passe en query string comme pour les états
    * d'attestation.
    */
-  async imprimerBilan(id: string, token: string | undefined, baseUrl: string): Promise<string> {
+  async imprimerBilan(id: string, token: string | undefined, _baseUrl: string): Promise<string> {
     try {
       this.jwt.verify(token ?? '');
     } catch {
@@ -513,18 +513,6 @@ function ilYA1JOUR(): Date {
   const d = new Date();
   d.setHours(d.getHours() - 24);
   return d;
-}
-
-function estObsolete(
-  dateAcquisition: Date | null,
-  obsolescenceMois: number,
-  maintenant: Date,
-): boolean {
-  if (!dateAcquisition) return false;
-  const ageMois =
-    (maintenant.getFullYear() - dateAcquisition.getFullYear()) * 12 +
-    (maintenant.getMonth() - dateAcquisition.getMonth());
-  return ageMois >= obsolescenceMois;
 }
 
 const MOIS_LIBELLES = [

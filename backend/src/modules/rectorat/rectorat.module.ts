@@ -8,7 +8,6 @@
  * base, mais l'admin peut le forcer à la demande.
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { RectoratController } from './rectorat.controller';
 import { RectoratService } from './rectorat.service';
 

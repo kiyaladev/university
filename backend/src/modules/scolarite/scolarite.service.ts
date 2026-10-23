@@ -191,7 +191,7 @@ export class ScolariteService {
       throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: existante.intitule }));
     }
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.evaluation.findUnique({
+      const avant = await tx.evaluation.findUnique({
         where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
@@ -240,7 +240,7 @@ export class ScolariteService {
       throw new BadRequestException(t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { intitule: existante.intitule, nombre: existante._count.notes }));
     }
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.evaluation.findUnique({
+      const avant = await tx.evaluation.findUnique({
         where: { id }, include: { _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
@@ -262,7 +262,7 @@ export class ScolariteService {
       throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': existante.intitule }));
     }
     return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.evaluation.findUnique({
+      const avant = await tx.evaluation.findUnique({
         where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));

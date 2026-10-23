@@ -53,7 +53,7 @@ export async function chargerEtablissement(prisma: SourceParametres): Promise<Et
   const etablissement = etablissementParDefaut();
   if (!prisma?.parametre?.findMany) return etablissement;
 
-  let lignes: Array<{ cle: string; valeur: string }> = [];
+  let lignes: Array<{ cle: string; valeur: string }>;
   try {
     lignes = await prisma.parametre.findMany({
       where: { cle: { in: Object.values(CLES_ETABLISSEMENT) } },

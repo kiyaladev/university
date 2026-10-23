@@ -14,14 +14,12 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
-import { QueryDto } from '../../common/dto';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateDeliberationDto,

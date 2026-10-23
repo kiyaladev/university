@@ -8,13 +8,12 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { CalculerFeuilleDto, CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
 import { PaieService } from './paie.service';
 import { verifierJetonImprimable } from '../../common/jeton-imprimable';

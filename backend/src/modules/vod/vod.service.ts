@@ -22,7 +22,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Role, StatutVOD, TypeRessourceVOD } from '@prisma/client';
+import { Prisma, Role, StatutVOD } from '@prisma/client';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';

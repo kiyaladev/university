@@ -1,5 +1,5 @@
 /** Tests des règles de délibération — le cœur du jury, figé dans le code. */
-import { classer, decider, mention, moyenneGenerale, moyenneUe } from './calcul.service';
+import { classer, decider, moyenneGenerale, moyenneUe } from './calcul.service';
 
 /**
  * Feuille type : une matière peut porter plusieurs épreuves (CC + examen).
@@ -77,7 +77,7 @@ describe('decider', () => {
   });
 
   it('AJOURNÉ (pas ADMIS) si une matière < 5 due à une absence consignée', () => {
-    const r = decider([
+    decider([
       { ...ue(12), absenceCloturee: false },
       { ...ue(4), absenceCloturee: true }, // matière sous 5 après absence clôturée
     ]);

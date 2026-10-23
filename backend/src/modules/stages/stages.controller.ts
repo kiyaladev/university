@@ -19,7 +19,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { FicheService } from './fiche.service';
 import {
   CreateSoutenanceDto,

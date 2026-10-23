@@ -1,5 +1,4 @@
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Matches, Min } from 'class-validator';
-import { Type } from 'class-transformer';
 import { StadeTirage } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 

@@ -99,7 +99,7 @@ describe('Écritures de scolarité après clôture annuelle', () => {
   });
 
   it('refuse le recalcul et la validation d’une délibération après clôture', async () => {
-    const { prisma, tx, service } = preparer();
+    const { tx, service } = preparer();
     await expect(service.calculerDeliberation('delib-1')).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.validerDeliberation('delib-1', USER.id)).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.deliberation.update).not.toHaveBeenCalled();

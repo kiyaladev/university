@@ -245,7 +245,7 @@ describe('Journal avant/après des réservations de salle', () => {
   });
 
   it("journalise l'annulation avec l'état avant et un après vide", async () => {
-    const { service, prisma, tx, journal, mutations } = preparer();
+    const { service, prisma, journal, mutations } = preparer();
 
     const resultat = await service.supprimer('reservation-1', enseignant);
 

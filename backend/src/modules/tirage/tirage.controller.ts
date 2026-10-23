@@ -7,13 +7,12 @@ import {
   Query,
   Req,
   Res,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import {
   CreateTirageDto,
   ImprimerTirageDto,
@@ -21,7 +20,7 @@ import {
   UpdateStadeTirageDto,
 } from './tirage.dto';
 import { TirageService } from './tirage.service';
-import { jetonImprimable, verifierJetonImprimable } from '../../common/jeton-imprimable';
+import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Tirage des épreuves')
 @ApiBearerAuth()

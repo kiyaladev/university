@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { TirageController } from './tirage.controller';
 import { TirageService } from './tirage.service';
 

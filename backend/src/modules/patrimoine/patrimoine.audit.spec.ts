@@ -82,7 +82,7 @@ describe("Patrimoine — modification d'un équipement", () => {
   });
 
   it('exclut le jeton QR, les notes et toute donnée de compte', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       equipementPatrimoine: {
         findUnique: jest.fn().mockResolvedValue(EQUIPEMENT),
         update: jest.fn().mockResolvedValue({ ...EQUIPEMENT, numeroInventaire: 'PAT-2026-00009' }),
@@ -116,7 +116,7 @@ describe("Patrimoine — modification d'un équipement", () => {
   });
 
   it('trace la suppression autorisée avec un état après vide', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       equipementPatrimoine: {
         findUnique: jest.fn().mockResolvedValue(EQUIPEMENT),
         delete: jest.fn().mockResolvedValue({}),
@@ -159,7 +159,7 @@ describe('Patrimoine — cycle des réparations', () => {
       description: 'Lampe morte, interventionmedicale à prévoir',
       notes: null,
     };
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       reparationMateriel: {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue(reparation),
@@ -220,7 +220,7 @@ describe('Patrimoine — cycle des réparations', () => {
       declareParId: 'agent-1', resoluParId: null, prestataire: null, notes: null,
     };
     const resolue = { ...ouverte, statut: StatutReparation.TERMINE, resoluParId: 'agent-2', dateResolution: new Date('2026-10-04T10:00:00.000Z') };
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       reparationMateriel: {
         findFirst: jest.fn().mockResolvedValue(ouverte),
         update: jest.fn().mockResolvedValue(resolue),

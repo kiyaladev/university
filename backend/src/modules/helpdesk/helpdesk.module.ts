@@ -6,7 +6,6 @@
  * à la main dans le service.
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { EquipementsController, TicketsController } from './helpdesk.controller';
 import { EquipementsService, TicketsService } from './helpdesk.service';

@@ -21,7 +21,6 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import { QueryDto } from '../../common/dto';
 import { distanceMetres, dureeMinutes, toDateOnly, toMinutes } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.service';
 import { MoyensAttestationService } from '../moyens-attestation/moyens-attestation.service';

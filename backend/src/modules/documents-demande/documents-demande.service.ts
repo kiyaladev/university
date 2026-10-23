@@ -321,7 +321,7 @@ export class DocumentsDemandeService extends CrudService {
           });
           return tarif;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           throw new ConflictException(
             t('documents-demande.tarifDejaExistant', { type: dto.type }),
@@ -427,7 +427,7 @@ export class DocumentsDemandeService extends CrudService {
           });
           return demande;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
@@ -550,7 +550,7 @@ export class DocumentsDemandeService extends CrudService {
         }
 
         return this.findOne(demande.id);
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
@@ -695,9 +695,9 @@ export class DocumentsDemandeService extends CrudService {
               envoyeLe: new Date(),
             },
           });
-        } catch (e: any) {
+        } catch (e: unknown) {
           this.logger.warn(
-            `Notification PRETE non consignée pour ${demande.numero} : ${e?.message ?? e}`,
+            `Notification PRETE non consignée pour ${demande.numero} : ${(e as Error | null)?.message ?? e}`,
           );
         }
       }
@@ -755,7 +755,7 @@ export class DocumentsDemandeService extends CrudService {
           });
           return apres;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
@@ -884,12 +884,12 @@ export class DocumentsDemandeService extends CrudService {
    * Document imprimable A4 — sans en-tête Authorization, le jeton JWT est
    * vérifié à la main (même motif que les attestations).
    */
-  async imprimer(id: string, token: string | undefined, jwt: { verify(t: string): any }) {
+  async imprimer(id: string, token: string | undefined, jwt: { verify(t: string): unknown }) {
     try {
       await jwt.verify(token ?? '');
     } catch {
       const err = new Error('Jeton invalide ou expiré');
-      (err as any).status = 401;
+      (err as Error & { status?: number }).status = 401;
       throw err;
     }
     return this.findOne(id);

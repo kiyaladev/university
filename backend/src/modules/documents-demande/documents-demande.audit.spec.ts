@@ -257,7 +257,7 @@ describe('Demandes de documents — encaissement', () => {
 
 describe('Demandes de documents — transitions de cycle', () => {
   it('trace l’ouverture de la demande sans son motif ni les coordonnées du demandeur', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       demandeDocument: {
         findMany: jest.fn().mockResolvedValue([{ numero: 'DOC-2026-00001' }]),
         create: jest.fn().mockResolvedValue(DEMANDE),
@@ -288,7 +288,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   });
 
   it('trace la remise au guichet avec sa date et sans la note libre', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PRETE }),
         update: jest.fn().mockResolvedValue({
@@ -313,7 +313,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   });
 
   it('trace le rejet sans recopier le motif', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
         update: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.REJETEE }),
@@ -334,7 +334,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   });
 
   it('trace le lancement du traitement dans la transaction', async () => {
-    const { tx, prisma, audit } = transaction({
+    const { prisma, audit } = transaction({
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
         update: jest.fn().mockResolvedValue({
@@ -355,7 +355,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   });
 
   it('trace le marquage PRETE sans le message au demandeur', async () => {
-    const { tx, prisma, audit } = transaction(
+    const { prisma, audit } = transaction(
       {
         // Verrou de ligne pris avant la relecture de la demande.
         $queryRaw: jest.fn().mockResolvedValue([]),

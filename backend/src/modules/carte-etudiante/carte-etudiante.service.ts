@@ -22,7 +22,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { t } from '../../common/i18n';
 import * as bcrypt from 'bcryptjs';
-import * as QRCode from 'qrcode';
 import { Prisma, StatutAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';

@@ -6,7 +6,6 @@
  * l'en-tête, est vérifié à la main dans le service.
  */
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { PortailRestoController, RestoController } from './resto.controller';
 import { RestoService } from './resto.service';

@@ -240,7 +240,7 @@ export class PatrimoineService {
           });
           return equipement;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
           // Conflit d'unicité : on réessaie avec un nouveau qrCode.
           const cible = (e.meta?.target as string[]) ?? [];
@@ -348,7 +348,7 @@ export class PatrimoineService {
           });
           return maj;
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
         throw e;
       }
@@ -574,10 +574,10 @@ export class PatrimoineService {
       }) : Promise.resolve([]),
     ]);
     const categoriesParId = new Map<string, { id: string; code: string; libelle: string }>(
-      categoriesNommees.map((c: any) => [c.id, c] as const),
+      categoriesNommees.map((c) => [c.id, c] as const),
     );
     const departementsParId = new Map<string, { id: string; code: string; nom: string }>(
-      departementsNommes.map((d: any) => [d.id, d] as const),
+      departementsNommes.map((d) => [d.id, d] as const),
     );
     const parCategorie = categories.flatMap((g) => {
       const c = categoriesParId.get(g.categorieId);

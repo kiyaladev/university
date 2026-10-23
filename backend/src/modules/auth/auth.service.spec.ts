@@ -53,7 +53,7 @@ function fairePrisma(
 ) {
   const validees: Carnet = { majs: [], traces: [] };
   const lecture: Ligne | null = utilisateur ? { ...utilisateur } : null;
-  let stockee: Ligne | null = utilisateur ? { ...utilisateur, ...options.etatInitial } : null;
+  const stockee: Ligne | null = utilisateur ? { ...utilisateur, ...options.etatInitial } : null;
 
   const client = (carnet: Carnet, inverses: (() => void)[]) => ({
     user: {

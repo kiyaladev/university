@@ -34,7 +34,7 @@ export async function exigerAnneeOuverte(db: DepotAnnee, anneeId?: string | null
 
 /** Garde les entités académiques rattachées à une promotion dans la même année. */
 export async function exigerPromotionMemeAnnee(
-  db: { promotion: { findUnique(args: any): Promise<{ anneeId: string } | null> } },
+  db: { promotion: { findUnique(args: unknown): Promise<{ anneeId: string } | null> } },
   promotionId: string,
   anneeId: string,
 ): Promise<void> {

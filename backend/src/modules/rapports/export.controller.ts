@@ -44,7 +44,7 @@ export class ExportController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
+  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() _user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'etat-paiement', this.exports.etatPaiement(query));
   }

@@ -3,7 +3,6 @@ import {
   IsUUID,
   IsInt,
   IsNotEmpty,
-  IsObject,
   IsOptional,
   IsString,
   Matches,

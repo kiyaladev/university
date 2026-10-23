@@ -34,13 +34,6 @@ export const RESERVATION_INCLUDE = {
  *  refusée ou annulée rend le créneau disponible aussitôt. */
 const STATUTS_OCCUPANTS = [StatutReservationSalle.EN_ATTENTE, StatutReservationSalle.CONFIRMEE];
 
-const LIBELLE_STATUT: Record<StatutReservationSalle, string> = {
-  EN_ATTENTE: 'en attente',
-  CONFIRMEE: 'confirmée',
-  REFUSEE: 'refusée',
-  ANNULEE: 'annulée',
-};
-
 /** Séances de l'emploi du temps, allégées pour la grille de la semaine. */
 const SEANCE_CALENDRIER = {
   select: {
@@ -69,8 +62,6 @@ const SALLE_CALENDRIER_SELECT = {
   capacite: true,
   actif: true,
 };
-
-const jjmm = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
 
 @Injectable()
 export class ReservationsService extends CrudService {

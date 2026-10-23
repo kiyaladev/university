@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { DocumentsDemandeController } from './documents-demande.controller';
 import { DocumentsDemandeService } from './documents-demande.service';
 import { MobileMoneyModule } from '../inscription/mobile-money.module';

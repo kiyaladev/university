@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import { ParametresModule } from '../parametres/parametres.module';
 import { CarteEtudianteController } from './carte-etudiante.controller';
 import { CarteEtudianteService } from './carte-etudiante.service';

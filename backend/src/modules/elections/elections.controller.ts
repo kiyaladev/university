@@ -14,7 +14,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { ElectionsService } from './elections.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';

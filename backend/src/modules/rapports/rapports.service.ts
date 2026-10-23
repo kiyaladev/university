@@ -145,7 +145,7 @@ function synthese(c: Compteurs) {
 export class RapportsService {
   constructor(private prisma: PrismaService) {}
 
-  private where(query: RapportQueryDto, user?: AuthUser): Prisma.SeanceWhereInput {
+  private where(query: RapportQueryDto, _user?: AuthUser): Prisma.SeanceWhereInput {
     const jour = query.date && !query.dateDebut && !query.dateFin
       ? toDateOnly(query.date)
       : undefined;

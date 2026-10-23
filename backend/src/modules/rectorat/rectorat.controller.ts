@@ -17,7 +17,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
-import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
+import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { RectoratService } from './rectorat.service';
 import { GenererBilanDto, RectoratQueryDto } from './rectorat.dto';
