@@ -2,19 +2,7 @@
 
 import { creer, lire, lister, modifier, type ParametresListe } from '@/shared/services/http';
 import { elements, type Collection } from './collections';
-import type { Examen } from '@/types';
-
-/** Un scan d'(examen) enregistré au poste de scan. */
-export interface ScanExamen {
-  id?: string;
-  code?: string;
-  matricule?: string;
-  nom?: string;
-  prenom?: string;
-  present?: boolean;
-  scannedAt?: string;
-  createdAt?: string;
-}
+import type { Examen, ScanExamen } from '@/types';
 
 /** Statistiques de présence d'un examen. */
 export interface StatsExamen {

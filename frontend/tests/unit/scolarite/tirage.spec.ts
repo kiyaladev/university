@@ -17,6 +17,16 @@ beforeEach(() => {
 });
 
 describe('features/scolarite/services/tirage', () => {
+  it('liste les tirages filtrés', async () => {
+    const page = { data: [{ id: 't1' }], total: 1, page: 1, pageSize: 50 };
+    api.get.mockResolvedValue({ data: page });
+
+    const resultat = await tirageService.liste({ examenId: 'x1', page: 1, pageSize: 50 });
+
+    expect(resultat).toBe(page);
+    expect(api.get).toHaveBeenCalledWith('/tirage', { params: { examenId: 'x1', page: 1, pageSize: 50 } });
+  });
+
   it('crée un tirage', async () => {
     api.post.mockResolvedValue({ data: { id: 't1' } });
 

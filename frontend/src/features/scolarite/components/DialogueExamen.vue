@@ -90,11 +90,11 @@
 import { ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { LIBELLE_TYPE_EXAMEN } from '@/shared/utils/libelles';
+import { examensService } from '../services/examens';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [] }>();
@@ -137,7 +137,7 @@ async function enregistrer() {
   }
   envoi.value = true;
   try {
-    await api.post('/examens', form.value);
+    await examensService.creer(form.value);
     $q.notify({ type: 'positive', message: t('examens.messages.scheduled') });
     ouvert.value = false;
     emit('enregistre');

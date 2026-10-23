@@ -1,20 +1,14 @@
-/** Tirages : création, progression du workflow et impression. */
+/** Tirages : liste, création, progression du workflow et impression. */
 
-import { creer, lire } from '@/shared/services/http';
-import type { Examen } from '@/types';
-
-/** Un tirage d'ordre d'arrivée pour un examen. */
-export interface Tirage {
-  id: string;
-  examenId: string;
-  stade?: string;
-  statut?: string;
-  createdAt?: string;
-  examen?: Examen;
-  [cle: string]: unknown;
-}
+import { creer, lire, lister, type ParametresListe } from '@/shared/services/http';
+import type { Tirage } from '@/types';
 
 export const tirageService = {
+  /** Liste paginée des tirages. */
+  liste(params: ParametresListe = {}) {
+    return lister<Tirage>('/tirage', params);
+  },
+
   /** Crée un tirage pour un examen. */
   creer(payload: unknown) {
     return creer<Tirage>('/tirage', payload);
