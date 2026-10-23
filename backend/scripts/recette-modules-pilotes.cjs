@@ -442,8 +442,10 @@ async function main() {
     400,
   );
   await request(admin, 'PUT', '/chambres/' + rooms[0].id, { statut: 'LIBRE' }, 400);
-  await request(admin, 'DELETE', '/chambres/' + rooms[0].id, null, 400);
-  await request(admin, 'DELETE', '/residences/' + residence.id, null, 400);
+  // 409 et non 400 : la demande est licite, c'est l'état du parc qui la
+  // refuse (la chambre porte une attribution, la résidence des chambres).
+  await request(admin, 'DELETE', '/chambres/' + rooms[0].id, null, 409);
+  await request(admin, 'DELETE', '/residences/' + residence.id, null, 409);
   await request(admin, 'PUT', `/attributions-logement/${applications[0].id}/retirer`, {
     motif: 'Départ fictif de recette',
   });

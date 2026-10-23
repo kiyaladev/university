@@ -142,7 +142,9 @@ async function main() {
     await request(admin, 'PUT', `/recettes/${cash.id}`, fields, 409);
   }
   await request(admin, 'PUT', `/recettes/${cash.id}`, { description: 'Correction documentaire privée' });
-  await request(admin, 'POST', `/paiements/${persisted.paiementId}/annuler`, { motif: 'Annulation de recette' }, 400);
+  // Un paiement encaissant une recette externe se gère depuis le registre des
+  // recettes : l'annulation directe est refusée par un conflit d'état (409).
+  await request(admin, 'POST', `/paiements/${persisted.paiementId}/annuler`, { motif: 'Annulation de recette' }, 409);
   const toCollect = await request(
     admin,
     'GET',
@@ -183,7 +185,7 @@ async function main() {
       noOrphanPayment: true,
       accountingFieldsFrozen: true,
       documentaryCorrectionAllowed: true,
-      cancellationOfSuccessfulPaymentRejected: true,
+      cancellationOfExternalReceiptPaymentRejected: true,
       paidAndUnpaidFiltersAgree: true,
       auditOmitsPrivateClientAndDescription: true,
     },
