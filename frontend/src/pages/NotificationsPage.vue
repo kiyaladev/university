@@ -1,19 +1,15 @@
 <template>
   <q-page class="notifications">
-    <header class="notifications__entete">
-      <div>
-        <h1 class="page-titre">{{ $t('notificationsPage.header.title') }}</h1>
-        <p class="page-sous-titre">
-          {{ $t('notificationsPage.header.subtitle') }}
-        </p>
-      </div>
-      <q-chip v-if="stats" square color="warning" text-color="dark" icon="sms">
-        {{ $t('notificationsPage.header.queued', { n: stats.EN_ATTENTE }) }}
-        <q-tooltip>
-          {{ $t('notificationsPage.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
-        </q-tooltip>
-      </q-chip>
-    </header>
+    <page-header :title="$t('notificationsPage.header.title')" :subtitle="$t('notificationsPage.header.subtitle')">
+      <template v-if="stats" #actions>
+        <q-chip square color="warning" text-color="dark" icon="sms">
+          {{ $t('notificationsPage.header.queued', { n: stats.EN_ATTENTE }) }}
+          <q-tooltip>
+            {{ $t('notificationsPage.header.tooltip', { envoyees: stats.ENVOYEE, echouees: stats.ECHOUE }) }}
+          </q-tooltip>
+        </q-chip>
+      </template>
+    </page-header>
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="diffusion" icon="campaign" :label="$t('notificationsPage.tabs.diffusion')" no-caps />
@@ -170,7 +166,7 @@
         v-model="filtresHistorique"
         :placeholder="$t('notificationsPage.history.searchPlaceholder')"
         :recherche="true"
-        @reinitialiser="filtresHistorique = { recherche: '' }"
+        @reinitialiser="reinitialiserHistorique"
       >
         <template #avances>
           <q-select
@@ -189,7 +185,7 @@
       </filter-bar>
 
       <div class="text-caption text-grey-7 q-mb-sm">
-        {{ $t('notificationsPage.history.countLabel', { n: pagination.total, periode: legendePeriode }) }}
+        {{ $t('notificationsPage.history.countLabel', { n: hist.total, periode: legendePeriode }) }}
       </div>
 
       <!-- Graphique de répartition -->
@@ -214,12 +210,12 @@
         flat
         bordered
         class="carte"
-        :rows="lignes"
+        :rows="hist.lignes"
         :columns="colonnes"
         row-key="id"
-        :loading="chargement"
+        :loading="hist.chargement"
         :rows-per-page-options="[0]"
-        :hide-bottom="chargement || lignes.length > 0"
+        :hide-bottom="hist.chargement || hist.lignes.length > 0"
       >
         <template #body-cell-statut="p">
           <q-td :props="p">
@@ -277,53 +273,45 @@
         </template>
 
         <template #no-data>
-          <div class="etat-vide">
-            <q-icon name="sms" size="36px" />
-            <div class="text-subtitle2 q-mt-sm">{{ $t('notificationsPage.history.emptyState.title') }}</div>
-            <div class="text-caption">
-              {{ $t('notificationsPage.history.emptyState.detail') }}
-              {{ aDesFiltresHistorique
-                ? $t('notificationsPage.history.emptyState.noneMatchFilters')
-                : $t('notificationsPage.history.emptyState.startBroadcast') }}
-            </div>
-            <q-btn
-              v-if="aDesFiltresHistorique"
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="filter_alt_off"
-              :label="$t('notificationsPage.history.emptyState.clearFilters')"
-              @click="reinitialiserHistorique"
-            />
-            <q-btn
-              v-else
-              flat
-              dense
-              no-caps
-              color="primary"
-              icon="campaign"
-              :label="$t('notificationsPage.history.emptyState.goToBroadcast')"
-              @click="onglet = 'diffusion'"
-            />
-          </div>
+          <etat-vide icone="sms" :titre="$t('notificationsPage.history.emptyState.title')" :aide="aideVideHistorique">
+            <template #action>
+              <q-btn
+                v-if="aDesFiltresHistorique"
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="filter_alt_off"
+                :label="$t('notificationsPage.history.emptyState.clearFilters')"
+                @click="reinitialiserHistorique"
+              />
+              <q-btn
+                v-else
+                flat
+                dense
+                no-caps
+                color="primary"
+                icon="campaign"
+                :label="$t('notificationsPage.history.emptyState.goToBroadcast')"
+                @click="onglet = 'diffusion'"
+              />
+            </template>
+          </etat-vide>
         </template>
       </q-table>
 
       <pagination-bar
-        :page="pagination.page"
-        :page-size="pagination.pageSize"
-        :total="pagination.total"
+        v-model:page="hist.page"
+        v-model:page-size="hist.pageSize"
+        :total="hist.total"
         :show-all="false"
-        @update:page="pagination.page = $event; chargerHistorique()"
-        @update:page-size="pagination.pageSize = $event; pagination.page = 1; chargerHistorique()"
       />
     </q-tab-panel>
   </q-page>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import type { ChartConfiguration } from 'chart.js';
@@ -340,6 +328,10 @@ import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChartCanvas from '../components/ChartCanvas.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 
 /**
  * Peintures des états d'envoi, identiques aux pastilles du registre :
@@ -352,6 +344,7 @@ const PEINTURE_ECHEC = '#CE1126';
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 const onglet = ref('diffusion');
 
@@ -427,12 +420,12 @@ async function confirmerEnvoi() {
     : destination.value === 'numeros'
       ? numerosComptes.value
       : 0;
-  $q.dialog({
-    title: t('notificationsPage.messages.confirmSendTitle'),
+  const ok = await confirmer({
+    titre: t('notificationsPage.messages.confirmSendTitle'),
     message: t('notificationsPage.messages.confirmSendMessage', { n: nbDestinaires }),
-    cancel: true,
-    ok: { color: 'primary', label: t('notificationsPage.messages.confirmSendOk'), unelevated: true },
-  }).onOk(() => envoyer());
+    ok: t('notificationsPage.messages.confirmSendOk'),
+  });
+  if (ok) await envoyer();
 }
 
 async function envoyer() {
@@ -545,10 +538,26 @@ async function diffuserResultats() {
 }
 
 // ------------------------------------------------------------- historique
-const chargement = ref(false);
-const lignes = ref<Notification[]>([]);
-const pagination = ref({ page: 1, pageSize: 25, total: 0 });
-const filtresHistorique = ref<Record<string, any>>({ recherche: '' });
+const filtresHistorique = ref<Record<string, any>>({ recherche: '', statut: null, dateDebut: '', dateFin: '' });
+const hist = reactive(
+  useListePaginee<Notification>({
+    filtres: filtresHistorique,
+    pageSize: 25,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/notifications', {
+          params: {
+            ...pageApi(p),
+            statut: f.statut || undefined,
+            search: texteApi(f.recherche),
+            dateDebut: f.dateDebut || undefined,
+            dateFin: f.dateFin || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
+const chargerHistorique = () => hist.recharger();
 
 const optionsStatuts = Object.entries(LIBELLE_STATUT_NOTIFICATION).map(([value, label]) => ({
   value: value as StatutNotification,
@@ -603,6 +612,15 @@ const aDesFiltresHistorique = computed(() => {
   return !!(f.recherche || f.statut || f.dateDebut || f.dateFin);
 });
 
+const aideVideHistorique = computed(
+  () =>
+    `${t('notificationsPage.history.emptyState.detail')} ${
+      aDesFiltresHistorique.value
+        ? t('notificationsPage.history.emptyState.noneMatchFilters')
+        : t('notificationsPage.history.emptyState.startBroadcast')
+    }`,
+);
+
 const legendePeriode = computed(() => {
   const f = filtresHistorique.value;
   if (f.dateDebut && f.dateFin) {
@@ -616,38 +634,9 @@ const legendePeriode = computed(() => {
   return t('notificationsPage.history.period.all');
 });
 
-async function chargerHistorique() {
-  chargement.value = true;
-  try {
-    const f = filtresHistorique.value;
-    const { data } = await api.get('/notifications', {
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: f.statut ?? undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-        dateDebut: f.dateDebut || undefined,
-        dateFin: f.dateFin || undefined,
-      },
-    });
-    lignes.value = data.data;
-    pagination.value.total = data.total;
-  } catch {
-    lignes.value = [];
-    pagination.value.total = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
 function reinitialiserHistorique() {
-  filtresHistorique.value = { recherche: '' };
+  hist.reinitialiser([]);
 }
-
-watch(filtresHistorique, () => {
-  pagination.value.page = 1;
-  void chargerHistorique();
-}, { deep: true });
 
 const renvoiEnCours = ref<string | null>(null);
 
@@ -750,7 +739,6 @@ watch(onglet, (v) => {
 });
 
 onMounted(() => {
-  void chargerHistorique();
   void chargerStats();
   void chargerNbInscrits();
   void chargerRepartition();
@@ -761,15 +749,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .notifications {
   padding: var(--up-4) var(--up-3) var(--up-6);
-}
-
-.notifications__entete {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--up-3);
-  flex-wrap: wrap;
-  margin-bottom: var(--up-3);
 }
 
 .notifications__diffusion {

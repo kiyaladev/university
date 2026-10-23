@@ -1,9 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="documents" />
-    <page-header :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')">
-
-    </page-header>
+    <page-header :title="$t('demandeDocuments.title')" :subtitle="$t('demandeDocuments.subtitle')" />
 
     <q-banner v-if="filtres.etudiantId" class="note--info q-mb-md">
       {{ $t('demandeDocuments.studentBanner.message') }}
@@ -20,7 +18,7 @@
       v-model="filtres"
       :placeholder="$t('demandeDocuments.filters.searchPlaceholder')"
       :recherche="true"
-      @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
+      @reinitialiser="filtres = { recherche: '' }"
     >
       <template #principaux>
         <q-select
@@ -55,33 +53,23 @@
       </template>
     </filter-bar>
 
-    <pagination-bar
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
-      :show-all="false"
-      @update:page="pagination.page = $event; requeter()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; requeter()"
-      @tous="chargerTout"
-    />
+    <pagination-bar v-model:page="liste.page" v-model:page-size="liste.pageSize" :total="liste.total" :show-all="false" />
 
     <q-table
       v-if="modeVue === 'tableau'"
       flat
       bordered
       class="carte"
-      :rows="demandes"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || demandes.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => selectionner(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('demandeDocuments.emptyState.message') }}
-        </div>
+        <etat-vide icone="description" :titre="$t('demandeDocuments.emptyState.message')" />
       </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ libelleType(p.row.type) }}</q-td>
@@ -196,7 +184,7 @@
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
-      <div v-for="d in demandes" :key="d.id" class="col-12 col-md-6 col-xl-4">
+      <div v-for="d in liste.lignes" :key="d.id" class="col-12 col-md-6 col-xl-4">
         <q-card flat bordered class="carte">
           <q-card-section class="row items-start q-pb-none">
             <div class="col">
@@ -298,12 +286,12 @@
 </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="description" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('demandeDocuments.emptyState.message') }}
-        </div>
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="description"
+        :titre="$t('demandeDocuments.emptyState.message')"
+      />
     </div>
 
     <!-- Dialog de détail -->
@@ -452,12 +440,13 @@ import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
@@ -470,13 +459,15 @@ import {
   montantLisible,
   optionsDepuis,
 } from '../utils/libelles';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import type { DemandeDocument, StatutDemande, StatutPaiement, TypeDemandeDocument } from '../types';
 
 const $q = useQuasar();
 const auth = useAuthStore();
-const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const { confirmerAvecSaisie } = useConfirmation();
 
 const ETAPES_DEMANDE = computed(() => [
   { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('demandeDocuments.steps.payment'), icone: 'payments' },
@@ -489,19 +480,40 @@ const ETAPES_DEMANDE = computed(() => [
 const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_DEMANDE);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_DEMANDE);
 
-const demandes = ref<DemandeDocument[]>([]);
 const stats = ref<Record<string, number> | null>(null);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 /**
  * Liaison depuis les autres écrans du dossier (réclamations, carte) :
- * `/demandes-docs?etudiantId=…` ouvre le registre filtré sur cet étudiant.
+ * `/demandes-docs?etudiantId=…` ouvre le registre filtré sur cet étudiant
+ * (les filtres sont relus de l'URL par `syncUrl`).
  */
 const filtres = ref<Record<string, any>>({
   recherche: '',
-  etudiantId: String(route.query.etudiantId ?? '') || undefined,
+  statut: null,
+  type: null,
+  etudiantId: undefined,
 });
+/** Même périmètre que GET /documents-demande côté API. */
+const peutVoir = () => auth.aRole(['ADMIN', 'SCOLARITE']);
+const liste = reactive(
+  useListePaginee<DemandeDocument>({
+    filtres,
+    syncUrl: true,
+    actif: peutVoir,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/documents-demande', {
+          params: {
+            ...pageApi(p),
+            statut: f.statut || undefined,
+            type: f.type || undefined,
+            etudiantId: f.etudiantId || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 const modeVue = usePresentationListe();
-const chargement = ref(false);
 const detailOuvert = ref(false);
 const demandeSelectionnee = ref<DemandeDocument | null>(null);
 const enCours = ref('');
@@ -557,50 +569,8 @@ function ouvrirCarteEtudiante(d: DemandeDocument | null) {
   void router.push({ name: 'cartes-etudiantes', query: { etudiantId: d.etudiantId } });
 }
 
-async function requeter() {
-  // Même périmètre que GET /documents-demande côté API.
-  if (!auth.aRole(['ADMIN', 'SCOLARITE'])) return;
-  chargement.value = true;
-  try {
-    const f = filtres.value;
-    // Silencieux : le bloc catch remplace le 403 brut par un message clair.
-    const { data } = await api.get('/documents-demande', {
-      silencieux: true,
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: f.statut || undefined,
-        type: f.type || undefined,
-        etudiantId: f.etudiantId || undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-      },
-    });
-    demandes.value = data.data;
-    pagination.value.total = data.total;
-  } catch (e: any) {
-    if (e?.response?.status === 403) {
-      $q.notify({ type: 'warning', message: t('demandeDocuments.messages.forbidden') });
-    } else if (e?.response?.status !== 401) {
-      $q.notify({
-        type: 'negative',
-        message: e?.response?.data?.message ?? t('demandeDocuments.messages.loadError'),
-      });
-    }
-    demandes.value = [];
-    pagination.value.total = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await requeter();
-}
-
 async function chargerStats() {
-  if (!auth.aRole(['ADMIN', 'SCOLARITE'])) return;
+  if (!peutVoir()) return;
   try {
     const { data } = await api.get('/documents-demande/dashboard');
     stats.value = data;
@@ -609,145 +579,90 @@ async function chargerStats() {
   }
 }
 
-function rafraichir() {
-  void requeter();
+/** Après une action : liste, compteurs et fiche ouverte à jour. */
+async function rafraichir(d: DemandeDocument) {
+  void liste.recharger();
   void chargerStats();
+  if (demandeSelectionnee.value?.id === d.id) {
+    const { data } = await api.get(`/documents-demande/${d.id}`);
+    demandeSelectionnee.value = data as DemandeDocument;
+  }
+}
+
+/** Action de workflow : POST, notification, rafraîchissement. */
+async function agir(
+  d: DemandeDocument,
+  cle: string,
+  action: string,
+  corps: object,
+  message: string,
+  type: 'positive' | 'warning' = 'positive',
+) {
+  enCours.value = cle;
+  try {
+    await api.post(`/documents-demande/${d.id}/${action}`, corps);
+    $q.notify({ type, message });
+    await rafraichir(d);
+  } catch {
+    /* notifié par l'intercepteur */
+  } finally {
+    enCours.value = '';
+  }
 }
 
 async function confirmerPaiement(d: DemandeDocument | null) {
   if (!d) return;
-  enCours.value = 'confirmer';
-  try {
-    await api.post(`/documents-demande/${d.id}/confirmer-paiement`, {});
-    $q.notify({ type: 'positive', message: t('demandeDocuments.messages.paymentConfirmed') });
-    rafraichir();
-    if (demandeSelectionnee.value?.id === d.id) {
-      const { data } = await api.get(`/documents-demande/${d.id}`);
-      demandeSelectionnee.value = data as DemandeDocument;
-    }
-  } catch {
-    /* notifié par l'intercepteur */
-  } finally {
-    enCours.value = '';
-  }
+  await agir(d, 'confirmer', 'confirmer-paiement', {}, t('demandeDocuments.messages.paymentConfirmed'));
 }
 
 async function lancerTraitement(d: DemandeDocument | null) {
   if (!d) return;
-  enCours.value = 'traitement';
-  try {
-    await api.post(`/documents-demande/${d.id}/lancer-traitement`, {});
-    $q.notify({ type: 'positive', message: t('demandeDocuments.messages.processingStarted') });
-    rafraichir();
-    if (demandeSelectionnee.value?.id === d.id) {
-      const { data } = await api.get(`/documents-demande/${d.id}`);
-      demandeSelectionnee.value = data as DemandeDocument;
-    }
-  } catch {
-    /* notifié par l'intercepteur */
-  } finally {
-    enCours.value = '';
-  }
+  await agir(d, 'traitement', 'lancer-traitement', {}, t('demandeDocuments.messages.processingStarted'));
 }
 
 async function marquerPrete(d: DemandeDocument | null) {
   if (!d) return;
-  $q.dialog({
-    title: t('demandeDocuments.markReadyDialog.title'),
+  const message = await confirmerAvecSaisie({
+    titre: t('demandeDocuments.markReadyDialog.title'),
     message: t('demandeDocuments.markReadyDialog.message'),
-    prompt: { model: '', type: 'textarea' },
-    cancel: true,
-    ok: { label: t('demandeDocuments.markReadyDialog.confirm'), color: 'positive' },
-  }).onOk(async (message: string) => {
-    enCours.value = 'prete';
-    try {
-      await api.post(`/documents-demande/${d.id}/prete`, {
-        message: message?.trim() || undefined,
-      });
-      $q.notify({ type: 'positive', message: t('demandeDocuments.messages.markedReady') });
-      rafraichir();
-      if (demandeSelectionnee.value?.id === d.id) {
-        const { data } = await api.get(`/documents-demande/${d.id}`);
-        demandeSelectionnee.value = data as DemandeDocument;
-      }
-    } catch {
-      /* notifié par l'intercepteur */
-    } finally {
-      enCours.value = '';
-    }
+    libelleSaisie: t('demandeDocuments.detail.smsNotification'),
+    ok: t('demandeDocuments.markReadyDialog.confirm'),
   });
+  if (message === null) return;
+  await agir(d, 'prete', 'prete', { message: message.trim() || undefined }, t('demandeDocuments.messages.markedReady'));
 }
 
 async function remettre(d: DemandeDocument | null) {
   if (!d) return;
-  $q.dialog({
-    title: t('demandeDocuments.handOverDialog.title'),
+  const noteRemise = await confirmerAvecSaisie({
+    titre: t('demandeDocuments.handOverDialog.title'),
     message: t('demandeDocuments.handOverDialog.message'),
-    prompt: { model: '', type: 'text' },
-    cancel: true,
-    ok: { label: t('demandeDocuments.handOverDialog.confirm'), color: 'positive' },
-  }).onOk(async (noteRemise: string) => {
-    enCours.value = 'remettre';
-    try {
-      await api.post(`/documents-demande/${d.id}/remettre`, {
-        noteRemise: noteRemise?.trim() || undefined,
-      });
-      $q.notify({ type: 'positive', message: t('demandeDocuments.messages.handedOver') });
-      rafraichir();
-      if (demandeSelectionnee.value?.id === d.id) {
-        const { data } = await api.get(`/documents-demande/${d.id}`);
-        demandeSelectionnee.value = data as DemandeDocument;
-      }
-    } catch {
-      /* notifié par l'intercepteur */
-    } finally {
-      enCours.value = '';
-    }
+    libelleSaisie: t('demandeDocuments.detail.notes'),
+    ok: t('demandeDocuments.handOverDialog.confirm'),
   });
+  if (noteRemise === null) return;
+  await agir(d, 'remettre', 'remettre', { noteRemise: noteRemise.trim() || undefined }, t('demandeDocuments.messages.handedOver'));
 }
 
 async function rejeter(d: DemandeDocument | null) {
   if (!d) return;
-  $q.dialog({
-    title: t('demandeDocuments.rejectDialog.title'),
+  const motif = await confirmerAvecSaisie({
+    titre: t('demandeDocuments.rejectDialog.title'),
     message: t('demandeDocuments.rejectDialog.message'),
-    prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
-    cancel: true,
-    ok: { label: t('demandeDocuments.rejectDialog.confirm'), color: 'negative' },
-  }).onOk(async (motif: string) => {
-    if (!motif?.trim()) return;
-    enCours.value = 'rejeter';
-    try {
-      await api.post(`/documents-demande/${d.id}/rejeter`, { motif: motif.trim() });
-      $q.notify({ type: 'warning', message: t('demandeDocuments.messages.rejected') });
-      rafraichir();
-      if (demandeSelectionnee.value?.id === d.id) {
-        const { data } = await api.get(`/documents-demande/${d.id}`);
-        demandeSelectionnee.value = data as DemandeDocument;
-      }
-    } catch {
-      /* notifié par l'intercepteur */
-    } finally {
-      enCours.value = '';
-    }
+    libelleSaisie: t('demandeDocuments.detail.motif'),
+    ok: t('demandeDocuments.rejectDialog.confirm'),
+    danger: true,
   });
+  if (motif === null) return;
+  // Le motif est obligatoire (3 caractères au moins), comme côté API.
+  if (motif.trim().length < 3) {
+    $q.notify({ type: 'warning', message: t('common.messages.errors.tooShort') });
+    return;
+  }
+  await agir(d, 'rejeter', 'rejeter', { motif: motif.trim() }, t('demandeDocuments.messages.rejected'), 'warning');
 }
 
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.statut,
-    filtres.value.type,
-    filtres.value.etudiantId,
-  ],
-  () => {
-    pagination.value.page = 1;
-    void requeter();
-  },
-);
-
 onMounted(() => {
-  void requeter();
   void chargerStats();
 });
 </script>

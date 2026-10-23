@@ -1,59 +1,58 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="bilan" />
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('statistiquesMesrs.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('statistiquesMesrs.subtitle') }}
+    <page-header :title="$t('statistiquesMesrs.title')" :subtitle="$t('statistiquesMesrs.subtitle')">
+      <template #actions>
+        <div class="col-auto row q-gutter-sm">
+          <q-select
+            v-model="anneeId"
+            :options="optionsAnnees"
+            dense
+            outlined
+            clearable
+            emit-value
+            map-options
+            :label="$t('statistiquesMesrs.filters.annee.label')"
+            :hint="$t('statistiquesMesrs.filters.annee.hint')"
+            style="min-width: 180px"
+            @update:model-value="charger"
+          />
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="file_download"
+            :label="$t('statistiquesMesrs.actions.export', { count: snapshots.length })"
+            :disable="!snapshots.length"
+            @click="exporterCsv"
+          >
+            <q-tooltip>
+              {{ $t('statistiquesMesrs.actions.exportTooltip', { annee: anneeLibelle ?? $t('statistiquesMesrs.allYears') }) }}
+            </q-tooltip>
+          </q-btn>
         </div>
-      </div>
-      <div class="col-auto row q-gutter-sm">
-        <q-select
-          v-model="anneeId"
-          :options="optionsAnnees"
-          dense
-          outlined
-          clearable
-          emit-value
-          map-options
-          :label="$t('statistiquesMesrs.filters.annee.label')"
-          :hint="$t('statistiquesMesrs.filters.annee.hint')"
-          style="min-width: 180px"
-          @update:model-value="charger"
-        />
+      </template>
+    </page-header>
+
+    <etat-vide
+      v-if="!snapshots.length && !chargement"
+      class="plaque"
+      icone="analytics"
+      :titre="$t('statistiquesMesrs.emptyState.title')"
+      :aide="$t('statistiquesMesrs.emptyState.text')"
+    >
+      <template #action>
         <q-btn
           unelevated
           color="primary"
           no-caps
-          icon="file_download"
-          :label="$t('statistiquesMesrs.actions.export', { count: snapshots.length })"
-          :disable="!snapshots.length"
-          @click="exporterCsv"
-        >
-          <q-tooltip>
-            {{ $t('statistiquesMesrs.actions.exportTooltip', { annee: anneeLibelle ?? $t('statistiquesMesrs.allYears') }) }}
-          </q-tooltip>
-        </q-btn>
-      </div>
-    </div>
-
-    <div v-if="!snapshots.length && !chargement" class="plaque etat-vide">
-      <q-icon name="analytics" size="42px" />
-      <div class="text-h6 q-mt-sm">{{ $t('statistiquesMesrs.emptyState.title') }}</div>
-      <div class="text-caption">
-        {{ $t('statistiquesMesrs.emptyState.text') }}
-      </div>
-      <q-btn
-        unelevated
-        color="primary"
-        no-caps
-        icon="dashboard"
-        :label="$t('statistiquesMesrs.actions.generateFromRectorat')"
-        to="/rectorat"
-        class="q-mt-sm"
-      />
-    </div>
+          icon="dashboard"
+          :label="$t('statistiquesMesrs.actions.generateFromRectorat')"
+          to="/rectorat"
+          class="q-mt-sm"
+        />
+      </template>
+    </etat-vide>
 
     <template v-else>
     <div class="row q-col-gutter-md q-mb-md">
@@ -185,6 +184,8 @@
 
 <script setup lang="ts">
 import SectionNavigation from '../components/SectionNavigation.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';

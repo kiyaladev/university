@@ -1,55 +1,51 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 720px; max-width: 95vw">
-      <q-card-section>
-        <div class="text-h6">{{ $t(existant ? 'recettes.formDialog.editTitle' : 'recettes.formDialog.newTitle') }}</div>
-        <div class="text-caption text-grey-7">
-          {{ $t('recettes.formDialog.numberHint') }}
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t(existant ? 'recettes.formDialog.editTitle' : 'recettes.formDialog.newTitle')"
+    :sous-titre="$t('recettes.formDialog.numberHint')"
+    taille="l"
+    :envoi="envoi"
+    :libelle-valider="$t(existant ? 'common.actions.save' : 'recettes.actions.issueRecette')"
+    @valider="enregistrer"
+  >
+    <div class="q-gutter-md">
+      <q-banner v-if="champsComptablesFiges" dense rounded class="bg-amber-1 text-brown-9">
+        {{ $t('recettes.formDialog.accountingLocked') }}
+      </q-banner>
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-6">
+          <q-input v-model="form.numero" :disable="!!existant" outlined dense :label="$t('recettes.formDialog.number')" />
         </div>
-      </q-card-section>
-      <q-card-section class="q-gutter-md">
-        <q-banner v-if="champsComptablesFiges" dense rounded class="bg-amber-1 text-brown-9">
-          {{ $t('recettes.formDialog.accountingLocked') }}
-        </q-banner>
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-6">
-            <q-input v-model="form.numero" :disable="!!existant" outlined dense :label="$t('recettes.formDialog.number')" />
-          </div>
-          <div class="col-12 col-sm-6">
-            <q-select
-              v-model="form.type"
-              :options="optionsTypes"
-              :disable="champsComptablesFiges"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('common.fields.type')"
-            />
-          </div>
+        <div class="col-12 col-sm-6">
+          <q-select
+            v-model="form.type"
+            :options="optionsTypes"
+            :disable="champsComptablesFiges"
+            outlined
+            dense
+            emit-value
+            map-options
+            :label="$t('common.fields.type')"
+          />
         </div>
-        <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" />
-        <q-input v-model="form.description" outlined dense type="textarea" rows="2" :label="$t('common.fields.description')" />
-        <div class="row q-col-gutter-md">
-          <div class="col-12 col-sm-4">
-            <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('recettes.formDialog.date')" />
-          </div>
-          <div class="col-12 col-sm-4">
-            <q-input v-model.number="form.montant" :disable="champsComptablesFiges" type="number" min="0" outlined dense :label="$t('recettes.formDialog.amount')" />
-          </div>
-          <div class="col-12 col-sm-4">
-            <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('recettes.formDialog.currency')" />
-          </div>
+      </div>
+      <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" />
+      <q-input v-model="form.description" outlined dense type="textarea" rows="2" :label="$t('common.fields.description')" />
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-4">
+          <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('recettes.formDialog.date')" />
         </div>
-        <q-input v-model="form.client" outlined dense :label="$t('recettes.table.columns.client')" />
-        <q-input v-model="form.factureNum" outlined dense :label="$t('recettes.formDialog.invoiceNumber')" />
-      </q-card-section>
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-        <q-btn unelevated color="primary" :label="$t(existant ? 'common.actions.save' : 'recettes.actions.issueRecette')" :loading="envoi" @click="enregistrer" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+        <div class="col-12 col-sm-4">
+          <q-input v-model.number="form.montant" :disable="champsComptablesFiges" type="number" min="0" outlined dense :label="$t('recettes.formDialog.amount')" />
+        </div>
+        <div class="col-12 col-sm-4">
+          <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('recettes.formDialog.currency')" />
+        </div>
+      </div>
+      <q-input v-model="form.client" outlined dense :label="$t('recettes.table.columns.client')" />
+      <q-input v-model="form.factureNum" outlined dense :label="$t('recettes.formDialog.invoiceNumber')" />
+    </div>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -58,15 +54,15 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import ChampDate from './ChampDate.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_TYPE_RECETTE, aujourdhui } from '../utils/libelles';
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   existant: any | null;
 }>();
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
-  cree: [];
+  enregistre: [];
 }>();
 
 const $q = useQuasar();
@@ -93,7 +89,7 @@ const envoi = ref(false);
 const champsComptablesFiges = computed(() => !!props.existant?.paiementId);
 
 watch(
-  () => props.modelValue,
+  ouvert,
   (v) => {
     if (v && props.existant) {
       form.value = {
@@ -148,8 +144,8 @@ async function enregistrer() {
       await api.post('/recettes', { numero: form.value.numero.trim(), ...payload });
       $q.notify({ type: 'positive', message: t('recettes.formDialog.created') });
     }
-    emit('update:modelValue', false);
-    emit('cree');
+    emit('enregistre');
+    ouvert.value = false;
   } catch {
     /* notifié par l'intercepteur */
   } finally {

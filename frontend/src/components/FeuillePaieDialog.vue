@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
+  <q-dialog v-model="ouvert">
     <q-card style="width: 480px; max-width: 95vw">
       <!-- Création : mois + année, le libellé et la période suivent. -->
       <template v-if="!creee">
@@ -92,14 +92,18 @@ import { api } from '../boot/axios';
 import { LIBELLE_STATUT_PAIE, dateLisible, montantLisible } from '../utils/libelles';
 import type { FeuillePaie } from '../types';
 
+/*
+ * Reste sur un q-dialog propre plutôt que DialogueFormulaire : après la
+ * création, la même fenêtre bascule sur un récapitulatif aux actions
+ * différentes (recalculer maintenant / fermer) au lieu de se refermer.
+ */
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   /** Années déjà couvertes par une feuille — proposées en premier. */
   anneesExistantes?: number[];
 }>();
 const emit = defineEmits<{
-  'update:modelValue': [boolean];
-  cree: [FeuillePaie];
+  enregistre: [FeuillePaie];
   calculer: [FeuillePaie];
 }>();
 
@@ -134,9 +138,9 @@ const libelle = computed(() => {
 });
 
 watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
+  ouvert,
+  (o) => {
+    if (!o) return;
     form.value = { mois: null, annee: new Date().getFullYear() };
     creee.value = null;
   },
@@ -148,7 +152,7 @@ async function creer() {
     const { data } = await api.post('/feuilles-paie', form.value);
     creee.value = data;
     $q.notify({ type: 'positive', message: t('paiePage.createDialog.created', { label: data.libelle }) });
-    emit('cree', data);
+    emit('enregistre', data);
   } catch {
     /* notifié par l'intercepteur */
   } finally {

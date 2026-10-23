@@ -1,8 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('tarifsDemandeAdmin.title')" :subtitle="$t('tarifsDemandeAdmin.subtitle')">
-      <template #actions>
-<div v-if="!rolePasBon" class="col-auto q-gutter-sm">
+      <template v-if="!rolePasBon" #actions>
         <q-btn
           outline
           color="primary"
@@ -24,7 +23,6 @@
             {{ $t('tarifsDemandeAdmin.actions.all_types_have_tariff') }}
           </q-tooltip>
         </q-btn>
-      </div>
       </template>
     </page-header>
 
@@ -45,9 +43,7 @@
       :hide-bottom="chargement || tarifs.length > 0"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('tarifsDemandeAdmin.table.empty') }}
-        </div>
+        <etat-vide icone="sell" :titre="$t('tarifsDemandeAdmin.table.empty')" />
       </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ libelleType(p.row.type) }}</q-td>
@@ -71,82 +67,67 @@
       </template>
     </q-table>
 
-    <q-dialog v-model="dialogOuvert">
-      <q-card style="width: 480px; max-width: 95vw">
-        <q-form ref="formRef" @submit.prevent="enregistrer">
-          <q-card-section class="text-h6">
-            {{ tarifEdite ? $t('tarifsDemandeAdmin.dialog.edit_title') : $t('tarifsDemandeAdmin.dialog.new_title') }}
-          </q-card-section>
-          <q-card-section>
-            <q-select
-              v-if="!tarifEdite"
-              v-model="form.type"
-              :options="optionsTypeCreation"
-              emit-value
-              map-options
-              outlined
-              dense
-              :label="$t('tarifsDemandeAdmin.dialog.type_label')"
-              :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
-              class="q-mb-md"
-              :rules="[(v) => !!v || $t('tarifsDemandeAdmin.dialog.type_required')]"
-            />
-            <q-input
-              v-else
-              :model-value="libelleType(form.type)"
-              outlined
-              dense
-              :label="$t('tarifsDemandeAdmin.dialog.type_label')"
-              disable
-              :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
-              class="q-mb-md"
-            />
-            <q-input
-              v-model.number="form.montant"
-              type="number"
-              outlined
-              dense
-              min="0"
-              :label="$t('tarifsDemandeAdmin.dialog.amount_label')"
-              suffix="GNF"
-              class="q-mb-md"
-              :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.amount_required')]"
-            />
-            <q-input
-              v-model.number="form.delaiHeures"
-              type="number"
-              outlined
-              dense
-              min="1"
-              :label="$t('tarifsDemandeAdmin.dialog.delay_label')"
-              :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.delay_required')]"
-            />
-          </q-card-section>
-          <q-banner v-if="erreur" dense class="note--erreur q-mx-md q-mb-sm">
-            <template #avatar><q-icon name="warning" /></template>
-            {{ erreur }}
-          </q-banner>
-          <q-card-actions align="right">
-            <q-btn flat :label="$t('tarifsDemandeAdmin.dialog.cancel')" no-caps v-close-popup />
-            <q-btn
-              color="primary"
-              unelevated
-              icon="save"
-              :label="$t('tarifsDemandeAdmin.dialog.save')"
-              no-caps
-              :loading="enregistrement"
-              :disable="!formulaireValide"
-              type="submit"
-            />
-          </q-card-actions>
-        </q-form>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogOuvert"
+      taille="s"
+      :titre="tarifEdite ? $t('tarifsDemandeAdmin.dialog.edit_title') : $t('tarifsDemandeAdmin.dialog.new_title')"
+      :libelle-valider="$t('tarifsDemandeAdmin.dialog.save')"
+      icone-valider="save"
+      :envoi="enregistrement"
+      :desactive="!formulaireValide"
+      @valider="enregistrer"
+    >
+      <q-select
+        v-if="!tarifEdite"
+        v-model="form.type"
+        :options="optionsTypeCreation"
+        emit-value
+        map-options
+        outlined
+        dense
+        :label="$t('tarifsDemandeAdmin.dialog.type_label')"
+        :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
+        class="q-mb-md"
+        :rules="[(v) => !!v || $t('tarifsDemandeAdmin.dialog.type_required')]"
+      />
+      <q-input
+        v-else
+        :model-value="libelleType(form.type)"
+        outlined
+        dense
+        :label="$t('tarifsDemandeAdmin.dialog.type_label')"
+        disable
+        :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
+        class="q-mb-md"
+      />
+      <q-input
+        v-model.number="form.montant"
+        type="number"
+        outlined
+        dense
+        min="0"
+        :label="$t('tarifsDemandeAdmin.dialog.amount_label')"
+        suffix="GNF"
+        class="q-mb-md"
+        :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.amount_required')]"
+      />
+      <q-input
+        v-model.number="form.delaiHeures"
+        type="number"
+        outlined
+        dense
+        min="1"
+        :label="$t('tarifsDemandeAdmin.dialog.delay_label')"
+        :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.delay_required')]"
+      />
+    </dialogue-formulaire>
   </q-page>
 </template>
 
 <script setup lang="ts">
 import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
@@ -166,8 +147,6 @@ const chargement = ref(false);
 const dialogOuvert = ref(false);
 const tarifEdite = ref<TarifDemande | null>(null);
 const enregistrement = ref(false);
-const erreur = ref('');
-const formRef = ref<{ validate: () => Promise<boolean>; resetValidation: () => void } | null>(null);
 
 const form = ref({
   type: 'AUTRE' as TypeDemandeDocument,
@@ -209,35 +188,30 @@ function ouvrir(t: TarifDemande | null) {
       TYPES_DOCUMENT.find((x) => !tarifs.value.some((y) => y.type === x.value))?.value ?? 'AUTRE';
     form.value = { type: premierTypeDisponible, montant: 0, delaiHeures: 72 };
   }
-  formRef.value?.resetValidation();
   dialogOuvert.value = true;
-  erreur.value = '';
 }
 
 async function enregistrer() {
-  const valide = await formRef.value?.validate();
-  if (valide === false) return;
   enregistrement.value = true;
-  erreur.value = '';
   try {
     if (tarifEdite.value) {
       await api.put(`/documents-demande/tarifs/${tarifEdite.value.id}`, {
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
-      }, { silencieux: true });
+      });
       $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.updated') });
     } else {
       await api.post('/documents-demande/tarifs', {
         type: form.value.type,
         montant: form.value.montant,
         delaiHeures: form.value.delaiHeures,
-      }, { silencieux: true });
+      });
       $q.notify({ type: 'positive', message: t('tarifsDemandeAdmin.messages.created') });
     }
     dialogOuvert.value = false;
     await charger();
-  } catch (e: any) {
-    erreur.value = e.response?.data?.message ?? t('tarifsDemandeAdmin.errors.save_error');
+  } catch {
+    /* l'intercepteur axios affiche le motif */
   } finally {
     enregistrement.value = false;
   }
@@ -250,7 +224,7 @@ async function charger() {
     const { data } = await api.get('/documents-demande/tarifs');
     tarifs.value = Array.isArray(data) ? data : data.data ?? [];
   } catch {
-    tarifs.value = [];
+    /* l'intercepteur axios affiche le motif */
   } finally {
     chargement.value = false;
   }

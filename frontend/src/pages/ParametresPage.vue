@@ -1,32 +1,30 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')">
-
-    </page-header>
+    <page-header :title="$t('parametres.title')" :subtitle="$t('parametres.subtitle')" />
 
     <section aria-labelledby="regles-presence">
     <h2 id="regles-presence" class="text-h6">{{ $t('simplification.rules') }}</h2>
 
-<div class="col-auto q-gutter-sm">
-        <q-btn
-          flat
-          no-caps
-          icon="undo"
-          :label="$t('parametres.actions.discard')"
-          :disable="!modifie || chargement"
-          @click="charger"
-        />
-        <q-btn
-          color="primary"
-          unelevated
-          no-caps
-          icon="save"
-          :label="$t('parametres.actions.save')"
-          :disable="!modifie"
-          :loading="enregistrement"
-          @click="enregistrer"
-        />
-      </div>
+    <div class="col-auto q-gutter-sm">
+      <q-btn
+        flat
+        no-caps
+        icon="undo"
+        :label="$t('parametres.actions.discard')"
+        :disable="!modifie || chargement"
+        @click="charger"
+      />
+      <q-btn
+        color="primary"
+        unelevated
+        no-caps
+        icon="save"
+        :label="$t('parametres.actions.save')"
+        :disable="!modifie"
+        :loading="enregistrement"
+        @click="enregistrer"
+      />
+    </div>
 
     <q-banner v-if="modifie" class="note--alerte q-mb-md" style="max-width: 820px">
       <template #avatar><q-icon name="edit_note" /></template>
@@ -73,11 +71,11 @@
       </q-list>
     </q-card>
 
-    <div v-if="!chargement && !parametres.length" class="etat-vide">
-      <q-icon name="settings" size="34px" />
-      <div class="pochoir">{{ $t('parametres.emptyState.title') }}</div>
-      <q-btn flat no-caps icon="refresh" :label="$t('parametres.emptyState.reload')" @click="charger" />
-    </div>
+    <etat-vide v-if="!chargement && !parametres.length" icone="settings" :titre="$t('parametres.emptyState.title')">
+      <template #action>
+        <q-btn flat no-caps icon="refresh" :label="$t('parametres.emptyState.reload')" @click="charger" />
+      </template>
+    </etat-vide>
 
     </section>
     <services-actifs />
@@ -89,6 +87,7 @@
 
 <script setup lang="ts">
 import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import { computed, onMounted, ref } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';

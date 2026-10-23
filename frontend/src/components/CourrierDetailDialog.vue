@@ -1,5 +1,5 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)" @show="charger">
+  <q-dialog v-model="ouvert" @show="charger">
     <q-card style="width: 880px; max-width: 95vw">
       <q-card-section v-if="chargementInitial" class="text-center q-pa-xl">
         <q-spinner size="32px" />
@@ -87,22 +87,20 @@
       </template>
     </q-card>
 
-    <q-dialog v-model="dialogParaphe">
-      <q-card style="width: 460px; max-width: 95vw">
-        <q-card-section>
-          <div class="text-h6">{{ $t('courrierPage.detail.stampStep', { order: etapeAParapher?.ordre }) }}</div>
-          <div class="text-caption text-grey-7">{{ etapeAParapher?.roleValideur }}</div>
-        </q-card-section>
-        <q-card-section class="q-gutter-md">
-          <q-input v-model="formParaphe.paraphe" outlined dense :label="$t('courrierPage.detail.signatureHash')" />
-          <q-input v-model="formParaphe.commentaire" outlined dense type="textarea" rows="3" :label="$t('common.fields.comment')" />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
-          <q-btn unelevated color="primary" :label="$t('common.actions.validate')" :loading="envoi" @click="validerParaphe" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogParaphe"
+      taille="s"
+      :titre="$t('courrierPage.detail.stampStep', { order: etapeAParapher?.ordre })"
+      :sous-titre="etapeAParapher?.roleValideur ?? undefined"
+      :libelle-valider="$t('common.actions.validate')"
+      :envoi="envoi"
+      @valider="validerParaphe"
+    >
+      <div class="q-gutter-md">
+        <q-input v-model="formParaphe.paraphe" outlined dense :label="$t('courrierPage.detail.signatureHash')" />
+        <q-input v-model="formParaphe.commentaire" outlined dense type="textarea" rows="3" :label="$t('common.fields.comment')" />
+      </div>
+    </dialogue-formulaire>
   </q-dialog>
 </template>
 
@@ -113,6 +111,8 @@ import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import WorkflowStepper from './WorkflowStepper.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
+import { useConfirmation } from '../composables/useConfirmation';
 import {
   LIBELLE_STATUT_COURRIER,
   dateHeureLisible,
@@ -120,18 +120,14 @@ import {
 import type { CircuitCourrier, Courrier } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
-const props = defineProps<{
-  modelValue: boolean;
-  courrierId: string | null;
-}>();
-const emit = defineEmits<{
-  'update:modelValue': [value: boolean];
-  modifie: [];
-}>();
+const ouvert = defineModel<boolean>({ required: true });
+const props = defineProps<{ courrierId: string | null }>();
+const emit = defineEmits<{ modifie: [] }>();
 
 const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
+const { confirmer } = useConfirmation();
 
 const courrier = ref<Courrier | null>(null);
 const chargementInitial = ref(false);
@@ -207,6 +203,8 @@ async function charger() {
   try {
     const { data } = await api.get(`/courrier/${props.courrierId}`);
     courrier.value = data;
+  } catch {
+    /* notifié par l'intercepteur */
   } finally {
     chargementInitial.value = false;
   }
@@ -236,29 +234,30 @@ async function validerParaphe() {
 
 function demanderTransition(cible: string) {
   if (cible === 'CLASSE' || cible === 'ARCHIVE') {
-    cloturer();
+    void cloturer();
   } else {
     $q.notify({ message: t('courrierPage.detail.stampOnStep'), type: 'info' });
   }
 }
 
-function cloturer() {
-  if (!courrier.value) return;
-  $q.dialog({
-    title: t('courrierPage.detail.closeTitle'),
-    message: t('courrierPage.detail.closeMessage', { number: courrier.value.numero, next: courrier.value.statut === 'CLASSE' ? 'ARCHIVE' : courrier.value.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
-    cancel: true,
-    ok: { color: 'negative', label: t('courrierPage.detail.closeTitle'), unelevated: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/courrier/${courrier.value!.id}/cloturer`, {});
-      $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
-      await charger();
-      emit('modifie');
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+async function cloturer() {
+  const c = courrier.value;
+  if (!c) return;
+  const ok = await confirmer({
+    titre: t('courrierPage.detail.closeTitle'),
+    message: t('courrierPage.detail.closeMessage', { number: c.numero, next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
+    ok: t('courrierPage.detail.closeTitle'),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await api.post(`/courrier/${c.id}/cloturer`, {});
+    $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
+    await charger();
+    emit('modifie');
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
 
 function imprimer() {
@@ -269,7 +268,7 @@ function imprimer() {
 watch(
   () => props.courrierId,
   () => {
-    if (props.modelValue) charger();
+    if (ouvert.value) void charger();
   },
 );
 </script>

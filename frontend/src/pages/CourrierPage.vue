@@ -1,15 +1,8 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('courrierPage.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('courrierPage.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('courrierPage.title')" :subtitle="$t('courrierPage.subtitle')">
+      <template v-if="peutCreer" #actions>
         <q-btn
-          v-if="peutCreer"
           unelevated
           color="primary"
           no-caps
@@ -17,8 +10,8 @@
           :label="$t('courrierPage.actions.register')"
           @click="ouvrirCreation"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <q-tabs v-model="onglet" dense no-caps align="left" class="onglets-panneau q-mb-md" narrow-indicator>
       <q-tab name="ENTRANT" :label="$t('courrierPage.tabs.entrant')" icon="inbox" />
@@ -30,7 +23,7 @@
       v-model="filtres"
       :placeholder="$t('courrierPage.filters.searchPlaceholder')"
       :chips="chipsFiltres"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #avances>
         <q-select
@@ -57,12 +50,12 @@
       flat
       bordered
       class="carte"
-      :rows="courriers"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || courriers.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => ouvrirDetail(row)"
     >
       <template #body-cell-type="p">
@@ -126,26 +119,25 @@
         </q-td>
       </template>
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="mail" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ titreVide }}</div>
-          <div class="text-caption">{{ aideVide }}</div>
-          <q-btn
-            v-if="peutCreer"
-            unelevated
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('courrierPage.actions.register')"
-            @click="ouvrirCreation"
-          />
-        </div>
+        <etat-vide icone="mail" :titre="titreVide" :aide="aideVide">
+          <template #action>
+            <q-btn
+              v-if="peutCreer"
+              unelevated
+              no-caps
+              color="primary"
+              icon="add"
+              :label="$t('courrierPage.actions.register')"
+              @click="ouvrirCreation"
+            />
+          </template>
+        </etat-vide>
       </template>
     </q-table>
 
     <div v-else class="row q-col-gutter-md">
       <div
-        v-for="c in courriers"
+        v-for="c in liste.lignes"
         :key="c.id"
         class="col-12 col-sm-6 col-md-4"
       >
@@ -187,11 +179,8 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!courriers.length && !chargement" class="col-12">
-        <div class="etat-vide">
-          <q-icon name="mail" size="36px" />
-          <div class="text-subtitle2 q-mt-sm">{{ titreVide }}</div>
-          <div class="text-caption">{{ aideVide }}</div>
+      <etat-vide v-if="!liste.lignes.length && !liste.chargement" class="col-12" icone="mail" :titre="titreVide" :aide="aideVide">
+        <template #action>
           <q-btn
             v-if="peutCreer"
             unelevated
@@ -201,41 +190,40 @@
             :label="$t('courrierPage.actions.register')"
             @click="ouvrirCreation"
           />
-        </div>
-      </div>
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      :page="filtres.page"
-      :page-size="filtres.pageSize"
-      :total="total"
-      @update:page="filtres.page = $event; charger()"
-      @update:page-size="filtres.pageSize = $event; filtres.page = 1; charger()"
-      @tous="chargerTout"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
+      @tous="liste.pageSize = Math.max(liste.total, 200)"
     />
 
     <courrier-detail-dialog
       v-model="dialogDetailOuvert"
       :courrier-id="courrierSelectionne?.id ?? null"
-      @modifie="charger"
+      @modifie="liste.recharger()"
     />
 
     <courrier-circuit-dialog
       v-model="dialogCreationOuvert"
-      :existant="null"
-      @cree="charger"
+      @enregistre="liste.recharger()"
     />
   </q-page>
 </template>
 
 <script setup lang="ts">
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 
 import { useAuthStore } from '../stores/auth';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChampDate from '../components/ChampDate.vue';
@@ -250,6 +238,8 @@ import {
 } from '../utils/libelles';
 import type { Courrier, ChipFiltre } from '../types';
 import { ouvrirImpression } from '../services/impression';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 
 /** Les archives ne sont pas un type de courrier mais deux statuts de fin. */
 const STATUTS_ARCHIVE = ['CLASSE', 'ARCHIVE'];
@@ -258,22 +248,61 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
 
-const onglet = ref<'ENTRANT' | 'SORTANT' | 'ARCHIVE'>('ENTRANT');
+const { confirmer } = useConfirmation();
 const modeVue = usePresentationListe();
-const courriers = ref<Courrier[]>([]);
-const total = ref(0);
-const chargement = ref(false);
 const dialogDetailOuvert = ref(false);
 const dialogCreationOuvert = ref(false);
 const courrierSelectionne = ref<Courrier | null>(null);
 
+type Onglet = 'ENTRANT' | 'SORTANT' | 'ARCHIVE';
+
+const onglet = ref<Onglet>('ENTRANT');
 const filtres = ref<Record<string, any>>({
   recherche: '',
   statut: null as string | null,
   dateDebut: decalerJours(aujourdhui(), -90),
   dateFin: aujourdhui(),
-  page: 1,
-  pageSize: 20,
+});
+
+/**
+ * L'onglet est un filtre serveur, pas un tri d'affichage : filtrer en local une
+ * page déjà découpée par le serveur donnait un compteur qui ne correspondait
+ * jamais à la liste (« 1–20 sur 137 » au-dessus de trois lignes).
+ *
+ * Les archives (deux statuts de fin) se demandent statut par statut : l'API
+ * n'accepte qu'un statut à la fois, on additionne donc les deux appels.
+ */
+const liste = reactive(
+  useListePaginee<Courrier>({
+    filtres,
+    syncUrl: true,
+    charger: async ({ filtres: f, ...p }) => {
+      const commun = {
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        dateDebut: f.dateDebut || undefined,
+        dateFin: f.dateFin || undefined,
+      };
+      if (onglet.value === 'ARCHIVE') {
+        const statuts = f.statut ? [f.statut].filter((s) => STATUTS_ARCHIVE.includes(s)) : STATUTS_ARCHIVE;
+        const reponses = await Promise.all(
+          statuts.map((statut) => api.get('/courrier', { params: { ...commun, statut } })),
+        );
+        return {
+          data: reponses.flatMap((r) => r.data.data as Courrier[]),
+          total: reponses.reduce((t, r) => t + (r.data.total ?? 0), 0),
+        };
+      }
+      const { data } = await api.get('/courrier', {
+        params: { ...commun, type: onglet.value, statut: f.statut || undefined },
+      });
+      return data;
+    },
+  }),
+);
+// Changer d'onglet ramène en page 1 (le setter de `page` recharge).
+watch(onglet, () => {
+  liste.page = 1;
 });
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT']));
@@ -321,7 +350,7 @@ const ligneResume = computed(() =>
   t('courrierPage.summary.line', {
     onglet: libelleOnglet.value,
     periode: periodeLisible.value,
-    total: total.value,
+    total: liste.total,
   }),
 );
 
@@ -389,73 +418,6 @@ function dateCourrier(c: Courrier): string {
   return dateLisible(d);
 }
 
-/**
- * L'onglet est un filtre serveur, pas un tri d'affichage : filtrer en local une
- * page déjà découpée par le serveur donnait un compteur qui ne correspondait
- * jamais à la liste (« 1–20 sur 137 » au-dessus de trois lignes).
- *
- * Les archives (deux statuts de fin) se demandent statut par statut : l'API
- * n'accepte qu'un statut à la fois, on additionne donc les deux appels.
- */
-async function charger() {
-  chargement.value = true;
-  try {
-    const commun = {
-      search: filtres.value.recherche || undefined,
-      dateDebut: filtres.value.dateDebut || undefined,
-      dateFin: filtres.value.dateFin || undefined,
-      page: filtres.value.page,
-      pageSize: filtres.value.pageSize,
-    };
-
-    if (onglet.value === 'ARCHIVE') {
-      const statuts = filtres.value.statut
-        ? [filtres.value.statut].filter((s) => STATUTS_ARCHIVE.includes(s))
-        : STATUTS_ARCHIVE;
-      if (!statuts.length) {
-        courriers.value = [];
-        total.value = 0;
-        return;
-      }
-      const reponses = await Promise.all(
-        statuts.map((statut) => api.get('/courrier', { params: { ...commun, statut } })),
-      );
-      courriers.value = reponses.flatMap((r) => r.data.data as Courrier[]);
-      total.value = reponses.reduce((t, r) => t + (r.data.total ?? 0), 0);
-      return;
-    }
-
-    const { data } = await api.get('/courrier', {
-      params: { ...commun, type: onglet.value, statut: filtres.value.statut || undefined },
-    });
-    courriers.value = data.data;
-    total.value = data.total;
-  } catch {
-    courriers.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  filtres.value.page = 1;
-  filtres.value.pageSize = Math.max(total.value, 200);
-  await charger();
-}
-
-function reinitialiser() {
-  filtres.value = {
-    recherche: '',
-    statut: null,
-    dateDebut: decalerJours(aujourdhui(), -90),
-    dateFin: aujourdhui(),
-    page: 1,
-    pageSize: 20,
-  };
-  charger();
-}
-
 function ouvrirCreation() {
   dialogCreationOuvert.value = true;
 }
@@ -469,40 +431,22 @@ function imprimer(c: Courrier) {
   void ouvrirImpression(`/courrier/${c.id}/imprimer`);
 }
 
-function cloturer(c: Courrier) {
-  $q.dialog({
-    title: t('courrierPage.dialogs.close.title'),
+async function cloturer(c: Courrier) {
+  const ok = await confirmer({
+    titre: t('courrierPage.dialogs.close.title'),
     message: t('courrierPage.dialogs.close.message', { numero: c.numero }),
-    cancel: true,
-    ok: { color: 'negative', label: t('courrierPage.dialogs.close.okLabel'), unelevated: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/courrier/${c.id}/cloturer`, {});
-      $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('courrierPage.dialogs.close.okLabel'),
+    danger: true,
   });
+  if (!ok) return;
+  try {
+    await api.post(`/courrier/${c.id}/cloturer`, {});
+    $q.notify({ type: 'positive', message: t('courrierPage.messages.closed') });
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
-
-watch(onglet, () => {
-  filtres.value.page = 1;
-  charger();
-});
-watch(
-  () => [
-    filtres.value.recherche,
-    filtres.value.statut,
-    filtres.value.dateDebut,
-    filtres.value.dateFin,
-  ],
-  () => {
-    filtres.value.page = 1;
-    charger();
-  },
-);
-onMounted(charger);
 </script>
 
 <style scoped lang="scss">
