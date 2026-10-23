@@ -36,8 +36,8 @@ describe('résolution publique des QR d’équipement', () => {
     const findUnique = jest.fn().mockResolvedValue({ id: 'eq-1', libelle: 'Vidéoprojecteur' });
     const service = new EquipementsService({ equipementCampus: { findMany, count, findUnique } } as never, {} as never);
 
-    await service.liste({});
-    await service.findOne('eq-1');
+    await service.lister({});
+    await service.lire('eq-1');
 
     expect(findMany.mock.calls[0][0].select).not.toHaveProperty('codeQr');
     expect(findUnique.mock.calls[0][0].select).not.toHaveProperty('codeQr');
@@ -116,7 +116,7 @@ describe('visibilité des tickets du helpdesk', () => {
     const count = jest.fn().mockResolvedValue(0);
     const service = new TicketsService({ ticketSupport: { findMany, count } } as never);
 
-    await service.liste({ statut: StatutTicket.OUVERT, equipementId: 'eq-1' }, utilisateur('user-1'));
+    await service.lister({ statut: StatutTicket.OUVERT, equipementId: 'eq-1' }, utilisateur('user-1'));
 
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -133,7 +133,7 @@ describe('visibilité des tickets du helpdesk', () => {
     const count = jest.fn().mockResolvedValue(0);
     const service = new TicketsService({ ticketSupport: { findMany, count } } as never);
 
-    await service.liste({}, utilisateur('gestionnaire', role));
+    await service.lister({}, utilisateur('gestionnaire', role));
 
     expect(findMany.mock.calls[0][0].where).toEqual({});
     expect(count.mock.calls[0][0].where).toEqual({});

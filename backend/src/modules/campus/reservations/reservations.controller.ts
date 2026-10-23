@@ -24,8 +24,8 @@ const DEMANDEURS = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ENSEIGNANT,
 export class ReservationsController {
   constructor(private readonly service: ReservationsService) {}
 
-  @Get() findAll(@Query() query: ReservationQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  @Get() lister(@Query() query: ReservationQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Vue semaine : réservations + séances de l'emploi du temps sur la grille. */
@@ -33,25 +33,25 @@ export class ReservationsController {
     return this.service.calendrier(query, user);
   }
 
-  @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Get(':id') lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.consulter(id, user);
   }
 
   @Roles(...DEMANDEURS)
   @Post()
-  create(@Body() dto: CreateReservationDto, @CurrentUser() user: AuthUser) {
+  creer(@Body() dto: CreateReservationDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(...DEMANDEURS)
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateReservationDto, @CurrentUser() user: AuthUser) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateReservationDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(...DEMANDEURS)
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 

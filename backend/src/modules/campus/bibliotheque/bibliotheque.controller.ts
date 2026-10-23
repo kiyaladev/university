@@ -38,8 +38,8 @@ export class BibliothequeController {
   @Public()
   @AuthentificationOptionnelle()
   @Get()
-  async liste(@Query() query: DocumentQueryDto, @UtilisateurOptionnel() utilisateur?: AuthUser) {
-    return this.service.liste(query, utilisateur ?? null);
+  async lister(@Query() query: DocumentQueryDto, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    return this.service.lister(query, utilisateur ?? null);
   }
 
   /** Déclarée avant `:id` : « populaires » ne doit pas être lu comme un identifiant. */
@@ -75,7 +75,7 @@ export class BibliothequeController {
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Get('plagiat/:id')
   detailPlagiat(@Param('id') id: string) {
-    return this.plagiat.detail(id);
+    return this.plagiat.lire(id);
   }
 
   /** Acquittement humain d'une suspicion : admin et direction. */

@@ -113,14 +113,14 @@ export class ReservationsService extends CrudService {
     return user.role === Role.ADMIN || user.role === Role.DIRECTION || user.role === Role.SCOLARITE;
   }
 
-  liste(query: ReservationQueryDto, user: AuthUser) {
+  lister(query: ReservationQueryDto, user: AuthUser) {
     const where = this.where(query);
     if (!this.gestionnaire(user)) where.demandeurId = user.id;
-    return this.findAll(query, where);
+    return super.lister(query, where);
   }
 
   async consulter(id: string, user: AuthUser) {
-    const reservation = await super.findOne(id);
+    const reservation = await super.lire(id);
     if (!this.gestionnaire(user) && reservation.demandeurId !== user.id) {
       throw new NotFoundException(t('reservations.reservation_introuvable'));
     }

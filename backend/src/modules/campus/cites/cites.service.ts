@@ -83,9 +83,9 @@ export class ResidencesService extends CrudService {
    * par {@link toBool}, qui traduit « false » en `false` (la conversion
    * implicite de class-transformer en ferait `true`).
    */
-  findAll(query: ResidenceQueryDto) {
+  lister(query: ResidenceQueryDto) {
     const actif = toBool(query.actif);
-    return super.findAll(query, {
+    return super.lister(query, {
       ...(query.ville ? { ville: { contains: query.ville, mode: 'insensitive' } } : {}),
       ...(typeof actif === 'boolean' ? { actif } : {}),
     });
@@ -131,7 +131,7 @@ export class ResidencesService extends CrudService {
   }
 
   /** Le parc est un référentiel : on ne supprime que les résidences vides. */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const residence = await tx.residence.findUnique({
@@ -242,7 +242,7 @@ export class ChambresService extends CrudService {
   }
 
   /** Une chambre avec un historique d'attributions se conserve. */
-  async remove(id: string, user?: AuthUser) {
+  async supprimer(id: string, user?: AuthUser) {
     return this.prisma.$transaction(
       async (tx) => {
         const chambre = await tx.chambre.findUnique({
@@ -288,9 +288,9 @@ export class AttributionsService extends CrudService {
     });
   }
 
-  liste(query: AttributionQueryDto) {
+  lister(query: AttributionQueryDto) {
     const { search, ...rest } = query;
-    return this.findAll(rest, {
+    return super.lister(rest, {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.anneeId ? { anneeId: query.anneeId } : {}),
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),

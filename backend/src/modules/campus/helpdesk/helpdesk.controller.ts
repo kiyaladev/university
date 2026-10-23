@@ -23,8 +23,8 @@ export class EquipementsController {
 
   /** Inventaire du parc : tout utilisateur connecté (le déclarant choisit). */
   @Get()
-  liste(@Query() query: EquipementQueryDto) {
-    return this.service.liste(query);
+  lister(@Query() query: EquipementQueryDto) {
+    return this.service.lister(query);
   }
 
   /**
@@ -53,8 +53,8 @@ export class EquipementsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  lire(@Param('id') id: string) {
+    return this.service.lire(id);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
@@ -87,8 +87,8 @@ export class TicketsController {
    * chaque autre rôle ne voit que ses propres déclarations.
    */
   @Get()
-  liste(@Query() query: TicketQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: TicketQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   /** Compteurs pour le panneau DSI — déclaré avant `:id` pour la même raison. */
@@ -99,7 +99,7 @@ export class TicketsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findTicket(id, user);
   }
 

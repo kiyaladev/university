@@ -26,7 +26,7 @@ describe('Périmètre de lecture des élections', () => {
   });
 
   it('force les non-gestionnaires à ne lister que les scrutins proclamés', async () => {
-    await service.liste({ statut: StatutElection.BROUILLON } as any, enseignant);
+    await service.lister({ statut: StatutElection.BROUILLON } as any, enseignant);
     expect(prisma.election.findMany.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAME);
     expect(prisma.election.count.mock.calls[0][0].where.statut).toBe(StatutElection.PROCLAME);
     expect(prisma.election.findMany.mock.calls[0][0].include.candidats.select).toEqual({
@@ -41,7 +41,7 @@ describe('Périmètre de lecture des élections', () => {
   });
 
   it('conserve les relations complètes des candidats pour les gestionnaires', async () => {
-    await service.liste({} as any, { id: 'admin', role: Role.ADMIN } as AuthUser);
+    await service.lister({} as any, { id: 'admin', role: Role.ADMIN } as AuthUser);
     expect(prisma.election.findMany.mock.calls[0][0].include.candidats.include).toEqual({
       etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
       enseignant: { select: { id: true, matricule: true, nom: true, prenom: true } },

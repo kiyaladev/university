@@ -148,7 +148,7 @@ describe('audit des mutations du parc de logements', () => {
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
     const service = new ChambresService(prisma);
 
-    await expect(service.remove('chambre-1', { id: 'admin-1' } as any)).resolves.toEqual({ id: 'chambre-1' });
+    await expect(service.supprimer('chambre-1', { id: 'admin-1' } as any)).resolves.toEqual({ id: 'chambre-1' });
 
     expect(tx.chambre.delete).toHaveBeenCalledWith({ where: { id: 'chambre-1' } });
     expect(auditCreate).toHaveBeenCalledWith({

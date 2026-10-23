@@ -285,8 +285,8 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
   it("n'écrit rien sur une lecture de l'inventaire ou d'un QR", async () => {
     const { service, prisma, journal } = preparer();
 
-    await service.liste({});
-    await service.findOne('eq-1');
+    await service.lister({});
+    await service.lire('eq-1');
     await service.parCode('UP-IT-jeton-imprime-secret');
 
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
@@ -539,7 +539,7 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, prisma, journal } = preparer();
     prisma.ticketSupport.groupBy.mockResolvedValue([{ statut: StatutTicket.OUVERT, _count: { _all: 2 } }]);
 
-    await service.liste({}, agent);
+    await service.lister({}, agent);
     await service.findTicket('ticket-1', enseignant);
     await service.stats();
 

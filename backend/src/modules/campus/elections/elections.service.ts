@@ -108,7 +108,7 @@ export class ElectionsService {
 
   // ----------------------------------------------------------- consultation
 
-  async liste(query: ElectionQueryDto, user: AuthUser) {
+  async lister(query: ElectionQueryDto, user: AuthUser) {
     const pagination = paginer(query);
 
     const where: Prisma.ElectionWhereInput = {

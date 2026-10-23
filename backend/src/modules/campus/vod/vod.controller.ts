@@ -38,8 +38,8 @@ export class VodController {
   }
 
   @Get()
-  liste(@Query() query: VodQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: VodQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Get(':id')

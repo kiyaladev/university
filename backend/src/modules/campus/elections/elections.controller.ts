@@ -29,8 +29,8 @@ export class ElectionsController {
   constructor(private readonly service: ElectionsService) {}
 
   @Get()
-  liste(@Query() query: ElectionQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: ElectionQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Get('actives')

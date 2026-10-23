@@ -55,13 +55,13 @@ export class ReclamationsController {
 
   @Roles(...ROLES_GESTION)
   @Get()
-  liste(@Query() query: ReclamationQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.liste(query, user);
+  lister(@Query() query: ReclamationQueryDto, @CurrentUser() user: AuthUser) {
+    return this.service.lister(query, user);
   }
 
   @Roles(...ROLES_LECTURE)
   @Get(':id')
-  findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  lire(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.findOnePour(id, user);
   }
 

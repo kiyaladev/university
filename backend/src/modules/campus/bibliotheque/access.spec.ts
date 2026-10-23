@@ -20,7 +20,7 @@ describe('Fonds privé de la bibliothèque', () => {
       documentDepot: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
     };
     const service = new BibliothequeService(prisma as any, {} as any);
-    await service.liste({ public: 'false' }, { role: Role.ETUDIANT } as any);
+    await service.lister({ public: 'false' }, { role: Role.ETUDIANT } as any);
     expect(prisma.documentDepot.findMany.mock.calls[0][0].where.public).toBe(true);
     expect(prisma.documentDepot.findMany.mock.calls[0][0].omit).toEqual({ fichier: true, contenuTexte: true });
   });
@@ -57,7 +57,7 @@ describe('Fonds privé de la bibliothèque', () => {
     };
     const service = new BibliothequeService(prisma as any, {} as any);
 
-    const resultat = await service.liste({} as any, null);
+    const resultat = await service.lister({} as any, null);
 
     expect(resultat.data[0]).toMatchObject({
       id: 'doc-1',

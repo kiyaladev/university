@@ -78,11 +78,11 @@ export class PatrimoineService {
   }
 
   async listeCategories() {
-    return this.categoriesService.findAll({ all: '1' } as any, {});
+    return this.categoriesService.lister({ all: '1' } as any, {});
   }
 
   async detailCategorie(id: string) {
-    return this.categoriesService.findOne(id);
+    return this.categoriesService.lire(id);
   }
 
   /**

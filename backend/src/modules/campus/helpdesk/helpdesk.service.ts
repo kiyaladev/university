@@ -137,8 +137,8 @@ export class EquipementsService extends CrudService {
   }
 
   /** Inventaire : tous les équipements, filtrés par ?search & ?actif. */
-  liste(query: EquipementQueryDto) {
-    return this.findAll(query, {
+  lister(query: EquipementQueryDto) {
+    return super.lister(query, {
       ...(query.actif != null ? { actif: query.actif === 'true' } : {}),
     });
   }
@@ -290,7 +290,7 @@ export class TicketsService extends CrudService {
     return !ROLE_GESTION.includes(user.role);
   }
 
-  async liste(query: TicketQueryDto, user: AuthUser) {
+  async lister(query: TicketQueryDto, user: AuthUser) {
     const pagination = paginer(query);
 
     const where: Prisma.TicketSupportWhereInput = {
@@ -392,7 +392,7 @@ export class TicketsService extends CrudService {
    * la trace décrive l'état réellement remplacé.
    */
   async changerStatut(id: string, dto: TraiterTicketDto, user: AuthUser) {
-    const ticket = await this.findOne(id);
+    const ticket = await this.lire(id);
     if (ticket.statut !== StatutTicket.OUVERT && ticket.statut !== StatutTicket.EN_COURS) {
       throw new BadRequestException(t('helpdesk.seuls_les_tickets_ouverts_ou_en_cours_changent_de_statut_un_'));
     }

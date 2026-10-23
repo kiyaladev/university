@@ -20,7 +20,7 @@ describe('Confidentialité des ressources VOD', () => {
     service = new VodService(prisma);
   });
   it('un filtre étudiant ne remplace pas son périmètre de lecture', async () => {
-    await service.liste({ inscriptionId: 'foreign', statut: 'BROUILLON', public: 'false' } as any, student);
+    await service.lister({ inscriptionId: 'foreign', statut: 'BROUILLON', public: 'false' } as any, student);
     expect(prisma.coursVOD.findMany.mock.calls[0][0].where.AND).toEqual([
       {
         statut: 'EN_LIGNE',

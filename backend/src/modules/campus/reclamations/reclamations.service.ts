@@ -199,7 +199,7 @@ export class ReclamationsService extends CrudService {
   }
 
   /** Liste paginée du registre, restreinte au propriétaire si l'utilisateur est étudiant. */
-  async liste(
+  async lister(
     query: {
       page?: number;
       pageSize?: number;
@@ -281,7 +281,7 @@ export class ReclamationsService extends CrudService {
     if (!user.etudiantId) {
       throw new NotFoundException(t('reclamations.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
-    return this.liste(query, user);
+    return this.lister(query, user);
   }
 
   /**
