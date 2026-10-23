@@ -1,13 +1,8 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('enseignants.header.title') }}</h1>
-        <div class="page-sous-titre">{{ $t('enseignants.header.subtitle') }}</div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('enseignants.header.title')" :subtitle="$t('enseignants.header.subtitle')">
+      <template v-if="auth.peutPlanifier" #actions>
         <q-btn
-          v-if="auth.peutPlanifier"
           unelevated
           color="primary"
           no-caps
@@ -15,8 +10,8 @@
           :label="$t('enseignants.header.newTeacher')"
           @click="ouvrir(null)"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -53,34 +48,34 @@
       flat
       bordered
       class="carte"
-      :rows="enseignants"
+      :rows="ens.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="ens.chargement"
       :pagination="{ rowsPerPage: 0 }"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="person" size="34px" />
-          <div class="pochoir">{{ messageVide }}</div>
-          <q-btn
-            v-if="auth.peutPlanifier && !filtresActifs"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('enseignants.emptyState.createFirst')"
-            @click="ouvrir(null)"
-          />
-          <q-btn
-            v-else-if="filtresActifs"
-            flat
-            no-caps
-            icon="refresh"
-            :label="$t('enseignants.emptyState.clearFilters')"
-            @click="reinitialiser"
-          />
-        </div>
+        <etat-vide icone="person" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="auth.peutPlanifier && !filtresActifs"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('enseignants.emptyState.createFirst')"
+              @click="ouvrir(null)"
+            />
+            <q-btn
+              v-else-if="filtresActifs"
+              flat
+              no-caps
+              icon="refresh"
+              :label="$t('enseignants.emptyState.clearFilters')"
+              @click="reinitialiser"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-nom="p">
@@ -169,7 +164,7 @@
     </q-table>
 
     <div v-else class="grille-cartes">
-      <q-card v-for="e in enseignants" :key="e.id" flat bordered class="carte grille-cartes__carte">
+      <q-card v-for="e in ens.lignes" :key="e.id" flat bordered class="carte grille-cartes__carte">
         <q-card-section>
           <div class="row items-center q-mb-xs">
             <q-chip dense :color="couleurStatut(e.statut)" text-color="white">
@@ -226,44 +221,42 @@
 </actions-secondaires>
 </q-card-actions>
       </q-card>
-      <div v-if="!enseignants.length && !chargement" class="etat-vide">
-        <q-icon name="person" size="34px" />
-        <div class="pochoir">{{ messageVide }}</div>
-        <q-btn
-          v-if="auth.peutPlanifier && !filtresActifs"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('enseignants.emptyState.createFirst')"
-          @click="ouvrir(null)"
-        />
-        <q-btn
-          v-else-if="filtresActifs"
-          flat
-          no-caps
-          icon="refresh"
-          :label="$t('enseignants.emptyState.clearFilters')"
-          @click="reinitialiser"
-        />
-      </div>
+      <etat-vide v-if="!ens.lignes.length && !ens.chargement" icone="person" :titre="messageVide">
+        <template #action>
+          <q-btn
+            v-if="auth.peutPlanifier && !filtresActifs"
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('enseignants.emptyState.createFirst')"
+            @click="ouvrir(null)"
+          />
+          <q-btn
+            v-else-if="filtresActifs"
+            flat
+            no-caps
+            icon="refresh"
+            :label="$t('enseignants.emptyState.clearFilters')"
+            @click="reinitialiser"
+          />
+        </template>
+      </etat-vide>
     </div>
 
     <pagination-bar
-      v-if="enseignants.length"
-      :page="page"
-      :page-size="pageSize"
-      :total="total"
-      @update:page="(v) => { page = v; charger(); }"
-      @update:page-size="(v) => { pageSize = v; page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="ens.lignes.length"
+      v-model:page="ens.page"
+      v-model:page-size="ens.pageSize"
+      :total="ens.total"
+      @tous="toutAfficher"
     />
 
     <enseignant-dialog
       v-model="dialogOuvert"
       :enseignant="enseignantEdite"
       :departements="departements"
-      @enregistre="charger"
+      @enregistre="ens.recharger()"
     />
 
     <!-- Moyens d'attestation : code personnel et empreinte -->
@@ -347,8 +340,8 @@
 <script setup lang="ts">
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { isAxiosError } from 'axios';
@@ -358,6 +351,10 @@ import { useReferentielsStore } from '../stores/referentiels';
 import EnseignantDialog from '../components/EnseignantDialog.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import { useImpressionFicheEnseignant } from '../composables/useImpressionFicheEnseignant';
 import {
   LIBELLE_STATUT_ENSEIGNANT,
@@ -373,23 +370,35 @@ import type { Departement, Enseignant, MoyensAttestation, ChipFiltre } from '../
 const $q = useQuasar();
 const auth = useAuthStore();
 const referentiels = useReferentielsStore();
-const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
+const { confirmer, supprimerAvecConfirmation } = useConfirmation();
 const { ouvrir: ouvrirFicheEnseignant } = useImpressionFicheEnseignant();
 
-const enseignants = ref<Enseignant[]>([]);
 const departements = ref<Departement[]>([]);
-const chargement = ref(false);
 const modeVue = usePresentationListe();
 const dialogOuvert = ref(false);
 const enseignantEdite = ref<Enseignant | null>(null);
 
-const page = ref(1);
-const pageSize = ref(20);
-const total = ref(0);
-
-const filtres = ref<Record<string, any>>({});
+// Filtres gardés dans l'URL : l'arrivée depuis « Utilisateurs » pré-recherche la fiche visée.
+const filtres = ref<Record<string, any>>({ recherche: '', departementId: null, statut: null });
+const ens = reactive(
+  useListePaginee<Enseignant>({
+    filtres,
+    syncUrl: true,
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/enseignants', {
+          params: {
+            ...pageApi(p),
+            search: texteApi(f.recherche),
+            departementId: f.departementId || undefined,
+            statut: f.statut || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const dialogMoyens = ref(false);
 const chargementMoyens = ref(false);
@@ -512,23 +521,22 @@ async function ouvrirMoyens(e: Enseignant) {
   }
 }
 
-function reinitialiserPin() {
-  $q.dialog({
-    title: t('enseignants.messages.resetPinTitle'),
+async function reinitialiserPin() {
+  const ok = await confirmer({
+    titre: t('enseignants.messages.resetPinTitle'),
     message: t('enseignants.messages.resetPinMessage'),
-    cancel: { label: t('enseignants.messages.cancel'), flat: true, noCaps: true },
-    ok: { color: 'primary', label: t('enseignants.messages.generate'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      const { data } = await api.post(
-        `/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`,
-      );
-      codeGenere.value = data.code;
-      moyens.value = { ...moyens.value!, codePin: true };
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('enseignants.messages.generate'),
   });
+  if (!ok) return;
+  try {
+    const { data } = await api.post(
+      `/attestation/enseignants/${enseignantMoyens.value!.id}/code-pin/reinitialiser`,
+    );
+    codeGenere.value = data.code;
+    moyens.value = { ...moyens.value!, codePin: true };
+  } catch {
+    /* notifié par l'intercepteur */
+  }
 }
 
 /**
@@ -601,78 +609,30 @@ function imprimerFiche(e: Enseignant) {
 }
 
 function supprimer(e: Enseignant) {
-  $q.dialog({
-    title: t('enseignants.messages.deleteTitle'),
-    message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
-    cancel: { label: t('enseignants.messages.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('enseignants.messages.delete'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/enseignants/${e.id}`);
-      $q.notify({ type: 'positive', message: t('enseignants.messages.deleteSuccess') });
-      await Promise.all([charger(), referentiels.rafraichir('enseignants')]);
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
+  void supprimerAvecConfirmation(
+    `/enseignants/${e.id}`,
+    `${e.nom} ${e.prenom}`,
+    () => Promise.all([ens.recharger(), referentiels.rafraichir('enseignants')]),
+    {
+      titre: t('enseignants.messages.deleteTitle'),
+      message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
+      ok: t('enseignants.messages.delete'),
+      succes: t('enseignants.messages.deleteSuccess'),
+    },
+  );
 }
 
-function parametres(tout = false) {
-  const params: Record<string, any> = tout
-    ? { all: '1' }
-    : { page: page.value, pageSize: pageSize.value };
-  if (filtres.value.recherche) params.search = filtres.value.recherche;
-  if (filtres.value.departementId) params.departementId = filtres.value.departementId;
-  if (filtres.value.statut) params.statut = filtres.value.statut;
-  return params;
-}
-
-async function charger(tout = false) {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/enseignants', { params: parametres(tout) });
-    enseignants.value = data.data ?? [];
-    total.value = data.total ?? enseignants.value.length;
-  } catch {
-    enseignants.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
-function chargerTout() {
-  page.value = 1;
-  return charger(true);
+/** « Tout afficher » : une seule page portant toute la liste (borne serveur : 1 000). */
+function toutAfficher() {
+  ens.pageSize = Math.min(Math.max(ens.total, ens.pageSize), 1000);
 }
 
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  void charger();
+  ens.reinitialiser([]);
 }
-
-watch(
-  () => [filtres.value.recherche, filtres.value.departementId, filtres.value.statut],
-  () => {
-    page.value = 1;
-    void charger();
-  },
-);
 
 onMounted(async () => {
   departements.value = await referentiels.departements();
-
-  // Arrivée depuis « Utilisateurs » : la fiche visée est pré-recherchée.
-  const depuis: Record<string, any> = {};
-  for (const cle of ['recherche', 'departementId', 'statut']) {
-    const v = route.query[cle];
-    if (typeof v === 'string' && v) depuis[cle] = v;
-  }
-  if (Object.keys(depuis).length) {
-    filtres.value = depuis;
-    return; // le watcher déclenche le chargement
-  }
-  await charger();
 });
 </script>
 

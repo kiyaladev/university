@@ -1,9 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <h1 class="page-titre">{{ $t('structure.title') }}</h1>
-    <div class="page-sous-titre q-mb-md">
-      {{ $t('structure.subtitle') }}
-    </div>
+    <page-header :title="$t('structure.title')" :subtitle="$t('structure.subtitle')" />
 
     <q-tabs v-model="onglet" dense align="left" class="onglets-panneau" narrow-indicator>
       <q-tab name="annees" icon="event" :label="$t('structure.tabs.annees')" no-caps />
@@ -41,21 +38,18 @@
           :pagination="{ rowsPerPage: 10 }"
         >
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="event" size="34px" />
-              <div class="pochoir">
-                {{ messageVide('annees', t('structure.emptyState.annees')) }}
-              </div>
-              <q-btn
-                v-if="peutGerer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('structure.actions.createAnnee')"
-                @click="ouvrirAnnee(null)"
-              />
-            </div>
+            <etat-vide icone="event" :titre="messageVide('annees', t('structure.emptyState.annees'))">
+              <template v-if="peutGerer" #action>
+                <q-btn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  icon="add"
+                  :label="$t('structure.actions.createAnnee')"
+                  @click="ouvrirAnnee(null)"
+                />
+              </template>
+            </etat-vide>
           </template>
           <template #body-cell-active="p">
             <q-td :props="p">
@@ -133,21 +127,18 @@
           :pagination="{ rowsPerPage: 15 }"
         >
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="apartment" size="34px" />
-              <div class="pochoir">
-                {{ messageVide('departements', t('structure.emptyState.departements')) }}
-              </div>
-              <q-btn
-                v-if="peutGerer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('structure.actions.createDepartement')"
-                @click="ouvrirDepartement(null)"
-              />
-            </div>
+            <etat-vide icone="apartment" :titre="messageVide('departements', t('structure.emptyState.departements'))">
+              <template v-if="peutGerer" #action>
+                <q-btn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  icon="add"
+                  :label="$t('structure.actions.createDepartement')"
+                  @click="ouvrirDepartement(null)"
+                />
+              </template>
+            </etat-vide>
           </template>
           <template #body-cell-filieres="p">
             <q-td :props="p" class="text-right">
@@ -241,21 +232,18 @@
           :pagination="{ rowsPerPage: 15 }"
         >
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="account_tree" size="34px" />
-              <div class="pochoir">
-                {{ messageVide('filieres', t('structure.emptyState.filieres')) }}
-              </div>
-              <q-btn
-                v-if="peutGerer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('structure.actions.createFiliere')"
-                @click="ouvrirFiliere(null)"
-              />
-            </div>
+            <etat-vide icone="account_tree" :titre="messageVide('filieres', t('structure.emptyState.filieres'))">
+              <template v-if="peutGerer" #action>
+                <q-btn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  icon="add"
+                  :label="$t('structure.actions.createFiliere')"
+                  @click="ouvrirFiliere(null)"
+                />
+              </template>
+            </etat-vide>
           </template>
           <template #body-cell-actions="p">
             <q-td :props="p" class="text-right">
@@ -360,21 +348,18 @@
           :pagination="{ rowsPerPage: 15 }"
         >
           <template #no-data>
-            <div class="etat-vide">
-              <q-icon name="groups" size="34px" />
-              <div class="pochoir">
-                {{ messageVide('promotions', t('structure.emptyState.promotions')) }}
-              </div>
-              <q-btn
-                v-if="peutGerer"
-                unelevated
-                color="primary"
-                no-caps
-                icon="add"
-                :label="$t('structure.actions.createPromotion')"
-                @click="ouvrirPromotion(null)"
-              />
-            </div>
+            <etat-vide icone="groups" :titre="messageVide('promotions', t('structure.emptyState.promotions'))">
+              <template v-if="peutGerer" #action>
+                <q-btn
+                  unelevated
+                  color="primary"
+                  no-caps
+                  icon="add"
+                  :label="$t('structure.actions.createPromotion')"
+                  @click="ouvrirPromotion(null)"
+                />
+              </template>
+            </etat-vide>
           </template>
           <template #body-cell-actions="p">
             <q-td :props="p" class="text-right">
@@ -418,231 +403,162 @@
     </q-tab-panels>
 
     <!-- Formulaire année -->
-    <q-dialog v-model="dialogAnnee">
-      <q-card style="width: 420px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{
-            anneeEditee
-              ? $t('structure.dialogs.annee.editTitle')
-              : $t('structure.dialogs.annee.newTitle')
-          }}
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="formAnnee.libelle"
-            outlined
-            dense
-            :label="$t('structure.dialogs.annee.libelle')"
-            :hint="$t('structure.dialogs.annee.libelleHint')"
-            :error="erreurs.anneeLibelle"
-            :error-message="$t('structure.dialogs.annee.libelleError')"
-          />
-          <div class="row q-col-gutter-md">
-            <div class="col-6">
-              <champ-date v-model="formAnnee.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
-            </div>
-            <div class="col-6">
-              <champ-date v-model="formAnnee.dateFin" :label="$t('structure.dialogs.annee.fin')" />
-            </div>
-          </div>
-          <q-toggle v-model="formAnnee.active" :label="$t('structure.dialogs.annee.active')" />
-          <div class="text-caption text-grey-7">
-            {{ $t('structure.dialogs.annee.activeHint') }}
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('structure.dialogs.actions.save')"
-            :loading="enregistrement"
-            @click="enregistrerAnnee"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogAnnee"
+      :titre="anneeEditee ? $t('structure.dialogs.annee.editTitle') : $t('structure.dialogs.annee.newTitle')"
+      taille="s"
+      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :envoi="enregistrement"
+      @valider="enregistrerAnnee"
+    >
+      <q-input
+        v-model="formAnnee.libelle"
+        outlined
+        dense
+        :label="$t('structure.dialogs.annee.libelle')"
+        :hint="$t('structure.dialogs.annee.libelleHint')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.annee.libelleError')]"
+      />
+      <div class="row q-col-gutter-md">
+        <div class="col-6">
+          <champ-date v-model="formAnnee.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
+        </div>
+        <div class="col-6">
+          <champ-date v-model="formAnnee.dateFin" :label="$t('structure.dialogs.annee.fin')" />
+        </div>
+      </div>
+      <q-toggle v-model="formAnnee.active" :label="$t('structure.dialogs.annee.active')" />
+      <div class="text-caption text-grey-7">
+        {{ $t('structure.dialogs.annee.activeHint') }}
+      </div>
+    </dialogue-formulaire>
 
     <!-- Formulaire département -->
-    <q-dialog v-model="dialogDepartement">
-      <q-card style="width: 420px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{
-            departementEdite
-              ? $t('structure.dialogs.departement.editTitle')
-              : $t('structure.dialogs.departement.newTitle')
-          }}
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="formDepartement.code"
-            outlined
-            dense
-            :label="$t('structure.dialogs.departement.code')"
-            :hint="$t('structure.dialogs.departement.codeHint')"
-            :error="erreurs.departementCode"
-            :error-message="$t('structure.dialogs.departement.codeError')"
-          />
-          <q-input
-            v-model="formDepartement.nom"
-            outlined
-            dense
-            :label="$t('structure.dialogs.departement.nom')"
-            :error="erreurs.departementNom"
-            :error-message="$t('structure.dialogs.departement.nomError')"
-          />
-          <q-input
-            v-model="formDepartement.faculte"
-            outlined
-            dense
-            :label="$t('structure.dialogs.departement.faculte')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('structure.dialogs.actions.save')"
-            :loading="enregistrement"
-            @click="enregistrerDepartement"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogDepartement"
+      :titre="departementEdite ? $t('structure.dialogs.departement.editTitle') : $t('structure.dialogs.departement.newTitle')"
+      taille="s"
+      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :envoi="enregistrement"
+      @valider="enregistrerDepartement"
+    >
+      <q-input
+        v-model="formDepartement.code"
+        outlined
+        dense
+        :label="$t('structure.dialogs.departement.code')"
+        :hint="$t('structure.dialogs.departement.codeHint')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.departement.codeError')]"
+      />
+      <q-input
+        v-model="formDepartement.nom"
+        outlined
+        dense
+        :label="$t('structure.dialogs.departement.nom')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.departement.nomError')]"
+      />
+      <q-input
+        v-model="formDepartement.faculte"
+        outlined
+        dense
+        :label="$t('structure.dialogs.departement.faculte')"
+      />
+    </dialogue-formulaire>
 
     <!-- Formulaire filière -->
-    <q-dialog v-model="dialogFiliere">
-      <q-card style="width: 420px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{
-            filiereEditee
-              ? $t('structure.dialogs.filiere.editTitle')
-              : $t('structure.dialogs.filiere.newTitle')
-          }}
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model="formFiliere.code"
-            outlined
-            dense
-            :label="$t('structure.dialogs.filiere.code')"
-            :error="erreurs.filiereCode"
-            :error-message="$t('structure.dialogs.filiere.codeError')"
-          />
-          <q-input
-            v-model="formFiliere.nom"
-            outlined
-            dense
-            :label="$t('structure.dialogs.filiere.nom')"
-            :error="erreurs.filiereNom"
-            :error-message="$t('structure.dialogs.filiere.nomError')"
-          />
-          <q-select
-            v-model="formFiliere.departementId"
-            :options="optionsDepartements"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('structure.dialogs.filiere.departement')"
-            :error="erreurs.filiereDepartement"
-            :error-message="$t('structure.dialogs.filiere.departementError')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('structure.dialogs.actions.save')"
-            :loading="enregistrement"
-            @click="enregistrerFiliere"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="dialogFiliere"
+      :titre="filiereEditee ? $t('structure.dialogs.filiere.editTitle') : $t('structure.dialogs.filiere.newTitle')"
+      taille="s"
+      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :envoi="enregistrement"
+      @valider="enregistrerFiliere"
+    >
+      <q-input
+        v-model="formFiliere.code"
+        outlined
+        dense
+        :label="$t('structure.dialogs.filiere.code')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.filiere.codeError')]"
+      />
+      <q-input
+        v-model="formFiliere.nom"
+        outlined
+        dense
+        :label="$t('structure.dialogs.filiere.nom')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.filiere.nomError')]"
+      />
+      <q-select
+        v-model="formFiliere.departementId"
+        :options="optionsDepartements"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('structure.dialogs.filiere.departement')"
+        :rules="[(v: string) => !!v || $t('structure.dialogs.filiere.departementError')]"
+      />
+    </dialogue-formulaire>
 
     <!-- Formulaire promotion -->
-    <q-dialog v-model="dialogPromotion">
-      <q-card style="width: 440px; max-width: 95vw">
-        <q-card-section class="text-h6">
-          {{
-            promotionEditee
-              ? $t('structure.dialogs.promotion.editTitle')
-              : $t('structure.dialogs.promotion.newTitle')
-          }}
-        </q-card-section>
-        <q-card-section>
+    <dialogue-formulaire
+      v-model="dialogPromotion"
+      :titre="promotionEditee ? $t('structure.dialogs.promotion.editTitle') : $t('structure.dialogs.promotion.newTitle')"
+      taille="s"
+      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :envoi="enregistrement"
+      @valider="enregistrerPromotion"
+    >
+      <q-input
+        v-model="formPromotion.nom"
+        outlined
+        dense
+        :label="$t('structure.dialogs.promotion.nom')"
+        :hint="$t('structure.dialogs.promotion.nomHint')"
+        :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.promotion.nomError')]"
+      />
+      <div class="row q-col-gutter-md">
+        <div class="col-12 col-sm-6">
+          <q-select
+            v-model="formPromotion.niveau"
+            :options="NIVEAUX"
+            outlined
+            dense
+            :label="$t('structure.dialogs.promotion.niveau')"
+          />
+        </div>
+        <div class="col-6">
           <q-input
-            v-model="formPromotion.nom"
+            v-model.number="formPromotion.effectif"
+            type="number"
+            min="0"
             outlined
             dense
-            :label="$t('structure.dialogs.promotion.nom')"
-            :hint="$t('structure.dialogs.promotion.nomHint')"
-            :error="erreurs.promotionNom"
-            :error-message="$t('structure.dialogs.promotion.nomError')"
+            :label="$t('structure.dialogs.promotion.effectif')"
           />
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-sm-6">
-              <q-select
-                v-model="formPromotion.niveau"
-                :options="NIVEAUX"
-                outlined
-                dense
-                :label="$t('structure.dialogs.promotion.niveau')"
-              />
-            </div>
-            <div class="col-6">
-              <q-input
-                v-model.number="formPromotion.effectif"
-                type="number"
-                min="0"
-                outlined
-                dense
-                :label="$t('structure.dialogs.promotion.effectif')"
-              />
-            </div>
-          </div>
-          <q-select
-            v-model="formPromotion.filiereId"
-            :options="optionsFilieres"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('structure.dialogs.promotion.filiere')"
-            :error="erreurs.promotionFiliere"
-            :error-message="$t('structure.dialogs.promotion.filiereError')"
-          />
-          <q-select
-            v-model="formPromotion.anneeId"
-            :options="optionsAnnees"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('structure.dialogs.promotion.annee')"
-            :error="erreurs.promotionAnnee"
-            :error-message="$t('structure.dialogs.promotion.anneeError')"
-          />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('structure.dialogs.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            no-caps
-            :label="$t('structure.dialogs.actions.save')"
-            :loading="enregistrement"
-            @click="enregistrerPromotion"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        </div>
+      </div>
+      <q-select
+        v-model="formPromotion.filiereId"
+        :options="optionsFilieres"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('structure.dialogs.promotion.filiere')"
+        :rules="[(v: string) => !!v || $t('structure.dialogs.promotion.filiereError')]"
+      />
+      <q-select
+        v-model="formPromotion.anneeId"
+        :options="optionsAnnees"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('structure.dialogs.promotion.annee')"
+        :rules="[(v: string) => !!v || $t('structure.dialogs.promotion.anneeError')]"
+      />
+    </dialogue-formulaire>
   </q-page>
 </template>
 
@@ -653,6 +569,10 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import ChampDate from '../components/ChampDate.vue';
 import FilterBar from '../components/FilterBar.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import { useConfirmation } from '../composables/useConfirmation';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
@@ -669,6 +589,7 @@ const auth = useAuthStore();
 const referentiels = useReferentielsStore();
 const router = useRouter();
 const { t } = useI18n();
+const { supprimerAvecConfirmation } = useConfirmation();
 
 const onglet = ref('annees');
 const chargement = ref(false);
@@ -703,18 +624,6 @@ const formAnnee = ref({ libelle: '', dateDebut: '', dateFin: '', active: false }
 const formDepartement = ref({ code: '', nom: '', faculte: '' });
 const formFiliere = ref({ code: '', nom: '', departementId: '' });
 const formPromotion = ref({ nom: '', niveau: 'L1', effectif: 0, filiereId: '', anneeId: '' });
-
-const erreurs = ref({
-  anneeLibelle: false,
-  departementCode: false,
-  departementNom: false,
-  filiereCode: false,
-  filiereNom: false,
-  filiereDepartement: false,
-  promotionNom: false,
-  promotionFiliere: false,
-  promotionAnnee: false,
-});
 
 const optionsDepartements = computed(() =>
   departements.value.map((d) => ({ label: d.nom, value: d.id })),
@@ -899,22 +808,7 @@ function voirChargesDeLaPromotion(p: PromotionListee) {
 
 // ------------------------------------------------------------ formulaires
 
-function reinitialiserErreurs() {
-  erreurs.value = {
-    anneeLibelle: false,
-    departementCode: false,
-    departementNom: false,
-    filiereCode: false,
-    filiereNom: false,
-    filiereDepartement: false,
-    promotionNom: false,
-    promotionFiliere: false,
-    promotionAnnee: false,
-  };
-}
-
 function ouvrirAnnee(a: AnneeAcademique | null) {
-  reinitialiserErreurs();
   anneeEditee.value = a;
   formAnnee.value = {
     libelle: a?.libelle ?? '',
@@ -926,14 +820,12 @@ function ouvrirAnnee(a: AnneeAcademique | null) {
 }
 
 function ouvrirDepartement(d: Departement | null) {
-  reinitialiserErreurs();
   departementEdite.value = d;
   formDepartement.value = { code: d?.code ?? '', nom: d?.nom ?? '', faculte: d?.faculte ?? '' };
   dialogDepartement.value = true;
 }
 
 function ouvrirFiliere(f: Filiere | null) {
-  reinitialiserErreurs();
   filiereEditee.value = f;
   formFiliere.value = {
     code: f?.code ?? '',
@@ -944,7 +836,6 @@ function ouvrirFiliere(f: Filiere | null) {
 }
 
 function ouvrirPromotion(p: PromotionListee | null) {
-  reinitialiserErreurs();
   promotionEditee.value = p;
   formPromotion.value = {
     nom: p?.nom ?? '',
@@ -973,13 +864,7 @@ async function envoyer(url: string, edition: boolean, payload: unknown, messageO
   }
 }
 
-function champsIncomplets() {
-  $q.notify({ type: 'warning', message: t('structure.messages.incompleteFields') });
-}
-
 async function enregistrerAnnee() {
-  erreurs.value.anneeLibelle = !formAnnee.value.libelle.trim();
-  if (erreurs.value.anneeLibelle) return champsIncomplets();
   const url = anneeEditee.value ? `/annees/${anneeEditee.value.id}` : '/annees';
   if (await envoyer(url, !!anneeEditee.value, formAnnee.value, t('structure.messages.anneeSaved'))) {
     dialogAnnee.value = false;
@@ -987,9 +872,6 @@ async function enregistrerAnnee() {
 }
 
 async function enregistrerDepartement() {
-  erreurs.value.departementCode = !formDepartement.value.code.trim();
-  erreurs.value.departementNom = !formDepartement.value.nom.trim();
-  if (erreurs.value.departementCode || erreurs.value.departementNom) return champsIncomplets();
   const payload = { ...formDepartement.value, faculte: formDepartement.value.faculte || undefined };
   const url = departementEdite.value
     ? `/departements/${departementEdite.value.id}`
@@ -1000,16 +882,6 @@ async function enregistrerDepartement() {
 }
 
 async function enregistrerFiliere() {
-  erreurs.value.filiereCode = !formFiliere.value.code.trim();
-  erreurs.value.filiereNom = !formFiliere.value.nom.trim();
-  erreurs.value.filiereDepartement = !formFiliere.value.departementId;
-  if (
-    erreurs.value.filiereCode ||
-    erreurs.value.filiereNom ||
-    erreurs.value.filiereDepartement
-  ) {
-    return champsIncomplets();
-  }
   const url = filiereEditee.value ? `/filieres/${filiereEditee.value.id}` : '/filieres';
   if (await envoyer(url, !!filiereEditee.value, formFiliere.value, t('structure.messages.filiereSaved'))) {
     dialogFiliere.value = false;
@@ -1017,16 +889,6 @@ async function enregistrerFiliere() {
 }
 
 async function enregistrerPromotion() {
-  erreurs.value.promotionNom = !formPromotion.value.nom.trim();
-  erreurs.value.promotionFiliere = !formPromotion.value.filiereId;
-  erreurs.value.promotionAnnee = !formPromotion.value.anneeId;
-  if (
-    erreurs.value.promotionNom ||
-    erreurs.value.promotionFiliere ||
-    erreurs.value.promotionAnnee
-  ) {
-    return champsIncomplets();
-  }
   const url = promotionEditee.value ? `/promotions/${promotionEditee.value.id}` : '/promotions';
   if (await envoyer(url, !!promotionEditee.value, formPromotion.value, t('structure.messages.promotionSaved'))) {
     dialogPromotion.value = false;
@@ -1034,23 +896,22 @@ async function enregistrerPromotion() {
 }
 
 function supprimer(ressource: string, libelle: string, id: string) {
-  $q.dialog({
-    title: t('structure.deleteDialog.title'),
-    message: t('structure.deleteDialog.message', { label: libelle }),
-    cancel: { label: t('structure.deleteDialog.cancel'), flat: true, noCaps: true },
-    ok: { color: 'negative', label: t('structure.deleteDialog.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.delete(`/${ressource}/${id}`);
-      $q.notify({ type: 'positive', message: t('structure.messages.deleted', { label: libelle }) });
-      // Années, départements et promotions sont partagés avec les autres
-      // écrans ; une filière renommée change aussi les promotions affichées.
+  // Années, départements et promotions sont partagés avec les autres
+  // écrans ; une filière renommée change aussi les promotions affichées.
+  void supprimerAvecConfirmation(
+    `/${ressource}/${id}`,
+    libelle,
+    async () => {
       await referentiels.rafraichir();
       await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
+    },
+    {
+      titre: t('structure.deleteDialog.title'),
+      message: t('structure.deleteDialog.message', { label: libelle }),
+      ok: t('structure.deleteDialog.confirm'),
+      succes: t('structure.messages.deleted', { label: libelle }),
+    },
+  );
 }
 
 async function charger() {
