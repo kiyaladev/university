@@ -474,24 +474,35 @@ export class AttestationsService {
     const statutOk = attestation.statut === StatutAttestation.EMIS;
     const valide = jetonOk && statutOk;
 
-    const verification = await this.prisma.verificationAttestation.create({
-      data: {
-        attestationId: attestation.id,
-        ip: ip ? String(ip) : null,
-        resultat: valide,
-      },
+    // La vérification et sa trace d'audit forment un seul fait : elles
+    // partent ensemble. Une tentative de fraude enregistrée sans sa trace
+    // fausserait le décompte des scans frauduleux, et l'inverse cacherait
+    // l'échec.
+    const verification = await this.prisma.$transaction(async (tx) => {
+      const cree = await tx.verificationAttestation.create({
+        data: {
+          attestationId: attestation.id,
+          ip: ip ? String(ip) : null,
+          resultat: valide,
+        },
+      });
+
+      if (!jetonOk) {
+        await tx.auditLog.create({
+          data: {
+            action: 'VERIF_ATTESTATION_ECHEC',
+            entite: 'attestations',
+            entiteId: ref,
+            details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
+            ip,
+          },
+        });
+      }
+
+      return cree;
     });
 
     if (!jetonOk) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_ATTESTATION_ECHEC',
-          entite: 'attestations',
-          entiteId: ref,
-          details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
-          ip,
-        },
-      });
       return {
         valide: false,
         raison:

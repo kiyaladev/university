@@ -61,19 +61,25 @@ describe('Lecture du registre des attestations', () => {
 });
 
 describe('Vérification publique des attestations', () => {
-  it('confirme la révocation sans publier son motif confidentiel', async () => {
-    const prisma = {
-      attestation: {
-        findUnique: jest.fn().mockResolvedValue({
-          id: 'attestation-1',
-          qrToken: 'secret',
-          statut: StatutAttestation.REVOQUE,
-          revoqueeLe: new Date('2026-10-01'),
-          motifRevocation: 'information confidentielle',
-        }),
-      },
+  /** Client complet : la vérification et sa trace d'audit sont écrites ensemble. */
+  function client(attestation: any) {
+    const prisma: any = {
+      attestation: { findUnique: jest.fn().mockResolvedValue(attestation) },
       verificationAttestation: { create: jest.fn().mockResolvedValue({ id: 'verification-1' }) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
+    prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) => operation(prisma));
+    return prisma;
+  }
+
+  it('confirme la révocation sans publier son motif confidentiel', async () => {
+    const prisma = client({
+      id: 'attestation-1',
+      qrToken: 'secret',
+      statut: StatutAttestation.REVOQUE,
+      revoqueeLe: new Date('2026-10-01'),
+      motifRevocation: 'information confidentielle',
+    });
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
     const resultat = await service.verifier({ ref: 'ATT-1', k: 'secret' } as any);
     expect(resultat.valide).toBe(false);
@@ -96,12 +102,7 @@ describe('Vérification publique des attestations', () => {
       annee: { libelle: '2026-2027' },
       promotion: { nom: 'L2', filiere: { nom: 'Informatique' } },
     };
-    const prisma = {
-      attestation: { findUnique: jest.fn().mockResolvedValue(attestation) },
-      verificationAttestation: {
-        create: jest.fn().mockResolvedValue({ id: verificationId }),
-      },
-    };
+    const prisma = client(attestation);
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
 
     const result = await service.verifier({ ref: attestation.numero, k: 'secret-qr' } as any);
@@ -191,6 +192,45 @@ describe('Vérification publique des attestations', () => {
     expect(details).not.toContain('Ancien motif');
     expect(details).not.toContain('Nouveau motif');
     expect(details).not.toContain('secret-qr');
+  });
+
+  it('écrit la tentative de fraude et sa trace dans la même transaction', async () => {
+    const prisma = client({
+      id: 'attestation-1',
+      numero: 'ATT-2026-00001',
+      qrToken: 'jeton-attendu',
+      statut: StatutAttestation.EMIS,
+      type: TypeAttestation.SCOLARITE,
+    });
+    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+
+    const resultat = await service.verifier({ ref: 'ATT-2026-00001', k: 'jeton-faux' } as any, '10.0.0.1');
+
+    expect(resultat.valide).toBe(false);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.verificationAttestation.create).toHaveBeenCalledTimes(1);
+    expect(prisma.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(prisma.auditLog.create.mock.calls[0][0].data).toMatchObject({
+      action: 'VERIF_ATTESTATION_ECHEC',
+      entiteId: 'ATT-2026-00001',
+      ip: '10.0.0.1',
+    });
+  });
+
+  it('abandonne la vérification si la trace d’échec ne peut pas être écrite', async () => {
+    const prisma = client({
+      id: 'attestation-1',
+      numero: 'ATT-2026-00001',
+      qrToken: 'jeton-attendu',
+      statut: StatutAttestation.EMIS,
+      type: TypeAttestation.SCOLARITE,
+    });
+    prisma.auditLog.create.mockRejectedValue(new Error('journal indisponible'));
+    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+
+    await expect(service.verifier({ ref: 'ATT-2026-00001', k: 'jeton-faux' } as any)).rejects.toThrow(
+      'journal indisponible',
+    );
   });
 });
 
