@@ -252,34 +252,41 @@ export class MoyensAttestationService {
       secret,
     );
 
-    await this.prisma.enseignant.update({
-      where: { id: enseignantId },
-      data: {
-        // Chiffré au repos : la base ne contient plus de biométrie lisible.
-        empreinteTemplate: chiffrer(dto.template),
-        empreinteDoigt: dto.doigt ?? 'index droit',
-        empreinteEnroleeLe: new Date(),
-        empreinteConsentementLe: new Date(),
-        empreinteConsentementPar: `${user.prenom} ${user.nom}`,
-      },
+    // L'écriture de l'empreinte et sa trace d'audit forment un seul fait :
+    // elles partent ensemble, comme le code PIN (une empreinte enrôlée sans
+    // trace, ou une trace sans empreinte, laisserait un dossier incohérent).
+    await this.prisma.$transaction(async (tx) => {
+      await tx.enseignant.update({
+        where: { id: enseignantId },
+        data: {
+          // Chiffré au repos : la base ne contient plus de biométrie lisible.
+          empreinteTemplate: chiffrer(dto.template),
+          empreinteDoigt: dto.doigt ?? 'index droit',
+          empreinteEnroleeLe: new Date(),
+          empreinteConsentementLe: new Date(),
+          empreinteConsentementPar: `${user.prenom} ${user.nom}`,
+        },
+      });
+      await journaliser(tx, user, 'EMPREINTE_ENROLEE', 'Enseignant', enseignantId);
     });
-    await journaliser(this.prisma, user, 'EMPREINTE_ENROLEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte enrôlée' };
   }
 
   async supprimerEmpreinte(enseignantId: string, user: AuthUser) {
     await this.controlerAcces(user, enseignantId);
-    await this.prisma.enseignant.update({
-      where: { id: enseignantId },
-      data: {
-        empreinteTemplate: null,
-        empreinteDoigt: null,
-        empreinteEnroleeLe: null,
-        empreinteConsentementLe: null,
-        empreinteConsentementPar: null,
-      },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.enseignant.update({
+        where: { id: enseignantId },
+        data: {
+          empreinteTemplate: null,
+          empreinteDoigt: null,
+          empreinteEnroleeLe: null,
+          empreinteConsentementLe: null,
+          empreinteConsentementPar: null,
+        },
+      });
+      await journaliser(tx, user, 'EMPREINTE_SUPPRIMEE', 'Enseignant', enseignantId);
     });
-    await journaliser(this.prisma, user, 'EMPREINTE_SUPPRIMEE', 'Enseignant', enseignantId);
     return { message: 'Empreinte supprimée' };
   }
 
