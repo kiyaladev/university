@@ -122,7 +122,9 @@ async function main() {
     include: { paiement: true },
   });
   payments.push(persisted.paiementId);
-  assert.equal(persisted.paiement.montant, 1250);
+  // Le montant est stocké en `numeric(14,2)` : Prisma le relit comme un objet
+  // `Decimal` (que l'API sérialise en nombre). On compare donc au nombre.
+  assert.equal(Number(persisted.paiement.montant), 1250);
   assert.equal(persisted.paiement.devise, 'GNF');
   assert.equal(persisted.paiement.statut, 'REUSSI');
   assert.equal(persisted.paiement.mode, 'ESPECES');
