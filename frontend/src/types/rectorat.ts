@@ -2,7 +2,10 @@
 
 import type { AnneeAcademique, Departement, Salle } from './referentiels';
 
-export type StatutReparation = 'DECLARE' | 'EN_COURS' | 'TERMINE' | 'ANNULE';
+/** Énumération générée depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type { StatutReparation } from './generated/enums';
+
+export type { StatutReparation } from './generated/enums';
 
 export interface CategoriePatrimoine {
   id: string;

@@ -3,21 +3,42 @@
 import type { AnneeAcademique, Departement, Enseignant, Salle } from './referentiels';
 import type { Etudiant, StatutPaiement } from './registre';
 
-export type CategorieChambre = 'CHAMBRE_SIMPLE' | 'CHAMBRE_PARTAGEE' | 'STUDIO' | 'APPARTEMENT';
-export type StatutChambre = 'LIBRE' | 'RESERVE' | 'OCCUPE' | 'MAINTENANCE';
-export type StatutAttributionLogement = 'EN_ATTENTE' | 'ACCORDE' | 'REFUSE' | 'RETIRE';
-export type TypeDocument = 'MEMOIRE' | 'THESE' | 'ARTICLE' | 'RAPPORT' | 'SUPPORT_COURS' | 'ARCHIVE' | 'AUTRE';
-export type TypeRepas = 'PETIT_DEJEUNER' | 'DEJEUNER' | 'COLLATION' | 'DINER' | 'AUTRE';
-export type StatutConsommation = 'EN_ATTENTE' | 'VALIDE' | 'ANNULE';
-export type StatutReservationSalle = 'EN_ATTENTE' | 'CONFIRME' | 'REFUSE' | 'ANNULE';
-export type TypeEncadrement = 'STAGE' | 'MEMOIRE' | 'RAPPORT';
-export type StatutEncadrement = 'PROPOSE' | 'VALIDE' | 'EN_COURS' | 'SOUTENU' | 'ABANDONNE';
-export type CategorieIncident =
-  'VIDEO' | 'SON' | 'RESEAU' | 'ELECTRICITE' | 'MOBILIER' | 'INFORMATIQUE' | 'CLIMATISATION' | 'AUTRE';
-export type PrioriteTicket = 'BASSE' | 'NORMALE' | 'HAUTE';
-export type StatutTicket = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'CLOTURE';
-export type StatutFormation = 'BROUILLON' | 'PUBLIE' | 'COMPLET';
-export type StatutInscriptionFormation = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  CategorieChambre,
+  CategorieIncident,
+  PrioriteTicket,
+  StatutAttributionLogement,
+  StatutChambre,
+  StatutConsommation,
+  StatutEncadrement,
+  StatutFormation,
+  StatutInscriptionFormation,
+  StatutReservationSalle,
+  StatutSuspicionPlagiat,
+  StatutTicket,
+  TypeDocument,
+  TypeEncadrement,
+  TypeRepas,
+} from './generated/enums';
+
+export type {
+  CategorieChambre,
+  CategorieIncident,
+  PrioriteTicket,
+  StatutAttributionLogement,
+  StatutChambre,
+  StatutConsommation,
+  StatutEncadrement,
+  StatutFormation,
+  StatutInscriptionFormation,
+  StatutReservationSalle,
+  StatutSuspicionPlagiat,
+  StatutTicket,
+  TypeDocument,
+  TypeEncadrement,
+  TypeRepas,
+} from './generated/enums';
 
 export interface Residence {
   id: string;
@@ -98,7 +119,7 @@ export interface SuspicionPlagiat {
   documentAId: string;
   documentBId: string;
   score: number;
-  statut: 'EN_ATTENTE' | 'ACQUITTE' | 'CONFIRME';
+  statut: StatutSuspicionPlagiat;
   detecteLe: string;
   acquitteParId?: string | null;
   acquitteLe?: string | null;

@@ -2,19 +2,36 @@
 
 import type { AnneeAcademique, Enseignant, Matiere, Promotion } from './referentiels';
 
-export type StatutInscription = 'BROUILLON' | 'EN_ATTENTE_PAIEMENT' | 'PAYE' | 'VALIDE' | 'ANNULE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  DecisionJury,
+  ModePaiement,
+  SessionDeliberation,
+  StatutAttestation,
+  StatutDeliberation,
+  StatutEvaluation,
+  StatutInscription,
+  StatutNotification,
+  StatutPaie,
+  StatutPaiement,
+  TypeAttestation,
+  TypeEvaluation,
+} from './generated/enums';
 
-export type StatutPaiement = 'EN_ATTENTE' | 'REUSSI' | 'ECHOUE' | 'ANNULE' | 'REMBOURSE';
-export type ModePaiement = 'MOBILE_MONEY' | 'ESPECES' | 'VIREMENT';
-export type StatutPaie = 'BROUILLON' | 'VALIDE' | 'PAYE';
-export type TypeEvaluation = 'CC' | 'EXAMEN' | 'RATTRAPAGE' | 'ORAL' | 'TP';
-export type StatutEvaluation = 'OUVERT' | 'CLOTURE';
-export type SessionDeliberation = 'NORMALE' | 'RATTRAPAGE';
-export type StatutDeliberation = 'BROUILLON' | 'VALIDE';
-export type DecisionJury = 'ADMIS' | 'AJOURNE' | 'DEFAILLANT';
-export type TypeAttestation = 'SCOLARITE' | 'SITUATION' | 'REUSSITE' | 'DIPLOME' | 'ASSIDUITE';
-export type StatutAttestation = 'EMIS' | 'REVOQUE';
-export type StatutNotification = 'EN_ATTENTE' | 'ENVOYE' | 'ECHOUE';
+export type {
+  DecisionJury,
+  ModePaiement,
+  SessionDeliberation,
+  StatutAttestation,
+  StatutDeliberation,
+  StatutEvaluation,
+  StatutInscription,
+  StatutNotification,
+  StatutPaie,
+  StatutPaiement,
+  TypeAttestation,
+  TypeEvaluation,
+} from './generated/enums';
 
 export interface Etudiant {
   id: string;
@@ -116,7 +133,7 @@ export interface Deliberation {
   id: string;
   anneeId: string;
   promotionId: string;
-  session: 'NORMALE' | 'RATTRAPAGE';
+  session: SessionDeliberation;
   statut: StatutDeliberation;
   tauxReussite?: number | null;
   commentaire?: string | null;

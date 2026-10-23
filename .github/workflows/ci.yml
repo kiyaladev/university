@@ -89,6 +89,11 @@ jobs:
         continue-on-error: true
         run: bun run format:check
 
+      # Les énumérations du frontend sont générées depuis le schéma Prisma :
+      # le fichier versionné doit correspondre au schéma, sinon la CI échoue.
+      - name: Types frontend synchronisés avec le schéma Prisma
+        run: bun run types:verifier
+
   build:
     name: Compilations
     runs-on: ubuntu-latest
