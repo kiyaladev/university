@@ -28,7 +28,7 @@ describe('conversion des booléens', () => {
     expect(toBool('   ')).toBeUndefined();
   });
 
-  it('ne déforme pas une valeur qu\'il ne sait pas traduire', () => {
+  it("ne déforme pas une valeur qu'il ne sait pas traduire", () => {
     // La validation doit alors la refuser, plutôt que de la lire comme « true ».
     expect(toBool('peut-être')).toBe('peut-être');
   });
