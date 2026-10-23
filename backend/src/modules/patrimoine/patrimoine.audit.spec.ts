@@ -56,7 +56,7 @@ describe("Patrimoine — modification d'un équipement", () => {
         update: jest.fn().mockResolvedValue(apres),
       },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await service.modifierEquipement('eq-1', { libelle: 'Projecteur Epson', valeurAcquisition: 380000 } as any, AGENT);
 
@@ -88,7 +88,7 @@ describe("Patrimoine — modification d'un équipement", () => {
         update: jest.fn().mockResolvedValue({ ...EQUIPEMENT, numeroInventaire: 'PAT-2026-00009' }),
       },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await service.modifierEquipement('eq-1', { numeroInventaire: 'PAT-2026-00009' } as any, AGENT);
 
@@ -107,7 +107,7 @@ describe("Patrimoine — modification d'un équipement", () => {
       },
       reparationMateriel: { count: jest.fn().mockResolvedValue(2) },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.supprimerEquipement('eq-1', AGENT)).rejects.toThrow(ConflictException);
 
@@ -123,7 +123,7 @@ describe("Patrimoine — modification d'un équipement", () => {
       },
       reparationMateriel: { count: jest.fn().mockResolvedValue(0) },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.supprimerEquipement('eq-1', AGENT)).resolves.toEqual({ id: 'eq-1' });
 
@@ -144,7 +144,7 @@ describe("Patrimoine — modification d'un équipement", () => {
     const { tx, prisma, audit } = transaction({
       categoriePatrimoine: { findUnique: jest.fn().mockResolvedValue(categorie), delete: jest.fn() },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.supprimerCategorie('cat-1', AGENT)).rejects.toThrow(ConflictException);
 
@@ -178,7 +178,7 @@ describe('Patrimoine — cycle des réparations', () => {
         update: jest.fn().mockResolvedValue({ ...EQUIPEMENT, enReparation: true }),
       },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await service.declarerReparation('eq-1', { description: 'Lampe morte' } as any, AGENT);
 
@@ -212,7 +212,7 @@ describe('Patrimoine — cycle des réparations', () => {
       },
       equipementPatrimoine: { findUnique: jest.fn().mockResolvedValue(EQUIPEMENT), update: jest.fn() },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.declarerReparation('eq-1', { description: 'Lampe morte' } as any, AGENT)).rejects.toThrow(
       ConflictException,
@@ -252,7 +252,7 @@ describe('Patrimoine — cycle des réparations', () => {
         update: jest.fn().mockResolvedValue({ ...EQUIPEMENT, enReparation: false }),
       },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await service.resoudreReparation(
       'eq-1',
@@ -283,7 +283,7 @@ describe('Patrimoine — cycle des réparations', () => {
       reparationMateriel: { findFirst: jest.fn().mockResolvedValue(null), update: jest.fn() },
       equipementPatrimoine: { findUnique: jest.fn().mockResolvedValue(EQUIPEMENT), update: jest.fn() },
     });
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.resoudreReparation('eq-1', {} as any, AGENT)).rejects.toThrow(BadRequestException);
 

@@ -1,10 +1,8 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Query, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, ProtectedDocument } from '../../common/decorators';
-import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 import { ExportService } from './export.service';
 import { RapportImprimableQueryDto, perimetrePresence } from './rapports.dto';
 
@@ -14,7 +12,6 @@ import { RapportImprimableQueryDto, perimetrePresence } from './rapports.dto';
 export class ExportController {
   constructor(
     private readonly exports: ExportService,
-    private readonly jwt: JwtService,
   ) {}
 
   private async envoyer(res: Response, nom: string, csv: Promise<string>) {
@@ -35,11 +32,9 @@ export class ExportController {
   @Get('presence-enseignants')
   async presence(
     @Res() res: Response,
-    @Req() req: Request,
     @Query() query: RapportImprimableQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
-    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(
       res,
       `assiduite-${query.dateDebut ?? ''}_${query.dateFin ?? ''}`,
@@ -58,11 +53,9 @@ export class ExportController {
   @Get('volume-horaire')
   async volume(
     @Res() res: Response,
-    @Req() req: Request,
     @Query() query: RapportImprimableQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
-    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'volume-horaire', this.exports.volumeHoraire(perimetrePresence(query, user)));
   }
 
@@ -70,11 +63,9 @@ export class ExportController {
   @Get('etat-paiement')
   async paiement(
     @Res() res: Response,
-    @Req() req: Request,
     @Query() query: RapportImprimableQueryDto,
     @CurrentUser() _user: AuthUser,
   ) {
-    verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'etat-paiement', this.exports.etatPaiement(query));
   }
 
@@ -89,11 +80,9 @@ export class ExportController {
   @Get('registre')
   async registre(
     @Res() res: Response,
-    @Req() req: Request,
     @Query() query: RapportImprimableQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
-    verifierJetonImprimable(this.jwt, req);
     const inclureObservations =
       user.role === Role.ADMIN || user.role === Role.DIRECTION || user.role === Role.SCOLARITE;
     await this.envoyer(

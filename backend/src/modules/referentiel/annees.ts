@@ -85,17 +85,9 @@ export class AnneesService extends CrudService {
       data: { active: false },
     });
     for (const annee of autres) {
-      await tx.auditLog.create({
-        data: {
-          userId,
-          action: 'ANNEE_ACADEMIQUE_MODIFIEE',
-          entite: 'AnneeAcademique',
-          entiteId: annee.id,
-          details: JSON.stringify({
-            avant: this.instantane(annee),
-            apres: { ...this.instantane(annee), active: false },
-          }),
-        },
+      await journaliser(tx, { id: userId }, 'ANNEE_ACADEMIQUE_MODIFIEE', 'AnneeAcademique', annee.id, {
+        avant: this.instantane(annee),
+        apres: { ...this.instantane(annee), active: false },
       });
     }
   }

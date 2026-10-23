@@ -528,10 +528,10 @@ export class PlagiatService {
    * Ce balayage n'écrit aucune entrée de journal, contrairement à la détection
    * d'un dépôt : il toucherait presque tous les documents du fonds, et une
    * trace par document noierait le journal sans rien apprendre. Qui l'a
-   * déclenché, et le bilan Created/updated/ignored, sont déjà portés par la
-   * trace unique `PLAGIAT_RECALCUL` du contrôleur.
+   * déclenché, et le bilan créé/mis à jour/ignoré, sont portés par la trace
+   * unique `PLAGIAT_RECALCUL` écrite ici.
    */
-  async recalculerComplet(): Promise<{ creees: number; misesAJour: number; ignorees: number }> {
+  async recalculerComplet(utilisateur: AuthUser): Promise<{ creees: number; misesAJour: number; ignorees: number }> {
     const docs = await this.prisma.documentDepot.findMany({
       select: {
         id: true,
@@ -649,6 +649,14 @@ export class PlagiatService {
     }
 
     this.logger.log(`Recalcul complet : ${creees} créées, ${misesAJour} mises à jour, ${ignorees} ignorées.`);
+    await journaliser(
+      this.prisma,
+      utilisateur,
+      'PLAGIAT_RECALCUL',
+      'SuspicionPlagiat',
+      null,
+      `${creees} créées, ${misesAJour} mises à jour, ${ignorees} ignorées.`,
+    );
     return { creees, misesAJour, ignorees };
   }
 }

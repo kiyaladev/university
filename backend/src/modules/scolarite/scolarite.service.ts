@@ -559,15 +559,7 @@ export class ScolariteService {
     }
     const resultat = await this.calculerInternes(delib, db);
     if (user) {
-      await db.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'DELIBERATION_RECALCULEE',
-          entite: 'Deliberation',
-          entiteId: deliberationId,
-          details: JSON.stringify(resultat),
-        },
-      });
+      await journaliser(db, user, 'DELIBERATION_RECALCULEE', 'Deliberation', deliberationId, resultat);
     }
     return resultat;
   }
@@ -596,17 +588,9 @@ export class ScolariteService {
         where: { id: deliberationId },
         data: { statut: StatutDeliberation.VALIDE, valideeParId: userId, valideeLe: new Date() },
       });
-      await tx.auditLog.create({
-        data: {
-          userId,
-          action: 'DELIBERATION_VALIDEE',
-          entite: 'Deliberation',
-          entiteId: deliberationId,
-          details: JSON.stringify({
-            avant: { statut: delib.statut, tauxReussite: delib.tauxReussite ?? null },
-            apres: { statut: miseAJour.statut, tauxReussite: miseAJour.tauxReussite ?? null },
-          }),
-        },
+      await journaliser(tx, { id: userId }, 'DELIBERATION_VALIDEE', 'Deliberation', deliberationId, {
+        avant: { statut: delib.statut, tauxReussite: delib.tauxReussite ?? null },
+        apres: { statut: miseAJour.statut, tauxReussite: miseAJour.tauxReussite ?? null },
       });
       return miseAJour;
     });

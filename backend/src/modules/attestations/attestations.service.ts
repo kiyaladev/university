@@ -7,15 +7,7 @@
  * ET un jeton aléatoire (qrToken) : impossible de reconstruire le jeton depuis
  * le numéro, un document scanné n'a pas de jumeau forgé.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import { Prisma, StatutAttestation, TypeAttestation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
@@ -61,7 +53,6 @@ export class AttestationsService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------------- consultation
@@ -396,14 +387,8 @@ export class AttestationsService {
 
   // ------------------------------------------------------------- documentation
 
-  /** Document A4 imprimable, ouvert dans un nouvel onglet : jeton vérifié à la main. */
-  async imprimer(id: string, token: string | undefined, baseUrl: string, _ip?: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('attestations.jeton_invalide_ou_expire'));
-    }
-
+  /** Document A4 imprimable, ouvert dans un nouvel onglet : jeton contrôlé par la garde globale. */
+  async imprimer(id: string, baseUrl: string, _ip?: string): Promise<string> {
     const attestation = await this.prisma.attestation.findUnique({
       where: { id },
       include: ATTESTATION_INCLUDE,
@@ -482,15 +467,15 @@ export class AttestationsService {
       });
 
       if (!jetonOk) {
-        await tx.auditLog.create({
-          data: {
-            action: 'VERIF_ATTESTATION_ECHEC',
-            entite: 'attestations',
-            entiteId: ref,
-            details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
-            ip,
-          },
-        });
+        await journaliser(
+          tx,
+          null,
+          'VERIF_ATTESTATION_ECHEC',
+          'attestations',
+          ref,
+          `Jeton mismatch pour ${ref} (fraude probable ?)`,
+          ip,
+        );
       }
 
       return cree;
@@ -528,15 +513,7 @@ export class AttestationsService {
   }
 
   private async tracerEchec(ref: string, ip?: string) {
-    await this.prisma.auditLog.create({
-      data: {
-        action: 'VERIF_ATTESTATION_ECHEC',
-        entite: 'attestations',
-        entiteId: ref,
-        details: `Numéro inconnu ${ref}`,
-        ip,
-      },
-    });
+    await journaliser(this.prisma, null, 'VERIF_ATTESTATION_ECHEC', 'attestations', ref, `Numéro inconnu ${ref}`, ip);
   }
 
   /** Journal des scans d'une attestation (direction générale). */

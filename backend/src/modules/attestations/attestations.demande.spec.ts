@@ -27,7 +27,7 @@ describe('Émission depuis une demande de document', () => {
       demandeDocument: { findUnique: jest.fn().mockResolvedValue(lien) },
       auditLog: { create: jest.fn() },
     };
-    const service = new AttestationsService({} as any, {} as any, {} as any);
+    const service = new AttestationsService({} as any, {} as any);
     return { tx, service };
   }
 

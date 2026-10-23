@@ -33,6 +33,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma, StatutEnseignant, StatutPaie, StatutPresence, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { round2, isoDate } from '../../common/utils';
@@ -158,15 +159,7 @@ export class PaieService {
     avant: unknown,
     apres: unknown,
   ) {
-    return tx.auditLog.create({
-      data: {
-        userId,
-        action,
-        entite: 'FeuillePaie',
-        entiteId,
-        details: JSON.stringify({ avant, apres }),
-      },
-    });
+    return journaliser(tx, { id: userId }, action, 'FeuillePaie', entiteId, { avant, apres });
   }
 
   // ----------------------------------------------------- cycle de vie

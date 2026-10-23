@@ -4,6 +4,7 @@ import { StatutNotification } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OtpClient, numerique } from './otp.client';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 
 const CONCURRENCE_MAX_SMS = 10;
 const TAILLE_LOT_PERSISTE_SMS = 50;
@@ -78,19 +79,15 @@ export class SmsService {
               }),
             );
           }
-          await tx.auditLog.create({
-            data: {
-              userId: lot[0]?.envoyeParId ?? null,
-              action: 'SMS_DIFFUSION_DEMANDEE',
-              entite: 'Notification',
-              details: JSON.stringify({
-                lotId,
-                canal: 'SMS',
-                statutInitial: StatutNotification.EN_ATTENTE,
-                nombreDestinataires: creees.length,
-                messagesPresents: lot.filter((cible) => Boolean(cible.message)).length,
-              }),
-            },
+          // Un lot manuel n'a pas toujours d'émetteur : la trace reste
+          // rattachée à personne plutôt qu'attribuée au premier de la liste.
+          const emetteur = lot[0]?.envoyeParId ?? null;
+          await journaliser(tx, emetteur ? { id: emetteur } : null, 'SMS_DIFFUSION_DEMANDEE', 'Notification', null, {
+            lotId,
+            canal: 'SMS',
+            statutInitial: StatutNotification.EN_ATTENTE,
+            nombreDestinataires: creees.length,
+            messagesPresents: lot.filter((cible) => Boolean(cible.message)).length,
           });
           return creees;
         });

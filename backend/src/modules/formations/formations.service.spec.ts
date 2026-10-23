@@ -27,7 +27,7 @@ describe('Vitrine publique des formations', () => {
       inscriptionFormation: { count: jest.fn().mockResolvedValue(0) },
       $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)),
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     await expect(
       service.inscriptionPublique('formation-1', {
@@ -60,7 +60,7 @@ describe('Vitrine publique des formations', () => {
       formation: { findUnique: jest.fn().mockResolvedValue(publicFields) },
       inscriptionFormation: { count: jest.fn().mockResolvedValue(7) },
     };
-    const service = new FormationsService(prisma as any, {} as any, {} as any);
+    const service = new FormationsService(prisma as any, {} as any);
 
     const result = await service.formationPublique('formation-1');
 
@@ -93,7 +93,7 @@ describe('Vitrine publique des formations', () => {
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
       auditLog: { create: jest.fn() },
     };
-    const service = new FormationsService(prisma as any, {} as any, {} as any);
+    const service = new FormationsService(prisma as any, {} as any);
 
     await service.creer({ titre: formation.titre, prix: formation.prix } as any, { id: 'admin-1' } as any);
 
@@ -134,7 +134,7 @@ describe('transitions de formation sur l’état verrouillé', () => {
     };
     const prisma: any = { $transaction: (operation) => operation(tx) };
     await expect(
-      (new FormationsService(prisma, {} as any, {} as any) as any)[method]('f', { id: 'admin' }),
+      (new FormationsService(prisma, {} as any) as any)[method]('f', { id: 'admin' }),
     ).rejects.toBeInstanceOf(exception);
     expect(tx.formation.update).not.toHaveBeenCalled();
     expect(tx.formation.delete).not.toHaveBeenCalled();
@@ -159,11 +159,10 @@ describe('confirmation imprimée d’inscription à une formation', () => {
     return new FormationsService(
       prisma,
       { valeur: jest.fn().mockResolvedValue('Établissement fictif') } as any,
-      { verify: jest.fn() } as any,
     );
   }
   it('imprime le montant encaissé et une inscription, sans affirmer un achèvement pédagogique', async () => {
-    const html = await servicePour().certificat('ins', 'jeton', 'http://localhost');
+    const html = await servicePour().certificat('ins', 'http://localhost');
     expect(html).toContain("Confirmation d'inscription");
     expect(html).toContain(`${(5000).toLocaleString('fr-FR')} GNF`);
     expect(html).not.toContain('EUR');
@@ -173,7 +172,7 @@ describe('confirmation imprimée d’inscription à une formation', () => {
   it.each([StatutPaiement.EN_ATTENTE, StatutPaiement.ANNULE, StatutPaiement.REMBOURSE])(
     'refuse le document si le paiement est %s',
     async (statut) => {
-      await expect(servicePour(statut).certificat('ins', 'jeton', 'http://localhost')).rejects.toBeInstanceOf(
+      await expect(servicePour(statut).certificat('ins', 'http://localhost')).rejects.toBeInstanceOf(
         ConflictException,
       );
     },
@@ -210,7 +209,7 @@ describe('Agrégat du tableau de bord des formations', () => {
         },
       ]),
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     const resultat = await service.dashboard();
 
@@ -230,7 +229,7 @@ describe('registre des inscriptions aux formations', () => {
         count: jest.fn().mockResolvedValue(62),
       },
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     const resultat = await service.inscriptionsDe('formation-1', { page: 2, pageSize: 20 });
 
@@ -256,7 +255,7 @@ describe('registre des inscriptions aux formations', () => {
         count: jest.fn().mockResolvedValue(1500),
       },
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     const resultat = await service.inscriptionsDe('formation-1', { pageSize: 5000 });
 
@@ -287,7 +286,7 @@ describe('confirmation des places de formation', () => {
       inscriptionFormation: { findUnique: jest.fn().mockResolvedValue(inscription) },
       $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)),
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     await expect(service.confirmer('for-ins-1', { id: 'agent-1' } as any)).rejects.toBeInstanceOf(ConflictException);
 
@@ -310,7 +309,7 @@ describe('confirmation des places de formation', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma: any = { $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)) };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     await expect(
       service.modifier('formation-1', { capacite: 2 } as any, { id: 'admin' } as any),
@@ -337,7 +336,7 @@ describe('confirmation des places de formation', () => {
       inscriptionFormation: { findUnique: jest.fn().mockResolvedValue(inscription) },
       $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)),
     };
-    const service = new FormationsService(prisma, {} as any, {} as any);
+    const service = new FormationsService(prisma, {} as any);
 
     await expect(service.annuler('inscription-1', { id: 'admin' } as any)).rejects.toBeInstanceOf(ConflictException);
     expect(tx.inscriptionFormation.updateMany).not.toHaveBeenCalled();

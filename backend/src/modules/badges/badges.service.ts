@@ -6,14 +6,7 @@
  * le temps ; le personnel peut la rallonger tant que le badge n'est pas
  * annulé. La révocation (annulation) est définitive : motif obligatoire.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import { Prisma, StatutBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
@@ -59,7 +52,6 @@ export class BadgesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametres: ParametresService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ---------------------------------------------------------------- calcul
@@ -311,15 +303,7 @@ export class BadgesService {
     });
 
     if (!badge) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_BADGE_ECHEC',
-          entite: 'badges',
-          entiteId: id,
-          details: `Identifiant inconnu ${id}`,
-          ip,
-        },
-      });
+      await journaliser(this.prisma, null, 'VERIF_BADGE_ECHEC', 'badges', id, `Identifiant inconnu ${id}`, ip);
       return { valide: false, raison: 'Aucun badge ne correspond à cet identifiant.' };
     }
 
@@ -327,17 +311,15 @@ export class BadgesService {
     const statutEffectif = this.evaluerStatut(badge);
     const valide = jetonOk && statutEffectif === StatutBadge.ACTIF;
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: valide ? 'VERIF_BADGE_OK' : 'VERIF_BADGE_ECHEC',
-        entite: 'badges',
-        entiteId: badge.id,
-        details: valide
-          ? 'Vérification publique réussie'
-          : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${statutEffectif}`,
-        ip,
-      },
-    });
+    await journaliser(
+      this.prisma,
+      null,
+      valide ? 'VERIF_BADGE_OK' : 'VERIF_BADGE_ECHEC',
+      'badges',
+      badge.id,
+      valide ? 'Vérification publique réussie' : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${statutEffectif}`,
+      ip,
+    );
 
     if (!jetonOk) {
       return {
@@ -375,12 +357,7 @@ export class BadgesService {
     };
   }
 
-  async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('badges.jeton_invalide_ou_expire'));
-    }
+  async imprimer(id: string, baseUrl: string): Promise<string> {
     const badge = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, badge.id, badge.qrToken);
     const etablissement = await chargerEtablissement(this.prisma);

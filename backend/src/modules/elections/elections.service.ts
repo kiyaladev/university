@@ -24,14 +24,7 @@
  * participation, jamais l'électeur ni son choix. Le scrutin se lit dans le
  * module ; le journal dit qui l'a configuré, quand, et depuis quel état.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutElection } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -111,7 +104,6 @@ export class ElectionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametres: ParametresService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ----------------------------------------------------------- consultation
@@ -644,12 +636,7 @@ export class ElectionsService {
     return `${baseUrl.replace(/\/+$/, '')}/#/elections/${electionId}`;
   }
 
-  async imprimerBulletin(id: string, token: string | undefined, baseUrl: string, user: AuthUser) {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('elections.jeton_invalide_ou_expire'));
-    }
+  async imprimerBulletin(id: string, baseUrl: string, user: AuthUser) {
     const election = await this.trouverPour(id, user);
     if (election.statut !== StatutElection.OUVERT) throw new NotFoundException(t('common.notFound'));
     const etablissement = await chargerEtablissement(this.prisma);

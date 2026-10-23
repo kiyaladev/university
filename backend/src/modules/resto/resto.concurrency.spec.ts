@@ -4,6 +4,18 @@ import { ModePaiement, Role, StatutConsommation, StatutPaiement } from '@prisma/
 import type { AuthUser } from '../../common/decorators';
 import { RestoService } from './resto.service';
 
+/** Compte du poste de guichet, résolu par la garde d'authentification optionnelle. */
+const GUICHET: AuthUser = {
+  id: 'cashier',
+  email: 'guichet@test',
+  nom: 'Guichet',
+  prenom: 'Awa',
+  role: Role.CONTROLEUR,
+  departementId: null,
+  enseignantId: null,
+  etudiantId: null,
+};
+
 describe('écritures concurrentes du portefeuille resto', () => {
   beforeEach(() => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Opération refusée' } as never);
@@ -30,7 +42,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
         }),
       ),
     };
-    const service = new RestoService(prisma, {} as never, {} as never);
+    const service = new RestoService(prisma, {} as never);
 
     await expect(
       service.simulerRecharge('r-1', { statut: StatutPaiement.REUSSI }, { id: 'admin' } as AuthUser),
@@ -69,7 +81,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       },
       $transaction: jest.fn((operation) => operation(transaction)),
     };
-    const service = new RestoService(prisma, {} as never, {} as never);
+    const service = new RestoService(prisma, {} as never);
 
     await service.simulerRecharge('r-2', { statut: StatutPaiement.REUSSI }, { id: 'admin' } as AuthUser);
 
@@ -114,7 +126,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       $transaction: jest.fn((operation) => operation(tx)),
     };
     const parametres = { valeur: jest.fn().mockResolvedValue('+224 000 00 00 00') };
-    const service = new RestoService(prisma, parametres as never, {} as never);
+    const service = new RestoService(prisma, parametres as never);
 
     await service.recharger('p-4', { montant: 20, mode: ModePaiement.ESPECES } as never, { id: 'admin' } as AuthUser);
 
@@ -159,7 +171,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       anneeAcademique: { findFirst: jest.fn().mockResolvedValue({ libelle: '2025-2026' }) },
       $transaction: jest.fn((operation) => operation(tx)),
     };
-    const result = await new RestoService(prisma, {} as never, {} as never).recharger(
+    const result = await new RestoService(prisma, {} as never).recharger(
       'p',
       { montant: 1000, mode: ModePaiement.MOBILE_MONEY, simuler: false },
       { id: 'admin' } as AuthUser,
@@ -194,7 +206,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
         }),
       ),
     };
-    const service = new RestoService(prisma, {} as never, {} as never);
+    const service = new RestoService(prisma, {} as never);
 
     await expect(
       service.annulerConsommation('c-1', {}, { id: 'admin', role: Role.ADMIN } as AuthUser),
@@ -225,7 +237,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       },
       $transaction: jest.fn((operation) => operation(tx)),
     };
-    const service = new RestoService(prisma, {} as never, {} as never);
+    const service = new RestoService(prisma, {} as never);
 
     await service.annulerConsommation('c-2', { motif: 'donnée confidentielle' }, { id: 'admin' } as AuthUser);
 
@@ -265,11 +277,10 @@ describe('écritures concurrentes du portefeuille resto', () => {
         }),
       ),
     };
-    const jwt = { verifyAsync: jest.fn().mockResolvedValue({ sub: 'cashier' }) };
-    const service = new RestoService(prisma, {} as never, jwt as never);
+    const service = new RestoService(prisma, {} as never);
 
     await expect(
-      service.validerRepas({ reference: 'E-1', repas: 'DEJEUNER', montant: 80 }, 'token'),
+      service.validerRepas({ reference: 'E-1', repas: 'DEJEUNER', montant: 80 }, GUICHET),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(debit).toHaveBeenCalledWith({
       where: { id: 'p-1', solde: { gte: 80 } },
@@ -295,10 +306,9 @@ describe('écritures concurrentes du portefeuille resto', () => {
       etudiant: { findUnique: jest.fn().mockResolvedValue(etudiant) },
       $transaction: jest.fn((operation) => operation(tx)),
     };
-    const jwt = { verifyAsync: jest.fn().mockResolvedValue({ sub: 'cashier' }) };
-    const service = new RestoService(prisma, {} as never, jwt as never);
+    const service = new RestoService(prisma, {} as never);
 
-    await service.validerRepas({ reference: 'UP-RESTO-3', repas: 'DEJEUNER', montant: 25 }, 'token');
+    await service.validerRepas({ reference: 'UP-RESTO-3', repas: 'DEJEUNER', montant: 25 }, GUICHET);
 
     expect(auditCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({

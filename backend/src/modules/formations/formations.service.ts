@@ -14,22 +14,15 @@
  * Le nombre de places se lit sur les inscriptions CONFIRME : annuler une
  * demande libère la place, confirmer après COMPLET est refusé.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
-import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { Paginated, QueryDto } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
-import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -105,7 +98,6 @@ export class FormationsService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------- vitrine publique
@@ -237,18 +229,18 @@ export class FormationsService {
             },
             select: { id: true, numero: true, statut: true },
           });
-          await tx.auditLog.create({
-            data: {
-              action: 'FORMATION_INSCRIPTION',
-              entite: 'InscriptionFormation',
-              entiteId: inscription.id,
-              details: JSON.stringify({
-                avant: null,
-                apres: { statut: inscription.statut, formationId, paiementId: paiement.id },
-              }),
-              ip: ip ?? null,
+          await journaliser(
+            tx,
+            null,
+            'FORMATION_INSCRIPTION',
+            'InscriptionFormation',
+            inscription.id,
+            {
+              avant: null,
+              apres: { statut: inscription.statut, formationId, paiementId: paiement.id },
             },
-          });
+            ip ?? null,
+          );
           return { inscription, paiement };
         }),
       {
@@ -340,9 +332,7 @@ export class FormationsService {
   }
 
   async liste(query: FormationQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where: Prisma.FormationWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
       ...(query.search
@@ -360,11 +350,12 @@ export class FormationsService {
         where,
         include: FORMATION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.formation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverFormation(id: string) {
@@ -396,14 +387,9 @@ export class FormationsService {
         },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CREE',
-          entite: 'Formation',
-          entiteId: formation.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(formation) }),
-        },
+      await journaliser(tx, user, 'FORMATION_CREE', 'Formation', formation.id, {
+        avant: null,
+        apres: this.instantaneAudit(formation),
       });
       return formation;
     });
@@ -452,17 +438,9 @@ export class FormationsService {
         },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_MODIFIEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_MODIFIEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -481,14 +459,9 @@ export class FormationsService {
         throw new ConflictException(t('formations.des_demandes_sont_deja_deposees_sur_cette_formation_annulez_'));
       }
       await tx.formation.delete({ where: { id } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_SUPPRIMEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({ avant: this.instantaneAudit(formation), apres: null }),
-        },
+      await journaliser(tx, user, 'FORMATION_SUPPRIMEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: null,
       });
     });
     return { id };
@@ -514,17 +487,9 @@ export class FormationsService {
         data: { statut: StatutFormation.PUBLIE },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_PUBLIEE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_PUBLIEE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -550,17 +515,9 @@ export class FormationsService {
         data: { statut: StatutFormation.COMPLET },
         include: FORMATION_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CLOTUREE',
-          entite: 'Formation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(formation),
-            apres: this.instantaneAudit(maj),
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_CLOTUREE', 'Formation', id, {
+        avant: this.instantaneAudit(formation),
+        apres: this.instantaneAudit(maj),
       });
       return maj;
     });
@@ -583,21 +540,19 @@ export class FormationsService {
 
   async inscriptionsDe(formationId: string, query: QueryDto = {}): Promise<Paginated<any>> {
     await this.trouverFormation(formationId);
-    const page = Math.max(1, Number(query.page ?? 1));
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
     const where = { formationId };
     const [data, total] = await Promise.all([
       this.prisma.inscriptionFormation.findMany({
         where,
         include: INSCRIPTION_FORMATION_INCLUDE,
         orderBy: { inscriteLe: 'desc' },
-        skip: all ? 0 : (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.inscriptionFormation.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverInscription(id: string) {
@@ -657,17 +612,9 @@ export class FormationsService {
       }
       const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
       if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_CONFIRMEE',
-          entite: 'InscriptionFormation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
-            apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_CONFIRMEE', 'InscriptionFormation', id, {
+        avant: { statut: avant.statut, paiement: paiement.statut, formationId: avant.formationId },
+        apres: { statut: maj.statut, paiement: maj.paiement?.statut, formationId: maj.formationId },
       });
       return maj;
     });
@@ -708,17 +655,9 @@ export class FormationsService {
       if (transition.count !== 1) throw new ConflictException(t('formations.cette_demande_est_deja_annulee'));
       const maj = await tx.inscriptionFormation.findUnique({ where: { id }, include: INSCRIPTION_FORMATION_INCLUDE });
       if (!maj) throw new NotFoundException(t('formations.inscription_a_la_formation_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'FORMATION_INSCRIPTION_ANNULEE',
-          entite: 'InscriptionFormation',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: avant.statut, formationId: avant.formationId },
-            apres: { statut: maj.statut, formationId: maj.formationId },
-          }),
-        },
+      await journaliser(tx, user, 'FORMATION_INSCRIPTION_ANNULEE', 'InscriptionFormation', id, {
+        avant: { statut: avant.statut, formationId: avant.formationId },
+        apres: { statut: maj.statut, formationId: maj.formationId },
       });
       return maj;
     });
@@ -733,13 +672,7 @@ export class FormationsService {
    * CONFIRME (payées) donnent droit au document. La vérification du
    * document relève du module attestations : le pied de page le signale.
    */
-  async certificat(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('formations.jeton_invalide_ou_expire'));
-    }
-
+  async certificat(id: string, baseUrl: string): Promise<string> {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut !== StatutInscriptionFormation.CONFIRME) {
       throw new BadRequestException(
@@ -756,12 +689,7 @@ export class FormationsService {
     // URL publique portée par le QR : la page vitrine des formations,
     // point de départ du circuit de vérification (module attestations).
     const urlPublique = `${baseUrl.replace(/\/+$/, '')}/#/formations`;
-    const svg = await QRCode.toString(urlPublique, {
-      type: 'svg',
-      margin: 2,
-      width: 220,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(urlPublique, { margin: 2, width: 220 });
 
     const etablissement = await chargerEtablissement(this.prisma);
     const formation = inscription.formation;

@@ -11,9 +11,9 @@ import { SoutenancesController, TravauxEncadresController } from './stages.contr
 import { StagesService } from './stages.service';
 
 /**
- * Le JwtModule est déclaré ici (même motif que modules/attestations) : la
- * fiche A4 s'ouvre dans un nouvel onglet sans en-tête Authorization, le jeton
- * passe par l'URL et est vérifié à la main dans FicheService.
+ * La fiche A4 s'ouvre dans un nouvel onglet sans en-tête Authorization : le
+ * jeton passe par l'URL et la garde globale `@ProtectedDocument` le contrôle
+ * avant l'appel à FicheService.
  */
 @Module({
   imports: [ParametresModule],

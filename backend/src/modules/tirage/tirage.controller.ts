@@ -1,12 +1,10 @@
-import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { CreateTirageDto, ImprimerTirageDto, TirageQueryDto, UpdateStadeTirageDto } from './tirage.dto';
 import { TirageService } from './tirage.service';
-import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Tirage des épreuves')
 @ApiBearerAuth()
@@ -14,7 +12,6 @@ import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 export class TirageController {
   constructor(
     private readonly service: TirageService,
-    private readonly jwt: JwtService,
   ) {}
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
@@ -72,13 +69,11 @@ export class TirageController {
 
   /**
    * Bordereau A4 — ouvert dans un nouvel onglet (pas d'en-tête Authorization).
-   * Le jeton est vérifié à la main avant l'appel au service.
+   * Le jeton est contrôlé par la garde globale avant l'appel au service.
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get(':id/imprimer-bordereau')
-  async imprimerBordereau(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
-    verifierJetonImprimable(this.jwt, req);
+  async imprimerBordereau(@Param('id') id: string, @Res() res: Response) {
     res.type('html').send(await this.service.imprimerBordereau(id));
   }
 }

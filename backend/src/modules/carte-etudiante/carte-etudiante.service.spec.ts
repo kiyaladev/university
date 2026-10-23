@@ -17,7 +17,7 @@ describe('Protection des données de la carte étudiante', () => {
         carteEtudiante: { findUnique: jest.fn().mockImplementation(async () => ({ statut })), update: jest.fn() },
         auditLog: { create: jest.fn() },
       };
-      const service = new CarteEtudianteService({ $transaction: (fn: any) => fn(tx) } as any, {} as any, {} as any);
+      const service = new CarteEtudianteService({ $transaction: (fn: any) => fn(tx) } as any, {} as any);
       await expect(
         service[operation](
           'carte-1',
@@ -43,7 +43,7 @@ describe('Protection des données de la carte étudiante', () => {
           }),
         },
       };
-      const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+      const service = new CarteEtudianteService(prisma as any, {} as any);
       expect(await service.verifierNip('carte-1', { nip: '1234' } as any)).toEqual({ ok: true });
       expect(await service.verifierNip('carte-1', { nip: '9876' } as any)).toEqual({ ok: false });
     },
@@ -55,7 +55,7 @@ describe('Protection des données de la carte étudiante', () => {
     { active: true, statut: 'REVOQUE', dateValidite: null },
   ])('refuse le NIP d’une carte invalide (%j)', async (etat) => {
     const prisma = { carteEtudiante: { findUnique: jest.fn().mockResolvedValue({ ...etat, nip: 'hash' }) } };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
     expect(await service.verifierNip('carte-1', { nip: '1234' } as any)).toEqual({ ok: false });
   });
 
@@ -72,7 +72,7 @@ describe('Protection des données de la carte étudiante', () => {
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
     expect(await service.verifier({ carte: 'carte-1', k: 'secret' } as any)).toMatchObject({ valide: false });
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -95,7 +95,7 @@ describe('Protection des données de la carte étudiante', () => {
     const prisma: any = {
       carteEtudiante: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(5000) },
     };
-    const service = new CarteEtudianteService(prisma, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma, {} as any);
 
     const resultat = await service.liste({ all: '1', pageSize: 1_000_000 } as any);
 
@@ -112,7 +112,7 @@ describe('Protection des données de la carte étudiante', () => {
     const prisma = {
       carteEtudiante: { findUnique: jest.fn().mockResolvedValue(carte) },
     };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
 
     const result = await service.trouver('carte-1');
 
@@ -141,7 +141,7 @@ describe('Protection des données de la carte étudiante', () => {
       carteEtudiante: { findUnique: jest.fn().mockResolvedValue(null) },
       $transaction: jest.fn((operation) => operation(tx)),
     };
-    const service = new CarteEtudianteService(prisma, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma, {} as any);
 
     await service.creer({ etudiantId: 'etudiant-1' } as any, { id: 'admin' } as any);
 
@@ -158,7 +158,7 @@ describe('Protection des données de la carte étudiante', () => {
     const prisma = {
       carteEtudiante: { findUnique: jest.fn().mockResolvedValue(carte) },
     };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
 
     const result = await service.maCarte({ etudiantId: 'etudiant-1' } as any);
 
@@ -184,7 +184,7 @@ describe('Protection des données de la carte étudiante', () => {
       },
       auditLog: { create: jest.fn().mockResolvedValue(undefined) },
     };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
 
     const result = await service.verifier({ carte: 'carte-1', k: 'jeton-qr-secret' } as any);
 
@@ -218,7 +218,7 @@ describe('Protection des données de la carte étudiante', () => {
       auditLog: { create: auditCreate },
     };
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
-    const service = new CarteEtudianteService(prisma, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma, {} as any);
 
     await service.modifier('carte-1', { dateValidite: '2028-09-01T00:00:00Z' } as any, { id: 'admin' } as any);
 
@@ -264,7 +264,6 @@ describe('Protection des données de la carte étudiante', () => {
     const service = new CarteEtudianteService(
       { $transaction: jest.fn((operation) => operation(tx)) } as any,
       {} as any,
-      {} as any,
     );
 
     await service.revoquer('carte-1', { motif: 'situation privée' } as any, { id: 'admin' } as any);
@@ -292,7 +291,7 @@ describe('Protection des données de la carte étudiante', () => {
       },
       auditLog: { create: jest.fn().mockResolvedValue(undefined) },
     };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(prisma as any, {} as any);
 
     const resultat = await service.verifier({ carte: 'carte-1', k: 'jeton-qr-secret' } as any);
 

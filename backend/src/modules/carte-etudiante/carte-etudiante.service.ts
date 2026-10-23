@@ -12,14 +12,7 @@
  * vérification (POST /:id/verifier-nip) reste interne pour les partenaires
  * (contrôle d'identité au resto, accès cité, etc.).
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import * as bcrypt from 'bcryptjs';
 import { Prisma, StatutAttestation } from '@prisma/client';
@@ -27,6 +20,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { ParametresService } from '../parametres/parametres.service';
 import {
   CreateCarteEtudianteDto,
@@ -63,16 +57,18 @@ export class CarteEtudianteService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametres: ParametresService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------------ consultation
 
   async liste(query: CarteEtudianteQueryDto) {
+    // La liste ne connaît pas le mode « tout » : la pagination est bornée à
+    // 1 000 lignes et la page demandée est ramenée à 1 si elle est invalide.
     const pageDemandee = Number(query.page ?? 1);
     const tailleDemandee = Number(query.pageSize ?? 50);
     const page = Number.isInteger(pageDemandee) && pageDemandee > 0 ? pageDemandee : 1;
     const pageSize = Number.isInteger(tailleDemandee) && tailleDemandee > 0 ? Math.min(tailleDemandee, 1000) : 50;
+    const pagination = paginer({ page, pageSize });
 
     const where: Record<string, unknown> = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -100,13 +96,13 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
         orderBy: { dateEmission: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.carteEtudiante.count({ where }),
     ]);
 
-    return { data, total, page, pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {
@@ -315,13 +311,7 @@ export class CarteEtudianteService {
    * Document A4 imprimable. Ouvert dans un nouvel onglet : l'en-tête
    * Authorization n'y arrive pas, le jeton passe en paramètre d'URL.
    */
-  async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('carte-etudiante.jeton_invalide_ou_expire'));
-    }
-
+  async imprimer(id: string, baseUrl: string): Promise<string> {
     const carte = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, carte.id, carte.qrToken);
     const etablissement = await chargerEtablissement(this.prisma);
@@ -356,15 +346,15 @@ export class CarteEtudianteService {
     });
 
     if (!carte) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_CARTE_ECHEC',
-          entite: 'cartes-etudiantes',
-          entiteId: id,
-          details: `Identifiant inconnu ${id}`,
-          ip,
-        },
-      });
+      await journaliser(
+        this.prisma,
+        null,
+        'VERIF_CARTE_ECHEC',
+        'cartes-etudiantes',
+        id,
+        `Identifiant inconnu ${id}`,
+        ip,
+      );
       return {
         valide: false,
         raison: 'Aucune carte ne correspond à cet identifiant.',
@@ -376,17 +366,17 @@ export class CarteEtudianteService {
     const expiree = Boolean(carte.dateValidite && new Date(carte.dateValidite).getTime() < Date.now());
     const valide = jetonOk && statutOk && !expiree;
 
-    await this.prisma.auditLog.create({
-      data: {
-        action: valide ? 'VERIF_CARTE_OK' : 'VERIF_CARTE_ECHEC',
-        entite: 'cartes-etudiantes',
-        entiteId: carte.id,
-        details: valide
-          ? `Vérification publique réussie`
-          : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${carte.statut} / expiration ${expiree ? 'oui' : 'non'}`,
-        ip,
-      },
-    });
+    await journaliser(
+      this.prisma,
+      null,
+      valide ? 'VERIF_CARTE_OK' : 'VERIF_CARTE_ECHEC',
+      'cartes-etudiantes',
+      carte.id,
+      valide
+        ? `Vérification publique réussie`
+        : `Jeton ${jetonOk ? 'OK' : 'invalide'} / statut ${carte.statut} / expiration ${expiree ? 'oui' : 'non'}`,
+      ip,
+    );
 
     if (!jetonOk) {
       return {

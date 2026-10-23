@@ -12,7 +12,6 @@ import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/de
 import { baseApplicative } from '../../common/utils';
 import { RectoratService } from './rectorat.service';
 import { GenererBilanDto, RectoratQueryDto } from './rectorat.dto';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 
 /** Direction + administration : le Rectorat est un public resserré. */
 const ROLES_RECTORAT = [Role.ADMIN, Role.DIRECTION];
@@ -55,6 +54,6 @@ export class RectoratController {
   @Get('bilan-mesrs/:id/imprimer')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.imprimerBilan(id, jetonImprimable(req), base));
+    res.type('html').send(await this.service.imprimerBilan(id, base));
   }
 }

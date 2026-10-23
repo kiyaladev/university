@@ -34,7 +34,7 @@ describe('Élections — état relu sous verrou', () => {
       voteElection: { findFirst: jest.fn(), createMany: jest.fn() },
       auditLog: { create: jest.fn() },
     };
-    service = new ElectionsService({ $transaction: (fn: any) => fn(tx) } as any, {} as any, {} as any);
+    service = new ElectionsService({ $transaction: (fn: any) => fn(tx) } as any, {} as any);
   });
   afterEach(() => jest.restoreAllMocks());
   it('refuse le vote lorsque la clôture a obtenu le verrou en premier', async () => {

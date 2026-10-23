@@ -1,12 +1,10 @@
-import { JwtStrategy } from '../auth/jwt.strategy';
-import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
 import type { Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
-import { PrismaService } from '../../prisma/prisma.service';
+import { AuthentificationOptionnelle, UtilisateurOptionnel } from '../../common/utilisateur-optionnel';
 import {
   AcquitterPlagiatDto,
   CreateDocumentDto,
@@ -35,37 +33,13 @@ export class BibliothequeController {
     private readonly service: BibliothequeService,
     private readonly recherche: RechercheService,
     private readonly plagiat: PlagiatService,
-    private readonly jwt: JwtService,
-    private readonly identite: JwtStrategy,
-    private readonly prisma: PrismaService,
   ) {}
 
-  /**
-   * Un porteur de jeton (staff) voit le fonds complet ; un visiteur sans jeton
-   * ne voit que les documents publiés. Le jeton est vérifié à la main, comme
-   * dans rapports/attestations : la route reste @Public(). Un jeton absent,
-   * invalide ou expiré vaut visiteur anonyme — jamais d'écran d'erreur sur la
-   * page publique à cause d'une session de travail périmée.
-   */
-  private async porteur(authorization?: string): Promise<AuthUser | null> {
-    if (!authorization?.startsWith('Bearer ')) return null;
-    let payload: { sub: string; iat?: number };
-    try {
-      payload = this.jwt.verify(authorization.slice(7));
-    } catch {
-      return null;
-    }
-    try {
-      return await this.identite.validate(payload);
-    } catch {
-      return null;
-    }
-  }
-
   @Public()
+  @AuthentificationOptionnelle()
   @Get()
-  async liste(@Query() query: DocumentQueryDto, @Headers('authorization') authorization?: string) {
-    return this.service.liste(query, await this.porteur(authorization));
+  async liste(@Query() query: DocumentQueryDto, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    return this.service.liste(query, utilisateur ?? null);
   }
 
   /** Déclarée avant `:id` : « populaires » ne doit pas être lu comme un identifiant. */
@@ -77,10 +51,11 @@ export class BibliothequeController {
 
   /** Recherche plein texte (PostgreSQL FTS, dictionnaire `french`). */
   @Public()
+  @AuthentificationOptionnelle()
   @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('recherche')
-  async rechercheFts(@Query() query: RechercheDocumentDto, @Headers('authorization') authorization?: string) {
-    return this.recherche.rechercher(query, await this.porteur(authorization));
+  async rechercheFts(@Query() query: RechercheDocumentDto, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    return this.recherche.rechercher(query, utilisateur ?? null);
   }
 
   /** Tableau de bord plagiat : la direction arbitre, elle doit donc le lire. */
@@ -94,16 +69,7 @@ export class BibliothequeController {
   @Roles(Role.ADMIN)
   @Post('recalculer-plagiat')
   async recalculerPlagiat(@CurrentUser() utilisateur: AuthUser) {
-    const resultat = await this.plagiat.recalculerComplet();
-    await this.prisma.auditLog.create({
-      data: {
-        userId: utilisateur.id,
-        action: 'PLAGIAT_RECALCUL',
-        entite: 'SuspicionPlagiat',
-        details: `${resultat.creees} créées, ${resultat.misesAJour} mises à jour, ${resultat.ignorees} ignorées.`,
-      },
-    });
-    return resultat;
+    return this.plagiat.recalculerComplet(utilisateur);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
@@ -129,9 +95,10 @@ export class BibliothequeController {
    * Seul cet appel compte un téléchargement dans la statistique.
    */
   @Public()
+  @AuthentificationOptionnelle()
   @Get(':id/fichier')
-  async fichier(@Param('id') id: string, @Res() res: Response, @Headers('authorization') authorization?: string) {
-    const { octets, mime, nom } = await this.service.fichier(id, await this.porteur(authorization));
+  async fichier(@Param('id') id: string, @Res() res: Response, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    const { octets, mime, nom } = await this.service.fichier(id, utilisateur ?? null);
     res.setHeader('Content-Type', mime);
     res.setHeader('Content-Disposition', `attachment; filename="${nom}"`);
     res.send(octets);

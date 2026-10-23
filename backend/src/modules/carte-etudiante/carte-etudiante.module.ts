@@ -6,9 +6,9 @@ import { CarteEtudianteService } from './carte-etudiante.service';
 /**
  * Carte d'étudiant numérique.
  *
- * Le module embarque son propre JwtModule pour les routes @Public() à jeton
- * vérifié à la main (impression A4) — même motif que les modules rapports,
- * formations, attestations.
+ * L'impression A4 s'ouvre dans un nouvel onglet sans en-tête Authorization :
+ * le jeton passe par l'URL et la garde globale `@ProtectedDocument` le
+ * contrôle — même motif que les modules rapports, formations, attestations.
  */
 @Module({
   imports: [ParametresModule],

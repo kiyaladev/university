@@ -11,7 +11,9 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { ModePaiement, Prisma, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { Paginated } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie } from '../../common/numero';
@@ -120,9 +122,7 @@ export class PaiementsService {
 
   /** Tous les paiements, quel que soit leur portefeuille, avec leur `source`. */
   async listePaiements(query: PaiementQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.PaiementWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -153,7 +153,8 @@ export class PaiementsService {
         where,
         include: PAIEMENT_AVEC_SOURCE_INCLUDE,
         orderBy: { horodatage: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.paiement.count({ where }),
     ]);
@@ -168,7 +169,7 @@ export class PaiementsService {
         demandeDocument,
       }),
     }));
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverPaiement(id: string) {
@@ -353,18 +354,10 @@ export class PaiementsService {
             }
           }
         }
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'PAIEMENT_SIMULE',
-            entite: 'Paiement',
-            entiteId: id,
-            details: JSON.stringify({
-              avant: instantanePaiement(paiement),
-              apres: instantanePaiement(p),
-              inscription: inscriptionAudit,
-            }),
-          },
+        await journaliser(tx, user, 'PAIEMENT_SIMULE', 'Paiement', id, {
+          avant: instantanePaiement(paiement),
+          apres: instantanePaiement(p),
+          inscription: inscriptionAudit,
         });
         return p;
       },
@@ -404,14 +397,9 @@ export class PaiementsService {
           throw new ConflictException(t('inscription.ce_paiement_est_deja_annule'));
         }
         const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'PAIEMENT_ANNULE',
-            entite: 'Paiement',
-            entiteId: id,
-            details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
-          },
+        await journaliser(tx, user, 'PAIEMENT_ANNULE', 'Paiement', id, {
+          avant: instantanePaiement(paiement),
+          apres: instantanePaiement(maj),
         });
         return maj;
       },

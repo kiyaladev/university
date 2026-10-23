@@ -73,9 +73,7 @@ export class AuthService {
         });
       }
 
-      await tx.auditLog.create({
-        data: { userId: user.id, action: 'LOGIN', entite: 'User', entiteId: user.id, ip },
-      });
+      await journaliser(tx, user, 'LOGIN', 'User', user.id, undefined, ip);
     });
 
     return {
@@ -137,18 +135,17 @@ export class AuthService {
         });
       }
 
-      await tx.auditLog.create({
-        data: {
-          userId,
-          action: verrouille ? 'LOGIN_VERROUILLAGE' : 'LOGIN_ECHEC',
-          entite: 'User',
-          entiteId: userId,
-          ip,
-          details: verrouille
-            ? `Compte verrouillé ${DUREE_VERROUILLAGE_MIN} min après ${ECHECS_AVANT_VERROUILLAGE} échecs`
-            : `Tentative échouée ${total}/${ECHECS_AVANT_VERROUILLAGE}`,
-        },
-      });
+      await journaliser(
+        tx,
+        { id: userId },
+        verrouille ? 'LOGIN_VERROUILLAGE' : 'LOGIN_ECHEC',
+        'User',
+        userId,
+        verrouille
+          ? `Compte verrouillé ${DUREE_VERROUILLAGE_MIN} min après ${ECHECS_AVANT_VERROUILLAGE} échecs`
+          : `Tentative échouée ${total}/${ECHECS_AVANT_VERROUILLAGE}`,
+        ip,
+      );
     });
   }
 

@@ -14,10 +14,12 @@
  */
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 import { ModePaiement, Prisma, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { toDateOnly } from '../../common/utils';
 import { SERIES_NUMERO, avecNumeroUnique, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -39,9 +41,7 @@ export class RecettesService {
   // ------------------------------------------------------- lecture
 
   async liste(query: RecetteQueryDto): Promise<Paginated<any>> {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.RecetteExterneWhereInput = {
       ...(query.type ? { type: query.type } : {}),
@@ -74,11 +74,12 @@ export class RecettesService {
         where,
         include: RECETTE_INCLUDE,
         orderBy: [{ date: 'desc' }, { numero: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.recetteExterne.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouver(id: string) {
@@ -109,14 +110,9 @@ export class RecettesService {
         },
         include: RECETTE_INCLUDE,
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'RECETTE_CREEE',
-          entite: 'RecetteExterne',
-          entiteId: recette.id,
-          details: JSON.stringify({ avant: null, apres: this.instantaneAudit(recette) }),
-        },
+      await journaliser(tx, user, 'RECETTE_CREEE', 'RecetteExterne', recette.id, {
+        avant: null,
+        apres: this.instantaneAudit(recette),
       });
       return recette;
     });
@@ -173,18 +169,10 @@ export class RecettesService {
         throw new ConflictException(t('recettes.modification_concurrente'));
       }
       const maj = await tx.recetteExterne.findUniqueOrThrow({ where: { id }, include: RECETTE_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'RECETTE_MODIFIEE',
-          entite: 'RecetteExterne',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: this.instantaneAudit(actuel),
-            apres: this.instantaneAudit(maj),
-            champsModifies: Object.keys(data),
-          }),
-        },
+      await journaliser(tx, user, 'RECETTE_MODIFIEE', 'RecetteExterne', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(data),
       });
       return maj;
     });
@@ -251,18 +239,10 @@ export class RecettesService {
             where: { id },
             include: RECETTE_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'RECETTE_ENCAISSEE',
-              entite: 'RecetteExterne',
-              entiteId: id,
-              details: JSON.stringify({
-                avant,
-                apres: this.instantaneAudit(miseAJour),
-                paiementReference: cree.reference,
-              }),
-            },
+          await journaliser(tx, user, 'RECETTE_ENCAISSEE', 'RecetteExterne', id, {
+            avant,
+            apres: this.instantaneAudit(miseAJour),
+            paiementReference: cree.reference,
           });
           return miseAJour;
         }),

@@ -1,12 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { CalculerFeuilleDto, CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
 import { PaieService } from './paie.service';
-import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Paie des vacataires')
 @ApiBearerAuth()
@@ -14,7 +12,6 @@ import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 export class PaieController {
   constructor(
     private readonly service: PaieService,
-    private readonly jwt: JwtService,
   ) {}
 
   /** Liste paginée, filtrable par statut / année / mois. */
@@ -68,16 +65,13 @@ export class PaieController {
 
   /**
    * État imprimable A4, ouvert dans un nouvel onglet : il ne peut pas porter
-   * d'en-tête Authorization, le jeton passe donc en paramètre d'URL et est
-   * vérifié ici manuellement (pas de passerelle de garde globale). Le HTML est
-   * renvoyé tel quel, aucune enveloppe JSON, `window.print()` au chargement.
+   * d'en-tête Authorization, le jeton passe donc en paramètre d'URL : la garde
+   * globale `@ProtectedDocument` le contrôle. Le HTML est renvoyé tel quel,
+   * aucune enveloppe JSON, `window.print()` au chargement.
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer')
-  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    // Le secret vient du JwtService injecté : plus de clé en dur qui pouvait
-    // diverger de celle de la stratégie JWT.
-    verifierJetonImprimable(this.jwt, req);
+  async imprimer(@Param('id') id: string, @Res() res: Response) {
     res.type('html').send(await this.service.imprimer(id));
   }
 }

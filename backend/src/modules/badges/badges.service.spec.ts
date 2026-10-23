@@ -29,7 +29,7 @@ describe('Vérification publique des badges', () => {
       badgeAcces: { findUnique: jest.fn().mockResolvedValue(badge) },
       auditLog: { create: jest.fn().mockResolvedValue(undefined) },
     };
-    const service = new BadgesService(prisma as any, {} as any, {} as any);
+    const service = new BadgesService(prisma as any, {} as any);
 
     const result = await service.verifier({ badge: 'badge-1', k: 'secret-qr' } as any);
 
@@ -74,7 +74,7 @@ describe('audit des mutations de badge', () => {
         },
         auditLog: { create: jest.fn() },
       };
-      const service = new BadgesService({ $transaction: (fn: any) => fn(tx) } as any, {} as any, {} as any);
+      const service = new BadgesService({ $transaction: (fn: any) => fn(tx) } as any, {} as any);
       await expect(
         service[operation]('badge-1', { dateValidite: '2099-01-01', motif: 'Recette' } as any, { id: 'admin' } as any),
       ).rejects.toBeInstanceOf(BadRequestException);
@@ -112,7 +112,7 @@ describe('audit des mutations de badge', () => {
       auditLog: { create: auditCreate },
     };
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
-    const service = new BadgesService(prisma, {} as any, {} as any);
+    const service = new BadgesService(prisma, {} as any);
 
     await service.creer(
       {
@@ -155,7 +155,7 @@ describe('audit des mutations de badge', () => {
       auditLog: { create: auditCreate },
     };
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
-    const service = new BadgesService(prisma, {} as any, {} as any);
+    const service = new BadgesService(prisma, {} as any);
 
     await service.modifier('badge-2', { telephone: '+224621111111' } as any, { id: 'admin' } as any);
 
@@ -203,7 +203,6 @@ describe('audit des mutations de badge', () => {
     const service = new BadgesService(
       { $transaction: jest.fn((operation) => operation(tx)) } as any,
       {} as any,
-      {} as any,
     );
 
     await service.annuler('badge-2', { motif: 'motif confidentiel' } as any, { id: 'admin' } as any);
@@ -226,7 +225,6 @@ describe('audit des mutations de badge', () => {
     };
     const service = new BadgesService(
       { $transaction: jest.fn((operation) => operation(tx)) } as any,
-      {} as any,
       {} as any,
     );
 
@@ -262,7 +260,7 @@ describe('audit des mutations de badge', () => {
       },
       auditLog: { create: jest.fn().mockResolvedValue(undefined) },
     };
-    const service = new BadgesService(prisma as any, {} as any, {} as any);
+    const service = new BadgesService(prisma as any, {} as any);
 
     const resultat = await service.verifier({ badge: 'badge-2', k: 'qr-secret' } as any);
 

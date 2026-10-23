@@ -514,20 +514,19 @@ export class ControleService {
         data: { statut: presente ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE },
       });
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
-          entite: 'Controle',
-          entiteId: controle.id,
-          details: JSON.stringify({
-            seanceId: seance.id,
-            avant: existant ? this.etatAudit(existant) : null,
-            apres: this.etatAudit(controle),
-          }),
-          ip,
+      await journaliser(
+        tx,
+        user,
+        existant ? 'POINTAGE_CORRECTION' : 'POINTAGE',
+        'Controle',
+        controle.id,
+        {
+          seanceId: seance.id,
+          avant: existant ? this.etatAudit(existant) : null,
+          apres: this.etatAudit(controle),
         },
-      });
+        ip,
+      );
       return controle;
     });
   }
@@ -609,8 +608,9 @@ export class ControleService {
 
   /** Journal d'audit (traçabilité des corrections). */
   async audit(query: AuditQueryDto) {
-    const page = Number(query.page ?? 1);
-    const pageSize = Number(query.pageSize ?? 50);
+    // Le journal ne connaît pas le mode « tout » : la page est bornée à
+    // 1 000 lignes, comme partout ailleurs.
+    const pagination = paginer({ page: query.page, pageSize: query.pageSize });
     const where = {
       ...(query.entite ? { entite: query.entite } : {}),
       // Les anciennes lignes VOTE_DEPOSE relient le compte de l'électeur au
@@ -646,8 +646,8 @@ export class ControleService {
         where,
         include: { user: { select: { nom: true, prenom: true, role: true } } },
         orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.auditLog.count({ where }),
     ]);
@@ -674,6 +674,6 @@ export class ControleService {
         }
         return { ...ligneExposee, details: detailsAuditNettoyes(ligne.action, ligne.details) };
       });
-    return { data: nettoye, total, page, pageSize };
+    return pagine(nettoye, total, pagination);
   }
 }

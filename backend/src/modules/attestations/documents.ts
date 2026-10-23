@@ -7,9 +7,8 @@
  * numéro (ref) et le jeton aléatoire (k). Scanner le document, c'est ouvrir
  * la page de vérité : attestation existe, intacte, jamais révoquée.
  */
-import * as QRCode from 'qrcode';
 import { StatutAttestation, TypeAttestation } from '@prisma/client';
-import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
+import { echapper, Etablissement, pageA4, PALETTE_IMPRESSION as P, qrSvg } from '../../common/impression';
 
 const LIBELLE_TYPE: Record<TypeAttestation, string> = {
   SCOLARITE: 'Certificat de scolarité',
@@ -71,12 +70,7 @@ export class DocumentsAttestation {
     const libelle = LIBELLE_TYPE[a.type] ?? a.type;
     const edite = dateFr(a.emiseLe);
 
-    const svg = await QRCode.toString(opt.urlVerification, {
-      type: 'svg',
-      margin: 2,
-      width: 230,
-      errorCorrectionLevel: 'M',
-    });
+    const svg = await qrSvg(opt.urlVerification, { margin: 2, width: 230 });
 
     const statut =
       a.statut === StatutAttestation.REVOQUE ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>' : '';

@@ -5,7 +5,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { ElectionsService } from './elections.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionDto, VoterDto } from './elections.dto';
 
 /**
@@ -18,7 +17,7 @@ import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionD
  *   par scrutin — contrainte @@unique sur Prisma).
  * - Résultats : tout utilisateur connecté (utile aussi aux étudiants qui
  *   consultent le verdict après clôture).
- * - Bulletin imprimable : @Public() à jeton vérifié à la main.
+ * - Bulletin imprimable : jeton contrôlé par la garde globale.
  *
  * Routes « actives », « :id/resultats », « :id/candidats », « :id/imprimer-bulletin »,
  * « vote » déclarées avant `:id` pour ne pas être capturées comme identifiants.
@@ -118,7 +117,7 @@ export class ElectionsController {
     @Res() res: Response,
   ) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimerBulletin(id, jetonImprimable(req), base, user);
+    const html = await this.service.imprimerBulletin(id, base, user);
     res.type('html').send(html);
   }
 }

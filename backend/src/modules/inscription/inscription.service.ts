@@ -12,7 +12,9 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { journaliser } from '../../common/audit';
 import { Paginated } from '../../common/dto';
+import { pagine, paginer } from '../../common/pagination';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.service';
 import { EtudiantsService, prochainMatricule, prochainNumeroInscription } from './etudiants.service';
@@ -150,9 +152,7 @@ export class InscriptionService {
 
   async listeInscriptions(query: InscriptionQueryDto, user?: AuthUser): Promise<Paginated<any>> {
     if (user?.role === Role.ETUDIANT) query = { ...query, etudiantId: user.etudiantId ?? '__aucun__' };
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.InscriptionWhereInput = {
       ...(user?.role === Role.CHEF_DEPARTEMENT
@@ -166,11 +166,12 @@ export class InscriptionService {
         where,
         include: INSCRIPTION_INCLUDE,
         orderBy: { createdAt: 'desc' },
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.inscription.count({ where }),
     ]);
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async trouverInscription(id: string, user?: AuthUser) {
@@ -249,15 +250,15 @@ export class InscriptionService {
             },
             select: { id: true },
           });
-          await tx.auditLog.create({
-            data: {
-              action: 'ETUDIANT_CREE',
-              entite: 'Etudiant',
-              entiteId: etudiant.id,
-              details: 'Fiche étudiante créée par préinscription en ligne',
-              ip: ip ?? null,
-            },
-          });
+          await journaliser(
+            tx,
+            null,
+            'ETUDIANT_CREE',
+            'Etudiant',
+            etudiant.id,
+            'Fiche étudiante créée par préinscription en ligne',
+            ip ?? null,
+          );
 
           const deja = await tx.inscription.findUnique({
             where: { etudiantId_anneeId: { etudiantId: etudiant.id, anneeId: annee.id } },
@@ -285,15 +286,15 @@ export class InscriptionService {
             },
             select: { id: true, numero: true, montantFrais: true },
           });
-          await tx.auditLog.create({
-            data: {
-              action: 'INSCRIPTION_CREE',
-              entite: 'Inscription',
-              entiteId: inscription.id,
-              details: `${inscription.numero} — préinscription enregistrée · ${promotion.nom} (${annee.libelle})`,
-              ip: ip ?? null,
-            },
-          });
+          await journaliser(
+            tx,
+            null,
+            'INSCRIPTION_CREE',
+            'Inscription',
+            inscription.id,
+            `${inscription.numero} — préinscription enregistrée · ${promotion.nom} (${annee.libelle})`,
+            ip ?? null,
+          );
 
           return {
             etudiantId: etudiant.id,
@@ -381,14 +382,9 @@ export class InscriptionService {
         }
         const rouverte = await tx.inscription.findUnique({ where: { id: existante.id }, include: INSCRIPTION_INCLUDE });
         if (!rouverte) throw new NotFoundException(t('inscription.inscription_introuvable'));
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: 'INSCRIPTION_REOUVERTE',
-            entite: 'Inscription',
-            entiteId: rouverte.id,
-            details: JSON.stringify({ avant: instantaneInscription(avant), apres: instantaneInscription(rouverte) }),
-          },
+        await journaliser(tx, user, 'INSCRIPTION_REOUVERTE', 'Inscription', rouverte.id, {
+          avant: instantaneInscription(avant),
+          apres: instantaneInscription(rouverte),
         });
         return rouverte;
       });
@@ -409,14 +405,9 @@ export class InscriptionService {
             },
             include: INSCRIPTION_INCLUDE,
           });
-          await tx.auditLog.create({
-            data: {
-              userId: user.id,
-              action: 'INSCRIPTION_CREE',
-              entite: 'Inscription',
-              entiteId: cree.id,
-              details: JSON.stringify({ avant: null, apres: instantaneInscription(cree) }),
-            },
+          await journaliser(tx, user, 'INSCRIPTION_CREE', 'Inscription', cree.id, {
+            avant: null,
+            apres: instantaneInscription(cree),
           });
           return cree;
         }),
@@ -465,14 +456,9 @@ export class InscriptionService {
       }
       const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
       if (!maj) throw new NotFoundException(t('inscription.inscription_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'INSCRIPTION_VALIDEE',
-          entite: 'Inscription',
-          entiteId: id,
-          details: JSON.stringify({ avant: instantaneInscription(inscription), apres: instantaneInscription(maj) }),
-        },
+      await journaliser(tx, user, 'INSCRIPTION_VALIDEE', 'Inscription', id, {
+        avant: instantaneInscription(inscription),
+        apres: instantaneInscription(maj),
       });
       return maj;
     });
@@ -502,14 +488,9 @@ export class InscriptionService {
       }
       const maj = await tx.inscription.findUnique({ where: { id }, include: INSCRIPTION_INCLUDE });
       if (!maj) throw new NotFoundException(t('inscription.inscription_introuvable'));
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'INSCRIPTION_ANNULEE',
-          entite: 'Inscription',
-          entiteId: id,
-          details: JSON.stringify({ avant: instantaneInscription(inscription), apres: instantaneInscription(maj) }),
-        },
+      await journaliser(tx, user, 'INSCRIPTION_ANNULEE', 'Inscription', id, {
+        avant: instantaneInscription(inscription),
+        apres: instantaneInscription(maj),
       });
       return maj;
     });

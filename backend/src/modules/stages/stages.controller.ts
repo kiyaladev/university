@@ -19,7 +19,6 @@ import {
   UpdateTravailDto,
 } from './stages.dto';
 import { StagesService, ROLES_PILOTES } from './stages.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 
 /** Encadrant : agit sur les travaux qu'il encadre, pas sur ceux des autres. */
 const ADJUDANTS = [...ROLES_PILOTES, Role.ENSEIGNANT];
@@ -43,7 +42,7 @@ export class TravauxEncadresController {
   @DocumentScope('travailEncadre', { [Role.ETUDIANT]: 'etudiantId', [Role.ENSEIGNANT]: 'encadrantId' })
   @Get(':id/fiche')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    const html = await this.fiche.fiche(id, jetonImprimable(req));
+    const html = await this.fiche.fiche(id);
     res.type('html').send(html);
   }
 

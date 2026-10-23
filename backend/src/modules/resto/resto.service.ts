@@ -13,8 +13,9 @@
  *    solde local serait à la fois falsifiable et incohérent d'un poste à
  *    l'autre. Le terminal cantine reste connecté.
  * 2. Le poste de guichet est @Public (l'appareil du cantinier se connecte via
- *    l'interface) : le jeton est vérifié A LA MAIN, comme pour l'impression
- *    des attestations. Seuls CONTROLEUR | ADMIN | SCOLARITE y sont admis.
+ *    l'interface) : le jeton est résolu par la garde globale
+ *    (`@AuthentificationOptionnelle`), le rôle est contrôlé ici. Seuls
+ *    CONTROLEUR | ADMIN | SCOLARITE y sont admis.
  * 3. Espèces (guichet) = crédit immédiat. Mobile Money = Recharge EN_ATTENTE,
  *    créditée à la confirmation : `simuler: true` à la création (pilote) ou
  *    POST /recharges/:id/simuler (caisse). L'argent du Mobile Money ne rentre
@@ -43,12 +44,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { t } from '../../common/i18n';
+import { journaliser } from '../../common/audit';
 import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
+import { pagine, paginer } from '../../common/pagination';
 import { ParametresService } from '../parametres/parametres.service';
 import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
@@ -63,7 +65,7 @@ import {
   ValiderRepasDto,
 } from './resto.dto';
 
-/** Postes de guichet admis à valider un repas (jeton vérifié à la main). */
+/** Postes de guichet admis à valider un repas (rôle contrôlé ici). */
 const GUICHET: Role[] = [Role.CONTROLEUR, Role.ADMIN, Role.SCOLARITE];
 
 export const PORTEFEUILLE_INCLUDE = {
@@ -84,15 +86,12 @@ export class RestoService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------------ consultation
 
   async listePortefeuilles(query: PortefeuillesQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.PortefeuilleRestoWhereInput = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -114,12 +113,13 @@ export class RestoService {
         where,
         include: PORTEFEUILLE_INCLUDE,
         orderBy: [{ updatedAt: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.portefeuilleResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /** Portefeuille de l'étudiant connecté (portail) : créé si absent, jamais null. */
@@ -269,19 +269,11 @@ export class RestoService {
         });
       }
 
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE',
-          entite: 'Recharge',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: { statut: recharge.statut, solde: soldeAvant },
-            apres: { statut: dto.statut, solde: soldeApres },
-            montant: recharge.montant,
-            champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
-          }),
-        },
+      await journaliser(tx, user, reussi ? 'RECHARGE_CONFIRMEE' : 'RECHARGE_ECHOUEE', 'Recharge', id, {
+        avant: { statut: recharge.statut, solde: soldeAvant },
+        apres: { statut: dto.statut, solde: soldeApres },
+        montant: recharge.montant,
+        champsModifies: reussi ? ['statut', 'solde'] : ['statut'],
       });
     });
 
@@ -323,8 +315,8 @@ export class RestoService {
   // ------------------------------------------------------------------ guichet
 
   /** Consultation carte (QR scanné) : l'identité et le solde, sans rien débiter. */
-  async carteInfo(reference: string, token?: string) {
-    await this.verifierGuichet(token);
+  async carteInfo(reference: string, utilisateur?: AuthUser) {
+    this.verifierGuichet(utilisateur);
     const etudiant = await this.etudiantParReference(reference);
     const portefeuille = await this.portefeuilleOuCree(null, etudiant.id);
     return {
@@ -339,8 +331,8 @@ export class RestoService {
    * valider. Le solde est vérifié en transaction — solde insuffisant,
    * 409 et le portefeuille n'est pas touché.
    */
-  async validerRepas(dto: ValiderRepasDto, token?: string) {
-    const user = await this.verifierGuichet(token);
+  async validerRepas(dto: ValiderRepasDto, utilisateur?: AuthUser) {
+    const user = this.verifierGuichet(utilisateur);
     const etudiant = await this.etudiantParReference(dto.reference);
 
     const { consommation, solde } = await this.prisma.$transaction(async (tx) => {
@@ -375,20 +367,12 @@ export class RestoService {
       });
 
       const maj = await tx.portefeuilleResto.findUnique({ where: { id: portefeuille.id }, select: { solde: true } });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'REPAS_VALIDE',
-          entite: 'ConsommationResto',
-          entiteId: consommation.id,
-          details: JSON.stringify({
-            repas: dto.repas,
-            montant: dto.montant,
-            avant: { solde: portefeuille.solde },
-            apres: { solde: maj!.solde },
-            champsModifies: ['solde'],
-          }),
-        },
+      await journaliser(tx, user, 'REPAS_VALIDE', 'ConsommationResto', consommation.id, {
+        repas: dto.repas,
+        montant: dto.montant,
+        avant: { solde: portefeuille.solde },
+        apres: { solde: maj!.solde },
+        champsModifies: ['solde'],
       });
       return { consommation, solde: maj!.solde };
     });
@@ -404,9 +388,7 @@ export class RestoService {
 
   /** Recharges (toutes, annulées comprises) : le miroir comptable des repas. */
   async listeRecharges(query: RechargesQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.RechargeWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -429,18 +411,17 @@ export class RestoService {
           portefeuille: { include: PORTEFEUILLE_INCLUDE },
         },
         orderBy: [{ rechargeLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.recharge.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   async listeConsommations(query: ConsommationsQueryDto) {
-    const page = Number(query.page ?? 1);
-    const all = query.all === 'true' || query.all === '1';
-    const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
+    const pagination = paginer(query);
 
     const where: Prisma.ConsommationRestoWhereInput = {
       ...(query.statut ? { statut: query.statut } : {}),
@@ -461,12 +442,13 @@ export class RestoService {
         where,
         include: { portefeuille: { include: PORTEFEUILLE_INCLUDE } },
         orderBy: [{ consommeLe: 'desc' }],
-        ...(all ? { skip: 0, take: pageSize } : { skip: (page - 1) * pageSize, take: pageSize }),
+        skip: pagination.skip,
+        take: pagination.take,
       }),
       this.prisma.consommationResto.count({ where }),
     ]);
 
-    return { data, total, page: all ? 1 : page, pageSize: all ? Math.min(total, pageSize) : pageSize };
+    return pagine(data, total, pagination);
   }
 
   /**
@@ -503,20 +485,12 @@ export class RestoService {
         where: { id: consommation.portefeuilleId },
         data: { solde: { increment: consommation.montant } },
       });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'REPAS_ANNULE',
-          entite: 'ConsommationResto',
-          entiteId: id,
-          details: JSON.stringify({
-            montant: consommation.montant,
-            motifFourni: Boolean(dto.motif),
-            avant: { statut: consommation.statut, solde: consommation.portefeuille.solde },
-            apres: { statut: maj!.statut, solde: portefeuille.solde },
-            champsModifies: ['statut', 'solde'],
-          }),
-        },
+      await journaliser(tx, user, 'REPAS_ANNULE', 'ConsommationResto', id, {
+        montant: consommation.montant,
+        motifFourni: Boolean(dto.motif),
+        avant: { statut: consommation.statut, solde: consommation.portefeuille.solde },
+        apres: { statut: maj!.statut, solde: portefeuille.solde },
+        champsModifies: ['statut', 'solde'],
       });
       return { maj: maj!, solde: portefeuille.solde };
     });
@@ -645,21 +619,13 @@ export class RestoService {
             solde = maj.solde;
           }
 
-          await tx.auditLog.create({
-            data: {
-              userId: args.user.id,
-              action: 'RECHARGE_CREEE',
-              entite: 'Recharge',
-              entiteId: recharge.id,
-              details: JSON.stringify({
-                reference: paiement.reference,
-                montant: args.montant,
-                statut: recharge.statut,
-                avant: { solde: soldeAvant },
-                apres: { solde: args.statutImmediat ? solde : soldeAvant },
-                champsModifies: args.statutImmediat ? ['paiement', 'recharge', 'solde'] : ['paiement', 'recharge'],
-              }),
-            },
+          await journaliser(tx, { id: args.user.id }, 'RECHARGE_CREEE', 'Recharge', recharge.id, {
+            reference: paiement.reference,
+            montant: args.montant,
+            statut: recharge.statut,
+            avant: { solde: soldeAvant },
+            apres: { solde: args.statutImmediat ? solde : soldeAvant },
+            champsModifies: args.statutImmediat ? ['paiement', 'recharge', 'solde'] : ['paiement', 'recharge'],
           });
 
           return { recharge, paiement, solde };
@@ -682,48 +648,20 @@ export class RestoService {
   }
 
   /**
-   * Vérification manuelle du jeton sur une route @Public : l'appareil du
-   * cantinier passe par l'interface, le jeton voyage en en-tête OU en
-   * paramètre d'URL (pattern attestations). On re-charge l'utilisateur en
-   * base pour contrôler activité et rôle — pas seulement la signature.
+   * Contrôle du poste de guichet. L'appareil du cantinier porte un jeton
+   * valide : la route est publique, mais l'authentification est faite par la
+   * garde globale (`@AuthentificationOptionnelle`), qui contrôle déjà la
+   * signature, l'activité du compte et la révocation des sessions. Il ne
+   * reste ici que le contrôle du rôle, propre à ce poste.
    */
-  private async verifierGuichet(token: string | undefined): Promise<AuthUser> {
-    let payload: { sub?: string; iat?: number };
-    try {
-      payload = (await this.jwt.verifyAsync(token ?? '')) as any;
-    } catch {
+  private verifierGuichet(utilisateur: AuthUser | undefined): AuthUser {
+    if (!utilisateur) {
       throw new UnauthorizedException(t('resto.jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet'));
     }
-    if (!payload?.sub) throw new UnauthorizedException(t('resto.jeton_invalide'));
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: {
-        etudiant: { select: { id: true } },
-        enseignant: { select: { id: true } },
-      },
-    });
-    if (!user || !user.actif) {
-      throw new UnauthorizedException(t('resto.compte_inexistant_ou_desactive'));
-    }
-    if (payload.iat && user.motDePasseModifieLe) {
-      if (payload.iat * 1000 < user.motDePasseModifieLe.getTime() - 1000) {
-        throw new UnauthorizedException(t('resto.session_expiree_reconnectez_vous'));
-      }
-    }
-    if (!GUICHET.includes(user.role)) {
+    if (!GUICHET.includes(utilisateur.role)) {
       throw new ForbiddenException(t('resto.le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola'));
     }
-    return {
-      id: user.id,
-      email: user.email,
-      nom: user.nom,
-      prenom: user.prenom,
-      role: user.role,
-      departementId: user.departementId,
-      enseignantId: user.enseignant?.id ?? null,
-      etudiantId: user.etudiant?.id ?? null,
-    };
+    return utilisateur;
   }
 }
 

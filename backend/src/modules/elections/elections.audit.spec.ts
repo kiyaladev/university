@@ -228,7 +228,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('rattribue la création du scrutin à son auteur, dans la transaction', async () => {
     const { prisma, journal, journalRacine } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await service.creer(DTO_ELECTION as any, scolarite);
 
@@ -248,7 +248,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('rattribue la déclaration d’un candidat à son auteur', async () => {
     const { prisma, journal, journalRacine } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await service.ajouterCandidat('election-1', DTO_CANDIDAT as any, admin);
 
@@ -266,7 +266,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('journalise la modification avec l’état avant, l’état atteint et les champs touchés', async () => {
     const { prisma, journal, journalRacine } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await service.modifier(
       'election-1',
@@ -312,7 +312,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     'journalise la transition « %s » avec l’état de départ et l’état atteint',
     async (methode, depart, action, arrivee, transition) => {
       const { prisma, journal, journalRacine } = depotAtomique({ statut: depart });
-      const service = new ElectionsService(prisma, {} as any, {} as any);
+      const service = new ElectionsService(prisma, {} as any);
 
       await (service as any)[methode]('election-1', admin);
 
@@ -333,7 +333,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('conserve l’état du scrutin après la proclamation', async () => {
     const { prisma, base, journal } = depotAtomique({ statut: StatutElection.CLOS });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     const proclamation = await service.proclamer('election-1', admin);
 
@@ -345,7 +345,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('réduit la déclaration d’un candidat à sa position et à son rattachement', async () => {
     const { prisma, journal } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await service.ajouterCandidat('election-1', DTO_CANDIDAT as any, admin);
 
@@ -364,7 +364,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('garde la trace du candidat retiré, désormais seule survivante', async () => {
     const { prisma, journal, base } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     const retire = await service.supprimerCandidat('election-1', 'candidat-1', admin);
 
@@ -401,7 +401,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const entrees: any[] = [];
     for (const [, jouer, options] of scenarios) {
       const { prisma, journal } = depotAtomique(options);
-      await jouer(new ElectionsService(prisma, {} as any, {} as any));
+      await jouer(new ElectionsService(prisma, {} as any));
       expect(journal).toHaveLength(1);
       entrees.push(...journal);
     }
@@ -468,7 +468,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('n’écrit aucun journal quand la mutation échoue', async () => {
     const { prisma, journal, base } = depotAtomique({ ecritureEchouee: 'update' });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.modifier('election-1', { nbSieges: 4 } as any, admin)).rejects.toThrow('mutation refusée');
 
@@ -481,7 +481,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
       statut: StatutElection.CLOS,
       journalEchoue: true,
     });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.proclamer('election-1', admin)).rejects.toThrow('journal indisponible');
 
@@ -493,7 +493,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('annule le retrait d’un candidat si l’écriture du journal échoue', async () => {
     const { prisma, journal, base } = depotAtomique({ journalEchoue: true });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.supprimerCandidat('election-1', 'candidat-1', admin)).rejects.toThrow('journal indisponible');
 
@@ -504,7 +504,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
   it('conserve le refus d’ouvrir un scrutin sans candidat, sans rien écrire', async () => {
     const { prisma, journal, base } = depotAtomique();
     base.candidats = [];
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.ouvrir('election-1', admin)).rejects.toBeInstanceOf(BadRequestException);
 
@@ -514,7 +514,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('conserve les transitions verrouillées, sans rien écrire', async () => {
     const { prisma, journal, base } = depotAtomique();
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.clore('election-1', admin)).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.proclamer('election-1', admin)).rejects.toBeInstanceOf(BadRequestException);
@@ -525,7 +525,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('conserve le refus de modifier un scrutin publié, sans rien écrire', async () => {
     const { prisma, journal, base } = depotAtomique({ statut: StatutElection.OUVERT });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.modifier('election-1', { nbSieges: 5 } as any, admin)).rejects.toBeInstanceOf(
       BadRequestException,
@@ -543,7 +543,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const { prisma, journal, base } = depotAtomique();
     // Un candidat déclaré sur un autre scrutin : le retrait visé n'existe pas ici.
     base.candidats = [{ ...CANDIDAT }, { ...CANDIDAT, id: 'candidat-3', electionId: 'election-2' }];
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
 
     await expect(service.supprimerCandidat('election-1', 'candidat-3', admin)).rejects.toBeInstanceOf(
       NotFoundException,
@@ -563,7 +563,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
       statut: StatutElection.OUVERT,
       fenetreOuverte: true,
     });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+    const service = new ElectionsService(prisma, {} as any);
     const electeur = { id: 'user-etu-77', role: Role.ETUDIANT, etudiantId: 'etudiant-77' } as AuthUser;
 
     const depot = await service.voter(
