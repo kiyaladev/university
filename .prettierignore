@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.quasar/
+audit/
+backend/prisma/migrations/
+frontend/src-capacitor/
+frontend/public/
+*.md
