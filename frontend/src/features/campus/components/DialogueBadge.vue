@@ -2,8 +2,8 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
+import { badgesService, type CorpsBadge } from '../services/badges';
 import type { BadgeAcces, TypeBadge } from '@/types';
 import { LIBELLE_TYPE_BADGE, optionsDepuis } from '@/shared/utils/libelles';
 
@@ -70,40 +70,39 @@ async function soumettre() {
     $q.notify({ type: 'warning', message: t('badges.dialogs.form.validityRequired') });
     return;
   }
+  const corps: CorpsBadge = {
+    type: formulaire.value.type,
+    nom: formulaire.value.nom,
+    prenom: formulaire.value.prenom,
+    dateValidite: formulaire.value.dateValidite,
+  };
+  // Les champs optionnels ne partent que s'ils sont renseignés.
+  const champsOptionnels = [
+    'fonction',
+    'organisation',
+    'telephone',
+    'email',
+    'pieceIdentite',
+    'numeroPiece',
+    'zonesAccess',
+    'photoUrl',
+    'motif',
+  ] as const;
+  for (const champ of champsOptionnels) {
+    const valeur = formulaire.value[champ];
+    if (valeur) corps[champ] = valeur;
+  }
   enregistrement.value = true;
   try {
-    const url = enEdition.value ? `/badges/${props.badge!.id}` : '/badges';
-    const methode = enEdition.value ? 'put' : 'post';
-    const payload: Record<string, unknown> = {
-      type: formulaire.value.type,
-      nom: formulaire.value.nom,
-      prenom: formulaire.value.prenom,
-      dateValidite: formulaire.value.dateValidite,
-    };
-    const champsOptionnels = [
-      'fonction',
-      'organisation',
-      'telephone',
-      'email',
-      'pieceIdentite',
-      'numeroPiece',
-      'zonesAccess',
-      'photoUrl',
-      'motif',
-    ];
-    for (const champ of champsOptionnels) {
-      const valeur = (formulaire.value as any)[champ];
-      if (valeur) payload[champ] = valeur;
-    }
-    const { data } = await api[methode](url, payload);
+    const data = enEdition.value
+      ? await badgesService.modifier(props.badge!.id, corps)
+      : await badgesService.creer(corps);
     $q.notify({
       type: 'positive',
       message: t(enEdition.value ? 'badges.dialogs.form.updated' : 'badges.dialogs.form.issued'),
     });
     emit('enregistre', data);
     ouvert.value = false;
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }

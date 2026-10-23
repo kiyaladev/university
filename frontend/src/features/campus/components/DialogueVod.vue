@@ -4,7 +4,8 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { api } from '@/boot/axios';
+import { vodService, type CorpsVod } from '../services/vod';
+import type { RessourceCatalogue } from '../types';
 import type { CoursVOD, Enseignant, Inscription, Matiere, TypeRessourceVOD } from '@/types';
 import { useAuthStore } from '@/stores/auth';
 
@@ -17,7 +18,7 @@ const props = defineProps<{
   vod?: CoursVOD | null;
 }>();
 
-const emit = defineEmits<{ enregistre: [v: CoursVOD] }>();
+const emit = defineEmits<{ enregistre: [v: RessourceCatalogue] }>();
 
 const OPTIONS_TYPE = computed(() => [
   { value: 'AUDIO' as TypeRessourceVOD, label: t('vodPage.formDialog.types.audio') },
@@ -67,33 +68,29 @@ async function soumettre() {
     $q.notify({ type: 'warning', message: t('vodPage.formDialog.required') });
     return;
   }
+  const corps: CorpsVod = {
+    titre: formulaire.value.titre,
+    description: formulaire.value.description || undefined,
+    type: formulaire.value.type,
+    url: formulaire.value.url,
+    thumbnailUrl: formulaire.value.thumbnailUrl || undefined,
+    matiereId: formulaire.value.matiereId || undefined,
+    enseignantId: formulaire.value.enseignantId || undefined,
+    dureeSecondes: formulaire.value.dureeSecondes ?? undefined,
+    public: formulaire.value.public,
+    ...(auth.estAdmin ? { inscriptionId: formulaire.value.inscriptionId } : {}),
+  };
   enregistrement.value = true;
   try {
-    // `api` est l'export nommé de boot/axios : l'import dynamique du default
-    // (la fonction de boot) masquait l'instance et cassait l'enregistrement.
-    const url = enEdition.value ? `/vod/${props.vod!.id}` : '/vod';
-    const methode = enEdition.value ? 'put' : 'post';
-    const payload: Record<string, unknown> = {
-      titre: formulaire.value.titre,
-      description: formulaire.value.description || undefined,
-      type: formulaire.value.type,
-      url: formulaire.value.url,
-      thumbnailUrl: formulaire.value.thumbnailUrl || undefined,
-      matiereId: formulaire.value.matiereId || undefined,
-      enseignantId: formulaire.value.enseignantId || undefined,
-      dureeSecondes: formulaire.value.dureeSecondes ?? undefined,
-      public: formulaire.value.public,
-      ...(auth.estAdmin ? { inscriptionId: formulaire.value.inscriptionId } : {}),
-    };
-    const { data } = methode === 'put' ? await api.put(url, payload) : await api.post(url, payload);
+    const data = enEdition.value
+      ? await vodService.modifier(props.vod!.id, corps)
+      : await vodService.creer(corps);
     $q.notify({
       type: 'positive',
       message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created'),
     });
     emit('enregistre', data);
     ouvert.value = false;
-  } catch {
-    /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
