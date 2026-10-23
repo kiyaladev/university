@@ -11,7 +11,6 @@ vi.mock('../../src/boot/axios', () => ({ api }));
 
 import {
   estInscription,
-  listeInscriptions,
   paiementsService,
   peutAnnulerPaiement,
   peutSimulerPaiement,
@@ -123,12 +122,6 @@ describe('features/finances/services/paiements', () => {
     expect(routeModule(paiement(), ouverts)).toBeNull();
     expect(routeModule(paiement({ source: 'FORMATION' } as Partial<Paiement>), ouverts)).toBe('/formations-admin');
     expect(routeModule(paiement({ source: 'RESTO' } as Partial<Paiement>), ouverts)).toBeNull();
-  });
-
-  it('aplatit la réponse des inscriptions', () => {
-    const inscriptions = [{ id: 'i1' }] as never[];
-    expect(listeInscriptions(inscriptions)).toBe(inscriptions);
-    expect(listeInscriptions({ data: inscriptions })).toBe(inscriptions);
   });
 
   it('n’autorise les actions que sur les paiements d’inscription', () => {

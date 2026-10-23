@@ -324,7 +324,8 @@ import ActionsSecondaires from '@/shared/components/ActionsSecondaires.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { dateLisible, montantLisible } from '@/shared/utils/libelles';
-import type { Inscription, Paiement } from '@/types';
+import { montantPaye, resteAPayer } from '@/shared/utils/finances';
+import type { Inscription } from '@/types';
 
 const props = defineProps<{
   /** Présentation retenue : le tableau ou les cartes. */
@@ -378,16 +379,6 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
-
-/** Somme réellement encaissée sur le dossier (seuls les paiements réussis comptent). */
-function montantPaye(dossier: Inscription): number {
-  return (dossier.paiements ?? []).filter((p: Paiement) => p.statut === 'REUSSI').reduce((t, p) => t + p.montant, 0);
-}
-
-/** Reste dû sur les frais d'inscription. */
-function resteAPayer(dossier: Inscription): number {
-  return Math.max(0, dossier.montantFrais - montantPaye(dossier));
-}
 
 const peutValider = (d: Inscription) => props.droitValider && d.statut === 'PAYE';
 const peutAnnuler = (d: Inscription) => props.droitAnnuler && !['VALIDE', 'ANNULE'].includes(d.statut);

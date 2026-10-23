@@ -1,4 +1,6 @@
 import { creer, lister, lire } from '@/shared/services/http';
+import { paiementsApi } from '@/shared/services/paiements';
+import { elements, type Collection } from '@/shared/utils/collections';
 import type { Etudiant, Inscription, Paiement } from '@/types';
 
 /**
@@ -36,22 +38,18 @@ export interface ParametresPaiements {
   etudiantId?: string;
 }
 
-/** Réponse possible de `GET /inscriptions?all=1` : un tableau ou une page. */
-export type ReponseInscriptions = Inscription[] | { data: Inscription[] };
-
 export const paiementsService = {
   /** Registre paginé des paiements. */
   liste: (params: ParametresPaiements = {}) => lister<Paiement>('/paiements', params),
 
   /** Tranche un paiement en attente : réussi ou échoué. */
-  simuler: (id: string, statut: 'REUSSI' | 'ECHOUE') =>
-    creer<Paiement>(`/paiements/${id}/simuler`, { statut }),
+  simuler: (id: string, statut: 'REUSSI' | 'ECHOUE') => paiementsApi.simuler(id, statut),
 
   /** Annule un paiement, avec le motif donné. */
   annuler: (id: string, motif: string) => creer<Paiement>(`/paiements/${id}/annuler`, { motif }),
 
   /** Toutes les inscriptions : le bandeau de ciblage y cherche son dossier. */
-  inscriptions: () => lire<ReponseInscriptions>('/inscriptions', { all: '1' }),
+  inscriptions: () => paiementsApi.dossiers(),
 
   /** Fiche d'un étudiant : le bandeau de ciblage y cherche son nom. */
   etudiant: (id: string) => lire<Etudiant>(`/etudiants/${id}`),
@@ -77,11 +75,6 @@ export function routeModule(paiement: Paiement, modulesOuverts: Record<string, b
   if (source === 'INSCRIPTION') return null;
   if (!modulesOuverts[source]) return null;
   return ROUTE_SOURCE[source];
-}
-
-/** Les inscriptions, que l'API les rende en tableau ou en `{ data }`. */
-export function listeInscriptions(reponse: ReponseInscriptions): Inscription[] {
-  return Array.isArray(reponse) ? reponse : (reponse.data ?? []);
 }
 
 /** Un paiement d'inscription en attente peut être simulé. */
