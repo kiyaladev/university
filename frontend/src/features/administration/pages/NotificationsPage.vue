@@ -99,16 +99,16 @@ async function chargerRepartition() {
 /** Alternative textuelle du graphique, pour qui ne voit pas les barres. */
 const resumeRepartition = computed(() => {
   const totaux = repartition30j.value.reduce(
-    (acc: { attente: number; envoyes: number; echouees: number }, r) => ({
+    (acc: { attente: number; envoyes: number; echoues: number }, r) => ({
       attente: acc.attente + r.EN_ATTENTE,
       envoyes: acc.envoyes + r.ENVOYE,
-      echoues: acc.echouees + r.ECHOUE,
+      echoues: acc.echoues + r.ECHOUE,
     }),
-    { attente: 0, envoyes: 0, echouees: 0 },
+    { attente: 0, envoyes: 0, echoues: 0 },
   );
   return t('notifications.history.chart.summaryAria', {
     envoyes: totaux.envoyes,
-    echouees: totaux.echouees,
+    echoues: totaux.echoues,
     attente: totaux.attente,
   });
 });
