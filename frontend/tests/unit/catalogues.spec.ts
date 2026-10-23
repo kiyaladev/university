@@ -1,7 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import messages from '../../src/i18n';
+import messagesFR from '../../src/i18n/fr-FR/index';
+import messagesEN from '../../src/i18n/en-US/index';
 
 type Arbre = { [cle: string]: string | Arbre };
 
@@ -31,8 +32,8 @@ function sources(dossier = SRC): string[] {
 const APPEL = /(?:\$t|\$te|\bte|\bt|i18n\.global\.te?)\(\s*(['"`])([\w.-]+)\1|keypath="([\w.-]+)"/g;
 
 describe('catalogues de traduction', () => {
-  const fr = feuilles(messages['fr-FR'] as unknown as Arbre);
-  const en = feuilles(messages['en-US'] as unknown as Arbre);
+  const fr = feuilles(messagesFR as unknown as Arbre);
+  const en = feuilles(messagesEN as unknown as Arbre);
 
   it('le français et l’anglais ont exactement les mêmes clés', () => {
     expect(fr.filter((cle) => !en.includes(cle))).toEqual([]);
