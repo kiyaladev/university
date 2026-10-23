@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Sauvegarde quotidienne de la base UniPrésence.
+# Sauvegarde quotidienne de la base University.
 #
 # Une base d'assiduité perdue, c'est un semestre de contrôle qui n'a jamais
 # existé. Le dump est au format « custom » de pg_dump : compressé, et

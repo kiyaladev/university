@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Restauration d'une sauvegarde UniPrésence.
+# Restauration d'une sauvegarde University.
 #
 # Une sauvegarde qu'on n'a jamais restaurée n'existe pas. Ce script sert
 # aussi bien à l'exercice de restauration (sur une base jetable) qu'au vrai

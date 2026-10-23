@@ -1,4 +1,4 @@
-# Passerelle biométrique UniPrésence
+# Passerelle biométrique University (prototype)
 
 Petit service local qui fait le pont entre un **lecteur d'empreintes** et
 l'application. Il tourne sur l'appareil du contrôleur, jamais sur le serveur :
@@ -8,6 +8,10 @@ le doigt est lu là où se trouve l'enseignant.
 cd biometrie
 BIOMETRIE_SECRET="le-meme-que-l-api" bun run start     # http://127.0.0.1:5044
 ```
+
+> Prototype : seul le pilote simulateur existe. Sur le serveur de production,
+> le port 5044 est déjà pris par un autre service : lancer avec `PORT=<libre>`.
+> Vue d'ensemble et statut : [docs/biometrie.md](../docs/biometrie.md).
 
 ## Pourquoi une passerelle plutôt que le navigateur
 

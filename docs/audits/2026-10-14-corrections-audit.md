@@ -1,6 +1,11 @@
 # Corrections de l'audit du 2026-10-14 (codex/university.md)
 
-Branche `fix/audit-2026-10-14`. Rien n'est commité. Les 13 constats ont tous été vérifiés dans le code avant d'être corrigés.
+> Document figé. Mise à jour du 23 octobre 2026 : ces corrections ont depuis été
+> commitées (`6175d91` « fix: corrige les constats de l'audit du 2026-10-14 »)
+> et intégrées aux branches d'amélioration. Le travail restant (protocole
+> anti-rejeu hors ligne de l'empreinte, constat 13) est suivi dans [docs/suivi.md](../suivi.md).
+
+Branche `fix/audit-2026-10-14`. À la rédaction, rien n'était encore commité. Les 13 constats ont tous été vérifiés dans le code avant d'être corrigés.
 
 Bilan : 12 corrigés, 1 corrigé partiellement (le protocole hors ligne n'est pas refait), 0 faux positif.
 
@@ -43,7 +48,7 @@ Dépendances installées dans le worktree avec `bun install --frozen-lockfile` (
 | `frontend: bunx vue-tsc --noEmit -p tsconfig.json` (après prepare) | OK (exit 0) |
 | `frontend: QA_BUILD_DIR=dist/qa-audit API_URL=http://127.0.0.1:9 bun run build` | OK (exit 0). Build de recette dans `frontend/dist/qa-audit` (ignoré par git), sans aucun appel réseau. |
 | `frontend: node tests/catalogues.cjs` | OK : 5536 clés FR = 5536 clés EN, aucune clé manquante |
-| Lint | Aucun script ni configuration lint dans `backend/package.json` ou `frontend/package.json` : non exécuté. |
+| Lint | Aucun script ni configuration lint dans `backend/package.json` ou `frontend/package.json` à cette date : non exécuté (ajouté depuis, voir [exploitation](../exploitation.md#outillage)). |
 | Tests e2e frontend (`tests/*.mjs`) | Non exécutés : il faut un backend et un frontend lancés (interdit ici : pas de services). |
 
 Nouveau fichier de tests : `backend/src/modules/inscription/inscription.reglement.spec.ts`. Clés i18n ajoutées en FR et EN : `inscription.devise_incompatible`, `inscription.statut_modifie_entre_temps`, `inscription.fiche_existante_connexion_requise`, `controle.heure_fin_reelle_avant_arrivee`, `attestation.passerelle_biometrique_non_configuree`, `filePointages.fingerprintOnly`, `filePointages.fingerprintHelp`.

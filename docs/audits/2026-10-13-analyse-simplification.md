@@ -1,5 +1,7 @@
 # Simplifier University — analyse du 13 octobre 2026
 
+> Document figé. Le bilan de réalisation reste à la racine : [SIMPLIFICATION_2026_10_13.md](../../SIMPLIFICATION_2026_10_13.md).
+
 ## Périmètre et conclusion
 
 Objectif demandé : alléger les pages, supprimer les choix inutiles, rendre les parcours plus compréhensibles, sans ajouter de fonctions complexes.
@@ -8,7 +10,7 @@ Analyse des routes, du menu, des composants partagés, des traductions français
 
 **Le meilleur premier chantier consiste à retirer les éléments répétés avant de fusionner les pages.** Le menu possède déjà cinq rubriques, des raccourcis par rôle et un seul groupe ouvert à la fois. Une nouvelle navigation générale apporterait peu. En revanche, les pages multiplient les renvois, les modes d’affichage et les blocs de synthèse avant la liste de travail.
 
-Ce document conserve l’analyse initiale, réalisée avant les modifications. La mise en œuvre autorisée ensuite est décrite dans le [bilan de réalisation](SIMPLIFICATION_2026_10_13.md). Aucune donnée de l’établissement n’a été supprimée.
+Ce document conserve l’analyse initiale, réalisée avant les modifications. La mise en œuvre autorisée ensuite est décrite dans le [bilan de réalisation](../../SIMPLIFICATION_2026_10_13.md). Aucune donnée de l’établissement n’a été supprimée.
 
 ## 1. Suppressions prioritaires
 
@@ -21,7 +23,7 @@ Ce document conserve l’analyse initiale, réalisée avant les modifications. L
 | Support : bouton « Déclarer un incident », carte de catégories, « Autre problème » | Garder une seule entrée « Signaler un problème » et choisir la catégorie dans le formulaire existant. Conserver le scan lorsqu’un équipement doit être identifié. | Plusieurs entrées différentes ouvrent le même geste. |
 | Champs contenant des valeurs calculées ou attribuées | Présenter matricule et tarif officiel comme du texte, conserver le champ de montant seulement lorsqu’une saisie est nécessaire. | Un champ désactivé donne l’impression qu’une action ou une saisie manque. |
 
-Sources : composants `ViewToggle`, `ParcoursMetier` et `LiensCroises` (supprimés lors de la mise en œuvre), [Paie](frontend/src/pages/PaiePage.vue), [Recettes](frontend/src/pages/RecettesPage.vue), [Support](frontend/src/pages/HelpdeskPage.vue), [Étudiant](frontend/src/components/EtudiantDialog.vue), [Inscription](frontend/src/components/InscriptionDialog.vue).
+Sources : composants `ViewToggle`, `ParcoursMetier` et `LiensCroises` (supprimés lors de la mise en œuvre), [Paie](../../frontend/src/pages/PaiePage.vue), [Recettes](../../frontend/src/pages/RecettesPage.vue), [Support](../../frontend/src/pages/HelpdeskPage.vue), [Étudiant](../../frontend/src/components/EtudiantDialog.vue), [Inscription](../../frontend/src/components/InscriptionDialog.vue).
 
 Les boutons présents dans un état vide peuvent rester : proposer la première création est utile. La cible est la répétition de commandes dans une page déjà remplie.
 
@@ -35,7 +37,7 @@ Proposition : une entrée **« Bilan de l’établissement »**, avec deux secti
 
 Le regroupement porte sur l’entrée et la présentation. Il doit conserver la distinction entre valeurs actuelles et valeurs archivées.
 
-Sources : [Rectorat](frontend/src/pages/RectoratPage.vue), [Statistiques MESRS](frontend/src/pages/StatistiquesMesrsPage.vue).
+Sources : [Rectorat](../../frontend/src/pages/RectoratPage.vue), [Statistiques MESRS](../../frontend/src/pages/StatistiquesMesrsPage.vue).
 
 ### Évaluations et notes : une entrée de travail cohérente
 
@@ -45,7 +47,7 @@ Proposition : une entrée **« Évaluations et notes »**. Depuis une évaluatio
 
 Pour les rôles qui commencent habituellement par les notes, le raccourci actuel peut rester : simplifier ne doit pas allonger leur parcours.
 
-Sources : [Évaluations](frontend/src/pages/EvaluationsPage.vue), [Notes](frontend/src/pages/NotesPage.vue).
+Sources : [Évaluations](../../frontend/src/pages/EvaluationsPage.vue), [Notes](../../frontend/src/pages/NotesPage.vue).
 
 ### Examens, tirage et scan : rattacher les actions à l’examen
 
@@ -55,7 +57,7 @@ Proposition : garder **« Organisation des examens »** dans le menu administrat
 
 Ne pas fusionner immédiatement les modèles `Examen` et `Evaluation` : le premier gère l’organisation et les présences, le second les coefficients et les notes. Une fusion technique est un chantier métier distinct.
 
-Sources : [Examens](frontend/src/pages/ExamensPage.vue), [Routes](frontend/src/router/routes.ts), [Modèles](backend/prisma/schema.prisma).
+Sources : [Examens](../../frontend/src/pages/ExamensPage.vue), [Routes](../../frontend/src/router/routes.ts), [Modèles](../../backend/prisma/schema.prisma).
 
 ### Documents : regrouper l’accès, garder les tâches distinctes
 
@@ -65,7 +67,7 @@ Proposition : conserver le regroupement « Documents » déjà présent dans le 
 
 Les badges visiteurs concernent les accès au campus ; ils peuvent rejoindre Campus plutôt que les documents scolaires. Cartes et badges ont des règles distinctes et ne justifient pas un formulaire commun.
 
-Sources : [Menu](frontend/src/layouts/MainLayout.vue), [Demandes](frontend/src/pages/DemandeDocumentsPage.vue), [Attestations](frontend/src/pages/AttestationsPage.vue), [Tarifs](frontend/src/pages/TarifsDemandeAdminPage.vue).
+Sources : [Menu](../../frontend/src/layouts/MainLayout.vue), [Demandes](../../frontend/src/pages/DemandeDocumentsPage.vue), [Attestations](../../frontend/src/pages/AttestationsPage.vue), [Tarifs](../../frontend/src/pages/TarifsDemandeAdminPage.vue).
 
 ### Support et patrimoine : clarifier maintenant, fusionner seulement après étude
 
@@ -75,7 +77,7 @@ Pour l’interface, faire du patrimoine le lieu de gestion de l’inventaire et 
 
 Première action : clarifier les intitulés et retirer les renvois génériques. Une unification des données demanderait une étude des correspondances, des QR et des tickets existants. Elle ne fait pas partie du premier chantier d’allègement.
 
-Sources : [Support](frontend/src/pages/HelpdeskPage.vue), [Patrimoine](frontend/src/pages/PatrimoinePage.vue), [Modèles](backend/prisma/schema.prisma).
+Sources : [Support](../../frontend/src/pages/HelpdeskPage.vue), [Patrimoine](../../frontend/src/pages/PatrimoinePage.vue), [Modèles](../../backend/prisma/schema.prisma).
 
 ## 3. Rendre les pages plus intuitives
 
@@ -111,7 +113,7 @@ Le composant `FilterBar` cache déjà les filtres avancés : conserver ce compor
 
 Conserver les termes universitaires usuels : délibération, promotion, attestation, vacataire. Une phrase courte peut expliquer un terme au moment où il devient utile. Éviter les longues explications répétées sur toutes les pages.
 
-Sources : [Libellés de navigation](frontend/src/i18n/fr-FR/nav.ts), [Libellés du menu](frontend/src/i18n/fr-FR/layout.ts), [Statistiques MESRS](frontend/src/i18n/fr-FR/statistiquesMesrs.ts).
+Sources : [Libellés de navigation](../../frontend/src/i18n/fr-FR/nav.ts), [Libellés du menu](../../frontend/src/i18n/fr-FR/layout.ts), [Statistiques MESRS](../../frontend/src/i18n/fr-FR/statistiquesMesrs.ts).
 
 ### Portail étudiant
 
@@ -119,7 +121,7 @@ Le portail présente les services puis l’inscription, les frais, les paiements
 
 Réduire l’accueil à l’état de l’inscription, au solde et au dernier résultat, puis aux quelques accès les plus fréquents. Réunir frais et paiements récents dans un même bloc, avec l’historique dépliable. Garder les documents et les services secondaires accessibles sans afficher toutes leurs informations d’emblée. Réunir les liens vers demandes de documents et réclamations sous le libellé de menu « Mes démarches », en conservant leurs formulaires spécialisés.
 
-Source : [Portail](frontend/src/pages/PortailPage.vue).
+Source : [Portail](../../frontend/src/pages/PortailPage.vue).
 
 ### Accueils et paramètres
 
@@ -129,7 +131,7 @@ Conserver ces accueils métier et réduire l’accueil général à quelques acc
 
 Les paramètres affichent une liste de réglages puis les services, avec deux enregistrements séparés. Présenter clairement deux sections, « Règles de présence » et « Services de l’établissement », chacune avec son bouton d’enregistrement. Déplacer langue et thème dans le menu du compte pour alléger le bandeau. Éviter d’ajouter une page de préférences.
 
-Sources : [Accueil général](frontend/src/pages/AccueilUniversityPage.vue), [Accueil scolarité](frontend/src/pages/AccueilScolaritePage.vue), [Paramètres](frontend/src/pages/ParametresPage.vue), [Services](frontend/src/components/ServicesActifs.vue), [Bandeau](frontend/src/layouts/MainLayout.vue).
+Sources : [Accueil général](../../frontend/src/pages/AccueilUniversityPage.vue), [Accueil scolarité](../../frontend/src/pages/AccueilScolaritePage.vue), [Paramètres](../../frontend/src/pages/ParametresPage.vue), [Services](../../frontend/src/components/ServicesActifs.vue), [Bandeau](../../frontend/src/layouts/MainLayout.vue).
 
 ## 4. Réduire le périmètre visible avec l’existant
 

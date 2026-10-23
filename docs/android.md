@@ -1,9 +1,16 @@
 # Application Android
 
-UniPrésence s'installe aussi comme application Android, pour le contrôleur qui
+University s'installe aussi comme application Android, pour le contrôleur qui
 fait sa tournée avec un lecteur d'empreintes au bout du câble.
 
-**Téléchargement : https://university.naimba.com/telechargement/university.apk**
+**Téléchargement prévu : https://university.naimba.com/telechargement/university.apk**
+
+> **Lien inactif au 23 octobre 2026.** nginx n'a pas de `location /telechargement/`
+> (l'adresse renvoie l'application web), et `/opt/apps/university/telechargement/`
+> ne contient que `unipresence.apk`. De plus, l'APK porte encore l'identifiant
+> `gn.unipresence.controle` et le nom « UniPrésence », identiques à ceux de
+> l'application UniPrésence : les deux ne peuvent pas coexister sur un même
+> téléphone. Ces deux points sont des [décisions en attente](suivi.md#décisions-en-attente).
 
 Android affichera un avertissement à l'installation (application hors Play
 Store) : autoriser l'installation depuis cette source. L'APK est signé avec la
@@ -99,6 +106,9 @@ désinstaller puis réinstaller l'application. Elle vit dans
 être sauvegardée ailleurs que sur ce serveur.
 
 ## Ce qui reste à faire
+
+Suivi centralisé dans [suivi.md](suivi.md) ; vue d'ensemble de la biométrie
+dans [biometrie.md](biometrie.md).
 
 - Déposer `mfs100.aar` et vérifier la capture sur un vrai lecteur : les noms de
   méthodes du SDK (`Init`, `AutoCapture`, `ExtractISOTemplate`, `MatchISO`,
