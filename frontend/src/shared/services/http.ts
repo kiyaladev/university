@@ -28,17 +28,11 @@ export type ValeurParametre = string | number | boolean | null | undefined;
 export type ParametresListe = Record<string, ValeurParametre>;
 
 /**
- * Forme d'une réponse de liste : l'enveloppe `{ data }` (avec ou sans
- * pagination) ou un tableau nu. Le back n'a pas une forme unique — `elements()`
- * (shared/utils/collections) normalise les deux.
- */
-export type ReponseListe<T> = Liste<T> | T[];
-
-/**
  * Liste paginée `{ data, total, page, pageSize }`.
  *
  * La pagination est facultative : le back ne l'annonce pas sur toutes ses
- * routes de liste.
+ * routes de liste. Certaines routes rendent même un tableau nu : `Collection`
+ * (shared/utils/collections) décrit ces deux formes.
  */
 export async function lister<T, P extends object = object>(
   url: string,
