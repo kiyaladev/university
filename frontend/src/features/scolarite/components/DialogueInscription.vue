@@ -64,11 +64,12 @@
 import { ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
 import { useReferentielsStore } from '@/stores/referentiels';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { montantLisible } from '@/shared/utils/libelles';
+import { fraisScolariteService } from '../services/frais';
+import { inscriptionsService } from '../services/inscriptions';
 
 const ouvert = defineModel<boolean>({ required: true });
 const emit = defineEmits<{ enregistre: [] }>();
@@ -112,14 +113,11 @@ async function chargerTarif() {
   tarifOfficiel.value = null;
   if (!form.value.promotionId) return;
   try {
-    const { data } = await api.get('/frais', {
-      params: {
-        all: '1',
-        promotionId: form.value.promotionId,
-        anneeId: form.value.anneeId || undefined,
-      },
+    const liste = await fraisScolariteService.liste({
+      all: '1',
+      promotionId: form.value.promotionId,
+      anneeId: form.value.anneeId || undefined,
     });
-    const liste = Array.isArray(data) ? data : (data.data ?? []);
     if (liste.length) {
       tarifOfficiel.value = liste[0].montant;
       form.value.montantFrais = liste[0].montant;
@@ -134,7 +132,7 @@ async function chargerTarif() {
 async function enregistrer() {
   enregistrement.value = true;
   try {
-    await api.post('/inscriptions', {
+    await inscriptionsService.creer({
       etudiantId: form.value.etudiantId,
       anneeId: form.value.anneeId || undefined,
       promotionId: form.value.promotionId,
