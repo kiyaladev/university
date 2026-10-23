@@ -34,7 +34,10 @@ executable('rsync', `
 `);
 
 const pathEnv = `${bin}:${process.env.PATH ?? ''}`;
-function run({ bytes = 20480, remote, rsyncStatus = 0, rsyncLog, keep = 30 } = {}) {
+function run({ bytes = 20480, remote, rsyncStatus = 0, rsyncLog, keep = 30, legacy = false } = {}) {
+  // `legacy` utilise l'ancien nom UNIPRESENCE_BACKUP_* : il doit rester
+  // accepté (avec un avertissement) pendant la transition.
+  const prefix = legacy ? 'UNIPRESENCE' : 'UNIVERSITY';
   return spawnSync('bash', [path.join(root, 'scripts/backup-db.sh')], {
     cwd: root,
     encoding: 'utf8',
@@ -42,12 +45,12 @@ function run({ bytes = 20480, remote, rsyncStatus = 0, rsyncLog, keep = 30 } = {
       ...process.env,
       PATH: pathEnv,
       DATABASE_URL: 'postgresql://backup-test:secret@127.0.0.1:5432/university?schema=public',
-      UNIPRESENCE_BACKUP_DIR: backups,
-      UNIPRESENCE_BACKUP_KEEP: String(keep),
+      [`${prefix}_BACKUP_DIR`]: backups,
+      [`${prefix}_BACKUP_KEEP`]: String(keep),
       FAKE_DUMP_BYTES: String(bytes),
       FAKE_RSYNC_STATUS: String(rsyncStatus),
       ...(rsyncLog ? { FAKE_RSYNC_LOG: rsyncLog } : {}),
-      ...(remote ? { UNIPRESENCE_BACKUP_REMOTE: remote } : {}),
+      ...(remote ? { [`${prefix}_BACKUP_REMOTE`]: remote } : {}),
     },
   });
 }
@@ -79,7 +82,7 @@ try {
   const short = spawnSync('bash', [path.join(root, 'scripts/backup-db.sh')], {
     cwd: root, encoding: 'utf8',
     env: { ...process.env, PATH: pathEnv, DATABASE_URL: 'postgresql://u:p@localhost/university',
-      UNIPRESENCE_BACKUP_DIR: shortDir, FAKE_DUMP_BYTES: '128' },
+      UNIVERSITY_BACKUP_DIR: shortDir, FAKE_DUMP_BYTES: '128' },
   });
   assert.notEqual(short.status, 0, 'a suspiciously small dump should fail');
   assert.equal((await readdir(shortDir)).length, 0,
@@ -94,6 +97,13 @@ try {
   assert.ok(afterRemoteFailure.some(name => name.endsWith('.dump') && !name.endsWith('.dump.sha256')),
     'the verified local archive should remain available after a remote failure');
 
+  // L'ancien nom de variable reste accepté, avec un avertissement : une
+  // installation existante ne doit pas casser au changement de produit.
+  const legacy = run({ legacy: true, keep: 30 });
+  assert.equal(legacy.status, 0, legacy.stderr);
+  assert.match(legacy.stderr, /UNIPRESENCE_BACKUP_DIR est obsolète/,
+    'the legacy variable name should be reported as obsolete');
+
   const isolatedRoot = path.join(temporary, 'cron-project');
   const isolatedScripts = path.join(isolatedRoot, 'scripts');
   const isolatedBackend = path.join(isolatedRoot, 'backend');
@@ -107,7 +117,7 @@ try {
   chmodSync(scriptCopie, 0o700);
   writeFileSync(path.join(isolatedBackend, '.env'), [
     'DATABASE_URL="postgresql://cron-test:secret@127.0.0.1:5432/university?schema=public"',
-    'UNIPRESENCE_BACKUP_REMOTE="mock:/offsite/university"',
+    'UNIVERSITY_BACKUP_REMOTE="mock:/offsite/university"',
   ].join('\n'));
   const cronRun = spawnSync('bash', [scriptCopie], {
     cwd: isolatedRoot,
@@ -116,8 +126,8 @@ try {
       ...process.env,
       PATH: pathEnv,
       DATABASE_URL: '',
-      UNIPRESENCE_BACKUP_REMOTE: '',
-      UNIPRESENCE_BACKUP_DIR: isolatedBackups,
+      UNIVERSITY_BACKUP_REMOTE: '',
+      UNIVERSITY_BACKUP_DIR: isolatedBackups,
       FAKE_RSYNC_STATUS: '0',
       FAKE_RSYNC_LOG: remoteLog,
     },
@@ -126,7 +136,37 @@ try {
   assert.match(readFileSync(remoteLog, 'utf8'), /mock:\/offsite\/university\//,
     'cron mode should load the offsite destination from backend/.env without an interactive shell');
 
-  console.log('backup-db: checksum/modes/rétention ; dumps incomplets refusés ; échec distant propagé ; destination .env chargée par cron');
+  // Même lecture depuis le fichier de configuration, avec l'ancien nom.
+  const legacyEnv = path.join(temporary, 'cron-project-legacy');
+  mkdirSync(path.join(legacyEnv, 'scripts'), { recursive: true });
+  mkdirSync(path.join(legacyEnv, 'backend'));
+  mkdirSync(path.join(legacyEnv, 'backups'));
+  writeFileSync(path.join(legacyEnv, 'scripts/backup-db.sh'), readFileSync(path.join(root, 'scripts/backup-db.sh')));
+  writeFileSync(path.join(legacyEnv, 'backend/.env'), [
+    'DATABASE_URL="postgresql://cron-test:secret@127.0.0.1:5432/university?schema=public"',
+    'UNIPRESENCE_BACKUP_REMOTE="mock:/offsite/legacy"',
+  ].join('\n'));
+  const legacyCronLog = path.join(temporary, 'rsync-args-legacy.log');
+  const legacyCron = spawnSync('bash', [path.join(legacyEnv, 'scripts/backup-db.sh')], {
+    cwd: legacyEnv,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      PATH: pathEnv,
+      DATABASE_URL: '',
+      UNIVERSITY_BACKUP_REMOTE: '',
+      UNIVERSITY_BACKUP_DIR: path.join(legacyEnv, 'backups'),
+      FAKE_RSYNC_STATUS: '0',
+      FAKE_RSYNC_LOG: legacyCronLog,
+    },
+  });
+  assert.equal(legacyCron.status, 0, legacyCron.stderr);
+  assert.match(readFileSync(legacyCronLog, 'utf8'), /mock:\/offsite\/legacy\//,
+    'the legacy destination in .env should still be honoured');
+  assert.match(legacyCron.stderr, /UNIPRESENCE_BACKUP_REMOTE est obsolète/,
+    'the legacy destination should be reported as obsolete');
+
+  console.log('backup-db: checksum/modes/rétention ; dumps incomplets refusés ; échec distant propagé ; destination .env chargée par cron ; ancien nom de variable encore accepté');
 } finally {
   rmSync(temporary, { recursive: true, force: true });
 }

@@ -6,10 +6,10 @@
 # aussi bien à l'exercice de restauration (sur une base jetable) qu'au vrai
 # incident.
 #
-#   scripts/restore-db.sh backups/unipresence-20260814-031500.dump unipresence_test
+#   scripts/restore-db.sh backups/university-20260814-031500.dump university_test
 #
 # La base cible est TOUJOURS explicite : on ne peut pas écraser la production
-# par distraction, il faut nommer « unipresence » soi-même.
+# par distraction, il faut nommer « university » soi-même.
 #
 set -euo pipefail
 
@@ -33,7 +33,7 @@ BASE_SOURCE="${DATABASE_URL##*/}"
 BASE_URL="${DATABASE_URL%/*}"
 URL_CIBLE="${BASE_URL}/${CIBLE}"
 
-if [[ "$CIBLE" == "$BASE_SOURCE" || "$CIBLE" == "unipresence" || "$CIBLE" == "university" ]]; then
+if [[ "$CIBLE" == "$BASE_SOURCE" || "$CIBLE" == "university" ]]; then
   read -rp "Écraser la base source/exploitation « $CIBLE » ? (tapez OUI) " reponse
   [[ "$reponse" == "OUI" ]] || { echo "annulé"; exit 1; }
 fi
