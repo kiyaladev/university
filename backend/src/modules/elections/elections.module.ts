@@ -6,8 +6,9 @@ import { ElectionsService } from './elections.service';
 /**
  * Plateforme d'élection des délégués et représentants.
  *
- * JwtModule local pour la route @Public() d'impression du bulletin à jeton
- * vérifié à la main (motif habituel).
+ * L'impression du bulletin s'ouvre dans un nouvel onglet sans en-tête
+ * Authorization : le jeton passe par l'URL et la garde globale
+ * `@ProtectedDocument` le contrôle (motif habituel).
  */
 @Module({
   imports: [ParametresModule],

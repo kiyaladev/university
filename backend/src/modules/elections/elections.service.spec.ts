@@ -22,7 +22,7 @@ describe('Périmètre de lecture des élections', () => {
         count: jest.fn().mockResolvedValue(0),
       },
     };
-    service = new ElectionsService(prisma, {} as any, {} as any);
+    service = new ElectionsService(prisma, {} as any);
   });
 
   it('force les non-gestionnaires à ne lister que les scrutins proclamés', async () => {
@@ -169,21 +169,20 @@ describe('impression du bulletin électoral', () => {
         }),
       },
     };
-    const jwt = { verify: jest.fn().mockResolvedValue({}) };
-    const service = new ElectionsService(prisma, {} as any, jwt as any);
-    return { service, prisma, jwt };
+    const service = new ElectionsService(prisma, {} as any);
+    return { service, prisma };
   }
 
   it.each([StatutElection.BROUILLON, StatutElection.CLOS])(
     'refuse le bulletin lorsque le scrutin est %s',
     async (statut) => {
-      const { service, jwt } = await serviceAvecEtat(statut);
+      const { service } = await serviceAvecEtat(statut);
 
+      // Le jeton n'est plus revérifié ici : la garde globale `@ProtectedDocument`
+      // contrôle la route avant le handler (voir common/protection-impression.spec.ts).
       await expect(
-        service.imprimerBulletin('e-1', 'token-valide', 'https://campus.test', gestionnaire),
+        service.imprimerBulletin('e-1', 'https://campus.test', gestionnaire),
       ).rejects.toThrow(NotFoundException);
-
-      expect(jwt.verify).toHaveBeenCalledWith('token-valide');
     },
   );
 });

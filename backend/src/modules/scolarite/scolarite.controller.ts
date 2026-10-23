@@ -1,15 +1,13 @@
 /** Scolarité LMD — routes API des évaluations, notes et délibérations.
  *  Les états imprimables (PV, bulletins) suivent le même dispositif que les
  *  rapports : ouverts dans un nouvel onglet sans en-tête Authorization, le
- *  jeton est passé en URL et vérifié ici à la main.
+ *  jeton est passé en URL et contrôlé par la garde globale.
  */
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
-import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateDeliberationDto,
   CreateEvaluationDto,
@@ -117,7 +115,6 @@ export class NotesController {
 export class DeliberationsController {
   constructor(
     private readonly service: ScolariteService,
-    private readonly jwt: JwtService,
   ) {}
 
   @Roles(...NOTES)
@@ -158,8 +155,7 @@ export class DeliberationsController {
   @ProtectedDocument(...NOTES)
   @Get(':id/imprimer')
   @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
-  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    verifierJetonImprimable(this.jwt, req);
+  async imprimer(@Param('id') id: string, @Res() res: Response) {
     res.type('html').send(await this.service.imprimerPv(id));
   }
 
@@ -170,10 +166,8 @@ export class DeliberationsController {
   async releve(
     @Param('id') id: string,
     @Param('inscriptionId') inscriptionId: string,
-    @Req() req: Request,
     @Res() res: Response,
   ) {
-    verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimerBulletin(id, inscriptionId));
   }
 }

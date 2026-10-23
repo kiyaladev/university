@@ -12,7 +12,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { PatrimoineService } from './patrimoine.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateCategorieDto,
   CreateEquipementDto,
@@ -81,14 +80,14 @@ export class PatrimoineController {
 
   /**
    * Étiquette A4. Ouverte dans un nouvel onglet : l'en-tête Authorization
-   * n'y arrive pas, le jeton passe en query string et est vérifié à la main
-   * (même motif que les attestations et les certifications de formation).
+   * n'y arrive pas, le jeton passe en query string et est contrôlé par la
+   * garde globale (même motif que les attestations et les certifications).
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get('equipements/:id/imprimer')
   async imprimerEtiquette(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.imprimerEtiquette(id, jetonImprimable(req), base));
+    res.type('html').send(await this.service.imprimerEtiquette(id, base));
   }
 
   @Get('equipements/:id')

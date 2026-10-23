@@ -3,29 +3,12 @@
  * Routes ouvertes (préinscription, impression jeton), registres d'étudiants,
  * tarifs, paiements et cycle de vie des dossiers.
  */
-import {
-  Body,
-  Controller,
-  Delete,
-  ForbiddenException,
-  Get,
-  Ip,
-  NotFoundException,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, NotFoundException, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { t } from '../../common/i18n';
 import { Role } from '@prisma/client';
-import { JwtStrategy } from '../auth/jwt.strategy';
-import { JwtService } from '@nestjs/jwt';
 import { Throttle } from '@nestjs/throttler';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import {
   AnnulerPaiementDto,
@@ -47,7 +30,6 @@ import { whereEtudiants } from './filtres';
 import { FraisService } from './frais.service';
 import { InscriptionService } from './inscription.service';
 import { PaiementsService } from './paiements.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Inscription publique')
 @Controller('inscription-publique')
@@ -202,8 +184,6 @@ export class PaiementsController {
 export class InscriptionsController {
   constructor(
     private readonly service: InscriptionService,
-    private readonly jwt: JwtService,
-    private readonly identite: JwtStrategy,
   ) {}
 
   @Get()
@@ -233,8 +213,9 @@ export class InscriptionsController {
 
   /**
    * Certificat A4 ouvert dans un nouvel onglet : le jeton passe en paramètre
-   * d'URL (pas d'en-tête Authorization possible) et est vérifié ici même,
-   * comme /feuilles-paie/:id/imprimer.
+   * d'URL (pas d'en-tête Authorization possible). La garde globale
+   * `@ProtectedDocument` le contrôle — signature, activité du compte et
+   * révocation des sessions — puis les rôles sont filtrés par le décorateur.
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ETUDIANT)
   @DocumentScope('inscription', {
@@ -242,19 +223,7 @@ export class InscriptionsController {
     [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId',
   })
   @Get(':id/attestation-inscription')
-  async attestation(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    let user: AuthUser;
-    try {
-      // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
-      const payload = this.jwt.verify(jetonImprimable(req) ?? '');
-      user = await this.identite.validate(payload);
-    } catch {
-      throw new UnauthorizedException(t('inscription.jeton_invalide_ou_expire'));
-    }
-    const rolesAutorises: Role[] = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.ETUDIANT];
-    if (!rolesAutorises.includes(user.role)) {
-      throw new ForbiddenException(t('common.forbidden'));
-    }
+  async attestation(@Param('id') id: string, @CurrentUser() user: AuthUser, @Res() res: Response) {
     await this.service.trouverInscription(id, user);
     res.type('html').send(await this.service.attestationInscription(id));
   }

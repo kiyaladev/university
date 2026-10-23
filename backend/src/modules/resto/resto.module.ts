@@ -1,9 +1,9 @@
 /**
  * Module C — Titres resto numériques & canteen wallet.
  *
- * Le JwtModule est déclaré ici (même motif que modules/attestations) : les
- * routes du poste de guichet sont publiques et le jeton, passant par l'URL ou
- * l'en-tête, est vérifié à la main dans le service.
+ * Les routes du poste de guichet sont publiques : le jeton, passant par l'URL
+ * ou l'en-tête, est résolu par la garde globale (`@AuthentificationOptionnelle`)
+ * et le rôle de guichet est contrôlé dans le service.
  */
 import { Module } from '@nestjs/common';
 import { ParametresModule } from '../parametres/parametres.module';

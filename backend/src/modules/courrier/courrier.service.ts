@@ -511,7 +511,7 @@ export class CourrierService {
 
   /**
    * Feuille A4 du courrier. Pas d'en-tête Authorization (window.open) : le jeton
-   * est vérifié manuellement dans le contrôleur avant l'appel à ce service.
+   * est contrôlé par la garde globale avant l'appel à ce service.
    */
   async imprimer(id: string, user: AuthUser): Promise<string> {
     const c = await this.trouver(id, user);

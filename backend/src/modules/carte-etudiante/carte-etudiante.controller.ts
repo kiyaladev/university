@@ -5,7 +5,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { CarteEtudianteService } from './carte-etudiante.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import { Throttle } from '@nestjs/throttler';
 import {
   CreateCarteEtudianteDto,
@@ -103,13 +102,13 @@ export class CarteEtudianteController {
     return this.service.verifierNip(id, dto);
   }
 
-  /** Document A4 : ouvert dans un nouvel onglet, jeton vérifié à la main. */
+  /** Document A4 : ouvert dans un nouvel onglet, jeton contrôlé par la garde globale. */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
   @DocumentScope('carteEtudiante', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, jetonImprimable(req), base);
+    const html = await this.service.imprimer(id, base);
     res.type('html').send(html);
   }
 }

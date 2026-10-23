@@ -6,7 +6,7 @@ describe('Snapshots MESRS', () => {
       $queryRaw: jest.fn().mockResolvedValue([{ count: 7n }]),
       equipementPatrimoine: { findMany: jest.fn() },
     };
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await expect((service as any).obsolescents()).resolves.toBe(7);
 
@@ -27,7 +27,7 @@ describe('Snapshots MESRS', () => {
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
       auditLog: { create: jest.fn() },
     };
-    const service = new RectoratService(prisma as any, {} as any);
+    const service = new RectoratService(prisma as any);
     jest.spyOn(service, 'chiffres').mockResolvedValue({
       effectifTotal: 12,
       tauxReussite: 67.5,
@@ -58,7 +58,7 @@ describe('Snapshots MESRS', () => {
       equipementPatrimoine: { count: jest.fn().mockResolvedValue(0) },
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
     };
-    const service = new RectoratService(prisma as any, {} as any);
+    const service = new RectoratService(prisma as any);
     jest.spyOn(service, 'chiffres').mockResolvedValue({ effectifTotal: 0, tauxReussite: 0 } as any);
     jest.spyOn(service as any, 'patrimoineParCategorie').mockResolvedValue([]);
     jest.spyOn(service as any, 'patrimoineParDepartement').mockResolvedValue([]);

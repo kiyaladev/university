@@ -21,7 +21,7 @@ describe('Mutations après révocation des attestations', () => {
       attestation: { findUnique: jest.fn().mockResolvedValue(avant) },
       $transaction: (fn: any) => fn(tx),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
     await expect(
       service[operation](
         'attestation-1',
@@ -42,7 +42,7 @@ describe('Lecture du registre des attestations', () => {
         count: jest.fn().mockResolvedValue(0),
       },
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     await service.liste({} as any);
 
@@ -74,7 +74,7 @@ describe('Vérification publique des attestations', () => {
       },
       verificationAttestation: { create: jest.fn().mockResolvedValue({ id: 'verification-1' }) },
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
     const resultat = await service.verifier({ ref: 'ATT-1', k: 'secret' } as any);
     expect(resultat.valide).toBe(false);
     expect(resultat.raison).toContain('révoquée');
@@ -102,7 +102,7 @@ describe('Vérification publique des attestations', () => {
         create: jest.fn().mockResolvedValue({ id: verificationId }),
       },
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     const result = await service.verifier({ ref: attestation.numero, k: 'secret-qr' } as any);
 
@@ -145,7 +145,7 @@ describe('Vérification publique des attestations', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: true }) },
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     await expect(
       service.modifier('attestation-1', { motif: 'Correction' } as any, { id: 'user-1' } as any),
@@ -181,7 +181,7 @@ describe('Vérification publique des attestations', () => {
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
       auditLog: { create: jest.fn() },
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     await service.modifier('attestation-1', { motif: 'Nouveau motif' } as any, { id: 'user-1' } as any);
 
@@ -213,7 +213,7 @@ describe('Cohérence année-promotion des attestations', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ id: 'annee-1', libelle: '2026-2027' }) },
       $transaction: (fn: any) => fn(tx),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
     await expect(
       service.creer(
         {
@@ -236,7 +236,7 @@ describe('Cohérence année-promotion des attestations', () => {
       inscription: { findUnique: jest.fn().mockResolvedValue(null) },
       $transaction: jest.fn(),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
     await expect(
       service.creer(
         { etudiantId: 'etudiant-1', inscriptionId: 'absente', type: TypeAttestation.SCOLARITE } as any,
@@ -268,7 +268,7 @@ describe('Cohérence année-promotion des attestations', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       $transaction: (fn: any) => fn(tx),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
     await expect(
       service.modifier(actuel.id, { type: TypeAttestation.SCOLARITE }, { id: 'admin' } as any),
     ).rejects.toBeInstanceOf(ConflictException);
@@ -302,7 +302,7 @@ describe('Cohérence année-promotion des attestations', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue(annee) },
       $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)),
     };
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     await expect(
       service.creer(

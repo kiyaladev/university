@@ -1,9 +1,8 @@
 /** Fiche récapitulative d'un travail encadré — HTML A4 ouvert dans un nouvel
  *  onglet, imprimé via le navigateur. L'enveloppe et le style viennent du
  *  gabarit commun `common/impression` (pageA4). */
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
-import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
 import { chargerEtablissement, echapper, pageA4 } from '../../common/impression';
@@ -69,18 +68,12 @@ export class FicheService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   /** Fiche récapitulative : page ouverte dans un nouvel onglet sans en-tête
-   *  Authorization, le jeton passe par l'URL et est vérifié à la main. */
-  async fiche(id: string, token: string | undefined): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('stages.jeton_invalide_ou_expire'));
-    }
-
+   *  Authorization, le jeton passe par l'URL et est contrôlé par la garde
+   *  globale. */
+  async fiche(id: string): Promise<string> {
     const travail: any = await this.prisma.travailEncadre.findUnique({
       where: { id },
       include: TRAVAIL_FICHE_INCLUDE,

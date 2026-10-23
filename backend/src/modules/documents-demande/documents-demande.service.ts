@@ -796,21 +796,6 @@ export class DocumentsDemandeService extends CrudService {
 
   // ---------------------------------------------------------- impression
 
-  /**
-   * Document imprimable A4 — sans en-tête Authorization, le jeton JWT est
-   * vérifié à la main (même motif que les attestations).
-   */
-  async imprimer(id: string, token: string | undefined, jwt: { verify(t: string): unknown }) {
-    try {
-      await jwt.verify(token ?? '');
-    } catch {
-      const err = new Error('Jeton invalide ou expiré');
-      (err as Error & { status?: number }).status = 401;
-      throw err;
-    }
-    return this.findOne(id);
-  }
-
   // ---------------------------------------------------------- helpers
 
   /**

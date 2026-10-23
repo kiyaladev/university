@@ -5,7 +5,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { AttestationsService } from './attestations.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import { Throttle } from '@nestjs/throttler';
 import {
   AttestationQueryDto,
@@ -74,14 +73,15 @@ export class AttestationsController {
 
   /**
    * Document A4. Ouvert dans un nouvel onglet : l'en-tête Authorization n'y
-   * arrive pas, le jeton passe donc en paramètre d'URL et est vérifié à la main.
+   * arrive pas, le jeton passe donc en paramètre d'URL : la garde globale
+   * `@ProtectedDocument` le contrôle.
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT)
   @DocumentScope('attestation', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, jetonImprimable(req), base, req.ip);
+    const html = await this.service.imprimer(id, base, req.ip);
     res.type('html').send(html);
   }
 

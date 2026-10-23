@@ -6,7 +6,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { BadgesService } from './badges.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   AnnulerBadgeDto,
   BadgeQueryDto,
@@ -23,7 +22,7 @@ import {
  * - Annulation : décision opposable, mêmes rôles.
  * - Rallonge : un badge expiré peut être remis en service tant qu'il n'est
  *   pas annulé (utile pour les intervenants récurrents).
- * - Impression : ouverte dans un nouvel onglet, jeton vérifié à la main.
+ * - Impression : ouverte dans un nouvel onglet, jeton contrôlé par la garde globale.
  */
 @ApiTags('Badges')
 @ApiBearerAuth()
@@ -83,7 +82,7 @@ export class BadgesController {
   @Get(':id/imprimer')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimer(id, jetonImprimable(req), base);
+    const html = await this.service.imprimer(id, base);
     res.type('html').send(html);
   }
 }

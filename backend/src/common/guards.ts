@@ -5,6 +5,7 @@ import { Role } from '@prisma/client';
 import { IS_PUBLIC_KEY, ROLES_KEY, AuthUser, DOCUMENT_ACCESS_KEY } from './decorators';
 import { t } from './i18n';
 import { UTILISATEUR_OPTIONNEL_KEY } from './utilisateur-optionnel';
+import { jetonImprimable } from './jeton-imprimable';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
@@ -16,9 +17,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     const handler = context.getHandler();
     if (this.reflector.get<boolean>(DOCUMENT_ACCESS_KEY, handler)) {
       const request = context.switchToHttp().getRequest();
-      if (!request.headers.authorization && typeof request.query?.token === 'string') {
-        request.headers.authorization = `Bearer ${request.query.token}`;
-      }
+      this.reporterJetonEnUrl(request);
       // Passport vérifie aussi le compte actif et les sessions révoquées.
       return super.canActivate(context);
     }
@@ -43,9 +42,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    */
   private async authentifierOptionnellement(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    if (!request.headers.authorization && typeof request.query?.token === 'string') {
-      request.headers.authorization = `Bearer ${request.query.token}`;
-    }
+    this.reporterJetonEnUrl(request);
     const utilisateurPrecedent = request.user;
     try {
       await super.canActivate(context);
@@ -56,6 +53,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       request.user = utilisateurPrecedent;
     }
     return true;
+  }
+
+  /**
+   * Les documents ouverts dans un nouvel onglet ne peuvent pas porter d'en-tête
+   * `Authorization` : le jeton passe alors en paramètre d'URL. On le recopie
+   * dans l'en-tête pour que Passport — qui ne lit que l'en-tête — le contrôle
+   * comme les autres routes. Un en-tête déjà présent n'est jamais écrasé.
+   */
+  private reporterJetonEnUrl(request: { headers: Record<string, unknown>; query?: unknown }) {
+    if (request.headers.authorization) return;
+    const jeton = jetonImprimable(request as never);
+    if (jeton) request.headers.authorization = `Bearer ${jeton}`;
   }
 }
 

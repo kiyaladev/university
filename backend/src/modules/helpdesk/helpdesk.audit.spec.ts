@@ -163,7 +163,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
       auditLog: { create: jest.fn() },
     };
     const ecritures = transaction(prisma, tx);
-    return { service: new EquipementsService(prisma, {} as never, {} as never), prisma, tx, ...ecritures };
+    return { service: new EquipementsService(prisma, {} as never), prisma, tx, ...ecritures };
   }
 
   it('journalise la création dans la transaction, sans le code QR imprimé', async () => {

@@ -14,14 +14,7 @@
  *   - L'impression d'étiquette est publique + jeton : la fenêtre ouverte
  *     depuis l'écran n'envoie pas l'en-tête Authorization.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, StatutReparation } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { AuthUser } from '../../common/decorators';
@@ -66,7 +59,6 @@ const REPARATION_INCLUDE = {
 export class PatrimoineService {
   constructor(
     private prisma: PrismaService,
-    private jwt: JwtService,
   ) {}
 
   // ============================================================ Catégories
@@ -633,17 +625,11 @@ export class PatrimoineService {
   // ============================================================ Étiquette A4
 
   /**
-   * Étiquette A4 d'un équipement : ouverte dans un nouvel onglet, le jeton
-   * est vérifié à la main (le navigateur n'envoie pas l'Authorization sur
-   * window.open).
+   * Étiquette A4 d'un équipement : ouverte dans un nouvel onglet, le jeton est
+   * contrôlé par la garde globale (le navigateur n'envoie pas l'Authorization
+   * sur window.open).
    */
-  async imprimerEtiquette(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('patrimoine.jeton_invalide_ou_expire'));
-    }
-
+  async imprimerEtiquette(id: string, baseUrl: string): Promise<string> {
     const equipement = await this.trouverEquipement(id);
     const urlInventaire = `${baseUrl.replace(/\/+$/, '')}/#/patrimoine?qr=${encodeURIComponent(equipement.qrCode)}`;
     const qr = await qrDataUrl(urlInventaire, { width: 360 });

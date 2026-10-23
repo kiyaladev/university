@@ -15,7 +15,6 @@ import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../c
 import { QueryDto } from '../../common/dto';
 import { baseApplicative } from '../../common/utils';
 import { FormationsService } from './formations.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateFormationDto,
   FormationQueryDto,
@@ -141,13 +140,14 @@ export class FormationsController {
 
   /**
    * Attestation A4 ouverte dans un nouvel onglet : l'en-tête Authorization n'y
-   * arrive pas, le jeton passe en paramètre d'URL et est vérifié à la main.
+   * arrive pas, le jeton passe en paramètre d'URL — la garde globale
+   * `@ProtectedDocument` le contrôle.
    * :id est ici l'identifiant de l'inscription (dossier FOR-AAAA-NNNNN).
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/certificat')
   async certificat(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    res.type('html').send(await this.service.certificat(id, jetonImprimable(req), base));
+    res.type('html').send(await this.service.certificat(id, base));
   }
 }

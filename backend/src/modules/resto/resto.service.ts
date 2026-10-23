@@ -13,8 +13,9 @@
  *    solde local serait à la fois falsifiable et incohérent d'un poste à
  *    l'autre. Le terminal cantine reste connecté.
  * 2. Le poste de guichet est @Public (l'appareil du cantinier se connecte via
- *    l'interface) : le jeton est vérifié A LA MAIN, comme pour l'impression
- *    des attestations. Seuls CONTROLEUR | ADMIN | SCOLARITE y sont admis.
+ *    l'interface) : le jeton est résolu par la garde globale
+ *    (`@AuthentificationOptionnelle`), le rôle est contrôlé ici. Seuls
+ *    CONTROLEUR | ADMIN | SCOLARITE y sont admis.
  * 3. Espèces (guichet) = crédit immédiat. Mobile Money = Recharge EN_ATTENTE,
  *    créditée à la confirmation : `simuler: true` à la création (pilote) ou
  *    POST /recharges/:id/simuler (caisse). L'argent du Mobile Money ne rentre
@@ -64,7 +65,7 @@ import {
   ValiderRepasDto,
 } from './resto.dto';
 
-/** Postes de guichet admis à valider un repas (jeton vérifié à la main). */
+/** Postes de guichet admis à valider un repas (rôle contrôlé ici). */
 const GUICHET: Role[] = [Role.CONTROLEUR, Role.ADMIN, Role.SCOLARITE];
 
 export const PORTEFEUILLE_INCLUDE = {

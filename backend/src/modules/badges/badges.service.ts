@@ -6,14 +6,7 @@
  * le temps ; le personnel peut la rallonger tant que le badge n'est pas
  * annulé. La révocation (annulation) est définitive : motif obligatoire.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import { Prisma, StatutBadge } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
@@ -59,7 +52,6 @@ export class BadgesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametres: ParametresService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ---------------------------------------------------------------- calcul
@@ -369,12 +361,7 @@ export class BadgesService {
     };
   }
 
-  async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('badges.jeton_invalide_ou_expire'));
-    }
+  async imprimer(id: string, baseUrl: string): Promise<string> {
     const badge = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, badge.id, badge.qrToken);
     const etablissement = await chargerEtablissement(this.prisma);

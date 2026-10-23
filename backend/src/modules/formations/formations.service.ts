@@ -14,15 +14,7 @@
  * Le nombre de places se lit sur les inscriptions CONFIRME : annuler une
  * demande libère la place, confirmer après COMPLET est refusé.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, StatutFormation, StatutInscriptionFormation, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
@@ -106,7 +98,6 @@ export class FormationsService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------- vitrine publique
@@ -679,13 +670,7 @@ export class FormationsService {
    * CONFIRME (payées) donnent droit au document. La vérification du
    * document relève du module attestations : le pied de page le signale.
    */
-  async certificat(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('formations.jeton_invalide_ou_expire'));
-    }
-
+  async certificat(id: string, baseUrl: string): Promise<string> {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut !== StatutInscriptionFormation.CONFIRME) {
       throw new BadRequestException(

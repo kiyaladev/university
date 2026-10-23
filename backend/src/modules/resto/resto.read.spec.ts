@@ -24,7 +24,7 @@ describe('Lecture de la carte restaurant au guichet', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  const preparer = (role: Role = Role.CONTROLEUR) => {
+  const preparer = () => {
     const etudiant = {
       id: 'etudiant-1',
       matricule: 'E-2026-001',
@@ -66,7 +66,7 @@ describe('Lecture de la carte restaurant au guichet', () => {
   });
 
   it('refuse un compte étudiant même si son jeton est valide', async () => {
-    const { prisma, service } = preparer(Role.ETUDIANT);
+    const { prisma, service } = preparer();
 
     await expect(service.carteInfo('E-2026-001', guichet(Role.ETUDIANT))).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.etudiant.findUnique).not.toHaveBeenCalled();

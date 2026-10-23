@@ -6,7 +6,7 @@ describe('Résolution publique des QR du patrimoine', () => {
     const db: any = {
       equipementPatrimoine: { findUnique: jest.fn().mockResolvedValue(equipement) },
     };
-    return { db, service: new PatrimoineService(db, {} as any) };
+    return { db, service: new PatrimoineService(db) };
   };
 
   it('renvoie une projection limitée aux informations utiles et exclut les équipements inactifs', async () => {
@@ -61,7 +61,7 @@ describe('Résolution publique des QR du patrimoine', () => {
     const prisma: any = {
       $transaction: jest.fn((operation: any) => operation(tx)),
     };
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     const maj = await service.regenererQr('eq-1', { id: 'admin-1' } as any);
 
@@ -91,7 +91,7 @@ describe('Tableau de bord patrimoine par année académique', () => {
       departement: { findMany: jest.fn().mockResolvedValue([]) },
       $queryRaw: jest.fn().mockResolvedValue([{ count: 0n }]),
     };
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await service.dashboard('annee-1');
 
@@ -112,7 +112,7 @@ describe('Tableau de bord patrimoine par année académique', () => {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue(null) },
       equipementPatrimoine: { aggregate: jest.fn() },
     };
-    const service = new PatrimoineService(prisma, {} as any);
+    const service = new PatrimoineService(prisma);
 
     await expect(service.dashboard('inconnue')).rejects.toThrow(NotFoundException);
     expect(prisma.equipementPatrimoine.aggregate).not.toHaveBeenCalled();

@@ -6,7 +6,6 @@ import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Public, Roles, ProtectedDocument } from '../../common/decorators';
 import { baseApplicative } from '../../common/utils';
 import { EquipementsService, TicketsService } from './helpdesk.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreateEquipementDto,
   DeclarerTicketDto,
@@ -43,13 +42,13 @@ export class EquipementsController {
   /**
    * Feuille A4 d'étiquettes. Ouverte dans un nouvel onglet : l'en-tête
    * Authorization n'y arrive pas, le jeton passe en paramètre d'URL et est
-   * vérifié à la main (même motif que l'impression des attestations).
+   * contrôlé par la garde globale (même motif que l'impression des attestations).
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer-qr')
   async imprimerQr(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
-    const html = await this.service.imprimerQr(id, jetonImprimable(req), base);
+    const html = await this.service.imprimerQr(id, base);
     res.type('html').send(html);
   }
 

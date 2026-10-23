@@ -1,7 +1,6 @@
 import { Body, Controller, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
 import {
@@ -12,7 +11,6 @@ import {
   UpdateCourrierDto,
 } from './courrier.dto';
 import { CourrierService } from './courrier.service';
-import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
 @ApiTags('Courrier')
 @ApiBearerAuth()
@@ -21,7 +19,6 @@ import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 export class CourrierController {
   constructor(
     private readonly service: CourrierService,
-    private readonly jwt: JwtService,
   ) {}
 
   @Get()
@@ -77,14 +74,13 @@ export class CourrierController {
 
   /**
    * Feuille A4 — ouverte dans un nouvel onglet ; l'en-tête Authorization
-   * n'y arrive pas, le jeton passe donc en query string et est vérifié ici.
+   * n'y arrive pas, le jeton passe donc en query string : la garde globale
+   * `@ProtectedDocument` le contrôle.
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT)
   @Get(':id/imprimer')
   async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
     const user = req.user as AuthUser;
-    verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimer(id, user));
   }
 }

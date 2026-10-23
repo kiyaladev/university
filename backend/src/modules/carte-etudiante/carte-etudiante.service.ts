@@ -12,14 +12,7 @@
  * vérification (POST /:id/verifier-nip) reste interne pour les partenaires
  * (contrôle d'identité au resto, accès cité, etc.).
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import * as bcrypt from 'bcryptjs';
 import { Prisma, StatutAttestation } from '@prisma/client';
@@ -64,7 +57,6 @@ export class CarteEtudianteService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly parametres: ParametresService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------------ consultation
@@ -319,13 +311,7 @@ export class CarteEtudianteService {
    * Document A4 imprimable. Ouvert dans un nouvel onglet : l'en-tête
    * Authorization n'y arrive pas, le jeton passe en paramètre d'URL.
    */
-  async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('carte-etudiante.jeton_invalide_ou_expire'));
-    }
-
+  async imprimer(id: string, baseUrl: string): Promise<string> {
     const carte = await this.trouver(id);
     const urlVerification = this.urlVerification(baseUrl, carte.id, carte.qrToken);
     const etablissement = await chargerEtablissement(this.prisma);

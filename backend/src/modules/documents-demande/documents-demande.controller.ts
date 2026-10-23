@@ -1,12 +1,10 @@
-import { Body, Controller, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
-import type { Request, Response } from 'express';
+import type { Response } from 'express';
 import { CurrentUser, Roles, ProtectedDocument, DocumentScope } from '../../common/decorators';
 import type { AuthUser } from '../../common/decorators';
 import { DocumentsDemandeService } from './documents-demande.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
 import {
   CreerDemandeDto,
   CreerTarifDto,
@@ -31,7 +29,6 @@ const ROLES_GESTION = [Role.ADMIN, Role.SCOLARITE] as const;
 export class DocumentsDemandeController {
   constructor(
     private readonly service: DocumentsDemandeService,
-    private readonly jwt: JwtService,
   ) {}
 
   // ---------- lecture : vues étudiant
@@ -129,18 +126,12 @@ export class DocumentsDemandeController {
     return this.service.rejeter(id, dto, user);
   }
 
-  // ---------- impression : route publique à jeton vérifié manuellement
+  // ---------- impression : le jeton est contrôlé par la garde globale
 
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
   @DocumentScope('demandeDocument', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
-  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
-    try {
-      await this.jwt.verify(jetonImprimable(req) ?? '');
-    } catch {
-      res.status(401).send('Jeton invalide ou expiré');
-      return;
-    }
+  async imprimer(@Param('id') id: string, @Res() res: Response) {
     res.type('html').send(await this.service.documentImprimable(id));
   }
 }

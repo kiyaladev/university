@@ -35,8 +35,7 @@
  *   • Patrimoine obsolescence : compte les EquipementPatrimoine où l'âge
  *     depuis dateAcquisition dépasse obsolescenceMois (mois glissants).
  */
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   Prisma,
   SessionDeliberation,
@@ -59,7 +58,6 @@ import { toMontant } from '../../common/finances/montant';
 export class RectoratService {
   constructor(
     private prisma: PrismaService,
-    private jwt: JwtService,
   ) {}
 
   // ---------------------------------------------------------- agrégats live
@@ -389,13 +387,7 @@ export class RectoratService {
    * nouvel onglet, le jeton passe en query string comme pour les états
    * d'attestation.
    */
-  async imprimerBilan(id: string, token: string | undefined, _baseUrl: string): Promise<string> {
-    try {
-      this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('rectorat.jeton_invalide_ou_expire'));
-    }
-
+  async imprimerBilan(id: string, _baseUrl: string): Promise<string> {
     const snapshot = await this.trouverBilan(id);
     const d = snapshot.donnees as any;
     const etablissement = await chargerEtablissement(this.prisma);

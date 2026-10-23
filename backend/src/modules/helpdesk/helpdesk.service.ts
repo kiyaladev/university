@@ -6,14 +6,7 @@
  * l'envers (par-code) rend l'usurpation d'intitulé impossible — un QR forgé
  * ne correspond à aucun équipement.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutTicket } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
 import { AuthUser } from '../../common/decorators';
@@ -117,7 +110,6 @@ function instantaneTicket(ticket: any) {
 export class EquipementsService extends CrudService {
   constructor(
     prisma: PrismaService,
-    private jwt: JwtService,
     private parametres: ParametresService,
   ) {
     super(prisma, 'equipementCampus', {
@@ -236,15 +228,9 @@ export class EquipementsService extends CrudService {
   /**
    * Feuille A4 d'étiquettes autocollantes (4 QR identiques) : ouverte dans un
    * nouvel onglet sans en-tête Authorization, le jeton passe par l'URL et est
-   * vérifié à la main (même motif que l'impression des attestations).
+   * contrôlé par la garde globale (même motif que l'impression des attestations).
    */
-  async imprimerQr(id: string, token: string | undefined, baseUrl: string): Promise<string> {
-    try {
-      await this.jwt.verify(token ?? '');
-    } catch {
-      throw new UnauthorizedException(t('helpdesk.jeton_invalide_ou_expire'));
-    }
-
+  async imprimerQr(id: string, baseUrl: string): Promise<string> {
     // `findOne` intentionally omits codeQr from authenticated API responses;
     // printing is the one internal path that needs the stored code itself.
     const equipement = await this.prisma.equipementCampus.findUnique({

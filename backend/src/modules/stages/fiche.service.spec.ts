@@ -22,10 +22,9 @@ describe('FicheService — projection des relations', () => {
     const service = new FicheService(
       { travailEncadre: { findUnique } } as any,
       { valeur: jest.fn().mockResolvedValue('Université') } as any,
-      { verify: jest.fn().mockReturnValue({}) } as any,
     );
 
-    await service.fiche('travail-1', 'token-valide');
+    await service.fiche('travail-1');
 
     const include = findUnique.mock.calls[0][0].include;
     expect(include.etudiant.select).toEqual({ id: true, matricule: true, nom: true, prenom: true });
