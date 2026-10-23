@@ -27,6 +27,7 @@ function preparer(connues: any[], agregat: any[]) {
   };
   const prisma: any = {
     documentDepot: { findMany: jest.fn().mockResolvedValue([]) },
+    auditLog: { create: jest.fn().mockResolvedValue({}) },
     suspicionPlagiat: {
       findMany: jest.fn().mockResolvedValueOnce(connues).mockResolvedValueOnce(agregat),
     },
