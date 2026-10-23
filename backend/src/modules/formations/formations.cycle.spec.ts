@@ -49,9 +49,7 @@ function formation(statut: StatutFormation, surcharge: Record<string, unknown> =
 function preparer(statut: StatutFormation = StatutFormation.BROUILLON, surcharge: Record<string, unknown> = {}) {
   const courante = formation(statut, surcharge);
   const tx: any = {
-    $queryRaw: jest.fn().mockResolvedValue([
-      { id: courante.id, statut: courante.statut, capacite: courante.capacite },
-    ]),
+    $queryRaw: jest.fn().mockResolvedValue([{ id: courante.id, statut: courante.statut, capacite: courante.capacite }]),
     formation: {
       findUnique: jest.fn().mockResolvedValue(courante),
       create: jest.fn().mockResolvedValue(courante),
@@ -68,7 +66,9 @@ function preparer(statut: StatutFormation = StatutFormation.BROUILLON, surcharge
       groupBy: jest.fn().mockResolvedValue([]),
     },
     paiement: {
-      create: jest.fn().mockResolvedValue({ id: 'pay-1', reference: 'PAY-F-2026-00001', montant: 150000, devise: 'GNF' }),
+      create: jest
+        .fn()
+        .mockResolvedValue({ id: 'pay-1', reference: 'PAY-F-2026-00001', montant: 150000, devise: 'GNF' }),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       findMany: jest.fn().mockResolvedValue([]),
     },
@@ -91,7 +91,7 @@ function preparer(statut: StatutFormation = StatutFormation.BROUILLON, surcharge
     $transaction: jest.fn((work) => work(tx)),
     $queryRaw: jest.fn().mockResolvedValue([]),
   };
-  return { prisma, tx, service: new FormationsService(prisma, {} as any, JWT) };
+  return { prisma, tx, service: new FormationsService(prisma, {} as any) };
 }
 
 describe('FormationsService — cycle de vie du catalogue', () => {
@@ -198,9 +198,7 @@ describe('FormationsService — figeage après confirmation', () => {
     const { tx, service } = preparer(StatutFormation.PUBLIE);
     tx.inscriptionFormation.count.mockResolvedValue(1);
 
-    await expect(service.modifier('formation-1', { prix: 1 } as any, USER)).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(service.modifier('formation-1', { prix: 1 } as any, USER)).rejects.toBeInstanceOf(ConflictException);
 
     expect(tx.formation.update).not.toHaveBeenCalled();
   });
@@ -272,9 +270,7 @@ describe('FormationsService — inscription publique', () => {
     const { prisma, service } = preparer(StatutFormation.PUBLIE, { capacite: 1 });
     prisma.inscriptionFormation.count.mockResolvedValue(1);
 
-    await expect(service.inscriptionPublique('formation-1', DEMANDE as any)).rejects.toBeInstanceOf(
-      ConflictException,
-    );
+    await expect(service.inscriptionPublique('formation-1', DEMANDE as any)).rejects.toBeInstanceOf(ConflictException);
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
@@ -449,16 +445,8 @@ describe('FormationsService — annulation d’une demande', () => {
 });
 
 describe('FormationsService — confirmation imprimée', () => {
-  it('refuse d’imprimer sans jeton valide', async () => {
-    const { prisma, service } = preparer();
-    const jwt = { verify: jest.fn(() => { throw new Error('jeton invalide'); }) };
-    const serviceSansJeton = new FormationsService(prisma, {} as any, jwt as any);
-
-    await expect(serviceSansJeton.certificat('ins-1', 'jeton-bidon', 'http://localhost')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
-  });
-
+  // Le jeton du nouvel onglet est vérifié par la garde globale (voir
+  // common/protection-impression.spec.ts), plus par le service.
   it('refuse d’imprimer une demande non confirmée', async () => {
     const { prisma, service } = preparer();
     prisma.inscriptionFormation.findUnique.mockResolvedValue({
@@ -469,9 +457,7 @@ describe('FormationsService — confirmation imprimée', () => {
       paiement: { id: 'pay-1', statut: StatutPaiement.REUSSI },
     });
 
-    await expect(service.certificat('ins-1', 'jeton', 'http://localhost')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    await expect(service.certificat('ins-1', 'http://localhost')).rejects.toBeInstanceOf(BadRequestException);
   });
 });
 
@@ -479,8 +465,20 @@ describe('FormationsService — tableau de bord', () => {
   it('agrège inscrits, payants et recette par formation puis au total', async () => {
     const { prisma } = preparer(StatutFormation.PUBLIE, { prix: new Prisma.Decimal('150000.00') });
     prisma.formation.findMany.mockResolvedValue([
-      { id: 'formation-1', titre: 'Comptabilité générale', prix: new Prisma.Decimal('150000.00'), devise: 'GNF', statut: StatutFormation.PUBLIE },
-      { id: 'formation-2', titre: 'Audit', prix: new Prisma.Decimal('50000.00'), devise: 'GNF', statut: StatutFormation.BROUILLON },
+      {
+        id: 'formation-1',
+        titre: 'Comptabilité générale',
+        prix: new Prisma.Decimal('150000.00'),
+        devise: 'GNF',
+        statut: StatutFormation.PUBLIE,
+      },
+      {
+        id: 'formation-2',
+        titre: 'Audit',
+        prix: new Prisma.Decimal('50000.00'),
+        devise: 'GNF',
+        statut: StatutFormation.BROUILLON,
+      },
     ]);
     prisma.inscriptionFormation.groupBy.mockResolvedValue([
       { formationId: 'formation-1', _count: { _all: 7 } },
@@ -489,7 +487,7 @@ describe('FormationsService — tableau de bord', () => {
     prisma.$queryRaw.mockResolvedValue([
       { formationId: 'formation-1', nbPayes: 5n, recette: new Prisma.Decimal('750000.00') },
     ]);
-    const service = new FormationsService(prisma, {} as any, JWT);
+    const service = new FormationsService(prisma, {} as any);
 
     const tableau = await service.dashboard();
 

@@ -62,7 +62,7 @@ function preparer(carteCourante: Record<string, unknown> | null = carte()) {
     auditLog: { create: jest.fn().mockResolvedValue({}) },
     $transaction: jest.fn((work) => work(tx)),
   };
-  return { prisma, tx, service: new CarteEtudianteService(prisma, {} as any, JWT) };
+  return { prisma, tx, service: new CarteEtudianteService(prisma, {} as any) };
 }
 
 describe('CarteEtudianteService — émission', () => {

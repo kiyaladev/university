@@ -55,7 +55,7 @@ describe('PlagiatService — recalcul complet par lots', () => {
     prisma.documentDepot.findMany.mockResolvedValue(docs);
     const service = new PlagiatService(prisma);
 
-    const bilan = await service.recalculerComplet();
+    const bilan = await service.recalculerComplet({ id: 'admin-1' } as any);
 
     expect(bilan).toEqual({ creees: 2, misesAJour: 1, ignorees: 0 });
     // Une seule requête pour toutes les suspicions qui portent le même score.
@@ -74,7 +74,7 @@ describe('PlagiatService — recalcul complet par lots', () => {
     prisma.documentDepot.findMany.mockResolvedValue(docs);
     const service = new PlagiatService(prisma);
 
-    const bilan = await service.recalculerComplet();
+    const bilan = await service.recalculerComplet({ id: 'admin-1' } as any);
 
     expect(bilan.creees).toBe(3);
     expect(tx.suspicionPlagiat.createMany).toHaveBeenCalledTimes(1);
@@ -100,7 +100,7 @@ describe('PlagiatService — recalcul complet par lots', () => {
     prisma.documentDepot.findMany.mockResolvedValue(docs);
     const service = new PlagiatService(prisma);
 
-    await service.recalculerComplet();
+    await service.recalculerComplet({ id: 'admin-1' } as any);
 
     // Deux valeurs distinctes d’indice, donc deux requêtes groupées.
     expect(tx.documentDepot.updateMany).toHaveBeenCalledTimes(2);
@@ -140,7 +140,7 @@ describe('PlagiatService — recalcul complet par lots', () => {
     prisma.documentDepot.findMany.mockResolvedValue(docs);
     const service = new PlagiatService(prisma);
 
-    const bilan = await service.recalculerComplet();
+    const bilan = await service.recalculerComplet({ id: 'admin-1' } as any);
 
     expect(bilan.misesAJour).toBe(528);
     expect(tx.suspicionPlagiat.updateMany).toHaveBeenCalledTimes(2);

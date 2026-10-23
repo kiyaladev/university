@@ -68,7 +68,7 @@ function fairePrisma(surcharge: Record<string, any> = {}) {
 describe('RectoratService — effectif', () => {
   it('compte les inscriptions de l’année en excluant brouillons et annulées', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -83,7 +83,7 @@ describe('RectoratService — effectif', () => {
   it('renvoie des chiffres à zéro quand aucune année académique n’est active', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.anneeAcademique.findFirst.mockResolvedValue(null);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -111,7 +111,7 @@ describe('RectoratService — effectif', () => {
     delegates.promotion.findMany.mockResolvedValue([
       { id: 'promo-1', nom: 'Licence 1', niveau: 'L1', filiere: { id: 'f-1', code: 'MATH', nom: 'Maths' } },
     ]);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -137,7 +137,7 @@ describe('RectoratService — effectif', () => {
 describe('RectoratService — taux de réussite', () => {
   it('ne retient que les délibérations validées de la session normale', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -153,7 +153,7 @@ describe('RectoratService — taux de réussite', () => {
 
   it('annonce zéro plutôt qu’un taux inventé quand aucune délibération n’est validée', async () => {
     const { prisma } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -163,7 +163,7 @@ describe('RectoratService — taux de réussite', () => {
   it('moyenne les taux des délibérations validées', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.deliberation.findMany.mockResolvedValue([{ tauxReussite: 60 }, { tauxReussite: 75 }]);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -174,7 +174,7 @@ describe('RectoratService — taux de réussite', () => {
 describe('RectoratService — masse salariale', () => {
   it('n’annonce que les feuilles validées ou payées', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -187,7 +187,7 @@ describe('RectoratService — masse salariale', () => {
   it('annonce le total des nets au centième', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.feuillePaie.aggregate.mockResolvedValue({ _sum: { montantTotal: 1234.567 } });
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -196,7 +196,7 @@ describe('RectoratService — masse salariale', () => {
 
   it('précise qu’aucune feuille validée n’a été trouvée', async () => {
     const { prisma } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -206,7 +206,7 @@ describe('RectoratService — masse salariale', () => {
   // Régression : la borne était une promesse étalée, donc ignorée.
   it('borne la masse salariale au mois demandé', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -223,7 +223,7 @@ describe('RectoratService — masse salariale', () => {
   it('convertit une somme numeric en nombre et non en chaîne', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.feuillePaie.aggregate.mockResolvedValue({ _sum: { montantTotal: new Prisma.Decimal('1234.57') } });
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -234,7 +234,7 @@ describe('RectoratService — masse salariale', () => {
   it('annonce zéro quand aucune feuille n’a de montant cumulé', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.feuillePaie.aggregate.mockResolvedValue({ _sum: { montantTotal: null } });
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -245,7 +245,7 @@ describe('RectoratService — masse salariale', () => {
 describe('RectoratService — indicateurs de bruit de fond', () => {
   it('compte les réclamations non closes', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -256,7 +256,7 @@ describe('RectoratService — indicateurs de bruit de fond', () => {
 
   it('compte les enseignants payés et les vacataires séparément', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const chiffres = await service.chiffres();
 
@@ -275,7 +275,7 @@ describe('RectoratService — indicateurs de bruit de fond', () => {
 
   it('compte les incidents helpdesk des dernières 24 heures', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.chiffres();
 
@@ -293,7 +293,7 @@ describe('RectoratService — tableau de bord rapide', () => {
     delegates.inscription.count.mockResolvedValue(120);
     delegates.reclamation.count.mockResolvedValue(4);
     delegates.ticketSupport.count.mockResolvedValue(2);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const tableau = await service.dashboardRapide();
 
@@ -309,7 +309,7 @@ describe('RectoratService — tableau de bord rapide', () => {
   it('n’annonce aucune année active quand le registre est vierge', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.anneeAcademique.findFirst.mockResolvedValue(null);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     const tableau = await service.dashboardRapide();
 
@@ -321,21 +321,21 @@ describe('RectoratService — snapshots MESRS', () => {
   it('refuse de générer un bilan pour une année inconnue', async () => {
     const { prisma, delegates } = fairePrisma();
     delegates.anneeAcademique.findUnique.mockResolvedValue(null);
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await expect(service.genererBilan('annee-inconnue', USER)).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('signale un snapshot introuvable', async () => {
     const { prisma } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await expect(service.trouverBilan('bilan-x')).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it('liste les snapshots du plus récent au plus ancien, bornés à 60', async () => {
     const { prisma, delegates } = fairePrisma();
-    const service = new RectoratService(prisma, {} as any);
+    const service = new RectoratService(prisma);
 
     await service.bilans('annee-1');
 

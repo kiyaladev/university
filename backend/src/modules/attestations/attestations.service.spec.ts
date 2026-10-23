@@ -202,7 +202,7 @@ describe('Vérification publique des attestations', () => {
       statut: StatutAttestation.EMIS,
       type: TypeAttestation.SCOLARITE,
     });
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     const resultat = await service.verifier({ ref: 'ATT-2026-00001', k: 'jeton-faux' } as any, '10.0.0.1');
 
@@ -226,7 +226,7 @@ describe('Vérification publique des attestations', () => {
       type: TypeAttestation.SCOLARITE,
     });
     prisma.auditLog.create.mockRejectedValue(new Error('journal indisponible'));
-    const service = new AttestationsService(prisma as any, {} as any, {} as any);
+    const service = new AttestationsService(prisma as any, {} as any);
 
     await expect(service.verifier({ ref: 'ATT-2026-00001', k: 'jeton-faux' } as any)).rejects.toThrow(
       'journal indisponible',

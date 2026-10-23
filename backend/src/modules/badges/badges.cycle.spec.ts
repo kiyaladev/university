@@ -65,7 +65,7 @@ function preparer(badgeCourant: Record<string, unknown> | null = badge()) {
     auditLog: { create: jest.fn().mockResolvedValue({}) },
     $transaction: jest.fn((work) => work(tx)),
   };
-  return { prisma, tx, service: new BadgesService(prisma, {} as any, JWT) };
+  return { prisma, tx, service: new BadgesService(prisma, {} as any) };
 }
 
 describe('BadgesService — émission', () => {
