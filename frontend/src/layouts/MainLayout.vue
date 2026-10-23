@@ -361,7 +361,7 @@ function preparerInstallation() {
   window.addEventListener('appinstalled', () => {
     installable.value = false;
     invite = null;
-    $q.notify({ type: 'positive', message: 'UniPrésence est installée sur cet appareil' });
+    $q.notify({ type: 'positive', message: t('layout.installed', { name: t('common.name') }) });
   });
 }
 
@@ -371,8 +371,8 @@ async function installer() {
   const { outcome } = await invite.userChoice;
   if (outcome !== 'accepted') {
     $q.notify({
-      message: 'Installation reportée',
-      caption: 'Vous pourrez la relancer depuis ce menu.',
+      message: t('layout.installDeferred'),
+      caption: t('layout.installDeferredHint'),
       icon: 'info',
     });
   }

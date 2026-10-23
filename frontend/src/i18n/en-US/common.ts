@@ -210,6 +210,13 @@ export default {
     unexpected: 'Unexpected server error (code {statut}).',
     tooManyLogins: 'Too many sign-in attempts. Wait fifteen minutes before trying again.',
     tooManyRequests: 'Too many requests sent. Wait a minute.',
+    sessionExpired: 'Session expired: sign in again.',
+  },
+  impression: {
+    nothingToPrint: 'Nothing to print.',
+    generationFailed: 'The document could not be generated.',
+    generationFailedMany: 'The documents could not be generated.',
+    exportFailed: 'The export could not be generated.',
   },
   units: {
     hours: '{n} h',
