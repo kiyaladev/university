@@ -6,6 +6,5 @@ export default {
   "documentsToProcess": "Documents to process",
   "documentsToDeliver": "Documents ready for collection",
   "empty": "No paid registrations awaiting validation",
-  "refresh": "Refresh",
   "error": "Some records could not be loaded"
 };

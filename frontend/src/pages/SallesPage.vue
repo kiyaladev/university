@@ -36,7 +36,7 @@
           outlined
           dense
           clearable
-          :label="$t('salles.filters.building')"
+          :label="$t('common.fields.building')"
         />
         <q-select
           v-model="filtres.etat"
@@ -46,7 +46,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('salles.filters.state')"
+          :label="$t('common.fields.state')"
         />
         <q-select
           v-if="peutGerer"
@@ -137,7 +137,7 @@
               :aria-label="$t('salles.roomActions.editAria')"
               @click="ouvrir(s)"
             >
-              <q-tooltip>{{ $t('salles.roomActions.editTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutSupprimer"
@@ -149,7 +149,7 @@
               :aria-label="$t('salles.roomActions.deleteAria')"
               @click="supprimer(s)"
             >
-              <q-tooltip>{{ $t('salles.roomActions.deleteTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
         </q-card>
@@ -170,7 +170,7 @@
             flat
             no-caps
             icon="refresh"
-            :label="$t('salles.emptyState.resetFilters')"
+            :label="$t('common.actions.reset_filters')"
             @click="reinitialiser"
           />
         </template>
@@ -206,7 +206,7 @@
               flat
               no-caps
               icon="refresh"
-              :label="$t('salles.emptyState.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
           </template>
@@ -263,7 +263,7 @@
             :aria-label="$t('salles.roomActions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>{{ $t('salles.roomActions.editTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutSupprimer"
@@ -275,7 +275,7 @@
             :aria-label="$t('salles.roomActions.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>{{ $t('salles.roomActions.deleteTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -296,7 +296,7 @@
       v-model="dialogOuvert"
       :titre="salleEditee ? $t('salles.dialog.editTitle') : $t('salles.dialog.newTitle')"
       taille="s"
-      :libelle-valider="$t('salles.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrer"
     >
@@ -307,7 +307,7 @@
             v-model="form.code"
             outlined
             dense
-            :label="$t('salles.dialog.codeLabel')"
+            :label="$t('common.fields.codeRequired')"
             :hint="$t('salles.dialog.codeHint')"
             :rules="[(v: string) => !!(v ?? '').trim() || $t('salles.dialog.codeRequired')]"
           />
@@ -317,14 +317,14 @@
             v-model="form.nom"
             outlined
             dense
-            :label="$t('salles.dialog.nameLabel')"
+            :label="$t('common.fields.nameRequired')"
             :rules="[(v: string) => !!(v ?? '').trim() || $t('salles.dialog.nameRequired')]"
           />
         </div>
       </div>
       <div class="row q-col-gutter-md">
         <div class="col-12 col-sm-7">
-          <q-input v-model="form.batiment" outlined dense :label="$t('salles.dialog.buildingLabel')" />
+          <q-input v-model="form.batiment" outlined dense :label="$t('common.fields.building')" />
         </div>
         <div class="col-5">
           <q-input
@@ -333,7 +333,7 @@
             min="0"
             outlined
             dense
-            :label="$t('salles.dialog.capacityLabel')"
+            :label="$t('common.fields.capacity')"
           />
         </div>
       </div>
@@ -516,10 +516,10 @@ const chips = computed(() => {
 });
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('salles.table.columns.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('salles.table.columns.name'), field: 'nom', align: 'left', sortable: true },
-  { name: 'batiment', label: t('salles.table.columns.building'), field: (r: Salle) => r.batiment || '—', align: 'left' },
-  { name: 'capacite', label: t('salles.table.columns.capacity'), field: 'capacite', align: 'right', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
+  { name: 'batiment', label: t('common.fields.building'), field: (r: Salle) => r.batiment || '—', align: 'left' },
+  { name: 'capacite', label: t('common.fields.capacity'), field: 'capacite', align: 'right', sortable: true },
   {
     name: 'repere',
     label: t('salles.table.columns.gpsMark'),
@@ -527,8 +527,8 @@ const colonnes = computed<QTableColumn[]>(() => [
     align: 'left',
   },
   { name: 'qr', label: t('salles.table.columns.qrToken'), field: 'qrToken', align: 'left' },
-  { name: 'etat', label: t('salles.table.columns.state'), field: 'actif', align: 'left' },
-  { name: 'actions', label: t('salles.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'etat', label: t('common.fields.state'), field: 'actif', align: 'left' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 /** Dessine le QR de la salle dans sa carte. */
@@ -617,7 +617,7 @@ function supprimer(s: Salle) {
   void supprimerAvecConfirmation(`/salles/${s.id}`, s.code, sal.recharger, {
     titre: t('salles.confirmDelete.title'),
     message: t('salles.confirmDelete.message', { code: s.code, name: s.nom }),
-    ok: t('salles.confirmDelete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('salles.messages.deleted'),
   });
 }

@@ -80,7 +80,7 @@
                 :aria-label="$t('structure.ariaLabels.editAnnee')"
                 @click="ouvrirAnnee(p.row)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -92,7 +92,7 @@
                 :aria-label="$t('structure.ariaLabels.deleteAnnee')"
                 @click="supprimer('annees', p.row.libelle, p.row.id)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -168,7 +168,7 @@
                 :aria-label="$t('structure.ariaLabels.editDepartement')"
                 @click="ouvrirDepartement(p.row)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -180,7 +180,7 @@
                 :aria-label="$t('structure.ariaLabels.deleteDepartement')"
                 @click="supprimer('departements', p.row.nom, p.row.id)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -204,7 +204,7 @@
               clearable
               emit-value
               map-options
-              :label="$t('structure.filters.departement')"
+              :label="$t('common.fields.department')"
             />
           </template>
           <template #actions>
@@ -266,7 +266,7 @@
                 :aria-label="$t('structure.ariaLabels.editFiliere')"
                 @click="ouvrirFiliere(p.row)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -278,7 +278,7 @@
                 :aria-label="$t('structure.ariaLabels.deleteFiliere')"
                 @click="supprimer('filieres', p.row.nom, p.row.id)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -302,7 +302,7 @@
               clearable
               emit-value
               map-options
-              :label="$t('structure.filters.filiere')"
+              :label="$t('common.fields.filiere')"
             />
             <q-select
               v-model="filtres.promotions.anneeId"
@@ -312,7 +312,7 @@
               clearable
               emit-value
               map-options
-              :label="$t('structure.filters.annee')"
+              :label="$t('common.fields.academicYear')"
             />
             <q-select
               v-model="filtres.promotions.niveau"
@@ -320,7 +320,7 @@
               outlined
               dense
               clearable
-              :label="$t('structure.filters.niveau')"
+              :label="$t('common.fields.level')"
             />
           </template>
           <template #actions>
@@ -382,7 +382,7 @@
                 :aria-label="$t('structure.ariaLabels.editPromotion')"
                 @click="ouvrirPromotion(p.row)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn
                 v-if="peutSupprimer"
@@ -394,7 +394,7 @@
                 :aria-label="$t('structure.ariaLabels.deletePromotion')"
                 @click="supprimer('promotions', p.row.nom, p.row.id)"
               >
-                <q-tooltip>{{ $t('structure.tooltips.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-td>
           </template>
@@ -407,7 +407,7 @@
       v-model="dialogAnnee"
       :titre="anneeEditee ? $t('structure.dialogs.annee.editTitle') : $t('structure.dialogs.annee.newTitle')"
       taille="s"
-      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrerAnnee"
     >
@@ -415,16 +415,16 @@
         v-model="formAnnee.libelle"
         outlined
         dense
-        :label="$t('structure.dialogs.annee.libelle')"
+        :label="$t('common.fields.labelRequired')"
         :hint="$t('structure.dialogs.annee.libelleHint')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.annee.libelleError')]"
       />
       <div class="row q-col-gutter-md">
         <div class="col-6">
-          <champ-date v-model="formAnnee.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
+          <champ-date v-model="formAnnee.dateDebut" :label="$t('common.fields.start')" />
         </div>
         <div class="col-6">
-          <champ-date v-model="formAnnee.dateFin" :label="$t('structure.dialogs.annee.fin')" />
+          <champ-date v-model="formAnnee.dateFin" :label="$t('common.fields.end')" />
         </div>
       </div>
       <q-toggle v-model="formAnnee.active" :label="$t('structure.dialogs.annee.active')" />
@@ -438,7 +438,7 @@
       v-model="dialogDepartement"
       :titre="departementEdite ? $t('structure.dialogs.departement.editTitle') : $t('structure.dialogs.departement.newTitle')"
       taille="s"
-      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrerDepartement"
     >
@@ -446,7 +446,7 @@
         v-model="formDepartement.code"
         outlined
         dense
-        :label="$t('structure.dialogs.departement.code')"
+        :label="$t('common.fields.codeRequired')"
         :hint="$t('structure.dialogs.departement.codeHint')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.departement.codeError')]"
       />
@@ -454,7 +454,7 @@
         v-model="formDepartement.nom"
         outlined
         dense
-        :label="$t('structure.dialogs.departement.nom')"
+        :label="$t('common.fields.nameRequired')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.departement.nomError')]"
       />
       <q-input
@@ -470,7 +470,7 @@
       v-model="dialogFiliere"
       :titre="filiereEditee ? $t('structure.dialogs.filiere.editTitle') : $t('structure.dialogs.filiere.newTitle')"
       taille="s"
-      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrerFiliere"
     >
@@ -478,14 +478,14 @@
         v-model="formFiliere.code"
         outlined
         dense
-        :label="$t('structure.dialogs.filiere.code')"
+        :label="$t('common.fields.codeRequired')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.filiere.codeError')]"
       />
       <q-input
         v-model="formFiliere.nom"
         outlined
         dense
-        :label="$t('structure.dialogs.filiere.nom')"
+        :label="$t('common.fields.nameRequired')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.filiere.nomError')]"
       />
       <q-select
@@ -505,7 +505,7 @@
       v-model="dialogPromotion"
       :titre="promotionEditee ? $t('structure.dialogs.promotion.editTitle') : $t('structure.dialogs.promotion.newTitle')"
       taille="s"
-      :libelle-valider="$t('structure.dialogs.actions.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrerPromotion"
     >
@@ -513,7 +513,7 @@
         v-model="formPromotion.nom"
         outlined
         dense
-        :label="$t('structure.dialogs.promotion.nom')"
+        :label="$t('common.fields.nameRequired')"
         :hint="$t('structure.dialogs.promotion.nomHint')"
         :rules="[(v: string) => !!(v ?? '').trim() || $t('structure.dialogs.promotion.nomError')]"
       />
@@ -534,7 +534,7 @@
             min="0"
             outlined
             dense
-            :label="$t('structure.dialogs.promotion.effectif')"
+            :label="$t('common.fields.headcount')"
           />
         </div>
       </div>
@@ -555,7 +555,7 @@
         dense
         emit-value
         map-options
-        :label="$t('structure.dialogs.promotion.annee')"
+        :label="$t('common.fields.academicYearRequired')"
         :rules="[(v: string) => !!v || $t('structure.dialogs.promotion.anneeError')]"
       />
     </dialogue-formulaire>
@@ -709,26 +709,26 @@ function messageVide(cle: string, parDefaut: string) {
 }
 
 const colonnesAnnees = computed<QTableColumn[]>(() => [
-  { name: 'libelle', label: t('structure.table.columns.annee'), field: 'libelle', align: 'left', sortable: true },
+  { name: 'libelle', label: t('common.fields.year'), field: 'libelle', align: 'left', sortable: true },
   {
     name: 'debut',
-    label: t('structure.table.columns.debut'),
+    label: t('common.fields.start'),
     field: (r: AnneeAcademique) => dateLisible(r.dateDebut),
     align: 'left',
   },
   {
     name: 'fin',
-    label: t('structure.table.columns.fin'),
+    label: t('common.fields.end'),
     field: (r: AnneeAcademique) => dateLisible(r.dateFin),
     align: 'left',
   },
-  { name: 'active', label: t('structure.table.columns.statut'), field: 'active', align: 'left' },
-  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'active', label: t('common.fields.status'), field: 'active', align: 'left' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 const colonnesDepartements = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('structure.table.columns.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('structure.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
   {
     name: 'faculte',
     label: t('structure.table.columns.faculte'),
@@ -737,7 +737,7 @@ const colonnesDepartements = computed<QTableColumn[]>(() => [
   },
   {
     name: 'enseignants',
-    label: t('structure.table.columns.enseignants'),
+    label: t('common.fields.teachers'),
     field: (r: Departement) => r._count?.enseignants ?? 0,
     align: 'right',
     sortable: true,
@@ -749,38 +749,38 @@ const colonnesDepartements = computed<QTableColumn[]>(() => [
     align: 'right',
     sortable: true,
   },
-  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 const colonnesFilieres = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('structure.table.columns.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('structure.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: t('structure.table.columns.departement'),
+    label: t('common.fields.department'),
     field: (r: Filiere) => r.departement?.nom ?? '—',
     align: 'left',
   },
-  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 const colonnesPromotions = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('structure.table.columns.promotion'), field: 'nom', align: 'left', sortable: true },
-  { name: 'niveau', label: t('structure.table.columns.niveau'), field: 'niveau', align: 'left', sortable: true },
+  { name: 'niveau', label: t('common.fields.level'), field: 'niveau', align: 'left', sortable: true },
   {
     name: 'filiere',
-    label: t('structure.table.columns.filiere'),
+    label: t('common.fields.filiere'),
     field: (r: PromotionListee) => r.filiere?.nom ?? '—',
     align: 'left',
   },
   {
     name: 'annee',
-    label: t('structure.table.columns.annee'),
+    label: t('common.fields.year'),
     field: (r: PromotionListee) => r.annee?.libelle ?? '—',
     align: 'left',
   },
-  { name: 'effectif', label: t('structure.table.columns.effectif'), field: 'effectif', align: 'right', sortable: true },
-  { name: 'actions', label: t('structure.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'effectif', label: t('common.fields.headcount'), field: 'effectif', align: 'right', sortable: true },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 // ------------------------------------------------------------ liaisons
@@ -906,9 +906,9 @@ function supprimer(ressource: string, libelle: string, id: string) {
       await charger();
     },
     {
-      titre: t('structure.deleteDialog.title'),
+      titre: t('common.actions.delete'),
       message: t('structure.deleteDialog.message', { label: libelle }),
-      ok: t('structure.deleteDialog.confirm'),
+      ok: t('common.actions.delete'),
       succes: t('structure.messages.deleted', { label: libelle }),
     },
   );

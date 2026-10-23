@@ -21,7 +21,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('matieres.filters.department')"
+          :label="$t('common.fields.department')"
         />
       </template>
     </filter-bar>
@@ -54,7 +54,7 @@
               flat
               no-caps
               icon="refresh"
-              :label="$t('matieres.emptyState.reset')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
           </template>
@@ -71,7 +71,7 @@
             :aria-label="$t('matieres.actionsColumn.editAria')" :label="$t('matieres.actionsColumn.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>{{ $t('matieres.actionsColumn.editTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
 <actions-secondaires>
 <q-btn v-close-popup
@@ -92,7 +92,7 @@
             :aria-label="$t('matieres.actionsColumn.deleteAria')" :label="$t('matieres.actionsColumn.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>{{ $t('matieres.actionsColumn.deleteTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
           </q-btn>
 </actions-secondaires>
 </q-td>
@@ -129,7 +129,7 @@
             dense
             no-caps
             icon="edit"
-            :label="$t('matieres.actionsColumn.editTooltip')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(m)"
           />
         </q-card-actions>
@@ -150,7 +150,7 @@
             flat
             no-caps
             icon="refresh"
-            :label="$t('matieres.emptyState.reset')"
+            :label="$t('common.actions.reset_filters')"
             @click="reinitialiser"
           />
         </template>
@@ -170,7 +170,7 @@
       v-model="dialogOuvert"
       :titre="matiereEditee ? $t('matieres.dialog.editTitle') : $t('matieres.dialog.newTitle')"
       taille="s"
-      :libelle-valider="$t('matieres.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrer"
     >
@@ -181,7 +181,7 @@
             v-model="form.code"
             outlined
             dense
-            :label="$t('matieres.dialog.codeLabel')"
+            :label="$t('common.fields.codeRequired')"
             :hint="$t('matieres.dialog.codeHint')"
             :rules="[(v: string) => !!(v ?? '').trim() || $t('matieres.dialog.codeError')]"
           />
@@ -195,7 +195,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('matieres.dialog.departmentLabel')"
+            :label="$t('common.fields.department')"
           />
         </div>
       </div>
@@ -225,7 +225,7 @@
             min="0"
             outlined
             dense
-            :label="$t('matieres.dialog.creditsLabel')"
+            :label="$t('common.fields.credits')"
           />
         </div>
       </div>
@@ -320,11 +320,11 @@ const chips = computed(() => {
 });
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('matieres.table.columns.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'intitule', label: t('matieres.table.columns.intitule'), field: 'intitule', align: 'left', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'intitule', label: t('common.fields.intitule'), field: 'intitule', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: t('matieres.table.columns.department'),
+    label: t('common.fields.department'),
     field: (r: Matiere) => r.departement?.nom ?? '—',
     align: 'left',
   },
@@ -335,8 +335,8 @@ const colonnes = computed<QTableColumn[]>(() => [
     align: 'right',
     sortable: true,
   },
-  { name: 'credits', label: t('matieres.table.columns.credits'), field: 'credits', align: 'right' },
-  { name: 'actions', label: t('matieres.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'credits', label: t('common.fields.credits'), field: 'credits', align: 'right' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 function ouvrir(m: Matiere | null) {
@@ -385,7 +385,7 @@ function supprimer(m: Matiere) {
     {
       titre: t('matieres.deleteDialog.title'),
       message: t('matieres.deleteDialog.message', { intitule: m.intitule }),
-      ok: t('matieres.deleteDialog.confirm'),
+      ok: t('common.actions.delete'),
       succes: t('matieres.messages.deleted'),
     },
   );

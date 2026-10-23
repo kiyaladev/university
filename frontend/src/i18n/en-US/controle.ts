@@ -46,7 +46,6 @@ export default {
     title: 'Nothing to check here',
     noneMatchFilter: 'No session matches this filter.',
     noneScheduled: 'No session is scheduled today.',
-    clearFilters: 'Clear filters',
     viewSchedule: 'View timetable',
     openUnscheduled: 'Open an unscheduled session',
   },

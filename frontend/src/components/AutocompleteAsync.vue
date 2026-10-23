@@ -144,7 +144,7 @@ watch(valeurCourante, (v) => {
     <template #no-option>
       <q-item>
         <q-item-section class="text-grey">
-          {{ loading ? $t('common.messages.loading') : $t('common.messages.noResult') }}
+          {{ loading ? $t('common.messages.loading') : $t('common.search.noResults') }}
         </q-item-section>
       </q-item>
     </template>

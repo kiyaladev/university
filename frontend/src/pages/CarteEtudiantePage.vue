@@ -59,11 +59,11 @@ const canvasQr = ref<HTMLCanvasElement | null>(null);
 const urlVerification = ref('');
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'etudiant', label: t('carteEtudiante.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
   { name: 'matricule', label: t('carteEtudiante.table.columns.matricule'), field: 'etudiant', align: 'left' },
-  { name: 'emission', label: t('carteEtudiante.table.columns.issuedOn'), field: 'dateEmission', align: 'left' },
+  { name: 'emission', label: t('common.fields.issuedOn'), field: 'dateEmission', align: 'left' },
   { name: 'validite', label: t('carteEtudiante.table.columns.validity'), field: 'dateValidite', align: 'left' },
-  { name: 'statut', label: t('carteEtudiante.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
   { name: 'actions', label: t('carteEtudiante.table.columns.actions'), field: 'id', align: 'right' },
 ]);
 
@@ -216,7 +216,7 @@ function ouvrirEmission() {
           </q-btn>
 <actions-secondaires>
 <q-btn v-close-popup flat no-caps dense icon="print" :aria-label="$t('carteEtudiante.actionsColumn.printAria')" :label="$t('carteEtudiante.actionsColumn.printAria')" @click="imprimer(p.row)">
-            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.printTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.print') }}</q-tooltip>
           </q-btn>
 <q-btn v-close-popup
             v-if="peutModifier && p.row.statut === 'EMISE'"
@@ -226,7 +226,7 @@ function ouvrirEmission() {
             :aria-label="$t('carteEtudiante.actionsColumn.editAria')" :label="$t('carteEtudiante.actionsColumn.editAria')"
             @click="ouvrirModification(p.row)"
           >
-            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.editTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
 <q-btn v-close-popup
             v-if="p.row.statut === 'EMISE' && peutRevoquer"
@@ -237,7 +237,7 @@ function ouvrirEmission() {
             :aria-label="$t('carteEtudiante.actionsColumn.revokeAria')" :label="$t('carteEtudiante.actionsColumn.revokeAria')"
             @click="ouvrirRevocation(p.row)"
           >
-            <q-tooltip>{{ $t('carteEtudiante.actionsColumn.revokeTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.revoke') }}</q-tooltip>
           </q-btn>
 </actions-secondaires>
 </q-td>
@@ -274,13 +274,13 @@ function ouvrirEmission() {
           <q-card-actions align="right">
 <q-btn flat dense icon="qr_code_2" :label="$t('carteEtudiante.cardActions.qr')" no-caps @click="ouvrirDetail(c)" />
 <actions-secondaires>
-<q-btn v-close-popup flat dense icon="print" :label="$t('carteEtudiante.cardActions.print')" no-caps @click="imprimer(c)" />
+<q-btn v-close-popup flat dense icon="print" :label="$t('common.actions.print')" no-caps @click="imprimer(c)" />
 <q-btn v-close-popup
               v-if="peutModifier && c.statut === 'EMISE'"
               flat
               dense
               icon="edit"
-              :label="$t('carteEtudiante.cardActions.edit')"
+              :label="$t('common.actions.edit')"
               no-caps
               @click="ouvrirModification(c)"
             />
@@ -290,7 +290,7 @@ function ouvrirEmission() {
               dense
               icon="block"
               color="negative"
-              :label="$t('carteEtudiante.cardActions.revoke')"
+              :label="$t('common.actions.revoke')"
               no-caps
               @click="ouvrirRevocation(c)"
             />
@@ -340,7 +340,7 @@ function ouvrirEmission() {
               {{ carteDetail.etudiant.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('carteEtudiante.detailDialog.close')" @click="dialogDetail = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="dialogDetail = false" />
         </q-card-section>
         <q-card-section class="text-center">
           <canvas ref="canvasQr" />

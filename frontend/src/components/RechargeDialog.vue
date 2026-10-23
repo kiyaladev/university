@@ -15,7 +15,7 @@
       option-label="libelle"
       emit-value
       map-options
-      :label="$t('resto.rechargeDialog.student')"
+      :label="$t('common.fields.studentRequired')"
       outlined
       dense
       use-input
@@ -64,7 +64,7 @@
         :options="optionsOperateurs"
         emit-value
         map-options
-        :label="$t('examens.scansTable.columns.operator')"
+        :label="$t('common.fields.operator')"
         outlined
         dense
         class="q-mt-md"

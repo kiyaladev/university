@@ -21,17 +21,11 @@ export default {
   },
   table: {
     columns: {
-      title: 'Titre',
-      type: 'Type',
-      period: 'Période',
       seats: 'Sièges',
       candidates: 'Candidats',
-      status: 'Statut',
-      actions: 'Actions',
     },
     actions: {
       printBallot: 'Imprimer un bulletin',
-      edit: 'Modifier',
       editAria: 'Modifier l’élection',
       candidatesTooltip: 'Candidats',
       candidatesAria: 'Voir les candidats',
@@ -40,7 +34,6 @@ export default {
     },
   },
   cardView: {
-    from: 'Du',
     to: 'au',
     seatSingular: 'siège',
     seatsPlural: 'sièges',
@@ -48,7 +41,6 @@ export default {
     candidatesPlural: 'candidats',
     actions: {
       ballot: 'Bulletin',
-      edit: 'Modifier',
       open: 'Ouvrir',
       close: 'Clore',
       proclaim: 'Proclamer',
@@ -73,7 +65,6 @@ export default {
       saved: 'Élection mise à jour.',
       created: 'Élection créée.',
       saveError: 'Enregistrement impossible.',
-      save: 'Enregistrer',
       create: 'Créer',
     },
     candidateForm: {
@@ -88,7 +79,6 @@ export default {
       saved: 'Candidat mis à jour.',
       added: 'Candidat ajouté.',
       saveError: 'Enregistrement impossible.',
-      save: 'Enregistrer',
     },
     removeCandidate: {
       title: 'Retirer ce candidat',
@@ -121,7 +111,6 @@ export default {
     },
     candidates: {
       title: 'Candidats — {title}',
-      close: 'Fermer',
       lockedBanner: 'Le scrutin est {status} : la liste des candidats n’est plus modifiable.',
       emptyState: 'Aucun candidat déclaré. Un scrutin sans candidat ne peut pas être ouvert.',
       ballotNumber: 'N° {n} sur le bulletin',
@@ -132,7 +121,6 @@ export default {
     },
     results: {
       title: 'Résultats — {title}',
-      close: 'Fermer',
       loading: 'Dépouillement en cours…',
       unavailable: 'Résultats indisponibles pour ce scrutin.',
       provisionalBanner:

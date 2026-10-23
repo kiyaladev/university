@@ -22,18 +22,10 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (No., subject…)',
-    status: 'Status',
-    type: 'Type',
-    priority: 'Priority',
   },
   table: {
     columns: {
-      number: 'No.',
       subject: 'Subject',
-      type: 'Type',
-      priority: 'Priority',
-      status: 'Status',
-      createdAt: 'Created on',
     },
     openTracking: 'Open complaint tracking',
     trackingTooltip: 'Tracking and discussion thread',
@@ -45,6 +37,5 @@ export default {
   cards: {
     messagesCount: '{count} message(s)',
     escalatedOn: 'Escalated on {date}',
-    detail: 'Detail',
   },
 };

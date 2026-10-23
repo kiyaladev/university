@@ -8,7 +8,7 @@
           <q-item v-for="pointage in pointages.file" :key="pointage.seanceId" class="q-px-none">
             <q-item-section>
               <q-item-label>{{ LIBELLE_STATUT_PRESENCE[pointage.statut || 'NON_CONTROLE'] }} · {{ dateHeureLisible(pointage.horodatage) }}</q-item-label>
-              <q-item-label caption>{{ t('filePointages.session') }} : {{ pointage.seanceId }}</q-item-label>
+              <q-item-label caption>{{ t('common.fields.session') }} : {{ pointage.seanceId }}</q-item-label>
               <p v-if="pointages.erreurs[pointage.seanceId]" class="text-negative q-mt-sm" role="status">{{ pointages.erreurs[pointage.seanceId] }}</p>
               <q-btn flat dense color="negative" :label="t('filePointages.remove')" class="self-start" @click="retirer(pointage.seanceId)" />
             </q-item-section>
@@ -31,8 +31,8 @@
         <q-banner v-if="Object.keys(pointages.erreurs).length" class="bg-orange-1 text-dark">{{ t('filePointages.conflictHelp') }}</q-banner>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn flat v-close-popup :label="t('filePointages.close')" />
-        <q-btn color="primary" :label="t('filePointages.retry')" :disable="!pointages.enLigne || (!pointages.enAttente && !seancesHorsLigne.enAttente)" :loading="pointages.synchronisation || seancesHorsLigne.synchronisation" @click="pointages.synchroniser()" />
+        <q-btn flat v-close-popup :label="t('common.actions.close')" />
+        <q-btn color="primary" :label="t('common.actions.retry')" :disable="!pointages.enLigne || (!pointages.enAttente && !seancesHorsLigne.enAttente)" :loading="pointages.synchronisation || seancesHorsLigne.synchronisation" @click="pointages.synchroniser()" />
       </q-card-actions>
     </q-card>
   </q-dialog>

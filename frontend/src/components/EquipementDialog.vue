@@ -7,7 +7,7 @@
     @valider="enregistrer"
   >
     <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
-    <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" class="q-mb-md"
+    <q-input v-model="form.libelle" outlined dense :label="$t('common.fields.labelRequired')" class="q-mb-md"
       :hint="$t('helpdesk.equipmentDialog.exampleLabel')"
       :rules="[(v: string) => (v ?? '').trim().length >= 2 || $t('common.messages.errors.tooShort')]" />
     <q-input v-model="form.emplacement" outlined dense :label="$t('helpdesk.table.columns.location')"

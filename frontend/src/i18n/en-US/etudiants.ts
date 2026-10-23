@@ -1,18 +1,13 @@
 /** Namespace `etudiants` — Students page. */
 export default {
-  title: 'Students',
   subtitle:
     'Find student records and access their enrolments.',
   actions: {
     new: 'New student',
-    resetFilters: 'Reset filters',
-    edit: 'Edit',
     editAria: "Edit the student's record",
     editTooltip: 'Edit record',
-    inscriptions: 'Enrollments',
     inscriptionsAria: "View the student's enrollments",
     inscriptionsTooltip: 'Open their enrollments',
-    paiements: 'Payments',
     paiementsAria: "View the student's payments",
     paiementsTooltip: 'Open their payments',
     evaluations: 'Assessments',
@@ -20,7 +15,6 @@ export default {
     evaluationsTooltip: 'Assessments for their cohort',
     print: 'Certificate',
     printAria: 'Print the enrollment certificate',
-    close: 'Close',
     openInInscriptions: 'Open in enrollments',
   },
   dialogForm: {
@@ -46,7 +40,6 @@ export default {
   filters: {
     searchPlaceholder: 'Search (ID number, last name, email)…',
     promotion: 'Cohort',
-    status: 'Status',
     gender: 'Gender',
     registeredFrom: 'Enrolled between (start)',
     registeredTo: 'and (end)',
@@ -70,11 +63,7 @@ export default {
       name: 'Name',
       gender: 'Gender',
       promotion: 'Latest cohort',
-      phone: 'Phone',
-      email: 'Email',
       account: 'Account',
-      inscriptions: 'Enrollments',
-      active: 'Active',
     },
     accountTooltip: 'Account: {email}',
     noAccountTooltip: 'No portal account',
@@ -85,7 +74,6 @@ export default {
     certificateTooltip: 'Enrollment certificate (latest record)',
   },
   cards: {
-    active: 'Active',
     inactive: 'Inactive',
     noInscription: 'No enrollment',
   },
@@ -104,10 +92,7 @@ export default {
     title: 'Enrollments — {name}',
     emptyState: 'No enrollment record for this student.',
     columns: {
-      number: 'No.',
       promotion: 'Cohort',
-      year: 'Year',
-      status: 'Status',
       amount: 'Enrollment fee',
       date: 'Created on',
     },
@@ -115,7 +100,6 @@ export default {
     paiementsTooltip: 'Payments for this record',
     printAria: 'Print the enrollment certificate',
     printTooltip: 'Enrollment certificate',
-    closeAria: 'Close',
   },
   confirmDeactivate: {
     title: 'Deactivate the student',

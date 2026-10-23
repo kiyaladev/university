@@ -12,7 +12,7 @@
       v-model="form.etudiantId"
       endpoint="/etudiants"
       :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}${e.actif ? '' : ` (${$t('inscriptions.createDialog.inactive')})`}`"
-      :label="$t('inscriptions.createDialog.student')"
+      :label="$t('common.fields.studentRequired')"
       :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
     />
 
@@ -23,7 +23,7 @@
           v-model="form.anneeId"
           endpoint="/annees"
           :label-fn="(a) => a.libelle"
-          :label="$t('affectations.dialog.fields.year')"
+          :label="$t('common.fields.academicYearRequired')"
           @update:model-value="onAnneeChange"
         />
       </div>

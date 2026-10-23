@@ -1,14 +1,11 @@
 /** Namespace `enseignants` — EnseignantsPage.vue (teaching staff). */
 export default {
   header: {
-    title: 'Teachers',
     subtitle: 'Teaching staff monitored by the control system',
     newTeacher: 'New teacher',
   },
   filters: {
     searchPlaceholder: 'Search (ID, name, email)…',
-    departementLabel: 'Department',
-    statutLabel: 'Status',
     chips: {
       search: '"{q}"',
       departement: 'Department: {nom}',
@@ -25,12 +22,8 @@ export default {
     columns: {
       nom: 'Name',
       grade: 'Grade',
-      statut: 'Status',
-      departement: 'Department',
       taux: 'Hourly rate',
-      telephone: 'Phone',
       compte: 'Account',
-      actions: 'Actions',
     },
     inactive: 'inactive',
     accountTooltip: 'Account: {email}',
@@ -46,8 +39,6 @@ export default {
       charges: 'Their teaching load',
       moyens: 'Attendance proof methods',
       fiche: 'Attendance sheet (last 90 days)',
-      modifier: 'Edit',
-      supprimer: 'Delete',
     },
   },
   cards: {
@@ -57,7 +48,6 @@ export default {
     sansCompte: 'No account',
     charges: 'Their load',
     attestation: 'Attendance proof',
-    modifier: 'Edit',
   },
   moyensDialog: {
     title: 'Attendance proof methods',
@@ -80,7 +70,6 @@ export default {
     },
     newCodeLabel: 'New code:',
     newCodeHint: 'Communicate it to the teacher — it will not be shown again.',
-    close: 'Close',
   },
   formDialog: {
     editTitle: 'Edit teacher',
@@ -111,7 +100,6 @@ export default {
     enrolementFailed: 'Enrollment failed',
     deleteTitle: 'Delete teacher',
     deleteMessage: 'Permanently delete {nom} {prenom} along with their assignments and sessions?',
-    delete: 'Delete',
     deleteSuccess: 'Teacher deleted',
     deleteFailed: 'Deletion failed',
     loadFailed: 'Unable to load teachers',

@@ -101,10 +101,10 @@
               <q-tooltip>{{ $t('cites.residences.table.tooltip.voirChambres') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="peutGererResidences" flat dense round icon="edit" :aria-label="$t('cites.residences.table.aria.modifier')" @click="ouvrirResidence(p.row)">
-              <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('cites.residences.table.aria.supprimer')" @click="supprimerResidence(p.row)">
-              <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -161,10 +161,10 @@
               {{ r.responsable ?? $t('cites.residences.card.noResponsable') }}
               <q-space />
               <q-btn v-if="peutGererResidences" flat dense round size="sm" icon="edit" :aria-label="$t('cites.residences.table.aria.modifier')" @click="ouvrirResidence(r)">
-                <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" :aria-label="$t('cites.residences.table.aria.supprimer')" @click="supprimerResidence(r)">
-                <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
@@ -202,7 +202,7 @@
             dense
             outlined
             clearable
-            :label="$t('cites.chambres.filters.categorie')"
+            :label="$t('common.fields.category')"
           />
           <q-select
             v-model="filtresChambres.statut"
@@ -212,7 +212,7 @@
             dense
             outlined
             clearable
-            :label="$t('cites.chambres.filters.statut')"
+            :label="$t('common.fields.status')"
           />
         </template>
       </filter-bar>
@@ -261,10 +261,10 @@
               <q-tooltip>{{ $t('cites.chambres.table.tooltip.voirAttributions') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="peutGererChambres" flat dense round icon="edit" :aria-label="$t('cites.chambres.table.aria.modifier')" @click="ouvrirChambre(p.row)">
-              <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('cites.chambres.table.aria.supprimer')" @click="supprimerChambre(p.row)">
-              <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -313,10 +313,10 @@
               <span class="chiffres text-weight-medium">{{ montantLisible(c.loyer) }} {{ c.devise }}</span>
               <q-space />
               <q-btn v-if="peutGererChambres" flat dense round size="sm" icon="edit" :aria-label="$t('cites.chambres.table.aria.modifier')" @click="ouvrirChambre(c)">
-                <q-tooltip>{{ $t('cites.common.tooltip.edit') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
               <q-btn v-if="auth.estAdmin" flat dense round size="sm" color="negative" icon="delete" :aria-label="$t('cites.chambres.table.aria.supprimer')" @click="supprimerChambre(c)">
-                <q-tooltip>{{ $t('cites.common.tooltip.delete') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
@@ -348,7 +348,7 @@
             dense
             outlined
             clearable
-            :label="$t('cites.attributions.filters.annee')"
+            :label="$t('common.fields.year')"
           />
           <q-select
             v-model="filtresAttributions.statut"
@@ -358,7 +358,7 @@
             dense
             outlined
             clearable
-            :label="$t('cites.attributions.filters.statut')"
+            :label="$t('common.fields.status')"
           />
           <autocomplete-async
             v-model="filtresAttributions.residenceId"
@@ -433,7 +433,7 @@
               <q-tooltip>{{ $t('cites.attributions.table.tooltip.decider') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin" flat dense round color="negative" icon="undo" :aria-label="$t('cites.attributions.table.aria.retirer')" @click="retirerAttribution(p.row)">
-              <q-tooltip>{{ $t('cites.attributions.table.tooltip.retirer') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.withdraw') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="p.row.etudiant" flat dense round icon="person" :aria-label="$t('cites.attributions.table.aria.voirEtudiant')" @click="voirEtudiant(p.row)">
               <q-tooltip>{{ $t('cites.attributions.table.tooltip.voirEtudiant') }}</q-tooltip>
@@ -501,10 +501,10 @@
               <q-btn v-if="a.statut === 'EN_ATTENTE' && peutDecider" flat dense no-caps color="primary" icon="gavel" :label="$t('cites.attributions.card.decider')" @click="ouvrirDecision(a)">
                 <q-tooltip>{{ $t('cites.attributions.card.deciderTooltip') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(a.statut) && auth.estAdmin" flat dense no-caps color="negative" icon="undo" :label="$t('cites.attributions.card.retirer')" @click="retirerAttribution(a)">
+              <q-btn v-if="['EN_ATTENTE', 'ACCORDEE'].includes(a.statut) && auth.estAdmin" flat dense no-caps color="negative" icon="undo" :label="$t('common.actions.withdraw')" @click="retirerAttribution(a)">
                 <q-tooltip>{{ $t('cites.attributions.card.retirerTooltip') }}</q-tooltip>
               </q-btn>
-              <q-btn v-if="a.etudiant" flat dense no-caps icon="person" :label="$t('cites.attributions.card.etudiant')" @click="voirEtudiant(a)">
+              <q-btn v-if="a.etudiant" flat dense no-caps icon="person" :label="$t('common.fields.student')" @click="voirEtudiant(a)">
                 <q-tooltip>{{ $t('cites.attributions.card.etudiantTooltip') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
@@ -581,7 +581,7 @@
           />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('cites.attributions.dialogs.decision.cancel')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
           <q-btn
             unelevated
             :color="decisionStatut === 'ACCORDEE' ? 'positive' : 'negative'"
@@ -763,7 +763,7 @@ const chipsAttributions = computed<ChipFiltre[]>(() => {
   const cs: ChipFiltre[] = [];
   if (f.anneeId) {
     const a = annees.value.find((x) => x.id === f.anneeId);
-    cs.push({ label: a?.libelle ?? t('cites.attributions.chips.anneeFallback'), value: f.anneeId, icone: 'event', cle: 'anneeId' });
+    cs.push({ label: a?.libelle ?? t('common.fields.year'), value: f.anneeId, icone: 'event', cle: 'anneeId' });
   }
   if (f.statut) cs.push({ label: LIBELLE_STATUT_ATTRIBUTION[f.statut] ?? f.statut, value: f.statut, icone: 'how_to_reg', cle: 'statut' });
   if (f.residenceId) {
@@ -775,31 +775,31 @@ const chipsAttributions = computed<ChipFiltre[]>(() => {
 
 // ------------------------------------------------------------- colonnes
 const colonnesResidences = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('cites.residences.table.columns.code'), field: 'code', align: 'left', sortable: true },
-  { name: 'nom', label: t('cites.residences.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'nom', label: t('common.fields.name'), field: 'nom', align: 'left', sortable: true },
   { name: 'ville', label: t('cites.residences.table.columns.ville'), field: 'ville', align: 'left' },
-  { name: 'capacite', label: t('cites.residences.table.columns.capacite'), field: 'capacite', align: 'right', sortable: true },
+  { name: 'capacite', label: t('common.fields.capacity'), field: 'capacite', align: 'right', sortable: true },
   { name: 'responsable', label: t('cites.residences.table.columns.responsable'), field: 'responsable', align: 'left' },
   { name: 'statut', label: t('cites.residences.table.columns.statut'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesChambres = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('cites.chambres.table.columns.code'), field: 'code', align: 'left', sortable: true },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left', sortable: true },
   { name: 'residence', label: t('cites.chambres.table.columns.residence'), field: 'residence', align: 'left' },
-  { name: 'categorie', label: t('cites.chambres.table.columns.categorie'), field: 'categorie', align: 'left', sortable: true },
+  { name: 'categorie', label: t('common.fields.category'), field: 'categorie', align: 'left', sortable: true },
   { name: 'lits', label: t('cites.chambres.table.columns.lits'), field: 'lits', align: 'center' },
   { name: 'loyer', label: t('cites.chambres.table.columns.loyer'), field: 'loyer', align: 'right', sortable: true },
-  { name: 'statut', label: t('cites.chambres.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesAttributions = computed<QTableColumn[]>(() => [
   { name: 'createdAt', label: t('cites.attributions.table.columns.demandeLe'), field: 'createdAt', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('cites.attributions.table.columns.etudiant'), field: 'id', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'id', align: 'left' },
   { name: 'chambre', label: t('cites.attributions.table.columns.chambre'), field: 'id', align: 'left' },
-  { name: 'score', label: t('cites.attributions.table.columns.score'), field: 'critereScore', align: 'center' },
-  { name: 'statut', label: t('cites.attributions.table.columns.statut'), field: 'statut', align: 'left' },
+  { name: 'score', label: t('common.fields.score'), field: 'critereScore', align: 'center' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -846,7 +846,7 @@ function supprimerResidence(r: Residence) {
   void supprimerAvecConfirmation(`/residences/${r.id}`, r.nom, res.recharger, {
     titre: t('cites.residences.dialogs.delete.title'),
     message: t('cites.residences.dialogs.delete.message', { nom: r.nom, code: r.code }),
-    ok: t('cites.residences.dialogs.delete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('cites.residences.dialogs.deleted'),
   });
 }
@@ -866,7 +866,7 @@ function supprimerChambre(c: Chambre) {
   void supprimerAvecConfirmation(`/chambres/${c.id}`, c.code, ch.recharger, {
     titre: t('cites.chambres.dialogs.delete.title'),
     message: t('cites.chambres.dialogs.delete.message', { code: c.code }),
-    ok: t('cites.chambres.dialogs.delete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('cites.chambres.dialogs.deleted'),
   });
 }
@@ -919,7 +919,7 @@ async function retirerAttribution(a: AttributionLogement) {
       residence: a.chambre?.residence?.nom,
     }),
     libelleSaisie: t('cites.attributions.dialogs.retirer.motifLabel'),
-    ok: t('cites.attributions.dialogs.retirer.confirm'),
+    ok: t('common.actions.withdraw'),
     danger: true,
   });
   if (motif === null) return;
@@ -949,7 +949,7 @@ function voirEtudiant(a: AttributionLogement) {
       email: e.email ?? '—',
       chambre,
     }),
-    ok: { label: t('cites.attributions.dialogs.etudiantDetail.close'), flat: true },
+    ok: { label: t('common.actions.close'), flat: true },
   });
 }
 

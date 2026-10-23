@@ -4,9 +4,6 @@ export default {
   subtitle:
     "Situation actuelle de l’établissement · année {annee}.",
   subtitleFallback: '—',
-  filters: {
-    year: 'Année',
-  },
   actions: {
     generateReport: 'Générer le bilan MESRS',
     generateReportTooltip:
@@ -36,8 +33,6 @@ export default {
   headcountChart: {
     title: 'Effectif par promotion',
     subtitle: 'Inscriptions non annulées · 24 premières promotions',
-    enrollments: 'Inscriptions',
-    datasetLabel: 'Effectif',
     emptyTitle: 'Aucune inscription sur cette année',
     emptyDescription:
       "L'effectif se lit sur les inscriptions non annulées. Changez d'année, ou ouvrez les inscriptions pour en enregistrer.",

@@ -8,7 +8,6 @@ export default {
     pay: 'Payer',
     payNow: 'Payer maintenant',
     track: 'Suivre',
-    close: 'Fermer',
     cancel: 'Annuler',
   },
   banner: {
@@ -27,15 +26,10 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (N°, motif…)',
-    status: 'Statut',
   },
   table: {
     columns: {
-      number: 'N°',
-      type: 'Type',
       fees: 'Frais',
-      status: 'Statut',
-      createdAt: 'Créée le',
     },
     paymentConfirmed: 'Paiement confirmé',
     trackTooltip: 'Suivre la demande',
@@ -49,7 +43,6 @@ export default {
     createdOn: 'Créée le {date}',
   },
   steps: {
-    payment: 'Paiement',
     paid: 'Payée',
     processing: 'Traitement',
     ready: 'Prête',
@@ -77,9 +70,7 @@ export default {
   },
   dialog: {
     fees: 'Frais',
-    payment: 'Paiement',
     notInitiated: 'Non initié',
-    createdAt: 'Créée le',
     deliveredAt: 'Remise le',
     requestReason: 'Motif de votre demande',
     registrarMessage: 'Message de la scolarité',
@@ -89,7 +80,6 @@ export default {
     mobileMoneyNote: 'Validez la demande sur votre téléphone. Le paiement reste en attente jusqu’à confirmation de l’encaissement ; votre document sera ensuite traité.',
     title: 'Payer la demande',
     mode: 'Mode de paiement',
-    operator: 'Opérateur',
     phoneLabel: 'Numéro Mobile Money',
     phoneHint: 'Le numéro qui sera débité',
     pilotNote:

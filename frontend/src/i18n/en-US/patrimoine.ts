@@ -63,13 +63,9 @@ export default {
   equipments: {
     searchPlaceholder: 'Search (name, serial no., inventory no., QR…)',
     filters: {
-      category: 'Category',
-      department: 'Department',
       noDepartment: 'No department',
-      status: 'Status',
       statusInService: 'In service',
       statusOutOfService: 'Out of service',
-      repairState: 'State',
       repairStateInRepair: 'Under repair',
       repairStateAvailable: 'Available',
     },
@@ -81,11 +77,8 @@ export default {
     table: {
       columns: {
         equipment: 'Equipment',
-        category: 'Category',
-        department: 'Department',
         value: 'Value',
         serial: 'Serial no.',
-        state: 'State',
       },
       actions: {
         detailsAria: 'Details of {name}',
@@ -95,13 +88,10 @@ export default {
         declareRepairAria: 'Report a repair for {name}',
         declareRepairTooltip: 'Report a repair',
         editAria: 'Edit {name}',
-        editTooltip: 'Edit',
         deleteAria: 'Delete {name}',
-        deleteTooltip: 'Delete',
       },
     },
     cards: {
-      detailsTooltip: 'Details',
       labelTooltip: 'A4 label',
     },
     emptyState: {
@@ -115,11 +105,8 @@ export default {
   categories: {
     table: {
       columns: {
-        code: 'Code',
-        label: 'Label',
         amortization: 'Amortization (months)',
         equipments: 'Equipment',
-        state: 'State',
       },
       actions: {
         editAria: 'Edit category {name}',
@@ -135,19 +122,15 @@ export default {
     dialog: {
       editTitle: 'Edit category',
       newTitle: 'New category',
-      codeLabel: 'Code *',
       codeHint: 'E.g.: VIDEO, MICRO, ORDI',
-      labelLabel: 'Label *',
       labelHint: 'E.g.: Projector',
       amortizationLabel: 'Amortization period (months)',
       amortizationHint: 'E.g.: 60 (5 years)',
       cancel: 'Cancel',
-      save: 'Save',
     },
     confirmDelete: {
       title: 'Delete this category?',
       message: '"{name}" — will be refused if equipment items are still attached to it.',
-      confirm: 'Delete',
     },
   },
   repairs: {
@@ -156,8 +139,6 @@ export default {
     table: {
       columns: {
         equipment: 'Equipment',
-        description: 'Description',
-        status: 'Status',
         declaredOn: 'Declared on',
         delay: 'Delay',
       },
@@ -185,7 +166,6 @@ export default {
   deleteEquipment: {
     title: 'Delete this equipment?',
     message: '{code} — will be refused if a repair has been logged.',
-    confirm: 'Delete',
   },
   messages: {
     loadInventoryError: 'Unable to load the inventory.',

@@ -25,7 +25,7 @@
       <q-btn to="/etudiants" flat icon="groups" :label="t('nav.etudiants')" />
       <q-btn to="/notes" flat icon="grading" :label="t('nav.notes')" />
       <q-btn to="/deliberations" flat icon="how_to_vote" :label="t('nav.deliberations')" />
-      <q-btn flat icon="refresh" :label="t('accueilScolarite.refresh')" :loading="chargement" @click="charger" />
+      <q-btn flat icon="refresh" :label="t('common.actions.refresh')" :loading="chargement" @click="charger" />
     </div>
   </q-page>
 </template>

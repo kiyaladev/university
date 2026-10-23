@@ -28,7 +28,6 @@ export default {
       title: 'Close the evaluation',
       message:
         'Close "{name}"? Grades become final and a deliberation recalculation will take them into account.',
-      confirm: 'Close',
     },
   },
   messages: {

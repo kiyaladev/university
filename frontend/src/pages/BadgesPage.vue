@@ -60,9 +60,9 @@ const CLASSE_STATUT: Record<string, string> = {
 };
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('badges.table.columns.number'), field: 'numero', align: 'left' },
-  { name: 'type', label: t('badges.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'identite', label: t('badges.table.columns.identity'), field: 'nom', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'identite', label: t('common.fields.identity'), field: 'nom', align: 'left' },
   {
     name: 'organisation',
     label: t('badges.table.columns.organization'),
@@ -70,7 +70,7 @@ const colonnes = computed<QTableColumn[]>(() => [
     align: 'left',
   },
   { name: 'validite', label: t('badges.table.columns.validity'), field: 'dateValidite', align: 'left' },
-  { name: 'statut', label: t('badges.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -165,7 +165,7 @@ function statutEffectif(b: BadgeAcces): string {
           :options="OPTIONS_TYPE"
           emit-value
           map-options
-          :label="$t('badges.filters.type')"
+          :label="$t('common.fields.type')"
           outlined
           dense
           clearable
@@ -175,7 +175,7 @@ function statutEffectif(b: BadgeAcces): string {
           :options="OPTIONS_STATUT"
           emit-value
           map-options
-          :label="$t('badges.filters.status')"
+          :label="$t('common.fields.status')"
           outlined
           dense
           clearable
@@ -230,7 +230,7 @@ function statutEffectif(b: BadgeAcces): string {
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
 <q-btn flat no-caps dense icon="print" :aria-label="$t('badges.aria.printBadge')" :label="$t('badges.aria.printBadge')" @click="imprimer(p.row)">
-            <q-tooltip>{{ $t('badges.tooltips.print') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.print') }}</q-tooltip>
           </q-btn>
 <actions-secondaires>
 <q-btn v-close-popup
@@ -241,7 +241,7 @@ function statutEffectif(b: BadgeAcces): string {
             :aria-label="$t('badges.aria.editBadge')" :label="$t('badges.aria.editBadge')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>{{ $t('badges.tooltips.edit') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
 <q-btn v-close-popup
             v-if="peutEditer && p.row.statut !== 'ANNULE'"
@@ -262,7 +262,7 @@ function statutEffectif(b: BadgeAcces): string {
             :aria-label="$t('badges.aria.cancelBadge')" :label="$t('badges.aria.cancelBadge')"
             @click="ouvrirAnnulation(p.row)"
           >
-            <q-tooltip>{{ $t('badges.tooltips.cancel') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.cancel') }}</q-tooltip>
           </q-btn>
 </actions-secondaires>
 </q-td>
@@ -302,7 +302,7 @@ function statutEffectif(b: BadgeAcces): string {
             </div>
           </q-card-section>
           <q-card-actions align="right">
-<q-btn flat dense icon="print" :label="$t('badges.actions.print')" no-caps @click="imprimer(b)" />
+<q-btn flat dense icon="print" :label="$t('common.actions.print')" no-caps @click="imprimer(b)" />
 <actions-secondaires>
 <q-btn v-close-popup
               v-if="peutEditer"
@@ -328,7 +328,7 @@ function statutEffectif(b: BadgeAcces): string {
               dense
               icon="block"
               color="negative"
-              :label="$t('badges.actions.cancel')"
+              :label="$t('common.actions.cancel')"
               no-caps
               @click="ouvrirAnnulation(b)"
             />

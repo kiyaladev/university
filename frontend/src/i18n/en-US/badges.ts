@@ -5,24 +5,16 @@ export default {
     'Visitors, guest speakers, technicians, dignitaries — printable badge with QR code and configurable validity, extendable or revocable.',
   actions: {
     issueBadge: 'Issue a badge',
-    print: 'Print',
     edit: 'Edit',
     extend: 'Extend',
-    cancel: 'Cancel',
   },
   filters: {
     searchPlaceholder: 'Name, organization, number…',
-    type: 'Type',
-    status: 'Status',
   },
   table: {
     columns: {
-      number: 'No.',
-      type: 'Type',
-      identity: 'Identity',
       organization: 'Organization',
       validity: 'Validity',
-      status: 'Status',
     },
   },
   card: {
@@ -31,10 +23,7 @@ export default {
     cancelReason: 'Cancellation reason: {reason}',
   },
   tooltips: {
-    print: 'Print',
-    edit: 'Edit',
     extend: 'Extend validity',
-    cancel: 'Cancel',
   },
   aria: {
     printBadge: 'Print the badge',
@@ -53,7 +42,6 @@ export default {
       titleNew: 'Issue a badge',
       typeLabel: 'Badge type',
       functionLabel: 'Role',
-      emailLabel: 'Email',
       idTypeLabel: 'ID type',
       idNumberLabel: 'ID number',
       zonesLabel: 'Allowed areas (CSV)',

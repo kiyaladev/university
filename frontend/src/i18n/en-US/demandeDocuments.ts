@@ -21,18 +21,10 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (No., reason, ID number…)',
-    status: 'Status',
-    type: 'Type',
-    student: 'Student',
   },
   table: {
     columns: {
-      numero: 'No.',
-      type: 'Type',
-      student: 'Student',
       frais: 'Fee',
-      status: 'Status',
-      createdOn: 'Created on',
       actions: '',
     },
     paymentConfirmed: 'Payment confirmed',
@@ -47,35 +39,25 @@ export default {
     startProcessing: 'Start processing',
     markReady: 'Mark ready',
     handOver: 'Hand over',
-    reject: 'Reject',
-    detail: 'Detail',
   },
   cardActions: {
-    confirm: 'Confirm',
     process: 'Process',
     ready: 'Ready',
   },
   steps: {
-    payment: 'Payment',
     paid: 'Paid',
     processing: 'Processing',
     ready: 'Ready',
     handedOver: 'Handed over',
   },
   detail: {
-    student: 'Student',
     theirCard: 'Their card',
     enrollment: 'Enrollment',
     fees: 'Fee',
-    payment: 'Payment',
     paymentNotStarted: 'Not started',
     processedBy: 'Processed by',
-    createdOn: 'Created on',
     handedOverOn: 'Handed over on',
-    motif: 'Reason',
-    notes: 'Notes',
     smsNotification: 'SMS notification',
-    close: 'Close',
   },
   createDialog: {
     title: 'New document request',
@@ -104,7 +86,6 @@ export default {
   rejectDialog: {
     title: 'Reject the request',
     message: 'Reason for rejection (required):',
-    confirm: 'Reject',
   },
   messages: {
     forbidden: 'You do not have access to this section.',

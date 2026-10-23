@@ -9,7 +9,6 @@ export default {
   },
   actions: {
     newResource: 'New resource',
-    resume: 'Resume',
     player: 'Player',
     publish: 'Publish',
     edit: 'Edit',
@@ -31,23 +30,16 @@ export default {
     updated: 'Resource updated.',
     created: 'Resource created.',
     saveFailed: 'Unable to save.',
-    types: { audio: 'Audio', video: 'Video', notes: 'Notes', transcription: 'Transcript' },
+    types: { audio: 'Audio', video: 'Video', transcription: 'Transcript' },
   },
   filters: {
     searchPlaceholder: 'Title, description…',
     resourceType: 'Resource type',
-    status: 'Status',
   },
   table: {
     columns: {
-      title: 'Title',
-      type: 'Type',
-      subject: 'Subject',
-      teacher: 'Teacher',
-      duration: 'Duration',
       progress: 'Progress',
       views: 'Views',
-      status: 'Status',
     },
   },
   card: {
@@ -60,8 +52,6 @@ export default {
   tooltips: {
     openPlayer: 'Open the player',
     publish: 'Publish',
-    edit: 'Edit',
-    archive: 'Archive',
   },
   aria: {
     play: 'Play "{title}"',
@@ -79,7 +69,6 @@ export default {
     archive: {
       title: 'Archive this resource?',
       message: '"{title}" will be removed from the catalog: no one will be able to watch it anymore.',
-      confirm: 'Archive',
     },
   },
   messages: {

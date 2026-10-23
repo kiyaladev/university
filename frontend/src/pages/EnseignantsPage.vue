@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('enseignants.header.title')" :subtitle="$t('enseignants.header.subtitle')">
+    <page-header :title="$t('common.fields.teachers')" :subtitle="$t('enseignants.header.subtitle')">
       <template v-if="auth.peutPlanifier" #actions>
         <q-btn
           unelevated
@@ -28,7 +28,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('enseignants.filters.departementLabel')"
+          :label="$t('common.fields.department')"
         />
         <q-select
           v-model="filtres.statut"
@@ -38,7 +38,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('enseignants.filters.statutLabel')"
+          :label="$t('common.fields.status')"
         />
       </template>
     </filter-bar>
@@ -116,7 +116,7 @@
             :aria-label="$t('enseignants.table.actionsAria.modifier')" :label="$t('enseignants.table.actionsAria.modifier')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.modifier') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
 <actions-secondaires>
 <q-btn v-close-popup
@@ -156,7 +156,7 @@
             :aria-label="$t('enseignants.table.actionsAria.supprimer')" :label="$t('enseignants.table.actionsAria.supprimer')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>{{ $t('enseignants.table.actionsTooltip.supprimer') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
           </q-btn>
 </actions-secondaires>
 </q-td>
@@ -197,7 +197,7 @@
             dense
             no-caps
             icon="edit"
-            :label="$t('enseignants.cards.modifier')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(e)"
           />
 <actions-secondaires>
@@ -330,7 +330,7 @@
         </q-banner>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('enseignants.moyensDialog.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -461,10 +461,10 @@ const chips = computed(() => {
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('enseignants.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
   { name: 'grade', label: t('enseignants.table.columns.grade'), field: (r: Enseignant) => r.grade || '—', align: 'left' },
-  { name: 'statut', label: t('enseignants.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: t('enseignants.table.columns.departement'),
+    label: t('common.fields.department'),
     field: (r: Enseignant) => r.departement?.nom ?? '—',
     align: 'left',
   },
@@ -474,9 +474,9 @@ const colonnes = computed<QTableColumn[]>(() => [
     field: (r: Enseignant) => (r.tauxHoraire ? montantLisible(r.tauxHoraire) : '—'),
     align: 'right',
   },
-  { name: 'telephone', label: t('enseignants.table.columns.telephone'), field: (r: Enseignant) => r.telephone || '—', align: 'left' },
+  { name: 'telephone', label: t('common.fields.phone'), field: (r: Enseignant) => r.telephone || '—', align: 'left' },
   { name: 'compte', label: t('enseignants.table.columns.compte'), field: 'id', align: 'center' },
-  { name: 'actions', label: t('enseignants.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 function ouvrir(e: Enseignant | null) {
@@ -616,7 +616,7 @@ function supprimer(e: Enseignant) {
     {
       titre: t('enseignants.messages.deleteTitle'),
       message: t('enseignants.messages.deleteMessage', { nom: e.nom, prenom: e.prenom }),
-      ok: t('enseignants.messages.delete'),
+      ok: t('common.actions.delete'),
       succes: t('enseignants.messages.deleteSuccess'),
     },
   );

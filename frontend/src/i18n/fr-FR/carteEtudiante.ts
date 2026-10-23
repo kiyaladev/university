@@ -28,11 +28,8 @@ export default {
   },
   table: {
     columns: {
-      student: 'Étudiant',
       matricule: 'Matricule',
-      issuedOn: 'Émise le',
       validity: 'Validité',
-      status: 'Statut',
       actions: '',
     },
   },
@@ -48,17 +45,11 @@ export default {
     qrAria: 'QR de vérification',
     qrTooltip: 'QR de vérification',
     printAria: 'Imprimer la carte',
-    printTooltip: 'Imprimer',
     editAria: 'Modifier la carte',
-    editTooltip: 'Modifier',
     revokeAria: 'Révoquer la carte',
-    revokeTooltip: 'Révoquer',
   },
   cardActions: {
     qr: 'QR',
-    print: 'Imprimer',
-    edit: 'Modifier',
-    revoke: 'Révoquer',
   },
   revokeDialog: {
     title: 'Révoquer la carte',
@@ -72,7 +63,6 @@ export default {
   },
   detailDialog: {
     title: 'QR de vérification',
-    close: 'Fermer',
     scanHint: "Scannez ce QR pour vérifier l'authenticité de la carte. Toute consultation est journalisée.",
     copyLink: 'Copier le lien',
     openVerification: 'Ouvrir la vérification',

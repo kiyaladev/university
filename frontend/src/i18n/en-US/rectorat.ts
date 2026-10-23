@@ -4,9 +4,6 @@ export default {
   subtitle:
     "Current institution figures · year {annee}.",
   subtitleFallback: '—',
-  filters: {
-    year: 'Year',
-  },
   actions: {
     generateReport: 'Generate MESRS report',
     generateReportTooltip:
@@ -36,8 +33,6 @@ export default {
   headcountChart: {
     title: 'Headcount by class',
     subtitle: 'Non-cancelled enrollments · first 24 classes',
-    enrollments: 'Enrollments',
-    datasetLabel: 'Headcount',
     emptyTitle: 'No enrollments for this year',
     emptyDescription:
       'Headcount is based on non-cancelled enrollments. Change the year, or open enrollments to record some.',

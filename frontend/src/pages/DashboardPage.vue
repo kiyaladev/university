@@ -6,8 +6,8 @@
       :subtitle="$t('dashboard.subtitle', { debut: dateLisible(dateDebut), fin: dateLisible(dateFin) })"
     >
       <template #actions>
-        <champ-date v-model="dateDebut" :label="$t('dashboard.filters.from')" style="width: 160px" />
-        <champ-date v-model="dateFin" :label="$t('dashboard.filters.to')" style="width: 160px" />
+        <champ-date v-model="dateDebut" :label="$t('common.actions.from')" style="width: 160px" />
+        <champ-date v-model="dateFin" :label="$t('common.actions.to')" style="width: 160px" />
         <q-select
           v-model="departementId"
           :options="optionsDepartements"
@@ -16,7 +16,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('dashboard.filters.department')"
+          :label="$t('common.fields.department')"
           style="min-width: 180px"
         />
         <q-btn
@@ -363,7 +363,7 @@ const kpis = computed(() => {
       detail: t('dashboard.kpis.presenceRateDetail', { count: g?.assurees ?? 0 }),
     },
     {
-      libelle: t('dashboard.kpis.absences'),
+      libelle: t('common.fields.absences'),
       valeur: g?.absent ?? 0,
       detail: t('dashboard.kpis.absencesDetail', {
         excused: g?.excuse ?? 0,
@@ -394,7 +394,7 @@ const configEvolution = computed<ChartConfiguration>(() => ({
         pointRadius: 0,
       },
       {
-        label: t('dashboard.charts.datasets.absences'),
+        label: t('common.fields.absences'),
         data: (d.value?.evolution ?? []).map((e: any) => e.absences),
         borderColor: ROUGE,
         borderWidth: 3,

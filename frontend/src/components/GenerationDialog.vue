@@ -24,7 +24,7 @@
           dense
           emit-value
           map-options
-          :label="$t('affectations.filters.year')"
+          :label="$t('common.fields.academicYear')"
           class="q-mt-md"
         />
 

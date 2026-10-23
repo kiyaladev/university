@@ -2,11 +2,6 @@
 export default {
   title: 'Tableau de bord',
   subtitle: 'Assiduité des enseignants — période du {debut} au {fin}',
-  filters: {
-    from: 'Du',
-    to: 'Au',
-    department: 'Département',
-  },
   actions: {
     refreshAria: 'Recalculer le tableau de bord',
     refreshTooltip: 'Recalculer',
@@ -35,7 +30,6 @@ export default {
     noData: 'Aucune donnée sur la période.',
     datasets: {
       sessionsHeld: 'Séances assurées',
-      absences: 'Absences',
       delays: 'Retards',
     },
   },
@@ -58,7 +52,6 @@ export default {
     plannedSessionsDetail: '{count} contrôlées ({percent})',
     presenceRate: 'Taux de présence',
     presenceRateDetail: '{count} séance(s) assurée(s)',
-    absences: 'Absences',
     absencesDetail: '{excused} excusée(s) · {late} retard(s)',
     hoursWorked: 'Heures réalisées',
     hoursWorkedDetail: 'sur {planned} programmées',

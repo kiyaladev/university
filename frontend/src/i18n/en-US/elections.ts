@@ -21,17 +21,11 @@ export default {
   },
   table: {
     columns: {
-      title: 'Title',
-      type: 'Type',
-      period: 'Period',
       seats: 'Seats',
       candidates: 'Candidates',
-      status: 'Status',
-      actions: 'Actions',
     },
     actions: {
       printBallot: 'Print a ballot',
-      edit: 'Edit',
       editAria: 'Edit the election',
       candidatesTooltip: 'Candidates',
       candidatesAria: 'View candidates',
@@ -40,7 +34,6 @@ export default {
     },
   },
   cardView: {
-    from: 'From',
     to: 'to',
     seatSingular: 'seat',
     seatsPlural: 'seats',
@@ -48,7 +41,6 @@ export default {
     candidatesPlural: 'candidates',
     actions: {
       ballot: 'Ballot',
-      edit: 'Edit',
       open: 'Open',
       close: 'Close',
       proclaim: 'Proclaim',
@@ -73,7 +65,6 @@ export default {
       saved: 'Election updated.',
       created: 'Election created.',
       saveError: 'Unable to save.',
-      save: 'Save',
       create: 'Create',
     },
     candidateForm: {
@@ -88,7 +79,6 @@ export default {
       saved: 'Candidate updated.',
       added: 'Candidate added.',
       saveError: 'Unable to save.',
-      save: 'Save',
     },
     removeCandidate: {
       title: 'Remove this candidate',
@@ -121,7 +111,6 @@ export default {
     },
     candidates: {
       title: 'Candidates — {title}',
-      close: 'Close',
       lockedBanner: 'The ballot is {status}: the candidate list can no longer be edited.',
       emptyState: 'No candidate declared. A ballot without candidates cannot be opened.',
       ballotNumber: 'No. {n} on the ballot',
@@ -132,7 +121,6 @@ export default {
     },
     results: {
       title: 'Results — {title}',
-      close: 'Close',
       loading: 'Counting in progress…',
       unavailable: 'Results unavailable for this ballot.',
       provisionalBanner: 'Provisional results: they only become official upon proclamation.',

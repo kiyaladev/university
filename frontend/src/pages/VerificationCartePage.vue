@@ -3,7 +3,7 @@
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
         <q-btn flat dense no-caps icon="fact_check" :label="$t('verificationCarte.actions.verifyAttestation')" to="/verification" />
-        <q-btn flat dense no-caps icon="login" :label="$t('verificationCarte.actions.login')" to="/connexion" />
+        <q-btn flat dense no-caps icon="login" :label="$t('common.actions.login')" to="/connexion" />
       </div>
       <div class="text-center q-my-lg">
         <h1 class="lettrage page-titre">{{ $t('verificationCarte.title') }}</h1>
@@ -39,7 +39,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            :label="$t('verificationCarte.form.verify')"
+            :label="$t('common.actions.verify')"
             :disable="!identifiant.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -71,7 +71,7 @@
             <table class="table-verification">
               <tbody>
                 <tr>
-                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.student') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.student') }}</td>
                   <td>{{ resultat.carte.etudiant ?? '—' }}</td>
                 </tr>
                 <tr>
@@ -79,11 +79,11 @@
                   <td><code>{{ resultat.carte.identifiant }}</code></td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.status') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.status') }}</td>
                   <td>{{ $t('verificationCarte.result.table.statusValue') }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">{{ $t('verificationCarte.result.table.issuedOn') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.issuedOn') }}</td>
                   <td>{{ dateLongue(resultat.carte.dateEmission) }}</td>
                 </tr>
                 <tr>

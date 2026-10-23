@@ -41,7 +41,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('reclamations.filters.statut')"
+          :label="$t('common.fields.status')"
         />
         <q-select
           v-model="filtres.type"
@@ -51,7 +51,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('reclamations.filters.type')"
+          :label="$t('common.fields.type')"
         />
         <q-select
           v-model="filtres.priorite"
@@ -61,13 +61,13 @@
           clearable
           emit-value
           map-options
-          :label="$t('reclamations.filters.priorite')"
+          :label="$t('common.fields.priority')"
         />
         <autocomplete-async
           v-model="filtres.departementId"
           endpoint="/departements"
           :label-fn="(d) => `${d.code} — ${d.nom}`"
-          :label="$t('reclamations.filters.departement')"
+          :label="$t('common.fields.department')"
         />
         <q-select
           v-model="filtres.assigneAId"
@@ -235,7 +235,7 @@
               dense
               no-caps
               icon="visibility"
-              :label="$t('reclamations.actions.detail')"
+              :label="$t('common.actions.detail')"
               @click="ouvrir(r)"
             />
             <q-btn
@@ -371,12 +371,12 @@ function libellePriorite(p: string) {
 }
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('reclamations.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
   { name: 'sujet', label: t('reclamations.table.columns.sujet'), field: 'sujet', align: 'left' },
-  { name: 'type', label: t('reclamations.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'priorite', label: t('reclamations.table.columns.priorite'), field: 'priorite', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'priorite', label: t('common.fields.priority'), field: 'priorite', align: 'left' },
   { name: 'auteur', label: t('reclamations.table.columns.auteur'), field: 'auteur', align: 'left' },
-  { name: 'statut', label: t('reclamations.table.columns.statut'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'activite', label: t('reclamations.table.columns.activite'), field: 'creeLe', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);

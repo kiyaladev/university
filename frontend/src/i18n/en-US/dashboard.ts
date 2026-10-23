@@ -2,11 +2,6 @@
 export default {
   title: 'Dashboard',
   subtitle: 'Teacher attendance — period from {debut} to {fin}',
-  filters: {
-    from: 'From',
-    to: 'To',
-    department: 'Department',
-  },
   actions: {
     refreshAria: 'Recompute the dashboard',
     refreshTooltip: 'Recompute',
@@ -35,7 +30,6 @@ export default {
     noData: 'No data for this period.',
     datasets: {
       sessionsHeld: 'Sessions held',
-      absences: 'Absences',
       delays: 'Delays',
     },
   },
@@ -58,7 +52,6 @@ export default {
     plannedSessionsDetail: '{count} checked ({percent})',
     presenceRate: 'Attendance rate',
     presenceRateDetail: '{count} session(s) held',
-    absences: 'Absences',
     absencesDetail: '{excused} excused · {late} delay(s)',
     hoursWorked: 'Hours completed',
     hoursWorkedDetail: 'out of {planned} scheduled',

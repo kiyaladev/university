@@ -1,6 +1,5 @@
 /** Namespace `formationsPubliques` — page FormationsPubliquesPage.vue (vitrine publique de la formation continue). */
 export default {
-  connexion: 'Se connecter',
   hero: {
     overline: 'Formation continue & certifications',
     title: 'Compétences pour demain',
@@ -29,7 +28,6 @@ export default {
       categorieDefaut: 'Formation',
       placesRestantes: '{n} places restantes',
       complet: 'Complet',
-      duree: 'Durée',
       dureeValeur: '{n} h',
       dates: 'Dates',
       lieu: 'Lieu',
@@ -41,7 +39,6 @@ export default {
   dialog: {
     step1: {
       title: "S'inscrire à la formation",
-      identite: 'Identité',
       nomComplet: {
         label: 'Nom et prénom *',
         hint: "Tel qu'il figurera sur votre attestation",
@@ -57,7 +54,6 @@ export default {
         label: 'Numéro étudiant (matricule INE, facultatif)',
         hint: 'Déjà étudiant ? Indiquez votre matricule pour rattacher la formation à votre dossier',
       },
-      fermer: 'Fermer',
       voirRecap: 'Voir le récapitulatif',
       renseignerAbord: "Renseignez d'abord votre nom et votre téléphone",
     },
@@ -65,7 +61,6 @@ export default {
       title: 'Récapitulatif de la demande',
       formation: 'Formation',
       participant: 'Participant(e)',
-      telephone: 'Téléphone',
       montantARegler: 'Montant à régler',
       note: 'En déposant cette demande, vous vous engagez à régler les frais de la formation par Mobile Money. La confirmation du paiement se fait au guichet de la scolarité.',
       retour: 'Retour',
@@ -80,7 +75,6 @@ export default {
       confirmee: 'confirmée',
       statutInfo: 'Statut actuel de votre demande : {statut} — vous recevrez votre attestation de formation en fin de parcours.',
       enAttentePaiement: 'en attente de paiement',
-      fermer: 'Fermer',
       inscrireAutre: 'Inscrire un autre participant',
     },
   },

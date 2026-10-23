@@ -12,7 +12,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('statistiquesMesrs.filters.annee.label')"
+            :label="$t('common.fields.year')"
             :hint="$t('statistiquesMesrs.filters.annee.hint')"
             style="min-width: 180px"
             @update:model-value="charger"
@@ -274,8 +274,8 @@ function dateLisibleCourt(iso: string): string {
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'genereLe', label: t('statistiquesMesrs.table.columns.genereLe'), field: 'genereLe', align: 'left', sortable: true },
-  { name: 'annee', label: t('statistiquesMesrs.table.columns.annee'), field: 'annee', align: 'left' },
-  { name: 'effectif', label: t('statistiquesMesrs.table.columns.effectif'), field: 'effectif', align: 'right' },
+  { name: 'annee', label: t('common.fields.year'), field: 'annee', align: 'left' },
+  { name: 'effectif', label: t('common.fields.headcount'), field: 'effectif', align: 'right' },
   { name: 'taux', label: t('statistiquesMesrs.table.columns.taux'), field: 'taux', align: 'right' },
   { name: 'masse', label: t('statistiquesMesrs.table.columns.masse'), field: 'masse', align: 'right' },
   {
@@ -298,7 +298,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
       labels,
       datasets: [
         {
-          label: t('statistiquesMesrs.chart.datasets.effectif'),
+          label: t('common.fields.headcount'),
           data: ordre.map((s) => s.donnees?.effectifTotal ?? 0),
           borderColor: PEINTURE_EFFECTIF,
           backgroundColor: 'rgba(16, 37, 30, 0.16)',
@@ -337,7 +337,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           position: 'left',
           beginAtZero: true,
           ticks: { precision: 0 },
-          title: { display: true, text: t('statistiquesMesrs.chart.axis.effectif') },
+          title: { display: true, text: t('common.fields.headcount') },
         },
         yTaux: {
           type: 'linear',
@@ -363,13 +363,13 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
 function exporterCsv() {
   const lignes = [
     [
-      t('statistiquesMesrs.csv.headers.date'),
-      t('statistiquesMesrs.csv.headers.annee'),
-      t('statistiquesMesrs.csv.headers.effectif'),
+      t('common.fields.date'),
+      t('common.fields.year'),
+      t('common.fields.headcount'),
       t('statistiquesMesrs.csv.headers.tauxReussite'),
       t('statistiquesMesrs.csv.headers.masseSalariale'),
       t('statistiquesMesrs.csv.headers.moisMasse'),
-      t('statistiquesMesrs.csv.headers.enseignants'),
+      t('common.fields.teachers'),
       t('statistiquesMesrs.csv.headers.vacataires'),
       t('statistiquesMesrs.csv.headers.reclamations'),
       t('statistiquesMesrs.csv.headers.incidents24h'),

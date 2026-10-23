@@ -132,7 +132,7 @@
           no-caps
           color="primary"
           icon="refresh"
-          :label="$t('plagiatPage.emptyState.resetFilters')"
+          :label="$t('common.actions.reset_filters')"
           @click="reinitialiser"
         />
       </template>
@@ -250,7 +250,7 @@
     >
       <template v-if="decisionCourante">
         <div class="text-caption text-grey-7 q-mb-md">
-          {{ $t('plagiatPage.dialog.scoreLabel') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('rectorat.subtitleFallback') }}
+          {{ $t('common.fields.score') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('rectorat.subtitleFallback') }}
           {{ $t('plagiatPage.dialog.comparisonDocs', {
             documentA: decisionCourante.documentA?.titre ?? '—',
             documentB: decisionCourante.documentB?.titre ?? '—',
@@ -273,7 +273,7 @@
           dense
           type="textarea"
           autogrow
-          :label="decisionStatut === 'CONFIRME' ? $t('plagiatPage.dialog.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
+          :label="decisionStatut === 'CONFIRME' ? $t('common.fields.motifRequired') : $t('plagiatPage.dialog.motifOptional')"
         />
       </template>
     </dialogue-formulaire>
@@ -346,11 +346,11 @@ const suspicions = computed(() => liste.lignes);
 const peutDecider = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'score', label: t('plagiatPage.table.columns.score'), field: 'score', align: 'center', sortable: true },
+  { name: 'score', label: t('common.fields.score'), field: 'score', align: 'center', sortable: true },
   { name: 'documentA', label: t('plagiatPage.table.columns.documentA'), field: 'documentAId', align: 'left' },
   { name: 'documentB', label: t('plagiatPage.table.columns.documentB'), field: 'documentBId', align: 'left' },
   { name: 'detecteLe', label: t('plagiatPage.table.columns.detectedOn'), field: (r) => dateLisible(r.detecteLe), align: 'center', sortable: true },
-  { name: 'statut', label: t('plagiatPage.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 

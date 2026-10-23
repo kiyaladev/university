@@ -15,7 +15,7 @@
           v-model="form.libelle"
           outlined
           dense
-          :label="$t('patrimoine.categories.dialog.labelLabel')"
+          :label="$t('common.fields.labelRequired')"
           :hint="$t('patrimoine.equipmentDialog.fields.labelHint')"
           :rules="[(v: string) => (v ?? '').trim().length >= 2 || $t('common.messages.errors.tooShort')]"
           autofocus

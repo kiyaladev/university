@@ -1,19 +1,14 @@
 /** Namespace `seances` — page SeancesPage.vue (registre des séances). */
 export default {
-  title: 'Séances',
   subtitle: 'Le registre des séances programmées et de ce qui y a été constaté',
   actions: {
     generateFromSchedule: 'Générer depuis l’emploi du temps',
     newUnscheduled: 'Séance non programmée',
     newAdHoc: 'Séance ponctuelle',
-    print: 'Imprimer',
     assignRound: 'Affecter une tournée',
-    reload: 'Recharger',
     reloadAria: 'Recharger le registre',
   },
   period: {
-    from: 'Du',
-    to: 'Au',
     shortcuts: {
       today: "Aujourd'hui",
       sevenDays: '7 jours',
@@ -23,8 +18,6 @@ export default {
   },
   filters: {
     search: 'Rechercher',
-    teacher: 'Enseignant',
-    room: 'Salle',
     status: 'État de la séance',
     onlyUnchecked: 'Uniquement les séances non contrôlées',
     label: 'Filtrer',
@@ -36,9 +29,7 @@ export default {
     activeUnchecked: 'non contrôlées',
   },
   summary: {
-    sessions: 'Séances',
     checked: 'Contrôlées',
-    absences: 'Absences',
     unchecked: 'Sans contrôle',
   },
   emptyState: {
@@ -50,13 +41,8 @@ export default {
   },
   table: {
     columns: {
-      date: 'Date',
       schedule: 'Horaire',
-      teacher: 'Enseignant',
-      subject: 'Matière',
       promotion: 'Promotion',
-      room: 'Salle',
-      type: 'Type',
       durationObserved: 'Durée constatée',
       status: 'État',
     },
@@ -77,11 +63,9 @@ export default {
   },
   detail: {
     title: 'Détail de la séance',
-    teacher: 'Enseignant',
     subjectPromotion: 'Matière · promotion',
     courseType: 'Type de cours',
     plannedSchedule: 'Horaire prévu',
-    room: 'Salle',
     assignedController: 'Contrôleur prévu',
     noAssignedController: 'Aucun contrôleur attribué',
     assignController: 'Affecter',
@@ -102,7 +86,6 @@ export default {
     signature: 'Signature',
     otherSessions: 'Ses autres séances',
     sessionsInRoom: 'Séances en {code}',
-    close: 'Fermer',
     correctCheck: 'Corriger le pointage',
     checkThisSession: 'Pointer cette séance',
   },
@@ -110,7 +93,6 @@ export default {
     title: 'Affecter une tournée',
     help: 'La prévisualisation compte les séances non attribuées ; les affectations existantes ne seront pas écrasées.',
     departmentOptional: 'Département (facultatif)',
-    previewAction: 'Prévisualiser',
     preview: '{affectables} séance(s) peuvent être attribuées. {closed} séance(s) d’année clôturée seront ignorées.',
     assignAction: 'Affecter {count} séance(s)',
     loadError: 'Impossible de charger les contrôleurs et départements.',

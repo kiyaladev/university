@@ -41,10 +41,10 @@
     <span class="section-titre">{{ t('emploiDuTemps.slotDialog.scheduleSection') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-6">
-        <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('structure.dialogs.annee.debut')" />
+        <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('common.fields.start')" />
       </div>
       <div class="col-6">
-        <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.messages.end')" />
+        <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.fields.end')" />
       </div>
     </div>
 

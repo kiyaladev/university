@@ -38,7 +38,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('deliberations.filters.anneeAcademique')"
+          :label="$t('common.fields.academicYear')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -64,7 +64,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('deliberations.filters.statut')"
+          :label="$t('common.fields.status')"
         />
       </template>
     </filter-bar>
@@ -335,7 +335,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat :label="$t('deliberations.actions.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -483,21 +483,21 @@ const deliberationsPage = computed(() =>
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'promotion', label: t('deliberations.table.columns.promotion'), field: (r) => r.promotion?.nom ?? '—', align: 'left', sortable: true },
-  { name: 'annee', label: t('deliberations.table.columns.annee'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
+  { name: 'annee', label: t('common.fields.year'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
   { name: 'session', label: t('deliberations.table.columns.session'), field: 'session', align: 'left' },
-  { name: 'statut', label: t('deliberations.table.columns.statut'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'taux', label: t('deliberations.table.columns.taux'), field: 'tauxReussite', align: 'center', sortable: true },
-  { name: 'effectif', label: t('deliberations.table.columns.effectif'), field: (r) => r._count?.lignes ?? 0, align: 'center' },
-  { name: 'creeLe', label: t('deliberations.table.columns.creeLe'), field: 'creeLe', align: 'left', sortable: true },
+  { name: 'effectif', label: t('common.fields.students'), field: (r) => r._count?.lignes ?? 0, align: 'center' },
+  { name: 'creeLe', label: t('common.fields.createdOn'), field: 'creeLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesDetail = computed<QTableColumn[]>(() => [
   { name: 'rang', label: t('deliberations.table.detailColumns.rang'), field: 'rang', align: 'center' },
-  { name: 'matricule', label: t('deliberations.table.detailColumns.matricule'), field: (r) => r.inscription?.etudiant?.matricule ?? '—', align: 'left' },
-  { name: 'etudiant', label: t('deliberations.table.detailColumns.etudiant'), field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`.trim() || '—', align: 'left' },
+  { name: 'matricule', label: t('common.fields.studentId'), field: (r) => r.inscription?.etudiant?.matricule ?? '—', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: (r) => `${r.inscription?.etudiant?.nom ?? ''} ${r.inscription?.etudiant?.prenom ?? ''}`.trim() || '—', align: 'left' },
   { name: 'moyenne', label: t('deliberations.table.detailColumns.moyenne'), field: 'moyenne', align: 'center' },
-  { name: 'decision', label: t('deliberations.table.detailColumns.decision'), field: 'decision', align: 'center' },
+  { name: 'decision', label: t('common.fields.decision'), field: 'decision', align: 'center' },
   { name: 'mention', label: t('deliberations.table.detailColumns.mention'), field: (r) => r.mention ?? '—', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);

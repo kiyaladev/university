@@ -10,8 +10,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (code, nom, bâtiment)…',
-    building: 'Bâtiment',
-    state: 'État',
     gpsMark: 'Repère GPS',
   },
   options: {
@@ -35,26 +33,17 @@ export default {
     regenerateAria: 'Régénérer le QR de la salle',
     regenerateTooltip: 'Régénérer le QR',
     editAria: 'Modifier la salle',
-    editTooltip: 'Modifier',
     deleteAria: 'Supprimer la salle',
-    deleteTooltip: 'Supprimer',
   },
   emptyState: {
     createFirst: 'Créer la première salle',
-    resetFilters: 'Réinitialiser les filtres',
     noneForCriteria: 'Aucune salle pour ces critères.',
     noneRegistered: 'Aucune salle enregistrée.',
   },
   table: {
     columns: {
-      code: 'Code',
-      name: 'Nom',
-      building: 'Bâtiment',
-      capacity: 'Capacité',
       gpsMark: 'Repère GPS',
       qrToken: 'Jeton QR',
-      state: 'État',
-      actions: 'Actions',
     },
   },
   chips: {
@@ -69,13 +58,9 @@ export default {
     editTitle: 'Modifier la salle',
     newTitle: 'Nouvelle salle',
     identificationSection: 'Identification',
-    codeLabel: 'Code *',
     codeHint: 'ex. AMPHI-A',
     codeRequired: 'Le code est obligatoire',
-    nameLabel: 'Nom *',
     nameRequired: 'Le nom est obligatoire',
-    buildingLabel: 'Bâtiment',
-    capacityLabel: 'Capacité',
     gpsSection: 'Repère GPS (facultatif)',
     gpsHelp: 'Permet de vérifier que le contrôleur est bien sur place au moment du pointage.',
     latitudeLabel: 'Latitude',
@@ -85,7 +70,6 @@ export default {
     useCurrentPosition: 'Utiliser ma position actuelle',
     usableToggle: 'Salle utilisable',
     cancel: 'Annuler',
-    save: 'Enregistrer',
   },
   confirmRegenerate: {
     title: 'Régénérer le QR',
@@ -97,7 +81,6 @@ export default {
     title: 'Supprimer la salle',
     message: 'Supprimer « {code} — {name} » ? Son affiche QR ne vaudra plus rien.',
     cancel: 'Annuler',
-    confirm: 'Supprimer',
   },
   messages: {
     positionSet: 'Position renseignée',

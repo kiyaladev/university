@@ -29,17 +29,17 @@
           />
         </div>
       </div>
-      <q-input v-model="form.libelle" outlined dense :label="$t('patrimoine.categories.dialog.labelLabel')" />
+      <q-input v-model="form.libelle" outlined dense :label="$t('common.fields.labelRequired')" />
       <q-input v-model="form.description" outlined dense type="textarea" rows="2" :label="$t('common.fields.description')" />
       <div class="row q-col-gutter-md">
         <div class="col-12 col-sm-4">
-          <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('recettes.formDialog.date')" />
+          <champ-date v-model="form.date" :disable="champsComptablesFiges" :label="$t('common.fields.dateRequired')" />
         </div>
         <div class="col-12 col-sm-4">
           <q-input v-model.number="form.montant" :disable="champsComptablesFiges" type="number" min="0" outlined dense :label="$t('recettes.formDialog.amount')" />
         </div>
         <div class="col-12 col-sm-4">
-          <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('recettes.formDialog.currency')" />
+          <q-input v-model="form.devise" :disable="champsComptablesFiges" outlined dense :label="$t('common.fields.currency')" />
         </div>
       </div>
       <q-input v-model="form.client" outlined dense :label="$t('recettes.table.columns.client')" />

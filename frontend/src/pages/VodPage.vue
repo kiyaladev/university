@@ -123,11 +123,11 @@ const CLASSE_STATUT: Record<string, string> = {
 
 /** La colonne « Statut » n'a pas de sens dans la collecte étudiante. */
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'titre', label: t('vodPage.table.columns.title'), field: 'titre', align: 'left' },
-  { name: 'type', label: t('vodPage.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'matiere', label: t('vodPage.table.columns.subject'), field: 'matiere', align: 'left' },
-  { name: 'enseignant', label: t('vodPage.table.columns.teacher'), field: 'enseignant', align: 'left' },
-  { name: 'duree', label: t('vodPage.table.columns.duration'), field: 'dureeSecondes', align: 'center' },
+  { name: 'titre', label: t('common.fields.title'), field: 'titre', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: 'matiere', align: 'left' },
+  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignant', align: 'left' },
+  { name: 'duree', label: t('common.fields.duration'), field: 'dureeSecondes', align: 'center' },
   ...(estEtudiant.value
     ? ([
         {
@@ -139,7 +139,7 @@ const colonnes = computed<QTableColumn[]>(() => [
       ] as QTableColumn[])
     : ([
         { name: 'vues', label: t('vodPage.table.columns.views'), field: 'nbVues', align: 'center' },
-        { name: 'statut', label: t('vodPage.table.columns.status'), field: 'statut', align: 'center' },
+        { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
       ] as QTableColumn[])),
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
@@ -195,7 +195,7 @@ async function archiver(v: RessourceCatalogue) {
   const ok = await confirmer({
     titre: t('vodPage.dialogs.archive.title'),
     message: t('vodPage.dialogs.archive.message', { title: v.titre }),
-    ok: t('vodPage.dialogs.archive.confirm'),
+    ok: t('common.actions.archive'),
     danger: true,
   });
   if (!ok) return;
@@ -267,7 +267,7 @@ function avancement(v: RessourceCatalogue): number {
           :options="OPTIONS_STATUT"
           emit-value
           map-options
-          :label="$t('vodPage.filters.status')"
+          :label="$t('common.fields.status')"
           outlined
           dense
           clearable
@@ -360,7 +360,7 @@ function avancement(v: RessourceCatalogue): number {
             :aria-label="$t('vodPage.aria.edit')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>{{ $t('vodPage.tooltips.edit') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutGererRessource(p.row) && p.row.statut !== 'ARCHIVE'"
@@ -372,7 +372,7 @@ function avancement(v: RessourceCatalogue): number {
             :aria-label="$t('vodPage.aria.archive')"
             @click="archiver(p.row)"
           >
-            <q-tooltip>{{ $t('vodPage.tooltips.archive') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.archive') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -427,7 +427,7 @@ function avancement(v: RessourceCatalogue): number {
               unelevated
               color="primary"
               icon="play_arrow"
-              :label="estEtudiant && avancement(v) > 0 && !v.termine ? $t('vodPage.actions.resume') : $t('vodPage.actions.player')"
+              :label="estEtudiant && avancement(v) > 0 && !v.termine ? $t('common.actions.resume') : $t('vodPage.actions.player')"
               no-caps
               @click="lecteur(v)"
             />
@@ -439,7 +439,7 @@ function avancement(v: RessourceCatalogue): number {
               :aria-label="$t('vodPage.aria.edit')"
               @click="ouvrirEdition(v)"
             >
-              <q-tooltip>{{ $t('vodPage.tooltips.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="peutGererRessource(v) && ['BROUILLON', 'HORS_LIGNE'].includes(v.statut ?? '')"
@@ -460,7 +460,7 @@ function avancement(v: RessourceCatalogue): number {
               :aria-label="$t('vodPage.aria.archive')"
               @click="archiver(v)"
             >
-              <q-tooltip>{{ $t('vodPage.tooltips.archive') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.archive') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
         </q-card>

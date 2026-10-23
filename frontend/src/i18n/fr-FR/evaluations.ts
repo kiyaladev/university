@@ -5,7 +5,6 @@ export default {
   subtitle: 'Les épreuves notées (CC, examen, rattrapage…) par matière et promotion',
   actions: {
     new: 'Nouvelle évaluation',
-    reset_filters: 'Réinitialiser les filtres',
   },
   dialogForm: {
     editTitle: 'Modifier l’évaluation',
@@ -23,9 +22,7 @@ export default {
   },
   filters: {
     search_placeholder: 'Rechercher par intitulé…',
-    year: 'Année académique',
     promotion: 'Promotion',
-    subject: 'Matière',
     type: 'Type d\'épreuve',
     status: 'État',
   },
@@ -43,13 +40,9 @@ export default {
   },
   table: {
     columns: {
-      title: 'Intitulé',
-      type: 'Type',
       coefficient: 'Coeff.',
-      subject: 'Matière',
       promotion: 'Promotion',
       semester: 'Sem',
-      date: 'Date',
       status: 'État',
       notes: 'Notes',
     },
@@ -62,7 +55,6 @@ export default {
     edit_evaluation: 'Modifier l’évaluation',
     edit_evaluation_aria: 'Modifier l\'évaluation',
     delete_locked: 'Des notes sont déjà saisies : suppression impossible',
-    delete: 'Supprimer',
     delete_aria: 'Supprimer l\'évaluation',
   },
   cards: {
@@ -70,18 +62,13 @@ export default {
     semester: 'sem. {n}',
     notes_view: 'Notes',
     notes_enter: 'Saisir les notes',
-    edit: 'Modifier',
-    close: 'Clôturer',
-    delete: 'Supprimer',
   },
   notes_count: '{n} note{plural}',
   dialogs: {
     close_title: 'Clôturer l’évaluation',
     close_message: 'Clôturer « {name} » ? Les notes deviennent définitives et la saisie sera fermée.',
-    close_confirm: 'Clôturer',
     delete_title: 'Supprimer l’évaluation',
     delete_message: 'Supprimer définitivement « {name} » ?',
-    delete_confirm: 'Supprimer',
   },
   messages: {
     closed: 'Évaluation clôturée',
@@ -96,12 +83,8 @@ export default {
     empty:
       'Aucun étudiant à noter : seuls les dossiers d’inscription validés de cette promotion figurent sur la feuille.',
     columns: {
-      matricule: 'Matricule',
-      number: 'N°',
-      student: 'Étudiant',
       present: 'Présent',
       note: 'Note',
     },
-    close: 'Fermer',
   },
 };

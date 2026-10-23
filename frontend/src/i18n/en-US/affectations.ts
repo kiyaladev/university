@@ -5,27 +5,17 @@ export default {
   actions: {
     new: 'New assignment',
     createFirst: 'Create the first assignment',
-    resetFilters: 'Reset filters',
-    edit: 'Edit',
     editAria: 'Edit the assignment',
-    delete: 'Delete',
     deleteAria: 'Delete the assignment',
   },
   filters: {
     searchPlaceholder: 'Search (teacher, subject, class)…',
-    teacher: 'Teacher',
-    subject: 'Subject',
     promotion: 'Class',
-    year: 'Academic year',
   },
   table: {
     columns: {
-      teacher: 'Teacher',
-      subject: 'Subject',
       promotion: 'Class',
-      year: 'Year',
       volume: 'Planned volume',
-      actions: 'Actions',
     },
   },
   cardView: {
@@ -50,26 +40,22 @@ export default {
       when: 'For whom, and when',
     },
     fields: {
-      teacher: 'Teacher *',
       teacherError: 'Choose the teacher',
       subject: 'Subject *',
       subjectError: 'Choose the subject',
       promotion: 'Class *',
       promotionError: 'Choose the class',
-      year: 'Academic year *',
       yearError: 'Choose the academic year',
       volume: 'Contractual workload (h)',
       volumeHint: 'Used to track "hours worked / hours owed"',
     },
     cancel: 'Cancel',
-    save: 'Save',
   },
   deleteDialog: {
     title: 'Delete the assignment',
     message:
       '"{subject}" assigned to {teacher}: related sessions will also be deleted. Continue?',
     cancel: 'Cancel',
-    confirm: 'Delete',
   },
   messages: {
     fillRequired: 'Fill in the required fields',

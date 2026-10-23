@@ -2,7 +2,6 @@
 export default {
   nav: {
     verifyCard: 'Vérifier une carte étudiante',
-    login: 'Se connecter',
   },
   title: 'Vérification d’attestation',
   subtitle:
@@ -15,7 +14,6 @@ export default {
     qrHint: 'Scannez le QR du document ou saisissez le code',
     qrParamsHint:
       'Le QR scanné (ou collé) est une URL : ses paramètres {ref} et {k} remplissent le formulaire automatiquement.',
-    submit: 'Vérifier',
   },
   result: {
     valid: 'Attestation authentique',
@@ -25,11 +23,8 @@ export default {
     table: {
       attestation: 'Attestation',
       attestationValue: '— n° {numero}',
-      etudiant: 'Étudiant',
       etudiantValue: '— matricule {matricule}',
       parcours: 'Parcours',
-      motif: 'Motif',
-      emiseLe: 'Émise le',
       reference: 'Référence de contrôle',
     },
     checkedAt:

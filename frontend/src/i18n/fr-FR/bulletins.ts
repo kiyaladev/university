@@ -9,7 +9,6 @@ export default {
   },
   filters: {
     search: 'Rechercher par nom ou matricule…',
-    annee: 'Année académique',
     promotion: 'Promotion',
     session: 'Session',
     decision: 'Décision du jury',
@@ -37,10 +36,7 @@ export default {
   },
   table: {
     columns: {
-      matricule: 'Matricule',
-      etudiant: 'Étudiant',
       moyenne: 'Moyenne',
-      decision: 'Décision',
       mention: 'Mention',
       rang: 'Rang',
     },
@@ -61,7 +57,6 @@ export default {
   cards: {
     rang: 'Rang {rang}',
     bulletin: 'Bulletin',
-    imprimer: 'Imprimer',
     attestation: 'Attestation',
     detailOnOfficial: 'Le détail par matière (UE, crédits, épreuves) figure sur le bulletin officiel imprimable.',
     totalCredits: 'Total crédits :',
@@ -69,9 +64,6 @@ export default {
     overallAverage: 'Moyenne générale :',
     honors: 'Mention :',
     columns: {
-      subject: 'Matière',
-      code: 'Code',
-      credits: 'Crédits',
       average: 'Moyenne /20',
     },
   },

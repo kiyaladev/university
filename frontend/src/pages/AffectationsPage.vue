@@ -23,7 +23,7 @@
           map-options
           use-input
           input-debounce="0"
-          :label="$t('affectations.filters.teacher')"
+          :label="$t('common.fields.teacher')"
           @filter="filtrerEnseignants"
         />
         <q-select
@@ -36,7 +36,7 @@
           map-options
           use-input
           input-debounce="0"
-          :label="$t('affectations.filters.subject')"
+          :label="$t('common.fields.subject')"
           @filter="filtrerMatieres"
         />
         <q-select
@@ -57,7 +57,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('affectations.filters.year')"
+          :label="$t('common.fields.academicYear')"
         />
       </template>
     </filter-bar>
@@ -90,7 +90,7 @@
               flat
               no-caps
               icon="refresh"
-              :label="$t('affectations.actions.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
           </template>
@@ -122,7 +122,7 @@
             :aria-label="$t('affectations.actions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>{{ $t('affectations.actions.edit') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutSupprimer"
@@ -134,7 +134,7 @@
             :aria-label="$t('affectations.actions.deleteAria')"
             @click="supprimer(p.row)"
           >
-            <q-tooltip>{{ $t('affectations.actions.delete') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -166,7 +166,7 @@
             dense
             no-caps
             icon="edit"
-            :label="$t('affectations.actions.edit')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(a)"
           />
           <q-btn
@@ -176,7 +176,7 @@
             no-caps
             color="negative"
             icon="delete"
-            :label="$t('affectations.actions.delete')"
+            :label="$t('common.actions.delete')"
             @click="supprimer(a)"
           />
         </q-card-actions>
@@ -197,7 +197,7 @@
             flat
             no-caps
             icon="refresh"
-            :label="$t('affectations.actions.resetFilters')"
+            :label="$t('common.actions.reset_filters')"
             @click="reinitialiser"
           />
         </template>
@@ -216,7 +216,7 @@
       v-model="dialogOuvert"
       :titre="affectationEditee ? $t('affectations.dialog.editTitle') : $t('affectations.dialog.newTitle')"
       taille="s"
-      :libelle-valider="$t('affectations.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrement"
       @valider="enregistrer"
     >
@@ -230,7 +230,7 @@
         map-options
         use-input
         input-debounce="0"
-        :label="$t('affectations.dialog.fields.teacher')"
+        :label="$t('common.fields.teacherRequired')"
         :rules="[(v: string) => !!v || $t('affectations.dialog.fields.teacherError')]"
         @filter="filtrerEnseignants"
       />
@@ -266,7 +266,7 @@
         dense
         emit-value
         map-options
-        :label="$t('affectations.dialog.fields.year')"
+        :label="$t('common.fields.academicYearRequired')"
         :rules="[(v: string) => !!v || $t('affectations.dialog.fields.yearError')]"
       />
       <q-input
@@ -426,8 +426,8 @@ const chips = computed(() => {
 });
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'enseignant', label: t('affectations.table.columns.teacher'), field: 'enseignantId', align: 'left' },
-  { name: 'matiere', label: t('affectations.table.columns.subject'), field: 'matiereId', align: 'left' },
+  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignantId', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: 'matiereId', align: 'left' },
   {
     name: 'promotion',
     label: t('affectations.table.columns.promotion'),
@@ -436,7 +436,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'annee',
-    label: t('affectations.table.columns.year'),
+    label: t('common.fields.year'),
     field: (r: Charge) => r.annee?.libelle ?? '—',
     align: 'left',
   },
@@ -446,7 +446,7 @@ const colonnes = computed<QTableColumn[]>(() => [
     field: (r: Charge) => `${r.volumeHorairePrevu} h`,
     align: 'right',
   },
-  { name: 'actions', label: t('affectations.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 function ouvrir(a: Charge | null) {
@@ -513,7 +513,7 @@ function supprimer(a: Charge) {
   void supprimerAvecConfirmation(`/affectations/${a.id}`, a.matiere?.intitule ?? '?', aff.recharger, {
     titre: t('affectations.deleteDialog.title'),
     message: t('affectations.deleteDialog.message', { subject: a.matiere?.intitule ?? '?', teacher }),
-    ok: t('affectations.deleteDialog.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('affectations.messages.deleted'),
   });
 }

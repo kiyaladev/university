@@ -17,10 +17,6 @@ export default {
     recherche: '"{q}"',
   },
   common: {
-    tooltip: {
-      edit: 'Edit',
-      delete: 'Delete',
-    },
     status: {
       active: 'Active',
       inactive: 'Inactive',
@@ -38,10 +34,7 @@ export default {
     },
     table: {
       columns: {
-        code: 'Code',
-        nom: 'Name',
         ville: 'City',
-        capacite: 'Capacity',
         responsable: 'Manager',
         statut: 'Status',
       },
@@ -78,7 +71,6 @@ export default {
       delete: {
         title: 'Delete hall',
         message: 'Permanently delete {nom} ({code})?',
-        confirm: 'Delete',
       },
       deleted: 'Hall deleted',
     },
@@ -91,17 +83,12 @@ export default {
     filters: {
       placeholder: 'Search (room code…)',
       residence: 'Hall',
-      categorie: 'Category',
-      statut: 'Status',
     },
     table: {
       columns: {
-        code: 'Code',
         residence: 'Hall',
-        categorie: 'Category',
         lits: 'Beds',
         loyer: 'Rent',
-        statut: 'Status',
       },
       aria: {
         voirAttributions: 'View this room\'s allocations',
@@ -128,14 +115,12 @@ export default {
         categoryLabel: 'Category *',
         statusLabel: 'Status *',
         monthlyRent: 'Monthly rent',
-        currency: 'Currency',
         currencyHint: 'Billing through Mobile Money is planned for the payment module',
         saved: 'Room saved',
       },
       delete: {
         title: 'Delete room',
         message: 'Permanently delete room {code}?',
-        confirm: 'Delete',
       },
       deleted: 'Room deleted',
     },
@@ -156,18 +141,13 @@ export default {
       saved: 'Request recorded — room reserved',
     },
     filters: {
-      annee: 'Year',
-      statut: 'Status',
       residence: 'Hall',
       etudiant: 'Search student (ID, name)',
     },
     table: {
       columns: {
         demandeLe: 'Requested on',
-        etudiant: 'Student',
         chambre: 'Room',
-        score: 'Score',
-        statut: 'Status',
       },
       aria: {
         decider: 'Decide on the allocation',
@@ -176,7 +156,6 @@ export default {
       },
       tooltip: {
         decider: 'Decide',
-        retirer: 'Withdraw',
         voirEtudiant: 'View student',
       },
     },
@@ -190,13 +169,10 @@ export default {
       score: 'Score:',
       decider: 'Decide',
       deciderTooltip: 'Grant or deny',
-      retirer: 'Withdraw',
       retirerTooltip: 'Withdraw allocation',
-      etudiant: 'Student',
       etudiantTooltip: 'View student record',
     },
     chips: {
-      anneeFallback: 'Year',
       residence: 'Hall: {code}',
       etudiant: 'Student: {etudiant}',
     },
@@ -212,7 +188,6 @@ export default {
         statutOccupee: 'OCCUPIED',
         statutLibre: 'FREE',
         motifLabel: 'Reason (optional)',
-        cancel: 'Cancel',
         accorder: 'Grant',
         refuser: 'Deny',
       },
@@ -220,12 +195,10 @@ export default {
         title: 'Withdraw allocation',
         message: 'Withdraw the allocation for {etudiant} for room {code} ({residence})?',
         motifLabel: 'Reason for withdrawal (optional)',
-        confirm: 'Withdraw',
       },
       etudiantDetail: {
         chambreLine: '\nRoom: {code} ({residence})',
         message: 'Student ID: {matricule}\nPhone: {telephone}\nEmail: {email}{chambre}',
-        close: 'Close',
       },
       accorded: 'Allocation granted — room occupied',
       refused: 'Request denied',

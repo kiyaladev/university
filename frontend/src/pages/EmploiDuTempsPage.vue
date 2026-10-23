@@ -76,7 +76,7 @@
         emit-value
         map-options
         use-input
-        :label="$t('emploiDuTemps.filters.teacher')"
+        :label="$t('common.fields.teacher')"
         @filter="filtrerEnseignants"
       />
       <q-select
@@ -87,7 +87,7 @@
         clearable
         emit-value
         map-options
-        :label="$t('emploiDuTemps.filters.room')"
+        :label="$t('common.fields.room')"
       />
       <q-btn
         round
@@ -97,7 +97,7 @@
         :loading="chargement"
         @click="charger"
       >
-        <q-tooltip>{{ $t('emploiDuTemps.filters.reloadTooltip') }}</q-tooltip>
+        <q-tooltip>{{ $t('common.actions.reload') }}</q-tooltip>
       </q-btn>
     </div>
 

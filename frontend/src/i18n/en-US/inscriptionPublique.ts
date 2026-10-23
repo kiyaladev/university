@@ -19,8 +19,6 @@ export default {
     title: 'Submit my application',
     steps: {
       ariaLabel: 'Pre-registration steps',
-      identity: 'Identity',
-      filiere: 'Program',
       confirmation: 'Confirmation',
     },
     step1: {
@@ -64,7 +62,6 @@ export default {
     step2: {
       sectionTitle: 'Choice of program',
       loadingFilieres: 'Loading open programs…',
-      anneeLabel: 'Academic year *',
       promotionLabel: 'Program *',
       promotionPlaceholder: 'Choose your program and level',
       fraisLabel: 'Fees: {montant} {devise}',

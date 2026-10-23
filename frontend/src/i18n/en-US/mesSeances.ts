@@ -2,10 +2,6 @@
 export default {
   title: 'My sessions',
   subtitle: 'Overview of my classes and the attendance checks concerning me',
-  filters: {
-    from: 'From',
-    to: 'To',
-  },
   actions: {
     myJustificatifs: 'My justifications',
     printAttendance: 'Print my attendance sheet',
@@ -13,18 +9,12 @@ export default {
   kpis: {
     planned: 'Scheduled sessions',
     ensured: 'Sessions held',
-    absences: 'Absences',
     hoursDone: 'Hours completed',
   },
   table: {
     columns: {
-      date: 'Date',
-      horaire: 'Time',
-      matiere: 'Subject',
       promotion: 'Cohort',
-      salle: 'Room',
       statut: 'Outcome',
-      duree: 'Duration',
       theme: 'Topic covered',
     },
     loadingLabel: 'Loading your sessions…',

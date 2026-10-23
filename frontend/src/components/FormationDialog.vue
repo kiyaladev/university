@@ -32,7 +32,7 @@
           v-model="form.categorie"
           outlined
           dense
-          :label="$t('cites.chambres.filters.categorie')"
+          :label="$t('common.fields.category')"
           :hint="$t('formationsAdmin.dialog.fields.categoryHint')"
         />
       </div>
@@ -67,7 +67,7 @@
           dense
           emit-value
           map-options
-          :label="$t('formationsAdmin.dialog.fields.currency')"
+          :label="$t('common.fields.currency')"
         />
       </div>
     </div>
@@ -85,10 +85,10 @@
         />
       </div>
       <div class="col-12 col-sm-3">
-        <champ-date v-model="form.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
+        <champ-date v-model="form.dateDebut" :label="$t('common.fields.start')" />
       </div>
       <div class="col-12 col-sm-3">
-        <champ-date v-model="form.dateFin" :label="$t('common.messages.end')" />
+        <champ-date v-model="form.dateFin" :label="$t('common.fields.end')" />
       </div>
     </div>
 

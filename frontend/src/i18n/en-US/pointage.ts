@@ -17,7 +17,6 @@ export default {
   "noLocation": "Location not recorded",
   "correctionProof": "Every correction requires new confirmation from the teacher.",
   "initialProof": "The teacher confirms their presence above — signature, PIN or fingerprint — before saving.",
-  "cancel": "Cancel",
   "correct": "Correct attendance record",
   "validate": "Save attendance record",
   "roomQr": "Room QR",

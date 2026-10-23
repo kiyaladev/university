@@ -3,10 +3,7 @@ export default {
   title: 'Statistiques',
   subtitle: 'Ce que la tournée a produit — salle par salle, enseignant par enseignant',
   filters: {
-    from: 'Du',
-    to: 'Au',
     recalculateAria: 'Recalculer les relevés',
-    recalculateTooltip: 'Recalculer',
   },
   shortcuts: {
     d7: '7 jours',
@@ -25,12 +22,8 @@ export default {
       hours: 'Heures assurées',
     },
     card: {
-      sessions: 'Séances',
       controlled: 'Contrôlées',
-      absences: 'Absences',
-      students: 'Étudiants',
       occupation: 'Occupation',
-      presence: 'Présence',
       visitedOn: 'Vue le',
       neverVisited: 'jamais visitée',
       sessionsLink: 'Ses séances',
@@ -42,13 +35,9 @@ export default {
     table: {
       loading: 'Calcul du relevé…',
       columns: {
-        salle: 'Salle',
-        planifiees: 'Séances',
         controlees: 'Contr.',
-        absent: 'Absences',
         effectif: 'Étud.',
         occupation: 'Occupation',
-        presence: 'Présence',
         visite: 'Vue le',
       },
     },
@@ -59,17 +48,11 @@ export default {
   },
   enseignants: {
     summary: {
-      sessions: 'Séances',
-      presence: 'Présence',
-      absences: 'Absences',
       hours: 'Heures assurées',
     },
     card: {
-      sessions: 'Séances',
       done: 'Assurées',
       late: 'Retards',
-      absences: 'Absences',
-      presence: 'Présence',
       hoursDone: '{hours} assurées',
     },
     empty: {
@@ -80,14 +63,8 @@ export default {
       loading: 'Calcul du relevé…',
       columns: {
         matricule: 'Matricule',
-        nom: 'Enseignant',
-        departement: 'Département',
-        planifiees: 'Séances',
         assurees: 'Assurées',
         retard: 'Retards',
-        absent: 'Absences',
-        heures: 'Heures',
-        presence: 'Présence',
       },
     },
     actions: {

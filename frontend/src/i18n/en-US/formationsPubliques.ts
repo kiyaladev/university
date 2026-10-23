@@ -1,6 +1,5 @@
 /** Namespace `formationsPubliques` — page FormationsPubliquesPage.vue (public storefront for continuing education). */
 export default {
-  connexion: 'Log in',
   hero: {
     overline: 'Continuing education & certifications',
     title: 'Skills for tomorrow',
@@ -29,7 +28,6 @@ export default {
       categorieDefaut: 'Course',
       placesRestantes: '{n} spots remaining',
       complet: 'Full',
-      duree: 'Duration',
       dureeValeur: '{n} h',
       dates: 'Dates',
       lieu: 'Location',
@@ -41,7 +39,6 @@ export default {
   dialog: {
     step1: {
       title: 'Enroll in the course',
-      identite: 'Identity',
       nomComplet: {
         label: 'Full name *',
         hint: 'As it will appear on your certificate',
@@ -57,7 +54,6 @@ export default {
         label: 'Student number (INE number, optional)',
         hint: 'Already a student? Enter your student number to link the course to your record',
       },
-      fermer: 'Close',
       voirRecap: 'View summary',
       renseignerAbord: 'Please fill in your name and phone number first',
     },
@@ -65,7 +61,6 @@ export default {
       title: 'Request summary',
       formation: 'Course',
       participant: 'Participant',
-      telephone: 'Phone',
       montantARegler: 'Amount due',
       note: 'By submitting this request, you agree to pay the course fees via Mobile Money. Payment confirmation is handled at the registrar\'s office.',
       retour: 'Back',
@@ -80,7 +75,6 @@ export default {
       confirmee: 'confirmed',
       statutInfo: 'Current status of your request: {statut} — you will receive your training certificate at the end of the course.',
       enAttentePaiement: 'awaiting payment',
-      fermer: 'Close',
       inscrireAutre: 'Enroll another participant',
     },
   },

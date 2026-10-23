@@ -61,7 +61,7 @@
       <template #body-cell-actions="p">
         <q-td :props="p" class="text-right">
           <q-btn flat dense round icon="edit" :aria-label="$t('tarifsDemandeAdmin.table.edit_aria')" @click="ouvrir(p.row)">
-            <q-tooltip>{{ $t('tarifsDemandeAdmin.table.edit_tooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
         </q-td>
       </template>
@@ -71,7 +71,7 @@
       v-model="dialogOuvert"
       taille="s"
       :titre="tarifEdite ? $t('tarifsDemandeAdmin.dialog.edit_title') : $t('tarifsDemandeAdmin.dialog.new_title')"
-      :libelle-valider="$t('tarifsDemandeAdmin.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       icone-valider="save"
       :envoi="enregistrement"
       :desactive="!formulaireValide"
@@ -85,7 +85,7 @@
         map-options
         outlined
         dense
-        :label="$t('tarifsDemandeAdmin.dialog.type_label')"
+        :label="$t('common.fields.type')"
         :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
         class="q-mb-md"
         :rules="[(v) => !!v || $t('tarifsDemandeAdmin.dialog.type_required')]"
@@ -95,7 +95,7 @@
         :model-value="libelleType(form.type)"
         outlined
         dense
-        :label="$t('tarifsDemandeAdmin.dialog.type_label')"
+        :label="$t('common.fields.type')"
         disable
         :hint="$t('tarifsDemandeAdmin.dialog.type_hint')"
         class="q-mb-md"
@@ -106,7 +106,7 @@
         outlined
         dense
         min="0"
-        :label="$t('tarifsDemandeAdmin.dialog.amount_label')"
+        :label="$t('common.fields.amount')"
         suffix="GNF"
         class="q-mb-md"
         :rules="[(v) => (v !== null && v !== undefined && v > 0) || $t('tarifsDemandeAdmin.dialog.amount_required')]"
@@ -173,8 +173,8 @@ const formulaireValide = computed(
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'type', label: t('tarifsDemandeAdmin.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'montant', label: t('tarifsDemandeAdmin.table.columns.amount'), field: 'montant', align: 'right' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'montant', label: t('common.fields.amount'), field: 'montant', align: 'right' },
   { name: 'delaiHeures', label: t('tarifsDemandeAdmin.table.columns.delay'), field: 'delaiHeures', align: 'right' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);

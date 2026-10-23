@@ -15,7 +15,7 @@
         dense
         type="textarea"
         autogrow
-        :label="$t('helpdesk.repairDialog.description')"
+        :label="$t('common.fields.descriptionRequired')"
         :hint="$t('helpdesk.repairDialog.descriptionHint')"
         :rules="[(v: string) => (v ?? '').trim().length >= 5 || $t('common.messages.errors.tooShort')]"
         autofocus

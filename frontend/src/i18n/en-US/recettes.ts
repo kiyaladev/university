@@ -13,9 +13,7 @@ export default {
     newTitle: 'Issue a revenue entry',
     numberHint: 'The number follows the REC-YYYY-NNNNN format and appears on the invoice or receipt.',
     number: 'Number (REC-YYYY-XXXXX)',
-    date: 'Date *',
     amount: 'Amount *',
-    currency: 'Currency',
     invoiceNumber: 'Invoice number',
     accountingLocked: 'This revenue item has been collected; its type, date, amount and currency are locked.',
     updated: 'Revenue entry updated',
@@ -50,10 +48,7 @@ export default {
     placeholder: 'Search (number, label, client…)',
   },
   filters: {
-    type: 'Type',
     paiementStatut: 'Collection',
-    dateDebut: 'From',
-    dateFin: 'To',
   },
   paiementOptions: {
     reussi: 'Collected',
@@ -77,17 +72,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'No.',
-      type: 'Type',
-      libelle: 'Label',
       client: 'Client',
-      date: 'Date',
-      montant: 'Amount',
-      statut: 'Status',
     },
-  },
-  card: {
-    montant: 'Amount',
   },
   tooltips: {
     detail: 'Detail / edit',

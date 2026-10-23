@@ -46,7 +46,6 @@ export default {
     title: 'Rien à pointer ici',
     noneMatchFilter: 'Aucune séance ne correspond à ce filtre.',
     noneScheduled: 'Aucune séance n’est programmée ce jour.',
-    clearFilters: 'Retirer les filtres',
     viewSchedule: 'Voir l’emploi du temps',
     openUnscheduled: 'Ouvrir une séance non programmée',
   },

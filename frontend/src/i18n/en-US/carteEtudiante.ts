@@ -28,11 +28,8 @@ export default {
   },
   table: {
     columns: {
-      student: 'Student',
       matricule: 'ID number',
-      issuedOn: 'Issued on',
       validity: 'Validity',
-      status: 'Status',
       actions: '',
     },
   },
@@ -48,17 +45,11 @@ export default {
     qrAria: 'Verification QR code',
     qrTooltip: 'Verification QR code',
     printAria: 'Print the card',
-    printTooltip: 'Print',
     editAria: 'Edit the card',
-    editTooltip: 'Edit',
     revokeAria: 'Revoke the card',
-    revokeTooltip: 'Revoke',
   },
   cardActions: {
     qr: 'QR',
-    print: 'Print',
-    edit: 'Edit',
-    revoke: 'Revoke',
   },
   revokeDialog: {
     title: 'Revoke the card',
@@ -72,7 +63,6 @@ export default {
   },
   detailDialog: {
     title: 'Verification QR code',
-    close: 'Close',
     scanHint: 'Scan this QR code to verify the card\'s authenticity. Every check is logged.',
     copyLink: 'Copy link',
     openVerification: 'Open verification',

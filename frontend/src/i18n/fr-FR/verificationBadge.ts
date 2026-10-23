@@ -15,7 +15,6 @@ export default {
     qrHint: 'Scannez le QR du badge ou saisissez le code',
     qrParamsHint:
       'Le QR scanné (ou collé) est une URL : ses paramètres {badge} et {k} remplissent le formulaire automatiquement.',
-    submit: 'Vérifier',
   },
   result: {
     valid: 'Badge authentique',
@@ -25,9 +24,7 @@ export default {
     table: {
       porteur: 'Porteur',
       numero: 'Numéro',
-      type: 'Type',
       qualite: 'Qualité',
-      statut: 'Statut',
       statutValue: 'Actif — non annulé, validité en cours',
       zones: 'Zones autorisées',
       delivreLe: 'Délivré le',

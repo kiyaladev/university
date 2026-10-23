@@ -31,7 +31,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('justificatifs.filters.status')"
+            :label="$t('common.fields.status')"
           />
         </div>
         <div class="col-6 col-md-3">
@@ -43,7 +43,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('justificatifs.filters.reason')"
+            :label="$t('common.fields.motif')"
           />
         </div>
         <div class="col-6 col-md-3">
@@ -87,7 +87,7 @@
             :aria-label="$t('justificatifs.table.actions.viewAria')"
             @click="detail = p.row"
           >
-            <q-tooltip>{{ $t('justificatifs.table.actions.viewTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.detail') }}</q-tooltip>
           </q-btn>
           <template v-if="p.row.statut === 'EN_ATTENTE' && peutArbitrer">
             <q-btn
@@ -137,7 +137,7 @@
           emit-value
           map-options
           use-input
-          :label="$t('justificatifs.depositDialog.teacher')"
+          :label="$t('common.fields.teacherRequired')"
           @filter="filtrerEnseignants"
           @update:model-value="chargerSeancesJustifiables"
         />
@@ -159,7 +159,7 @@
           dense
           emit-value
           map-options
-          :label="$t('justificatifs.depositDialog.reason')"
+          :label="$t('common.fields.motifRequired')"
         />
         <q-input
           v-model="form.motif"
@@ -189,19 +189,19 @@
         <q-card-section v-if="detail">
           <q-list dense>
             <q-item>
-              <q-item-section>{{ $t('justificatifs.detailDialog.teacher') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.teacher') }}</q-item-section>
               <q-item-section side>
                 {{ detail.enseignant?.nom }} {{ detail.enseignant?.prenom }}
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('justificatifs.detailDialog.session') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.session') }}</q-item-section>
               <q-item-section side>
                 {{ dateLisible(detail.seance?.date) }} · {{ detail.seance?.heureDebut }}–{{ detail.seance?.heureFin }}
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('justificatifs.detailDialog.reason') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.motif') }}</q-item-section>
               <q-item-section side>{{ libelleMotif(detail.type) }}</q-item-section>
             </q-item>
             <q-item>
@@ -209,7 +209,7 @@
               <q-item-section side class="text-right">{{ detail.motif }}</q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('justificatifs.detailDialog.status') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.status') }}</q-item-section>
               <q-item-section side>
                 <span class="champ champ-justificatif" :class="`champ--${champStatut(detail.statut)}`">
                   <span class="pochoir">{{ libelleStatut(detail.statut) }}</span>
@@ -249,7 +249,7 @@
             :label="$t('justificatifs.detailDialog.viewSession')"
             :to="lienSeance(detail)"
           />
-          <q-btn flat no-caps :label="$t('justificatifs.detailDialog.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -364,7 +364,7 @@ const optionsSeances = computed(() =>
 const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: t('justificatifs.table.columns.session'),
+    label: t('common.fields.session'),
     field: (r: Justificatif) =>
       `${dateLisible(r.seance?.date)} ${r.seance?.heureDebut ?? ''}`,
     align: 'left',
@@ -372,25 +372,25 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'enseignant',
-    label: t('justificatifs.table.columns.teacher'),
+    label: t('common.fields.teacher'),
     field: (r: Justificatif) => `${r.enseignant?.nom ?? ''} ${r.enseignant?.prenom ?? ''}`,
     align: 'left',
   },
   {
     name: 'matiere',
-    label: t('justificatifs.table.columns.subject'),
+    label: t('common.fields.subject'),
     field: (r: Justificatif) => r.seance?.affectation?.matiere?.intitule ?? '—',
     align: 'left',
   },
   {
     name: 'type',
-    label: t('justificatifs.table.columns.reason'),
+    label: t('common.fields.motif'),
     field: (r: Justificatif) => libelleMotif(r.type),
     align: 'left',
     sortable: true,
   },
   { name: 'explication', label: t('justificatifs.table.columns.explanation'), field: 'motif', align: 'left' },
-  { name: 'statut', label: t('justificatifs.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 

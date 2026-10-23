@@ -34,9 +34,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (numéro, objet, expéditeur, destinataire…)',
-    status: 'Statut',
-    from: 'Du',
-    to: 'Au',
     searchChip: '« {value} »',
     statusChip: 'Statut : {value}',
   },
@@ -48,13 +45,9 @@ export default {
   },
   table: {
     columns: {
-      numero: 'N°',
       objet: 'Objet',
-      type: 'Type',
       correspondant: 'Expéditeur / Destinataire',
-      date: 'Date',
       circuit: 'Circuit',
-      statut: 'Statut',
     },
     steps: '{count} étape(s)',
   },
@@ -63,7 +56,6 @@ export default {
     to: 'À : {value}',
     stamps: '{count} paraphe(s)',
     print: 'Imprimer le bordereau',
-    close: 'Clôturer',
   },
   detail: {
     sender: 'Expéditeur : {name}',
@@ -78,7 +70,6 @@ export default {
     stamped: 'Paraphe enregistré',
     stampFailed: 'Paraphe impossible',
     stampOnStep: 'Le paraphe se fait sur une étape du circuit',
-    closeTitle: 'Clôturer',
     closeMessage: 'Clôturer « {number} » et avancer vers {next} ?',
   },
   actionsColumn: {
@@ -102,7 +93,6 @@ export default {
       title: 'Clôturer le courrier',
       message:
         'Confirmer la clôture de « {numero} » ? Cette transition avance vers les archives (CLASSE → ARCHIVE).',
-      okLabel: 'Clôturer',
     },
   },
   messages: {

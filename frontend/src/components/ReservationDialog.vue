@@ -19,7 +19,7 @@
 
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <champ-date v-model="form.dateJour" :label="t('reservations.createDialog.dateLabel')" />
+        <champ-date v-model="form.dateJour" :label="t('common.fields.dateRequired')" />
       </div>
       <div class="col-12 col-sm-6">
         <div class="row q-col-gutter-sm">

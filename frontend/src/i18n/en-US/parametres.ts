@@ -42,7 +42,6 @@ export default {
   },
   emptyState: {
     title: 'No setting available.',
-    reload: 'Reload',
   },
   audit: {
     title: 'Audit log',

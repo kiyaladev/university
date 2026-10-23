@@ -7,12 +7,10 @@ export default {
     schedule: 'Schedule an exam',
     scanStation: 'Scan station',
     draw: 'Draw for exams',
-    start: 'Start',
     finish: 'Finish',
     scanCards: 'Scan cards',
     scanner: 'Scan',
     drawShort: 'Draw',
-    close: 'Close',
   },
   fields: {
     supervisor: 'Assigned proctor',
@@ -25,9 +23,7 @@ export default {
   filters: {
     searchPlaceholder: 'Search (exam code, title, subject…)',
     type: 'Exam type',
-    subject: 'Subject',
     promotion: 'Class',
-    academicYear: 'Academic year',
     dateFrom: 'Exams from',
     dateTo: 'to',
     searchChip: '"{query}"',
@@ -35,15 +31,9 @@ export default {
   },
   table: {
     columns: {
-      code: 'Code',
-      title: 'Title',
-      type: 'Type',
       slot: 'Date & time',
-      subject: 'Subject',
       promotion: 'Class',
-      room: 'Room',
       present: 'Present',
-      status: 'Status',
     },
     tooltips: {
       openSheet: 'Exam sheet',
@@ -62,9 +52,6 @@ export default {
   },
   sheet: {
     closeAria: 'Close the sheet',
-    date: 'Date',
-    schedule: 'Time',
-    room: 'Room',
     presentsOverEnrolled: 'Present / enrolled',
     chainContinuation: 'Next steps',
     scanJournal: 'Scan log',
@@ -77,15 +64,12 @@ export default {
       time: 'Time',
       holder: 'Holder',
       registrationNumber: 'ID number entered',
-      result: 'Result',
-      operator: 'Operator',
     },
   },
   confirm: {
     startTitle: 'Start the exam',
     startMessage:
       'Start {code} — {title}? The number of enrolled students will be recalculated from the class\'s validated registrations, and the scan station will open on this exam.',
-    startAction: 'Start',
     finishTitle: 'Finish the exam',
     finishMessage:
       'Close {code} — {title}? The number of present students is now locked: no more cards can be scanned for this exam. This operation is final.',

@@ -244,9 +244,9 @@ async function cloturer() {
   const c = courrier.value;
   if (!c) return;
   const ok = await confirmer({
-    titre: t('courrier.detail.closeTitle'),
+    titre: t('common.actions.closeOut'),
     message: t('courrier.detail.closeMessage', { number: c.numero, next: c.statut === 'CLASSE' ? 'ARCHIVE' : c.statut === 'TRAITE' ? 'CLASSE' : 'TRAITE' }),
-    ok: t('courrier.detail.closeTitle'),
+    ok: t('common.actions.closeOut'),
     danger: true,
   });
   if (!ok) return;

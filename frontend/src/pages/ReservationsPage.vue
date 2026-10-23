@@ -19,7 +19,7 @@
           :loading="chargement"
           @click="charger"
         >
-          <q-tooltip>{{ $t('reservations.actions.reload') }}</q-tooltip>
+          <q-tooltip>{{ $t('common.actions.reload') }}</q-tooltip>
         </q-btn>
       </template>
     </page-header>
@@ -36,10 +36,10 @@
           v-model="filtresReservations.salleId"
           endpoint="/salles"
           :label-fn="(s) => $t('reservations.filters.roomOption', { code: s.code, name: s.nom, capacity: s.capacite })"
-          :label="$t('reservations.filters.room')"
+          :label="$t('common.fields.room')"
         />
-        <champ-date v-model="filtresReservations.dateDebut" :label="$t('reservations.filters.from')" />
-        <champ-date v-model="filtresReservations.dateFin" :label="$t('reservations.filters.to')" />
+        <champ-date v-model="filtresReservations.dateDebut" :label="$t('common.actions.from')" />
+        <champ-date v-model="filtresReservations.dateFin" :label="$t('common.actions.to')" />
       </template>
       <template #actions>
         <q-btn
@@ -280,7 +280,7 @@ const COULEUR_STATUT: Record<string, string> = {
 const COULEUR_SEANCE = '#86868b';
 
 function libelleSeance(s: SeanceCalendrier): string {
-  return s.affectation?.matiere?.intitule ?? t('reservations.session.defaultLabel');
+  return s.affectation?.matiere?.intitule ?? t('common.fields.session');
 }
 
 const evenementsCalendrier = computed(() => [
@@ -317,11 +317,11 @@ function nomSalle(salleId: string | null): string {
 
 const colonnesReservations = computed(() => [
   { name: 'creneau', label: t('reservations.table.columns.slot'), field: 'dateJour', align: 'left' as const },
-  { name: 'salle', label: t('reservations.table.columns.room'), field: 'salle', align: 'left' as const },
-  { name: 'motif', label: t('reservations.table.columns.reason'), field: 'motif', align: 'left' as const },
+  { name: 'salle', label: t('common.fields.room'), field: 'salle', align: 'left' as const },
+  { name: 'motif', label: t('common.fields.motif'), field: 'motif', align: 'left' as const },
   { name: 'organisme', label: t('reservations.table.columns.organization'), field: 'organisme', align: 'left' as const },
   { name: 'responsable', label: t('reservations.table.columns.responsible'), field: 'responsable', align: 'left' as const },
-  { name: 'statut', label: t('reservations.table.columns.status'), field: 'statut', align: 'left' as const },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' as const },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
 ]);
 

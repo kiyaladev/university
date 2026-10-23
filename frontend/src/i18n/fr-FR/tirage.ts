@@ -8,7 +8,6 @@ export default {
     exams: 'Examens',
     viewAll: 'Voir tous les tirages',
     bordereau: 'Bordereau',
-    print: 'Imprimer',
     cancel: 'Annuler',
     back: 'Revenir',
     cancelDraw: 'Annuler le tirage',

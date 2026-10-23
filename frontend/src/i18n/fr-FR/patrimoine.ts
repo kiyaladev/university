@@ -63,13 +63,9 @@ export default {
   equipments: {
     searchPlaceholder: "Rechercher (libellé, n° série, n° d'inventaire, QR…)",
     filters: {
-      category: 'Catégorie',
-      department: 'Département',
       noDepartment: 'Sans département',
-      status: 'Statut',
       statusInService: 'En service',
       statusOutOfService: 'Hors service',
-      repairState: 'État',
       repairStateInRepair: 'En réparation',
       repairStateAvailable: 'Disponible',
     },
@@ -81,11 +77,8 @@ export default {
     table: {
       columns: {
         equipment: 'Équipement',
-        category: 'Catégorie',
-        department: 'Département',
         value: 'Valeur',
         serial: 'N° série',
-        state: 'État',
       },
       actions: {
         detailsAria: 'Détails de {name}',
@@ -95,13 +88,10 @@ export default {
         declareRepairAria: 'Déclarer une réparation sur {name}',
         declareRepairTooltip: 'Déclarer une réparation',
         editAria: 'Modifier {name}',
-        editTooltip: 'Modifier',
         deleteAria: 'Supprimer {name}',
-        deleteTooltip: 'Supprimer',
       },
     },
     cards: {
-      detailsTooltip: 'Détails',
       labelTooltip: 'Étiquette A4',
     },
     emptyState: {
@@ -115,11 +105,8 @@ export default {
   categories: {
     table: {
       columns: {
-        code: 'Code',
-        label: 'Libellé',
         amortization: 'Amortissement (mois)',
         equipments: 'Équipements',
-        state: 'État',
       },
       actions: {
         editAria: 'Modifier la catégorie {name}',
@@ -135,19 +122,15 @@ export default {
     dialog: {
       editTitle: 'Modifier la catégorie',
       newTitle: 'Nouvelle catégorie',
-      codeLabel: 'Code *',
       codeHint: 'Ex. : VIDEO, MICRO, ORDI',
-      labelLabel: 'Libellé *',
       labelHint: 'Ex. : Vidéoprojecteur',
       amortizationLabel: "Durée d'amortissement (mois)",
       amortizationHint: 'Ex. : 60 (5 ans)',
       cancel: 'Annuler',
-      save: 'Enregistrer',
     },
     confirmDelete: {
       title: 'Supprimer la catégorie ?',
       message: '« {name} » — refusée si des équipements y sont rattachés.',
-      confirm: 'Supprimer',
     },
   },
   repairs: {
@@ -156,8 +139,6 @@ export default {
     table: {
       columns: {
         equipment: 'Équipement',
-        description: 'Description',
-        status: 'Statut',
         declaredOn: 'Déclarée le',
         delay: 'Délai',
       },
@@ -185,7 +166,6 @@ export default {
   deleteEquipment: {
     title: 'Supprimer l’équipement ?',
     message: '{code} — refusée si une réparation a été consignée.',
-    confirm: 'Supprimer',
   },
   messages: {
     loadInventoryError: "Chargement de l'inventaire impossible.",

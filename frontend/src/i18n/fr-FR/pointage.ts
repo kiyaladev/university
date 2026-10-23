@@ -17,7 +17,6 @@ export default {
   "noLocation": "Position non enregistrée",
   "correctionProof": "Toute correction du constat exige une nouvelle attestation de l’enseignant.",
   "initialProof": "L’enseignant atteste sa présence ci-dessus — signature, code PIN ou empreinte — avant l’enregistrement.",
-  "cancel": "Annuler",
   "correct": "Corriger le pointage",
   "validate": "Valider le pointage",
   "roomQr": "QR salle",

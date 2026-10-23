@@ -26,7 +26,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('formationsAdmin.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
     </filter-bar>
@@ -143,10 +143,10 @@
               :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(p.row)"
             >
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.close') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.closeOut') }}</q-tooltip>
             </q-btn>
             <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(p.row)">
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn flat dense round icon="group" :aria-label="$t('formationsAdmin.table.aria.registrations')" @click="basculerRegistre(p)">
               <q-tooltip>{{ $t('formationsAdmin.table.tooltips.registrations') }}</q-tooltip>
@@ -167,7 +167,7 @@
             <div class="row items-center q-mb-sm">
               <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: p.row.titre }) }}</div>
               <q-space />
-              <q-btn flat dense no-caps color="primary" :label="$t('formationsAdmin.actions.reload')" icon="refresh" @click="chargerRegistre(p.row, true)" />
+              <q-btn flat dense no-caps color="primary" :label="$t('common.actions.reload')" icon="refresh" @click="chargerRegistre(p.row, true)" />
             </div>
             <q-table
               flat
@@ -280,7 +280,7 @@
             <q-btn flat dense no-caps icon="group" :label="$t('formationsAdmin.actions.registrations')" @click="basculerRegistreCarte(f)" />
             <q-space />
             <q-btn flat dense round icon="edit" :aria-label="$t('formationsAdmin.table.aria.edit')" @click="ouvrirModification(f)">
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
@@ -288,7 +288,7 @@
               :aria-label="$t('formationsAdmin.table.aria.publish')"
               @click="publier(f)"
             >
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.publishShort') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.publish') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'PUBLIEE'"
@@ -296,7 +296,7 @@
               :aria-label="$t('formationsAdmin.table.aria.close')"
               @click="cloturer(f)"
             >
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.close') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.closeOut') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="f.statut === 'BROUILLON'"
@@ -304,7 +304,7 @@
               :aria-label="$t('formationsAdmin.table.aria.delete')"
               @click="supprimer(f)"
             >
-              <q-tooltip>{{ $t('formationsAdmin.table.tooltips.deleteShort') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-card-actions>
           <q-slide-transition>
@@ -313,7 +313,7 @@
               <div class="row items-center q-mb-sm">
                 <div class="pochoir">{{ $t('formationsAdmin.registry.title', { title: f.titre }) }}</div>
                 <q-space />
-                <q-btn flat dense no-caps color="primary" :label="$t('formationsAdmin.actions.reload')" icon="refresh" @click="chargerRegistre(f, true)" />
+                <q-btn flat dense no-caps color="primary" :label="$t('common.actions.reload')" icon="refresh" @click="chargerRegistre(f, true)" />
               </div>
               <q-table
                 flat
@@ -488,9 +488,9 @@ const chips = computed(() => {
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'titre', label: t('formationsAdmin.table.columns.formation'), field: 'titre', align: 'left' },
-  { name: 'statut', label: t('formationsAdmin.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
   { name: 'prix', label: t('formationsAdmin.table.columns.price'), field: 'prix', align: 'right' },
-  { name: 'duree', label: t('formationsAdmin.table.columns.duration'), field: 'dureeHeures', align: 'center' },
+  { name: 'duree', label: t('common.fields.duration'), field: 'dureeHeures', align: 'center' },
   { name: 'capacite', label: t('formationsAdmin.table.columns.capacity'), field: 'capacite', align: 'center' },
   { name: 'inscrits', label: t('formationsAdmin.table.columns.registered'), field: 'inscrits', align: 'center' },
   { name: 'recette', label: t('formationsAdmin.table.columns.revenue'), field: 'recette', align: 'right' },
@@ -505,8 +505,8 @@ const colonnesRegistre = computed<QTableColumn[]>(() => [
   { name: 'numero', label: t('formationsAdmin.registry.columns.fileNumber'), field: 'numero', align: 'left' },
   { name: 'inscrit', label: t('formationsAdmin.registry.columns.registrant'), field: 'inscrit', align: 'left' },
   { name: 'statut', label: t('formationsAdmin.registry.columns.request'), field: 'statut', align: 'center' },
-  { name: 'paiement', label: t('formationsAdmin.registry.columns.amount'), field: 'paiement', align: 'right' },
-  { name: 'paiementStatut', label: t('formationsAdmin.registry.columns.payment'), field: 'paiementStatut', align: 'center' },
+  { name: 'paiement', label: t('common.fields.amount'), field: 'paiement', align: 'right' },
+  { name: 'paiementStatut', label: t('common.fields.payment'), field: 'paiementStatut', align: 'center' },
   { name: 'actionsRegistre', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -610,7 +610,7 @@ function publier(f: Formation) {
     {
       titre: t('formationsAdmin.dialogs.publish.title'),
       message: t('formationsAdmin.dialogs.publish.message', { title: f.titre }),
-      ok: t('formationsAdmin.dialogs.publish.confirm'),
+      ok: t('common.actions.publish'),
     },
     () => formationsService.publier(f.id),
     { type: 'positive', message: t('formationsAdmin.messages.published') },
@@ -622,7 +622,7 @@ function cloturer(f: Formation) {
     {
       titre: t('formationsAdmin.dialogs.close.title'),
       message: t('formationsAdmin.dialogs.close.message', { title: f.titre }),
-      ok: t('formationsAdmin.dialogs.close.confirm'),
+      ok: t('common.actions.closeOut'),
     },
     () => formationsService.cloturer(f.id),
     { type: 'warning', message: t('formationsAdmin.messages.closed') },
@@ -633,7 +633,7 @@ function supprimer(f: Formation) {
   void supprimerAvecConfirmation(`/formations/${f.id}`, f.titre, rechargerTout, {
     titre: t('formationsAdmin.dialogs.delete.title'),
     message: t('formationsAdmin.dialogs.delete.message', { title: f.titre }),
-    ok: t('formationsAdmin.dialogs.delete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('formationsAdmin.messages.draftDeleted'),
   });
 }
@@ -646,7 +646,7 @@ function confirmer(i: InscriptionFormationDetail) {
         reference: i.paiement?.reference ?? t('formationsAdmin.dialogs.confirmPayment.paymentFallback'),
         numero: i.numero,
       }),
-      ok: t('formationsAdmin.dialogs.confirmPayment.confirm'),
+      ok: t('common.actions.confirm'),
     },
     () => formationsService.confirmerInscription(i.id),
     { type: 'positive', message: t('formationsAdmin.messages.registrationConfirmed', { numero: i.numero }) },

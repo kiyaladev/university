@@ -61,7 +61,7 @@
             v-model="form.etudiantId"
             endpoint="/etudiants"
             :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-            :label="$t('paiements.dialog.fields.student')"
+            :label="$t('common.fields.studentRequired')"
             :placeholder="$t('paiements.dialog.fields.studentPlaceholder')"
           />
         </template>

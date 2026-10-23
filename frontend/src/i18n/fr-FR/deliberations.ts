@@ -9,7 +9,6 @@ export default {
     recalculate: 'Recalculer',
     validateJury: 'Valider le jury',
     pv: 'PV',
-    close: 'Fermer',
     back: 'Revenir',
   },
   createDialog: {
@@ -20,7 +19,6 @@ export default {
     previewDecision: 'ADMIS / AJOURNÉ',
     previewHint: 'Les notes et la décision sont renseignées après calcul.',
     sampleSubject: 'Matière {number}',
-    sampleStudent: 'Étudiant',
     sampleName: 'Exemple',
     selectedPromotion: 'Promotion sélectionnée',
     selectedYear: 'Année sélectionnée',
@@ -29,10 +27,8 @@ export default {
   },
   filters: {
     search: 'Rechercher une promotion…',
-    anneeAcademique: 'Année académique',
     promotion: 'Promotion',
     session: 'Session',
-    statut: 'Statut',
   },
   chips: {
     search: '« {value} »',
@@ -44,19 +40,12 @@ export default {
   table: {
     columns: {
       promotion: 'Promotion',
-      annee: 'Année',
       session: 'Session',
-      statut: 'Statut',
       taux: 'Taux de réussite',
-      effectif: 'Étudiants',
-      creeLe: 'Créée le',
     },
     detailColumns: {
       rang: 'Rang',
-      matricule: 'Matricule',
-      etudiant: 'Étudiant',
       moyenne: 'Moyenne',
-      decision: 'Décision',
       mention: 'Mention',
     },
   },

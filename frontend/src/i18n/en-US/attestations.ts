@@ -7,12 +7,9 @@ export default {
     bulletins: 'Transcripts',
     issue: 'Issue an attestation',
     qr: 'QR',
-    print: 'Print',
-    revoke: 'Revoke',
   },
   issueDialog: {
     subtitle: 'Official document verifiable by QR code — only one active attestation is allowed for the same student, type, and academic year.',
-    student: 'Student *',
     studentHint: 'Type at least 2 letters: name, first name, or student ID',
     studentEmpty: 'No student found',
     type: 'Attestation type *',
@@ -26,8 +23,6 @@ export default {
   filters: {
     searchPlaceholder: 'Search (number, name, student ID)…',
     type: 'Document type',
-    status: 'Status',
-    academicYear: 'Academic year',
     promotion: 'Class',
     searchChip: '"{value}"',
     typeChip: 'Type: {value}',
@@ -37,13 +32,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'No.',
-      type: 'Type',
-      student: 'Student',
       parcours: 'Year / class',
-      status: 'Status',
       verifications: 'Verifications',
-      issuedOn: 'Issued on',
     },
   },
   actionsColumn: {
@@ -69,7 +59,6 @@ export default {
     issuedOnBy: 'Issued on {date} by {who}',
     revokedOnBy: 'Revoked on {date} — {motif}',
     matricule: '— student ID {matricule}',
-    close: 'Close',
   },
   revocation: {
     title: 'Revoke {numero}',

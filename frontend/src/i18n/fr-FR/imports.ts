@@ -5,7 +5,6 @@ export default {
   file: 'Fichier CSV ou XLSX',
   chooseFile: 'Choisir un fichier',
   template: 'Télécharger un modèle CSV',
-  preview: 'Prévisualiser',
   apply: 'Importer les lignes valides',
   confirm: 'Créer les {count} ligne(s) valides ? Les erreurs seront ignorées et signalées dans le rapport.',
   previewRequired: 'Prévisualisez le fichier avant de lancer l’import.',

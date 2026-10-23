@@ -5,7 +5,6 @@ export default {
   subtitle:
     'Les scrutins ouverts à votre voix, et les résultats des scrutins proclamés. Votre bulletin est anonyme.',
   loading: 'Chargement des scrutins…',
-  retry: 'Réessayer',
   errors: {
     load: 'Impossible de charger les scrutins.',
     submit: 'Dépôt du bulletin impossible.',
@@ -18,7 +17,6 @@ export default {
     message:
       'Aucune élection n’est ouverte et aucun résultat n’a encore été proclamé. Vous serez informé de l’ouverture du prochain scrutin.',
     my_space: 'Mon espace',
-    refresh: 'Actualiser',
   },
   list: {
     title: 'Scrutins',

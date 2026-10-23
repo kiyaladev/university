@@ -15,8 +15,6 @@ export default {
     typeToSearch: 'Type to search',
   },
   filters: {
-    type: 'Type',
-    department: 'Department',
     departmentPlaceholder: 'Type the name or code…',
     editionYear: 'Edition year',
     publication: 'Publication',
@@ -28,12 +26,8 @@ export default {
   },
   table: {
     columns: {
-      type: 'Type',
       document: 'Document',
-      department: 'Department',
-      year: 'Year',
       size: 'Size',
-      state: 'State',
       plagiarism: 'Plagiarism',
     },
   },
@@ -51,21 +45,15 @@ export default {
   },
   actionsColumn: {
     downloadAria: 'Download the document',
-    downloadTooltip: 'Download',
-    download: 'Download',
     previewAria: 'Content preview',
     previewTooltip: 'Content preview',
     preview: 'Preview',
     editAria: 'Edit the document',
-    editTooltip: 'Edit',
     unpublishAria: 'Remove from public showcase',
     publishAria: 'Publish to the public showcase',
-    unpublishTooltip: 'Unpublish',
-    publishTooltip: 'Publish',
     viewScoreAria: 'View plagiarism score',
     viewScoreTooltip: 'View plagiarism score',
     deleteAria: 'Delete the document',
-    deleteTooltip: 'Delete',
   },
   riskHighTooltip: 'High risk — check the suspicions',
   emptyState: {
@@ -127,17 +115,11 @@ export default {
   },
   dialogs: {
     publish: {
-      publishTitle: 'Publish',
-      unpublishTitle: 'Unpublish',
       publishMessage: 'Make "{titre}" visible on the public page?',
       unpublishMessage: 'Remove "{titre}" from the public page?',
-      publishOk: 'Publish',
-      unpublishOk: 'Unpublish',
     },
     delete: {
-      title: 'Delete',
       message: 'Delete "{titre}"? The attached file will be lost.',
-      ok: 'Delete',
     },
     recalculate: {
       title: 'Recalculate plagiarism suspicions',

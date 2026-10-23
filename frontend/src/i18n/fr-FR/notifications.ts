@@ -18,7 +18,6 @@ export default {
   broadcast: {
     generalNotice: {
       title: 'Avis général',
-      motifLabel: 'Motif',
       recipientsLabel: 'Destinataires',
       numbersLabel: 'Numéros, un par ligne (ou séparés par une virgule)',
       numbersInvalid: 'Certains numéros semblent invalides',
@@ -42,7 +41,6 @@ export default {
       avis: 'Avis',
       resultats: 'Résultats',
       inscription: 'Inscription',
-      paiement: 'Paiement',
       convocation: 'Convocation',
       autre: 'Autre',
     },
@@ -59,9 +57,6 @@ export default {
   },
   history: {
     searchPlaceholder: 'Rechercher (téléphone, nom, message…)',
-    statutLabel: 'Statut',
-    dateFrom: 'Du',
-    dateTo: 'Au',
     countLabel: '{n} envoi(s) — {periode}.',
     period: {
       range: 'du {debut} au {fin}',
@@ -82,10 +77,7 @@ export default {
     },
     table: {
       columns: {
-        date: 'Date',
         destinataire: 'Destinataire',
-        motif: 'Motif',
-        statut: 'Statut',
         message: 'Message',
         envoyePar: 'Émis par',
       },
@@ -97,7 +89,6 @@ export default {
       detail: "Le registre garde la trace de chaque SMS parti d'UniPrésence.",
       noneMatchFilters: 'Aucun ne correspond aux filtres en cours.',
       startBroadcast: 'Diffusez un avis depuis l’onglet Diffusion pour commencer.',
-      clearFilters: 'Retirer les filtres',
       goToBroadcast: 'Aller à la diffusion',
     },
   },

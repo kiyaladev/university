@@ -1,7 +1,7 @@
 <template>
   <dialogue-formulaire
     v-model="ouvert"
-    :titre="$t(travail ? 'stages.workDialog.editTitle' : 'stages.workDialog.newTitle')"
+    :titre="$t(travail ? 'stages.dialogs.workDialog.editTitle' : 'stages.dialogs.workDialog.newTitle')"
     taille="l"
     :envoi="enregistrement"
     @valider="enregistrer"
@@ -16,11 +16,11 @@
             dense
             emit-value
             map-options
-            :label="$t('stages.workDialog.type')"
+            :label="$t('stages.dialogs.workDialog.type')"
           />
         </div>
         <div class="col-12 col-sm-8">
-          <q-input v-model="form.intitule" outlined dense :label="$t('stages.workDialog.title')" :rules="[requis]" />
+          <q-input v-model="form.intitule" outlined dense :label="$t('stages.dialogs.workDialog.title')" :rules="[requis]" />
         </div>
       </div>
 
@@ -44,7 +44,7 @@
             map-options
             use-input
             input-debounce="300"
-            :label="$t('stages.workDialog.student')"
+            :label="$t('common.fields.studentRequired')"
             :disable="!peutChoisirEtudiant"
             :rules="[requis]"
             @filter="filtrerEtudiants"
@@ -62,7 +62,7 @@
             input-debounce="300"
             clearable
             :label="$t('stages.detail.fields.supervisor')"
-            :hint="$t('stages.workDialog.supervisorHint')"
+            :hint="$t('stages.dialogs.workDialog.supervisorHint')"
             @filter="filtrerEncadrants"
           />
         </div>
@@ -73,7 +73,7 @@
           <q-input v-model="form.entreprise" outlined dense :label="$t('stages.detail.fields.company')" />
         </div>
         <div class="col-12 col-sm-6">
-          <q-input v-model="form.tuteurEntreprise" outlined dense :label="$t('stages.workDialog.companyTutor')" />
+          <q-input v-model="form.tuteurEntreprise" outlined dense :label="$t('stages.dialogs.workDialog.companyTutor')" />
         </div>
       </div>
 
@@ -82,10 +82,10 @@
           <q-input v-model="form.lieu" outlined dense :label="$t('common.fields.location')" />
         </div>
         <div class="col-12 col-sm-4">
-          <champ-date v-model="form.dateDebut" :label="$t('structure.dialogs.annee.debut')" />
+          <champ-date v-model="form.dateDebut" :label="$t('common.fields.start')" />
         </div>
         <div class="col-12 col-sm-4">
-          <champ-date v-model="form.dateFin" :label="$t('common.messages.end')" />
+          <champ-date v-model="form.dateFin" :label="$t('common.fields.end')" />
         </div>
       </div>
 
@@ -97,8 +97,8 @@
         dense
         emit-value
         map-options
-        :label="$t('stages.workDialog.initialStatus')"
-        :hint="$t('stages.workDialog.initialStatusHint')"
+        :label="$t('stages.dialogs.workDialog.initialStatus')"
+        :hint="$t('stages.dialogs.workDialog.initialStatusHint')"
       />
     </div>
   </dialogue-formulaire>
@@ -123,7 +123,7 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const enregistrement = ref(false);
 /** Intitulé et étudiant : sans eux le serveur refuse, le formulaire le dit avant. */
-const requis = (v: string | null) => !!(v ?? '').trim() || t('stages.workDialog.required');
+const requis = (v: string | null) => !!(v ?? '').trim() || t('stages.dialogs.workDialog.required');
 
 const form = ref({
   type: 'MEMOIRE',
@@ -223,7 +223,7 @@ async function enregistrer() {
     if (props.travail) await api.put(`/travaux-encadres/${props.travail.id}`, payload);
     else await api.post('/travaux-encadres', payload);
 
-    $q.notify({ type: 'positive', message: t(props.travail ? 'stages.workDialog.updated' : 'stages.workDialog.created') });
+    $q.notify({ type: 'positive', message: t(props.travail ? 'stages.dialogs.workDialog.updated' : 'stages.dialogs.workDialog.created') });
     emit('enregistre');
     ouvert.value = false;
   } catch {

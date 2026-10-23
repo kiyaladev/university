@@ -5,7 +5,6 @@ export default {
   file: 'CSV or XLSX file',
   chooseFile: 'Choose a file',
   template: 'Download a CSV template',
-  preview: 'Preview',
   apply: 'Import valid rows',
   confirm: 'Create the {count} valid row(s)? Invalid rows will be skipped and listed in the report.',
   previewRequired: 'Preview the file before starting the import.',

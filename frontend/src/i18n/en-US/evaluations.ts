@@ -5,7 +5,6 @@ export default {
   subtitle: 'Graded assessments (continuous assessment, exam, resit…) by subject and cohort',
   actions: {
     new: 'New evaluation',
-    reset_filters: 'Reset filters',
   },
   dialogForm: {
     editTitle: 'Edit evaluation',
@@ -23,9 +22,7 @@ export default {
   },
   filters: {
     search_placeholder: 'Search by title…',
-    year: 'Academic year',
     promotion: 'Cohort',
-    subject: 'Subject',
     type: 'Assessment type',
     status: 'Status',
   },
@@ -43,13 +40,9 @@ export default {
   },
   table: {
     columns: {
-      title: 'Title',
-      type: 'Type',
       coefficient: 'Coeff.',
-      subject: 'Subject',
       promotion: 'Cohort',
       semester: 'Sem',
-      date: 'Date',
       status: 'Status',
       notes: 'Grades',
     },
@@ -62,7 +55,6 @@ export default {
     edit_evaluation: 'Edit the evaluation',
     edit_evaluation_aria: 'Edit the evaluation',
     delete_locked: 'Grades have already been entered: deletion not possible',
-    delete: 'Delete',
     delete_aria: 'Delete the evaluation',
   },
   cards: {
@@ -70,18 +62,13 @@ export default {
     semester: 'sem. {n}',
     notes_view: 'Grades',
     notes_enter: 'Enter grades',
-    edit: 'Edit',
-    close: 'Close',
-    delete: 'Delete',
   },
   notes_count: '{n} grade{plural}',
   dialogs: {
     close_title: 'Close the evaluation',
     close_message: 'Close "{name}"? Grades become final and entry will be closed.',
-    close_confirm: 'Close',
     delete_title: 'Delete the evaluation',
     delete_message: 'Permanently delete "{name}"?',
-    delete_confirm: 'Delete',
   },
   messages: {
     closed: 'Evaluation closed',
@@ -95,12 +82,8 @@ export default {
     enter_notes: 'Enter grades',
     empty: 'No student to grade: only validated enrollment records for this cohort appear on the sheet.',
     columns: {
-      matricule: 'Student ID',
-      number: 'No.',
-      student: 'Student',
       present: 'Present',
       note: 'Grade',
     },
-    close: 'Close',
   },
 };

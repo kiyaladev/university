@@ -30,7 +30,7 @@
           :loading="liste.chargement"
           @click="liste.recharger()"
         >
-          <q-tooltip>{{ $t('paie.tooltips.reload') }}</q-tooltip>
+          <q-tooltip>{{ $t('common.actions.reload') }}</q-tooltip>
         </q-btn>
       </template>
       <template #avances>
@@ -42,7 +42,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('paie.filters.statut')"
+          :label="$t('common.fields.status')"
         />
         <q-select
           v-model="filtres.annee"
@@ -52,7 +52,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('paie.filters.annee')"
+          :label="$t('common.fields.year')"
         />
       </template>
     </filter-bar>
@@ -167,7 +167,7 @@
               :aria-label="$t('paie.ariaLabels.delete', { libelle: p.row.libelle })"
               @click.stop="supprimer(p.row)"
             >
-              <q-tooltip>{{ $t('paie.tooltips.delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </template>
         </q-td>
@@ -186,7 +186,7 @@
               no-caps
               color="primary"
               icon="filter_alt_off"
-              :label="$t('paie.actions.clearFilters')"
+              :label="$t('common.actions.clearFilters')"
               @click="liste.reinitialiser([])"
             />
             <q-btn
@@ -238,10 +238,10 @@
           </q-card-section>
           <q-card-actions align="right">
             <template v-if="peutCalculer(f)">
-              <q-btn flat dense no-caps icon="refresh" :label="$t('paie.actions.recalculate')" @click.stop="recalculer(f)" />
+              <q-btn flat dense no-caps icon="refresh" :label="$t('common.actions.recalculate')" @click.stop="recalculer(f)" />
             </template>
             <template v-if="peutValider(f)">
-              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('paie.actions.validate')" @click.stop="valider(f)" />
+              <q-btn flat dense no-caps color="positive" icon="verified" :label="$t('common.actions.validate')" @click.stop="valider(f)" />
             </template>
             <template v-if="peutPayer(f)">
               <q-btn flat dense no-caps icon="payments" :label="$t('paie.actions.markPaid')" @click.stop="payer(f)" />
@@ -252,7 +252,7 @@
               dense
               no-caps
               icon="print"
-              :label="$t('paie.actions.print')"
+              :label="$t('common.actions.print')"
               @click.stop="imprimer(f)"
             />
             <template v-if="peutSupprimer(f)">
@@ -284,7 +284,7 @@
             no-caps
             color="primary"
             icon="filter_alt_off"
-            :label="$t('paie.actions.clearFilters')"
+            :label="$t('common.actions.clearFilters')"
             @click="liste.reinitialiser([])"
           />
           <q-btn
@@ -368,7 +368,7 @@
             :label="$t('paie.actions.printSheet')"
             @click="detail && imprimer(detail)"
           />
-          <q-btn flat no-caps :label="$t('paie.actions.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -492,11 +492,11 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('paie.table.columns.libelle'), field: 'libelle', align: 'left', sortable: true },
   {
     name: 'periode',
-    label: t('paie.table.columns.periode'),
+    label: t('common.fields.period'),
     field: (r: FeuillePaie) => `${dateLisible(r.dateDebut)} — ${dateLisible(r.dateFin)}`,
     align: 'left',
   },
-  { name: 'statut', label: t('paie.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'lignes', label: t('paie.table.columns.lignes'), field: 'lignes', align: 'right' },
   {
     name: 'montantTotal',
@@ -512,7 +512,7 @@ const colonnes = computed<QTableColumn[]>(() => [
 // par le même : sans quoi une colonne dit « 12000 » quand la voisine dit
 // « 12 000 ».
 const colonnesLignes = computed<QTableColumn[]>(() => [
-  { name: 'enseignant', label: t('paie.table.lignesColumns.enseignant'), field: 'enseignant', align: 'left' },
+  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignant', align: 'left' },
   {
     name: 'taux',
     label: t('paie.table.lignesColumns.taux'),

@@ -5,20 +5,14 @@ export default {
   actions: {
     new: 'New user',
     createFirst: 'Create the first account',
-    resetFilters: 'Reset filters',
-    edit: 'Edit',
     editAria: 'Edit the user',
-    delete: 'Delete',
     deleteAria: 'Delete the user',
     cancel: 'Cancel',
-    save: 'Save',
     teacherRecord: 'Teacher record',
     openTeacherRecordAria: 'Open the teacher record',
   },
   filters: {
     searchPlaceholder: 'Search (last name, first name, email)…',
-    role: 'Role',
-    department: 'Department',
   },
   chips: {
     search: '"{search}"',
@@ -28,11 +22,6 @@ export default {
   table: {
     columns: {
       name: 'Name',
-      role: 'Role',
-      department: 'Department',
-      phone: 'Phone',
-      active: 'Active',
-      actions: 'Actions',
     },
     you: 'you',
     activeAccount: 'Active account',
@@ -62,7 +51,6 @@ export default {
     passwordInvalid: 'Password must be at least 6 characters',
     sectionRole: 'Role and scope',
     role: 'Role *',
-    phone: 'Phone',
     department: 'Assigned department',
     teacherRecord: 'Linked teacher record',
     teacherRecordHint: 'Required for the teacher to see their sessions',

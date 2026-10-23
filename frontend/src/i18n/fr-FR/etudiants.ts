@@ -1,18 +1,13 @@
 /** Namespace `etudiants` — page Étudiants. */
 export default {
-  title: 'Étudiants',
   subtitle:
     'Retrouvez les fiches des étudiants et accédez à leurs inscriptions.',
   actions: {
     new: 'Nouvel étudiant',
-    resetFilters: 'Réinitialiser les filtres',
-    edit: 'Modifier',
     editAria: "Modifier la fiche de l'étudiant",
     editTooltip: 'Modifier la fiche',
-    inscriptions: 'Inscriptions',
     inscriptionsAria: "Voir les inscriptions de l'étudiant",
     inscriptionsTooltip: 'Ouvrir ses inscriptions',
-    paiements: 'Paiements',
     paiementsAria: "Voir les paiements de l'étudiant",
     paiementsTooltip: 'Ouvrir ses paiements',
     evaluations: 'Évaluations',
@@ -20,7 +15,6 @@ export default {
     evaluationsTooltip: 'Évaluations de sa promotion',
     print: 'Certificat',
     printAria: "Imprimer le certificat d'inscription",
-    close: 'Fermer',
     openInInscriptions: 'Ouvrir dans les inscriptions',
   },
   dialogForm: {
@@ -46,7 +40,6 @@ export default {
   filters: {
     searchPlaceholder: 'Rechercher (matricule, nom, email)…',
     promotion: 'Promotion',
-    status: 'Statut',
     gender: 'Genre',
     registeredFrom: 'Inscrit entre (début)',
     registeredTo: 'et (fin)',
@@ -70,11 +63,7 @@ export default {
       name: 'Nom & prénom',
       gender: 'Genre',
       promotion: 'Dernière promotion',
-      phone: 'Téléphone',
-      email: 'E-mail',
       account: 'Compte',
-      inscriptions: 'Inscriptions',
-      active: 'Actif',
     },
     accountTooltip: 'Compte : {email}',
     noAccountTooltip: 'Aucun compte portail',
@@ -85,7 +74,6 @@ export default {
     certificateTooltip: 'Certificat d’inscription (dernier dossier)',
   },
   cards: {
-    active: 'Actif',
     inactive: 'Inactif',
     noInscription: 'Aucune inscription',
   },
@@ -104,10 +92,7 @@ export default {
     title: 'Inscriptions — {name}',
     emptyState: 'Aucun dossier d’inscription pour cet étudiant.',
     columns: {
-      number: 'N°',
       promotion: 'Promotion',
-      year: 'Année',
-      status: 'Statut',
       amount: 'Frais d’inscription',
       date: 'Créé le',
     },
@@ -115,7 +100,6 @@ export default {
     paiementsTooltip: 'Paiements de ce dossier',
     printAria: "Imprimer le certificat d'inscription",
     printTooltip: 'Certificat d’inscription',
-    closeAria: 'Fermer',
   },
   confirmDeactivate: {
     title: 'Désactiver l’étudiant',

@@ -5,7 +5,6 @@ export default {
     "Topic proposed → approved → supervised → report submitted → defended. Tracked by the registrar and the direction; teachers manage their supervisions, students manage their own work (via the portal).",
   actions: {
     new: 'New work',
-    close: 'Close',
   },
   tabs: {
     works: 'Works',
@@ -14,7 +13,6 @@ export default {
   filters: {
     searchPlaceholderWorks: 'Search (title, company, location…)',
     searchPlaceholderDefenses: 'Search (title, student, room…)',
-    type: 'Type',
     supervisor: 'Supervisor',
     supervisorFiltered: 'Filtered supervisor',
     workStatus: 'Work status',
@@ -28,10 +26,7 @@ export default {
   table: {
     columns: {
       work: 'Work',
-      student: 'Student',
       supervisor: 'Supervisor',
-      period: 'Period',
-      status: 'Status',
       report: 'Report',
       defense: 'Defense',
     },
@@ -50,13 +45,11 @@ export default {
       viewSheet: 'View the work sheet',
       viewSheetTooltip: 'View sheet',
       edit: 'Edit the work',
-      editTooltip: 'Edit',
       print: 'Print the sheet',
       planDefense: 'Schedule the defense',
       juryReport: 'Enter the jury result',
       juryReportTooltip: 'Jury result',
       delete: 'Delete the work',
-      deleteTooltip: 'Delete',
     },
   },
   stats: {
@@ -101,7 +94,6 @@ export default {
       newTitle: 'New supervised work',
       type: 'Type *',
       title: 'Work title *',
-      student: 'Student *',
       supervisorHint: 'Assign supervision to a teacher',
       companyTutor: 'Company tutor',
       initialStatus: 'Initial status',
@@ -138,7 +130,6 @@ export default {
       title: 'Delete this work?',
       message:
         '{title} — file deletion reserved for administrators, PROPOSED / APPROVED states only.',
-      confirm: 'Delete',
     },
   },
   notifications: {
@@ -150,16 +141,12 @@ export default {
   detail: {
     title: 'Supervised work',
     fields: {
-      type: 'Type',
-      student: 'Student',
       supervisor: 'Supervisor',
       company: 'Company',
       companyTutor: 'Company tutor',
       place: 'Location',
-      period: 'Period',
       reportSubmitted: 'Report submitted',
       defense: 'Defense',
-      status: 'Status',
     },
     yes: 'Yes',
     no: 'No',

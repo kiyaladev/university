@@ -43,7 +43,6 @@ export default {
   },
   emptyState: {
     title: 'Aucun paramètre disponible.',
-    reload: 'Recharger',
   },
   audit: {
     title: 'Journal d’audit',

@@ -5,24 +5,16 @@ export default {
     'Visiteurs, intervenants, techniciens, personnalités — badge imprimable avec QR et validité paramétrable, prolongeable ou annulable.',
   actions: {
     issueBadge: 'Émettre un badge',
-    print: 'Imprimer',
     edit: 'Éditer',
     extend: 'Rallonger',
-    cancel: 'Annuler',
   },
   filters: {
     searchPlaceholder: 'Nom, organisation, numéro…',
-    type: 'Type',
-    status: 'Statut',
   },
   table: {
     columns: {
-      number: 'N°',
-      type: 'Type',
-      identity: 'Identité',
       organization: 'Organisation',
       validity: 'Validité',
-      status: 'Statut',
     },
   },
   card: {
@@ -31,10 +23,7 @@ export default {
     cancelReason: "Motif d'annulation : {reason}",
   },
   tooltips: {
-    print: 'Imprimer',
-    edit: 'Modifier',
     extend: 'Prolonger la validité',
-    cancel: 'Annuler',
   },
   aria: {
     printBadge: 'Imprimer le badge',
@@ -53,7 +42,6 @@ export default {
       titleNew: 'Émettre un badge',
       typeLabel: 'Type de badge',
       functionLabel: 'Fonction',
-      emailLabel: 'E-mail',
       idTypeLabel: 'Type de pièce',
       idNumberLabel: 'Numéro de pièce',
       zonesLabel: 'Zones autorisées (CSV)',

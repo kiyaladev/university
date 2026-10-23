@@ -9,7 +9,6 @@ export default {
   },
   filters: {
     search: 'Search by name or student ID…',
-    annee: 'Academic year',
     promotion: 'Cohort',
     session: 'Session',
     decision: 'Jury decision',
@@ -37,10 +36,7 @@ export default {
   },
   table: {
     columns: {
-      matricule: 'Student ID',
-      etudiant: 'Student',
       moyenne: 'Average',
-      decision: 'Decision',
       mention: 'Honors',
       rang: 'Rank',
     },
@@ -61,7 +57,6 @@ export default {
   cards: {
     rang: 'Rank {rang}',
     bulletin: 'Report card',
-    imprimer: 'Print',
     attestation: 'Certificate',
     detailOnOfficial: 'Subject details (courses, credits, assessments) appear on the printable official report card.',
     totalCredits: 'Total credits:',
@@ -69,9 +64,6 @@ export default {
     overallAverage: 'Overall average:',
     honors: 'Honors:',
     columns: {
-      subject: 'Subject',
-      code: 'Code',
-      credits: 'Credits',
       average: 'Average /20',
     },
   },

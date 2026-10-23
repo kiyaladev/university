@@ -164,7 +164,7 @@
             v-model="form.anneeId"
             endpoint="/inscription-publique/annees"
             :label-fn="(a) => a.libelle"
-            :label="$t('inscriptionPublique.form.step2.anneeLabel')"
+            :label="$t('common.fields.academicYearRequired')"
             :disable="annees.length <= 1"
             @update:model-value="onAnneeChange"
           />
@@ -361,8 +361,8 @@ interface ResultatDepot {
 const { t } = useI18n();
 
 const libellesEtapes = computed(() => [
-  t('inscriptionPublique.form.steps.identity'),
-  t('inscriptionPublique.form.steps.filiere'),
+  t('common.fields.identity'),
+  t('common.fields.filiere'),
   t('inscriptionPublique.form.steps.confirmation'),
 ]);
 

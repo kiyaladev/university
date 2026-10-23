@@ -32,7 +32,7 @@
         :label="$t('errorNotFound.actions.studentPortal')"
         to="/portail-connexion"
       />
-      <q-btn v-else flat no-caps size="lg" icon="logout" :label="$t('errorNotFound.actions.logout')" @click="seDeconnecter" />
+      <q-btn v-else flat no-caps size="lg" icon="logout" :label="$t('common.actions.logout')" @click="seDeconnecter" />
     </div>
 
     <nav class="introuvable__services" :aria-label="$t('errorNotFound.services.ariaLabel')">

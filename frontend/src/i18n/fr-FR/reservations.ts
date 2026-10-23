@@ -6,15 +6,11 @@ export default {
   actions: {
     reserve: 'Réserver une salle',
     reloadPeriod: 'Recharger la période',
-    reload: 'Recharger',
     today: "Aujourd'hui",
     thisMonth: 'Ce mois-ci',
   },
   filters: {
-    room: 'Salle',
     roomOption: '{code} — {name} ({capacity} places)',
-    from: 'Du',
-    to: 'Au',
   },
   legend: {
     timetable: 'Emploi du temps (lecture seule)',
@@ -28,11 +24,8 @@ export default {
   table: {
     columns: {
       slot: 'Créneau',
-      room: 'Salle',
-      reason: 'Motif',
       organization: 'Organisme',
       responsible: 'Responsable',
-      status: 'Statut',
     },
     viewDetail: 'Voir le détail de la réservation',
     viewDetailTooltip: 'Voir le détail',
@@ -45,9 +38,6 @@ export default {
   chips: {
     room: 'Salle : {code}',
     roomFallback: '…',
-  },
-  session: {
-    defaultLabel: 'Séance',
   },
   detailDialog: {
     requester: 'Demandeur',
@@ -70,7 +60,6 @@ export default {
   },
   createDialog: {
     roomLabel: 'Salle *',
-    dateLabel: 'Date *',
     startLabel: 'Début *',
     endLabel: 'Fin *',
     reasonLabel: 'Motif de l’événement *',

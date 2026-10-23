@@ -8,7 +8,7 @@
     <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-5">
-        <q-input v-model="form.code" outlined dense :label="$t('matieres.dialog.codeLabel')" placeholder="R1-101" :rules="[requis]" />
+        <q-input v-model="form.code" outlined dense :label="$t('common.fields.codeRequired')" placeholder="R1-101" :rules="[requis]" />
       </div>
       <div class="col-12 col-sm-7">
         <q-select
@@ -70,7 +70,7 @@
           v-model="form.devise"
           outlined
           dense
-          :label="$t('cites.chambres.dialogs.form.currency')"
+          :label="$t('common.fields.currency')"
           :hint="$t('cites.chambres.dialogs.form.currencyHint')"
         />
       </div>

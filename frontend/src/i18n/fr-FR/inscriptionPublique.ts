@@ -19,8 +19,6 @@ export default {
     title: 'Déposer mon dossier',
     steps: {
       ariaLabel: 'Étapes de la préinscription',
-      identity: 'Identité',
-      filiere: 'Filière',
       confirmation: 'Confirmation',
     },
     step1: {
@@ -64,7 +62,6 @@ export default {
     step2: {
       sectionTitle: 'Choix de la promotion',
       loadingFilieres: 'Chargement des filières ouvertes…',
-      anneeLabel: 'Année académique *',
       promotionLabel: 'Promotion *',
       promotionPlaceholder: 'Choisissez votre filière et niveau',
       fraisLabel: 'Frais : {montant} {devise}',

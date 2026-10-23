@@ -5,27 +5,17 @@ export default {
   actions: {
     new: 'Nouvelle affectation',
     createFirst: 'Créer la première affectation',
-    resetFilters: 'Réinitialiser les filtres',
-    edit: 'Modifier',
     editAria: 'Modifier l’affectation',
-    delete: 'Supprimer',
     deleteAria: 'Supprimer l’affectation',
   },
   filters: {
     searchPlaceholder: 'Rechercher (enseignant, matière, promotion)…',
-    teacher: 'Enseignant',
-    subject: 'Matière',
     promotion: 'Promotion',
-    year: 'Année académique',
   },
   table: {
     columns: {
-      teacher: 'Enseignant',
-      subject: 'Matière',
       promotion: 'Promotion',
-      year: 'Année',
       volume: 'Volume prévu',
-      actions: 'Actions',
     },
   },
   cardView: {
@@ -50,26 +40,22 @@ export default {
       when: 'Pour qui, et quand',
     },
     fields: {
-      teacher: 'Enseignant *',
       teacherError: 'Choisissez l’enseignant',
       subject: 'Matière *',
       subjectError: 'Choisissez la matière',
       promotion: 'Promotion *',
       promotionError: 'Choisissez la promotion',
-      year: 'Année académique *',
       yearError: 'Choisissez l’année académique',
       volume: 'Volume horaire contractuel (h)',
       volumeHint: 'Sert au suivi « heures réalisées / heures dues »',
     },
     cancel: 'Annuler',
-    save: 'Enregistrer',
   },
   deleteDialog: {
     title: 'Supprimer l’affectation',
     message:
       '« {subject} » confiée à {teacher} : les séances liées seront également supprimées. Continuer ?',
     cancel: 'Annuler',
-    confirm: 'Supprimer',
   },
   messages: {
     fillRequired: 'Complétez les champs obligatoires',

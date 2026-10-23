@@ -2,7 +2,6 @@
 export default {
   actions: {
     verifyAttestation: 'Verify a certificate',
-    login: 'Log in',
   },
   title: 'Student card verification',
   subtitle:
@@ -16,7 +15,6 @@ export default {
     qrExplanationPrefix: 'The scanned (or pasted) QR code is a URL: its parameters',
     qrExplanationAnd: 'and',
     qrExplanationSuffix: 'fill in the form automatically.',
-    verify: 'Verify',
   },
   result: {
     valid: 'Authentic card',
@@ -24,11 +22,8 @@ export default {
     introPrefix: 'Card',
     introSuffix: "is indeed found in the institution's register. Verified details:",
     table: {
-      student: 'Student',
       cardNumber: 'Card number',
-      status: 'Status',
       statusValue: 'Issued — not revoked, currently valid',
-      issuedOn: 'Issued on',
       validUntil: 'Valid until',
     },
     verifiedAt: 'Verified on {date} — this check has been recorded in the card log.',

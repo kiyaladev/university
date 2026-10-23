@@ -7,7 +7,6 @@ export default {
     seeShowcase: 'View public showcase',
     seeShowcaseTooltip: 'Page seen by candidates — published courses only',
     newFormation: 'New course',
-    reload: 'Reload',
     registrations: 'Registrations',
   },
   dialog: {
@@ -28,7 +27,6 @@ export default {
       location: 'Location / district',
       locationHint: 'Campus, room, faculty…',
       price: 'Price (GNF) *',
-      currency: 'Currency',
       duration: 'Duration (hours)',
       capacity: 'Capacity (seats)',
       capacityHint: 'Leave blank for open access',
@@ -40,7 +38,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (title, category, location…)',
-    status: 'Status',
     searchChip: '"{query}"',
   },
   stats: {
@@ -52,9 +49,7 @@ export default {
   table: {
     columns: {
       formation: 'Course',
-      status: 'Status',
       price: 'Price',
-      duration: 'Duration',
       capacity: 'Seats',
       registered: 'Registered',
       revenue: 'Revenue',
@@ -65,12 +60,8 @@ export default {
     paidCount: '{count} paid',
     tooltips: {
       publish: 'Publish the course',
-      publishShort: 'Publish',
-      close: 'Close',
-      edit: 'Edit',
       registrations: 'Registrations',
       delete: 'Delete draft',
-      deleteShort: 'Delete',
     },
     aria: {
       publish: 'Publish the course',
@@ -86,8 +77,6 @@ export default {
       fileNumber: 'File no.',
       registrant: 'Registrant',
       request: 'Request',
-      amount: 'Amount',
-      payment: 'Payment',
     },
     tooltips: {
       confirmPayment: 'Confirm the payment',
@@ -114,25 +103,21 @@ export default {
       title: 'Publish this course?',
       message:
         '"{title}" goes live on the public showcase: requests and Mobile Money payments will become possible.',
-      confirm: 'Publish',
     },
     close: {
       title: 'Close this course?',
       message:
         'The showcase will stop offering "{title}"; pending requests can no longer be confirmed. The class roster becomes official.',
-      confirm: 'Close',
     },
     delete: {
       title: 'Delete this draft?',
       message: '"{title}" was never sold: deleting it leaves no customer trace.',
-      confirm: 'Delete',
     },
     confirmPayment: {
       title: 'Confirm the payment?',
       message:
         'Pilot confirmation: the Mobile Money operator has collected — {reference} moves to REUSSI and request {numero} moves to CONFIRMEE.',
       paymentFallback: 'the payment',
-      confirm: 'Confirm',
     },
     cancelRequest: {
       title: 'Cancel this request?',

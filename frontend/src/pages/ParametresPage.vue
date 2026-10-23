@@ -73,7 +73,7 @@
 
     <etat-vide v-if="!chargement && !parametres.length" icone="settings" :titre="$t('parametres.emptyState.title')">
       <template #action>
-        <q-btn flat no-caps icon="refresh" :label="$t('parametres.emptyState.reload')" @click="charger" />
+        <q-btn flat no-caps icon="refresh" :label="$t('common.actions.reload')" @click="charger" />
       </template>
     </etat-vide>
 

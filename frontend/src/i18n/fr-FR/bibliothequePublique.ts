@@ -1,8 +1,5 @@
 /** Namespace `bibliothequePublique`. */
 export default {
-  nav: {
-    login: 'Se connecter',
-  },
   title: 'Bibliothèque numérique',
   subtitle:
     "Mémoires, thèses, articles et supports de cours de l'université : le dépôt institutionnel accessible à tous, pour le prestige de l'établissement et son éligibilité aux programmes AUF / UNESCO.",
@@ -11,7 +8,6 @@ export default {
   },
   filters: {
     type: 'Type de document',
-    department: 'Département',
     editionYear: "Année d'édition",
   },
   emptyState: {
@@ -26,17 +22,12 @@ export default {
     year: 'année {year}',
     downloadsTitle: '{count} téléchargement(s)',
     sizeMo: '{size} Mo',
-    download: 'Télécharger',
   },
   table: {
     columns: {
       document: 'Document',
-      department: 'Département',
-      type: 'Type',
-      year: 'Année',
       downloads: 'Téléchargements',
     },
-    download: 'Télécharger',
   },
   footer:
     "La consultation et le téléchargement sont libres et gratuits. La numérisation des fonds papier fait l'objet d'un marché distinct.",

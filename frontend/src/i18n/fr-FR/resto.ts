@@ -9,7 +9,6 @@ export default {
   },
   rechargeDialog: {
     title: 'Recharger un portefeuille resto',
-    student: 'Étudiant *',
     noWallet: 'Aucun portefeuille trouvé',
     sectionTitle: 'Rechargement',
     amount: 'Montant (GNF) *',
@@ -58,8 +57,6 @@ export default {
     searchPlaceholder: 'Rechercher (matricule, nom, prénom…)',
     table: {
       columns: {
-        student: 'Étudiant',
-        phone: 'Téléphone',
         balance: 'Solde',
       },
     },
@@ -81,8 +78,6 @@ export default {
       consommations: 'Consommations',
     },
     filters: {
-      from: 'Du',
-      to: 'Au',
       paymentStatus: 'Statut du paiement',
     },
     actions: {
@@ -100,10 +95,6 @@ export default {
       columns: {
         date: 'Le',
         type: 'Opération',
-        student: 'Étudiant',
-        detail: 'Détail',
-        amount: 'Montant',
-        status: 'Statut',
       },
     },
     type: {
@@ -129,6 +120,5 @@ export default {
     chips: {
       cantine: 'Cantine : {cantine}',
     },
-    paymentModeFallback: 'Paiement',
   },
 };

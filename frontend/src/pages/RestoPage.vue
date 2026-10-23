@@ -249,8 +249,8 @@
         @reinitialiser="tx.reinitialiser(['dateDebut', 'dateFin'])"
       >
         <template #avances>
-          <champ-date v-model="filtresTransactions.dateDebut" :label="$t('resto.transactions.filters.from')" />
-          <champ-date v-model="filtresTransactions.dateFin" :label="$t('resto.transactions.filters.to')" />
+          <champ-date v-model="filtresTransactions.dateDebut" :label="$t('common.actions.from')" />
+          <champ-date v-model="filtresTransactions.dateFin" :label="$t('common.actions.to')" />
           <!-- Le serveur ne filtre les recharges que par statut de paiement. -->
           <q-select
             v-if="ongletTransactions === 'recharges'"
@@ -521,10 +521,10 @@ function rechargerCible() {
 }
 
 const colonnesPortefeuilles = computed<QTableColumn[]>(() => [
-  { name: 'etudiant', label: t('resto.wallets.table.columns.student'), field: 'etudiant', sortable: true },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', sortable: true },
   {
     name: 'telephone',
-    label: t('resto.wallets.table.columns.phone'),
+    label: t('common.fields.phone'),
     field: (r: any) => r.etudiant?.telephone ?? '—',
     align: 'left',
   },
@@ -588,7 +588,7 @@ async function chargerFlux(f: Record<string, any>): Promise<{ data: LigneTransac
       id: r.id,
       type: 'RECHARGE' as const,
       date: r.rechargeLe,
-      libelle: `${LIBELLE_MODE_PAIEMENT[r.paiement?.mode] ?? t('resto.transactions.paymentModeFallback')}${r.paiement?.reference ? ` — ${r.paiement.reference}` : ''}`,
+      libelle: `${LIBELLE_MODE_PAIEMENT[r.paiement?.mode] ?? t('common.fields.payment')}${r.paiement?.reference ? ` — ${r.paiement.reference}` : ''}`,
       etudiant: nomEtudiant(r.portefeuille?.etudiant),
       montant: r.montant,
       statut: r.paiement?.statut ?? r.statut,
@@ -687,10 +687,10 @@ async function annulerRepas(ligne: LigneTransaction) {
 const colonnesTransactions = computed<QTableColumn[]>(() => [
   { name: 'date', label: t('resto.transactions.table.columns.date'), field: 'date', sortable: true },
   { name: 'type', label: t('resto.transactions.table.columns.type'), field: 'type' },
-  { name: 'etudiant', label: t('resto.transactions.table.columns.student'), field: 'etudiant' },
-  { name: 'detail', label: t('resto.transactions.table.columns.detail'), field: 'libelle' },
-  { name: 'montant', label: t('resto.transactions.table.columns.amount'), field: 'montant', align: 'right' as const },
-  { name: 'statut', label: t('resto.transactions.table.columns.status'), field: 'statut' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant' },
+  { name: 'detail', label: t('common.actions.detail'), field: 'libelle' },
+  { name: 'montant', label: t('common.fields.amount'), field: 'montant', align: 'right' as const },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut' },
   { name: 'actions', label: '', field: 'actions', align: 'right' as const },
 ]);
 

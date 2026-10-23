@@ -42,7 +42,7 @@
       class="q-mb-md"
     />
 
-    <span class="section-titre">{{ $t('reclamations.dialog.create.description') }}</span>
+    <span class="section-titre">{{ $t('common.fields.descriptionRequired') }}</span>
     <q-input
       v-model="form.description"
       outlined

@@ -34,10 +34,10 @@
           clearable
           emit-value
           map-options
-          :label="$t('courrier.filters.status')"
+          :label="$t('common.fields.status')"
         />
-        <champ-date v-model="filtres.dateDebut" :label="$t('courrier.filters.from')" />
-        <champ-date v-model="filtres.dateFin" :label="$t('courrier.filters.to')" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
       </template>
     </filter-bar>
 
@@ -175,7 +175,7 @@
           </q-card-section>
           <q-card-actions align="right">
             <q-btn flat dense no-caps icon="print" :label="$t('courrier.card.print')" @click.stop="imprimer(c)" />
-            <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" :label="$t('courrier.card.close')" @click.stop="cloturer(c)" />
+            <q-btn v-if="peutCloturer(c)" flat dense no-caps color="negative" icon="archive" :label="$t('common.actions.closeOut')" @click.stop="cloturer(c)" />
           </q-card-actions>
         </q-card>
       </div>
@@ -369,14 +369,14 @@ const aideVide = computed(() =>
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('courrier.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'objet',
     label: t('courrier.table.columns.objet'),
     field: 'objet',
     align: 'left',
   },
-  { name: 'type', label: t('courrier.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   {
     name: 'correspondant',
     label: t('courrier.table.columns.correspondant'),
@@ -385,12 +385,12 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'date',
-    label: t('courrier.table.columns.date'),
+    label: t('common.fields.date'),
     field: (r: Courrier) => dateCourrier(r),
     align: 'left',
   },
   { name: 'circuits', label: t('courrier.table.columns.circuit'), field: 'circuits', align: 'left' },
-  { name: 'statut', label: t('courrier.table.columns.statut'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -435,7 +435,7 @@ async function cloturer(c: Courrier) {
   const ok = await confirmer({
     titre: t('courrier.dialogs.close.title'),
     message: t('courrier.dialogs.close.message', { numero: c.numero }),
-    ok: t('courrier.dialogs.close.okLabel'),
+    ok: t('common.actions.closeOut'),
     danger: true,
   });
   if (!ok) return;

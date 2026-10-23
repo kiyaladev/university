@@ -47,7 +47,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('mesReclamations.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
       <template #avances>
@@ -59,7 +59,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('mesReclamations.filters.type')"
+          :label="$t('common.fields.type')"
         />
         <q-select
           v-model="filtres.priorite"
@@ -69,7 +69,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('mesReclamations.filters.priority')"
+          :label="$t('common.fields.priority')"
         />
       </template>
     </filter-bar>
@@ -161,7 +161,7 @@
             </div>
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn flat dense no-caps icon="visibility" :label="$t('mesReclamations.cards.detail')" @click="ouvrir(r)" />
+            <q-btn flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click="ouvrir(r)" />
           </q-card-actions>
         </q-card>
       </div>
@@ -284,14 +284,14 @@ function libellePriorite(p: string) {
 }
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('mesReclamations.table.columns.number'), field: 'numero', align: 'left', sortable: true },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
   { name: 'sujet', label: t('mesReclamations.table.columns.subject'), field: 'sujet', align: 'left' },
-  { name: 'type', label: t('mesReclamations.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'priorite', label: t('mesReclamations.table.columns.priority'), field: 'priorite', align: 'left' },
-  { name: 'statut', label: t('mesReclamations.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'priorite', label: t('common.fields.priority'), field: 'priorite', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: t('mesReclamations.table.columns.createdAt'),
+    label: t('common.fields.createdOn'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),

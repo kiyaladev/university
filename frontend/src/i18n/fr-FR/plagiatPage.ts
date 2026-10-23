@@ -37,15 +37,12 @@ export default {
     filteredHint: 'Élargissez les critères pour revoir la file d’arbitrage.',
     defaultHint:
       'Les nouveaux dépôts sont comparés automatiquement ; relancez un recalcul complet après un import massif.',
-    resetFilters: 'Réinitialiser les filtres',
   },
   table: {
     columns: {
-      score: 'Score',
       documentA: 'Document A',
       documentB: 'Document B',
       detectedOn: 'Détecté le',
-      status: 'Statut',
     },
     actions: {
       viewDetailAria: 'Voir le détail de la suspicion',
@@ -66,12 +63,10 @@ export default {
   dialog: {
     titleAcquit: 'Acquitter la suspicion',
     titleConfirm: 'Confirmer le plagiat',
-    scoreLabel: 'Score',
     comparisonDocs: '« {documentA} » contre « {documentB} »',
     confirmWarning:
       'Confirmer ouvre une procédure disciplinaire. Le motif est obligatoire et la décision ne pourra plus être modifiée.',
     acquitWarning: 'La suspicion sera close sans suite. La décision ne pourra plus être modifiée.',
-    motifRequired: 'Motif *',
     motifOptional: 'Motif (facultatif)',
     cancel: 'Annuler',
     acquitSubmit: 'Acquitter définitivement',

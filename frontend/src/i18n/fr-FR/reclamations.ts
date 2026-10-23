@@ -5,7 +5,6 @@ export default {
     'Guichet unique des doléances étudiantes — note manquante, erreur de saisie, scolarité, enseignement. Chaque réclamation suit un cycle tracé : de l’ouverture à la clôture, en passant par l’assignation et l’escalade automatique à 48 h.',
   actions: {
     newReclamation: 'Nouvelle réclamation',
-    detail: 'Détail',
     escalate: 'Escalader',
   },
   dialog: {
@@ -14,7 +13,6 @@ export default {
       subject: 'Sujet *',
       subjectMin: 'Au moins 3 caractères',
       subjectHint: 'Résumez le problème en une phrase',
-      description: 'Description *',
       descriptionMin: 'Au moins 10 caractères',
       descriptionMax: 'Au plus 4 000 caractères',
       descriptionHint: 'Décrivez précisément',
@@ -52,8 +50,6 @@ export default {
       takeOwnership: 'Prendre en charge',
       awaitReply: 'En attente de réponse',
       markResolved: 'Marquer résolu',
-      reject: 'Rejeter',
-      resume: 'Reprendre',
       messageSent: 'Message envoyé',
       rejectTitle: 'Rejeter la réclamation',
       rejectPrompt: 'Indiquez le motif du rejet (obligatoire) :',
@@ -73,10 +69,6 @@ export default {
     placeholder: 'Rechercher (N°, sujet, nom…)',
   },
   filters: {
-    statut: 'Statut',
-    type: 'Type',
-    priorite: 'Priorité',
-    departement: 'Département',
     assigneA: 'Assigné à',
     escalade: 'Escalade',
   },
@@ -93,12 +85,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'N°',
       sujet: 'Sujet',
-      type: 'Type',
-      priorite: 'Priorité',
       auteur: 'Auteur',
-      statut: 'Statut',
       activite: 'Activité',
     },
   },

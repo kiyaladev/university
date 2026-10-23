@@ -52,7 +52,7 @@
 
         <!-- Décision de l'administration : confirmer ou refuser proprement. -->
         <div v-if="peutDecider" class="q-mt-md">
-          <span class="section-titre">{{ $t('bulletins.table.columns.decision') }}</span>
+          <span class="section-titre">{{ $t('common.fields.decision') }}</span>
           <q-input
             v-model="decisionMotif"
             outlined
@@ -100,10 +100,10 @@
               <champ-date v-model="form.dateJour" :label="$t('common.fields.date')" />
             </div>
             <div class="col-6">
-              <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('structure.dialogs.annee.debut')" />
+              <q-input v-model="form.heureDebut" outlined dense mask="##:##" :label="$t('common.fields.start')" />
             </div>
             <div class="col-6">
-              <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.messages.end')" />
+              <q-input v-model="form.heureFin" outlined dense mask="##:##" :label="$t('common.fields.end')" />
             </div>
           </div>
           <q-input v-model="form.motif" outlined dense :label="$t('common.fields.motif')" />

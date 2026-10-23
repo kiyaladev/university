@@ -28,10 +28,10 @@
         <q-select v-model="filtres.paiementStatut" :options="optionsPaiement" outlined dense clearable emit-value map-options :label="$t('recettes.filters.paiementStatut')" />
       </template>
       <template #avances>
-        <q-select v-model="filtres.type" :options="optionsTypes" outlined dense clearable emit-value map-options :label="$t('recettes.filters.type')" />
+        <q-select v-model="filtres.type" :options="optionsTypes" outlined dense clearable emit-value map-options :label="$t('common.fields.type')" />
 
-        <champ-date v-model="filtres.dateDebut" :label="$t('recettes.filters.dateDebut')" />
-        <champ-date v-model="filtres.dateFin" :label="$t('recettes.filters.dateFin')" />
+        <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
+        <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
       </template>
     </filter-bar>
 
@@ -134,7 +134,7 @@
             </div>
           </q-card-section>
           <q-card-section>
-            <div class="text-caption text-grey-7">{{ $t('recettes.card.montant') }}</div>
+            <div class="text-caption text-grey-7">{{ $t('common.fields.amount') }}</div>
             <div class="text-h6 chiffres">{{ montantLisible(r.montant) }} {{ r.devise }}</div>
           </q-card-section>
           <q-card-actions align="right">
@@ -296,13 +296,13 @@ const chipsFiltres = computed(() => {
 });
 
 const colonnesTableau = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('recettes.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: t('recettes.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'libelle', label: t('recettes.table.columns.libelle'), field: 'libelle', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'libelle', label: t('common.fields.label'), field: 'libelle', align: 'left' },
   { name: 'client', label: t('recettes.table.columns.client'), field: 'client', align: 'left' },
-  { name: 'date', label: t('recettes.table.columns.date'), field: (r: RecetteExterne) => dateLisible(r.date), align: 'left' },
-  { name: 'montant', label: t('recettes.table.columns.montant'), field: 'montant', align: 'right' },
-  { name: 'statut', label: t('recettes.table.columns.statut'), field: 'paiementId', align: 'left' },
+  { name: 'date', label: t('common.fields.date'), field: (r: RecetteExterne) => dateLisible(r.date), align: 'left' },
+  { name: 'montant', label: t('common.fields.amount'), field: 'montant', align: 'right' },
+  { name: 'statut', label: t('common.fields.status'), field: 'paiementId', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 

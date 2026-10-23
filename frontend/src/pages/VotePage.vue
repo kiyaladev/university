@@ -206,7 +206,7 @@ onMounted(charger);
       <template #avatar><q-icon name="error" /></template>
       {{ erreurChargement }}
       <template #action>
-        <q-btn flat no-caps :label="$t('vote.retry')" @click="charger" />
+        <q-btn flat no-caps :label="$t('common.actions.retry')" @click="charger" />
       </template>
     </q-banner>
 
@@ -219,7 +219,7 @@ onMounted(charger);
       <template #action>
         <div class="etat-vide__actions">
           <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" :label="$t('vote.empty_state.my_space')" to="/portail" />
-          <q-btn flat no-caps icon="refresh" :label="$t('vote.empty_state.refresh')" @click="charger" />
+          <q-btn flat no-caps icon="refresh" :label="$t('common.actions.refresh')" @click="charger" />
         </div>
       </template>
     </etat-vide>

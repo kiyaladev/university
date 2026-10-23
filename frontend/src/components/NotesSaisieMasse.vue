@@ -216,7 +216,7 @@ const peutEditer = computed(() => !props.lectureSeule);
         <div class="col-etu">{{ $t('common.fields.student') }}</div>
         <div class="col-pres">{{ $t('common.actions.pickPresent') }}</div>
         <div class="col-note">{{ $t('notes.bulk.grade') }}</div>
-        <div class="col-eta">{{ $t('bibliotheque.table.columns.state') }}</div>
+        <div class="col-eta">{{ $t('common.fields.state') }}</div>
       </div>
 
       <div

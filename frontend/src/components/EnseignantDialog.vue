@@ -6,7 +6,7 @@
     :envoi="enregistrement"
     @valider="enregistrer"
   >
-    <span class="section-titre">{{ $t('badges.table.columns.identity') }}</span>
+    <span class="section-titre">{{ $t('common.fields.identity') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
         <q-input v-model="form.matricule" outlined dense :label="$t('enseignants.formDialog.matricule')" :rules="[requis]" />
@@ -33,7 +33,7 @@
 
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.email" outlined dense type="email" :label="$t('etudiants.table.columns.email')" />
+        <q-input v-model="form.email" outlined dense type="email" :label="$t('common.fields.emailShort')" />
       </div>
       <div class="col-12 col-sm-6">
         <q-input v-model="form.telephone" outlined dense :label="$t('common.fields.phone')" />

@@ -1,12 +1,10 @@
 /** Namespace `paiements` — page Paiements. */
 export default {
-  title: 'Paiements',
   subtitle:
     "Encaissements Mobile Money, espèces et virements : l'agent comptable confirme les transactions de l'opérateur, chaque opération est tracée.",
   actions: {
     new: 'Nouveau paiement',
     viewAll: 'Voir tous les paiements',
-    resetFilters: 'Réinitialiser les filtres',
   },
   kpis: {
     totalCollected: 'Total encaissé',
@@ -17,13 +15,9 @@ export default {
     'Calculé sur les {count} paiement{plural} affiché{plural} sur {total} — « Charger tout » pour porter le calcul sur l\'ensemble du registre.',
   filters: {
     searchPlaceholder: 'Rechercher (référence, nom étudiant)…',
-    status: 'Statut',
     mode: 'Mode',
-    operator: 'Opérateur',
-    reason: 'Motif',
     reasonPlaceholder: "Frais d'inscription…",
     enrollment: 'Dossier d’inscription',
-    student: 'Étudiant',
     from: 'Depuis',
     to: "Jusqu'à",
   },
@@ -31,13 +25,8 @@ export default {
     columns: {
       reference: 'Référence',
       source: 'Source',
-      student: 'Étudiant',
       mode: 'Mode / Opérateur',
-      amount: 'Montant',
-      status: 'Statut',
-      reason: 'Motif',
       transaction: 'Transaction',
-      date: 'Date',
     },
     actions: {
       details: 'Détails de la transaction',
@@ -55,14 +44,10 @@ export default {
   },
   cards: {
     mode: 'Mode',
-    amount: 'Montant',
     transaction: 'Transaction : {id}',
-    details: 'Détails',
     success: 'Réussi',
     failed: 'Échoué',
-    cancel: 'Annuler',
     enrollment: 'Dossier',
-    student: 'Étudiant',
     openModule: 'Ouvrir {module}',
   },
   sources: {
@@ -98,11 +83,9 @@ export default {
   },
   detail: {
     studentFile: 'Étudiant / dossier',
-    amount: 'Montant',
     transaction: 'Transaction (opérateur)',
     transactionNone: 'aucune — simulation pilote',
     operatorPhone: 'Opérateur / téléphone',
-    reason: 'Motif',
     timestamp: 'Horodatage',
     createdBy: 'Causerie',
     createdByFallback: 'registre',
@@ -110,7 +93,6 @@ export default {
     cancelReason: ' · annulé : {reason}',
   },
   dialogs: {
-    close: 'Fermer',
     cancelTitle: 'Annuler {reference}',
     cancelSubtitle: 'le paiement reste tracé au registre.',
     cancelReasonLabel: "Motif d'annulation *",
@@ -125,7 +107,6 @@ export default {
       enrollment: 'Dossier *',
       enrollmentPlaceholder: 'Tapez n° de dossier ou nom d’étudiant…',
       beneficiary: 'Bénéficiaire',
-      student: 'Étudiant *',
       studentPlaceholder: 'Tapez nom, prénom ou matricule…',
       payment: 'Règlement',
       mode: 'Mode de paiement *',
@@ -147,7 +128,6 @@ export default {
     message: '{reference} pour {amount} — répercuter la réponse de l’opérateur ({outcome}) ?',
     outcomeSuccess: 'paiement reçu',
     outcomeFailed: 'transaction rejetée',
-    confirmLabel: 'Confirmer',
   },
   messages: {
     confirmed: 'Paiement confirmé',

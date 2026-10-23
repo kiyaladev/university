@@ -16,25 +16,19 @@ export default {
   table: {
     empty: 'No fee registered. As long as a type has no fee, student requests are created free of charge and go directly into processing.',
     columns: {
-      type: 'Type',
-      amount: 'Amount',
       delay: 'Delay',
     },
     edit_aria: 'Edit fee',
-    edit_tooltip: 'Edit',
   },
   dialog: {
     edit_title: 'Edit fee',
     new_title: 'New fee',
-    type_label: 'Type',
     type_hint: 'The type is fixed after creation',
     type_required: 'Type required',
-    amount_label: 'Amount',
     amount_required: 'Amount required',
     delay_label: 'Usual delay (hours)',
     delay_required: 'Delay required',
     cancel: 'Cancel',
-    save: 'Save',
   },
   messages: {
     updated: 'Fee updated',

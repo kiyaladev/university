@@ -5,7 +5,7 @@
       <p>{{ t('servicesActifs.subtitle') }}</p>
       <q-banner v-if="store.erreur" class="note--erreur" role="alert">
         {{ t('servicesActifs.loadError') }}
-        <template #action><q-btn flat :label="t('servicesActifs.retry')" @click="charger" /></template>
+        <template #action><q-btn flat :label="t('common.actions.retry')" @click="charger" /></template>
       </q-banner>
       <q-linear-progress v-if="chargement" indeterminate />
       <div v-if="services.length" class="row q-gutter-sm q-mb-md">

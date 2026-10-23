@@ -6,15 +6,11 @@ export default {
   actions: {
     reserve: 'Book a room',
     reloadPeriod: 'Reload the period',
-    reload: 'Reload',
     today: 'Today',
     thisMonth: 'This month',
   },
   filters: {
-    room: 'Room',
     roomOption: '{code} — {name} ({capacity} seats)',
-    from: 'From',
-    to: 'To',
   },
   legend: {
     timetable: 'Timetable (read-only)',
@@ -28,11 +24,8 @@ export default {
   table: {
     columns: {
       slot: 'Slot',
-      room: 'Room',
-      reason: 'Reason',
       organization: 'Organization',
       responsible: 'Responsible',
-      status: 'Status',
     },
     viewDetail: 'View booking detail',
     viewDetailTooltip: 'View detail',
@@ -45,9 +38,6 @@ export default {
   chips: {
     room: 'Room: {code}',
     roomFallback: '…',
-  },
-  session: {
-    defaultLabel: 'Session',
   },
   detailDialog: {
     requester: 'Requester',
@@ -70,7 +60,6 @@ export default {
   },
   createDialog: {
     roomLabel: 'Room *',
-    dateLabel: 'Date *',
     startLabel: 'Start *',
     endLabel: 'End *',
     reasonLabel: 'Event purpose *',

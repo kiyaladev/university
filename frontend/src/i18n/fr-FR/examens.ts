@@ -7,12 +7,10 @@ export default {
     schedule: 'Planifier un examen',
     scanStation: 'Poste de scan',
     draw: 'Tirage des épreuves',
-    start: 'Démarrer',
     finish: 'Terminer',
     scanCards: 'Scanner les cartes',
     scanner: 'Scanner',
     drawShort: 'Tirage',
-    close: 'Fermer',
   },
   fields: {
     supervisor: 'Surveillant affecté',
@@ -25,9 +23,7 @@ export default {
   filters: {
     searchPlaceholder: 'Rechercher (code examen, intitulé, matière…)',
     type: "Type d'épreuve",
-    subject: 'Matière',
     promotion: 'Promotion',
-    academicYear: 'Année académique',
     dateFrom: 'Épreuves du',
     dateTo: 'au',
     searchChip: '« {query} »',
@@ -35,15 +31,9 @@ export default {
   },
   table: {
     columns: {
-      code: 'Code',
-      title: 'Intitulé',
-      type: 'Type',
       slot: 'Date & heure',
-      subject: 'Matière',
       promotion: 'Promotion',
-      room: 'Salle',
       present: 'Présents',
-      status: 'Statut',
     },
     tooltips: {
       openSheet: "Fiche de l'examen",
@@ -62,9 +52,6 @@ export default {
   },
   sheet: {
     closeAria: 'Fermer la fiche',
-    date: 'Date',
-    schedule: 'Horaire',
-    room: 'Salle',
     presentsOverEnrolled: 'Présents / inscrits',
     chainContinuation: 'Suite de la chaîne',
     scanJournal: 'Journal des scans',
@@ -77,15 +64,12 @@ export default {
       time: 'Heure',
       holder: 'Porteur',
       registrationNumber: 'Matricule saisi',
-      result: 'Résultat',
-      operator: 'Opérateur',
     },
   },
   confirm: {
     startTitle: "Démarrer l'examen",
     startMessage:
       "Démarrer {code} — {title} ? Le nombre d'inscrits sera recalculé depuis les inscriptions validées de la promotion, et le poste de scan s'ouvrira à cet examen.",
-    startAction: 'Démarrer',
     finishTitle: "Terminer l'examen",
     finishMessage:
       'Clôturer {code} — {title} ? Le nombre de présents est figé : plus aucune carte ne pourra être scannée pour cette épreuve. Cette opération est définitive.',

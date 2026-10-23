@@ -39,7 +39,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            :label="$t('verificationBadge.form.submit')"
+            :label="$t('common.actions.verify')"
             :disable="!identifiant.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -78,7 +78,7 @@
                   <td><code>{{ resultat.badge.numero }}</code></td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.type') }}</td>
+                  <td class="pochoir ta-intitule">{{ $t('common.fields.type') }}</td>
                   <td>{{ LIBELLE_TYPE_BADGE[resultat.badge.type ?? ''] ?? resultat.badge.type }}</td>
                 </tr>
                 <tr v-if="resultat.badge.fonction || resultat.badge.organisation">
@@ -88,7 +88,7 @@
                   </td>
                 </tr>
                 <tr>
-                  <td class="pochoir ta-intitule">{{ $t('verificationBadge.result.table.statut') }}</td>
+                  <td class="pochoir ta-intitule">{{ $t('common.fields.status') }}</td>
                   <td>{{ $t('verificationBadge.result.table.statutValue') }}</td>
                 </tr>
                 <tr v-if="resultat.badge.zonesAccess">

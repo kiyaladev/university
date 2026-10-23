@@ -148,7 +148,7 @@ onMounted(charger);
             {{ carte.etudiant?.prenom }} {{ carte.etudiant?.nom }}
           </div>
           <div class="text-caption">
-            {{ $t('maCarte.card.matricule') }} <code>{{ carte.etudiant?.matricule }}</code>
+            {{ $t('common.fields.studentId') }} <code>{{ carte.etudiant?.matricule }}</code>
           </div>
           <div class="q-mt-sm">
             <span class="champ champ-statut" :class="CLASSE_STATUT_CARTE[carte.statut]">
@@ -170,7 +170,7 @@ onMounted(charger);
       <q-card-section>
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
-            <div class="text-caption text-grey-7">{{ $t('maCarte.card.issuedOn') }}</div>
+            <div class="text-caption text-grey-7">{{ $t('common.fields.issuedOn') }}</div>
             <div class="text-body1">{{ dateLongue(carte.dateEmission) }}</div>
           </div>
           <div class="col-12 col-md-6">
@@ -224,7 +224,7 @@ onMounted(charger);
       :titre="$t('maCarte.dialog.title')"
       :sous-titre="$t('maCarte.dialog.description')"
       taille="s"
-      :libelle-valider="$t('maCarte.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       :desactive="!nipValeur || !nipConfirmation"
       @valider="confirmerNip"
     >

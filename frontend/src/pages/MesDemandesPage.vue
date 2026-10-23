@@ -47,7 +47,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('mesDemandes.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
     </filter-bar>
@@ -229,7 +229,7 @@
               </span>
             </div>
             <div>
-              <span class="pochoir">{{ $t('mesDemandes.dialog.payment') }}</span>
+              <span class="pochoir">{{ $t('common.fields.payment') }}</span>
               <span v-if="demandeSuivie.paiement">
                 {{ demandeSuivie.paiement.reference }} ·
                 {{ LIBELLE_STATUT_PAIEMENT[demandeSuivie.paiement.statut] ?? demandeSuivie.paiement.statut }}
@@ -237,7 +237,7 @@
               <span v-else class="text-grey-7">{{ $t('mesDemandes.dialog.notInitiated') }}</span>
             </div>
             <div>
-              <span class="pochoir">{{ $t('mesDemandes.dialog.createdAt') }}</span>
+              <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>
               <span>{{ dateHeureLisible(demandeSuivie.creeLe) }}</span>
             </div>
             <div v-if="demandeSuivie.remiseLe">
@@ -260,7 +260,7 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('mesDemandes.actions.close')" no-caps v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" no-caps v-close-popup />
           <q-btn
             v-if="demandeSuivie && demandeSuivie.statut === 'EN_ATTENTE_PAIEMENT' && demandeSuivie.frais > 0"
             unelevated
@@ -312,7 +312,7 @@
           dense
           emit-value
           map-options
-          :label="$t('mesDemandes.paymentDialog.operator')"
+          :label="$t('common.fields.operator')"
           class="q-mb-sm"
         />
         <q-input
@@ -383,7 +383,7 @@ const EXPLICATION_STATUT = computed<Record<StatutDemande, string>>(() => ({
 }));
 
 const ETAPES_DEMANDE = computed(() => [
-  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('mesDemandes.steps.payment'), icone: 'payments' },
+  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('common.fields.payment'), icone: 'payments' },
   { identifiant: 'PAYEE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
   { identifiant: 'EN_TRAITEMENT', libelle: t('mesDemandes.steps.processing'), icone: 'build' },
   { identifiant: 'PRETE', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
@@ -455,13 +455,13 @@ function libelleType(t: string) {
 }
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('mesDemandes.table.columns.number'), field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: t('mesDemandes.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   { name: 'frais', label: t('mesDemandes.table.columns.fees'), field: 'frais', align: 'right' },
-  { name: 'statut', label: t('mesDemandes.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: t('mesDemandes.table.columns.createdAt'),
+    label: t('common.fields.createdOn'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),

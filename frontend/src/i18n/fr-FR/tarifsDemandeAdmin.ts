@@ -16,25 +16,19 @@ export default {
   table: {
     empty: 'Aucun tarif enregistré. Tant qu\'un type n\'a pas de tarif, les demandes des étudiants sont créées sans frais et passent directement en traitement.',
     columns: {
-      type: 'Type',
-      amount: 'Montant',
       delay: 'Délai',
     },
     edit_aria: 'Modifier le tarif',
-    edit_tooltip: 'Modifier',
   },
   dialog: {
     edit_title: 'Modifier le tarif',
     new_title: 'Nouveau tarif',
-    type_label: 'Type',
     type_hint: 'Le type est figé après création',
     type_required: 'Type requis',
-    amount_label: 'Montant',
     amount_required: 'Montant requis',
     delay_label: 'Délai habituel (heures)',
     delay_required: 'Délai requis',
     cancel: 'Annuler',
-    save: 'Enregistrer',
   },
   messages: {
     updated: 'Tarif mis à jour',

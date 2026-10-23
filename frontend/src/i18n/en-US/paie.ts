@@ -6,14 +6,9 @@ export default {
   actions: {
     newSheet: 'New sheet',
     reload: 'Reload',
-    recalculate: 'Recalculate',
-    validate: 'Validate',
     markPaid: 'Mark paid',
-    print: 'Print',
     printSheet: 'Print the sheet (A4)',
     delete: 'Delete',
-    close: 'Close',
-    clearFilters: 'Clear filters',
     createFirst: 'Create the first sheet',
   },
   links: {
@@ -31,8 +26,6 @@ export default {
     },
   },
   filters: {
-    statut: 'Status',
-    annee: 'Year',
     statutChip: 'Status: {value}',
     anneeChip: 'Year: {value}',
   },
@@ -45,13 +38,10 @@ export default {
   table: {
     columns: {
       libelle: 'Sheet',
-      periode: 'Period',
-      statut: 'Status',
       lignes: 'Lines',
       montantTotal: 'Total amount (GNF)',
     },
     lignesColumns: {
-      enseignant: 'Teacher',
       taux: 'Hourly rate (GNF)',
       heures: 'Hours completed',
       volume: 'Planned volume',
@@ -66,13 +56,11 @@ export default {
     lignesCount: '{count} line(s)',
   },
   tooltips: {
-    reload: 'Reload',
     detail: 'Line detail',
     recalculate: 'Recalculate checked hours',
     validate: 'Validate and lock the amounts',
     markPaid: 'Mark paid',
     print: 'Print the sheet (A4)',
-    delete: 'Delete',
   },
   ariaLabels: {
     reload: 'Reload payroll sheets',

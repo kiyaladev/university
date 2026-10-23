@@ -1,11 +1,9 @@
 /** Namespace `inscriptions` — page Inscriptions (dossiers de l'année). */
 export default {
-  title: 'Inscriptions',
   subtitle:
     "Dossiers de l’année : encaisser les frais par Mobile Money ou au guichet, valider les dossiers réglés, imprimer les certificats.",
   actions: {
     new: 'Nouvelle inscription au guichet',
-    resetFilters: 'Réinitialiser les filtres',
   },
   banner: {
     dossiersOf: 'Dossiers de',
@@ -14,18 +12,14 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (n° de dossier, nom étudiant)…',
-    academicYear: 'Année académique',
     promotion: 'Promotion',
-    status: 'Statut',
     enrolledFrom: 'Inscrit depuis',
     enrolledUntil: "jusqu'à",
   },
   table: {
     columns: {
       number: 'N° dossier',
-      student: 'Étudiant',
       promotion: 'Année / Promotion',
-      status: 'Statut',
       fees: 'Frais (GNF)',
       paid: 'Payé (GNF)',
       balance: 'Reste à payer (GNF)',
@@ -52,11 +46,7 @@ export default {
     balance: 'Reste à payer',
     actions: {
       collect: 'Encaisser',
-      payments: 'Paiements',
-      validate: 'Valider',
-      cancel: 'Annuler',
       certificate: 'Certificat',
-      student: 'Étudiant',
     },
   },
   emptyState: {
@@ -76,19 +66,15 @@ export default {
     unavailable: 'Fiche étudiant indisponible.',
     sex: 'Sexe',
     birthDate: 'Date de naissance',
-    phone: 'Téléphone',
-    email: 'E-mail',
     address: 'Adresse',
     portalAccount: 'Compte portail',
     none: 'aucun',
-    close: 'Fermer',
     registry: 'Registre',
     hisPayments: 'Ses paiements',
     editRecord: 'Modifier la fiche',
   },
   createDialog: {
     title: 'Nouvelle inscription (guichet)',
-    student: 'Étudiant *',
     studentPlaceholder: 'Tapez nom, prénom ou matricule…',
     inactive: 'inactif',
     officialFee: 'Tarif officiel',
@@ -103,7 +89,6 @@ export default {
       title: 'Valider le dossier',
       message:
         'Valider {numero} ({prenom} {nom}) ? Les frais sont réglés, le dossier devient définitif.',
-      confirm: 'Valider',
     },
     cancel: {
       title: 'Annuler le dossier',

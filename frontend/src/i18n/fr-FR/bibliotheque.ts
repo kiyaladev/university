@@ -15,8 +15,6 @@ export default {
     typeToSearch: 'Tapez pour rechercher',
   },
   filters: {
-    type: 'Type',
-    department: 'Département',
     departmentPlaceholder: 'Tapez le nom ou le code…',
     editionYear: "Année d'édition",
     publication: 'Publication',
@@ -28,12 +26,8 @@ export default {
   },
   table: {
     columns: {
-      type: 'Type',
       document: 'Document',
-      department: 'Département',
-      year: 'Année',
       size: 'Taille',
-      state: 'État',
       plagiarism: 'Plagiat',
     },
   },
@@ -51,21 +45,15 @@ export default {
   },
   actionsColumn: {
     downloadAria: 'Télécharger le document',
-    downloadTooltip: 'Télécharger',
-    download: 'Télécharger',
     previewAria: 'Aperçu du contenu',
     previewTooltip: 'Aperçu contenu',
     preview: 'Aperçu',
     editAria: 'Modifier le document',
-    editTooltip: 'Modifier',
     unpublishAria: 'Retirer de la vitrine publique',
     publishAria: 'Publier sur la vitrine publique',
-    unpublishTooltip: 'Dépublier',
-    publishTooltip: 'Publier',
     viewScoreAria: 'Voir le score de plagiat',
     viewScoreTooltip: 'Voir le score de plagiat',
     deleteAria: 'Supprimer le document',
-    deleteTooltip: 'Supprimer',
   },
   riskHighTooltip: 'Risque élevé — vérifier les suspicions',
   emptyState: {
@@ -127,17 +115,11 @@ export default {
   },
   dialogs: {
     publish: {
-      publishTitle: 'Publier',
-      unpublishTitle: 'Dépublier',
       publishMessage: 'Rendre « {titre} » visible sur la page publique ?',
       unpublishMessage: 'Retirer « {titre} » de la page publique ?',
-      publishOk: 'Publier',
-      unpublishOk: 'Dépublier',
     },
     delete: {
-      title: 'Supprimer',
       message: 'Supprimer « {titre} » ? Le fichier joint sera perdu.',
-      ok: 'Supprimer',
     },
     recalculate: {
       title: 'Recalculer les suspicions de plagiat',

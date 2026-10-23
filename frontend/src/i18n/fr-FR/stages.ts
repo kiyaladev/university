@@ -5,7 +5,6 @@ export default {
     "Sujet proposé → validé → encadré → rapport rendu → soutenu. Suivi tenu par la scolarité et la direction ; l'enseignant pilote ses encadrements, l'étudiant ses travaux (via le portail).",
   actions: {
     new: 'Nouveau travail',
-    close: 'Fermer',
   },
   tabs: {
     works: 'Travaux',
@@ -14,7 +13,6 @@ export default {
   filters: {
     searchPlaceholderWorks: 'Rechercher (intitulé, entreprise, lieu…)',
     searchPlaceholderDefenses: 'Rechercher (intitulé, étudiant, salle…)',
-    type: 'Type',
     supervisor: 'Encadrant',
     supervisorFiltered: 'Encadrant filtré',
     workStatus: 'Statut travail',
@@ -28,10 +26,7 @@ export default {
   table: {
     columns: {
       work: 'Travail',
-      student: 'Étudiant',
       supervisor: 'Encadrant',
-      period: 'Période',
-      status: 'Statut',
       report: 'Rapport',
       defense: 'Soutenance',
     },
@@ -50,13 +45,11 @@ export default {
       viewSheet: 'Voir la fiche du travail',
       viewSheetTooltip: 'Voir la fiche',
       edit: 'Modifier le travail',
-      editTooltip: 'Modifier',
       print: 'Imprimer la fiche',
       planDefense: 'Planifier la soutenance',
       juryReport: 'Saisir le constat du jury',
       juryReportTooltip: 'Constat du jury',
       delete: 'Supprimer le travail',
-      deleteTooltip: 'Supprimer',
     },
   },
   stats: {
@@ -101,7 +94,6 @@ export default {
       newTitle: 'Nouveau travail encadré',
       type: 'Type *',
       title: 'Intitulé du travail *',
-      student: 'Étudiant *',
       supervisorHint: 'Attribuer l’encadrement à un enseignant',
       companyTutor: 'Tuteur en entreprise',
       initialStatus: 'Statut initial',
@@ -138,7 +130,6 @@ export default {
       title: 'Supprimer ce travail ?',
       message:
         "{title} — casse du dossier réservée à l'administration, états PROPOSE / VALIDE uniquement.",
-      confirm: 'Supprimer',
     },
   },
   notifications: {
@@ -150,16 +141,12 @@ export default {
   detail: {
     title: 'Travail encadré',
     fields: {
-      type: 'Type',
-      student: 'Étudiant',
       supervisor: 'Encadrant',
       company: 'Entreprise',
       companyTutor: 'Tuteur entreprise',
       place: 'Lieu',
-      period: 'Période',
       reportSubmitted: 'Rapport rendu',
       defense: 'Soutenance',
-      status: 'Statut',
     },
     yes: 'Oui',
     no: 'Non',

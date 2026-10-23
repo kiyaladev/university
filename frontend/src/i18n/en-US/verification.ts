@@ -2,7 +2,6 @@
 export default {
   nav: {
     verifyCard: 'Verify a student card',
-    login: 'Log in',
   },
   title: 'Certificate verification',
   subtitle:
@@ -15,7 +14,6 @@ export default {
     qrHint: 'Scan the document QR code or enter the code',
     qrParamsHint:
       'The scanned (or pasted) QR code is a URL: its {ref} and {k} parameters fill in the form automatically.',
-    submit: 'Verify',
   },
   result: {
     valid: 'Genuine certificate',
@@ -25,11 +23,8 @@ export default {
     table: {
       attestation: 'Certificate',
       attestationValue: '— no. {numero}',
-      etudiant: 'Student',
       etudiantValue: '— student ID {matricule}',
       parcours: 'Program',
-      motif: 'Reason',
-      emiseLe: 'Issued on',
       reference: 'Verification reference',
     },
     checkedAt:

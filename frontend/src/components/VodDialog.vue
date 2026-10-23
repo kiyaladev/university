@@ -22,7 +22,7 @@ const emit = defineEmits<{ enregistre: [v: CoursVOD] }>();
 const OPTIONS_TYPE = computed(() => [
   { value: 'AUDIO' as TypeRessourceVOD, label: t('vodPage.formDialog.types.audio') },
   { value: 'VIDEO' as TypeRessourceVOD, label: t('vodPage.formDialog.types.video') },
-  { value: 'NOTES' as TypeRessourceVOD, label: t('vodPage.formDialog.types.notes') },
+  { value: 'NOTES' as TypeRessourceVOD, label: t('common.fields.notes') },
   { value: 'TRANSCRIPTION' as TypeRessourceVOD, label: t('vodPage.formDialog.types.transcription') },
 ]);
 

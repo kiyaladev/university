@@ -9,7 +9,6 @@ export default {
   },
   rechargeDialog: {
     title: 'Top up a canteen wallet',
-    student: 'Student *',
     noWallet: 'No wallet found',
     sectionTitle: 'Top-up',
     amount: 'Amount (GNF) *',
@@ -57,8 +56,6 @@ export default {
     searchPlaceholder: 'Search (ID number, last name, first name…)',
     table: {
       columns: {
-        student: 'Student',
-        phone: 'Phone',
         balance: 'Balance',
       },
     },
@@ -79,8 +76,6 @@ export default {
       consommations: 'Meals',
     },
     filters: {
-      from: 'From',
-      to: 'To',
       paymentStatus: 'Payment status',
     },
     actions: {
@@ -98,10 +93,6 @@ export default {
       columns: {
         date: 'Date',
         type: 'Operation',
-        student: 'Student',
-        detail: 'Detail',
-        amount: 'Amount',
-        status: 'Status',
       },
     },
     type: {
@@ -127,6 +118,5 @@ export default {
     chips: {
       cantine: 'Canteen: {cantine}',
     },
-    paymentModeFallback: 'Payment',
   },
 };

@@ -9,7 +9,7 @@
     @valider="enregistrer"
   >
     <div class="q-gutter-md">
-      <q-input v-model="form.intitule" outlined dense :label="$t('evaluations.table.columns.title')" />
+      <q-input v-model="form.intitule" outlined dense :label="$t('common.fields.intitule')" />
       <autocomplete-async
         v-model="form.surveillantId"
         endpoint="/examens/surveillants"
@@ -48,7 +48,7 @@
           <autocomplete-async
             v-model="form.anneeId"
             endpoint="/referentiel/annees"
-            :label="$t('affectations.dialog.fields.year')"
+            :label="$t('common.fields.academicYearRequired')"
             :label-fn="(a) => a.libelle"
           />
         </div>

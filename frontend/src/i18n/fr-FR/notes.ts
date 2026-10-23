@@ -28,7 +28,6 @@ export default {
       title: 'Clôturer l’évaluation',
       message:
         'Clôturer « {name} » ? Les notes deviennent définitives et un recalage de délibération les prendra en compte.',
-      confirm: 'Clôturer',
     },
   },
   messages: {

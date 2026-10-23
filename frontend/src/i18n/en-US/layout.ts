@@ -14,7 +14,6 @@ export default {
   "myAccount": "My account",
   "currentPassword": "Current password",
   "newPassword": "New password",
-  "cancel": "Cancel",
   "confirm": "Confirm",
   "offline": "Offline",
   "install": "Install on this device",
@@ -22,7 +21,6 @@ export default {
   "downloadAndroid": "Download the Android app",
   "androidHelp": "Required for a fingerprint reader connected to the phone",
   "changePassword": "Change my password",
-  "logout": "Sign out",
   "toSync": "{n} pending sync",
   "passwordChanged": "Password changed",
   "groups": {

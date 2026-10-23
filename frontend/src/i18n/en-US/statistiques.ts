@@ -3,10 +3,7 @@ export default {
   title: 'Statistics',
   subtitle: 'What the rounds produced — room by room, teacher by teacher',
   filters: {
-    from: 'From',
-    to: 'To',
     recalculateAria: 'Recalculate the reports',
-    recalculateTooltip: 'Recalculate',
   },
   shortcuts: {
     d7: '7 days',
@@ -25,12 +22,8 @@ export default {
       hours: 'Hours delivered',
     },
     card: {
-      sessions: 'Sessions',
       controlled: 'Checked',
-      absences: 'Absences',
-      students: 'Students',
       occupation: 'Occupancy',
-      presence: 'Attendance',
       visitedOn: 'Seen on',
       neverVisited: 'never visited',
       sessionsLink: 'Its sessions',
@@ -42,13 +35,9 @@ export default {
     table: {
       loading: 'Computing the report…',
       columns: {
-        salle: 'Room',
-        planifiees: 'Sessions',
         controlees: 'Checked',
-        absent: 'Absences',
         effectif: 'Stud.',
         occupation: 'Occupancy',
-        presence: 'Attendance',
         visite: 'Seen on',
       },
     },
@@ -59,17 +48,11 @@ export default {
   },
   enseignants: {
     summary: {
-      sessions: 'Sessions',
-      presence: 'Attendance',
-      absences: 'Absences',
       hours: 'Hours delivered',
     },
     card: {
-      sessions: 'Sessions',
       done: 'Delivered',
       late: 'Late',
-      absences: 'Absences',
-      presence: 'Attendance',
       hoursDone: '{hours} delivered',
     },
     empty: {
@@ -80,14 +63,8 @@ export default {
       loading: 'Computing the report…',
       columns: {
         matricule: 'ID',
-        nom: 'Teacher',
-        departement: 'Department',
-        planifiees: 'Sessions',
         assurees: 'Delivered',
         retard: 'Late',
-        absent: 'Absences',
-        heures: 'Hours',
-        presence: 'Attendance',
       },
     },
     actions: {

@@ -64,13 +64,13 @@ const ONGLETS = computed<Array<{ statut: StatutElection; label: string; icone: s
 ]);
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'titre', label: t('elections.table.columns.title'), field: 'titre', align: 'left' },
-  { name: 'type', label: t('elections.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'periode', label: t('elections.table.columns.period'), field: 'dateOuverture', align: 'left' },
+  { name: 'titre', label: t('common.fields.title'), field: 'titre', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'periode', label: t('common.fields.period'), field: 'dateOuverture', align: 'left' },
   { name: 'sieges', label: t('elections.table.columns.seats'), field: 'nbSieges', align: 'center' },
   { name: 'candidats', label: t('elections.table.columns.candidates'), field: '_count', align: 'center' },
-  { name: 'statut', label: t('elections.table.columns.status'), field: 'statut', align: 'center' },
-  { name: 'actions', label: t('elections.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 const dialogEdition = ref(false);
@@ -326,7 +326,7 @@ watch(onglet, () => {
             :aria-label="$t('elections.table.actions.editAria')"
             @click="ouvrirEdition(p.row)"
           >
-            <q-tooltip>{{ $t('elections.table.actions.edit') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             v-if="peutEditer && p.row.statut === 'BROUILLON'"
@@ -406,7 +406,7 @@ watch(onglet, () => {
               </div>
               <div class="text-h6 q-mt-sm">{{ e.titre }}</div>
               <div class="text-caption text-grey-7">
-                {{ $t('elections.cardView.from') }} {{ dateHeureElection(e.dateOuverture) }}<br>
+                {{ $t('common.actions.from') }} {{ dateHeureElection(e.dateOuverture) }}<br>
                 {{ $t('elections.cardView.to') }} {{ dateHeureElection(e.dateCloture) }}
               </div>
               <div class="row q-mt-sm items-center">
@@ -432,7 +432,7 @@ watch(onglet, () => {
                 dense
                 no-caps
                 icon="edit"
-                :label="$t('elections.cardView.actions.edit')"
+                :label="$t('common.actions.edit')"
                 @click="ouvrirEdition(e)"
               />
               <q-btn
@@ -492,7 +492,7 @@ watch(onglet, () => {
         <q-card-section class="row items-center">
           <div class="text-h6">{{ $t('elections.dialogs.candidates.title', { title: electionCandidats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" :aria-label="$t('elections.dialogs.candidates.close')" @click="dialogCandidats = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="dialogCandidats = false" />
         </q-card-section>
         <q-card-section>
           <q-banner v-if="electionCandidats?.statut !== 'BROUILLON'" class="note--alerte q-mb-md">
@@ -535,7 +535,7 @@ watch(onglet, () => {
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('elections.dialogs.candidates.close')" @click="dialogCandidats = false" />
+          <q-btn flat no-caps :label="$t('common.actions.close')" @click="dialogCandidats = false" />
           <q-btn
             v-if="electionCandidats?.statut === 'BROUILLON' && peutEditer"
             unelevated
@@ -566,7 +566,7 @@ watch(onglet, () => {
         <q-card-section class="row items-center">
           <div class="text-h6">{{ $t('elections.dialogs.results.title', { title: electionResultats?.titre }) }}</div>
           <q-space />
-          <q-btn flat round dense icon="close" :aria-label="$t('elections.dialogs.results.close')" @click="dialogResultats = false" />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="dialogResultats = false" />
         </q-card-section>
 
         <q-card-section v-if="chargementResultats" class="etat-vide">

@@ -9,11 +9,7 @@ export default {
     paie: { label: 'Paie des vacataires', help: 'Feuilles mensuelles issues de ces heures contrôlées' },
   },
   filters: {
-    dateDebut: 'Du',
-    dateFin: 'Au',
-    departement: 'Département',
     promotion: 'Promotion',
-    statut: 'Statut',
   },
   actions: {
     reloadAria: 'Recharger les états sur la période',
@@ -34,7 +30,6 @@ export default {
     weekStart: 'Lundi de la semaine',
     weekRange: 'Période couverte jusqu’au {end}',
     signatureLabel: 'Signature manuscrite du chef de département',
-    cancel: 'Annuler',
     generate: 'Signer et télécharger le PDF',
     signatureRequired: 'Ajoutez votre signature avant de générer le relevé.',
     mondayRequired: 'Choisissez un lundi comme premier jour de la semaine.',
@@ -82,15 +77,11 @@ export default {
     table: {
       columns: {
         matricule: 'Matricule',
-        nom: 'Enseignant',
         departement: 'Départ.',
         planifiees: 'Progr.',
         controlees: 'Contr.',
         assurees: 'Assur.',
         retard: 'Retards',
-        absent: 'Absences',
-        heures: 'Heures',
-        taux: 'Présence',
       },
     },
     emptyState: {
@@ -103,13 +94,10 @@ export default {
   volume: {
     table: {
       columns: {
-        enseignant: 'Enseignant',
-        matiere: 'Matière',
         promotion: 'Promotion',
         prevu: 'Contrat (h)',
         realise: 'Réalisé (h)',
         reste: 'Reste (h)',
-        seances: 'Séances',
         avancement: 'Avancement',
       },
     },
@@ -127,11 +115,7 @@ export default {
     table: {
       columns: {
         matricule: 'Matricule',
-        nom: 'Enseignant',
-        statut: 'Statut',
         departement: 'Départ.',
-        seances: 'Séances',
-        heures: 'Heures',
         taux: 'Taux horaire',
         montant: 'Montant (GNF)',
       },
@@ -147,15 +131,9 @@ export default {
     summary: '{total} séance(s) · {controlees} contrôlée(s) · {absences} absence(s)',
     table: {
       columns: {
-        date: 'Date',
-        horaire: 'Horaire',
-        enseignant: 'Enseignant',
-        matiere: 'Matière',
         promotion: 'Promotion',
-        salle: 'Salle',
         statut: 'Constat',
         arrivee: 'Arrivée',
-        duree: 'Durée',
         effectif: 'Étud.',
         theme: 'Thème déroulé',
       },

@@ -4,7 +4,6 @@ export default {
   title: 'Vote',
   subtitle: 'Elections open for your vote, and the results of proclaimed elections. Your ballot is anonymous.',
   loading: 'Loading elections…',
-  retry: 'Retry',
   errors: {
     load: 'Unable to load elections.',
     submit: 'Unable to submit ballot.',
@@ -16,7 +15,6 @@ export default {
     title: 'No election at the moment',
     message: 'No election is open and no result has been proclaimed yet. You will be notified when the next election opens.',
     my_space: 'My space',
-    refresh: 'Refresh',
   },
   list: {
     title: 'Elections',

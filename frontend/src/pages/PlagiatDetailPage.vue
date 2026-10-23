@@ -175,7 +175,7 @@
         <div class="col-12 col-md-7">
           <q-card flat bordered class="carte">
             <q-card-section>
-              <div class="text-h6 q-mb-sm">{{ $t('plagiatDetail.decision.title') }}</div>
+              <div class="text-h6 q-mb-sm">{{ $t('common.fields.decision') }}</div>
 
               <q-banner v-if="suspicion.statut !== 'EN_ATTENTE'" dense class="bg-grey-3 q-mb-md">
                 <template #avatar><q-icon name="lock" /></template>

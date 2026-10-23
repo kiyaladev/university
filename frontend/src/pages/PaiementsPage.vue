@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('paiements.title')" :subtitle="$t('paiements.subtitle')">
+    <page-header :title="$t('common.fields.payments')" :subtitle="$t('paiements.subtitle')">
       <template #actions>
         <q-btn v-if="peutCreer" unelevated color="primary" no-caps icon="add"
           :label="$t('paiements.actions.new')" @click="dialogPaiement = true" />
@@ -48,7 +48,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('paiements.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
       <template #avances>
@@ -71,14 +71,14 @@
           clearable
           emit-value
           map-options
-          :label="$t('paiements.filters.operator')"
+          :label="$t('common.fields.operator')"
         />
         <q-input
           v-model="filtres.motif"
           outlined
           dense
           clearable
-          :label="$t('paiements.filters.reason')"
+          :label="$t('common.fields.motif')"
           :placeholder="$t('paiements.filters.reasonPlaceholder')"
         />
         <autocomplete-async
@@ -92,7 +92,7 @@
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-          :label="$t('paiements.filters.student')"
+          :label="$t('common.fields.student')"
           clearable
         />
         <champ-date v-model="filtres.dateDebut" :label="$t('paiements.filters.from')" />
@@ -121,7 +121,7 @@
                 outline
                 no-caps
                 icon="refresh"
-                :label="$t('paiements.actions.resetFilters')"
+                :label="$t('common.actions.reset_filters')"
                 @click="reinitialiser"
               />
               <q-btn
@@ -314,7 +314,7 @@
               </div>
             </div>
             <div class="col-6 text-right">
-              <div class="text-caption text-grey-7">{{ $t('paiements.cards.amount') }}</div>
+              <div class="text-caption text-grey-7">{{ $t('common.fields.amount') }}</div>
               <div class="text-weight-medium lettrage chiffres">
                 {{ montantLisible(p.montant) }} {{ p.devise }}
               </div>
@@ -335,7 +335,7 @@
             color="primary"
             icon="info"
             no-caps
-            :label="$t('paiements.cards.details')"
+            :label="$t('common.actions.details')"
             @click="ouvrirDetail(p)"
           />
 <actions-secondaires>
@@ -376,7 +376,7 @@
             color="negative"
             icon="block"
             no-caps
-            :label="$t('paiements.cards.cancel')"
+            :label="$t('common.actions.cancel')"
             @click="ouvrirAnnulation(p)"
           />
 <q-btn v-close-popup
@@ -394,7 +394,7 @@
             dense
             icon="person"
             no-caps
-            :label="$t('paiements.cards.student')"
+            :label="$t('common.fields.student')"
             @click="voirEtudiant(p)"
           />
 </actions-secondaires>
@@ -408,7 +408,7 @@
               outline
               no-caps
               icon="refresh"
-              :label="$t('paiements.actions.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -457,7 +457,7 @@
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.amount') }}</q-item-label>
+                <q-item-label caption>{{ $t('common.fields.amount') }}</q-item-label>
                 <q-item-label>{{ montantLisible(detail?.montant) }} {{ detail?.devise }}</q-item-label>
               </q-item-section>
             </q-item>
@@ -478,7 +478,7 @@
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>{{ $t('paiements.detail.reason') }}</q-item-label>
+                <q-item-label caption>{{ $t('common.fields.motif') }}</q-item-label>
                 <q-item-label>{{ detail?.motif ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
@@ -501,7 +501,7 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('paiements.dialogs.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -672,13 +672,13 @@ const optionsOperateurs = computed(() =>
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'reference', label: t('paiements.table.columns.reference'), field: 'reference', align: 'left', sortable: true },
   { name: 'source', label: t('paiements.table.columns.source'), field: 'source', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('paiements.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
   { name: 'mode', label: t('paiements.table.columns.mode'), field: 'mode', align: 'left' },
-  { name: 'montant', label: t('paiements.table.columns.amount'), field: 'montant', align: 'right', sortable: true },
-  { name: 'statut', label: t('paiements.table.columns.status'), field: 'statut', align: 'left', sortable: true },
-  { name: 'motif', label: t('paiements.table.columns.reason'), field: 'motif', align: 'left' },
+  { name: 'montant', label: t('common.fields.amount'), field: 'montant', align: 'right', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
+  { name: 'motif', label: t('common.fields.motif'), field: 'motif', align: 'left' },
   { name: 'transactionId', label: t('paiements.table.columns.transaction'), field: 'transactionId', align: 'left' },
-  { name: 'horodatage', label: t('paiements.table.columns.date'), field: 'horodatage', align: 'left' },
+  { name: 'horodatage', label: t('common.fields.date'), field: 'horodatage', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -872,7 +872,7 @@ async function simuler(p: Paiement, statut: 'REUSSI' | 'ECHOUE') {
           ? t('paiements.confirmDialog.outcomeSuccess')
           : t('paiements.confirmDialog.outcomeFailed'),
     }),
-    ok: t('paiements.confirmDialog.confirmLabel'),
+    ok: t('common.actions.confirm'),
     danger: statut === 'ECHOUE',
   });
   if (!ok) return;

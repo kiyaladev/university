@@ -19,7 +19,7 @@
       <span class="lettrage portail__autre-titre">{{ $t('portail.errorState.title') }}</span>
       <p class="portail__autre-texte">{{ erreur }}</p>
       <div class="portail__autre-actions">
-        <q-btn unelevated color="primary" no-caps icon="refresh" :label="$t('portail.actions.retry')" @click="charger" />
+        <q-btn unelevated color="primary" no-caps icon="refresh" :label="$t('common.actions.retry')" @click="charger" />
         <q-btn flat no-caps icon="logout" :label="$t('portail.actions.logout')" @click="seDeconnecter" />
       </div>
     </div>
@@ -48,7 +48,7 @@
           <h2 class="pochoir section-titre">{{ $t('portail.sections.inscription.title') }}</h2>
           <template v-if="profil.inscription">
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.statut') }}</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('common.fields.status') }}</span>
               <q-chip
                 :color="couleurInscription[profil.inscription.statut] ?? 'grey-8'"
                 text-color="white"
@@ -62,11 +62,11 @@
               <span>{{ profil.inscription.promotion.nom }}</span>
             </div>
             <div class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.annee') }}</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('common.fields.year') }}</span>
               <span>{{ profil.inscription.annee.libelle }}</span>
             </div>
             <div v-if="profil.inscription.promotion.filiere" class="carte-portail__ligne">
-              <span class="pochoir carte-portail__libelle">{{ $t('portail.sections.inscription.filiere') }}</span>
+              <span class="pochoir carte-portail__libelle">{{ $t('common.fields.filiere') }}</span>
               <span>{{ profil.inscription.promotion.filiere }}</span>
             </div>
           </template>
@@ -119,7 +119,7 @@
 
         <!-- Résultats -->
         <section class="plaque carte-portail carte-portail--resultat">
-          <h2 class="pochoir section-titre">{{ $t('portail.sections.resultat.title') }}</h2>
+          <h2 class="pochoir section-titre">{{ $t('common.fields.result') }}</h2>
           <template v-if="resultats?.finale">
             <div class="carte-portail__resultat-panneau">
               <span

@@ -20,7 +20,7 @@
           outlined
           emit-value
           map-options
-          :label="$t('rectorat.filters.year')"
+          :label="$t('common.fields.year')"
           style="min-width: 180px"
           @update:model-value="charger"
         />
@@ -106,7 +106,7 @@
               <div class="text-subtitle2">{{ $t('rectorat.headcountChart.title') }}</div>
               <div class="text-caption text-grey-7">{{ $t('rectorat.headcountChart.subtitle') }}</div>
             </div>
-            <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('rectorat.headcountChart.enrollments')" to="/inscriptions" />
+            <q-btn flat dense no-caps color="primary" icon="how_to_reg" :label="$t('common.fields.enrollments')" to="/inscriptions" />
           </q-card-section>
           <q-card-section>
             <chart-canvas
@@ -300,7 +300,7 @@ const configPromotions = computed<ChartConfiguration>(() => ({
     labels: promotions.value.map((p) => p.nom),
     datasets: [
       {
-        label: t('rectorat.headcountChart.datasetLabel'),
+        label: t('common.fields.headcount'),
         data: promotions.value.map((p) => p.effectif),
         backgroundColor: PEINTURE_EFFECTIF,
         borderColor: PEINTURE_EFFECTIF,

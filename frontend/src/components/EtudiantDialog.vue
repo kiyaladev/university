@@ -8,7 +8,7 @@
     :desactive="!formulaireValide"
     @valider="enregistrer"
   >
-    <span class="section-titre">{{ $t('badges.table.columns.identity') }}</span>
+    <span class="section-titre">{{ $t('common.fields.identity') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
         <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" />

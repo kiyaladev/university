@@ -68,7 +68,7 @@
             <span>{{ reclamation.assigneA ? reclamation.assigneA.prenom + ' ' + reclamation.assigneA.nom : '—' }}</span>
           </div>
           <div>
-            <span class="pochoir reclamation-meta__libelle">{{ $t('deliberations.table.columns.creeLe') }}</span>
+            <span class="pochoir reclamation-meta__libelle">{{ $t('common.fields.createdOn') }}</span>
             <span>{{ dateHeureLisible(reclamation.creeLe) }}</span>
           </div>
           <div v-if="reclamation.escaladeLe">
@@ -282,12 +282,12 @@ const transitionsAutorisees = computed<Transition[]>(() => {
   if (props.reclamation.statut === 'EN_COURS') {
     possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: $t('reclamations.dialog.detail.awaitReply'), icone: 'forum' });
     possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: $t('reclamations.dialog.detail.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({ cible: 'REJETEE', label: $t('common.actions.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
   }
   if (props.reclamation.statut === 'EN_ATTENTE_REPONSE') {
-    possibles.push({ cible: 'EN_COURS', label: $t('reclamations.dialog.detail.resume'), icone: 'autorenew' });
+    possibles.push({ cible: 'EN_COURS', label: $t('common.actions.resume'), icone: 'autorenew' });
     possibles.push({ cible: 'RESOLUE', label: $t('reclamations.dialog.detail.markResolved'), icone: 'check_circle', couleur: 'positive' });
-    possibles.push({ cible: 'REJETEE', label: $t('reclamations.dialog.detail.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
+    possibles.push({ cible: 'REJETEE', label: $t('common.actions.reject'), icone: 'block', couleur: 'negative', requireMotif: true });
   }
   return possibles;
 });
@@ -346,7 +346,7 @@ async function changerStatut(cible: StatutReclamation) {
         message: $t('reclamations.dialog.detail.rejectPrompt'),
         prompt: { model: '', isValid: (v: string) => v.trim().length >= 3, type: 'textarea' },
         cancel: true,
-        ok: { label: $t('reclamations.dialog.detail.reject'), color: 'negative' },
+        ok: { label: $t('common.actions.reject'), color: 'negative' },
       })
         .onOk((valeur: string) => resolve(valeur))
         .onCancel(() => resolve(null));

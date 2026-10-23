@@ -8,7 +8,7 @@
         dense
         no-caps
         icon="login"
-        :label="$t('bibliothequePublique.nav.login')"
+        :label="$t('common.actions.login')"
         to="/connexion"
       />
     </div>
@@ -64,7 +64,7 @@
               clearable
               emit-value
               map-options
-              :label="$t('bibliothequePublique.filters.department')"
+              :label="$t('common.fields.department')"
               :loading="chargementDepartements"
             />
           </div>
@@ -167,7 +167,7 @@
                     color="primary"
                     no-caps
                     icon="download"
-                    :label="$t('bibliothequePublique.card.download')"
+                    :label="$t('common.actions.download')"
                     :title="doc.tailleKo ? $t('bibliothequePublique.card.sizeMo', { size: (doc.tailleKo / 1024).toFixed(1) }) : undefined"
                     @click="telecharger(doc)"
                   />
@@ -215,7 +215,7 @@
                 dense
                 no-caps
                 icon="download"
-                :label="$t('bibliothequePublique.table.download')"
+                :label="$t('common.actions.download')"
                 @click="telecharger(p.row)"
               />
             </q-td>
@@ -323,9 +323,9 @@ const optionsDepartements = computed<OptionSimple[]>(() =>
 
 const colonnesTableau = computed(() => [
   { name: 'titre', label: t('bibliothequePublique.table.columns.document'), field: 'titre', align: 'left' as const },
-  { name: 'departement', label: t('bibliothequePublique.table.columns.department'), field: 'departement', align: 'left' as const },
-  { name: 'type', label: t('bibliothequePublique.table.columns.type'), field: 'type', align: 'left' as const },
-  { name: 'annee', label: t('bibliothequePublique.table.columns.year'), field: 'anneeEdition', align: 'center' as const },
+  { name: 'departement', label: t('common.fields.department'), field: 'departement', align: 'left' as const },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' as const },
+  { name: 'annee', label: t('common.fields.year'), field: 'anneeEdition', align: 'center' as const },
   { name: 'telechargements', label: t('bibliothequePublique.table.columns.downloads'), field: 'telechargements', align: 'right' as const },
   { name: 'actions', label: '', field: 'id', align: 'right' as const },
 ]);

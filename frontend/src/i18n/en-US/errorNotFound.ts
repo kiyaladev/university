@@ -7,7 +7,6 @@ export default {
     backHome: 'Back to my home',
     login: 'Sign in',
     studentPortal: 'Student portal',
-    logout: 'Sign out',
   },
   services: {
     ariaLabel: 'Pages accessible without an account',

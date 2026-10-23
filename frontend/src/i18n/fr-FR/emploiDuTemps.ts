@@ -26,10 +26,7 @@ export default {
   },
   filters: {
     promotion: 'Promotion',
-    teacher: 'Enseignant',
-    room: 'Salle',
     reloadAria: 'Recharger l’emploi du temps',
-    reloadTooltip: 'Recharger',
   },
   summary: {
     slots: 'Créneaux',

@@ -28,7 +28,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('utilisateurs.filters.role')"
+          :label="$t('common.fields.role')"
         />
         <q-select
           v-model="filtres.departementId"
@@ -38,7 +38,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('utilisateurs.filters.department')"
+          :label="$t('common.fields.department')"
         />
       </template>
     </filter-bar>
@@ -71,7 +71,7 @@
               flat
               no-caps
               icon="refresh"
-              :label="$t('utilisateurs.actions.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
           </template>
@@ -131,7 +131,7 @@
             :aria-label="$t('utilisateurs.actions.editAria')"
             @click="ouvrir(p.row)"
           >
-            <q-tooltip>{{ $t('utilisateurs.actions.edit') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
           </q-btn>
           <q-btn
             flat
@@ -147,7 +147,7 @@
               {{
                 estMoi(p.row)
                   ? $t('utilisateurs.table.cannotDeleteSelf')
-                  : $t('utilisateurs.actions.delete')
+                  : $t('common.actions.delete')
               }}
             </q-tooltip>
           </q-btn>
@@ -194,7 +194,7 @@
             dense
             no-caps
             icon="edit"
-            :label="$t('utilisateurs.actions.edit')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(u)"
           />
           <q-btn
@@ -203,7 +203,7 @@
             no-caps
             color="negative"
             icon="delete"
-            :label="$t('utilisateurs.actions.delete')"
+            :label="$t('common.actions.delete')"
             :disable="estMoi(u)"
             @click="supprimer(u)"
           />
@@ -225,7 +225,7 @@
             flat
             no-caps
             icon="refresh"
-            :label="$t('utilisateurs.actions.resetFilters')"
+            :label="$t('common.actions.reset_filters')"
             @click="reinitialiser"
           />
         </template>
@@ -245,7 +245,7 @@
       :titre="utilisateurEdite ? $t('utilisateurs.dialog.editTitle') : $t('utilisateurs.dialog.newTitle')"
       taille="s"
       :envoi="enregistrement"
-      :libelle-valider="$t('utilisateurs.actions.save')"
+      :libelle-valider="$t('common.actions.save')"
       @valider="enregistrer"
     >
       <span class="section-titre">{{ $t('utilisateurs.dialog.sectionIdentity') }}</span>
@@ -311,7 +311,7 @@
           />
         </div>
         <div class="col-12 col-sm-6">
-          <q-input v-model="form.telephone" outlined dense :label="$t('utilisateurs.dialog.phone')" />
+          <q-input v-model="form.telephone" outlined dense :label="$t('common.fields.phone')" />
         </div>
       </div>
       <q-select
@@ -468,21 +468,21 @@ const chips = computed(() => {
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('utilisateurs.table.columns.name'), field: 'nom', align: 'left', sortable: true },
-  { name: 'role', label: t('utilisateurs.table.columns.role'), field: 'role', align: 'left', sortable: true },
+  { name: 'role', label: t('common.fields.role'), field: 'role', align: 'left', sortable: true },
   {
     name: 'departement',
-    label: t('utilisateurs.table.columns.department'),
+    label: t('common.fields.department'),
     field: (r: Utilisateur) => nomDepartement(r),
     align: 'left',
   },
   {
     name: 'telephone',
-    label: t('utilisateurs.table.columns.phone'),
+    label: t('common.fields.phone'),
     field: (r: Utilisateur) => r.telephone || '—',
     align: 'left',
   },
-  { name: 'actif', label: t('utilisateurs.table.columns.active'), field: 'actif', align: 'center' },
-  { name: 'actions', label: t('utilisateurs.table.columns.actions'), field: 'id', align: 'right' },
+  { name: 'actif', label: t('common.fields.active'), field: 'actif', align: 'center' },
+  { name: 'actions', label: t('common.actions.actions'), field: 'id', align: 'right' },
 ]);
 
 function ouvrir(u: Utilisateur | null) {
@@ -569,7 +569,7 @@ function supprimer(u: Utilisateur) {
   void supprimerAvecConfirmation(`/utilisateurs/${u.id}`, u.email, rechargerTout, {
     titre: t('utilisateurs.confirmDelete.title'),
     message: t('utilisateurs.confirmDelete.message', { name: `${u.prenom} ${u.nom}`, email: u.email }),
-    ok: t('utilisateurs.actions.delete'),
+    ok: t('common.actions.delete'),
     succes: t('utilisateurs.messages.deleted'),
   });
 }

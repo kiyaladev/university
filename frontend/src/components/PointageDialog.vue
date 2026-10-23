@@ -177,7 +177,7 @@
           </span>
         </p>
         <div class="fiche__actions">
-          <q-btn flat no-caps :label="t('pointage.cancel')" @click="fermer(false)" />
+          <q-btn flat no-caps :label="t('common.actions.cancel')" @click="fermer(false)" />
           <q-btn
             unelevated
             color="primary"

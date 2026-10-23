@@ -21,7 +21,7 @@
       autofocus
       emit-value
       map-options
-      :label="$t('attestations.issueDialog.student')"
+      :label="$t('common.fields.studentRequired')"
       option-label="label"
       option-value="value"
       :hint="$t('attestations.issueDialog.studentHint')"
@@ -63,7 +63,7 @@
           emit-value
           map-options
           clearable
-          :label="$t('affectations.filters.year')"
+          :label="$t('common.fields.academicYear')"
         />
       </div>
       <div class="col-12 col-sm-6">

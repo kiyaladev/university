@@ -14,7 +14,6 @@ export default {
   "myAccount": "Mon compte",
   "currentPassword": "Mot de passe actuel",
   "newPassword": "Nouveau mot de passe",
-  "cancel": "Annuler",
   "confirm": "Valider",
   "offline": "Hors ligne",
   "install": "Installer sur cet appareil",
@@ -22,7 +21,6 @@ export default {
   "downloadAndroid": "Télécharger l’application Android",
   "androidHelp": "Nécessaire pour le lecteur d’empreintes branché au téléphone",
   "changePassword": "Changer mon mot de passe",
-  "logout": "Se déconnecter",
   "toSync": "{n} à synchroniser",
   "passwordChanged": "Mot de passe modifié",
   "groups": {

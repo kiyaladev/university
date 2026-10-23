@@ -67,7 +67,7 @@
           dense
           emit-value
           map-options
-          :label="$t('affectations.dialog.fields.year')"
+          :label="$t('common.fields.academicYearRequired')"
           @update:model-value="resetAnneeChangee"
         />
       </div>

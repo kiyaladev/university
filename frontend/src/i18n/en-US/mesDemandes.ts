@@ -8,7 +8,6 @@ export default {
     pay: 'Pay',
     payNow: 'Pay now',
     track: 'Track',
-    close: 'Close',
     cancel: 'Cancel',
   },
   banner: {
@@ -27,15 +26,10 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (No., reason…)',
-    status: 'Status',
   },
   table: {
     columns: {
-      number: 'No.',
-      type: 'Type',
       fees: 'Fee',
-      status: 'Status',
-      createdAt: 'Created on',
     },
     paymentConfirmed: 'Payment confirmed',
     trackTooltip: 'Track the request',
@@ -49,7 +43,6 @@ export default {
     createdOn: 'Created on {date}',
   },
   steps: {
-    payment: 'Payment',
     paid: 'Paid',
     processing: 'Processing',
     ready: 'Ready',
@@ -76,9 +69,7 @@ export default {
   },
   dialog: {
     fees: 'Fee',
-    payment: 'Payment',
     notInitiated: 'Not initiated',
-    createdAt: 'Created on',
     deliveredAt: 'Delivered on',
     requestReason: 'Reason for your request',
     registrarMessage: 'Message from the registrar',
@@ -88,7 +79,6 @@ export default {
     mobileMoneyNote: 'Approve the request on your phone. Payment remains pending until collection is confirmed; your document will then be processed.',
     title: 'Pay for the request',
     mode: 'Payment method',
-    operator: 'Operator',
     phoneLabel: 'Mobile Money number',
     phoneHint: 'The number that will be charged',
     pilotNote:

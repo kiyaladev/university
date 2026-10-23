@@ -378,7 +378,7 @@ async function avancer(t: Tirage) {
       message: MESSAGES_TRANSITION.value.IMPRIME,
       prompt: { model: t.empreinteSource, type: 'text' },
       cancel: true,
-      ok: { color: 'primary', label: translate('tirage.actions.print'), unelevated: true, noCaps: true },
+      ok: { color: 'primary', label: translate('common.actions.print'), unelevated: true, noCaps: true },
     }).onOk((value: string) => validerEtAvancer(value));
     return;
   }

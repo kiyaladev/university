@@ -1,14 +1,11 @@
 /** Namespace `enseignants` — page EnseignantsPage.vue (corps enseignant). */
 export default {
   header: {
-    title: 'Enseignants',
     subtitle: 'Corps enseignant suivi par le dispositif de contrôle',
     newTeacher: 'Nouvel enseignant',
   },
   filters: {
     searchPlaceholder: 'Rechercher (matricule, nom, e-mail)…',
-    departementLabel: 'Département',
-    statutLabel: 'Statut',
     chips: {
       search: '« {q} »',
       departement: 'Département : {nom}',
@@ -25,12 +22,8 @@ export default {
     columns: {
       nom: 'Nom & prénom',
       grade: 'Grade',
-      statut: 'Statut',
-      departement: 'Département',
       taux: 'Taux horaire',
-      telephone: 'Téléphone',
       compte: 'Compte',
-      actions: 'Actions',
     },
     inactive: 'inactif',
     accountTooltip: 'Compte : {email}',
@@ -46,8 +39,6 @@ export default {
       charges: 'Ses charges d’enseignement',
       moyens: 'Moyens d’attestation de présence',
       fiche: 'Fiche d’assiduité (90 derniers jours)',
-      modifier: 'Modifier',
-      supprimer: 'Supprimer',
     },
   },
   cards: {
@@ -57,7 +48,6 @@ export default {
     sansCompte: 'Sans compte',
     charges: 'Ses charges',
     attestation: 'Attestation',
-    modifier: 'Modifier',
   },
   moyensDialog: {
     title: 'Moyens d’attestation',
@@ -80,7 +70,6 @@ export default {
     },
     newCodeLabel: 'Nouveau code :',
     newCodeHint: 'Communiquez-le à l’enseignant, il ne sera plus affiché.',
-    close: 'Fermer',
   },
   formDialog: {
     editTitle: 'Modifier l’enseignant',
@@ -111,7 +100,6 @@ export default {
     enrolementFailed: 'Enrôlement impossible',
     deleteTitle: 'Supprimer l’enseignant',
     deleteMessage: 'Supprimer définitivement {nom} {prenom} ainsi que ses affectations et séances ?',
-    delete: 'Supprimer',
     deleteSuccess: 'Enseignant supprimé',
     deleteFailed: 'Suppression impossible',
     loadFailed: 'Chargement des enseignants impossible',

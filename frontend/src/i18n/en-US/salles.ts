@@ -10,8 +10,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (code, name, building)…',
-    building: 'Building',
-    state: 'State',
     gpsMark: 'GPS location',
   },
   options: {
@@ -35,26 +33,17 @@ export default {
     regenerateAria: 'Regenerate the room\'s QR code',
     regenerateTooltip: 'Regenerate the QR code',
     editAria: 'Edit the room',
-    editTooltip: 'Edit',
     deleteAria: 'Delete the room',
-    deleteTooltip: 'Delete',
   },
   emptyState: {
     createFirst: 'Create the first room',
-    resetFilters: 'Reset filters',
     noneForCriteria: 'No room matches these criteria.',
     noneRegistered: 'No room registered.',
   },
   table: {
     columns: {
-      code: 'Code',
-      name: 'Name',
-      building: 'Building',
-      capacity: 'Capacity',
       gpsMark: 'GPS location',
       qrToken: 'QR token',
-      state: 'State',
-      actions: 'Actions',
     },
   },
   chips: {
@@ -69,13 +58,9 @@ export default {
     editTitle: 'Edit room',
     newTitle: 'New room',
     identificationSection: 'Identification',
-    codeLabel: 'Code *',
     codeHint: 'e.g. AMPHI-A',
     codeRequired: 'The code is required',
-    nameLabel: 'Name *',
     nameRequired: 'The name is required',
-    buildingLabel: 'Building',
-    capacityLabel: 'Capacity',
     gpsSection: 'GPS location (optional)',
     gpsHelp: 'Allows checking that the invigilator is indeed on site at the time of the check.',
     latitudeLabel: 'Latitude',
@@ -85,7 +70,6 @@ export default {
     useCurrentPosition: 'Use my current position',
     usableToggle: 'Room usable',
     cancel: 'Cancel',
-    save: 'Save',
   },
   confirmRegenerate: {
     title: 'Regenerate the QR code',
@@ -97,7 +81,6 @@ export default {
     title: 'Delete the room',
     message: 'Delete "{code} — {name}"? Its QR poster will no longer be valid.',
     cancel: 'Cancel',
-    confirm: 'Delete',
   },
   messages: {
     positionSet: 'Position filled in',

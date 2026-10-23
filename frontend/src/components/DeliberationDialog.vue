@@ -14,7 +14,7 @@
       dense
       emit-value
       map-options
-      :label="$t('affectations.dialog.fields.year')"
+      :label="$t('common.fields.academicYearRequired')"
       @update:model-value="resetPromotion"
     />
     <q-select
@@ -140,7 +140,7 @@ const apercu = computed(() => {
     );
   }
   return {
-    etudiant: { matricule: '———', nom: t('deliberations.createDialog.sampleStudent'), prenom: t('deliberations.createDialog.sampleName') },
+    etudiant: { matricule: '———', nom: t('common.fields.student'), prenom: t('deliberations.createDialog.sampleName') },
     promotion: p?.nom ?? t('deliberations.createDialog.selectedPromotion'),
     annee: a?.libelle ?? t('deliberations.createDialog.selectedYear'),
     lignes,

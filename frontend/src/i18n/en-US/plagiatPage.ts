@@ -37,15 +37,12 @@ export default {
     filteredHint: 'Broaden the criteria to review the arbitration queue.',
     defaultHint:
       'New submissions are compared automatically; run a full recalculation after a bulk import.',
-    resetFilters: 'Reset filters',
   },
   table: {
     columns: {
-      score: 'Score',
       documentA: 'Document A',
       documentB: 'Document B',
       detectedOn: 'Detected on',
-      status: 'Status',
     },
     actions: {
       viewDetailAria: 'View suspicion detail',
@@ -66,12 +63,10 @@ export default {
   dialog: {
     titleAcquit: 'Acquit the suspicion',
     titleConfirm: 'Confirm plagiarism',
-    scoreLabel: 'Score',
     comparisonDocs: '"{documentA}" against "{documentB}"',
     confirmWarning:
       'Confirming opens a disciplinary procedure. The reason is mandatory and the decision can no longer be changed.',
     acquitWarning: 'The suspicion will be closed without follow-up. The decision can no longer be changed.',
-    motifRequired: 'Reason *',
     motifOptional: 'Reason (optional)',
     cancel: 'Cancel',
     acquitSubmit: 'Acquit permanently',

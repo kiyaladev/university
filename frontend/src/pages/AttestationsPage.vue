@@ -52,7 +52,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('attestations.filters.status')"
+          :label="$t('common.fields.status')"
         />
         <q-select
           v-model="filtres.anneeId"
@@ -62,7 +62,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('attestations.filters.academicYear')"
+          :label="$t('common.fields.academicYear')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -228,7 +228,7 @@
         <q-card-actions align="right">
 <q-btn flat dense no-caps icon="qr_code_2" :label="$t('attestations.actions.qr')" @click.stop="ouvrirDetail(a)" />
 <actions-secondaires>
-<q-btn v-close-popup flat dense no-caps icon="print" :label="$t('attestations.actions.print')" @click.stop="imprimer(a)" />
+<q-btn v-close-popup flat dense no-caps icon="print" :label="$t('common.actions.print')" @click.stop="imprimer(a)" />
 <q-btn v-close-popup
             v-if="peutRevoquer && a.statut === 'EMISE'"
             flat
@@ -236,7 +236,7 @@
             no-caps
             color="negative"
             icon="block"
-            :label="$t('attestations.actions.revoke')"
+            :label="$t('common.actions.revoke')"
             @click.stop="revoquer(a)"
           />
 </actions-secondaires>
@@ -303,7 +303,7 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('attestations.detail.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
           <q-btn
             v-if="detail?.anneeId && detail?.promotionId"
             flat
@@ -319,7 +319,7 @@
             no-caps
             color="primary"
             icon="print"
-            :label="$t('attestations.actions.print')"
+            :label="$t('common.actions.print')"
             @click="imprimer(detail)"
           />
         </q-card-actions>
@@ -383,7 +383,7 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('attestations.detail.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -510,13 +510,13 @@ const chips = computed(() => {
 });
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('attestations.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: t('attestations.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'etudiant', label: t('attestations.table.columns.student'), field: (r) => `${r.etudiant?.nom ?? ''} ${r.etudiant?.prenom ?? ''}`, align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: (r) => `${r.etudiant?.nom ?? ''} ${r.etudiant?.prenom ?? ''}`, align: 'left' },
   { name: 'parcours', label: t('attestations.table.columns.parcours'), field: 'anneeId', align: 'left' },
-  { name: 'statut', label: t('attestations.table.columns.status'), field: 'statut', align: 'center' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'center' },
   { name: 'verifications', label: t('attestations.table.columns.verifications'), field: (r) => r._count?.verifications ?? 0, align: 'center' },
-  { name: 'emiseLe', label: t('attestations.table.columns.issuedOn'), field: 'emiseLe', align: 'left', sortable: true },
+  { name: 'emiseLe', label: t('common.fields.issuedOn'), field: 'emiseLe', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 

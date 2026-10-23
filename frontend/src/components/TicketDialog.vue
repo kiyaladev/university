@@ -49,7 +49,7 @@
       </div>
     </div>
 
-    <span class="section-titre">{{ $t('helpdesk.ticketForm.description') }}</span>
+    <span class="section-titre">{{ $t('common.fields.descriptionRequired') }}</span>
     <q-input
       v-model="form.description"
       outlined

@@ -7,7 +7,6 @@ export default {
     seeShowcase: 'Voir la vitrine publique',
     seeShowcaseTooltip: 'Page consultée par les candidats — formations publiées uniquement',
     newFormation: 'Nouvelle formation',
-    reload: 'Recharger',
     registrations: 'Inscriptions',
   },
   dialog: {
@@ -28,7 +27,6 @@ export default {
       location: 'Lieu / district',
       locationHint: 'Campus, salle, faculté…',
       price: 'Prix (GNF) *',
-      currency: 'Devise',
       duration: 'Durée (heures)',
       capacity: 'Capacité (places)',
       capacityHint: 'Vide = accès libre',
@@ -40,7 +38,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (titre, catégorie, lieu…)',
-    status: 'Statut',
     searchChip: '« {query} »',
   },
   stats: {
@@ -52,9 +49,7 @@ export default {
   table: {
     columns: {
       formation: 'Formation',
-      status: 'Statut',
       price: 'Prix',
-      duration: 'Durée',
       capacity: 'Places',
       registered: 'Inscrits',
       revenue: 'Recette',
@@ -65,12 +60,8 @@ export default {
     paidCount: '{count} payé(s)',
     tooltips: {
       publish: 'Publier la formation',
-      publishShort: 'Publier',
-      close: 'Clôturer',
-      edit: 'Modifier',
       registrations: 'Inscriptions',
       delete: 'Supprimer le brouillon',
-      deleteShort: 'Supprimer',
     },
     aria: {
       publish: 'Publier la formation',
@@ -86,8 +77,6 @@ export default {
       fileNumber: 'N° dossier',
       registrant: 'Inscrit(e)',
       request: 'Demande',
-      amount: 'Montant',
-      payment: 'Paiement',
     },
     tooltips: {
       confirmPayment: 'Confirmer le paiement',
@@ -114,25 +103,21 @@ export default {
       title: 'Publier cette formation ?',
       message:
         '« {title} » entre en vitrine publique : les demandes et les paiements Mobile Money deviendront possibles.',
-      confirm: 'Publier',
     },
     close: {
       title: 'Clôturer cette formation ?',
       message:
         "La vitrine cessera d'offrir « {title} » ; les demandes en attente ne pourront plus être confirmées. Le circuit de la promotion devient officiel.",
-      confirm: 'Clôturer',
     },
     delete: {
       title: 'Supprimer ce brouillon ?',
       message: '« {title} » ne s\'est jamais vendu : sa suppression ne laisse aucune trace client.',
-      confirm: 'Supprimer',
     },
     confirmPayment: {
       title: 'Confirmer le paiement ?',
       message:
         "Confirmation pilote : l'opérateur Mobile Money a encaissé — {reference} passe REUSSI et la demande {numero} passe CONFIRMEE.",
       paymentFallback: 'le paiement',
-      confirm: 'Confirmer',
     },
     cancelRequest: {
       title: 'Annuler cette demande ?',

@@ -3,7 +3,7 @@
     <div class="col-12 col-sm-10 col-md-7 col-lg-6">
       <div class="row justify-end q-gutter-sm q-mb-sm">
         <q-btn flat dense no-caps icon="badge" :label="$t('verification.nav.verifyCard')" to="/verification-carte" />
-        <q-btn flat dense no-caps icon="login" :label="$t('verification.nav.login')" to="/connexion" />
+        <q-btn flat dense no-caps icon="login" :label="$t('common.actions.login')" to="/connexion" />
       </div>
       <div class="text-center q-my-lg">
         <h1 class="lettrage page-titre">{{ $t('verification.title') }}</h1>
@@ -40,7 +40,7 @@
             color="primary"
             no-caps
             icon="verified_user"
-            :label="$t('verification.form.submit')"
+            :label="$t('common.actions.verify')"
             :disable="!numero.trim() || !codeQr.trim()"
             :loading="verificationEnCours"
             @click="verifier"
@@ -79,7 +79,7 @@
                   </td>
                 </tr>
                 <tr v-if="detail.etudiant">
-                  <td class="ta-intitule">{{ $t('verification.result.table.etudiant') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.student') }}</td>
                   <td>
                     {{ detail.etudiant.prenom }} {{ detail.etudiant.nom }}
                     {{ $t('verification.result.table.etudiantValue', { matricule: detail.etudiant.matricule }) }}
@@ -93,11 +93,11 @@
                   </td>
                 </tr>
                 <tr v-if="detail.motif">
-                  <td class="ta-intitule">{{ $t('verification.result.table.motif') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.motif') }}</td>
                   <td>{{ detail.motif }}</td>
                 </tr>
                 <tr>
-                  <td class="ta-intitule">{{ $t('verification.result.table.emiseLe') }}</td>
+                  <td class="ta-intitule">{{ $t('common.fields.issuedOn') }}</td>
                   <td>{{ dateLongue(detail.emiseLe) }}</td>
                 </tr>
                 <tr v-if="resultat.verificationId">

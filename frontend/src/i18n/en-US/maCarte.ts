@@ -12,13 +12,11 @@ export default {
     openComplaint: 'Open a complaint',
   },
   card: {
-    matricule: 'Student ID',
     revoked: {
       text: 'This card has been revoked by the institution: it is no longer valid and its QR code displays "invalid card".',
       reasonSuffix: ' Reason: {reason}.',
       requestDuplicate: 'Request a duplicate from the registrar.',
     },
-    issuedOn: 'Issued on',
     validUntil: 'Valid until',
     qrHint: 'Scan this QR code to verify your card. Every check is logged.',
     copyLink: 'Copy the link',
@@ -34,7 +32,6 @@ export default {
     nipHint: 'Enter 4 to 6 digits.',
     confirmLabel: 'Confirmation',
     cancel: 'Cancel',
-    save: 'Save',
   },
   messages: {
     linkCopied: 'Verification link copied.',

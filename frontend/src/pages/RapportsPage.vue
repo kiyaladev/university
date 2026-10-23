@@ -6,10 +6,10 @@
     <q-card flat bordered class="carte q-mb-md">
       <q-card-section class="row q-col-gutter-sm items-center">
         <div class="col-6 col-md-2">
-          <champ-date v-model="filtres.dateDebut" :label="$t('rapports.filters.dateDebut')" />
+          <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" />
         </div>
         <div class="col-6 col-md-2">
-          <champ-date v-model="filtres.dateFin" :label="$t('rapports.filters.dateFin')" />
+          <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" />
         </div>
         <div class="col-12 col-md-3">
           <q-select
@@ -20,7 +20,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('rapports.filters.departement')"
+            :label="$t('common.fields.department')"
           />
         </div>
         <div class="col-12 col-md-3">
@@ -225,7 +225,7 @@
                 outlined
                 dense
                 clearable
-                :label="$t('rapports.filters.statut')"
+                :label="$t('common.fields.status')"
                 style="min-width: 160px"
                 @update:model-value="charger"
               />
@@ -350,7 +350,7 @@
           <signature-pad v-model="signatureChef" :label="$t('rapports.releveSigne.signatureLabel')" />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('rapports.releveSigne.cancel')" :disable="generationReleve" @click="dialogReleve = false" />
+          <q-btn flat no-caps :label="$t('common.actions.cancel')" :disable="generationReleve" @click="dialogReleve = false" />
           <q-btn color="primary" unelevated no-caps icon="picture_as_pdf" :loading="generationReleve" :label="$t('rapports.releveSigne.generate')" @click="genererReleve" />
         </q-card-actions>
       </q-card>
@@ -491,41 +491,41 @@ const periodeLisible = computed(
 
 const colonnesAssiduite = computed<QTableColumn[]>(() => [
   { name: 'matricule', label: t('rapports.assiduite.table.columns.matricule'), field: 'matricule', align: 'left' },
-  { name: 'nom', label: t('rapports.assiduite.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
+  { name: 'nom', label: t('common.fields.teacher'), field: 'nom', align: 'left', sortable: true },
   { name: 'departement', label: t('rapports.assiduite.table.columns.departement'), field: 'departement', align: 'left' },
   { name: 'planifiees', label: t('rapports.assiduite.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
   { name: 'controlees', label: t('rapports.assiduite.table.columns.controlees'), field: 'controlees', align: 'right' },
   { name: 'assurees', label: t('rapports.assiduite.table.columns.assurees'), field: 'assurees', align: 'right' },
   { name: 'retard', label: t('rapports.assiduite.table.columns.retard'), field: 'retard', align: 'right', sortable: true },
-  { name: 'absent', label: t('rapports.assiduite.table.columns.absent'), field: 'absent', align: 'right', sortable: true },
+  { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
   {
     name: 'heures',
-    label: t('rapports.assiduite.table.columns.heures'),
+    label: t('common.fields.hours'),
     field: (r: any) => heuresLisibles(r.heuresRealisees),
     align: 'right',
   },
-  { name: 'taux', label: t('rapports.assiduite.table.columns.taux'), field: 'tauxPresence', align: 'left', sortable: true },
+  { name: 'taux', label: t('common.fields.attendance'), field: 'tauxPresence', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'enseignantId', align: 'right' },
 ]);
 
 const colonnesVolume = computed<QTableColumn[]>(() => [
-  { name: 'enseignant', label: t('rapports.volume.table.columns.enseignant'), field: 'enseignant', align: 'left', sortable: true },
-  { name: 'matiere', label: t('rapports.volume.table.columns.matiere'), field: 'matiere', align: 'left' },
+  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignant', align: 'left', sortable: true },
+  { name: 'matiere', label: t('common.fields.subject'), field: 'matiere', align: 'left' },
   { name: 'promotion', label: t('rapports.volume.table.columns.promotion'), field: 'promotion', align: 'left' },
   { name: 'prevu', label: t('rapports.volume.table.columns.prevu'), field: 'volumeHorairePrevu', align: 'right' },
   { name: 'realise', label: t('rapports.volume.table.columns.realise'), field: 'heuresRealisees', align: 'right', sortable: true },
   { name: 'reste', label: t('rapports.volume.table.columns.reste'), field: 'reste', align: 'right' },
-  { name: 'seances', label: t('rapports.volume.table.columns.seances'), field: 'planifiees', align: 'right' },
+  { name: 'seances', label: t('common.fields.sessions'), field: 'planifiees', align: 'right' },
   { name: 'avancement', label: t('rapports.volume.table.columns.avancement'), field: 'tauxContrat', align: 'left', sortable: true },
 ]);
 
 const colonnesPaiement = computed<QTableColumn[]>(() => [
   { name: 'matricule', label: t('rapports.paiement.table.columns.matricule'), field: 'matricule', align: 'left' },
-  { name: 'nom', label: t('rapports.paiement.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
-  { name: 'statut', label: t('rapports.paiement.table.columns.statut'), field: 'statutEnseignant', align: 'left' },
+  { name: 'nom', label: t('common.fields.teacher'), field: 'nom', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statutEnseignant', align: 'left' },
   { name: 'departement', label: t('rapports.paiement.table.columns.departement'), field: 'departement', align: 'left' },
-  { name: 'seances', label: t('rapports.paiement.table.columns.seances'), field: 'seancesAssurees', align: 'right' },
-  { name: 'heures', label: t('rapports.paiement.table.columns.heures'), field: 'heuresRealisees', align: 'right', sortable: true },
+  { name: 'seances', label: t('common.fields.sessions'), field: 'seancesAssurees', align: 'right' },
+  { name: 'heures', label: t('common.fields.hours'), field: 'heuresRealisees', align: 'right', sortable: true },
   {
     name: 'taux',
     label: t('rapports.paiement.table.columns.taux'),
@@ -542,15 +542,15 @@ const colonnesPaiement = computed<QTableColumn[]>(() => [
 ]);
 
 const colonnesRegistre = computed<QTableColumn[]>(() => [
-  { name: 'date', label: t('rapports.registre.table.columns.date'), field: 'date', align: 'left', sortable: true },
-  { name: 'horaire', label: t('rapports.registre.table.columns.horaire'), field: 'horaire', align: 'left' },
-  { name: 'enseignant', label: t('rapports.registre.table.columns.enseignant'), field: 'enseignant', align: 'left' },
-  { name: 'matiere', label: t('rapports.registre.table.columns.matiere'), field: 'matiere', align: 'left' },
+  { name: 'date', label: t('common.fields.date'), field: 'date', align: 'left', sortable: true },
+  { name: 'horaire', label: t('common.fields.schedule'), field: 'horaire', align: 'left' },
+  { name: 'enseignant', label: t('common.fields.teacher'), field: 'enseignant', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: 'matiere', align: 'left' },
   { name: 'promotion', label: t('rapports.registre.table.columns.promotion'), field: 'promotion', align: 'left' },
-  { name: 'salle', label: t('rapports.registre.table.columns.salle'), field: 'salle', align: 'left' },
+  { name: 'salle', label: t('common.fields.room'), field: 'salle', align: 'left' },
   { name: 'statut', label: t('rapports.registre.table.columns.statut'), field: 'statut', align: 'left' },
   { name: 'arrivee', label: t('rapports.registre.table.columns.arrivee'), field: 'heureArrivee', align: 'left' },
-  { name: 'duree', label: t('rapports.registre.table.columns.duree'), field: (r: any) => dureeLisible(r.dureeMinutes), align: 'left' },
+  { name: 'duree', label: t('common.fields.duration'), field: (r: any) => dureeLisible(r.dureeMinutes), align: 'left' },
   { name: 'effectif', label: t('rapports.registre.table.columns.effectif'), field: 'effectifPresent', align: 'right' },
   { name: 'theme', label: t('rapports.registre.table.columns.theme'), field: 'thematiqueTraitee', align: 'left' },
 ]);

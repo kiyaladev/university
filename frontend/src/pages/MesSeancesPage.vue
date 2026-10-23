@@ -3,8 +3,8 @@
     <page-header :title="$t('mesSeances.title')" :subtitle="$t('mesSeances.subtitle')">
       <template #actions>
         <div class="row q-gutter-sm items-center">
-          <champ-date v-model="dateDebut" :label="$t('mesSeances.filters.from')" style="width: 152px" />
-          <champ-date v-model="dateFin" :label="$t('mesSeances.filters.to')" style="width: 152px" />
+          <champ-date v-model="dateDebut" :label="$t('common.actions.from')" style="width: 152px" />
+          <champ-date v-model="dateFin" :label="$t('common.actions.to')" style="width: 152px" />
           <q-btn
             flat
             no-caps
@@ -124,7 +124,7 @@ const kpis = computed(() => {
   return [
     { libelle: t('mesSeances.kpis.planned'), valeur: s?.planifiees ?? 0, couleur: 'primary' },
     { libelle: t('mesSeances.kpis.ensured'), valeur: s?.assurees ?? 0, couleur: 'positive' },
-    { libelle: t('mesSeances.kpis.absences'), valeur: s?.absent ?? 0, couleur: 'negative' },
+    { libelle: t('common.fields.absences'), valeur: s?.absent ?? 0, couleur: 'negative' },
     {
       libelle: t('mesSeances.kpis.hoursDone'),
       valeur: heuresLisibles(s?.heuresRealisees),
@@ -136,19 +136,19 @@ const kpis = computed(() => {
 const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: t('mesSeances.table.columns.date'),
+    label: t('common.fields.date'),
     field: (r: any) => dateLisible(r.date),
     align: 'left',
     sortable: true,
   },
-  { name: 'horaire', label: t('mesSeances.table.columns.horaire'), field: 'horaire', align: 'left' },
-  { name: 'matiere', label: t('mesSeances.table.columns.matiere'), field: 'matiere', align: 'left' },
+  { name: 'horaire', label: t('common.fields.schedule'), field: 'horaire', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: 'matiere', align: 'left' },
   { name: 'promotion', label: t('mesSeances.table.columns.promotion'), field: 'promotion', align: 'left' },
-  { name: 'salle', label: t('mesSeances.table.columns.salle'), field: 'salle', align: 'left' },
+  { name: 'salle', label: t('common.fields.room'), field: 'salle', align: 'left' },
   { name: 'statut', label: t('mesSeances.table.columns.statut'), field: 'statut', align: 'left' },
   {
     name: 'duree',
-    label: t('mesSeances.table.columns.duree'),
+    label: t('common.fields.duration'),
     field: (r: any) => dureeLisible(r.dureeMinutes),
     align: 'left',
   },

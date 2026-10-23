@@ -33,7 +33,7 @@
               dense
               emit-value
               map-options
-              :label="$t('notifications.broadcast.generalNotice.motifLabel')"
+              :label="$t('common.fields.motif')"
             />
 
             <p class="pochoir notif-bloc__titre">{{ $t('notifications.broadcast.generalNotice.recipientsLabel') }}</p>
@@ -177,10 +177,10 @@
             clearable
             emit-value
             map-options
-            :label="$t('notifications.history.statutLabel')"
+            :label="$t('common.fields.status')"
           />
-          <champ-date v-model="filtresHistorique.dateDebut" :label="$t('notifications.history.dateFrom')" />
-          <champ-date v-model="filtresHistorique.dateFin" :label="$t('notifications.history.dateTo')" />
+          <champ-date v-model="filtresHistorique.dateDebut" :label="$t('common.actions.from')" />
+          <champ-date v-model="filtresHistorique.dateFin" :label="$t('common.actions.to')" />
         </template>
       </filter-bar>
 
@@ -282,7 +282,7 @@
                 no-caps
                 color="primary"
                 icon="filter_alt_off"
-                :label="$t('notifications.history.emptyState.clearFilters')"
+                :label="$t('common.actions.clearFilters')"
                 @click="reinitialiserHistorique"
               />
               <q-btn
@@ -366,7 +366,7 @@ const motifs = computed(() => [
   { label: t('notifications.broadcast.motifs.avis'), value: 'AVIS' },
   { label: t('notifications.broadcast.motifs.resultats'), value: 'RESULTATS' },
   { label: t('notifications.broadcast.motifs.inscription'), value: 'INSCRIPTION' },
-  { label: t('notifications.broadcast.motifs.paiement'), value: 'PAIEMENT' },
+  { label: t('common.fields.payment'), value: 'PAIEMENT' },
   { label: t('notifications.broadcast.motifs.convocation'), value: 'CONVOCATION' },
   { label: t('notifications.broadcast.motifs.autre'), value: 'AUTRE' },
 ]);
@@ -573,7 +573,7 @@ const couleurStatut: Record<string, string> = {
 const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: t('notifications.history.table.columns.date'),
+    label: t('common.fields.date'),
     field: (r: Notification) => r.createdAt,
     format: (v: string) => dateHeureLisible(v),
     align: 'left',
@@ -585,8 +585,8 @@ const colonnes = computed<QTableColumn[]>(() => [
     field: (r: Notification) => `${r.destinataireNom ?? ''} ${r.telephone}`,
     align: 'left',
   },
-  { name: 'motif', label: t('notifications.history.table.columns.motif'), field: (r: Notification) => r.motif ?? '—', align: 'left' },
-  { name: 'statut', label: t('notifications.history.table.columns.statut'), field: (r: Notification) => r.statut, align: 'left' },
+  { name: 'motif', label: t('common.fields.motif'), field: (r: Notification) => r.motif ?? '—', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: (r: Notification) => r.statut, align: 'left' },
   {
     name: 'message',
     label: t('notifications.history.table.columns.message'),

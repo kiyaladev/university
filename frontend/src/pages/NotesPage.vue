@@ -242,7 +242,7 @@ async function cloturer() {
   const ok = await confirmer({
     titre: t('notes.dialogs.close.title'),
     message: t('notes.dialogs.close.message', { name: e.intitule }),
-    ok: t('notes.dialogs.close.confirm'),
+    ok: t('common.actions.closeOut'),
   });
   if (!ok) return;
   try {

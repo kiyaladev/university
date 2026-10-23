@@ -3,7 +3,6 @@ export default {
   actions: {
     home: 'Retour à mon accueil',
     logout: 'Se déconnecter',
-    retry: 'Réessayer',
     view: 'Voir',
     recharge: 'Recharger',
     cancel: 'Annuler',
@@ -35,10 +34,7 @@ export default {
   sections: {
     inscription: {
       title: 'Inscription',
-      statut: 'Statut',
       promotion: 'Promotion',
-      annee: 'Année',
-      filiere: 'Filière',
       empty: 'Aucune inscription enregistrée.',
     },
     frais: {
@@ -52,7 +48,6 @@ export default {
       empty: 'Aucun paiement enregistré.',
     },
     resultat: {
-      title: 'Résultat',
       rankTooltip: 'Rang dans la promotion',
       rank: 'rang {rang}',
       empty: 'Aucun résultat publié pour le moment. Les délibérations validées par le jury apparaîtront ici.',

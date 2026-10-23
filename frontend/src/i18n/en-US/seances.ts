@@ -1,19 +1,14 @@
 /** Namespace `seances` — Sessions register page. */
 export default {
-  title: 'Sessions',
   subtitle: 'The register of scheduled sessions and what was observed there',
   actions: {
     generateFromSchedule: 'Generate from timetable',
     newUnscheduled: 'Unscheduled session',
     newAdHoc: 'One-off session',
-    print: 'Print',
     assignRound: 'Assign a round',
-    reload: 'Reload',
     reloadAria: 'Reload the register',
   },
   period: {
-    from: 'From',
-    to: 'To',
     shortcuts: {
       today: 'Today',
       sevenDays: '7 days',
@@ -23,8 +18,6 @@ export default {
   },
   filters: {
     search: 'Search',
-    teacher: 'Teacher',
-    room: 'Room',
     status: 'Session status',
     onlyUnchecked: 'Only unchecked sessions',
     label: 'Filter',
@@ -36,9 +29,7 @@ export default {
     activeUnchecked: 'unchecked',
   },
   summary: {
-    sessions: 'Sessions',
     checked: 'Checked',
-    absences: 'Absences',
     unchecked: 'Unchecked',
   },
   emptyState: {
@@ -50,13 +41,8 @@ export default {
   },
   table: {
     columns: {
-      date: 'Date',
       schedule: 'Schedule',
-      teacher: 'Teacher',
-      subject: 'Subject',
       promotion: 'Class',
-      room: 'Room',
-      type: 'Type',
       durationObserved: 'Observed duration',
       status: 'Status',
     },
@@ -77,11 +63,9 @@ export default {
   },
   detail: {
     title: 'Session details',
-    teacher: 'Teacher',
     subjectPromotion: 'Subject · class',
     courseType: 'Course type',
     plannedSchedule: 'Planned schedule',
-    room: 'Room',
     assignedController: 'Assigned controller',
     noAssignedController: 'No controller assigned',
     assignController: 'Assign',
@@ -102,7 +86,6 @@ export default {
     signature: 'Signature',
     otherSessions: 'Their other sessions',
     sessionsInRoom: 'Sessions in {code}',
-    close: 'Close',
     correctCheck: 'Correct the check',
     checkThisSession: 'Check this session',
   },
@@ -110,7 +93,6 @@ export default {
     title: 'Assign a round',
     help: 'The preview counts unassigned sessions; existing assignments will not be overwritten.',
     departmentOptional: 'Department (optional)',
-    previewAction: 'Preview',
     preview: '{affectables} session(s) can be assigned. {closed} session(s) in a closed academic year will be skipped.',
     assignAction: 'Assign {count} session(s)',
     loadError: 'Could not load controllers and departments.',

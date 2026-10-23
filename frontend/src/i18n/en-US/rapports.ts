@@ -9,11 +9,7 @@ export default {
     paie: { label: 'Adjunct payroll', help: 'Monthly sheets generated from these checked hours' },
   },
   filters: {
-    dateDebut: 'From',
-    dateFin: 'To',
-    departement: 'Department',
     promotion: 'Class',
-    statut: 'Status',
   },
   actions: {
     reloadAria: 'Reload the statements for the period',
@@ -34,7 +30,6 @@ export default {
     weekStart: 'Monday of the week',
     weekRange: 'Period ends on {end}',
     signatureLabel: 'Handwritten signature of the department head',
-    cancel: 'Cancel',
     generate: 'Sign and download PDF',
     signatureRequired: 'Add your signature before generating the report.',
     mondayRequired: 'Choose a Monday as the first day of the week.',
@@ -82,15 +77,11 @@ export default {
     table: {
       columns: {
         matricule: 'ID',
-        nom: 'Teacher',
         departement: 'Dept.',
         planifiees: 'Sched.',
         controlees: 'Checked',
         assurees: 'Held',
         retard: 'Late',
-        absent: 'Absences',
-        heures: 'Hours',
-        taux: 'Attendance',
       },
     },
     emptyState: {
@@ -103,13 +94,10 @@ export default {
   volume: {
     table: {
       columns: {
-        enseignant: 'Teacher',
-        matiere: 'Subject',
         promotion: 'Class',
         prevu: 'Contract (h)',
         realise: 'Completed (h)',
         reste: 'Remaining (h)',
-        seances: 'Sessions',
         avancement: 'Progress',
       },
     },
@@ -127,11 +115,7 @@ export default {
     table: {
       columns: {
         matricule: 'ID',
-        nom: 'Teacher',
-        statut: 'Status',
         departement: 'Dept.',
-        seances: 'Sessions',
-        heures: 'Hours',
         taux: 'Hourly rate',
         montant: 'Amount (GNF)',
       },
@@ -147,15 +131,9 @@ export default {
     summary: '{total} session(s) · {controlees} checked · {absences} absence(s)',
     table: {
       columns: {
-        date: 'Date',
-        horaire: 'Time',
-        enseignant: 'Teacher',
-        matiere: 'Subject',
         promotion: 'Class',
-        salle: 'Room',
         statut: 'Record',
         arrivee: 'Arrival',
-        duree: 'Duration',
         effectif: 'Students',
         theme: 'Topic covered',
       },

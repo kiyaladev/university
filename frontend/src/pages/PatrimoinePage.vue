@@ -87,14 +87,14 @@
         <template #avances>
           <autocomplete-async
             v-model="filtres.categorieId"
-            :label="$t('patrimoine.equipments.filters.category')"
+            :label="$t('common.fields.category')"
             endpoint="/patrimoine/categories"
             :label-fn="(c) => `${c.libelle} (${c.code})`"
             preload
           />
           <autocomplete-async
             v-model="filtres.departementId"
-            :label="$t('patrimoine.equipments.filters.department')"
+            :label="$t('common.fields.department')"
             endpoint="/departements"
             :label-fn="(d) => d.nom"
             preload
@@ -110,7 +110,7 @@
             emit-value
             map-options
             clearable
-            :label="$t('patrimoine.equipments.filters.status')"
+            :label="$t('common.fields.status')"
           />
           <q-select
             v-model="filtres.enReparation"
@@ -123,7 +123,7 @@
             emit-value
             map-options
             clearable
-            :label="$t('patrimoine.equipments.filters.repairState')"
+            :label="$t('common.fields.state')"
           />
         </template>
       </filter-bar>
@@ -220,7 +220,7 @@
               :aria-label="$t('patrimoine.equipments.table.actions.editAria', { name: p.row.libelle })"
               @click="ouvrirEquipement(p.row)"
             >
-              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.estAdmin"
@@ -232,7 +232,7 @@
               :aria-label="$t('patrimoine.equipments.table.actions.deleteAria', { name: p.row.libelle })"
               @click="supprimerEquipement(p.row)"
             >
-              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.deleteTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -307,8 +307,8 @@
             </q-card-section>
             <q-separator />
             <q-card-actions align="right">
-              <q-btn flat dense round icon="visibility" :aria-label="$t('patrimoine.equipments.cards.detailsTooltip')" @click="voirDetails(e)">
-                <q-tooltip>{{ $t('patrimoine.equipments.cards.detailsTooltip') }}</q-tooltip>
+              <q-btn flat dense round icon="visibility" :aria-label="$t('common.actions.details')" @click="voirDetails(e)">
+                <q-tooltip>{{ $t('common.actions.details') }}</q-tooltip>
               </q-btn>
               <q-btn flat dense round icon="print" :aria-label="$t('patrimoine.equipments.cards.labelTooltip')" @click="imprimerEtiquette(e)">
                 <q-tooltip>{{ $t('patrimoine.equipments.cards.labelTooltip') }}</q-tooltip>
@@ -333,7 +333,7 @@
                 :aria-label="$t('patrimoine.equipments.table.actions.editAria', { name: e.libelle })"
                 @click="ouvrirEquipement(e)"
               >
-                <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
+                <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
               </q-btn>
             </q-card-actions>
           </q-card>
@@ -400,7 +400,7 @@
               :aria-label="$t('patrimoine.categories.table.actions.editAria', { name: p.row.libelle })"
               @click="ouvrirCategorie(p.row)"
             >
-              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.editTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn
               v-if="auth.estAdmin"
@@ -412,7 +412,7 @@
               :aria-label="$t('patrimoine.categories.table.actions.deleteAria', { name: p.row.libelle })"
               @click="supprimerCategorie(p.row)"
             >
-              <q-tooltip>{{ $t('patrimoine.equipments.table.actions.deleteTooltip') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -517,7 +517,7 @@
       v-model="dialogCategorie"
       taille="s"
       :titre="categorieEditee ? $t('patrimoine.categories.dialog.editTitle') : $t('patrimoine.categories.dialog.newTitle')"
-      :libelle-valider="$t('patrimoine.categories.dialog.save')"
+      :libelle-valider="$t('common.actions.save')"
       :envoi="enregistrementCategorie"
       @valider="enregistrerCategorie"
     >
@@ -525,7 +525,7 @@
         v-model="formCategorie.code"
         outlined
         dense
-        :label="$t('patrimoine.categories.dialog.codeLabel')"
+        :label="$t('common.fields.codeRequired')"
         :hint="$t('patrimoine.categories.dialog.codeHint')"
         :rules="[auMoinsDeux]"
         class="q-mb-md"
@@ -534,7 +534,7 @@
         v-model="formCategorie.libelle"
         outlined
         dense
-        :label="$t('patrimoine.categories.dialog.labelLabel')"
+        :label="$t('common.fields.labelRequired')"
         :hint="$t('patrimoine.categories.dialog.labelHint')"
         :rules="[auMoinsDeux]"
         class="q-mb-md"
@@ -737,22 +737,22 @@ const aideVideEquipements = computed(() =>
 // ---------------------------------------------------------------- colonnes
 const colonnesEquipements = computed<QTableColumn[]>(() => [
   { name: 'libelle', label: t('patrimoine.equipments.table.columns.equipment'), field: 'libelle', align: 'left' },
-  { name: 'categorie', label: t('patrimoine.equipments.table.columns.category'), field: 'categorie', align: 'left' },
+  { name: 'categorie', label: t('common.fields.category'), field: 'categorie', align: 'left' },
   {
     name: 'departement',
-    label: t('patrimoine.equipments.table.columns.department'),
+    label: t('common.fields.department'),
     field: (r: EquipementPatrimoine) => r.departement?.nom ?? '—',
     align: 'left',
   },
   { name: 'valeur', label: t('patrimoine.equipments.table.columns.value'), field: 'valeur', align: 'right' },
   { name: 'serie', label: t('patrimoine.equipments.table.columns.serial'), field: 'numeroSerie', align: 'left' },
-  { name: 'etat', label: t('patrimoine.equipments.table.columns.state'), field: 'etat', align: 'left' },
+  { name: 'etat', label: t('common.fields.state'), field: 'etat', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesCategories = computed<QTableColumn[]>(() => [
-  { name: 'code', label: t('patrimoine.categories.table.columns.code'), field: 'code', align: 'left' },
-  { name: 'libelle', label: t('patrimoine.categories.table.columns.label'), field: 'libelle', align: 'left' },
+  { name: 'code', label: t('common.fields.code'), field: 'code', align: 'left' },
+  { name: 'libelle', label: t('common.fields.label'), field: 'libelle', align: 'left' },
   {
     name: 'dureeAmortissement',
     label: t('patrimoine.categories.table.columns.amortization'),
@@ -760,14 +760,14 @@ const colonnesCategories = computed<QTableColumn[]>(() => [
     align: 'right',
   },
   { name: 'equipements', label: t('patrimoine.categories.table.columns.equipments'), field: 'equipements', align: 'right' },
-  { name: 'actif', label: t('patrimoine.categories.table.columns.state'), field: 'actif', align: 'left' },
+  { name: 'actif', label: t('common.fields.state'), field: 'actif', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesReparations = computed<QTableColumn[]>(() => [
   { name: 'equipement', label: t('patrimoine.repairs.table.columns.equipment'), field: 'equipement', align: 'left' },
-  { name: 'description', label: t('patrimoine.repairs.table.columns.description'), field: 'description', align: 'left' },
-  { name: 'statut', label: t('patrimoine.repairs.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'description', label: t('common.fields.description'), field: 'description', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'declarLe', label: t('patrimoine.repairs.table.columns.declaredOn'), field: 'dateDeclaration', align: 'left' },
   { name: 'delai', label: t('patrimoine.repairs.table.columns.delay'), field: 'delai', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
@@ -865,7 +865,7 @@ function supprimerCategorie(c: CategoriePatrimoine) {
   void supprimerAvecConfirmation(`/patrimoine/categories/${c.id}`, c.libelle, cat.recharger, {
     titre: t('patrimoine.categories.confirmDelete.title'),
     message: t('patrimoine.categories.confirmDelete.message', { name: c.libelle }),
-    ok: t('patrimoine.categories.confirmDelete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('patrimoine.messages.categoryDeleted'),
   });
 }
@@ -874,7 +874,7 @@ function supprimerEquipement(e: EquipementPatrimoine) {
   void supprimerAvecConfirmation(`/patrimoine/equipements/${e.id}`, e.numeroInventaire, apresEquipement, {
     titre: t('patrimoine.deleteEquipment.title'),
     message: t('patrimoine.deleteEquipment.message', { code: e.numeroInventaire }),
-    ok: t('patrimoine.deleteEquipment.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('patrimoine.messages.equipmentDeleted'),
   });
 }

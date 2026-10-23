@@ -12,13 +12,11 @@ export default {
     openComplaint: 'Ouvrir une réclamation',
   },
   card: {
-    matricule: 'Matricule',
     revoked: {
       text: 'Cette carte a été révoquée par l’établissement : elle n’est plus valable et son QR affiche « carte non valable ».',
       reasonSuffix: ' Motif : {reason}.',
       requestDuplicate: 'Demandez un duplicata à la scolarité.',
     },
-    issuedOn: 'Émise le',
     validUntil: 'Valable jusqu’au',
     qrHint: 'Scannez ce QR pour vérifier votre carte. Toute consultation est journalisée.',
     copyLink: 'Copier le lien',
@@ -34,7 +32,6 @@ export default {
     nipHint: 'Saisissez 4 à 6 chiffres.',
     confirmLabel: 'Confirmation',
     cancel: 'Annuler',
-    save: 'Enregistrer',
   },
   messages: {
     linkCopied: 'Lien de vérification copié.',

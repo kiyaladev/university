@@ -5,7 +5,6 @@ export default {
     'Single window for student grievances — missing grade, entry error, registrar, teaching. Each complaint follows a tracked lifecycle: from opening to closing, through assignment and automatic escalation after 48 h.',
   actions: {
     newReclamation: 'New complaint',
-    detail: 'Detail',
     escalate: 'Escalate',
   },
   dialog: {
@@ -14,7 +13,6 @@ export default {
       subject: 'Subject *',
       subjectMin: 'At least 3 characters',
       subjectHint: 'Summarize the problem in one sentence',
-      description: 'Description *',
       descriptionMin: 'At least 10 characters',
       descriptionMax: 'At most 4,000 characters',
       descriptionHint: 'Describe the issue in detail',
@@ -52,8 +50,6 @@ export default {
       takeOwnership: 'Take ownership',
       awaitReply: 'Awaiting response',
       markResolved: 'Mark as resolved',
-      reject: 'Reject',
-      resume: 'Resume',
       messageSent: 'Message sent',
       rejectTitle: 'Reject complaint',
       rejectPrompt: 'Enter the reason for rejection (required):',
@@ -73,10 +69,6 @@ export default {
     placeholder: 'Search (No., subject, name…)',
   },
   filters: {
-    statut: 'Status',
-    type: 'Type',
-    priorite: 'Priority',
-    departement: 'Department',
     assigneA: 'Assigned to',
     escalade: 'Escalation',
   },
@@ -93,12 +85,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'No.',
       sujet: 'Subject',
-      type: 'Type',
-      priorite: 'Priority',
       auteur: 'Author',
-      statut: 'Status',
       activite: 'Activity',
     },
   },

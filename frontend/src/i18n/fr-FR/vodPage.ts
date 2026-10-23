@@ -9,7 +9,6 @@ export default {
   },
   actions: {
     newResource: 'Nouvelle ressource',
-    resume: 'Reprendre',
     player: 'Lecteur',
     publish: 'Mettre en ligne',
     edit: 'Modifier',
@@ -31,23 +30,16 @@ export default {
     updated: 'Ressource mise à jour.',
     created: 'Ressource créée.',
     saveFailed: 'Enregistrement impossible.',
-    types: { audio: 'Audio', video: 'Vidéo', notes: 'Notes', transcription: 'Transcription' },
+    types: { audio: 'Audio', video: 'Vidéo', transcription: 'Transcription' },
   },
   filters: {
     searchPlaceholder: 'Titre, description…',
     resourceType: 'Type de ressource',
-    status: 'Statut',
   },
   table: {
     columns: {
-      title: 'Titre',
-      type: 'Type',
-      subject: 'Matière',
-      teacher: 'Enseignant',
-      duration: 'Durée',
       progress: 'Où j’en suis',
       views: 'Vues',
-      status: 'Statut',
     },
   },
   card: {
@@ -60,8 +52,6 @@ export default {
   tooltips: {
     openPlayer: 'Ouvrir le lecteur',
     publish: 'Mettre en ligne',
-    edit: 'Modifier',
-    archive: 'Archiver',
   },
   aria: {
     play: 'Lire « {title} »',
@@ -79,7 +69,6 @@ export default {
     archive: {
       title: 'Archiver cette ressource ?',
       message: '« {title} » sortira du catalogue : plus personne ne pourra la lire.',
-      confirm: 'Archiver',
     },
   },
   messages: {

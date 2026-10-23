@@ -13,9 +13,7 @@ export default {
     newTitle: 'Émettre une recette',
     numberHint: 'Le numéro suit le format REC-AAAA-NNNNN ; il figure sur la facture ou le reçu.',
     number: 'Numéro (REC-AAAA-XXXXX)',
-    date: 'Date *',
     amount: 'Montant *',
-    currency: 'Devise',
     invoiceNumber: 'N° de facture',
     accountingLocked: 'La recette est encaissée : son type, sa date, son montant et sa devise sont figés.',
     updated: 'Recette modifiée',
@@ -50,10 +48,7 @@ export default {
     placeholder: 'Rechercher (numéro, libellé, client…)',
   },
   filters: {
-    type: 'Type',
     paiementStatut: 'Encaissement',
-    dateDebut: 'Du',
-    dateFin: 'Au',
   },
   paiementOptions: {
     reussi: 'Encaissées',
@@ -77,17 +72,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'N°',
-      type: 'Type',
-      libelle: 'Libellé',
       client: 'Client',
-      date: 'Date',
-      montant: 'Montant',
-      statut: 'Statut',
     },
-  },
-  card: {
-    montant: 'Montant',
   },
   tooltips: {
     detail: 'Détail / modifier',

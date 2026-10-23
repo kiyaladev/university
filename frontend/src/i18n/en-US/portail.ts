@@ -3,7 +3,6 @@ export default {
   actions: {
     home: 'Back to my home',
     logout: 'Log out',
-    retry: 'Retry',
     view: 'View',
     recharge: 'Top up',
     cancel: 'Cancel',
@@ -35,10 +34,7 @@ export default {
   sections: {
     inscription: {
       title: 'Enrollment',
-      statut: 'Status',
       promotion: 'Class',
-      annee: 'Year',
-      filiere: 'Program',
       empty: 'No enrollment recorded.',
     },
     frais: {
@@ -52,7 +48,6 @@ export default {
       empty: 'No payment recorded.',
     },
     resultat: {
-      title: 'Result',
       rankTooltip: 'Rank in the class',
       rank: 'rank {rang}',
       empty: 'No result published yet. Deliberations validated by the board will appear here.',

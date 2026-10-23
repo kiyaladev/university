@@ -4,8 +4,8 @@
     <page-header :title="$t('statistiques.title')" :subtitle="$t('statistiques.subtitle')">
       <template #actions>
         <div class="stats__periode">
-          <champ-date v-model="filtres.dateDebut" :label="$t('statistiques.filters.from')" @update:model-value="raccourciActif = ''" />
-          <champ-date v-model="filtres.dateFin" :label="$t('statistiques.filters.to')" @update:model-value="raccourciActif = ''" />
+          <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" @update:model-value="raccourciActif = ''" />
+          <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" @update:model-value="raccourciActif = ''" />
           <q-btn
             round
             color="primary"
@@ -14,7 +14,7 @@
             :loading="chargement"
             @click="charger"
           >
-            <q-tooltip>{{ $t('statistiques.filters.recalculateTooltip') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.recalculate') }}</q-tooltip>
           </q-btn>
         </div>
       </template>
@@ -84,7 +84,7 @@
 
               <div class="fiche__chiffres">
                 <div class="fiche__chiffre">
-                  <span class="pochoir">{{ $t('statistiques.salles.card.sessions') }}</span>
+                  <span class="pochoir">{{ $t('common.fields.sessions') }}</span>
                   <span class="lettrage chiffres">{{ l.planifiees }}</span>
                 </div>
                 <div class="fiche__chiffre">
@@ -92,13 +92,13 @@
                   <span class="lettrage chiffres">{{ l.controlees }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">{{ $t('statistiques.salles.card.absences') }}</span>
+                  <span class="pochoir">{{ $t('common.fields.absences') }}</span>
                   <span class="lettrage chiffres" :class="l.absent ? 'text-negative' : ''">
                     {{ l.absent }}
                   </span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">{{ $t('statistiques.salles.card.students') }}</span>
+                  <span class="pochoir">{{ $t('common.fields.students') }}</span>
                   <span class="lettrage chiffres">{{ l.effectifMoyen || '—' }}</span>
                 </div>
               </div>
@@ -108,7 +108,7 @@
                 <barre-taux :valeur="l.tauxOccupation" />
               </div>
               <div class="fiche__taux">
-                <span class="pochoir">{{ $t('statistiques.salles.card.presence') }}</span>
+                <span class="pochoir">{{ $t('common.fields.attendance') }}</span>
                 <barre-taux :valeur="l.tauxPresence" />
               </div>
 
@@ -205,19 +205,19 @@
       <q-tab-panel name="enseignants" class="q-pa-none">
         <section v-if="enseignants?.total" class="plaque releve q-mb-md">
           <div class="releve__ligne">
-            <p class="pochoir">{{ $t('statistiques.enseignants.summary.sessions') }}</p>
+            <p class="pochoir">{{ $t('common.fields.sessions') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ enseignants.total.planifiees }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">{{ $t('statistiques.enseignants.summary.presence') }}</p>
+            <p class="pochoir">{{ $t('common.fields.attendance') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ pourcentLisible(enseignants.total.tauxPresence) }}
             </p>
           </div>
           <div class="releve__ligne">
-            <p class="pochoir">{{ $t('statistiques.enseignants.summary.absences') }}</p>
+            <p class="pochoir">{{ $t('common.fields.absences') }}</p>
             <p class="lettrage avec-unite chiffres releve__valeur">
               {{ enseignants.total.absent }}
             </p>
@@ -266,7 +266,7 @@
 
               <div class="fiche__chiffres">
                 <div class="fiche__chiffre">
-                  <span class="pochoir">{{ $t('statistiques.enseignants.card.sessions') }}</span>
+                  <span class="pochoir">{{ $t('common.fields.sessions') }}</span>
                   <span class="lettrage chiffres">{{ l.planifiees }}</span>
                 </div>
                 <div class="fiche__chiffre">
@@ -278,7 +278,7 @@
                   <span class="lettrage chiffres">{{ l.retard }}</span>
                 </div>
                 <div class="fiche__chiffre">
-                  <span class="pochoir">{{ $t('statistiques.enseignants.card.absences') }}</span>
+                  <span class="pochoir">{{ $t('common.fields.absences') }}</span>
                   <span class="lettrage chiffres" :class="l.absent ? 'text-negative' : ''">
                     {{ l.absent }}
                   </span>
@@ -286,7 +286,7 @@
               </div>
 
               <div class="fiche__taux">
-                <span class="pochoir">{{ $t('statistiques.enseignants.card.presence') }}</span>
+                <span class="pochoir">{{ $t('common.fields.attendance') }}</span>
                 <barre-taux :valeur="l.tauxPresence" />
               </div>
 
@@ -422,13 +422,13 @@ const sallesVisitees = computed(
 );
 
 const colonnesSalles = computed<QTableColumn[]>(() => [
-  { name: 'salle', label: t('statistiques.salles.table.columns.salle'), field: 'code', align: 'left', sortable: true },
-  { name: 'planifiees', label: t('statistiques.salles.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
+  { name: 'salle', label: t('common.fields.room'), field: 'code', align: 'left', sortable: true },
+  { name: 'planifiees', label: t('common.fields.sessions'), field: 'planifiees', align: 'right', sortable: true },
   { name: 'controlees', label: t('statistiques.salles.table.columns.controlees'), field: 'controlees', align: 'right', sortable: true },
-  { name: 'absent', label: t('statistiques.salles.table.columns.absent'), field: 'absent', align: 'right', sortable: true },
+  { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
   { name: 'effectif', label: t('statistiques.salles.table.columns.effectif'), field: 'effectifMoyen', align: 'right', sortable: true },
   { name: 'occupation', label: t('statistiques.salles.table.columns.occupation'), field: 'tauxOccupation', align: 'left', sortable: true },
-  { name: 'presence', label: t('statistiques.salles.table.columns.presence'), field: 'tauxPresence', align: 'left', sortable: true },
+  { name: 'presence', label: t('common.fields.attendance'), field: 'tauxPresence', align: 'left', sortable: true },
   { name: 'visite', label: t('statistiques.salles.table.columns.visite'), field: 'derniereVisite', align: 'left', sortable: true },
   { name: 'registre', label: '', field: 'salleId', align: 'right' },
 ]);
@@ -449,19 +449,19 @@ const colonnesEnseignantsVisibles = computed(() =>
 
 const colonnesEnseignants = computed<QTableColumn[]>(() => [
   { name: 'matricule', label: t('statistiques.enseignants.table.columns.matricule'), field: 'matricule', align: 'left' },
-  { name: 'nom', label: t('statistiques.enseignants.table.columns.nom'), field: 'nom', align: 'left', sortable: true },
-  { name: 'departement', label: t('statistiques.enseignants.table.columns.departement'), field: 'departement', align: 'left' },
-  { name: 'planifiees', label: t('statistiques.enseignants.table.columns.planifiees'), field: 'planifiees', align: 'right', sortable: true },
+  { name: 'nom', label: t('common.fields.teacher'), field: 'nom', align: 'left', sortable: true },
+  { name: 'departement', label: t('common.fields.department'), field: 'departement', align: 'left' },
+  { name: 'planifiees', label: t('common.fields.sessions'), field: 'planifiees', align: 'right', sortable: true },
   { name: 'assurees', label: t('statistiques.enseignants.table.columns.assurees'), field: 'assurees', align: 'right' },
   { name: 'retard', label: t('statistiques.enseignants.table.columns.retard'), field: 'retard', align: 'right', sortable: true },
-  { name: 'absent', label: t('statistiques.enseignants.table.columns.absent'), field: 'absent', align: 'right', sortable: true },
+  { name: 'absent', label: t('common.fields.absences'), field: 'absent', align: 'right', sortable: true },
   {
     name: 'heures',
-    label: t('statistiques.enseignants.table.columns.heures'),
+    label: t('common.fields.hours'),
     field: (r: any) => heuresLisibles(r.heuresRealisees),
     align: 'right',
   },
-  { name: 'presence', label: t('statistiques.enseignants.table.columns.presence'), field: 'tauxPresence', align: 'left', sortable: true },
+  { name: 'presence', label: t('common.fields.attendance'), field: 'tauxPresence', align: 'left', sortable: true },
   { name: 'fiche', label: '', field: 'enseignantId', align: 'right' },
 ]);
 

@@ -1,6 +1,6 @@
 <template>
   <q-page class="registre">
-    <page-header :title="$t('seances.title')" :subtitle="$t('seances.subtitle')">
+    <page-header :title="$t('common.fields.sessions')" :subtitle="$t('seances.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutAffecterControleur"
@@ -19,7 +19,7 @@
           :label="auth.peutPointer ? $t('seances.actions.newUnscheduled') : $t('seances.actions.newAdHoc')"
           @click="ouvrirSeance(null)"
         />
-        <q-btn outline no-caps icon="print" :label="$t('seances.actions.print')" @click="imprimer" />
+        <q-btn outline no-caps icon="print" :label="$t('common.actions.print')" @click="imprimer" />
       </template>
     </page-header>
 
@@ -38,8 +38,8 @@
         </button>
       </div>
 
-      <champ-date v-model="filtres.dateDebut" :label="$t('seances.period.from')" style="width: 148px" />
-      <champ-date v-model="filtres.dateFin" :label="$t('seances.period.to')" style="width: 148px" />
+      <champ-date v-model="filtres.dateDebut" :label="$t('common.actions.from')" style="width: 148px" />
+      <champ-date v-model="filtres.dateFin" :label="$t('common.actions.to')" style="width: 148px" />
 
       <q-btn
         flat
@@ -57,7 +57,7 @@
         :loading="chargement"
         @click="charger"
       >
-        <q-tooltip>{{ $t('seances.actions.reload') }}</q-tooltip>
+        <q-tooltip>{{ $t('common.actions.reload') }}</q-tooltip>
       </q-btn>
     </div>
 
@@ -74,7 +74,7 @@
         emit-value
         map-options
         use-input
-        :label="$t('seances.filters.teacher')"
+        :label="$t('common.fields.teacher')"
         @filter="filtrerEnseignants"
       />
       <q-select
@@ -85,7 +85,7 @@
         clearable
         emit-value
         map-options
-        :label="$t('seances.filters.room')"
+        :label="$t('common.fields.room')"
       />
       <q-select
         v-model="filtres.statut"
@@ -103,7 +103,7 @@
     <!-- Relevé de la période affichée -->
     <section class="plaque registre__releve">
       <div class="registre__releve-cellule">
-        <p class="pochoir">{{ $t('seances.summary.sessions') }}</p>
+        <p class="pochoir">{{ $t('common.fields.sessions') }}</p>
         <p class="lettrage chiffres registre__releve-valeur">{{ seancesFiltrees.length }}</p>
       </div>
       <div class="registre__releve-cellule">
@@ -111,7 +111,7 @@
         <p class="lettrage chiffres registre__releve-valeur">{{ compte.controlees }}</p>
       </div>
       <div class="registre__releve-cellule">
-        <p class="pochoir">{{ $t('seances.summary.absences') }}</p>
+        <p class="pochoir">{{ $t('common.fields.absences') }}</p>
         <p class="lettrage chiffres registre__releve-valeur">{{ compte.absences }}</p>
       </div>
       <div class="registre__releve-cellule">
@@ -303,7 +303,7 @@
                sienne. En dessous de 600 px les deux se superposent proprement
                au lieu de se marcher dessus. -->
           <dl class="fiche-detail">
-            <dt class="pochoir">{{ $t('seances.detail.teacher') }}</dt>
+            <dt class="pochoir">{{ $t('common.fields.teacher') }}</dt>
             <dd>
               {{ detail.affectation?.enseignant?.nom }} {{ detail.affectation?.enseignant?.prenom }}
             </dd>
@@ -319,7 +319,7 @@
             <dt class="pochoir">{{ $t('seances.detail.plannedSchedule') }}</dt>
             <dd class="chiffres">{{ detail.heureDebut }} – {{ detail.heureFin }}</dd>
 
-            <dt class="pochoir">{{ $t('seances.detail.room') }}</dt>
+            <dt class="pochoir">{{ $t('common.fields.room') }}</dt>
             <dd>
               <span v-if="detail.salle" class="plaque-salle">{{ detail.salle.code }}</span>
               <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
@@ -418,7 +418,7 @@
         </q-card-actions>
 
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('seances.detail.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
           <q-btn
             v-if="auth.peutPointer && detail && detail.statut !== 'ANNULEE'"
             unelevated
@@ -461,8 +461,8 @@
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div class="row q-col-gutter-md q-mb-md">
-            <div class="col-6"><champ-date v-model="tournee.dateDebut" :label="$t('seances.period.from')" @update:model-value="tourneeApercu = null" /></div>
-            <div class="col-6"><champ-date v-model="tournee.dateFin" :label="$t('seances.period.to')" @update:model-value="tourneeApercu = null" /></div>
+            <div class="col-6"><champ-date v-model="tournee.dateDebut" :label="$t('common.actions.from')" @update:model-value="tourneeApercu = null" /></div>
+            <div class="col-6"><champ-date v-model="tournee.dateFin" :label="$t('common.actions.to')" @update:model-value="tourneeApercu = null" /></div>
           </div>
           <q-select
             v-model="tournee.departementId" :options="optionsDepartements"
@@ -490,7 +490,7 @@
             v-if="!tourneeApercu"
             outline color="primary" no-caps icon="manage_search"
             :loading="chargementTournee"
-            :label="$t('seances.tournee.previewAction')"
+            :label="$t('common.actions.preview')"
             @click="previsualiserTournee"
           />
           <q-btn
@@ -549,7 +549,7 @@ const { t } = useI18n();
 const colonnes = computed<QTableColumn[]>(() => [
   {
     name: 'date',
-    label: t('seances.table.columns.date'),
+    label: t('common.fields.date'),
     field: (r: Seance) => r.date,
     format: (v: string) => dateLisible(v),
     align: 'left',
@@ -564,7 +564,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'enseignant',
-    label: t('seances.table.columns.teacher'),
+    label: t('common.fields.teacher'),
     field: (r: Seance) =>
       `${r.affectation?.enseignant?.nom ?? ''} ${r.affectation?.enseignant?.prenom ?? ''}`.trim(),
     align: 'left',
@@ -572,7 +572,7 @@ const colonnes = computed<QTableColumn[]>(() => [
   },
   {
     name: 'matiere',
-    label: t('seances.table.columns.subject'),
+    label: t('common.fields.subject'),
     field: (r: Seance) => r.affectation?.matiere?.intitule ?? '—',
     align: 'left',
     sortable: true,
@@ -583,8 +583,8 @@ const colonnes = computed<QTableColumn[]>(() => [
     field: (r: Seance) => r.affectation?.promotion?.nom ?? '—',
     align: 'left',
   },
-  { name: 'salle', label: t('seances.table.columns.room'), field: (r: Seance) => r.salle?.code ?? '—', align: 'left' },
-  { name: 'type', label: t('seances.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'salle', label: t('common.fields.room'), field: (r: Seance) => r.salle?.code ?? '—', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   {
     name: 'duree',
     label: t('seances.table.columns.durationObserved'),

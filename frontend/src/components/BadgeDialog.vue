@@ -131,7 +131,7 @@ async function soumettre() {
       </div>
       <div class="row q-col-gutter-md">
         <q-input v-model="formulaire.telephone" :label="$t('common.fields.phone')" outlined dense class="col" />
-        <q-input v-model="formulaire.email" :label="$t('badges.dialogs.form.emailLabel')" outlined dense class="col" type="email" />
+        <q-input v-model="formulaire.email" :label="$t('common.fields.emailShort')" outlined dense class="col" type="email" />
       </div>
       <div class="row q-col-gutter-md">
         <q-input v-model="formulaire.pieceIdentite" :label="$t('badges.dialogs.form.idTypeLabel')" outlined dense class="col" />

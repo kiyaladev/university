@@ -11,12 +11,9 @@ export default {
   "keyUnavailable": "The offline vault is unavailable. New attendance records cannot be saved on this device.",
   "title": "Pending attendance records",
   "help": "Records stay on this device until they are accepted.",
-  "session": "Session",
   "remove": "Remove from queue",
   "empty": "All attendance records have been synced.",
   "conflictHelp": "A record made by another agent needs review by management. It will not be overwritten automatically.",
-  "close": "Close",
-  "retry": "Retry",
   "removeConfirm": "Remove this unsynced record from this device?",
   "legacy": "An older attendance queue is preserved on this device. Its owner must be identified before it can be recovered; contact the administrator.",
   chiffrement: {

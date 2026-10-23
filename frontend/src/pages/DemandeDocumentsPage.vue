@@ -29,7 +29,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('demandeDocuments.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
       <template #avances>
@@ -42,13 +42,13 @@
           clearable
           emit-value
           map-options
-          :label="$t('demandeDocuments.filters.type')"
+          :label="$t('common.fields.type')"
         />
         <autocomplete-async
           v-model="filtres.etudiantId"
           endpoint="/etudiants"
           :label-fn="(e) => `${e.matricule} — ${e.nom} ${e.prenom}`"
-          :label="$t('demandeDocuments.filters.student')"
+          :label="$t('common.fields.student')"
         />
       </template>
     </filter-bar>
@@ -169,14 +169,14 @@
             dense no-caps
             icon="block"
             color="negative"
-            :aria-label="$t('demandeDocuments.actionsColumn.reject')" :label="$t('demandeDocuments.actionsColumn.reject')"
+            :aria-label="$t('common.actions.reject')" :label="$t('common.actions.reject')"
             :loading="enCours === 'rejeter'"
             @click.stop="rejeter(p.row)"
           >
-            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.reject') }}</q-tooltip>
+            <q-tooltip>{{ $t('common.actions.reject') }}</q-tooltip>
           </q-btn>
-<q-btn v-close-popup flat dense no-caps icon="visibility" :aria-label="$t('demandeDocuments.actionsColumn.detail')" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(p.row)">
-            <q-tooltip>{{ $t('demandeDocuments.actionsColumn.detail') }}</q-tooltip>
+<q-btn v-close-popup flat dense no-caps icon="visibility" :aria-label="$t('common.actions.detail')" :label="$t('common.actions.detail')" @click.stop="selectionner(p.row)">
+            <q-tooltip>{{ $t('common.actions.detail') }}</q-tooltip>
           </q-btn>
 </actions-secondaires>
 </q-td>
@@ -266,7 +266,7 @@
               no-caps
               icon="verified"
               color="positive"
-              :label="$t('demandeDocuments.cardActions.confirm')"
+              :label="$t('common.actions.confirm')"
               :loading="enCours === 'confirmer'"
               @click.stop="confirmerPaiement(d)"
             />
@@ -277,11 +277,11 @@
               no-caps
               icon="block"
               color="negative"
-              :label="$t('demandeDocuments.actionsColumn.reject')"
+              :label="$t('common.actions.reject')"
               :loading="enCours === 'rejeter'"
               @click.stop="rejeter(d)"
             />
-<q-btn v-close-popup flat dense no-caps icon="visibility" :label="$t('demandeDocuments.actionsColumn.detail')" @click.stop="selectionner(d)" />
+<q-btn v-close-popup flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click.stop="selectionner(d)" />
 </actions-secondaires>
 </q-card-actions>
         </q-card>
@@ -314,7 +314,7 @@
           />
           <div class="demande-meta q-mt-md">
             <div>
-              <span class="pochoir">{{ $t('demandeDocuments.detail.student') }}</span>
+              <span class="pochoir">{{ $t('common.fields.student') }}</span>
               <span v-if="demandeSelectionnee.etudiant">
                 {{ demandeSelectionnee.etudiant.prenom }} {{ demandeSelectionnee.etudiant.nom }} ({{ demandeSelectionnee.etudiant.matricule }})
                 <q-btn
@@ -340,7 +340,7 @@
               </span>
             </div>
             <div>
-              <span class="pochoir">{{ $t('demandeDocuments.detail.payment') }}</span>
+              <span class="pochoir">{{ $t('common.fields.payment') }}</span>
               <span v-if="demandeSelectionnee.paiement">
                 {{ demandeSelectionnee.paiement.reference }} · {{ libellePaiement(demandeSelectionnee.paiement.statut) }}
               </span>
@@ -354,7 +354,7 @@
               <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
             </div>
             <div>
-              <span class="pochoir">{{ $t('demandeDocuments.detail.createdOn') }}</span>
+              <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>
               <span>{{ dateHeureLisible(demandeSelectionnee.creeLe) }}</span>
             </div>
             <div v-if="demandeSelectionnee.remiseLe">
@@ -363,11 +363,11 @@
             </div>
           </div>
           <div v-if="demandeSelectionnee.motif" class="q-mt-md">
-            <span class="section-titre">{{ $t('demandeDocuments.detail.motif') }}</span>
+            <span class="section-titre">{{ $t('common.fields.motif') }}</span>
             <div class="demande-motif" style="white-space: pre-wrap">{{ demandeSelectionnee.motif }}</div>
           </div>
           <div v-if="demandeSelectionnee.notes" class="q-mt-md">
-            <span class="section-titre">{{ $t('demandeDocuments.detail.notes') }}</span>
+            <span class="section-titre">{{ $t('common.fields.notes') }}</span>
             <div class="demande-notes" style="white-space: pre-wrap">{{ demandeSelectionnee.notes }}</div>
           </div>
           <div v-if="demandeSelectionnee.notification" class="q-mt-md">
@@ -421,14 +421,14 @@
               color="negative"
               no-caps
               icon="block"
-              :label="$t('demandeDocuments.actionsColumn.reject')"
+              :label="$t('common.actions.reject')"
               :loading="enCours === 'rejeter'"
               @click="rejeter(demandeSelectionnee)"
             />
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('demandeDocuments.detail.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -470,7 +470,7 @@ const { t } = useI18n();
 const { confirmerAvecSaisie } = useConfirmation();
 
 const ETAPES_DEMANDE = computed(() => [
-  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('demandeDocuments.steps.payment'), icone: 'payments' },
+  { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('common.fields.payment'), icone: 'payments' },
   { identifiant: 'PAYEE', libelle: t('demandeDocuments.steps.paid'), icone: 'verified' },
   { identifiant: 'EN_TRAITEMENT', libelle: t('demandeDocuments.steps.processing'), icone: 'build' },
   { identifiant: 'PRETE', libelle: t('demandeDocuments.steps.ready'), icone: 'check_circle' },
@@ -536,14 +536,14 @@ function libellePaiement(s: StatutPaiement | string) {
 }
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('demandeDocuments.table.columns.numero'), field: 'numero', align: 'left', sortable: true },
-  { name: 'type', label: t('demandeDocuments.table.columns.type'), field: 'type', align: 'left' },
-  { name: 'etudiant', label: t('demandeDocuments.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
   { name: 'frais', label: t('demandeDocuments.table.columns.frais'), field: 'frais', align: 'right' },
-  { name: 'statut', label: t('demandeDocuments.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
     name: 'creeLe',
-    label: t('demandeDocuments.table.columns.createdOn'),
+    label: t('common.fields.createdOn'),
     field: 'creeLe',
     align: 'left',
     format: (v: string) => dateHeureLisible(v),
@@ -637,7 +637,7 @@ async function remettre(d: DemandeDocument | null) {
   const noteRemise = await confirmerAvecSaisie({
     titre: t('demandeDocuments.handOverDialog.title'),
     message: t('demandeDocuments.handOverDialog.message'),
-    libelleSaisie: t('demandeDocuments.detail.notes'),
+    libelleSaisie: t('common.fields.notes'),
     ok: t('demandeDocuments.handOverDialog.confirm'),
   });
   if (noteRemise === null) return;
@@ -649,8 +649,8 @@ async function rejeter(d: DemandeDocument | null) {
   const motif = await confirmerAvecSaisie({
     titre: t('demandeDocuments.rejectDialog.title'),
     message: t('demandeDocuments.rejectDialog.message'),
-    libelleSaisie: t('demandeDocuments.detail.motif'),
-    ok: t('demandeDocuments.rejectDialog.confirm'),
+    libelleSaisie: t('common.fields.motif'),
+    ok: t('common.actions.reject'),
     danger: true,
   });
   if (motif === null) return;

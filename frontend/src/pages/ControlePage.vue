@@ -131,7 +131,7 @@
           outline
           no-caps
           icon="filter_alt_off"
-          :label="$t('controle.emptyState.clearFilters')"
+          :label="$t('common.actions.clearFilters')"
           @click="((filtreEtat = 'toutes'), (recherche = ''))"
         />
         <template v-else>

@@ -9,7 +9,6 @@ export default {
     recalculate: 'Recalculate',
     validateJury: 'Validate jury',
     pv: 'Minutes',
-    close: 'Close',
     back: 'Go back',
   },
   createDialog: {
@@ -20,7 +19,6 @@ export default {
     previewDecision: 'PASSED / RESIT',
     previewHint: 'Grades and the decision are entered after calculation.',
     sampleSubject: 'Subject {number}',
-    sampleStudent: 'Student',
     sampleName: 'Sample',
     selectedPromotion: 'Selected cohort',
     selectedYear: 'Selected year',
@@ -29,10 +27,8 @@ export default {
   },
   filters: {
     search: 'Search a cohort…',
-    anneeAcademique: 'Academic year',
     promotion: 'Cohort',
     session: 'Session',
-    statut: 'Status',
   },
   chips: {
     search: '“{value}”',
@@ -44,19 +40,12 @@ export default {
   table: {
     columns: {
       promotion: 'Cohort',
-      annee: 'Year',
       session: 'Session',
-      statut: 'Status',
       taux: 'Pass rate',
-      effectif: 'Students',
-      creeLe: 'Created on',
     },
     detailColumns: {
       rang: 'Rank',
-      matricule: 'Student ID',
-      etudiant: 'Student',
       moyenne: 'Average',
-      decision: 'Decision',
       mention: 'Honors',
     },
   },

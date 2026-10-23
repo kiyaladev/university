@@ -97,7 +97,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('helpdesk.filters.status')"
+            :label="$t('common.fields.status')"
           />
         </template>
         <template #avances>
@@ -110,7 +110,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('helpdesk.filters.category')"
+            :label="$t('common.fields.category')"
           />
           <q-select
             v-model="filtres.priorite"
@@ -120,7 +120,7 @@
             clearable
             emit-value
             map-options
-            :label="$t('helpdesk.filters.priority')"
+            :label="$t('common.fields.priority')"
           />
           <autocomplete-async
             v-model="filtres.equipementId"
@@ -190,7 +190,7 @@
                   </q-item>
                   <q-item clickable v-close-popup @click="changerStatut(p.row, 'CLOTURE')">
                     <q-item-section avatar><q-icon name="archive" size="18px" /></q-item-section>
-                    <q-item-section>{{ $t('helpdesk.gestionTable.statutMenu.cloturer') }}</q-item-section>
+                    <q-item-section>{{ $t('common.actions.closeOut') }}</q-item-section>
                   </q-item>
                 </q-list>
               </q-menu>
@@ -239,11 +239,11 @@
             </q-card-section>
             <q-separator />
             <q-card-actions class="q-px-md">
-              <q-btn flat dense no-caps icon="visibility" :label="$t('helpdesk.gestionTable.detail')" @click="ticketDetail = t" />
+              <q-btn flat dense no-caps icon="visibility" :label="$t('common.actions.detail')" @click="ticketDetail = t" />
               <q-space />
               <q-btn
                 v-if="t.statut === 'OUVERT' || t.statut === 'EN_COURS'"
-                flat dense no-caps color="primary" icon="forward" :label="$t('helpdesk.gestionTable.statutButton')"
+                flat dense no-caps color="primary" icon="forward" :label="$t('common.fields.status')"
               >
                 <q-menu>
                   <q-list dense style="min-width: 200px">
@@ -254,7 +254,7 @@
                       <q-item-section>{{ $t('helpdesk.gestionTable.cardMenu.resolu') }}</q-item-section>
                     </q-item>
                     <q-item clickable v-close-popup @click="changerStatut(t, 'CLOTURE')">
-                      <q-item-section>{{ $t('helpdesk.gestionTable.cardMenu.cloturer') }}</q-item-section>
+                      <q-item-section>{{ $t('common.actions.closeOut') }}</q-item-section>
                     </q-item>
                   </q-list>
                 </q-menu>
@@ -305,7 +305,7 @@
             outlined
             emit-value
             map-options
-            :label="$t('helpdesk.filters.state')"
+            :label="$t('common.fields.state')"
           />
         </template>
       </filter-bar>
@@ -344,10 +344,10 @@
               <q-tooltip>{{ $t('helpdesk.equipmentTab.printLabel') }}</q-tooltip>
             </q-btn>
             <q-btn flat dense round icon="edit" :aria-label="$t('helpdesk.equipmentTab.editEquipment')" @click="ouvrirEquipement(p.row)">
-              <q-tooltip>{{ $t('helpdesk.actions.edit') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.edit') }}</q-tooltip>
             </q-btn>
             <q-btn v-if="auth.estAdmin" flat dense round color="negative" icon="delete" :aria-label="$t('helpdesk.equipmentTab.deleteEquipment')" @click="supprimerEquipement(p.row)">
-              <q-tooltip>{{ $t('helpdesk.actions.delete') }}</q-tooltip>
+              <q-tooltip>{{ $t('common.actions.delete') }}</q-tooltip>
             </q-btn>
           </q-td>
         </template>
@@ -387,9 +387,9 @@
               </div>
             </q-card-section>
             <q-card-actions class="q-px-md">
-              <q-btn flat dense no-caps icon="print" :label="$t('helpdesk.actions.print')" @click="imprimerQr(e)" />
+              <q-btn flat dense no-caps icon="print" :label="$t('common.actions.print')" @click="imprimerQr(e)" />
               <q-space />
-              <q-btn flat dense no-caps icon="edit" :label="$t('helpdesk.actions.edit')" @click="ouvrirEquipement(e)" />
+              <q-btn flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrirEquipement(e)" />
             </q-card-actions>
           </q-card>
         </div>
@@ -476,7 +476,7 @@
           </div>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('helpdesk.actions.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -505,7 +505,7 @@
           </p>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('helpdesk.actions.cancel')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -678,10 +678,10 @@ function nomCourt(u: { nom?: string; prenom?: string } | null | undefined): stri
 
 // ---------------------------------------------------------------- colonnes
 const colonnesCommunes = (): QTableColumn[] => [
-  { name: 'numero', label: t('helpdesk.table.columns.number'), field: 'numero', align: 'left', sortable: true },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left', sortable: true },
   {
     name: 'categorie',
-    label: t('helpdesk.table.columns.category'),
+    label: t('common.fields.category'),
     field: (r: TicketSupport) => libelleCategorie(r.categorie),
     align: 'left',
   },
@@ -693,11 +693,11 @@ const colonnesCommunes = (): QTableColumn[] => [
   },
 ];
 const colonnesFin = (): QTableColumn[] => [
-  { name: 'priorite', label: t('helpdesk.table.columns.priority'), field: 'priorite', align: 'left' },
-  { name: 'statut', label: t('helpdesk.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'priorite', label: t('common.fields.priority'), field: 'priorite', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   {
     name: 'createdAt',
-    label: t('helpdesk.table.columns.date'),
+    label: t('common.fields.date'),
     field: (r: TicketSupport) => dateHeureLisible(r.createdAt),
     align: 'left',
   },
@@ -705,7 +705,7 @@ const colonnesFin = (): QTableColumn[] => [
 
 const colonnesMes = computed<QTableColumn[]>(() => [
   ...colonnesCommunes(),
-  { name: 'description', label: t('helpdesk.table.columns.description'), field: 'description', align: 'left' },
+  { name: 'description', label: t('common.fields.description'), field: 'description', align: 'left' },
   ...colonnesFin(),
 ]);
 
@@ -722,10 +722,10 @@ const colonnesGestion = computed<QTableColumn[]>(() => [
 ]);
 
 const colonnesEquipements = computed<QTableColumn[]>(() => [
-  { name: 'libelle', label: t('helpdesk.table.columns.label'), field: 'libelle', align: 'left', sortable: true },
+  { name: 'libelle', label: t('common.fields.label'), field: 'libelle', align: 'left', sortable: true },
   { name: 'emplacement', label: t('helpdesk.table.columns.location'), field: 'emplacement', align: 'left' },
   { name: 'codeQr', label: t('helpdesk.table.columns.qrCode'), field: 'codeQr', align: 'left' },
-  { name: 'actif', label: t('helpdesk.table.columns.state'), field: 'actif', align: 'left' },
+  { name: 'actif', label: t('common.fields.state'), field: 'actif', align: 'left' },
   {
     name: 'tickets',
     label: t('helpdesk.table.columns.tickets'),

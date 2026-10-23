@@ -87,9 +87,9 @@ function imprimer() {
         v-else
         flat
         :columns="[
-          { name: 'matiere', label: $t('bulletins.cards.columns.subject'), field: 'matiere', align: 'left' },
-          { name: 'code', label: $t('bulletins.cards.columns.code'), field: 'code', align: 'left', style: 'width: 100px' },
-          { name: 'credits', label: $t('bulletins.cards.columns.credits'), field: 'credits', align: 'right', style: 'width: 80px' },
+          { name: 'matiere', label: $t('common.fields.subject'), field: 'matiere', align: 'left' },
+          { name: 'code', label: $t('common.fields.code'), field: 'code', align: 'left', style: 'width: 100px' },
+          { name: 'credits', label: $t('common.fields.credits'), field: 'credits', align: 'right', style: 'width: 80px' },
           { name: 'moyenne', label: $t('bulletins.cards.columns.average'), field: 'moyenne', align: 'right', style: 'width: 110px' },
         ]"
         :rows="bulletin.lignes"

@@ -6,7 +6,6 @@ export default {
   allYears: 'toutes les années',
   filters: {
     annee: {
-      label: 'Année',
       hint: 'Vide : toutes les années',
     },
   },
@@ -48,12 +47,10 @@ export default {
     summaryEmpty: "Aucun bilan à représenter.",
     summaryEntry: '{date} — effectif {effectif}, réussite {reussite}, masse salariale {masse} GNF',
     datasets: {
-      effectif: 'Effectif',
       tauxReussite: 'Taux de réussite (%)',
       masseSalariale: 'Masse salariale (GNF)',
     },
     axis: {
-      effectif: 'Effectif',
       taux: 'Taux %',
       gnf: 'GNF',
     },
@@ -64,8 +61,6 @@ export default {
     filteredOn: 'filtré sur {annee}',
     columns: {
       genereLe: 'Généré le',
-      annee: 'Année',
-      effectif: 'Effectif',
       taux: 'Taux',
       masse: 'Masse salariale (GNF)',
       generePar: 'Par',
@@ -75,13 +70,9 @@ export default {
   },
   csv: {
     headers: {
-      date: 'Date',
-      annee: 'Année',
-      effectif: 'Effectif',
       tauxReussite: 'Taux réussite',
       masseSalariale: 'Masse salariale',
       moisMasse: 'Mois masse',
-      enseignants: 'Enseignants',
       vacataires: 'Vacataires',
       reclamations: 'Réclamations',
       incidents24h: 'Incidents 24h',

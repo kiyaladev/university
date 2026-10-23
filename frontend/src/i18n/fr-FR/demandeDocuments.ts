@@ -21,18 +21,10 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (N°, motif, matricule…)',
-    status: 'Statut',
-    type: 'Type',
-    student: 'Étudiant',
   },
   table: {
     columns: {
-      numero: 'N°',
-      type: 'Type',
-      student: 'Étudiant',
       frais: 'Frais',
-      status: 'Statut',
-      createdOn: 'Créée le',
       actions: '',
     },
     paymentConfirmed: 'Paiement confirmé',
@@ -47,35 +39,25 @@ export default {
     startProcessing: 'Lancer le traitement',
     markReady: 'Marquer prête',
     handOver: 'Remettre',
-    reject: 'Rejeter',
-    detail: 'Détail',
   },
   cardActions: {
-    confirm: 'Confirmer',
     process: 'Traiter',
     ready: 'Prête',
   },
   steps: {
-    payment: 'Paiement',
     paid: 'Payée',
     processing: 'Traitement',
     ready: 'Prête',
     handedOver: 'Remise',
   },
   detail: {
-    student: 'Étudiant',
     theirCard: 'Sa carte',
     enrollment: 'Inscription',
     fees: 'Frais',
-    payment: 'Paiement',
     paymentNotStarted: 'Non initié',
     processedBy: 'Traitée par',
-    createdOn: 'Créée le',
     handedOverOn: 'Remise le',
-    motif: 'Motif',
-    notes: 'Notes',
     smsNotification: 'Notification SMS',
-    close: 'Fermer',
   },
   createDialog: {
     title: 'Nouvelle demande de document',
@@ -104,7 +86,6 @@ export default {
   rejectDialog: {
     title: 'Rejeter la demande',
     message: 'Motif du rejet (obligatoire) :',
-    confirm: 'Rejeter',
   },
   messages: {
     forbidden: "Vous n'avez pas accès à cette section.",

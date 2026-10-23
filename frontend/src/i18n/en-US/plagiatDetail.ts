@@ -29,7 +29,6 @@ export default {
     noText: 'No extracted text to compare.',
   },
   decision: {
-    title: 'Decision',
     alreadyTaken: 'Decision already made — the suspicion can no longer be modified.',
     acquit: 'Acquit the suspicion',
     confirm: 'Confirm plagiarism',

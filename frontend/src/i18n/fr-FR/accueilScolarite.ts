@@ -6,6 +6,5 @@ export default {
   "documentsToProcess": "Documents à traiter",
   "documentsToDeliver": "Documents prêts à remettre",
   "empty": "Aucune inscription payée en attente de validation",
-  "refresh": "Actualiser",
   "error": "Certains dossiers n’ont pas pu être chargés"
 };

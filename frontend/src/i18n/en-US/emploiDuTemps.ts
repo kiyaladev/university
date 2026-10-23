@@ -26,10 +26,7 @@ export default {
   },
   filters: {
     promotion: 'Class',
-    teacher: 'Teacher',
-    room: 'Room',
     reloadAria: 'Reload the timetable',
-    reloadTooltip: 'Reload',
   },
   summary: {
     slots: 'Slots',

@@ -93,7 +93,7 @@
               </q-item>
               <q-item clickable v-close-popup @click="deconnexion">
                 <q-item-section avatar><q-icon name="logout" /></q-item-section>
-                <q-item-section>{{ t('layout.logout') }}</q-item-section>
+                <q-item-section>{{ t('common.actions.logout') }}</q-item-section>
               </q-item>
             </q-list>
           </q-menu>
@@ -162,7 +162,7 @@
           <q-input v-model="nouveau" type="password" :label="t('layout.newPassword')" outlined dense />
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="t('layout.cancel')" v-close-popup />
+          <q-btn flat :label="t('common.actions.cancel')" v-close-popup />
           <q-btn color="primary" :label="t('layout.confirm')" :loading="enregistrement" @click="changerMotDePasse" />
         </q-card-actions>
       </q-card>

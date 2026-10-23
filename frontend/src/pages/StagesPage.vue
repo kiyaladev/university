@@ -44,7 +44,7 @@
             dense
             outlined
             clearable
-            :label="$t('stages.filters.type')"
+            :label="$t('common.fields.type')"
           />
           <autocomplete-async
             v-model="filtresTravaux.encadrantId"
@@ -118,7 +118,7 @@
             <actions-secondaires>
               <q-btn v-close-popup
                 v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-                flat dense no-caps icon="edit" :label="$t('stages.table.actions.editTooltip')" @click="ouvrirEdition(p.row)"
+                flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrirEdition(p.row)"
               />
               <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
               <q-btn v-close-popup
@@ -131,7 +131,7 @@
               <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
                 :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
               <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-                flat dense no-caps color="negative" icon="delete" :label="$t('stages.table.actions.deleteTooltip')" @click="supprimer(p.row)" />
+                flat dense no-caps color="negative" icon="delete" :label="$t('common.actions.delete')" @click="supprimer(p.row)" />
             </actions-secondaires>
           </q-card-actions>
     </q-card></div>
@@ -221,7 +221,7 @@
             <actions-secondaires>
               <q-btn v-close-popup
                 v-if="peutCreer && ['PROPOSE', 'VALIDE', 'EN_COURS'].includes(p.row.statut)"
-                flat dense no-caps icon="edit" :label="$t('stages.table.actions.editTooltip')" @click="ouvrirEdition(p.row)"
+                flat dense no-caps icon="edit" :label="$t('common.actions.edit')" @click="ouvrirEdition(p.row)"
               />
               <q-btn v-close-popup flat dense no-caps icon="print" :label="$t('stages.table.actions.print')" @click="imprimer(p.row)" />
               <q-btn v-close-popup
@@ -234,7 +234,7 @@
               <q-btn v-close-popup v-if="peutConstatJury(p.row)" flat dense no-caps color="deep-purple" icon="fact_check"
                 :label="$t('stages.table.actions.juryReport')" @click="ouvrirJury(p.row)" />
               <q-btn v-close-popup v-if="auth.estAdmin && ['PROPOSE', 'VALIDE'].includes(p.row.statut)"
-                flat dense no-caps color="negative" icon="delete" :label="$t('stages.table.actions.deleteTooltip')" @click="supprimer(p.row)" />
+                flat dense no-caps color="negative" icon="delete" :label="$t('common.actions.delete')" @click="supprimer(p.row)" />
             </actions-secondaires>
           </q-td>
         </template>
@@ -383,7 +383,7 @@
         <q-card-section v-if="detail">
           <q-list dense>
             <q-item>
-              <q-item-section>{{ $t('stages.detail.fields.type') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.type') }}</q-item-section>
               <q-item-section side>{{ LIBELLE_TYPE_ENCADREMENT[detail.type] }}</q-item-section>
             </q-item>
             <q-item>
@@ -395,7 +395,7 @@
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('stages.detail.fields.student') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.student') }}</q-item-section>
               <q-item-section side>
                 {{ detail.etudiant?.nom }} {{ detail.etudiant?.prenom }}
                 ({{ detail.etudiant?.matricule }})
@@ -420,7 +420,7 @@
               <q-item-section side>{{ detail.lieu ?? '—' }}</q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('stages.detail.fields.period') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.period') }}</q-item-section>
               <q-item-section side>
                 {{ dateLisible(detail.dateDebut) }} → {{ dateLisible(detail.dateFin) }}
               </q-item-section>
@@ -440,7 +440,7 @@
               </q-item-section>
             </q-item>
             <q-item>
-              <q-item-section>{{ $t('stages.detail.fields.status') }}</q-item-section>
+              <q-item-section>{{ $t('common.fields.status') }}</q-item-section>
               <q-item-section side>
                 <q-chip :color="couleurStatut(detail.statut)" text-color="white" dense square>
                   {{ LIBELLE_STATUT_ENCADREMENT[detail.statut] }}
@@ -450,7 +450,7 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat :label="$t('stages.actions.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -586,10 +586,10 @@ const BOUTONS_PAR_STATUT = computed<Record<StatutEncadrement, BoutonTransition[]
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'intitule', label: t('stages.table.columns.work'), field: 'intitule', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('stages.table.columns.student'), field: 'etudiantId', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiantId', align: 'left' },
   { name: 'encadrant', label: t('stages.table.columns.supervisor'), field: 'encadrantId', align: 'left' },
-  { name: 'periode', label: t('stages.table.columns.period'), field: 'dateDebut', align: 'left' },
-  { name: 'statut', label: t('stages.table.columns.status'), field: 'statut', align: 'left' },
+  { name: 'periode', label: t('common.fields.period'), field: 'dateDebut', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'rapport', label: t('stages.table.columns.report'), field: 'rapportRendu', align: 'center' },
   { name: 'soutenance', label: t('stages.table.columns.defense'), field: 'soutenance', align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
@@ -737,7 +737,7 @@ function supprimer(travail: TravailEncadre) {
   void supprimerAvecConfirmation(`/travaux-encadres/${travail.id}`, travail.intitule, charger, {
     titre: t('stages.dialogs.delete.title'),
     message: t('stages.dialogs.delete.message', { title: travail.intitule }),
-    ok: t('stages.dialogs.delete.confirm'),
+    ok: t('common.actions.delete'),
     succes: t('stages.notifications.deleted'),
   });
 }

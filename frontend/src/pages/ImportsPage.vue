@@ -44,7 +44,7 @@
             color="primary"
             no-caps
             icon="fact_check"
-            :label="t('imports.preview')"
+            :label="t('common.actions.preview')"
             :loading="chargement === 'preview'"
             :disable="!type || !fichier || !!chargement"
             @click="previsualiser"
@@ -122,7 +122,7 @@
       <template #avatar><q-icon name="task_alt" /></template>
       {{ t('imports.done', { count: rapport.importees }) }}
       <span v-if="rapport.rejetees"> · {{ t('imports.rejected') }} : {{ rapport.rejetees }}</span>
-      <template #action><q-btn flat round icon="close" :aria-label="t('common.close')" @click="rapport = null" /></template>
+      <template #action><q-btn flat round icon="close" :aria-label="t('common.actions.close')" @click="rapport = null" /></template>
       <div v-if="rapport.erreurs.length" class="q-mt-sm">
         <div v-for="item in rapport.erreurs" :key="item.numero">
           {{ t('imports.line') }} {{ item.numero }} : {{ item.erreurs.join(' · ') }}

@@ -95,7 +95,7 @@ async function soumettre() {
     :titre="titre"
     taille="m"
     :envoi="enregistrement"
-    :libelle-valider="enEdition ? $t('elections.dialogs.electionForm.save') : $t('elections.dialogs.electionForm.create')"
+    :libelle-valider="enEdition ? $t('common.actions.save') : $t('elections.dialogs.electionForm.create')"
     @valider="soumettre"
   >
     <div class="q-gutter-md">

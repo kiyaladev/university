@@ -7,12 +7,9 @@ export default {
     bulletins: 'Bulletins',
     issue: 'Émettre une attestation',
     qr: 'QR',
-    print: 'Imprimer',
-    revoke: 'Révoquer',
   },
   issueDialog: {
     subtitle: "Document officiel vérifiable par QR code — la même année, le même type et le même étudiant ne donnent qu'une attestation active.",
-    student: 'Étudiant *',
     studentHint: 'Tapez au moins 2 lettres : nom, prénom ou matricule',
     studentEmpty: 'Aucun étudiant trouvé',
     type: "Type d'attestation *",
@@ -26,8 +23,6 @@ export default {
   filters: {
     searchPlaceholder: 'Rechercher (numéro, nom, matricule)…',
     type: 'Type de document',
-    status: 'Statut',
-    academicYear: 'Année académique',
     promotion: 'Promotion',
     searchChip: '« {value} »',
     typeChip: 'Type : {value}',
@@ -37,13 +32,8 @@ export default {
   },
   table: {
     columns: {
-      numero: 'N°',
-      type: 'Type',
-      student: 'Étudiant',
       parcours: 'Année / promotion',
-      status: 'Statut',
       verifications: 'Vérifications',
-      issuedOn: 'Émise le',
     },
   },
   actionsColumn: {
@@ -69,7 +59,6 @@ export default {
     issuedOnBy: 'Émise le {date} par {who}',
     revokedOnBy: 'Révoquée le {date} — {motif}',
     matricule: '— matricule {matricule}',
-    close: 'Fermer',
   },
   revocation: {
     title: 'Révoquer {numero}',

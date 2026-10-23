@@ -17,10 +17,6 @@ export default {
     recherche: '« {q} »',
   },
   common: {
-    tooltip: {
-      edit: 'Modifier',
-      delete: 'Supprimer',
-    },
     status: {
       active: 'Active',
       inactive: 'Inactive',
@@ -38,10 +34,7 @@ export default {
     },
     table: {
       columns: {
-        code: 'Code',
-        nom: 'Nom',
         ville: 'Ville',
-        capacite: 'Capacité',
         responsable: 'Responsable',
         statut: 'État',
       },
@@ -78,7 +71,6 @@ export default {
       delete: {
         title: 'Supprimer la résidence',
         message: 'Supprimer définitivement {nom} ({code}) ?',
-        confirm: 'Supprimer',
       },
       deleted: 'Résidence supprimée',
     },
@@ -91,17 +83,12 @@ export default {
     filters: {
       placeholder: 'Rechercher (code de chambre…)',
       residence: 'Résidence',
-      categorie: 'Catégorie',
-      statut: 'Statut',
     },
     table: {
       columns: {
-        code: 'Code',
         residence: 'Résidence',
-        categorie: 'Catégorie',
         lits: 'Lits',
         loyer: 'Loyer',
-        statut: 'Statut',
       },
       aria: {
         voirAttributions: 'Voir les attributions de cette chambre',
@@ -128,14 +115,12 @@ export default {
         categoryLabel: 'Catégorie *',
         statusLabel: 'Statut *',
         monthlyRent: 'Loyer par mois',
-        currency: 'Devise',
         currencyHint: 'Facturation future via Mobile Money (module paiement)',
         saved: 'Chambre enregistrée',
       },
       delete: {
         title: 'Supprimer la chambre',
         message: 'Supprimer définitivement la chambre {code} ?',
-        confirm: 'Supprimer',
       },
       deleted: 'Chambre supprimée',
     },
@@ -156,18 +141,13 @@ export default {
       saved: 'Demande enregistrée — chambre réservée',
     },
     filters: {
-      annee: 'Année',
-      statut: 'Statut',
       residence: 'Résidence',
       etudiant: 'Recherche étudiant (matricule, nom)',
     },
     table: {
       columns: {
         demandeLe: 'Demandé le',
-        etudiant: 'Étudiant',
         chambre: 'Chambre',
-        score: 'Score',
-        statut: 'Statut',
       },
       aria: {
         decider: "Décider de l'attribution",
@@ -176,7 +156,6 @@ export default {
       },
       tooltip: {
         decider: 'Décider',
-        retirer: 'Retirer',
         voirEtudiant: "Voir l'étudiant",
       },
     },
@@ -190,13 +169,10 @@ export default {
       score: 'Score :',
       decider: 'Décider',
       deciderTooltip: 'Accorder ou refuser',
-      retirer: 'Retirer',
       retirerTooltip: "Retirer l'attribution",
-      etudiant: 'Étudiant',
       etudiantTooltip: "Voir la fiche de l'étudiant",
     },
     chips: {
-      anneeFallback: 'Année',
       residence: 'Résidence : {code}',
       etudiant: 'Étudiant : {etudiant}',
     },
@@ -212,7 +188,6 @@ export default {
         statutOccupee: 'OCCUPÉE',
         statutLibre: 'LIBRE',
         motifLabel: 'Motif (optionnel)',
-        cancel: 'Annuler',
         accorder: 'Accorder',
         refuser: 'Refuser',
       },
@@ -220,12 +195,10 @@ export default {
         title: 'Retirer l’attribution',
         message: 'Retirer l’attribution de {etudiant} pour la chambre {code} ({residence}) ?',
         motifLabel: 'Motif du retrait (facultatif)',
-        confirm: 'Retirer',
       },
       etudiantDetail: {
         chambreLine: '\nChambre : {code} ({residence})',
         message: 'Matricule : {matricule}\nTéléphone : {telephone}\nE-mail : {email}{chambre}',
-        close: 'Fermer',
       },
       accorded: 'Attribution accordée — chambre occupée',
       refused: 'Demande refusée',

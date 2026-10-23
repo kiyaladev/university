@@ -7,7 +7,7 @@
       dense
       no-caps
       icon="login"
-      :label="$t('formationsPubliques.connexion')"
+      :label="$t('common.actions.login')"
       to="/connexion"
       class="vitrine__connexion"
     />
@@ -73,7 +73,7 @@
 
           <dl class="carte-formation__details">
             <div v-if="f.dureeHeures">
-              <dt class="pochoir">{{ $t('formationsPubliques.catalogue.card.duree') }}</dt>
+              <dt class="pochoir">{{ $t('common.fields.duration') }}</dt>
               <dd class="chiffres">{{ $t('formationsPubliques.catalogue.card.dureeValeur', { n: f.dureeHeures }) }}</dd>
             </div>
             <div v-if="f.dateDebut || f.dateFin">
@@ -120,7 +120,7 @@
           </div>
         </q-card-section>
         <q-card-section v-if="etape === 1">
-          <span class="section-titre">{{ $t('formationsPubliques.dialog.step1.identite') }}</span>
+          <span class="section-titre">{{ $t('common.fields.identity') }}</span>
           <q-input
             v-model="form.nomComplet"
             outlined
@@ -165,7 +165,7 @@
               <span class="recapitulatif__valeur">{{ form.nomComplet }}</span>
             </div>
             <div class="recapitulatif__ligne">
-              <span class="pochoir">{{ $t('formationsPubliques.dialog.step2.telephone') }}</span>
+              <span class="pochoir">{{ $t('common.fields.phone') }}</span>
               <span class="recapitulatif__valeur chiffres">{{ form.telephone }}</span>
             </div>
             <div class="recapitulatif__ligne">
@@ -218,7 +218,7 @@
 
         <q-card-actions align="right">
           <template v-if="etape === 1">
-            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step1.fermer')" v-close-popup />
+            <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
             <q-btn
               color="primary"
               unelevated
@@ -244,7 +244,7 @@
             />
           </template>
           <template v-else>
-            <q-btn flat no-caps :label="$t('formationsPubliques.dialog.step3.fermer')" v-close-popup @click="fermer" />
+            <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup @click="fermer" />
             <q-btn
               color="primary"
               unelevated

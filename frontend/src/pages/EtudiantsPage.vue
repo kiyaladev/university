@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('etudiants.title')" :subtitle="$t('etudiants.subtitle')">
+    <page-header :title="$t('common.fields.students')" :subtitle="$t('etudiants.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutGerer"
@@ -36,7 +36,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('etudiants.filters.status')"
+          :label="$t('common.fields.status')"
         />
         <q-select
           v-model="filtres.sexe"
@@ -74,7 +74,7 @@
                 outline
                 no-caps
                 icon="refresh"
-                :label="$t('etudiants.actions.resetFilters')"
+                :label="$t('common.actions.reset_filters')"
                 @click="reinitialiser"
               />
               <q-btn
@@ -259,7 +259,7 @@
               :color="e.actif ? 'positive' : 'grey-7'"
               :icon="e.actif ? 'check_circle' : 'remove_circle'"
               dense
-              :label="e.actif ? $t('etudiants.cards.active') : $t('etudiants.cards.inactive')"
+              :label="e.actif ? $t('common.fields.active') : $t('etudiants.cards.inactive')"
             />
             <q-chip v-if="e.sexe" dense outline color="primary">
               {{ e.sexe === 'F' ? $t('etudiants.options.gender.female') : $t('etudiants.options.gender.male') }}
@@ -295,7 +295,7 @@
             color="primary"
             icon="how_to_reg"
             no-caps
-            :label="$t('etudiants.actions.inscriptions')"
+            :label="$t('common.fields.enrollments')"
             @click="allerAuxInscriptions(e)"
           />
 <actions-secondaires>
@@ -305,7 +305,7 @@
             dense
             icon="edit"
             no-caps
-            :label="$t('etudiants.actions.edit')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(e)"
           />
 <q-btn v-close-popup
@@ -315,7 +315,7 @@
             color="primary"
             icon="payments"
             no-caps
-            :label="$t('etudiants.actions.paiements')"
+            :label="$t('common.fields.payments')"
             @click="allerAuxPaiements(e)"
           />
 <q-btn v-close-popup
@@ -349,7 +349,7 @@
               outline
               no-caps
               icon="refresh"
-              :label="$t('etudiants.actions.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -392,7 +392,7 @@
               {{ etudiantInscriptions?.matricule }}
             </div>
           </div>
-          <q-btn flat round dense icon="close" :aria-label="$t('etudiants.dialogInscriptions.closeAria')" v-close-popup />
+          <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" v-close-popup />
         </q-card-section>
         <q-card-section class="q-pt-none">
           <q-linear-progress v-if="chargementInscriptions" indeterminate color="primary" class="q-mb-sm" />
@@ -450,7 +450,7 @@
           </q-table>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('etudiants.actions.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
           <q-btn
             v-if="peutValiderVoir && etudiantInscriptions"
             unelevated
@@ -574,19 +574,19 @@ const colonnes = computed<QTableColumn[]>(() => [
   { name: 'nom', label: t('etudiants.table.columns.name'), field: 'nom', align: 'left', sortable: true },
   { name: 'sexe', label: t('etudiants.table.columns.gender'), field: 'sexe', align: 'left' },
   { name: 'promotion', label: t('etudiants.table.columns.promotion'), field: 'promotion', align: 'left' },
-  { name: 'telephone', label: t('etudiants.table.columns.phone'), field: 'telephone', align: 'left' },
-  { name: 'email', label: t('etudiants.table.columns.email'), field: 'email', align: 'left' },
+  { name: 'telephone', label: t('common.fields.phone'), field: 'telephone', align: 'left' },
+  { name: 'email', label: t('common.fields.emailShort'), field: 'email', align: 'left' },
   { name: 'comptes', label: t('etudiants.table.columns.account'), field: 'comptes', align: 'center' },
-  { name: 'inscriptions', label: t('etudiants.table.columns.inscriptions'), field: 'inscriptions', align: 'right', sortable: true },
-  { name: 'actif', label: t('etudiants.table.columns.active'), field: 'actif', align: 'center' },
+  { name: 'inscriptions', label: t('common.fields.enrollments'), field: 'inscriptions', align: 'right', sortable: true },
+  { name: 'actif', label: t('common.fields.active'), field: 'actif', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
 const colonnesInscriptions = computed<QTableColumn[]>(() => [
-  { name: 'numero', label: t('etudiants.dialogInscriptions.columns.number'), field: 'numero', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left' },
   { name: 'promotion', label: t('etudiants.dialogInscriptions.columns.promotion'), field: (r) => r.promotion?.nom ?? '—', align: 'left' },
-  { name: 'annee', label: t('etudiants.dialogInscriptions.columns.year'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
-  { name: 'statut', label: t('etudiants.dialogInscriptions.columns.status'), field: 'statut', align: 'left' },
+  { name: 'annee', label: t('common.fields.year'), field: (r) => r.annee?.libelle ?? '—', align: 'left' },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left' },
   { name: 'montant', label: t('etudiants.dialogInscriptions.columns.amount'), field: 'montantFrais', align: 'right' },
   { name: 'date', label: t('etudiants.dialogInscriptions.columns.date'), field: (r) => dateLisible(r.createdAt), align: 'left' },
   { name: 'actions', label: '', field: 'id', align: 'right' },

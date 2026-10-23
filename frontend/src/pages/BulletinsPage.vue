@@ -37,7 +37,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('bulletins.filters.annee')"
+          :label="$t('common.fields.academicYear')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -244,7 +244,7 @@
                 dense
                 no-caps
                 icon="picture_as_pdf"
-                :label="$t('bulletins.cards.imprimer')"
+                :label="$t('common.actions.print')"
                 :disable="!l.deliberationId"
                 @click.stop="imprimerUn(l)"
               />
@@ -412,10 +412,10 @@ const chips = computed(() => {
 });
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'matricule', label: t('bulletins.table.columns.matricule'), field: 'matricule', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('bulletins.table.columns.etudiant'), field: (r) => `${r.nom} ${r.prenom}`, align: 'left', sortable: true },
+  { name: 'matricule', label: t('common.fields.studentId'), field: 'matricule', align: 'left', sortable: true },
+  { name: 'etudiant', label: t('common.fields.student'), field: (r) => `${r.nom} ${r.prenom}`, align: 'left', sortable: true },
   { name: 'moyenne', label: t('bulletins.table.columns.moyenne'), field: 'moyenne', align: 'center', sortable: true },
-  { name: 'decision', label: t('bulletins.table.columns.decision'), field: 'decision', align: 'center' },
+  { name: 'decision', label: t('common.fields.decision'), field: 'decision', align: 'center' },
   { name: 'mention', label: t('bulletins.table.columns.mention'), field: (r) => r.mention ?? '—', align: 'left' },
   { name: 'rang', label: t('bulletins.table.columns.rang'), field: 'rang', align: 'center', sortable: true },
   { name: 'actions', label: '', field: 'inscriptionId', align: 'right' },

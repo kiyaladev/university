@@ -6,14 +6,9 @@ export default {
   actions: {
     newSheet: 'Nouvelle feuille',
     reload: 'Recharger',
-    recalculate: 'Recalculer',
-    validate: 'Valider',
     markPaid: 'Marquer payée',
-    print: 'Imprimer',
     printSheet: 'Imprimer la feuille (A4)',
     delete: 'Supprimer',
-    close: 'Fermer',
-    clearFilters: 'Retirer les filtres',
     createFirst: 'Créer la première feuille',
   },
   links: {
@@ -31,8 +26,6 @@ export default {
     },
   },
   filters: {
-    statut: 'Statut',
-    annee: 'Année',
     statutChip: 'Statut : {value}',
     anneeChip: 'Année : {value}',
   },
@@ -45,13 +38,10 @@ export default {
   table: {
     columns: {
       libelle: 'Feuille',
-      periode: 'Période',
-      statut: 'Statut',
       lignes: 'Lignes',
       montantTotal: 'Montant total (GNF)',
     },
     lignesColumns: {
-      enseignant: 'Enseignant',
       taux: 'Taux horaire (GNF)',
       heures: 'Heures réalisées',
       volume: 'Volume prévu',
@@ -66,13 +56,11 @@ export default {
     lignesCount: '{count} ligne(s)',
   },
   tooltips: {
-    reload: 'Recharger',
     detail: 'Détail des lignes',
     recalculate: 'Recalculer les heures contrôlées',
     validate: 'Valider et figer les montants',
     markPaid: 'Marquer payée',
     print: 'Imprimer la feuille (A4)',
-    delete: 'Supprimer',
   },
   ariaLabels: {
     reload: 'Recharger les feuilles de paie',

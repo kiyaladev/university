@@ -51,7 +51,7 @@
         <autocomplete-async
           v-model="filtres.matiereId"
           endpoint="/matieres"
-          :label="$t('examens.filters.subject')"
+          :label="$t('common.fields.subject')"
           :label-fn="(m) => `${m.code} — ${m.intitule}`"
         />
         <autocomplete-async
@@ -63,7 +63,7 @@
         <autocomplete-async
           v-model="filtres.anneeId"
           endpoint="/referentiel/annees"
-          :label="$t('examens.filters.academicYear')"
+          :label="$t('common.fields.academicYear')"
           :label-fn="(a) => a.libelle"
         />
         <champ-date v-model="filtres.dateDebut" :label="$t('examens.filters.dateFrom')" />
@@ -223,7 +223,7 @@
               no-caps
               icon="play_arrow"
               color="positive"
-              :label="$t('examens.actions.start')"
+              :label="$t('common.actions.start')"
               @click.stop="demarrer(e)"
             />
 <actions-secondaires>
@@ -302,15 +302,15 @@
         <q-card-section v-if="examenFiche" class="q-pt-none">
           <div class="row q-col-gutter-md text-caption">
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">{{ $t('examens.sheet.date') }}</div>
+              <div class="text-grey-7">{{ $t('common.fields.date') }}</div>
               <div class="text-weight-medium">{{ dateLisible(examenFiche.dateExamen) }}</div>
             </div>
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">{{ $t('examens.sheet.schedule') }}</div>
+              <div class="text-grey-7">{{ $t('common.fields.schedule') }}</div>
               <div class="text-weight-medium">{{ examenFiche.heureDebut }}–{{ examenFiche.heureFin }}</div>
             </div>
             <div class="col-6 col-sm-3">
-              <div class="text-grey-7">{{ $t('examens.sheet.room') }}</div>
+              <div class="text-grey-7">{{ $t('common.fields.room') }}</div>
               <div class="text-weight-medium">{{ examenFiche.salle?.code ?? '—' }}</div>
             </div>
             <div class="col-6 col-sm-3">
@@ -373,7 +373,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat :label="$t('examens.actions.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -517,15 +517,15 @@ const messageVide = computed(() =>
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'codeExamen', label: t('examens.table.columns.code'), field: 'codeExamen', align: 'left', sortable: true },
-  { name: 'intitule', label: t('examens.table.columns.title'), field: 'intitule', align: 'left' },
-  { name: 'type', label: t('examens.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'codeExamen', label: t('common.fields.code'), field: 'codeExamen', align: 'left', sortable: true },
+  { name: 'intitule', label: t('common.fields.intitule'), field: 'intitule', align: 'left' },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   { name: 'creneau', label: t('examens.table.columns.slot'), field: 'dateExamen', align: 'left', sortable: true },
-  { name: 'matiere', label: t('examens.table.columns.subject'), field: (r: Examen) => r.matiere?.intitule ?? '—', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: (r: Examen) => r.matiere?.intitule ?? '—', align: 'left' },
   { name: 'promotion', label: t('examens.table.columns.promotion'), field: (r: Examen) => r.promotion?.nom ?? '—', align: 'left' },
-  { name: 'salle', label: t('examens.table.columns.room'), field: (r: Examen) => r.salle?.code ?? '—', align: 'left' },
+  { name: 'salle', label: t('common.fields.room'), field: (r: Examen) => r.salle?.code ?? '—', align: 'left' },
   { name: 'presence', label: t('examens.table.columns.present'), field: 'nbPresents', align: 'right' },
-  { name: 'statut', label: t('examens.table.columns.status'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'actions', label: '', field: 'id', align: 'right' },
 ]);
 
@@ -533,8 +533,8 @@ const colonnesScans = computed<QTableColumn[]>(() => [
   { name: 'heure', label: t('examens.scansTable.columns.time'), field: (r: ScanExamen) => dateHeureLisible(r.heureScan), align: 'left' },
   { name: 'porteur', label: t('examens.scansTable.columns.holder'), field: (r: ScanExamen) => `${r.prenomPorteur ?? ''} ${r.nomPorteur ?? ''}`.trim() || '—', align: 'left' },
   { name: 'matricule', label: t('examens.scansTable.columns.registrationNumber'), field: (r: ScanExamen) => r.matriculeSaisi ?? '—', align: 'left' },
-  { name: 'valide', label: t('examens.scansTable.columns.result'), field: 'valide', align: 'left' },
-  { name: 'scanneur', label: t('examens.scansTable.columns.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
+  { name: 'valide', label: t('common.fields.result'), field: 'valide', align: 'left' },
+  { name: 'scanneur', label: t('common.fields.operator'), field: (r: ScanExamen) => (r.scanneur ? `${r.scanneur.prenom} ${r.scanneur.nom}` : '—'), align: 'left' },
 ]);
 
 function couleurStatut(s: string) {
@@ -612,7 +612,7 @@ async function demarrer(e: Examen) {
   const ok = await confirmer({
     titre: t('examens.confirm.startTitle'),
     message: t('examens.confirm.startMessage', { code: e.codeExamen, title: e.intitule }),
-    ok: t('examens.confirm.startAction'),
+    ok: t('common.actions.start'),
   });
   if (ok) await changerStatut(e, 'demarrer', 'EN_COURS', t('examens.messages.started'));
 }

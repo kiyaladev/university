@@ -6,7 +6,6 @@ export default {
   allYears: 'all years',
   filters: {
     annee: {
-      label: 'Year',
       hint: 'Empty: all years',
     },
   },
@@ -48,12 +47,10 @@ export default {
     summaryEmpty: "No report to display.",
     summaryEntry: '{date} — headcount {effectif}, success rate {reussite}, payroll {masse} GNF',
     datasets: {
-      effectif: 'Headcount',
       tauxReussite: 'Success rate (%)',
       masseSalariale: 'Payroll (GNF)',
     },
     axis: {
-      effectif: 'Headcount',
       taux: 'Rate %',
       gnf: 'GNF',
     },
@@ -64,8 +61,6 @@ export default {
     filteredOn: 'filtered on {annee}',
     columns: {
       genereLe: 'Generated on',
-      annee: 'Year',
-      effectif: 'Headcount',
       taux: 'Rate',
       masse: 'Payroll (GNF)',
       generePar: 'By',
@@ -75,13 +70,9 @@ export default {
   },
   csv: {
     headers: {
-      date: 'Date',
-      annee: 'Year',
-      effectif: 'Headcount',
       tauxReussite: 'Success rate',
       masseSalariale: 'Payroll',
       moisMasse: 'Payroll month',
-      enseignants: 'Teachers',
       vacataires: 'Part-time staff',
       reclamations: 'Complaints',
       incidents24h: 'Incidents 24h',

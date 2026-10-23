@@ -34,9 +34,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (number, subject, sender, recipient…)',
-    status: 'Status',
-    from: 'From',
-    to: 'To',
     searchChip: '"{value}"',
     statusChip: 'Status: {value}',
   },
@@ -48,13 +45,9 @@ export default {
   },
   table: {
     columns: {
-      numero: 'No.',
       objet: 'Subject',
-      type: 'Type',
       correspondant: 'Sender / Recipient',
-      date: 'Date',
       circuit: 'Routing',
-      statut: 'Status',
     },
     steps: '{count} step(s)',
   },
@@ -63,7 +56,6 @@ export default {
     to: 'To: {value}',
     stamps: '{count} signature(s)',
     print: 'Print the slip',
-    close: 'Close',
   },
   detail: {
     sender: 'Sender: {name}',
@@ -78,7 +70,6 @@ export default {
     stamped: 'Countersignature recorded',
     stampFailed: 'Unable to countersign',
     stampOnStep: 'Countersigning is performed on a workflow step',
-    closeTitle: 'Close',
     closeMessage: 'Close “{number}” and move it to {next}?',
   },
   actionsColumn: {
@@ -100,7 +91,6 @@ export default {
     close: {
       title: 'Close the mail item',
       message: 'Confirm closing "{numero}"? This transition moves it to the archives (FILED → ARCHIVED).',
-      okLabel: 'Close',
     },
   },
   messages: {

@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <page-header :title="$t('inscriptions.title')" :subtitle="$t('inscriptions.subtitle')">
+    <page-header :title="$t('common.fields.enrollments')" :subtitle="$t('inscriptions.subtitle')">
       <template #actions>
         <q-btn
           v-if="peutGerer"
@@ -39,7 +39,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('inscriptions.filters.status')"
+          :label="$t('common.fields.status')"
         />
       </template>
       <template #avances>
@@ -51,7 +51,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('inscriptions.filters.academicYear')"
+          :label="$t('common.fields.academicYear')"
           @update:model-value="filtres.promotionId = null"
         />
         <q-select
@@ -91,7 +91,7 @@
                 outline
                 no-caps
                 icon="refresh"
-                :label="$t('inscriptions.actions.resetFilters')"
+                :label="$t('common.actions.reset_filters')"
                 @click="reinitialiser"
               />
               <q-btn
@@ -302,7 +302,7 @@
             color="positive"
             icon="verified"
             no-caps
-            :label="$t('inscriptions.cards.actions.validate')"
+            :label="$t('common.actions.validate')"
             @click="valider(d)"
           />
 <actions-secondaires>
@@ -311,7 +311,7 @@
             dense
             icon="receipt_long"
             no-caps
-            :label="$t('inscriptions.cards.actions.payments')"
+            :label="$t('common.fields.payments')"
             @click="voirPaiements(d)"
           />
 <q-btn v-close-popup
@@ -321,7 +321,7 @@
             color="negative"
             icon="cancel"
             no-caps
-            :label="$t('inscriptions.cards.actions.cancel')"
+            :label="$t('common.actions.cancel')"
             @click="annuler(d)"
           />
 <q-btn v-close-popup
@@ -338,7 +338,7 @@
             dense
             icon="person"
             no-caps
-            :label="$t('inscriptions.cards.actions.student')"
+            :label="$t('common.fields.student')"
             @click="voirEtudiant(d)"
           />
 </actions-secondaires>
@@ -352,7 +352,7 @@
               outline
               no-caps
               icon="refresh"
-              :label="$t('inscriptions.actions.resetFilters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -424,13 +424,13 @@
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.phone') }}</q-item-label>
+                <q-item-label caption>{{ $t('common.fields.phone') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.telephone ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
             <q-item>
               <q-item-section>
-                <q-item-label caption>{{ $t('inscriptions.studentDialog.email') }}</q-item-label>
+                <q-item-label caption>{{ $t('common.fields.emailShort') }}</q-item-label>
                 <q-item-label>{{ etudiantApercu?.email ?? '—' }}</q-item-label>
               </q-item-section>
             </q-item>
@@ -451,7 +451,7 @@
           </q-list>
         </q-card-section>
         <q-card-actions align="right">
-          <q-btn flat no-caps :label="$t('inscriptions.studentDialog.close')" v-close-popup />
+          <q-btn flat no-caps :label="$t('common.actions.close')" v-close-popup />
           <q-btn
             v-if="etudiantApercu"
             flat
@@ -598,9 +598,9 @@ const optionsStatuts = computed(() =>
 
 const colonnes = computed<QTableColumn[]>(() => [
   { name: 'numero', label: t('inscriptions.table.columns.number'), field: 'numero', align: 'left', sortable: true },
-  { name: 'etudiant', label: t('inscriptions.table.columns.student'), field: 'etudiant', align: 'left' },
+  { name: 'etudiant', label: t('common.fields.student'), field: 'etudiant', align: 'left' },
   { name: 'promotion', label: t('inscriptions.table.columns.promotion'), field: 'promotion', align: 'left' },
-  { name: 'statut', label: t('inscriptions.table.columns.status'), field: 'statut', align: 'left', sortable: true },
+  { name: 'statut', label: t('common.fields.status'), field: 'statut', align: 'left', sortable: true },
   { name: 'montantFrais', label: t('inscriptions.table.columns.fees'), field: 'montantFrais', align: 'right', sortable: true },
   { name: 'paye', label: t('inscriptions.table.columns.paid'), field: 'paye', align: 'right' },
   { name: 'solde', label: t('inscriptions.table.columns.balance'), field: 'solde', align: 'right' },
@@ -717,7 +717,7 @@ async function valider(dossier: Inscription) {
       prenom: dossier.etudiant?.prenom,
       nom: dossier.etudiant?.nom,
     }),
-    ok: t('inscriptions.dialogs.validate.confirm'),
+    ok: t('common.actions.validate'),
   });
   if (!ok) return;
   try {

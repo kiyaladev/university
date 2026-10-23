@@ -2,7 +2,6 @@
 export default {
   actions: {
     verifyAttestation: 'Vérifier une attestation',
-    login: 'Se connecter',
   },
   title: 'Vérification de carte étudiante',
   subtitle:
@@ -16,7 +15,6 @@ export default {
     qrExplanationPrefix: 'Le QR scanné (ou collé) est une URL : ses paramètres',
     qrExplanationAnd: 'et',
     qrExplanationSuffix: 'remplissent le formulaire automatiquement.',
-    verify: 'Vérifier',
   },
   result: {
     valid: 'Carte authentique',
@@ -24,11 +22,8 @@ export default {
     introPrefix: 'La carte',
     introSuffix: "existe bien dans le registre de l'établissement. Mentions vérifiées :",
     table: {
-      student: 'Étudiant',
       cardNumber: 'Numéro de carte',
-      status: 'Statut',
       statusValue: 'Émise — non révoquée, validité en cours',
-      issuedOn: 'Émise le',
       validUntil: "Valable jusqu'au",
     },
     verifiedAt: 'Vérifié le {date} — cette consultation a été enregistrée dans le journal de la carte.',

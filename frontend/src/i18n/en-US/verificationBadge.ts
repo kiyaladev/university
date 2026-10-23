@@ -15,7 +15,6 @@ export default {
     qrHint: 'Scan the badge QR code or enter the code',
     qrParamsHint:
       'The scanned (or pasted) QR code is a URL: its {badge} and {k} parameters fill in the form automatically.',
-    submit: 'Verify',
   },
   result: {
     valid: 'Genuine badge',
@@ -25,9 +24,7 @@ export default {
     table: {
       porteur: 'Holder',
       numero: 'Number',
-      type: 'Type',
       qualite: 'Role',
-      statut: 'Status',
       statutValue: 'Active — not cancelled, currently valid',
       zones: 'Authorized zones',
       delivreLe: 'Issued on',

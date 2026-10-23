@@ -18,7 +18,6 @@ export default {
   broadcast: {
     generalNotice: {
       title: 'General notice',
-      motifLabel: 'Reason',
       recipientsLabel: 'Recipients',
       numbersLabel: 'Numbers, one per line (or comma-separated)',
       numbersInvalid: 'Some numbers look invalid',
@@ -42,7 +41,6 @@ export default {
       avis: 'Notice',
       resultats: 'Results',
       inscription: 'Enrollment',
-      paiement: 'Payment',
       convocation: 'Summons',
       autre: 'Other',
     },
@@ -59,9 +57,6 @@ export default {
   },
   history: {
     searchPlaceholder: 'Search (phone, name, message…)',
-    statutLabel: 'Status',
-    dateFrom: 'From',
-    dateTo: 'To',
     countLabel: '{n} send(s) — {periode}.',
     period: {
       range: 'from {debut} to {fin}',
@@ -82,10 +77,7 @@ export default {
     },
     table: {
       columns: {
-        date: 'Date',
         destinataire: 'Recipient',
-        motif: 'Reason',
-        statut: 'Status',
         message: 'Message',
         envoyePar: 'Sent by',
       },
@@ -97,7 +89,6 @@ export default {
       detail: 'The register keeps a trace of every SMS sent from UniPrésence.',
       noneMatchFilters: 'None match the current filters.',
       startBroadcast: 'Send a notice from the Broadcast tab to get started.',
-      clearFilters: 'Clear filters',
       goToBroadcast: 'Go to broadcast',
     },
   },

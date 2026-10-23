@@ -1,12 +1,10 @@
 /** Namespace `paiements` — Payments page. */
 export default {
-  title: 'Payments',
   subtitle:
     'Mobile Money, cash and transfer collections: the accountant confirms the operator transactions, every operation is tracked.',
   actions: {
     new: 'New payment',
     viewAll: 'View all payments',
-    resetFilters: 'Reset filters',
   },
   kpis: {
     totalCollected: 'Total collected',
@@ -17,13 +15,9 @@ export default {
     'Based on the {count} payment{plural} shown{plural} out of {total} — use "Load all" to run the calculation on the entire register.',
   filters: {
     searchPlaceholder: 'Search (reference, student name)…',
-    status: 'Status',
     mode: 'Mode',
-    operator: 'Operator',
-    reason: 'Reason',
     reasonPlaceholder: 'Enrollment fees…',
     enrollment: 'Enrollment file',
-    student: 'Student',
     from: 'From',
     to: 'To',
   },
@@ -31,13 +25,8 @@ export default {
     columns: {
       reference: 'Reference',
       source: 'Source',
-      student: 'Student',
       mode: 'Mode / Operator',
-      amount: 'Amount',
-      status: 'Status',
-      reason: 'Reason',
       transaction: 'Transaction',
-      date: 'Date',
     },
     actions: {
       details: 'Transaction details',
@@ -55,14 +44,10 @@ export default {
   },
   cards: {
     mode: 'Mode',
-    amount: 'Amount',
     transaction: 'Transaction: {id}',
-    details: 'Details',
     success: 'Successful',
     failed: 'Failed',
-    cancel: 'Cancel',
     enrollment: 'File',
-    student: 'Student',
     openModule: 'Open {module}',
   },
   sources: {
@@ -97,11 +82,9 @@ export default {
   },
   detail: {
     studentFile: 'Student / file',
-    amount: 'Amount',
     transaction: 'Transaction (operator)',
     transactionNone: 'none — pilot simulation',
     operatorPhone: 'Operator / phone',
-    reason: 'Reason',
     timestamp: 'Timestamp',
     createdBy: 'Recorded by',
     createdByFallback: 'register',
@@ -109,7 +92,6 @@ export default {
     cancelReason: ' · cancelled: {reason}',
   },
   dialogs: {
-    close: 'Close',
     cancelTitle: 'Cancel {reference}',
     cancelSubtitle: 'the payment remains tracked in the register.',
     cancelReasonLabel: 'Cancellation reason *',
@@ -124,7 +106,6 @@ export default {
       enrollment: 'Enrollment file *',
       enrollmentPlaceholder: 'Enter file number or student name…',
       beneficiary: 'Beneficiary',
-      student: 'Student *',
       studentPlaceholder: 'Enter name, first name, or student number…',
       payment: 'Payment',
       mode: 'Payment method *',
@@ -146,7 +127,6 @@ export default {
     message: '{reference} for {amount} — apply the operator response ({outcome})?',
     outcomeSuccess: 'payment received',
     outcomeFailed: 'transaction rejected',
-    confirmLabel: 'Confirm',
   },
   messages: {
     confirmed: 'Payment confirmed',

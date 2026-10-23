@@ -1,11 +1,9 @@
 /** Namespace `inscriptions` — Enrollments page (yearly enrollment records). */
 export default {
-  title: 'Enrollments',
   subtitle:
     'Enrollment records for the year: collect fees via Mobile Money or at the front desk, validate paid records, print certificates.',
   actions: {
     new: 'New enrollment at the desk',
-    resetFilters: 'Reset filters',
   },
   banner: {
     dossiersOf: 'Records for',
@@ -14,18 +12,14 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (record no., student name)…',
-    academicYear: 'Academic year',
     promotion: 'Class',
-    status: 'Status',
     enrolledFrom: 'Enrolled since',
     enrolledUntil: 'until',
   },
   table: {
     columns: {
       number: 'Record no.',
-      student: 'Student',
       promotion: 'Year / Class',
-      status: 'Status',
       fees: 'Fees (GNF)',
       paid: 'Paid (GNF)',
       balance: 'Balance due (GNF)',
@@ -52,11 +46,7 @@ export default {
     balance: 'Balance due',
     actions: {
       collect: 'Collect',
-      payments: 'Payments',
-      validate: 'Validate',
-      cancel: 'Cancel',
       certificate: 'Certificate',
-      student: 'Student',
     },
   },
   emptyState: {
@@ -76,19 +66,15 @@ export default {
     unavailable: 'Student record unavailable.',
     sex: 'Sex',
     birthDate: 'Date of birth',
-    phone: 'Phone',
-    email: 'Email',
     address: 'Address',
     portalAccount: 'Portal account',
     none: 'none',
-    close: 'Close',
     registry: 'Registry',
     hisPayments: 'Their payments',
     editRecord: 'Edit record',
   },
   createDialog: {
     title: 'New enrollment (front desk)',
-    student: 'Student *',
     studentPlaceholder: 'Type a name or student ID…',
     inactive: 'inactive',
     officialFee: 'Official fee',
@@ -102,7 +88,6 @@ export default {
     validate: {
       title: 'Validate the record',
       message: 'Validate {numero} ({prenom} {nom})? The fees are paid, the record becomes final.',
-      confirm: 'Validate',
     },
     cancel: {
       title: 'Cancel the record',

@@ -28,7 +28,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('evaluations.filters.year')"
+          :label="$t('common.fields.academicYear')"
         />
         <q-select
           v-model="filtres.promotionId"
@@ -43,7 +43,7 @@
         <autocomplete-async
           v-model="filtres.matiereId"
           endpoint="/matieres"
-          :label="$t('evaluations.filters.subject')"
+          :label="$t('common.fields.subject')"
           clearable
           :label-fn="(m) => `${m.code} — ${m.intitule}`"
         />
@@ -89,7 +89,7 @@
               outline
               no-caps
               icon="refresh"
-              :label="$t('evaluations.actions.reset_filters')"
+              :label="$t('common.actions.reset_filters')"
               @click="reinitialiser"
             />
             <q-btn
@@ -185,7 +185,7 @@
               {{
                 nombreNotes(p.row) > 0
                   ? $t('evaluations.table.delete_locked')
-                  : $t('evaluations.table.delete')
+                  : $t('common.actions.delete')
               }}
             </q-tooltip>
           </q-btn>
@@ -254,7 +254,7 @@
             dense
             icon="edit"
             no-caps
-            :label="$t('evaluations.cards.edit')"
+            :label="$t('common.actions.edit')"
             @click="ouvrir(e)"
           />
 <q-btn v-close-popup
@@ -263,7 +263,7 @@
             dense
             icon="lock"
             no-caps
-            :label="$t('evaluations.cards.close')"
+            :label="$t('common.actions.closeOut')"
             @click="cloturer(e)"
           />
 <q-btn v-close-popup
@@ -273,7 +273,7 @@
             color="negative"
             icon="delete"
             no-caps
-            :label="$t('evaluations.cards.delete')"
+            :label="$t('common.actions.delete')"
             :disable="nombreNotes(e) > 0"
             @click="supprimer(e)"
           />
@@ -287,7 +287,7 @@
             outline
             no-caps
             icon="refresh"
-            :label="$t('evaluations.actions.reset_filters')"
+            :label="$t('common.actions.reset_filters')"
             @click="reinitialiser"
           />
           <q-btn
@@ -393,7 +393,7 @@
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat :label="$t('evaluations.notes_modal.close')" v-close-popup />
+          <q-btn flat :label="$t('common.actions.close')" v-close-popup />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -551,10 +551,10 @@ const optionsStatuts = computed(() =>
 );
 
 const colonnes = computed<QTableColumn[]>(() => [
-  { name: 'intitule', label: t('evaluations.table.columns.title'), field: 'intitule', align: 'left', sortable: true },
-  { name: 'type', label: t('evaluations.table.columns.type'), field: 'type', align: 'left' },
+  { name: 'intitule', label: t('common.fields.intitule'), field: 'intitule', align: 'left', sortable: true },
+  { name: 'type', label: t('common.fields.type'), field: 'type', align: 'left' },
   { name: 'coefficient', label: t('evaluations.table.columns.coefficient'), field: 'coefficient', align: 'center' },
-  { name: 'matiere', label: t('evaluations.table.columns.subject'), field: (r) => r.matiere?.intitule ?? '—', align: 'left' },
+  { name: 'matiere', label: t('common.fields.subject'), field: (r) => r.matiere?.intitule ?? '—', align: 'left' },
   {
     name: 'promotion',
     label: t('evaluations.table.columns.promotion'),
@@ -562,7 +562,7 @@ const colonnes = computed<QTableColumn[]>(() => [
     align: 'left',
   },
   { name: 'semestre', label: t('evaluations.table.columns.semester'), field: 'semestre', align: 'center' },
-  { name: 'date', label: t('evaluations.table.columns.date'), field: 'date', align: 'left' },
+  { name: 'date', label: t('common.fields.date'), field: 'date', align: 'left' },
   { name: 'statut', label: t('evaluations.table.columns.status'), field: 'statut', align: 'left' },
   { name: 'notes', label: t('evaluations.table.columns.notes'), field: 'id', align: 'center' },
   { name: 'actions', label: '', field: 'id', align: 'right' },
@@ -590,7 +590,7 @@ async function cloturer(e: Evaluation) {
   const ok = await confirmer({
     titre: t('evaluations.dialogs.close_title'),
     message: t('evaluations.dialogs.close_message', { name: e.intitule }),
-    ok: t('evaluations.dialogs.close_confirm'),
+    ok: t('common.actions.closeOut'),
   });
   if (!ok) return;
   try {
@@ -606,7 +606,7 @@ function supprimer(e: Evaluation) {
   void supprimerAvecConfirmation(`/evaluations/${e.id}`, e.intitule, ev.recharger, {
     titre: t('evaluations.dialogs.delete_title'),
     message: t('evaluations.dialogs.delete_message', { name: e.intitule }),
-    ok: t('evaluations.dialogs.delete_confirm'),
+    ok: t('common.actions.delete'),
     succes: t('evaluations.messages.deleted'),
   });
 }
@@ -627,11 +627,11 @@ const notesConsultation = ref<Array<{
 const chargementNotes = ref(false);
 
 const colonnesNotesConsultation = computed<QTableColumn[]>(() => [
-  { name: 'matricule', label: t('evaluations.notes_modal.columns.matricule'), field: 'matricule', align: 'left' },
-  { name: 'numero', label: t('evaluations.notes_modal.columns.number'), field: 'numero', align: 'left' },
+  { name: 'matricule', label: t('common.fields.studentId'), field: 'matricule', align: 'left' },
+  { name: 'numero', label: t('common.fields.numberShort'), field: 'numero', align: 'left' },
   {
     name: 'etudiant',
-    label: t('evaluations.notes_modal.columns.student'),
+    label: t('common.fields.student'),
     field: (r) => `${r.nom} ${r.prenom}`,
     align: 'left',
   },

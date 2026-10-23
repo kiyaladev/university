@@ -5,20 +5,14 @@ export default {
   actions: {
     new: 'Nouvel utilisateur',
     createFirst: 'Créer le premier compte',
-    resetFilters: 'Réinitialiser les filtres',
-    edit: 'Modifier',
     editAria: 'Modifier l’utilisateur',
-    delete: 'Supprimer',
     deleteAria: 'Supprimer l’utilisateur',
     cancel: 'Annuler',
-    save: 'Enregistrer',
     teacherRecord: 'Sa fiche',
     openTeacherRecordAria: 'Ouvrir la fiche enseignant',
   },
   filters: {
     searchPlaceholder: 'Rechercher (nom, prénom, e-mail)…',
-    role: 'Rôle',
-    department: 'Département',
   },
   chips: {
     search: '« {search} »',
@@ -28,11 +22,6 @@ export default {
   table: {
     columns: {
       name: 'Nom & prénom',
-      role: 'Rôle',
-      department: 'Département',
-      phone: 'Téléphone',
-      active: 'Actif',
-      actions: 'Actions',
     },
     you: 'vous',
     activeAccount: 'Compte actif',
@@ -62,7 +51,6 @@ export default {
     passwordInvalid: 'Le mot de passe doit faire au moins 6 caractères',
     sectionRole: 'Rôle et périmètre',
     role: 'Rôle *',
-    phone: 'Téléphone',
     department: 'Département de rattachement',
     teacherRecord: 'Fiche enseignant associée',
     teacherRecordHint: 'Nécessaire pour que l’enseignant voie ses séances',
