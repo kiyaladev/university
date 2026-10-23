@@ -14,6 +14,39 @@ import { creerIndexedDbFaux, creerStockageFaux, jetonPour } from './stockage-out
 const PROPRIETAIRE = 'agent-test';
 const CLE_FILE = 'university_file_pointages';
 const CLE_FILE_PROPRIETAIRE = `${CLE_FILE}_${PROPRIETAIRE}`;
+const BASE_LEGACY = 'unipresence-file-crypto-v1';
+
+/** Écrit une clé de chiffrement dans une base IndexedDB (base de l'appareil). */
+async function ecrireCleDansBase(base: string, proprietaire: string, cle: CryptoKey): Promise<void> {
+  await new Promise<void>((resolve) => {
+    const requete = indexedDB.open(base, 1);
+    requete.onupgradeneeded = () => {
+      if (!requete.result.objectStoreNames.contains('cles'))
+        requete.result.createObjectStore('cles', { keyPath: 'proprietaire' });
+    };
+    requete.onsuccess = () => {
+      const db = requete.result;
+      const tx = db.transaction('cles', 'readwrite');
+      tx.objectStore('cles').put({ proprietaire, cle });
+      tx.oncomplete = () => {
+        db.close();
+        resolve();
+      };
+    };
+  });
+}
+
+/** Chiffre une file avec une clé donnée, comme le fait le service. */
+async function chiffrerAvec(cle: CryptoKey, valeur: unknown): Promise<string> {
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const chiffre = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: nonce },
+    cle,
+    new TextEncoder().encode(JSON.stringify(valeur)),
+  );
+  const enBase64 = (octets: Uint8Array) => Buffer.from(octets).toString('base64');
+  return `upf1:${enBase64(nonce)}:${enBase64(new Uint8Array(chiffre))}`;
+}
 
 beforeEach(async () => {
   vi.stubGlobal('localStorage', creerStockageFaux());
@@ -67,6 +100,40 @@ describe('shared/services/file-chiffree', () => {
     expect(relu).toEqual([{ seanceId: 'ancienne' }]);
     expect(stocke.startsWith('upf1:')).toBe(true);
     expect(stocke).not.toContain('ancienne');
+  });
+
+  it('reprend la clé de chiffrement conservée dans l’ancienne base', async () => {
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
+    localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
+
+    const { lireFileChiffree } = await import('../../src/shared/services/file-chiffree');
+
+    await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [])).resolves.toEqual([
+      { seanceId: 'seance-1' },
+    ]);
+  });
+
+  it('recopie les clés de chiffrement de l’ancienne base puis la retire', async () => {
+    const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    await ecrireCleDansBase(BASE_LEGACY, PROPRIETAIRE, cle);
+    localStorage.setItem(CLE_FILE_PROPRIETAIRE, await chiffrerAvec(cle, [{ seanceId: 'seance-1' }]));
+
+    const { migrerBaseCrypto, lireFileChiffree } = await import('../../src/shared/services/file-chiffree');
+
+    await expect(migrerBaseCrypto()).resolves.toBe(1);
+    const bases = await indexedDB.databases();
+    expect(bases.map((base) => base.name)).not.toContain(BASE_LEGACY);
+    // La file reste déchiffrable : rien n'est perdu.
+    await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [])).resolves.toEqual([
+      { seanceId: 'seance-1' },
+    ]);
   });
 
   it('refuse la lecture d’une file chiffrée par un autre compte', async () => {

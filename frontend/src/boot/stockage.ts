@@ -13,11 +13,15 @@
  */
 import { defineBoot } from '#q-app/wrappers';
 import { migrerCaches, migrerClesLocales } from '@/shared/services/cles-stockage';
+import { migrerBaseCrypto } from '@/shared/services/file-chiffree';
 
 export default defineBoot(async () => {
   // Les clés de stockage sont synchrones : la reprise est faite avant tout
   // le reste, pour qu'aucun service ne lise une clé abandonnée.
   migrerClesLocales();
+  // Les clés de chiffrement de la base renommée sont recopiées, puis
+  // l'ancienne base est retirée : les files déjà écrites restent lisibles.
+  await migrerBaseCrypto();
   // Les caches du service worker ne portent aucune donnée unique.
   await migrerCaches();
 });
