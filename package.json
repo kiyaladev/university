@@ -1,0 +1,19 @@
+{
+  "name": "university",
+  "private": true,
+  "description": "University — scripts de vérification communs. Pas de workspaces : backend/ et frontend/ gardent chacun leur bun.lock.",
+  "packageManager": "bun@1.4.2",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "install:all": "cd backend && bun install && cd ../frontend && bun install",
+    "typecheck": "cd backend && bun run typecheck && cd ../frontend && bun run typecheck",
+    "test": "cd backend && bun run test && cd ../frontend && bun run test:unit",
+    "test:back": "cd backend && bun run test",
+    "test:front": "cd frontend && bun run test:unit",
+    "lint": "cd backend && bun run lint && cd ../frontend && bun run lint",
+    "format:check": "cd backend && bun run format:check; cd ../frontend && bun run format:check",
+    "build:back": "cd backend && bun run build"
+  }
+}

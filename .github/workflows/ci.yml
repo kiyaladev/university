@@ -1,0 +1,77 @@
+# Intégration continue : vérifications seulement, aucun déploiement, aucun secret.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Valeurs factices : prisma generate n'ouvre aucune connexion, et le
+  # postinstall du frontend (quasar prepare) exige une API_URL.
+  DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+  API_URL: https://university-api.naimba.com/api
+  NODE_ENV: test
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      # Les bun.lock (format 3) sont produits par bun 1.4.2. Un `bun install`
+      # lancé avec bun 1.3.x les réécrit en format 1 et aplatit les overrides
+      # imbriqués : ce contrôle le refuse (voir docs/suivi.md).
+      - name: Installation backend
+        working-directory: backend
+        run: bun install --frozen-lockfile
+
+      - name: Installation frontend
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+
+      - name: Prisma generate
+        working-directory: backend
+        run: bunx prisma generate
+
+      - name: Typecheck backend
+        working-directory: backend
+        run: bun run typecheck
+
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: bun run typecheck
+
+      - name: Tests backend (Jest)
+        working-directory: backend
+        run: bun run test
+
+      - name: Tests frontend (Vitest)
+        working-directory: frontend
+        run: bun run test:unit
+
+      # Non bloquant au début : la dette existante ne produit que des avertissements.
+      - name: Lint backend
+        working-directory: backend
+        continue-on-error: true
+        run: bun run lint
+
+      - name: Lint frontend
+        working-directory: frontend
+        continue-on-error: true
+        run: bun run lint
