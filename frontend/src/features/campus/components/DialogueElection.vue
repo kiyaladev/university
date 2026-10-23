@@ -4,8 +4,7 @@ import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
-import { api } from '@/boot/axios';
-import { OPTIONS_TYPE_ELECTION } from '../services/elections';
+import { OPTIONS_TYPE_ELECTION, electionsService, type CorpsElection } from '../services/elections';
 import type { Departement, Election, Promotion, TypeElection } from '@/types';
 
 const $q = useQuasar();
@@ -63,9 +62,7 @@ async function soumettre() {
   }
   enregistrement.value = true;
   try {
-    const url = enEdition.value ? `/elections/${props.election!.id}` : '/elections';
-    const methode = enEdition.value ? 'put' : 'post';
-    const payload: Record<string, unknown> = {
+    const payload: CorpsElection = {
       titre: formulaire.value.titre,
       type: formulaire.value.type,
       dateOuverture: new Date(formulaire.value.dateOuverture).toISOString(),
@@ -76,7 +73,9 @@ async function soumettre() {
     if (formulaire.value.departementId) payload.departementId = formulaire.value.departementId;
     if (formulaire.value.description) payload.description = formulaire.value.description;
     if (formulaire.value.bulletin) payload.bulletin = formulaire.value.bulletin;
-    const { data } = await api[methode](url, payload);
+    const data = enEdition.value
+      ? await electionsService.modifier(props.election!.id, payload)
+      : await electionsService.creer(payload);
     $q.notify({
       type: 'positive',
       message: enEdition.value
