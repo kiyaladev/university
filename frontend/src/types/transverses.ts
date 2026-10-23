@@ -3,14 +3,38 @@
 import type { Departement, Enseignant, Matiere, Promotion } from './referentiels';
 import type { Etudiant } from './registre';
 
-export type StatutCarteEtudiante = 'EMIS' | 'REVOQUE';
+/** Énumérations générées depuis le schéma Prisma (voir `types/generated/enums.ts`). */
+import type {
+  ModeVote,
+  StatutAttestation,
+  StatutBadge,
+  StatutElection,
+  StatutVOD,
+  TypeElection,
+  TypeRessourceVOD,
+} from './generated/enums';
+
+export type {
+  ModeVote,
+  StatutBadge,
+  StatutElection,
+  StatutVOD,
+  TypeElection,
+  TypeRessourceVOD,
+} from './generated/enums';
+
+/**
+ * Statut de la carte étudiante : le modèle `CarteEtudiante` réutilise l'enum
+ * Prisma `StatutAttestation` (EMIS / REVOQUE). Le nom d'usage est conservé
+ * pour ne rien changer aux imports existants.
+ */
+export type StatutCarteEtudiante = StatutAttestation;
+
+/**
+ * Type de badge d'accès : la colonne `BadgeAcces.type` est une chaîne libre en
+ * base (pas d'enum Prisma), les valeurs sont donc énumérées à la main.
+ */
 export type TypeBadge = 'VISITEUR' | 'INTERVENANT' | 'TECHNICIEN' | 'VIP';
-export type StatutBadge = 'ACTIF' | 'EXPIRE' | 'ANNULE';
-export type TypeRessourceVOD = 'AUDIO' | 'VIDEO' | 'NOTES' | 'TRANSCRIPTION';
-export type StatutVOD = 'BROUILLON' | 'EN_LIGNE' | 'HORS_LIGNE' | 'ARCHIVE';
-export type TypeElection = 'DELEGUE_PROMOTION' | 'DELEGUE_DEPARTEMENT' | 'PRESIDENT_UNIVERSITE' | 'SYNDICAT' | 'CLUB';
-export type StatutElection = 'BROUILLON' | 'OUVERT' | 'CLOS' | 'PROCLAME' | 'ANNULE';
-export type ModeVote = 'WEB' | 'KIOSQUE' | 'SMS';
 
 export interface CarteEtudiante {
   id: string;
