@@ -21,7 +21,7 @@ import { deviseDossier } from './paiements.service';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
-import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie } from '../../common/numero';
 import { toMontant } from '../../common/finances/montant';
 import { CreateInscriptionDto, InscriptionPubliqueDto, InscriptionQueryDto } from './inscription.dto';
 
@@ -217,9 +217,9 @@ export class InscriptionService {
       ? undefined
       : `Aucun tarif n'est paramétré pour ${promotion.nom} sur ${annee.libelle} : le montant est laissé à 0 en attendant.`;
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const resultat = await this.prisma.$transaction(async (tx) => {
+    const resultat = await avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           await exigerAnneeOuverte(tx, annee.id);
           // Route publique, sans authentification : connaître une adresse
           // e-mail ne prouve pas qu'on la possède. Une fiche existante ne se
@@ -302,22 +302,24 @@ export class InscriptionService {
             montantFrais: toMontant(inscription.montantFrais),
             devise: frais?.devise ?? 'GNF',
           };
-        });
+        }),
+      {
+        tentatives: 10,
+        // La transaction porte deux numéros : le matricule de la fiche et le
+        // numéro du dossier. Un e-mail déjà pris n'est pas une course sur le
+        // compteur : il doit remonter tel quel.
+        colonnes: ['matricule', 'numero'],
+        erreur: () => new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez')),
+      },
+    );
 
-        return {
-          ...resultat,
-          avertissement: avertissement ?? null,
-          message:
-            `Dossier ${resultat.numero} déposé. Réglez ${resultat.montantFrais.toLocaleString('fr-FR')} ` +
-            `${resultat.devise} via Mobile Money pour finaliser votre inscription.`,
-        };
-      } catch (e: any) {
-        if (e instanceof ConflictException) throw e;
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
+    return {
+      ...resultat,
+      avertissement: avertissement ?? null,
+      message:
+        `Dossier ${resultat.numero} déposé. Réglez ${resultat.montantFrais.toLocaleString('fr-FR')} ` +
+        `${resultat.devise} via Mobile Money pour finaliser votre inscription.`,
+    };
   }
 
   /** Inscription au guichet (agent comptable / scolarité). */
@@ -392,9 +394,9 @@ export class InscriptionService {
       });
     }
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           await exigerAnneeOuverte(tx, annee.id);
           const cree = await tx.inscription.create({
             data: {
@@ -417,13 +419,13 @@ export class InscriptionService {
             },
           });
           return cree;
-        });
-      } catch (e: any) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['numero'],
+        erreur: () => new ConflictException(t('inscription.numero_de_dossier_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   // ---------------------------------------------------------- cycle de vie

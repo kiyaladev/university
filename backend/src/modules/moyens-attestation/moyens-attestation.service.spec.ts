@@ -197,6 +197,77 @@ describe('Attestation — enrôlement de l’empreinte', () => {
   });
 });
 
+describe('Attestation — transaction d’écriture de l’empreinte', () => {
+  const horodatage = () => new Date().toISOString();
+  const signerEnrolement = (id: string, h: string) => signer(`enrolement|${id}|${GABARIT}|${h}`);
+
+  /** Service dont la transaction est distincte du client : on voit ce qui part par `tx`. */
+  function preparerTransaction() {
+    const base = preparer();
+    const tx: any = {
+      enseignant: { update: jest.fn().mockResolvedValue({}) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+    };
+    base.prisma.$transaction = jest.fn(async (operation: (t: any) => unknown) => operation(tx));
+    return { ...base, tx };
+  }
+
+  it('écrit l’empreinte et sa trace dans la même transaction', async () => {
+    process.env.BIOMETRIE_CHIFFREMENT_CLE = 'c'.repeat(64);
+    oublierCle();
+
+    const { service, prisma, tx } = preparerTransaction();
+    const h = horodatage();
+    await service.enrolerEmpreinte(
+      'ens-1',
+      { template: GABARIT, horodatage: h, signature: signerEnrolement('ens-1', h), consentement: true },
+      ADMIN,
+    );
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.enseignant.update).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
+    expect(tx.auditLog.create.mock.calls[0][0].data.action).toBe('EMPREINTE_ENROLEE');
+    // Rien ne sort de la transaction.
+    expect(prisma.enseignant.update).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('efface l’empreinte et sa trace dans la même transaction', async () => {
+    const { service, prisma, tx } = preparerTransaction();
+
+    await service.supprimerEmpreinte('ens-1', ADMIN);
+
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(tx.enseignant.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ens-1' },
+        data: expect.objectContaining({ empreinteTemplate: null, empreinteConsentementPar: null }),
+      }),
+    );
+    expect(tx.auditLog.create.mock.calls[0][0].data.action).toBe('EMPREINTE_SUPPRIMEE');
+    expect(prisma.enseignant.update).not.toHaveBeenCalled();
+    expect(prisma.auditLog.create).not.toHaveBeenCalled();
+  });
+
+  it('abandonne l’enrôlement si la trace ne peut pas être écrite', async () => {
+    process.env.BIOMETRIE_CHIFFREMENT_CLE = 'c'.repeat(64);
+    oublierCle();
+
+    const { service, tx } = preparerTransaction();
+    tx.auditLog.create.mockRejectedValue(new Error('journal indisponible'));
+    const h = horodatage();
+
+    await expect(
+      service.enrolerEmpreinte(
+        'ens-1',
+        { template: GABARIT, horodatage: h, signature: signerEnrolement('ens-1', h), consentement: true },
+        ADMIN,
+      ),
+    ).rejects.toThrow('journal indisponible');
+  });
+});
+
 describe('Attestation — purge biométrique', () => {
   function preparerPurge(echecJournal = false) {
     const base: any = {

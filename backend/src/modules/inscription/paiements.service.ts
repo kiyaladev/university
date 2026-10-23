@@ -14,7 +14,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
-import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie } from '../../common/numero';
 import { toMontant } from '../../common/finances/montant';
 import {
   PAIEMENT_SOURCE_INCLUDE,
@@ -186,9 +186,9 @@ export class PaiementsService {
    * pilote, sans URL) et reste EN_ATTENTE jusqu'à la confirmation.
    */
   async creerPaiement(dto: CreatePaiementDto, user: AuthUser) {
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const paiement = await this.prisma.$transaction(async (tx) => {
+    const paiement = await avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const inscription = dto.inscriptionId
             ? await tx.inscription.findUnique({
                 where: { id: dto.inscriptionId },
@@ -250,29 +250,32 @@ export class PaiementsService {
             },
             { userId: user.id, instantane: instantanePaiement },
           );
-        });
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['reference'],
+        erreur: () =>
+          new ConflictException(t('inscription.reference_de_paiement_temporairement_indisponible_reessayez')),
+      },
+    );
 
-        if (paiement.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
-          const rattache = await transmettreMobileMoney<typeof paiement>(paiement, {
-            prisma: this.prisma,
-            mobileMoney: this.mobileMoney,
-            userId: user.id,
-            logger: this.logger,
-            instantane: instantanePaiement,
-            include: PAIEMENT_INCLUDE,
-            // Sans passerelle, MobileMoneyService trace la simulation pilote.
-            appelerSansPasserelle: true,
-          });
-          if (rattache) return rattache;
-        }
-
-        return paiement;
-      } catch (e: any) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
+    // La transmission à l'opérateur sort de la transaction et de la relance :
+    // elle ne doit jamais être rejouée si une étape ultérieure échoue.
+    if (paiement.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
+      const rattache = await transmettreMobileMoney<typeof paiement>(paiement, {
+        prisma: this.prisma,
+        mobileMoney: this.mobileMoney,
+        userId: user.id,
+        logger: this.logger,
+        instantane: instantanePaiement,
+        include: PAIEMENT_INCLUDE,
+        // Sans passerelle, MobileMoneyService trace la simulation pilote.
+        appelerSansPasserelle: true,
+      });
+      if (rattache) return rattache;
     }
-    throw new ConflictException(t('inscription.reference_de_paiement_temporairement_indisponible_reessayez'));
+
+    return paiement;
   }
 
   /**

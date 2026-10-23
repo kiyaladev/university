@@ -24,7 +24,7 @@ import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
 import { documents, AttestationImprimable } from './documents';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import {
   AttestationQueryDto,
@@ -182,17 +182,11 @@ export class AttestationsService {
     // Dédoublonnage : une seule attestation émise du même type, même année,
     // pour le même étudiant. La révocation de l'existante rouvre le droit
     // d'en émettre une nouvelle.
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const attestation = await this.prisma.$transaction((tx) => this.emettreTx(tx, dto, annee, user));
-        return attestation;
-      } catch (e: any) {
-        if (e instanceof ConflictException) throw e;
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+    return avecNumeroUnique(() => this.prisma.$transaction((tx) => this.emettreTx(tx, dto, annee, user)), {
+      tentatives: 10,
+      colonnes: ['numero'],
+      erreur: () => new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez')),
+    });
   }
 
   /**
@@ -474,24 +468,35 @@ export class AttestationsService {
     const statutOk = attestation.statut === StatutAttestation.EMIS;
     const valide = jetonOk && statutOk;
 
-    const verification = await this.prisma.verificationAttestation.create({
-      data: {
-        attestationId: attestation.id,
-        ip: ip ? String(ip) : null,
-        resultat: valide,
-      },
+    // La vérification et sa trace d'audit forment un seul fait : elles
+    // partent ensemble. Une tentative de fraude enregistrée sans sa trace
+    // fausserait le décompte des scans frauduleux, et l'inverse cacherait
+    // l'échec.
+    const verification = await this.prisma.$transaction(async (tx) => {
+      const cree = await tx.verificationAttestation.create({
+        data: {
+          attestationId: attestation.id,
+          ip: ip ? String(ip) : null,
+          resultat: valide,
+        },
+      });
+
+      if (!jetonOk) {
+        await tx.auditLog.create({
+          data: {
+            action: 'VERIF_ATTESTATION_ECHEC',
+            entite: 'attestations',
+            entiteId: ref,
+            details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
+            ip,
+          },
+        });
+      }
+
+      return cree;
     });
 
     if (!jetonOk) {
-      await this.prisma.auditLog.create({
-        data: {
-          action: 'VERIF_ATTESTATION_ECHEC',
-          entite: 'attestations',
-          entiteId: ref,
-          details: `Jeton mismatch pour ${ref} (fraude probable ?)`,
-          ip,
-        },
-      });
       return {
         valide: false,
         raison:

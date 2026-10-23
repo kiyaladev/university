@@ -18,6 +18,20 @@ const SEUIL_JACCARD = 0.8;
 const TAILLE_MIN_JACCARD = 30;
 
 /**
+ * Taille d'un lot d'écriture du recalcul. Assez grand pour ne pas
+ * multiplier les transactions, assez petit pour ne pas immobiliser la base
+ * pendant le balayage complet du fonds.
+ */
+const TAILLE_LOT = 500;
+
+/** Découpe une liste en lots de taille bornée. */
+function parLots<T>(items: T[], taille: number = TAILLE_LOT): T[][] {
+  const lots: T[][] = [];
+  for (let i = 0; i < items.length; i += taille) lots.push(items.slice(i, i + taille));
+  return lots;
+}
+
+/**
  * Ce que la fiche d'un document suspect doit porter pour être lisible à
  * l'écran : sans `auteurs` ni `departement`, la carte de suspicion n'affichait
  * qu'un titre et deux tirets, alors qu'on y arbitre une accusation.
@@ -582,11 +596,31 @@ export class PlagiatService {
       }
     }
 
+    // Les écritures sont regroupées par lots.
+    //
+    // Auparavant, chaque suspicion et chaque document recevait son propre
+    // `update` : une requête par ligne (N+1) et, en cas d'échec en cours de
+    // route, un recalcul à moitié appliqué. Les lignes qui portent la même
+    // valeur sont désormais mises à jour d'un seul coup, par lots bornés :
+    // une transaction par lot, jamais une transaction géante qui
+    // immobiliserait la base pendant tout le balayage.
+    const parScore = new Map<number, string[]>();
     for (const m of aMettreAJour) {
-      await this.prisma.suspicionPlagiat.update({ where: { id: m.id }, data: { score: m.score } });
+      const ids = parScore.get(m.score);
+      if (ids) ids.push(m.id);
+      else parScore.set(m.score, [m.id]);
     }
-    if (aCreer.length) {
-      await this.prisma.suspicionPlagiat.createMany({ data: aCreer });
+    for (const [score, ids] of parScore) {
+      for (const lot of parLots(ids)) {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.suspicionPlagiat.updateMany({ where: { id: { in: lot } }, data: { score } });
+        });
+      }
+    }
+    for (const lot of parLots(aCreer)) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.suspicionPlagiat.createMany({ data: lot });
+      });
     }
 
     // Met à jour l'indicePlagiat agrégé par document (le max des suspicions
@@ -600,11 +634,18 @@ export class PlagiatService {
       maxParDoc.set(l.documentAId, Math.max(maxParDoc.get(l.documentAId) ?? 0, l.score));
       maxParDoc.set(l.documentBId, Math.max(maxParDoc.get(l.documentBId) ?? 0, l.score));
     }
+    const docParIndice = new Map<number, string[]>();
     for (const [docId, score] of maxParDoc) {
-      await this.prisma.documentDepot.update({
-        where: { id: docId },
-        data: { indicePlagiat: score },
-      });
+      const ids = docParIndice.get(score);
+      if (ids) ids.push(docId);
+      else docParIndice.set(score, [docId]);
+    }
+    for (const [score, docIds] of docParIndice) {
+      for (const lot of parLots(docIds)) {
+        await this.prisma.$transaction(async (tx) => {
+          await tx.documentDepot.updateMany({ where: { id: { in: lot } }, data: { indicePlagiat: score } });
+        });
+      }
     }
 
     this.logger.log(`Recalcul complet : ${creees} créées, ${misesAJour} mises à jour, ${ignorees} ignorées.`);

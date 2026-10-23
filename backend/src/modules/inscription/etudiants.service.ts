@@ -14,7 +14,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { toDateOnly } from '../../common/utils';
 import { CreateEtudiantDto, UpdateEtudiantDto } from './inscription.dto';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 
 export const ETUDIANT_INCLUDE = {
   user: { select: { id: true, email: true, actif: true } },
@@ -143,9 +143,9 @@ export class EtudiantsService extends CrudService {
     }
 
     const annee = millesimeSerie(SERIES_NUMERO.MATRICULE, libelleAnnee);
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const etudiant = await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           let compte: { id: string } | null = null;
           if (creerCompte) {
             const existant = await tx.user.findUnique({ where: { email: donnees.email } });
@@ -184,15 +184,16 @@ export class EtudiantsService extends CrudService {
             },
           });
           return etudiant;
-        });
-        return etudiant;
-      } catch (e: any) {
-        if (e instanceof ConflictException) throw e;
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('inscription.matricule_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        // Seul le matricule est un numéro : un e-mail déjà pris ou un jeton
+        // de resto en double doivent remonter tels quels, pas être transformés
+        // en « matricule indisponible ».
+        colonnes: ['matricule'],
+        erreur: () => new ConflictException(t('inscription.matricule_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   async modifier(id: string, dto: UpdateEtudiantDto, user: AuthUser) {

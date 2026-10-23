@@ -35,7 +35,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { demandeDocumentHtml } from './documents-demande.impression';
 import { MobileMoneyService } from '../inscription/mobile-money.service';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { PaiementATransmettre, creerPaiementTx, transmettreMobileMoney } from '../../common/finances';
 import { toMontant } from '../../common/finances/montant';
 
@@ -377,9 +377,9 @@ export class DocumentsDemandeService extends CrudService {
     const devise = tarif?.devise ?? 'GNF';
     const annee = millesimeSerie(SERIES_NUMERO.DOCUMENT_DEMANDE);
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const numero = await this.prochainNumero(tx, annee);
           const demande = await tx.demandeDocument.create({
             data: {
@@ -409,13 +409,14 @@ export class DocumentsDemandeService extends CrudService {
             },
           });
           return demande;
-        });
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('documents-demande.numero_de_demande_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['numero'],
+        erreur: () =>
+          new ConflictException(t('documents-demande.numero_de_demande_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   // ---------------------------------------------------------- paiement
@@ -459,9 +460,9 @@ export class DocumentsDemandeService extends CrudService {
     }
 
     const annee = millesimeSerie(SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE);
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const paiement = await this.prisma.$transaction(async (tx) => {
+    const paiement = await avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const avant = await tx.demandeDocument.findUnique({ where: { id: demande.id } });
           if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
           if (avant.etudiantId !== user.etudiantId) {
@@ -527,27 +528,29 @@ export class DocumentsDemandeService extends CrudService {
             },
           });
           return cree;
-        });
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['reference'],
+        erreur: () =>
+          new ConflictException(t('documents-demande.reference_de_paiement_temporairement_indisponible_reessayez')),
+      },
+    );
 
-        // Mode pilote : la simulation force la confirmation automatique.
-        if (dto.simuler) {
-          await this.confirmerPaiement(demande.id, { paiementId: paiement.id }, user);
-          return this.findOne(demande.id);
-        }
-
-        // Mobile Money : tentative de transmission à l'opérateur. L'appel
-        // réseau sort de la transaction : il ne doit jamais la retenir.
-        if (dto.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
-          await this.tenterTransmissionMobileMoney(paiement, user.id);
-        }
-
-        return this.findOne(demande.id);
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
+    // Mode pilote : la simulation force la confirmation automatique.
+    if (dto.simuler) {
+      await this.confirmerPaiement(demande.id, { paiementId: paiement.id }, user);
+      return this.findOne(demande.id);
     }
-    throw new ConflictException(t('documents-demande.reference_de_paiement_temporairement_indisponible_reessayez'));
+
+    // Mobile Money : tentative de transmission à l'opérateur. L'appel réseau
+    // sort de la transaction et de la relance : il ne doit jamais la retenir,
+    // ni être rejoué si une étape ultérieure échoue.
+    if (dto.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
+      await this.tenterTransmissionMobileMoney(paiement, user.id);
+    }
+
+    return this.findOne(demande.id);
   }
 
   /**
@@ -695,9 +698,9 @@ export class DocumentsDemandeService extends CrudService {
    * (P2002) rejoue la transaction entière.
    */
   private async marquerPreteTx(id: string, message: string, user: AuthUser) {
-    for (let tentative = 0; tentative < 5; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           await tx.$queryRaw`SELECT id FROM "DemandeDocument" WHERE id = ${id} FOR UPDATE`;
           const avant = await tx.demandeDocument.findUnique({ where: { id } });
           if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
@@ -736,13 +739,16 @@ export class DocumentsDemandeService extends CrudService {
             },
           });
           return apres;
-        });
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 5,
+        // La transaction peut émettre une attestation : c'est son numéro qui
+        // peut être pris par une émission concurrente.
+        colonnes: ['numero'],
+        erreur: () =>
+          new ConflictException(t('attestations.numero_d_attestation_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   /** Attestation liée à la demande (existante ou émise ici), ou null si le type n'en relève pas. */

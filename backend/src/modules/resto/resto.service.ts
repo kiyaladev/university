@@ -50,7 +50,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { ParametresService } from '../parametres/parametres.service';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import {
   AnnulerConsommationDto,
@@ -601,9 +601,9 @@ export class RestoService {
   }) {
     const annee = await this.numeroAnnee();
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const paiement = await creerPaiementTx(tx, {
             data: {
               reference: await prochainNumeroPaiement(tx, annee),
@@ -663,13 +663,13 @@ export class RestoService {
           });
 
           return { recharge, paiement, solde };
-        });
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('resto.reference_de_paiement_temporairement_indisponible_reessayez'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['reference'],
+        erreur: () => new ConflictException(t('resto.reference_de_paiement_temporairement_indisponible_reessayez')),
+      },
+    );
   }
 
   /** Année des références "PAY-R-<aaaa>-…" : l'année scolaire active, sinon l'année civile. */

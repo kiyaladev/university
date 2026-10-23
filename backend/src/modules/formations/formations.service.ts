@@ -31,7 +31,7 @@ import { Paginated, QueryDto } from '../../common/dto';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { ParametresService } from '../parametres/parametres.service';
-import { SERIES_NUMERO, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import { toMontant } from '../../common/finances/montant';
 import { t } from '../../common/i18n';
@@ -196,9 +196,9 @@ export class FormationsService {
     }
 
     const annee = millesimeSerie(SERIES_NUMERO.FORMATION);
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        const creation = await this.prisma.$transaction(async (tx) => {
+    const creation = await avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const verrou = await this.verrouillerFormation(tx, formationId);
           const formationCourante = await tx.formation.findUnique({ where: { id: formationId } });
           if (!formationCourante || formationCourante.statut !== StatutFormation.PUBLIE) {
@@ -250,24 +250,26 @@ export class FormationsService {
             },
           });
           return { inscription, paiement };
-        });
+        }),
+      {
+        tentatives: 10,
+        // La transaction porte deux numéros : la référence du paiement et le
+        // numéro d'inscription à la formation.
+        colonnes: ['reference', 'numero'],
+        erreur: () => new ConflictException(t('formations.reference_de_dossier_temporairement_indisponible_reessayez')),
+      },
+    );
 
-        return {
-          inscriptionId: creation.inscription.id,
-          numero: creation.inscription.numero,
-          montant: toMontant(creation.paiement.montant),
-          devise: creation.paiement.devise,
-          message:
-            `Demande ${creation.inscription.numero} déposée. Réglez ` +
-            `${toMontant(creation.paiement.montant).toLocaleString('fr-FR')} ${creation.paiement.devise} ` +
-            `par Mobile Money ; la confirmation se fait au guichet de la scolarité.`,
-        };
-      } catch (e: unknown) {
-        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') continue;
-        throw e;
-      }
-    }
-    throw new ConflictException(t('formations.reference_de_dossier_temporairement_indisponible_reessayez'));
+    return {
+      inscriptionId: creation.inscription.id,
+      numero: creation.inscription.numero,
+      montant: toMontant(creation.paiement.montant),
+      devise: creation.paiement.devise,
+      message:
+        `Demande ${creation.inscription.numero} déposée. Réglez ` +
+        `${toMontant(creation.paiement.montant).toLocaleString('fr-FR')} ${creation.paiement.devise} ` +
+        `par Mobile Money ; la confirmation se fait au guichet de la scolarité.`,
+    };
   }
 
   // -------------------------------------------------------------- gestion

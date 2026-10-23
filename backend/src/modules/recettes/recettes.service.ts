@@ -19,7 +19,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
-import { SERIES_NUMERO, prochainNumeroSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, prochainNumeroSerie } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import { toMontant } from '../../common/finances/montant';
 import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
@@ -200,9 +200,9 @@ export class RecettesService {
   async encaisser(id: string, dto: EncaisserRecetteDto, user: AuthUser) {
     const modeEnum: ModePaiement = (dto.mode as ModePaiement | undefined) ?? ModePaiement.ESPECES;
 
-    for (let tentative = 0; tentative < 10; tentative++) {
-      try {
-        return await this.prisma.$transaction(async (tx) => {
+    return avecNumeroUnique(
+      () =>
+        this.prisma.$transaction(async (tx) => {
           const recette = await tx.recetteExterne.findUnique({ where: { id }, include: RECETTE_INCLUDE });
           if (!recette) throw new NotFoundException(t('recettes.recette_introuvable'));
           if (recette.paiementId) {
@@ -265,15 +265,13 @@ export class RecettesService {
             },
           });
           return miseAJour;
-        });
-      } catch (erreur: any) {
-        const cible = erreur?.meta?.target;
-        const cibleTexte = Array.isArray(cible) ? cible.join(',') : String(cible ?? '');
-        if (erreur?.code === 'P2002' && cibleTexte.toLowerCase().includes('reference')) continue;
-        throw erreur;
-      }
-    }
-    throw new ConflictException(t('recettes.reference_paiement_temporairement_indisponible'));
+        }),
+      {
+        tentatives: 10,
+        colonnes: ['reference'],
+        erreur: () => new ConflictException(t('recettes.reference_paiement_temporairement_indisponible')),
+      },
+    );
   }
 
   private instantaneAudit(recette: any) {
