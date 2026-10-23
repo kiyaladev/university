@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "eslint .",
     "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.{cjs,ts}\" \"prisma/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.{cjs,ts}\" \"prisma/**/*.ts\"",
     "prisma:generate": "prisma generate",
     "prisma:deploy": "prisma migrate deploy",
     "audit:routes": "node scripts/inventaire-routes.cjs /tmp/university-inventaire-routes.json",
