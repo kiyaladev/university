@@ -66,9 +66,13 @@ async function main() {
   assert.equal(preview.apercu[0].donnees.jourSemaine, 1);
   assert.equal(preview.apercu[0].donnees.heureDebut, '08:00');
   const applied = (await call(school, 'POST', '/imports/referentiels/appliquer', dto, 201)).data;
+  // Les créneaux importés sont mémorisés avant toute assertion : chacun porte
+  // une trace d'audit (CRENEAU_CREE) qui doit être purgée en fin de recette,
+  // même si la suite du scénario échoue.
+  const persisted = await db.creneau.findMany({ where: { affectationId: assignment.id } });
+  slot = persisted;
   assert.equal(applied.importees, 2);
   assert.equal(applied.rejetees, 1);
-  const persisted = await db.creneau.findMany({ where: { affectationId: assignment.id } });
   assert.equal(persisted.length, 2);
   assert.ok(
     persisted.every(
@@ -119,13 +123,10 @@ main()
   })
   .finally(async () => {
     if (year) {
-      const cs = assignment
-        ? await db.creneau.findMany({ where: { affectationId: assignment.id }, select: { id: true } })
-        : [];
       const ss = await db.seance.findMany({ where: { anneeId: year.id }, select: { id: true } });
       await db.auditLog.deleteMany({
         where: {
-          entiteId: { in: [year.id, ...(slot ? [slot.id] : []), ...ss.map((s) => s.id), ...cs.map((c) => c.id)] },
+          entiteId: { in: [year.id, ...(slot ? slot.map((s) => s.id) : []), ...ss.map((s) => s.id)] },
         },
       });
       await db.seance.deleteMany({ where: { anneeId: year.id } });
