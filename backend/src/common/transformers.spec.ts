@@ -1,5 +1,3 @@
-import { plainToInstance } from 'class-transformer';
-import { validate } from 'class-validator';
 import { toBool } from './transformers';
 
 describe('conversion des booléens', () => {

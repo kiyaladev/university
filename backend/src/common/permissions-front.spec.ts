@@ -101,14 +101,18 @@ const MASQUES_ASSUMES: Record<string, Role[]> = {
   'stages.modifierRapport': [Role.ENSEIGNANT, Role.ETUDIANT],
 };
 
-const FICHIER_FRONT = join(__dirname, '..', '..', '..', 'frontend', 'src', 'navigation', 'permissions.ts');
+const NAVIGATION_FRONT = join(__dirname, '..', '..', '..', 'frontend', 'src', 'navigation');
+const FICHIER_FRONT = join(NAVIGATION_FRONT, 'permissions.ts');
+// Constantes de rôles partagées (PERSONNEL…), importées par la matrice.
+const FICHIER_ROLES_FRONT = join(NAVIGATION_FRONT, 'roles.ts');
 
 /** Lit la matrice du frontend sans l'exécuter : constantes `X: Role[] = [...]` et entrées `'cle': [...]`. */
 function lireMatriceFront(source: string): Record<string, string[]> {
   const sansCommentaires = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   const liste = (texte: string) => [...texte.matchAll(/'([A-Z_]+)'/g)].map((m) => m[1]);
   const constantes: Record<string, string[]> = {};
-  for (const m of sansCommentaires.matchAll(/const (\w+): Role\[\] = \[([^\]]*)\]/g)) constantes[m[1]] = liste(m[2]);
+  const avecRoles = (existsSync(FICHIER_ROLES_FRONT) ? readFileSync(FICHIER_ROLES_FRONT, 'utf8') : '') + sansCommentaires;
+  for (const m of avecRoles.matchAll(/const (\w+): Role\[\] = \[([^\]]*)\]/g)) constantes[m[1]] = liste(m[2]);
   const corps = sansCommentaires.slice(sansCommentaires.indexOf('PERMISSIONS = {'));
   const matrice: Record<string, string[]> = {};
   for (const m of corps.matchAll(/'([\w.]+)':\s*(\[[^\]]*\]|\w+)/g)) {
