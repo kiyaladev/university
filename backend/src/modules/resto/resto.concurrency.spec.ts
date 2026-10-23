@@ -180,7 +180,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       consommationResto: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'c-1',
-          statut: StatutConsommation.VALIDEE,
+          statut: StatutConsommation.VALIDE,
           montant: 50,
           portefeuilleId: 'p-1',
           etudiant: 'E-1 — Test',
@@ -207,7 +207,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
     const tx = {
       consommationResto: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
-        findUnique: jest.fn().mockResolvedValue({ id: 'c-2', statut: StatutConsommation.ANNULEE }),
+        findUnique: jest.fn().mockResolvedValue({ id: 'c-2', statut: StatutConsommation.ANNULE }),
       },
       portefeuilleResto: { update: jest.fn().mockResolvedValue({ solde: 150 }) },
       auditLog: { create: auditCreate },
@@ -216,7 +216,7 @@ describe('écritures concurrentes du portefeuille resto', () => {
       consommationResto: {
         findUnique: jest.fn().mockResolvedValue({
           id: 'c-2',
-          statut: StatutConsommation.VALIDEE,
+          statut: StatutConsommation.VALIDE,
           montant: 50,
           portefeuilleId: 'p-2',
           etudiant: 'E-2 — Personne privée',
@@ -233,8 +233,8 @@ describe('écritures concurrentes du portefeuille resto', () => {
     expect(details).toEqual({
       montant: 50,
       motifFourni: true,
-      avant: { statut: StatutConsommation.VALIDEE, solde: 100 },
-      apres: { statut: StatutConsommation.ANNULEE, solde: 150 },
+      avant: { statut: StatutConsommation.VALIDE, solde: 100 },
+      apres: { statut: StatutConsommation.ANNULE, solde: 150 },
       champsModifies: ['statut', 'solde'],
     });
     expect(auditCreate.mock.calls[0][0].data.details).not.toContain('donnée confidentielle');

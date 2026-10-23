@@ -266,9 +266,9 @@ const reservationsFiltrees = computed(() =>
 
 const COULEUR_STATUT: Record<string, string> = {
   EN_ATTENTE: '#FCD116',
-  CONFIRMEE: '#007A4D',
-  REFUSEE: '#86868b',
-  ANNULEE: '#86868b',
+  CONFIRME: '#007A4D',
+  REFUSE: '#86868b',
+  ANNULE: '#86868b',
 };
 /** Gris sourd : les séances ne sont là que pour le repérage, en lecture seule. */
 const COULEUR_SEANCE = '#86868b';

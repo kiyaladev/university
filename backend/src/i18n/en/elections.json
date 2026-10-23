@@ -13,8 +13,8 @@
   "au_moins_un_candidat_n_appartient_pas_a_cette_election": "At least one candidate does not belong to this election.",
   "une_election_publiee_ne_se_modifie_plus_creez_en_une_nouvell": "A published election can no longer be edited: please create a new one.",
   "declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin": "Declare at least one candidate before opening the poll.",
-  "l_election_est_election_statut_seule_une_ouverte_peut_etre_c": "The election is {election.statut}: only an OPEN election can be closed.",
-  "l_election_est_election_statut_seule_une_close_peut_etre_pro": "The election is {election.statut}: only a CLOSED election can be announced.",
+  "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_c": "The state of the election is {election.statut}: it can only be closed from the open state.",
+  "l_etat_de_l_election_est_election_statut_elle_ne_peut_etre_p": "The state of the election is {election.statut}: it can only be announced from the closed state.",
   "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scruti": "Candidates may only register before the poll opens.",
   "les_candidats_ne_se_declarent_qu_avant_l_ouverture_du_scrutin": "Candidates can only register before voting opens."
 }

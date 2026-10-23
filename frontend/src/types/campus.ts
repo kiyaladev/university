@@ -4,20 +4,20 @@ import type { AnneeAcademique, Departement, Enseignant, Salle } from './referent
 import type { Etudiant, StatutPaiement } from './registre';
 
 export type CategorieChambre = 'CHAMBRE_SIMPLE' | 'CHAMBRE_PARTAGEE' | 'STUDIO' | 'APPARTEMENT';
-export type StatutChambre = 'LIBRE' | 'RESERVEE' | 'OCCUPEE' | 'MAINTENANCE';
-export type StatutAttributionLogement = 'EN_ATTENTE' | 'ACCORDEE' | 'REFUSEE' | 'RETIREE';
+export type StatutChambre = 'LIBRE' | 'RESERVE' | 'OCCUPE' | 'MAINTENANCE';
+export type StatutAttributionLogement = 'EN_ATTENTE' | 'ACCORDE' | 'REFUSE' | 'RETIRE';
 export type TypeDocument = 'MEMOIRE' | 'THESE' | 'ARTICLE' | 'RAPPORT' | 'SUPPORT_COURS' | 'ARCHIVE' | 'AUTRE';
 export type TypeRepas = 'PETIT_DEJEUNER' | 'DEJEUNER' | 'COLLATION' | 'DINER' | 'AUTRE';
-export type StatutConsommation = 'EN_ATTENTE' | 'VALIDEE' | 'ANNULEE';
-export type StatutReservationSalle = 'EN_ATTENTE' | 'CONFIRMEE' | 'REFUSEE' | 'ANNULEE';
+export type StatutConsommation = 'EN_ATTENTE' | 'VALIDE' | 'ANNULE';
+export type StatutReservationSalle = 'EN_ATTENTE' | 'CONFIRME' | 'REFUSE' | 'ANNULE';
 export type TypeEncadrement = 'STAGE' | 'MEMOIRE' | 'RAPPORT';
 export type StatutEncadrement = 'PROPOSE' | 'VALIDE' | 'EN_COURS' | 'SOUTENU' | 'ABANDONNE';
 export type CategorieIncident =
   'VIDEO' | 'SON' | 'RESEAU' | 'ELECTRICITE' | 'MOBILIER' | 'INFORMATIQUE' | 'CLIMATISATION' | 'AUTRE';
 export type PrioriteTicket = 'BASSE' | 'NORMALE' | 'HAUTE';
 export type StatutTicket = 'OUVERT' | 'EN_COURS' | 'RESOLU' | 'CLOTURE';
-export type StatutFormation = 'BROUILLON' | 'PUBLIEE' | 'COMPLETE';
-export type StatutInscriptionFormation = 'EN_ATTENTE' | 'CONFIRMEE' | 'ANNULEE';
+export type StatutFormation = 'BROUILLON' | 'PUBLIE' | 'COMPLET';
+export type StatutInscriptionFormation = 'EN_ATTENTE' | 'CONFIRME' | 'ANNULE';
 
 export interface Residence {
   id: string;

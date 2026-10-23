@@ -85,7 +85,7 @@ describe('Périmètre des créneaux', () => {
         inscriptions: {
           some: {
             etudiantId: 'etudiant-1',
-            statut: 'VALIDEE',
+            statut: 'VALIDE',
             annee: { active: true, cloturee: false },
           },
         },

@@ -2,19 +2,19 @@
 
 import type { AnneeAcademique, Enseignant, Matiere, Promotion } from './referentiels';
 
-export type StatutInscription = 'BROUILLON' | 'EN_ATTENTE_PAIEMENT' | 'PAYEE' | 'VALIDEE' | 'ANNULEE';
+export type StatutInscription = 'BROUILLON' | 'EN_ATTENTE_PAIEMENT' | 'PAYE' | 'VALIDE' | 'ANNULE';
 
 export type StatutPaiement = 'EN_ATTENTE' | 'REUSSI' | 'ECHOUE' | 'ANNULE' | 'REMBOURSE';
 export type ModePaiement = 'MOBILE_MONEY' | 'ESPECES' | 'VIREMENT';
-export type StatutPaie = 'BROUILLON' | 'VALIDEE' | 'PAYEE';
+export type StatutPaie = 'BROUILLON' | 'VALIDE' | 'PAYE';
 export type TypeEvaluation = 'CC' | 'EXAMEN' | 'RATTRAPAGE' | 'ORAL' | 'TP';
-export type StatutEvaluation = 'OUVERTE' | 'CLOTUREE';
+export type StatutEvaluation = 'OUVERT' | 'CLOTURE';
 export type SessionDeliberation = 'NORMALE' | 'RATTRAPAGE';
-export type StatutDeliberation = 'BROUILLON' | 'VALIDEE';
+export type StatutDeliberation = 'BROUILLON' | 'VALIDE';
 export type DecisionJury = 'ADMIS' | 'AJOURNE' | 'DEFAILLANT';
 export type TypeAttestation = 'SCOLARITE' | 'SITUATION' | 'REUSSITE' | 'DIPLOME' | 'ASSIDUITE';
-export type StatutAttestation = 'EMISE' | 'REVOQUEE';
-export type StatutNotification = 'EN_ATTENTE' | 'ENVOYEE' | 'ECHOUE';
+export type StatutAttestation = 'EMIS' | 'REVOQUE';
+export type StatutNotification = 'EN_ATTENTE' | 'ENVOYE' | 'ECHOUE';
 
 export interface Etudiant {
   id: string;

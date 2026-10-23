@@ -37,7 +37,7 @@ import { journaliser } from '../../common/audit';
 import { filtreDepartement } from '../../common/perimetre';
 
 /** Inscrits « présents aux fichiers » : les dossiers validés par la scolarité. */
-const INSCRITS_VALIDES = { statut: 'VALIDEE' } as const;
+const INSCRITS_VALIDES = { statut: 'VALIDE' } as const;
 
 type Db = PrismaService | Prisma.TransactionClient;
 
@@ -178,7 +178,7 @@ export class ScolariteService {
     if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (dto.anneeId !== undefined) await exigerAnneeOuverte(this.prisma, dto.anneeId);
-    if (existante.statut === StatutEvaluation.CLOTUREE) {
+    if (existante.statut === StatutEvaluation.CLOTURE) {
       throw new BadRequestException(
         t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', {
           intitule: existante.intitule,
@@ -192,7 +192,7 @@ export class ScolariteService {
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
-      if (avant.statut === StatutEvaluation.CLOTUREE) {
+      if (avant.statut === StatutEvaluation.CLOTURE) {
         throw new BadRequestException(
           t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: avant.intitule }),
         );
@@ -266,7 +266,7 @@ export class ScolariteService {
     const existante = await this.veillerEvaluation(id);
     if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
-    if (existante.statut === StatutEvaluation.CLOTUREE) {
+    if (existante.statut === StatutEvaluation.CLOTURE) {
       throw new BadRequestException(
         t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': existante.intitule }),
       );
@@ -278,14 +278,14 @@ export class ScolariteService {
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
-      if (avant.statut === StatutEvaluation.CLOTUREE) {
+      if (avant.statut === StatutEvaluation.CLOTURE) {
         throw new BadRequestException(
           t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': avant.intitule }),
         );
       }
       const maj = await tx.evaluation.update({
         where: { id },
-        data: { statut: StatutEvaluation.CLOTUREE },
+        data: { statut: StatutEvaluation.CLOTURE },
         include: {
           matiere: true,
           promotion: true,
@@ -375,7 +375,7 @@ export class ScolariteService {
       });
       if (!evaluation) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, evaluation.anneeId);
-      if (evaluation.statut === StatutEvaluation.CLOTUREE) {
+      if (evaluation.statut === StatutEvaluation.CLOTURE) {
         throw new BadRequestException(
           t('scolarite.l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes', {
             intitule: evaluation.intitule,
@@ -554,7 +554,7 @@ export class ScolariteService {
       include: { annee: true, promotion: true },
     });
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
-    if (delib.statut === StatutDeliberation.VALIDEE) {
+    if (delib.statut === StatutDeliberation.VALIDE) {
       throw new BadRequestException(t('scolarite.deliberation_validee_par_le_jury_tout_recalcul_est_bloque'));
     }
     const resultat = await this.calculerInternes(delib, db);
@@ -572,7 +572,7 @@ export class ScolariteService {
     return resultat;
   }
 
-  /** Le jury (ADMIN|DIRECTION) valide : BROUILLON → VALIDEE, tout est figé. */
+  /** Le jury (ADMIN|DIRECTION) valide : BROUILLON → VALIDE, tout est figé. */
   async validerDeliberation(deliberationId: string, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       let delib = await tx.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true } });
@@ -581,7 +581,7 @@ export class ScolariteService {
       await tx.$queryRaw`SELECT id FROM "Deliberation" WHERE id = ${deliberationId} FOR UPDATE`;
       delib = await tx.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true } });
       if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
-      if (delib.statut === StatutDeliberation.VALIDEE) {
+      if (delib.statut === StatutDeliberation.VALIDE) {
         const le = delib.valideeLe?.toLocaleDateString('fr-FR');
         throw new BadRequestException(
           t(
@@ -594,7 +594,7 @@ export class ScolariteService {
       }
       const miseAJour = await tx.deliberation.update({
         where: { id: deliberationId },
-        data: { statut: StatutDeliberation.VALIDEE, valideeParId: userId, valideeLe: new Date() },
+        data: { statut: StatutDeliberation.VALIDE, valideeParId: userId, valideeLe: new Date() },
       });
       await tx.auditLog.create({
         data: {
@@ -682,7 +682,7 @@ export class ScolariteService {
         note: e.notes[0]?.note ?? null,
         present: e.notes[0]?.present ?? true,
         coefficient: e.coefficient,
-        cloturee: e.statut === StatutEvaluation.CLOTUREE,
+        cloturee: e.statut === StatutEvaluation.CLOTURE,
       }));
       const moyenne = moyenneUe(epreuves);
       return {

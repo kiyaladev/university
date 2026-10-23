@@ -218,7 +218,7 @@ export class InscriptionsController {
     return this.service.creerInscription(dto, user);
   }
 
-  /** PAYEE → VALIDEE : décision de la scolarité. */
+  /** PAYE → VALIDE : décision de la scolarité. */
   @Roles(Role.SCOLARITE, Role.ADMIN)
   @Put(':id/valider')
   valider(@Param('id') id: string, @CurrentUser() user: AuthUser) {

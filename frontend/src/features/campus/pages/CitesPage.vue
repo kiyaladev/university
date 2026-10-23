@@ -559,7 +559,7 @@
               <q-tooltip>{{ $t('cites.attributions.table.tooltip.decider') }}</q-tooltip>
             </q-btn>
             <q-btn
-              v-if="['EN_ATTENTE', 'ACCORDEE'].includes(p.row.statut) && auth.estAdmin"
+              v-if="['EN_ATTENTE', 'ACCORDE'].includes(p.row.statut) && auth.estAdmin"
               flat
               dense
               round
@@ -665,7 +665,7 @@
                 <q-tooltip>{{ $t('cites.attributions.card.deciderTooltip') }}</q-tooltip>
               </q-btn>
               <q-btn
-                v-if="['EN_ATTENTE', 'ACCORDEE'].includes(a.statut) && auth.estAdmin"
+                v-if="['EN_ATTENTE', 'ACCORDE'].includes(a.statut) && auth.estAdmin"
                 flat
                 dense
                 no-caps
@@ -752,15 +752,15 @@
           <q-option-group
             v-model="decisionStatut"
             :options="[
-              { label: $t('cites.attributions.dialogs.decision.optionAccorder'), value: 'ACCORDEE', color: 'positive' },
-              { label: $t('cites.attributions.dialogs.decision.optionRefuser'), value: 'REFUSEE', color: 'negative' },
+              { label: $t('cites.attributions.dialogs.decision.optionAccorder'), value: 'ACCORDE', color: 'positive' },
+              { label: $t('cites.attributions.dialogs.decision.optionRefuser'), value: 'REFUSE', color: 'negative' },
             ]"
             inline
             class="q-mb-md"
           />
           <q-banner dense class="note--info q-mb-md">
             <template #avatar><q-icon name="info" /></template>
-            <span v-if="decisionStatut === 'ACCORDEE'">
+            <span v-if="decisionStatut === 'ACCORDE'">
               <i18n-t keypath="cites.attributions.dialogs.decision.infoAccorder" tag="span">
                 <template #statut
                   ><strong>{{ $t('cites.attributions.dialogs.decision.statutOccupee') }}</strong></template
@@ -789,10 +789,10 @@
           <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
           <q-btn
             unelevated
-            :color="decisionStatut === 'ACCORDEE' ? 'positive' : 'negative'"
-            :icon="decisionStatut === 'ACCORDEE' ? 'check' : 'close'"
+            :color="decisionStatut === 'ACCORDE' ? 'positive' : 'negative'"
+            :icon="decisionStatut === 'ACCORDE' ? 'check' : 'close'"
             :label="
-              decisionStatut === 'ACCORDEE'
+              decisionStatut === 'ACCORDE'
                 ? $t('cites.attributions.dialogs.decision.accorder')
                 : $t('cites.attributions.dialogs.decision.refuser')
             "
@@ -1117,8 +1117,8 @@ function supprimerResidence(r: Residence) {
 
 const compteStatut = (r: Residence, statut: string) => (r.chambres ?? []).filter((c) => c.statut === statut).length;
 const compteLibres = (r: Residence) => compteStatut(r, 'LIBRE');
-const compteReservees = (r: Residence) => compteStatut(r, 'RESERVEE');
-const compteOccupees = (r: Residence) => compteStatut(r, 'OCCUPEE');
+const compteReservees = (r: Residence) => compteStatut(r, 'RESERVE');
+const compteOccupees = (r: Residence) => compteStatut(r, 'OCCUPE');
 
 // ---------------------------------------------------------------- chambres
 function ouvrirChambre(c: Chambre | null) {
@@ -1138,13 +1138,13 @@ function supprimerChambre(c: Chambre) {
 // ------------------------------------------------------- décision du jury
 const decisionDialog = ref(false);
 const decision = ref<AttributionLogement | null>(null);
-const decisionStatut = ref<'ACCORDEE' | 'REFUSEE'>('ACCORDEE');
+const decisionStatut = ref<'ACCORDE' | 'REFUSE'>('ACCORDE');
 const decisionMotif = ref('');
 const decisionEnCours = ref(false);
 
 function ouvrirDecision(a: AttributionLogement) {
   decision.value = a;
-  decisionStatut.value = 'ACCORDEE';
+  decisionStatut.value = 'ACCORDE';
   decisionMotif.value = '';
   decisionDialog.value = true;
 }
@@ -1160,9 +1160,9 @@ async function decider() {
       commentaire: decisionMotif.value || undefined,
     });
     $q.notify({
-      type: decisionStatut.value === 'ACCORDEE' ? 'positive' : 'info',
+      type: decisionStatut.value === 'ACCORDE' ? 'positive' : 'info',
       message:
-        decisionStatut.value === 'ACCORDEE'
+        decisionStatut.value === 'ACCORDE'
           ? t('cites.attributions.dialogs.accorded')
           : t('cites.attributions.dialogs.refused'),
     });

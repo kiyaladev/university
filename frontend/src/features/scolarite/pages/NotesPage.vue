@@ -3,10 +3,10 @@
     <en-tete-page :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
       <template v-if="evaluationActive" #actions>
         <q-badge
-          :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
+          :color="evaluationActive.statut === 'OUVERT' ? 'positive' : 'grey-7'"
           class="q-px-sm q-py-xs text-body2"
         >
-          <q-icon :name="evaluationActive.statut === 'OUVERTE' ? 'lock_open' : 'lock'" class="q-mr-xs" />
+          <q-icon :name="evaluationActive.statut === 'OUVERT' ? 'lock_open' : 'lock'" class="q-mr-xs" />
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
       </template>
@@ -38,7 +38,7 @@
             @click="allerAuxEvaluations"
           />
           <q-btn
-            v-if="evaluationActive && evaluationActive.statut === 'OUVERTE' && peutCloturer()"
+            v-if="evaluationActive && evaluationActive.statut === 'OUVERT' && peutCloturer()"
             outline
             no-caps
             icon="lock"
@@ -147,7 +147,7 @@ const lignes = ref<
 const notesExistantes = ref<Note[]>([]);
 const chargementInitial = ref(true);
 
-const cloturee = computed(() => evaluationActive.value?.statut === 'CLOTUREE');
+const cloturee = computed(() => evaluationActive.value?.statut === 'CLOTURE');
 
 /** Une ligne d'autocomplétion doit dire l'épreuve, la matière, la promo et l'état. */
 function libelleEvaluation(e: any): string {
@@ -252,7 +252,7 @@ async function cloturer() {
   try {
     await api.post(`/evaluations/${e.id}/cloturer`);
     $q.notify({ type: 'positive', message: t('notes.messages.closed') });
-    await choisir({ ...e, statut: 'CLOTUREE' });
+    await choisir({ ...e, statut: 'CLOTURE' });
   } catch {
     /* Notification gérée par l’intercepteur axios */
   }

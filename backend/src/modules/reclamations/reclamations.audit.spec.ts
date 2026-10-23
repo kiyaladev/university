@@ -105,7 +105,7 @@ describe('Journal avant/après des réclamations', () => {
     anonyme: false,
     etudiantId: 'etudiant-1',
     priorite: PrioriteReclamation.NORMALE,
-    statut: StatutReclamation.OUVERTE,
+    statut: StatutReclamation.OUVERT,
     departementId: 'departement-1',
     assigneAId: null,
     assigneA: null,
@@ -129,7 +129,7 @@ describe('Journal avant/après des réclamations', () => {
     numero: 'REC-2026-00001',
     type: TypeReclamation.INSCRIPTION,
     priorite: PrioriteReclamation.NORMALE,
-    statut: StatutReclamation.OUVERTE,
+    statut: StatutReclamation.OUVERT,
     anonyme: false,
     etudiantId: 'etudiant-1',
     departementId: 'departement-1',
@@ -194,7 +194,7 @@ describe('Journal avant/après des réclamations', () => {
         findFirst: jest.fn().mockResolvedValue(courante),
         findMany: jest.fn().mockResolvedValue([courante]),
         count: jest.fn().mockResolvedValue(1),
-        groupBy: jest.fn().mockResolvedValue([{ statut: StatutReclamation.OUVERTE, _count: { _all: 1 } }]),
+        groupBy: jest.fn().mockResolvedValue([{ statut: StatutReclamation.OUVERT, _count: { _all: 1 } }]),
       },
       messageReclamation: { count: jest.fn().mockResolvedValue(1) },
       user: {
@@ -359,7 +359,7 @@ describe('Journal avant/après des réclamations', () => {
     prisma.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
     tx.reclamation.update.mockResolvedValue(
       dossier({
-        statut: StatutReclamation.RESOLUE,
+        statut: StatutReclamation.RESOLU,
         notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
         fermeLe: new Date('2026-10-02T11:00:00.000Z'),
       }),
@@ -368,7 +368,7 @@ describe('Journal avant/après des réclamations', () => {
 
     await service.changerStatut(
       'rec-1',
-      { statut: StatutReclamation.RESOLUE, commentaire: 'Dossier incomplet, motif interne' } as any,
+      { statut: StatutReclamation.RESOLU, commentaire: 'Dossier incomplet, motif interne' } as any,
       admin,
     );
 
@@ -385,7 +385,7 @@ describe('Journal avant/après des réclamations', () => {
     const ecrit = details(journal);
     expect(ecrit.avant.statut).toBe(StatutReclamation.EN_COURS);
     expect(ecrit.avant.fermeLe).toBeNull();
-    expect(ecrit.apres.statut).toBe(StatutReclamation.RESOLUE);
+    expect(ecrit.apres.statut).toBe(StatutReclamation.RESOLU);
     expect(ecrit.apres.fermeLe).toBe(new Date('2026-10-02T11:00:00.000Z').toISOString());
     expect(ecrit.champsModifies).toEqual(['statut', 'notes', 'fermeLe']);
     expect(ecrit.commentaireFourni).toBe(true);
@@ -416,7 +416,7 @@ describe('Journal avant/après des réclamations', () => {
     });
     const ecrit = details(journal);
     expect(ecrit.avant.assigneAId).toBeNull();
-    expect(ecrit.avant.statut).toBe(StatutReclamation.OUVERTE);
+    expect(ecrit.avant.statut).toBe(StatutReclamation.OUVERT);
     expect(ecrit.apres.assigneAId).toBe('admin-1');
     expect(ecrit.apres.assigneARole).toBe(Role.DIRECTION);
     expect(ecrit.apres.statut).toBe(StatutReclamation.EN_COURS);
@@ -497,21 +497,21 @@ describe('Journal avant/après des réclamations', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     prisma.reclamation.findUnique.mockResolvedValue(
       dossier({
-        statut: StatutReclamation.REJETEE,
+        statut: StatutReclamation.REJETE,
         notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
         fermeLe: new Date('2026-10-02T11:00:00.000Z'),
       }),
     );
     tx.reclamation.update.mockResolvedValue(
       dossier({
-        statut: StatutReclamation.REJETEE,
+        statut: StatutReclamation.REJETE,
         notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne\nCLÔTURE — rejetée',
         fermeLe: new Date('2026-10-02T11:00:00.000Z'),
       }),
     );
     tx.reclamation.findUnique.mockResolvedValue(
       dossier({
-        statut: StatutReclamation.REJETEE,
+        statut: StatutReclamation.REJETE,
         notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
         fermeLe: new Date('2026-10-02T11:00:00.000Z'),
       }),
@@ -530,8 +530,8 @@ describe('Journal avant/après des réclamations', () => {
       entiteId: 'rec-1',
     });
     const ecrit = details(journal);
-    expect(ecrit.avant.statut).toBe(StatutReclamation.REJETEE);
-    expect(ecrit.apres.statut).toBe(StatutReclamation.REJETEE);
+    expect(ecrit.avant.statut).toBe(StatutReclamation.REJETE);
+    expect(ecrit.apres.statut).toBe(StatutReclamation.REJETE);
     expect(ecrit.noteClotureFournie).toBe(true);
     expect(ecrit.champsModifies).toEqual(['notes']);
     expectPasDeFuite(journal);
@@ -549,7 +549,7 @@ describe('Journal avant/après des réclamations', () => {
         delaiEscaladeHeures: 48,
         type: TypeReclamation.INSCRIPTION,
         priorite: PrioriteReclamation.NORMALE,
-        statut: StatutReclamation.OUVERTE,
+        statut: StatutReclamation.OUVERT,
         anonyme: false,
         escaladeLe: null,
       },
@@ -576,7 +576,7 @@ describe('Journal avant/après des réclamations', () => {
     });
     const ecrit = details(journal);
     expect(ecrit.avant.escaladeLe).toBeNull();
-    expect(ecrit.avant.statut).toBe(StatutReclamation.OUVERTE);
+    expect(ecrit.avant.statut).toBe(StatutReclamation.OUVERT);
     expect(ecrit.apres.escaladeLe).toBe(maintenant.toISOString());
     expect(ecrit.origine).toBe('CRON');
     expect(ecrit.forcee).toBe(false);
@@ -608,7 +608,7 @@ describe('Journal avant/après des réclamations', () => {
         delaiEscaladeHeures: 48,
         type: TypeReclamation.INSCRIPTION,
         priorite: PrioriteReclamation.NORMALE,
-        statut: StatutReclamation.OUVERTE,
+        statut: StatutReclamation.OUVERT,
         anonyme: false,
         escaladeLe: null,
       },
@@ -625,7 +625,7 @@ describe('Journal avant/après des réclamations', () => {
       expect.objectContaining({
         where: {
           id: 'rec-1',
-          statut: { in: [StatutReclamation.OUVERTE, StatutReclamation.EN_COURS, StatutReclamation.EN_ATTENTE_REPONSE] },
+          statut: { in: [StatutReclamation.OUVERT, StatutReclamation.EN_COURS, StatutReclamation.EN_ATTENTE_REPONSE] },
           escaladeLe: null,
         },
       }),
@@ -652,7 +652,7 @@ describe('Journal avant/après des réclamations', () => {
     await expect(
       service.changerStatut(
         'rec-1',
-        { statut: StatutReclamation.RESOLUE, commentaire: 'Décision concurrente' } as any,
+        { statut: StatutReclamation.RESOLU, commentaire: 'Décision concurrente' } as any,
         admin,
       ),
     ).rejects.toMatchObject({
@@ -671,7 +671,7 @@ describe('Journal avant/après des réclamations', () => {
     await expect(
       service.changerStatut(
         'rec-1',
-        { statut: StatutReclamation.RESOLUE, commentaire: 'Dossier incomplet' } as any,
+        { statut: StatutReclamation.RESOLU, commentaire: 'Dossier incomplet' } as any,
         admin,
       ),
     ).rejects.toThrow('mutation refusée');
@@ -682,7 +682,7 @@ describe('Journal avant/après des réclamations', () => {
 
   it("n'écrit aucun journal lorsque le message est refusé", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    tx.reclamation.findFirst.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLUE }));
+    tx.reclamation.findFirst.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLU }));
 
     await expect(service.posterMessage('rec-1', { contenu: 'Dernier essai' } as any, etudiant)).rejects.toThrow();
 
@@ -693,7 +693,7 @@ describe('Journal avant/après des réclamations', () => {
 
   it("n'écrit aucun journal sur une transition refusée par la matrice", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLUE }));
+    tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLU }));
 
     await expect(service.changerStatut('rec-1', { statut: StatutReclamation.EN_COURS } as any, admin)).rejects.toThrow(
       'reclamations.transition_de_statut_non_autorisee',

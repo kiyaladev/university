@@ -48,11 +48,11 @@ export default {
   },
   statusExplanations: {
     EN_ATTENTE_PAIEMENT: 'Pay the fee to start processing. Without payment, the request stays pending.',
-    PAYEE: 'Fee received. The registrar will take your request in charge.',
+    PAYE: 'Fee received. The registrar will take your request in charge.',
     EN_TRAITEMENT: 'The registrar is preparing your document.',
-    PRETE: "Your document is ready: come to the registrar's front desk with your ID card.",
+    PRET: "Your document is ready: come to the registrar's front desk with your ID card.",
     REMISE: 'Document delivered. Nothing else to do.',
-    REJETEE: 'Request rejected. The reason is shown below; you can submit a new one.',
+    REJETE: 'Request rejected. The reason is shown below; you can submit a new one.',
   },
   paymentOptions: {
     mobileMoney: 'Mobile Money',

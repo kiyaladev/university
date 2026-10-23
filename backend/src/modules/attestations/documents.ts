@@ -79,7 +79,7 @@ export class DocumentsAttestation {
     });
 
     const statut =
-      a.statut === StatutAttestation.REVOQUEE ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>' : '';
+      a.statut === StatutAttestation.REVOQUE ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>' : '';
 
     return pageA4({
       titre: `${libelle} ${a.numero}`,

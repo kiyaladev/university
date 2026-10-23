@@ -11,12 +11,12 @@ describe('Audit des transitions d’inscription', () => {
       etudiantId: 'etu-1',
       anneeId: 'annee-1',
       promotionId: 'promo-1',
-      statut: StatutInscription.PAYEE,
+      statut: StatutInscription.PAYE,
       montantFrais: 250000,
       etudiant: { nom: 'Diallo', prenom: 'Aïssatou', telephone: '+224600000000', email: 'private@example.test' },
       promotion: { filiere: { departementId: 'dep-1' } },
     };
-    const apres = { ...avant, statut: StatutInscription.VALIDEE };
+    const apres = { ...avant, statut: StatutInscription.VALIDE };
     const tx = {
       inscription: {
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -37,8 +37,8 @@ describe('Audit des transitions d’inscription', () => {
 
     const details = JSON.parse(tx.auditLog.create.mock.calls[0][0].data.details);
     expect(details).toEqual({
-      avant: expect.objectContaining({ statut: StatutInscription.PAYEE, montantFrais: 250000 }),
-      apres: expect.objectContaining({ statut: StatutInscription.VALIDEE, montantFrais: 250000 }),
+      avant: expect.objectContaining({ statut: StatutInscription.PAYE, montantFrais: 250000 }),
+      apres: expect.objectContaining({ statut: StatutInscription.VALIDE, montantFrais: 250000 }),
     });
     expect(tx.auditLog.create.mock.calls[0][0].data).not.toHaveProperty('telephone');
     expect(tx.auditLog.create.mock.calls[0][0].data.details).not.toContain('private@example.test');
@@ -52,7 +52,7 @@ describe('Audit des transitions d’inscription', () => {
       etudiantId: 'etu-1',
       anneeId: 'annee-close',
       promotionId: 'promo-1',
-      statut: StatutInscription.PAYEE,
+      statut: StatutInscription.PAYE,
       montantFrais: 250000,
       etudiant: { nom: 'Diallo', prenom: 'Aïssatou' },
       promotion: { filiere: { departementId: 'dep-1' } },

@@ -36,12 +36,12 @@ export default {
   },
   cardActions: {
     process: 'Traiter',
-    ready: 'Prête',
+    ready: 'Prêt',
   },
   steps: {
-    paid: 'Payée',
+    paid: 'Payé',
     processing: 'Traitement',
-    ready: 'Prête',
+    ready: 'Prêt',
     handedOver: 'Remise',
   },
   detail: {

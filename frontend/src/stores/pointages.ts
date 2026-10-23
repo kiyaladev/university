@@ -10,6 +10,7 @@ import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
 import { lireToken } from '@/shared/services/session';
 import { ecrireFileChiffree, lireFileChiffree } from '@/shared/services/file-chiffree';
+import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Pointage } from '../types';
 
 const CLE_FILE = 'unipresence_file_pointages';
@@ -61,8 +62,13 @@ async function lireFile(owner: string): Promise<Pointage[]> {
     const t = p.horodatage ? new Date(p.horodatage).getTime() : Date.now();
     return Number.isFinite(t) && t >= limite;
   });
-  if (secretsRetires || retenus.length !== file.length) await ecrireFileChiffree(cleFile(owner), owner, retenus);
-  return retenus;
+  // Jetons d'état : la file peut dater d'avant l'harmonisation des statuts.
+  // On convertit à la lecture et on réécrit le fichier (migration de la file).
+  const convertis = normaliserJetonsStatuts(retenus) as Pointage[];
+  const jetonsConvertis = JSON.stringify(convertis) !== JSON.stringify(retenus);
+  if (secretsRetires || retenus.length !== file.length || jetonsConvertis)
+    await ecrireFileChiffree(cleFile(owner), owner, convertis);
+  return convertis;
 }
 
 export const usePointagesStore = defineStore('pointages', {

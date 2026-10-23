@@ -24,7 +24,7 @@ function preparer() {
     },
     seance: {
       findUnique: jest.fn().mockResolvedValue(null),
-      create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ ...data, statut: 'PLANIFIEE' })),
+      create: jest.fn().mockImplementation(({ data }) => Promise.resolve({ ...data, statut: 'PLANIFIE' })),
     },
     anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
     auditLog: { create: jest.fn().mockResolvedValue({}) },

@@ -184,7 +184,7 @@ describe('Contrat HTTP local OTP/SMS', () => {
     });
     expect(tx.notification.update).toHaveBeenCalledWith({
       where: { id: 'notification-1' },
-      data: expect.objectContaining({ statut: 'ENVOYEE', envoyeLe: expect.any(Date) }),
+      data: expect.objectContaining({ statut: 'ENVOYE', envoyeLe: expect.any(Date) }),
     });
     expect(tx.auditLog.create).toHaveBeenCalledWith({
       data: expect.objectContaining({

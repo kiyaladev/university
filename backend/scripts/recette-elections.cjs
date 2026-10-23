@@ -89,7 +89,7 @@ async function main() {
   report.proclamations = proclamations.map((x) => x.status);
   const results = (await call(student, 'GET', '/elections/' + electionId + '/resultats')).data;
   assert.equal(await db.voteElection.count({ where: { electionId } }), 2);
-  assert.equal((await db.election.findUnique({ where: { id: electionId } })).statut, 'PROCLAMEE');
+  assert.equal((await db.election.findUnique({ where: { id: electionId } })).statut, 'PROCLAME');
   const logs = await db.auditLog.findMany({ where: { entiteId: electionId } });
   for (const action of ['ELECTION_OUVERTE', 'ELECTION_CLOSE', 'ELECTION_PROCLAMEE'])
     assert.equal(logs.filter((l) => l.action === action).length, 1);

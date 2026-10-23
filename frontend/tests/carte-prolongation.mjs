@@ -91,7 +91,7 @@ try {
   await call(school, 'PUT', '/cartes-etudiantes/' + card.id, { dateValidite: future }, 400);
   await call(admin, 'POST', '/cartes-etudiantes', { etudiantId: student.id }, 409);
   const final = await db.carteEtudiante.findUniqueOrThrow({ where: { id: card.id } });
-  assert.equal(final.statut, 'REVOQUEE'); assert.equal(final.active, false);
+  assert.equal(final.statut, 'REVOQUE'); assert.equal(final.active, false);
   assert.equal((await call(null, 'GET', qrPath)).data.valide, false);
   assert.equal((await call(admin, 'POST', `/cartes-etudiantes/${card.id}/verifier-nip`, { nip: '1234' }, 201)).data.ok, false);
   await page.reload({ waitUntil: 'networkidle' });

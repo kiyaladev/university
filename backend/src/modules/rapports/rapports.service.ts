@@ -174,7 +174,7 @@ export class RapportsService {
     if (departementId) affectation.enseignant = { departementId };
 
     return {
-      statut: { not: StatutSeance.ANNULEE },
+      statut: { not: StatutSeance.ANNULE },
       ...(Object.keys(date).length ? { date } : {}),
       ...(Object.keys(affectation).length ? { affectation } : {}),
       ...(query.salleId ? { salleId: query.salleId } : {}),

@@ -8,7 +8,7 @@ export type TypeReclamation =
 
 export type PrioriteReclamation = 'BASSE' | 'NORMALE' | 'HAUTE' | 'URGENTE';
 
-export type StatutReclamation = 'OUVERTE' | 'EN_COURS' | 'EN_ATTENTE_REPONSE' | 'RESOLUE' | 'FERMEE' | 'REJETEE';
+export type StatutReclamation = 'OUVERT' | 'EN_COURS' | 'EN_ATTENTE_REPONSE' | 'RESOLU' | 'FERME' | 'REJETE';
 
 export interface MessageReclamation {
   id: string;
@@ -56,7 +56,7 @@ export type TypeDemandeDocument =
   | 'CERTIFICAT_SCOLARITE'
   | 'AUTRE';
 
-export type StatutDemande = 'EN_ATTENTE_PAIEMENT' | 'PAYEE' | 'EN_TRAITEMENT' | 'PRETE' | 'REMISE' | 'REJETEE';
+export type StatutDemande = 'EN_ATTENTE_PAIEMENT' | 'PAYE' | 'EN_TRAITEMENT' | 'PRET' | 'REMISE' | 'REJETE';
 
 export interface TarifDemande {
   id: string;

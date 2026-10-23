@@ -13,7 +13,7 @@ const EVALUATION: any = {
   promotionId: 'promotion-1',
   semestre: 1,
   date: null,
-  statut: StatutEvaluation.OUVERTE,
+  statut: StatutEvaluation.OUVERT,
   _count: { notes: 0 },
 };
 
@@ -61,7 +61,7 @@ describe('Journal avant/après des évaluations', () => {
     expect(tx.evaluation.create).toHaveBeenCalledTimes(1);
     expect(JSON.parse(auditLog.create.mock.calls[0][0].data.details)).toMatchObject({
       avant: null,
-      apres: { id: 'eval-1', statut: StatutEvaluation.OUVERTE },
+      apres: { id: 'eval-1', statut: StatutEvaluation.OUVERT },
     });
   });
 
@@ -107,13 +107,13 @@ describe('Journal avant/après des évaluations', () => {
   });
 
   it('journalise la clôture de l’évaluation', async () => {
-    const apres = { ...EVALUATION, statut: StatutEvaluation.CLOTUREE };
+    const apres = { ...EVALUATION, statut: StatutEvaluation.CLOTURE };
     const { auditLog, service } = preparer(apres);
     await service.cloturerEvaluation('eval-1', USER);
 
     expect(JSON.parse(auditLog.create.mock.calls[0][0].data.details)).toMatchObject({
-      avant: { statut: StatutEvaluation.OUVERTE },
-      apres: { statut: StatutEvaluation.CLOTUREE },
+      avant: { statut: StatutEvaluation.OUVERT },
+      apres: { statut: StatutEvaluation.CLOTURE },
     });
   });
 });

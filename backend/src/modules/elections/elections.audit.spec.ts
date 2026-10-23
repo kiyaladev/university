@@ -301,13 +301,16 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     expect(brut).not.toContain('Autre description confidentielle');
   });
 
+  // Le détail « transition » garde le vocabulaire du journal : une transition
+  // écrite avant l'harmonisation des statuts reste lisible après, sans
+  // réécriture du journal (docs/decisions/statuts.md).
   it.each([
-    ['ouvrir', StatutElection.BROUILLON, 'ELECTION_OUVERTE', StatutElection.OUVERTE],
-    ['clore', StatutElection.OUVERTE, 'ELECTION_CLOSE', StatutElection.CLOSE],
-    ['proclamer', StatutElection.CLOSE, 'ELECTION_PROCLAMEE', StatutElection.PROCLAMEE],
+    ['ouvrir', StatutElection.BROUILLON, 'ELECTION_OUVERTE', StatutElection.OUVERT, 'BROUILLON→OUVERTE'],
+    ['clore', StatutElection.OUVERT, 'ELECTION_CLOSE', StatutElection.CLOS, 'OUVERTE→CLOSE'],
+    ['proclamer', StatutElection.CLOS, 'ELECTION_PROCLAMEE', StatutElection.PROCLAME, 'CLOSE→PROCLAMEE'],
   ])(
     'journalise la transition « %s » avec l’état de départ et l’état atteint',
-    async (methode, depart, action, arrivee) => {
+    async (methode, depart, action, arrivee, transition) => {
       const { prisma, journal, journalRacine } = depotAtomique({ statut: depart });
       const service = new ElectionsService(prisma, {} as any, {} as any);
 
@@ -322,22 +325,22 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
         entiteId: 'election-1',
       });
       const ecrit = details(journal[0]);
-      expect(ecrit.transition).toBe(`${depart}→${arrivee}`);
+      expect(ecrit.transition).toBe(transition);
       expect(ecrit.avant).toEqual({ ...INSTANTANE, statut: depart });
       expect(ecrit.apres).toEqual({ ...INSTANTANE, statut: arrivee });
     },
   );
 
   it('conserve l’état du scrutin après la proclamation', async () => {
-    const { prisma, base, journal } = depotAtomique({ statut: StatutElection.CLOSE });
+    const { prisma, base, journal } = depotAtomique({ statut: StatutElection.CLOS });
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
     const proclamation = await service.proclamer('election-1', admin);
 
-    expect(proclamation.statut).toBe(StatutElection.PROCLAMEE);
-    expect(base.statut).toBe(StatutElection.PROCLAMEE);
+    expect(proclamation.statut).toBe(StatutElection.PROCLAME);
+    expect(base.statut).toBe(StatutElection.PROCLAME);
     expect(base.titre).toBe(TITRE);
-    expect(details(journal[0]).apres.statut).toBe(StatutElection.PROCLAMEE);
+    expect(details(journal[0]).apres.statut).toBe(StatutElection.PROCLAME);
   });
 
   it('réduit la déclaration d’un candidat à sa position et à son rattachement', async () => {
@@ -389,8 +392,8 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
         (s) => s.modifier('election-1', { titre: TITRE_NOUVEAU, description: DESCRIPTION } as any, admin),
       ],
       ['ouverture', (s) => s.ouvrir('election-1', admin)],
-      ['clôture', (s) => s.clore('election-1', admin), { statut: StatutElection.OUVERTE }],
-      ['proclamation', (s) => s.proclamer('election-1', admin), { statut: StatutElection.CLOSE }],
+      ['clôture', (s) => s.clore('election-1', admin), { statut: StatutElection.OUVERT }],
+      ['proclamation', (s) => s.proclamer('election-1', admin), { statut: StatutElection.CLOS }],
       ['déclaration', (s) => s.ajouterCandidat('election-1', DTO_CANDIDAT as any, admin)],
       ['retrait', (s) => s.supprimerCandidat('election-1', 'candidat-1', admin)],
     ];
@@ -475,7 +478,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('annule la proclamation si l’écriture du journal échoue', async () => {
     const { prisma, journal, base } = depotAtomique({
-      statut: StatutElection.CLOSE,
+      statut: StatutElection.CLOS,
       journalEchoue: true,
     });
     const service = new ElectionsService(prisma, {} as any, {} as any);
@@ -484,7 +487,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
     // La proclamation est passée par la transaction avant l'échec du journal :
     // c'est l'annulation de l'ensemble, pas l'ordre des appels, qui protège l'état.
-    expect(base.statut).toBe(StatutElection.CLOSE);
+    expect(base.statut).toBe(StatutElection.CLOS);
     expect(journal).toEqual([]);
   });
 
@@ -521,7 +524,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
   });
 
   it('conserve le refus de modifier un scrutin publié, sans rien écrire', async () => {
-    const { prisma, journal, base } = depotAtomique({ statut: StatutElection.OUVERTE });
+    const { prisma, journal, base } = depotAtomique({ statut: StatutElection.OUVERT });
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
     await expect(service.modifier('election-1', { nbSieges: 5 } as any, admin)).rejects.toBeInstanceOf(
@@ -557,7 +560,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
 
   it('ne journalise ni le dépôt, ni le votant, ni le scrutin choisi', async () => {
     const { prisma, journal, journalRacine } = depotAtomique({
-      statut: StatutElection.OUVERTE,
+      statut: StatutElection.OUVERT,
       fenetreOuverte: true,
     });
     const service = new ElectionsService(prisma, {} as any, {} as any);

@@ -2,7 +2,7 @@
  *
  *  Règle pilotée (figée dans le code) :
  *   1. MOYENNE D'UE : pour chaque matière, moyenne pondérée des épreuves par
- *      leur coefficient. Une évaluation OUVERTE ne compte que les notes
+ *      leur coefficient. Une évaluation OUVERT ne compte que les notes
  *      réellement saisies (absence non pénalisée, correction possible).
  *      Une évaluation CLOTURÉE fige l'épreuve : une absence consignée
  *      (present=false) vaut 0/20 ; l'absence totale de saisie (aucune ligne)

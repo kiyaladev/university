@@ -3,7 +3,7 @@
  *
  * Cycle de vie d'un examen : PLANIFIE → EN_COURS → TERMINE (ou ANNULE).
  * À l'ouverture (POST /examens/:id/demarrer), le service calcule le nombre
- * d'inscrits (= inscriptions VALIDEE de la promotion + année) et fige ce
+ * d'inscrits (= inscriptions VALIDE de la promotion + année) et fige ce
  * chiffre dans la fiche : c'est l'instantané qui sert de base aux scans.
  *
  * Le scan à l'entrée de la salle valide le porteur selon trois clés possibles,
@@ -199,7 +199,7 @@ export class ExamensService {
 
   /**
    * PLANIFIE → EN_COURS :
-   *   - recalcule `nbInscrits` à partir des inscriptions VALIDEE pour la
+   *   - recalcule `nbInscrits` à partir des inscriptions VALIDE pour la
    *     promotion + année de l'examen ;
    *   - remet `nbPresents` à 0 (reprise propre d'une session).
    */
@@ -216,7 +216,7 @@ export class ExamensService {
         throw new BadRequestException(t('examens.examen_deja_termine'));
       }
       const nbInscrits = await tx.inscription.count({
-        where: { promotionId: examen.promotionId, anneeId: examen.anneeId, statut: 'VALIDEE' },
+        where: { promotionId: examen.promotionId, anneeId: examen.anneeId, statut: 'VALIDE' },
       });
       const transition = await tx.examen.updateMany({
         where: { id, statut: StatutExamen.PLANIFIE },
@@ -296,7 +296,7 @@ export class ExamensService {
    * Scan à l'entrée — la règle de validation :
    *   1. La référence est reconnue via `Etudiant.qrRestoToken`, puis
    *      `Etudiant.matricule`, puis `Etudiant.id` (chacun, à tour de rôle) ;
-   *   2. l'étudiant trouvé DOIT avoir une inscription VALIDEE pour la promotion
+   *   2. l'étudiant trouvé DOIT avoir une inscription VALIDE pour la promotion
    *      et l'année académiques de l'examen — sinon le scan est consigné en
    *      invalide ;
    *   3. un scan déjà enregistré pour ce même étudiant/examen n'est pas
@@ -328,7 +328,7 @@ export class ExamensService {
         etudiantId: candidat.id,
         promotionId: examen.promotionId,
         anneeId: examen.anneeId,
-        statut: 'VALIDEE',
+        statut: 'VALIDE',
       },
       select: { id: true },
     });

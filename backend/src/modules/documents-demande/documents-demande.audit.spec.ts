@@ -333,7 +333,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   it('trace la remise au guichet avec sa date et sans la note libre', async () => {
     const { prisma, audit } = transaction({
       demandeDocument: {
-        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PRETE }),
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PRET }),
         update: jest.fn().mockResolvedValue({
           ...DEMANDE,
           statut: StatutDemande.REMISE,
@@ -348,7 +348,7 @@ describe('Demandes de documents — transitions de cycle', () => {
     const data = audit.mock.calls[0][0].data;
     expect(data.action).toBe('DEMANDE_DOC_REMISE');
     const details = lire(audit);
-    expect(details.avant.statut).toBe(StatutDemande.PRETE);
+    expect(details.avant.statut).toBe(StatutDemande.PRET);
     expect(details.apres.statut).toBe(StatutDemande.REMISE);
     expect(details.avant.remiseLe).toBeNull();
     expect(details.apres.remiseLe).toBe('2026-10-05T08:00:00.000Z');
@@ -360,8 +360,8 @@ describe('Demandes de documents — transitions de cycle', () => {
   it('trace le rejet sans recopier le motif', async () => {
     const { prisma, audit } = transaction({
       demandeDocument: {
-        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
-        update: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.REJETEE }),
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYE }),
+        update: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.REJETE }),
       },
     });
     const service = new DocumentsDemandeService(prisma as any);
@@ -372,8 +372,8 @@ describe('Demandes de documents — transitions de cycle', () => {
     expect(data.userId).toBe('agent-1');
     expect(data.action).toBe('DEMANDE_DOC_REJETEE');
     const details = lire(audit);
-    expect(details.avant.statut).toBe(StatutDemande.PAYEE);
-    expect(details.apres.statut).toBe(StatutDemande.REJETEE);
+    expect(details.avant.statut).toBe(StatutDemande.PAYE);
+    expect(details.apres.statut).toBe(StatutDemande.REJETE);
     expect(details.motifFourni).toBe(true);
     expect(data.details).not.toContain('justificatif medical manquant');
   });
@@ -381,7 +381,7 @@ describe('Demandes de documents — transitions de cycle', () => {
   it('trace le lancement du traitement dans la transaction', async () => {
     const { prisma, audit } = transaction({
       demandeDocument: {
-        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYE }),
         update: jest.fn().mockResolvedValue({
           ...DEMANDE,
           statut: StatutDemande.EN_TRAITEMENT,
@@ -395,29 +395,29 @@ describe('Demandes de documents — transitions de cycle', () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     const details = lire(audit);
-    expect(details.avant.statut).toBe(StatutDemande.PAYEE);
+    expect(details.avant.statut).toBe(StatutDemande.PAYE);
     expect(details.apres.statut).toBe(StatutDemande.EN_TRAITEMENT);
     expect(details.apres.traiteParId).toBe('agent-1');
     expect(details.champsModifies).toEqual(['statut', 'traiteParId']);
   });
 
-  it('trace le marquage PRETE sans le message au demandeur', async () => {
+  it('trace le marquage PRET sans le message au demandeur', async () => {
     const { prisma, audit } = transaction(
       {
         // Verrou de ligne pris avant la relecture de la demande.
         $queryRaw: jest.fn().mockResolvedValue([]),
         demandeDocument: {
-          findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
+          findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYE }),
           update: jest.fn().mockResolvedValue({
             ...DEMANDE,
-            statut: StatutDemande.PRETE,
+            statut: StatutDemande.PRET,
             traiteParId: 'agent-1',
             notification: 'Votre relevé est prêt au guichet',
           }),
         },
       },
       {
-        demandeDocument: { findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }) },
+        demandeDocument: { findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYE }) },
         etudiant: { findUnique: jest.fn().mockResolvedValue(null) },
       },
     );
@@ -428,8 +428,8 @@ describe('Demandes de documents — transitions de cycle', () => {
     const data = audit.mock.calls[0][0].data;
     expect(data.action).toBe('DEMANDE_DOC_PRETE');
     const details = lire(audit);
-    expect(details.avant.statut).toBe(StatutDemande.PAYEE);
-    expect(details.apres.statut).toBe(StatutDemande.PRETE);
+    expect(details.avant.statut).toBe(StatutDemande.PAYE);
+    expect(details.apres.statut).toBe(StatutDemande.PRET);
     expect(details.champsModifies).toEqual(['statut', 'traiteParId', 'notification']);
     expect(data.details).not.toContain('Votre relevé est prêt au guichet');
   });
@@ -521,7 +521,7 @@ describe('Demandes de documents — absence de trace sur mutation refusée', () 
     expect(audit).not.toHaveBeenCalled();
   });
 
-  it('refuse le marquage PRETE d’une demande non traitée sans ouvrir de transaction', async () => {
+  it('refuse le marquage PRET d’une demande non traitée sans ouvrir de transaction', async () => {
     const { prisma, audit } = transaction(
       {},
       {
@@ -539,7 +539,7 @@ describe('Demandes de documents — absence de trace sur mutation refusée', () 
   it('refuse la remise d’une demande non prête : ni écriture ni trace', async () => {
     const { tx, prisma, audit } = transaction({
       demandeDocument: {
-        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
+        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYE }),
         update: jest.fn(),
       },
     });

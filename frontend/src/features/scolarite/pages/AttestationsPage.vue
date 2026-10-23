@@ -184,7 +184,7 @@
             </q-btn>
             <q-btn
               v-close-popup
-              v-if="peutRevoquer && p.row.statut === 'EMISE'"
+              v-if="peutRevoquer && p.row.statut === 'EMIS'"
               flat
               dense
               no-caps
@@ -250,7 +250,7 @@
             />
             <q-btn
               v-close-popup
-              v-if="peutRevoquer && a.statut === 'EMISE'"
+              v-if="peutRevoquer && a.statut === 'EMIS'"
               flat
               dense
               no-caps
@@ -318,7 +318,7 @@
                 })
               }}
             </div>
-            <div v-if="detail.statut === 'REVOQUEE'" class="text-negative">
+            <div v-if="detail.statut === 'REVOQUE'" class="text-negative">
               {{
                 $t('attestations.detail.revokedOnBy', {
                   date: dateLisible(detail.revoqueeLe),

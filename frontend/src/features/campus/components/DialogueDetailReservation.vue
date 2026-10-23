@@ -55,7 +55,7 @@
               :label="$t('common.actions.confirm')"
               :loading="enCours === 'confirmer'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
-              @click="decider('CONFIRMEE')"
+              @click="decider('CONFIRME')"
             />
             <q-btn
               unelevated
@@ -65,7 +65,7 @@
               :label="$t('common.actions.refuse')"
               :loading="enCours === 'refuser'"
               :disabled="reservation.statut !== 'EN_ATTENTE'"
-              @click="decider('REFUSEE')"
+              @click="decider('REFUSE')"
             />
           </div>
         </div>
@@ -207,9 +207,9 @@ watch(
   },
 );
 
-async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
+async function decider(statut: 'CONFIRME' | 'REFUSE') {
   const id = props.reservation!.id;
-  enCours.value = statut === 'CONFIRMEE' ? 'confirmer' : 'refuser';
+  enCours.value = statut === 'CONFIRME' ? 'confirmer' : 'refuser';
   erreur.value = '';
   try {
     await api.post(
@@ -221,8 +221,8 @@ async function decider(statut: 'CONFIRMEE' | 'REFUSEE') {
       { silencieux: true },
     );
     $q.notify({
-      type: statut === 'CONFIRMEE' ? 'positive' : 'warning',
-      message: t(statut === 'CONFIRMEE' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
+      type: statut === 'CONFIRME' ? 'positive' : 'warning',
+      message: t(statut === 'CONFIRME' ? 'reservations.detailDialog.confirmed' : 'reservations.detailDialog.refused'),
     });
     emit('change');
   } catch (e: any) {

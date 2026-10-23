@@ -237,7 +237,7 @@ function ouvrirEmission() {
             </q-btn>
             <q-btn
               v-close-popup
-              v-if="peutModifier && p.row.statut === 'EMISE'"
+              v-if="peutModifier && p.row.statut === 'EMIS'"
               flat
               no-caps
               dense
@@ -250,7 +250,7 @@ function ouvrirEmission() {
             </q-btn>
             <q-btn
               v-close-popup
-              v-if="p.row.statut === 'EMISE' && peutRevoquer"
+              v-if="p.row.statut === 'EMIS' && peutRevoquer"
               flat
               no-caps
               dense
@@ -313,7 +313,7 @@ function ouvrirEmission() {
               />
               <q-btn
                 v-close-popup
-                v-if="peutModifier && c.statut === 'EMISE'"
+                v-if="peutModifier && c.statut === 'EMIS'"
                 flat
                 dense
                 icon="edit"
@@ -323,7 +323,7 @@ function ouvrirEmission() {
               />
               <q-btn
                 v-close-popup
-                v-if="c.statut === 'EMISE' && peutRevoquer"
+                v-if="c.statut === 'EMIS' && peutRevoquer"
                 flat
                 dense
                 icon="block"

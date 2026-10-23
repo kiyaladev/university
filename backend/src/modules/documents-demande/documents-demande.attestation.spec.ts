@@ -66,7 +66,7 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
     );
     expect(tx.demandeDocument.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ statut: StatutDemande.PRETE, attestationId: 'att-1' }),
+        data: expect.objectContaining({ statut: StatutDemande.PRET, attestationId: 'att-1' }),
       }),
     );
     expect(resultat.attestation).toEqual(expect.objectContaining({ numero: 'ATT-2026-00001' }));
@@ -82,7 +82,7 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
 
     expect(attestations.emettrePourDemandeTx).not.toHaveBeenCalled();
     const data = tx.demandeDocument.update.mock.calls[0][0].data;
-    expect(data.statut).toBe(StatutDemande.PRETE);
+    expect(data.statut).toBe(StatutDemande.PRET);
     expect(data).not.toHaveProperty('attestationId');
   });
 
@@ -90,7 +90,7 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
     const { service, tx, attestations } = monter({ type: TypeDemandeDocument.ATTESTATION_SCOLARITE });
     tx.demandeDocument.findUnique.mockResolvedValue({
       id: 'demande-1',
-      statut: StatutDemande.PRETE,
+      statut: StatutDemande.PRET,
       type: TypeDemandeDocument.ATTESTATION_SCOLARITE,
     });
 
@@ -112,7 +112,7 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
 
     expect(attestations.emettrePourDemandeTx).not.toHaveBeenCalled();
     const data = tx.demandeDocument.update.mock.calls[0][0].data;
-    expect(data.statut).toBe(StatutDemande.PRETE);
+    expect(data.statut).toBe(StatutDemande.PRET);
     expect(data).not.toHaveProperty('attestationId');
   });
 });

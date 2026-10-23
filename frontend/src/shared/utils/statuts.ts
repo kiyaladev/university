@@ -80,8 +80,12 @@ export type Ton = 'positif' | 'attention' | 'negatif' | 'neutre' | 'info';
 
 export const TONS: readonly Ton[] = ['positif', 'attention', 'negatif', 'neutre', 'info'];
 
-/** Statuts de délibération connus des libellés au-delà du type `StatutDeliberation`. */
-type StatutDeliberationEtendu = StatutDeliberation | 'PROPOSE' | 'VALIDE' | 'SOUTENU' | 'ABANDONNE';
+/**
+ * Statuts de délibération connus des libellés au-delà du type
+ * `StatutDeliberation` : ceux de l'encadrement. `VALIDE` leur est commun —
+ * la délibération validée et l'encadrement validé portent le même jeton.
+ */
+type StatutDeliberationEtendu = StatutDeliberation | 'PROPOSE' | 'SOUTENU' | 'ABANDONNE';
 
 const TONS_STATUT = {
   paiement: {
@@ -94,28 +98,27 @@ const TONS_STATUT = {
   inscription: {
     BROUILLON: 'neutre',
     EN_ATTENTE_PAIEMENT: 'attention',
-    PAYEE: 'positif',
-    VALIDEE: 'positif',
-    ANNULEE: 'negatif',
+    PAYE: 'positif',
+    VALIDE: 'positif',
+    ANNULE: 'negatif',
   } satisfies Record<StatutInscription, Ton>,
   paie: {
     BROUILLON: 'neutre',
-    VALIDEE: 'positif',
-    PAYEE: 'info',
+    VALIDE: 'positif',
+    PAYE: 'info',
   } satisfies Record<StatutPaie, Ton>,
   recette: {
-    ENCAISSEE: 'positif',
+    ENCAISSE: 'positif',
     A_ENCAISSER: 'neutre',
   } satisfies Record<keyof typeof LIBELLE_STATUT_RECETTE, Ton>,
   evaluation: {
-    OUVERTE: 'positif',
-    CLOTUREE: 'neutre',
+    OUVERT: 'positif',
+    CLOTURE: 'neutre',
   } satisfies Record<StatutEvaluation, Ton>,
   deliberation: {
     BROUILLON: 'attention',
-    VALIDEE: 'positif',
-    PROPOSE: 'neutre',
     VALIDE: 'positif',
+    PROPOSE: 'neutre',
     SOUTENU: 'positif',
     ABANDONNE: 'negatif',
   } satisfies Record<StatutDeliberationEtendu, Ton>,
@@ -125,16 +128,16 @@ const TONS_STATUT = {
     DEFAILLANT: 'negatif',
   } satisfies Record<DecisionJury, Ton>,
   attestation: {
-    EMISE: 'positif',
-    REVOQUEE: 'negatif',
+    EMIS: 'positif',
+    REVOQUE: 'negatif',
   } satisfies Record<StatutAttestation, Ton>,
   carte: {
-    EMISE: 'positif',
-    REVOQUEE: 'negatif',
+    EMIS: 'positif',
+    REVOQUE: 'negatif',
   } satisfies Record<StatutCarteEtudiante, Ton>,
   notification: {
     EN_ATTENTE: 'attention',
-    ENVOYEE: 'positif',
+    ENVOYE: 'positif',
     ECHOUE: 'negatif',
   } satisfies Record<StatutNotification, Ton>,
   courrier: {
@@ -166,33 +169,33 @@ const TONS_STATUT = {
   } satisfies Record<StatutBadge, Ton>,
   election: {
     BROUILLON: 'neutre',
-    OUVERTE: 'positif',
-    CLOSE: 'attention',
-    PROCLAMEE: 'info',
-    ANNULEE: 'negatif',
+    OUVERT: 'positif',
+    CLOS: 'attention',
+    PROCLAME: 'info',
+    ANNULE: 'negatif',
   } satisfies Record<StatutElection, Ton>,
   chambre: {
     LIBRE: 'positif',
-    RESERVEE: 'attention',
-    OCCUPEE: 'neutre',
+    RESERVE: 'attention',
+    OCCUPE: 'neutre',
     MAINTENANCE: 'negatif',
   } satisfies Record<StatutChambre, Ton>,
   attribution: {
     EN_ATTENTE: 'neutre',
-    ACCORDEE: 'positif',
-    REFUSEE: 'negatif',
-    RETIREE: 'attention',
+    ACCORDE: 'positif',
+    REFUSE: 'negatif',
+    RETIRE: 'attention',
   } satisfies Record<StatutAttributionLogement, Ton>,
   consommation: {
     EN_ATTENTE: 'neutre',
-    VALIDEE: 'positif',
-    ANNULEE: 'attention',
+    VALIDE: 'positif',
+    ANNULE: 'attention',
   } satisfies Record<StatutConsommation, Ton>,
   reservation: {
     EN_ATTENTE: 'attention',
-    CONFIRMEE: 'positif',
-    REFUSEE: 'negatif',
-    ANNULEE: 'neutre',
+    CONFIRME: 'positif',
+    REFUSE: 'negatif',
+    ANNULE: 'neutre',
   } satisfies Record<StatutReservationSalle, Ton>,
   ticket: {
     OUVERT: 'attention',
@@ -202,13 +205,13 @@ const TONS_STATUT = {
   } satisfies Record<StatutTicket, Ton>,
   formation: {
     BROUILLON: 'neutre',
-    PUBLIEE: 'positif',
-    COMPLETE: 'attention',
+    PUBLIE: 'positif',
+    COMPLET: 'attention',
   } satisfies Record<StatutFormation, Ton>,
   inscriptionFormation: {
     EN_ATTENTE: 'attention',
-    CONFIRMEE: 'positif',
-    ANNULEE: 'negatif',
+    CONFIRME: 'positif',
+    ANNULE: 'negatif',
   } satisfies Record<StatutInscriptionFormation, Ton>,
   stage: {
     PROPOSE: 'neutre',
@@ -229,20 +232,20 @@ const TONS_STATUT = {
     ARCHIVE: 'info',
   } satisfies Record<StatutVOD, Ton>,
   reclamation: {
-    OUVERTE: 'attention',
+    OUVERT: 'attention',
     EN_COURS: 'positif',
     EN_ATTENTE_REPONSE: 'neutre',
-    RESOLUE: 'positif',
-    FERMEE: 'neutre',
-    REJETEE: 'negatif',
+    RESOLU: 'positif',
+    FERME: 'neutre',
+    REJETE: 'negatif',
   } satisfies Record<StatutReclamation, Ton>,
   demande: {
     EN_ATTENTE_PAIEMENT: 'attention',
-    PAYEE: 'positif',
+    PAYE: 'positif',
     EN_TRAITEMENT: 'positif',
-    PRETE: 'positif',
+    PRET: 'positif',
     REMISE: 'info',
-    REJETEE: 'negatif',
+    REJETE: 'negatif',
   } satisfies Record<StatutDemande, Ton>,
   justificatif: {
     EN_ATTENTE: 'attention',
@@ -317,3 +320,71 @@ export const CLASSE_CHAMP_PRESENCE: Record<StatutPresence, string> = {
   REMPLACE: 'remplace',
   DEPART_ANTICIPE: 'depart',
 };
+
+/**
+ * Jetons d'état : compatibilité avec l'écriture antérieure des enums.
+ *
+ * Depuis l'harmonisation des statuts (docs/decisions/statuts.md), une valeur
+ * d'état est écrite sans marqueur de genre : `ANNULE`, `VALIDE`, `CLOTURE`…
+ * Cette table permet de lire ce qui traîne de l'ancienne écriture :
+ *
+ *  - dans les réponses d'une API qui n'a pas encore été migrée (déploiement
+ *    partiel, retour arrière) ;
+ *  - dans les fichiers conservés sur l'appareil (file hors ligne du contrôleur).
+ *
+ * La table est une bijection : chaque ancien jeton a un seul successeur, et
+ * aucun jeton courant n'y figure.
+ */
+export const JETONS_STATUT_LEGACY: Readonly<Record<string, string>> = Object.freeze({
+  ACCORDEE: 'ACCORDE',
+  ANNULEE: 'ANNULE',
+  CLOSE: 'CLOS',
+  CLOTUREE: 'CLOTURE',
+  COMPLETE: 'COMPLET',
+  CONFIRMEE: 'CONFIRME',
+  CONTROLEE: 'CONTROLE',
+  EMISE: 'EMIS',
+  ENCAISSEE: 'ENCAISSE',
+  ENVOYEE: 'ENVOYE',
+  FERMEE: 'FERME',
+  OCCUPEE: 'OCCUPE',
+  OUVERTE: 'OUVERT',
+  PAYEE: 'PAYE',
+  PLANIFIEE: 'PLANIFIE',
+  PRETE: 'PRET',
+  PROCLAMEE: 'PROCLAME',
+  PUBLIEE: 'PUBLIE',
+  REFUSEE: 'REFUSE',
+  REJETEE: 'REJETE',
+  RESERVEE: 'RESERVE',
+  RESOLUE: 'RESOLU',
+  RETIREE: 'RETIRE',
+  REVOQUEE: 'REVOQUE',
+  VALIDEE: 'VALIDE',
+});
+
+/** Le jeton courant correspondant à une valeur lue (identique si elle est déjà courante). */
+export function jetonStatutActuel(valeur: string): string {
+  return JETONS_STATUT_LEGACY[valeur] ?? valeur;
+}
+
+/**
+ * Convertit les jetons d'état d'une charge utile. Seules les chaînes
+ * exactement égales à un ancien jeton sont touchées : un texte libre qui
+ * contiendrait ces mots n'est pas réécrit.
+ */
+export function normaliserJetonsStatuts<T>(valeur: T): T {
+  if (typeof valeur === 'string') return jetonStatutActuel(valeur) as unknown as T;
+  if (Array.isArray(valeur))
+    return valeur.map((element) => normaliserJetonsStatuts(element)) as unknown as T;
+  if (valeur !== null && typeof valeur === 'object') {
+    const prototype = Object.getPrototypeOf(valeur);
+    if (prototype !== Object.prototype && prototype !== null) return valeur;
+    const sortie: Record<string, unknown> = {};
+    for (const [cle, contenu] of Object.entries(valeur as Record<string, unknown>)) {
+      sortie[cle] = normaliserJetonsStatuts(contenu);
+    }
+    return sortie as unknown as T;
+  }
+  return valeur;
+}

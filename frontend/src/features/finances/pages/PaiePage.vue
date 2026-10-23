@@ -442,7 +442,7 @@ const peutCreer = computed(() => auth.peut('paie.creer'));
 const peutImprimer = computed(() => auth.peut('paie.imprimer'));
 const aDesFiltres = computed(() => !!filtres.value.statut || !!filtres.value.annee);
 
-const optionsStatuts = ['BROUILLON', 'VALIDEE', 'PAYEE'].map((v) => ({
+const optionsStatuts = ['BROUILLON', 'VALIDE', 'PAYE'].map((v) => ({
   label: LIBELLE_STATUT_PAIE[v],
   value: v,
 }));
@@ -609,7 +609,7 @@ function supprimer(f: FeuillePaie) {
 // Droits d'action, par rôle et par statut du cycle de vie.
 const peutCalculer = (f: FeuillePaie) => auth.peut('paie.calculer') && f.statut === 'BROUILLON';
 const peutValider = (f: FeuillePaie) => auth.peut('paie.valider') && f.statut === 'BROUILLON';
-const peutPayer = (f: FeuillePaie) => auth.peut('paie.payer') && f.statut === 'VALIDEE';
+const peutPayer = (f: FeuillePaie) => auth.peut('paie.payer') && f.statut === 'VALIDE';
 const peutSupprimer = (f: FeuillePaie) => auth.peut('paie.supprimer') && f.statut === 'BROUILLON';
 </script>
 

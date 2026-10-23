@@ -256,7 +256,7 @@
             <span class="section-titre">{{ $t('mesDemandes.dialog.registrarMessage') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notification }}</div>
           </div>
-          <div v-if="demandeSuivie.statut === 'REJETEE' && demandeSuivie.notes" class="q-mt-md">
+          <div v-if="demandeSuivie.statut === 'REJETE' && demandeSuivie.notes" class="q-mt-md">
             <span class="section-titre">{{ $t('mesDemandes.dialog.rejectionReason') }}</span>
             <div class="demande-bloc" style="white-space: pre-wrap">{{ demandeSuivie.notes }}</div>
           </div>
@@ -378,18 +378,18 @@ const rolePasBon = computed(() => auth.utilisateur && auth.utilisateur.role !== 
 /** Le même statut, dit sans jargon administratif. */
 const EXPLICATION_STATUT = computed<Record<StatutDemande, string>>(() => ({
   EN_ATTENTE_PAIEMENT: t('mesDemandes.statusExplanations.EN_ATTENTE_PAIEMENT'),
-  PAYEE: t('mesDemandes.statusExplanations.PAYEE'),
+  PAYE: t('mesDemandes.statusExplanations.PAYE'),
   EN_TRAITEMENT: t('mesDemandes.statusExplanations.EN_TRAITEMENT'),
-  PRETE: t('mesDemandes.statusExplanations.PRETE'),
+  PRET: t('mesDemandes.statusExplanations.PRET'),
   REMISE: t('mesDemandes.statusExplanations.REMISE'),
-  REJETEE: t('mesDemandes.statusExplanations.REJETEE'),
+  REJETE: t('mesDemandes.statusExplanations.REJETE'),
 }));
 
 const ETAPES_DEMANDE = computed(() => [
   { identifiant: 'EN_ATTENTE_PAIEMENT', libelle: t('common.fields.payment'), icone: 'payments' },
-  { identifiant: 'PAYEE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
+  { identifiant: 'PAYE', libelle: t('mesDemandes.steps.paid'), icone: 'verified' },
   { identifiant: 'EN_TRAITEMENT', libelle: t('mesDemandes.steps.processing'), icone: 'build' },
-  { identifiant: 'PRETE', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
+  { identifiant: 'PRET', libelle: t('mesDemandes.steps.ready'), icone: 'check_circle' },
   { identifiant: 'REMISE', libelle: t('mesDemandes.steps.delivered'), icone: 'task_alt' },
 ]);
 
@@ -423,7 +423,7 @@ const modeVue = usePresentationListe();
 // Compteurs calculés sur les demandes affichées (l'API étudiante ne
 // fournit pas de tableau de bord dédié).
 const stats = computed(() => {
-  const counts: Record<string, number> = { EN_ATTENTE_PAIEMENT: 0, EN_TRAITEMENT: 0, PRETE: 0, REMISE: 0 };
+  const counts: Record<string, number> = { EN_ATTENTE_PAIEMENT: 0, EN_TRAITEMENT: 0, PRET: 0, REMISE: 0 };
   for (const d of liste.lignes) {
     if (counts[d.statut] != null) counts[d.statut]++;
   }
@@ -446,7 +446,7 @@ const formPaiement = ref({
 const plaques = computed(() => [
   { cle: 'EN_ATTENTE_PAIEMENT', libelle: t('mesDemandes.stats.labels.toPay'), alerte: true },
   { cle: 'EN_TRAITEMENT', libelle: t('mesDemandes.stats.labels.inProgress'), alerte: false },
-  { cle: 'PRETE', libelle: t('mesDemandes.stats.labels.ready'), alerte: false },
+  { cle: 'PRET', libelle: t('mesDemandes.stats.labels.ready'), alerte: false },
   { cle: 'REMISE', libelle: t('mesDemandes.stats.labels.delivered'), alerte: false },
 ]);
 

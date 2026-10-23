@@ -367,7 +367,7 @@ export class RestoService {
           repas: dto.repas,
           montant: dto.montant,
           cantine: dto.cantine ?? null,
-          statut: StatutConsommation.VALIDEE,
+          statut: StatutConsommation.VALIDE,
           valideurId: user.id,
           valideLe: new Date(),
           consommeLe: new Date(),
@@ -480,7 +480,7 @@ export class RestoService {
       include: { portefeuille: true },
     });
     if (!consommation) throw new NotFoundException(t('resto.consommation_introuvable'));
-    if (consommation.statut !== StatutConsommation.VALIDEE) {
+    if (consommation.statut !== StatutConsommation.VALIDE) {
       throw new BadRequestException(
         t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }),
       );
@@ -488,8 +488,8 @@ export class RestoService {
 
     const { maj, solde } = await this.prisma.$transaction(async (tx) => {
       const annulation = await tx.consommationResto.updateMany({
-        where: { id, statut: StatutConsommation.VALIDEE },
-        data: { statut: StatutConsommation.ANNULEE },
+        where: { id, statut: StatutConsommation.VALIDE },
+        data: { statut: StatutConsommation.ANNULE },
       });
       if (annulation.count !== 1) {
         throw new BadRequestException(

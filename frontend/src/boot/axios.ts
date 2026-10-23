@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Notify } from 'quasar';
 import { getAppLocale, i18n } from './i18n';
 import { effacerToken, lireToken } from '@/shared/services/session';
+import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 
 /**
  * Option maison lue par l'intercepteur : une requête « silencieuse » n'affiche
@@ -31,7 +32,14 @@ export default defineBoot(({ router }) => {
   });
 
   api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // Jetons d'état : une API pas encore migrée répond avec l'ancienne
+      // écriture (`ANNULEE`). On convertit à la réception pour que
+      // l'interface reste juste pendant un déploiement partiel ou un retour
+      // arrière (voir docs/decisions/statuts.md).
+      if (response.data) response.data = normaliserJetonsStatuts(response.data);
+      return response;
+    },
     // `async` : on doit réinitialiser le store avant de naviguer, sinon la
     // garde de routes lit encore `connecte === true` et laisse repasser.
     async (error) => {

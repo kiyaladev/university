@@ -44,7 +44,7 @@ try {
   await page.getByRole('button', { name: en ? 'Details' : 'Détails', exact: true }).first().click();
   const dialog = page.locator('.q-dialog').last();
   await dialog.locator('dd').filter({ hasText: id }).waitFor();
-  const text = await dialog.innerText(); assert.ok(text.includes('OUVERTE')); assert.ok(text.includes('true'));
+  const text = await dialog.innerText(); assert.ok(text.includes('OUVERT')); assert.ok(text.includes('true'));
   for (const secret of ['Sujet confidentiel QA', 'Description confidentielle', 'Auteur confidentiel QA', 'qa-confidentiel@example.invalid']) assert.ok(!text.includes(secret));
   assert.ok(!text.includes('latitude')); assert.ok(!text.includes('qrToken')); assert.deepEqual(errors, []);
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));

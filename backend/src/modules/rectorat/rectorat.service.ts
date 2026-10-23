@@ -17,19 +17,19 @@
  *     compté si l'étudiant a été validé — un brouillon d'inscription pas
  *     payé n'est pas un étudiant inscrit). On retient la décision du modèle
  *     : un inscrit réel est >= EN_ATTENTE_PAIEMENT (le module Inscription
- *     passe PAYEE puis VALIDEE). On exclut donc BROUILLON.
+ *     passe PAYE puis VALIDE). On exclut donc BROUILLON.
  *   • Effectif par promotion : groupBy sur promotionId des inscriptions
  *     filtrées.
  *   • Taux de réussite : moyenne des deliberation.tauxReussite sur la session
  *     NORMALE des délibérations VALIDEES de l'année. Si aucune délibération
  *     validée, on retourne 0 — un Rectorat neuf n'invente pas un taux.
  *   • Masse salariale du mois : somme des lignePaie.montantNet sur les
- *     feuilles VALIDEE ou PAYEE du mois calendaire courant. Une feuille
+ *     feuilles VALIDE ou PAYE du mois calendaire courant. Une feuille
  *     BROUILLON n'est pas un état payée — le Rectorat ne l'annonce pas.
  *   • Enseignants / vacataires : count des Enseignant où statut = PERMANENT
  *     ou VACATAIRE, et idem pour VACATAIRE seul.
  *   • Réclamations en cours : count des Reclamation où statut NOT IN
- *     (RESOLUE, FERMEE, REJETEE).
+ *     (RESOLU, FERME, REJETE).
  *   • Incidents helpdesk 24h : count des TicketSupport créés depuis
  *     (maintenant − 24h), tous statuts.
  *   • Patrimoine obsolescence : compte les EquipementPatrimoine où l'âge
@@ -127,7 +127,7 @@ export class RectoratService {
         where: {
           anneeId: annee.id,
           session: SessionDeliberation.NORMALE,
-          statut: StatutDeliberation.VALIDEE,
+          statut: StatutDeliberation.VALIDE,
         },
         select: { tauxReussite: true },
       }),
@@ -187,8 +187,8 @@ export class RectoratService {
 
   /**
    * Masse salariale du mois calendaire courant : somme des feuillePaie.
-   * montantTotal (déjà la somme des lignes) sur les feuilles VALIDEE ou
-   * PAYEE qui recouvrent le mois. On exclut les BROUILLON (pas un état
+   * montantTotal (déjà la somme des lignes) sur les feuilles VALIDE ou
+   * PAYE qui recouvrent le mois. On exclut les BROUILLON (pas un état
    * comptable) — un Rectorat n'annonce pas un brouillon.
    */
   private async masseSalarialeMois(): Promise<{ total: number; libelle: string }> {
@@ -202,13 +202,13 @@ export class RectoratService {
         _sum: { montantTotal: true },
         where: {
           ...bornesFeuilleMois(mois, annee),
-          statut: { in: [StatutPaie.VALIDEE, StatutPaie.PAYEE] },
+          statut: { in: [StatutPaie.VALIDE, StatutPaie.PAYE] },
         },
       }),
       this.prisma.feuillePaie.count({
         where: {
           ...bornesFeuilleMois(mois, annee),
-          statut: { in: [StatutPaie.VALIDEE, StatutPaie.PAYEE] },
+          statut: { in: [StatutPaie.VALIDE, StatutPaie.PAYE] },
         },
       }),
     ]);
@@ -508,15 +508,15 @@ async function bornesFeuilleMois(mois: number, annee: number): Promise<Prisma.Fe
   };
 }
 
-/** Statuts d'inscription qui comptent comme inscrit (≠ BROUILLON, ≠ ANNULEE). */
+/** Statuts d'inscription qui comptent comme inscrit (≠ BROUILLON, ≠ ANNULE). */
 function baseInscriptionNonAnnulee(): Prisma.InscriptionWhereInput {
   return {
-    statut: { notIn: [StatutInscription.BROUILLON, StatutInscription.ANNULEE] },
+    statut: { notIn: [StatutInscription.BROUILLON, StatutInscription.ANNULE] },
   };
 }
 
 function reclamationFermee(): StatutReclamation[] {
-  return [StatutReclamation.RESOLUE, StatutReclamation.FERMEE, StatutReclamation.REJETEE];
+  return [StatutReclamation.RESOLU, StatutReclamation.FERME, StatutReclamation.REJETE];
 }
 
 function statutsEnseignantsPayes(): StatutEnseignant[] {

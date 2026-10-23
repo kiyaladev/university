@@ -68,7 +68,7 @@ describe('Règlement des inscriptions — cumul des paiements', () => {
     );
     expect(tx.inscription.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { statut: StatutInscription.PAYEE },
+        data: { statut: StatutInscription.PAYE },
       }),
     );
   });
@@ -128,23 +128,23 @@ describe('Cycle de vie des inscriptions — transitions conditionnelles', () => 
   }
 
   it('refuse une validation si le dossier a été annulé entre-temps', async () => {
-    const { tx, service } = preparer(StatutInscription.PAYEE);
+    const { tx, service } = preparer(StatutInscription.PAYE);
     await expect(service.validerInscription('ins-1', AGENT)).rejects.toBeInstanceOf(ConflictException);
     expect(tx.inscription.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'ins-1', statut: StatutInscription.PAYEE },
+        where: { id: 'ins-1', statut: StatutInscription.PAYE },
       }),
     );
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
   it('refuse une annulation si le dossier a été validé entre-temps', async () => {
-    const { tx, service } = preparer(StatutInscription.PAYEE);
+    const { tx, service } = preparer(StatutInscription.PAYE);
     await expect(service.annulerInscription('ins-1', AGENT)).rejects.toBeInstanceOf(ConflictException);
     expect(tx.inscription.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'ins-1', statut: StatutInscription.PAYEE },
-        data: { statut: StatutInscription.ANNULEE },
+        where: { id: 'ins-1', statut: StatutInscription.PAYE },
+        data: { statut: StatutInscription.ANNULE },
       }),
     );
     expect(tx.auditLog.create).not.toHaveBeenCalled();
@@ -159,7 +159,7 @@ describe('Réinscription après annulation', () => {
       etudiantId: 'etu-1',
       anneeId: 'annee-1',
       promotionId: 'promo-1',
-      statut: StatutInscription.ANNULEE,
+      statut: StatutInscription.ANNULE,
       montantFrais: 100,
     };
     const tx: any = {
@@ -188,7 +188,7 @@ describe('Réinscription après annulation', () => {
       inscription: {
         findUnique: jest
           .fn()
-          .mockResolvedValue({ id: 'ins-1', numero: annule.numero, statut: StatutInscription.ANNULEE }),
+          .mockResolvedValue({ id: 'ins-1', numero: annule.numero, statut: StatutInscription.ANNULE }),
       },
       frais: { findUnique: jest.fn().mockResolvedValue({ montant: 150, devise: 'GNF' }) },
       $transaction: jest.fn((work: any) => work(tx)),
@@ -201,7 +201,7 @@ describe('Réinscription après annulation', () => {
 
     expect(tx.inscription.create).not.toHaveBeenCalled();
     expect(tx.inscription.updateMany).toHaveBeenCalledWith({
-      where: { id: 'ins-1', statut: StatutInscription.ANNULEE },
+      where: { id: 'ins-1', statut: StatutInscription.ANNULE },
       data: expect.objectContaining({
         promotionId: 'promo-2',
         statut: StatutInscription.EN_ATTENTE_PAIEMENT,

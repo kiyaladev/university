@@ -159,9 +159,9 @@
           <q-btn
             v-if="
               estStaff &&
-              reclamation.statut !== 'FERMEE' &&
-              reclamation.statut !== 'REJETEE' &&
-              reclamation.statut !== 'RESOLUE'
+              reclamation.statut !== 'FERME' &&
+              reclamation.statut !== 'REJETE' &&
+              reclamation.statut !== 'RESOLU'
             "
             outline
             color="primary"
@@ -174,9 +174,9 @@
           <q-btn
             v-if="
               auth.aRole(['ADMIN', 'DIRECTION']) &&
-              reclamation.statut !== 'FERMEE' &&
-              reclamation.statut !== 'REJETEE' &&
-              reclamation.statut !== 'RESOLUE'
+              reclamation.statut !== 'FERME' &&
+              reclamation.statut !== 'REJETE' &&
+              reclamation.statut !== 'RESOLU'
             "
             outline
             color="warning"
@@ -189,7 +189,7 @@
           <q-btn
             v-if="
               auth.aRole(['ADMIN', 'DIRECTION']) &&
-              (reclamation.statut === 'RESOLUE' || reclamation.statut === 'FERMEE' || reclamation.statut === 'REJETEE')
+              (reclamation.statut === 'RESOLU' || reclamation.statut === 'FERME' || reclamation.statut === 'REJETE')
             "
             outline
             color="positive"
@@ -272,38 +272,38 @@ const estStaff = computed(() => auth.aRole(['ADMIN', 'DIRECTION', 'SCOLARITE']))
 const peutOuvrirDossier = computed(() => auth.peut('reclamations.ouvrirDossier'));
 
 const ETAPES_RECLAMATION = computed(() => [
-  { identifiant: 'OUVERTE', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
+  { identifiant: 'OUVERT', libelle: $t('reclamations.dialog.detail.opened'), icone: 'inbox' },
   { identifiant: 'EN_COURS', libelle: $t('reclamations.dialog.detail.inProgress'), icone: 'autorenew' },
   { identifiant: 'EN_ATTENTE_REPONSE', libelle: $t('reclamations.dialog.detail.awaitingReply'), icone: 'forum' },
-  { identifiant: 'RESOLUE', libelle: $t('reclamations.dialog.detail.resolved'), icone: 'check_circle' },
+  { identifiant: 'RESOLU', libelle: $t('reclamations.dialog.detail.resolved'), icone: 'check_circle' },
 ]);
 
 const peutPoster = computed(() => {
   if (!props.reclamation) return false;
-  const clos: StatutReclamation[] = ['RESOLUE', 'FERMEE', 'REJETEE'];
+  const clos: StatutReclamation[] = ['RESOLU', 'FERME', 'REJETE'];
   return !clos.includes(props.reclamation.statut);
 });
 
 const transitionsAutorisees = computed<Transition[]>(() => {
   if (!props.reclamation) return [];
   if (!estStaff.value) return [];
-  const clos: StatutReclamation[] = ['RESOLUE', 'FERMEE', 'REJETEE'];
+  const clos: StatutReclamation[] = ['RESOLU', 'FERME', 'REJETE'];
   if (clos.includes(props.reclamation.statut)) return [];
 
   const possibles: Transition[] = [];
-  if (props.reclamation.statut === 'OUVERTE') {
+  if (props.reclamation.statut === 'OUVERT') {
     possibles.push({ cible: 'EN_COURS', label: $t('reclamations.dialog.detail.takeOwnership'), icone: 'autorenew' });
   }
   if (props.reclamation.statut === 'EN_COURS') {
     possibles.push({ cible: 'EN_ATTENTE_REPONSE', label: $t('reclamations.dialog.detail.awaitReply'), icone: 'forum' });
     possibles.push({
-      cible: 'RESOLUE',
+      cible: 'RESOLU',
       label: $t('reclamations.dialog.detail.markResolved'),
       icone: 'check_circle',
       couleur: 'positive',
     });
     possibles.push({
-      cible: 'REJETEE',
+      cible: 'REJETE',
       label: $t('common.actions.reject'),
       icone: 'block',
       couleur: 'negative',
@@ -313,13 +313,13 @@ const transitionsAutorisees = computed<Transition[]>(() => {
   if (props.reclamation.statut === 'EN_ATTENTE_REPONSE') {
     possibles.push({ cible: 'EN_COURS', label: $t('common.actions.resume'), icone: 'autorenew' });
     possibles.push({
-      cible: 'RESOLUE',
+      cible: 'RESOLU',
       label: $t('reclamations.dialog.detail.markResolved'),
       icone: 'check_circle',
       couleur: 'positive',
     });
     possibles.push({
-      cible: 'REJETEE',
+      cible: 'REJETE',
       label: $t('common.actions.reject'),
       icone: 'block',
       couleur: 'negative',
@@ -374,7 +374,7 @@ async function posterMessage() {
 async function changerStatut(cible: StatutReclamation) {
   if (!props.reclamation) return;
   let commentaire = '';
-  if (cible === 'REJETEE') {
+  if (cible === 'REJETE') {
     // Le motif est celui saisi dans l'invite : il arrive par le callback,
     // jamais en relisant le DOM d'un dialogue déjà fermé.
     const motif = await new Promise<string | null>((resolve) => {
@@ -398,7 +398,7 @@ async function changerStatut(cible: StatutReclamation) {
       ...(commentaire ? { commentaire } : {}),
     });
     $q.notify({
-      type: cible === 'REJETEE' ? 'warning' : 'positive',
+      type: cible === 'REJETE' ? 'warning' : 'positive',
       message: $t('reclamations.dialog.detail.statusChanged', { status: libelleStatut(cible) }),
     });
     emit('change', data as Reclamation);

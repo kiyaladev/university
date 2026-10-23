@@ -47,7 +47,7 @@ const candidatsAffiches = computed<CandidatElection[]>(() => {
 });
 
 /** Un scrutin encore ouvert accepte des bulletins ; les autres se consultent. */
-const scrutinOuvert = computed(() => electionActive.value?.statut === 'OUVERTE');
+const scrutinOuvert = computed(() => electionActive.value?.statut === 'OUVERT');
 
 const peutValider = computed(() => {
   if (!electionActive.value || !scrutinOuvert.value || aVote.value) return false;
@@ -68,7 +68,7 @@ async function charger() {
     const [ouvertes, proclamees] = await Promise.all([
       // Silencieux : l'échec s'affiche dans le bandeau de la page.
       electionsService.actives(true),
-      electionsService.liste({ statut: 'PROCLAMEE', pageSize: 20 }, true).catch(() => null),
+      electionsService.liste({ statut: 'PROCLAME', pageSize: 20 }, true).catch(() => null),
     ]);
     elections.value = [...ouvertes.data, ...(proclamees?.data.data ?? [])];
     if (elections.value[0]) await selectionnerElection(elections.value[0]);
@@ -112,7 +112,7 @@ async function selectionnerElection(e: Election) {
     /* silencieux : l'électeur peut continuer sans cette information */
   }
 
-  if (e.statut === 'CLOSE' || e.statut === 'PROCLAMEE') {
+  if (e.statut === 'CLOS' || e.statut === 'PROCLAME') {
     chargementResultats.value = true;
     try {
       const { data } = await electionsService.resultats(e.id, true);

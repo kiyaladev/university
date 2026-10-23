@@ -88,10 +88,10 @@ async function login(email, password = 'Passer@2026') {
     check(
       'Paiement enregistré dans le dossier',
       (await db.inscription.findUniqueOrThrow({ where: { id: inscription.id } })).statut,
-      'PAYEE',
+      'PAYE',
     );
     const validee = await call(`/inscriptions/${inscription.id}/valider`, sco, 'PUT', {});
-    check('Validation par scolarité', validee.statut, 'VALIDEE');
+    check('Validation par scolarité', validee.statut, 'VALIDE');
     await call(`/inscriptions/${inscription.id}/valider`, sco, 'PUT', {}, 200);
     const certificat = await call(`/inscriptions/${inscription.id}/attestation-inscription`, student);
     check('Certificat du propriétaire produit', typeof certificat === 'string' && certificat.includes(prefix), true);
@@ -121,7 +121,7 @@ async function login(email, password = 'Passer@2026') {
       'EN_TRAITEMENT',
     );
     await call(`/documents-demande/${demande.id}/prete`, sco, 'POST', {});
-    check('Document prêt', (await call(`/documents-demande/${demande.id}`, student)).statut, 'PRETE');
+    check('Document prêt', (await call(`/documents-demande/${demande.id}`, student)).statut, 'PRET');
     await call(`/documents-demande/${demande.id}/remettre`, sco, 'POST', { noteRemise: prefix });
     check('Document remis', (await call(`/documents-demande/${demande.id}`, student)).statut, 'REMISE');
     await call(`/documents-demande/${demande.id}`, otherStudent, 'GET', undefined, 404);
@@ -192,22 +192,22 @@ async function login(email, password = 'Passer@2026') {
       description: 'Vérification du cycle de traitement en recette locale.',
     });
     fixtures.reclamations.push(reclamation.id);
-    check('Réclamation ouverte', reclamation.statut, 'OUVERTE');
+    check('Réclamation ouverte', reclamation.statut, 'OUVERT');
     await call(`/reclamations/${reclamation.id}`, otherStudent, 'GET', undefined, 404);
     await call(`/reclamations/${reclamation.id}/assigner`, sco, 'PUT', { assigneAId: agent.id });
     await call(`/reclamations/${reclamation.id}/messages`, student, 'POST', {
       contenu: 'Complément fourni par le demandeur.',
     });
-    await call(`/reclamations/${reclamation.id}/statut`, sco, 'PUT', { statut: 'RESOLUE' }, 400);
+    await call(`/reclamations/${reclamation.id}/statut`, sco, 'PUT', { statut: 'RESOLU' }, 400);
     await call(`/reclamations/${reclamation.id}/statut`, sco, 'PUT', {
-      statut: 'RESOLUE',
+      statut: 'RESOLU',
       commentaire: 'Demande traitée lors de la recette.',
     });
     await call(`/reclamations/${reclamation.id}/cloturer`, direction, 'POST', { noteCloture: prefix });
     check(
       'Réclamation résolue avec clôture',
       (await call(`/reclamations/${reclamation.id}`, student)).statut,
-      'RESOLUE',
+      'RESOLU',
     );
     await call(`/reclamations/${reclamation.id}/messages`, student, 'POST', { contenu: 'Message après clôture' }, 400);
 
@@ -219,9 +219,9 @@ async function login(email, password = 'Passer@2026') {
       heureFin: '10:00',
     });
     fixtures.reservations.push(reservation.id);
-    await call(`/reservations/${reservation.id}/decider`, sco, 'POST', { statut: 'CONFIRMEE' }, 403);
-    await call(`/reservations/${reservation.id}/decider`, direction, 'POST', { statut: 'CONFIRMEE' });
-    check('Réservation confirmée', (await call(`/reservations/${reservation.id}`, sco)).statut, 'CONFIRMEE');
+    await call(`/reservations/${reservation.id}/decider`, sco, 'POST', { statut: 'CONFIRME' }, 403);
+    await call(`/reservations/${reservation.id}/decider`, direction, 'POST', { statut: 'CONFIRME' });
+    check('Réservation confirmée', (await call(`/reservations/${reservation.id}`, sco)).statut, 'CONFIRME');
     const collision = await fetch(base + '/reservations', {
       method: 'POST',
       headers: { Authorization: `Bearer ${sco}`, 'Content-Type': 'application/json' },
@@ -253,7 +253,7 @@ async function login(email, password = 'Passer@2026') {
         date: new Date('2099-01-12'),
         heureDebut: '09:00',
         heureFin: '11:00',
-        statut: 'CONTROLEE',
+        statut: 'CONTROLE',
         type: 'CM',
       },
     });
@@ -278,7 +278,7 @@ async function login(email, password = 'Passer@2026') {
     await call(`/feuilles-paie/${feuille.id}/calculer`, sco, 'POST', {}, 400);
     await call(`/feuilles-paie/${feuille.id}/payer`, sco, 'POST', {}, 403);
     await call(`/feuilles-paie/${feuille.id}/payer`, admin, 'POST', {});
-    check('Paie exécutée', (await call(`/feuilles-paie/${feuille.id}`, sco)).statut, 'PAYEE');
+    check('Paie exécutée', (await call(`/feuilles-paie/${feuille.id}`, sco)).statut, 'PAYE');
     await call(`/feuilles-paie/${feuille.id}`, student, 'GET', undefined, 403);
     fs.writeFileSync(
       process.env.QA_REPORT || '/tmp/university-cycles.json',

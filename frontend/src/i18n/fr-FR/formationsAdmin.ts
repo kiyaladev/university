@@ -116,7 +116,7 @@ export default {
     confirmPayment: {
       title: 'Confirmer le paiement ?',
       message:
-        "Confirmation pilote : l'opérateur Mobile Money a encaissé — {reference} passe REUSSI et la demande {numero} passe CONFIRMEE.",
+        "Confirmation pilote : l'opérateur Mobile Money a encaissé — {reference} passe REUSSI et la demande {numero} passe CONFIRME.",
       paymentFallback: 'le paiement',
     },
     cancelRequest: {

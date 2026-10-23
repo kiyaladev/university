@@ -180,7 +180,7 @@
       <li v-for="s in seancesFiltrees" :key="s.id">
         <article
           class="plaque seance"
-          :class="{ 'seance--en-cours': estEnCours(s), 'seance--annulee': s.statut === 'ANNULEE' }"
+          :class="{ 'seance--en-cours': estEnCours(s), 'seance--annulee': s.statut === 'ANNULE' }"
         >
           <div class="champ seance__heure" :class="{ 'seance__heure--en-cours': estEnCours(s) }">
             <span class="lettrage chiffres seance__debut">{{ s.heureDebut }}</span>
@@ -223,7 +223,7 @@
           </div>
 
           <button
-            v-if="s.statut !== 'ANNULEE'"
+            v-if="s.statut !== 'ANNULE'"
             type="button"
             class="champ seance__action se-peint"
             :class="s.controle ? `champ--${classeStatut(s.controle.statut)}` : 'seance__action--vierge'"
@@ -396,7 +396,7 @@ const jourLisible = computed(() =>
   }),
 );
 
-const tenues = computed(() => seances.value.filter((s) => s.statut !== 'ANNULEE'));
+const tenues = computed(() => seances.value.filter((s) => s.statut !== 'ANNULE'));
 const total = computed(() => tenues.value.length);
 const pointees = computed(() => tenues.value.filter((s) => s.controle).length);
 const restantes = computed(() => total.value - pointees.value);

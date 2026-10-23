@@ -37,7 +37,7 @@ try {
   otherStudentId = otherStudent.id;
   const inscriptions = [];
   for (const [index, promotion] of [[0, promotions[0]], [1, promotions[2]]]) {
-    inscriptions.push(await prisma.inscription.create({ data: { numero: tag + '-INS-' + (index ? 'B' : 'A'), etudiantId: student.id, anneeId: years[index].id, promotionId: promotion.id, statut: 'VALIDEE' } }));
+    inscriptions.push(await prisma.inscription.create({ data: { numero: tag + '-INS-' + (index ? 'B' : 'A'), etudiantId: student.id, anneeId: years[index].id, promotionId: promotion.id, statut: 'VALIDE' } }));
   }
   const context = await browser.newContext({ viewport: { width: 375, height: 900 }, serviceWorkers: 'block' });
   await context.addInitScript(token => { localStorage.setItem('unipresence_token', token); localStorage.setItem('lang', 'fr-FR'); }, token);

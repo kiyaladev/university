@@ -369,7 +369,7 @@ export class ControleService {
     ) {
       throw new NotFoundException(t('controle.seance_introuvable'));
     }
-    if (seance.statut === StatutSeance.ANNULEE) {
+    if (seance.statut === StatutSeance.ANNULE) {
       throw new BadRequestException(t('controle.cette_seance_a_ete_annulee'));
     }
 
@@ -511,7 +511,7 @@ export class ControleService {
 
       await tx.seance.update({
         where: { id: seance.id },
-        data: { statut: presente ? StatutSeance.CONTROLEE : StatutSeance.NON_TENUE },
+        data: { statut: presente ? StatutSeance.CONTROLE : StatutSeance.NON_TENUE },
       });
 
       await tx.auditLog.create({
@@ -580,7 +580,7 @@ export class ControleService {
       await tx.controle.delete({ where: { id } });
       await tx.seance.update({
         where: { id: controle.seanceId },
-        data: { statut: StatutSeance.PLANIFIEE },
+        data: { statut: StatutSeance.PLANIFIE },
       });
       await journaliser(tx, user, 'POINTAGE_SUPPRESSION', 'Controle', id, {
         seanceId: controle.seanceId,

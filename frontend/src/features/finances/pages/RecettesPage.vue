@@ -83,7 +83,7 @@
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
-          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
+          <PastilleStatut domaine="recette" :statut="p.row.paiementId ? 'ENCAISSE' : 'A_ENCAISSER'" />
         </q-td>
       </template>
       <template #body-cell-montant="p">
@@ -164,7 +164,7 @@
                 <div class="text-subtitle1 text-weight-bold">{{ r.libelle }}</div>
                 <div class="text-caption q-mt-xs">{{ libelleType(r.type) }} · {{ r.client ?? '—' }}</div>
               </div>
-              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSEE' : 'A_ENCAISSER'" />
+              <PastilleStatut domaine="recette" :statut="r.paiementId ? 'ENCAISSE' : 'A_ENCAISSER'" />
             </div>
           </q-card-section>
           <q-card-section>

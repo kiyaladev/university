@@ -21,7 +21,7 @@ describe('Élections — état relu sous verrou', () => {
           ordre.push('lecture');
           return {
             id: 'e',
-            statut: StatutElection.CLOSE,
+            statut: StatutElection.CLOS,
             candidats: [],
             dateOuverture: new Date(Date.now() - 10000),
             dateCloture: new Date(Date.now() + 10000),
@@ -63,7 +63,7 @@ describe('Élections — état relu sous verrou', () => {
     },
   );
   it('refuse une seconde proclamation après la première', async () => {
-    tx.election.findUnique.mockResolvedValue({ id: 'e', statut: StatutElection.PROCLAMEE });
+    tx.election.findUnique.mockResolvedValue({ id: 'e', statut: StatutElection.PROCLAME });
     await expect(service.proclamer('e', user)).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.$queryRaw).toHaveBeenCalled();
     expect(tx.election.update).not.toHaveBeenCalled();

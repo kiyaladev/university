@@ -48,7 +48,7 @@ const PAIEMENT_AVEC_SOURCE_INCLUDE = {
 /**
  * Message du refus, par source, quand /paiements est sollicité pour un
  * paiement d'un autre portefeuille : le confirmer ou l'annuler ici sauterait
- * le crédit du solde resto, le passage de la demande de document en PAYEE,
+ * le crédit du solde resto, le passage de la demande de document en PAYE,
  * le contrôle de capacité d'une formation ou le circuit des recettes.
  */
 const REFUS_SIMULATION: Record<Exclude<SourcePaiement, 'INSCRIPTION'>, string> = {
@@ -278,7 +278,7 @@ export class PaiementsService {
   /**
    * Confirmation pilote : l'agent comptable / le DAF répercute la réponse de
    * l'opérateur (guichet). À un paiement réussi, si le cumul des paiements
-   * réussis du dossier atteint les frais, l'inscription passe en PAYEE.
+   * réussis du dossier atteint les frais, l'inscription passe en PAYE.
    */
   async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
     const reussi = dto.statut === 'REUSSI';
@@ -329,21 +329,21 @@ export class PaiementsService {
           });
           if (
             dossier &&
-            dossier.statut !== StatutInscription.VALIDEE &&
-            dossier.statut !== StatutInscription.ANNULEE &&
-            dossier.statut !== StatutInscription.PAYEE &&
+            dossier.statut !== StatutInscription.VALIDE &&
+            dossier.statut !== StatutInscription.ANNULE &&
+            dossier.statut !== StatutInscription.PAYE &&
             toMontant(cumul._sum.montant) >= toMontant(dossier.montantFrais)
           ) {
             const changement = await tx.inscription.updateMany({
               where: { id: p.inscriptionId, statut: dossier.statut },
-              data: { statut: StatutInscription.PAYEE },
+              data: { statut: StatutInscription.PAYE },
             });
             if (changement.count === 1) {
               inscriptionAudit = {
                 avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: toMontant(dossier.montantFrais) },
                 apres: {
                   id: p.inscriptionId,
-                  statut: StatutInscription.PAYEE,
+                  statut: StatutInscription.PAYE,
                   montantFrais: toMontant(dossier.montantFrais),
                 },
               };

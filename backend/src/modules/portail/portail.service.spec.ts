@@ -179,7 +179,7 @@ describe('résultats dans le portail étudiant', () => {
       rang: 2,
       deliberation: {
         session: 'NORMALE',
-        statut: 'VALIDEE',
+        statut: 'VALIDE',
         valideeLe,
         promotion: { nom: 'L2 Informatique' },
         annee: { libelle: '2025-2026' },
@@ -196,7 +196,7 @@ describe('résultats dans le portail étudiant', () => {
       expect.objectContaining({
         where: {
           inscription: { etudiantId: 'etu-1' },
-          deliberation: { statut: 'VALIDEE' },
+          deliberation: { statut: 'VALIDE' },
         },
         select: expect.objectContaining({
           moyenne: true,
@@ -229,7 +229,7 @@ describe('résultat final du portail étudiant', () => {
     rang: null,
     deliberation: {
       session,
-      statut: 'VALIDEE',
+      statut: 'VALIDE',
       valideeLe: new Date(valideeLe),
       promotion: { nom: 'L' },
       annee: { libelle: annee, dateDebut: new Date(dateDebut) },

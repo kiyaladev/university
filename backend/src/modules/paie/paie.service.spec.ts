@@ -98,7 +98,7 @@ describe('PaieService — historique avant/après', () => {
     expect(tx.seance.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          statut: StatutSeance.CONTROLEE,
+          statut: StatutSeance.CONTROLE,
           controle: { is: { statut: { in: expect.arrayContaining([StatutPresence.PRESENT]) } } },
         }),
       }),
@@ -205,8 +205,8 @@ describe('PaieService — historique avant/après', () => {
         },
       ],
     };
-    const validee = { ...brouillon, statut: StatutPaie.VALIDEE };
-    const payee = { ...brouillon, statut: StatutPaie.PAYEE };
+    const validee = { ...brouillon, statut: StatutPaie.VALIDE };
+    const payee = { ...brouillon, statut: StatutPaie.PAYE };
     const events: any[] = [];
     const tx = {
       feuillePaie: {
@@ -243,17 +243,17 @@ describe('PaieService — historique avant/après', () => {
     expect(tx.feuillePaie.updateMany).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        where: { id: 'feuille-2', statut: StatutPaie.VALIDEE, updatedAt },
+        where: { id: 'feuille-2', statut: StatutPaie.VALIDE, updatedAt },
       }),
     );
     expect(events.map((event) => event.action)).toEqual(['PAIE_VALIDEE', 'PAIE_PAYEE']);
     expect(JSON.parse(events[0].details)).toMatchObject({
       avant: { statut: StatutPaie.BROUILLON },
-      apres: { statut: StatutPaie.VALIDEE },
+      apres: { statut: StatutPaie.VALIDE },
     });
     expect(JSON.parse(events[1].details)).toMatchObject({
-      avant: { statut: StatutPaie.VALIDEE },
-      apres: { statut: StatutPaie.PAYEE },
+      avant: { statut: StatutPaie.VALIDE },
+      apres: { statut: StatutPaie.PAYE },
     });
   });
 });

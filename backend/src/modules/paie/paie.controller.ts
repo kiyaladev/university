@@ -45,14 +45,14 @@ export class PaieController {
     return this.service.calculer(id, query.tous === 'true' || query.tous === '1', user);
   }
 
-  /** BROUILLON → VALIDEE : les montants sont figés. */
+  /** BROUILLON → VALIDE : les montants sont figés. */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post(':id/valider')
   valider(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.valider(id, user);
   }
 
-  /** VALIDEE → PAYEE : mandat exécuté. */
+  /** VALIDE → PAYE : mandat exécuté. */
   @Roles(Role.ADMIN)
   @Post(':id/payer')
   payer(@Param('id') id: string, @CurrentUser() user: AuthUser) {

@@ -63,7 +63,7 @@ export class NotificationsService {
         throw new BadRequestException(t('portail.aucune_annee_academique_active_impossible_de_cibler_les_insc'));
       }
       const lignes = await this.prisma.inscription.findMany({
-        where: { anneeId: annee.id, statut: { not: StatutInscription.ANNULEE } },
+        where: { anneeId: annee.id, statut: { not: StatutInscription.ANNULE } },
         include: {
           etudiant: {
             select: { id: true, nom: true, prenom: true, telephone: true },
@@ -118,7 +118,7 @@ export class NotificationsService {
       },
     });
     if (!deliberation) throw new NotFoundException(t('portail.deliberation_introuvable'));
-    if (deliberation.statut !== StatutDeliberation.VALIDEE) {
+    if (deliberation.statut !== StatutDeliberation.VALIDE) {
       throw new ConflictException(t('portail.results_only_validated'));
     }
 
@@ -162,7 +162,7 @@ export class NotificationsService {
     });
     const parStatut: Record<StatutNotification, number> = {
       [StatutNotification.EN_ATTENTE]: 0,
-      [StatutNotification.ENVOYEE]: 0,
+      [StatutNotification.ENVOYE]: 0,
       [StatutNotification.ECHOUE]: 0,
     };
     for (const groupe of groupes) parStatut[groupe.statut] = groupe._count._all;
@@ -173,7 +173,7 @@ export class NotificationsService {
   /** Délibérations validées, pour le sélecteur de la page de diffusion. */
   async deliberationsDisponibles() {
     const deliberations = await this.prisma.deliberation.findMany({
-      where: { statut: StatutDeliberation.VALIDEE },
+      where: { statut: StatutDeliberation.VALIDE },
       include: {
         promotion: { include: { filiere: true } },
         annee: true,
@@ -209,7 +209,7 @@ export class NotificationsService {
       // Soustraire ceux sans téléphone (un envoi SMS échouerait)
       const avecNumero = await this.prisma.etudiant.count({
         where: {
-          inscriptions: { some: { anneeId: annee.id, statut: { in: ['EN_ATTENTE_PAIEMENT', 'PAYEE', 'VALIDEE'] } } },
+          inscriptions: { some: { anneeId: annee.id, statut: { in: ['EN_ATTENTE_PAIEMENT', 'PAYE', 'VALIDE'] } } },
           telephone: { not: null },
         },
       });
@@ -230,12 +230,12 @@ export class NotificationsService {
 
   /**
    * Répartition quotidienne des envois sur les N derniers jours.
-   * Retourne un tableau de { date, EN_ATTENTE, ENVOYEE, ECHOUE } par jour calendaire.
+   * Retourne un tableau de { date, EN_ATTENTE, ENVOYE, ECHOUE } par jour calendaire.
    * Les jours sans envoi sont retournés avec 0 pour assurer la continuité du graphique.
    */
   async repartitionQuotidienne(
     jours: number,
-  ): Promise<Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>> {
+  ): Promise<Array<{ date: string; EN_ATTENTE: number; ENVOYE: number; ECHOUE: number }>> {
     const depuis = new Date();
     depuis.setUTCDate(depuis.getUTCDate() - jours + 1);
     depuis.setUTCHours(0, 0, 0, 0);
@@ -252,21 +252,21 @@ export class NotificationsService {
     `;
 
     // Indexation par date ISO (YYYY-MM-DD)
-    const parJour = new Map<string, { EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>();
+    const parJour = new Map<string, { EN_ATTENTE: number; ENVOYE: number; ECHOUE: number }>();
     for (const l of lignes) {
       const cle = l.jour.toISOString().slice(0, 10);
-      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYEE: 0, ECHOUE: 0 };
+      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYE: 0, ECHOUE: 0 };
       cur[l.statut] = Number(l.n);
       parJour.set(cle, cur);
     }
 
     // Compléter avec les jours manquants pour assurer la continuité
-    const sortie: Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }> = [];
+    const sortie: Array<{ date: string; EN_ATTENTE: number; ENVOYE: number; ECHOUE: number }> = [];
     for (let i = 0; i < jours; i++) {
       const d = new Date(depuis);
       d.setUTCDate(d.getUTCDate() + i);
       const cle = d.toISOString().slice(0, 10);
-      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYEE: 0, ECHOUE: 0 };
+      const cur = parJour.get(cle) ?? { EN_ATTENTE: 0, ENVOYE: 0, ECHOUE: 0 };
       sortie.push({ date: cle, ...cur });
     }
     return sortie;

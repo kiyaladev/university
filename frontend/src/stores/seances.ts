@@ -3,6 +3,7 @@ import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
 import { lireToken } from '@/shared/services/session';
+import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Affectation, Salle, Seance, TypeCours } from '../types';
 
 export interface NouvelleSeance {
@@ -61,8 +62,13 @@ function lireFile(owner: string): SeanceEnFile[] {
       const date = new Date(s?.enfileeLe ?? '').getTime();
       return Number.isFinite(date) && date >= limite && typeof s.idClient === 'string';
     });
-    if (retenues.length !== file.length) localStorage.setItem(clePour(CLE, owner), JSON.stringify(retenues));
-    return retenues;
+    // Jetons d'état : la file peut dater d'avant l'harmonisation des statuts.
+    // On convertit à la lecture et on réécrit le fichier (migration de la
+    // file), faute de quoi le serveur refuserait la valeur.
+    const converties = normaliserJetonsStatuts(retenues) as SeanceEnFile[];
+    if (retenues.length !== file.length || JSON.stringify(converties) !== JSON.stringify(retenues))
+      localStorage.setItem(clePour(CLE, owner), JSON.stringify(converties));
+    return converties;
   } catch {
     return [];
   }
@@ -205,7 +211,7 @@ export const useSeancesStore = defineStore('seancesHorsLigne', {
               heureFin: s.heureFin,
               type: s.type,
               salleId: s.salleId,
-              statut: 'PLANIFIEE',
+              statut: 'PLANIFIE',
               thematique: s.thematique ?? null,
               affectation: s.affectation,
               salle: s.salle,

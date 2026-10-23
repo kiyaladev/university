@@ -26,7 +26,7 @@ const db = new PrismaClient();
       data: {
         intitule: 'Épreuve QA de traduction',
         type: 'EXAMEN',
-        statut: 'CLOTUREE',
+        statut: 'CLOTURE',
         promotionId: ref.id,
         anneeId: ref.anneeId,
         matiereId: matiere.id,

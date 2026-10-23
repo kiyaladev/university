@@ -249,7 +249,7 @@ export class AttestationsService {
         etudiantId: dto.etudiantId,
         type: dto.type as TypeAttestation,
         anneeId: anneeIdRetenue,
-        statut: StatutAttestation.EMISE,
+        statut: StatutAttestation.EMIS,
       },
     });
     if (doublon) {
@@ -317,7 +317,7 @@ export class AttestationsService {
   async modifier(id: string, dto: UpdateAttestationDto, user: AuthUser) {
     const attestation = await this.findOne(id);
     await exigerAnneeOuverte(this.prisma, attestation.anneeId);
-    if (attestation.statut === StatutAttestation.REVOQUEE) {
+    if (attestation.statut === StatutAttestation.REVOQUE) {
       throw new BadRequestException(t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
     }
     if (dto.type == null && dto.motif == null) {
@@ -330,7 +330,7 @@ export class AttestationsService {
       await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
       const actuel = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
       if (!actuel) throw new NotFoundException(t('attestations.attestation_introuvable'));
-      if (actuel.statut === StatutAttestation.REVOQUEE) {
+      if (actuel.statut === StatutAttestation.REVOQUE) {
         throw new BadRequestException(t('attestations.cette_attestation_a_ete_revoquee_elle_ne_peut_plus_etre_modi'));
       }
       if (dto.type != null && dto.type !== actuel.type) {
@@ -340,7 +340,7 @@ export class AttestationsService {
             etudiantId: actuel.etudiantId,
             anneeId: actuel.anneeId,
             type: dto.type,
-            statut: StatutAttestation.EMISE,
+            statut: StatutAttestation.EMIS,
           },
         });
         if (doublon)
@@ -371,13 +371,13 @@ export class AttestationsService {
       await tx.$queryRaw`SELECT id FROM "Attestation" WHERE id = ${id} FOR UPDATE`;
       const attestation = await tx.attestation.findUnique({ where: { id }, include: ATTESTATION_INCLUDE });
       if (!attestation) throw new NotFoundException(t('attestations.attestation_introuvable'));
-      if (attestation.statut === StatutAttestation.REVOQUEE) {
+      if (attestation.statut === StatutAttestation.REVOQUE) {
         throw new BadRequestException(t('attestations.cette_attestation_est_deja_revoquee'));
       }
       const miseAJour = await tx.attestation.update({
         where: { id },
         data: {
-          statut: StatutAttestation.REVOQUEE,
+          statut: StatutAttestation.REVOQUE,
           motifRevocation: dto.motifRevocation,
           revoqueeLe: new Date(),
           revoqueeParId: user.id,
@@ -471,7 +471,7 @@ export class AttestationsService {
     }
 
     const jetonOk = attestation.qrToken === jeton;
-    const statutOk = attestation.statut === StatutAttestation.EMISE;
+    const statutOk = attestation.statut === StatutAttestation.EMIS;
     const valide = jetonOk && statutOk;
 
     const verification = await this.prisma.verificationAttestation.create({

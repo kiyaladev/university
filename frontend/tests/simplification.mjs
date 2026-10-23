@@ -22,12 +22,12 @@ const browser = await chromium.launch();
 const results = [];
 const empty = { data: [], total: 0, page: 1, pageSize: 20 };
 const student = { id: 'student', nom: 'Diallo', prenom: 'Aminata', matricule: '2026-0001', actif: true, inscriptions: [], _count: { inscriptions: 0 } };
-const evaluation = { id: 'evaluation', intitule: 'Analyse', type: 'EXAMEN', statut: 'OUVERTE', semestre: 1, coefficient: 1, date: '2026-10-13', matiere: { intitule: 'Mathématiques' }, promotion: { id: 'promotion', nom: 'L1' }, _count: { notes: 0 } };
+const evaluation = { id: 'evaluation', intitule: 'Analyse', type: 'EXAMEN', statut: 'OUVERT', semestre: 1, coefficient: 1, date: '2026-10-13', matiere: { intitule: 'Mathématiques' }, promotion: { id: 'promotion', nom: 'L1' }, _count: { notes: 0 } };
 const today = new Date().toLocaleDateString('en-CA');
 const work = { id: 'work', intitule: 'Projet de stage', type: 'STAGE', statut: 'PROPOSE', rapportRendu: false, etudiant: student };
 const draw = { id: 'draw', stade: 'PROGRAMME', examenId: 'exam', examen: { id: 'exam', codeExamen: 'EX-1', intitule: 'Mathématiques' }, dateTirage: today, nbExemplaires: 30, empreinteSource: 'a'.repeat(64) };
 const deliberation = { id: 'jury', statut: 'BROUILLON', session: 'NORMALE', promotionId: 'promotion', promotion: { nom: 'L1' }, annee: { libelle: '2026-2027' }, creeLe: today, tauxReussite: null, _count: { lignes: 0 }, lignes: [] };
-const session = { id: 'session', date: today, heureDebut: '08:00', heureFin: '10:00', statut: 'PLANIFIEE', type: 'COURS', salle: { id: 'room', code: 'A1' }, affectation: { id: 'charge', enseignant: { id: 'teacher', nom: 'Camara', prenom: 'Moussa' }, matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1', effectif: 30 } } };
+const session = { id: 'session', date: today, heureDebut: '08:00', heureFin: '10:00', statut: 'PLANIFIE', type: 'COURS', salle: { id: 'room', code: 'A1' }, affectation: { id: 'charge', enseignant: { id: 'teacher', nom: 'Camara', prenom: 'Moussa' }, matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1', effectif: 30 } } };
 const serviceIds = ['presence', 'scolarite', 'finances', 'documentsEtudiants', 'reclamations', 'reservations', 'bibliotheque', 'logements', 'restauration', 'stages', 'helpdesk', 'formations', 'patrimoine', 'courrier', 'examens', 'elections', 'cartes', 'badges', 'vod', 'notifications', 'rectorat'];
 
 async function open(role, locale = 'fr-FR', width = 1440, disabled = [], record = session) {
@@ -70,7 +70,7 @@ async function open(role, locale = 'fr-FR', width = 1440, disabled = [], record 
     else if (endpoint === '/patrimoine/dashboard') data = { parCategorie: [], alertes: [] };
     else if (endpoint === '/documents-demande/dashboard' || endpoint.endsWith('/stats')) data = {};
     else if (endpoint === '/soutenances') data = [];
-    else if (endpoint === '/portail/me') data = { etudiant: student, inscription: { statut: 'VALIDEE', promotion: { nom: 'L1' }, annee: { libelle: '2026-2027' } }, frais: { montant: 100000, paye: 60000, solde: 40000, devise: 'GNF', taux: 60 }, paiements: [{ id: 'payment', reference: 'P1', mode: 'ESPECES', statut: 'REUSSI', horodatage: today, montant: 60000, devise: 'GNF' }], attestations: [] };
+    else if (endpoint === '/portail/me') data = { etudiant: student, inscription: { statut: 'VALIDE', promotion: { nom: 'L1' }, annee: { libelle: '2026-2027' } }, frais: { montant: 100000, paye: 60000, solde: 40000, devise: 'GNF', taux: 60 }, paiements: [{ id: 'payment', reference: 'P1', mode: 'ESPECES', statut: 'REUSSI', horodatage: today, montant: 60000, devise: 'GNF' }], attestations: [] };
     else if (endpoint === '/portail/resultats') data = { finale: null, lignes: [] };
     else if (endpoint === '/portail/resto/me') data = { solde: 0, recharges: [], consommations: [] };
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(data) });

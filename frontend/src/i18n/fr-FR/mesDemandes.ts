@@ -41,18 +41,18 @@ export default {
     createdOn: 'Créée le {date}',
   },
   steps: {
-    paid: 'Payée',
+    paid: 'Payé',
     processing: 'Traitement',
-    ready: 'Prête',
+    ready: 'Prêt',
     delivered: 'Remise',
   },
   statusExplanations: {
     EN_ATTENTE_PAIEMENT: 'Réglez les frais pour lancer le traitement. Sans paiement, la demande reste en attente.',
-    PAYEE: 'Frais reçus. La scolarité va prendre votre demande en charge.',
+    PAYE: 'Frais reçus. La scolarité va prendre votre demande en charge.',
     EN_TRAITEMENT: 'La scolarité prépare votre document.',
-    PRETE: 'Votre document est prêt : présentez-vous au guichet de la scolarité avec votre carte.',
+    PRET: 'Votre document est prêt : présentez-vous au guichet de la scolarité avec votre carte.',
     REMISE: 'Document remis. Rien de plus à faire.',
-    REJETEE: 'Demande rejetée. Le motif est indiqué ci-dessous ; vous pouvez en déposer une nouvelle.',
+    REJETE: 'Demande rejetée. Le motif est indiqué ci-dessous ; vous pouvez en déposer une nouvelle.',
   },
   paymentOptions: {
     mobileMoney: 'Mobile Money',

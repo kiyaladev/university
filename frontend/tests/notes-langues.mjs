@@ -32,7 +32,7 @@ try {
   const payload = await reponse.json();
   const evaluations = Array.isArray(payload) ? payload : payload.data;
   assert.ok(Array.isArray(evaluations) && evaluations.length > 0, 'La recette QA doit proposer une évaluation');
-  const evaluation = evaluations.find(item => item.statut === 'OUVERTE') ?? evaluations[0];
+  const evaluation = evaluations.find(item => item.statut === 'OUVERT') ?? evaluations[0];
   assert.ok(evaluation.id, 'Une évaluation QA doit avoir un identifiant');
   await page.goto(`${base}/#/notes?evaluation=${encodeURIComponent(evaluation.id)}`, { waitUntil: 'networkidle' });
   await page.locator('.saisie-masse').waitFor({ timeout: 12000 });

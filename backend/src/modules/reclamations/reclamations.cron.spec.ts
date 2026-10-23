@@ -25,7 +25,7 @@ function preparer() {
           delaiEscaladeHeures: 48,
           type: TypeReclamation.INSCRIPTION,
           priorite: PrioriteReclamation.NORMALE,
-          statut: StatutReclamation.OUVERTE,
+          statut: StatutReclamation.OUVERT,
           anonyme: false,
           escaladeLe: null,
         },
