@@ -81,7 +81,9 @@
                 <template v-else-if="c.name === 'empreinte'"
                   >{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</template
                 >
-                <template v-else-if="c.name === 'stade'">{{ libelleStade(p.row.stade) }}</template>
+                <template v-else-if="c.name === 'stade'">
+                  <PastilleStatut domaine="tirage" :statut="p.row.stade" />
+                </template>
                 <span v-else>{{ c.value }}</span>
               </div>
             </q-card-section>
