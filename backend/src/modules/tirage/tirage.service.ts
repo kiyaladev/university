@@ -299,7 +299,7 @@ export class TirageService {
     <div class="signature">Le surveillant<br /><small>${t.examen.surveillant ? `${echapper(t.examen.surveillant.prenom)} ${echapper(t.examen.surveillant.nom)}` : ''}</small></div>
     <div class="signature">Le Chef de département</div>
   </div>`,
-      piedDePage: `<span>UniPrésence — sécurité des épreuves</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
+      piedDePage: `<span>University — sécurité des épreuves</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
     });
   }
 }

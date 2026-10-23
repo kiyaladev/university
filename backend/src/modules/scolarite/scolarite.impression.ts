@@ -43,7 +43,7 @@ function page(etablissement: Etablissement, titre: string, sousTitre: string, co
     <div class="titre">${echapper(titre)}</div>
     <div class="sous-titre">${sousTitre}</div>`,
     corps: contenu,
-    piedDePage: `<span>UniPrésence — scolarité LMD</span><span>Édité le ${edite}</span>`,
+    piedDePage: `<span>University — scolarité LMD</span><span>Édité le ${edite}</span>`,
   });
 }
 

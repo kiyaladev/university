@@ -2,7 +2,7 @@
  * Module 2 — Gestion des vacataires & paie des heures complémentaires.
  *
  * Les feuil­les de paie mensuelles figent ce que /rapports/etat-paiement
- * calculait à la volée : les heures de service fait CONTROLEES via UniPrésence
+ * calculait à la volée : les heures de service fait CONTROLEES via University
  * sont agrégées en lignes de paie, validées par la direction, marquées payées,
  * puis imprimées en A4. Règle comptable retenue (source de vérité pour les
  * agents comptables — voir `calculer`) :
@@ -461,7 +461,7 @@ export class PaieService {
       styles: STYLE_FEUILLE_PAIE,
       entete: `<div class="etab">${echapper(etablissement.nom)}</div>
     <div class="titre">Feuille de paie — ${echapper(feuille.libelle)}</div>
-    <div class="sous-titre">Heures des vacataires contrôlées par UniPrésence</div>`,
+    <div class="sous-titre">Heures des vacataires contrôlées dans University</div>`,
       corps: `<div class="meta">
     <span>Période : du ${echapper(isoDate(feuille.dateDebut))} au ${echapper(isoDate(feuille.dateFin))}</span>
     <span>Statut : <span class="badge ${feuille.statut}">${LIBELLE_STATUT_PAIE[feuille.statut]}</span></span>
@@ -485,7 +485,7 @@ export class PaieService {
     <div class="signature">Le DAF</div>
     <div class="signature">Le Recteur</div>
   </div>`,
-      piedDePage: `<span>UniPrésence — feuille de paie mensuelle des vacataires</span><span>Édité le ${edite}</span>`,
+      piedDePage: `<span>University — feuille de paie mensuelle des vacataires</span><span>Édité le ${edite}</span>`,
     });
   }
 }
