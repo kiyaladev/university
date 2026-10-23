@@ -42,14 +42,10 @@ export default {
       awaitingReport: 'Result pending',
     },
     actions: {
-      viewSheet: 'View the work sheet',
       viewSheetTooltip: 'View sheet',
-      edit: 'Edit the work',
       print: 'Print the sheet',
       planDefense: 'Schedule the defense',
       juryReport: 'Enter the jury result',
-      juryReportTooltip: 'Jury result',
-      delete: 'Delete the work',
     },
   },
   stats: {
@@ -70,15 +66,6 @@ export default {
     columns: {
       proposed: 'Proposed',
       validated: 'Approved',
-      inProgress: 'In progress',
-      defended: 'Defended',
-      abandoned: 'Abandoned',
-    },
-    studentToDesignate: 'Student to be assigned',
-    actions: {
-      edit: 'Edit',
-      defense: 'Defense',
-      report: 'Result',
     },
   },
   transitions: {

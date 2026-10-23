@@ -23,7 +23,6 @@ export default {
   card: {
     credits: '{count} crédits',
     noDepartment: 'Sans département',
-    volume: 'Volume horaire {value} h',
   },
   emptyState: {
     filtered: 'Aucune matière pour ces critères.',
@@ -40,20 +39,14 @@ export default {
     intituleError: 'L’intitulé est obligatoire',
     volumeLabel: 'Volume horaire (h)',
     volumeHint: 'Pré-remplit les charges d’enseignement',
-    cancel: 'Annuler',
   },
   deleteDialog: {
     title: 'Supprimer la matière',
     message:
       'Supprimer « {intitule} » ? Les charges d’enseignement qui la portent seront également supprimées.',
-    cancel: 'Annuler',
   },
   messages: {
-    requiredFields: 'Complétez les champs obligatoires',
     saved: 'Matière enregistrée',
-    saveError: 'Enregistrement impossible',
     deleted: 'Matière supprimée',
-    deleteError: 'Suppression impossible',
-    loadError: 'Chargement des matières impossible',
   },
 };

@@ -3,11 +3,6 @@ export default {
   title: 'Rapports de présence',
   subtitle:
     "Les états ligne à ligne du registre de contrôle, sur une période choisie : qui a assuré quoi, combien d'heures, combien à payer. C'est la pièce justificative — imprimable et exportable. Les indicateurs de suivi quotidien sont dans Statistiques, la synthèse annuelle dans le Tableau de bord Rectorat.",
-  crossLinks: {
-    statistiques: { label: 'Statistiques', help: 'Indicateurs de contrôle au jour le jour' },
-    rectorat: { label: 'Tableau de bord Rectorat', help: 'Synthèse annuelle : effectifs, réussite, masse salariale' },
-    paie: { label: 'Paie des vacataires', help: 'Feuilles mensuelles issues de ces heures contrôlées' },
-  },
   filters: {
     promotion: 'Promotion',
   },
@@ -143,9 +138,5 @@ export default {
       message: 'Le registre transcrit les séances programmées, contrôlées ou non. Élargissez la période pour retrouver des lignes.',
       action: 'Ouvrir les séances',
     },
-  },
-  messages: {
-    loadError: 'Chargement des états impossible.',
-    referenceDataError: 'Départements et promotions indisponibles : les filtres resteront vides.',
   },
 };

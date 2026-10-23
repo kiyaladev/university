@@ -109,6 +109,5 @@ export default {
   },
   messages: {
     escalated: 'Complaint {numero} escalated',
-    escalateError: 'Unable to escalate',
   },
 };

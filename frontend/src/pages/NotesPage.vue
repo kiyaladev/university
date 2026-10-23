@@ -59,7 +59,7 @@
             {{ evaluationActive.intitule }}
           </div>
           <div class="text-caption text-grey-7">
-            {{ evaluationActive.matiere?.intitule }} {{ $t('rectorat.subtitleFallback') }}
+            {{ evaluationActive.matiere?.intitule }} {{ $t('common.format.emptyValue') }}
             {{ evaluationActive.promotion?.nom }} — {{ $t('notes.semester') }}
             {{ evaluationActive.semestre }}
           </div>

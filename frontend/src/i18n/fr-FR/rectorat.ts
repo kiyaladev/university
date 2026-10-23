@@ -9,14 +9,6 @@ export default {
     generateReportTooltip:
       "Enregistre les chiffres actuels dans les bilans archivés.",
   },
-  links: {
-    statisticsMesrs: 'Statistiques MESRS',
-    statisticsMesrsHelp: "Les bilans figés déjà transmis au Ministère",
-    reports: 'Rapports de présence',
-    reportsHelp: 'Les états ligne à ligne, exportables',
-    statistics: 'Statistiques',
-    statisticsHelp: 'Le suivi du contrôle des séances au jour le jour',
-  },
   kpis: {
     totalHeadcount: 'Effectif total',
     totalHeadcountDetail: '{count} promotion(s) · inscriptions non annulées',
@@ -66,10 +58,7 @@ export default {
   },
   loading: 'Chargement du tableau de bord…',
   messages: {
-    dashboardLoadFailed: 'Chargement du tableau de bord impossible.',
     reportGenerated: 'Bilan MESRS {annee} généré et archivé.',
     viewSnapshots: "Voir les bilans archivés",
-    reportGenerationFailed: 'Génération du bilan impossible.',
-    yearsUnavailable: 'Années académiques indisponibles.',
   },
 };

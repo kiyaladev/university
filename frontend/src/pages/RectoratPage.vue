@@ -7,7 +7,7 @@
         <div class="page-sous-titre">
           <i18n-t keypath="rectorat.subtitle" tag="span">
             <template #annee>
-              <strong>{{ chiffres?.annee?.libelle ?? $t('rectorat.subtitleFallback') }}</strong>
+              <strong>{{ chiffres?.annee?.libelle ?? $t('common.format.emptyValue') }}</strong>
             </template>
           </i18n-t>
         </div>
@@ -72,7 +72,7 @@
         <q-card flat bordered class="carte full-height column">
           <q-card-section class="text-center col">
             <div class="stat-chiffre chiffres">
-              {{ montantLisible(chiffres?.masseSalariale) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+              {{ montantLisible(chiffres?.masseSalariale) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span>
             </div>
             <div class="pochoir text-grey-7">{{ $t('rectorat.kpis.payroll') }}</div>
             <div class="text-caption text-grey-6">{{ chiffres?.masseSalarialeMois ?? '—' }}</div>

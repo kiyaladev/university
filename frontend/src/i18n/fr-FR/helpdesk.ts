@@ -1,12 +1,10 @@
 /** Namespace `helpdesk`. */
 export default {
-  _namespace: 'helpdesk',
   title: 'Assistance informatique',
   subtitle:
     "Signalez un problème informatique et suivez son traitement.",
   actions: {
     declareIncident: "Signaler un problème",
-    otherProblem: 'Autre problème',
     scanEquipment: 'Scanner QR équipement',
     newEquipment: 'Nouvel équipement',
   },
@@ -14,12 +12,6 @@ export default {
     myTickets: "Mes signalements",
     management: "Traitement des incidents",
     equipment: "Équipements du support",
-  },
-  declareCard: {
-    title: 'Déclarer en deux clics',
-    description:
-      "Arrivé par le QR d'un équipement ? Le formulaire s'ouvre déjà prêt — il ne reste qu'à choisir la catégorie et décrire la panne.",
-    adminNote: "L'ADMIN voit tous les tickets ici.",
   },
   myTicketsTable: {
     titleAll: 'Toutes les déclarations',

@@ -156,9 +156,9 @@
         <template #body-cell-valeur="p">
           <q-td :props="p" class="text-right chiffres">
             <span v-if="p.row.valeurAcquisition != null">
-              {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+              {{ montantLisible(p.row.valeurAcquisition) }} <span class="text-caption">{{ $t('common.units.gnf') }}</span>
             </span>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
         </template>
         <template #body-cell-etat="p">
@@ -286,7 +286,7 @@
                   {{ e.departement?.nom ?? $t('patrimoine.equipments.filters.noDepartment') }}
                 </div>
                 <div class="text-caption text-grey-7" v-if="e.valeurAcquisition != null">
-                  {{ montantLisible(e.valeurAcquisition) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+                  {{ montantLisible(e.valeurAcquisition) }} {{ $t('common.units.gnf') }}
                 </div>
               </div>
             </q-card-section>
@@ -596,7 +596,7 @@
                 <q-item-label caption>
                   {{ dateLisible(r.dateDeclaration) }}
                   <template v-if="r.prestataire"> · {{ r.prestataire }}</template>
-                  <template v-if="r.cout"> · {{ montantLisible(r.cout) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</template>
+                  <template v-if="r.cout"> · {{ montantLisible(r.cout) }} {{ $t('common.units.gnf') }}</template>
                 </q-item-label>
                 <q-item-label caption v-if="r.notes">
                   <em>{{ r.notes }}</em>

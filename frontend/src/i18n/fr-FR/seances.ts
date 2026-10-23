@@ -2,7 +2,6 @@
 export default {
   subtitle: 'Le registre des séances programmées et de ce qui y a été constaté',
   actions: {
-    generateFromSchedule: 'Générer depuis l’emploi du temps',
     newUnscheduled: 'Séance non programmée',
     newAdHoc: 'Séance ponctuelle',
     assignRound: 'Affecter une tournée',
@@ -71,9 +70,7 @@ export default {
     assignController: 'Affecter',
     assignControllerTitle: 'Affecter un contrôleur à cette séance',
     assignControllerHelp: 'Cette affectation sert au calcul de couverture des tournées et est journalisée.',
-    controllersLoadError: 'Impossible de charger la liste des contrôleurs.',
     controllerAssigned: 'Affectation du contrôleur enregistrée.',
-    controllerAssignError: 'Impossible d’enregistrer cette affectation.',
     absenceJustification: 'Justificatif d’absence',
     openFile: 'Ouvrir le dossier',
     actualCourse: 'Constat',
@@ -95,11 +92,8 @@ export default {
     departmentOptional: 'Département (facultatif)',
     preview: '{affectables} séance(s) peuvent être attribuées. {closed} séance(s) d’année clôturée seront ignorées.',
     assignAction: 'Affecter {count} séance(s)',
-    loadError: 'Impossible de charger les contrôleurs et départements.',
     controllerRequired: 'Choisissez un contrôleur actif.',
-    previewError: 'Impossible de prévisualiser cette période.',
     assigned: '{count} séance(s) attribuée(s). Les séances déjà affectées ont été conservées.',
-    assignError: 'La tournée n’a pas pu être affectée. Prévisualisez de nouveau la période.',
   },
   dialogs: {
     dialogForm: {

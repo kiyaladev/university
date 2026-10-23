@@ -16,7 +16,7 @@
       :placeholder="$t('inscriptions.createDialog.studentPlaceholder')"
     />
 
-    <span class="section-titre">{{ $t('verification.result.table.parcours') }}</span>
+    <span class="section-titre">{{ $t('common.fields.track') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
         <autocomplete-async
@@ -32,18 +32,18 @@
           v-model="form.promotionId"
           endpoint="/promotions"
           :label-fn="(p) => p.nom"
-          :label="$t('affectations.dialog.fields.promotion')"
+          :label="$t('common.fields.promotionRequired')"
           :disable="!form.anneeId"
           @update:model-value="chargerTarif"
         />
       </div>
     </div>
 
-    <span class="section-titre">{{ $t('demandeDocuments.detail.fees') }}</span>
+    <span class="section-titre">{{ $t('common.fields.fees') }}</span>
     <div v-if="tarifOfficiel !== null" class="plaque acces-tarif q-mb-sm">
       <div class="text-caption acces-tarif__libelle">{{ $t('inscriptions.createDialog.officialFee') }}</div>
       <div class="lettrage chiffres acces-tarif__montant">
-        {{ montantLisible(tarifOfficiel) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+        {{ montantLisible(tarifOfficiel) }} {{ $t('common.units.gnf') }}
       </div>
     </div>
     <q-input

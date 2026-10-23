@@ -138,7 +138,7 @@ async function soumettre() {
         <q-input v-model="formulaire.numeroPiece" :label="$t('badges.dialogs.form.idNumberLabel')" outlined dense class="col" />
       </div>
       <div class="row q-col-gutter-md">
-        <q-input v-model="formulaire.dateValidite" :label="$t('verificationCarte.result.table.validUntil')" type="date" outlined dense class="col" />
+        <q-input v-model="formulaire.dateValidite" :label="$t('common.fields.validUntil')" type="date" outlined dense class="col" />
         <q-input v-model="formulaire.zonesAccess" :label="$t('badges.dialogs.form.zonesLabel')" outlined dense class="col" />
       </div>
       <q-input v-model="formulaire.photoUrl" :label="$t('badges.dialogs.form.photoLabel')" outlined dense />

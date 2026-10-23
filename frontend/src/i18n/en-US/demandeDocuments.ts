@@ -3,15 +3,9 @@ export default {
   title: 'Document requests',
   subtitle:
     'The student submits their request online, pays the configured fee, the registrar processes it, marks the document as ready, and hands it over at the counter.',
-  actions: {
-    tarifs: 'Request fees',
-  },
   studentBanner: {
     message: 'Register restricted to a single student\'s requests (incoming link).',
     seeAll: 'See all requests',
-  },
-  stats: {
-    revenues: 'Revenue collected: {amount} GNF.',
   },
   plaques: {
     awaitingPayment: 'To pay',
@@ -88,17 +82,10 @@ export default {
     message: 'Reason for rejection (required):',
   },
   messages: {
-    forbidden: 'You do not have access to this section.',
-    loadError: 'Unable to load',
     paymentConfirmed: 'Payment confirmed',
-    confirmError: 'Unable to confirm',
     processingStarted: 'Processing started',
-    processingError: 'Unable to start',
     markedReady: 'Request marked ready, student notified',
-    markReadyError: 'Unable to mark ready',
     handedOver: 'Document handed over',
-    handOverError: 'Unable to hand over',
     rejected: 'Request rejected',
-    rejectError: 'Unable to reject',
   },
 };

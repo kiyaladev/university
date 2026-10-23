@@ -4,11 +4,7 @@ export default {
   frequentTasks: 'Tâches courantes',
   studentVideoCourses: 'Cours en vidéo',
   noModule: "Aucune page trouvée",
-  relatedScreensAria: 'Écrans liés',
-  seeAlso: 'Voir aussi',
-  kanban: { empty: 'Aucune carte', count: '{n} élément(s)' },
   primary: {"presence": "Présences", "registrar": "Scolarité", "finance": "Finances", "campus": "Campus", "administration": "Administration"},
-  views: {"tableau": "Tableau", "cartes": "Cartes", "calendrier": "Calendrier", "kanban": "Kanban", "label": "Affichage de la liste"},
 
   "openMenu": "Ouvrir le menu",
   "myAccount": "Mon compte",
@@ -24,19 +20,11 @@ export default {
   "toSync": "{n} à synchroniser",
   "passwordChanged": "Mot de passe modifié",
   "groups": {
-    "personal": "Mon espace",
-    "tracking": "Suivi",
     "organisation": "Organisation",
-    "registrar": "Scolarité",
-    "results": "Examens & résultats",
     "documents": "Guichet & documents",
-    "campus": "Campus",
-    "universityLife": "Vie universitaire",
-    "management": "Pilotage & administration",
     "settings": "Paramétrage"
   }
 ,
-  _namespace: 'layout',
   publicNav: {
     services: 'Services publics', menu: 'Services', footer: 'UniPrésence — services publics de l’université', personalArea: 'Espace personnel',
     staffLogin: 'Connexion', staffLoginHelp: 'Personnel de l’université', studentPortal: 'Portail étudiant', smsLogin: 'Connexion par SMS',

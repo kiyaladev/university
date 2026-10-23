@@ -3,7 +3,6 @@ export default {
   subtitle: 'Chargez un CSV, vérifiez les lignes avant toute écriture, puis appliquez les lignes valides.',
   type: 'Données à importer',
   file: 'Fichier CSV ou XLSX',
-  chooseFile: 'Choisir un fichier',
   template: 'Télécharger un modèle CSV',
   apply: 'Importer les lignes valides',
   confirm: 'Créer les {count} ligne(s) valides ? Les erreurs seront ignorées et signalées dans le rapport.',

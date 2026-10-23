@@ -68,16 +68,13 @@ export default {
       'Confirmer ouvre une procédure disciplinaire. Le motif est obligatoire et la décision ne pourra plus être modifiée.',
     acquitWarning: 'La suspicion sera close sans suite. La décision ne pourra plus être modifiée.',
     motifOptional: 'Motif (facultatif)',
-    cancel: 'Annuler',
     acquitSubmit: 'Acquitter définitivement',
     confirmSubmit: 'Confirmer le plagiat',
   },
   messages: {
-    dashboardUnavailable: 'Tableau de bord anti-plagiat indisponible',
     motifRequired: 'Le motif est obligatoire pour une confirmation',
     acquitted: 'Suspicion acquittée',
     confirmed: 'Plagiat confirmé — procédure ouverte',
-    decisionFailed: 'Décision impossible',
     recalculateDialogTitle: 'Recalculer toutes les suspicions',
     recalculateDialogMessage:
       'Tous les documents déposés seront comparés deux à deux : l’opération peut prendre plusieurs minutes. Les décisions déjà prises ne sont pas remises en cause.',
@@ -86,6 +83,5 @@ export default {
     recalculateDoneMessage:
       '{created} suspicion(s) créée(s), {updated} mise(s) à jour, {ignored} ignorée(s).',
     recalculateSuccess: 'Recalcul anti-plagiat terminé',
-    recalculateFailed: 'Recalcul impossible',
   },
 };

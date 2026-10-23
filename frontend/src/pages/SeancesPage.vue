@@ -310,7 +310,7 @@
 
             <dt class="pochoir">{{ $t('seances.detail.subjectPromotion') }}</dt>
             <dd>
-              {{ detail.affectation?.matiere?.intitule }} {{ $t('rectorat.subtitleFallback') }} {{ detail.affectation?.promotion?.nom }}
+              {{ detail.affectation?.matiere?.intitule }} {{ $t('common.format.emptyValue') }} {{ detail.affectation?.promotion?.nom }}
             </dd>
 
             <dt class="pochoir">{{ $t('seances.detail.courseType') }}</dt>
@@ -322,7 +322,7 @@
             <dt class="pochoir">{{ $t('common.fields.room') }}</dt>
             <dd>
               <span v-if="detail.salle" class="plaque-salle">{{ detail.salle.code }}</span>
-              <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+              <span v-else>{{ $t('common.format.emptyValue') }}</span>
             </dd>
 
             <dt class="pochoir">{{ $t('seances.detail.assignedController') }}</dt>

@@ -68,16 +68,13 @@ export default {
       'Confirming opens a disciplinary procedure. The reason is mandatory and the decision can no longer be changed.',
     acquitWarning: 'The suspicion will be closed without follow-up. The decision can no longer be changed.',
     motifOptional: 'Reason (optional)',
-    cancel: 'Cancel',
     acquitSubmit: 'Acquit permanently',
     confirmSubmit: 'Confirm plagiarism',
   },
   messages: {
-    dashboardUnavailable: 'Anti-plagiarism dashboard unavailable',
     motifRequired: 'A reason is required to confirm',
     acquitted: 'Suspicion acquitted',
     confirmed: 'Plagiarism confirmed — procedure opened',
-    decisionFailed: 'Decision failed',
     recalculateDialogTitle: 'Recalculate all suspicions',
     recalculateDialogMessage:
       'All submitted documents will be compared pairwise: this operation may take several minutes. Decisions already made are not reconsidered.',
@@ -86,6 +83,5 @@ export default {
     recalculateDoneMessage:
       '{created} suspicion(s) created, {updated} updated, {ignored} ignored.',
     recalculateSuccess: 'Anti-plagiarism recalculation complete',
-    recalculateFailed: 'Recalculation failed',
   },
 };

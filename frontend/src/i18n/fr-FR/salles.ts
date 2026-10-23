@@ -57,7 +57,6 @@ export default {
   dialog: {
     editTitle: 'Modifier la salle',
     newTitle: 'Nouvelle salle',
-    identificationSection: 'Identification',
     codeHint: 'ex. AMPHI-A',
     codeRequired: 'Le code est obligatoire',
     nameRequired: 'Le nom est obligatoire',
@@ -69,29 +68,21 @@ export default {
     radiusError: 'Minimum 10 m',
     useCurrentPosition: 'Utiliser ma position actuelle',
     usableToggle: 'Salle utilisable',
-    cancel: 'Annuler',
   },
   confirmRegenerate: {
     title: 'Régénérer le QR',
     message: 'L’affiche actuelle de {code} deviendra invalide. Continuer ?',
-    cancel: 'Annuler',
     confirm: 'Régénérer',
   },
   confirmDelete: {
     title: 'Supprimer la salle',
     message: 'Supprimer « {code} — {name} » ? Son affiche QR ne vaudra plus rien.',
-    cancel: 'Annuler',
   },
   messages: {
     positionSet: 'Position renseignée',
     positionUnavailable: 'Position indisponible',
-    requiredFields: 'Complétez les champs obligatoires',
     saved: 'Salle enregistrée',
-    saveError: 'Enregistrement impossible',
     regenerated: 'Nouveau QR généré — pensez à réimprimer l’affiche',
-    regenerateError: 'Régénération impossible',
     deleted: 'Salle supprimée',
-    deleteError: 'Suppression impossible — des séances s’y déroulent encore',
-    loadError: 'Chargement des salles impossible',
   },
 };

@@ -24,7 +24,7 @@
       dense
       emit-value
       map-options
-      :label="$t('affectations.dialog.fields.promotion')"
+      :label="$t('common.fields.promotionRequired')"
       class="q-mt-sm"
     />
     <semestre-select

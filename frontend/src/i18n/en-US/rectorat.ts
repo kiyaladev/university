@@ -9,14 +9,6 @@ export default {
     generateReportTooltip:
       "Save the current figures in archived reports.",
   },
-  links: {
-    statisticsMesrs: 'MESRS Statistics',
-    statisticsMesrsHelp: "The frozen reports already sent to the Ministry",
-    reports: 'Attendance reports',
-    reportsHelp: 'Line-by-line, exportable statements',
-    statistics: 'Statistics',
-    statisticsHelp: 'Day-to-day tracking of session monitoring',
-  },
   kpis: {
     totalHeadcount: 'Total headcount',
     totalHeadcountDetail: '{count} class(es) · non-cancelled enrollments',
@@ -66,10 +58,7 @@ export default {
   },
   loading: 'Loading dashboard…',
   messages: {
-    dashboardLoadFailed: 'Unable to load the dashboard.',
     reportGenerated: 'MESRS report {annee} generated and archived.',
     viewSnapshots: "View archived reports",
-    reportGenerationFailed: 'Unable to generate the report.',
-    yearsUnavailable: 'Academic years unavailable.',
   },
 };

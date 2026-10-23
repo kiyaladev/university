@@ -7,9 +7,6 @@ export default {
     schedule: 'Schedule a draw',
     exams: 'Exams',
     viewAll: 'View all draws',
-    bordereau: 'Slip',
-    cancel: 'Cancel',
-    back: 'Go back',
     cancelDraw: 'Cancel the draw',
     confirmPrint: 'Confirm printing',
   },
@@ -43,11 +40,6 @@ export default {
     voirExamen: 'View exam',
     annulerTirage: 'Cancel the draw',
   },
-  ariaLabels: {
-    imprimerBordereau: 'Print the draw slip',
-    voirExamen: 'View the exam for this draw',
-    annulerTirage: 'Cancel the draw',
-  },
   emptyState: {
     message: 'No draws match these criteria.',
   },
@@ -76,7 +68,6 @@ export default {
       submit: 'Schedule',
       required: 'Exam, date, number of copies, and fingerprint are required.',
       invalidFingerprint: 'The fingerprint must be a 64-character SHA-256 hexadecimal value. Load the file to calculate it.',
-      saveFailed: 'Unable to save the draw',
     },
     advance: {
       title: 'Move to stage “{stade}”',
@@ -89,12 +80,9 @@ export default {
     },
   },
   messages: {
-    loadError: 'Unable to load draws',
     scheduled: 'Draw scheduled',
     fingerprintRequired: 'Fingerprint required to print',
     stageChanged: 'Stage → {stade}',
-    transitionError: 'Transition failed',
     cancelled: 'Draw cancelled',
-    cancelError: 'Cancellation failed',
   },
 };

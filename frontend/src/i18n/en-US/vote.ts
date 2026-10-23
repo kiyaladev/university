@@ -1,13 +1,11 @@
 /** Namespace `vote`. */
 export default {
-  _namespace: 'vote',
   title: 'Vote',
   subtitle: 'Elections open for your vote, and the results of proclaimed elections. Your ballot is anonymous.',
   loading: 'Loading elections…',
   errors: {
     load: 'Unable to load elections.',
     submit: 'Unable to submit ballot.',
-    popup_blocked: 'Allow pop-ups to open the ballot.',
     max_seats_one: 'Only one seat is available: uncheck your current choice first.',
     max_seats: 'You can select at most {n} candidates.',
   },
@@ -46,7 +44,6 @@ export default {
     title: 'Submit my ballot',
     message:
       'You are voting for: {names}.  The vote is final: once the ballot is submitted, it cannot be modified or withdrawn, and you will not be able to vote in this election again. Your choice is anonymous: only the fact that you voted is kept.',
-    cancel: 'Cancel',
     confirm: 'Submit my ballot',
   },
   messages: {

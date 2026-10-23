@@ -117,7 +117,7 @@
                 outlined
                 dense
                 :label="$t('paiements.dialog.fields.mobileMoneyPhone')"
-                :placeholder="$t('inscriptionPublique.form.step1.telephone.placeholder')"
+                :placeholder="$t('common.fields.phonePlaceholder')"
               />
             </div>
           </div>

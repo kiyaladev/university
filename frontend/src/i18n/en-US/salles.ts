@@ -57,7 +57,6 @@ export default {
   dialog: {
     editTitle: 'Edit room',
     newTitle: 'New room',
-    identificationSection: 'Identification',
     codeHint: 'e.g. AMPHI-A',
     codeRequired: 'The code is required',
     nameRequired: 'The name is required',
@@ -69,29 +68,21 @@ export default {
     radiusError: 'Minimum 10 m',
     useCurrentPosition: 'Use my current position',
     usableToggle: 'Room usable',
-    cancel: 'Cancel',
   },
   confirmRegenerate: {
     title: 'Regenerate the QR code',
     message: 'The current poster for {code} will become invalid. Continue?',
-    cancel: 'Cancel',
     confirm: 'Regenerate',
   },
   confirmDelete: {
     title: 'Delete the room',
     message: 'Delete "{code} — {name}"? Its QR poster will no longer be valid.',
-    cancel: 'Cancel',
   },
   messages: {
     positionSet: 'Position filled in',
     positionUnavailable: 'Position unavailable',
-    requiredFields: 'Fill in the required fields',
     saved: 'Room saved',
-    saveError: 'Unable to save',
     regenerated: 'New QR code generated — remember to reprint the poster',
-    regenerateError: 'Unable to regenerate',
     deleted: 'Room deleted',
-    deleteError: 'Unable to delete — sessions are still held there',
-    loadError: 'Unable to load the rooms',
   },
 };

@@ -23,9 +23,7 @@ export default {
     approverRole: 'Rôle du valideur',
     noRouting: 'Aucun circuit défini — un circuit par défaut sera appliqué.',
     addStep: 'Ajouter une étape',
-    requiredFields: 'Numéro et objet sont obligatoires',
     saved: 'Courrier enregistré',
-    saveFailed: 'Enregistrement impossible',
   },
   tabs: {
     entrant: 'Entrants',
@@ -68,7 +66,6 @@ export default {
     signatureHash: 'Empreinte du paraphe (SHA-256, optionnel)',
     status: { received: 'Reçu', inWorkflow: 'En circuit', processed: 'Traité', filed: 'Classé', archived: 'Archivé' },
     stamped: 'Paraphe enregistré',
-    stampFailed: 'Paraphe impossible',
     stampOnStep: 'Le paraphe se fait sur une étape du circuit',
     closeMessage: 'Clôturer « {number} » et avancer vers {next} ?',
   },
@@ -96,8 +93,6 @@ export default {
     },
   },
   messages: {
-    loadError: 'Chargement du courrier impossible.',
     closed: 'Courrier clôturé',
-    closeError: 'Clôture impossible',
   },
 };

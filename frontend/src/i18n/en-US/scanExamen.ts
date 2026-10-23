@@ -39,8 +39,5 @@ export default {
   messages: {
     examNotStarted:
       'This exam has not started: scans will be refused until it is launched.',
-    examNotFound: 'Exam not found',
-    loadExamsFailed: 'Unable to load exams',
-    scanFailed: 'Scan failed',
   },
 };

@@ -182,7 +182,7 @@
           <template v-if="p.row.tauxReussite !== null && p.row.tauxReussite !== undefined">
             {{ pourcentLisible(p.row.tauxReussite) }}
           </template>
-          <template v-else>{{ $t('rectorat.subtitleFallback') }}</template>
+          <template v-else>{{ $t('common.format.emptyValue') }}</template>
         </q-td>
       </template>
 

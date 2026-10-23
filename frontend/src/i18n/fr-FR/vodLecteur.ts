@@ -21,7 +21,4 @@ export default {
     message: "Cette ressource n'est pas disponible.",
     detail: "Elle a peut-être été archivée ou n'est pas ouverte à votre profil.",
   },
-  notify: {
-    ressourceIntrouvable: 'Ressource introuvable.',
-  },
 };

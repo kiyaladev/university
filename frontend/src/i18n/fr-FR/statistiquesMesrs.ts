@@ -14,20 +14,6 @@ export default {
     exportTooltip: 'Tableur (Excel / LibreOffice) — {annee}',
     generateFromRectorat: "Ouvrir la situation actuelle",
   },
-  links: {
-    rectorat: {
-      label: 'Tableau de bord Rectorat',
-      hint: "Les mêmes indicateurs à l’instant présent — et le bouton qui génère un bilan",
-    },
-    rapports: {
-      label: 'Rapports de présence',
-      hint: 'Les états ligne à ligne derrière ces agrégats',
-    },
-    statistiques: {
-      label: 'Statistiques',
-      hint: 'Le suivi du contrôle des séances au jour le jour',
-    },
-  },
   emptyState: {
     title: 'Aucun bilan archivé',
     text: "Enregistrez un bilan depuis « Situation actuelle » pour conserver les effectifs, la réussite et la masse salariale.",
@@ -52,7 +38,6 @@ export default {
     },
     axis: {
       taux: 'Taux %',
-      gnf: 'GNF',
     },
   },
   table: {
@@ -82,7 +67,6 @@ export default {
     },
   },
   messages: {
-    loadError: "Chargement des bilans MESRS impossible.",
     anneesUnavailable: 'Années académiques indisponibles : le filtre restera vide.',
   },
 };

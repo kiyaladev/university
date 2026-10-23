@@ -5,7 +5,6 @@ export default {
     logout: 'Log out',
     view: 'View',
     recharge: 'Top up',
-    cancel: 'Cancel',
   },
   otherRole: {
     title: 'Student area',
@@ -25,8 +24,7 @@ export default {
   },
   services: {
     maCarte: { label: 'My student card', help: 'Digital card, QR code and personal code' },
-    demandesDocuments: { label: 'My document requests', help: 'Academic documents and complaints' },
-    reclamations: { label: 'My complaints', help: 'Dispute a grade, report a record error' },
+    demandesDocuments: { help: 'Academic documents and complaints' },
     vote: { label: 'Vote', help: 'Delegate elections and announced results' },
     bibliotheque: { label: 'Digital library', help: 'Theses, dissertations and course materials' },
     formations: { label: 'Continuing education', help: 'Catalog of training courses open for enrollment' },
@@ -44,7 +42,6 @@ export default {
       empty: 'No fees for this year.',
     },
     paiements: {
-      title: 'Recent payments',
       empty: 'No payment recorded.',
     },
     resultat: {
@@ -81,7 +78,6 @@ export default {
   },
   loading: 'Loading your record…',
   messages: {
-    popupBlocked: 'Allow pop-ups to open the attestation.',
     loadError: 'Your record could not be loaded. Check your connection, then try again.',
     rechargeInfo: 'Top-up {reference} pending — follow the payment instructions',
   },

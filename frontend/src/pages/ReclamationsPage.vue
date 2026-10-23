@@ -138,7 +138,7 @@
             {{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}
           </span>
           <span v-else-if="p.row.nomAuteur">{{ p.row.nomAuteur }}</span>
-          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
       <template #body-cell-activite="p">
@@ -204,7 +204,7 @@
               <span class="text-caption">
                 <span v-if="r.anonyme">{{ $t('reclamations.fields.anonyme') }}</span>
                 <span v-else-if="r.etudiant">{{ r.etudiant.prenom }} {{ r.etudiant.nom }}</span>
-                <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+                <span v-else>{{ $t('common.format.emptyValue') }}</span>
               </span>
             </div>
             <div v-if="r.departement" class="row items-center">

@@ -17,7 +17,6 @@ export default {
     pinHintOptional: 'Facultatif : l’étudiant pourra le redéfinir depuis son portail.',
     updated: 'Carte mise à jour.',
     issued: 'Carte émise.',
-    issueFailed: 'Émission impossible.',
   },
   studentBanner: {
     message: "Liste restreinte aux cartes d'un seul étudiant (lien entrant).",
@@ -53,12 +52,10 @@ export default {
   },
   revokeDialog: {
     title: 'Révoquer la carte',
-    close: 'Fermer',
     warning:
       'Action irréversible : la carte devient inutilisable et tout scan de son QR affichera « carte non valable ». L\'étudiant en est informé sur « Ma carte étudiante ».',
     motifLabel: 'Motif de révocation',
     motifHint: "3 caractères minimum — il sera affiché à l'étudiant.",
-    cancel: 'Annuler',
     confirm: 'Révoquer définitivement',
   },
   detailDialog: {
@@ -71,6 +68,5 @@ export default {
     linkCopied: 'Lien de vérification copié.',
     copyError: 'Copie impossible : sélectionnez le lien à la main.',
     revoked: 'Carte révoquée.',
-    revokeError: 'Révocation impossible.',
   },
 };

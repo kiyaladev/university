@@ -64,7 +64,6 @@ export default {
       required: 'Title, opening time and closing time are required.',
       saved: 'Election updated.',
       created: 'Election created.',
-      saveError: 'Unable to save.',
       create: 'Create',
     },
     candidateForm: {
@@ -78,13 +77,12 @@ export default {
       requiredName: 'First and last name are required.',
       saved: 'Candidate updated.',
       added: 'Candidate added.',
-      saveError: 'Unable to save.',
+      programme: 'Manifesto',
     },
     removeCandidate: {
       title: 'Remove this candidate',
       message: 'Remove {name} from the candidate list?',
       removeAria: 'Remove {name}',
-      cancel: 'Cancel',
       confirm: 'Remove',
     },
     transitions: {
@@ -137,10 +135,5 @@ export default {
   },
   messages: {
     candidateRemoved: 'Candidate removed.',
-    candidateRemoveError: 'Removal failed.',
-    resultsError: 'Results unavailable.',
-    transitionError: 'Transition failed.',
-    loadError: 'Loading failed.',
-    popupBlocked: 'Allow pop-ups to open the ballot.',
   },
 };

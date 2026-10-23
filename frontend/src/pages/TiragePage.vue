@@ -116,7 +116,7 @@
       </template>
       <template #body-cell-empreinte="p">
         <q-td :props="p">
-          <code class="empreinte-courte">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}{{ $t('reservations.chips.roomFallback') }}</code>
+          <code class="empreinte-courte">{{ (p.row.empreinteSource ?? '').slice(0, 16) }}…</code>
           <q-tooltip>{{ p.row.empreinteSource }}</q-tooltip>
         </q-td>
       </template>

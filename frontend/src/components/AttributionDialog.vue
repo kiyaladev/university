@@ -71,7 +71,7 @@
           outlined
           dense
           type="textarea"
-          :label="$t('justificatifs.detailDialog.title')"
+          :label="$t('common.fields.supportingDocument')"
           :autogrow="true"
           :hint="$t('cites.attributions.dialog.proofHint')"
           rows="2"

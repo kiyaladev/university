@@ -78,7 +78,7 @@
         <q-card flat bordered class="carte full-height">
           <q-card-section class="text-center">
             <div class="stat-chiffre chiffres">
-              {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+              {{ montantLisible(dernier?.masseSalariale) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span>
             </div>
             <div class="pochoir text-grey-7">{{ $t('statistiquesMesrs.stats.masseSalariale') }}</div>
             <div class="text-caption text-grey-6">{{ legendeDernier }}</div>
@@ -353,7 +353,7 @@ const configEvolution = computed<ChartConfiguration | null>(() => {
           beginAtZero: true,
           grid: { drawOnChartArea: false },
           ticks: { callback: (v) => nombreLisible(Number(v), 0) },
-          title: { display: true, text: t('statistiquesMesrs.chart.axis.gnf') },
+          title: { display: true, text: t('common.units.gnf') },
         },
       },
     },

@@ -7,7 +7,6 @@ export default {
     createFirst: 'Créer le premier compte',
     editAria: 'Modifier l’utilisateur',
     deleteAria: 'Supprimer l’utilisateur',
-    cancel: 'Annuler',
     teacherRecord: 'Sa fiche',
     openTeacherRecordAria: 'Ouvrir la fiche enseignant',
   },
@@ -60,10 +59,7 @@ export default {
   messages: {
     fillRequired: 'Complétez les champs obligatoires',
     saved: 'Utilisateur enregistré',
-    saveFailed: 'Enregistrement impossible',
     deleted: 'Compte supprimé',
-    deleteFailed: 'Suppression impossible',
-    loadFailed: 'Chargement des comptes impossible',
   },
   confirmDelete: {
     title: 'Supprimer le compte',

@@ -5,7 +5,7 @@
     :envoi="enregistrement"
     @valider="enregistrer"
   >
-    <span class="section-titre">{{ $t('salles.dialog.identificationSection') }}</span>
+    <span class="section-titre">{{ $t('common.fields.identification') }}</span>
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-5">
         <q-input v-model="form.code" outlined dense :label="$t('common.fields.codeRequired')" placeholder="R1-101" :rules="[requis]" />

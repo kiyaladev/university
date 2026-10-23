@@ -61,7 +61,7 @@
           </div>
           <div>
             <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
-            <div class="text-h6">{{ montantLisible(creee.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
+            <div class="text-h6">{{ montantLisible(creee.montantTotal) }} {{ $t('common.units.gnf') }}</div>
           </div>
           <div class="text-caption text-grey-7">
             {{ $t('paie.dialogs.createDialog.draftHint') }}

@@ -30,7 +30,7 @@
           <autocomplete-async
             v-model="form.matiereId"
             endpoint="/matieres"
-            :label="$t('affectations.dialog.fields.subject')"
+            :label="$t('common.fields.subjectRequired')"
             :label-fn="(m) => `${m.code} — ${m.intitule}`"
           />
         </div>
@@ -38,7 +38,7 @@
           <autocomplete-async
             v-model="form.promotionId"
             endpoint="/referentiel/promotions"
-            :label="$t('affectations.dialog.fields.promotion')"
+            :label="$t('common.fields.promotionRequired')"
             :label-fn="(p) => `${p.nom} — ${p.niveau}`"
           />
         </div>

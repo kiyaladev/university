@@ -3,15 +3,9 @@ export default {
   title: 'Demandes de documents',
   subtitle:
     "L'étudiant formule sa demande en ligne, paie les frais au tarif paramétré, la scolarité traite, marque le document comme prêt et le remet au guichet.",
-  actions: {
-    tarifs: 'Tarifs des demandes',
-  },
   studentBanner: {
     message: "Registre restreint aux demandes d'un seul étudiant (lien entrant).",
     seeAll: 'Voir toutes les demandes',
-  },
-  stats: {
-    revenues: 'Recettes encaissées : {amount} GNF.',
   },
   plaques: {
     awaitingPayment: 'À payer',
@@ -88,17 +82,10 @@ export default {
     message: 'Motif du rejet (obligatoire) :',
   },
   messages: {
-    forbidden: "Vous n'avez pas accès à cette section.",
-    loadError: 'Chargement impossible',
     paymentConfirmed: 'Paiement confirmé',
-    confirmError: 'Confirmation impossible',
     processingStarted: 'Traitement lancé',
-    processingError: 'Lancement impossible',
     markedReady: 'Demande marquée prête, étudiant notifié',
-    markReadyError: 'Impossible de marquer prête',
     handedOver: 'Document remis',
-    handOverError: 'Remise impossible',
     rejected: 'Demande rejetée',
-    rejectError: 'Rejet impossible',
   },
 };

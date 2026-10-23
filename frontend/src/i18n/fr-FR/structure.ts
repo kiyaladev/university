@@ -101,23 +101,15 @@ export default {
       filiereError: 'Rattachez la promotion à une filière',
       anneeError: 'Choisissez l’année académique',
     },
-    actions: {
-      cancel: 'Annuler',
-    },
   },
   deleteDialog: {
     message: 'Supprimer « {label} » ? Les données rattachées seront également supprimées.',
-    cancel: 'Annuler',
   },
   messages: {
     anneeSaved: 'Année académique enregistrée',
     departementSaved: 'Département enregistré',
     filiereSaved: 'Filière enregistrée',
     promotionSaved: 'Promotion enregistrée',
-    saveError: 'Enregistrement impossible',
-    incompleteFields: 'Complétez les champs obligatoires',
     deleted: '« {label} » supprimé',
-    deleteError: 'Suppression impossible — des données rattachées l’empêchent',
-    loadError: 'Chargement de la structure impossible',
   },
 };

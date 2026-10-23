@@ -10,7 +10,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Rechercher (enseignant, matière, promotion)…',
-    promotion: 'Promotion',
   },
   table: {
     columns: {
@@ -41,28 +40,20 @@ export default {
     },
     fields: {
       teacherError: 'Choisissez l’enseignant',
-      subject: 'Matière *',
       subjectError: 'Choisissez la matière',
-      promotion: 'Promotion *',
       promotionError: 'Choisissez la promotion',
       yearError: 'Choisissez l’année académique',
       volume: 'Volume horaire contractuel (h)',
       volumeHint: 'Sert au suivi « heures réalisées / heures dues »',
     },
-    cancel: 'Annuler',
   },
   deleteDialog: {
     title: 'Supprimer l’affectation',
     message:
       '« {subject} » confiée à {teacher} : les séances liées seront également supprimées. Continuer ?',
-    cancel: 'Annuler',
   },
   messages: {
-    fillRequired: 'Complétez les champs obligatoires',
     saved: 'Affectation enregistrée',
-    saveError: 'Enregistrement impossible',
     deleted: 'Affectation supprimée',
-    deleteError: 'Suppression impossible',
-    loadError: 'Chargement des charges impossible',
   },
 };

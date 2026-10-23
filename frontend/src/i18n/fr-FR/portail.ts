@@ -5,7 +5,6 @@ export default {
     logout: 'Se déconnecter',
     view: 'Voir',
     recharge: 'Recharger',
-    cancel: 'Annuler',
   },
   otherRole: {
     title: 'Espace étudiant',
@@ -25,8 +24,7 @@ export default {
   },
   services: {
     maCarte: { label: 'Ma carte étudiante', help: 'Carte numérique, QR code et code personnel' },
-    demandesDocuments: { label: 'Mes demandes de documents', help: 'Documents scolaires et réclamations' },
-    reclamations: { label: 'Mes réclamations', help: 'Contester une note, signaler une erreur de dossier' },
+    demandesDocuments: { help: 'Documents scolaires et réclamations' },
     vote: { label: 'Voter', help: 'Élections des délégués et résultats proclamés' },
     bibliotheque: { label: 'Bibliothèque numérique', help: 'Mémoires, thèses et supports de cours' },
     formations: { label: 'Formation continue', help: 'Catalogue des formations ouvertes à l’inscription' },
@@ -44,7 +42,6 @@ export default {
       empty: 'Aucun frais pour cette année.',
     },
     paiements: {
-      title: 'Paiements récents',
       empty: 'Aucun paiement enregistré.',
     },
     resultat: {
@@ -81,7 +78,6 @@ export default {
   },
   loading: 'Chargement de votre dossier…',
   messages: {
-    popupBlocked: "Autorisez les fenêtres contextuelles pour ouvrir l’attestation.",
     loadError: 'Votre dossier n’a pas pu être chargé. Vérifiez votre connexion, puis réessayez.',
     rechargeInfo: 'Recharge {reference} en attente — suivez les instructions de paiement',
   },

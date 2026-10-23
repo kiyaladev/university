@@ -1,6 +1,5 @@
 /** Namespace `vote`. */
 export default {
-  _namespace: 'vote',
   title: 'Voter',
   subtitle:
     'Les scrutins ouverts à votre voix, et les résultats des scrutins proclamés. Votre bulletin est anonyme.',
@@ -8,7 +7,6 @@ export default {
   errors: {
     load: 'Impossible de charger les scrutins.',
     submit: 'Dépôt du bulletin impossible.',
-    popup_blocked: 'Autorisez les fenêtres contextuelles pour ouvrir le bulletin.',
     max_seats_one: 'Un seul siège est à pourvoir : décochez d’abord votre choix actuel.',
     max_seats: 'Vous pouvez retenir au plus {n} candidats.',
   },
@@ -49,7 +47,6 @@ export default {
     title: 'Déposer mon bulletin',
     message:
       'Vous votez pour : {names}.  Le vote est définitif : une fois le bulletin déposé, il ne peut être ni modifié ni retiré, et vous ne pourrez plus voter sur ce scrutin. Votre choix est anonyme : seul le fait que vous ayez voté est conservé.',
-    cancel: 'Annuler',
     confirm: 'Déposer mon bulletin',
   },
   messages: {

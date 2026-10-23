@@ -5,25 +5,9 @@ export default {
     "Le chemin d'une feuille mensuelle : elle agrège les heures constatées lors des contrôles, la direction la valide — les montants sont alors figés —, puis l'administration la marque payée.",
   actions: {
     newSheet: 'Nouvelle feuille',
-    reload: 'Recharger',
     markPaid: 'Marquer payée',
     printSheet: 'Imprimer la feuille (A4)',
-    delete: 'Supprimer',
     createFirst: 'Créer la première feuille',
-  },
-  links: {
-    reports: {
-      label: 'Rapports de présence',
-      help: 'L’état de paiement détaillé, enseignant par enseignant',
-    },
-    teachingLoads: {
-      label: 'Charges d’enseignement',
-      help: 'Les taux horaires et volumes contractuels utilisés au calcul',
-    },
-    dashboard: {
-      label: 'Tableau de bord Rectorat',
-      help: 'La masse salariale consolidée sur 12 mois',
-    },
   },
   filters: {
     statutChip: 'Statut : {value}',
@@ -120,14 +104,9 @@ export default {
     },
   },
   messages: {
-    loadError: 'Chargement des feuilles de paie impossible.',
     recalculated: 'Feuille recalculée',
-    recalculateError: 'Recalcul impossible',
     validated: 'Feuille validée',
-    validateError: 'Validation impossible',
     paid: 'Feuille payée',
-    payError: 'Opération impossible',
     deleted: 'Feuille supprimée',
-    deleteError: 'Suppression impossible',
   },
 };

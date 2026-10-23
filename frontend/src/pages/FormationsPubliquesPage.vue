@@ -115,7 +115,7 @@
         <q-card-section v-if="etape === 1">
           <div class="text-h6">{{ $t('formationsPubliques.dialog.step1.title') }}</div>
           <div class="text-caption text-grey-7 q-mt-xs">
-            <strong>{{ selection?.titre }}</strong> {{ $t('rectorat.subtitleFallback') }}
+            <strong>{{ selection?.titre }}</strong> {{ $t('common.format.emptyValue') }}
             {{ montantLisible(selection?.prix ?? 0) }} {{ selection?.devise ?? 'GNF' }}
           </div>
         </q-card-section>

@@ -5,25 +5,9 @@ export default {
     "The path of a monthly sheet: it aggregates the hours recorded during attendance checks, management validates it — the amounts are then locked —, then admin staff mark it paid.",
   actions: {
     newSheet: 'New sheet',
-    reload: 'Reload',
     markPaid: 'Mark paid',
     printSheet: 'Print the sheet (A4)',
-    delete: 'Delete',
     createFirst: 'Create the first sheet',
-  },
-  links: {
-    reports: {
-      label: 'Attendance reports',
-      help: 'The detailed payment statement, teacher by teacher',
-    },
-    teachingLoads: {
-      label: 'Teaching loads',
-      help: 'The hourly rates and contractual volumes used in the calculation',
-    },
-    dashboard: {
-      label: 'Rectorate dashboard',
-      help: 'The payroll total consolidated over 12 months',
-    },
   },
   filters: {
     statutChip: 'Status: {value}',
@@ -120,14 +104,9 @@ export default {
     },
   },
   messages: {
-    loadError: 'Unable to load payroll sheets.',
     recalculated: 'Sheet recalculated',
-    recalculateError: 'Recalculation failed',
     validated: 'Sheet validated',
-    validateError: 'Validation failed',
     paid: 'Sheet paid',
-    payError: 'Operation failed',
     deleted: 'Sheet deleted',
-    deleteError: 'Deletion failed',
   },
 };

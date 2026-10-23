@@ -28,7 +28,7 @@
           </span>
           <span class="pochoir">{{ $t('reservations.table.columns.organization') }}</span>
           <span>{{ reservation.organisme || '—' }}</span>
-          <span class="pochoir">{{ $t('cites.residences.table.columns.responsable') }}</span>
+          <span class="pochoir">{{ $t('common.fields.manager') }}</span>
           <span>{{ reservation.responsable || '—' }}</span>
           <span class="pochoir">{{ $t('reservations.detailDialog.requester') }}</span>
           <span>
@@ -108,7 +108,7 @@
           </div>
           <q-input v-model="form.motif" outlined dense :label="$t('common.fields.motif')" />
           <q-input v-model="form.organisme" outlined dense :label="$t('reservations.table.columns.organization')" />
-          <q-input v-model="form.responsable" outlined dense :label="$t('cites.residences.table.columns.responsable')" />
+          <q-input v-model="form.responsable" outlined dense :label="$t('common.fields.manager')" />
           <div class="row q-gutter-sm q-mt-sm">
             <q-btn
               unelevated

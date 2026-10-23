@@ -1,12 +1,10 @@
 /** Namespace `helpdesk`. */
 export default {
-  _namespace: 'helpdesk',
   title: 'IT assistance',
   subtitle:
     "Report an IT problem and track its resolution.",
   actions: {
     declareIncident: "Report a problem",
-    otherProblem: 'Other problem',
     scanEquipment: 'Scan equipment QR',
     newEquipment: 'New equipment',
   },
@@ -14,12 +12,6 @@ export default {
     myTickets: "My reports",
     management: "Incident management",
     equipment: "Support equipment",
-  },
-  declareCard: {
-    title: 'Report in two clicks',
-    description:
-      "Arrived via a piece of equipment's QR code? The form is already pre-filled — just pick the category and describe the issue.",
-    adminNote: 'ADMIN sees all tickets here.',
   },
   myTicketsTable: {
     titleAll: 'All reports',

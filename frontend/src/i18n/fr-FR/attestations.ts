@@ -66,7 +66,6 @@ export default {
       "Le QR cessera de garantir le document : l'authenticité de la révocation est elle-même vérifiable en ligne. L'opération est définitive.",
     motifLabel: 'Motif de révocation *',
     motifHint: 'Trois caractères minimum — ce motif est affiché lors des vérifications publiques',
-    cancel: 'Annuler',
     confirm: 'Révoquer définitivement',
   },
   verificationsDialog: {
@@ -80,7 +79,5 @@ export default {
   },
   messages: {
     revoked: 'Attestation révoquée — le QR ne sera plus valable',
-    revokeError: 'Révocation impossible',
-    loadError: 'Chargement des attestations impossible',
   },
 };

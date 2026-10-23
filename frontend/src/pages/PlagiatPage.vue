@@ -111,7 +111,7 @@
       <div class="text-caption text-weight-medium q-mb-xs">{{ $t('plagiatPage.topDocuments.title') }}</div>
       <ol class="q-pl-md q-mb-none">
         <li v-for="d in topDocuments" :key="d.id" class="text-caption">
-          {{ d.titre }} {{ $t('rectorat.subtitleFallback') }} <span class="text-grey-9">{{ $t('plagiatPage.topDocuments.count', { count: d.compte }) }}</span>
+          {{ d.titre }} {{ $t('common.format.emptyValue') }} <span class="text-grey-9">{{ $t('plagiatPage.topDocuments.count', { count: d.compte }) }}</span>
         </li>
       </ol>
     </q-banner>
@@ -250,7 +250,7 @@
     >
       <template v-if="decisionCourante">
         <div class="text-caption text-grey-7 q-mb-md">
-          {{ $t('common.fields.score') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('rectorat.subtitleFallback') }}
+          {{ $t('common.fields.score') }} <strong>{{ Math.round(decisionCourante.score) }} %</strong> {{ $t('common.format.emptyValue') }}
           {{ $t('plagiatPage.dialog.comparisonDocs', {
             documentA: decisionCourante.documentA?.titre ?? '—',
             documentB: decisionCourante.documentB?.titre ?? '—',

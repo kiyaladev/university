@@ -79,7 +79,6 @@ export default {
     inactive: 'inactive',
     officialFee: 'Official fee',
     amount: 'Enrollment fee (GNF)',
-    officialFeeApplied: 'Official fee applied automatically',
     noFee: 'No fee is configured: enter the amount',
     save: 'Save enrollment',
     created: 'Enrollment created — awaiting payment',

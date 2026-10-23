@@ -183,7 +183,7 @@
       <template #body-cell-taille="p">
         <q-td :props="p" class="text-right">
           <span v-if="p.row.tailleKo">{{ $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) }) }}</span>
-          <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else>{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
       <template #body-cell-publie="p">
@@ -211,7 +211,7 @@
               {{ $t('bibliotheque.riskHighTooltip') }}
             </q-tooltip>
           </q-badge>
-          <span v-else class="text-grey-6 text-caption">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-6 text-caption">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
       <template #body-cell-actions="p">

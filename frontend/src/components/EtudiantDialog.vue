@@ -74,7 +74,7 @@
       {{ etudiant?.matricule ?? $t('etudiants.dialogForm.assignedOnSave') }}
     </p>
 
-    <span class="section-titre">{{ $t('affectations.filters.promotion') }}</span>
+    <span class="section-titre">{{ $t('common.fields.promotion') }}</span>
     <!--
       La promotion se porte par un dossier d'inscription, jamais par la
       fiche : on renvoie vers l'écran qui en a la charge.

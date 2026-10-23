@@ -79,7 +79,6 @@ export default {
     inactive: 'inactif',
     officialFee: 'Tarif officiel',
     amount: 'Montant des frais (GNF)',
-    officialFeeApplied: 'Tarif officiel appliqué automatiquement',
     noFee: 'Aucun tarif paramétré : saisissez le montant',
     save: 'Enregistrer l’inscription',
     created: 'Inscription créée — en attente de paiement',

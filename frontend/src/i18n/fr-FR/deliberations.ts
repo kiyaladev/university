@@ -6,10 +6,8 @@ export default {
   actions: {
     newDeliberation: 'Nouvelle délibération',
     reportCards: 'Bulletins',
-    recalculate: 'Recalculer',
     validateJury: 'Valider le jury',
     pv: 'PV',
-    back: 'Revenir',
   },
   createDialog: {
     session: 'Session *',
@@ -23,7 +21,6 @@ export default {
     selectedPromotion: 'Promotion sélectionnée',
     selectedYear: 'Année sélectionnée',
     created: 'Délibération créée, moyennes calculées',
-    createFailed: 'Création impossible — une délibération existe peut-être déjà pour cette promotion et cette session.',
   },
   filters: {
     search: 'Rechercher une promotion…',
@@ -71,15 +68,6 @@ export default {
     title: 'Délibération — {promotion}',
     emptyLines: 'Aucune ligne : lancez le recalcul pour produire les moyennes et les décisions.',
   },
-  kanban: {
-    columns: {
-      propose: 'Proposées (brouillon)',
-      valide: 'Validées (jury)',
-      soutenu: 'Rattrapages validés',
-      abandonne: 'Rattrapages en attente',
-    },
-    cardMeta: '{count} étudiant(s) · créée le {date}',
-  },
   dialogs: {
     recalculate: {
       title: 'Recalculer la délibération',
@@ -101,11 +89,7 @@ export default {
     },
   },
   messages: {
-    detailError: 'Détail indisponible',
     recalculated: 'Délibération recalculée',
-    recalculateError: 'Recalcul impossible',
     validated: 'Délibération validée par le jury',
-    validateError: 'Validation impossible',
-    loadError: 'Chargement des délibérations impossible',
   },
 };

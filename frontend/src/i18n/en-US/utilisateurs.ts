@@ -7,7 +7,6 @@ export default {
     createFirst: 'Create the first account',
     editAria: 'Edit the user',
     deleteAria: 'Delete the user',
-    cancel: 'Cancel',
     teacherRecord: 'Teacher record',
     openTeacherRecordAria: 'Open the teacher record',
   },
@@ -60,10 +59,7 @@ export default {
   messages: {
     fillRequired: 'Please fill in the required fields',
     saved: 'User saved',
-    saveFailed: 'Unable to save',
     deleted: 'Account deleted',
-    deleteFailed: 'Unable to delete',
-    loadFailed: 'Unable to load accounts',
   },
   confirmDelete: {
     title: 'Delete account',

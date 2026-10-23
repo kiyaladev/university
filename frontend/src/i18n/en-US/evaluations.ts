@@ -1,6 +1,5 @@
 /** Namespace `evaluations`. */
 export default {
-  _namespace: 'evaluations',
   title: 'Evaluations',
   subtitle: 'Graded assessments (continuous assessment, exam, resit…) by subject and cohort',
   actions: {

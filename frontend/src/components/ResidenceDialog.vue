@@ -11,7 +11,7 @@
         <q-input v-model="form.code" outlined dense :label="$t('common.fields.codeRequired')" :rules="[requis]" />
       </div>
       <div class="col-12 col-sm-8">
-        <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" :rules="[requis]" />
+        <q-input v-model="form.nom" outlined dense :label="$t('common.fields.nameRequired')" :rules="[requis]" />
       </div>
     </div>
 

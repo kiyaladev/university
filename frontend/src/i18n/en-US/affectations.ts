@@ -10,7 +10,6 @@ export default {
   },
   filters: {
     searchPlaceholder: 'Search (teacher, subject, class)…',
-    promotion: 'Class',
   },
   table: {
     columns: {
@@ -41,28 +40,20 @@ export default {
     },
     fields: {
       teacherError: 'Choose the teacher',
-      subject: 'Subject *',
       subjectError: 'Choose the subject',
-      promotion: 'Class *',
       promotionError: 'Choose the class',
       yearError: 'Choose the academic year',
       volume: 'Contractual workload (h)',
       volumeHint: 'Used to track "hours worked / hours owed"',
     },
-    cancel: 'Cancel',
   },
   deleteDialog: {
     title: 'Delete the assignment',
     message:
       '"{subject}" assigned to {teacher}: related sessions will also be deleted. Continue?',
-    cancel: 'Cancel',
   },
   messages: {
-    fillRequired: 'Fill in the required fields',
     saved: 'Assignment saved',
-    saveError: 'Save failed',
     deleted: 'Assignment deleted',
-    deleteError: 'Deletion failed',
-    loadError: 'Failed to load teaching loads',
   },
 };

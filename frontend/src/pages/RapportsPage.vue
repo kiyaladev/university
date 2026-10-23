@@ -215,7 +215,7 @@
             <div class="col">
               <div class="text-caption text-grey-7">{{ $t('rapports.paiement.montantTotal') }}</div>
               <div class="text-h5 text-weight-bold text-primary">
-                {{ montantLisible(paiement?.totalMontant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+                {{ montantLisible(paiement?.totalMontant) }} {{ $t('common.units.gnf') }}
               </div>
             </div>
             <div class="col-auto">

@@ -100,23 +100,15 @@ export default {
       filiereError: 'Attach the cohort to a program',
       anneeError: 'Choose the academic year',
     },
-    actions: {
-      cancel: 'Cancel',
-    },
   },
   deleteDialog: {
     message: 'Delete "{label}"? Related data will also be deleted.',
-    cancel: 'Cancel',
   },
   messages: {
     anneeSaved: 'Academic year saved',
     departementSaved: 'Department saved',
     filiereSaved: 'Program saved',
     promotionSaved: 'Cohort saved',
-    saveError: 'Unable to save',
-    incompleteFields: 'Please fill in the required fields',
     deleted: '"{label}" deleted',
-    deleteError: 'Unable to delete — related data prevents it',
-    loadError: 'Unable to load the academic structure',
   },
 };

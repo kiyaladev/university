@@ -49,10 +49,8 @@ export default {
     noDecisionYet: 'No decision recorded yet.',
   },
   messages: {
-    notFound: 'Suspicion not found',
     motifRequiredForConfirm: 'A reason is required to confirm',
     acquitted: 'Suspicion acquitted',
     confirmed: 'Plagiarism confirmed — procedure opened',
-    decisionFailed: 'Decision could not be recorded',
   },
 };

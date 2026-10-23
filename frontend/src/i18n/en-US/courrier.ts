@@ -23,9 +23,7 @@ export default {
     approverRole: 'Approver role',
     noRouting: 'No route defined — a default route will be applied.',
     addStep: 'Add a step',
-    requiredFields: 'Number and subject are required',
     saved: 'Mail item saved',
-    saveFailed: 'Unable to save the mail item',
   },
   tabs: {
     entrant: 'Incoming',
@@ -68,7 +66,6 @@ export default {
     signatureHash: 'Countersignature hash (SHA-256, optional)',
     status: { received: 'Received', inWorkflow: 'In workflow', processed: 'Processed', filed: 'Filed', archived: 'Archived' },
     stamped: 'Countersignature recorded',
-    stampFailed: 'Unable to countersign',
     stampOnStep: 'Countersigning is performed on a workflow step',
     closeMessage: 'Close “{number}” and move it to {next}?',
   },
@@ -94,8 +91,6 @@ export default {
     },
   },
   messages: {
-    loadError: 'Unable to load the mail.',
     closed: 'Mail closed',
-    closeError: 'Unable to close the mail',
   },
 };

@@ -3,7 +3,7 @@
     <q-card style="width: 760px; max-width: 96vw; max-height: 90vh" class="column">
       <q-card-section v-if="reclamation" class="row items-center no-wrap">
         <div class="col">
-          <div class="text-h6">{{ reclamation.numero }} {{ $t('rectorat.subtitleFallback') }} {{ reclamation.sujet }}</div>
+          <div class="text-h6">{{ reclamation.numero }} {{ $t('common.format.emptyValue') }} {{ reclamation.sujet }}</div>
           <div class="text-caption text-grey-7">
             {{ reclamation.etudiant ? reclamation.etudiant.nom + ' ' + reclamation.etudiant.prenom : (reclamation.nomAuteur || (reclamation.anonyme ? $t('reclamations.dialog.detail.anonymous') : '—')) }}
             <span v-if="reclamation.etudiant"> · {{ reclamation.etudiant.matricule }}</span>

@@ -83,12 +83,9 @@ export default {
     saved: 'Enseignant enregistré',
   },
   messages: {
-    moyensUnreadable: 'Moyens d’attestation illisibles',
     resetPinTitle: 'Réinitialiser le code personnel',
     resetPinMessage: 'Un nouveau code sera généré et affiché une seule fois. Continuer ?',
-    cancel: 'Annuler',
     generate: 'Générer',
-    pinGenerationFailed: 'Génération du code impossible',
     consentTitle: 'Consentement de l’enseignant',
     consentMessage:
       'À lire à l’enseignant avant la lecture :« Votre empreinte sera enregistrée sous forme de gabarit chiffré, jamais sous forme d’image, et servira uniquement à attester votre présence en cours. Vous pouvez refuser : le code personnel et la signature manuscrite restent à votre disposition. Vous pouvez demander son effacement à tout moment. »',
@@ -101,7 +98,5 @@ export default {
     deleteTitle: 'Supprimer l’enseignant',
     deleteMessage: 'Supprimer définitivement {nom} {prenom} ainsi que ses affectations et séances ?',
     deleteSuccess: 'Enseignant supprimé',
-    deleteFailed: 'Suppression impossible',
-    loadFailed: 'Chargement des enseignants impossible',
   },
 };

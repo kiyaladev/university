@@ -158,7 +158,7 @@ onBeforeUnmount(() => { void signalerVue(false); });
         <h1 class="text-h6 q-my-none">{{ vod.titre }}</h1>
         <div class="text-caption text-grey-7">
           {{ vod.enseignant ? `${vod.enseignant.prenom} ${vod.enseignant.nom}` : '' }}
-          <span v-if="vod.matiere"> · {{ vod.matiere.code }} {{ $t('rectorat.subtitleFallback') }} {{ vod.matiere.intitule }}</span>
+          <span v-if="vod.matiere"> · {{ vod.matiere.code }} {{ $t('common.format.emptyValue') }} {{ vod.matiere.intitule }}</span>
         </div>
       </q-card-section>
 

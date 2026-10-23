@@ -2,7 +2,6 @@
 export default {
   subtitle: 'The register of scheduled sessions and what was observed there',
   actions: {
-    generateFromSchedule: 'Generate from timetable',
     newUnscheduled: 'Unscheduled session',
     newAdHoc: 'One-off session',
     assignRound: 'Assign a round',
@@ -71,9 +70,7 @@ export default {
     assignController: 'Assign',
     assignControllerTitle: 'Assign a controller to this session',
     assignControllerHelp: 'This assignment feeds round coverage reports and is recorded in the audit log.',
-    controllersLoadError: 'Could not load the controller list.',
     controllerAssigned: 'Controller assignment saved.',
-    controllerAssignError: 'Could not save this assignment.',
     absenceJustification: 'Absence justification',
     openFile: 'Open the file',
     actualCourse: 'Report',
@@ -95,11 +92,8 @@ export default {
     departmentOptional: 'Department (optional)',
     preview: '{affectables} session(s) can be assigned. {closed} session(s) in a closed academic year will be skipped.',
     assignAction: 'Assign {count} session(s)',
-    loadError: 'Could not load controllers and departments.',
     controllerRequired: 'Choose an active controller.',
-    previewError: 'Could not preview this period.',
     assigned: '{count} session(s) assigned. Existing assignments were preserved.',
-    assignError: 'Could not assign the round. Preview the period again.',
   },
   dialogs: {
     dialogForm: {

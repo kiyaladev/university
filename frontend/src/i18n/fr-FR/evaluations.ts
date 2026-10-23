@@ -1,6 +1,5 @@
 /** Namespace `evaluations`. */
 export default {
-  _namespace: 'evaluations',
   title: 'Évaluations',
   subtitle: 'Les épreuves notées (CC, examen, rattrapage…) par matière et promotion',
   actions: {

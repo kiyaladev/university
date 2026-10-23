@@ -53,7 +53,7 @@
           <q-input v-model="form.expediteur" outlined dense :label="$t('courrier.registrationDialog.sender')" />
         </div>
         <div v-else class="col-6">
-          <q-input v-model="form.destinataire" outlined dense :label="$t('notifications.history.table.columns.destinataire')" />
+          <q-input v-model="form.destinataire" outlined dense :label="$t('common.fields.recipient')" />
         </div>
         <div class="col-6">
           <champ-date v-if="form.type === 'ENTRANT'" v-model="form.dateReception" :label="$t('courrier.registrationDialog.receivedOn')" />

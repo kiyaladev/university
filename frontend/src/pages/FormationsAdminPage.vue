@@ -44,7 +44,7 @@
       <div class="col-12 col-md-3">
         <q-card flat bordered class="carte">
           <q-card-section class="text-center">
-            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span></div>
+            <div class="stat-chiffre chiffres">{{ montantLisible(stats.recette) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span></div>
             <div class="pochoir text-grey-7">{{ $t('formationsAdmin.stats.revenue') }}</div>
           </q-card-section>
         </q-card>
@@ -119,14 +119,14 @@
                 {{ $t('formationsAdmin.table.paidCount', { count: ligneDashboard(p.row.id)?.nbPayes }) }}
               </div>
             </template>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
           <q-td key="recette" :props="p" class="text-right chiffres">
             <template v-if="ligneDashboard(p.row.id)">
               {{ montantLisible(ligneDashboard(p.row.id)?.recette ?? 0) }}
               <span class="text-caption text-grey-7">{{ p.row.devise }}</span>
             </template>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
           <q-td key="actions" :props="p" class="text-right">
             <q-btn

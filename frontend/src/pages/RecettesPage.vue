@@ -14,8 +14,8 @@
     </page-header>
 
     <div v-if="kpis" class="resume-liste" role="status">
-      <span>{{ $t('recettes.kpis.totalMois.title') }} : <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
-      <span>{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} : <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
+      <span>{{ $t('recettes.kpis.totalMois.title') }} : <strong>{{ montantLisible(kpis.totalMois) }} {{ $t('common.units.gnf') }}</strong></span>
+      <span>{{ $t('recettes.kpis.totalAnnee.title', { annee: kpis.annee }) }} : <strong>{{ montantLisible(kpis.totalAnnee) }} {{ $t('common.units.gnf') }}</strong></span>
     </div>
 
     <filter-bar

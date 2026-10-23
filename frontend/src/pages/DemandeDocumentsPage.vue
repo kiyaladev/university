@@ -80,7 +80,7 @@
             <div>{{ p.row.etudiant.prenom }} {{ p.row.etudiant.nom }}</div>
             <div class="text-caption text-grey-7">{{ p.row.etudiant.matricule }}</div>
           </template>
-          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
       <template #body-cell-statut="p">
@@ -327,7 +327,7 @@
                   @click="ouvrirCarteEtudiante(demandeSelectionnee)"
                 />
               </span>
-              <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+              <span v-else>{{ $t('common.format.emptyValue') }}</span>
             </div>
             <div>
               <span class="pochoir">{{ $t('demandeDocuments.detail.enrollment') }}</span>
@@ -351,7 +351,7 @@
               <span v-if="demandeSelectionnee.traitePar">
                 {{ demandeSelectionnee.traitePar.prenom }} {{ demandeSelectionnee.traitePar.nom }}
               </span>
-              <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+              <span v-else>{{ $t('common.format.emptyValue') }}</span>
             </div>
             <div>
               <span class="pochoir">{{ $t('common.fields.createdOn') }}</span>

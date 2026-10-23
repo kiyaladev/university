@@ -39,14 +39,6 @@ export default {
       created: 'Équipement enregistré à l’inventaire',
     },
   },
-  links: {
-    rectoratLabel: 'Tableau de bord Rectorat',
-    rectoratHelp: 'Les obsolescences ci-dessous, dans la vue d’ensemble de la direction',
-    helpdeskLabel: 'Assistance informatique',
-    helpdeskHelp: 'Les incidents déclarés sur ces mêmes équipements',
-    sallesLabel: 'Salles',
-    sallesHelp: 'Les lieux où le matériel est affecté',
-  },
   summary: {
     inService: 'équipements en service',
     acquisitionValue: "valeur d'acquisition {value} GNF",
@@ -126,7 +118,6 @@ export default {
       labelHint: 'Ex. : Vidéoprojecteur',
       amortizationLabel: "Durée d'amortissement (mois)",
       amortizationHint: 'Ex. : 60 (5 ans)',
-      cancel: 'Annuler',
     },
     confirmDelete: {
       title: 'Supprimer la catégorie ?',
@@ -168,16 +159,10 @@ export default {
     message: '{code} — refusée si une réparation a été consignée.',
   },
   messages: {
-    loadInventoryError: "Chargement de l'inventaire impossible.",
-    loadCategoriesError: 'Chargement des catégories impossible.',
-    loadRepairsError: 'Chargement des réparations impossible.',
     categoryUpdated: 'Catégorie mise à jour',
     categorySaved: 'Catégorie enregistrée',
-    categorySaveError: 'Enregistrement de la catégorie impossible',
     categoryDeleted: 'Catégorie supprimée',
-    deleteError: 'Suppression impossible',
     equipmentDeleted: 'Équipement supprimé',
     equipmentNotFound: 'Équipement introuvable, rechargez la page.',
-    repairsUnavailable: 'Carnet de réparations indisponible.',
   },
 };

@@ -18,30 +18,13 @@ export default {
     accountingLocked: 'This revenue item has been collected; its type, date, amount and currency are locked.',
     updated: 'Revenue entry updated',
     created: 'Revenue entry issued',
-    saveFailed: 'Unable to save',
-  },
-  crossLinks: {
-    paiements: {
-      label: 'Payments',
-      help: 'The payments collected from these revenue items, and their receipts',
-    },
-    rectorat: {
-      label: 'Rectorat dashboard',
-      help: 'The overall situation of the institution',
-    },
   },
   kpis: {
     totalMois: {
       title: 'Total for the current month',
-      subtitle: 'revenue items in GNF, issued or collected',
     },
     totalAnnee: {
       title: 'Total for year {annee}',
-      subtitle: 'total revenue in GNF',
-    },
-    top3: {
-      title: 'Top three revenue types in GNF',
-      empty: 'No revenue item this year.',
     },
   },
   search: {
@@ -93,8 +76,6 @@ export default {
     ok: 'Collect',
   },
   messages: {
-    loadError: 'Unable to load revenue items.',
     cashSuccess: 'Revenue item collected',
-    cashError: 'Unable to collect',
   },
 };

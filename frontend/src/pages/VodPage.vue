@@ -303,7 +303,7 @@ function avancement(v: RessourceCatalogue): number {
             {{ p.row.matiere.code }}
             <q-tooltip>{{ p.row.matiere.intitule }}</q-tooltip>
           </span>
-          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
       <template #body-cell-enseignant="p">

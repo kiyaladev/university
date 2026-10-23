@@ -44,35 +44,8 @@ export default {
   emptyState: {
     title: 'Aucun paramètre disponible.',
   },
-  audit: {
-    title: 'Journal d’audit',
-    subtitle: 'Qui a fait quoi, et quand — les corrections de pointage sont tracées ici.',
-    entityLabel: 'Entité',
-    entities: {
-      controle: 'Contrôles',
-      seance: 'Séances',
-      user: 'Utilisateurs',
-    },
-    empty: {
-      filtered: 'Aucune trace pour cette entité.',
-      all: 'Aucune trace enregistrée.',
-    },
-    table: {
-      columns: {
-        date: 'Date',
-        utilisateur: 'Utilisateur',
-        action: 'Action',
-        entite: 'Entité',
-        details: 'Détails',
-        ip: 'Poste',
-      },
-    },
-  },
   messages: {
-    loadError: 'Chargement des paramètres impossible',
-    auditLoadError: 'Journal d’audit illisible',
     saved: 'Paramètres enregistrés',
-    saveError: 'Enregistrement impossible',
   },
   attendanceRules: 'Règles de présence',
 };

@@ -7,10 +7,6 @@ export default {
     queued: 'En file : {n}',
     tooltip: 'Envoyées {envoyees} · Échouées {echouees}',
   },
-  links: {
-    deliberations: { label: 'Délibérations', help: 'La source des résultats diffusés par SMS' },
-    etudiants: { label: 'Étudiants', help: 'Les numéros de téléphone utilisés pour la diffusion' },
-  },
   tabs: {
     diffusion: 'Diffusion',
     historique: 'Historique',
@@ -97,17 +93,12 @@ export default {
     confirmSendMessage: 'Vous allez envoyer un SMS à {n} destinataire(s). Continuer ?',
     confirmSendOk: 'Envoyer',
     enterAtLeastOneNumber: 'Saisissez au moins un numéro.',
-    sendFailed: 'Envoi impossible.',
     sentSummary: '{envoyees} SMS envoyé(s){echoueesSuffix}.',
     sentSummaryFailedSuffix: ', {n} échoué(s)',
     enterMessageBeforeTest: 'Saisissez un message avant de tester.',
-    testFailed: 'Test impossible.',
     testSentSummary: 'Test envoyé à {total} numéro(s) : {envoyees} reçu(s).',
-    broadcastFailed: 'Diffusion impossible.',
     resultsBroadcastSummary: 'Résultats diffusés : {envoyees} envoyé(s), {echouees} échoué(s).',
-    historyLoadFailed: 'Chargement de l’historique impossible.',
     resendFailedAgain: 'Renvoi au {telephone} : échec à nouveau.',
     resendSuccess: 'Message renvoyé au {telephone}.',
-    resendFailed: 'Renvoi impossible.',
   },
 };

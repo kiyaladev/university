@@ -31,7 +31,6 @@ export default {
     nipLabel: 'PIN (4 to 6 digits)',
     nipHint: 'Enter 4 to 6 digits.',
     confirmLabel: 'Confirmation',
-    cancel: 'Cancel',
   },
   messages: {
     linkCopied: 'Verification link copied.',
@@ -39,6 +38,5 @@ export default {
     nipLength: 'The PIN must be 4 to 6 digits.',
     nipMismatch: 'The two PINs do not match.',
     nipSaved: 'PIN saved.',
-    nipSaveError: 'Unable to save the PIN.',
   },
 };

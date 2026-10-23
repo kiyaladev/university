@@ -35,7 +35,6 @@ export default {
     sessionHint: 'Séances non assurées des 90 derniers jours',
     explanation: 'Explication *',
     file: 'Pièce justificative (image ou PDF)',
-    cancel: 'Annuler',
     submit: 'Déposer le justificatif',
   },
   detailDialog: {

@@ -270,7 +270,7 @@
         <q-card-section>
           <div class="text-h6">{{ detail?.numero }}</div>
           <div class="page-sous-titre q-mt-xs">
-            {{ detail ? LIBELLE_TYPE_ATTESTATION[detail.type] ?? detail.type : '' }} {{ $t('rectorat.subtitleFallback') }}
+            {{ detail ? LIBELLE_TYPE_ATTESTATION[detail.type] ?? detail.type : '' }} {{ $t('common.format.emptyValue') }}
             {{ detail ? LIBELLE_STATUT_ATTESTATION[detail.statut] ?? detail.statut : '' }}
           </div>
         </q-card-section>

@@ -66,7 +66,6 @@ export default {
       "The QR code will no longer vouch for the document: the authenticity of the revocation is itself verifiable online. This action is final.",
     motifLabel: 'Revocation reason *',
     motifHint: 'Minimum three characters — this reason is shown during public verifications',
-    cancel: 'Cancel',
     confirm: 'Revoke permanently',
   },
   verificationsDialog: {
@@ -80,7 +79,5 @@ export default {
   },
   messages: {
     revoked: 'Attestation revoked — the QR code will no longer be valid',
-    revokeError: 'Unable to revoke',
-    loadError: 'Unable to load attestations',
   },
 };

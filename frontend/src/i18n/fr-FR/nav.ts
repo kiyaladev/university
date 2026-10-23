@@ -12,7 +12,6 @@ export default {
   verification: 'Vérification d’attestation',
   "verification-carte": 'Vérification de carte étudiante',
   "verification-badge": 'Vérification de badge d’accès',
-  "tableau-de-bord": 'Tableau de bord',
   controle: 'Contrôle des séances',
   seances: 'Séances',
   "emploi-du-temps": 'Emploi du temps',

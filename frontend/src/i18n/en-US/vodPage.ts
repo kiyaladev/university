@@ -10,9 +10,6 @@ export default {
   actions: {
     newResource: 'New resource',
     player: 'Player',
-    publish: 'Publish',
-    edit: 'Edit',
-    archive: 'Archive',
   },
   formDialog: {
     editTitle: 'Edit video course',
@@ -29,7 +26,6 @@ export default {
     required: 'Title and URL are required.',
     updated: 'Resource updated.',
     created: 'Resource created.',
-    saveFailed: 'Unable to save.',
     types: { audio: 'Audio', video: 'Video', transcription: 'Transcript' },
   },
   filters: {
@@ -73,8 +69,6 @@ export default {
   },
   messages: {
     published: 'Resource published.',
-    publishFailed: 'Publishing failed.',
     archived: 'Resource archived.',
-    archiveFailed: 'Archiving failed.',
   },
 };

@@ -3,11 +3,6 @@ export default {
   title: 'Attendance reports',
   subtitle:
     "Line-by-line statements from the attendance register, over a chosen period: who taught what, how many hours, how much to pay. This is the supporting document — printable and exportable. Day-to-day tracking indicators are in Statistics, the annual summary in the Rectorat dashboard.",
-  crossLinks: {
-    statistiques: { label: 'Statistics', help: 'Day-to-day attendance indicators' },
-    rectorat: { label: 'Rectorat dashboard', help: 'Annual summary: headcount, success rate, payroll' },
-    paie: { label: 'Adjunct payroll', help: 'Monthly sheets generated from these checked hours' },
-  },
   filters: {
     promotion: 'Class',
   },
@@ -143,9 +138,5 @@ export default {
       message: 'The register transcribes scheduled sessions, checked or not. Widen the period to find entries.',
       action: 'Open sessions',
     },
-  },
-  messages: {
-    loadError: 'Unable to load the statements.',
-    referenceDataError: 'Departments and classes unavailable: the filters will remain empty.',
   },
 };

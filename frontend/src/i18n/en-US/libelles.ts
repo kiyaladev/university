@@ -9,15 +9,6 @@ export default {
     EXCUSE: 'Excused absence',
     NON_CONTROLE: 'Not controlled',
   },
-  icone_statut_presence: {
-    PRESENT: 'check_circle',
-    RETARD: 'schedule',
-    ABSENT: 'cancel',
-    DEPART_ANTICIPE: 'logout',
-    REMPLACE: 'swap_horiz',
-    EXCUSE: 'assignment_turned_in',
-    NON_CONTROLE: 'radio_button_unchecked',
-  },
   statut_seance: {
     PLANIFIEE: 'Scheduled',
     EN_COURS: 'In progress',
@@ -241,12 +232,6 @@ export default {
     PRESTATION_CONSEIL: 'Consulting service',
     AUTRE: 'Other',
   },
-  icone_attestation: {
-    AUCUNE: 'help_outline',
-    SIGNATURE: 'draw',
-    CODE_PIN: 'dialpad',
-    EMPREINTE: 'fingerprint',
-  },
   type_cours: {
     CM: 'Lecture',
     TD: 'Tutorial',
@@ -352,13 +337,5 @@ export default {
     5: 'Friday',
     6: 'Saturday',
     7: 'Sunday',
-  },
-  niveaux: {
-    L1: 'L1',
-    L2: 'L2',
-    'L3': 'L3',
-    M1: 'M1',
-    M2: 'M2',
-    DOCTORAT: 'Doctorate',
   },
 };

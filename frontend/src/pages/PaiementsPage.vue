@@ -17,7 +17,7 @@
     </q-banner>
 
     <div class="resume-liste" role="status">
-      <span>{{ $t('paiements.kpis.totalCollected') }} : <strong>{{ montantLisible(kpis.totalEncaisse) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</strong></span>
+      <span>{{ $t('paiements.kpis.totalCollected') }} : <strong>{{ montantLisible(kpis.totalEncaisse) }} {{ $t('common.units.gnf') }}</strong></span>
       <span>{{ $t('paiements.kpis.pending') }} : <strong>{{ kpis.enAttente }}</strong></span>
       <span v-if="kpis.echoues">{{ $t('paiements.kpis.failed') }} : <strong>{{ kpis.echoues }}</strong></span>
     </div>
@@ -511,7 +511,7 @@
       v-model="dialogAnnulation"
       taille="s"
       :titre="$t('paiements.dialogs.cancelTitle', { reference: paiementAnnuler?.reference })"
-      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('rectorat.subtitleFallback')} ${$t('paiements.dialogs.cancelSubtitle')}`"
+      :sous-titre="`${paiementAnnuler ? LIBELLE_STATUT_PAIEMENT[paiementAnnuler.statut] : ''} ${$t('common.format.emptyValue')} ${$t('paiements.dialogs.cancelSubtitle')}`"
       :envoi="annulationEnCours"
       :libelle-valider="$t('paiements.dialogs.cancelConfirm')"
       icone-valider="block"

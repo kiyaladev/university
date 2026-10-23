@@ -122,7 +122,6 @@ export default {
     cancelRequest: {
       title: 'Annuler cette demande ?',
       message: 'La demande {numero} sera annulée ; sa place est libérée pour la vitrine.',
-      cancel: 'Non, garder',
       confirm: 'Annuler la demande',
     },
   },

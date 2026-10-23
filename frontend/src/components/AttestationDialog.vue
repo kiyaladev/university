@@ -33,7 +33,7 @@
       </template>
     </q-select>
 
-    <span class="section-titre q-mt-md">{{ $t('bibliotheque.table.columns.document') }}</span>
+    <span class="section-titre q-mt-md">{{ $t('common.fields.document') }}</span>
     <q-select
       v-model="form.type"
       :options="optionsTypes"
@@ -75,7 +75,7 @@
           emit-value
           map-options
           clearable
-          :label="$t('affectations.filters.promotion')"
+          :label="$t('common.fields.promotion')"
         />
       </div>
     </div>

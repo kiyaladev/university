@@ -76,11 +76,8 @@ export default {
     finishAction: 'Terminer définitivement',
   },
   messages: {
-    loadFailed: 'Chargement des examens impossible',
     started: 'Examen démarré',
-    startFailed: 'Démarrage impossible',
     finished: 'Examen terminé',
-    finishFailed: 'Opération impossible',
     scheduled: 'Examen planifié',
   },
 };

@@ -103,7 +103,7 @@
           <q-chip v-if="p.row.sexe" dense outline color="primary">
             {{ $t(p.row.sexe === 'F' ? 'etudiants.options.genderShort.F' : 'etudiants.options.genderShort.M') }}
           </q-chip>
-          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
 
@@ -112,7 +112,7 @@
           <q-chip v-if="dernierePromo(p.row)" dense outline color="primary">
             {{ dernierePromo(p.row) }}
           </q-chip>
-          <span v-else class="text-grey-7">{{ $t('rectorat.subtitleFallback') }}</span>
+          <span v-else class="text-grey-7">{{ $t('common.format.emptyValue') }}</span>
         </q-td>
       </template>
 
@@ -272,7 +272,7 @@
           </div>
           <div class="text-caption text-grey-7">
             <span v-if="e.telephone">{{ e.telephone }}</span>
-            <span v-else>{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else>{{ $t('common.format.emptyValue') }}</span>
           </div>
           <div class="q-mt-sm">
             <q-chip
@@ -418,7 +418,7 @@
             </template>
             <template #body-cell-montant="p">
               <q-td :props="p" class="text-right text-weight-medium chiffres">
-                {{ montantLisible(p.row.montantFrais) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+                {{ montantLisible(p.row.montantFrais) }} {{ $t('common.units.gnf') }}
               </q-td>
             </template>
             <template #body-cell-actions="p">

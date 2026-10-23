@@ -104,7 +104,7 @@
             <div class="guichet-resultat__lignes">
               <div class="guichet-resultat__ligne">
                 <span>{{ LIBELLE_TYPE_REPAS[resultat.consommation.repas] }}</span>
-                <span class="chiffres">{{ montantLisible(resultat.consommation.montant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+                <span class="chiffres">{{ montantLisible(resultat.consommation.montant) }} {{ $t('common.units.gnf') }}</span>
               </div>
               <div v-if="resultat.consommation.cantine" class="guichet-resultat__ligne">
                 <span>{{ $t('resto.cantine') }}</span>
@@ -112,7 +112,7 @@
               </div>
               <div class="guichet-resultat__ligne guichet-resultat__ligne--fort">
                 <span>{{ $t('resto.guichet.result.ok.newBalance') }}</span>
-                <span class="chiffres">{{ montantLisible(resultat.solde) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+                <span class="chiffres">{{ montantLisible(resultat.solde) }} {{ $t('common.units.gnf') }}</span>
               </div>
             </div>
           </section>
@@ -181,7 +181,7 @@
         </template>
         <template #body-cell-solde="p">
           <q-td :props="p" class="text-right">
-            <span class="chiffres text-weight-medium">{{ montantLisible(p.row.solde) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+            <span class="chiffres text-weight-medium">{{ montantLisible(p.row.solde) }} {{ $t('common.units.gnf') }}</span>
           </q-td>
         </template>
         <template #body-cell-actions="p">
@@ -207,7 +207,7 @@
           <q-card flat bordered class="carte">
             <q-card-section class="text-center">
               <div class="pochoir text-grey-7">{{ p.etudiant?.matricule ?? '—' }}</div>
-              <div class="text-h4 chiffres q-mt-sm">{{ montantLisible(p.solde) }} <span class="text-h6">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span></div>
+              <div class="text-h4 chiffres q-mt-sm">{{ montantLisible(p.solde) }} <span class="text-h6">{{ $t('common.units.gnf') }}</span></div>
               <div class="text-subtitle1 q-mt-sm">{{ p.etudiant?.nom }} {{ p.etudiant?.prenom }}</div>
               <div class="text-caption text-grey-7">{{ p.etudiant?.telephone ?? '—' }}</div>
             </q-card-section>

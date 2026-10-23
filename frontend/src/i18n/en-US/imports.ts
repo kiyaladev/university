@@ -3,7 +3,6 @@ export default {
   subtitle: 'Upload a CSV, review every row before writing, then apply the valid rows.',
   type: 'Data to import',
   file: 'CSV or XLSX file',
-  chooseFile: 'Choose a file',
   template: 'Download a CSV template',
   apply: 'Import valid rows',
   confirm: 'Create the {count} valid row(s)? Invalid rows will be skipped and listed in the report.',

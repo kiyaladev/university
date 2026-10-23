@@ -8,7 +8,6 @@ export default {
     pay: 'Pay',
     payNow: 'Pay now',
     track: 'Track',
-    cancel: 'Cancel',
   },
   banner: {
     wrongRole:
@@ -16,7 +15,6 @@ export default {
     goToRegistry: 'Document requests',
   },
   stats: {
-    caption: 'Counters computed from the requests shown below.',
     labels: {
       toPay: 'To pay',
       inProgress: 'In progress',
@@ -81,15 +79,12 @@ export default {
     mode: 'Payment method',
     phoneLabel: 'Mobile Money number',
     phoneHint: 'The number that will be charged',
-    pilotNote:
-      'Pilot mode: no Mobile Money gateway is connected. The payment is recorded as successful and the request moves to processing.',
     pendingNote:
       "The payment will be recorded as pending: pay at the registrar's front desk, who will confirm it to start processing.",
   },
   messages: {
     phoneRequired: 'Enter a valid Mobile Money number.',
     mobileMoneyPending: 'Payment request recorded. Wait for collection to be confirmed before the document is processed.',
-    paymentRegisteredProcessing: 'Payment recorded: your request is now being processed.',
     paymentInitiatedPending: 'Payment initiated: come to the front desk, the registrar will confirm it.',
     paymentFailed: 'Payment failed',
   },

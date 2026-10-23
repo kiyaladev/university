@@ -24,10 +24,10 @@
 
     <div class="row q-col-gutter-md">
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.nom" outlined dense :label="$t('inscriptionPublique.form.step1.nom.label')" :rules="[requis]" />
+        <q-input v-model="form.nom" outlined dense :label="$t('common.fields.lastNameRequired')" :rules="[requis]" />
       </div>
       <div class="col-12 col-sm-6">
-        <q-input v-model="form.prenom" outlined dense :label="$t('inscriptionPublique.form.step1.prenom.label')" :rules="[requis]" />
+        <q-input v-model="form.prenom" outlined dense :label="$t('common.fields.firstNameRequired')" :rules="[requis]" />
       </div>
     </div>
 

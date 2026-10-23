@@ -12,7 +12,6 @@ export default {
   verification: 'Attestation verification',
   "verification-carte": 'Student card verification',
   "verification-badge": 'Access badge verification',
-  "tableau-de-bord": 'Dashboard',
   controle: 'Session attendance',
   seances: 'Sessions',
   "emploi-du-temps": 'Timetable',

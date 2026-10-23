@@ -76,11 +76,8 @@ export default {
     finishAction: 'Finish permanently',
   },
   messages: {
-    loadFailed: 'Unable to load exams',
     started: 'Exam started',
-    startFailed: 'Unable to start',
     finished: 'Exam finished',
-    finishFailed: 'Operation failed',
     scheduled: 'Exam scheduled',
   },
 };

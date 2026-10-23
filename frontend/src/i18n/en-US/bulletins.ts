@@ -68,11 +68,9 @@ export default {
     },
   },
   messages: {
-    chargementImpossible: 'Unable to load report cards',
     aucuneDeliberationEtudiant: 'No grade board for this student.',
     aucunBulletinDisponible: 'No report card available: no grade board found.',
     etudiantNonIdentifie: 'Student not identified for this enrollment.',
-    bulletinsOuverts: '{n} report card(s) opened.',
   },
   dialogs: {
     imprimerPromotion: {

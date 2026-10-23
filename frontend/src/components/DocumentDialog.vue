@@ -67,7 +67,7 @@
               v-model="form.enseignantId"
               endpoint="/enseignants"
               :label-fn="(e) => `${e.prenom} ${e.nom}${e.matricule ? ' — ' + e.matricule : ''}`"
-              :label="$t('stages.detail.fields.supervisor')"
+              :label="$t('common.fields.supervisor')"
               :placeholder="$t('bibliotheque.dialog.fields.supervisorPlaceholder')"
             />
           </div>

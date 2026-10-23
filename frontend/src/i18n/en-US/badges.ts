@@ -30,7 +30,6 @@ export default {
     editBadge: 'Edit the badge',
     extendBadge: 'Extend the validity',
     cancelBadge: 'Cancel the badge',
-    close: 'Close',
   },
   emptyState: {
     message:
@@ -51,7 +50,6 @@ export default {
       validityRequired: 'Enter a validity date.',
       updated: 'Badge updated.',
       issued: 'Badge issued.',
-      issueFailed: 'Could not issue the badge.',
     },
     cancel: {
       title: 'Cancel the badge',
@@ -59,21 +57,17 @@ export default {
         'Irreversible action: a cancelled badge can no longer be reactivated or extended. Issue a new one if needed.',
       reasonLabel: 'Cancellation reason',
       reasonHint: 'Minimum 3 characters.',
-      cancelAction: 'Cancel',
       confirmAction: 'Cancel permanently',
     },
     extend: {
       title: 'Extend the validity',
       info: 'The badge will return to "Active" status and keep its number and QR code: no need to reprint it.',
       newValidityDateLabel: 'New validity date',
-      cancelAction: 'Cancel',
       confirmAction: 'Extend',
     },
   },
   messages: {
     cancelled: 'Badge cancelled.',
-    cancelFailed: 'Cancellation failed.',
     extended: 'Validity extended.',
-    extendFailed: 'Extension failed.',
   },
 };

@@ -42,14 +42,10 @@ export default {
       awaitingReport: 'Constat en attente',
     },
     actions: {
-      viewSheet: 'Voir la fiche du travail',
       viewSheetTooltip: 'Voir la fiche',
-      edit: 'Modifier le travail',
       print: 'Imprimer la fiche',
       planDefense: 'Planifier la soutenance',
       juryReport: 'Saisir le constat du jury',
-      juryReportTooltip: 'Constat du jury',
-      delete: 'Supprimer le travail',
     },
   },
   stats: {
@@ -70,15 +66,6 @@ export default {
     columns: {
       proposed: 'Proposé',
       validated: 'Validé',
-      inProgress: 'En cours',
-      defended: 'Soutenu',
-      abandoned: 'Abandonné',
-    },
-    studentToDesignate: 'Étudiant à désigner',
-    actions: {
-      edit: 'Modifier',
-      defense: 'Soutenance',
-      report: 'Constat',
     },
   },
   transitions: {

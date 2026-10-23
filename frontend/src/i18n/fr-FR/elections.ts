@@ -64,7 +64,6 @@ export default {
       required: 'Titre, ouverture et clôture sont obligatoires.',
       saved: 'Élection mise à jour.',
       created: 'Élection créée.',
-      saveError: 'Enregistrement impossible.',
       create: 'Créer',
     },
     candidateForm: {
@@ -78,13 +77,12 @@ export default {
       requiredName: 'Nom et prénom sont obligatoires.',
       saved: 'Candidat mis à jour.',
       added: 'Candidat ajouté.',
-      saveError: 'Enregistrement impossible.',
+      programme: 'Programme',
     },
     removeCandidate: {
       title: 'Retirer ce candidat',
       message: 'Retirer {name} de la liste des candidats ?',
       removeAria: 'Retirer {name}',
-      cancel: 'Annuler',
       confirm: 'Retirer',
     },
     transitions: {
@@ -138,10 +136,5 @@ export default {
   },
   messages: {
     candidateRemoved: 'Candidat retiré.',
-    candidateRemoveError: 'Suppression impossible.',
-    resultsError: 'Résultats indisponibles.',
-    transitionError: 'Transition impossible.',
-    loadError: 'Chargement impossible.',
-    popupBlocked: 'Autorisez les fenêtres contextuelles pour ouvrir le bulletin.',
   },
 };

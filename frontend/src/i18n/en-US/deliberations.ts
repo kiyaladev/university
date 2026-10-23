@@ -6,10 +6,8 @@ export default {
   actions: {
     newDeliberation: 'New deliberation',
     reportCards: 'Transcripts',
-    recalculate: 'Recalculate',
     validateJury: 'Validate jury',
     pv: 'Minutes',
-    back: 'Go back',
   },
   createDialog: {
     session: 'Session *',
@@ -23,7 +21,6 @@ export default {
     selectedPromotion: 'Selected cohort',
     selectedYear: 'Selected year',
     created: 'Deliberation created and averages calculated',
-    createFailed: 'Unable to create the deliberation — one may already exist for this cohort and session.',
   },
   filters: {
     search: 'Search a cohort…',
@@ -71,15 +68,6 @@ export default {
     title: 'Deliberation — {promotion}',
     emptyLines: 'No lines: run the recalculation to produce averages and decisions.',
   },
-  kanban: {
-    columns: {
-      propose: 'Proposed (draft)',
-      valide: 'Validated (jury)',
-      soutenu: 'Resits validated',
-      abandonne: 'Resits pending',
-    },
-    cardMeta: '{count} student(s) · created on {date}',
-  },
   dialogs: {
     recalculate: {
       title: 'Recalculate the deliberation',
@@ -101,11 +89,7 @@ export default {
     },
   },
   messages: {
-    detailError: 'Detail unavailable',
     recalculated: 'Deliberation recalculated',
-    recalculateError: 'Recalculation failed',
     validated: 'Deliberation validated by the jury',
-    validateError: 'Validation failed',
-    loadError: 'Unable to load deliberations',
   },
 };

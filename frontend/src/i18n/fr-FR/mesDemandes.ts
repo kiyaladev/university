@@ -8,7 +8,6 @@ export default {
     pay: 'Payer',
     payNow: 'Payer maintenant',
     track: 'Suivre',
-    cancel: 'Annuler',
   },
   banner: {
     wrongRole:
@@ -16,7 +15,6 @@ export default {
     goToRegistry: 'Demandes de documents',
   },
   stats: {
-    caption: 'Compteurs calculés sur les demandes affichées ci-dessous.',
     labels: {
       toPay: 'À payer',
       inProgress: 'En traitement',
@@ -82,15 +80,12 @@ export default {
     mode: 'Mode de paiement',
     phoneLabel: 'Numéro Mobile Money',
     phoneHint: 'Le numéro qui sera débité',
-    pilotNote:
-      "Mode pilote : aucune passerelle Mobile Money n'est connectée. Le paiement est enregistré comme réussi et la demande passe en traitement.",
     pendingNote:
       'Le paiement sera enregistré en attente : réglez au guichet de la scolarité, qui confirmera pour lancer le traitement.',
   },
   messages: {
     phoneRequired: 'Indiquez un numéro Mobile Money valide.',
     mobileMoneyPending: 'Demande de paiement enregistrée. Attendez la confirmation de l’encaissement avant le traitement du document.',
-    paymentRegisteredProcessing: 'Paiement enregistré : votre demande passe en traitement.',
     paymentInitiatedPending: 'Paiement initié : présentez-vous au guichet, la scolarité confirmera.',
     paymentFailed: 'Paiement impossible',
   },

@@ -122,7 +122,6 @@ export default {
     cancelRequest: {
       title: 'Cancel this request?',
       message: 'Request {numero} will be cancelled; its seat is released back to the showcase.',
-      cancel: 'No, keep it',
       confirm: 'Cancel the request',
     },
   },

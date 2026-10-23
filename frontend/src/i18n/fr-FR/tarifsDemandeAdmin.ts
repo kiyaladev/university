@@ -1,6 +1,5 @@
 /** Namespace `tarifsDemandeAdmin`. */
 export default {
-  _namespace: 'tarifsDemandeAdmin',
   title: 'Tarifs des demandes',
   subtitle:
     'Chaque type de document (attestation de scolarité, relevé de notes, duplicata…) est facturé au tarif paramétré ici. Le montant et le délai annoncés à l\'étudiant au moment de sa demande en dépendent.',
@@ -11,7 +10,6 @@ export default {
   },
   errors: {
     role_forbidden: 'Cette page est réservée à l\'administrateur. Vous êtes connecté en {role}.',
-    save_error: 'Enregistrement impossible',
   },
   table: {
     empty: 'Aucun tarif enregistré. Tant qu\'un type n\'a pas de tarif, les demandes des étudiants sont créées sans frais et passent directement en traitement.',
@@ -28,7 +26,6 @@ export default {
     amount_required: 'Montant requis',
     delay_label: 'Délai habituel (heures)',
     delay_required: 'Délai requis',
-    cancel: 'Annuler',
   },
   messages: {
     updated: 'Tarif mis à jour',

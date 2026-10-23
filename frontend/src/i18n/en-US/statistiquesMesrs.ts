@@ -14,20 +14,6 @@ export default {
     exportTooltip: 'Spreadsheet (Excel / LibreOffice) — {annee}',
     generateFromRectorat: "Open current figures",
   },
-  links: {
-    rectorat: {
-      label: 'Rectorate Dashboard',
-      hint: "The same indicators in real time — and the button that generates a report",
-    },
-    rapports: {
-      label: 'Attendance reports',
-      hint: 'The line-by-line statements behind these aggregates',
-    },
-    statistiques: {
-      label: 'Statistics',
-      hint: 'Day-to-day session monitoring',
-    },
-  },
   emptyState: {
     title: "No report archived",
     text: "Save a report from “Current figures” to archive headcount, success rate and payroll.",
@@ -52,7 +38,6 @@ export default {
     },
     axis: {
       taux: 'Rate %',
-      gnf: 'GNF',
     },
   },
   table: {
@@ -82,7 +67,6 @@ export default {
     },
   },
   messages: {
-    loadError: "Unable to load MESRS reports.",
     anneesUnavailable: 'Academic years unavailable: the filter will remain empty.',
   },
 };

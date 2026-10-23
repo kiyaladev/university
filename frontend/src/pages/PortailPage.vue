@@ -199,7 +199,7 @@
           <div class="carte-portail__recap">
             <span class="lettrage chiffres carte-portail__montant">
               {{ montantLisible(resto.solde) }}
-              <span class="carte-portail__devise">{{ $t('statistiquesMesrs.chart.axis.gnf') }}</span>
+              <span class="carte-portail__devise">{{ $t('common.units.gnf') }}</span>
             </span>
           </div>
           <p class="carte-portail__vide">

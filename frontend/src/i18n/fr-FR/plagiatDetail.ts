@@ -49,10 +49,8 @@ export default {
     noDecisionYet: "Aucune décision enregistrée pour l'instant.",
   },
   messages: {
-    notFound: 'Suspicion introuvable',
     motifRequiredForConfirm: 'Le motif est obligatoire pour une confirmation',
     acquitted: 'Suspicion acquittée',
     confirmed: 'Plagiat confirmé — procédure ouverte',
-    decisionFailed: 'Décision impossible',
   },
 };

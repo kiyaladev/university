@@ -417,7 +417,7 @@
             >
               {{ p.row.critereScore }}
             </q-badge>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
         </template>
         <template #body-cell-statut="p">
@@ -493,7 +493,7 @@
                 >
                   {{ a.critereScore }}
                 </q-badge>
-                <span v-else class="text-grey-6 q-ml-xs">{{ $t('rectorat.subtitleFallback') }}</span>
+                <span v-else class="text-grey-6 q-ml-xs">{{ $t('common.format.emptyValue') }}</span>
               </div>
             </q-card-section>
             <q-separator />
@@ -537,7 +537,7 @@
         <q-card-section class="text-h6">{{ $t('cites.attributions.dialogs.decision.title') }}</q-card-section>
         <q-card-section v-if="decision" class="q-pt-none text-caption text-grey-7">
           {{ decision.etudiant?.nom }} {{ decision.etudiant?.prenom }}
-          <span v-if="decision.etudiant?.matricule"> {{ $t('rectorat.subtitleFallback') }} {{ decision.etudiant.matricule }}</span>
+          <span v-if="decision.etudiant?.matricule"> {{ $t('common.format.emptyValue') }} {{ decision.etudiant.matricule }}</span>
           <br />
           <i18n-t keypath="cites.attributions.dialogs.decision.chambreLabel" tag="span">
             <template #code><strong>{{ decision.chambre?.code }}</strong></template>

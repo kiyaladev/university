@@ -83,12 +83,9 @@ export default {
     saved: 'Teacher saved',
   },
   messages: {
-    moyensUnreadable: 'Attendance proof methods unreadable',
     resetPinTitle: 'Reset personal code',
     resetPinMessage: 'A new code will be generated and shown only once. Continue?',
-    cancel: 'Cancel',
     generate: 'Generate',
-    pinGenerationFailed: 'Unable to generate the code',
     consentTitle: 'Teacher consent',
     consentMessage:
       'To be read to the teacher before scanning:"Your fingerprint will be stored as an encrypted template, never as an image, and will only be used to certify your presence in class. You may refuse: the personal code and handwritten signature remain available to you. You may request its deletion at any time."',
@@ -101,7 +98,5 @@ export default {
     deleteTitle: 'Delete teacher',
     deleteMessage: 'Permanently delete {nom} {prenom} along with their assignments and sessions?',
     deleteSuccess: 'Teacher deleted',
-    deleteFailed: 'Deletion failed',
-    loadFailed: 'Unable to load teachers',
   },
 };

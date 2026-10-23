@@ -12,7 +12,6 @@ export default {
     goToRegistry: 'Réclamations & requêtes',
   },
   stats: {
-    caption: 'Compteurs calculés sur les réclamations affichées ci-dessous.',
     labels: {
       open: 'Ouvertes',
       inProgress: 'En cours',

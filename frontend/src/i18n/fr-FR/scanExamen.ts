@@ -39,8 +39,5 @@ export default {
   messages: {
     examNotStarted:
       "Cet examen n'est pas démarré : les scans seront refusés tant qu'il n'est pas lancé.",
-    examNotFound: 'Examen introuvable',
-    loadExamsFailed: 'Chargement des examens impossible',
-    scanFailed: 'Scan impossible',
   },
 };

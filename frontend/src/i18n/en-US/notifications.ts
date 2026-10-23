@@ -7,10 +7,6 @@ export default {
     queued: 'Queued: {n}',
     tooltip: 'Sent {envoyees} · Failed {echouees}',
   },
-  links: {
-    deliberations: { label: 'Deliberations', help: 'The source of results broadcast by SMS' },
-    etudiants: { label: 'Students', help: 'The phone numbers used for the broadcast' },
-  },
   tabs: {
     diffusion: 'Broadcast',
     historique: 'History',
@@ -97,17 +93,12 @@ export default {
     confirmSendMessage: 'You are about to send an SMS to {n} recipient(s). Continue?',
     confirmSendOk: 'Send',
     enterAtLeastOneNumber: 'Enter at least one number.',
-    sendFailed: 'Unable to send.',
     sentSummary: '{envoyees} SMS sent{echoueesSuffix}.',
     sentSummaryFailedSuffix: ', {n} failed',
     enterMessageBeforeTest: 'Enter a message before testing.',
-    testFailed: 'Unable to test.',
     testSentSummary: 'Test sent to {total} number(s): {envoyees} received.',
-    broadcastFailed: 'Unable to broadcast.',
     resultsBroadcastSummary: 'Results broadcast: {envoyees} sent, {echouees} failed.',
-    historyLoadFailed: 'Unable to load history.',
     resendFailedAgain: 'Resend to {telephone}: failed again.',
     resendSuccess: 'Message resent to {telephone}.',
-    resendFailed: 'Unable to resend.',
   },
 };

@@ -30,7 +30,6 @@ export default {
     editBadge: 'Modifier le badge',
     extendBadge: 'Prolonger la validité',
     cancelBadge: 'Annuler le badge',
-    close: 'Fermer',
   },
   emptyState: {
     message:
@@ -51,7 +50,6 @@ export default {
       validityRequired: 'Indiquez une date de validité.',
       updated: 'Badge mis à jour.',
       issued: 'Badge émis.',
-      issueFailed: 'Émission impossible.',
     },
     cancel: {
       title: 'Annuler le badge',
@@ -59,21 +57,17 @@ export default {
         "Action irréversible : un badge annulé ne peut plus être réactivé ni prolongé. Émettez-en un nouveau si besoin.",
       reasonLabel: "Motif d'annulation",
       reasonHint: '3 caractères minimum.',
-      cancelAction: 'Annuler',
       confirmAction: 'Annuler définitivement',
     },
     extend: {
       title: 'Prolonger la validité',
       info: 'Le badge repassera en statut « Actif » et conservera son numéro et son QR : inutile de le réimprimer.',
       newValidityDateLabel: 'Nouvelle date de validité',
-      cancelAction: 'Annuler',
       confirmAction: 'Prolonger',
     },
   },
   messages: {
     cancelled: 'Badge annulé.',
-    cancelFailed: 'Annulation impossible.',
     extended: 'Validité prolongée.',
-    extendFailed: 'Prolongation impossible.',
   },
 };

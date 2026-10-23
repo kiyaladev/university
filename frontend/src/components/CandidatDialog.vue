@@ -121,7 +121,7 @@ async function soumettre() {
       />
       <q-input
         v-model="formulaire.programme"
-        :label="$t('matieres.dialog.sectionTitle')"
+        :label="$t('elections.dialogs.candidateForm.programme')"
         outlined
         dense
         type="textarea"

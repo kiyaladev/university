@@ -7,9 +7,6 @@ export default {
     schedule: 'Programmer un tirage',
     exams: 'Examens',
     viewAll: 'Voir tous les tirages',
-    bordereau: 'Bordereau',
-    cancel: 'Annuler',
-    back: 'Revenir',
     cancelDraw: 'Annuler le tirage',
     confirmPrint: 'Confirmer l’impression',
   },
@@ -43,11 +40,6 @@ export default {
     voirExamen: 'Voir l’examen',
     annulerTirage: 'Annuler le tirage',
   },
-  ariaLabels: {
-    imprimerBordereau: 'Imprimer le bordereau du tirage',
-    voirExamen: 'Voir l’examen de ce tirage',
-    annulerTirage: 'Annuler le tirage',
-  },
   emptyState: {
     message: 'Aucun tirage pour ces critères.',
   },
@@ -76,7 +68,6 @@ export default {
       submit: 'Programmer',
       required: 'Examen, date, nombre d’exemplaires et empreinte sont obligatoires.',
       invalidFingerprint: 'L’empreinte doit être un SHA-256 de 64 caractères hexadécimaux. Chargez le fichier pour la calculer.',
-      saveFailed: 'Enregistrement impossible',
     },
     advance: {
       title: 'Passer au stade « {stade} »',
@@ -89,12 +80,9 @@ export default {
     },
   },
   messages: {
-    loadError: 'Chargement des tirages impossible',
     scheduled: 'Tirage programmé',
     fingerprintRequired: 'Empreinte requise pour imprimer',
     stageChanged: 'Stade → {stade}',
-    transitionError: 'Transition impossible',
     cancelled: 'Tirage annulé',
-    cancelError: 'Annulation impossible',
   },
 };

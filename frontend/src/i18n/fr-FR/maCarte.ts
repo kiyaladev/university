@@ -31,7 +31,6 @@ export default {
     nipLabel: 'NIP (4 à 6 chiffres)',
     nipHint: 'Saisissez 4 à 6 chiffres.',
     confirmLabel: 'Confirmation',
-    cancel: 'Annuler',
   },
   messages: {
     linkCopied: 'Lien de vérification copié.',
@@ -39,6 +38,5 @@ export default {
     nipLength: 'Le NIP doit comporter 4 à 6 chiffres.',
     nipMismatch: 'Les deux NIP ne correspondent pas.',
     nipSaved: 'NIP enregistré.',
-    nipSaveError: 'Impossible d’enregistrer le NIP.',
   },
 };

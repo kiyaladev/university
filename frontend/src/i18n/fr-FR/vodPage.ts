@@ -10,9 +10,6 @@ export default {
   actions: {
     newResource: 'Nouvelle ressource',
     player: 'Lecteur',
-    publish: 'Mettre en ligne',
-    edit: 'Modifier',
-    archive: 'Archiver',
   },
   formDialog: {
     editTitle: 'Modifier la cours en vidéo',
@@ -29,7 +26,6 @@ export default {
     required: 'Le titre et l’URL sont obligatoires.',
     updated: 'Ressource mise à jour.',
     created: 'Ressource créée.',
-    saveFailed: 'Enregistrement impossible.',
     types: { audio: 'Audio', video: 'Vidéo', transcription: 'Transcription' },
   },
   filters: {
@@ -73,8 +69,6 @@ export default {
   },
   messages: {
     published: 'Ressource mise en ligne.',
-    publishFailed: 'Publication impossible.',
     archived: 'Ressource archivée.',
-    archiveFailed: 'Archivage impossible.',
   },
 };

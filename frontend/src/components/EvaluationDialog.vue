@@ -12,7 +12,7 @@
       v-model="form.intitule"
       outlined
       dense
-      :label="$t('matieres.dialog.intituleLabel')"
+      :label="$t('common.fields.intituleRequired')"
       :hint="$t('evaluations.dialogForm.titleHint')"
     />
 
@@ -80,7 +80,7 @@
           emit-value
           map-options
           clearable
-          :label="$t('affectations.dialog.fields.promotion')"
+          :label="$t('common.fields.promotionRequired')"
         />
       </div>
     </div>

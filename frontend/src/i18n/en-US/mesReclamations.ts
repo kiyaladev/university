@@ -12,7 +12,6 @@ export default {
     goToRegistry: 'Complaints & requests',
   },
   stats: {
-    caption: 'Counters computed from the complaints shown below.',
     labels: {
       open: 'Open',
       inProgress: 'In progress',

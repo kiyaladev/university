@@ -39,14 +39,6 @@ export default {
       created: 'Equipment added to the inventory',
     },
   },
-  links: {
-    rectoratLabel: 'Rectorate dashboard',
-    rectoratHelp: 'The obsolescences below, in the leadership overview',
-    helpdeskLabel: 'IT support',
-    helpdeskHelp: 'Incidents reported on these same equipment items',
-    sallesLabel: 'Rooms',
-    sallesHelp: 'The places where the equipment is assigned',
-  },
   summary: {
     inService: 'equipment in service',
     acquisitionValue: 'acquisition value {value} GNF',
@@ -126,7 +118,6 @@ export default {
       labelHint: 'E.g.: Projector',
       amortizationLabel: 'Amortization period (months)',
       amortizationHint: 'E.g.: 60 (5 years)',
-      cancel: 'Cancel',
     },
     confirmDelete: {
       title: 'Delete this category?',
@@ -168,16 +159,10 @@ export default {
     message: '{code} — will be refused if a repair has been logged.',
   },
   messages: {
-    loadInventoryError: 'Unable to load the inventory.',
-    loadCategoriesError: 'Unable to load the categories.',
-    loadRepairsError: 'Unable to load the repairs.',
     categoryUpdated: 'Category updated',
     categorySaved: 'Category saved',
-    categorySaveError: 'Unable to save the category',
     categoryDeleted: 'Category deleted',
-    deleteError: 'Unable to delete',
     equipmentDeleted: 'Equipment deleted',
     equipmentNotFound: 'Equipment not found, please reload the page.',
-    repairsUnavailable: 'Repair log unavailable.',
   },
 };

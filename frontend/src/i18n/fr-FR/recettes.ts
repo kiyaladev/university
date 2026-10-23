@@ -18,30 +18,13 @@ export default {
     accountingLocked: 'La recette est encaissée : son type, sa date, son montant et sa devise sont figés.',
     updated: 'Recette modifiée',
     created: 'Recette émise',
-    saveFailed: 'Enregistrement impossible',
-  },
-  crossLinks: {
-    paiements: {
-      label: 'Paiements',
-      help: 'Les encaissements créés par ces recettes, et leurs reçus',
-    },
-    rectorat: {
-      label: 'Tableau de bord Rectorat',
-      help: 'La situation d’ensemble de l’établissement',
-    },
   },
   kpis: {
     totalMois: {
       title: 'Total du mois en cours',
-      subtitle: 'recettes en GNF émises, encaissées ou non',
     },
     totalAnnee: {
       title: 'Total année {annee}',
-      subtitle: 'total des recettes en GNF',
-    },
-    top3: {
-      title: 'Trois principaux types de recettes en GNF',
-      empty: 'Aucune recette cette année.',
     },
   },
   search: {
@@ -93,8 +76,6 @@ export default {
     ok: 'Encaisser',
   },
   messages: {
-    loadError: 'Chargement des recettes impossible.',
     cashSuccess: 'Recette encaissée',
-    cashError: 'Encaissement impossible',
   },
 };

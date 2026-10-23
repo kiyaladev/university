@@ -147,7 +147,7 @@
         <template #body-cell-intitule="p">
           <q-td :props="p">
             <div class="text-weight-medium">
-              {{ LIBELLE_TYPE_ENCADREMENT[p.row.type] }} {{ $t('rectorat.subtitleFallback') }} {{ p.row.intitule }}
+              {{ LIBELLE_TYPE_ENCADREMENT[p.row.type] }} {{ $t('common.format.emptyValue') }} {{ p.row.intitule }}
             </div>
             <div v-if="p.row.entreprise" class="text-caption text-grey-7">
               {{ p.row.entreprise }}
@@ -171,7 +171,7 @@
             <span v-if="p.row.dateDebut || p.row.dateFin">
               {{ dateLisible(p.row.dateDebut) }} → {{ dateLisible(p.row.dateFin) }}
             </span>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
         </template>
         <template #body-cell-statut="p">
@@ -207,7 +207,7 @@
                 <span v-else>{{ $t('stages.table.defense.awaitingReport') }}</span>
               </div>
             </template>
-            <span v-else class="text-grey-6">{{ $t('rectorat.subtitleFallback') }}</span>
+            <span v-else class="text-grey-6">{{ $t('common.format.emptyValue') }}</span>
           </q-td>
         </template>
         <template #body-cell-actions="p">
@@ -343,7 +343,7 @@
               <span class="text-grey-7">· {{ s.salle ? `${s.salle.nom} (${s.salle.code})` : $t('stages.list.roomToBeSet') }}</span>
             </q-item-label>
             <q-item-label caption>
-              {{ s.travailEncadre?.intitule }} {{ $t('rectorat.subtitleFallback') }} {{ s.travailEncadre?.etudiant?.nom }}
+              {{ s.travailEncadre?.intitule }} {{ $t('common.format.emptyValue') }} {{ s.travailEncadre?.etudiant?.nom }}
               {{ s.travailEncadre?.etudiant?.prenom }}
             </q-item-label>
           </q-item-section>

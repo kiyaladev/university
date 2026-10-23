@@ -17,7 +17,6 @@ export default {
     pinHintOptional: 'Optional: the student can reset it from their portal.',
     updated: 'Card updated.',
     issued: 'Card issued.',
-    issueFailed: 'Unable to issue the card.',
   },
   studentBanner: {
     message: 'List restricted to a single student\'s cards (incoming link).',
@@ -53,12 +52,10 @@ export default {
   },
   revokeDialog: {
     title: 'Revoke the card',
-    close: 'Close',
     warning:
       'Irreversible action: the card becomes unusable and any scan of its QR code will display "card not valid". The student is notified on "My student card".',
     motifLabel: 'Revocation reason',
     motifHint: 'Minimum 3 characters — it will be shown to the student.',
-    cancel: 'Cancel',
     confirm: 'Revoke permanently',
   },
   detailDialog: {
@@ -71,6 +68,5 @@ export default {
     linkCopied: 'Verification link copied.',
     copyError: 'Unable to copy: select the link manually.',
     revoked: 'Card revoked.',
-    revokeError: 'Unable to revoke.',
   },
 };

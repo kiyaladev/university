@@ -47,7 +47,7 @@
           clearable
           emit-value
           map-options
-          :label="$t('affectations.filters.promotion')"
+          :label="$t('common.fields.promotion')"
         />
         <q-select
           v-model="filtres.anneeId"
@@ -154,7 +154,7 @@
             </q-chip>
           </div>
           <div class="text-caption text-grey-7 q-mt-sm">
-            {{ a.annee?.libelle ?? '—' }} {{ $t('rectorat.subtitleFallback') }} {{ $t('affectations.cardView.contractualVolume') }}
+            {{ a.annee?.libelle ?? '—' }} {{ $t('common.format.emptyValue') }} {{ $t('affectations.cardView.contractualVolume') }}
             <span class="chiffres">{{ $t('common.units.hours', { n: a.volumeHorairePrevu }) }}</span>
           </div>
         </q-card-section>
@@ -243,7 +243,7 @@
         map-options
         use-input
         input-debounce="0"
-        :label="$t('affectations.dialog.fields.subject')"
+        :label="$t('common.fields.subjectRequired')"
         :rules="[(v: string) => !!v || $t('affectations.dialog.fields.subjectError')]"
         @filter="filtrerMatieres"
       />
@@ -256,7 +256,7 @@
         dense
         emit-value
         map-options
-        :label="$t('affectations.dialog.fields.promotion')"
+        :label="$t('common.fields.promotionRequired')"
         :rules="[(v: string) => !!v || $t('affectations.dialog.fields.promotionError')]"
       />
       <q-select

@@ -68,11 +68,9 @@ export default {
     },
   },
   messages: {
-    chargementImpossible: 'Chargement des bulletins impossible',
     aucuneDeliberationEtudiant: 'Aucune délibération pour cet étudiant.',
     aucunBulletinDisponible: 'Aucun bulletin disponible : aucune délibération trouvée.',
     etudiantNonIdentifie: 'Étudiant non identifié pour cette inscription.',
-    bulletinsOuverts: '{n} bulletin(s) ouvert(s).',
   },
   dialogs: {
     imprimerPromotion: {

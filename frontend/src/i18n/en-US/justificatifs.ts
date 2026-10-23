@@ -35,7 +35,6 @@ export default {
     sessionHint: 'Unassured sessions from the last 90 days',
     explanation: 'Explanation *',
     file: 'Supporting document (image or PDF)',
-    cancel: 'Cancel',
     submit: 'Submit the excuse',
   },
   detailDialog: {

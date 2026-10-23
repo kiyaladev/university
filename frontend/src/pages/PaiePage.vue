@@ -58,10 +58,10 @@
     </filter-bar>
 
     <div class="text-caption text-grey-7 q-mb-sm">
-      {{ $t('paie.summary.sheetsCount', { count: liste.total }) }} {{ $t('rectorat.subtitleFallback') }}
+      {{ $t('paie.summary.sheetsCount', { count: liste.total }) }} {{ $t('common.format.emptyValue') }}
       {{ filtres.statut ? LIBELLE_STATUT_PAIE[filtres.statut].toLowerCase() : $t('paie.summary.allStatuses') }},
       {{ filtres.annee ?? $t('paie.summary.allYears') }} · {{ $t('paie.summary.totalShown') }}
-      {{ montantLisible(totalMontant) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}
+      {{ montantLisible(totalMontant) }} {{ $t('common.units.gnf') }}
     </div>
 
     <!-- Vue tableau -->
@@ -216,7 +216,7 @@
               <div class="col">
                 <div class="text-h6">{{ f.libelle }}</div>
                 <div class="text-caption text-grey-7">
-                  {{ dateLisible(f.dateDebut) }} {{ $t('rectorat.subtitleFallback') }} {{ dateLisible(f.dateFin) }}
+                  {{ dateLisible(f.dateDebut) }} {{ $t('common.format.emptyValue') }} {{ dateLisible(f.dateFin) }}
                 </div>
               </div>
               <span class="champ badge-statut" :class="classeStatut(f.statut)">
@@ -228,7 +228,7 @@
             <div class="row items-end justify-between">
               <div>
                 <div class="text-caption text-grey-7">{{ $t('paie.card.totalAmount') }}</div>
-                <div class="text-h6">{{ montantLisible(f.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
+                <div class="text-h6">{{ montantLisible(f.montantTotal) }} {{ $t('common.units.gnf') }}</div>
               </div>
               <div class="text-caption text-grey-7 text-right">
                 {{ $t('paie.card.lignesCount', { count: f.lignes?.length ?? 0 }) }}<br />
@@ -353,7 +353,7 @@
                   {{ $t('paie.detail.total', { count: detail?.lignes?.length ?? 0 }) }}
                 </div>
                 <div class="text-weight-medium chiffres">{{ heuresLisibles(heuresTotal) }} {{ $t('paie.detail.completed') }}</div>
-                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} {{ $t('statistiquesMesrs.chart.axis.gnf') }}</div>
+                <div class="text-weight-medium chiffres">{{ montantLisible(detail?.montantTotal) }} {{ $t('common.units.gnf') }}</div>
               </div>
             </template>
           </q-table>

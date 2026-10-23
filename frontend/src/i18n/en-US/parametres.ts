@@ -43,35 +43,8 @@ export default {
   emptyState: {
     title: 'No setting available.',
   },
-  audit: {
-    title: 'Audit log',
-    subtitle: 'Who did what, and when — attendance corrections are tracked here.',
-    entityLabel: 'Entity',
-    entities: {
-      controle: 'Checks',
-      seance: 'Sessions',
-      user: 'Users',
-    },
-    empty: {
-      filtered: 'No trace for this entity.',
-      all: 'No trace recorded.',
-    },
-    table: {
-      columns: {
-        date: 'Date',
-        utilisateur: 'User',
-        action: 'Action',
-        entite: 'Entity',
-        details: 'Details',
-        ip: 'Workstation',
-      },
-    },
-  },
   messages: {
-    loadError: 'Unable to load settings',
-    auditLoadError: 'Unable to read the audit log',
     saved: 'Settings saved',
-    saveError: 'Unable to save',
   },
   attendanceRules: 'Attendance rules',
 };
