@@ -81,6 +81,7 @@ export default {
     checkedBy: 'Checked by',
     attestation: 'Attestation',
     signature: 'Signature',
+    signatureAlt: 'Controller signature on the check-in',
     otherSessions: 'Their other sessions',
     sessionsInRoom: 'Sessions in {code}',
     correctCheck: 'Correct the check',
