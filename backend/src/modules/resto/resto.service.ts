@@ -43,7 +43,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { t } from '../../common/i18n';
 import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Etudiant } from '@prisma/client';
 import { randomBytes } from 'node:crypto';
@@ -84,7 +83,6 @@ export class RestoService {
   constructor(
     private prisma: PrismaService,
     private parametres: ParametresService,
-    private jwt: JwtService,
   ) {}
 
   // ------------------------------------------------------------ consultation
@@ -323,8 +321,8 @@ export class RestoService {
   // ------------------------------------------------------------------ guichet
 
   /** Consultation carte (QR scanné) : l'identité et le solde, sans rien débiter. */
-  async carteInfo(reference: string, token?: string) {
-    await this.verifierGuichet(token);
+  async carteInfo(reference: string, utilisateur?: AuthUser) {
+    this.verifierGuichet(utilisateur);
     const etudiant = await this.etudiantParReference(reference);
     const portefeuille = await this.portefeuilleOuCree(null, etudiant.id);
     return {
@@ -339,8 +337,8 @@ export class RestoService {
    * valider. Le solde est vérifié en transaction — solde insuffisant,
    * 409 et le portefeuille n'est pas touché.
    */
-  async validerRepas(dto: ValiderRepasDto, token?: string) {
-    const user = await this.verifierGuichet(token);
+  async validerRepas(dto: ValiderRepasDto, utilisateur?: AuthUser) {
+    const user = this.verifierGuichet(utilisateur);
     const etudiant = await this.etudiantParReference(dto.reference);
 
     const { consommation, solde } = await this.prisma.$transaction(async (tx) => {
@@ -682,48 +680,20 @@ export class RestoService {
   }
 
   /**
-   * Vérification manuelle du jeton sur une route @Public : l'appareil du
-   * cantinier passe par l'interface, le jeton voyage en en-tête OU en
-   * paramètre d'URL (pattern attestations). On re-charge l'utilisateur en
-   * base pour contrôler activité et rôle — pas seulement la signature.
+   * Contrôle du poste de guichet. L'appareil du cantinier porte un jeton
+   * valide : la route est publique, mais l'authentification est faite par la
+   * garde globale (`@AuthentificationOptionnelle`), qui contrôle déjà la
+   * signature, l'activité du compte et la révocation des sessions. Il ne
+   * reste ici que le contrôle du rôle, propre à ce poste.
    */
-  private async verifierGuichet(token: string | undefined): Promise<AuthUser> {
-    let payload: { sub?: string; iat?: number };
-    try {
-      payload = (await this.jwt.verifyAsync(token ?? '')) as any;
-    } catch {
+  private verifierGuichet(utilisateur: AuthUser | undefined): AuthUser {
+    if (!utilisateur) {
       throw new UnauthorizedException(t('resto.jeton_invalide_ou_expire_reconnectez_le_poste_de_guichet'));
     }
-    if (!payload?.sub) throw new UnauthorizedException(t('resto.jeton_invalide'));
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: payload.sub },
-      include: {
-        etudiant: { select: { id: true } },
-        enseignant: { select: { id: true } },
-      },
-    });
-    if (!user || !user.actif) {
-      throw new UnauthorizedException(t('resto.compte_inexistant_ou_desactive'));
-    }
-    if (payload.iat && user.motDePasseModifieLe) {
-      if (payload.iat * 1000 < user.motDePasseModifieLe.getTime() - 1000) {
-        throw new UnauthorizedException(t('resto.session_expiree_reconnectez_vous'));
-      }
-    }
-    if (!GUICHET.includes(user.role)) {
+    if (!GUICHET.includes(utilisateur.role)) {
       throw new ForbiddenException(t('resto.le_poste_de_guichet_est_reserve_aux_comptes_controleur_scola'));
     }
-    return {
-      id: user.id,
-      email: user.email,
-      nom: user.nom,
-      prenom: user.prenom,
-      role: user.role,
-      departementId: user.departementId,
-      enseignantId: user.enseignant?.id ?? null,
-      etudiantId: user.etudiant?.id ?? null,
-    };
+    return utilisateur;
   }
 }
 

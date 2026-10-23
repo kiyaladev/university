@@ -1,11 +1,10 @@
-import { Body, Controller, Get, Header, Param, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
-import type { Request } from 'express';
 import { AuthUser, CurrentUser, Public, Roles } from '../../common/decorators';
 import { RestoService } from './resto.service';
-import { jetonImprimable } from '../../common/jeton-imprimable';
+import { AuthentificationOptionnelle, UtilisateurOptionnel } from '../../common/utilisateur-optionnel';
 import {
   AnnulerConsommationDto,
   ConsommationsQueryDto,
@@ -85,22 +84,25 @@ export class RestoController {
 
   // ------------------------------------------------------------- poste guichet
   // Routes @Public : l'appareil du cantinier lit le jeton en en-tête (interface)
-  // ou en paramètre d'URL (fin de session, imprimante) ; le service le vérifie
-  // à la main — pattern identique à `attestations/:id/imprimer`.
+  // ou en paramètre d'URL (fin de session, imprimante). La route est publique
+  // mais l'authentification est optionnelle et résolue par la garde globale ;
+  // le service contrôle ensuite le rôle du poste de guichet.
 
   @Public()
+  @AuthentificationOptionnelle()
   @Throttle({ courant: { ttl: 60_000, limit: 60 } })
   @Get('carte/:reference')
   @Header('Cache-Control', 'no-store')
-  carte(@Param('reference') reference: string, @Req() req: Request) {
-    return this.service.carteInfo(reference, jetonImprimable(req));
+  carte(@Param('reference') reference: string, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    return this.service.carteInfo(reference, utilisateur);
   }
 
   @Public()
+  @AuthentificationOptionnelle()
   @Throttle({ courant: { ttl: 60_000, limit: 60 } })
   @Post('valider')
-  valider(@Body() dto: ValiderRepasDto, @Req() req: Request) {
-    return this.service.validerRepas(dto, jetonImprimable(req));
+  valider(@Body() dto: ValiderRepasDto, @UtilisateurOptionnel() utilisateur?: AuthUser) {
+    return this.service.validerRepas(dto, utilisateur);
   }
 }
 
