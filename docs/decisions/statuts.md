@@ -228,9 +228,9 @@ Légende des impacts : **B** backend (`backend/src`, DTO, services, tests) — *
   reformulés pour rester grammaticaux (§6).
 - **Recettes** : `backend/scripts/recette-*.cjs` (14 scripts) vérifient des statuts en dur.
 - **Seed** : `backend/prisma/seed.ts` alimente les statuts en dur.
-- **Docs** : ce document ; les rapports d'audit déjà écrits (`docs/audits/`, `audit/`) sont des
-  **archives** : ils décrivent l'état du code à la date de leur rédaction et ne sont pas
-  réécrits.
+- **Docs** : ce document ; les rapports d'audit déjà écrits (`docs/audits/`, preuves brutes
+  comprises dans `docs/audits/preuves/`) sont des **archives** : ils décrivent l'état du code à
+  la date de leur rédaction et ne sont pas réécrits.
 - **Scripts de recette front** : `frontend/tests/*.mjs` (QA Playwright pilotant une API réelle)
   containaient eux aussi des statuts en dur : ils sont à jour.
 
@@ -430,7 +430,7 @@ n'est plus viable : c'est le sens de la coupure.
 - **Recherche exhaustive** des 24 anciens jetons dans tout le dépôt (`*.ts`, `*.vue`, `*.prisma`,
   `*.sql`, `*.json`, `*.cjs`, `*.md`), y compris chaînes, SQL brut et JSON. Sont exclus : les
   migrations déjà appliquées (histoire de la base, non réécrites), les rapports d'audit
-  (`audit/`, `docs/audits/` — archives) et ce document.
+  (`docs/audits/` — archives) et ce document.
 - **Backend** : `tsc --noEmit` puis `jest --runInBand` (suite complète).
 - **Frontend** : `bun run typecheck`, `bun run test:unit`, `bun run lint`.
   Les tables de tons (`frontend/src/shared/utils/statuts.ts`) sont contraintes par
@@ -455,6 +455,6 @@ n'est plus viable : c'est le sens de la coupure.
 | Concordance migration / schéma / table de compatibilité | vérifiée par script |
 
 Restent volontairement en écriture ancienne : les migrations déjà appliquées (histoire de la
-base), les rapports d'audit (`audit/`, `docs/audits/`, archives), ce document, la table de
+base), les rapports d'audit (`docs/audits/`, archives), ce document, la table de
 compatibilité (backend et front), les tests de compatibilité, le vocabulaire du journal d'audit
 et le script inverse de la migration.
