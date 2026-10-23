@@ -13,6 +13,7 @@ import { titreRoute } from '../utils/titreRoute';
 import { accueilParRole } from '../utils/accueil';
 import type { Role } from '../types';
 import { useServicesActifsStore } from '../stores/servicesActifs';
+import { verifierManifeste } from '../navigation/menu';
 
 /**
  * L'écran d'accueil dépend du rôle : le personnel arrive sur le tableau de
@@ -39,6 +40,10 @@ export default defineRouter(function () {
     routes,
     history: createHistory(process.env.VUE_ROUTER_BASE),
   });
+
+  // Le manifeste de navigation et les routes doivent se répondre : une
+  // incohérence casse le démarrage en développement plutôt qu'un lien en recette.
+  if (process.env.DEV) verifierManifeste(Router);
 
   // Garde d'accès : jeton obligatoire, puis contrôle du rôle.
   Router.beforeEach(async (to) => {

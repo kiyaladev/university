@@ -184,6 +184,7 @@ import { LIBELLE_ROLE } from '../utils/libelles';
 import { surAndroid } from '../services/empreinte';
 import { api } from '../boot/axios';
 import { titreRoute } from '../utils/titreRoute';
+import { FAMILLES, menuPour, raccourcisPour } from '../navigation/menu';
 import { getAppLocale, setAppLocale, type AppLocale } from '../boot/i18n';
 
 const $q = useQuasar();
@@ -225,293 +226,31 @@ function changerLangue(code: AppLocale) {
   setAppLocale(code);
 }
 
-const menu = computed(() => {
-  const r = auth.utilisateur?.role;
-  const est = (...roles: string[]) => !!r && roles.includes(r);
-  /**
-   * Un lien n'apparaît que pour les rôles que la route accepte : la liste de
-   * rôles écrite ici doit rester le miroir exact de `meta.roles` dans
-   * router/routes.ts, sinon le lien renvoie l'utilisateur à son accueil.
-   */
-  const lien = (
-    roles: string[] | null, to: string, icone: string, libelle: string, badge?: number,
-  ) => {
-    const meta = router.resolve(to).meta;
-    const autorises = meta.roles ?? roles;
-    if (['/notes', '/bulletins', '/tirage', '/demandes-docs/tarifs', '/statistiques-mesrs', '/synthese-presences', '/statistiques', '/rapports', '/attestations', '/demandes-docs', '/cartes-etudiantes', '/reclamations/mes', '/demandes-docs/mes'].includes(to)) return [];
-    if (to === '/examens/scan' && !['ENSEIGNANT', 'CONTROLEUR'].includes(r ?? '')) return [];
-    if (!services.autorise(to) || (r === 'ENSEIGNANT' && to === '/seances') || (autorises && !est(...autorises))) return [];
-    const intitule = r === 'ETUDIANT' && to === '/vod'
-      ? t('layout.studentVideoCourses')
-      : titreRoute(meta.titre) || libelle;
-    return [{ to, icone, libelle: intitule, badge, exact: false, section: '' }];
-  };
-
-  const groupes = [
-    { titre: '', liens: [
-      ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'], '/suivi-presences', 'insights', t('simplification.presence')),
-      ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/documents', 'description', t('simplification.documents')),
-      ...lien(['ETUDIANT'], '/mes-demarches', 'assignment', t('simplification.procedures')),
-    ] },
-    // L'étudiant ouvre le panneau sur ce qui le concerne : sa rubrique passe
-    // avant celles du personnel, qui pour lui sont toutes vides.
-    {
-      titre: t('layout.groups.personal'),
-      liens: [
-        ...lien(['ETUDIANT'], '/portail', 'person', 'Mon espace'),
-        ...lien(['ETUDIANT'], '/emploi-du-temps', 'calendar_month', 'Emploi du temps'),
-        ...lien(['ETUDIANT'], '/vod', 'play_circle', 'Cours en vidéo'),
-        ...lien(['ETUDIANT'], '/ma-carte', 'badge', 'Ma carte étudiante'),
-        ...lien(['ETUDIANT'], '/demandes-docs/mes', 'description', 'Mes demandes de documents'),
-        ...lien(['ETUDIANT'], '/reclamations/mes', 'support_agent', 'Mes réclamations'),
-        ...lien(['ETUDIANT'], '/elections/vote', 'how_to_vote', 'Voter'),
-      ],
-    },
-    {
-      titre: t('layout.groups.tracking'),
-      liens: [
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
-          '/',
-          'dashboard',
-          'Tableau de bord',
-        ),
-        ...lien(
-          ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
-          '/controle',
-          'fact_check',
-          'Contrôle des séances',
-        ),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
-          '/seances',
-          'event_note',
-          'Séances',
-        ),
-        ...lien(['ENSEIGNANT'], '/mes-seances', 'person_pin', 'Mes séances'),
-        ...lien(['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'], '/synthese-presences', 'dashboard', t('accueilUniversity.attendance')),
-        // Les justificatifs sont un acte d'administration : l'enseignant
-        // dépose, la scolarité enregistre, la direction arbitre. Le contrôleur
-        // constate sur le terrain mais n'instruit pas.
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'ENSEIGNANT'],
-          '/justificatifs',
-          'assignment_late',
-          'Justificatifs d’absence',
-          justificatifsEnAttente.value || undefined,
-        ),
-        ...lien(
-          ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
-          '/statistiques',
-          'query_stats',
-          'Statistiques',
-        ),
-      ],
-    },
-    {
-      titre: t('layout.groups.organisation'),
-      liens: [
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
-          '/emploi-du-temps',
-          'calendar_month',
-          'Emploi du temps',
-        ),
-        ...lien(
-          ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'],
-          '/affectations',
-          'assignment_ind',
-          'Charges d’enseignement',
-        ),
-        ...lien(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'], '/enseignants', 'person', 'Enseignants'),
-        ...lien(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'], '/matieres', 'menu_book', 'Matières'),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/structure', 'account_tree', 'Structure académique'),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'], '/salles', 'meeting_room', 'Salles & QR'),
-        ...lien(['ADMIN', 'SCOLARITE'], '/imports', 'upload_file', 'Imports'),
-      ],
-    },
-    {
-      titre: t('layout.groups.registrar'),
-      liens: [
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/etudiants', 'groups', 'Étudiants'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/inscriptions', 'how_to_reg', 'Inscriptions'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/paiements', 'payments', 'Paiements'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/evaluations', 'fact_check', 'Évaluations'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'], '/notes', 'edit_note', 'Saisie des notes'),
-      ],
-    },
-    // De l'épreuve au diplôme : composer, tirer, scanner, délibérer, éditer.
-    {
-      titre: t('layout.groups.results'),
-      liens: [
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/examens', 'quiz', 'Examens'),
-        ...lien(
-          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'],
-          '/examens/scan',
-          'qr_code_scanner',
-          'Scan examens',
-        ),
-        ...lien(['ADMIN', 'SCOLARITE'], '/tirage', 'local_printshop', 'Tirage des épreuves'),
-        ...lien(
-          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'],
-          '/deliberations',
-          'gavel',
-          'Délibérations',
-        ),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/bulletins', 'school', 'Bulletins'),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/attestations', 'verified_user', 'Attestations'),
-        ...lien(['ADMIN', 'DIRECTION'], '/plagiat', 'find_in_page', 'Anti-plagiat'),
-      ],
-    },
-    // Le guichet : ce que l'étudiant demande et ce qu'on lui délivre.
-    {
-      titre: t('layout.groups.documents'),
-      liens: [
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/reclamations', 'support_agent', 'Réclamations & requêtes'),
-        ...lien(['ADMIN', 'SCOLARITE'], '/demandes-docs', 'description', 'Demandes de documents'),
-        ...lien(['ADMIN', 'SCOLARITE'], '/cartes-etudiantes', 'badge', 'Cartes étudiantes'),
-        ...lien(['ADMIN', 'SCOLARITE'], '/badges', 'how_to_reg', 'Badges & visiteurs'),
-      ],
-    },
-    {
-      titre: t('layout.groups.campus'),
-      liens: [
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/cites', 'apartment', 'Cités universitaires'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE', 'CONTROLEUR'], '/resto', 'restaurant', 'Resto numérique'),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT'],
-          '/bibliotheque-gestion',
-          'local_library',
-          'Bibliothèque numérique',
-        ),
-        ...lien(['ENSEIGNANT', 'ADMIN', 'SCOLARITE', 'DIRECTION'], '/vod', 'play_circle', 'VOD des cours'),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE'],
-          '/formations-admin',
-          'workspace_premium',
-          'Formation continue',
-        ),
-        ...lien(
-          ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT'],
-          '/stages',
-          'work',
-          'Stages & mémoires',
-        ),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT', 'CONTROLEUR'],
-          '/reservations',
-          'event_seat',
-          'Réservations de salles',
-        ),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT', 'CONTROLEUR'],
-          '/helpdesk',
-          'headset_mic',
-          'Support IT',
-        ),
-      ],
-    },
-    {
-      titre: t('layout.groups.universityLife'),
-      liens: [
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/elections', 'how_to_vote', 'Élections'),
-        ...lien(['ENSEIGNANT', 'CONTROLEUR', 'ADMIN'], '/elections/vote', 'ballot', 'Voter'),
-      ],
-    },
-    {
-      titre: t('layout.groups.management'),
-      liens: [
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
-          '/rapports',
-          'insights',
-          'Rapports & états',
-        ),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/scolarite', 'school', t('nav.scolarite')),
-        ...lien(['ADMIN', 'DIRECTION'], '/audit', 'history', t('audit.title')),
-        ...lien(['ADMIN', 'DIRECTION'], '/statistiques-mesrs', 'analytics', 'Statistiques MESRS'),
-        ...lien(['ADMIN', 'DIRECTION'], '/bilan', 'account_balance', t('simplification.bilan')),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/recettes', 'request_quote', 'Régie des recettes'),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/paie', 'payments', 'Paie des vacataires'),
-        ...lien(['ADMIN', 'SCOLARITE', 'DIRECTION'], '/patrimoine', 'inventory_2', 'Patrimoine & matériel'),
-        ...lien(
-          ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
-          '/courrier',
-          'mail',
-          'Courrier administratif',
-        ),
-        ...lien(['ADMIN', 'DIRECTION', 'SCOLARITE'], '/notifications', 'sms', 'Notifications SMS'),
-      ],
-    },
-    {
-      titre: t('layout.groups.settings'),
-      liens: [
-        ...lien(['ADMIN'], '/demandes-docs/tarifs', 'price_change', 'Tarifs des demandes'),
-        ...lien(['ADMIN'], '/utilisateurs', 'manage_accounts', 'Utilisateurs'),
-        ...lien(['ADMIN'], '/parametres', 'settings', 'Paramètres'),
-      ],
-    },
-  ];
-
-  /**
-   * Un lien ne se surligne « exactement » que s'il chapeaute d'autres liens du
-   * panneau (« /examens » face à « /examens/scan ») : ailleurs, la
-   * correspondance large permet à la rubrique de rester allumée sur ses pages
-   * de détail, comme « /plagiat » quand on lit une suspicion.
-   */
-  const adresses = groupes.flatMap((g) => g.liens.map((l) => l.to));
-  for (const groupe of groupes) {
-    for (const l of groupe.liens) {
-      l.exact = l.to === '/' || adresses.some((a) => a.startsWith(`${l.to}/`));
-    }
-  }
-  const rubriques = [
-    { id: 'presence', titre: t('layout.primary.presence'), icone: 'fact_check', liens: [] as typeof groupes[number]['liens'] },
-    { id: 'registrar', titre: t('layout.primary.registrar'), icone: 'school', liens: [] as typeof groupes[number]['liens'] },
-    { id: 'finance', titre: t('layout.primary.finance'), icone: 'payments', liens: [] as typeof groupes[number]['liens'] },
-    { id: 'campus', titre: t('layout.primary.campus'), icone: 'apartment', liens: [] as typeof groupes[number]['liens'] },
-    { id: 'administration', titre: t('layout.primary.administration'), icone: 'settings', liens: [] as typeof groupes[number]['liens'] },
-  ];
-  const presence = ['/suivi-presences', '/synthese-presences', '/controle', '/seances', '/mes-seances', '/justificatifs', '/statistiques', '/rapports', '/emploi-du-temps'];
-  const registrar = ['documents', 'mes-demarches', 'portail', 'scolarite', 'etudiants', 'inscriptions', 'examens', 'notes', 'evaluations', 'deliberations', 'bulletins', 'attestations', 'demandes-docs', 'mes-demandes', 'ma-carte', 'cartes-etudiantes', 'stages', 'tirage', 'reclamations', 'mes-reclamations'];
-  const finance = ['paiements', 'recettes', 'paie'];
-  const campus = ['bibliotheque', 'bibliotheque-gestion', 'vod', 'resto', 'cites', 'helpdesk', 'elections', 'patrimoine', 'reservations', 'formations', 'formations-admin', 'badges'];
-  const dejaPlaces = new Set<string>();
-  for (const groupe of groupes) for (const lien of groupe.liens) {
-    if (dejaPlaces.has(lien.to)) continue;
-    dejaPlaces.add(lien.to);
-    const racine = lien.to.split('/')[1];
-    const index = presence.includes(lien.to) ? 0 : registrar.includes(racine) ? 1 : finance.includes(racine) ? 2 : campus.includes(racine) ? 3 : 4;
-    if (index === 1) lien.section = t(['etudiants', 'inscriptions', 'portail', 'scolarite'].includes(racine) ? 'accueilUniversity.dossiers'
-      : ['examens', 'notes', 'evaluations', 'deliberations', 'bulletins', 'tirage'].includes(racine) ? 'accueilUniversity.resultats'
-      : ['documents', 'attestations', 'demandes-docs', 'ma-carte', 'cartes-etudiantes'].includes(racine) ? 'accueilUniversity.documents' : 'layout.groups.documents');
-    if (index === 4) lien.section = t(['affectations', 'enseignants', 'matieres', 'structure', 'salles', 'imports'].includes(racine) ? 'layout.groups.organisation' : 'layout.groups.settings');
-    rubriques[index].liens.push(lien);
-  }
-  for (const rubrique of rubriques) rubrique.liens.sort((a, b) => a.section.localeCompare(b.section));
-  return rubriques.filter(rubrique => rubrique.liens.length);
-});
+/**
+ * Le menu se déduit du manifeste de navigation (navigation/manifeste.ts) :
+ * rôles, rubriques, intertitres, ordre et services y sont déclarés une fois,
+ * et la route porte les mêmes rôles, si bien qu'un lien ne peut pas renvoyer
+ * l'utilisateur à son accueil.
+ */
+const menu = computed(() => menuPour(auth.utilisateur?.role ?? null, services.services, cle => t(cle)).map(rubrique => ({
+  id: rubrique.id,
+  titre: t(rubrique.titre),
+  icone: rubrique.icone,
+  liens: rubrique.liens.map(lien => ({
+    to: lien.path,
+    icone: lien.icone,
+    libelle: titreRoute(lien.titre),
+    badge: lien.path === '/justificatifs' ? justificatifsEnAttente.value || undefined : undefined,
+    exact: lien.exact,
+    section: lien.section ? t(lien.section) : '',
+  })),
+})));
 
 const raccourcis = computed(() => {
-  const parRole: Record<string, string[]> = {
-    ADMIN: ['/', '/controle', '/inscriptions', '/suivi-presences'],
-    DIRECTION: ['/', '/suivi-presences', '/paie', '/bilan'],
-    SCOLARITE: ['/scolarite', '/inscriptions', '/evaluations', '/documents'],
-    CONTROLEUR: ['/controle', '/emploi-du-temps'],
-    ENSEIGNANT: ['/mes-seances', '/emploi-du-temps', '/justificatifs'],
-    CHEF_DEPARTEMENT: ['/', '/seances', '/evaluations', '/suivi-presences'],
-    ETUDIANT: ['/portail', '/emploi-du-temps', '/ma-carte'],
-  };
   const tous = menu.value.flatMap(groupe => groupe.liens);
-  return (parRole[auth.utilisateur?.role || ''] || []).flatMap(to => tous.filter(lien => lien.to === to));
+  return raccourcisPour(auth.utilisateur?.role ?? null).flatMap(to => tous.filter(lien => lien.to === to));
 });
-const familles: Record<string, string[]> = {
-  '/suivi-presences': ['/synthese-presences', '/statistiques', '/rapports'],
-  '/documents': ['/demandes-docs', '/attestations', '/cartes-etudiantes'],
-  '/bilan': ['/rectorat', '/statistiques-mesrs'],
-  '/mes-demarches': ['/demandes-docs/mes', '/reclamations/mes'],
-  '/evaluations': ['/notes'], '/deliberations': ['/bulletins'], '/examens': ['/tirage'],
-};
+const familles = FAMILLES;
 const normaliserRecherche = (texte: string) => texte.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().trim();
 const rechercheNormalisee = computed(() => normaliserRecherche(rechercheMenu.value || ''));
 const raccourcisVisibles = computed(() => raccourcis.value.filter(lien => normaliserRecherche(lien.libelle).includes(rechercheNormalisee.value)));

@@ -19,25 +19,17 @@
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/auth';
 import { useServicesActifsStore } from '../stores/servicesActifs';
 import PageHeader from '../components/PageHeader.vue';
 import { titreRoute } from '../utils/titreRoute';
+import { tachesAccueil } from '../navigation/menu';
 const { t } = useI18n();
-const router = useRouter();
 const auth = useAuthStore();
 const services = useServicesActifsStore();
-const taches: Record<string, string[]> = {
-  ADMIN: ['/controle', '/inscriptions', '/evaluations', '/documents'],
-  DIRECTION: ['/suivi-presences', '/bilan', '/paie'],
-  CHEF_DEPARTEMENT: ['/seances', '/evaluations', '/deliberations', '/suivi-presences'],
-};
+/** Tâches fréquentes du rôle : déclarées dans le manifeste de navigation (`tacheAccueilPour`). */
 const groupes = computed(() => [
-  { id: 'presence', liens: (taches[auth.role ?? ''] ?? []).map(to => [to, 'arrow_forward']) },
-].map(groupe => ({ ...groupe, liens: groupe.liens.flatMap(([to, icon]) => {
-  const meta = router.resolve(to).meta;
-  return services.autorise(to) && (!meta.roles || !!auth.role && meta.roles.includes(auth.role)) ? [{ to, icon, label: ({ '/suivi-presences': t('simplification.presence'), '/bilan': t('simplification.bilan'), '/documents': t('simplification.documents') } as Record<string, string>)[to] ?? titreRoute(meta.titre) }] : [];
-}) })).filter(g => g.liens.length));
+  { id: 'presence', liens: tachesAccueil(auth.role, services.services).map(e => ({ to: e.path, icon: 'arrow_forward', label: titreRoute(e.titre) })) },
+].filter(g => g.liens.length));
 </script>

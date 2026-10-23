@@ -4,6 +4,7 @@ import { enrolerAppareilSiNecessaire } from '../services/empreinte';
 import { ecrireToken, effacerToken, lireToken } from '../services/session';
 import { useReferentielsStore } from './referentiels';
 import type { Role, Utilisateur } from '../types';
+import { roleAutorise, type Permission } from '../navigation/permissions';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -25,24 +26,21 @@ export const useAuthStore = defineStore('auth', {
     /** Vrai si l'utilisateur a l'un des rôles demandés. */
     aRole: (s) => (roles: Role[]) => !!s.utilisateur && roles.includes(s.utilisateur.role),
 
+    /** Droit d'action de la matrice navigation/permissions.ts. */
+    peut: (s) => (permission: Permission) => roleAutorise(s.utilisateur?.role, permission),
+
     /** Peut consigner un pointage en salle. */
-    peutPointer: (s) =>
-      !!s.utilisateur &&
-      ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'].includes(s.utilisateur.role),
+    peutPointer: (s) => roleAutorise(s.utilisateur?.role, 'seances.pointer'),
 
     /** Peut modifier les référentiels et l'emploi du temps. */
-    peutPlanifier: (s) =>
-      !!s.utilisateur &&
-      ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT'].includes(s.utilisateur.role),
+    peutPlanifier: (s) => roleAutorise(s.utilisateur?.role, 'referentiels.planifier'),
 
     /**
      * Tenir l'emploi du temps : le contrôleur constate la réalité des créneaux
      * avant tout le monde, il peut donc en ouvrir et en corriger — mais cela ne
      * lui ouvre aucun autre référentiel.
      */
-    peutTenirEmploiDuTemps: (s) =>
-      !!s.utilisateur &&
-      ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'].includes(s.utilisateur.role),
+    peutTenirEmploiDuTemps: (s) => roleAutorise(s.utilisateur?.role, 'emploiDuTemps.tenir'),
 
     estAdmin: (s) => s.utilisateur?.role === 'ADMIN',
     estEnseignant: (s) => s.utilisateur?.role === 'ENSEIGNANT',

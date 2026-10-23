@@ -1,7 +1,12 @@
 import type { RouteRecordRaw } from 'vue-router';
 import type { Role } from '../types';
+import { ecran } from '../navigation/menu';
 
-/** `meta.roles` : rôles autorisés (absence = tous les utilisateurs connectés). */
+/**
+ * `meta.roles` : rôles autorisés (absence = tous les utilisateurs connectés).
+ * Les écrans du menu tirent titre et rôles du manifeste de navigation
+ * (`ecran('/chemin')`, voir navigation/manifeste.ts) : c'est là qu'on les change.
+ */
 declare module 'vue-router' {
   interface RouteMeta {
     titre?: string;
@@ -113,9 +118,9 @@ const routes: RouteRecordRaw[] = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: 'suivi-presences', name: 'suivi-presences', component: () => import('pages/AccueilUniversityPage.vue'),
-        meta: { titre: 'simplification.presence', roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR'] } },
+        meta: ecran('/suivi-presences') },
       { path: 'documents', name: 'documents', component: () => import('pages/AccueilUniversityPage.vue'),
-        meta: { titre: 'simplification.documents', roles: ['ADMIN', 'DIRECTION', 'SCOLARITE'] } },
+        meta: ecran('/documents') },
       { path: 'bilan', redirect: '/rectorat' },
       { path: 'mes-demarches', redirect: '/demandes-docs/mes' },
       {
@@ -123,35 +128,26 @@ const routes: RouteRecordRaw[] = [
         name: 'tableau-de-bord',
         component: () => import('pages/AccueilUniversityPage.vue'),
         /** Registre de contrôle : l'étudiant est renvoyé vers son espace (voir la garde). */
-        meta: {
-          titre: 'accueilUniversity.title',
-          roles: ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
-        },
+        meta: ecran('/'),
       },
       {
         path: 'synthese-presences',
         name: 'synthese-presences',
         component: () => import('pages/DashboardPage.vue'),
-        meta: { titre: 'accueilUniversity.attendance', roles: ['ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/synthese-presences'),
       },
       {
         path: 'controle',
         name: 'controle',
         component: () => import('pages/ControlePage.vue'),
-        meta: {
-          titre: 'nav.controle',
-          roles: ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
-        },
+        meta: ecran('/controle'),
       },
       {
         /** Registre de travail du personnel : on y pointe et on y programme. */
         path: 'seances',
         name: 'seances',
         component: () => import('pages/SeancesPage.vue'),
-        meta: {
-          titre: 'nav.seances',
-          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'CONTROLEUR', 'ENSEIGNANT'],
-        },
+        meta: ecran('/seances'),
       },
       {
         /**
@@ -162,60 +158,43 @@ const routes: RouteRecordRaw[] = [
         path: 'emploi-du-temps',
         name: 'emploi-du-temps',
         component: () => import('pages/EmploiDuTempsPage.vue'),
-        meta: {
-          titre: 'nav.emploi-du-temps',
-          roles: [
-            'ADMIN',
-            'DIRECTION',
-            'SCOLARITE',
-            'CHEF_DEPARTEMENT',
-            'CONTROLEUR',
-            'ENSEIGNANT',
-            'ETUDIANT',
-          ],
-        },
+        meta: ecran('/emploi-du-temps'),
       },
       {
         path: 'affectations',
         name: 'affectations',
         component: () => import('pages/AffectationsPage.vue'),
-        meta: {
-          titre: 'nav.affectations',
-          roles: ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'],
-        },
+        meta: ecran('/affectations'),
       },
       {
         path: 'enseignants',
         name: 'enseignants',
         component: () => import('pages/EnseignantsPage.vue'),
-        meta: { titre: 'nav.enseignants', roles: ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'] },
+        meta: ecran('/enseignants'),
       },
       {
         path: 'matieres',
         name: 'matieres',
         component: () => import('pages/MatieresPage.vue'),
-        meta: { titre: 'nav.matieres', roles: ['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION'] },
+        meta: ecran('/matieres'),
       },
       {
         path: 'structure',
         name: 'structure',
         component: () => import('pages/StructurePage.vue'),
-        meta: {
-          titre: 'nav.structure',
-          roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'],
-        },
+        meta: ecran('/structure'),
       },
       {
         path: 'salles',
         name: 'salles',
         component: () => import('pages/SallesPage.vue'),
-        meta: { titre: 'nav.salles', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'] },
+        meta: ecran('/salles'),
       },
       {
         path: 'imports',
         name: 'imports-referentiels',
         component: () => import('pages/ImportsPage.vue'),
-        meta: { titre: 'nav.imports', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: ecran('/imports'),
       },
       {
         /**
@@ -225,106 +204,97 @@ const routes: RouteRecordRaw[] = [
         path: 'justificatifs',
         name: 'justificatifs',
         component: () => import('pages/JustificatifsPage.vue'),
-        meta: {
-          titre: 'nav.justificatifs',
-          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'ENSEIGNANT'],
-        },
+        meta: ecran('/justificatifs'),
       },
       {
         path: 'statistiques',
         name: 'statistiques',
         component: () => import('pages/StatistiquesPage.vue'),
-        meta: {
-          titre: 'nav.statistiques',
-          roles: ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
-        },
+        meta: ecran('/statistiques'),
       },
       {
         path: 'rapports',
         name: 'rapports',
         component: () => import('pages/RapportsPage.vue'),
-        meta: {
-          titre: 'nav.rapports',
-          roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
-        },
+        meta: ecran('/rapports'),
       },
       {
         path: 'mes-seances',
         name: 'mes-seances',
         component: () => import('pages/MesSeancesPage.vue'),
-        meta: { titre: 'nav.mes-seances', roles: ['ENSEIGNANT'] },
+        meta: ecran('/mes-seances'),
       },
       {
         path: 'audit',
         name: 'audit',
         component: () => import('pages/AuditPage.vue'),
-        meta: { titre: 'nav.audit', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/audit'),
       },
       {
         path: 'scolarite',
         name: 'scolarite',
         component: () => import('pages/AccueilScolaritePage.vue'),
-        meta: { titre: 'nav.scolarite', roles: ['SCOLARITE', 'ADMIN'] },
+        meta: ecran('/scolarite'),
       },
       {
         path: 'utilisateurs',
         name: 'utilisateurs',
         component: () => import('pages/UtilisateursPage.vue'),
-        meta: { titre: 'nav.utilisateurs', roles: ['ADMIN'] },
+        meta: ecran('/utilisateurs'),
       },
       {
         path: 'parametres',
         name: 'parametres',
         component: () => import('pages/ParametresPage.vue'),
-        meta: { titre: 'nav.parametres', roles: ['ADMIN'] },
+        meta: ecran('/parametres'),
       },
       {
         path: 'etudiants',
         name: 'etudiants',
         component: () => import('pages/EtudiantsPage.vue'),
-        meta: { titre: 'nav.etudiants', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/etudiants'),
       },
       {
         path: 'inscriptions',
         name: 'inscriptions',
         component: () => import('pages/InscriptionsPage.vue'),
-        meta: { titre: 'nav.inscriptions', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/inscriptions'),
       },
       {
         path: 'paiements',
         name: 'paiements',
         component: () => import('pages/PaiementsPage.vue'),
-        meta: { titre: 'nav.paiements', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/paiements'),
       },
       {
         path: 'evaluations',
         name: 'evaluations',
         component: () => import('pages/EvaluationsPage.vue'),
-        meta: { titre: 'nav.evaluations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/evaluations'),
       },
       {
         path: 'notes',
         name: 'notes',
         component: () => import('pages/NotesPage.vue'),
-        meta: { titre: 'nav.notes', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/notes'),
       },
       {
         path: 'deliberations',
         name: 'deliberations',
         component: () => import('pages/DeliberationsPage.vue'),
-        meta: { titre: 'nav.deliberations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/deliberations'),
       },
       {
         path: 'attestations',
         name: 'attestations',
         component: () => import('pages/AttestationsPage.vue'),
-        meta: { titre: 'nav.attestations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/attestations'),
       },
       {
         path: 'plagiat',
         name: 'plagiat',
         component: () => import('pages/PlagiatPage.vue'),
-        meta: { titre: 'nav.plagiat', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/plagiat'),
       },
       {
         path: 'plagiat/:id',
@@ -336,163 +306,163 @@ const routes: RouteRecordRaw[] = [
         path: 'bulletins',
         name: 'bulletins',
         component: () => import('pages/BulletinsPage.vue'),
-        meta: { titre: 'nav.bulletins', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/bulletins'),
       },
       {
         path: 'paie',
         name: 'paie',
         component: () => import('pages/PaiePage.vue'),
-        meta: { titre: 'nav.paie', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/paie'),
       },
       {
         path: 'notifications',
         name: 'notifications',
         component: () => import('pages/NotificationsPage.vue'),
-        meta: { titre: 'nav.notifications', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/notifications'),
       },
       {
         path: 'portail',
         name: 'portail',
         component: () => import('pages/PortailPage.vue'),
-        meta: { titre: 'nav.portail', roles: ['ETUDIANT'] },
+        meta: ecran('/portail'),
       },
       {
         path: 'cites',
         name: 'cites',
         component: () => import('pages/CitesPage.vue'),
-        meta: { titre: 'nav.cites', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/cites'),
       },
       {
         path: 'bibliotheque-gestion',
         name: 'bibliotheque',
         component: () => import('pages/BibliothequePage.vue'),
-        meta: { titre: 'nav.bibliotheque', roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'ENSEIGNANT'] },
+        meta: ecran('/bibliotheque-gestion'),
       },
       {
         path: 'resto',
         name: 'resto',
         component: () => import('pages/RestoPage.vue'),
-        meta: { titre: 'nav.resto', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CONTROLEUR'] },
+        meta: ecran('/resto'),
       },
       {
         path: 'reservations',
         name: 'reservations',
         component: () => import('pages/ReservationsPage.vue'),
-        meta: { titre: 'nav.reservations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'] },
+        meta: ecran('/reservations'),
       },
       {
         path: 'stages',
         name: 'stages',
         component: () => import('pages/StagesPage.vue'),
-        meta: { titre: 'nav.stages', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT'] },
+        meta: ecran('/stages'),
       },
       {
         path: 'helpdesk',
         name: 'helpdesk',
         component: () => import('pages/HelpdeskPage.vue'),
-        meta: { titre: 'nav.helpdesk', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'ENSEIGNANT', 'CONTROLEUR'] },
+        meta: ecran('/helpdesk'),
       },
       {
         path: 'formations-admin',
         name: 'formations-admin',
         component: () => import('pages/FormationsAdminPage.vue'),
-        meta: { titre: 'nav.formations-admin', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/formations-admin'),
       },
       {
         path: 'rectorat',
         name: 'rectorat',
         component: () => import('pages/RectoratPage.vue'),
-        meta: { titre: 'nav.rectorat', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/rectorat'),
       },
       {
         path: 'statistiques-mesrs',
         name: 'statistiques-mesrs',
         component: () => import('pages/StatistiquesMesrsPage.vue'),
-        meta: { titre: 'nav.statistiques-mesrs', roles: ['ADMIN', 'DIRECTION'] },
+        meta: ecran('/statistiques-mesrs'),
       },
       {
         path: 'patrimoine',
         name: 'patrimoine',
         component: () => import('pages/PatrimoinePage.vue'),
-        meta: { titre: 'nav.patrimoine', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/patrimoine'),
       },
       {
         path: 'courrier',
         name: 'courrier',
         component: () => import('pages/CourrierPage.vue'),
-        meta: { titre: 'nav.courrier', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION', 'CHEF_DEPARTEMENT'] },
+        meta: ecran('/courrier'),
       },
       {
         path: 'examens',
         name: 'examens',
         component: () => import('pages/ExamensPage.vue'),
-        meta: { titre: 'nav.examens', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/examens'),
       },
       {
         path: 'examens/scan',
         name: 'scan-examen',
         component: () => import('pages/ScanExamenPage.vue'),
-        meta: { titre: 'nav.scan-examen', roles: ['ENSEIGNANT', 'CONTROLEUR', 'ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/examens/scan'),
       },
       {
         path: 'tirage',
         name: 'tirage',
         component: () => import('pages/TiragePage.vue'),
-        meta: { titre: 'nav.tirage', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: ecran('/tirage'),
       },
       {
         path: 'recettes',
         name: 'recettes',
         component: () => import('pages/RecettesPage.vue'),
-        meta: { titre: 'nav.recettes', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/recettes'),
       },
       {
         path: 'reclamations',
         name: 'reclamations',
         component: () => import('pages/ReclamationsPage.vue'),
-        meta: { titre: 'nav.reclamations', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/reclamations'),
       },
       {
         path: 'reclamations/mes',
         name: 'mes-reclamations',
         component: () => import('pages/MesReclamationsPage.vue'),
-        meta: { titre: 'nav.mes-reclamations', roles: ['ETUDIANT'] },
+        meta: ecran('/reclamations/mes'),
       },
       {
         path: 'demandes-docs',
         name: 'demandes-docs',
         component: () => import('pages/DemandeDocumentsPage.vue'),
-        meta: { titre: 'nav.demandes-docs', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: ecran('/demandes-docs'),
       },
       {
         path: 'demandes-docs/mes',
         name: 'mes-demandes-docs',
         component: () => import('pages/MesDemandesPage.vue'),
-        meta: { titre: 'nav.mes-demandes-docs', roles: ['ETUDIANT'] },
+        meta: ecran('/demandes-docs/mes'),
       },
       {
         path: 'demandes-docs/tarifs',
         name: 'tarifs-demandes',
         component: () => import('pages/TarifsDemandeAdminPage.vue'),
-        meta: { titre: 'nav.tarifs-demandes', roles: ['ADMIN'] },
+        meta: ecran('/demandes-docs/tarifs'),
       },
       {
         path: 'cartes-etudiantes',
         name: 'cartes-etudiantes',
         component: () => import('pages/CarteEtudiantePage.vue'),
-        meta: { titre: 'nav.cartes-etudiantes', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: ecran('/cartes-etudiantes'),
       },
       {
         path: 'ma-carte',
         name: 'ma-carte',
         component: () => import('pages/MaCartePage.vue'),
-        meta: { titre: 'nav.ma-carte', roles: ['ETUDIANT'] },
+        meta: ecran('/ma-carte'),
       },
       {
         path: 'badges',
         name: 'badges',
         component: () => import('pages/BadgesPage.vue'),
-        meta: { titre: 'nav.badges', roles: ['ADMIN', 'SCOLARITE'] },
+        meta: ecran('/badges'),
       },
       {
         path: 'vod',
@@ -504,10 +474,7 @@ const routes: RouteRecordRaw[] = [
          * ouverture, il pouvait lire une vidéo dont on lui donnait le lien mais
          * n'avait aucun catalogue où la trouver.
          */
-        meta: {
-          titre: 'nav.vod',
-          roles: ['ENSEIGNANT', 'ADMIN', 'SCOLARITE', 'DIRECTION', 'ETUDIANT'],
-        },
+        meta: ecran('/vod'),
       },
       {
         path: 'vod/lecteur/:id',
@@ -522,13 +489,13 @@ const routes: RouteRecordRaw[] = [
         path: 'elections',
         name: 'elections',
         component: () => import('pages/ElectionsPage.vue'),
-        meta: { titre: 'nav.elections', roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'] },
+        meta: ecran('/elections'),
       },
       {
         path: 'elections/vote',
         name: 'elections-vote',
         component: () => import('pages/VotePage.vue'),
-        meta: { titre: 'nav.elections-vote', roles: ['ETUDIANT', 'ENSEIGNANT', 'CONTROLEUR', 'ADMIN'] },
+        meta: ecran('/elections/vote'),
       },
     ],
   },
