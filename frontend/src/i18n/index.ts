@@ -72,6 +72,8 @@ import examensFR from './fr-FR/examens';
 import examensEN from './en-US/examens';
 import formationsAdminFR from './fr-FR/formationsAdmin';
 import formationsAdminEN from './en-US/formationsAdmin';
+import fraisFR from './fr-FR/frais';
+import fraisEN from './en-US/frais';
 import formationsPubliquesFR from './fr-FR/formationsPubliques';
 import formationsPubliquesEN from './en-US/formationsPubliques';
 import inscriptionsFR from './fr-FR/inscriptions';
@@ -192,6 +194,7 @@ const frFR = {
   examens: examensFR,
   formationsAdmin: formationsAdminFR,
   formationsPubliques: formationsPubliquesFR,
+  frais: fraisFR,
   inscriptions: inscriptionsFR,
   imports: importsFR,
   inscriptionPublique: inscriptionPubliqueFR,
@@ -270,6 +273,7 @@ const enUS = {
   examens: examensEN,
   formationsAdmin: formationsAdminEN,
   formationsPubliques: formationsPubliquesEN,
+  frais: fraisEN,
   inscriptions: inscriptionsEN,
   imports: importsEN,
   inscriptionPublique: inscriptionPubliqueEN,

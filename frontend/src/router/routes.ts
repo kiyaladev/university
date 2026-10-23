@@ -275,6 +275,13 @@ const routes: RouteRecordRaw[] = [
         meta: ecran('/paiements'),
       },
       {
+        /** Grille des tarifs d'inscription (`/frais`). */
+        path: 'frais',
+        name: 'frais',
+        component: () => import('@/features/finances/pages/FraisPage.vue'),
+        meta: ecran('/frais'),
+      },
+      {
         path: 'evaluations',
         name: 'evaluations',
         component: () => import('@/features/scolarite/pages/EvaluationsPage.vue'),

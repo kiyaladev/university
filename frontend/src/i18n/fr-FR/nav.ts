@@ -30,6 +30,7 @@ export default {
   etudiants: 'Étudiants',
   inscriptions: 'Inscriptions',
   paiements: 'Paiements',
+  frais: "Frais d'inscription",
   evaluations: 'Évaluations et notes',
   notes: 'Saisie des notes',
   deliberations: 'Délibérations',

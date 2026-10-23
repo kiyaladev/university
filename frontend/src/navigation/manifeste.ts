@@ -425,6 +425,15 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     raccourciPour: { DIRECTION: 2 },
     tacheAccueilPour: { DIRECTION: 2 },
   },
+  {
+    /** Grille des tarifs d'inscription : administration et scolarité. */
+    path: '/frais',
+    titre: 'nav.frais',
+    rubrique: 'finance',
+    icone: 'request_quote',
+    ordre: 40,
+    roles: ['ADMIN', 'SCOLARITE'],
+  },
 
   // ── Campus ─────────────────────────────────────────────────────────────
   {
