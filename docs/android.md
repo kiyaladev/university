@@ -204,3 +204,8 @@ dans [biometrie.md](biometrie.md).
   remplacer.
 - Corriger le `storeFile` de `android-cle/cle.properties` pour qu'il pointe sur
   la copie locale du keystore (voir [la clé de signature](#la-clé-de-signature--la-copie-et-le-storefile)).
+
+
+## Lien de téléchargement dans l'interface
+
+Le lien « Télécharger l'application » du menu du compte est masqué tant que `APK_PUBLIE` vaut `false` dans `frontend/src/layouts/MainLayout.vue`. Après publication de `university.apk` (`scripts/apk.sh`) et vérification de `https://university.naimba.com/telechargement/university.apk`, passer la constante à `true`.

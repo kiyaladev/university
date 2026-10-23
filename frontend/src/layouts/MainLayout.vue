@@ -237,7 +237,10 @@ const enregistrement = ref(false);
 const justificatifsEnAttente = ref(0);
 const installable = ref(false);
 
-const proposerApk = computed(() => /android/i.test(navigator.userAgent) && !surAndroid());
+// Passer à `true` quand `university.apk` est publié dans /telechargement/
+// (scripts/apk.sh, docs/android.md) : sans fichier, le lien mènerait à une 404.
+const APK_PUBLIE = false;
+const proposerApk = computed(() => APK_PUBLIE && /android/i.test(navigator.userAgent) && !surAndroid());
 let invite: any = null;
 
 const { t } = useI18n();
