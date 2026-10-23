@@ -1,132 +1,121 @@
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 620px; max-width: 96vw">
-      <q-card-section class="text-h6">{{ $t('mesReclamations.actions.new') }}</q-card-section>
-
-      <q-card-section>
-        <span class="section-titre">{{ $t('reclamations.dialog.create.type') }}</span>
-        <div class="row q-col-gutter-sm">
-          <div
-            v-for="t in TYPES"
-            :key="t.value"
-            class="col-6 col-sm-4"
-          >
-            <q-btn
-              flat
-              no-caps
-              class="tuile-type full-width"
-              :class="{ 'tuile-type--active': form.type === t.value }"
-              @click="form.type = form.type === t.value ? '' : t.value"
-            >
-              <div class="column items-center">
-                <q-icon :name="t.icone" size="24px" />
-                <span class="q-mt-xs text-center">{{ t.label }}</span>
-              </div>
-            </q-btn>
-          </div>
-        </div>
-
-        <span class="section-titre">{{ $t('reclamations.dialog.create.subject') }}</span>
-        <q-input
-          v-model="form.sujet"
-          outlined
-          dense
-          counter
-          :max-length="200"
-          :rules="[(v) => (v ?? '').trim().length >= 3 || $t('reclamations.dialog.create.subjectMin')]"
-          :label="$t('reclamations.dialog.create.subjectHint')"
-          class="q-mb-md"
-        />
-
-        <span class="section-titre">{{ $t('reclamations.dialog.create.description') }}</span>
-        <q-input
-          v-model="form.description"
-          outlined
-          dense
-          type="textarea"
-          rows="4"
-          counter
-          :min-length="10"
-          :max-length="4000"
-          :rules="[
-            (v) => (v ?? '').trim().length >= 10 || $t('reclamations.dialog.create.descriptionMin'),
-            (v) => (v ?? '').trim().length <= 4000 || $t('reclamations.dialog.create.descriptionMax'),
-          ]"
-          :label="$t('reclamations.dialog.create.descriptionHint')"
-          :placeholder="$t('reclamations.dialog.create.descriptionPlaceholder')"
-          class="q-mb-md"
-        />
-
-        <span class="section-titre">{{ $t('common.fields.priority') }}</span>
-        <q-select
-          v-model="form.priorite"
-          :options="OPTIONS_PRIORITES"
-          outlined
-          dense
-          emit-value
-          map-options
-          :label="$t('common.fields.priority')"
-          :hint="$t('reclamations.dialog.create.priorityHint')"
-          class="q-mb-md"
-        />
-
-        <span class="section-titre">{{ $t('reclamations.dialog.create.department') }}</span>
-        <autocomplete-async
-          v-model="form.departementId"
-          endpoint="/departements"
-          :label-fn="(d) => `${d.code} — ${d.nom}`"
-          :label="$t('common.fields.department')"
-        />
-
-        <q-toggle
-          v-model="form.anonyme"
-          class="q-mt-md"
-          :label="$t('reclamations.dialog.create.anonymous')"
-        >
-          <q-tooltip>
-            {{ $t('reclamations.dialog.create.anonymousHint') }}
-          </q-tooltip>
-        </q-toggle>
-
-        <template v-if="form.anonyme">
-          <q-input
-            v-model="form.nomAuteur"
-            outlined
-            dense
-            :label="$t('reclamations.dialog.create.contactName')"
-            class="q-mt-sm"
-            :hint="$t('reclamations.dialog.create.contactHint')"
-          />
-          <q-input
-            v-model="form.emailAuteur"
-            outlined
-            dense
-            type="email"
-            :label="$t('reclamations.dialog.create.contactEmail')"
-            class="q-mt-sm"
-          />
-        </template>
-      </q-card-section>
-
-      <q-banner v-if="erreur" dense class="note--erreur q-mx-md q-mb-sm">
-        <template #avatar><q-icon name="warning" /></template>
-        {{ erreur }}
-      </q-banner>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" v-close-popup />
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="$t('mesReclamations.actions.new')"
+    :envoi="enregistrement"
+    :libelle-valider="$t('common.actions.send')"
+    icone-valider="send"
+    :desactive="!valide"
+    @valider="envoyer"
+  >
+    <span class="section-titre">{{ $t('reclamations.dialog.create.type') }}</span>
+    <div class="row q-col-gutter-sm">
+      <div
+        v-for="t in TYPES"
+        :key="t.value"
+        class="col-6 col-sm-4"
+      >
         <q-btn
-          color="primary"
-          unelevated
-          icon="send"
-          :label="$t('common.actions.send')"
-          :loading="enregistrement"
-          :disable="!valide"
-          @click="envoyer"
-        />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+          flat
+          no-caps
+          class="tuile-type full-width"
+          :class="{ 'tuile-type--active': form.type === t.value }"
+          @click="form.type = form.type === t.value ? '' : t.value"
+        >
+          <div class="column items-center">
+            <q-icon :name="t.icone" size="24px" />
+            <span class="q-mt-xs text-center">{{ t.label }}</span>
+          </div>
+        </q-btn>
+      </div>
+    </div>
+
+    <span class="section-titre">{{ $t('reclamations.dialog.create.subject') }}</span>
+    <q-input
+      v-model="form.sujet"
+      outlined
+      dense
+      counter
+      :max-length="200"
+      :rules="[(v) => (v ?? '').trim().length >= 3 || $t('reclamations.dialog.create.subjectMin')]"
+      :label="$t('reclamations.dialog.create.subjectHint')"
+      class="q-mb-md"
+    />
+
+    <span class="section-titre">{{ $t('reclamations.dialog.create.description') }}</span>
+    <q-input
+      v-model="form.description"
+      outlined
+      dense
+      type="textarea"
+      rows="4"
+      counter
+      :min-length="10"
+      :max-length="4000"
+      :rules="[
+        (v) => (v ?? '').trim().length >= 10 || $t('reclamations.dialog.create.descriptionMin'),
+        (v) => (v ?? '').trim().length <= 4000 || $t('reclamations.dialog.create.descriptionMax'),
+      ]"
+      :label="$t('reclamations.dialog.create.descriptionHint')"
+      :placeholder="$t('reclamations.dialog.create.descriptionPlaceholder')"
+      class="q-mb-md"
+    />
+
+    <span class="section-titre">{{ $t('common.fields.priority') }}</span>
+    <q-select
+      v-model="form.priorite"
+      :options="OPTIONS_PRIORITES"
+      outlined
+      dense
+      emit-value
+      map-options
+      :label="$t('common.fields.priority')"
+      :hint="$t('reclamations.dialog.create.priorityHint')"
+      class="q-mb-md"
+    />
+
+    <span class="section-titre">{{ $t('reclamations.dialog.create.department') }}</span>
+    <autocomplete-async
+      v-model="form.departementId"
+      endpoint="/departements"
+      :label-fn="(d) => `${d.code} — ${d.nom}`"
+      :label="$t('common.fields.department')"
+    />
+
+    <q-toggle
+      v-model="form.anonyme"
+      class="q-mt-md"
+      :label="$t('reclamations.dialog.create.anonymous')"
+    >
+      <q-tooltip>
+        {{ $t('reclamations.dialog.create.anonymousHint') }}
+      </q-tooltip>
+    </q-toggle>
+
+    <template v-if="form.anonyme">
+      <q-input
+        v-model="form.nomAuteur"
+        outlined
+        dense
+        :label="$t('reclamations.dialog.create.contactName')"
+        class="q-mt-sm"
+        :hint="$t('reclamations.dialog.create.contactHint')"
+      />
+      <q-input
+        v-model="form.emailAuteur"
+        outlined
+        dense
+        type="email"
+        :label="$t('reclamations.dialog.create.contactEmail')"
+        class="q-mt-sm"
+      />
+    </template>
+
+    <q-banner v-if="erreur" dense class="note--erreur q-mt-md">
+      <template #avatar><q-icon name="warning" /></template>
+      {{ erreur }}
+    </q-banner>
+  </dialogue-formulaire>
 </template>
 
 <script setup lang="ts">
@@ -135,16 +124,12 @@ import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
 import { api } from '../boot/axios';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { LIBELLE_PRIORITE_RECLAMATION, LIBELLE_TYPE_RECLAMATION } from '../utils/libelles';
 import type { PrioriteReclamation, Reclamation, TypeReclamation } from '../types';
 
-const props = defineProps<{
-  modelValue: boolean;
-}>();
-const emit = defineEmits<{
-  'update:modelValue': [boolean];
-  creee: [Reclamation];
-}>();
+const ouvert = defineModel<boolean>({ required: true });
+const emit = defineEmits<{ enregistre: [Reclamation] }>();
 
 const $q = useQuasar();
 const { t: $t } = useI18n();
@@ -202,9 +187,9 @@ const valide = computed(() => {
 });
 
 watch(
-  () => props.modelValue,
-  (ouvert) => {
-    if (!ouvert) return;
+  ouvert,
+  (o) => {
+    if (!o) return;
     erreur.value = '';
     form.value = {
       type: '',
@@ -238,8 +223,8 @@ async function envoyer() {
     }
     const { data } = await api.post('/reclamations', body, { silencieux: true });
     $q.notify({ type: 'positive', message: $t('reclamations.dialog.create.opened', { numero: data.numero }) });
-    emit('creee', data);
-    emit('update:modelValue', false);
+    emit('enregistre', data);
+    ouvert.value = false;
   } catch (e: any) {
     erreur.value = e.response?.data?.message ?? $t('reclamations.dialog.create.sendFailed');
   } finally {

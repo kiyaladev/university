@@ -11,6 +11,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
 import type { CoursVOD } from '../types';
+import EtatVide from '../components/EtatVide.vue';
 
 const $q = useQuasar();
 const route = useRoute();
@@ -246,21 +247,12 @@ onBeforeUnmount(() => { void signalerVue(false); });
       </q-card-section>
     </q-card>
 
-    <q-card v-else class="lecteur-carte q-mt-md q-pa-lg text-center text-grey-7">
-      <q-icon name="videocam_off" size="38px" color="grey-5" />
-      <div class="q-mt-sm">{{ $t('vodLecteur.introuvable.message') }}</div>
-      <div class="text-caption q-mt-xs">
-        {{ $t('vodLecteur.introuvable.detail') }}
-      </div>
-      <q-btn
-        flat
-        no-caps
-        color="primary"
-        icon="arrow_back"
-        :label="$t('vodLecteur.retourCatalogue')"
-        class="q-mt-sm"
-        @click="retour"
-      />
+    <q-card v-else class="lecteur-carte q-mt-md">
+      <etat-vide icone="videocam_off" :titre="$t('vodLecteur.introuvable.message')" :aide="$t('vodLecteur.introuvable.detail')">
+        <template #action>
+          <q-btn flat no-caps color="primary" icon="arrow_back" :label="$t('vodLecteur.retourCatalogue')" @click="retour" />
+        </template>
+      </etat-vide>
     </q-card>
   </q-page>
 </template>

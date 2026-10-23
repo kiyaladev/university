@@ -4,19 +4,18 @@
       <q-spinner color="primary" size="40px" />
     </div>
 
-    <div v-else-if="!suspicion" class="plaque q-pa-lg text-center text-grey-7">
-      <q-icon name="error" size="38px" color="negative" />
-      <div class="q-mt-sm">{{ $t('plagiatDetail.notFound.message') }}</div>
-      <q-btn
-        flat
-        no-caps
-        color="primary"
-        icon="arrow_back"
-        :label="$t('plagiatDetail.notFound.backToQueue')"
-        :to="{ name: 'plagiat' }"
-        class="q-mt-md"
-      />
-    </div>
+    <etat-vide v-else-if="!suspicion" icone="error" :titre="$t('plagiatDetail.notFound.message')">
+      <template #action>
+        <q-btn
+          flat
+          no-caps
+          color="primary"
+          icon="arrow_back"
+          :label="$t('plagiatDetail.notFound.backToQueue')"
+          :to="{ name: 'plagiat' }"
+        />
+      </template>
+    </etat-vide>
 
     <template v-else>
       <q-btn
@@ -29,19 +28,13 @@
         class="q-mb-md"
       />
 
-      <div class="row items-center q-col-gutter-md q-mb-md">
-        <div class="col">
-          <h1 class="page-titre">{{ $t('plagiatDetail.title') }}</h1>
-          <div class="page-sous-titre">
-            {{ $t('plagiatDetail.subtitle') }}
-          </div>
-        </div>
-        <div class="col-auto">
+      <page-header :title="$t('plagiatDetail.title')" :subtitle="$t('plagiatDetail.subtitle')">
+        <template #actions>
           <q-chip :color="couleurStatut(suspicion.statut)" text-color="white" dense size="md" :icon="iconeStatut(suspicion.statut)">
             {{ LIBELLE_STATUT_SUSPICION[suspicion.statut] }}
           </q-chip>
-        </div>
-      </div>
+        </template>
+      </page-header>
 
       <q-card flat bordered class="carte q-mb-md">
         <q-card-section class="row items-center">
@@ -53,7 +46,7 @@
           </div>
           <div class="col-auto text-right">
             <div class="text-caption text-grey-7">{{ $t('plagiatDetail.score.detectedOn') }}</div>
-            <div class="text-weight-medium">{{ new Date(suspicion.detecteLe).toLocaleString('fr-FR') }}</div>
+            <div class="text-weight-medium">{{ dateHeureLisible(suspicion.detecteLe) }}</div>
           </div>
         </q-card-section>
       </q-card>
@@ -87,7 +80,7 @@
                 </q-item>
                 <q-item>
                   <q-item-section avatar><q-icon name="event" /></q-item-section>
-                  <q-item-section>{{ dateComplete(suspicion.documentA?.createdAt) }}</q-item-section>
+                  <q-item-section>{{ dateHeureLisible(suspicion.documentA?.createdAt) }}</q-item-section>
                 </q-item>
               </q-list>
             </q-card-section>
@@ -131,7 +124,7 @@
                 </q-item>
                 <q-item>
                   <q-item-section avatar><q-icon name="event" /></q-item-section>
-                  <q-item-section>{{ dateComplete(suspicion.documentB?.createdAt) }}</q-item-section>
+                  <q-item-section>{{ dateHeureLisible(suspicion.documentB?.createdAt) }}</q-item-section>
                 </q-item>
               </q-list>
             </q-card-section>
@@ -241,7 +234,7 @@
               <q-timeline color="primary" dense>
                 <q-timeline-entry
                   :title="$t('plagiatDetail.journal.autoDetection')"
-                  :subtitle="new Date(suspicion.detecteLe).toLocaleString('fr-FR')"
+                  :subtitle="dateHeureLisible(suspicion.detecteLe)"
                   icon="policy"
                 >
                   {{ $t('plagiatDetail.journal.createdByEngine', { score: Math.round(suspicion.score) }) }}
@@ -252,7 +245,7 @@
                   :color="suspicion.statut === 'ACQUITTE' ? 'positive' : 'negative'"
                   :icon="suspicion.statut === 'ACQUITTE' ? 'thumb_down' : 'gavel'"
                   :title="suspicion.statut === 'ACQUITTE' ? $t('plagiatDetail.journal.acquittal') : $t('plagiatDetail.journal.confirmation')"
-                  :subtitle="new Date(suspicion.acquitteLe).toLocaleString('fr-FR')"
+                  :subtitle="dateHeureLisible(suspicion.acquitteLe)"
                 >
                   <i18n-t
                     v-if="suspicion.acquittePar"
@@ -288,7 +281,9 @@ import { useQuasar } from 'quasar';
 import { useRoute } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
-import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT } from '../utils/libelles';
+import { LIBELLE_STATUT_SUSPICION, LIBELLE_TYPE_DOCUMENT, dateHeureLisible } from '../utils/libelles';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import type { DocumentDepot, SuspicionPlagiat, TypeDocument } from '../types';
 
 const $q = useQuasar();
@@ -325,7 +320,6 @@ const couleurScore = (score: number) => {
 const libelleType = (type?: TypeDocument) =>
   LIBELLE_TYPE_DOCUMENT[type ?? 'AUTRE'] ?? t('plagiatDetail.documents.otherType');
 
-const dateComplete = (iso?: string) => (iso ? new Date(iso).toLocaleString('fr-FR') : '—');
 
 async function charger() {
   if (!id.value) return;

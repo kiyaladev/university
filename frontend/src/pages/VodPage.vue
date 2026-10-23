@@ -9,12 +9,16 @@ import { usePresentationListe } from '../composables/presentationListe';
  *    ses inscriptions lui ouvrent, uniquement EN_LIGNE). Toutes les actions
  *    d'écriture disparaissent — le backend les réserve à ADMIN/ENSEIGNANT.
  */
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref } from 'vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useRouter } from 'vue-router';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import VodDialog from '../components/VodDialog.vue';
@@ -51,10 +55,8 @@ const $q = useQuasar();
 const auth = useAuthStore();
 const router = useRouter();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
-const ressources = ref<RessourceCatalogue[]>([]);
-const chargement = ref(false);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
 const filtres = ref<Record<string, any>>({ recherche: '', type: null, statut: null });
 
 const modeVue = usePresentationListe();
@@ -66,6 +68,49 @@ function peutGererRessource(v: RessourceCatalogue) {
 }
 /** Un étudiant ne voit que sa collecte : ni statuts, ni actions. */
 const estEtudiant = computed(() => auth.aRole(['ETUDIANT']));
+
+/**
+ * Personnel : `/vod` paginé, filtré par le serveur. Étudiant : sa collecte
+ * (`/vod/ma-collecte`) arrive d'un bloc et se filtre ici.
+ */
+const liste = reactive(
+  useListePaginee<RessourceCatalogue>({
+    filtres,
+    syncUrl: true,
+    pageSize: estEtudiant.value ? 0 : 20,
+    clesLocales: estEtudiant.value ? true : [],
+    charger: async ({ filtres: f, ...p }) => {
+      if (estEtudiant.value) {
+        const { data } = await api.get<RessourceCatalogue[]>('/vod/ma-collecte');
+        return { data: Array.isArray(data) ? data : [] };
+      }
+      const params: Record<string, unknown> = {
+        ...pageApi(p),
+        search: texteApi(f.recherche),
+        type: f.type || undefined,
+        statut: f.statut || undefined,
+      };
+      // Un compte sans droit d'écriture ne consulte que ce qui est en ligne.
+      if (!peutEditer.value) params.statut = 'EN_LIGNE';
+      const { data } = await api.get('/vod', { params });
+      return data;
+    },
+  }),
+);
+
+/** Collecte étudiante filtrée côté client ; le personnel reçoit la page du serveur. */
+const ressources = computed<RessourceCatalogue[]>(() => {
+  if (!estEtudiant.value) return liste.lignes;
+  const terme = (filtres.value.recherche ?? '').toString().trim().toLowerCase();
+  let lignes = liste.lignes;
+  if (filtres.value.type) lignes = lignes.filter((v) => v.type === filtres.value.type);
+  if (terme) {
+    lignes = lignes.filter(
+      (v) => v.titre.toLowerCase().includes(terme) || (v.description ?? '').toLowerCase().includes(terme),
+    );
+  }
+  return lignes;
+});
 
 const OPTIONS_TYPE = optionsDepuis(LIBELLE_TYPE_RESSOURCE_VOD);
 const OPTIONS_STATUT = optionsDepuis(LIBELLE_STATUT_VOD);
@@ -140,72 +185,27 @@ async function publier(v: RessourceCatalogue) {
   try {
     await api.post(`/vod/${v.id}/publier`);
     $q.notify({ type: 'positive', message: t('vodPage.messages.published') });
-    await charger();
+    await liste.recharger();
   } catch {
     /* notifié par l'intercepteur */
   }
 }
 
-function archiver(v: RessourceCatalogue) {
-  $q.dialog({
-    title: t('vodPage.dialogs.archive.title'),
+async function archiver(v: RessourceCatalogue) {
+  const ok = await confirmer({
+    titre: t('vodPage.dialogs.archive.title'),
     message: t('vodPage.dialogs.archive.message', { title: v.titre }),
-    cancel: true,
-    ok: { color: 'negative', label: t('vodPage.dialogs.archive.confirm') },
-  }).onOk(async () => {
-    try {
-      await api.post(`/vod/${v.id}/archiver`, {});
-      $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('vodPage.dialogs.archive.confirm'),
+    danger: true,
   });
-}
-
-/** Collecte étudiante : liste complète non paginée, filtrée côté client. */
-async function chargerCollecte() {
-  const { data } = await api.get<RessourceCatalogue[]>('/vod/ma-collecte');
-  const terme = (filtres.value.recherche ?? '').toString().trim().toLowerCase();
-  let liste = Array.isArray(data) ? data : [];
-  if (filtres.value.type) liste = liste.filter((v) => v.type === filtres.value.type);
-  if (terme) {
-    liste = liste.filter(
-      (v) =>
-        v.titre.toLowerCase().includes(terme) ||
-        (v.description ?? '').toLowerCase().includes(terme),
-    );
-  }
-  ressources.value = liste;
-  pagination.value.total = liste.length;
-}
-
-async function charger() {
-  chargement.value = true;
+  if (!ok) return;
   try {
-    if (estEtudiant.value) {
-      await chargerCollecte();
-      return;
-    }
-    const params: Record<string, unknown> = {
-      page: pagination.value.page,
-      pageSize: pagination.value.pageSize,
-    };
-    if (filtres.value.recherche) params.search = filtres.value.recherche;
-    if (filtres.value.type) params.type = filtres.value.type;
-    if (filtres.value.statut) params.statut = filtres.value.statut;
-    // Un compte sans droit d'écriture ne consulte que ce qui est en ligne.
-    if (!peutEditer.value) params.statut = 'EN_LIGNE';
-    const { data } = await api.get('/vod', { params });
-    ressources.value = data.data;
-    pagination.value.total = data.total;
-  } finally {
-    chargement.value = false;
+    await api.post(`/vod/${v.id}/archiver`, {});
+    $q.notify({ type: 'warning', message: t('vodPage.messages.archived') });
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
   }
-}
-
-function reinitialiser() {
-  filtres.value = { recherche: '', type: null, statut: null };
 }
 
 function formatDuree(s?: number | null): string {
@@ -224,27 +224,16 @@ function avancement(v: RessourceCatalogue): number {
   return Math.min(100, Math.round((v.dernierePosition / v.dureeSecondes) * 100));
 }
 
-watch(filtres, () => { pagination.value.page = 1; void charger(); }, { deep: true });
-onMounted(charger);
 </script>
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('vodPage.title') }}</h1>
-        <div class="page-sous-titre">
-          <template v-if="estEtudiant">
-            {{ $t('vodPage.subtitle.student') }}
-          </template>
-          <template v-else>
-            {{ $t('vodPage.subtitle.staff') }}
-          </template>
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header
+      :title="$t('vodPage.title')"
+      :subtitle="estEtudiant ? $t('vodPage.subtitle.student') : $t('vodPage.subtitle.staff')"
+    >
+      <template v-if="peutEditer" #actions>
         <q-btn
-          v-if="peutEditer"
           unelevated
           color="primary"
           no-caps
@@ -252,14 +241,14 @@ onMounted(charger);
           :label="$t('vodPage.actions.newResource')"
           @click="ouvrirEdition()"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
       :chips="chips"
       :placeholder="$t('vodPage.filters.searchPlaceholder')"
-      @reinitialiser="reinitialiser"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #avances>
         <q-select
@@ -294,25 +283,16 @@ onMounted(charger);
       :rows="ressources"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || ressources.length > 0"
+      :hide-bottom="liste.chargement || ressources.length > 0"
     >
       <template #no-data>
-        <div class="full-width text-center text-grey-7 q-pa-lg">
-          <q-icon name="play_circle_outline" size="38px" color="grey-5" />
-          <div class="q-mt-sm">{{ messageVide }}</div>
-          <q-btn
-            v-if="peutEditer"
-            flat
-            no-caps
-            color="primary"
-            icon="add"
-            :label="$t('vodPage.actions.newResource')"
-            class="q-mt-sm"
-            @click="ouvrirEdition()"
-          />
-        </div>
+        <etat-vide icone="play_circle_outline" :titre="messageVide">
+          <template v-if="peutEditer" #action>
+            <q-btn flat no-caps color="primary" icon="add" :label="$t('vodPage.actions.newResource')" @click="ouvrirEdition()" />
+          </template>
+        </etat-vide>
       </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ LIBELLE_TYPE_RESSOURCE_VOD[p.row.type] ?? p.row.type }}</q-td>
@@ -485,34 +465,23 @@ onMounted(charger);
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !ressources.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="play_circle_outline" size="42px" color="grey-5" />
-        <div class="q-mt-sm">{{ messageVide }}</div>
-        <q-btn
-          v-if="peutEditer"
-          flat
-          no-caps
-          color="primary"
-          icon="add"
-          :label="$t('vodPage.actions.newResource')"
-          class="q-mt-sm"
-          @click="ouvrirEdition()"
-        />
-      </div>
+      <etat-vide v-if="!liste.chargement && !ressources.length" class="col-12" icone="play_circle_outline" :titre="messageVide">
+        <template v-if="peutEditer" #action>
+          <q-btn flat no-caps color="primary" icon="add" :label="$t('vodPage.actions.newResource')" @click="ouvrirEdition()" />
+        </template>
+      </etat-vide>
     </div>
 
     <!-- La collecte étudiante arrive d'un bloc : rien à paginer. -->
     <pagination-bar
       v-if="!estEtudiant && ressources.length"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="(v) => { pagination.page = v; charger(); }"
-      @update:page-size="(v) => { pagination.pageSize = v; pagination.page = 1; charger(); }"
     />
 
-    <vod-dialog v-if="peutEditer" v-model="dialogEdition" :vod="vodEnEdition" @enregistre="charger" />
+    <vod-dialog v-if="peutEditer" v-model="dialogEdition" :vod="vodEnEdition" @enregistre="liste.recharger()" />
   </q-page>
 </template>
 

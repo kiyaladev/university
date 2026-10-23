@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { api } from '../boot/axios';
 import type { CoursVOD, Enseignant, Inscription, Matiere, TypeRessourceVOD } from '../types';
 import { useAuthStore } from '../stores/auth';
@@ -11,12 +12,12 @@ const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   vod?: CoursVOD | null;
 }>();
 
-const emit = defineEmits<{ 'update:modelValue': [v: boolean]; enregistre: [v: CoursVOD] }>();
+const emit = defineEmits<{ enregistre: [v: CoursVOD] }>();
 
 const OPTIONS_TYPE = computed(() => [
   { value: 'AUDIO' as TypeRessourceVOD, label: t('vodPage.formDialog.types.audio') },
@@ -41,7 +42,7 @@ const formulaire = ref({
 const enregistrement = ref(false);
 
 watch(
-  () => props.modelValue,
+  ouvert,
   (visible) => {
     if (visible) {
       const v = props.vod;
@@ -90,108 +91,98 @@ async function soumettre() {
     const { data } = methode === 'put' ? await api.put(url, payload) : await api.post(url, payload);
     $q.notify({ type: 'positive', message: t(enEdition.value ? 'vodPage.formDialog.updated' : 'vodPage.formDialog.created') });
     emit('enregistre', data);
-    emit('update:modelValue', false);
+    ouvert.value = false;
   } catch {
     /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
 }
-
-function fermer() {
-  emit('update:modelValue', false);
-}
 </script>
 
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="width: 560px; max-width: 92vw">
-      <q-card-section class="row items-center">
-        <div class="text-h6">{{ titre }}</div>
-        <q-space />
-        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
-      </q-card-section>
-
-      <q-card-section class="q-gutter-md">
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="titre"
+    taille="m"
+    :envoi="enregistrement"
+    :libelle-valider="$t(enEdition ? 'common.actions.save' : 'common.actions.create')"
+    @valider="soumettre"
+  >
+    <div class="q-gutter-md">
+      <q-input
+        v-model="formulaire.titre"
+        :label="$t('common.fields.title')"
+        outlined
+        dense
+      />
+      <q-select
+        v-model="formulaire.type"
+        :options="OPTIONS_TYPE"
+        emit-value
+        map-options
+        :label="$t('vodPage.filters.resourceType')"
+        outlined
+        dense
+      />
+      <q-input
+        v-model="formulaire.url"
+        :label="$t('vodPage.formDialog.mediaUrl')"
+        outlined
+        dense
+        :placeholder="$t('vodPage.formDialog.mediaUrlPlaceholder')"
+      />
+      <q-input
+        v-model="formulaire.thumbnailUrl"
+        :label="$t('vodPage.formDialog.thumbnailUrl')"
+        outlined
+        dense
+        :placeholder="$t('vodPage.formDialog.thumbnailUrlPlaceholder')"
+      />
+      <autocomplete-async
+        v-model="formulaire.matiereId"
+        endpoint="/matieres"
+        :label-fn="(m: Matiere) => `${m.code} — ${m.intitule}`"
+        :label="$t('common.fields.subject')"
+      />
+      <autocomplete-async
+        v-model="formulaire.enseignantId"
+        endpoint="/enseignants"
+        :label-fn="(e: Enseignant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
+        :label="$t('common.fields.teacher')"
+      />
+      <div class="row q-col-gutter-md">
         <q-input
-          v-model="formulaire.titre"
-          :label="$t('common.fields.title')"
+          v-model.number="formulaire.dureeSecondes"
+          type="number"
+          :label="$t('vodPage.formDialog.duration')"
           outlined
           dense
+          class="col-12 col-sm-6"
         />
-        <q-select
-          v-model="formulaire.type"
-          :options="OPTIONS_TYPE"
-          emit-value
-          map-options
-          :label="$t('vodPage.filters.resourceType')"
-          outlined
-          dense
-        />
-        <q-input
-          v-model="formulaire.url"
-          :label="$t('vodPage.formDialog.mediaUrl')"
-          outlined
-          dense
-          :placeholder="$t('vodPage.formDialog.mediaUrlPlaceholder')"
-        />
-        <q-input
-          v-model="formulaire.thumbnailUrl"
-          :label="$t('vodPage.formDialog.thumbnailUrl')"
-          outlined
-          dense
-          :placeholder="$t('vodPage.formDialog.thumbnailUrlPlaceholder')"
-        />
+        <q-toggle v-model="formulaire.public" :label="$t('vodPage.formDialog.publicResource')" class="col-12 col-sm-6" />
+      </div>
+      <template v-if="!formulaire.public">
         <autocomplete-async
-          v-model="formulaire.matiereId"
-          endpoint="/matieres"
-          :label-fn="(m: Matiere) => `${m.code} — ${m.intitule}`"
-          :label="$t('common.fields.subject')"
+          v-if="auth.estAdmin"
+          v-model="formulaire.inscriptionId"
+          endpoint="/inscriptions"
+          server-search
+          :label-fn="(i: Inscription) => `${i.numero} — ${i.etudiant?.prenom ?? ''} ${i.etudiant?.nom ?? ''} — ${i.annee?.libelle ?? ''} ${i.promotion?.nom ?? ''}`"
+          :label="$t('vodPage.formDialog.privateEnrollment')"
         />
-        <autocomplete-async
-          v-model="formulaire.enseignantId"
-          endpoint="/enseignants"
-          :label-fn="(e: Enseignant) => `${e.matricule} — ${e.prenom} ${e.nom}`"
-          :label="$t('common.fields.teacher')"
-        />
-        <div class="row q-col-gutter-md">
-          <q-input
-            v-model.number="formulaire.dureeSecondes"
-            type="number"
-            :label="$t('vodPage.formDialog.duration')"
-            outlined
-            dense
-            class="col-12 col-sm-6"
-          />
-          <q-toggle v-model="formulaire.public" :label="$t('vodPage.formDialog.publicResource')" class="col-12 col-sm-6" />
+        <div class="text-caption text-grey-7">
+          {{ $t(auth.estAdmin ? 'vodPage.formDialog.privateEnrollmentHint' : 'vodPage.formDialog.privateEnrollmentManaged') }}
         </div>
-        <template v-if="!formulaire.public">
-          <autocomplete-async
-            v-if="auth.estAdmin"
-            v-model="formulaire.inscriptionId"
-            endpoint="/inscriptions"
-            server-search
-            :label-fn="(i: Inscription) => `${i.numero} — ${i.etudiant?.prenom ?? ''} ${i.etudiant?.nom ?? ''} — ${i.annee?.libelle ?? ''} ${i.promotion?.nom ?? ''}`"
-            :label="$t('vodPage.formDialog.privateEnrollment')"
-          />
-          <div class="text-caption text-grey-7">
-            {{ $t(auth.estAdmin ? 'vodPage.formDialog.privateEnrollmentHint' : 'vodPage.formDialog.privateEnrollmentManaged') }}
-          </div>
-        </template>
-        <q-input
-          v-model="formulaire.description"
-          :label="$t('common.fields.description')"
-          outlined
-          dense
-          type="textarea"
-          autogrow
-        />
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="$t(enEdition ? 'common.actions.save' : 'common.actions.create')" @click="soumettre" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </template>
+      <q-input
+        v-model="formulaire.description"
+        :label="$t('common.fields.description')"
+        outlined
+        dense
+        type="textarea"
+        autogrow
+      />
+    </div>
+  </dialogue-formulaire>
 </template>

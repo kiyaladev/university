@@ -3,7 +3,6 @@
     <section-navigation section="procedures" />
     <page-header :title="$t('mesDemandes.title')" :subtitle="$t('mesDemandes.subtitle')">
       <template #actions>
-<div class="col-auto">
         <q-btn
           unelevated
           color="primary"
@@ -12,7 +11,6 @@
           :label="$t('mesDemandes.actions.new')"
           @click="creationOuverte = true"
         />
-      </div>
       </template>
     </page-header>
 
@@ -38,7 +36,7 @@
       v-model="filtres"
       :placeholder="$t('mesDemandes.filters.searchPlaceholder')"
       :recherche="true"
-      @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #principaux>
         <q-select
@@ -52,20 +50,14 @@
           :label="$t('mesDemandes.filters.status')"
         />
       </template>
-      <template #avances>
-
-      </template>
     </filter-bar>
 
     <pagination-bar
       v-if="!rolePasBon"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="pagination.page = $event; requeter()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; requeter()"
-      @tous="chargerTout"
     />
 
     <q-table
@@ -73,18 +65,16 @@
       flat
       bordered
       class="carte"
-      :rows="demandes"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || demandes.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => ouvrirSuivi(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('mesDemandes.emptyState.description') }}
-        </div>
+        <etat-vide icone="description" :titre="$t('mesDemandes.emptyState.description')" />
       </template>
       <template #body-cell-type="p">
         <q-td :props="p">{{ libelleType(p.row.type) }}</q-td>
@@ -137,7 +127,7 @@
     </q-table>
 
     <div v-else-if="!rolePasBon" class="row q-col-gutter-md">
-      <div v-for="d in demandes" :key="d.id" class="col-12 col-md-6">
+      <div v-for="d in liste.lignes" :key="d.id" class="col-12 col-md-6">
         <q-card flat bordered class="carte">
           <q-card-section class="row items-start">
             <div class="col">
@@ -188,24 +178,26 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !demandes.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="description" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('mesDemandes.emptyState.description') }}
-        </div>
-        <q-btn
-          class="q-mt-md"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('mesDemandes.actions.new')"
-          @click="creationOuverte = true"
-        />
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="description"
+        :titre="$t('mesDemandes.emptyState.description')"
+      >
+        <template #action>
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('mesDemandes.actions.new')"
+            @click="creationOuverte = true"
+          />
+        </template>
+      </etat-vide>
     </div>
 
-    <demande-document-dialog v-model="creationOuverte" @creee="onCreee" />
+    <demande-document-dialog v-model="creationOuverte" @enregistre="liste.recharger()" />
 
     <!-- Suivi d'une demande : mêmes étapes que côté scolarité -->
     <q-dialog v-model="suiviOuvert">
@@ -283,74 +275,68 @@
     </q-dialog>
 
     <!-- Dialogue de paiement -->
-    <q-dialog v-model="paiementOuvert">
-      <q-card style="width: 480px; max-width: 95vw">
-        <q-card-section class="text-h6">{{ $t('mesDemandes.paymentDialog.title') }}</q-card-section>
-        <q-card-section v-if="demandeAPayer">
-          <div class="row q-col-gutter-md items-center q-mb-md">
-            <div class="col">
-              <div class="text-uppercase text-caption text-grey-7">{{ demandeAPayer.numero }}</div>
-              <div class="text-subtitle1 text-weight-medium">{{ libelleType(demandeAPayer.type) }}</div>
-            </div>
-            <div class="col-auto text-h5 chiffres">
-              {{ montantLisible(demandeAPayer.frais) }} {{ demandeAPayer.devise }}
-            </div>
-          </div>
-          <q-select
-            v-model="formPaiement.mode"
-            :options="OPTIONS_PAIEMENT"
-            outlined
-            dense
-            emit-value
-            map-options
-            :label="$t('mesDemandes.paymentDialog.mode')"
-            class="q-mb-md"
-          />
-          <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
-            <q-select
-              v-model="formPaiement.operateur"
-              :options="OPTIONS_OPERATEUR"
-              outlined
-              dense
-              emit-value
-              map-options
-              :label="$t('mesDemandes.paymentDialog.operator')"
-              class="q-mb-sm"
-            />
-            <q-input
-              v-model="formPaiement.telephone"
-              outlined
-              dense
-              :label="$t('mesDemandes.paymentDialog.phoneLabel')"
-              :hint="$t('mesDemandes.paymentDialog.phoneHint')"
-            />
-          </template>
-          <q-banner class="note--info q-mt-md">
-            <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
-              {{ $t('mesDemandes.paymentDialog.mobileMoneyNote') }}
-            </template>
-            <template v-else>
-              {{ $t('mesDemandes.paymentDialog.pendingNote') }}
-            </template>
-          </q-banner>
-        </q-card-section>
-        <q-banner v-if="erreurPaiement" dense class="note--erreur q-mx-md q-mb-sm">
-          <template #avatar><q-icon name="warning" /></template>
-          {{ erreurPaiement }}
-        </q-banner>
-        <q-card-actions align="right">
-          <q-btn flat :label="$t('mesDemandes.actions.cancel')" v-close-popup />
-          <q-btn
-            color="primary"
-            unelevated
-            icon="payments"
-            :label="$t('mesDemandes.actions.pay')"
-            :loading="enregistrementPaiement"
-            @click="payer"
-          />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <dialogue-formulaire
+      v-model="paiementOuvert"
+      :titre="$t('mesDemandes.paymentDialog.title')"
+      taille="s"
+      :envoi="enregistrementPaiement"
+      :libelle-valider="$t('mesDemandes.actions.pay')"
+      icone-valider="payments"
+      @valider="payer"
+    >
+    <template v-if="demandeAPayer">
+      <div class="row q-col-gutter-md items-center q-mb-md">
+        <div class="col">
+          <div class="text-uppercase text-caption text-grey-7">{{ demandeAPayer.numero }}</div>
+          <div class="text-subtitle1 text-weight-medium">{{ libelleType(demandeAPayer.type) }}</div>
+        </div>
+        <div class="col-auto text-h5 chiffres">
+          {{ montantLisible(demandeAPayer.frais) }} {{ demandeAPayer.devise }}
+        </div>
+      </div>
+      <q-select
+        v-model="formPaiement.mode"
+        :options="OPTIONS_PAIEMENT"
+        outlined
+        dense
+        emit-value
+        map-options
+        :label="$t('mesDemandes.paymentDialog.mode')"
+        class="q-mb-md"
+      />
+      <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
+        <q-select
+          v-model="formPaiement.operateur"
+          :options="OPTIONS_OPERATEUR"
+          outlined
+          dense
+          emit-value
+          map-options
+          :label="$t('mesDemandes.paymentDialog.operator')"
+          class="q-mb-sm"
+        />
+        <q-input
+          v-model="formPaiement.telephone"
+          outlined
+          dense
+          :label="$t('mesDemandes.paymentDialog.phoneLabel')"
+          :hint="$t('mesDemandes.paymentDialog.phoneHint')"
+        />
+      </template>
+      <q-banner class="note--info q-mt-md">
+        <template v-if="formPaiement.mode === 'MOBILE_MONEY'">
+          {{ $t('mesDemandes.paymentDialog.mobileMoneyNote') }}
+        </template>
+        <template v-else>
+          {{ $t('mesDemandes.paymentDialog.pendingNote') }}
+        </template>
+      </q-banner>
+    </template>
+    <q-banner v-if="erreurPaiement" dense class="note--erreur q-mt-md">
+      <template #avatar><q-icon name="warning" /></template>
+      {{ erreurPaiement }}
+    </q-banner>
+    </dialogue-formulaire>
   </q-page>
 </template>
 
@@ -358,7 +344,7 @@
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
@@ -366,6 +352,9 @@ import { useAuthStore } from '../stores/auth';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import DemandeDocumentDialog from '../components/DemandeDocumentDialog.vue';
+import DialogueFormulaire from '../components/DialogueFormulaire.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import WorkflowStepper from '../components/WorkflowStepper.vue';
 import {
   LIBELLE_STATUT_DEMANDE,
@@ -413,12 +402,30 @@ const OPTIONS_OPERATEUR = computed(() => [
   { label: t('mesDemandes.operatorOptions.telecel'), value: 'TELECEL' },
 ]);
 
-const demandes = ref<DemandeDocument[]>([]);
-const stats = ref<Record<string, number> | null>(null);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({ recherche: '', statut: null });
+const liste = reactive(
+  useListePaginee<DemandeDocument>({
+    filtres,
+    actif: () => auth.utilisateur?.role === 'ETUDIANT',
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/documents-demande/mes', {
+          params: { ...pageApi(p), statut: f.statut || undefined, search: texteApi(f.recherche) },
+        })
+        .then((r) => r.data),
+  }),
+);
 const modeVue = usePresentationListe();
-const chargement = ref(false);
+
+// Compteurs calculés sur les demandes affichées (l'API étudiante ne
+// fournit pas de tableau de bord dédié).
+const stats = computed(() => {
+  const counts: Record<string, number> = { EN_ATTENTE_PAIEMENT: 0, EN_TRAITEMENT: 0, PRETE: 0, REMISE: 0 };
+  for (const d of liste.lignes) {
+    if (counts[d.statut] != null) counts[d.statut]++;
+  }
+  return counts;
+});
 
 const creationOuverte = ref(false);
 const suiviOuvert = ref(false);
@@ -506,7 +513,7 @@ async function payer() {
         : t('mesDemandes.messages.paymentInitiatedPending'),
     });
     paiementOuvert.value = false;
-    void requeter();
+    void liste.recharger();
   } catch (e: any) {
     erreurPaiement.value = e.response?.data?.message ?? t('mesDemandes.messages.paymentFailed');
   } finally {
@@ -514,60 +521,6 @@ async function payer() {
   }
 }
 
-async function requeter() {
-  if (auth.utilisateur?.role !== 'ETUDIANT') return;
-  chargement.value = true;
-  try {
-    const f = filtres.value;
-    const { data } = await api.get('/documents-demande/mes', {
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: f.statut || undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-      },
-    });
-    demandes.value = data.data;
-    pagination.value.total = data.total;
-
-    // Compteurs calculés sur les demandes affichées (l'API étudiante ne
-    // fournit pas de tableau de bord dédié).
-    const counts: Record<string, number> = {
-      EN_ATTENTE_PAIEMENT: 0,
-      EN_TRAITEMENT: 0,
-      PRETE: 0,
-      REMISE: 0,
-    };
-    for (const d of demandes.value) {
-      if (counts[d.statut] != null) counts[d.statut]++;
-    }
-    stats.value = counts;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await requeter();
-}
-
-function onCreee() {
-  void requeter();
-}
-
-watch(
-  () => [filtres.value.recherche, filtres.value.statut],
-  () => {
-    pagination.value.page = 1;
-    void requeter();
-  },
-);
-
-onMounted(() => {
-  void requeter();
-});
 </script>
 
 <style scoped lang="scss">

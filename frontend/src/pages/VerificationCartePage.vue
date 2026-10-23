@@ -84,16 +84,16 @@
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('verificationCarte.result.table.issuedOn') }}</td>
-                  <td>{{ dateFr(resultat.carte.dateEmission) }}</td>
+                  <td>{{ dateLongue(resultat.carte.dateEmission) }}</td>
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('verificationCarte.result.table.validUntil') }}</td>
-                  <td>{{ dateFr(resultat.carte.dateValidite) }}</td>
+                  <td>{{ dateLongue(resultat.carte.dateValidite) }}</td>
                 </tr>
               </tbody>
             </table>
             <div class="text-caption text-grey-7 q-mt-md">
-              {{ $t('verificationCarte.result.verifiedAt', { date: dateHeureFr(new Date()) }) }}
+              {{ $t('verificationCarte.result.verifiedAt', { date: dateHeure(new Date()) }) }}
             </div>
           </div>
 
@@ -113,6 +113,7 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { getAppLocale } from '../boot/i18n';
 import QrScanner from '../components/QrScanner.vue';
 
 /**
@@ -189,13 +190,14 @@ async function verifier() {
   }
 }
 
-function dateFr(v?: string | null): string {
+/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
+function dateLongue(v?: string | null): string {
   if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
-function dateHeureFr(v: Date): string {
-  return v.toLocaleString('fr-FR', {
+function dateHeure(v: Date): string {
+  return v.toLocaleString(getAppLocale(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

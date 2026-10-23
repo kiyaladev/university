@@ -98,7 +98,7 @@
                 </tr>
                 <tr>
                   <td class="ta-intitule">{{ $t('verification.result.table.emiseLe') }}</td>
-                  <td>{{ dateFr(detail.emiseLe) }}</td>
+                  <td>{{ dateLongue(detail.emiseLe) }}</td>
                 </tr>
                 <tr v-if="resultat.verificationId">
                   <td class="ta-intitule">{{ $t('verification.result.table.reference') }}</td>
@@ -107,7 +107,7 @@
               </tbody>
             </table>
             <div class="text-caption text-grey-7 q-mt-md">
-              {{ $t('verification.result.checkedAt', { date: dateHeureFr(new Date()) }) }}
+              {{ $t('verification.result.checkedAt', { date: dateHeure(new Date()) }) }}
             </div>
           </div>
 
@@ -127,6 +127,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
+import { getAppLocale } from '../boot/i18n';
 import QrScanner from '../components/QrScanner.vue';
 import { LIBELLE_TYPE_ATTESTATION } from '../utils/libelles';
 
@@ -210,13 +211,14 @@ async function verifier() {
   }
 }
 
-function dateFr(v?: string | null): string {
+/** Date en toutes lettres (« 12 mars 2026 »), dans la langue choisie. */
+function dateLongue(v?: string | null): string {
   if (!v) return '—';
-  return new Date(v).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  return new Date(v).toLocaleDateString(getAppLocale(), { day: '2-digit', month: 'long', year: 'numeric' });
 }
 
-function dateHeureFr(v: Date): string {
-  return v.toLocaleString('fr-FR', {
+function dateHeure(v: Date): string {
+  return v.toLocaleString(getAppLocale(), {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

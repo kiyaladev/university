@@ -1,14 +1,8 @@
 <template>
   <q-page class="q-pa-md">
     <section-navigation section="procedures" />
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('mesReclamations.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('mesReclamations.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('mesReclamations.title')" :subtitle="$t('mesReclamations.subtitle')">
+      <template #actions>
         <q-btn
           unelevated
           color="primary"
@@ -17,8 +11,8 @@
           :label="$t('mesReclamations.actions.new')"
           @click="creationOuverte = true"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <q-banner v-if="rolePasBon" class="note--info q-mb-md">
       {{ $t('mesReclamations.banner.wrongRole', { role: auth.utilisateur?.role, registry: $t('mesReclamations.banner.goToRegistry') }) }}
@@ -42,7 +36,7 @@
       v-model="filtres"
       :placeholder="$t('mesReclamations.filters.searchPlaceholder')"
       :recherche="true"
-      @reinitialiser="filtres = { recherche: '' }; pagination.page = 1; requeter()"
+      @reinitialiser="liste.reinitialiser([])"
     >
       <template #principaux>
         <q-select
@@ -57,7 +51,6 @@
         />
       </template>
       <template #avances>
-
         <q-select
           v-model="filtres.type"
           :options="OPTIONS_TYPES"
@@ -83,13 +76,10 @@
 
     <pagination-bar
       v-if="!rolePasBon"
-      :page="pagination.page"
-      :page-size="pagination.pageSize"
-      :total="pagination.total"
+      v-model:page="liste.page"
+      v-model:page-size="liste.pageSize"
+      :total="liste.total"
       :show-all="false"
-      @update:page="pagination.page = $event; requeter()"
-      @update:page-size="pagination.pageSize = $event; pagination.page = 1; requeter()"
-      @tous="chargerTout"
     />
 
     <q-table
@@ -97,18 +87,16 @@
       flat
       bordered
       class="carte"
-      :rows="reclamations"
+      :rows="liste.lignes"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="liste.chargement"
       :rows-per-page-options="[0]"
-      :hide-bottom="chargement || reclamations.length > 0"
+      :hide-bottom="liste.chargement || liste.lignes.length > 0"
       @row-click="(_, row) => ouvrir(row)"
     >
       <template #no-data>
-        <div class="text-center q-pa-md text-grey-7">
-          {{ $t('mesReclamations.emptyState.description') }}
-        </div>
+        <etat-vide icone="forum" :titre="$t('mesReclamations.emptyState.description')" />
       </template>
       <template #body-cell-statut="p">
         <q-td :props="p">
@@ -141,7 +129,7 @@
     </q-table>
 
     <div v-else-if="!rolePasBon" class="row q-col-gutter-md">
-      <div v-for="r in reclamations" :key="r.id" class="col-12 col-md-6">
+      <div v-for="r in liste.lignes" :key="r.id" class="col-12 col-md-6">
         <q-card flat bordered class="carte reclamation-carte">
           <q-card-section class="row items-start">
             <div class="col">
@@ -177,28 +165,30 @@
           </q-card-actions>
         </q-card>
       </div>
-      <div v-if="!chargement && !reclamations.length" class="col-12 text-center text-grey-7 q-pa-lg">
-        <q-icon name="forum" size="42px" color="grey-5" />
-        <div class="q-mt-sm">
-          {{ $t('mesReclamations.emptyState.description') }}
-        </div>
-        <q-btn
-          class="q-mt-md"
-          unelevated
-          color="primary"
-          no-caps
-          icon="add"
-          :label="$t('mesReclamations.actions.new')"
-          @click="creationOuverte = true"
-        />
-      </div>
+      <etat-vide
+        v-if="!liste.chargement && !liste.lignes.length"
+        class="col-12"
+        icone="forum"
+        :titre="$t('mesReclamations.emptyState.description')"
+      >
+        <template #action>
+          <q-btn
+            unelevated
+            color="primary"
+            no-caps
+            icon="add"
+            :label="$t('mesReclamations.actions.new')"
+            @click="creationOuverte = true"
+          />
+        </template>
+      </etat-vide>
     </div>
 
-    <reclamation-dialog v-model="creationOuverte" @creee="onCreee" />
+    <reclamation-dialog v-model="creationOuverte" @enregistre="liste.recharger()" />
     <reclamation-detail-dialog
       v-model="detailOuvert"
       :reclamation="reclamationSelectionnee"
-      @change="onChange"
+      @change="liste.recharger()"
     />
   </q-page>
 </template>
@@ -206,7 +196,7 @@
 <script setup lang="ts">
 import SectionNavigation from '../components/SectionNavigation.vue';
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref } from 'vue';
 import { type QTableColumn } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { api } from '../boot/axios';
@@ -215,6 +205,9 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ReclamationDialog from '../components/ReclamationDialog.vue';
 import ReclamationDetailDialog from '../components/ReclamationDetailDialog.vue';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { pageApi, texteApi, useListePaginee } from '../composables/useListePaginee';
 import {
   LIBELLE_PRIORITE_RECLAMATION,
   LIBELLE_STATUT_RECLAMATION,
@@ -238,12 +231,36 @@ const OPTIONS_STATUTS = optionsDepuis(LIBELLE_STATUT_RECLAMATION);
 const OPTIONS_TYPES = optionsDepuis(LIBELLE_TYPE_RECLAMATION);
 const OPTIONS_PRIORITES = optionsDepuis(LIBELLE_PRIORITE_RECLAMATION);
 
-const reclamations = ref<Reclamation[]>([]);
-const stats = ref<Record<string, number> | null>(null);
-const pagination = ref({ page: 1, pageSize: 20, total: 0 });
-const filtres = ref<Record<string, any>>({ recherche: '' });
+const filtres = ref<Record<string, any>>({ recherche: '', statut: null, type: null, priorite: null });
+const liste = reactive(
+  useListePaginee<Reclamation>({
+    filtres,
+    actif: () => auth.utilisateur?.role === 'ETUDIANT',
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/reclamations/me', {
+          params: {
+            ...pageApi(p),
+            statut: f.statut || undefined,
+            type: f.type || undefined,
+            priorite: f.priorite || undefined,
+            search: texteApi(f.recherche),
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 const modeVue = usePresentationListe();
-const chargement = ref(false);
+
+// Compteurs calculés sur les réclamations affichées (l'API étudiante ne
+// fournit pas de tableau de bord dédié).
+const stats = computed(() => {
+  const counts: Record<string, number> = { OUVERTE: 0, EN_COURS: 0, EN_ATTENTE_REPONSE: 0, RESOLUE: 0 };
+  for (const r of liste.lignes) {
+    if (counts[r.statut] != null) counts[r.statut]++;
+  }
+  return counts;
+});
 const creationOuverte = ref(false);
 const detailOuvert = ref(false);
 const reclamationSelectionnee = ref<Reclamation | null>(null);
@@ -287,66 +304,6 @@ function ouvrir(r: Reclamation) {
   detailOuvert.value = true;
 }
 
-async function requeter() {
-  if (auth.utilisateur?.role !== 'ETUDIANT') return;
-  chargement.value = true;
-  try {
-    const f = filtres.value;
-    const { data } = await api.get('/reclamations/me', {
-      params: {
-        page: pagination.value.page,
-        pageSize: pagination.value.pageSize,
-        statut: f.statut || undefined,
-        type: f.type || undefined,
-        priorite: f.priorite || undefined,
-        search: (f.recherche ?? '').toString().trim() || undefined,
-      },
-    });
-    reclamations.value = data.data;
-    pagination.value.total = data.total;
-
-    // Compteurs calculés sur les réclamations affichées (l'API étudiante ne
-    // fournit pas de tableau de bord dédié).
-    const counts: Record<string, number> = {
-      OUVERTE: 0,
-      EN_COURS: 0,
-      EN_ATTENTE_REPONSE: 0,
-      RESOLUE: 0,
-    };
-    for (const r of reclamations.value) {
-      if (counts[r.statut] != null) counts[r.statut]++;
-    }
-    stats.value = counts;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  pagination.value.page = 1;
-  pagination.value.pageSize = Math.max(pagination.value.total, 200) || 200;
-  await requeter();
-}
-
-function onCreee() {
-  void requeter();
-}
-
-function onChange() {
-  void requeter();
-}
-
-watch(
-  () => [filtres.value.recherche, filtres.value.statut, filtres.value.type, filtres.value.priorite],
-  () => {
-    pagination.value.page = 1;
-    void requeter();
-  },
-);
-
-onMounted(() => {
-  void requeter();
-});
 </script>
 
 <style scoped lang="scss">

@@ -12,12 +12,16 @@ import {
   messageErreurElection,
 } from '../services/elections';
 import { useAuthStore } from '../stores/auth';
+import { useConfirmation } from '../composables/useConfirmation';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import type { CandidatElection, Election, ResultatElection } from '../types';
 import { ouvrirImpression } from '../services/impression';
 
 const $q = useQuasar();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 const elections = ref<Election[]>([]);
 const electionActive = ref<Election | null>(null);
@@ -141,22 +145,18 @@ function basculerCandidat(id: string) {
 }
 
 /** Le bulletin est définitif : on le récapitule avant de le glisser dans l'urne. */
-function confirmerVote() {
+async function confirmerVote() {
   if (!electionActive.value || !peutValider.value) return;
   const noms = candidatsAffiches.value
     .filter((c) => selections.value.includes(c.id))
     .map((c) => `${c.prenom} ${c.nom}`)
     .join(', ');
-  $q.dialog({
-    title: t('vote.confirm_dialog.title'),
+  const ok = await confirmer({
+    titre: t('vote.confirm_dialog.title'),
     message: t('vote.confirm_dialog.message', { names: noms }),
-    html: false,
-    cancel: { label: t('vote.confirm_dialog.cancel'), flat: true, noCaps: true },
-    ok: { label: t('vote.confirm_dialog.confirm'), color: 'primary', unelevated: true, noCaps: true },
-    persistent: true,
-  }).onOk(() => {
-    void validerVote();
+    ok: t('vote.confirm_dialog.confirm'),
   });
+  if (ok) await validerVote();
 }
 
 async function validerVote() {
@@ -195,14 +195,7 @@ onMounted(charger);
 
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('vote.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('vote.subtitle') }}
-        </div>
-      </div>
-    </div>
+    <page-header :title="$t('vote.title')" :subtitle="$t('vote.subtitle')" />
 
     <div v-if="chargement" class="etat-vide">
       <q-spinner color="primary" size="36px" />
@@ -217,17 +210,19 @@ onMounted(charger);
       </template>
     </q-banner>
 
-    <div v-else-if="!elections.length" class="etat-vide">
-      <q-icon name="how_to_vote" size="46px" color="grey-7" />
-      <span class="lettrage etat-vide__titre">{{ $t('vote.empty_state.title') }}</span>
-      <span class="pochoir etat-vide__mention">
-        {{ $t('vote.empty_state.message') }}
-      </span>
-      <div class="etat-vide__actions">
-        <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" :label="$t('vote.empty_state.my_space')" to="/portail" />
-        <q-btn flat no-caps icon="refresh" :label="$t('vote.empty_state.refresh')" @click="charger" />
-      </div>
-    </div>
+    <etat-vide
+      v-else-if="!elections.length"
+      icone="how_to_vote"
+      :titre="$t('vote.empty_state.title')"
+      :aide="$t('vote.empty_state.message')"
+    >
+      <template #action>
+        <div class="etat-vide__actions">
+          <q-btn v-if="estEtudiant" unelevated color="primary" no-caps icon="person" :label="$t('vote.empty_state.my_space')" to="/portail" />
+          <q-btn flat no-caps icon="refresh" :label="$t('vote.empty_state.refresh')" @click="charger" />
+        </div>
+      </template>
+    </etat-vide>
 
     <div v-else class="row q-col-gutter-md">
       <!-- Liste des scrutins -->
@@ -333,12 +328,7 @@ onMounted(charger);
                 </span>
               </div>
 
-              <div v-if="!candidatsAffiches.length" class="etat-vide">
-                <q-icon name="groups" size="36px" color="grey-7" />
-                <span class="pochoir etat-vide__mention">
-                  {{ $t('vote.detail.no_candidates') }}
-                </span>
-              </div>
+              <etat-vide v-if="!candidatsAffiches.length" icone="groups" :titre="$t('vote.detail.no_candidates')" />
 
               <q-list v-else bordered separator>
                 <q-item v-for="c in candidatsAffiches" :key="c.id" tag="label" clickable>
@@ -450,10 +440,6 @@ onMounted(charger);
 .badge--neutre { background: #f5f5f7; color: #6e6e73; }
 .badge--attention { background: #fff6ef; color: #b64400; }
 .badge--primaire { background: #e8eef5; color: #0d47a1; }
-
-.etat-vide__titre { font-size: 1.3rem; color: var(--up-encre); }
-
-.etat-vide__mention { max-width: 46ch; }
 
 .etat-vide__actions {
   display: flex;

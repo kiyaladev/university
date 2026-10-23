@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import AutocompleteAsync from './AutocompleteAsync.vue';
+import DialogueFormulaire from './DialogueFormulaire.vue';
 import { api } from '../boot/axios';
 import { OPTIONS_TYPE_ELECTION } from '../services/elections';
 import type { Departement, Election, Promotion, TypeElection } from '../types';
@@ -10,12 +11,12 @@ import type { Departement, Election, Promotion, TypeElection } from '../types';
 const $q = useQuasar();
 const { t } = useI18n();
 
+const ouvert = defineModel<boolean>({ required: true });
 const props = defineProps<{
-  modelValue: boolean;
   election?: Election | null;
 }>();
 
-const emit = defineEmits<{ 'update:modelValue': [v: boolean]; enregistre: [e: Election] }>();
+const emit = defineEmits<{ enregistre: [e: Election] }>();
 
 const OPTIONS_TYPE = OPTIONS_TYPE_ELECTION;
 
@@ -34,7 +35,7 @@ const formulaire = ref({
 const enregistrement = ref(false);
 
 watch(
-  () => props.modelValue,
+  ouvert,
   (visible) => {
     if (visible) {
       const e = props.election;
@@ -79,94 +80,84 @@ async function soumettre() {
     const { data } = await api[methode](url, payload);
     $q.notify({ type: 'positive', message: enEdition.value ? t('elections.dialogs.electionForm.saved') : t('elections.dialogs.electionForm.created') });
     emit('enregistre', data);
-    emit('update:modelValue', false);
+    ouvert.value = false;
   } catch {
     /* notifié par l'intercepteur */
   } finally {
     enregistrement.value = false;
   }
 }
-
-function fermer() {
-  emit('update:modelValue', false);
-}
 </script>
 
 <template>
-  <q-dialog :model-value="modelValue" @update:model-value="(v) => emit('update:modelValue', v)">
-    <q-card style="min-width: 540px; max-width: 92vw">
-      <q-card-section class="row items-center">
-        <div class="text-h6">{{ titre }}</div>
-        <q-space />
-        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="fermer" />
-      </q-card-section>
-
-      <q-card-section class="q-gutter-md">
-        <q-input v-model="formulaire.titre" :label="$t('common.fields.title')" outlined dense />
-        <q-select
-          v-model="formulaire.type"
-          :options="OPTIONS_TYPE"
-          emit-value
-          map-options
-          :label="$t('common.fields.type')"
-          outlined
-          dense
+  <dialogue-formulaire
+    v-model="ouvert"
+    :titre="titre"
+    taille="m"
+    :envoi="enregistrement"
+    :libelle-valider="enEdition ? $t('elections.dialogs.electionForm.save') : $t('elections.dialogs.electionForm.create')"
+    @valider="soumettre"
+  >
+    <div class="q-gutter-md">
+      <q-input v-model="formulaire.titre" :label="$t('common.fields.title')" outlined dense />
+      <q-select
+        v-model="formulaire.type"
+        :options="OPTIONS_TYPE"
+        emit-value
+        map-options
+        :label="$t('common.fields.type')"
+        outlined
+        dense
+      />
+      <div class="row q-col-gutter-md">
+        <autocomplete-async
+          v-model="formulaire.promotionId"
+          endpoint="/promotions"
+          :label-fn="(p: Promotion) => `${p.nom} (${p.filiere?.code ?? ''})`"
+          :label="$t('elections.dialogs.electionForm.promotion')"
+          class="col"
         />
-        <div class="row q-col-gutter-md">
-          <autocomplete-async
-            v-model="formulaire.promotionId"
-            endpoint="/promotions"
-            :label-fn="(p: Promotion) => `${p.nom} (${p.filiere?.code ?? ''})`"
-            :label="$t('elections.dialogs.electionForm.promotion')"
-            class="col"
-          />
-          <autocomplete-async
-            v-model="formulaire.departementId"
-            endpoint="/departements"
-            :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"
-            :label="$t('elections.dialogs.electionForm.department')"
-            class="col"
-          />
-        </div>
-        <div class="row q-col-gutter-md">
-          <q-input
-            v-model="formulaire.dateOuverture"
-            type="datetime-local"
-            :label="$t('elections.dialogs.electionForm.opening')"
-            outlined
-            dense
-            class="col"
-          />
-          <q-input
-            v-model="formulaire.dateCloture"
-            type="datetime-local"
-            :label="$t('elections.dialogs.electionForm.closing')"
-            outlined
-            dense
-            class="col"
-          />
-        </div>
+        <autocomplete-async
+          v-model="formulaire.departementId"
+          endpoint="/departements"
+          :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"
+          :label="$t('elections.dialogs.electionForm.department')"
+          class="col"
+        />
+      </div>
+      <div class="row q-col-gutter-md">
         <q-input
-          v-model.number="formulaire.nbSieges"
-          type="number"
-          :label="$t('elections.dialogs.electionForm.seats')"
+          v-model="formulaire.dateOuverture"
+          type="datetime-local"
+          :label="$t('elections.dialogs.electionForm.opening')"
           outlined
           dense
+          class="col"
         />
         <q-input
-          v-model="formulaire.description"
-          :label="$t('common.fields.description')"
+          v-model="formulaire.dateCloture"
+          type="datetime-local"
+          :label="$t('elections.dialogs.electionForm.closing')"
           outlined
           dense
-          type="textarea"
-          autogrow
+          class="col"
         />
-      </q-card-section>
-
-      <q-card-actions align="right">
-        <q-btn flat :label="$t('common.actions.cancel')" no-caps @click="fermer" />
-        <q-btn unelevated color="primary" :loading="enregistrement" no-caps :label="enEdition ? $t('elections.dialogs.electionForm.save') : $t('elections.dialogs.electionForm.create')" @click="soumettre" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
+      </div>
+      <q-input
+        v-model.number="formulaire.nbSieges"
+        type="number"
+        :label="$t('elections.dialogs.electionForm.seats')"
+        outlined
+        dense
+      />
+      <q-input
+        v-model="formulaire.description"
+        :label="$t('common.fields.description')"
+        outlined
+        dense
+        type="textarea"
+        autogrow
+      />
+    </div>
+  </dialogue-formulaire>
 </template>
