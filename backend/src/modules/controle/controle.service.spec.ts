@@ -856,3 +856,97 @@ describe('ControleService — journal de corrections', () => {
     });
   });
 });
+
+describe('ControleService — correction d’un pointage', () => {
+  const EXISTANT = {
+    id: 'c1',
+    seanceId: 'seance-1',
+    controleurId: 'user-1',
+    statut: StatutPresence.RETARD,
+    heureArrivee: '08:20',
+    heureFinReelle: '09:15',
+    dureeMinutes: 55,
+    effectifPresent: 42,
+    thematiqueTraitee: 'Chapitre 3',
+    observation: 'Retard de 10 minutes',
+    signatureBase64: 'data:image/png;base64,AAA',
+    attestation: 'SIGNATURE',
+    attestationValide: true,
+    attestationLe: new Date('2026-01-06T08:20:00.000Z'),
+    empreinteScore: null,
+    methode: 'QR_SALLE',
+    qrSalleValide: true,
+    latitude: 9.5335,
+    longitude: -13.6875,
+    distanceMetres: 12,
+    enseignantRemplacantId: null,
+    horsLigne: false,
+    horodatage: new Date('2026-01-06T08:20:00.000Z'),
+  };
+
+  function preparerCorrection(parametres: Record<string, unknown> = {}) {
+    const { service, prisma, attestation } = preparer({
+      parametres: { ATTESTATION_OBLIGATOIRE: true, EFFECTIF_OBLIGATOIRE: true, ...parametres },
+    });
+    prisma.controle.findFirst.mockResolvedValue(EXISTANT);
+    prisma.controle.findUnique.mockResolvedValue(EXISTANT);
+    return { service, prisma, attestation };
+  }
+
+  it('ne change que les champs transmis', async () => {
+    const { service, prisma } = preparerCorrection();
+
+    await service.modifier('c1', { observation: 'Retard excusé' }, CONTROLEUR, '10.0.0.1');
+
+    const data = prisma.controle.update.mock.calls[0][0].data;
+    expect(data.observation).toBe('Retard excusé');
+    expect(data.effectifPresent).toBe(42);
+    expect(data.heureArrivee).toBe('08:20');
+    expect(data.heureFinReelle).toBe('09:15');
+    expect(data.thematiqueTraitee).toBe('Chapitre 3');
+    expect(data.statut).toBe(StatutPresence.RETARD);
+  });
+
+  it('conserve l’attestation déjà donnée et n’en exige pas une nouvelle', async () => {
+    const { service, prisma, attestation } = preparerCorrection();
+
+    await service.modifier('c1', { effectifPresent: 40 }, CONTROLEUR, '10.0.0.1');
+
+    const data = prisma.controle.update.mock.calls[0][0].data;
+    expect(data.attestation).toBe('SIGNATURE');
+    expect(data.attestationValide).toBe(true);
+    expect(data.effectifPresent).toBe(40);
+    // Aucune preuve n'est demandée à l'enseignant : la correction ne rejoue pas
+    // la saisie.
+    expect(attestation.verifierPreuves).not.toHaveBeenCalled();
+  });
+
+  it('conserve la méthode de vérification et l’horodatage d’origine', async () => {
+    const { service, prisma } = preparerCorrection();
+
+    await service.modifier('c1', { observation: 'Rectificatif' }, CONTROLEUR, '10.0.0.1');
+
+    const data = prisma.controle.update.mock.calls[0][0].data;
+    expect(data.methode).toBe('QR_SALLE');
+    expect(data.qrSalleValide).toBe(true);
+    expect(data.horodatage).toEqual(EXISTANT.horodatage);
+  });
+
+  it('journalise la correction', async () => {
+    const { service, prisma } = preparerCorrection();
+
+    await service.modifier('c1', { observation: 'Rectificatif' }, CONTROLEUR, '10.0.0.1');
+
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ action: 'POINTAGE_CORRECTION' }) }),
+    );
+  });
+
+  it('refuse la correction d’un pointage fait par un autre agent', async () => {
+    const { service } = preparerCorrection();
+
+    await expect(service.modifier('c1', { observation: 'X' }, { ...CONTROLEUR, id: 'user-9' })).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+  });
+});

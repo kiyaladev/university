@@ -20,6 +20,9 @@ import bibliothequeFR from './bibliotheque';
 import citesFR from './cites';
 import structureFR from './structure';
 import helpdeskFR from './helpdesk';
+import correctionsPointagesFR from './correctionsPointages';
+import fraisFR from './frais';
+import moyensAttestationFR from './moyensAttestation';
 import affectationsFR from './affectations';
 import attestationsFR from './attestations';
 import badgesFR from './badges';
@@ -97,6 +100,9 @@ const messages = {
   cites: citesFR,
   structure: structureFR,
   helpdesk: helpdeskFR,
+  correctionsPointages: correctionsPointagesFR,
+  frais: fraisFR,
+  moyensAttestation: moyensAttestationFR,
   affectations: affectationsFR,
   attestations: attestationsFR,
   badges: badgesFR,

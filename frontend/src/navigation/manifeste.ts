@@ -166,6 +166,34 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     famille: '/suivi-presences',
   },
   {
+    /**
+     * Moyens de preuve : appareils de contrôle et moyens d'attestation des
+     * enseignants. Les `@Roles` de `/attestation` sont administration,
+     * scolarité, chef de département et direction ; les appareils en
+     * particulier restent à l'administration et à la direction.
+     */
+    path: '/moyens-attestation',
+    titre: 'nav.moyens-attestation',
+    rubrique: 'presence',
+    icone: 'fingerprint',
+    ordre: 90,
+    roles: ['ADMIN', 'DIRECTION', 'SCOLARITE', 'CHEF_DEPARTEMENT'],
+  },
+  {
+    /**
+     * Correction des pointages : les rôles qui peuvent corriger un pointage
+     * (`PUT /controles/:id`), c'est-à-dire l'administration, la direction, le
+     * chef de département et le contrôleur. La suppression, elle, est
+     * réservée à l'administration et à la direction.
+     */
+    path: '/corrections-pointages',
+    titre: 'nav.corrections-pointages',
+    rubrique: 'presence',
+    icone: 'edit_note',
+    ordre: 100,
+    roles: ['CONTROLEUR', 'ADMIN', 'DIRECTION', 'CHEF_DEPARTEMENT'],
+  },
+  {
     path: '/rapports',
     titre: 'nav.rapports',
     rubrique: 'presence',
@@ -434,6 +462,15 @@ export const MANIFESTE: readonly EntreeNavigation[] = [
     roles: ['ADMIN', 'SCOLARITE', 'DIRECTION'],
     raccourciPour: { DIRECTION: 2 },
     tacheAccueilPour: { DIRECTION: 2 },
+  },
+  {
+    /** Grille des tarifs d'inscription : administration et scolarité. */
+    path: '/frais',
+    titre: 'nav.frais',
+    rubrique: 'finance',
+    icone: 'request_quote',
+    ordre: 40,
+    roles: ['ADMIN', 'SCOLARITE'],
   },
 
   // ── Campus ─────────────────────────────────────────────────────────────
