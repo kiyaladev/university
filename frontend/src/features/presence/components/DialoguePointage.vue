@@ -201,7 +201,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
+import { parametresService, valeurParametre } from '../services/parametres';
 import { useReferentielsStore } from '@/stores/referentiels';
 import { usePointagesStore } from '@/stores/pointages';
 import { dureeLisible, maintenantHHmm, LIBELLE_STATUT_PRESENCE } from '@/shared/utils/libelles';
@@ -307,8 +307,8 @@ watch(
 
     // Règle de l'établissement : l'attestation peut être exigée ou facultative.
     try {
-      const { data } = await api.get('/parametres/pointage');
-      attestationObligatoire.value = data.find((p: any) => p.cle === 'ATTESTATION_OBLIGATOIRE')?.valeur !== 'false';
+      const regles = await parametresService.reglesPointage();
+      attestationObligatoire.value = valeurParametre(regles, 'ATTESTATION_OBLIGATOIRE', 'true') !== 'false';
     } catch {
       attestationObligatoire.value = true;
     }

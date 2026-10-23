@@ -107,7 +107,8 @@
 import { computed, ref, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
-import { api } from '@/boot/axios';
+import { affectationsService, libelleAffectation } from '../services/affectations';
+import { creneauxService } from '../services/creneaux';
 import { TYPES_COURS } from '@/shared/utils/libelles';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
@@ -170,13 +171,12 @@ function viderPeriode() {
 
 const optionsSalles = computed(() => props.salles.map((s) => ({ label: `${s.code} — ${s.nom}`, value: s.id })));
 
-const libelle = (a: Affectation) =>
-  `${a.enseignant?.nom} ${a.enseignant?.prenom} · ${a.matiere?.code} · ${a.promotion?.nom}`;
+const libelle = (a: Affectation) => libelleAffectation(a);
 
 async function filtrer(saisie: string, maj: (fn: () => void) => void) {
   if (!affectations.value.length) {
-    const { data } = await api.get('/affectations', { params: { all: '1' } });
-    affectations.value = data.data;
+    const page = await affectationsService.toutes();
+    affectations.value = page.data;
   }
   maj(() => {
     const q = saisie.toLowerCase();
@@ -214,8 +214,8 @@ async function enregistrer() {
       dateFin: form.value.dateFin || null,
     };
     // Silencieux : le motif (conflit d'emploi du temps…) s'affiche dans le bandeau.
-    if (props.creneau) await api.put(`/creneaux/${props.creneau.id}`, charge, { silencieux: true });
-    else await api.post('/creneaux', charge, { silencieux: true });
+    if (props.creneau) await creneauxService.modifier(props.creneau.id, charge);
+    else await creneauxService.creer(charge);
     $q.notify({ type: 'positive', message: t('emploiDuTemps.slotDialog.saved') });
     emit('enregistre');
     ouvert.value = false;
