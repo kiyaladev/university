@@ -490,7 +490,7 @@ model Enseignant {
   grade       String? // Assistant, Maître-assistant, Maître de conférences, Professeur
   statut      StatutEnseignant @default(PERMANENT)
   // Rémunération horaire (vacataires) — sert à l'état de paiement
-  tauxHoraire Float            @default(0)
+  tauxHoraire Decimal          @default(0) @db.Decimal(14, 2)
   actif       Boolean          @default(true)
 
   departementId String?
@@ -823,7 +823,7 @@ model Inscription {
   promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
 
   statut          StatutInscription @default(BROUILLON)
-  montantFrais    Float             @default(0) // instantané du montant à payer
+  montantFrais    Decimal           @default(0) @db.Decimal(14, 2) // instantané du montant à payer
   dateInscription DateTime?
 
   valideeParId String?
@@ -854,7 +854,7 @@ model Frais {
   annee       AnneeAcademique @relation(fields: [anneeId], references: [id], onDelete: Restrict)
   promotionId String
   promotion   Promotion       @relation(fields: [promotionId], references: [id], onDelete: Restrict)
-  montant     Float           @default(0)
+  montant     Decimal         @default(0) @db.Decimal(14, 2)
   devise      String          @default("GNF")
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
@@ -866,7 +866,7 @@ model Frais {
 model Paiement {
   id            String         @id @default(uuid())
   reference     String         @unique // "PAY-2026-00001"
-  montant       Float
+  montant       Decimal        @db.Decimal(14, 2)
   devise        String         @default("GNF")
   mode          ModePaiement   @default(MOBILE_MONEY)
   operateur     String? // "ORANGE_MONEY", "MTN_MOMO", "TELECEL"…
@@ -1067,7 +1067,7 @@ model FeuillePaie {
   dateDebut    DateTime   @db.Date
   dateFin      DateTime   @db.Date
   statut       StatutPaie @default(BROUILLON)
-  montantTotal Float      @default(0) // somme des lignes
+  montantTotal Decimal    @default(0) @db.Decimal(14, 2) // somme des lignes
 
   creeParId    String?
   creePar      User?     @relation("FeuillePaieCreePar", fields: [creeParId], references: [id], onDelete: SetNull)
@@ -1095,12 +1095,12 @@ model LignePaie {
   enseignantId String
   enseignant   Enseignant  @relation(fields: [enseignantId], references: [id], onDelete: Restrict)
 
-  tauxHoraire   Float   @default(0) // instantané au moment du calcul
+  tauxHoraire   Decimal @default(0) @db.Decimal(14, 2) // instantané au moment du calcul
   heuresReelles Int     @default(0) // heures de service fait contrôlé
   volumePrevu   Int     @default(0) // heures contractuelles de la période
-  montantBrut   Float   @default(0)
-  retenue       Float   @default(0)
-  montantNet    Float   @default(0)
+  montantBrut   Decimal @default(0) @db.Decimal(14, 2)
+  retenue       Decimal @default(0) @db.Decimal(14, 2)
+  montantNet    Decimal @default(0) @db.Decimal(14, 2)
   commentaire   String?
 
   createdAt DateTime @default(now())
@@ -1156,7 +1156,7 @@ model Chambre {
   residence   Residence        @relation(fields: [residenceId], references: [id], onDelete: Cascade)
   categorie   CategorieChambre @default(CHAMBRE_PARTAGEE)
   lits        Int              @default(2)
-  loyer       Float            @default(0)
+  loyer       Decimal          @default(0) @db.Decimal(14, 2)
   devise      String           @default("GNF")
   statut      StatutChambre    @default(LIBRE)
   createdAt   DateTime         @default(now())
@@ -1455,7 +1455,7 @@ model Formation {
   titre       String
   description String?
   categorie   String? // "Informatique", "Gestion"…
-  prix        Float           @default(0)
+  prix        Decimal         @default(0) @db.Decimal(14, 2)
   devise      String          @default("GNF")
   dureeHeures Int?
   dateDebut   DateTime?       @db.Date
@@ -1546,7 +1546,7 @@ model EquipementPatrimoine {
   salleId           String?
   salle             Salle?              @relation(fields: [salleId], references: [id], onDelete: SetNull)
   dateAcquisition   DateTime?           @db.Date
-  valeurAcquisition Float?
+  valeurAcquisition Decimal?            @db.Decimal(14, 2)
   numeroInventaire  String              @unique
   qrCode            String              @unique // "UP-PAT-<base64url>" — QR d'inventaire
   actif             Boolean             @default(true)
@@ -1579,7 +1579,7 @@ model ReparationMateriel {
   description     String
   prestataire     String?
   // Coût en GNF
-  cout            Float                @default(0)
+  cout            Decimal              @default(0) @db.Decimal(14, 2)
   statut          StatutReparation     @default(DECLARE)
   dateResolution  DateTime?
   declareParId    String?
@@ -1783,7 +1783,7 @@ model RecetteExterne {
   type        TypeRecette
   libelle     String
   description String?
-  montant     Float
+  montant     Decimal     @db.Decimal(14, 2)
   devise      String      @default("GNF")
   date        DateTime    @db.Date
   client      String?
@@ -1906,7 +1906,7 @@ model DemandeDocument {
   etudiant      Etudiant            @relation(fields: [etudiantId], references: [id], onDelete: Restrict)
   inscriptionId String?
   inscription   Inscription?        @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
-  frais         Float               @default(0)
+  frais         Decimal             @default(0) @db.Decimal(14, 2)
   devise        String              @default("GNF")
   paiementId    String?             @unique
   paiement      Paiement?           @relation("PaiementDemandeDocument", fields: [paiementId], references: [id], onDelete: SetNull)
@@ -1930,7 +1930,7 @@ model DemandeDocument {
 model TarifDemande {
   id          String              @id @default(uuid())
   type        TypeDemandeDocument @unique
-  montant     Float               @default(0)
+  montant     Decimal             @default(0) @db.Decimal(14, 2)
   devise      String              @default("GNF")
   // Délai de traitement en heures
   delaiHeures Int                 @default(72)

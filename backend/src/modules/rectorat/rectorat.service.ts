@@ -53,6 +53,7 @@ import { isoDate, round2 } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
+import { toMontant } from '../../common/finances/montant';
 
 @Injectable()
 export class RectoratService {
@@ -213,7 +214,7 @@ export class RectoratService {
     ]);
 
     return {
-      total: round2(total._sum.montantTotal ?? 0),
+      total: round2(toMontant(total._sum.montantTotal)),
       libelle: nb > 0 ? moisLabel : `${moisLabel} (aucune feuille validée)`,
     };
   }
@@ -343,7 +344,7 @@ export class RectoratService {
               code: categorie.code,
               libelle: categorie.libelle,
               nombre: g._count._all,
-              valeur: round2(g._sum.valeurAcquisition ?? 0),
+              valeur: round2(toMontant(g._sum.valeurAcquisition)),
             },
           ]
         : [];
@@ -373,7 +374,7 @@ export class RectoratService {
               code: departement.code,
               nom: departement.nom,
               nombre: g._count._all,
-              valeur: round2(g._sum.valeurAcquisition ?? 0),
+              valeur: round2(toMontant(g._sum.valeurAcquisition)),
             },
           ]
         : [];

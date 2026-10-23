@@ -5,6 +5,7 @@ import { Prisma, StatutPresence, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { dureeMinutes, isoDate, pct, round2, toDateOnly } from '../../common/utils';
+import { toMontant } from '../../common/finances/montant';
 import { RapportQueryDto } from './rapports.dto';
 
 const CONTROLE_RAPPORT_SELECT = {
@@ -371,9 +372,9 @@ export class RapportsService {
         nom: `${enseignant.nom} ${enseignant.prenom}`,
         statutEnseignant: enseignant.statut,
         departement: enseignant.departement?.nom ?? null,
-        tauxHoraire: enseignant.tauxHoraire,
+        tauxHoraire: toMontant(enseignant.tauxHoraire),
         heuresRealisees: s.heuresRealisees,
-        montant: round2(s.heuresRealisees * enseignant.tauxHoraire),
+        montant: round2(s.heuresRealisees * toMontant(enseignant.tauxHoraire)),
         seancesAssurees: s.assurees,
         absences: c.absent,
         detail: [...detail.entries()].map(([libelle, d]) => ({

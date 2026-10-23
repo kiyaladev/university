@@ -15,6 +15,7 @@ import { Paginated } from '../../common/dto';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { SERIES_NUMERO, millesimeSerie } from '../../common/numero';
+import { toMontant } from '../../common/finances/montant';
 import {
   PAIEMENT_SOURCE_INCLUDE,
   SourcePaiement,
@@ -331,7 +332,7 @@ export class PaiementsService {
             dossier.statut !== StatutInscription.VALIDEE &&
             dossier.statut !== StatutInscription.ANNULEE &&
             dossier.statut !== StatutInscription.PAYEE &&
-            (cumul._sum.montant ?? 0) >= dossier.montantFrais
+            toMontant(cumul._sum.montant) >= toMontant(dossier.montantFrais)
           ) {
             const changement = await tx.inscription.updateMany({
               where: { id: p.inscriptionId, statut: dossier.statut },
@@ -339,8 +340,12 @@ export class PaiementsService {
             });
             if (changement.count === 1) {
               inscriptionAudit = {
-                avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: dossier.montantFrais },
-                apres: { id: p.inscriptionId, statut: StatutInscription.PAYEE, montantFrais: dossier.montantFrais },
+                avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: toMontant(dossier.montantFrais) },
+                apres: {
+                  id: p.inscriptionId,
+                  statut: StatutInscription.PAYEE,
+                  montantFrais: toMontant(dossier.montantFrais),
+                },
               };
             }
           }

@@ -13,6 +13,7 @@ import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 import { JwtConfigModule } from './common/jwt-config.module';
 import { validerConfiguration } from './common/configuration';
 import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
+import { MontantInterceptor } from './common/finances/montant.interceptor';
 import { HealthController } from './common/health.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { ReferentielModule } from './modules/referentiel/referentiel.module';
@@ -110,6 +111,11 @@ import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard'
   controllers: [HealthController],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: SensitiveDataInterceptor },
+    // Déclaré APRÈS le précédent : les intercepteurs globaux s'exécutent dans
+    // l'ordre sur la requête et dans l'ordre inverse sur la réponse. Le
+    // convertisseur de montants passe donc avant le filtre de secrets, et
+    // aucun `Prisma.Decimal` n'atteint la sérialisation.
+    { provide: APP_INTERCEPTOR, useClass: MontantInterceptor },
     // Toutes les routes sont protégées par défaut : @Public() ouvre l'exception,
     // @Roles() restreint plus finement, et l'enseignant reste en lecture seule.
     { provide: APP_GUARD, useClass: JwtAuthGuard },

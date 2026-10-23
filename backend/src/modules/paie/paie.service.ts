@@ -39,6 +39,7 @@ import { round2, isoDate } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.service';
 import { CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
 import { paginer, pagine } from '../../common/pagination';
+import { toMontant } from '../../common/finances/montant';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 
 /** « Janvier 2026 » — les mois sont écrits en toutes lettres sur les états. */
@@ -121,29 +122,29 @@ export class PaieService {
   }
 
   private instantane(
-    feuille: { statut: StatutPaie; montantTotal: number },
+    feuille: { statut: StatutPaie; montantTotal: Prisma.Decimal | number },
     lignes: Array<{
       enseignantId: string;
-      tauxHoraire: number;
+      tauxHoraire: Prisma.Decimal | number;
       heuresReelles: number;
       volumePrevu: number;
-      montantBrut: number;
-      retenue: number;
-      montantNet: number;
+      montantBrut: Prisma.Decimal | number;
+      retenue: Prisma.Decimal | number;
+      montantNet: Prisma.Decimal | number;
     }>,
   ) {
     return {
       statut: feuille.statut,
-      montantTotal: feuille.montantTotal,
+      montantTotal: toMontant(feuille.montantTotal),
       lignes: lignes.map(
         ({ enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet }) => ({
           enseignantId,
-          tauxHoraire,
+          tauxHoraire: toMontant(tauxHoraire),
           heuresReelles,
           volumePrevu,
-          montantBrut,
-          retenue,
-          montantNet,
+          montantBrut: toMontant(montantBrut),
+          retenue: toMontant(retenue),
+          montantNet: toMontant(montantNet),
         }),
       ),
     };
@@ -288,7 +289,10 @@ export class PaieService {
                 select: { id: true, tauxHoraire: true },
               })
             : [];
-          const taux = new Map(fiches.map((e) => [e.id, e.tauxHoraire]));
+          // Le taux horaire est stocké en `numeric(14,2)` : on le ramène à un
+          // nombre avant tout calcul, pour que la paie reste arithmétique
+          // ordinaire et que l'instantané d'audit porte des nombres.
+          const taux = new Map(fiches.map((e) => [e.id, toMontant(e.tauxHoraire)]));
 
           const lignes = enseignantsId.map((enseignantId) => {
             const heuresReelles = Math.floor(minutes.get(enseignantId)! / 60);
@@ -439,12 +443,12 @@ export class PaieService {
         (l) => `<tr>
         <td>${echapper(l.enseignant.nom)} ${echapper(l.enseignant.prenom)}<br>
             <small>${echapper(l.enseignant.matricule)}</small></td>
-        <td class="num">${l.tauxHoraire.toLocaleString('fr-FR')}</td>
+        <td class="num">${toMontant(l.tauxHoraire).toLocaleString('fr-FR')}</td>
         <td class="num">${l.heuresReelles} h</td>
         <td class="num">${l.volumePrevu} h</td>
-        <td class="num">${l.montantBrut.toLocaleString('fr-FR')}</td>
-        <td class="num">${l.retenue.toLocaleString('fr-FR')}</td>
-        <td class="num">${l.montantNet.toLocaleString('fr-FR')}</td>
+        <td class="num">${toMontant(l.montantBrut).toLocaleString('fr-FR')}</td>
+        <td class="num">${toMontant(l.retenue).toLocaleString('fr-FR')}</td>
+        <td class="num">${toMontant(l.montantNet).toLocaleString('fr-FR')}</td>
         <td>${l.commentaire ? echapper(l.commentaire) : ''}</td>
       </tr>`,
       )
@@ -472,7 +476,7 @@ export class PaieService {
     <tbody>${lignesHtml || `<tr><td colspan="8" style="color:${P.encreDouce}">Aucune ligne — feuille non calculée</td></tr>`}</tbody>
     <tfoot><tr>
       <td colspan="6">Montant total à payer</td>
-      <td class="num">${feuille.montantTotal.toLocaleString('fr-FR')}</td>
+      <td class="num">${toMontant(feuille.montantTotal).toLocaleString('fr-FR')}</td>
       <td></td>
     </tr></tfoot>
   </table>

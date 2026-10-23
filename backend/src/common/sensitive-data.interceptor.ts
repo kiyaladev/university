@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { Role } from '@prisma/client';
 import { AuthUser } from './decorators';
 import { estChefDeDepartement } from './perimetre';
+import { estDecimal } from './finances/montant';
 
 /** Password/PIN hashes and biometric templates never belong in an HTTP response. */
 const SECRETS = new Set(['password', 'codePin', 'empreinteTemplate', 'nip', 'qrRestoToken']);
@@ -23,6 +24,10 @@ const PREUVES_PRESENCE_PRIVEES = new Set(['signatureBase64', 'latitude', 'longit
 
 export function sansSecrets(value: unknown, user?: AuthUser): unknown {
   if (Array.isArray(value)) return value.map((item) => sansSecrets(item, user));
+  // Un montant (`Prisma.Decimal`) n'est ni un secret ni un objet ordinaire :
+  // sans ce cas, `Object.entries` le décomposerait en `{ d, e, s }`. Il part
+  // en nombre — le frontend attend des nombres, pas des chaînes.
+  if (estDecimal(value)) return value.toNumber();
   if (!value || typeof value !== 'object' || value instanceof Date || Buffer.isBuffer(value)) return value;
   const record = value as Record<string, unknown>;
   const enseignant = 'tauxHoraire' in record && 'matricule' in record && 'prenom' in record;
