@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { motDePasseDemo } from '../../common/demo-accounts';
+import { optionsJwt } from '../../common/jwt-config.module';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -16,10 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      // Lu via ConfigService, et non `process.env` : la stratégie est
-      // construite par injection, donc le `.env` est déjà chargé, mais la
-      // clé reste ainsi définie à un seul endroit (JwtConfigModule).
-      secretOrKey: config.get<string>('JWT_SECRET') ?? 'change-me-in-production',
+      // Même résolution que la signature (JwtConfigModule) : secret de la
+      // configuration, repli d'exemple hors production, refus en production.
+      // Un seul endroit décide, il ne peut pas y avoir deux secrets.
+      secretOrKey: optionsJwt(config).secret,
     });
   }
 

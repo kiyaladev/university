@@ -1,14 +1,14 @@
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { JWT_SECRET_EXEMPLE } from './configuration';
+
+export { JWT_SECRET_EXEMPLE };
 
 /** Forme minimale du service de configuration, pour rester testable. */
 interface LectureConfig {
   get<T = string>(cle: string): T | undefined;
 }
-
-/** Valeur d'exemple publique (`.env.example`) : refusée en production. */
-export const JWT_SECRET_EXEMPLE = 'change-me-in-production';
 
 /**
  * Résolution du secret et de la durée de vie. Exportée pour être testée

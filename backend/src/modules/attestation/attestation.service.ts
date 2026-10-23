@@ -30,15 +30,13 @@ import {
   PreuveEmpreinteDto,
 } from './attestation.dto';
 import { t } from '../../common/i18n';
+import { BIOMETRIE_SECRET_EXEMPLE } from '../../common/configuration';
 import { toDateOnly } from '../../common/utils';
 import { journaliser } from '../../common/audit';
 import { estChefDeDepartement } from '../../common/perimetre';
 
 /** Fenêtre d'acceptation d'un résultat signé par la passerelle biométrique. */
 const FRAICHEUR_EMPREINTE_MS = 5 * 60 * 1000;
-
-/** Valeur d'exemple publique (`.env.example`) : refusée en production. */
-const BIOMETRIE_SECRET_EXEMPLE = 'change-me-biometrie';
 
 export interface PreuvesAttestation {
   signatureBase64?: string;

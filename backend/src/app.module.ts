@@ -18,6 +18,7 @@ import { DebitGuard } from './common/debit.guard';
 import { DocumentScopeGuard } from './common/document-scope.guard';
 import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 import { JwtConfigModule } from './common/jwt-config.module';
+import { validerConfiguration } from './common/configuration';
 import { SensitiveDataInterceptor } from './common/sensitive-data.interceptor';
 import { Public } from './common/decorators';
 import { AuthModule } from './modules/auth/auth.module';
@@ -67,7 +68,8 @@ export class HealthController {
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    // Variables vérifiées au démarrage : voir common/configuration.ts.
+    ConfigModule.forRoot({ isGlobal: true, validate: validerConfiguration }),
     // Secret et durée de vie des jetons, résolus après le chargement du .env.
     JwtConfigModule,
     ScheduleModule.forRoot(),
