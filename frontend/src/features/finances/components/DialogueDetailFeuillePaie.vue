@@ -76,7 +76,7 @@ import { type QTableColumn } from 'quasar';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import EtatVide from '@/shared/components/EtatVide.vue';
 import { heuresLisibles, montantLisible, dateLisible } from '@/shared/utils/libelles';
-import type { FeuillePaie } from '@/types';
+import type { FeuillePaie, LignePaie } from '@/types';
 
 const props = defineProps<{
   feuille: FeuillePaie | null;
@@ -101,37 +101,37 @@ const colonnesLignes = computed<QTableColumn[]>(() => [
   {
     name: 'taux',
     label: t('paie.table.lignesColumns.taux'),
-    field: (r: any) => montantLisible(r.tauxHoraire),
+    field: (r: LignePaie) => montantLisible(r.tauxHoraire),
     align: 'right',
   },
   {
     name: 'heures',
     label: t('paie.table.lignesColumns.heures'),
-    field: (r: any) => heuresLisibles(r.heuresReelles),
+    field: (r: LignePaie) => heuresLisibles(r.heuresReelles),
     align: 'right',
   },
   {
     name: 'volume',
     label: t('paie.table.lignesColumns.volume'),
-    field: (r: any) => heuresLisibles(r.volumePrevu),
+    field: (r: LignePaie) => heuresLisibles(r.volumePrevu),
     align: 'right',
   },
   {
     name: 'brut',
     label: t('paie.table.lignesColumns.brut'),
-    field: (r: any) => montantLisible(r.montantBrut),
+    field: (r: LignePaie) => montantLisible(r.montantBrut),
     align: 'right',
   },
   {
     name: 'retenue',
     label: t('paie.table.lignesColumns.retenue'),
-    field: (r: any) => montantLisible(r.retenue),
+    field: (r: LignePaie) => montantLisible(r.retenue),
     align: 'right',
   },
   {
     name: 'montant',
     label: t('paie.table.lignesColumns.montant'),
-    field: (r: any) => montantLisible(r.montantNet),
+    field: (r: LignePaie) => montantLisible(r.montantNet),
     align: 'right',
   },
   { name: 'commentaire', label: t('paie.table.lignesColumns.commentaire'), field: 'commentaire', align: 'left' },

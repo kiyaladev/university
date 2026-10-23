@@ -150,7 +150,7 @@ const emit = defineEmits<{
 /** Dessine le QR de la salle dans sa carte. */
 const canvasParSalle = new Map<string, HTMLCanvasElement>();
 
-function enregistrerCanvas(el: any, salle: Salle) {
+function enregistrerCanvas(el: unknown, salle: Salle) {
   if (!el) {
     canvasParSalle.delete(salle.id);
     return;

@@ -228,11 +228,14 @@ async function enrolerEmpreinte() {
 
     $q.notify({ type: 'positive', message: t('enseignants.messages.enrolementSuccess', { qualite: capture.qualite }) });
     moyens.value = { ...moyens.value!, empreinte: true, empreinteDoigt: 'index droit' };
-  } catch (e: any) {
+  } catch (e: unknown) {
     // L'erreur de l'API est notifiée par l'intercepteur ; reste la passerelle
     // locale du lecteur (fetch, JSON illisible, capture refusée).
     if (!isAxiosError(e)) {
-      $q.notify({ type: 'negative', message: e?.message ?? t('enseignants.messages.enrolementFailed') });
+      $q.notify({
+        type: 'negative',
+        message: e instanceof Error ? e.message : t('enseignants.messages.enrolementFailed'),
+      });
     }
   } finally {
     enrolementEnCours.value = false;

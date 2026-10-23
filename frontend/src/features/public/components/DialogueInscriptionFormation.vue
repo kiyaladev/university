@@ -218,8 +218,9 @@ async function deposer() {
     });
     resultat.value = data;
     etape.value = 3;
-  } catch (e: any) {
-    messageErreur.value = e?.response?.data?.message ?? t('formationsPubliques.messages.depotImpossible');
+  } catch (e: unknown) {
+    const corps = (e as { response?: { data?: { message?: string } } } | null)?.response?.data;
+    messageErreur.value = corps?.message ?? t('formationsPubliques.messages.depotImpossible');
   } finally {
     depotEnCours.value = false;
   }

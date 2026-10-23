@@ -176,7 +176,7 @@ const optionsStatuts = ['BROUILLON', 'VALIDE', 'PAYE'].map((v) => ({
 }));
 
 const chipsFiltres = computed(() => {
-  const chips: Array<{ label: string; value: any }> = [];
+  const chips: Array<{ label: string; value: string }> = [];
   if (filtres.value.statut) {
     chips.push({
       label: t('paie.filters.statutChip', { value: LIBELLE_STATUT_PAIE[filtres.value.statut] }),

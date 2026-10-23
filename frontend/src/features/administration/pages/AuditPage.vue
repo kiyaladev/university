@@ -178,8 +178,9 @@ const liste = reactive(
           action: f.action || undefined,
           ...bornesAudit(f),
         });
-      } catch (error: any) {
-        erreur.value = error.response?.data?.message || t('audit.error');
+      } catch (error: unknown) {
+        const corps = (error as { response?: { data?: { message?: string } } } | null)?.response?.data;
+        erreur.value = corps?.message || t('audit.error');
         throw error;
       }
     },

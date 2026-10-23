@@ -45,7 +45,7 @@
         v-model="form.departementId"
         endpoint="/departements"
         :label="$t('courrier.registrationDialog.department')"
-        :label-fn="(d: any) => `${d.code} — ${d.nom}`"
+        :label-fn="(d: Departement) => `${d.code} — ${d.nom}`"
       />
       <div class="text-caption text-grey-7">
         {{
@@ -149,6 +149,7 @@ import ChampDate from '@/shared/components/ChampDate.vue';
 import ChampRecherche from '@/shared/components/ChampRecherche.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { useAuthStore } from '@/stores/auth';
+import type { Departement } from '@/types';
 import { courrierService } from '../services/courrier';
 
 const ouvert = defineModel<boolean>({ required: true });

@@ -185,8 +185,8 @@ const erreur = ref('');
 const envoi = ref(false);
 const codeDemande = ref(false);
 
-function messageErreur(e: any): string {
-  const donnees = e?.response?.data?.message;
+function messageErreur(e: unknown): string {
+  const donnees = (e as { response?: { data?: { message?: string | string[] } } } | null)?.response?.data?.message;
   return Array.isArray(donnees) ? donnees.join(' · ') : (donnees ?? t('portailConnexion.messages.genericError'));
 }
 
@@ -214,7 +214,7 @@ async function demanderCode() {
     if (renvoi) {
       $q.notify({ type: 'positive', message: t('portailConnexion.messages.codeResent') });
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     erreur.value = messageErreur(e);
   } finally {
     envoi.value = false;
@@ -230,7 +230,7 @@ async function entrer() {
     // profond vers une rubrique précis perdait ici sa destination.
     const suite = route.query.suite as string | undefined;
     await router.push(suite ?? '/portail');
-  } catch (e: any) {
+  } catch (e: unknown) {
     code.value = '';
     erreur.value = messageErreur(e) || t('portailConnexion.messages.invalidCode');
   }

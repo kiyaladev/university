@@ -251,8 +251,9 @@ async function deposer() {
     });
     etape.value = 3;
     oublierBrouillon();
-  } catch (e: any) {
-    messageDepotErreur.value = e?.response?.data?.message ?? t('inscriptionPublique.form.step2.depotError');
+  } catch (e: unknown) {
+    const corps = (e as { response?: { data?: { message?: string } } } | null)?.response?.data;
+    messageDepotErreur.value = corps?.message ?? t('inscriptionPublique.form.step2.depotError');
   } finally {
     depotEnCours.value = false;
   }
