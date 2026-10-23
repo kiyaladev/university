@@ -148,6 +148,7 @@
     />
 
     <tirage-dialog v-model="dialogCreationOuvert" @enregistre="liste.recharger()" />
+    <impression-tirage-dialog v-model="dialogImpressionOuvert" :tirage-id="tirageAImprimer" @enregistre="apresImpression" />
   </q-page>
 </template>
 
@@ -164,6 +165,7 @@ import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import TirageDialog from '../components/TirageDialog.vue';
+import ImpressionTirageDialog from '../components/ImpressionTirageDialog.vue';
 import PageHeader from '../components/PageHeader.vue';
 import EtatVide from '../components/EtatVide.vue';
 import { pageApi, useListePaginee } from '../composables/useListePaginee';
@@ -180,6 +182,8 @@ const router = useRouter();
 const { t: translate } = useI18n();
 const { confirmer } = useConfirmation();
 const dialogCreationOuvert = ref(false);
+const dialogImpressionOuvert = ref(false);
+const tirageAImprimer = ref<string | null>(null);
 /** Examen sur lequel la page a été ouverte depuis la fiche d'un examen. */
 const examenFiltre = ref<Examen | null>(null);
 
@@ -349,37 +353,11 @@ async function avancer(t: Tirage) {
     stade === 'DISTRIBUE' ? 'distribuer' :
     'recuperer';
 
-  const validerEtAvancer = async (empreinteSaisie?: string) => {
-    let payload: Record<string, unknown> = { stade };
-    if (stade === 'IMPRIME') {
-      if (!empreinteSaisie) {
-        $q.notify({ type: 'negative', message: translate('tirage.messages.fingerprintRequired') });
-        return;
-      }
-      payload = {
-        empreinteSource: empreinteSaisie.trim().toLowerCase(),
-        empreinteExemplaires: t.empreinteExemplaires ?? undefined,
-      };
-    }
-    try {
-      await api.post(`/tirage/${t.id}/${routeSuivant}`, payload);
-      $q.notify({ type: 'positive', message: translate('tirage.messages.stageChanged', { stade: libelleStade(stade) }) });
-      await liste.recharger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  };
-
-  // Seule saisie préremplie de la page : `confirmerAvecSaisie` ne sait pas
-  // proposer de valeur initiale, on garde donc le dialogue Quasar ici.
+  // PROGRAMME → IMPRIME : dialogue dédié, champ d'empreinte vide (le serveur
+  // compare, l'empreinte attendue n'est pas exposée avant impression).
   if (stade === 'IMPRIME') {
-    $q.dialog({
-      title: translate('tirage.actions.confirmPrint'),
-      message: MESSAGES_TRANSITION.value.IMPRIME,
-      prompt: { model: t.empreinteSource, type: 'text' },
-      cancel: true,
-      ok: { color: 'primary', label: translate('tirage.actions.print'), unelevated: true, noCaps: true },
-    }).onOk((value: string) => validerEtAvancer(value));
+    tirageAImprimer.value = t.id;
+    dialogImpressionOuvert.value = true;
     return;
   }
 
@@ -388,7 +366,23 @@ async function avancer(t: Tirage) {
     message: MESSAGES_TRANSITION.value[stade] ?? '',
     ok: libelleStade(stade),
   });
-  if (ok) await validerEtAvancer();
+  if (!ok) return;
+  try {
+    await api.post(`/tirage/${t.id}/${routeSuivant}`, { stade });
+    notifierStade(stade);
+    await liste.recharger();
+  } catch {
+    /* notifié par l'intercepteur */
+  }
+}
+
+function notifierStade(stade: StadeTirage) {
+  $q.notify({ type: 'positive', message: translate('tirage.messages.stageChanged', { stade: libelleStade(stade) }) });
+}
+
+async function apresImpression() {
+  notifierStade('IMPRIME');
+  await liste.recharger();
 }
 
 async function annuler(t: Tirage) {
