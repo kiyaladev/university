@@ -49,6 +49,34 @@ const AUDIT_DETAILS_STRUCTURES_AUTORISES = new Set([
   'PLAGIAT_INDICE_MAJ',
 ]);
 
+/**
+ * État d'un pointage déjà consigné. Une correction repart de cet état : elle
+ * ne change que les champs transmis, et ne rejoue ni les preuves ni les
+ * contrôles de saisie.
+ */
+export interface PointageConsigne {
+  seanceId: string;
+  statut: StatutPresence;
+  heureArrivee: string | null;
+  heureFinReelle: string | null;
+  effectifPresent: number | null;
+  thematiqueTraitee: string | null;
+  observation: string | null;
+  signatureBase64: string | null;
+  attestation: AttestationMode;
+  attestationValide: boolean;
+  attestationLe: Date | null;
+  empreinteScore: number | null;
+  methode: MethodeVerification;
+  qrSalleValide: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  distanceMetres: number | null;
+  enseignantRemplacantId: string | null;
+  horsLigne: boolean;
+  horodatage: Date;
+}
+
 function retirerTexteLibreAudit(valeur: unknown): unknown {
   if (Array.isArray(valeur)) return valeur.map(retirerTexteLibreAudit);
   if (!valeur || typeof valeur !== 'object') return valeur;
@@ -336,7 +364,7 @@ export class ControleService {
     return StatutPresence.ABSENT;
   }
 
-  private async construireDonnees(dto: PointageDto, user: AuthUser) {
+  private async construireDonnees(dto: PointageDto, user: AuthUser, avant?: PointageConsigne) {
     const seance = await this.prisma.seance.findUnique({
       where: { id: dto.seanceId },
       include: {
@@ -381,18 +409,26 @@ export class ControleService {
       if (!qrValide) {
         throw new BadRequestException(t('controle.qrNeCorrespondPasALaSalle'));
       }
+    } else if (avant) {
+      // Correction : le QR a déjà été lu au moment du pointage, on n'en exige pas
+      // un nouveau — les preuves ne se rejouent pas dans une correction.
+      qrValide = avant.qrSalleValide;
     } else if (qrObligatoire && !dto.horsLigne) {
       throw new BadRequestException(t('controle.le_scan_du_qr_de_la_salle_est_obligatoire'));
     }
 
     // --- Preuve 2 : géolocalisation du contrôleur
-    let distance: number | null = null;
+    const latitude = dto.latitude ?? avant?.latitude ?? null;
+    const longitude = dto.longitude ?? avant?.longitude ?? null;
+    let distance: number | null = avant?.distanceMetres ?? null;
     if (dto.latitude != null && dto.longitude != null && seance.salle?.latitude != null) {
       distance = distanceMetres(dto.latitude, dto.longitude, seance.salle.latitude, seance.salle.longitude!);
       const geolocObligatoire = await this.parametres.booleen('GEOLOC_OBLIGATOIRE', false);
       if (geolocObligatoire && distance > (seance.salle.rayonMetres ?? 80)) {
         throw new BadRequestException(t('controle.positionHorsRayon', { distance, rayon: seance.salle.rayonMetres }));
       }
+    } else if (avant) {
+      // Correction : la position relevée au pointage est conservée.
     } else if (
       (await this.parametres.booleen('GEOLOC_OBLIGATOIRE', false)) &&
       !dto.horsLigne &&
@@ -416,22 +452,35 @@ export class ControleService {
 
     // --- Preuve 3 : l'enseignant atteste sa présence devant le contrôleur,
     // sur l'appareil de celui-ci (signature, code personnel ou empreinte)
+    const preuveFournie = !!(dto.signatureBase64 || dto.codePinEnseignant || dto.empreinte);
     const attestation = present
-      ? await this.attestation.verifierPreuves(seance.affectation.enseignantId, {
-          signatureBase64: dto.signatureBase64,
-          codePinEnseignant: dto.codePinEnseignant,
-          empreinte: dto.empreinte,
-        })
+      ? preuveFournie
+        ? await this.attestation.verifierPreuves(seance.affectation.enseignantId, {
+            signatureBase64: dto.signatureBase64,
+            codePinEnseignant: dto.codePinEnseignant,
+            empreinte: dto.empreinte,
+          })
+        : avant
+          ? // Correction : l'enseignant avait déjà attested sa présence, cette
+            // attestation reste valable. La redemander l'aurait impossible.
+            { mode: avant.attestation, valide: avant.attestationValide, score: avant.empreinteScore }
+          : await this.attestation.verifierPreuves(seance.affectation.enseignantId, {
+              signatureBase64: undefined,
+              codePinEnseignant: undefined,
+              empreinte: undefined,
+            })
       : { mode: AttestationMode.AUCUNE, valide: false };
 
-    if (present && !attestation.valide && (await this.parametres.booleen('ATTESTATION_OBLIGATOIRE', true))) {
+    // Les contrôles de saisie valent pour un pointage : une correction porte
+    // sur des valeurs déjà constatées, elle ne rejoue pas la saisie.
+    if (present && !avant && !attestation.valide && (await this.parametres.booleen('ATTESTATION_OBLIGATOIRE', true))) {
       throw new BadRequestException(t('controle.l_enseignant_doit_attester_sa_presence_devant_vous_signature'));
     }
 
-    if (present && !dto.signatureBase64 && (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))) {
+    if (present && !avant && !dto.signatureBase64 && (await this.parametres.booleen('SIGNATURE_OBLIGATOIRE', false))) {
       throw new BadRequestException(t('controle.la_signature_manuscrite_de_l_enseignant_est_obligatoire'));
     }
-    if (present && dto.effectifPresent == null && (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))) {
+    if (present && !avant && dto.effectifPresent == null && (await this.parametres.booleen('EFFECTIF_OBLIGATOIRE', true))) {
       throw new BadRequestException(t('controle.le_nombre_d_etudiants_presents_est_obligatoire'));
     }
 
@@ -440,13 +489,18 @@ export class ControleService {
     if (!duree && present) duree = dureeMinutes(seance.heureDebut, seance.heureFin);
     if (!present) duree = 0;
 
-    const methode: MethodeVerification = qrValide
-      ? MethodeVerification.QR_SALLE
-      : distance != null
-        ? MethodeVerification.GEOLOCALISATION
-        : dto.signatureBase64
-          ? MethodeVerification.SIGNATURE
-          : MethodeVerification.MANUEL;
+    // La méthode de vérification ne change que si la correction apporte une
+    // nouvelle preuve ; sinon, on garde celle du pointage d'origine.
+    const methode: MethodeVerification =
+      avant && !preuveFournie && !dto.qrToken && dto.latitude == null
+        ? avant.methode
+        : qrValide
+          ? MethodeVerification.QR_SALLE
+          : distance != null
+            ? MethodeVerification.GEOLOCALISATION
+            : dto.signatureBase64
+              ? MethodeVerification.SIGNATURE
+              : MethodeVerification.MANUEL;
 
     return {
       seance,
@@ -458,7 +512,9 @@ export class ControleService {
         statut,
         attestation: attestation.mode,
         attestationValide: attestation.valide,
-        attestationLe: attestation.valide ? new Date() : null,
+        // Correction sans nouvelle preuve : l'attestation reste datée de son
+        // enregistrement, pas du jour de la correction.
+        attestationLe: attestation.valide ? (preuveFournie ? new Date() : (avant?.attestationLe ?? new Date())) : null,
         empreinteScore: attestation.score ?? null,
         heureArrivee: dto.heureArrivee ?? null,
         heureFinReelle: dto.heureFinReelle ?? null,
@@ -467,21 +523,21 @@ export class ControleService {
         thematiqueTraitee: dto.thematiqueTraitee ?? null,
         observation: dto.observation ?? null,
         methode,
-        latitude: dto.latitude ?? null,
-        longitude: dto.longitude ?? null,
+        latitude,
+        longitude,
         distanceMetres: distance,
-        signatureBase64: dto.signatureBase64 ?? null,
+        signatureBase64: dto.signatureBase64 ?? avant?.signatureBase64 ?? null,
         qrSalleValide: qrValide,
         enseignantRemplacantId: dto.enseignantRemplacantId ?? null,
         horsLigne: dto.horsLigne ?? false,
-        horodatage: dto.horodatage ? new Date(dto.horodatage) : new Date(),
+        horodatage: dto.horodatage ? new Date(dto.horodatage) : (avant?.horodatage ?? new Date()),
       },
     };
   }
 
   /** Enregistre (ou corrige) le pointage d'une séance. */
-  async pointer(dto: PointageDto, user: AuthUser, ip?: string) {
-    const { seance, donnees, presente } = await this.construireDonnees(dto, user);
+  async pointer(dto: PointageDto, user: AuthUser, ip?: string, avant?: PointageConsigne) {
+    const { seance, donnees, presente } = await this.construireDonnees(dto, user, avant);
 
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, seance.anneeId);
@@ -541,7 +597,28 @@ export class ControleService {
     if (existant.controleurId !== user.id && ![Role.ADMIN, Role.DIRECTION].includes(user.role as any)) {
       throw new ForbiddenException(t('controle.seul_l_auteur_du_controle_ou_la_direction_peut_le_corriger'));
     }
-    return this.pointer({ ...dto, seanceId: existant.seanceId } as PointageDto, user, ip);
+    // L'état complet est relu : la correction repart de ce qui a été consigné,
+    // pas de ce que l'utilisateur voit (un contrôleur n'a pas tous les champs).
+    const avant = await this.prisma.controle.findUnique({ where: { id } });
+    if (!avant) throw new NotFoundException(t('controle.controle_introuvable'));
+
+    // Une correction ne change que les champs transmis : sans ce rapport avec
+    // l'état consigné, le recalcul du pointage remettrait à vide tout champ
+    // omis (effectif, attestation, horaires). Les preuves ne sont pas
+    // reportées ici : elles restent celles du pointage d'origine.
+    const rapport: PointageDto = {
+      seanceId: avant.seanceId,
+      statut: dto.statut ?? avant.statut,
+      heureArrivee: dto.heureArrivee ?? avant.heureArrivee ?? undefined,
+      heureFinReelle: dto.heureFinReelle ?? avant.heureFinReelle ?? undefined,
+      effectifPresent: dto.effectifPresent ?? avant.effectifPresent ?? undefined,
+      thematiqueTraitee: dto.thematiqueTraitee ?? avant.thematiqueTraitee ?? undefined,
+      observation: dto.observation ?? avant.observation ?? undefined,
+      enseignantRemplacantId: dto.enseignantRemplacantId ?? avant.enseignantRemplacantId ?? undefined,
+      horsLigne: dto.horsLigne ?? avant.horsLigne,
+      horodatage: dto.horodatage ?? avant.horodatage.toISOString(),
+    };
+    return this.pointer(rapport, user, ip, avant);
   }
 
   /**
