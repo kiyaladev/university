@@ -16,7 +16,7 @@ import { t } from './i18n';
  * Traduit les erreurs Prisma que le code métier ne traite pas explicitement.
  *
  * Sans ce filtre, une `update({ where: { id } })` sur une ligne supprimée entre
- * -temps renvoie une 500 illisible à l'utilisateur, alors que la situation
+ *-temps renvoie une 500 illisible à l'utilisateur, alors que la situation
  * demande un 404. C'est le cas par défaut pour les services qui n'utilisent pas
  * CrudService, qui vérifie déjà l'existence avant d'écrire.
  */
