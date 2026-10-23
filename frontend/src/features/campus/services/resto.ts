@@ -65,12 +65,10 @@ export const restoService = {
     creer<ResultatRecharge>(`/resto/portefeuilles/${id}/recharger`, corps),
 
   // -------------------------------------------------------------- transactions
-  listeConsommations: (params: ParametresFlux = {}) =>
-    lister<ConsommationResto>('/resto/consommations', { ...params }),
+  listeConsommations: (params: ParametresFlux = {}) => lister<ConsommationResto>('/resto/consommations', { ...params }),
 
   listeRecharges: (params: ParametresFlux = {}) => lister<RechargeResto>('/resto/recharges', { ...params }),
 
   /** Annulation d'une consommation (remboursement au guichet). */
-  annulerConsommation: (id: string, motif: string) =>
-    creer<void>(`/resto/consommations/${id}/annuler`, { motif }),
+  annulerConsommation: (id: string, motif: string) => creer<void>(`/resto/consommations/${id}/annuler`, { motif }),
 };

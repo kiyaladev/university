@@ -1,11 +1,6 @@
 <template>
   <div>
-    <barre-filtres
-      v-model="filtres"
-      :chips="chips"
-      :recherche="false"
-      @reinitialiser="emit('reinitialiser')"
-    >
+    <barre-filtres v-model="filtres" :chips="chips" :recherche="false" @reinitialiser="emit('reinitialiser')">
       <template #avances>
         <q-select
           v-model="filtres.anneeId"

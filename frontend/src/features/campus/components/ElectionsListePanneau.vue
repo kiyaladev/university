@@ -252,7 +252,13 @@
       />
     </template>
 
-    <barre-pagination v-if="lignes.length" v-model:page="page" v-model:page-size="pageSize" :total="total" :show-all="false" />
+    <barre-pagination
+      v-if="lignes.length"
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      :total="total"
+      :show-all="false"
+    />
   </div>
 </template>
 

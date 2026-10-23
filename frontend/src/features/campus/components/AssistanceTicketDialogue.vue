@@ -28,7 +28,11 @@
           <div class="col-6">
             <span class="section-titre">{{ $t('helpdesk.ticketDetailDialog.declarant') }}</span>
             <div>
-              {{ ticket.utilisateur ? `${ticket.utilisateur.prenom} ${ticket.utilisateur.nom}` : (ticket.declarantNom ?? '—') }}
+              {{
+                ticket.utilisateur
+                  ? `${ticket.utilisateur.prenom} ${ticket.utilisateur.nom}`
+                  : (ticket.declarantNom ?? '—')
+              }}
             </div>
           </div>
         </div>

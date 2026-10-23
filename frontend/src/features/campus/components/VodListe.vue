@@ -283,12 +283,7 @@ function avancement(v: RessourceCatalogue): number {
         </q-card-actions>
       </q-card>
     </div>
-    <etat-vide
-      v-if="!chargement && !ressources.length"
-      class="col-12"
-      icone="play_circle_outline"
-      :titre="messageVide"
-    >
+    <etat-vide v-if="!chargement && !ressources.length" class="col-12" icone="play_circle_outline" :titre="messageVide">
       <template v-if="peutEditer" #action>
         <q-btn
           flat

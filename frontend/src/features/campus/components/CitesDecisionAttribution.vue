@@ -61,7 +61,11 @@
           unelevated
           :color="statut === 'ACCORDE' ? 'positive' : 'negative'"
           :icon="statut === 'ACCORDE' ? 'check' : 'close'"
-          :label="statut === 'ACCORDE' ? $t('cites.attributions.dialogs.decision.accorder') : $t('cites.attributions.dialogs.decision.refuser')"
+          :label="
+            statut === 'ACCORDE'
+              ? $t('cites.attributions.dialogs.decision.accorder')
+              : $t('cites.attributions.dialogs.decision.refuser')
+          "
           :loading="enCours"
           @click="emit('confirme', statut, motif || undefined)"
         />

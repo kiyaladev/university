@@ -38,7 +38,7 @@ describe('campus/services/vod (écrans catalogue et lecteur)', () => {
     expect(resultat).toEqual({ data: [{ id: 'v1' }], total: 1 });
   });
 
-  it('renvoie la collecte de l\'étudiant telle quelle', async () => {
+  it("renvoie la collecte de l'étudiant telle quelle", async () => {
     const collecte = [{ id: 'v1', titre: 'Cours' }];
     api.get.mockResolvedValue({ data: collecte });
 
@@ -46,7 +46,7 @@ describe('campus/services/vod (écrans catalogue et lecteur)', () => {
     expect(api.get).toHaveBeenCalledWith('/vod/ma-collecte', { params: undefined });
   });
 
-  it('lit la fiche d\'une ressource pour le lecteur', async () => {
+  it("lit la fiche d'une ressource pour le lecteur", async () => {
     api.get.mockResolvedValue({ data: { id: 'v1', titre: 'Cours', dureeSecondes: 600 } });
 
     const resultat = await vodService.detail('v1');

@@ -27,11 +27,7 @@ vi.mock('../../src/boot/i18n', () => ({
 
 import { bibliothequeService, normaliserDocuments } from '../../src/shared/services/bibliotheque';
 import { formationsService } from '../../src/shared/services/formations';
-import {
-  couleurPlagiat,
-  iconePlagiat,
-  surligner,
-} from '../../src/features/campus/components/BibliothequeAffiche';
+import { couleurPlagiat, iconePlagiat, surligner } from '../../src/features/campus/components/BibliothequeAffiche';
 import { datesLisible } from '../../src/features/campus/components/FormationAffiche';
 
 beforeEach(() => {
@@ -157,7 +153,7 @@ describe('shared/services/formations', () => {
   });
 });
 
-describe('campus/components — aides d\'affichage', () => {
+describe("campus/components — aides d'affichage", () => {
   it('colorie le score de plagiat selon son seuil', () => {
     expect(couleurPlagiat(85)).toBe('negative');
     expect(couleurPlagiat(60)).toBe('warning');
@@ -173,11 +169,9 @@ describe('campus/components — aides d\'affichage', () => {
     expect(surligner('Mémoire de fin', '  ')).toBe('Mémoire de fin');
   });
 
-  it('formate la période d\'une formation', () => {
+  it("formate la période d'une formation", () => {
     expect(datesLisible({ dateDebut: null } as never)).toBe('');
     expect(datesLisible({ dateDebut: '2026-08-12' } as never)).toBe('12/08/2026');
-    expect(datesLisible({ dateDebut: '2026-08-12', dateFin: '2026-08-20' } as never)).toBe(
-      '12/08/2026 → 20/08/2026',
-    );
+    expect(datesLisible({ dateDebut: '2026-08-12', dateFin: '2026-08-20' } as never)).toBe('12/08/2026 → 20/08/2026');
   });
 });

@@ -30,9 +30,7 @@
 
     <template #body-cell-paiement="r">
       <q-td :props="r">
-        <div class="chiffres">
-          {{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? DEVISE }}
-        </div>
+        <div class="chiffres">{{ montantLisible(r.row.paiement?.montant) }} {{ r.row.paiement?.devise ?? DEVISE }}</div>
         <div class="text-caption text-grey-7">{{ r.row.paiement?.reference ?? '—' }}</div>
       </q-td>
     </template>

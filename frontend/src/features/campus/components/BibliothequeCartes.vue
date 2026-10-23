@@ -3,7 +3,13 @@
     <div v-for="doc in documents" :key="doc.id" class="col-12 col-sm-6 col-lg-4">
       <q-card class="carte carte-document q-pa-md full-height">
         <div class="row items-start no-wrap">
-          <q-chip dense outline color="primary" class="q-ma-none" :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type" />
+          <q-chip
+            dense
+            outline
+            color="primary"
+            class="q-ma-none"
+            :label="LIBELLE_TYPE_DOCUMENT[doc.type] ?? doc.type"
+          />
           <q-space />
           <q-icon v-if="!doc.public" name="visibility_off" color="orange" size="20px">
             <q-tooltip>{{ $t('bibliotheque.card.unpublished') }}</q-tooltip>

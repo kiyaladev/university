@@ -33,15 +33,17 @@
     </template>
     <template #body-cell-taille="p">
       <q-td :props="p" class="text-right">
-        <span v-if="p.row.tailleKo">{{
-          $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) })
-        }}</span>
+        <span v-if="p.row.tailleKo">{{ $t('common.units.megabytes', { n: (p.row.tailleKo / 1024).toFixed(1) }) }}</span>
         <span v-else>{{ $t('common.format.emptyValue') }}</span>
       </q-td>
     </template>
     <template #body-cell-publie="p">
       <q-td :props="p">
-        <q-icon :name="p.row.public ? 'visibility' : 'visibility_off'" :color="p.row.public ? 'positive' : 'orange'" size="20px">
+        <q-icon
+          :name="p.row.public ? 'visibility' : 'visibility_off'"
+          :color="p.row.public ? 'positive' : 'orange'"
+          size="20px"
+        >
           <q-tooltip>{{
             p.row.public ? $t('bibliotheque.status.published') : $t('bibliotheque.status.unpublished')
           }}</q-tooltip>

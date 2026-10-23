@@ -130,16 +130,12 @@ describe('campus/services/assistance', () => {
     expect(api.post).toHaveBeenCalledWith('/tickets/t1/statut', { statut: 'RESOLU' }, {});
   });
 
-  it('ouvre un ticket en silence (l\'intercepteur notifie, la page aussi)', async () => {
+  it("ouvre un ticket en silence (l'intercepteur notifie, la page aussi)", async () => {
     api.post.mockResolvedValue({ data: { id: 't2', numero: 'T-2' } });
 
     await ticketsService.creer({ categorie: 'Reseau', description: 'Pas de réseau' });
 
-    expect(api.post).toHaveBeenCalledWith(
-      '/tickets',
-      { categorie: 'Reseau', description: 'Pas de réseau' },
-      {},
-    );
+    expect(api.post).toHaveBeenCalledWith('/tickets', { categorie: 'Reseau', description: 'Pas de réseau' }, {});
   });
 });
 
@@ -196,7 +192,7 @@ describe('campus/services/resto', () => {
 });
 
 describe('campus/services/reservations', () => {
-  it('charge le calendrier d\'une période', async () => {
+  it("charge le calendrier d'une période", async () => {
     api.get.mockResolvedValue({ data: { jours: [], salles: [] } });
 
     await reservationsService.calendrier({ dateDebut: '2026-01-01', dateFin: '2026-01-31', salleId: 's1' });
@@ -238,7 +234,7 @@ describe('campus/services/reservations', () => {
 });
 
 describe('campus/services/vod', () => {
-  it('liste le catalogue et la collecte de l\'étudiant', async () => {
+  it("liste le catalogue et la collecte de l'étudiant", async () => {
     api.get.mockResolvedValue({ data: { data: [], total: 0 } });
 
     await vodService.liste({ page: 1, pageSize: 20, statut: 'EN_LIGNE' });
@@ -352,11 +348,7 @@ describe('campus/services/elections', () => {
     await electionsService.creerCandidat('e1', { nom: 'Traoré', prenom: 'Awa', ordre: 1 });
     await electionsService.supprimerCandidat('e1', 'c1');
 
-    expect(api.post).toHaveBeenCalledWith(
-      '/elections/e1/candidats',
-      { nom: 'Traoré', prenom: 'Awa', ordre: 1 },
-      {},
-    );
+    expect(api.post).toHaveBeenCalledWith('/elections/e1/candidats', { nom: 'Traoré', prenom: 'Awa', ordre: 1 }, {});
     expect(api.delete).toHaveBeenCalledWith('/elections/e1/candidats/c1', {});
   });
 });

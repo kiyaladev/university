@@ -29,13 +29,7 @@
           outlined
           :label="$t('cites.residences.filters.etat')"
         />
-        <q-input
-          v-model="filtres.ville"
-          dense
-          outlined
-          :label="$t('cites.residences.filters.ville')"
-          clearable
-        />
+        <q-input v-model="filtres.ville" dense outlined :label="$t('cites.residences.filters.ville')" clearable />
       </template>
     </barre-filtres>
 
@@ -139,7 +133,9 @@
             </div>
             <div class="row items-center">
               <q-icon name="bed" size="16px" class="q-mr-sm text-grey-6" />
-              <span class="text-caption">{{ $t('cites.residences.card.capacite', { n: nombreLisible(r.capacite) }) }}</span>
+              <span class="text-caption">{{
+                $t('cites.residences.card.capacite', { n: nombreLisible(r.capacite) })
+              }}</span>
             </div>
             <div class="row items-center q-gutter-xs">
               <q-icon name="meeting_room" size="16px" class="q-mr-sm text-grey-6" />

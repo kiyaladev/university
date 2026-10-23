@@ -87,8 +87,7 @@ export const citesService = {
 
   creerResidence: (corps: CorpsResidence) => creer<Residence>('/residences', corps),
 
-  modifierResidence: (id: string, corps: Partial<CorpsResidence>) =>
-    modifier<Residence>(`/residences/${id}`, corps),
+  modifierResidence: (id: string, corps: Partial<CorpsResidence>) => modifier<Residence>(`/residences/${id}`, corps),
 
   supprimerResidence: (id: string) => supprimer(`/residences/${id}`),
 

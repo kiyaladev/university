@@ -4,7 +4,14 @@
       <q-card-section class="row items-center">
         <div class="text-h6">{{ $t('elections.dialogs.results.title', { title: election?.titre }) }}</div>
         <q-space />
-        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="emit('update:modelValue', false)" />
+        <q-btn
+          flat
+          round
+          dense
+          icon="close"
+          :aria-label="$t('common.actions.close')"
+          @click="emit('update:modelValue', false)"
+        />
       </q-card-section>
 
       <q-card-section v-if="chargement" class="etat-vide">

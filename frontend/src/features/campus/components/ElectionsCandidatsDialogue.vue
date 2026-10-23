@@ -4,7 +4,14 @@
       <q-card-section class="row items-center">
         <div class="text-h6">{{ $t('elections.dialogs.candidates.title', { title: election?.titre }) }}</div>
         <q-space />
-        <q-btn flat round dense icon="close" :aria-label="$t('common.actions.close')" @click="emit('update:modelValue', false)" />
+        <q-btn
+          flat
+          round
+          dense
+          icon="close"
+          :aria-label="$t('common.actions.close')"
+          @click="emit('update:modelValue', false)"
+        />
       </q-card-section>
       <q-card-section>
         <q-banner v-if="election?.statut !== 'BROUILLON'" class="note--alerte q-mb-md">
@@ -16,11 +23,7 @@
           }}
         </q-banner>
 
-        <etat-vide
-          v-if="!candidats.length"
-          icone="groups"
-          :titre="$t('elections.dialogs.candidates.emptyState')"
-        />
+        <etat-vide v-if="!candidats.length" icone="groups" :titre="$t('elections.dialogs.candidates.emptyState')" />
 
         <q-list v-else bordered separator>
           <q-item v-for="c in candidats" :key="c.id">

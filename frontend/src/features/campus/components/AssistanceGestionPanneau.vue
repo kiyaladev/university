@@ -62,12 +62,7 @@
       </template>
     </barre-filtres>
 
-    <barre-pagination
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :total="total"
-      :show-all="false"
-    />
+    <barre-pagination v-model:page="page" v-model:page-size="pageSize" :total="total" :show-all="false" />
 
     <q-table
       v-if="presentation === 'tableau'"
@@ -243,11 +238,7 @@ import EtatVide from '@/shared/components/EtatVide.vue';
 import PastilleStatut from '@/shared/components/PastilleStatut.vue';
 import { usePresentationListe } from '@/shared/composables/usePresentationListe';
 import { dateHeureLisible } from '@/shared/utils/format';
-import {
-  LIBELLE_CATEGORIE_INCIDENT,
-  LIBELLE_PRIORITE_TICKET,
-  LIBELLE_STATUT_TICKET,
-} from '@/shared/utils/libelles';
+import { LIBELLE_CATEGORIE_INCIDENT, LIBELLE_PRIORITE_TICKET, LIBELLE_STATUT_TICKET } from '@/shared/utils/libelles';
 import type { ChipFiltre, StatutTicket, TicketSupport } from '@/types';
 
 const props = defineProps<{
