@@ -3,13 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
-import {
-  AcceptLanguageResolver,
-  HeaderResolver,
-  I18nJsonLoader,
-  I18nModule,
-  QueryResolver,
-} from 'nestjs-i18n';
+import { AcceptLanguageResolver, HeaderResolver, I18nJsonLoader, I18nModule, QueryResolver } from 'nestjs-i18n';
 import * as path from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { JwtAuthGuard, LectureSeuleGuard, RolesGuard } from './common/guards';
@@ -76,11 +70,7 @@ import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard'
         path: path.join(__dirname, 'i18n/'),
       },
       loader: I18nJsonLoader,
-      resolvers: [
-        new HeaderResolver(['x-lang']),
-        new AcceptLanguageResolver(),
-        new QueryResolver(['lang', 'l']),
-      ],
+      resolvers: [new HeaderResolver(['x-lang']), new AcceptLanguageResolver(), new QueryResolver(['lang', 'l'])],
     }),
     PrismaModule,
     AuthModule,

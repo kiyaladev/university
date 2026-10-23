@@ -16,9 +16,7 @@ import { StagesService } from './stages.service';
  * passe par l'URL et est vérifié à la main dans FicheService.
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [TravauxEncadresController, SoutenancesController],
   providers: [StagesService, FicheService],
   exports: [StagesService],

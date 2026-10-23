@@ -13,8 +13,7 @@ import { TirageService } from './tirage.service';
  * du module (toute version corrompue est refusée).
  */
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [TirageController],
   providers: [TirageService],
   exports: [TirageService],

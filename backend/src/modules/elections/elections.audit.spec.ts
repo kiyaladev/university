@@ -268,12 +268,16 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const { prisma, journal, journalRacine } = depotAtomique();
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await service.modifier('election-1', {
-      titre: TITRE_NOUVEAU,
-      description: 'Autre description confidentielle',
-      dateCloture: '2026-10-09T12:00:00.000Z',
-      nbSieges: 3,
-    } as any, admin);
+    await service.modifier(
+      'election-1',
+      {
+        titre: TITRE_NOUVEAU,
+        description: 'Autre description confidentielle',
+        dateCloture: '2026-10-09T12:00:00.000Z',
+        nbSieges: 3,
+      } as any,
+      admin,
+    );
 
     expect(journalRacine).not.toHaveBeenCalled();
     expect(journal).toHaveLength(1);
@@ -301,30 +305,28 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     ['ouvrir', StatutElection.BROUILLON, 'ELECTION_OUVERTE', StatutElection.OUVERTE],
     ['clore', StatutElection.OUVERTE, 'ELECTION_CLOSE', StatutElection.CLOSE],
     ['proclamer', StatutElection.CLOSE, 'ELECTION_PROCLAMEE', StatutElection.PROCLAMEE],
-  ])('journalise la transition « %s » avec l’état de départ et l’état atteint', async (
-    methode,
-    depart,
-    action,
-    arrivee,
-  ) => {
-    const { prisma, journal, journalRacine } = depotAtomique({ statut: depart });
-    const service = new ElectionsService(prisma, {} as any, {} as any);
+  ])(
+    'journalise la transition « %s » avec l’état de départ et l’état atteint',
+    async (methode, depart, action, arrivee) => {
+      const { prisma, journal, journalRacine } = depotAtomique({ statut: depart });
+      const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await (service as any)[methode]('election-1', admin);
+      await (service as any)[methode]('election-1', admin);
 
-    expect(journalRacine).not.toHaveBeenCalled();
-    expect(journal).toHaveLength(1);
-    expect(journal[0]).toMatchObject({
-      userId: 'admin-1',
-      action,
-      entite: 'Election',
-      entiteId: 'election-1',
-    });
-    const ecrit = details(journal[0]);
-    expect(ecrit.transition).toBe(`${depart}→${arrivee}`);
-    expect(ecrit.avant).toEqual({ ...INSTANTANE, statut: depart });
-    expect(ecrit.apres).toEqual({ ...INSTANTANE, statut: arrivee });
-  });
+      expect(journalRacine).not.toHaveBeenCalled();
+      expect(journal).toHaveLength(1);
+      expect(journal[0]).toMatchObject({
+        userId: 'admin-1',
+        action,
+        entite: 'Election',
+        entiteId: 'election-1',
+      });
+      const ecrit = details(journal[0]);
+      expect(ecrit.transition).toBe(`${depart}→${arrivee}`);
+      expect(ecrit.avant).toEqual({ ...INSTANTANE, statut: depart });
+      expect(ecrit.apres).toEqual({ ...INSTANTANE, statut: arrivee });
+    },
+  );
 
   it('conserve l’état du scrutin après la proclamation', async () => {
     const { prisma, base, journal } = depotAtomique({ statut: StatutElection.CLOSE });
@@ -382,7 +384,10 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
   it('n’écrit dans aucun journal ni identité, ni choix, ni total, ni texte libre', async () => {
     const scenarios: Array<[string, (s: ElectionsService) => Promise<unknown>, Options?]> = [
       ['création', (s) => s.creer(DTO_ELECTION as any, admin)],
-      ['modification', (s) => s.modifier('election-1', { titre: TITRE_NOUVEAU, description: DESCRIPTION } as any, admin)],
+      [
+        'modification',
+        (s) => s.modifier('election-1', { titre: TITRE_NOUVEAU, description: DESCRIPTION } as any, admin),
+      ],
       ['ouverture', (s) => s.ouvrir('election-1', admin)],
       ['clôture', (s) => s.clore('election-1', admin), { statut: StatutElection.OUVERTE }],
       ['proclamation', (s) => s.proclamer('election-1', admin), { statut: StatutElection.CLOSE }],
@@ -398,19 +403,36 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
       entrees.push(...journal);
     }
 
-    const clesAutorisees = new Set([
-      ...Object.keys(INSTANTANE),
-      ...Object.keys(INSTANTANE_CANDIDAT),
-    ]);
+    const clesAutorisees = new Set([...Object.keys(INSTANTANE), ...Object.keys(INSTANTANE_CANDIDAT)]);
     const clesInterdites = [
       // identité d'un électeur et lien avec un choix
-      'electeurId', 'etudiantId', 'enseignantId', 'candidatId', 'scrutinId', 'electeur',
-      'ip', 'ipAppareil', 'mode',
+      'electeurId',
+      'etudiantId',
+      'enseignantId',
+      'candidatId',
+      'scrutinId',
+      'electeur',
+      'ip',
+      'ipAppareil',
+      'mode',
       // bulletin et résultats
-      'bulletin', 'bulletins', 'votes', 'voix', 'voixTotales', 'nbBulletins', 'nbVotes',
-      'participation', 'candidatsElus', 'resultats',
+      'bulletin',
+      'bulletins',
+      'votes',
+      'voix',
+      'voixTotales',
+      'nbBulletins',
+      'nbVotes',
+      'participation',
+      'candidatsElus',
+      'resultats',
       // texte libre
-      'titre', 'description', 'nom', 'prenom', 'programme', 'photoUrl',
+      'titre',
+      'description',
+      'nom',
+      'prenom',
+      'programme',
+      'photoUrl',
     ];
     for (const entree of entrees) {
       const ecrit = details(entree);
@@ -424,8 +446,15 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
         }
       }
       for (const interdit of [
-        TITRE, TITRE_NOUVEAU, DESCRIPTION, BULLETIN,
-        NOM_CANDIDAT, PRENOM_CANDIDAT, PROGRAMME, PHOTO, ETUDIANT_LIE,
+        TITRE,
+        TITRE_NOUVEAU,
+        DESCRIPTION,
+        BULLETIN,
+        NOM_CANDIDAT,
+        PRENOM_CANDIDAT,
+        PROGRAMME,
+        PHOTO,
+        ETUDIANT_LIE,
       ]) {
         expect(entree.details).not.toContain(interdit);
       }
@@ -438,8 +467,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const { prisma, journal, base } = depotAtomique({ ecritureEchouee: 'update' });
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await expect(service.modifier('election-1', { nbSieges: 4 } as any, admin))
-      .rejects.toThrow('mutation refusée');
+    await expect(service.modifier('election-1', { nbSieges: 4 } as any, admin)).rejects.toThrow('mutation refusée');
 
     expect(journal).toEqual([]);
     expect(base.nbSieges).toBe(2);
@@ -464,8 +492,7 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const { prisma, journal, base } = depotAtomique({ journalEchoue: true });
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await expect(service.supprimerCandidat('election-1', 'candidat-1', admin))
-      .rejects.toThrow('journal indisponible');
+    await expect(service.supprimerCandidat('election-1', 'candidat-1', admin)).rejects.toThrow('journal indisponible');
 
     expect(base.candidats).toEqual([{ ...CANDIDAT }]);
     expect(journal).toEqual([]);
@@ -497,10 +524,12 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     const { prisma, journal, base } = depotAtomique({ statut: StatutElection.OUVERTE });
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await expect(service.modifier('election-1', { nbSieges: 5 } as any, admin))
-      .rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.ajouterCandidat('election-1', DTO_CANDIDAT as any, admin))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifier('election-1', { nbSieges: 5 } as any, admin)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    await expect(service.ajouterCandidat('election-1', DTO_CANDIDAT as any, admin)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(base.nbSieges).toBe(2);
     expect(base.candidats).toEqual([{ ...CANDIDAT }]);
@@ -513,10 +542,12 @@ describe('Élections — journal d’audit avant/après des métadonnées', () =
     base.candidats = [{ ...CANDIDAT }, { ...CANDIDAT, id: 'candidat-3', electionId: 'election-2' }];
     const service = new ElectionsService(prisma, {} as any, {} as any);
 
-    await expect(service.supprimerCandidat('election-1', 'candidat-3', admin))
-      .rejects.toBeInstanceOf(NotFoundException);
-    await expect(service.supprimerCandidat('election-1', 'candidat-9', admin))
-      .rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.supprimerCandidat('election-1', 'candidat-3', admin)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    await expect(service.supprimerCandidat('election-1', 'candidat-9', admin)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
 
     expect(base.candidats).toHaveLength(2);
     expect(journal).toEqual([]);

@@ -40,13 +40,11 @@ export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: st
   },
   ATTESTATION_OBLIGATOIRE: {
     valeur: 'true',
-    description:
-      "Exiger que l'enseignant atteste sa présence (signature, code personnel ou lecteur d’empreintes)",
+    description: "Exiger que l'enseignant atteste sa présence (signature, code personnel ou lecteur d’empreintes)",
   },
   SIGNATURE_OBLIGATOIRE: {
     valeur: 'false',
-    description:
-      "Exiger spécifiquement la signature manuscrite, même si un autre moyen a été utilisé",
+    description: 'Exiger spécifiquement la signature manuscrite, même si un autre moyen a été utilisé',
   },
   EMPREINTE_SCORE_MIN: {
     valeur: '60',
@@ -54,7 +52,7 @@ export const PARAMETRES_DEFAUT: Record<string, { valeur: string; description: st
   },
   EFFECTIF_OBLIGATOIRE: {
     valeur: 'true',
-    description: "Exiger le comptage des étudiants présents",
+    description: 'Exiger le comptage des étudiants présents',
   },
 };
 
@@ -73,11 +71,13 @@ export class ParametresService {
 
   async liste() {
     const valeurs = await this.tous();
-    return Object.entries(valeurs).map(([cle, valeur]) => ({
-      cle,
-      valeur,
-      description: PARAMETRES_DEFAUT[cle]?.description ?? null,
-    })).filter(p => !p.cle.startsWith(PREFIXE_SERVICE_ACTIF));
+    return Object.entries(valeurs)
+      .map(([cle, valeur]) => ({
+        cle,
+        valeur,
+        description: PARAMETRES_DEFAUT[cle]?.description ?? null,
+      }))
+      .filter((p) => !p.cle.startsWith(PREFIXE_SERVICE_ACTIF));
   }
 
   /** Paramètre unique nécessaire au dialogue de pointage ; ne divulgue pas les seuils internes. */
@@ -109,7 +109,7 @@ export class ParametresService {
   }
 
   async enregistrer(dto: UpdateParametresDto, user?: AuthUser) {
-    if (dto.parametres.some(p => p.cle.startsWith(PREFIXE_SERVICE_ACTIF))) {
+    if (dto.parametres.some((p) => p.cle.startsWith(PREFIXE_SERVICE_ACTIF))) {
       throw new BadRequestException(t('common.servicesConfigurationEndpoint'));
     }
     await this.prisma.$transaction(async (tx) => {
@@ -124,19 +124,12 @@ export class ParametresService {
           },
           update: { valeur: p.valeur },
         });
-        await journaliser(
-          tx,
-          user ?? null,
-          'PARAMETRE_MODIFIE',
-          'Parametre',
-          p.cle,
-          {
-            cle: p.cle,
-            avant: this.instantaneAudit(p.cle, avant?.valeur ?? PARAMETRES_DEFAUT[p.cle]?.valeur ?? null),
-            apres: this.instantaneAudit(p.cle, apres.valeur),
-            descriptionModifiee: !avant && Boolean(p.description ?? PARAMETRES_DEFAUT[p.cle]?.description),
-          },
-        );
+        await journaliser(tx, user ?? null, 'PARAMETRE_MODIFIE', 'Parametre', p.cle, {
+          cle: p.cle,
+          avant: this.instantaneAudit(p.cle, avant?.valeur ?? PARAMETRES_DEFAUT[p.cle]?.valeur ?? null),
+          apres: this.instantaneAudit(p.cle, apres.valeur),
+          descriptionModifiee: !avant && Boolean(p.description ?? PARAMETRES_DEFAUT[p.cle]?.description),
+        });
       }
     });
     return this.liste();

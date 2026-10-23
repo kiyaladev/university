@@ -8,7 +8,11 @@ describe('audit des mutations de structure académique', () => {
       departement: {
         create: jest.fn().mockResolvedValue({ ...departement, _count: { enseignants: 0, filieres: 0 } }),
         findUnique: jest.fn().mockResolvedValue(departement),
-        update: jest.fn().mockResolvedValue({ ...departement, nom: 'Informatique et systèmes', _count: { enseignants: 0, filieres: 0 } }),
+        update: jest.fn().mockResolvedValue({
+          ...departement,
+          nom: 'Informatique et systèmes',
+          _count: { enseignants: 0, filieres: 0 },
+        }),
       },
       auditLog: { create: auditCreate },
     };
@@ -16,19 +20,28 @@ describe('audit des mutations de structure académique', () => {
     const service = new DepartementsService(prisma);
 
     await service.creer({ code: 'INFO', nom: 'Informatique', faculte: 'Sciences' }, { id: 'admin-1' } as any);
-    expect(auditCreate).toHaveBeenLastCalledWith({ data: expect.objectContaining({
-      userId: 'admin-1', action: 'DEPARTEMENT_CREE', entiteId: 'dept-1',
-      details: expect.stringContaining('"avant":null'),
-    }) });
+    expect(auditCreate).toHaveBeenLastCalledWith({
+      data: expect.objectContaining({
+        userId: 'admin-1',
+        action: 'DEPARTEMENT_CREE',
+        entiteId: 'dept-1',
+        details: expect.stringContaining('"avant":null'),
+      }),
+    });
 
     await service.modifier('dept-1', { nom: 'Informatique et systèmes' }, { id: 'admin-1' } as any);
-    expect(auditCreate).toHaveBeenLastCalledWith({ data: expect.objectContaining({
-      action: 'DEPARTEMENT_MODIFIE', entiteId: 'dept-1',
-      details: expect.stringContaining('Informatique et systèmes'),
-    }) });
+    expect(auditCreate).toHaveBeenLastCalledWith({
+      data: expect.objectContaining({
+        action: 'DEPARTEMENT_MODIFIE',
+        entiteId: 'dept-1',
+        details: expect.stringContaining('Informatique et systèmes'),
+      }),
+    });
     expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     expect(JSON.parse(auditCreate.mock.calls[1][0].data.details)).toMatchObject({
-      avant: { nom: 'Informatique' }, apres: { nom: 'Informatique et systèmes' }, champsModifies: ['nom'],
+      avant: { nom: 'Informatique' },
+      apres: { nom: 'Informatique et systèmes' },
+      champsModifies: ['nom'],
     });
   });
 
@@ -38,7 +51,11 @@ describe('audit des mutations de structure académique', () => {
     const tx: any = {
       filiere: {
         findUnique: jest.fn().mockResolvedValue(avant),
-        update: jest.fn().mockResolvedValue({ ...avant, nom: 'Génie logiciel avancé', departement: { id: 'dept-1', nom: 'Informatique' } }),
+        update: jest.fn().mockResolvedValue({
+          ...avant,
+          nom: 'Génie logiciel avancé',
+          departement: { id: 'dept-1', nom: 'Informatique' },
+        }),
       },
       auditLog: { create: auditCreate },
     };
@@ -60,7 +77,9 @@ describe('audit des mutations de structure académique', () => {
   it('ne laisse pas passer la modification si l’écriture du journal échoue', async () => {
     const tx: any = {
       filiere: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'filiere-1', code: 'GL', nom: 'Génie logiciel', departementId: 'dept-1' }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: 'filiere-1', code: 'GL', nom: 'Génie logiciel', departementId: 'dept-1' }),
         update: jest.fn().mockResolvedValue({ id: 'filiere-1', code: 'GL', nom: 'GL avancé', departementId: 'dept-1' }),
       },
       auditLog: { create: jest.fn().mockRejectedValue(new Error('audit indisponible')) },

@@ -8,6 +8,8 @@ export class ParametreItemDto {
 }
 
 export class UpdateParametresDto {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => ParametreItemDto)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ParametreItemDto)
   parametres: ParametreItemDto[];
 }

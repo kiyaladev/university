@@ -10,9 +10,7 @@ import { AttestationsService } from './attestations.service';
  * vérifié à la main dans le service.
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [AttestationsController],
   providers: [AttestationsService],
   exports: [AttestationsService],

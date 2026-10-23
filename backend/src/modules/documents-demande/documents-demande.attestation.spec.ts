@@ -54,20 +54,29 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
 
     const resultat: any = await service.marquerPrete('demande-1', {}, user);
 
-    expect(attestations.emettrePourDemandeTx).toHaveBeenCalledWith(tx, {
-      type: typeAttestation,
-      etudiantId: 'etudiant-1',
-      inscriptionId: 'inscription-1',
-      motif: 'Bourse',
-    }, user);
-    expect(tx.demandeDocument.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ statut: StatutDemande.PRETE, attestationId: 'att-1' }),
-    }));
+    expect(attestations.emettrePourDemandeTx).toHaveBeenCalledWith(
+      tx,
+      {
+        type: typeAttestation,
+        etudiantId: 'etudiant-1',
+        inscriptionId: 'inscription-1',
+        motif: 'Bourse',
+      },
+      user,
+    );
+    expect(tx.demandeDocument.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ statut: StatutDemande.PRETE, attestationId: 'att-1' }),
+      }),
+    );
     expect(resultat.attestation).toEqual(expect.objectContaining({ numero: 'ATT-2026-00001' }));
   });
 
   it("n'émet pas une seconde attestation pour une demande déjà liée", async () => {
-    const { service, tx, attestations } = monter({ type: TypeDemandeDocument.ATTESTATION_SCOLARITE, attestationId: 'att-existante' });
+    const { service, tx, attestations } = monter({
+      type: TypeDemandeDocument.ATTESTATION_SCOLARITE,
+      attestationId: 'att-existante',
+    });
 
     await service.marquerPrete('demande-1', {}, user);
 
@@ -80,7 +89,9 @@ describe('Demande de document passée « prête » et attestation vérifiable', 
   it("n'émet rien quand la demande est devenue prête entre-temps (relecture verrouillée)", async () => {
     const { service, tx, attestations } = monter({ type: TypeDemandeDocument.ATTESTATION_SCOLARITE });
     tx.demandeDocument.findUnique.mockResolvedValue({
-      id: 'demande-1', statut: StatutDemande.PRETE, type: TypeDemandeDocument.ATTESTATION_SCOLARITE,
+      id: 'demande-1',
+      statut: StatutDemande.PRETE,
+      type: TypeDemandeDocument.ATTESTATION_SCOLARITE,
     });
 
     await expect(service.marquerPrete('demande-1', {}, user)).rejects.toBeInstanceOf(BadRequestException);

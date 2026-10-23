@@ -23,10 +23,12 @@ describe('lecture des fichiers CSV de référentiels', () => {
     const csv = lireCsv('Matricule;Nom;Prénom;Email\r\nT-01;"Diallo; Camara";"Aïssatou\nMarie";a@example.org');
     expect(csv.erreurs).toEqual([]);
     expect(csv.entetes).toEqual(['matricule', 'nom', 'prenom', 'email']);
-    expect(csv.lignes).toEqual([{
-      numero: 2,
-      donnees: { matricule: 'T-01', nom: 'Diallo; Camara', prenom: 'Aïssatou\nMarie', email: 'a@example.org' },
-    }]);
+    expect(csv.lignes).toEqual([
+      {
+        numero: 2,
+        donnees: { matricule: 'T-01', nom: 'Diallo; Camara', prenom: 'Aïssatou\nMarie', email: 'a@example.org' },
+      },
+    ]);
   });
 
   it('repère les en-têtes après un titre préliminaire contenant une virgule', () => {

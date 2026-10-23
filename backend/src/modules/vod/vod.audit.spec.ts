@@ -161,10 +161,18 @@ describe('VodService — journal d’audit avant/après', () => {
     tx.inscription.findUnique.mockResolvedValue({ anneeId: 'annee-2' });
     const service = new VodService(prisma);
 
-    await expect(service.creer({
-      titre: 'Cours', type: TypeRessourceVOD.VIDEO, url: 'local://media.mp4',
-      seanceId: 'seance-1', inscriptionId: 'inscription-1',
-    } as any, PROFS)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creer(
+        {
+          titre: 'Cours',
+          type: TypeRessourceVOD.VIDEO,
+          url: 'local://media.mp4',
+          seanceId: 'seance-1',
+          inscriptionId: 'inscription-1',
+        } as any,
+        PROFS,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(tx.coursVOD.create).not.toHaveBeenCalled();
     expect(journal).toEqual([]);
@@ -175,8 +183,9 @@ describe('VodService — journal d’audit avant/après', () => {
     tx.inscription.findUnique.mockResolvedValue({ anneeId: 'annee-2' });
     const service = new VodService(prisma);
 
-    await expect(service.modifier('vod-1', { inscriptionId: 'inscription-1' } as any, PROFS))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifier('vod-1', { inscriptionId: 'inscription-1' } as any, PROFS)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(tx.coursVOD.update).not.toHaveBeenCalled();
     expect(journal).toEqual([]);
@@ -186,12 +195,20 @@ describe('VodService — journal d’audit avant/après', () => {
     const { prisma, journal } = baseAtomique();
     const service = new VodService(prisma);
 
-    await service.modifier('vod-1', { titre: 'Nouveau titre CONFIDENTIEL', url: 'https://cdn.example.com/nouveau.mp4?token=JETON-AUTRE' } as any, PROFS);
+    await service.modifier(
+      'vod-1',
+      { titre: 'Nouveau titre CONFIDENTIEL', url: 'https://cdn.example.com/nouveau.mp4?token=JETON-AUTRE' } as any,
+      PROFS,
+    );
 
     const brut = journal[0].data.details;
     for (const fuite of [
-      'CONFIDENTIEL', 'JETON-SECRET-123', 'JETON-AUTRE',
-      'ENS-CONFIDENTIEL', 'media.mp4', 'vignette.png',
+      'CONFIDENTIEL',
+      'JETON-SECRET-123',
+      'JETON-AUTRE',
+      'ENS-CONFIDENTIEL',
+      'media.mp4',
+      'vignette.png',
     ]) {
       expect(brut).not.toContain(fuite);
     }
@@ -203,10 +220,21 @@ describe('VodService — journal d’audit avant/après', () => {
     expect(apres.url).toBeUndefined();
     // Aucun nom de personne ni intitulé de matière parmi les clés projetées.
     for (const etat of [avant, apres]) {
-      expect(Object.keys(etat)).not.toEqual(expect.arrayContaining([
-        'titre', 'description', 'transcription', 'url', 'thumbnailUrl',
-        'matiere', 'enseignant', 'creePar', 'nbVues', 'nbComplets', 'ipAppareil',
-      ]));
+      expect(Object.keys(etat)).not.toEqual(
+        expect.arrayContaining([
+          'titre',
+          'description',
+          'transcription',
+          'url',
+          'thumbnailUrl',
+          'matiere',
+          'enseignant',
+          'creePar',
+          'nbVues',
+          'nbComplets',
+          'ipAppareil',
+        ]),
+      );
     }
   });
 
@@ -311,7 +339,10 @@ describe('VodService — journal d’audit avant/après', () => {
     const tx = { coursVOD: { create: jest.fn().mockResolvedValue(VOD) }, auditLog: { create: auditCreate } };
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
 
-    await new VodService(prisma).creer({ titre: 'Cours', type: TypeRessourceVOD.VIDEO, url: 'local://media.mp4' } as any, PROFS);
+    await new VodService(prisma).creer(
+      { titre: 'Cours', type: TypeRessourceVOD.VIDEO, url: 'local://media.mp4' } as any,
+      PROFS,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(auditCreate.mock.calls[0][0].data.action).toBe('VOD_CREE');
@@ -353,19 +384,23 @@ describe('VodService — journal d’audit avant/après', () => {
     expect(journal).toHaveLength(0);
   });
 
-  it.each(['modifier', 'publier', 'archiver'])('refuse %s si le cours a été archivé après le premier contrôle', async method => {
-    const { prisma, tx, journal, base } = baseAtomique();
-    base.statut = StatutVOD.ARCHIVE;
-    prisma.coursVOD.findUnique = jest.fn().mockResolvedValue(VOD);
-    const service = new VodService(prisma);
-    const operation = method === 'publier'
-      ? service.publier('vod-1', PROFS)
-      : (service as any)[method]('vod-1', { titre: 'Tentative tardive' }, PROFS);
-    await expect(operation).rejects.toBeInstanceOf(BadRequestException);
-    expect(tx.coursVOD.update).not.toHaveBeenCalled();
-    expect(base.statut).toBe(StatutVOD.ARCHIVE);
-    expect(journal).toHaveLength(0);
-  });
+  it.each(['modifier', 'publier', 'archiver'])(
+    'refuse %s si le cours a été archivé après le premier contrôle',
+    async (method) => {
+      const { prisma, tx, journal, base } = baseAtomique();
+      base.statut = StatutVOD.ARCHIVE;
+      prisma.coursVOD.findUnique = jest.fn().mockResolvedValue(VOD);
+      const service = new VodService(prisma);
+      const operation =
+        method === 'publier'
+          ? service.publier('vod-1', PROFS)
+          : (service as any)[method]('vod-1', { titre: 'Tentative tardive' }, PROFS);
+      await expect(operation).rejects.toBeInstanceOf(BadRequestException);
+      expect(tx.coursVOD.update).not.toHaveBeenCalled();
+      expect(base.statut).toBe(StatutVOD.ARCHIVE);
+      expect(journal).toHaveLength(0);
+    },
+  );
 
   it('refuse une seconde publication après un premier contrôle sur un brouillon', async () => {
     const { prisma, tx, base, journal } = baseAtomique();
@@ -386,10 +421,11 @@ describe('VodService — journal d’audit avant/après', () => {
     };
     const prisma: any = {
       coursVOD: { findFirst: jest.fn().mockResolvedValue(VOD) },
-      $transaction: operation => operation(tx),
+      $transaction: (operation) => operation(tx),
     };
-    await expect(new VodService(prisma).enregistrerVue('vod-1', { positionSecondes: 95, dureeSecondes: 100 }, ETUDIANT))
-      .rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      new VodService(prisma).enregistrerVue('vod-1', { positionSecondes: 95, dureeSecondes: 100 }, ETUDIANT),
+    ).rejects.toBeInstanceOf(NotFoundException);
     expect(create).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
   });
@@ -431,7 +467,11 @@ describe('VodService — journal d’audit avant/après', () => {
     const coursUpdate = jest.fn().mockResolvedValue({ nbVues: 13 });
     const tx: any = {
       $queryRaw: jest.fn().mockResolvedValue([{ id: VOD.id }]),
-      coursVOD: { update: coursUpdate, findUnique: jest.fn().mockResolvedValue(VOD), findFirst: jest.fn().mockResolvedValue(VOD) },
+      coursVOD: {
+        update: coursUpdate,
+        findUnique: jest.fn().mockResolvedValue(VOD),
+        findFirst: jest.fn().mockResolvedValue(VOD),
+      },
       vueVOD: { create: vueCreate },
     };
     const prisma: any = {
@@ -443,7 +483,12 @@ describe('VodService — journal d’audit avant/après', () => {
     };
     const service = new VodService(prisma);
 
-    const resultat = await service.enregistrerVue('vod-1', { positionSecondes: 3300, dureeSecondes: 3600 } as any, ETUDIANT, '10.0.0.1');
+    const resultat = await service.enregistrerVue(
+      'vod-1',
+      { positionSecondes: 3300, dureeSecondes: 3600 } as any,
+      ETUDIANT,
+      '10.0.0.1',
+    );
 
     // Le décompte reste inchangé : la vue alimente toujours ses compteurs.
     expect(resultat).toEqual({ ok: true, termine: true, nbVues: 13 });

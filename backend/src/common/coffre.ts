@@ -39,9 +39,7 @@ function cle(): Buffer {
     );
   }
 
-  cleMemo = /^[0-9a-f]{64}$/i.test(brut)
-    ? Buffer.from(brut, 'hex')
-    : scryptSync(brut, SEL, 32);
+  cleMemo = /^[0-9a-f]{64}$/i.test(brut) ? Buffer.from(brut, 'hex') : scryptSync(brut, SEL, 32);
   return cleMemo;
 }
 
@@ -74,10 +72,7 @@ export function dechiffrer(valeur: string): string {
   const [, iv, tag, corps] = valeur.split('.');
   const dechiffreur = createDecipheriv('aes-256-gcm', cle(), Buffer.from(iv!, 'base64url'));
   dechiffreur.setAuthTag(Buffer.from(tag!, 'base64url'));
-  return Buffer.concat([
-    dechiffreur.update(Buffer.from(corps!, 'base64url')),
-    dechiffreur.final(),
-  ]).toString('utf8');
+  return Buffer.concat([dechiffreur.update(Buffer.from(corps!, 'base64url')), dechiffreur.final()]).toString('utf8');
 }
 
 /** Pour les tests : oublie la clé mémorisée. */

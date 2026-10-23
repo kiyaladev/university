@@ -90,18 +90,12 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
 };
 
 /** "FOR-2026-00001" — dossier d'inscription à une formation continue. */
-async function prochainNumeroFormation(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+async function prochainNumeroFormation(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'inscriptionFormation', 'numero', `FOR-${annee}-`, 5);
 }
 
 /** "PAY-F-2026-00001" — paiement Mobile Money d'une formation (PAY-F-AAAA). */
-async function prochaineReferencePaiement(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+async function prochaineReferencePaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-F-${annee}-`, 5);
 }
 
@@ -138,8 +132,7 @@ export class FormationsService {
     return formations.map((f) => ({
       ...f,
       inscrits: confirmees.get(f.id) ?? 0,
-      placesRestantes:
-        f.capacite == null ? null : Math.max(0, f.capacite - (confirmees.get(f.id) ?? 0)),
+      placesRestantes: f.capacite == null ? null : Math.max(0, f.capacite - (confirmees.get(f.id) ?? 0)),
     }));
   }
 
@@ -159,8 +152,7 @@ export class FormationsService {
     return {
       ...formation,
       inscrits: confirmees,
-      placesRestantes:
-        formation.capacite == null ? null : Math.max(0, formation.capacite - confirmees),
+      placesRestantes: formation.capacite == null ? null : Math.max(0, formation.capacite - confirmees),
     };
   }
 
@@ -173,11 +165,7 @@ export class FormationsService {
    * La confirmation de l'opérateur est simulée au guichet par un agent
    * (POST /formations/inscriptions/:id/confirmer) — mode pilote.
    */
-  async inscriptionPublique(
-    formationId: string,
-    dto: InscriptionFormationPubliqueDto,
-    ip?: string,
-  ) {
+  async inscriptionPublique(formationId: string, dto: InscriptionFormationPubliqueDto, ip?: string) {
     const formation = await this.prisma.formation.findUnique({ where: { id: formationId } });
     if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
     if (formation.statut !== StatutFormation.PUBLIEE) {
@@ -192,7 +180,9 @@ export class FormationsService {
         select: { id: true },
       });
       if (!etudiant) {
-        throw new BadRequestException(t('formations.aucun_etudiant_ne_porte_le_matricule_dto_matricule_laissez_l', { matricule: dto.matricule }));
+        throw new BadRequestException(
+          t('formations.aucun_etudiant_ne_porte_le_matricule_dto_matricule_laissez_l', { matricule: dto.matricule }),
+        );
       }
       etudiantId = etudiant.id;
     }
@@ -310,9 +300,7 @@ export class FormationsService {
       `),
     ]);
 
-    const inscritsMap = new Map(
-      inscritsParFormation.map((g) => [g.formationId, g._count._all]),
-    );
+    const inscritsMap = new Map(inscritsParFormation.map((g) => [g.formationId, g._count._all]));
 
     const paiementParFormation = new Map(
       paiementsParFormation.map((p) => [p.formationId, { nbPayes: Number(p.nbPayes), recette: Number(p.recette) }]),
@@ -435,7 +423,9 @@ export class FormationsService {
         where: { formationId: id, statut: StatutInscriptionFormation.CONFIRMEE },
       });
       if (confirmee > 0 && (dto.titre !== undefined || dto.prix !== undefined)) {
-        throw new ConflictException(t('formations.confirmee_inscription_s_deja_confirmee_s_et_payee_s_le_titre', { confirmee }));
+        throw new ConflictException(
+          t('formations.confirmee_inscription_s_deja_confirmee_s_et_payee_s_le_titre', { confirmee }),
+        );
       }
       if (dto.capacite !== undefined && dto.capacite !== null && dto.capacite < confirmee) {
         throw new ConflictException(t('formations.capacite_inferieure_aux_inscriptions_confirmees'));
@@ -509,9 +499,11 @@ export class FormationsService {
       if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
       if (formation.statut !== StatutFormation.BROUILLON) {
         throw new BadRequestException(
-          t(formation.statut === StatutFormation.COMPLETE
-            ? 'formations.formation_close_elle_ne_peut_plus_etre_publiee'
-            : 'formations.cette_formation_est_deja_publiee'),
+          t(
+            formation.statut === StatutFormation.COMPLETE
+              ? 'formations.formation_close_elle_ne_peut_plus_etre_publiee'
+              : 'formations.cette_formation_est_deja_publiee',
+          ),
         );
       }
       const maj = await tx.formation.update({
@@ -543,9 +535,11 @@ export class FormationsService {
       if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
       if (formation.statut !== StatutFormation.PUBLIEE) {
         throw new BadRequestException(
-          t(formation.statut === StatutFormation.BROUILLON
-            ? 'formations.une_formation_en_brouillon_ne_se_clot_pas_publiez_la_d_ab'
-            : 'formations.cette_formation_est_deja_cloturee'),
+          t(
+            formation.statut === StatutFormation.BROUILLON
+              ? 'formations.une_formation_en_brouillon_ne_se_clot_pas_publiez_la_d_ab'
+              : 'formations.cette_formation_est_deja_cloturee',
+          ),
         );
       }
       const maj = await tx.formation.update({
@@ -678,12 +672,15 @@ export class FormationsService {
 
   /** Sérialise les confirmations d'une même formation pendant le contrôle de capacité. */
   private async verrouillerFormation(tx: Prisma.TransactionClient, id: string) {
-    const formation = typeof (tx as any).$queryRaw === 'function'
-      ? ((await (tx as any).$queryRaw`
+    const formation =
+      typeof (tx as any).$queryRaw === 'function'
+        ? ((
+            await (tx as any).$queryRaw`
           SELECT "id", "statut", "capacite"
           FROM "Formation" WHERE "id" = ${id} FOR UPDATE
-        `)[0] as { id: string; statut: StatutFormation; capacite: number | null } | undefined)
-      : await tx.formation.findUnique({ where: { id }, select: { id: true, statut: true, capacite: true } });
+        `
+          )[0] as { id: string; statut: StatutFormation; capacite: number | null } | undefined)
+        : await tx.formation.findUnique({ where: { id }, select: { id: true, statut: true, capacite: true } });
     if (!formation) throw new NotFoundException(t('formations.formation_introuvable'));
     return formation;
   }
@@ -743,7 +740,10 @@ export class FormationsService {
     const inscription = await this.trouverInscription(id);
     if (inscription.statut !== StatutInscriptionFormation.CONFIRMEE) {
       throw new BadRequestException(
-        t('formations.inscription_numero_n_est_pas_confirmee_libelle_statut_inscri', { numero: inscription.numero, statut: LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut }),
+        t('formations.inscription_numero_n_est_pas_confirmee_libelle_statut_inscri', {
+          numero: inscription.numero,
+          statut: LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut,
+        }),
       );
     }
     if (inscription.paiement?.statut !== StatutPaiement.REUSSI) {
@@ -764,9 +764,7 @@ export class FormationsService {
     const formation = inscription.formation;
     const diplome =
       inscription.nomComplet ??
-      (inscription.etudiant
-        ? `${inscription.etudiant.prenom} ${inscription.etudiant.nom}`
-        : null) ??
+      (inscription.etudiant ? `${inscription.etudiant.prenom} ${inscription.etudiant.nom}` : null) ??
       '—';
     const edite = new Date().toLocaleString('fr-FR');
     const dates = [

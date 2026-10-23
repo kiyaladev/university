@@ -72,9 +72,7 @@ export class CarteEtudianteService {
     const pageDemandee = Number(query.page ?? 1);
     const tailleDemandee = Number(query.pageSize ?? 50);
     const page = Number.isInteger(pageDemandee) && pageDemandee > 0 ? pageDemandee : 1;
-    const pageSize = Number.isInteger(tailleDemandee) && tailleDemandee > 0
-      ? Math.min(tailleDemandee, 1000)
-      : 50;
+    const pageSize = Number.isInteger(tailleDemandee) && tailleDemandee > 0 ? Math.min(tailleDemandee, 1000) : 50;
 
     const where: Record<string, unknown> = {
       ...(query.etudiantId ? { etudiantId: query.etudiantId } : {}),
@@ -191,18 +189,11 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await journaliser(
-        tx,
-        user,
-        'CARTE_ETUDIANTE_EMISE',
-        'CarteEtudiante',
-        carte.id,
-        {
-            avant: null,
-            apres: this.instantaneAudit({ ...carte, nip: nipHash }),
-            champsModifies: ['active', 'statut', 'dateValidite', 'photoUrl', 'nip'],
-          },
-      );
+      await journaliser(tx, user, 'CARTE_ETUDIANTE_EMISE', 'CarteEtudiante', carte.id, {
+        avant: null,
+        apres: this.instantaneAudit({ ...carte, nip: nipHash }),
+        champsModifies: ['active', 'statut', 'dateValidite', 'photoUrl', 'nip'],
+      });
       return carte;
     });
   }
@@ -227,18 +218,11 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await journaliser(
-        tx,
-        user,
-        'CARTE_ETUDIANTE_MODIFIEE',
-        'CarteEtudiante',
-        id,
-        {
-            avant: this.instantaneAudit(actuel),
-            apres: this.instantaneAudit({ ...miseAJour, nip: nipHash ?? actuel.nip }),
-            champsModifies: Object.keys(data),
-          },
-      );
+      await journaliser(tx, user, 'CARTE_ETUDIANTE_MODIFIEE', 'CarteEtudiante', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit({ ...miseAJour, nip: nipHash ?? actuel.nip }),
+        champsModifies: Object.keys(data),
+      });
       return miseAJour;
     });
   }
@@ -257,19 +241,12 @@ export class CarteEtudianteService {
         include: CARTE_INCLUDE,
         omit: CARTE_OMIT,
       });
-      await journaliser(
-        tx,
-        user,
-        'CARTE_ETUDIANTE_REVOQUEE',
-        'CarteEtudiante',
-        id,
-        {
-            avant: this.instantaneAudit(actuel),
-            apres: this.instantaneAudit({ ...miseAJour, nip: actuel.nip }),
-            motifFourni: Boolean(dto.motif),
-            champsModifies: ['statut', 'active', 'motifRevocation'],
-          },
-      );
+      await journaliser(tx, user, 'CARTE_ETUDIANTE_REVOQUEE', 'CarteEtudiante', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit({ ...miseAJour, nip: actuel.nip }),
+        motifFourni: Boolean(dto.motif),
+        champsModifies: ['statut', 'active', 'motifRevocation'],
+      });
       return miseAJour;
     });
   }
@@ -294,18 +271,11 @@ export class CarteEtudianteService {
         throw new BadRequestException(t('carte-etudiante.vous_ne_pouvez_definir_que_le_nip_de_votre_propre_carte'));
       }
       const miseAJour = await tx.carteEtudiante.update({ where: { id }, data: { nip: nipHash } });
-      await journaliser(
-        tx,
-        user,
-        'CARTE_ETUDIANTE_NIP_MODIFIE',
-        'CarteEtudiante',
-        id,
-        {
-            avant: { nipConfigure: Boolean(actuel.nip) },
-            apres: { nipConfigure: true },
-            champsModifies: ['nip'],
-          },
-      );
+      await journaliser(tx, user, 'CARTE_ETUDIANTE_NIP_MODIFIE', 'CarteEtudiante', id, {
+        avant: { nipConfigure: Boolean(actuel.nip) },
+        apres: { nipConfigure: true },
+        champsModifies: ['nip'],
+      });
       return { id: miseAJour.id, nipDefini: true };
     });
   }
@@ -320,8 +290,13 @@ export class CarteEtudianteService {
       where: { id },
       select: { nip: true, statut: true, active: true, dateValidite: true },
     });
-    if (!carte || carte.statut !== StatutAttestation.EMISE || !carte.active || !carte.nip
-      || (carte.dateValidite && carte.dateValidite.getTime() < Date.now())) {
+    if (
+      !carte ||
+      carte.statut !== StatutAttestation.EMISE ||
+      !carte.active ||
+      !carte.nip ||
+      (carte.dateValidite && carte.dateValidite.getTime() < Date.now())
+    ) {
       return { ok: false };
     }
     const ok = await bcrypt.compare(dto.nip, carte.nip);
@@ -340,11 +315,7 @@ export class CarteEtudianteService {
    * Document A4 imprimable. Ouvert dans un nouvel onglet : l'en-tête
    * Authorization n'y arrive pas, le jeton passe en paramètre d'URL.
    */
-  async imprimer(
-    id: string,
-    token: string | undefined,
-    baseUrl: string,
-  ): Promise<string> {
+  async imprimer(id: string, token: string | undefined, baseUrl: string): Promise<string> {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
@@ -396,7 +367,7 @@ export class CarteEtudianteService {
       });
       return {
         valide: false,
-        raison: "Aucune carte ne correspond à cet identifiant.",
+        raison: 'Aucune carte ne correspond à cet identifiant.',
       };
     }
 
@@ -421,7 +392,7 @@ export class CarteEtudianteService {
       return {
         valide: false,
         raison:
-          "Le code de vérification ne correspond pas à cette carte : le document présenté est peut-être une copie falsifiée.",
+          'Le code de vérification ne correspond pas à cette carte : le document présenté est peut-être une copie falsifiée.',
       };
     }
     if (!statutOk) {
@@ -433,7 +404,7 @@ export class CarteEtudianteService {
     if (expiree) {
       return {
         valide: false,
-        raison: "La validité de cette carte est expirée : renouvelez-la auprès de la scolarité.",
+        raison: 'La validité de cette carte est expirée : renouvelez-la auprès de la scolarité.',
       };
     }
 

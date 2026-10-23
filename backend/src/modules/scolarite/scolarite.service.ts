@@ -5,12 +5,7 @@
  *  et orchestrer les vérifications d'état (évaluations clôturées, jury
  *  validé…).
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   DecisionJury,
   Prisma,
@@ -170,14 +165,10 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await journaliser(
-        tx,
-        user,
-        'EVALUATION_CREEE',
-        'Evaluation',
-        evaluation.id,
-        { avant: null, apres: this.instantaneEvaluation(evaluation) },
-      );
+      await journaliser(tx, user, 'EVALUATION_CREEE', 'Evaluation', evaluation.id, {
+        avant: null,
+        apres: this.instantaneEvaluation(evaluation),
+      });
       return evaluation;
     });
   }
@@ -188,16 +179,23 @@ export class ScolariteService {
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (dto.anneeId !== undefined) await exigerAnneeOuverte(this.prisma, dto.anneeId);
     if (existante.statut === StatutEvaluation.CLOTUREE) {
-      throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: existante.intitule }));
+      throw new BadRequestException(
+        t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', {
+          intitule: existante.intitule,
+        }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.evaluation.findUnique({
-        where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
+        where: { id },
+        include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: avant.intitule }));
+        throw new BadRequestException(
+          t('scolarite.l_evaluation_existante_intitule_est_cloturee_ses_notes_sont_fig', { intitule: avant.intitule }),
+        );
       }
       if (dto.anneeId !== undefined) await exigerAnneeOuverte(tx, dto.anneeId);
       await exigerPromotionMemeAnnee(tx, dto.promotionId ?? avant.promotionId, dto.anneeId ?? avant.anneeId);
@@ -220,14 +218,10 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await journaliser(
-        tx,
-        user,
-        'EVALUATION_MODIFIEE',
-        'Evaluation',
-        id,
-        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
-      );
+      await journaliser(tx, user, 'EVALUATION_MODIFIEE', 'Evaluation', id, {
+        avant: this.instantaneEvaluation(avant),
+        apres: this.instantaneEvaluation(maj),
+      });
       return maj;
     });
   }
@@ -237,19 +231,33 @@ export class ScolariteService {
     if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (existante._count.notes > 0) {
-      throw new BadRequestException(t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { intitule: existante.intitule, nombre: existante._count.notes }));
+      throw new BadRequestException(
+        t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', {
+          intitule: existante.intitule,
+          nombre: existante._count.notes,
+        }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.evaluation.findUnique({
-        where: { id }, include: { _count: { select: { notes: true } } },
+        where: { id },
+        include: { _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant._count.notes > 0) {
-        throw new BadRequestException(t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', { intitule: avant.intitule, nombre: avant._count.notes }));
+        throw new BadRequestException(
+          t('scolarite.impossible_de_supprimer_existante_intitule_des_notes_y_sont_de', {
+            intitule: avant.intitule,
+            nombre: avant._count.notes,
+          }),
+        );
       }
       await tx.evaluation.delete({ where: { id } });
-      await journaliser(tx, user, 'EVALUATION_SUPPRIMEE', 'Evaluation', id, { avant: this.instantaneEvaluation(avant), apres: null });
+      await journaliser(tx, user, 'EVALUATION_SUPPRIMEE', 'Evaluation', id, {
+        avant: this.instantaneEvaluation(avant),
+        apres: null,
+      });
       return { id };
     });
   }
@@ -259,16 +267,21 @@ export class ScolariteService {
     if (!existante) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
     await exigerAnneeOuverte(this.prisma, existante.anneeId);
     if (existante.statut === StatutEvaluation.CLOTUREE) {
-      throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': existante.intitule }));
+      throw new BadRequestException(
+        t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': existante.intitule }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.evaluation.findUnique({
-        where: { id }, include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
+        where: { id },
+        include: { matiere: true, promotion: true, annee: true, _count: { select: { notes: true } } },
       });
       if (!avant) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, avant.anneeId);
       if (avant.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': avant.intitule }));
+        throw new BadRequestException(
+          t('scolarite.l_evaluation_existante_intitule_est_deja_cloturee', { 'existante.intitule': avant.intitule }),
+        );
       }
       const maj = await tx.evaluation.update({
         where: { id },
@@ -280,14 +293,10 @@ export class ScolariteService {
           _count: { select: { notes: true } },
         },
       });
-      await journaliser(
-        tx,
-        user,
-        'EVALUATION_CLOTUREE',
-        'Evaluation',
-        id,
-        { avant: this.instantaneEvaluation(avant), apres: this.instantaneEvaluation(maj) },
-      );
+      await journaliser(tx, user, 'EVALUATION_CLOTUREE', 'Evaluation', id, {
+        avant: this.instantaneEvaluation(avant),
+        apres: this.instantaneEvaluation(maj),
+      });
       return maj;
     });
   }
@@ -367,7 +376,11 @@ export class ScolariteService {
       if (!evaluation) throw new NotFoundException(t('scolarite.evaluation_introuvable'));
       await exigerAnneeOuverte(tx, evaluation.anneeId);
       if (evaluation.statut === StatutEvaluation.CLOTUREE) {
-        throw new BadRequestException(t('scolarite.l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes', { intitule: evaluation.intitule }));
+        throw new BadRequestException(
+          t('scolarite.l_evaluation_evaluation_intitule_est_cloturee_la_saisie_des_notes', {
+            intitule: evaluation.intitule,
+          }),
+        );
       }
 
       const inscrits = await tx.inscription.findMany({
@@ -375,8 +388,8 @@ export class ScolariteService {
         select: { id: true },
       });
       const dansLaPromotion = new Set(inscrits.map((i) => i.id));
-      const valides = dto.notes.filter((n) =>
-        dansLaPromotion.has(n.inscriptionId) && ((n.note ?? null) === null || (n.note! >= 0 && n.note! <= 20)),
+      const valides = dto.notes.filter(
+        (n) => dansLaPromotion.has(n.inscriptionId) && ((n.note ?? null) === null || (n.note! >= 0 && n.note! <= 20)),
       );
       const ignorees = dto.notes.length - valides.length;
       const precedentes = valides.length
@@ -402,24 +415,17 @@ export class ScolariteService {
       }
 
       if (valides.length) {
-        await journaliser(
-          tx,
-          saisiePar,
-          'NOTES_SAISIES',
-          'Evaluation',
-          dto.evaluationId,
-          {
-              acteur: saisiePar.id,
-              changements: valides.map((note) => {
-                const precedent = parInscription.get(note.inscriptionId);
-                return {
-                  inscriptionId: note.inscriptionId,
-                  avant: precedent ? { note: precedent.note, present: precedent.present } : null,
-                  apres: { note: note.note ?? null, present: note.present ?? true },
-                };
-              }),
-            },
-        );
+        await journaliser(tx, saisiePar, 'NOTES_SAISIES', 'Evaluation', dto.evaluationId, {
+          acteur: saisiePar.id,
+          changements: valides.map((note) => {
+            const precedent = parInscription.get(note.inscriptionId);
+            return {
+              inscriptionId: note.inscriptionId,
+              avant: precedent ? { note: precedent.note, present: precedent.present } : null,
+              apres: { note: note.note ?? null, present: note.present ?? true },
+            };
+          }),
+        });
       }
       return { n: valides.length, ignorees };
     });
@@ -490,9 +496,11 @@ export class ScolariteService {
     });
     if (existante) {
       throw new ConflictException(
-        t(session === SessionDeliberation.NORMALE
-          ? 'scolarite.une_deliberation_de_session_normale_existe_deja_pour_cette_p'
-          : 'scolarite.une_deliberation_de_rattrapage_existe_deja_pour_cette_promot'),
+        t(
+          session === SessionDeliberation.NORMALE
+            ? 'scolarite.une_deliberation_de_session_normale_existe_deja_pour_cette_p'
+            : 'scolarite.une_deliberation_de_rattrapage_existe_deja_pour_cette_promot',
+        ),
       );
     }
 
@@ -518,14 +526,11 @@ export class ScolariteService {
         },
       });
       const calcul = await this.calculerDeliberation(cree.id, tx);
-      await journaliser(
-        tx,
-        creePar,
-        'DELIBERATION_CREEE',
-        'Deliberation',
-        cree.id,
-        { anneeId: cree.anneeId, promotionId: cree.promotionId, resultat: calcul },
-      );
+      await journaliser(tx, creePar, 'DELIBERATION_CREEE', 'Deliberation', cree.id, {
+        anneeId: cree.anneeId,
+        promotionId: cree.promotionId,
+        resultat: calcul,
+      });
       return this.detailDeliberation(cree.id, tx);
     });
     return delib;
@@ -544,7 +549,10 @@ export class ScolariteService {
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     await exigerAnneeOuverte(db, delib.anneeId);
     await db.$queryRaw`SELECT id FROM "Deliberation" WHERE id = ${deliberationId} FOR UPDATE`;
-    delib = await db.deliberation.findUnique({ where: { id: deliberationId }, include: { annee: true, promotion: true } });
+    delib = await db.deliberation.findUnique({
+      where: { id: deliberationId },
+      include: { annee: true, promotion: true },
+    });
     if (!delib) throw new NotFoundException(t('scolarite.deliberation_introuvable'));
     if (delib.statut === StatutDeliberation.VALIDEE) {
       throw new BadRequestException(t('scolarite.deliberation_validee_par_le_jury_tout_recalcul_est_bloque'));
@@ -576,7 +584,12 @@ export class ScolariteService {
       if (delib.statut === StatutDeliberation.VALIDEE) {
         const le = delib.valideeLe?.toLocaleDateString('fr-FR');
         throw new BadRequestException(
-          t(le ? 'scolarite.cette_deliberation_a_deja_ete_validee_par_le_jury_le_le' : 'scolarite.cette_deliberation_est_deja_validee', le ? { le } : undefined),
+          t(
+            le
+              ? 'scolarite.cette_deliberation_a_deja_ete_validee_par_le_jury_le_le'
+              : 'scolarite.cette_deliberation_est_deja_validee',
+            le ? { le } : undefined,
+          ),
         );
       }
       const miseAJour = await tx.deliberation.update({
@@ -648,9 +661,7 @@ export class ScolariteService {
       where: {
         promotionId: delib.promotionId,
         anneeId: delib.anneeId,
-        ...(delib.session === SessionDeliberation.NORMALE
-          ? { type: { not: TypeEvaluation.RATTRAPAGE } }
-          : {}),
+        ...(delib.session === SessionDeliberation.NORMALE ? { type: { not: TypeEvaluation.RATTRAPAGE } } : {}),
       },
       include: {
         matiere: true,
@@ -703,9 +714,11 @@ export class ScolariteService {
     const candidats = await this.candidatsDeliberation(delib, tx);
     if (!candidats.length) {
       throw new BadRequestException(
-        t(delib.session === SessionDeliberation.RATTRAPAGE
-          ? 'scolarite.aucun_etudiant_a_repositionner_aucun_ajourne_a_la_session_no'
-          : 'scolarite.aucun_etudiant_inscrit_statut_valide_pour_cette_promotion'),
+        t(
+          delib.session === SessionDeliberation.RATTRAPAGE
+            ? 'scolarite.aucun_etudiant_a_repositionner_aucun_ajourne_a_la_session_no'
+            : 'scolarite.aucun_etudiant_inscrit_statut_valide_pour_cette_promotion',
+        ),
       );
     }
 

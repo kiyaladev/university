@@ -2,12 +2,7 @@ import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
-import {
-  CreateRecetteDto,
-  EncaisserRecetteDto,
-  RecetteQueryDto,
-  UpdateRecetteDto,
-} from './recettes.dto';
+import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
 import { RecettesService } from './recettes.service';
 
 @ApiTags('Recettes externes')
@@ -46,11 +41,7 @@ export class RecettesController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateRecetteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateRecetteDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -60,11 +51,7 @@ export class RecettesController {
    */
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/encaisser')
-  encaisser(
-    @Param('id') id: string,
-    @Body() dto: EncaisserRecetteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  encaisser(@Param('id') id: string, @Body() dto: EncaisserRecetteDto, @CurrentUser() user: AuthUser) {
     return this.service.encaisser(id, dto, user);
   }
 }

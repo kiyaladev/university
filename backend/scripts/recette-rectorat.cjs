@@ -13,12 +13,18 @@ const api = 'http://127.0.0.1:15041/api';
 const prisma = new PrismaClient({ datasources: { db: { url: env.DATABASE_URL } } });
 let studentId, snapshotId;
 async function request(token, method, route, body, status = 200) {
-  const response = await fetch(api + route, { method, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  const response = await fetch(api + route, {
+    method,
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'Content-Type': 'application/json' },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
   const text = await response.text();
   assert.equal(response.status, status, `${method} ${route}: ${text.slice(0, 200)}`);
   return response.headers.get('content-type')?.includes('json') ? JSON.parse(text) : text;
 }
-async function login(email, password) { return (await request(null, 'POST', '/auth/login', { email, password }, 201)).token; }
+async function login(email, password) {
+  return (await request(null, 'POST', '/auth/login', { email, password }, 201)).token;
+}
 async function main() {
   const account = await prisma.user.findUniqueOrThrow({ where: { email: 'admin@unipresence.gn' } });
   const admin = await login(account.email, 'Passer@2026');
@@ -35,10 +41,15 @@ async function main() {
   const tag = 'QA-RECTORAT-' + randomUUID();
   const student = await prisma.etudiant.create({ data: { matricule: tag, nom: 'Recette', prenom: 'Consolidation' } });
   studentId = student.id;
-  const inscription = await prisma.inscription.create({ data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDEE' } });
+  const inscription = await prisma.inscription.create({
+    data: { numero: tag, etudiantId: student.id, anneeId: year.id, promotionId: promotion.id, statut: 'VALIDEE' },
+  });
   const current = await request(direction, 'GET', route);
   assert.equal(current.effectifTotal, before.effectifTotal + 1);
-  assert.equal(current.effectifParPromotion.reduce((n, p) => n + p.effectif, 0), current.effectifTotal);
+  assert.equal(
+    current.effectifParPromotion.reduce((n, p) => n + p.effectif, 0),
+    current.effectifTotal,
+  );
   await request(direction, 'POST', '/rectorat/bilan-mesrs/generer', { anneeId: year.id }, 403);
   const snapshot = await request(admin, 'POST', '/rectorat/bilan-mesrs/generer', { anneeId: year.id }, 201);
   snapshotId = snapshot.id;
@@ -51,19 +62,43 @@ async function main() {
   assert.equal(persisted.donnees.effectifTotal, current.effectifTotal);
   assert.notEqual(persisted.donnees.effectifTotal, after.effectifTotal);
   const list = await request(direction, 'GET', '/rectorat/bilan-mesrs?anneeId=' + year.id);
-  assert.ok(list.some(s => s.id === snapshot.id));
+  assert.ok(list.some((s) => s.id === snapshot.id));
   const printRoute = `/rectorat/bilan-mesrs/${snapshot.id}/imprimer`;
   await request(null, 'GET', printRoute, null, 401);
   await request(studentToken, 'GET', printRoute, null, 403);
   const document = await request(direction, 'GET', printRoute);
   assert.ok(document.includes(year.libelle));
-  assert.equal(await prisma.auditLog.count({ where: { entiteId: snapshot.id, action: 'BILAN_MESRS_GENERE', userId: account.id } }), 1);
-  const report = { date: new Date().toISOString(), database: database.pathname.slice(1), passed: true, observations: { initialHeadcount: before.effectifTotal, snapshotHeadcount: current.effectifTotal, currentHeadcountAfterCancellation: after.effectifTotal, snapshotUnchanged: true, promotionTotalsAgree: true, generatorRoleRestricted: true, printRolesRestricted: true, generationAuditCount: 1 }, productionUntouched: true, ministryTransmissionAndBusinessDefinitionsPending: true };
+  assert.equal(
+    await prisma.auditLog.count({ where: { entiteId: snapshot.id, action: 'BILAN_MESRS_GENERE', userId: account.id } }),
+    1,
+  );
+  const report = {
+    date: new Date().toISOString(),
+    database: database.pathname.slice(1),
+    passed: true,
+    observations: {
+      initialHeadcount: before.effectifTotal,
+      snapshotHeadcount: current.effectifTotal,
+      currentHeadcountAfterCancellation: after.effectifTotal,
+      snapshotUnchanged: true,
+      promotionTotalsAgree: true,
+      generatorRoleRestricted: true,
+      printRolesRestricted: true,
+      generationAuditCount: 1,
+    },
+    productionUntouched: true,
+    ministryTransmissionAndBusinessDefinitionsPending: true,
+  };
   if (process.argv[2]) fs.writeFileSync(process.argv[2], JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report));
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; }).finally(async () => {
-  if (snapshotId) await prisma.statistiqueMesrs.delete({ where: { id: snapshotId } });
-  if (studentId) await prisma.etudiant.delete({ where: { id: studentId } });
-  await prisma.$disconnect();
-});
+main()
+  .catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    if (snapshotId) await prisma.statistiqueMesrs.delete({ where: { id: snapshotId } });
+    if (studentId) await prisma.etudiant.delete({ where: { id: studentId } });
+    await prisma.$disconnect();
+  });

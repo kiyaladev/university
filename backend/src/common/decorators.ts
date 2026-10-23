@@ -11,11 +11,8 @@ export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
 export const DOCUMENT_ACCESS_KEY = 'documentAccess';
 /** Authentification normale, avec prise en charge du jeton du nouvel onglet. */
-export const ProtectedDocument = (...roles: Role[]) => applyDecorators(
-  SetMetadata(IS_PUBLIC_KEY, false),
-  SetMetadata(DOCUMENT_ACCESS_KEY, true),
-  Roles(...roles),
-);
+export const ProtectedDocument = (...roles: Role[]) =>
+  applyDecorators(SetMetadata(IS_PUBLIC_KEY, false), SetMetadata(DOCUMENT_ACCESS_KEY, true), Roles(...roles));
 
 export const DOCUMENT_SCOPE_KEY = 'documentScope';
 export interface DocumentScopeOptions {
@@ -38,9 +35,7 @@ export interface AuthUser {
 }
 
 /** Injecte l'utilisateur authentifié dans un handler. */
-export const CurrentUser = createParamDecorator(
-  (data: keyof AuthUser | undefined, ctx: ExecutionContext) => {
-    const user = ctx.switchToHttp().getRequest().user as AuthUser;
-    return data ? user?.[data] : user;
-  },
-);
+export const CurrentUser = createParamDecorator((data: keyof AuthUser | undefined, ctx: ExecutionContext) => {
+  const user = ctx.switchToHttp().getRequest().user as AuthUser;
+  return data ? user?.[data] : user;
+});

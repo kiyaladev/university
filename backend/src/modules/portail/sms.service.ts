@@ -61,20 +61,22 @@ export class SmsService {
         notifications = await this.prisma.$transaction(async (tx) => {
           const creees: { id: string }[] = [];
           for (const cible of lot) {
-            creees.push(await tx.notification.create({
-              data: {
-                telephone: numerique(cible.telephone),
-                message: cible.message,
-                motif: cible.motif ?? null,
-                destinataireNom: cible.destinataireNom ?? null,
-                etudiantId: cible.etudiantId ?? null,
-                statut: StatutNotification.EN_ATTENTE,
-                envoyeParId: cible.envoyeParId ?? null,
-                envoyeLe: null,
-                erreur: null,
-              },
-              select: { id: true },
-            }));
+            creees.push(
+              await tx.notification.create({
+                data: {
+                  telephone: numerique(cible.telephone),
+                  message: cible.message,
+                  motif: cible.motif ?? null,
+                  destinataireNom: cible.destinataireNom ?? null,
+                  etudiantId: cible.etudiantId ?? null,
+                  statut: StatutNotification.EN_ATTENTE,
+                  envoyeParId: cible.envoyeParId ?? null,
+                  envoyeLe: null,
+                  erreur: null,
+                },
+                select: { id: true },
+              }),
+            );
           }
           await tx.auditLog.create({
             data: {
@@ -94,20 +96,26 @@ export class SmsService {
         });
       } catch {
         // Aucun appel externe ne part sans trace durable de la demande.
-        resultats.push(...lot.map((cible) => ({
-          telephone: numerique(cible.telephone),
-          ok: false,
-          erreur: t('sms.sendOrLogFailure'),
-        })));
+        resultats.push(
+          ...lot.map((cible) => ({
+            telephone: numerique(cible.telephone),
+            ok: false,
+            erreur: t('sms.sendOrLogFailure'),
+          })),
+        );
         continue;
       }
 
       for (let index = 0; index < lot.length; index += CONCURRENCE_MAX_SMS) {
         const ciblesConcurrentes = lot.slice(index, index + CONCURRENCE_MAX_SMS);
         const notificationsConcurrentes = notifications.slice(index, index + CONCURRENCE_MAX_SMS);
-        resultats.push(...await Promise.all(ciblesConcurrentes.map((cible, position) =>
-          this.envoyerNotification(cible, notificationsConcurrentes[position].id),
-        )));
+        resultats.push(
+          ...(await Promise.all(
+            ciblesConcurrentes.map((cible, position) =>
+              this.envoyerNotification(cible, notificationsConcurrentes[position].id),
+            ),
+          )),
+        );
       }
     }
     const envoyees = resultats.filter((r) => r.ok).length;

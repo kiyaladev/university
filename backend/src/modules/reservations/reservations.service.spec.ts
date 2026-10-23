@@ -8,11 +8,19 @@ jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: stri
 describe('Périmètre des réservations', () => {
   const teacher = { id: 'user-1', enseignantId: 'teacher-1', role: Role.ENSEIGNANT } as AuthUser;
   const otherReservation = {
-    id: 'reservation-1', salleId: 'room-1', demandeurId: 'teacher-2',
-    dateJour: new Date('2026-10-02T00:00:00.000Z'), heureDebut: '09:00', heureFin: '10:00',
-    statut: 'CONFIRMEE', motif: 'Événement privé', organisme: 'Organisation privée',
+    id: 'reservation-1',
+    salleId: 'room-1',
+    demandeurId: 'teacher-2',
+    dateJour: new Date('2026-10-02T00:00:00.000Z'),
+    heureDebut: '09:00',
+    heureFin: '10:00',
+    statut: 'CONFIRMEE',
+    motif: 'Événement privé',
+    organisme: 'Organisation privée',
     demandeur: { id: 'teacher-2', nom: 'Diallo', prenom: 'Awa' },
-    refuseParId: 'admin-1', refusePar: { id: 'admin-1', nom: 'Admin', prenom: 'Un' }, refuseMotif: 'Détail privé',
+    refuseParId: 'admin-1',
+    refusePar: { id: 'admin-1', nom: 'Admin', prenom: 'Un' },
+    refuseMotif: 'Détail privé',
   };
   const prepare = () => {
     const db: any = {
@@ -44,10 +52,27 @@ describe('Périmètre des réservations', () => {
     const { db, service } = prepare();
     const result = await service.calendrier({ dateDebut: '2026-10-02', dateFin: '2026-10-02' } as any, teacher);
     const reservation = result.jours[0].reservations[0];
-    expect(reservation).toMatchObject({ id: otherReservation.id, salleId: otherReservation.salleId, statut: 'CONFIRMEE' });
-    expect(reservation).toMatchObject({ motif: null, organisme: null, responsable: null, demandeurId: null, demandeur: null, refusePar: null, refuseMotif: null });
+    expect(reservation).toMatchObject({
+      id: otherReservation.id,
+      salleId: otherReservation.salleId,
+      statut: 'CONFIRMEE',
+    });
+    expect(reservation).toMatchObject({
+      motif: null,
+      organisme: null,
+      responsable: null,
+      demandeurId: null,
+      demandeur: null,
+      refusePar: null,
+      refuseMotif: null,
+    });
     expect(db.salle.findMany.mock.calls[0][0].select).toEqual({
-      id: true, code: true, nom: true, batiment: true, capacite: true, actif: true,
+      id: true,
+      code: true,
+      nom: true,
+      batiment: true,
+      capacite: true,
+      actif: true,
     });
     expect(db.salle.findMany.mock.calls[0][0].select).not.toHaveProperty('qrToken');
     expect(db.seance.findMany.mock.calls[0][0].where.affectation).toEqual({ enseignantId: 'teacher-1' });
@@ -55,17 +80,27 @@ describe('Périmètre des réservations', () => {
 
   it('limite les séances du calendrier d’un contrôleur à son département ou à ses affectations', async () => {
     const { db, service } = prepare();
-    await service.calendrier({ dateDebut: '2026-10-02', dateFin: '2026-10-02' } as any, {
-      id: 'ctrl-1', role: Role.CONTROLEUR, departementId: 'dept-1',
-    } as any);
+    await service.calendrier(
+      { dateDebut: '2026-10-02', dateFin: '2026-10-02' } as any,
+      {
+        id: 'ctrl-1',
+        role: Role.CONTROLEUR,
+        departementId: 'dept-1',
+      } as any,
+    );
     expect(db.seance.findMany.mock.calls[0][0].where.affectation).toEqual({
       enseignant: { departementId: 'dept-1' },
     });
 
     const sansDepartement = prepare();
-    await sansDepartement.service.calendrier({ dateDebut: '2026-10-02', dateFin: '2026-10-02' } as any, {
-      id: 'ctrl-2', role: Role.CONTROLEUR, departementId: null,
-    } as any);
+    await sansDepartement.service.calendrier(
+      { dateDebut: '2026-10-02', dateFin: '2026-10-02' } as any,
+      {
+        id: 'ctrl-2',
+        role: Role.CONTROLEUR,
+        departementId: null,
+      } as any,
+    );
     expect(sansDepartement.db.seance.findMany.mock.calls[0][0].where.OR).toEqual([
       { controleurAssigneId: 'ctrl-2' },
       { controle: { is: { controleurId: 'ctrl-2' } } },
@@ -74,8 +109,9 @@ describe('Périmètre des réservations', () => {
 
   it('refuse une période de calendrier supérieure à 93 jours avant toute requête', async () => {
     const { db, service } = prepare();
-    await expect(service.calendrier({ dateDebut: '1900-01-01', dateFin: '9999-12-31' } as any, teacher))
-      .rejects.toThrow(BadRequestException);
+    await expect(
+      service.calendrier({ dateDebut: '1900-01-01', dateFin: '9999-12-31' } as any, teacher),
+    ).rejects.toThrow(BadRequestException);
     expect(db.reservationSalle.findMany).not.toHaveBeenCalled();
     expect(db.seance.findMany).not.toHaveBeenCalled();
     expect(db.salle.findMany).not.toHaveBeenCalled();
@@ -83,6 +119,8 @@ describe('Périmètre des réservations', () => {
 
   it('permet au demandeur de consulter son propre détail', async () => {
     const { service } = prepare();
-    await expect(service.consulter(otherReservation.id, { ...teacher, id: otherReservation.demandeurId })).resolves.toEqual(otherReservation);
+    await expect(
+      service.consulter(otherReservation.id, { ...teacher, id: otherReservation.demandeurId }),
+    ).resolves.toEqual(otherReservation);
   });
 });

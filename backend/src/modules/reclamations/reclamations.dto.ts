@@ -9,11 +9,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import {
-  PrioriteReclamation,
-  StatutReclamation,
-  TypeReclamation,
-} from '@prisma/client';
+import { PrioriteReclamation, StatutReclamation, TypeReclamation } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 
 /**

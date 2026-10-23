@@ -77,8 +77,8 @@ export class ImpressionService {
     <div class="titre">${echapper(titre)}</div>
     <div class="sous-titre">${sousTitre}</div>`,
       corps: contenu,
-      piedDePage: '<span>UniPrésence — contrôle numérique de présence des enseignants</span>'
-        + `<span>Édité le ${edite}</span>`,
+      piedDePage:
+        '<span>UniPrésence — contrôle numérique de présence des enseignants</span>' + `<span>Édité le ${edite}</span>`,
     });
   }
 
@@ -228,7 +228,14 @@ export class ImpressionService {
       orderBy: { code: 'asc' },
     });
 
-    await journaliser(this.prisma, user, 'IMPRESSION_QR_SALLES', 'Salle', salleId ?? null, `${salles.length} affiche(s) QR générée(s)`);
+    await journaliser(
+      this.prisma,
+      user,
+      'IMPRESSION_QR_SALLES',
+      'Salle',
+      salleId ?? null,
+      `${salles.length} affiche(s) QR générée(s)`,
+    );
 
     const blocs = await Promise.all(
       salles.map(async (s) => {

@@ -15,13 +15,7 @@ import { ReservationsService } from './reservations.service';
  * Tout le personnel peut demander une salle pour un événement ; seuls
  * l'administration et la direction la confirment ou la refusent.
  */
-const DEMANDEURS = [
-  Role.ADMIN,
-  Role.SCOLARITE,
-  Role.DIRECTION,
-  Role.ENSEIGNANT,
-  Role.CONTROLEUR,
-] as const;
+const DEMANDEURS = [Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ENSEIGNANT, Role.CONTROLEUR] as const;
 
 @ApiTags('Réservations de salles')
 @ApiBearerAuth()
@@ -44,30 +38,26 @@ export class ReservationsController {
   }
 
   @Roles(...DEMANDEURS)
-  @Post() create(@Body() dto: CreateReservationDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateReservationDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(...DEMANDEURS)
-  @Put(':id') update(
-    @Param('id') id: string,
-    @Body() dto: UpdateReservationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateReservationDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(...DEMANDEURS)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Post(':id/decider') decider(
-    @Param('id') id: string,
-    @Body() dto: DeciderReservationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Post(':id/decider')
+  decider(@Param('id') id: string, @Body() dto: DeciderReservationDto, @CurrentUser() user: AuthUser) {
     return this.service.decider(id, dto, user);
   }
 }

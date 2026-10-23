@@ -20,7 +20,6 @@ import { OPERATEURS_MOBILE_MONEY } from '../../common/finances/paiement';
 /** Valeurs admises pour `Etudiant.sexe`. */
 export const SEXES = ['M', 'F'] as const;
 
-
 /** Dossier déposé en ligne, sans compte : identité du candidat + choix de promotion. */
 export class InscriptionPubliqueDto {
   @IsString() nom: string;

@@ -6,12 +6,26 @@ describe('Clôture des années académiques', () => {
   const user: any = { id: 'admin-1', role: Role.ADMIN };
   function preparer(cloturee = false) {
     const annee = {
-      id: 'annee-1', libelle: '2025-2026', dateDebut: new Date('2025-09-01'),
-      dateFin: new Date('2026-08-31'), active: true, cloturee,
+      id: 'annee-1',
+      libelle: '2025-2026',
+      dateDebut: new Date('2025-09-01'),
+      dateFin: new Date('2026-08-31'),
+      active: true,
+      cloturee,
       _count: {
-        promotions: 0, affectations: 0, seances: 0, inscriptions: 0, paiements: 0, evaluations: 0,
-        deliberations: 0, attestations: 0, feuillesPaie: 0, frais: 0,
-        attributionsLogement: 0, statistiquesMesrs: 0, examens: 0,
+        promotions: 0,
+        affectations: 0,
+        seances: 0,
+        inscriptions: 0,
+        paiements: 0,
+        evaluations: 0,
+        deliberations: 0,
+        attestations: 0,
+        feuillesPaie: 0,
+        frais: 0,
+        attributionsLogement: 0,
+        statistiquesMesrs: 0,
+        examens: 0,
       },
     };
     const tx: any = {
@@ -44,13 +58,17 @@ describe('Clôture des années académiques', () => {
     expect(prisma.$transaction.mock.calls[0][1]).toMatchObject({
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
-    expect(tx.anneeAcademique.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'annee-1' },
-      data: expect.objectContaining({ cloturee: true, active: false }),
-    }));
-    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ userId: user.id, action: 'ANNEE_ACADEMIQUE_CLOTUREE', entiteId: 'annee-1' }),
-    }));
+    expect(tx.anneeAcademique.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'annee-1' },
+        data: expect.objectContaining({ cloturee: true, active: false }),
+      }),
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userId: user.id, action: 'ANNEE_ACADEMIQUE_CLOTUREE', entiteId: 'annee-1' }),
+      }),
+    );
   });
 
   it('crée une année dans une transaction sérialisable', async () => {
@@ -69,7 +87,9 @@ describe('Clôture des années académiques', () => {
 
   it('fige les dates et le libellé après clôture', async () => {
     const { tx, service } = preparer(true);
-    await expect(service.modifier('annee-1', { dateFin: '2026-09-30' }, user)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifier('annee-1', { dateFin: '2026-09-30' }, user)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(tx.anneeAcademique.update).not.toHaveBeenCalled();
   });
 
@@ -84,9 +104,19 @@ describe('Clôture des années académiques', () => {
     tx.anneeAcademique.findUnique.mockResolvedValue({
       cloturee: false,
       _count: {
-        promotions: 1, affectations: 0, seances: 0, inscriptions: 0, paiements: 0, evaluations: 0,
-        deliberations: 0, attestations: 0, feuillesPaie: 0, frais: 0,
-        attributionsLogement: 0, statistiquesMesrs: 0, examens: 0,
+        promotions: 1,
+        affectations: 0,
+        seances: 0,
+        inscriptions: 0,
+        paiements: 0,
+        evaluations: 0,
+        deliberations: 0,
+        attestations: 0,
+        feuillesPaie: 0,
+        frais: 0,
+        attributionsLogement: 0,
+        statistiquesMesrs: 0,
+        examens: 0,
       },
     });
 
@@ -100,11 +130,24 @@ describe('Clôture des années académiques', () => {
   it('refuse la suppression si la seule dépendance est un paiement', async () => {
     const { tx, service } = preparer();
     tx.anneeAcademique.findUnique.mockResolvedValue({
-      id: 'annee-1', libelle: '2025-2026', active: false, cloturee: false,
+      id: 'annee-1',
+      libelle: '2025-2026',
+      active: false,
+      cloturee: false,
       _count: {
-        promotions: 0, affectations: 0, seances: 0, inscriptions: 0, paiements: 1, evaluations: 0,
-        deliberations: 0, attestations: 0, feuillesPaie: 0, frais: 0,
-        attributionsLogement: 0, statistiquesMesrs: 0, examens: 0,
+        promotions: 0,
+        affectations: 0,
+        seances: 0,
+        inscriptions: 0,
+        paiements: 1,
+        evaluations: 0,
+        deliberations: 0,
+        attestations: 0,
+        feuillesPaie: 0,
+        frais: 0,
+        attributionsLogement: 0,
+        statistiquesMesrs: 0,
+        examens: 0,
       },
     });
 
@@ -118,11 +161,15 @@ describe('Clôture des années académiques', () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.anneeAcademique.delete).toHaveBeenCalledWith({ where: { id: 'annee-1' } });
-    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        userId: user.id, action: 'ANNEE_ACADEMIQUE_SUPPRIMEE', entiteId: 'annee-1',
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: user.id,
+          action: 'ANNEE_ACADEMIQUE_SUPPRIMEE',
+          entiteId: 'annee-1',
+        }),
       }),
-    }));
+    );
   });
 
   it('ignore une valeur cloturee fournie à la création', async () => {
@@ -132,21 +179,35 @@ describe('Clôture des années académiques', () => {
       user,
     );
     expect(tx.anneeAcademique.create.mock.calls[0][0].data).not.toHaveProperty('cloturee');
-    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: 'ANNEE_ACADEMIQUE_CREEE', userId: user.id }),
-    }));
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'ANNEE_ACADEMIQUE_CREEE', userId: user.id }),
+      }),
+    );
   });
 
   it('ne désactive que les autres années encore ouvertes', async () => {
     const { service, tx } = preparer();
-    tx.anneeAcademique.findMany.mockResolvedValue([{
-      id: 'annee-ancienne', active: true, cloturee: false,
-      libelle: '2024-2025', dateDebut: new Date('2024-09-01'), dateFin: new Date('2025-08-31'),
-    }]);
+    tx.anneeAcademique.findMany.mockResolvedValue([
+      {
+        id: 'annee-ancienne',
+        active: true,
+        cloturee: false,
+        libelle: '2024-2025',
+        dateDebut: new Date('2024-09-01'),
+        dateFin: new Date('2025-08-31'),
+      },
+    ]);
 
-    await service.creer({
-      libelle: '2026-2027', dateDebut: '2026-09-01', dateFin: '2027-08-31', active: true,
-    } as any, user);
+    await service.creer(
+      {
+        libelle: '2026-2027',
+        dateDebut: '2026-09-01',
+        dateFin: '2027-08-31',
+        active: true,
+      } as any,
+      user,
+    );
 
     expect(tx.anneeAcademique.findMany).toHaveBeenCalledWith({
       where: { active: true, cloturee: false },
@@ -159,17 +220,25 @@ describe('Clôture des années académiques', () => {
 
   it('refuse une période inversée à la création avant toute écriture', async () => {
     const { prisma, tx, service } = preparer();
-    await expect(service.creer({
-      libelle: '2026-2027', dateDebut: '2027-09-01', dateFin: '2026-08-31',
-    } as any, user)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creer(
+        {
+          libelle: '2026-2027',
+          dateDebut: '2027-09-01',
+          dateFin: '2026-08-31',
+        } as any,
+        user,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.anneeAcademique.create).not.toHaveBeenCalled();
   });
 
   it('refuse de déplacer le début après la fin déjà enregistrée', async () => {
     const { tx, service } = preparer();
-    await expect(service.modifier('annee-1', { dateDebut: '2026-09-01' }, user))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifier('annee-1', { dateDebut: '2026-09-01' }, user)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(tx.anneeAcademique.update).not.toHaveBeenCalled();
   });
 

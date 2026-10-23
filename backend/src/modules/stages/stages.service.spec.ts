@@ -50,9 +50,11 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     const etudiant = { id: 'user-etu', role: Role.ETUDIANT, etudiantId: 'etudiant-1' } as AuthUser;
 
     await expect(service.detail('travail-1', etudiant)).resolves.toEqual(travail);
-    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'travail-1', etudiantId: 'etudiant-1' },
-    }));
+    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'travail-1', etudiantId: 'etudiant-1' },
+      }),
+    );
   });
 
   it('retourne le même NotFound pour un dossier tiers et un identifiant inconnu', async () => {
@@ -60,9 +62,11 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     const etudiant = { id: 'user-etu', role: Role.ETUDIANT, etudiantId: 'etudiant-1' } as AuthUser;
 
     await expect(service.detail('travail-2', etudiant)).rejects.toThrow(NotFoundException);
-    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'travail-2', etudiantId: 'etudiant-1' },
-    }));
+    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'travail-2', etudiantId: 'etudiant-1' },
+      }),
+    );
   });
 
   it('filtre le détail enseignant sur son encadrement', async () => {
@@ -70,8 +74,10 @@ describe('Périmètre de lecture des travaux encadrés', () => {
     const enseignant = { id: 'user-prof', role: Role.ENSEIGNANT, enseignantId: 'prof-1' } as AuthUser;
 
     await service.detail('travail-1', enseignant);
-    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'travail-1', encadrantId: 'prof-1' },
-    }));
+    expect(db.travailEncadre.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'travail-1', encadrantId: 'prof-1' },
+      }),
+    );
   });
 });

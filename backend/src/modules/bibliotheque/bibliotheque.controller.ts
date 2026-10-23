@@ -1,16 +1,5 @@
 import { JwtStrategy } from '../auth/jwt.strategy';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Headers,
-  Param,
-  Post,
-  Put,
-  Query,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Post, Put, Query, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
@@ -66,15 +55,16 @@ export class BibliothequeController {
     } catch {
       return null;
     }
-    try { return await this.identite.validate(payload); } catch { return null; }
+    try {
+      return await this.identite.validate(payload);
+    } catch {
+      return null;
+    }
   }
 
   @Public()
   @Get()
-  async liste(
-    @Query() query: DocumentQueryDto,
-    @Headers('authorization') authorization?: string,
-  ) {
+  async liste(@Query() query: DocumentQueryDto, @Headers('authorization') authorization?: string) {
     return this.service.liste(query, await this.porteur(authorization));
   }
 
@@ -89,10 +79,7 @@ export class BibliothequeController {
   @Public()
   @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Get('recherche')
-  async rechercheFts(
-    @Query() query: RechercheDocumentDto,
-    @Headers('authorization') authorization?: string,
-  ) {
+  async rechercheFts(@Query() query: RechercheDocumentDto, @Headers('authorization') authorization?: string) {
     return this.recherche.rechercher(query, await this.porteur(authorization));
   }
 
@@ -128,11 +115,7 @@ export class BibliothequeController {
   /** Acquittement humain d'une suspicion : admin et direction. */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post('plagiat/:id/acquitter')
-  acquitter(
-    @Param('id') id: string,
-    @Body() dto: AcquitterPlagiatDto,
-    @CurrentUser() utilisateur: AuthUser,
-  ) {
+  acquitter(@Param('id') id: string, @Body() dto: AcquitterPlagiatDto, @CurrentUser() utilisateur: AuthUser) {
     return this.plagiat.acquitter(id, dto.decision, utilisateur, dto.commentaire);
   }
 
@@ -147,11 +130,7 @@ export class BibliothequeController {
    */
   @Public()
   @Get(':id/fichier')
-  async fichier(
-    @Param('id') id: string,
-    @Res() res: Response,
-    @Headers('authorization') authorization?: string,
-  ) {
+  async fichier(@Param('id') id: string, @Res() res: Response, @Headers('authorization') authorization?: string) {
     const { octets, mime, nom } = await this.service.fichier(id, await this.porteur(authorization));
     res.setHeader('Content-Type', mime);
     res.setHeader('Content-Disposition', `attachment; filename="${nom}"`);
@@ -166,11 +145,7 @@ export class BibliothequeController {
 
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateDocumentDto,
-    @CurrentUser() utilisateur: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateDocumentDto, @CurrentUser() utilisateur: AuthUser) {
     return this.service.modifier(id, dto, utilisateur);
   }
 

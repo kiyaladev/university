@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
@@ -84,11 +74,7 @@ export class PaieController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     // Le secret vient du JwtService injecté : plus de clé en dur qui pouvait
     // diverger de celle de la stratégie JWT.
     verifierJetonImprimable(this.jwt, req);

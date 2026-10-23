@@ -1,21 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
-import {
-  CategorieChambre,
-  StatutAttributionLogement,
-  StatutChambre,
-} from '@prisma/client';
-import {
-  IsBoolean,
-  IsEnum,
-  IsIn,
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
+import { CategorieChambre, StatutAttributionLogement, StatutChambre } from '@prisma/client';
+import { IsBoolean, IsEnum, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
 // ---------------------------------------------------------------------------

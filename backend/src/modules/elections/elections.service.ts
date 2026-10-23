@@ -39,13 +39,7 @@ import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
 import { ParametresService } from '../parametres/parametres.service';
-import {
-  CreateCandidatDto,
-  CreateElectionDto,
-  ElectionQueryDto,
-  UpdateElectionDto,
-  VoterDto,
-} from './elections.dto';
+import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionDto, VoterDto } from './elections.dto';
 import { documentsElection, BulletinElection } from './documents';
 import { paginer, pagine } from '../../common/pagination';
 import { avantApres, journaliser } from '../../common/audit';
@@ -225,10 +219,7 @@ export class ElectionsService {
     const scrutin = await this.prisma.voteElection.findFirst({
       where: {
         electionId,
-        OR: [
-          { electeurId: user.id },
-          ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : []),
-        ],
+        OR: [{ electeurId: user.id }, ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : [])],
       },
       orderBy: { horodatage: 'desc' },
       select: { scrutinId: true, horodatage: true },
@@ -266,7 +257,14 @@ export class ElectionsService {
         },
         include: ELECTION_INCLUDE,
       });
-      await journaliser(tx, user, 'ELECTION_CREEE', 'Election', election.id, avantApres(null, this.instantaneElection(election)));
+      await journaliser(
+        tx,
+        user,
+        'ELECTION_CREEE',
+        'Election',
+        election.id,
+        avantApres(null, this.instantaneElection(election)),
+      );
       return election;
     });
   }
@@ -305,7 +303,9 @@ export class ElectionsService {
         id,
         // Les champs touchés sont nommés, leur contenu ne l'est pas : savoir que
         // le titre a changé suffit à l'audit sans le recopier.
-        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { champsModifies: Object.keys(dto) }),
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
+          champsModifies: Object.keys(dto),
+        }),
       );
       return miseAJour;
     });
@@ -315,9 +315,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException(
-          `L'élection est ${election.statut} : on ne peut l'ouvrir que depuis BROUILLON.`,
-        );
+        throw new BadRequestException(`L'élection est ${election.statut} : on ne peut l'ouvrir que depuis BROUILLON.`);
       }
       if (election.candidats.length === 0) {
         throw new BadRequestException(t('elections.declarez_au_moins_un_candidat_avant_d_ouvrir_le_scrutin'));
@@ -333,7 +331,9 @@ export class ElectionsService {
         'ELECTION_OUVERTE',
         'Election',
         id,
-        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.OUVERTE}` }),
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
+          transition: `${election.statut}→${StatutElection.OUVERTE}`,
+        }),
       );
       return miseAJour;
     });
@@ -343,7 +343,11 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.OUVERTE) {
-        throw new BadRequestException(t('elections.l_election_est_election_statut_seule_une_ouverte_peut_etre_c', { 'election.statut': election.statut }));
+        throw new BadRequestException(
+          t('elections.l_election_est_election_statut_seule_une_ouverte_peut_etre_c', {
+            'election.statut': election.statut,
+          }),
+        );
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -356,7 +360,9 @@ export class ElectionsService {
         'ELECTION_CLOSE',
         'Election',
         id,
-        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.CLOSE}` }),
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
+          transition: `${election.statut}→${StatutElection.CLOSE}`,
+        }),
       );
       return miseAJour;
     });
@@ -366,7 +372,11 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.CLOSE) {
-        throw new BadRequestException(t('elections.l_election_est_election_statut_seule_une_close_peut_etre_pro', { 'election.statut': election.statut }));
+        throw new BadRequestException(
+          t('elections.l_election_est_election_statut_seule_une_close_peut_etre_pro', {
+            'election.statut': election.statut,
+          }),
+        );
       }
       const miseAJour = await tx.election.update({
         where: { id },
@@ -379,7 +389,9 @@ export class ElectionsService {
         'ELECTION_PROCLAMEE',
         'Election',
         id,
-        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), { transition: `${election.statut}→${StatutElection.PROCLAMEE}` }),
+        avantApres(this.instantaneElection(election), this.instantaneElection(miseAJour), {
+          transition: `${election.statut}→${StatutElection.PROCLAMEE}`,
+        }),
       );
       return miseAJour;
     });
@@ -424,9 +436,7 @@ export class ElectionsService {
     return this.prisma.$transaction(async (tx) => {
       const election = await this.electionVerrouillee(tx, id);
       if (election.statut !== StatutElection.BROUILLON) {
-        throw new BadRequestException(
-          'Les candidats ne se retirent qu\'avant l\'ouverture du scrutin.',
-        );
+        throw new BadRequestException("Les candidats ne se retirent qu'avant l'ouverture du scrutin.");
       }
       const candidat = await tx.candidatElection.findUnique({
         where: { id: candidatId },
@@ -470,54 +480,66 @@ export class ElectionsService {
     const scrutinId = randomBytes(8).toString('hex');
     for (let tentative = 0; tentative < 3; tentative++) {
       try {
-        await this.prisma.$transaction(async (transaction) => {
-          const election = await this.electionVerrouillee(transaction, dto.electionId);
-          if (election.statut !== StatutElection.OUVERTE) {
-            throw new BadRequestException(t('elections.le_scrutin_n_est_pas_ouvert'));
-          }
-          const maintenant = new Date();
-          if (election.dateOuverture > maintenant) {
-            throw new BadRequestException(t('elections.l_ouverture_du_scrutin_n_est_pas_encore_effective'));
-          }
-          if (election.dateCloture <= maintenant) {
-            throw new BadRequestException(t('elections.le_scrutin_est_clos'));
-          }
-          if (dto.bulletin.length === 0) {
-            throw new BadRequestException(t('elections.bulletin_vide_selectionnez_au_moins_un_candidat'));
-          }
-          if (dto.bulletin.length > election.nbSieges) {
-            throw new BadRequestException(
-              `Vous pouvez choisir au plus ${election.nbSieges} candidat(s) (sièges à pourvoir).`,
-            );
-          }
-          const doublons = new Set<string>();
-          for (const id of idsChoisis) {
-            if (doublons.has(id)) {
-              throw new BadRequestException(t('elections.le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois'));
+        await this.prisma.$transaction(
+          async (transaction) => {
+            const election = await this.electionVerrouillee(transaction, dto.electionId);
+            if (election.statut !== StatutElection.OUVERTE) {
+              throw new BadRequestException(t('elections.le_scrutin_n_est_pas_ouvert'));
             }
-            doublons.add(id);
-          }
+            const maintenant = new Date();
+            if (election.dateOuverture > maintenant) {
+              throw new BadRequestException(t('elections.l_ouverture_du_scrutin_n_est_pas_encore_effective'));
+            }
+            if (election.dateCloture <= maintenant) {
+              throw new BadRequestException(t('elections.le_scrutin_est_clos'));
+            }
+            if (dto.bulletin.length === 0) {
+              throw new BadRequestException(t('elections.bulletin_vide_selectionnez_au_moins_un_candidat'));
+            }
+            if (dto.bulletin.length > election.nbSieges) {
+              throw new BadRequestException(
+                `Vous pouvez choisir au plus ${election.nbSieges} candidat(s) (sièges à pourvoir).`,
+              );
+            }
+            const doublons = new Set<string>();
+            for (const id of idsChoisis) {
+              if (doublons.has(id)) {
+                throw new BadRequestException(t('elections.le_meme_candidat_ne_peut_pas_etre_choisi_deux_fois'));
+              }
+              doublons.add(id);
+            }
 
-          const candidatsExistants = await transaction.candidatElection.findMany({
-            where: { id: { in: idsChoisis }, electionId: dto.electionId },
-            select: { id: true },
-          });
-          if (candidatsExistants.length !== idsChoisis.length) {
-            throw new BadRequestException(t('elections.au_moins_un_candidat_n_appartient_pas_a_cette_election'));
-          }
+            const candidatsExistants = await transaction.candidatElection.findMany({
+              where: { id: { in: idsChoisis }, electionId: dto.electionId },
+              select: { id: true },
+            });
+            if (candidatsExistants.length !== idsChoisis.length) {
+              throw new BadRequestException(t('elections.au_moins_un_candidat_n_appartient_pas_a_cette_election'));
+            }
 
-          const dejaVote = await transaction.voteElection.findFirst({
-            where: { electionId: dto.electionId, OR: [
-              { electeurId: user.id },
-              ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : []),
-            ] }, select: { id: true },
-          });
-          if (dejaVote) throw new ConflictException(t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
-          await transaction.voteElection.createMany({ data: idsChoisis.map(candidatId => ({
-            electionId: dto.electionId, candidatId, etudiantId: user.etudiantId ?? null,
-            electeurId: user.id, scrutinId, mode: dto.mode ?? 'WEB', ipAppareil: ip ?? null,
-          })) });
-        }, { isolationLevel: 'Serializable' });
+            const dejaVote = await transaction.voteElection.findFirst({
+              where: {
+                electionId: dto.electionId,
+                OR: [{ electeurId: user.id }, ...(user.etudiantId ? [{ etudiantId: user.etudiantId }] : [])],
+              },
+              select: { id: true },
+            });
+            if (dejaVote)
+              throw new ConflictException(t('elections.vous_avez_deja_depose_un_bulletin_pour_cette_election'));
+            await transaction.voteElection.createMany({
+              data: idsChoisis.map((candidatId) => ({
+                electionId: dto.electionId,
+                candidatId,
+                etudiantId: user.etudiantId ?? null,
+                electeurId: user.id,
+                scrutinId,
+                mode: dto.mode ?? 'WEB',
+                ipAppareil: ip ?? null,
+              })),
+            });
+          },
+          { isolationLevel: 'Serializable' },
+        );
         break;
       } catch (error: any) {
         // Deux bulletins simultanés passent par le même contrôle transactionnel.
@@ -677,5 +699,4 @@ export class ElectionsService {
       photoFournie: Boolean(candidat.photoUrl),
     };
   }
-
 }

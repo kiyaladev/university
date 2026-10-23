@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Ip,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Ip, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
@@ -74,41 +63,25 @@ export class BadgesController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateBadgeDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateBadgeDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/annuler')
-  annuler(
-    @Param('id') id: string,
-    @Body() dto: AnnulerBadgeDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  annuler(@Param('id') id: string, @Body() dto: AnnulerBadgeDto, @CurrentUser() user: AuthUser) {
     return this.service.annuler(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/rallonger')
-  rallonger(
-    @Param('id') id: string,
-    @Body() dto: RallongerBadgeDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  rallonger(@Param('id') id: string, @Body() dto: RallongerBadgeDto, @CurrentUser() user: AuthUser) {
     return this.service.rallonger(id, dto, user);
   }
 
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get(':id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     const html = await this.service.imprimer(id, jetonImprimable(req), base);
     res.type('html').send(html);

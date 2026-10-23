@@ -7,16 +7,11 @@
  * sans raccordement ici).
  */
 import { Module } from '@nestjs/common';
-import {
-  AttributionsController,
-  ChambresController,
-  ResidencesController,
-} from './cites.controller';
+import { AttributionsController, ChambresController, ResidencesController } from './cites.controller';
 import { AttributionsService, ChambresService, ResidencesService } from './cites.service';
 
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [ResidencesController, ChambresController, AttributionsController],
   providers: [ResidencesService, ChambresService, AttributionsService],
   exports: [ResidencesService, ChambresService, AttributionsService],

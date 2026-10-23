@@ -91,11 +91,12 @@ export function pvDeliberationHtml(deliberation: any, etablissement: Etablisseme
       <div class="signature">La scolarité</div>
     </div>`;
 
-  const ligneValidee = statut === StatutDeliberation.VALIDEE && valideePar
-    ? ` — validée par ${echapper(`${valideePar.prenom ?? ''} ${valideePar.nom ?? ''}`)}`
-    : statut === StatutDeliberation.VALIDEE
-      ? ' — validée par le jury'
-      : '';
+  const ligneValidee =
+    statut === StatutDeliberation.VALIDEE && valideePar
+      ? ` — validée par ${echapper(`${valideePar.prenom ?? ''} ${valideePar.nom ?? ''}`)}`
+      : statut === StatutDeliberation.VALIDEE
+        ? ' — validée par le jury'
+        : '';
 
   return page(
     etablissement,
@@ -113,12 +114,16 @@ export function bulletinDeliberationHtml(
   const etudiant = ligne?.inscription?.etudiant;
 
   const matieresHtml = matieres
-    .map((m: any) =>
-      `<tr>
+    .map(
+      (m: any) =>
+        `<tr>
         <td>${echapper(m.matiereIntitule)}</td>
         <td>${m.credits}</td>
         <td>${m.epreuves
-          .map((e: any) => `${echapper(e.intitule)} (c. ${echapper(e.coefficient)}) : ${e.note !== null ? echapper(e.note) : e.present ? 'non noté' : 'absent'}`)
+          .map(
+            (e: any) =>
+              `${echapper(e.intitule)} (c. ${echapper(e.coefficient)}) : ${e.note !== null ? echapper(e.note) : e.present ? 'non noté' : 'absent'}`,
+          )
           .join('<br>')}</td>
         <td><strong>${m.moyenne !== null ? noteLisible(m.moyenne) : '—'}</strong></td>
         <td>${m.enDefaut ? '<span class="badge DEFAILLANT">en défaut</span>' : ''}</td>

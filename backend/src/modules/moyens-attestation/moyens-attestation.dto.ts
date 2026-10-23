@@ -1,14 +1,4 @@
-import {
-  IsBoolean,
-  IsUUID,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  Matches,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsUUID, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, Min } from 'class-validator';
 
 export class DefinirCodePinDto {
   @Matches(/^\d{4,6}$/, { message: 'Le code doit comporter 4 à 6 chiffres' })

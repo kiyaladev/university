@@ -12,10 +12,7 @@ const UN_JOUR_MS = 86_400_000;
  * Intervalle de dates inclusif : `dateFin` couvre toute la journée saisie
  * (« jusqu'au 31 » inclut le 31 à 23:59:59.999), comme l'ancien filtrage client.
  */
-export function intervalleDates(
-  dateDebut?: string,
-  dateFin?: string,
-): Prisma.DateTimeFilter | undefined {
+export function intervalleDates(dateDebut?: string, dateFin?: string): Prisma.DateTimeFilter | undefined {
   if (!dateDebut && !dateFin) return undefined;
   const filtre: Prisma.DateTimeFilter = {};
   if (dateDebut) filtre.gte = new Date(dateDebut);
@@ -30,8 +27,7 @@ export function intervalleDates(
  * La recherche textuelle reste ajoutée par `CrudService.findAll`.
  */
 export function whereEtudiants(query: EtudiantQueryDto): Prisma.EtudiantWhereInput {
-  const actif =
-    query.actif === 'false' || query.actif === '0' ? false : query.actif ? true : undefined;
+  const actif = query.actif === 'false' || query.actif === '0' ? false : query.actif ? true : undefined;
   const createdAt = intervalleDates(query.dateDebut, query.dateFin);
   const dossier: Prisma.InscriptionWhereInput = {
     ...(query.promotionId ? { promotionId: query.promotionId } : {}),

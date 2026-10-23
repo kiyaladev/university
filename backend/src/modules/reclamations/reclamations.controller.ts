@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
@@ -83,31 +75,19 @@ export class ReclamationsController {
   /** Tout utilisateur peut poster sur la réclamation qu'il a ouverte. */
   @Throttle({ courant: { ttl: 60_000, limit: 30 } })
   @Post(':id/messages')
-  poster(
-    @Param('id') id: string,
-    @Body() dto: PosterMessageDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  poster(@Param('id') id: string, @Body() dto: PosterMessageDto, @CurrentUser() user: AuthUser) {
     return this.service.posterMessage(id, dto, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Put(':id/statut')
-  changerStatut(
-    @Param('id') id: string,
-    @Body() dto: ChangerStatutDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  changerStatut(@Param('id') id: string, @Body() dto: ChangerStatutDto, @CurrentUser() user: AuthUser) {
     return this.service.changerStatut(id, dto, user);
   }
 
   @Roles(...ROLES_ASSIGNATION)
   @Put(':id/assigner')
-  assigner(
-    @Param('id') id: string,
-    @Body() dto: AssignerReclamationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  assigner(@Param('id') id: string, @Body() dto: AssignerReclamationDto, @CurrentUser() user: AuthUser) {
     return this.service.assigner(id, dto, user);
   }
 
@@ -119,11 +99,7 @@ export class ReclamationsController {
 
   @Roles(...ROLES_CLOTURE)
   @Post(':id/cloturer')
-  cloturer(
-    @Param('id') id: string,
-    @Body() dto: CloturerReclamationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  cloturer(@Param('id') id: string, @Body() dto: CloturerReclamationDto, @CurrentUser() user: AuthUser) {
     return this.service.cloturer(id, dto, user);
   }
 

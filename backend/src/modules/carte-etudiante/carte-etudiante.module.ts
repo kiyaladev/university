@@ -11,9 +11,7 @@ import { CarteEtudianteService } from './carte-etudiante.service';
  * formations, attestations.
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [CarteEtudianteController],
   providers: [CarteEtudianteService],
   exports: [CarteEtudianteService],

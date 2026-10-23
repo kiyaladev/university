@@ -1,21 +1,12 @@
 import { fondsComplet, projectionPubliqueDocument } from './access';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { t } from '../../common/i18n';
 import { CrudService } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import {
-  CreateDocumentDto,
-  DocumentQueryDto,
-  UpdateDocumentDto,
-} from './bibliotheque.dto';
+import { CreateDocumentDto, DocumentQueryDto, UpdateDocumentDto } from './bibliotheque.dto';
 import { PlagiatService } from './plagiat.service';
 import { avantApres, journaliser } from '../../common/audit';
 
@@ -68,7 +59,10 @@ export interface FichierDocument {
 
 @Injectable()
 export class BibliothequeService extends CrudService {
-  constructor(prisma: PrismaService, private readonly plagiat: PlagiatService) {
+  constructor(
+    prisma: PrismaService,
+    private readonly plagiat: PlagiatService,
+  ) {
     super(prisma, 'documentDepot', {
       searchFields: ['titre', 'auteurs', 'resume'],
       orderBy: { createdAt: 'desc' },
@@ -140,7 +134,9 @@ export class BibliothequeService extends CrudService {
     const longueur = Buffer.byteLength(dto.fichier, 'utf8');
     if (longueur >= LIMITE_DATA_URL_OCTETS) {
       const mo = (longueur / (1024 * 1024)).toFixed(1);
-      throw new BadRequestException(t('bibliotheque.le_fichier_joint_depasse_la_limite_de_8_mo_data_url_base64_d', { mo }));
+      throw new BadRequestException(
+        t('bibliotheque.le_fichier_joint_depasse_la_limite_de_8_mo_data_url_base64_d', { mo }),
+      );
     }
     const { mime, octets } = this.decouperDataUrl(dto.fichier);
     return {
@@ -221,10 +217,7 @@ export class BibliothequeService extends CrudService {
     const docs = await this.prisma.documentDepot.findMany({
       where: {
         public: true,
-        OR: [
-          { anneeEdition: annee },
-          { anneeEdition: null, createdAt: { gte: new Date(annee, 0, 1) } },
-        ],
+        OR: [{ anneeEdition: annee }, { anneeEdition: null, createdAt: { gte: new Date(annee, 0, 1) } }],
       },
       orderBy: [{ telechargements: 'desc' }, { createdAt: 'desc' }],
       take: 10,
@@ -255,7 +248,14 @@ export class BibliothequeService extends CrudService {
         include: DOCUMENT_INCLUDE,
         omit: { fichier: true, contenuTexte: true },
       });
-      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_CREE', 'DocumentDepot', cree.id, avantApres(this.instantaneAudit(null), this.instantaneAudit(cree), { champsModifies: Object.keys(dto) }));
+      await journaliser(
+        tx,
+        utilisateur,
+        'DOCUMENT_DEPOT_CREE',
+        'DocumentDepot',
+        cree.id,
+        avantApres(this.instantaneAudit(null), this.instantaneAudit(cree), { champsModifies: Object.keys(dto) }),
+      );
       return cree;
     });
     void this.analyserDoublons(document.id);
@@ -276,45 +276,69 @@ export class BibliothequeService extends CrudService {
       contenuTexte = extrait.contenuTexte;
       empreinteHash = extrait.empreinteHash;
     }
-    const miseAJour = await this.prisma.$transaction(async (tx) => {
-      const document: any = await tx.documentDepot.findUnique({
-        where: { id }, select: DOCUMENT_MUTATION_SELECT,
-      });
-      if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
-      if (utilisateur.role !== Role.ADMIN && document.deposeParId !== utilisateur.id) {
-        throw new ForbiddenException(t('bibliotheque.seul_le_deposant_initial_peut_modifier_ce_document_sauf_admi'));
-      }
-      const { typeMime, tailleKo, ...metadonnees } = prepare;
-      const donnees = {
-        ...metadonnees,
-        ...(prepare.fichier ? { typeMime, tailleKo } : {}),
-        contenuTexte: prepare.fichier ? contenuTexte : document.contenuTexte ?? null,
-        empreinteHash: prepare.fichier ? empreinteHash : document.empreinteHash ?? null,
-      };
-      const maj = await tx.documentDepot.update({
-        where: { id }, data: donnees, include: DOCUMENT_INCLUDE,
-        omit: { fichier: true, contenuTexte: true },
-      });
-      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_MODIFIE', 'DocumentDepot', id, avantApres(this.instantaneAudit(document), this.instantaneAudit(maj), { champsModifies: Object.keys(dto) }));
-      return maj;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    const miseAJour = await this.prisma.$transaction(
+      async (tx) => {
+        const document: any = await tx.documentDepot.findUnique({
+          where: { id },
+          select: DOCUMENT_MUTATION_SELECT,
+        });
+        if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
+        if (utilisateur.role !== Role.ADMIN && document.deposeParId !== utilisateur.id) {
+          throw new ForbiddenException(t('bibliotheque.seul_le_deposant_initial_peut_modifier_ce_document_sauf_admi'));
+        }
+        const { typeMime, tailleKo, ...metadonnees } = prepare;
+        const donnees = {
+          ...metadonnees,
+          ...(prepare.fichier ? { typeMime, tailleKo } : {}),
+          contenuTexte: prepare.fichier ? contenuTexte : (document.contenuTexte ?? null),
+          empreinteHash: prepare.fichier ? empreinteHash : (document.empreinteHash ?? null),
+        };
+        const maj = await tx.documentDepot.update({
+          where: { id },
+          data: donnees,
+          include: DOCUMENT_INCLUDE,
+          omit: { fichier: true, contenuTexte: true },
+        });
+        await journaliser(
+          tx,
+          utilisateur,
+          'DOCUMENT_DEPOT_MODIFIE',
+          'DocumentDepot',
+          id,
+          avantApres(this.instantaneAudit(document), this.instantaneAudit(maj), { champsModifies: Object.keys(dto) }),
+        );
+        return maj;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
     void this.analyserDoublons(id);
     return this.sansFichier(miseAJour as any);
   }
 
   async supprimer(id: string, utilisateur: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const document: any = await tx.documentDepot.findUnique({
-        where: { id }, select: DOCUMENT_MUTATION_SELECT,
-      });
-      if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
-      if (utilisateur.role !== Role.ADMIN && document.deposeParId !== utilisateur.id) {
-        throw new ForbiddenException(t('bibliotheque.seul_le_deposant_initial_peut_supprimer_ce_document_sauf_adm'));
-      }
-      await tx.documentDepot.delete({ where: { id } });
-      await journaliser(tx, utilisateur, 'DOCUMENT_DEPOT_SUPPRIME', 'DocumentDepot', id, avantApres(this.instantaneAudit(document), this.instantaneAudit(null), { champsModifies: [] }));
-      return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const document: any = await tx.documentDepot.findUnique({
+          where: { id },
+          select: DOCUMENT_MUTATION_SELECT,
+        });
+        if (!document) throw new NotFoundException(t('bibliotheque.document_introuvable'));
+        if (utilisateur.role !== Role.ADMIN && document.deposeParId !== utilisateur.id) {
+          throw new ForbiddenException(t('bibliotheque.seul_le_deposant_initial_peut_supprimer_ce_document_sauf_adm'));
+        }
+        await tx.documentDepot.delete({ where: { id } });
+        await journaliser(
+          tx,
+          utilisateur,
+          'DOCUMENT_DEPOT_SUPPRIME',
+          'DocumentDepot',
+          id,
+          avantApres(this.instantaneAudit(document), this.instantaneAudit(null), { champsModifies: [] }),
+        );
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -344,13 +368,14 @@ export class BibliothequeService extends CrudService {
 
   /** Nom à la française, sans retour de ligne, pour l'en-tête Content-Disposition. */
   private nomFichier(titre: string, mime: string): string {
-    const base = (titre as string)
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 80) || 'document';
+    const base =
+      (titre as string)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 80) || 'document';
     const extensions: Record<string, string> = {
       'application/pdf': 'pdf',
       'application/msword': 'doc',

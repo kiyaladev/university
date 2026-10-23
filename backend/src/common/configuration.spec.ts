@@ -19,7 +19,9 @@ describe('schéma de configuration', () => {
   it('bloque la production sans JWT_SECRET ou avec la valeur d’exemple', () => {
     const journal = { warn: jest.fn() };
     expect(() => validerConfiguration({ ...PROD_MINIMALE, JWT_SECRET: undefined }, journal)).toThrow(/JWT_SECRET/);
-    expect(() => validerConfiguration({ ...PROD_MINIMALE, JWT_SECRET: 'change-me-in-production' }, journal)).toThrow(/JWT_SECRET/);
+    expect(() => validerConfiguration({ ...PROD_MINIMALE, JWT_SECRET: 'change-me-in-production' }, journal)).toThrow(
+      /JWT_SECRET/,
+    );
   });
 
   it('bloque toujours sans DATABASE_URL et liste toutes les erreurs ensemble', () => {

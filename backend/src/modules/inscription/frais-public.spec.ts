@@ -8,10 +8,9 @@ describe('lecture publique des tarifs d’inscription', () => {
     const count = jest.fn().mockResolvedValue(1);
     const service = new FraisService({ frais: { findMany, count } } as any);
 
-    await expect(service.tarifsPublics(
-      { page: 2, pageSize: 10 } as any,
-      { anneeId: 'annee-1', promotionId: 'promotion-1' },
-    )).resolves.toEqual({
+    await expect(
+      service.tarifsPublics({ page: 2, pageSize: 10 } as any, { anneeId: 'annee-1', promotionId: 'promotion-1' }),
+    ).resolves.toEqual({
       data: [{ id: 'frais-1', montant: 120, devise: 'GNF' }],
       total: 1,
       page: 2,
@@ -24,7 +23,9 @@ describe('lecture publique des tarifs d’inscription', () => {
       skip: 10,
       take: 10,
     });
-    expect(count).toHaveBeenCalledWith({ where: { AND: [{ annee: { cloturee: false } }, { anneeId: 'annee-1', promotionId: 'promotion-1' }] } });
+    expect(count).toHaveBeenCalledWith({
+      where: { AND: [{ annee: { cloturee: false } }, { anneeId: 'annee-1', promotionId: 'promotion-1' }] },
+    });
     expect(Reflect.getMetadata(IS_PUBLIC_KEY, FraisController.prototype.liste)).toBe(true);
   });
 

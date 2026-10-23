@@ -5,10 +5,18 @@ describe('Protection des archives du référentiel', () => {
   it('refuse de supprimer un département qui porte des données métier', async () => {
     const prisma: any = {
       departement: {
-        findUnique: jest.fn().mockResolvedValue({ _count: {
-          membres: 0, enseignants: 0, filieres: 0, matieres: 0, documents: 0,
-          equipementsPatrimoine: 0, reclamations: 0, elections: 1,
-        } }),
+        findUnique: jest.fn().mockResolvedValue({
+          _count: {
+            membres: 0,
+            enseignants: 0,
+            filieres: 0,
+            matieres: 0,
+            documents: 0,
+            equipementsPatrimoine: 0,
+            reclamations: 0,
+            elections: 1,
+          },
+        }),
         delete: jest.fn(),
       },
     };
@@ -40,12 +48,21 @@ describe('Protection des archives du référentiel', () => {
     const prisma: any = {
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       promotion: {
-        findUnique: jest.fn()
+        findUnique: jest
+          .fn()
           .mockResolvedValueOnce(promotion)
-          .mockResolvedValueOnce({ _count: {
-            affectations: 0, inscriptions: 0, frais: 0, evaluations: 0,
-            deliberations: 0, attestations: 0, examens: 0, elections: 1,
-          } }),
+          .mockResolvedValueOnce({
+            _count: {
+              affectations: 0,
+              inscriptions: 0,
+              frais: 0,
+              evaluations: 0,
+              deliberations: 0,
+              attestations: 0,
+              examens: 0,
+              elections: 1,
+            },
+          }),
         update: jest.fn(),
       },
       $transaction: jest.fn((operation: any) => operation(prisma)),

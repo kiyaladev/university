@@ -78,31 +78,15 @@ export function jourSemaine(d: Date): number {
   return js === 0 ? 7 : js;
 }
 
-export const JOURS = [
-  '',
-  'Lundi',
-  'Mardi',
-  'Mercredi',
-  'Jeudi',
-  'Vendredi',
-  'Samedi',
-  'Dimanche',
-];
+export const JOURS = ['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 /** Distance en mètres entre deux points GPS (formule de haversine). */
-export function distanceMetres(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+export function distanceMetres(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371000;
   const rad = (x: number) => (x * Math.PI) / 180;
   const dLat = rad(lat2 - lat1);
   const dLon = rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
   return Math.round(2 * R * Math.asin(Math.sqrt(a)));
 }
 

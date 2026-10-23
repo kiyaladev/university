@@ -131,10 +131,7 @@ export class SeancesService extends CrudService {
       // Sans département de rattachement, le contrôleur ne voit que les
       // séances qui lui sont attribuées ou qu'il a déjà pointées.
       contraintes.push({
-        OR: [
-          { controleurAssigneId: user.id },
-          { controle: { is: { controleurId: user.id } } },
-        ],
+        OR: [{ controleurAssigneId: user.id }, { controle: { is: { controleurId: user.id } } }],
       });
     }
 
@@ -161,9 +158,7 @@ export class SeancesService extends CrudService {
       ...(Object.keys(date).length ? { date } : {}),
       ...(query.salleId ? { salleId: query.salleId } : {}),
       ...(query.statut ? { statut: query.statut as StatutSeance } : {}),
-      ...(query.nonControlees === '1' || query.nonControlees === 'true'
-        ? { controle: { is: null } }
-        : {}),
+      ...(query.nonControlees === '1' || query.nonControlees === 'true' ? { controle: { is: null } } : {}),
       ...(contraintes.length ? { AND: contraintes } : {}),
     };
   }
@@ -200,37 +195,43 @@ export class SeancesService extends CrudService {
       throw new BadRequestException(t('planification.controleurAffectationRequired'));
     }
     const nouveauControleurId = dto.controleurId || null;
-    return this.prisma.$transaction(async (tx) => {
-      const seance: any = await tx.seance.findUnique({
-        where: { id },
-        select: { id: true, anneeId: true, controleurAssigneId: true },
-      });
-      if (!seance) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, seance.anneeId);
-      if (nouveauControleurId) {
-        const controleur = await tx.user.findUnique({
-          where: { id: nouveauControleurId },
-          select: { id: true, nom: true, prenom: true, role: true, actif: true },
+    return this.prisma.$transaction(
+      async (tx) => {
+        const seance: any = await tx.seance.findUnique({
+          where: { id },
+          select: { id: true, anneeId: true, controleurAssigneId: true },
         });
-        if (!controleur || !controleur.actif || controleur.role !== Role.CONTROLEUR) {
-          throw new BadRequestException(t('planification.controleurAffectationInvalid'));
+        if (!seance) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, seance.anneeId);
+        if (nouveauControleurId) {
+          const controleur = await tx.user.findUnique({
+            where: { id: nouveauControleurId },
+            select: { id: true, nom: true, prenom: true, role: true, actif: true },
+          });
+          if (!controleur || !controleur.actif || controleur.role !== Role.CONTROLEUR) {
+            throw new BadRequestException(t('planification.controleurAffectationInvalid'));
+          }
         }
-      }
-      const miseAJour = await tx.seance.update({
-        where: { id },
-        data: { controleurAssigneId: nouveauControleurId },
-        include: SEANCE_INCLUDE,
-      });
-      await journaliser(
-        tx,
-        user,
-        nouveauControleurId ? 'CONTROLEUR_AFFECTE_SEANCE' : 'CONTROLEUR_RETIRE_SEANCE',
-        'Seance',
-        id,
-        { avant: { controleurAssigneId: seance.controleurAssigneId }, apres: { controleurAssigneId: nouveauControleurId } },
-      );
-      return miseAJour;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        const miseAJour = await tx.seance.update({
+          where: { id },
+          data: { controleurAssigneId: nouveauControleurId },
+          include: SEANCE_INCLUDE,
+        });
+        await journaliser(
+          tx,
+          user,
+          nouveauControleurId ? 'CONTROLEUR_AFFECTE_SEANCE' : 'CONTROLEUR_RETIRE_SEANCE',
+          'Seance',
+          id,
+          {
+            avant: { controleurAssigneId: seance.controleurAssigneId },
+            apres: { controleurAssigneId: nouveauControleurId },
+          },
+        );
+        return miseAJour;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private plageTournee(dto: AffecterTourneeDto): Prisma.SeanceWhereInput {
@@ -274,38 +275,39 @@ export class SeancesService extends CrudService {
 
   async affecterTournee(dto: AffecterTourneeDto, user: AuthUser) {
     const where = this.plageTournee(dto);
-    return this.prisma.$transaction(async (tx) => {
-      await this.verifierControleurActif(tx as PrismaService, dto.controleurId);
-      const seances = await tx.seance.findMany({
-        where,
-        select: { id: true, anneeId: true },
-      });
-      const anneesOuvertes = new Set<string>();
-      for (const anneeId of new Set(seances.map((s) => s.anneeId))) {
-        try {
-          await exigerAnneeOuverte(tx, anneeId);
-          anneesOuvertes.add(anneeId);
-        } catch (error) {
-          if (!(error instanceof AnneeAcademiqueClotureeException)) throw error;
+    return this.prisma.$transaction(
+      async (tx) => {
+        await this.verifierControleurActif(tx as PrismaService, dto.controleurId);
+        const seances = await tx.seance.findMany({
+          where,
+          select: { id: true, anneeId: true },
+        });
+        const anneesOuvertes = new Set<string>();
+        for (const anneeId of new Set(seances.map((s) => s.anneeId))) {
+          try {
+            await exigerAnneeOuverte(tx, anneeId);
+            anneesOuvertes.add(anneeId);
+          } catch (error) {
+            if (!(error instanceof AnneeAcademiqueClotureeException)) throw error;
+          }
         }
-      }
-      const idsOuverts = seances.filter((s) => anneesOuvertes.has(s.anneeId)).map((s) => s.id);
-      const ignoreesAnneeCloturee = seances.length - idsOuverts.length;
-      const resultat = idsOuverts.length
-        ? await tx.seance.updateMany({
-            where: { id: { in: idsOuverts }, controleurAssigneId: null, statut: { not: StatutSeance.ANNULEE } },
-            data: { controleurAssigneId: dto.controleurId },
-          })
-        : { count: 0 };
+        const idsOuverts = seances.filter((s) => anneesOuvertes.has(s.anneeId)).map((s) => s.id);
+        const ignoreesAnneeCloturee = seances.length - idsOuverts.length;
+        const resultat = idsOuverts.length
+          ? await tx.seance.updateMany({
+              where: { id: { in: idsOuverts }, controleurAssigneId: null, statut: { not: StatutSeance.ANNULEE } },
+              data: { controleurAssigneId: dto.controleurId },
+            })
+          : { count: 0 };
 
-      if (resultat.count) {
-        await journaliser(
-          tx,
-          user,
-          'TOURNEE_CONTROLEUR_AFFECTEE',
-          'TourneeControleur',
-          `${dto.dateDebut}_${dto.dateFin}`,
-          {
+        if (resultat.count) {
+          await journaliser(
+            tx,
+            user,
+            'TOURNEE_CONTROLEUR_AFFECTEE',
+            'TourneeControleur',
+            `${dto.dateDebut}_${dto.dateFin}`,
+            {
               controleurId: dto.controleurId,
               departementId: dto.departementId ?? null,
               dateDebut: dto.dateDebut,
@@ -315,14 +317,16 @@ export class SeancesService extends CrudService {
               controleurApres: dto.controleurId,
               seancesIgnoreesAnneeCloturee: ignoreesAnneeCloturee,
             },
-        );
-      }
-      return {
-        seancesAffectees: resultat.count,
-        seancesIgnoreesAnneeCloturee: ignoreesAnneeCloturee,
-        seancesDejaAffecteesOuAbsentes: seances.length - resultat.count - ignoreesAnneeCloturee,
-      };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+          );
+        }
+        return {
+          seancesAffectees: resultat.count,
+          seancesIgnoreesAnneeCloturee: ignoreesAnneeCloturee,
+          seancesDejaAffecteesOuAbsentes: seances.length - resultat.count - ignoreesAnneeCloturee,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /** Feuille de route du contrôleur : les séances d'une journée, par heure. */
@@ -367,10 +371,7 @@ export class SeancesService extends CrudService {
       if (user?.role === Role.CONTROLEUR && !user.departementId) {
         where.seances = {
           some: {
-            OR: [
-              { controleurAssigneId: user.id },
-              { controle: { is: { controleurId: user.id } } },
-            ],
+            OR: [{ controleurAssigneId: user.id }, { controle: { is: { controleurId: user.id } } }],
           },
         };
       }
@@ -396,93 +397,116 @@ export class SeancesService extends CrudService {
   }
 
   async creer(dto: CreateSeanceDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const data = await this.payload(dto, undefined, false, tx, user);
-      await exigerAnneeOuverte(tx, data.anneeId);
-      const seance = await tx.seance.create({
-        data: {
-          ...data,
-          ...(user?.role === Role.CONTROLEUR ? { controleurAssigneId: user.id } : {}),
-        } as Prisma.SeanceUncheckedCreateInput,
-        include: SEANCE_INCLUDE,
-      });
-      await journaliser(tx, user ?? null, 'SEANCE_CREEE', 'Seance', seance.id, { avant: null, apres: this.instantaneAudit(seance) });
-      return seance;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const data = await this.payload(dto, undefined, false, tx, user);
+        await exigerAnneeOuverte(tx, data.anneeId);
+        const seance = await tx.seance.create({
+          data: {
+            ...data,
+            ...(user?.role === Role.CONTROLEUR ? { controleurAssigneId: user.id } : {}),
+          } as Prisma.SeanceUncheckedCreateInput,
+          include: SEANCE_INCLUDE,
+        });
+        await journaliser(tx, user ?? null, 'SEANCE_CREEE', 'Seance', seance.id, {
+          avant: null,
+          apres: this.instantaneAudit(seance),
+        });
+        return seance;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async modifier(id: string, dto: UpdateSeanceDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.seance.findFirst({
-        where: { id, ...this.where({}, user) }, include: SEANCE_INCLUDE,
-      });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.anneeId);
-      const data = await this.payload(dto, avant.anneeId, false, tx, user);
-      await exigerAnneeOuverte(tx, data.anneeId);
-      const apres = await tx.seance.update({ where: { id }, data, include: SEANCE_INCLUDE });
-      await journaliser(
-        tx,
-        user ?? null,
-        'SEANCE_MODIFIEE',
-        'Seance',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.seance.findFirst({
+          where: { id, ...this.where({}, user) },
+          include: SEANCE_INCLUDE,
+        });
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, avant.anneeId);
+        const data = await this.payload(dto, avant.anneeId, false, tx, user);
+        await exigerAnneeOuverte(tx, data.anneeId);
+        const apres = await tx.seance.update({ where: { id }, data, include: SEANCE_INCLUDE });
+        await journaliser(tx, user ?? null, 'SEANCE_MODIFIEE', 'Seance', id, {
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(apres),
+        });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async annuler(id: string, motif?: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.seance.findFirst({
-        where: { id, ...this.where({}, user) }, include: { ...SEANCE_INCLUDE, controle: true },
-      });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.anneeId);
-      if (avant.controle) throw new BadRequestException(t('planification.une_seance_deja_controlee_ne_peut_pas_etre_annulee'));
-      const apres = await tx.seance.update({
-        where: { id },
-        data: { statut: StatutSeance.ANNULEE, thematique: motif ? `[Annulée] ${motif}` : avant.thematique },
-        include: SEANCE_INCLUDE,
-      });
-      await journaliser(
-        tx,
-        user ?? null,
-        'SEANCE_ANNULEE',
-        'Seance',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.seance.findFirst({
+          where: { id, ...this.where({}, user) },
+          include: { ...SEANCE_INCLUDE, controle: true },
+        });
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, avant.anneeId);
+        if (avant.controle)
+          throw new BadRequestException(t('planification.une_seance_deja_controlee_ne_peut_pas_etre_annulee'));
+        const apres = await tx.seance.update({
+          where: { id },
+          data: { statut: StatutSeance.ANNULEE, thematique: motif ? `[Annulée] ${motif}` : avant.thematique },
+          include: SEANCE_INCLUDE,
+        });
+        await journaliser(tx, user ?? null, 'SEANCE_ANNULEE', 'Seance', id, {
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(apres),
+        });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.anneeId);
-      // Un contrôle ou un justificatif est une preuve (base de la paie) : la
-      // séance se garde, elle s'annule. FK en RESTRICT : une preuve posée
-      // entre-temps fait échouer le DELETE, traduit en 409.
-      const preuves = await tx.seance.findUnique({
-        where: { id }, select: { controle: { select: { id: true } }, justificatif: { select: { id: true } } },
-      });
-      if (preuves?.controle || preuves?.justificatif) {
-        throw new ConflictException(t('planification.seance_pointee_non_supprimable'));
-      }
-      await supprimerOuConflit(() => tx.seance.delete({ where: { id } }), 'planification.seance_pointee_non_supprimable');
-      await journaliser(tx, user ?? null, 'SEANCE_SUPPRIMEE', 'Seance', id, { avant: this.instantaneAudit(avant), apres: null });
-      return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, avant.anneeId);
+        // Un contrôle ou un justificatif est une preuve (base de la paie) : la
+        // séance se garde, elle s'annule. FK en RESTRICT : une preuve posée
+        // entre-temps fait échouer le DELETE, traduit en 409.
+        const preuves = await tx.seance.findUnique({
+          where: { id },
+          select: { controle: { select: { id: true } }, justificatif: { select: { id: true } } },
+        });
+        if (preuves?.controle || preuves?.justificatif) {
+          throw new ConflictException(t('planification.seance_pointee_non_supprimable'));
+        }
+        await supprimerOuConflit(
+          () => tx.seance.delete({ where: { id } }),
+          'planification.seance_pointee_non_supprimable',
+        );
+        await journaliser(tx, user ?? null, 'SEANCE_SUPPRIMEE', 'Seance', id, {
+          avant: this.instantaneAudit(avant),
+          apres: null,
+        });
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private instantaneAudit(seance: any) {
     return {
-      id: seance.id, affectationId: seance.affectationId, anneeId: seance.anneeId,
-      date: seance.date, heureDebut: seance.heureDebut, heureFin: seance.heureFin,
-      statut: seance.statut, salleId: seance.salleId, controleurAssigneId: seance.controleurAssigneId,
+      id: seance.id,
+      affectationId: seance.affectationId,
+      anneeId: seance.anneeId,
+      date: seance.date,
+      heureDebut: seance.heureDebut,
+      heureFin: seance.heureFin,
+      statut: seance.statut,
+      salleId: seance.salleId,
+      controleurAssigneId: seance.controleurAssigneId,
     };
   }
 
@@ -494,67 +518,68 @@ export class SeancesService extends CrudService {
    * 08h-12h, du 1er au 31 janvier » : hors de sa période, il ne produit rien.
    */
   async generer(dto: GenerationDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-    await exigerAnneeOuverte(tx, dto.anneeId);
-    const debut = toDateOnly(dto.dateDebut);
-    const fin = toDateOnly(dto.dateFin);
-    if (fin < debut) throw new BadRequestException(t('planification.periode_invalide'));
-    if ((fin.getTime() - debut.getTime()) / 86400000 > 400) {
-      throw new BadRequestException(t('planification.periode_trop_longue_maximum_400_jours'));
-    }
+    return this.prisma.$transaction(
+      async (tx) => {
+        await exigerAnneeOuverte(tx, dto.anneeId);
+        const debut = toDateOnly(dto.dateDebut);
+        const fin = toDateOnly(dto.dateFin);
+        if (fin < debut) throw new BadRequestException(t('planification.periode_invalide'));
+        if ((fin.getTime() - debut.getTime()) / 86400000 > 400) {
+          throw new BadRequestException(t('planification.periode_trop_longue_maximum_400_jours'));
+        }
 
-    const creneaux = await tx.creneau.findMany({
-      where: {
-        actif: true,
-        affectation: { anneeId: dto.anneeId, ...this.scopeAffectation(user) },
-        ...(dto.creneauIds?.length ? { id: { in: dto.creneauIds } } : {}),
-      },
-    });
-    if (!creneaux.length) {
-      throw new BadRequestException(t('planification.aucun_creneau_actif_a_generer_pour_cette_annee'));
-    }
-
-    const exclus = new Set(dto.joursExclus ?? []);
-    const lignes: Prisma.SeanceCreateManyInput[] = [];
-
-    for (let d = new Date(debut); d <= fin; d.setUTCDate(d.getUTCDate() + 1)) {
-      const jour = jourSemaine(d);
-      const iso = isoDate(d);
-      if (exclus.has(iso)) continue;
-
-      for (const c of creneaux.filter((c) => c.jourSemaine === jour && vaut(c, d))) {
-        lignes.push({
-          affectationId: c.affectationId,
-          creneauId: c.id,
-          anneeId: dto.anneeId,
-          date: toDateOnly(iso),
-          heureDebut: c.heureDebut,
-          heureFin: c.heureFin,
-          type: c.type,
-          salleId: c.salleId,
+        const creneaux = await tx.creneau.findMany({
+          where: {
+            actif: true,
+            affectation: { anneeId: dto.anneeId, ...this.scopeAffectation(user) },
+            ...(dto.creneauIds?.length ? { id: { in: dto.creneauIds } } : {}),
+          },
         });
-      }
-    }
+        if (!creneaux.length) {
+          throw new BadRequestException(t('planification.aucun_creneau_actif_a_generer_pour_cette_annee'));
+        }
 
-    const res = await tx.seance.createMany({ data: lignes, skipDuplicates: true });
-    if (res.count > 0) {
-      await journaliser(
-        tx,
-        user ?? null,
-        'SEANCES_GENEREES',
-        'AnneeAcademique',
-        dto.anneeId,
-        { periode: { debut: isoDate(debut), fin: isoDate(fin) }, candidates: lignes.length, creees: res.count, ignorees: lignes.length - res.count },
-      );
-    }
-    return {
-      creneaux: creneaux.length,
-      candidates: lignes.length,
-      creees: res.count,
-      ignorees: lignes.length - res.count,
-      periode: { debut: isoDate(debut), fin: isoDate(fin) },
-    };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        const exclus = new Set(dto.joursExclus ?? []);
+        const lignes: Prisma.SeanceCreateManyInput[] = [];
+
+        for (let d = new Date(debut); d <= fin; d.setUTCDate(d.getUTCDate() + 1)) {
+          const jour = jourSemaine(d);
+          const iso = isoDate(d);
+          if (exclus.has(iso)) continue;
+
+          for (const c of creneaux.filter((c) => c.jourSemaine === jour && vaut(c, d))) {
+            lignes.push({
+              affectationId: c.affectationId,
+              creneauId: c.id,
+              anneeId: dto.anneeId,
+              date: toDateOnly(iso),
+              heureDebut: c.heureDebut,
+              heureFin: c.heureFin,
+              type: c.type,
+              salleId: c.salleId,
+            });
+          }
+        }
+
+        const res = await tx.seance.createMany({ data: lignes, skipDuplicates: true });
+        if (res.count > 0) {
+          await journaliser(tx, user ?? null, 'SEANCES_GENEREES', 'AnneeAcademique', dto.anneeId, {
+            periode: { debut: isoDate(debut), fin: isoDate(fin) },
+            candidates: lignes.length,
+            creees: res.count,
+            ignorees: lignes.length - res.count,
+          });
+        }
+        return {
+          creneaux: creneaux.length,
+          candidates: lignes.length,
+          creees: res.count,
+          ignorees: lignes.length - res.count,
+          periode: { debut: isoDate(debut), fin: isoDate(fin) },
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -570,34 +595,34 @@ export class SeancesService extends CrudService {
     for (const entree of dto.seances) {
       try {
         const { idClient, ...creation } = entree;
-        const resultat = await this.prisma.$transaction(async (tx) => {
-          const existante = await tx.seance.findUnique({ where: { id: idClient } });
-          const payload = await this.payload(creation, existante?.anneeId, Boolean(existante), tx, user);
-          if (existante) {
-            if (!this.memeSeance(existante, payload)) {
-              throw new ConflictException(t('planification.cle_seance_hors_ligne_deja_utilisee'));
+        const resultat = await this.prisma.$transaction(
+          async (tx) => {
+            const existante = await tx.seance.findUnique({ where: { id: idClient } });
+            const payload = await this.payload(creation, existante?.anneeId, Boolean(existante), tx, user);
+            if (existante) {
+              if (!this.memeSeance(existante, payload)) {
+                throw new ConflictException(t('planification.cle_seance_hors_ligne_deja_utilisee'));
+              }
+              return { seance: existante, dejaCreee: true };
             }
-            return { seance: existante, dejaCreee: true };
-          }
-          await exigerAnneeOuverte(tx, payload.anneeId);
-          const creee = await tx.seance.create({
-            data: {
-              id: idClient,
-              ...payload,
-              ...(user?.role === Role.CONTROLEUR ? { controleurAssigneId: user.id } : {}),
-            } as Prisma.SeanceUncheckedCreateInput,
-            include: SEANCE_INCLUDE,
-          });
-          await journaliser(
-            tx,
-            user ?? null,
-            'SEANCE_SYNCHRONISEE_HORS_LIGNE',
-            'Seance',
-            creee.id,
-            { avant: null, apres: this.instantaneAudit(creee), idClient },
-          );
-          return { seance: creee, dejaCreee: false };
-        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+            await exigerAnneeOuverte(tx, payload.anneeId);
+            const creee = await tx.seance.create({
+              data: {
+                id: idClient,
+                ...payload,
+                ...(user?.role === Role.CONTROLEUR ? { controleurAssigneId: user.id } : {}),
+              } as Prisma.SeanceUncheckedCreateInput,
+              include: SEANCE_INCLUDE,
+            });
+            await journaliser(tx, user ?? null, 'SEANCE_SYNCHRONISEE_HORS_LIGNE', 'Seance', creee.id, {
+              avant: null,
+              apres: this.instantaneAudit(creee),
+              idClient,
+            });
+            return { seance: creee, dejaCreee: false };
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        );
         resultats.push({ idClient, ok: true, id: resultat.seance.id, dejaCreee: resultat.dejaCreee });
       } catch (e: any) {
         // Deux tentatives concurrentes peuvent gagner la création avec la même
@@ -611,7 +636,9 @@ export class SeancesService extends CrudService {
               resultats.push({ idClient, ok: true, id: existante.id, dejaCreee: true });
               continue;
             }
-          } catch { /* La réponse individuelle ci-dessous garde l’échec. */ }
+          } catch {
+            /* La réponse individuelle ci-dessous garde l’échec. */
+          }
         }
         resultats.push({
           idClient: entree.idClient,
@@ -631,13 +658,15 @@ export class SeancesService extends CrudService {
 
   private memeSeance(existante: any, payload: Record<string, any>) {
     const date = toDateOnly(isoDate(existante.date));
-    return existante.affectationId === payload.affectationId
-      && date.getTime() === payload.date.getTime()
-      && existante.heureDebut === payload.heureDebut
-      && existante.heureFin === payload.heureFin
-      && existante.type === (payload.type ?? 'CM')
-      && (existante.salleId ?? null) === (payload.salleId ?? null)
-      && (existante.thematique ?? null) === (payload.thematique ?? null);
+    return (
+      existante.affectationId === payload.affectationId &&
+      date.getTime() === payload.date.getTime() &&
+      existante.heureDebut === payload.heureDebut &&
+      existante.heureFin === payload.heureFin &&
+      existante.type === (payload.type ?? 'CM') &&
+      (existante.salleId ?? null) === (payload.salleId ?? null) &&
+      (existante.thematique ?? null) === (payload.thematique ?? null)
+    );
   }
 
   /**
@@ -649,46 +678,48 @@ export class SeancesService extends CrudService {
     const hier = toDateOnly(new Date());
     hier.setUTCDate(hier.getUTCDate() - 1);
 
-    const res = await this.prisma.$transaction(async (tx) => {
-      const candidats = await tx.seance.findMany({
-        where: {
-          date: { lte: hier }, statut: StatutSeance.PLANIFIEE,
-          controle: { is: null }, annee: { cloturee: false },
-        },
-        select: { anneeId: true },
-        distinct: ['anneeId'],
-      });
-      const anneesVerrouilleesOuvertes = new Set<string>();
-      for (const { anneeId } of candidats) {
-        try {
-          await exigerAnneeOuverte(tx, anneeId);
-          anneesVerrouilleesOuvertes.add(anneeId);
-        } catch (error) {
-          if (!(error instanceof AnneeAcademiqueClotureeException)) throw error;
+    const res = await this.prisma.$transaction(
+      async (tx) => {
+        const candidats = await tx.seance.findMany({
+          where: {
+            date: { lte: hier },
+            statut: StatutSeance.PLANIFIEE,
+            controle: { is: null },
+            annee: { cloturee: false },
+          },
+          select: { anneeId: true },
+          distinct: ['anneeId'],
+        });
+        const anneesVerrouilleesOuvertes = new Set<string>();
+        for (const { anneeId } of candidats) {
+          try {
+            await exigerAnneeOuverte(tx, anneeId);
+            anneesVerrouilleesOuvertes.add(anneeId);
+          } catch (error) {
+            if (!(error instanceof AnneeAcademiqueClotureeException)) throw error;
+          }
         }
-      }
-      const resultat = await tx.seance.updateMany({
-        where: {
-          date: { lte: hier },
-          statut: StatutSeance.PLANIFIEE,
-          controle: { is: null },
-          anneeId: { in: [...anneesVerrouilleesOuvertes] },
-          annee: { cloturee: false },
-        },
-        data: { statut: StatutSeance.NON_TENUE },
-      });
-      if (resultat.count) {
-        await journaliser(
-          tx,
-          null,
-          'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT',
-          'Seance',
-          isoDate(hier),
-          { statutAvant: StatutSeance.PLANIFIEE, statutApres: StatutSeance.NON_TENUE, nombre: resultat.count },
-        );
-      }
-      return resultat;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        const resultat = await tx.seance.updateMany({
+          where: {
+            date: { lte: hier },
+            statut: StatutSeance.PLANIFIEE,
+            controle: { is: null },
+            anneeId: { in: [...anneesVerrouilleesOuvertes] },
+            annee: { cloturee: false },
+          },
+          data: { statut: StatutSeance.NON_TENUE },
+        });
+        if (resultat.count) {
+          await journaliser(tx, null, 'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT', 'Seance', isoDate(hier), {
+            statutAvant: StatutSeance.PLANIFIEE,
+            statutApres: StatutSeance.NON_TENUE,
+            nombre: resultat.count,
+          });
+        }
+        return resultat;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
     if (res.count) {
       this.logger.log(`${res.count} séance(s) passée(s) sans contrôle marquée(s) NON_TENUE`);
     }

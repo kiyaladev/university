@@ -11,9 +11,7 @@ import { PortailRestoController, RestoController } from './resto.controller';
 import { RestoService } from './resto.service';
 
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [RestoController, PortailRestoController],
   providers: [RestoService],
   exports: [RestoService],

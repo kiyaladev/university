@@ -84,7 +84,9 @@ export class SeanceHorsLigneDto extends CreateSeanceDto {
 }
 
 export class SyncSeancesDto {
-  @IsArray() @ArrayMaxSize(50) @ValidateNested({ each: true })
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
   @Type(() => SeanceHorsLigneDto)
   seances: SeanceHorsLigneDto[];
 }

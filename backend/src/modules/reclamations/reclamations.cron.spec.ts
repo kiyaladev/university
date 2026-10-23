@@ -17,12 +17,19 @@ function preparer() {
   };
   const prisma: any = {
     reclamation: {
-      findMany: jest.fn().mockResolvedValue([{
-        id: 'rec-1', numero: 'REC-2026-00001', creeLe: new Date('2026-10-01T08:00:00.000Z'),
-        delaiEscaladeHeures: 48, type: TypeReclamation.INSCRIPTION,
-        priorite: PrioriteReclamation.NORMALE, statut: StatutReclamation.OUVERTE,
-        anonyme: false, escaladeLe: null,
-      }]),
+      findMany: jest.fn().mockResolvedValue([
+        {
+          id: 'rec-1',
+          numero: 'REC-2026-00001',
+          creeLe: new Date('2026-10-01T08:00:00.000Z'),
+          delaiEscaladeHeures: 48,
+          type: TypeReclamation.INSCRIPTION,
+          priorite: PrioriteReclamation.NORMALE,
+          statut: StatutReclamation.OUVERTE,
+          anonyme: false,
+          escaladeLe: null,
+        },
+      ]),
     },
     $transaction: jest.fn((operation: (client: any) => unknown) => operation(tx)),
   };
@@ -51,8 +58,10 @@ describe('Escalade planifiée des réclamations', () => {
   it('escalade les réclamations échues sans utilisateur et journalise sans compte', async () => {
     const { service, tx } = preparer();
 
-    await expect(service.escaladerReclamationsEchues())
-      .resolves.toEqual({ escaladees: 1, numeros: ['REC-2026-00001'] });
+    await expect(service.escaladerReclamationsEchues()).resolves.toEqual({
+      escaladees: 1,
+      numeros: ['REC-2026-00001'],
+    });
 
     expect(tx.reclamation.updateMany).toHaveBeenCalledTimes(1);
     expect(tx.auditLog.create).toHaveBeenCalledWith({
@@ -63,9 +72,12 @@ describe('Escalade planifiée des réclamations', () => {
 
   it("consigne un conflit de sérialisation sans lever d'exception hors requête", async () => {
     const { service, prisma } = preparer();
-    prisma.$transaction.mockRejectedValue(new Prisma.PrismaClientKnownRequestError('serialization conflict', {
-      code: 'P2034', clientVersion: 'test',
-    }));
+    prisma.$transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('serialization conflict', {
+        code: 'P2034',
+        clientVersion: 'test',
+      }),
+    );
 
     await expect(service.escaladerReclamationsEchues()).resolves.toBeNull();
 

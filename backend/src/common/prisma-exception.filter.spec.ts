@@ -11,13 +11,16 @@ describe('PrismaExceptionFilter — réponses HTTP', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
-  it.each([['P2002', 409], ['P2034', 409], ['P2025', 404], ['P2018', 404]])(
-    'répond à %s sans relancer une exception depuis le filtre', (code, status) => {
-      const error = new Prisma.PrismaClientKnownRequestError('Détail interne', { code, clientVersion: '6' });
-      expect(() => filter.catch(error, host)).not.toThrow();
-      expect(adapter.reply).toHaveBeenCalledWith(response, expect.objectContaining({ statusCode: status }), status);
-    },
-  );
+  it.each([
+    ['P2002', 409],
+    ['P2034', 409],
+    ['P2025', 404],
+    ['P2018', 404],
+  ])('répond à %s sans relancer une exception depuis le filtre', (code, status) => {
+    const error = new Prisma.PrismaClientKnownRequestError('Détail interne', { code, clientVersion: '6' });
+    expect(() => filter.catch(error, host)).not.toThrow();
+    expect(adapter.reply).toHaveBeenCalledWith(response, expect.objectContaining({ statusCode: status }), status);
+  });
 
   it('conserve le refus métier et termine la réponse', () => {
     filter.catch(new ForbiddenException('Lecture seule'), host);

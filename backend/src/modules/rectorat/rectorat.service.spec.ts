@@ -39,9 +39,11 @@ describe('Snapshots MESRS', () => {
     await service.genererBilan('annee-1', { id: 'admin-1' } as any);
 
     expect(tx.statistiqueMesrs.create).toHaveBeenCalledTimes(1);
-    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ entiteId: snapshot.id, action: 'BILAN_MESRS_GENERE' }),
-    }));
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ entiteId: snapshot.id, action: 'BILAN_MESRS_GENERE' }),
+      }),
+    );
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 

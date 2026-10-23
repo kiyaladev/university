@@ -123,7 +123,12 @@ describe('StagesService — journal d’audit avant/après', () => {
     await service.creer({ intitule: 'Mémoire', etudiantId: 'etudiant-1' } as any, etudiant);
 
     expect(auditCreate).toHaveBeenCalledWith({
-      data: expect.objectContaining({ userId: 'user-etu', action: 'TRAVAIL_ENCADRE_CREE', entite: 'TravailEncadre', entiteId: 'travail-1' }),
+      data: expect.objectContaining({
+        userId: 'user-etu',
+        action: 'TRAVAIL_ENCADRE_CREE',
+        entite: 'TravailEncadre',
+        entiteId: 'travail-1',
+      }),
     });
     // Un étudiant propose son dossier : il n'est jamais porteur d'un encadrant.
     expect(detailsDe(auditCreate).avant).toBeNull();
@@ -155,9 +160,14 @@ describe('StagesService — journal d’audit avant/après', () => {
 
   it('rattribue la décision du jury (note, mention) à son auteur', async () => {
     const soutenance = {
-      id: 'sout-1', travailEncadreId: 'travail-1', date: new Date('2026-06-20T09:00:00.000Z'),
-      salleId: 'salle-1', presidentId: 'prof-2', assesseurs: 'Pr. Jury ; Dr. Jury',
-      note: 14, mention: 'Très bien',
+      id: 'sout-1',
+      travailEncadreId: 'travail-1',
+      date: new Date('2026-06-20T09:00:00.000Z'),
+      salleId: 'salle-1',
+      presidentId: 'prof-2',
+      assesseurs: 'Pr. Jury ; Dr. Jury',
+      note: 14,
+      mention: 'Très bien',
     };
     const tx = {
       soutenance: {
@@ -237,8 +247,12 @@ describe('StagesService — journal d’audit avant/après', () => {
   it('journalise la soutenance et le passage en SOUTENU dans le même acte', async () => {
     const enCours = { ...DOSSIER, statut: StatutEncadrement.EN_COURS, rapportRendu: true };
     const soutenance = {
-      id: 'sout-1', travailEncadreId: 'travail-1', date: new Date('2026-06-20T09:00:00.000Z'),
-      salleId: 'salle-1', presidentId: 'prof-2', assesseurs: 'Pr. Jury ; Dr. Jury',
+      id: 'sout-1',
+      travailEncadreId: 'travail-1',
+      date: new Date('2026-06-20T09:00:00.000Z'),
+      salleId: 'salle-1',
+      presidentId: 'prof-2',
+      assesseurs: 'Pr. Jury ; Dr. Jury',
     };
     const tx = {
       travailEncadre: {
@@ -255,7 +269,10 @@ describe('StagesService — journal d’audit avant/après', () => {
     const service = new StagesService(prisma);
     const scolarite = { id: 'scol-1', role: Role.SCOLARITE } as AuthUser;
 
-    await service.enregistrerSoutenance({ travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any, scolarite);
+    await service.enregistrerSoutenance(
+      { travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any,
+      scolarite,
+    );
 
     const { avant, apres } = detailsDe(auditCreate);
     expect(auditCreate.mock.calls[0][0].data).toMatchObject({ action: 'SOUTENANCE_CREEE', entiteId: 'travail-1' });
@@ -282,13 +299,22 @@ describe('StagesService — journal d’audit avant/après', () => {
         findUnique: jest.fn().mockResolvedValueOnce(enCours).mockResolvedValueOnce(apres),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
-      soutenance: { create: jest.fn().mockResolvedValue({ id: 'sout-1', travailEncadreId: 'travail-1', date: new Date('2026-06-20T09:00:00.000Z') }) },
+      soutenance: {
+        create: jest.fn().mockResolvedValue({
+          id: 'sout-1',
+          travailEncadreId: 'travail-1',
+          date: new Date('2026-06-20T09:00:00.000Z'),
+        }),
+      },
       auditLog: { create: auditCreate },
     };
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
     const service = new StagesService(prisma);
 
-    await service.enregistrerSoutenance({ travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any, { id: 'scol-1', role: Role.SCOLARITE } as AuthUser);
+    await service.enregistrerSoutenance(
+      { travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any,
+      { id: 'scol-1', role: Role.SCOLARITE } as AuthUser,
+    );
 
     expect(detailsDe(auditCreate).apres.statut).toBe(StatutEncadrement.SOUTENU);
   });
@@ -312,14 +338,20 @@ describe('StagesService — journal d’audit avant/après', () => {
     };
     const service = new StagesService(prisma);
 
-    await service.modifier('travail-1', { encadrantId: 'prof-9' } as any, { id: 'scol-1', role: Role.SCOLARITE } as AuthUser);
+    await service.modifier(
+      'travail-1',
+      { encadrantId: 'prof-9' } as any,
+      { id: 'scol-1', role: Role.SCOLARITE } as AuthUser,
+    );
 
     const { avant, apres: etatApres } = detailsDe(auditCreate);
     expect(avant).toEqual(INSTANTANE);
     expect(etatApres).toEqual({ ...INSTANTANE, encadrantId: 'prof-9' });
     // Aucune clé de texte libre, ni avant ni après.
     for (const etat of [avant, etatApres]) {
-      expect(Object.keys(etat)).not.toEqual(expect.arrayContaining(['intitule', 'description', 'entreprise', 'tuteurEntreprise', 'lieu']));
+      expect(Object.keys(etat)).not.toEqual(
+        expect.arrayContaining(['intitule', 'description', 'entreprise', 'tuteurEntreprise', 'lieu']),
+      );
       expect(etat.entreprisePresente).toBe(true);
       expect(etat.entreprise).toBeUndefined();
       expect(etat.tuteurEntreprisePresent).toBe(true);
@@ -333,8 +365,13 @@ describe('StagesService — journal d’audit avant/après', () => {
 
   it('journalise la note chiffrée mais jamais la mention ni les assesseurs', async () => {
     const avant = {
-      id: 'sout-1', travailEncadreId: 'travail-1', date: new Date('2026-06-20T09:00:00.000Z'),
-      salleId: 'salle-1', presidentId: 'prof-2', assesseurs: 'Pr. Jury ; Dr. Jury', note: 12,
+      id: 'sout-1',
+      travailEncadreId: 'travail-1',
+      date: new Date('2026-06-20T09:00:00.000Z'),
+      salleId: 'salle-1',
+      presidentId: 'prof-2',
+      assesseurs: 'Pr. Jury ; Dr. Jury',
+      note: 12,
       mention: 'Assez bien',
     };
     const tx = {
@@ -347,7 +384,11 @@ describe('StagesService — journal d’audit avant/après', () => {
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
     const service = new StagesService(prisma);
 
-    await service.noter('sout-1', { note: 16, mention: 'Félicitations du jury' } as any, { id: 'dir-1', role: Role.DIRECTION } as AuthUser);
+    await service.noter(
+      'sout-1',
+      { note: 16, mention: 'Félicitations du jury' } as any,
+      { id: 'dir-1', role: Role.DIRECTION } as AuthUser,
+    );
 
     const { avant: etatAvant, apres: etatApres } = detailsDe(auditCreate);
     expect(etatAvant.note).toBe(12);
@@ -375,7 +416,11 @@ describe('StagesService — journal d’audit avant/après', () => {
     };
     const service = new StagesService(prisma);
 
-    await service.modifier('travail-1', { rapportRendu: true } as any, { id: 'scol-1', role: Role.SCOLARITE } as AuthUser);
+    await service.modifier(
+      'travail-1',
+      { rapportRendu: true } as any,
+      { id: 'scol-1', role: Role.SCOLARITE } as AuthUser,
+    );
 
     const { avant, apres } = detailsDe(auditCreate);
     expect(avant.rapportRendu).toBe(false);
@@ -413,7 +458,10 @@ describe('StagesService — journal d’audit avant/après', () => {
     const scolarite = { id: 'scol-1', role: Role.SCOLARITE } as AuthUser;
 
     await expect(
-      service.enregistrerSoutenance({ travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any, scolarite),
+      service.enregistrerSoutenance(
+        { travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any,
+        scolarite,
+      ),
     ).rejects.toThrow('journal indisponible');
     expect(enCours.statut).toBe(StatutEncadrement.EN_COURS);
     expect(base.statut).toBe(StatutEncadrement.EN_COURS);
@@ -447,7 +495,10 @@ describe('StagesService — journal d’audit avant/après', () => {
     const service = new StagesService(prisma);
 
     await expect(
-      service.enregistrerSoutenance({ travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any, { id: 'scol-1', role: Role.SCOLARITE } as AuthUser),
+      service.enregistrerSoutenance(
+        { travailEncadreId: 'travail-1', date: '2026-06-20T09:00:00.000Z' } as any,
+        { id: 'scol-1', role: Role.SCOLARITE } as AuthUser,
+      ),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(create).not.toHaveBeenCalled();
     expect(auditCreate).not.toHaveBeenCalled();
@@ -489,7 +540,9 @@ describe('StagesService — journal d’audit avant/après', () => {
     const service = new StagesService(prisma);
     const ancienProf = { id: 'user-prof', role: Role.ENSEIGNANT, enseignantId: 'prof-1' } as AuthUser;
 
-    await expect(service.transition('travail-1', StatutEncadrement.EN_COURS, ancienProf)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.transition('travail-1', StatutEncadrement.EN_COURS, ancienProf)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
     expect(auditCreate).not.toHaveBeenCalled();
   });
 

@@ -5,9 +5,7 @@ import { ScolariteService } from './scolarite.service';
 
 /** Scolarité LMD : évaluations, feuilles de notes et délibérations du jury. */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [EvaluationsController, NotesController, DeliberationsController],
   providers: [ScolariteService],
   exports: [ScolariteService],

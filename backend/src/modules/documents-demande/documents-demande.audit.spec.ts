@@ -32,8 +32,12 @@ const DEMANDE = {
   motif: 'Inscription sur dossier medical',
   etudiantId: 'etu-1',
   etudiant: {
-    id: 'etu-1', matricule: '2026-00001', nom: 'Diallo', prenom: 'Aïssatou',
-    telephone: '+224622334455', email: 'aissatou.diallo@example.test',
+    id: 'etu-1',
+    matricule: '2026-00001',
+    nom: 'Diallo',
+    prenom: 'Aïssatou',
+    telephone: '+224622334455',
+    email: 'aissatou.diallo@example.test',
   },
 };
 
@@ -61,10 +65,12 @@ describe('Demandes de documents — grille tarifaire', () => {
     await service.modifierTarif('tarif-1', { montant: 30000 }, AGENT);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.tarifDemande.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'tarif-1' },
-      data: { montant: 30000 },
-    }));
+    expect(tx.tarifDemande.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'tarif-1' },
+        data: { montant: 30000 },
+      }),
+    );
     expect(audit).toHaveBeenCalledTimes(1);
     expect(audit.mock.calls[0][0].data).toEqual({
       userId: 'agent-1',
@@ -106,7 +112,11 @@ describe('Demandes de documents — grille tarifaire', () => {
     const details = lire(audit);
     expect(details.avant).toBeNull();
     expect(details.apres).toEqual({
-      id: 'tarif-1', type: 'RELEVE_NOTES', montant: 25000, devise: 'GNF', delaiHeures: 72,
+      id: 'tarif-1',
+      type: 'RELEVE_NOTES',
+      montant: 25000,
+      devise: 'GNF',
+      delaiHeures: 72,
     });
   });
 });
@@ -116,8 +126,13 @@ describe('Demandes de documents — encaissement', () => {
     const demandeAvant = { ...DEMANDE, paiementId: 'pay-1' };
     const demandeApres = { ...DEMANDE, statut: StatutDemande.EN_TRAITEMENT, traiteParId: 'agent-1' };
     const paiementAvant = {
-      id: 'pay-1', reference: 'PAY-2026-00001', montant: 25000, devise: 'GNF',
-      mode: 'ESPECES', statut: StatutPaiement.EN_ATTENTE, telephone: '+224622334455',
+      id: 'pay-1',
+      reference: 'PAY-2026-00001',
+      montant: 25000,
+      devise: 'GNF',
+      mode: 'ESPECES',
+      statut: StatutPaiement.EN_ATTENTE,
+      telephone: '+224622334455',
       transactionId: 'opérateur-777',
     };
     const paiementApres = { ...paiementAvant, statut: StatutPaiement.REUSSI };
@@ -136,14 +151,18 @@ describe('Demandes de documents — encaissement', () => {
     await service.confirmerPaiement('dem-1', { paiementId: 'pay-1' }, AGENT);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.paiement.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'pay-1' },
-      data: expect.objectContaining({ statut: StatutPaiement.REUSSI }),
-    }));
-    expect(tx.demandeDocument.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'dem-1' },
-      data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: 'agent-1' },
-    }));
+    expect(tx.paiement.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'pay-1' },
+        data: expect.objectContaining({ statut: StatutPaiement.REUSSI }),
+      }),
+    );
+    expect(tx.demandeDocument.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'dem-1' },
+        data: { statut: StatutDemande.EN_TRAITEMENT, traiteParId: 'agent-1' },
+      }),
+    );
     expect(audit).toHaveBeenCalledTimes(1);
     const data = audit.mock.calls[0][0].data;
     expect(data.userId).toBe('agent-1');
@@ -159,7 +178,7 @@ describe('Demandes de documents — encaissement', () => {
     expect(data.details).not.toContain('example.test');
   });
 
-  it("refuse un identifiant de paiement incohérent sans encaisser ni tracer", async () => {
+  it('refuse un identifiant de paiement incohérent sans encaisser ni tracer', async () => {
     const { tx, prisma, audit } = transaction({
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: 'pay-1' }),
@@ -169,8 +188,9 @@ describe('Demandes de documents — encaissement', () => {
     });
     const service = new DocumentsDemandeService(prisma as any);
 
-    await expect(service.confirmerPaiement('dem-1', { paiementId: 'pay-9' }, AGENT))
-      .rejects.toThrow(BadRequestException);
+    await expect(service.confirmerPaiement('dem-1', { paiementId: 'pay-9' }, AGENT)).rejects.toThrow(
+      BadRequestException,
+    );
 
     expect(tx.paiement.update).not.toHaveBeenCalled();
     expect(tx.demandeDocument.update).not.toHaveBeenCalled();
@@ -179,8 +199,14 @@ describe('Demandes de documents — encaissement', () => {
 
   it('rattache le paiement à la demande dans la transaction qui le crée', async () => {
     const paiement = {
-      id: 'pay-1', reference: 'PAY-2026-00001', montant: 25000, devise: 'GNF',
-      mode: 'ESPECES', statut: StatutPaiement.EN_ATTENTE, telephone: null, transactionId: null,
+      id: 'pay-1',
+      reference: 'PAY-2026-00001',
+      montant: 25000,
+      devise: 'GNF',
+      mode: 'ESPECES',
+      statut: StatutPaiement.EN_ATTENTE,
+      telephone: null,
+      transactionId: null,
     };
     const { tx, prisma, audit } = transaction(
       {
@@ -205,19 +231,24 @@ describe('Demandes de documents — encaissement', () => {
     );
     const service = new DocumentsDemandeService(prisma as any);
     jest.spyOn(service, 'findOnePour').mockResolvedValue({
-      ...DEMANDE, paiementId: null, inscriptionId: 'ins-1',
+      ...DEMANDE,
+      paiementId: null,
+      inscriptionId: 'ins-1',
     } as any);
 
     await service.payer('dem-1', { mode: 'ESPECES' } as any, ETUDIANT);
 
     // Le rattachement ne doit pas repartir dans une écriture séparée.
     expect(prisma.demandeDocument.update).not.toHaveBeenCalled();
-    expect(tx.demandeDocument.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'dem-1', statut: StatutDemande.EN_ATTENTE_PAIEMENT, paiementId: null },
-      data: { paiementId: expect.stringMatching(/^[0-9a-f-]{36}$/i) },
-    }));
+    expect(tx.demandeDocument.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'dem-1', statut: StatutDemande.EN_ATTENTE_PAIEMENT, paiementId: null },
+        data: { paiementId: expect.stringMatching(/^[0-9a-f-]{36}$/i) },
+      }),
+    );
     expect(tx.paiement.create.mock.calls[0][0].data).toMatchObject({
-      inscriptionId: 'ins-1', anneeId: 'annee-2026',
+      inscriptionId: 'ins-1',
+      anneeId: 'annee-2026',
     });
     const details = lire(audit);
     expect(audit.mock.calls[0][0].data.action).toBe('DEMANDE_DOC_PAIEMENT_INITIE');
@@ -228,23 +259,32 @@ describe('Demandes de documents — encaissement', () => {
 
   it('annule un second paiement si une autre transaction rattache le premier', async () => {
     const paiement = {
-      id: 'pay-2', reference: 'PAY-2026-00002', montant: 25000, devise: 'GNF',
-      mode: 'ESPECES', statut: StatutPaiement.EN_ATTENTE, telephone: null, transactionId: null,
+      id: 'pay-2',
+      reference: 'PAY-2026-00002',
+      montant: 25000,
+      devise: 'GNF',
+      mode: 'ESPECES',
+      statut: StatutPaiement.EN_ATTENTE,
+      telephone: null,
+      transactionId: null,
     };
-    const { tx, prisma, audit } = transaction({
-      demandeDocument: {
-        findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
-        findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }),
-        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+    const { tx, prisma, audit } = transaction(
+      {
+        demandeDocument: {
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+          findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }),
+          updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+        },
+        paiement: {
+          create: jest.fn(async ({ data }: any) => ({ ...paiement, id: data.id })),
+          findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+        },
+        inscription: { findUnique: jest.fn() },
       },
-      paiement: {
-        create: jest.fn(async ({ data }: any) => ({ ...paiement, id: data.id })),
-        findMany: jest.fn().mockResolvedValue([{ reference: 'PAY-2026-00001' }]),
+      {
+        demandeDocument: { findFirst: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }) },
       },
-      inscription: { findUnique: jest.fn() },
-    }, {
-      demandeDocument: { findFirst: jest.fn().mockResolvedValue({ ...DEMANDE, paiementId: null }) },
-    });
+    );
     const service = new DocumentsDemandeService(prisma as any);
     jest.spyOn(service, 'findOnePour').mockResolvedValue({ ...DEMANDE, paiementId: null } as any);
 
@@ -257,12 +297,15 @@ describe('Demandes de documents — encaissement', () => {
 
 describe('Demandes de documents — transitions de cycle', () => {
   it('trace l’ouverture de la demande sans son motif ni les coordonnées du demandeur', async () => {
-    const { prisma, audit } = transaction({
-      demandeDocument: {
-        findMany: jest.fn().mockResolvedValue([{ numero: 'DOC-2026-00001' }]),
-        create: jest.fn().mockResolvedValue(DEMANDE),
+    const { prisma, audit } = transaction(
+      {
+        demandeDocument: {
+          findMany: jest.fn().mockResolvedValue([{ numero: 'DOC-2026-00001' }]),
+          create: jest.fn().mockResolvedValue(DEMANDE),
+        },
       },
-    }, { tarifDemande: { findUnique: jest.fn().mockResolvedValue({ montant: 25000, devise: 'GNF' }) } });
+      { tarifDemande: { findUnique: jest.fn().mockResolvedValue({ montant: 25000, devise: 'GNF' }) } },
+    );
     const service = new DocumentsDemandeService(prisma as any);
 
     await service.creer({ type: 'RELEVE_NOTES', motif: 'dossier medical' } as any, ETUDIANT);
@@ -292,7 +335,9 @@ describe('Demandes de documents — transitions de cycle', () => {
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PRETE }),
         update: jest.fn().mockResolvedValue({
-          ...DEMANDE, statut: StatutDemande.REMISE, remiseLe: new Date('2026-10-05T08:00:00.000Z'),
+          ...DEMANDE,
+          statut: StatutDemande.REMISE,
+          remiseLe: new Date('2026-10-05T08:00:00.000Z'),
         }),
       },
     });
@@ -338,7 +383,9 @@ describe('Demandes de documents — transitions de cycle', () => {
       demandeDocument: {
         findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
         update: jest.fn().mockResolvedValue({
-          ...DEMANDE, statut: StatutDemande.EN_TRAITEMENT, traiteParId: 'agent-1',
+          ...DEMANDE,
+          statut: StatutDemande.EN_TRAITEMENT,
+          traiteParId: 'agent-1',
         }),
       },
     });
@@ -362,7 +409,9 @@ describe('Demandes de documents — transitions de cycle', () => {
         demandeDocument: {
           findUnique: jest.fn().mockResolvedValue({ ...DEMANDE, statut: StatutDemande.PAYEE }),
           update: jest.fn().mockResolvedValue({
-            ...DEMANDE, statut: StatutDemande.PRETE, traiteParId: 'agent-1',
+            ...DEMANDE,
+            statut: StatutDemande.PRETE,
+            traiteParId: 'agent-1',
             notification: 'Votre relevé est prêt au guichet',
           }),
         },
@@ -389,18 +438,26 @@ describe('Demandes de documents — transitions de cycle', () => {
 describe('Demandes de documents — corrélation Mobile Money', () => {
   it('lie et journalise la référence opérateur dans une même transaction sans la copier au journal', async () => {
     const paiementAvant = {
-      id: 'pay-mm-1', reference: 'PAY-2026-00009', montant: 25000, devise: 'GNF',
-      mode: 'MOBILE_MONEY', statut: StatutPaiement.EN_ATTENTE, transactionId: null,
+      id: 'pay-mm-1',
+      reference: 'PAY-2026-00009',
+      montant: 25000,
+      devise: 'GNF',
+      mode: 'MOBILE_MONEY',
+      statut: StatutPaiement.EN_ATTENTE,
+      transactionId: null,
       telephone: '+224622334455',
     };
     const paiementApres = { ...paiementAvant, transactionId: 'provider-secret-transaction' };
     const auditHorsTransaction = { create: jest.fn().mockResolvedValue({}) };
-    const { tx, prisma, audit } = transaction({
-      paiement: {
-        findUnique: jest.fn().mockResolvedValue(paiementAvant),
-        update: jest.fn().mockResolvedValue(paiementApres),
+    const { tx, prisma, audit } = transaction(
+      {
+        paiement: {
+          findUnique: jest.fn().mockResolvedValue(paiementAvant),
+          update: jest.fn().mockResolvedValue(paiementApres),
+        },
       },
-    }, { auditLog: auditHorsTransaction });
+      { auditLog: auditHorsTransaction },
+    );
     const service = new DocumentsDemandeService(prisma as any);
     const urlAvant = process.env.MOBILE_MONEY_URL;
     const fetchAvant = global.fetch;
@@ -411,15 +468,18 @@ describe('Demandes de documents — corrélation Mobile Money', () => {
     }) as any;
 
     try {
-      await (service as any).tenterTransmissionMobileMoney({
-        id: paiementAvant.id,
-        reference: paiementAvant.reference,
-        montant: paiementAvant.montant,
-        devise: paiementAvant.devise,
-        operateur: 'ORANGE',
-        telephone: paiementAvant.telephone,
-        motif: 'demande confidentielle',
-      }, 'etudiant-compte-1');
+      await (service as any).tenterTransmissionMobileMoney(
+        {
+          id: paiementAvant.id,
+          reference: paiementAvant.reference,
+          montant: paiementAvant.montant,
+          devise: paiementAvant.devise,
+          operateur: 'ORANGE',
+          telephone: paiementAvant.telephone,
+          motif: 'demande confidentielle',
+        },
+        'etudiant-compte-1',
+      );
     } finally {
       global.fetch = fetchAvant;
       if (urlAvant === undefined) delete process.env.MOBILE_MONEY_URL;
@@ -455,17 +515,19 @@ describe('Demandes de documents — absence de trace sur mutation refusée', () 
     const { prisma, audit } = transaction({});
     const service = new DocumentsDemandeService(prisma as any);
 
-    await expect(service.rejeter('dem-1', { motif: '   ' } as any, AGENT))
-      .rejects.toThrow(BadRequestException);
+    await expect(service.rejeter('dem-1', { motif: '   ' } as any, AGENT)).rejects.toThrow(BadRequestException);
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(audit).not.toHaveBeenCalled();
   });
 
   it('refuse le marquage PRETE d’une demande non traitée sans ouvrir de transaction', async () => {
-    const { prisma, audit } = transaction({}, {
-      demandeDocument: { findUnique: jest.fn().mockResolvedValue({ ...DEMANDE }) },
-    });
+    const { prisma, audit } = transaction(
+      {},
+      {
+        demandeDocument: { findUnique: jest.fn().mockResolvedValue({ ...DEMANDE }) },
+      },
+    );
     const service = new DocumentsDemandeService(prisma as any);
 
     await expect(service.marquerPrete('dem-1', {}, AGENT)).rejects.toThrow(BadRequestException);

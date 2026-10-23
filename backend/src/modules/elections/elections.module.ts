@@ -10,9 +10,7 @@ import { ElectionsService } from './elections.service';
  * vérifié à la main (motif habituel).
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [ElectionsController],
   providers: [ElectionsService],
   exports: [ElectionsService],

@@ -45,7 +45,9 @@ function preparerPaiementMm() {
 describe('Paiement Mobile Money — orchestration de l’inscription', () => {
   const urlAvant = process.env.MOBILE_MONEY_URL;
 
-  beforeEach(() => { process.env.MOBILE_MONEY_URL = 'https://operator.example.test'; });
+  beforeEach(() => {
+    process.env.MOBILE_MONEY_URL = 'https://operator.example.test';
+  });
   afterEach(() => {
     if (urlAvant === undefined) delete process.env.MOBILE_MONEY_URL;
     else process.env.MOBILE_MONEY_URL = urlAvant;
@@ -58,12 +60,17 @@ describe('Paiement Mobile Money — orchestration de l’inscription', () => {
       .mockImplementationOnce((operation: (client: any) => unknown) => operation(tx))
       .mockRejectedValueOnce(new Error('database unavailable'));
 
-    await expect(service.creerPaiement({
-      montant: 25000,
-      mode: ModePaiement.MOBILE_MONEY,
-      telephone: paiement.telephone,
-      operateur: paiement.operateur,
-    } as any, { id: 'agent-1' } as any)).resolves.toMatchObject({
+    await expect(
+      service.creerPaiement(
+        {
+          montant: 25000,
+          mode: ModePaiement.MOBILE_MONEY,
+          telephone: paiement.telephone,
+          operateur: paiement.operateur,
+        } as any,
+        { id: 'agent-1' } as any,
+      ),
+    ).resolves.toMatchObject({
       id: paiement.id,
       statut: 'EN_ATTENTE',
       transactionId: null,
@@ -83,12 +90,17 @@ describe('Paiement Mobile Money — orchestration de l’inscription', () => {
     const { paiement, prisma, mobileMoney, service } = preparerPaiementMm();
     mobileMoney.demanderPaiement.mockRejectedValue(new Error('provider-secret-response'));
 
-    await expect(service.creerPaiement({
-      montant: 25000,
-      mode: ModePaiement.MOBILE_MONEY,
-      telephone: paiement.telephone,
-      operateur: paiement.operateur,
-    } as any, { id: 'agent-1' } as any)).resolves.toMatchObject({ id: paiement.id, statut: 'EN_ATTENTE' });
+    await expect(
+      service.creerPaiement(
+        {
+          montant: 25000,
+          mode: ModePaiement.MOBILE_MONEY,
+          telephone: paiement.telephone,
+          operateur: paiement.operateur,
+        } as any,
+        { id: 'agent-1' } as any,
+      ),
+    ).resolves.toMatchObject({ id: paiement.id, statut: 'EN_ATTENTE' });
 
     expect(mobileMoney.demanderPaiement).toHaveBeenCalledTimes(1);
     expect(prisma.auditLog.create.mock.calls.map((call: any[]) => call[0].data.action)).toEqual([
@@ -102,12 +114,15 @@ describe('Paiement Mobile Money — orchestration de l’inscription', () => {
     const { paiement, tx, mobileMoney, service } = preparerPaiementMm();
     mobileMoney.demanderPaiement.mockResolvedValue({ mode: 'operateur', transactionId: 'provider-secret-transaction' });
 
-    await service.creerPaiement({
-      montant: 25000,
-      mode: ModePaiement.MOBILE_MONEY,
-      telephone: paiement.telephone,
-      operateur: paiement.operateur,
-    } as any, { id: 'agent-1' } as any);
+    await service.creerPaiement(
+      {
+        montant: 25000,
+        mode: ModePaiement.MOBILE_MONEY,
+        telephone: paiement.telephone,
+        operateur: paiement.operateur,
+      } as any,
+      { id: 'agent-1' } as any,
+    );
 
     const auditLiaison = tx.auditLog.create.mock.calls
       .map((call: any[]) => call[0].data)

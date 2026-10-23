@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { t } from '../../common/i18n';
 import { PDFParse } from 'pdf-parse';
@@ -205,9 +200,7 @@ export class PlagiatService {
         await parser.destroy();
       }
     } catch (e: any) {
-      this.logger.warn(
-        `Échec d'extraction PDF (${e?.message ?? e}). Document enregistré sans texte.`,
-      );
+      this.logger.warn(`Échec d'extraction PDF (${e?.message ?? e}). Document enregistré sans texte.`);
       return { contenuTexte: null, empreinteHash };
     }
   }
@@ -222,9 +215,7 @@ export class PlagiatService {
     try {
       return await this.detecterDoublons(documentId);
     } catch (e: any) {
-      this.logger.warn(
-        `Détection de doublons en échec pour ${documentId} : ${e?.message ?? e}`,
-      );
+      this.logger.warn(`Détection de doublons en échec pour ${documentId} : ${e?.message ?? e}`);
       return null;
     }
   }
@@ -488,10 +479,7 @@ export class PlagiatService {
     return this.prisma.$transaction(async (tx) => {
       const existante = await tx.suspicionPlagiat.findUnique({ where: { id } });
       if (!existante) throw new NotFoundException(t('bibliotheque.suspicion_introuvable'));
-      if (
-        decision !== StatutSuspicionPlagiat.ACQUITTE &&
-        decision !== StatutSuspicionPlagiat.CONFIRME
-      ) {
+      if (decision !== StatutSuspicionPlagiat.ACQUITTE && decision !== StatutSuspicionPlagiat.CONFIRME) {
         throw new BadRequestException(t('bibliotheque.decision_de_plagiat_invalide'));
       }
       const avant = instantaneSuspicion(existante);
@@ -511,12 +499,7 @@ export class PlagiatService {
       await journaliser(tx, utilisateur, `PLAGIAT_${decision}`, 'SuspicionPlagiat', id, {
         avant,
         apres: instantaneSuspicion(miseAJour),
-        champsModifies: [
-          'statut',
-          'acquitteParId',
-          'acquitteLe',
-          ...(commentaire ? ['commentaire'] : []),
-        ],
+        champsModifies: ['statut', 'acquitteParId', 'acquitteLe', ...(commentaire ? ['commentaire'] : [])],
       });
       return miseAJour;
     });
@@ -624,9 +607,7 @@ export class PlagiatService {
       });
     }
 
-    this.logger.log(
-      `Recalcul complet : ${creees} créées, ${misesAJour} mises à jour, ${ignorees} ignorées.`,
-    );
+    this.logger.log(`Recalcul complet : ${creees} créées, ${misesAJour} mises à jour, ${ignorees} ignorées.`);
     return { creees, misesAJour, ignorees };
   }
 }

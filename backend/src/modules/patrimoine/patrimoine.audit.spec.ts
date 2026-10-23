@@ -30,12 +30,16 @@ const EQUIPEMENT = {
   actif: true,
   enReparation: false,
   obsolescenceMois: 60,
-  notes: 'Observation interne de l\'agent',
+  notes: "Observation interne de l'agent",
 };
 
 /** Client transactionnel minimal : une écriture hors `tx` échoue le test. */
 const transaction = (delegats: Record<string, any>, horsTransaction: Record<string, any> = {}) => {
-  const tx: any = { ...delegats, $queryRaw: jest.fn().mockResolvedValue([{ id: 'eq-1' }]), auditLog: { create: jest.fn().mockResolvedValue({}) } };
+  const tx: any = {
+    ...delegats,
+    $queryRaw: jest.fn().mockResolvedValue([{ id: 'eq-1' }]),
+    auditLog: { create: jest.fn().mockResolvedValue({}) },
+  };
   const prisma: any = { ...horsTransaction, $transaction: jest.fn((operation: any) => operation(tx)) };
   return { tx, prisma, audit: tx.auditLog.create };
 };
@@ -54,11 +58,7 @@ describe("Patrimoine — modification d'un équipement", () => {
     });
     const service = new PatrimoineService(prisma, {} as any);
 
-    await service.modifierEquipement(
-      'eq-1',
-      { libelle: 'Projecteur Epson', valeurAcquisition: 380000 } as any,
-      AGENT,
-    );
+    await service.modifierEquipement('eq-1', { libelle: 'Projecteur Epson', valeurAcquisition: 380000 } as any, AGENT);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.equipementPatrimoine.update).toHaveBeenCalledTimes(1);
@@ -135,7 +135,10 @@ describe("Patrimoine — modification d'un équipement", () => {
 
   it("n'inscrit rien quand la catégorie supprimée porte encore des équipements", async () => {
     const categorie = {
-      id: 'cat-1', code: 'VIDEO', libelle: 'Audiovisuel', dureeAmortissement: 60,
+      id: 'cat-1',
+      code: 'VIDEO',
+      libelle: 'Audiovisuel',
+      dureeAmortissement: 60,
       _count: { equipements: 3 },
     };
     const { tx, prisma, audit } = transaction({
@@ -153,9 +156,15 @@ describe("Patrimoine — modification d'un équipement", () => {
 describe('Patrimoine — cycle des réparations', () => {
   it("déclare la réparation et bascule l'équipement dans la même transaction", async () => {
     const reparation = {
-      id: 'rep-1', equipementId: 'eq-1', statut: StatutReparation.EN_COURS, cout: 75000,
-      dateDeclaration: new Date('2026-10-01T09:00:00.000Z'), dateResolution: null,
-      declareParId: 'agent-1', resoluParId: null, prestataire: 'Atelier Kankan',
+      id: 'rep-1',
+      equipementId: 'eq-1',
+      statut: StatutReparation.EN_COURS,
+      cout: 75000,
+      dateDeclaration: new Date('2026-10-01T09:00:00.000Z'),
+      dateResolution: null,
+      declareParId: 'agent-1',
+      resoluParId: null,
+      prestataire: 'Atelier Kankan',
       description: 'Lampe morte, interventionmedicale à prévoir',
       notes: null,
     };
@@ -196,7 +205,8 @@ describe('Patrimoine — cycle des réparations', () => {
     const { tx, prisma, audit } = transaction({
       reparationMateriel: {
         findFirst: jest.fn().mockResolvedValue({
-          id: 'rep-0', statut: StatutReparation.EN_COURS,
+          id: 'rep-0',
+          statut: StatutReparation.EN_COURS,
         }),
         create: jest.fn(),
       },
@@ -204,9 +214,9 @@ describe('Patrimoine — cycle des réparations', () => {
     });
     const service = new PatrimoineService(prisma, {} as any);
 
-    await expect(
-      service.declarerReparation('eq-1', { description: 'Lampe morte' } as any, AGENT),
-    ).rejects.toThrow(ConflictException);
+    await expect(service.declarerReparation('eq-1', { description: 'Lampe morte' } as any, AGENT)).rejects.toThrow(
+      ConflictException,
+    );
 
     expect(tx.reparationMateriel.create).not.toHaveBeenCalled();
     expect(tx.equipementPatrimoine.update).not.toHaveBeenCalled();
@@ -215,11 +225,23 @@ describe('Patrimoine — cycle des réparations', () => {
 
   it("clôture la réparation et libère l'équipement avec l'état des deux côtés", async () => {
     const ouverte = {
-      id: 'rep-1', equipementId: 'eq-1', statut: StatutReparation.EN_COURS, cout: 75000,
-      dateDeclaration: new Date('2026-10-01T09:00:00.000Z'), dateResolution: null,
-      declareParId: 'agent-1', resoluParId: null, prestataire: null, notes: null,
+      id: 'rep-1',
+      equipementId: 'eq-1',
+      statut: StatutReparation.EN_COURS,
+      cout: 75000,
+      dateDeclaration: new Date('2026-10-01T09:00:00.000Z'),
+      dateResolution: null,
+      declareParId: 'agent-1',
+      resoluParId: null,
+      prestataire: null,
+      notes: null,
     };
-    const resolue = { ...ouverte, statut: StatutReparation.TERMINE, resoluParId: 'agent-2', dateResolution: new Date('2026-10-04T10:00:00.000Z') };
+    const resolue = {
+      ...ouverte,
+      statut: StatutReparation.TERMINE,
+      resoluParId: 'agent-2',
+      dateResolution: new Date('2026-10-04T10:00:00.000Z'),
+    };
     const { prisma, audit } = transaction({
       reparationMateriel: {
         findFirst: jest.fn().mockResolvedValue(ouverte),
@@ -232,9 +254,15 @@ describe('Patrimoine — cycle des réparations', () => {
     });
     const service = new PatrimoineService(prisma, {} as any);
 
-    await service.resoudreReparation('eq-1', { noteResolution: 'Lampe remplacée' } as any, {
-      id: 'agent-2', nom: 'Diallo', prenom: 'Aïssatou',
-    } as any);
+    await service.resoudreReparation(
+      'eq-1',
+      { noteResolution: 'Lampe remplacée' } as any,
+      {
+        id: 'agent-2',
+        nom: 'Diallo',
+        prenom: 'Aïssatou',
+      } as any,
+    );
 
     expect(audit).toHaveBeenCalledTimes(1);
     const data = audit.mock.calls[0][0].data;

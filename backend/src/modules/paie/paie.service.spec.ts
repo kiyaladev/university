@@ -25,19 +25,46 @@ describe('PaieService — historique avant/après', () => {
     const avant = {
       statut: StatutPaie.BROUILLON,
       montantTotal: 100,
-      lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 25, heuresReelles: 4, volumePrevu: 6, montantBrut: 100, retenue: 0, montantNet: 100, commentaire: null }],
+      lignes: [
+        {
+          enseignantId: 'enseignant-1',
+          tauxHoraire: 25,
+          heuresReelles: 4,
+          volumePrevu: 6,
+          montantBrut: 100,
+          retenue: 0,
+          montantNet: 100,
+          commentaire: null,
+        },
+      ],
     };
     const apres = {
       statut: StatutPaie.BROUILLON,
       montantTotal: 150,
-      lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 50, heuresReelles: 3, volumePrevu: 6, montantBrut: 150, retenue: 0, montantNet: 150, commentaire: null }],
+      lignes: [
+        {
+          enseignantId: 'enseignant-1',
+          tauxHoraire: 50,
+          heuresReelles: 3,
+          volumePrevu: 6,
+          montantBrut: 150,
+          retenue: 0,
+          montantNet: 150,
+          commentaire: null,
+        },
+      ],
     };
     const auditCreate = jest.fn().mockResolvedValue({});
     const updatedAt = new Date('2026-01-02T00:00:00.000Z');
     const tx = {
-      seance: { findMany: jest.fn().mockResolvedValue([{
-        controle: { dureeMinutes: 180 }, affectation: { enseignantId: 'enseignant-1' },
-      }]) },
+      seance: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            controle: { dureeMinutes: 180 },
+            affectation: { enseignantId: 'enseignant-1' },
+          },
+        ]),
+      },
       affectation: { findMany: jest.fn().mockResolvedValue([{ enseignantId: 'enseignant-1', volumeHorairePrevu: 6 }]) },
       lignePaie: {
         findMany: jest.fn().mockResolvedValue(avant.lignes),
@@ -51,7 +78,15 @@ describe('PaieService — historique avant/après', () => {
       },
       auditLog: { create: auditCreate },
     };
-    const feuille = { id: 'feuille-1', statut: StatutPaie.BROUILLON, montantTotal: 100, updatedAt, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-01-31'), lignes: avant.lignes };
+    const feuille = {
+      id: 'feuille-1',
+      statut: StatutPaie.BROUILLON,
+      montantTotal: 100,
+      updatedAt,
+      dateDebut: new Date('2026-01-01'),
+      dateFin: new Date('2026-01-31'),
+      lignes: avant.lignes,
+    };
     const prisma = {
       feuillePaie: { findUnique: jest.fn().mockResolvedValue(feuille) },
       $transaction: jest.fn((operation) => operation(tx)),
@@ -60,9 +95,14 @@ describe('PaieService — historique avant/après', () => {
 
     await service.calculer('feuille-1', false, USER);
 
-    expect(tx.seance.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ statut: StatutSeance.CONTROLEE, controle: { is: { statut: { in: expect.arrayContaining([StatutPresence.PRESENT]) } } } }),
-    }));
+    expect(tx.seance.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          statut: StatutSeance.CONTROLEE,
+          controle: { is: { statut: { in: expect.arrayContaining([StatutPresence.PRESENT]) } } },
+        }),
+      }),
+    );
     expect(auditCreate).toHaveBeenCalledWith({
       data: expect.objectContaining({
         userId: USER.id,
@@ -70,8 +110,36 @@ describe('PaieService — historique avant/après', () => {
         entite: 'FeuillePaie',
         entiteId: 'feuille-1',
         details: JSON.stringify({
-          avant: { statut: StatutPaie.BROUILLON, montantTotal: 100, lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 25, heuresReelles: 4, volumePrevu: 6, montantBrut: 100, retenue: 0, montantNet: 100 }] },
-          apres: { statut: StatutPaie.BROUILLON, montantTotal: 150, lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 50, heuresReelles: 3, volumePrevu: 6, montantBrut: 150, retenue: 0, montantNet: 150 }] },
+          avant: {
+            statut: StatutPaie.BROUILLON,
+            montantTotal: 100,
+            lignes: [
+              {
+                enseignantId: 'enseignant-1',
+                tauxHoraire: 25,
+                heuresReelles: 4,
+                volumePrevu: 6,
+                montantBrut: 100,
+                retenue: 0,
+                montantNet: 100,
+              },
+            ],
+          },
+          apres: {
+            statut: StatutPaie.BROUILLON,
+            montantTotal: 150,
+            lignes: [
+              {
+                enseignantId: 'enseignant-1',
+                tauxHoraire: 50,
+                heuresReelles: 3,
+                volumePrevu: 6,
+                montantBrut: 150,
+                retenue: 0,
+                montantNet: 150,
+              },
+            ],
+          },
         }),
       }),
     });
@@ -96,10 +164,17 @@ describe('PaieService — historique avant/après', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma: any = {
-      feuillePaie: { findUnique: jest.fn().mockResolvedValue({
-        id: 'feuille-1', statut: StatutPaie.BROUILLON, updatedAt,
-        montantTotal: 0, dateDebut: new Date('2026-01-01'), dateFin: new Date('2026-01-31'), lignes: [],
-      }) },
+      feuillePaie: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'feuille-1',
+          statut: StatutPaie.BROUILLON,
+          updatedAt,
+          montantTotal: 0,
+          dateDebut: new Date('2026-01-01'),
+          dateFin: new Date('2026-01-31'),
+          lignes: [],
+        }),
+      },
       $transaction: jest.fn((operation) => operation(tx)),
     };
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Cette feuille vient d’être modifiée.' } as never);
@@ -113,18 +188,42 @@ describe('PaieService — historique avant/après', () => {
 
   it('journalise avant/après au gel puis au paiement d’une feuille', async () => {
     const updatedAt = new Date('2026-01-02T00:00:00.000Z');
-    const brouillon = { id: 'feuille-2', statut: StatutPaie.BROUILLON, updatedAt, montantTotal: 0, lignes: [{ enseignantId: 'enseignant-2', tauxHoraire: 20, heuresReelles: 1, volumePrevu: 2, montantBrut: 20, retenue: 0, montantNet: 20 }] };
+    const brouillon = {
+      id: 'feuille-2',
+      statut: StatutPaie.BROUILLON,
+      updatedAt,
+      montantTotal: 0,
+      lignes: [
+        {
+          enseignantId: 'enseignant-2',
+          tauxHoraire: 20,
+          heuresReelles: 1,
+          volumePrevu: 2,
+          montantBrut: 20,
+          retenue: 0,
+          montantNet: 20,
+        },
+      ],
+    };
     const validee = { ...brouillon, statut: StatutPaie.VALIDEE };
     const payee = { ...brouillon, statut: StatutPaie.PAYEE };
     const events: any[] = [];
     const tx = {
       feuillePaie: {
-        findUnique: jest.fn()
-          .mockResolvedValueOnce(brouillon).mockResolvedValueOnce(validee)
-          .mockResolvedValueOnce(validee).mockResolvedValueOnce(payee),
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce(brouillon)
+          .mockResolvedValueOnce(validee)
+          .mockResolvedValueOnce(validee)
+          .mockResolvedValueOnce(payee),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
-      auditLog: { create: jest.fn(async ({ data }) => { events.push(data); return {}; }) },
+      auditLog: {
+        create: jest.fn(async ({ data }) => {
+          events.push(data);
+          return {};
+        }),
+      },
     };
     const prisma = {
       feuillePaie: { findUnique: jest.fn() },
@@ -135,14 +234,26 @@ describe('PaieService — historique avant/après', () => {
     await service.valider('feuille-2', USER);
     await service.payer('feuille-2', USER);
 
-    expect(tx.feuillePaie.updateMany).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      where: { id: 'feuille-2', statut: StatutPaie.BROUILLON, updatedAt },
-    }));
-    expect(tx.feuillePaie.updateMany).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      where: { id: 'feuille-2', statut: StatutPaie.VALIDEE, updatedAt },
-    }));
-    expect(events.map(event => event.action)).toEqual(['PAIE_VALIDEE', 'PAIE_PAYEE']);
-    expect(JSON.parse(events[0].details)).toMatchObject({ avant: { statut: StatutPaie.BROUILLON }, apres: { statut: StatutPaie.VALIDEE } });
-    expect(JSON.parse(events[1].details)).toMatchObject({ avant: { statut: StatutPaie.VALIDEE }, apres: { statut: StatutPaie.PAYEE } });
+    expect(tx.feuillePaie.updateMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: { id: 'feuille-2', statut: StatutPaie.BROUILLON, updatedAt },
+      }),
+    );
+    expect(tx.feuillePaie.updateMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: { id: 'feuille-2', statut: StatutPaie.VALIDEE, updatedAt },
+      }),
+    );
+    expect(events.map((event) => event.action)).toEqual(['PAIE_VALIDEE', 'PAIE_PAYEE']);
+    expect(JSON.parse(events[0].details)).toMatchObject({
+      avant: { statut: StatutPaie.BROUILLON },
+      apres: { statut: StatutPaie.VALIDEE },
+    });
+    expect(JSON.parse(events[1].details)).toMatchObject({
+      avant: { statut: StatutPaie.VALIDEE },
+      apres: { statut: StatutPaie.PAYEE },
+    });
   });
 });

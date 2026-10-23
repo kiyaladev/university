@@ -123,14 +123,16 @@ export class JustificatifsService extends CrudService {
   }
 
   async findOnePour(id: string, user: AuthUser) {
-    const where = user.role === Role.ENSEIGNANT
-      ? { id, enseignantId: user.enseignantId ?? '__aucun__' }
-      : estChefDeDepartement(user)
-        ? { id, ...filtreDepartement(user, 'seance.affectation.promotion.filiere') }
-        : { id };
-    const justificatif = user.role === Role.ENSEIGNANT || estChefDeDepartement(user)
-      ? await this.delegate.findFirst({ where, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
-      : await this.delegate.findFirst({ where, include: JUSTIFICATIF_INCLUDE });
+    const where =
+      user.role === Role.ENSEIGNANT
+        ? { id, enseignantId: user.enseignantId ?? '__aucun__' }
+        : estChefDeDepartement(user)
+          ? { id, ...filtreDepartement(user, 'seance.affectation.promotion.filiere') }
+          : { id };
+    const justificatif =
+      user.role === Role.ENSEIGNANT || estChefDeDepartement(user)
+        ? await this.delegate.findFirst({ where, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
+        : await this.delegate.findFirst({ where, include: JUSTIFICATIF_INCLUDE });
     if (!justificatif) throw new NotFoundException(t('common.notFound'));
     return justificatif;
   }
@@ -163,32 +165,36 @@ export class JustificatifsService extends CrudService {
     }
 
     const { enseignantId: _ignore, ...rest } = dto;
-    return this.prisma.$transaction(async (tx) => {
-      const seanceTx: any = await tx.seance.findFirst({
-        where: {
-          id: dto.seanceId,
-          ...filtreDepartement(user, 'affectation.promotion.filiere'),
-        },
-        include: { affectation: true },
-      });
-      if (!seanceTx) throw new BadRequestException(t('justificatifs.seance_introuvable'));
-      await exigerAnneeOuverte(tx, seanceTx.anneeId);
-      const dejaPresent = await tx.justificatif.findUnique({ where: { seanceId: dto.seanceId }, select: { id: true } });
-      if (dejaPresent) throw new BadRequestException(t('justificatifs.un_justificatif_existe_deja_pour_cette_seance'));
-      const data = { ...rest, enseignantId: seanceTx.affectation.enseignantId };
-      const justificatif = estChefDeDepartement(user) || user.role === Role.ENSEIGNANT
-        ? await tx.justificatif.create({ data, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
-        : await tx.justificatif.create({ data, include: JUSTIFICATIF_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'JUSTIFICATIF_DEPOSE',
-        'Justificatif',
-        justificatif.id,
-        { avant: null, apres: this.instantaneAudit(justificatif) },
-      );
-      return justificatif;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const seanceTx: any = await tx.seance.findFirst({
+          where: {
+            id: dto.seanceId,
+            ...filtreDepartement(user, 'affectation.promotion.filiere'),
+          },
+          include: { affectation: true },
+        });
+        if (!seanceTx) throw new BadRequestException(t('justificatifs.seance_introuvable'));
+        await exigerAnneeOuverte(tx, seanceTx.anneeId);
+        const dejaPresent = await tx.justificatif.findUnique({
+          where: { seanceId: dto.seanceId },
+          select: { id: true },
+        });
+        if (dejaPresent)
+          throw new BadRequestException(t('justificatifs.un_justificatif_existe_deja_pour_cette_seance'));
+        const data = { ...rest, enseignantId: seanceTx.affectation.enseignantId };
+        const justificatif =
+          estChefDeDepartement(user) || user.role === Role.ENSEIGNANT
+            ? await tx.justificatif.create({ data, select: JUSTIFICATIF_ENSEIGNANT_SELECT })
+            : await tx.justificatif.create({ data, include: JUSTIFICATIF_INCLUDE });
+        await journaliser(tx, user, 'JUSTIFICATIF_DEPOSE', 'Justificatif', justificatif.id, {
+          avant: null,
+          apres: this.instantaneAudit(justificatif),
+        });
+        return justificatif;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /** Validation : la séance passe en absence excusée. */
@@ -198,90 +204,105 @@ export class JustificatifsService extends CrudService {
       throw new BadRequestException(t('justificatifs.decision_finale_requise'));
     }
 
-    await this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.justificatif.findUnique({
-        where: { id }, include: { seance: { select: { id: true, anneeId: true, affectation: { select: { promotion: { select: { filiere: { select: { departementId: true } } } } } } } } },
-      });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      if (estChefDeDepartement(user) && (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)) {
-        throw new NotFoundException(t('common.notFound'));
-      }
-      await exigerAnneeOuverte(tx, avant.seance.anneeId);
-      if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
-        throw new BadRequestException(t('justificatifs.deja_traite'));
-      }
-      const decision = await tx.justificatif.updateMany({
-        where: { id, statut: StatutJustificatif.EN_ATTENTE },
-        data: {
-          statut: dto.statut,
-          commentaire: dto.commentaire,
-          traiteParId: user.id,
-          traiteLe: new Date(),
-        },
-      });
-      if (decision.count !== 1) throw new BadRequestException(t('justificatifs.deja_traite'));
-      const apres = await tx.justificatif.findUniqueOrThrow({ where: { id }, include: JUSTIFICATIF_INCLUDE });
-
-      if (dto.statut === StatutJustificatif.VALIDE) {
-        await tx.controle.upsert({
-          where: { seanceId: avant.seanceId },
-          create: {
-            seanceId: avant.seanceId,
-            controleurId: user.id,
-            statut: StatutPresence.EXCUSE,
-            methode: MethodeVerification.MANUEL,
-            dureeMinutes: 0,
-            observation: 'Absence justifiée',
-          },
-          update: {
-            statut: StatutPresence.EXCUSE,
-            observation: 'Absence justifiée',
+    await this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.justificatif.findUnique({
+          where: { id },
+          include: {
+            seance: {
+              select: {
+                id: true,
+                anneeId: true,
+                affectation: { select: { promotion: { select: { filiere: { select: { departementId: true } } } } } },
+              },
+            },
           },
         });
-      }
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        if (
+          estChefDeDepartement(user) &&
+          (!user.departementId || avant.seance.affectation.promotion.filiere.departementId !== user.departementId)
+        ) {
+          throw new NotFoundException(t('common.notFound'));
+        }
+        await exigerAnneeOuverte(tx, avant.seance.anneeId);
+        if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
+          throw new BadRequestException(t('justificatifs.deja_traite'));
+        }
+        const decision = await tx.justificatif.updateMany({
+          where: { id, statut: StatutJustificatif.EN_ATTENTE },
+          data: {
+            statut: dto.statut,
+            commentaire: dto.commentaire,
+            traiteParId: user.id,
+            traiteLe: new Date(),
+          },
+        });
+        if (decision.count !== 1) throw new BadRequestException(t('justificatifs.deja_traite'));
+        const apres = await tx.justificatif.findUniqueOrThrow({ where: { id }, include: JUSTIFICATIF_INCLUDE });
 
-      await journaliser(
-        tx,
-        user,
-        `JUSTIFICATIF_${dto.statut}`,
-        'Justificatif',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
-      );
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        if (dto.statut === StatutJustificatif.VALIDE) {
+          await tx.controle.upsert({
+            where: { seanceId: avant.seanceId },
+            create: {
+              seanceId: avant.seanceId,
+              controleurId: user.id,
+              statut: StatutPresence.EXCUSE,
+              methode: MethodeVerification.MANUEL,
+              dureeMinutes: 0,
+              observation: 'Absence justifiée',
+            },
+            update: {
+              statut: StatutPresence.EXCUSE,
+              observation: 'Absence justifiée',
+            },
+          });
+        }
+
+        await journaliser(tx, user, `JUSTIFICATIF_${dto.statut}`, 'Justificatif', id, {
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(apres),
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     // Relecture après mise à jour du contrôle : la réponse reflète l'état final.
     return this.findOnePour(id, user);
   }
 
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.justificatif.findUnique({
-        where: { id }, include: { seance: { select: { id: true, anneeId: true } } },
-      });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.seance.anneeId);
-      if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
-        throw new BadRequestException(t('justificatifs.deja_traite'));
-      }
-      await tx.justificatif.delete({ where: { id } });
-      await journaliser(
-        tx,
-        user ?? null,
-        'JUSTIFICATIF_SUPPRIME',
-        'Justificatif',
-        id,
-        { avant: this.instantaneAudit(avant), apres: null },
-      );
-      return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.justificatif.findUnique({
+          where: { id },
+          include: { seance: { select: { id: true, anneeId: true } } },
+        });
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, avant.seance.anneeId);
+        if (avant.statut !== StatutJustificatif.EN_ATTENTE) {
+          throw new BadRequestException(t('justificatifs.deja_traite'));
+        }
+        await tx.justificatif.delete({ where: { id } });
+        await journaliser(tx, user ?? null, 'JUSTIFICATIF_SUPPRIME', 'Justificatif', id, {
+          avant: this.instantaneAudit(avant),
+          apres: null,
+        });
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private instantaneAudit(justificatif: any) {
     return {
-      id: justificatif.id, seanceId: justificatif.seanceId, enseignantId: justificatif.enseignantId,
-      type: justificatif.type, statut: justificatif.statut,
-      traiteParId: justificatif.traiteParId ?? null, traiteLe: justificatif.traiteLe ?? null,
+      id: justificatif.id,
+      seanceId: justificatif.seanceId,
+      enseignantId: justificatif.enseignantId,
+      type: justificatif.type,
+      statut: justificatif.statut,
+      traiteParId: justificatif.traiteParId ?? null,
+      traiteLe: justificatif.traiteLe ?? null,
     };
   }
 }

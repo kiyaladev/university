@@ -44,11 +44,19 @@ export class AffectationQueryDto extends QueryDto {
 }
 
 export const AFFECTATION_INCLUDE = {
-  enseignant: { select: {
-    id: true, matricule: true, nom: true, prenom: true, grade: true,
-    statut: true, actif: true, departementId: true,
-    departement: { select: { id: true, nom: true } },
-  } },
+  enseignant: {
+    select: {
+      id: true,
+      matricule: true,
+      nom: true,
+      prenom: true,
+      grade: true,
+      statut: true,
+      actif: true,
+      departementId: true,
+      departement: { select: { id: true, nom: true } },
+    },
+  },
   matiere: true,
   promotion: { include: { filiere: true } },
   annee: true,
@@ -93,14 +101,10 @@ export class AffectationsService extends CrudService {
       await exigerPromotionMemeAnnee(tx, dto.promotionId, dto.anneeId);
       await this.exigerPerimetreAffectation(user, dto.enseignantId, tx as any);
       const affectation = await tx.affectation.create({ data: dto, include: AFFECTATION_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'AFFECTATION_CREEE',
-        'Affectation',
-        affectation.id,
-        { avant: null, apres: this.instantaneAudit(affectation) },
-      );
+      await journaliser(tx, user, 'AFFECTATION_CREEE', 'Affectation', affectation.id, {
+        avant: null,
+        apres: this.instantaneAudit(affectation),
+      });
       return affectation;
     });
   }
@@ -124,14 +128,10 @@ export class AffectationsService extends CrudService {
       if (estChefDeDepartement(user)) exigerPerimetre(user, avant.enseignant?.departementId);
       await this.exigerPerimetreAffectation(user, dto.enseignantId ?? avant.enseignantId, tx as any);
       const maj = await tx.affectation.update({ where: { id }, data: dto, include: AFFECTATION_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'AFFECTATION_MODIFIEE',
-        'Affectation',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj) },
-      );
+      await journaliser(tx, user, 'AFFECTATION_MODIFIEE', 'Affectation', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(maj),
+      });
       return maj;
     });
   }
@@ -156,8 +156,15 @@ export class AffectationsService extends CrudService {
       const { count: seancesSupprimees } = await tx.seance.deleteMany({
         where: { affectationId: id, controle: { is: null }, justificatif: { is: null } },
       });
-      await supprimerOuConflit(() => tx.affectation.delete({ where: { id } }), 'referentiel.affectation_referenced_delete');
-      await journaliser(tx, user ?? null, 'AFFECTATION_SUPPRIMEE', 'Affectation', id, { avant: this.instantaneAudit(avant), apres: null, seancesSupprimees });
+      await supprimerOuConflit(
+        () => tx.affectation.delete({ where: { id } }),
+        'referentiel.affectation_referenced_delete',
+      );
+      await journaliser(tx, user ?? null, 'AFFECTATION_SUPPRIMEE', 'Affectation', id, {
+        avant: this.instantaneAudit(avant),
+        apres: null,
+        seancesSupprimees,
+      });
       return { id };
     });
   }
@@ -225,28 +232,24 @@ export class AffectationsController {
   constructor(private readonly service: AffectationsService) {}
 
   @Get() findAll(@Query() query: AffectationQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.findAll(
-      { ...query, search: undefined },
-      this.service.where(query, user),
-    );
+    return this.service.findAll({ ...query, search: undefined }, this.service.where(query, user));
   }
   @Get(':id') findOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.trouverPerimetre(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Post() create(@Body() dto: CreateAffectationDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateAffectationDto, @CurrentUser() user: AuthUser) {
     return this.service.creerPour(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Put(':id') update(
-    @Param('id') id: string,
-    @Body() dto: UpdateAffectationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateAffectationDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierPour(id, dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.remove(id, user);
   }
 }

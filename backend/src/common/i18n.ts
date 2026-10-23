@@ -43,9 +43,7 @@ export function t(key: string, args?: Record<string, unknown>): string {
 
   let valeur: unknown = catalogue;
   for (const segment of segments) {
-    valeur = valeur && typeof valeur === 'object'
-      ? (valeur as Record<string, unknown>)[segment]
-      : undefined;
+    valeur = valeur && typeof valeur === 'object' ? (valeur as Record<string, unknown>)[segment] : undefined;
   }
   if (typeof valeur !== 'string') return key;
 

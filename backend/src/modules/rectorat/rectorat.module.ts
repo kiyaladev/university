@@ -12,8 +12,7 @@ import { RectoratController } from './rectorat.controller';
 import { RectoratService } from './rectorat.service';
 
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [RectoratController],
   providers: [RectoratService],
   exports: [RectoratService],

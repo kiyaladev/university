@@ -16,7 +16,8 @@ describe('Suppression d’une séance pointée', () => {
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false }]),
       seance: {
-        findUnique: jest.fn()
+        findUnique: jest
+          .fn()
           .mockResolvedValueOnce({ id: 'seance-1', anneeId: 'annee-1', affectationId: 'aff-1' })
           .mockResolvedValueOnce(preuves),
         delete: jest.fn(),
@@ -93,9 +94,12 @@ describe('Suppression d’une affectation', () => {
 });
 
 describe('Jeton de vérification d’attestation dans une demande de document', () => {
-  it.each([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE])('expose qrToken à %s, comme le registre des attestations', (role) => {
-    expect((includeDemandePour({ role }).attestation.select as any).qrToken).toBe(true);
-  });
+  it.each([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE])(
+    'expose qrToken à %s, comme le registre des attestations',
+    (role) => {
+      expect((includeDemandePour({ role }).attestation.select as any).qrToken).toBe(true);
+    },
+  );
 
   it.each([Role.ETUDIANT, Role.ENSEIGNANT, Role.CONTROLEUR])('ne l’expose pas à %s', (role) => {
     const select = includeDemandePour({ role }).attestation.select as any;

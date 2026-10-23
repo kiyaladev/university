@@ -34,7 +34,8 @@ export class ReleveHebdomadaireDto {
   @IsUUID() departementId: string;
   @IsDateString() dateDebut: string;
   @IsDateString() dateFin: string;
-  @MaxLength(1_000_000) @Matches(/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/)
+  @MaxLength(1_000_000)
+  @Matches(/^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/)
   signatureBase64: string;
 }
 

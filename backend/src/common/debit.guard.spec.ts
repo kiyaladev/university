@@ -44,8 +44,6 @@ describe('DebitGuard', () => {
   });
 
   it('retombe sur la socket si req.ip manque', async () => {
-    await expect(
-      garde.tracker({ socket: { remoteAddress: '10.0.0.5' } }),
-    ).resolves.toBe('ip:10.0.0.5');
+    await expect(garde.tracker({ socket: { remoteAddress: '10.0.0.5' } })).resolves.toBe('ip:10.0.0.5');
   });
 });

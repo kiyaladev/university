@@ -1,17 +1,7 @@
 /** Contrats de saisie du module Stages & Mémoires. */
 import { PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsBoolean,
-  IsDateString,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { StatutEncadrement, TypeEncadrement } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 

@@ -17,12 +17,10 @@ describe('options du module JWT', () => {
     // l'import du fichier, donc avant ConfigModule.forRoot() — `process.env`
     // valait undefined et les jetons étaient signés avec le repli écrit en
     // clair dans le dépôt. Ici la configuration est déjà lue.
-    expect(optionsJwt(config({ JWT_SECRET: 'depuis-le-dotenv' })).secret).not.toBe(
-      'change-me-in-production',
-    );
+    expect(optionsJwt(config({ JWT_SECRET: 'depuis-le-dotenv' })).secret).not.toBe('change-me-in-production');
   });
 
-  it('avertit par la valeur de repli quand aucune configuration n\'est fournie', () => {
+  it("avertit par la valeur de repli quand aucune configuration n'est fournie", () => {
     // Sans secret, le comportement doit rester celui d'un environnement de
     // développement — le build de production, lui, échoue si la variable manque.
     expect(optionsJwt(config({})).secret).toBe('change-me-in-production');
@@ -31,8 +29,12 @@ describe('options du module JWT', () => {
 
   describe('en production', () => {
     const nodeEnv = process.env.NODE_ENV;
-    beforeEach(() => { process.env.NODE_ENV = 'production'; });
-    afterEach(() => { process.env.NODE_ENV = nodeEnv; });
+    beforeEach(() => {
+      process.env.NODE_ENV = 'production';
+    });
+    afterEach(() => {
+      process.env.NODE_ENV = nodeEnv;
+    });
 
     it('refuse un secret absent', () => {
       expect(() => optionsJwt(config({}))).toThrow(/JWT_SECRET/);

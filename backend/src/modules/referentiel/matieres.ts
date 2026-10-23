@@ -49,14 +49,11 @@ export class MatieresService extends CrudService {
     if (acteur) exigerPerimetre(acteur, dto.departementId);
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.matiere.create({ data: dto, include: { departement: true } });
-      await journaliser(
-        tx,
-        acteur ?? null,
-        'MATIERE_CREEE',
-        'Matiere',
-        creee.id,
-        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, acteur ?? null, 'MATIERE_CREEE', 'Matiere', creee.id, {
+        avant: null,
+        apres: this.instantaneAudit(creee),
+        champsModifies: Object.keys(dto),
+      });
       return creee;
     });
   }
@@ -70,14 +67,11 @@ export class MatieresService extends CrudService {
         exigerPerimetre(acteur, dto.departementId ?? avant.departementId);
       }
       const maj = await tx.matiere.update({ where: { id }, data: dto, include: { departement: true } });
-      await journaliser(
-        tx,
-        acteur ?? null,
-        'MATIERE_MODIFIEE',
-        'Matiere',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(maj), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, acteur ?? null, 'MATIERE_MODIFIEE', 'Matiere', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(dto),
+      });
       return maj;
     });
   }
@@ -87,7 +81,10 @@ export class MatieresService extends CrudService {
       const avant = await tx.matiere.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.notFound'));
       await supprimerOuConflit(() => tx.matiere.delete({ where: { id } }), 'referentiel.matiere_referenced_delete');
-      await journaliser(tx, acteur ?? null, 'MATIERE_SUPPRIMEE', 'Matiere', id, { avant: this.instantaneAudit(avant), apres: null });
+      await journaliser(tx, acteur ?? null, 'MATIERE_SUPPRIMEE', 'Matiere', id, {
+        avant: this.instantaneAudit(avant),
+        apres: null,
+      });
       return { id };
     });
   }
@@ -135,20 +132,19 @@ export class MatieresController {
     return this.service.trouverPerimetre(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Post() create(@Body() dto: CreateMatiereDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateMatiereDto, @CurrentUser() user: AuthUser) {
     exigerPerimetre(user, dto.departementId);
     return this.service.creer(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Put(':id') update(
-    @Param('id') id: string,
-    @Body() dto: UpdateMatiereDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateMatiereDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierPerimetre(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

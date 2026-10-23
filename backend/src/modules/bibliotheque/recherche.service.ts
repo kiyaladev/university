@@ -41,7 +41,9 @@ function construireTsQuery(saisie: string): string {
  * volumineux) avant de renvoyer la ligne au front : ces colonnes ne sont utiles
  * qu'au téléchargement et à la détection locale, jamais à l'affichage.
  */
-function sansLourdePayload<T extends { fichier?: unknown; contenuTexte?: unknown }>(doc: T): Omit<T, 'fichier' | 'contenuTexte'> {
+function sansLourdePayload<T extends { fichier?: unknown; contenuTexte?: unknown }>(
+  doc: T,
+): Omit<T, 'fichier' | 'contenuTexte'> {
   const { fichier: _f, contenuTexte: _c, ...reste } = doc as any;
   return reste;
 }
@@ -74,7 +76,12 @@ export class RechercheService {
   async rechercher(query: RechercheDocumentDto, utilisateur: AuthUser | null) {
     const tsquery = construireTsQuery(query.q);
     if (!tsquery) {
-      return { data: [], total: 0, page: query.page ?? 1, pageSize: Math.max(1, Math.min(1000, Number(query.pageSize ?? 50))) };
+      return {
+        data: [],
+        total: 0,
+        page: query.page ?? 1,
+        pageSize: Math.max(1, Math.min(1000, Number(query.pageSize ?? 50))),
+      };
     }
 
     const page = Number(query.page ?? 1);
@@ -85,11 +92,7 @@ export class RechercheService {
 
     // Un appelant anonyme est verrouillé sur les documents publiés : `?public=false`
     // ne doit jamais pouvoir élargir la sélection côté SQL.
-    const publicFiltre = fondsComplet(utilisateur)
-      ? query.public
-        ? query.public === 'true'
-        : undefined
-      : true;
+    const publicFiltre = fondsComplet(utilisateur) ? (query.public ? query.public === 'true' : undefined) : true;
 
     const conditions: Prisma.Sql[] = [Prisma.sql`recherche @@ to_tsquery('french', ${tsquery})`];
     if (publicFiltre !== undefined) {
@@ -137,9 +140,7 @@ export class RechercheService {
       })
       .sort((a, b) => (b.rang ?? 0) - (a.rang ?? 0));
 
-    this.logger.log(
-      `Recherche « ${query.q} » → ${total} document(s) ; ${ids.length} affiché(s).`,
-    );
+    this.logger.log(`Recherche « ${query.q} » → ${total} document(s) ; ${ids.length} affiché(s).`);
 
     return {
       data: ordonnes,

@@ -4,18 +4,7 @@
  * direction ; l'étudiant ne passe que par le portail, l'enseignant par ses
  * encadrements. Voir la machine à états documentée dans stages.service.ts.
  */
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -53,11 +42,7 @@ export class TravauxEncadresController {
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.ETUDIANT, Role.ENSEIGNANT)
   @DocumentScope('travailEncadre', { [Role.ETUDIANT]: 'etudiantId', [Role.ENSEIGNANT]: 'encadrantId' })
   @Get(':id/fiche')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const html = await this.fiche.fiche(id, jetonImprimable(req));
     res.type('html').send(html);
   }
@@ -78,11 +63,7 @@ export class TravauxEncadresController {
   /** Modification administrative ; la vie du statut passe par /transition. */
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.ENSEIGNANT, Role.ETUDIANT)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateTravailDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateTravailDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -96,11 +77,7 @@ export class TravauxEncadresController {
   /** Machine à états : une cible, appliquée depuis l'état courant. */
   @Roles(...ADJUDANTS)
   @Post(':id/transition')
-  transition(
-    @Param('id') id: string,
-    @Body() dto: TransitionDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  transition(@Param('id') id: string, @Body() dto: TransitionDto, @CurrentUser() user: AuthUser) {
     return this.service.transition(id, dto.statut, user);
   }
 }
@@ -129,11 +106,7 @@ export class SoutenancesController {
   /** Constat du jury : note et mention sur une soutenance tenue. */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Put(':id/hota')
-  noter(
-    @Param('id') id: string,
-    @Body() dto: NoteSoutenanceDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  noter(@Param('id') id: string, @Body() dto: NoteSoutenanceDto, @CurrentUser() user: AuthUser) {
     return this.service.noter(id, dto, user);
   }
 }

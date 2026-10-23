@@ -31,7 +31,9 @@ const CRENEAU_JEUDI = {
 function preparer(creneaux = [CRENEAU_LUNDI, CRENEAU_JEUDI]) {
   const prisma = {
     anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
-    affectation: { findFirst: jest.fn().mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1', annee: { cloturee: false } }) },
+    affectation: {
+      findFirst: jest.fn().mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1', annee: { cloturee: false } }),
+    },
     creneau: { findMany: jest.fn().mockResolvedValue(creneaux) },
     seance: {
       findMany: jest.fn().mockResolvedValue([{ anneeId: 'annee-1' }]),
@@ -80,7 +82,9 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
     prisma.$queryRaw = jest.fn().mockResolvedValue([{ cloturee: false }]);
 
     await service.generer({
-      anneeId: 'annee-1', dateDebut: '2026-08-10', dateFin: '2026-08-16',
+      anneeId: 'annee-1',
+      dateDebut: '2026-08-10',
+      dateFin: '2026-08-16',
     });
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
@@ -91,9 +95,13 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
     const { service, prisma } = preparer([CRENEAU_LUNDI]);
     prisma.$queryRaw = jest.fn().mockResolvedValue([{ cloturee: true }]);
 
-    await expect(service.generer({
-      anneeId: 'annee-1', dateDebut: '2026-08-10', dateFin: '2026-08-16',
-    })).rejects.toThrow(BadRequestException);
+    await expect(
+      service.generer({
+        anneeId: 'annee-1',
+        dateDebut: '2026-08-10',
+        dateFin: '2026-08-16',
+      }),
+    ).rejects.toThrow(BadRequestException);
 
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     expect(prisma.seance.createMany).not.toHaveBeenCalled();
@@ -103,15 +111,25 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
     const { service, prisma } = preparer();
     const chef = { id: 'chef-1', role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1' } as any;
 
-    await service.generer({
-      anneeId: 'annee-1', dateDebut: '2026-08-10', dateFin: '2026-08-16',
-    }, chef);
+    await service.generer(
+      {
+        anneeId: 'annee-1',
+        dateDebut: '2026-08-10',
+        dateFin: '2026-08-16',
+      },
+      chef,
+    );
 
-    expect(prisma.creneau.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ affectation: {
-        anneeId: 'annee-1', enseignant: { departementId: 'dept-1' },
-      } }),
-    }));
+    expect(prisma.creneau.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          affectation: {
+            anneeId: 'annee-1',
+            enseignant: { departementId: 'dept-1' },
+          },
+        }),
+      }),
+    );
   });
 
   it('refuse la création par un chef sur une affectation hors département', async () => {
@@ -119,37 +137,55 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
     prisma.affectation.findFirst.mockResolvedValue(null);
     const chef = { id: 'chef-1', role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1' } as any;
 
-    await expect(service.creer({ affectationId: 'aff-dept-2', date: '2026-08-10' } as any, chef))
-      .rejects.toThrow(BadRequestException);
-    expect(prisma.affectation.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'aff-dept-2', enseignant: { departementId: 'dept-1' } },
-    }));
+    await expect(service.creer({ affectationId: 'aff-dept-2', date: '2026-08-10' } as any, chef)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(prisma.affectation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'aff-dept-2', enseignant: { departementId: 'dept-1' } },
+      }),
+    );
   });
 
   it('permet au contrôleur sans département une séance hors programme sur une affectation qui lui est attribuée', async () => {
     const { service, prisma } = preparer();
     const user = { id: 'ctrl-1', role: Role.CONTROLEUR, departementId: null } as any;
-    await service.creer({
-      affectationId: 'aff-1', date: '2026-08-10', heureDebut: '08:00', heureFin: '10:00',
-    }, user);
-    expect(prisma.affectation.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 'aff-1',
-        seances: { some: { OR: [
-          { controleurAssigneId: 'ctrl-1' },
-          { controle: { is: { controleurId: 'ctrl-1' } } },
-        ] } },
+    await service.creer(
+      {
+        affectationId: 'aff-1',
+        date: '2026-08-10',
+        heureDebut: '08:00',
+        heureFin: '10:00',
       },
-    }));
+      user,
+    );
+    expect(prisma.affectation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'aff-1',
+          seances: {
+            some: { OR: [{ controleurAssigneId: 'ctrl-1' }, { controle: { is: { controleurId: 'ctrl-1' } } }] },
+          },
+        },
+      }),
+    );
     expect(prisma.seance.create.mock.calls[0][0].data.controleurAssigneId).toBe('ctrl-1');
   });
 
   it('refuse au contrôleur sans département une affectation non attribuée', async () => {
     const { service, prisma } = preparer();
     prisma.affectation.findFirst.mockResolvedValue(null);
-    await expect(service.creer({
-      affectationId: 'aff-other', date: '2026-08-10', heureDebut: '08:00', heureFin: '10:00',
-    }, { id: 'ctrl-1', role: Role.CONTROLEUR, departementId: null } as any)).rejects.toThrow(BadRequestException);
+    await expect(
+      service.creer(
+        {
+          affectationId: 'aff-other',
+          date: '2026-08-10',
+          heureDebut: '08:00',
+          heureFin: '10:00',
+        },
+        { id: 'ctrl-1', role: Role.CONTROLEUR, departementId: null } as any,
+      ),
+    ).rejects.toThrow(BadRequestException);
     expect(prisma.seance.create).not.toHaveBeenCalled();
   });
 
@@ -252,9 +288,7 @@ describe('SeancesService — génération depuis l’emploi du temps', () => {
       dateFin: '2026-08-17', // 2 lundis
     });
 
-    expect(prisma.seance.createMany).toHaveBeenCalledWith(
-      expect.objectContaining({ skipDuplicates: true }),
-    );
+    expect(prisma.seance.createMany).toHaveBeenCalledWith(expect.objectContaining({ skipDuplicates: true }));
     expect(res.creees).toBe(1);
     expect(res.ignorees).toBe(1);
   });
@@ -295,9 +329,11 @@ describe('SeancesService — clôture nocturne', () => {
         data: { statut: StatutSeance.NON_TENUE },
       }),
     );
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: 'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT' }),
-    }));
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'SEANCES_PASSEES_CLOTUREES_AUTOMATIQUEMENT' }),
+      }),
+    );
     expect(res.count).toBe(3);
   });
 
@@ -308,13 +344,14 @@ describe('SeancesService — clôture nocturne', () => {
 
     await service.cloturerSeancesPassees();
 
-    expect(prisma.seance.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ anneeId: { in: [] } }),
-    }));
+    expect(prisma.seance.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ anneeId: { in: [] } }),
+      }),
+    );
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
 });
-
 
 describe('SeancesService — consultation par identifiant', () => {
   const user: any = { role: Role.ENSEIGNANT, enseignantId: 'ens-1' };
@@ -322,9 +359,11 @@ describe('SeancesService — consultation par identifiant', () => {
     const { service, prisma } = preparer();
     prisma.seance.findFirst = jest.fn().mockResolvedValue({ id: 'seance-1' });
     await service.consulter('seance-1', user);
-    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'seance-1', affectation: { enseignantId: 'ens-1' } },
-    }));
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'seance-1', affectation: { enseignantId: 'ens-1' } },
+      }),
+    );
   });
   it('refuse une séance qui ne figure pas dans le périmètre', async () => {
     const { service, prisma } = preparer();
@@ -333,22 +372,20 @@ describe('SeancesService — consultation par identifiant', () => {
   });
   it('ferme le périmètre d’un chef sans département attribué', () => {
     const { service } = preparer();
-    expect(service.where({}, { role: Role.CHEF_DEPARTEMENT, departementId: null } as any))
-      .toEqual({ affectation: { enseignant: { departementId: '__aucun__' } } });
+    expect(service.where({}, { role: Role.CHEF_DEPARTEMENT, departementId: null } as any)).toEqual({
+      affectation: { enseignant: { departementId: '__aucun__' } },
+    });
   });
   it('limite un contrôleur aux séances des enseignants de son département', () => {
     const { service } = preparer();
-    expect(service.where({}, { role: Role.CONTROLEUR, departementId: 'dep-1' } as any))
-      .toEqual({ affectation: { enseignant: { departementId: 'dep-1' } } });
+    expect(service.where({}, { role: Role.CONTROLEUR, departementId: 'dep-1' } as any)).toEqual({
+      affectation: { enseignant: { departementId: 'dep-1' } },
+    });
   });
   it('borne un contrôleur sans département à ses séances affectées ou déjà pointées', () => {
     const { service } = preparer();
-    expect(service.where({}, { id: 'ctrl-1', role: Role.CONTROLEUR, departementId: null } as any))
-      .toEqual({
-        AND: [{ OR: [
-          { controleurAssigneId: 'ctrl-1' },
-          { controle: { is: { controleurId: 'ctrl-1' } } },
-        ] }],
-      });
+    expect(service.where({}, { id: 'ctrl-1', role: Role.CONTROLEUR, departementId: null } as any)).toEqual({
+      AND: [{ OR: [{ controleurAssigneId: 'ctrl-1' }, { controle: { is: { controleurId: 'ctrl-1' } } }] }],
+    });
   });
 });

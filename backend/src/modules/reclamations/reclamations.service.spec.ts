@@ -4,12 +4,14 @@ import { I18nContext } from 'nestjs-i18n';
 import { ReclamationsService } from './reclamations.service';
 
 function lierTransaction(prisma: any) {
-  prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) => operation({
-    reclamation: prisma.reclamation,
-    messageReclamation: prisma.messageReclamation,
-    user: prisma.user,
-    auditLog: prisma.auditLog ?? { create: jest.fn() },
-  }));
+  prisma.$transaction = jest.fn(async (operation: (tx: any) => unknown) =>
+    operation({
+      reclamation: prisma.reclamation,
+      messageReclamation: prisma.messageReclamation,
+      user: prisma.user,
+      auditLog: prisma.auditLog ?? { create: jest.fn() },
+    }),
+  );
 }
 
 describe('Périmètre des lectures de réclamations', () => {
@@ -27,15 +29,14 @@ describe('Périmètre des lectures de réclamations', () => {
 
     const result = await service.mesReclamations({}, etudiant);
 
-    expect(prisma.reclamation.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        OR: [
-          { etudiantId: 'etudiant-1' },
-          { anonyme: true, createurId: 'user-1' },
-        ],
-      },
-      omit: { createurId: true, notes: true },
-    }));
+    expect(prisma.reclamation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          OR: [{ etudiantId: 'etudiant-1' }, { anonyme: true, createurId: 'user-1' }],
+        },
+        omit: { createurId: true, notes: true },
+      }),
+    );
     expect(result.data).toEqual([ligne]);
     expect(result.data[0]).not.toHaveProperty('notes');
     expect(prisma.reclamation.findMany.mock.calls[0][0].include.messages).toBeUndefined();
@@ -48,9 +49,7 @@ describe('Périmètre des lectures de réclamations', () => {
     } as any);
     const prisma = {
       reclamation: {
-        findFirst: jest.fn()
-          .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(null),
+        findFirst: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(null),
       },
     };
     const service = new ReclamationsService(prisma as any);
@@ -61,26 +60,28 @@ describe('Périmètre des lectures de réclamations', () => {
     await expect(service.findOnePour('rec-autre', etudiant)).rejects.toMatchObject({
       status: notFound.getStatus(),
     });
-    expect(prisma.reclamation.findFirst).toHaveBeenNthCalledWith(1, expect.objectContaining({
-      where: {
-        id: 'absente',
-        OR: [
-          { etudiantId: 'etudiant-1' },
-          { anonyme: true, createurId: 'user-1' },
-        ],
-      }, omit: { createurId: true, notes: true },
-      include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
-    }));
-    expect(prisma.reclamation.findFirst).toHaveBeenNthCalledWith(2, expect.objectContaining({
-      where: {
-        id: 'rec-autre',
-        OR: [
-          { etudiantId: 'etudiant-1' },
-          { anonyme: true, createurId: 'user-1' },
-        ],
-      }, omit: { createurId: true, notes: true },
-      include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
-    }));
+    expect(prisma.reclamation.findFirst).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: {
+          id: 'absente',
+          OR: [{ etudiantId: 'etudiant-1' }, { anonyme: true, createurId: 'user-1' }],
+        },
+        omit: { createurId: true, notes: true },
+        include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
+      }),
+    );
+    expect(prisma.reclamation.findFirst).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: {
+          id: 'rec-autre',
+          OR: [{ etudiantId: 'etudiant-1' }, { anonyme: true, createurId: 'user-1' }],
+        },
+        omit: { createurId: true, notes: true },
+        include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
+      }),
+    );
     contexte.mockRestore();
   });
 
@@ -90,8 +91,9 @@ describe('Périmètre des lectures de réclamations', () => {
     } as any);
     const prisma = { reclamation: { findFirst: jest.fn().mockResolvedValue(null) } };
     const service = new ReclamationsService(prisma as any);
-    await expect(service.findOnePour('rec-1', { role: Role.ENSEIGNANT, etudiantId: null } as any))
-      .rejects.toThrow(NotFoundException);
+    await expect(service.findOnePour('rec-1', { role: Role.ENSEIGNANT, etudiantId: null } as any)).rejects.toThrow(
+      NotFoundException,
+    );
     contexte.mockRestore();
   });
 
@@ -105,32 +107,31 @@ describe('Périmètre des lectures de réclamations', () => {
     await new ReclamationsService(prisma as any).mesReclamations({ search: 'bourse' } as any, etudiant);
     const where = prisma.reclamation.findMany.mock.calls[0][0].where;
     expect(where.AND).toHaveLength(2);
-    expect(where.AND[0].OR).toEqual([
-      { etudiantId: 'etudiant-1' },
-      { anonyme: true, createurId: 'user-1' },
-    ]);
+    expect(where.AND[0].OR).toEqual([{ etudiantId: 'etudiant-1' }, { anonyme: true, createurId: 'user-1' }]);
     expect(where.AND[1].OR[0]).toEqual({ numero: { contains: 'bourse', mode: 'insensitive' } });
   });
 
   it('permet à l’auteur de retrouver son fil anonyme sans révéler son compte', async () => {
     const anonyme = {
-      id: 'rec-anonyme', anonyme: true, etudiantId: null, statut: 'OUVERTE',
+      id: 'rec-anonyme',
+      anonyme: true,
+      etudiantId: null,
+      statut: 'OUVERTE',
       messages: [],
     };
     const prisma = { reclamation: { findFirst: jest.fn().mockResolvedValue(anonyme) } };
     const result = await new ReclamationsService(prisma as any).findOnePour('rec-anonyme', etudiant);
     expect(result).toEqual(anonyme);
-    expect(prisma.reclamation.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 'rec-anonyme',
-        OR: [
-          { etudiantId: 'etudiant-1' },
-          { anonyme: true, createurId: 'user-1' },
-        ],
-      },
-      omit: { createurId: true, notes: true },
-      include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
-    }));
+    expect(prisma.reclamation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'rec-anonyme',
+          OR: [{ etudiantId: 'etudiant-1' }, { anonyme: true, createurId: 'user-1' }],
+        },
+        omit: { createurId: true, notes: true },
+        include: expect.objectContaining({ messages: expect.objectContaining({ take: 20 }) }),
+      }),
+    );
   });
 
   it('garde l’auteur anonyme lors d’une réponse au fil', async () => {
@@ -149,9 +150,11 @@ describe('Périmètre des lectures de réclamations', () => {
     lierTransaction(prisma);
 
     await new ReclamationsService(prisma as any).posterMessage('rec-anonyme', { contenu: 'Suivi' }, etudiant);
-    expect(prisma.messageReclamation.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ reclamationId: 'rec-anonyme', auteurId: null, nomAffichage: 'Anonyme' }),
-    }));
+    expect(prisma.messageReclamation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ reclamationId: 'rec-anonyme', auteurId: null, nomAffichage: 'Anonyme' }),
+      }),
+    );
   });
 
   it('refuse un message au-delà du plafond et ne l’enregistre pas', async () => {
@@ -161,7 +164,10 @@ describe('Périmètre des lectures de réclamations', () => {
     const prisma = {
       reclamation: {
         findFirst: jest.fn().mockResolvedValue({
-          id: 'rec-1', numero: 'REC-2026-00001', anonyme: false, statut: 'OUVERTE',
+          id: 'rec-1',
+          numero: 'REC-2026-00001',
+          anonyme: false,
+          statut: 'OUVERTE',
         }),
       },
       messageReclamation: {
@@ -170,9 +176,9 @@ describe('Périmètre des lectures de réclamations', () => {
       },
     };
     lierTransaction(prisma);
-    await expect(new ReclamationsService(prisma as any).posterMessage(
-      'rec-1', { contenu: 'Encore un message' }, etudiant,
-    )).rejects.toThrow(BadRequestException);
+    await expect(
+      new ReclamationsService(prisma as any).posterMessage('rec-1', { contenu: 'Encore un message' }, etudiant),
+    ).rejects.toThrow(BadRequestException);
     expect(prisma.messageReclamation.create).not.toHaveBeenCalled();
     contexte.mockRestore();
   });
@@ -184,7 +190,9 @@ describe('Périmètre des lectures de réclamations', () => {
     const prisma = {
       reclamation: {
         findUnique: jest.fn().mockResolvedValue({
-          id: 'rec-1', statut: 'OUVERTE', notes: null,
+          id: 'rec-1',
+          statut: 'OUVERTE',
+          notes: null,
         }),
         update: jest.fn(),
       },
@@ -192,10 +200,13 @@ describe('Périmètre des lectures de réclamations', () => {
     lierTransaction(prisma);
     const service = new ReclamationsService(prisma as any);
 
-    await expect(service.changerStatut(
-      'rec-1', { statut: 'RESOLUE', commentaire: 'Décision' } as any,
-      { id: 'agent-1', role: Role.ADMIN } as any,
-    )).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.changerStatut(
+        'rec-1',
+        { statut: 'RESOLUE', commentaire: 'Décision' } as any,
+        { id: 'agent-1', role: Role.ADMIN } as any,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.reclamation.update).not.toHaveBeenCalled();
     contexte.mockRestore();
   });
@@ -207,7 +218,9 @@ describe('Périmètre des lectures de réclamations', () => {
     const prisma = {
       reclamation: {
         findUnique: jest.fn().mockResolvedValue({
-          id: 'rec-1', statut: 'RESOLUE', notes: null,
+          id: 'rec-1',
+          statut: 'RESOLUE',
+          notes: null,
         }),
         update: jest.fn(),
       },
@@ -215,10 +228,9 @@ describe('Périmètre des lectures de réclamations', () => {
     lierTransaction(prisma);
     const service = new ReclamationsService(prisma as any);
 
-    await expect(service.changerStatut(
-      'rec-1', { statut: 'EN_COURS' } as any,
-      { id: 'agent-1', role: Role.ADMIN } as any,
-    )).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.changerStatut('rec-1', { statut: 'EN_COURS' } as any, { id: 'agent-1', role: Role.ADMIN } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.reclamation.update).not.toHaveBeenCalled();
     contexte.mockRestore();
   });
@@ -234,13 +246,13 @@ describe('Périmètre des lectures de réclamations', () => {
     lierTransaction(prisma);
     const service = new ReclamationsService(prisma as any);
 
-    await expect(service.assigner(
-      'rec-1', { assigneAId: 'compte-inactif' },
-      { id: 'agent-1', role: Role.ADMIN } as any,
-    )).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.assigner('rec-1', { assigneAId: 'compte-inactif' }, { id: 'agent-1', role: Role.ADMIN } as any),
+    ).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.user.findFirst).toHaveBeenCalledWith({
       where: {
-        id: 'compte-inactif', actif: true,
+        id: 'compte-inactif',
+        actif: true,
         role: { in: [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT] },
       },
       select: { id: true, nom: true, prenom: true },
@@ -259,10 +271,9 @@ describe('Périmètre des lectures de réclamations', () => {
     lierTransaction(prisma);
     const service = new ReclamationsService(prisma as any);
 
-    await expect(service.assigner(
-      'rec-1', { assigneAId: 'agent-2' },
-      { id: 'agent-1', role: Role.ADMIN } as any,
-    )).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.assigner('rec-1', { assigneAId: 'agent-2' }, { id: 'agent-1', role: Role.ADMIN } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.user.findFirst).not.toHaveBeenCalled();
     contexte.mockRestore();
   });

@@ -43,10 +43,26 @@ describe('Confirmation pilote des paiements — garde-fou des autres portefeuill
   const agent = { id: 'agent-1' } as any;
 
   it.each([
-    ['une recharge resto', { recharges: [{ id: 'recharge-1' }] }, 'inscription.paiement_resto_confirme_par_la_recharge'],
-    ['une recette externe', { rechargesRecette: { id: 'recette-1' } }, 'inscription.paiement_recette_geree_par_les_recettes'],
-    ['une demande de document', { demandeDocument: { id: 'demande-1' } }, 'inscription.paiement_document_confirme_par_la_demande'],
-    ['une formation', { inscriptionFormation: { id: 'if-1' } }, 'inscription.paiement_formation_confirme_par_action_de_formation'],
+    [
+      'une recharge resto',
+      { recharges: [{ id: 'recharge-1' }] },
+      'inscription.paiement_resto_confirme_par_la_recharge',
+    ],
+    [
+      'une recette externe',
+      { rechargesRecette: { id: 'recette-1' } },
+      'inscription.paiement_recette_geree_par_les_recettes',
+    ],
+    [
+      'une demande de document',
+      { demandeDocument: { id: 'demande-1' } },
+      'inscription.paiement_document_confirme_par_la_demande',
+    ],
+    [
+      'une formation',
+      { inscriptionFormation: { id: 'if-1' } },
+      'inscription.paiement_formation_confirme_par_action_de_formation',
+    ],
   ])('refuse un paiement lié à %s sans rien écrire', async (_libelle, liens, message) => {
     const { tx, service } = preparer(liens);
 
@@ -79,9 +95,11 @@ describe('Confirmation pilote des paiements — garde-fou des autres portefeuill
 
     await service.simulerPaiement('paiement-1', { statut: 'REUSSI' } as any, agent);
 
-    expect(tx.paiement.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ statut: StatutPaiement.REUSSI }),
-    }));
+    expect(tx.paiement.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ statut: StatutPaiement.REUSSI }),
+      }),
+    );
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
   });
 });

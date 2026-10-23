@@ -15,13 +15,7 @@
  * En mode pilote, le paiement Mobile Money est simulé — l'agent comptable
  * confirme via POST /:id/confirmer-paiement.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   Prisma,
   StatutDemande,
@@ -120,18 +114,12 @@ export class DocumentsDemandeService extends CrudService {
   }
 
   /** Numéro séquentiel par année : "DOC-2026-00001". */
-  private async prochainNumero(
-    tx: Prisma.TransactionClient,
-    annee: string,
-  ): Promise<string> {
+  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
     return prochainNumeroTx(tx, 'demandeDocument', 'numero', `${PREFIX_DEMANDE}${annee}-`, 5);
   }
 
   /** Numéro séquentiel "PAY-AAAA-NNNNN" pour le paiement lié. */
-  private async prochainNumeroPaiement(
-    tx: Prisma.TransactionClient,
-    annee: string,
-  ): Promise<string> {
+  private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
     return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
   }
 
@@ -212,8 +200,7 @@ export class DocumentsDemandeService extends CrudService {
    * l'existence d'un identifiant qui n'est pas le sien.
    */
   async findOnePour(id: string, user: AuthUser) {
-    const estStaff =
-      user.role === 'ADMIN' || user.role === 'SCOLARITE' || user.role === 'DIRECTION';
+    const estStaff = user.role === 'ADMIN' || user.role === 'SCOLARITE' || user.role === 'DIRECTION';
     const demande = await this.prisma.demandeDocument.findFirst({
       where: {
         id,
@@ -296,10 +283,7 @@ export class DocumentsDemandeService extends CrudService {
    * Création d'un tarif (ADMIN). Le tarif commande le prix d'un document :
    * sa création et son entrée de journal partagent la transaction.
    */
-  async creerTarif(
-    dto: { type: TypeDemandeDocument; montant: number; delaiHeures: number },
-    user: AuthUser,
-  ) {
+  async creerTarif(dto: { type: TypeDemandeDocument; montant: number; delaiHeures: number }, user: AuthUser) {
     for (let tentative = 0; tentative < 5; tentative++) {
       try {
         return await this.prisma.$transaction(async (tx) => {
@@ -323,9 +307,7 @@ export class DocumentsDemandeService extends CrudService {
         });
       } catch (e: unknown) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-          throw new ConflictException(
-            t('documents-demande.tarifDejaExistant', { type: dto.type }),
-          );
+          throw new ConflictException(t('documents-demande.tarifDejaExistant', { type: dto.type }));
         }
         throw e;
       }
@@ -338,11 +320,7 @@ export class DocumentsDemandeService extends CrudService {
    * demandes passées : seule la trace avant/après permet de dire ce qu'un
    * guichetier a réellement facturé, d'où le relevé des deux montants.
    */
-  async modifierTarif(
-    id: string,
-    dto: { montant?: number; delaiHeures?: number },
-    user: AuthUser,
-  ) {
+  async modifierTarif(id: string, dto: { montant?: number; delaiHeures?: number }, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.tarifDemande.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('documents-demande.tarif_introuvable'));
@@ -376,16 +354,18 @@ export class DocumentsDemandeService extends CrudService {
    * (paramétrable). Si aucun tarif n'est défini pour ce type, le montant est
    * 0 — la demande est alors créée sans paiement attendu (workflow dégradé).
    */
-  async creer(
-    dto: { type: TypeDemandeDocument; motif?: string; inscriptionId?: string },
-    user: AuthUser,
-  ) {
+  async creer(dto: { type: TypeDemandeDocument; motif?: string; inscriptionId?: string }, user: AuthUser) {
     if (!user.etudiantId) {
       throw new NotFoundException(t('documents-demande.aucun_dossier_etudiant_rattache_a_ce_compte'));
     }
-    if (dto.inscriptionId && !await this.prisma.inscription.findFirst({
-      where: { id: dto.inscriptionId, etudiantId: user.etudiantId }, select: { id: true },
-    })) throw new NotFoundException(t('common.notFound'));
+    if (
+      dto.inscriptionId &&
+      !(await this.prisma.inscription.findFirst({
+        where: { id: dto.inscriptionId, etudiantId: user.etudiantId },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException(t('common.notFound'));
     const tarif = await this.tarifPour(dto.type);
     const frais = tarif?.montant ?? 0;
     const devise = tarif?.devise ?? 'GNF';
@@ -404,10 +384,7 @@ export class DocumentsDemandeService extends CrudService {
               inscriptionId: dto.inscriptionId ?? null,
               frais,
               devise,
-              statut:
-                frais > 0
-                  ? StatutDemande.EN_ATTENTE_PAIEMENT
-                  : StatutDemande.EN_TRAITEMENT,
+              statut: frais > 0 ? StatutDemande.EN_ATTENTE_PAIEMENT : StatutDemande.EN_TRAITEMENT,
               traiteParId: frais > 0 ? null : user.id,
             },
             include: DEMANDE_INCLUDE,
@@ -450,8 +427,11 @@ export class DocumentsDemandeService extends CrudService {
     if (dto.simuler && process.env.NODE_ENV === 'production') {
       throw new BadRequestException(t('documents-demande.simulationPaiementDesactiveeProduction'));
     }
-    if (dto.mode === ModePaiement.MOBILE_MONEY && !dto.simuler &&
-      (!dto.operateur?.trim() || !/^\+?[\d\s().-]{6,20}$/.test(dto.telephone?.trim() ?? ''))) {
+    if (
+      dto.mode === ModePaiement.MOBILE_MONEY &&
+      !dto.simuler &&
+      (!dto.operateur?.trim() || !/^\+?[\d\s().-]{6,20}$/.test(dto.telephone?.trim() ?? ''))
+    ) {
       throw new BadRequestException(t('common.mobileMoneyDetailsRequired'));
     }
     const demande = await this.findOnePour(id, user);
@@ -459,15 +439,17 @@ export class DocumentsDemandeService extends CrudService {
       throw new BadRequestException(t('documents-demande.seul_le_demandeur_peut_payer_sa_propre_demande'));
     }
     if (demande.frais <= 0) {
-      throw new BadRequestException(t('documents-demande.cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_'));
-    }
-    if (demande.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
       throw new BadRequestException(
-        t('documents-demande.demandeNonEnAttentePaiement'),
+        t('documents-demande.cette_demande_est_sans_frais_inutile_de_payer_elle_est_deja_'),
       );
     }
+    if (demande.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
+      throw new BadRequestException(t('documents-demande.demandeNonEnAttentePaiement'));
+    }
     if (demande.paiementId) {
-      throw new BadRequestException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
+      throw new BadRequestException(
+        t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'),
+      );
     }
 
     const annee = anneeNumero();
@@ -480,7 +462,9 @@ export class DocumentsDemandeService extends CrudService {
             throw new BadRequestException(t('documents-demande.seul_le_demandeur_peut_payer_sa_propre_demande'));
           }
           if (avant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT || avant.paiementId) {
-            throw new ConflictException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
+            throw new ConflictException(
+              t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'),
+            );
           }
           const reference = await this.prochainNumeroPaiement(tx, annee);
           const paiementId = randomUUID();
@@ -516,7 +500,9 @@ export class DocumentsDemandeService extends CrudService {
             data: { paiementId },
           });
           if (rattachement.count !== 1) {
-            throw new ConflictException(t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'));
+            throw new ConflictException(
+              t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'),
+            );
           }
           const apres = await tx.demandeDocument.findUnique({ where: { id: demande.id } });
           if (!apres) throw new NotFoundException(t('documents-demande.demande_introuvable'));
@@ -564,23 +550,15 @@ export class DocumentsDemandeService extends CrudService {
    * écritures et leur journal sont validés ensemble, sinon un encaissement
    * sans basculement (ou l'inverse) resterait sans trace exploitable.
    */
-  async confirmerPaiement(
-    id: string,
-    dto: { paiementId?: string },
-    user: AuthUser,
-  ) {
+  async confirmerPaiement(id: string, dto: { paiementId?: string }, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const demandeAvant = await tx.demandeDocument.findUnique({ where: { id } });
       if (!demandeAvant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
       if (demandeAvant.statut !== StatutDemande.EN_ATTENTE_PAIEMENT) {
-        throw new BadRequestException(
-          t('documents-demande.demandeDejaTraitee'),
-        );
+        throw new BadRequestException(t('documents-demande.demandeDejaTraitee'));
       }
       if (!demandeAvant.paiementId) {
-        throw new BadRequestException(
-          t('documents-demande.aucunPaiementAssocie'),
-        );
+        throw new BadRequestException(t('documents-demande.aucunPaiementAssocie'));
       }
       if (dto.paiementId && dto.paiementId !== demandeAvant.paiementId) {
         throw new BadRequestException(t('documents-demande.identifiant_de_paiement_incoherent'));
@@ -653,16 +631,10 @@ export class DocumentsDemandeService extends CrudService {
    * est émise à l'étudiant (via Notification) avec le message transmis par
    * le guichet. La notification ne part que si l'étudiant a un téléphone.
    */
-  async marquerPrete(
-    id: string,
-    dto: { message?: string },
-    user: AuthUser,
-  ) {
+  async marquerPrete(id: string, dto: { message?: string }, user: AuthUser) {
     const demande = await this.findOne(id);
     if (!STATUTS_PAIEMENT_REQUIS.includes(demande.statut)) {
-      throw new BadRequestException(
-        t('documents-demande.demandeNonTraitee'),
-      );
+      throw new BadRequestException(t('documents-demande.demandeNonTraitee'));
     }
     if (demande.statut === StatutDemande.PRETE || demande.statut === StatutDemande.REMISE) {
       throw new BadRequestException(t('documents-demande.cette_demande_est_deja_prete_ou_remise'));
@@ -747,8 +719,12 @@ export class DocumentsDemandeService extends CrudService {
               details: JSON.stringify({
                 avant: this.instantaneDemande(avant),
                 apres: this.instantaneDemande(apres),
-                champsModifies: ['statut', 'traiteParId', 'notification',
-                  ...(attestationId && attestationId !== avant.attestationId ? ['attestationId'] : [])],
+                champsModifies: [
+                  'statut',
+                  'traiteParId',
+                  'notification',
+                  ...(attestationId && attestationId !== avant.attestationId ? ['attestationId'] : []),
+                ],
                 sms: 'meilleur-effort hors transaction',
               }),
             },
@@ -766,7 +742,14 @@ export class DocumentsDemandeService extends CrudService {
   /** Attestation liée à la demande (existante ou émise ici), ou null si le type n'en relève pas. */
   private async attestationPourDemandeTx(
     tx: Prisma.TransactionClient,
-    demande: { id: string; type: TypeDemandeDocument; etudiantId: string; inscriptionId: string | null; motif: string | null; attestationId?: string | null },
+    demande: {
+      id: string;
+      type: TypeDemandeDocument;
+      etudiantId: string;
+      inscriptionId: string | null;
+      motif: string | null;
+      attestationId?: string | null;
+    },
     user: AuthUser,
   ): Promise<string | null> {
     const type = TYPE_ATTESTATION_PAR_DEMANDE[demande.type];
@@ -775,21 +758,21 @@ export class DocumentsDemandeService extends CrudService {
     if (!this.attestations) {
       throw new ConflictException(t('documents-demande.attestation_service_indisponible'));
     }
-    const attestation = await this.attestations.emettrePourDemandeTx(tx, {
-      type,
-      etudiantId: demande.etudiantId,
-      inscriptionId: demande.inscriptionId ?? undefined,
-      motif: demande.motif ?? undefined,
-    }, user);
+    const attestation = await this.attestations.emettrePourDemandeTx(
+      tx,
+      {
+        type,
+        etudiantId: demande.etudiantId,
+        inscriptionId: demande.inscriptionId ?? undefined,
+        motif: demande.motif ?? undefined,
+      },
+      user,
+    );
     return attestation.id;
   }
 
   /** Remise effective au guichet : passe en REMISE et date remiseLe. */
-  async remettre(
-    id: string,
-    dto: { noteRemise?: string },
-    user: AuthUser,
-  ) {
+  async remettre(id: string, dto: { noteRemise?: string }, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.demandeDocument.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('documents-demande.demande_introuvable'));
@@ -956,11 +939,11 @@ export class DocumentsDemandeService extends CrudService {
   /** Libellé humain d'un type de document, pour les messages SMS. */
   private libelleType(t: TypeDemandeDocument): string {
     const libelles: Record<TypeDemandeDocument, string> = {
-      ATTESTATION_SCOLARITE: "attestation de scolarité",
-      ATTESTATION_FREQUENTATION: "attestation de fréquentation",
+      ATTESTATION_SCOLARITE: 'attestation de scolarité',
+      ATTESTATION_FREQUENTATION: 'attestation de fréquentation',
       RELEVE_NOTES: 'relevé de notes',
       DUPLICATA_CARTE: 'duplicata de carte',
-      ATTESTATION_REUSSITE: "attestation de réussite",
+      ATTESTATION_REUSSITE: 'attestation de réussite',
       CERTIFICAT_SCOLARITE: 'certificat de scolarité',
       AUTRE: 'document',
     };
@@ -969,10 +952,7 @@ export class DocumentsDemandeService extends CrudService {
 
   /** Fiche A4 de la demande (le contrôleur a vérifié le jeton d'impression). */
   async documentImprimable(id: string): Promise<string> {
-    const [demande, etablissement] = await Promise.all([
-      this.findOne(id),
-      chargerEtablissement(this.prisma),
-    ]);
+    const [demande, etablissement] = await Promise.all([this.findOne(id), chargerEtablissement(this.prisma)]);
     return demandeDocumentHtml(demande, etablissement);
   }
 }

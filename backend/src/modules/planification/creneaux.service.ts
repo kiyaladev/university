@@ -14,11 +14,19 @@ import { estChefDeDepartement } from '../../common/perimetre';
 export const CRENEAU_INCLUDE = {
   affectation: {
     include: {
-      enseignant: { select: {
-        id: true, matricule: true, nom: true, prenom: true, grade: true,
-        statut: true, actif: true, departementId: true,
-        departement: { select: { id: true, nom: true } },
-      } },
+      enseignant: {
+        select: {
+          id: true,
+          matricule: true,
+          nom: true,
+          prenom: true,
+          grade: true,
+          statut: true,
+          actif: true,
+          departementId: true,
+          departement: { select: { id: true, nom: true } },
+        },
+      },
       matiere: true,
       promotion: { include: { filiere: true } },
     },
@@ -119,9 +127,7 @@ export class CreneauxService extends CrudService {
     lundi.setUTCDate(lundi.getUTCDate() - ((lundi.getUTCDay() + 6) % 7));
     const dimanche = new Date(lundi.getTime() + 6 * 86400000);
     const base = this.where(query, user) as Prisma.CreneauWhereInput;
-    const filtresExistants = base.AND
-      ? Array.isArray(base.AND) ? base.AND : [base.AND]
-      : [];
+    const filtresExistants = base.AND ? (Array.isArray(base.AND) ? base.AND : [base.AND]) : [];
     const where: Prisma.CreneauWhereInput = {
       actif: true,
       ...base,
@@ -164,12 +170,22 @@ export class CreneauxService extends CrudService {
     const base = id ? await db.creneau.findUnique({ where: { id }, include: { affectation: true } }) : null;
     const debut = dto.heureDebut ?? base?.heureDebut;
     const fin = dto.heureFin ?? base?.heureFin;
-    const dateDebut = dto.dateDebut !== undefined
-      ? dto.dateDebut ? toDateOnly(dto.dateDebut) : null
-      : (base?.dateDebut ? toDateOnly(base.dateDebut) : null);
-    const dateFin = dto.dateFin !== undefined
-      ? dto.dateFin ? toDateOnly(dto.dateFin) : null
-      : (base?.dateFin ? toDateOnly(base.dateFin) : null);
+    const dateDebut =
+      dto.dateDebut !== undefined
+        ? dto.dateDebut
+          ? toDateOnly(dto.dateDebut)
+          : null
+        : base?.dateDebut
+          ? toDateOnly(base.dateDebut)
+          : null;
+    const dateFin =
+      dto.dateFin !== undefined
+        ? dto.dateFin
+          ? toDateOnly(dto.dateFin)
+          : null
+        : base?.dateFin
+          ? toDateOnly(base.dateFin)
+          : null;
 
     if (debut && fin && dureeMinutes(debut, fin) <= 0) {
       throw new BadRequestException(t('planification.l_heure_de_fin_doit_suivre_l_heure_de_debut'));
@@ -222,7 +238,11 @@ export class CreneauxService extends CrudService {
 
     if (collision) {
       throw new BadRequestException(
-        t('planification.conflit_d_emploi_du_temps_jour_collision_heuredebut_collision', { jour: JOURS[jour], debut: collision.heureDebut, fin: collision.heureFin }),
+        t('planification.conflit_d_emploi_du_temps_jour_collision_heuredebut_collision', {
+          jour: JOURS[jour],
+          debut: collision.heureDebut,
+          fin: collision.heureFin,
+        }),
       );
     }
   }
@@ -238,12 +258,18 @@ export class CreneauxService extends CrudService {
   }
 
   async creer(dto: CreateCreneauDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      await this.valider(dto, undefined, tx, user);
-      const creneau = await tx.creneau.create({ data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await journaliser(tx, user ?? null, 'CRENEAU_CREE', 'Creneau', creneau.id, { avant: null, apres: this.instantaneAudit(creneau) });
-      return creneau;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        await this.valider(dto, undefined, tx, user);
+        const creneau = await tx.creneau.create({ data: this.payload(dto), include: CRENEAU_INCLUDE });
+        await journaliser(tx, user ?? null, 'CRENEAU_CREE', 'Creneau', creneau.id, {
+          avant: null,
+          apres: this.instantaneAudit(creneau),
+        });
+        return creneau;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /** Même contrôle de collision lors de la prévisualisation d'un import. */
@@ -252,52 +278,65 @@ export class CreneauxService extends CrudService {
   }
 
   async modifier(id: string, dto: UpdateCreneauDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant: any = await tx.creneau.findFirst({
-        where: { id, ...this.where({}, user) }, include: CRENEAU_INCLUDE,
-      });
-      if (!avant) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, avant.affectation.anneeId);
-      await this.valider(dto, id, tx, user);
-      const cible: any = dto.affectationId ? await tx.affectation.findFirst({
-        where: { id: dto.affectationId, ...(this.where({}, user).affectation ?? {}) },
-        select: { anneeId: true },
-      }) : { anneeId: avant.affectation.anneeId };
-      if (!cible) throw new NotFoundException(t('common.notFound'));
-      if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
-      const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
-      await journaliser(
-        tx,
-        user ?? null,
-        'CRENEAU_MODIFIE',
-        'Creneau',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres) },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant: any = await tx.creneau.findFirst({
+          where: { id, ...this.where({}, user) },
+          include: CRENEAU_INCLUDE,
+        });
+        if (!avant) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, avant.affectation.anneeId);
+        await this.valider(dto, id, tx, user);
+        const cible: any = dto.affectationId
+          ? await tx.affectation.findFirst({
+              where: { id: dto.affectationId, ...(this.where({}, user).affectation ?? {}) },
+              select: { anneeId: true },
+            })
+          : { anneeId: avant.affectation.anneeId };
+        if (!cible) throw new NotFoundException(t('common.notFound'));
+        if (cible) await exigerAnneeOuverte(tx, cible.anneeId);
+        const apres = await tx.creneau.update({ where: { id }, data: this.payload(dto), include: CRENEAU_INCLUDE });
+        await journaliser(tx, user ?? null, 'CRENEAU_MODIFIE', 'Creneau', id, {
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(apres),
+        });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-    const creneau: any = await tx.creneau.findFirst({
-      where: { id, ...this.where({}, user) },
-      include: CRENEAU_INCLUDE,
-    });
-    if (!creneau) throw new NotFoundException(t('common.notFound'));
-    await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
-    await tx.creneau.delete({ where: { id } });
-    await journaliser(tx, user ?? null, 'CRENEAU_SUPPRIME', 'Creneau', id, { avant: this.instantaneAudit(creneau), apres: null });
-    return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const creneau: any = await tx.creneau.findFirst({
+          where: { id, ...this.where({}, user) },
+          include: CRENEAU_INCLUDE,
+        });
+        if (!creneau) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, creneau.affectation.anneeId);
+        await tx.creneau.delete({ where: { id } });
+        await journaliser(tx, user ?? null, 'CRENEAU_SUPPRIME', 'Creneau', id, {
+          avant: this.instantaneAudit(creneau),
+          apres: null,
+        });
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private instantaneAudit(creneau: any) {
     return {
-      id: creneau.id, affectationId: creneau.affectationId,
-      jourSemaine: creneau.jourSemaine, heureDebut: creneau.heureDebut,
-      heureFin: creneau.heureFin, salleId: creneau.salleId,
-      dateDebut: creneau.dateDebut, dateFin: creneau.dateFin, actif: creneau.actif,
+      id: creneau.id,
+      affectationId: creneau.affectationId,
+      jourSemaine: creneau.jourSemaine,
+      heureDebut: creneau.heureDebut,
+      heureFin: creneau.heureFin,
+      salleId: creneau.salleId,
+      dateDebut: creneau.dateDebut,
+      dateFin: creneau.dateFin,
+      actif: creneau.actif,
     };
   }
 }

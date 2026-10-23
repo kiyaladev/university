@@ -8,34 +8,21 @@
  * cumul des paiements réussis couvre les frais, puis la scolarité la VALIDE.
  * Le numéro "INS-2026-00042" est l'identifiant de tous les autres modules.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { ParametresService } from '../parametres/parametres.service';
-import {
-  EtudiantsService,
-  prochainMatricule,
-  prochainNumeroInscription,
-} from './etudiants.service';
+import { EtudiantsService, prochainMatricule, prochainNumeroInscription } from './etudiants.service';
 import { whereInscriptions } from './filtres';
 import { deviseDossier } from './paiements.service';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
 import { anneeNumero } from '../../common/numero';
-import {
-  CreateInscriptionDto,
-  InscriptionPubliqueDto,
-  InscriptionQueryDto,
-} from './inscription.dto';
+import { CreateInscriptionDto, InscriptionPubliqueDto, InscriptionQueryDto } from './inscription.dto';
 
 export const INSCRIPTION_INCLUDE = {
   etudiant: {
@@ -167,7 +154,9 @@ export class InscriptionService {
     const pageSize = Math.max(1, Math.min(1000, Number(query.pageSize ?? (all ? 1000 : 50))));
 
     const where: Prisma.InscriptionWhereInput = {
-      ...(user?.role === Role.CHEF_DEPARTEMENT ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } : {}),
+      ...(user?.role === Role.CHEF_DEPARTEMENT
+        ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } }
+        : {}),
       ...whereInscriptions(query),
     };
 
@@ -186,9 +175,7 @@ export class InscriptionService {
   async trouverInscription(id: string, user?: AuthUser) {
     const where: Prisma.InscriptionWhereInput = {
       id,
-      ...(user?.role === Role.ETUDIANT
-        ? { etudiantId: user.etudiantId ?? '__aucun__' }
-        : {}),
+      ...(user?.role === Role.ETUDIANT ? { etudiantId: user.etudiantId ?? '__aucun__' } : {}),
       ...(user?.role === Role.CHEF_DEPARTEMENT
         ? { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } }
         : {}),
@@ -276,7 +263,14 @@ export class InscriptionService {
             select: { numero: true },
           });
           if (deja) {
-            throw new ConflictException(t('inscription.un_dossier_deja_numero_existe_deja_pour_dto_prenom_dto_nom_s', { 'deja.numero': deja.numero, 'dto.prenom': dto.prenom, 'dto.nom': dto.nom, 'annee.libelle': annee.libelle }));
+            throw new ConflictException(
+              t('inscription.un_dossier_deja_numero_existe_deja_pour_dto_prenom_dto_nom_s', {
+                'deja.numero': deja.numero,
+                'dto.prenom': dto.prenom,
+                'dto.nom': dto.nom,
+                'annee.libelle': annee.libelle,
+              }),
+            );
           }
 
           const inscription = await tx.inscription.create({
@@ -347,7 +341,14 @@ export class InscriptionService {
       select: { id: true, numero: true, statut: true },
     });
     if (existante && existante.statut !== StatutInscription.ANNULEE) {
-      throw new ConflictException(t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', { 'existante.numero': existante.numero, 'etudiant.prenom': etudiant.prenom, 'etudiant.nom': etudiant.nom, 'annee.libelle': annee.libelle }));
+      throw new ConflictException(
+        t('inscription.un_dossier_existante_numero_existe_deja_pour_etudiant_prenom', {
+          'existante.numero': existante.numero,
+          'etudiant.prenom': etudiant.prenom,
+          'etudiant.nom': etudiant.nom,
+          'annee.libelle': annee.libelle,
+        }),
+      );
     }
 
     const frais = await this.prisma.frais.findUnique({
@@ -432,11 +433,14 @@ export class InscriptionService {
     if (inscription.statut === StatutInscription.ANNULEE) {
       throw new BadRequestException(t('inscription.ce_dossier_est_annule_impossible_de_le_valider'));
     }
-    if (
-      inscription.statut !== StatutInscription.PAYEE &&
-      inscription.statut !== StatutInscription.VALIDEE
-    ) {
-      throw new BadRequestException(t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', { 'inscription.numero': inscription.numero, 'LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut': LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut }));
+    if (inscription.statut !== StatutInscription.PAYEE && inscription.statut !== StatutInscription.VALIDEE) {
+      throw new BadRequestException(
+        t('inscription.inscription_numero_frais_non_regles_statut_libelle_statut_in', {
+          'inscription.numero': inscription.numero,
+          'LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut':
+            LIBELLE_STATUT_INSCRIPTION[inscription.statut] ?? inscription.statut,
+        }),
+      );
     }
     if (inscription.statut === StatutInscription.VALIDEE) return inscription;
 
@@ -478,7 +482,11 @@ export class InscriptionService {
       throw new BadRequestException(t('inscription.ce_dossier_est_deja_annule'));
     }
     if (inscription.statut === StatutInscription.VALIDEE) {
-      throw new BadRequestException(t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', { 'inscription.numero': inscription.numero }));
+      throw new BadRequestException(
+        t('inscription.inscription_numero_est_valide_son_annulation_doit_passer_par', {
+          'inscription.numero': inscription.numero,
+        }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       await exigerAnneeOuverte(tx, inscription.anneeId);

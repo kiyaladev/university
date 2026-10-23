@@ -4,19 +4,28 @@ import { RecettesService } from './recettes.service';
 
 function simulerTraductionsRecettes() {
   jest.spyOn(I18nContext, 'current').mockReturnValue({
-    t: (key: string) => ({
-      'recettes.modification_comptable_apres_encaissement_interdite': 'Montant figé',
-      'recettes.modification_concurrente': 'Modification concurrente',
-      'recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache': 'Déjà encaissée',
-    }[key] ?? key),
+    t: (key: string) =>
+      ({
+        'recettes.modification_comptable_apres_encaissement_interdite': 'Montant figé',
+        'recettes.modification_concurrente': 'Modification concurrente',
+        'recettes.cette_recette_a_deja_ete_encaissee_paiement_deja_rattache': 'Déjà encaissée',
+      })[key] ?? key,
   } as never);
 }
 
 describe('journal des recettes externes', () => {
   const avant = {
-    id: 'recette-1', numero: 'REC-2026-00001', type: TypeRecette.AUTRE, libelle: 'Location de salle',
-    montant: 100, devise: 'GNF', date: new Date('2026-10-01T00:00:00.000Z'),
-    paiementId: null, client: 'Personne privée', factureNum: 'FACT-1', description: 'Description privée',
+    id: 'recette-1',
+    numero: 'REC-2026-00001',
+    type: TypeRecette.AUTRE,
+    libelle: 'Location de salle',
+    montant: 100,
+    devise: 'GNF',
+    date: new Date('2026-10-01T00:00:00.000Z'),
+    paiementId: null,
+    client: 'Personne privée',
+    factureNum: 'FACT-1',
+    description: 'Description privée',
   };
   const apres = { ...avant, montant: 125 };
 
@@ -50,21 +59,45 @@ describe('journal des recettes externes', () => {
     const prisma = { $transaction: jest.fn((run: (tx: any) => unknown) => run(tx)) };
     const service = new RecettesService(prisma as never);
 
-    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never))
-      .resolves.toEqual(apres);
+    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never)).resolves.toEqual(apres);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.recetteExterne.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'recette-1', paiementId: null, montant: 100 },
-      data: expect.objectContaining({ montant: 125 }),
-    }));
-    expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
-      userId: 'agent-1', action: 'RECETTE_MODIFIEE', entiteId: 'recette-1', details: expect.any(String),
-    }) });
+    expect(tx.recetteExterne.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'recette-1', paiementId: null, montant: 100 },
+        data: expect.objectContaining({ montant: 125 }),
+      }),
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'agent-1',
+        action: 'RECETTE_MODIFIEE',
+        entiteId: 'recette-1',
+        details: expect.any(String),
+      }),
+    });
     const details = JSON.parse(tx.auditLog.create.mock.calls[0][0].data.details);
     expect(details).toEqual({
-      avant: { id: 'recette-1', numero: 'REC-2026-00001', type: TypeRecette.AUTRE, libelle: 'Location de salle', montant: 100, devise: 'GNF', date: avant.date.toISOString(), paiementId: null },
-      apres: { id: 'recette-1', numero: 'REC-2026-00001', type: TypeRecette.AUTRE, libelle: 'Location de salle', montant: 125, devise: 'GNF', date: avant.date.toISOString(), paiementId: null },
+      avant: {
+        id: 'recette-1',
+        numero: 'REC-2026-00001',
+        type: TypeRecette.AUTRE,
+        libelle: 'Location de salle',
+        montant: 100,
+        devise: 'GNF',
+        date: avant.date.toISOString(),
+        paiementId: null,
+      },
+      apres: {
+        id: 'recette-1',
+        numero: 'REC-2026-00001',
+        type: TypeRecette.AUTRE,
+        libelle: 'Location de salle',
+        montant: 125,
+        devise: 'GNF',
+        date: avant.date.toISOString(),
+        paiementId: null,
+      },
       champsModifies: ['montant'],
     });
     expect(tx.auditLog.create.mock.calls[0][0].data.details).not.toContain('Personne privée');
@@ -84,8 +117,10 @@ describe('journal des recettes externes', () => {
       $transaction: jest.fn((run: (tx: any) => unknown) => run(tx)),
     } as never);
 
-    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never))
-      .rejects.toMatchObject({ status: 409, message: 'Montant figé' });
+    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never)).rejects.toMatchObject({
+      status: 409,
+      message: 'Montant figé',
+    });
     expect(tx.recetteExterne.update).not.toHaveBeenCalled();
     expect(tx.recetteExterne.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
@@ -95,7 +130,10 @@ describe('journal des recettes externes', () => {
     simulerTraductionsRecettes();
     const tx = {
       recetteExterne: {
-        findUnique: jest.fn().mockResolvedValueOnce(avant).mockResolvedValueOnce({ ...avant, paiementId: 'paiement-concurrent' }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValueOnce(avant)
+          .mockResolvedValueOnce({ ...avant, paiementId: 'paiement-concurrent' }),
         updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
       auditLog: { create: jest.fn() },
@@ -104,11 +142,15 @@ describe('journal des recettes externes', () => {
       $transaction: jest.fn((run: (tx: any) => unknown) => run(tx)),
     } as never);
 
-    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never))
-      .rejects.toMatchObject({ status: 409, message: 'Montant figé' });
-    expect(tx.recetteExterne.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ id: 'recette-1', paiementId: null, montant: 100 }),
-    }));
+    await expect(service.modifier('recette-1', { montant: 125 }, { id: 'agent-1' } as never)).rejects.toMatchObject({
+      status: 409,
+      message: 'Montant figé',
+    });
+    expect(tx.recetteExterne.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'recette-1', paiementId: null, montant: 100 }),
+      }),
+    );
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
@@ -134,18 +176,30 @@ describe('journal des recettes externes', () => {
 
     expect(tx.recetteExterne.updateMany).toHaveBeenCalledWith({
       where: {
-        id: 'recette-1', paiementId: null, montant: 100, devise: 'GNF',
-        date: avant.date, type: TypeRecette.AUTRE, libelle: 'Location de salle',
-      }, data: { paiementId: 'paiement-1' },
+        id: 'recette-1',
+        paiementId: null,
+        montant: 100,
+        devise: 'GNF',
+        date: avant.date,
+        type: TypeRecette.AUTRE,
+        libelle: 'Location de salle',
+      },
+      data: { paiementId: 'paiement-1' },
     });
     expect(tx.paiement.create.mock.calls[0][0].data.completeLe).toBeInstanceOf(Date);
-    expect(tx.paiement.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { reference: { startsWith: 'PAY-X-2026-' } },
-    }));
-    expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
-      userId: 'agent-1', action: 'RECETTE_ENCAISSEE', entiteId: 'recette-1',
-      details: expect.stringContaining('PAY-X-2026-00001'),
-    }) });
+    expect(tx.paiement.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { reference: { startsWith: 'PAY-X-2026-' } },
+      }),
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'agent-1',
+        action: 'RECETTE_ENCAISSEE',
+        entiteId: 'recette-1',
+        details: expect.stringContaining('PAY-X-2026-00001'),
+      }),
+    });
   });
 
   it('annule le paiement si une autre transaction a déjà encaissé la recette', async () => {
@@ -165,9 +219,13 @@ describe('journal des recettes externes', () => {
       $transaction: jest.fn((run: (tx: any) => unknown) => run(tx)),
     } as never);
 
-    tx.recetteExterne.findUnique.mockResolvedValueOnce(avant).mockResolvedValueOnce({ ...avant, paiementId: 'paiement-existant' });
-    await expect(service.encaisser('recette-1', {}, { id: 'agent-1' } as never))
-      .rejects.toMatchObject({ status: 409, message: 'Déjà encaissée' });
+    tx.recetteExterne.findUnique
+      .mockResolvedValueOnce(avant)
+      .mockResolvedValueOnce({ ...avant, paiementId: 'paiement-existant' });
+    await expect(service.encaisser('recette-1', {}, { id: 'agent-1' } as never)).rejects.toMatchObject({
+      status: 409,
+      message: 'Déjà encaissée',
+    });
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 
@@ -185,9 +243,12 @@ describe('journal des recettes externes', () => {
     const premier = transaction(jest.fn().mockRejectedValue({ code: 'P2002', meta: { target: ['reference'] } }));
     const secondCreate = jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-X-2026-00001' });
     const second = transaction(secondCreate);
-    const prisma = { $transaction: jest.fn()
-      .mockImplementationOnce((run: (tx: any) => unknown) => run(premier))
-      .mockImplementationOnce((run: (tx: any) => unknown) => run(second)) };
+    const prisma = {
+      $transaction: jest
+        .fn()
+        .mockImplementationOnce((run: (tx: any) => unknown) => run(premier))
+        .mockImplementationOnce((run: (tx: any) => unknown) => run(second)),
+    };
     const service = new RecettesService(prisma as never);
 
     await expect(service.encaisser('recette-1', {}, { id: 'agent-1' } as never)).resolves.toEqual(payee);
@@ -207,9 +268,9 @@ describe('journal des recettes externes', () => {
       },
       paiement: {
         // Honore `startsWith` comme Prisma, sinon le test ne prouverait rien.
-        findMany: jest.fn(async (args: any) => references
-          .filter((r) => r.startsWith(args.where.reference.startsWith))
-          .map((reference) => ({ reference }))),
+        findMany: jest.fn(async (args: any) =>
+          references.filter((r) => r.startsWith(args.where.reference.startsWith)).map((reference) => ({ reference })),
+        ),
         create: jest.fn().mockResolvedValue({ id: 'paiement-1', reference: 'PAY-X-2026-00003' }),
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
@@ -289,7 +350,8 @@ describe('indicateurs du tableau des recettes', () => {
 
   it('calcule les totaux sur la même période et dans la devise GNF', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-10-03T12:00:00.000Z'));
-    const groupBy = jest.fn()
+    const groupBy = jest
+      .fn()
       .mockResolvedValueOnce([{ type: TypeRecette.AUTRE, _sum: { montant: 100 }, _count: { _all: 2 } }])
       .mockResolvedValueOnce([{ type: TypeRecette.AUTRE, _sum: { montant: 100 } }]);
     const findMany = jest.fn().mockResolvedValue([
@@ -302,8 +364,31 @@ describe('indicateurs du tableau des recettes', () => {
 
     expect(result.totalMois).toBe(60);
     expect(result.totalAnnee).toBe(100);
-    expect(groupBy).toHaveBeenNthCalledWith(1, expect.objectContaining({ where: { date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') }, devise: 'GNF' } }));
-    expect(groupBy).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: { date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') }, devise: 'GNF' } }));
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') }, devise: 'GNF' } }));
+    expect(groupBy).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        where: {
+          date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') },
+          devise: 'GNF',
+        },
+      }),
+    );
+    expect(groupBy).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        where: {
+          date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') },
+          devise: 'GNF',
+        },
+      }),
+    );
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          date: { gte: new Date('2026-01-01T00:00:00.000Z'), lte: new Date('2026-12-31T00:00:00.000Z') },
+          devise: 'GNF',
+        },
+      }),
+    );
   });
 });

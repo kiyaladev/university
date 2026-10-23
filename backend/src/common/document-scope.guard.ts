@@ -7,7 +7,10 @@ import { t } from './i18n';
 
 @Injectable()
 export class DocumentScopeGuard implements CanActivate {
-  constructor(private reflector: Reflector, private prisma: PrismaService) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const scope = this.reflector.get<DocumentScopeOptions>(DOCUMENT_SCOPE_KEY, context.getHandler());
@@ -21,8 +24,12 @@ export class DocumentScopeGuard implements CanActivate {
       if (([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE] as Role[]).includes(user.role)) return true;
       throw new NotFoundException(t('common.notFound'));
     }
-    const owner = field === 'etudiantId' ? user.etudiantId
-      : field.endsWith('departementId') ? user.departementId : user.enseignantId;
+    const owner =
+      field === 'etudiantId'
+        ? user.etudiantId
+        : field.endsWith('departementId')
+          ? user.departementId
+          : user.enseignantId;
     if (!owner || typeof request.params.id !== 'string') throw new NotFoundException(t('common.notFound'));
     const delegate = (this.prisma as any)[scope.model];
     if (!delegate || typeof delegate.findFirst !== 'function') throw new NotFoundException(t('common.notFound'));
@@ -37,7 +44,8 @@ export class DocumentScopeGuard implements CanActivate {
     }
     const condition = field.split('.').reduceRight((value, key) => ({ [key]: value }), owner as any);
     const record = await delegate.findFirst({
-      where: { ...condition, id: request.params.id }, select: { id: true },
+      where: { ...condition, id: request.params.id },
+      select: { id: true },
     });
     if (!record) throw new NotFoundException(t('common.notFound'));
     return true;

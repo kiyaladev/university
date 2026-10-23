@@ -44,10 +44,12 @@ describe('Périmètre des créneaux', () => {
 
     const args = db.creneau.findMany.mock.calls[0][0];
     expect(args.take).toBe(2000);
-    expect(args.where.AND).toEqual(expect.arrayContaining([
-      { OR: [{ dateDebut: null }, { dateDebut: { lte: new Date('2026-10-11T00:00:00.000Z') } }] },
-      { OR: [{ dateFin: null }, { dateFin: { gte: new Date('2026-10-05T00:00:00.000Z') } }] },
-    ]));
+    expect(args.where.AND).toEqual(
+      expect.arrayContaining([
+        { OR: [{ dateDebut: null }, { dateDebut: { lte: new Date('2026-10-11T00:00:00.000Z') } }] },
+        { OR: [{ dateFin: null }, { dateFin: { gte: new Date('2026-10-05T00:00:00.000Z') } }] },
+      ]),
+    );
   });
 
   it('limite le chef au département du créneau dans la liste', async () => {
@@ -64,9 +66,11 @@ describe('Périmètre des créneaux', () => {
 
     db.creneau.findFirst.mockResolvedValue(null);
     await expect(service.findOne('c-2', controleur)).rejects.toThrow(NotFoundException);
-    expect(db.creneau.findFirst).toHaveBeenLastCalledWith(expect.objectContaining({
-      where: { id: 'c-2', affectation: { enseignant: { departementId: 'dept-2' } } },
-    }));
+    expect(db.creneau.findFirst).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: { id: 'c-2', affectation: { enseignant: { departementId: 'dept-2' } } },
+      }),
+    );
   });
 
   it('limite la liste étudiante à sa promotion validée de l’année active et projette les seuls champs d’affichage', async () => {
@@ -104,9 +108,11 @@ describe('Périmètre des créneaux', () => {
     const { db, service } = prepare();
     db.creneau.findFirst.mockResolvedValue(null);
     await expect(service.findOne('c-1', enseignant)).rejects.toThrow(NotFoundException);
-    expect(db.creneau.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'c-1', affectation: { enseignantId: 'prof-1' } },
-    }));
+    expect(db.creneau.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'c-1', affectation: { enseignantId: 'prof-1' } },
+      }),
+    );
   });
 
   it('refuse le détail direct sans session au lieu de lire sans filtre', async () => {
@@ -119,29 +125,44 @@ describe('Périmètre des créneaux', () => {
   it('retourne un périmètre vide à un chef sans département', async () => {
     const { db, service } = prepare();
     await service.liste({} as any, { ...chef, departementId: null });
-    expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignant.departementId).toBe('__aucun_departement__');
+    expect(db.creneau.findMany.mock.calls[0][0].where.affectation.enseignant.departementId).toBe(
+      '__aucun_departement__',
+    );
   });
 
   it('refuse la création avec une affectation d’un autre département', async () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Affectation introuvable' } as never);
     const { db, service } = prepare();
-    await expect(service.creer({
-      affectationId: 'aff-dept-2', jourSemaine: 1, heureDebut: '08:00', heureFin: '10:00',
-    } as any, chef)).rejects.toThrow(BadRequestException);
-    expect(db.affectation.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ enseignant: { departementId: 'dept-1' } }),
-    }));
+    await expect(
+      service.creer(
+        {
+          affectationId: 'aff-dept-2',
+          jourSemaine: 1,
+          heureDebut: '08:00',
+          heureFin: '10:00',
+        } as any,
+        chef,
+      ),
+    ).rejects.toThrow(BadRequestException);
+    expect(db.affectation.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ enseignant: { departementId: 'dept-1' } }),
+      }),
+    );
     expect(db.creneau.create).not.toHaveBeenCalled();
   });
 
   it('refuse la modification et la suppression d’un créneau d’un autre département', async () => {
     const { db, service } = prepare();
-    await expect(service.modifier('cr-dept-2', { heureDebut: '09:00' } as any, chef))
-      .rejects.toThrow(NotFoundException);
+    await expect(service.modifier('cr-dept-2', { heureDebut: '09:00' } as any, chef)).rejects.toThrow(
+      NotFoundException,
+    );
     await expect(service.remove('cr-dept-2', chef)).rejects.toThrow(NotFoundException);
-    expect(db.creneau.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ affectation: { enseignant: { departementId: 'dept-1' } } }),
-    }));
+    expect(db.creneau.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ affectation: { enseignant: { departementId: 'dept-1' } } }),
+      }),
+    );
     expect(db.creneau.update).not.toHaveBeenCalled();
     expect(db.creneau.delete).not.toHaveBeenCalled();
   });
@@ -186,8 +207,20 @@ describe('Validation des collisions de créneaux', () => {
         delete: jest.fn(),
       },
       affectation: {
-        findUnique: jest.fn().mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1', enseignantId: 'ens-1', promotionId: 'promo-1', annee: { cloturee: false } }),
-        findFirst: jest.fn().mockResolvedValue({ id: 'aff-1', anneeId: 'annee-1', enseignantId: 'ens-1', promotionId: 'promo-1', annee: { cloturee: false } }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'aff-1',
+          anneeId: 'annee-1',
+          enseignantId: 'ens-1',
+          promotionId: 'promo-1',
+          annee: { cloturee: false },
+        }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: 'aff-1',
+          anneeId: 'annee-1',
+          enseignantId: 'ens-1',
+          promotionId: 'promo-1',
+          annee: { cloturee: false },
+        }),
       },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
@@ -208,11 +241,13 @@ describe('Validation des collisions de créneaux', () => {
   it('refuse aussi de supprimer la borne de fin si cela crée une collision future', async () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Conflit de créneau' } as never);
     const { service, prisma } = preparerCollision();
-    prisma.creneau.findMany.mockResolvedValue([{
-      ...creneauConcurrent,
-      dateDebut: new Date('2026-09-01T00:00:00Z'),
-      dateFin: new Date('2026-09-30T00:00:00Z'),
-    }]);
+    prisma.creneau.findMany.mockResolvedValue([
+      {
+        ...creneauConcurrent,
+        dateDebut: new Date('2026-09-01T00:00:00Z'),
+        dateFin: new Date('2026-09-30T00:00:00Z'),
+      },
+    ]);
 
     await expect(service.modifier('cr-1', { dateFin: null } as any)).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.creneau.update).not.toHaveBeenCalled();
@@ -220,20 +255,22 @@ describe('Validation des collisions de créneaux', () => {
 
   it('permet deux créneaux aux mêmes heures si leurs périodes ne se chevauchent pas', async () => {
     const { service, prisma } = preparerCollision();
-    prisma.creneau.findMany.mockResolvedValue([{
-      ...creneauConcurrent,
-      dateDebut: new Date('2026-09-01T00:00:00Z'),
-      dateFin: new Date('2026-09-30T00:00:00Z'),
-    }]);
-    prisma.creneau.findUnique
-      .mockResolvedValueOnce(baseExistante)
-      .mockResolvedValueOnce(baseExistante);
+    prisma.creneau.findMany.mockResolvedValue([
+      {
+        ...creneauConcurrent,
+        dateDebut: new Date('2026-09-01T00:00:00Z'),
+        dateFin: new Date('2026-09-30T00:00:00Z'),
+      },
+    ]);
+    prisma.creneau.findUnique.mockResolvedValueOnce(baseExistante).mockResolvedValueOnce(baseExistante);
     prisma.creneau.update.mockResolvedValue({ id: 'cr-1' });
 
-    await expect(service.modifier('cr-1', {
-      dateDebut: '2026-08-10',
-      dateFin: '2026-08-31',
-    } as any)).resolves.toEqual({ id: 'cr-1' });
+    await expect(
+      service.modifier('cr-1', {
+        dateDebut: '2026-08-10',
+        dateFin: '2026-08-31',
+      } as any),
+    ).resolves.toEqual({ id: 'cr-1' });
     expect(prisma.creneau.findMany).toHaveBeenCalledTimes(1);
   });
 
@@ -250,7 +287,9 @@ describe('Validation des collisions de créneaux', () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Période incohérente' } as never);
     const { service, prisma } = preparerCollision();
 
-    await expect(service.modifier('cr-1', { dateFin: '2026-08-01' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifier('cr-1', { dateFin: '2026-08-01' } as any)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.creneau.update).not.toHaveBeenCalled();
     expect(prisma.creneau.findMany).not.toHaveBeenCalled();
   });

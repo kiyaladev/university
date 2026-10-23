@@ -46,9 +46,13 @@ describe('projection de l’annuaire enseignant', () => {
     const { prisma, service } = creerService();
     prisma.enseignant.findFirst.mockResolvedValue(null);
 
-    await expect(service.detailPour('enseignant-1', {
-      id: 'chef-1', role: Role.CHEF_DEPARTEMENT, departementId: null,
-    } as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.detailPour('enseignant-1', {
+        id: 'chef-1',
+        role: Role.CHEF_DEPARTEMENT,
+        departementId: null,
+      } as any),
+    ).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.enseignant.findFirst).toHaveBeenCalledWith({
       where: { id: 'enseignant-1', departementId: '__aucun__' },
       select: ENSEIGNANT_LECTURE_MINIMALE,
@@ -59,7 +63,9 @@ describe('projection de l’annuaire enseignant', () => {
     const { prisma, service } = creerService();
 
     await service.detailPour('enseignant-1', {
-      id: 'chef-1', role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1',
+      id: 'chef-1',
+      role: Role.CHEF_DEPARTEMENT,
+      departementId: 'dept-1',
     } as any);
 
     expect(prisma.enseignant.findFirst).toHaveBeenCalledWith({

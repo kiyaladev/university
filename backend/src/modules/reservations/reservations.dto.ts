@@ -1,14 +1,6 @@
 import { PartialType } from '@nestjs/swagger';
 import { StatutReservationSalle } from '@prisma/client';
-import {
-  IsDateString,
-  IsEnum,
-  IsIn,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsIn, IsOptional, IsString, IsUUID, Matches } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
 const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;

@@ -352,7 +352,12 @@ export class RestoService {
         data: { solde: { decrement: dto.montant } },
       });
       if (debit.count !== 1) {
-        throw new ConflictException(t('resto.solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_', { solde: portefeuille.solde, montant: dto.montant }));
+        throw new ConflictException(
+          t('resto.solde_insuffisant_rechargez_via_le_portail_solde_portefeuille_', {
+            solde: portefeuille.solde,
+            montant: dto.montant,
+          }),
+        );
       }
 
       const consommation = await tx.consommationResto.create({
@@ -476,7 +481,9 @@ export class RestoService {
     });
     if (!consommation) throw new NotFoundException(t('resto.consommation_introuvable'));
     if (consommation.statut !== StatutConsommation.VALIDEE) {
-      throw new BadRequestException(t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }));
+      throw new BadRequestException(
+        t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }),
+      );
     }
 
     const { maj, solde } = await this.prisma.$transaction(async (tx) => {
@@ -485,7 +492,11 @@ export class RestoService {
         data: { statut: StatutConsommation.ANNULEE },
       });
       if (annulation.count !== 1) {
-        throw new BadRequestException(t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', { statut: consommation.statut }));
+        throw new BadRequestException(
+          t('resto.cette_consommation_est_deja_consommation_statut_seul_un_repas_vali', {
+            statut: consommation.statut,
+          }),
+        );
       }
       const maj = await tx.consommationResto.findUnique({ where: { id } });
       const portefeuille = await tx.portefeuilleResto.update({
@@ -525,7 +536,9 @@ export class RestoService {
       throw new BadRequestException(t('resto.reference_vide_scannez_le_qr_ou_saisissez_le_matricule'));
     }
 
-    const parQr = ref.startsWith('UP-RESTO-') ? await this.prisma.etudiant.findUnique({ where: { qrRestoToken: ref } }) : null;
+    const parQr = ref.startsWith('UP-RESTO-')
+      ? await this.prisma.etudiant.findUnique({ where: { qrRestoToken: ref } })
+      : null;
     const etudiant =
       parQr ??
       (await this.prisma.etudiant.findUnique({ where: { matricule: ref } })) ??
@@ -541,10 +554,7 @@ export class RestoService {
    * Le QR de la carte se génère à la volée pour les anciens dossiers — au
    * premier passage au guichet comme à la première consultation du portail.
    */
-  private async assurerQrToken(
-    tx: Prisma.TransactionClient | null,
-    etudiant: Etudiant,
-  ): Promise<Etudiant> {
+  private async assurerQrToken(tx: Prisma.TransactionClient | null, etudiant: Etudiant): Promise<Etudiant> {
     if (etudiant.qrRestoToken) return etudiant;
     const client = tx ?? this.prisma;
     const qrRestoToken = nouveauQrRestoToken();
@@ -564,10 +574,7 @@ export class RestoService {
   }
 
   /** Portefeuille unique par étudiant : créé idempotent, jamais de doublon. */
-  private async portefeuilleOuCree(
-    tx: Prisma.TransactionClient | null,
-    etudiantId: string,
-  ) {
+  private async portefeuilleOuCree(tx: Prisma.TransactionClient | null, etudiantId: string) {
     const base = tx ?? this.prisma;
     return base.portefeuilleResto.upsert({
       where: { etudiantId },
@@ -650,9 +657,7 @@ export class RestoService {
                 statut: recharge.statut,
                 avant: { solde: soldeAvant },
                 apres: { solde: args.statutImmediat ? solde : soldeAvant },
-                champsModifies: args.statutImmediat
-                  ? ['paiement', 'recharge', 'solde']
-                  : ['paiement', 'recharge'],
+                champsModifies: args.statutImmediat ? ['paiement', 'recharge', 'solde'] : ['paiement', 'recharge'],
               }),
             },
           });
@@ -728,9 +733,6 @@ function nouveauQrRestoToken(): string {
 }
 
 /** "PAY-R-2026-00001" — référence des paiements du portefeuille resto. */
-async function prochainNumeroPaiement(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-R-${annee}-`, 5);
 }

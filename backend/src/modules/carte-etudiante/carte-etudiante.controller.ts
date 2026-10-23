@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Ip,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Ip, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -80,32 +69,20 @@ export class CarteEtudianteController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateCarteEtudianteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateCarteEtudianteDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post(':id/revoquer')
-  revoquer(
-    @Param('id') id: string,
-    @Body() dto: RevoquerCarteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  revoquer(@Param('id') id: string, @Body() dto: RevoquerCarteDto, @CurrentUser() user: AuthUser) {
     return this.service.revoquer(id, dto, user);
   }
 
   /** Définition du NIP : l'étudiant, sur sa propre carte uniquement. */
   @Roles(Role.ETUDIANT)
   @Post(':id/nip')
-  definirNip(
-    @Param('id') id: string,
-    @Body() dto: DefinirNipDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  definirNip(@Param('id') id: string, @Body() dto: DefinirNipDto, @CurrentUser() user: AuthUser) {
     return this.service.definirNip(id, dto, user);
   }
 
@@ -130,11 +107,7 @@ export class CarteEtudianteController {
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
   @DocumentScope('carteEtudiante', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     const html = await this.service.imprimer(id, jetonImprimable(req), base);
     res.type('html').send(html);

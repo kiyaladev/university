@@ -22,10 +22,12 @@ const CONTROLE_RAPPORT_SELECT = {
   attestationValide: true,
   signatureBase64: true,
 };
-const { signatureBase64: _signatureBase64, ...CONTROLE_RAPPORT_SELECT_SANS_SIGNATURE } =
-  CONTROLE_RAPPORT_SELECT;
-const { signatureBase64: _signatureSelectee, observation: _observationSelectee, ...CONTROLE_RAPPORT_SELECT_RESTREINT } =
-  CONTROLE_RAPPORT_SELECT;
+const { signatureBase64: _signatureBase64, ...CONTROLE_RAPPORT_SELECT_SANS_SIGNATURE } = CONTROLE_RAPPORT_SELECT;
+const {
+  signatureBase64: _signatureSelectee,
+  observation: _observationSelectee,
+  ...CONTROLE_RAPPORT_SELECT_RESTREINT
+} = CONTROLE_RAPPORT_SELECT;
 
 const SEANCE_STATS_INCLUDE = {
   controle: { select: CONTROLE_RAPPORT_SELECT },
@@ -146,13 +148,13 @@ export class RapportsService {
   constructor(private prisma: PrismaService) {}
 
   private where(query: RapportQueryDto, _user?: AuthUser): Prisma.SeanceWhereInput {
-    const jour = query.date && !query.dateDebut && !query.dateFin
-      ? toDateOnly(query.date)
-      : undefined;
+    const jour = query.date && !query.dateDebut && !query.dateFin ? toDateOnly(query.date) : undefined;
     const fin = jour ?? toDateOnly(query.dateFin ?? isoDate(new Date()));
-    const debut = jour ?? (query.dateDebut
-      ? toDateOnly(query.dateDebut)
-      : new Date(fin.getTime() - (PERIODE_RAPPORT_DEFAUT_JOURS - 1) * JOUR_MS));
+    const debut =
+      jour ??
+      (query.dateDebut
+        ? toDateOnly(query.dateDebut)
+        : new Date(fin.getTime() - (PERIODE_RAPPORT_DEFAUT_JOURS - 1) * JOUR_MS));
     const jours = Math.floor((fin.getTime() - debut.getTime()) / JOUR_MS) + 1;
     if (jours < 1) {
       throw new BadRequestException('La date de début doit précéder ou égaler la date de fin.');
@@ -194,17 +196,19 @@ export class RapportsService {
 
   async dashboard(query: RapportQueryDto) {
     const aujourdhui = isoDate(new Date());
-    const debutPeriode =
-      query.dateDebut ?? isoDate(new Date(Date.now() - 29 * 86400000));
+    const debutPeriode = query.dateDebut ?? isoDate(new Date(Date.now() - 29 * 86400000));
     const finPeriode = query.dateFin ?? aujourdhui;
 
     const [seancesPeriode, seancesJour, justificatifsEnAttente] = await Promise.all([
       this.seances({ ...query, dateDebut: debutPeriode, dateFin: finPeriode }),
       this.seances({ ...query, dateDebut: aujourdhui, dateFin: aujourdhui }),
-      this.prisma.justificatif.count({ where: { statut: 'EN_ATTENTE',
-        ...(query.enseignantId ? { enseignantId: query.enseignantId } : {}),
-        ...(query.departementId ? { enseignant: { departementId: query.departementId } } : {}),
-      } }),
+      this.prisma.justificatif.count({
+        where: {
+          statut: 'EN_ATTENTE',
+          ...(query.enseignantId ? { enseignantId: query.enseignantId } : {}),
+          ...(query.departementId ? { enseignant: { departementId: query.departementId } } : {}),
+        },
+      }),
     ]);
 
     const global = nouveauxCompteurs();
@@ -455,7 +459,10 @@ export class RapportsService {
   async couvertureControleurs(query: RapportQueryDto) {
     const seances = await this.seances(query);
     const aujourdhui = isoDate(new Date());
-    const groupes = new Map<string, { controleur: { id: string; nom: string; prenom: string }; seances: SeanceComplete[] }>();
+    const groupes = new Map<
+      string,
+      { controleur: { id: string; nom: string; prenom: string }; seances: SeanceComplete[] }
+    >();
     const nonAffectees: SeanceComplete[] = [];
 
     for (const seance of seances) {
@@ -487,11 +494,13 @@ export class RapportsService {
     return {
       periode: { debut: query.dateDebut, fin: query.dateFin },
       nonAffectees: resume(nonAffectees),
-      lignes: [...groupes.values()].map(({ controleur, seances: liste }) => ({
-        controleurId: controleur.id,
-        nom: `${controleur.prenom} ${controleur.nom}`,
-        ...resume(liste),
-      })).sort((a, b) => a.nom.localeCompare(b.nom)),
+      lignes: [...groupes.values()]
+        .map(({ controleur, seances: liste }) => ({
+          controleurId: controleur.id,
+          nom: `${controleur.prenom} ${controleur.nom}`,
+          ...resume(liste),
+        }))
+        .sort((a, b) => a.nom.localeCompare(b.nom)),
     };
   }
 
@@ -523,7 +532,7 @@ export class RapportsService {
       dureeMinutes: s.controle?.dureeMinutes ?? 0,
       effectifPresent: s.controle?.effectifPresent ?? null,
       thematiqueTraitee: s.controle?.thematiqueTraitee ?? s.thematique ?? '',
-      observation: inclureObservations ? s.controle?.observation ?? '' : '',
+      observation: inclureObservations ? (s.controle?.observation ?? '') : '',
       methode: s.controle?.methode ?? null,
       attestation: s.controle?.attestation ?? null,
       attestationValide: s.controle?.attestationValide ?? false,

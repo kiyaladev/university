@@ -39,7 +39,11 @@ function preparer(options: { parametres?: Record<string, unknown>; seance?: any 
       findMany: jest.fn().mockResolvedValue([]),
       update: jest.fn().mockResolvedValue({}),
     },
-    salle: { findUnique: jest.fn().mockResolvedValue({ id: 'salle-1', code: 'A1', nom: 'Amphi A', actif: true, qrToken: 'secret-qr' }) },
+    salle: {
+      findUnique: jest
+        .fn()
+        .mockResolvedValue({ id: 'salle-1', code: 'A1', nom: 'Amphi A', actif: true, qrToken: 'secret-qr' }),
+    },
     controle: {
       findFirst: jest.fn().mockResolvedValue(null),
       findUnique: jest.fn().mockResolvedValue(null),
@@ -85,7 +89,10 @@ function preparer(options: { parametres?: Record<string, unknown>; seance?: any 
 describe('ControleService — déduction du statut de présence', () => {
   it('refuse au chef un pointage de séance appartenant à un autre département', async () => {
     const { service, prisma } = preparer({
-      seance: { ...SEANCE, affectation: { ...SEANCE.affectation, enseignant: { id: 'ens-2', departementId: 'dept-2' } } },
+      seance: {
+        ...SEANCE,
+        affectation: { ...SEANCE.affectation, enseignant: { id: 'ens-2', departementId: 'dept-2' } },
+      },
     });
     const chef = { ...CONTROLEUR, role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1' };
 
@@ -99,11 +106,14 @@ describe('ControleService — déduction du statut de présence', () => {
       seance: { ...SEANCE, controleurAssigneId: 'user-2', controle: null },
     });
 
+    await expect(service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, CONTROLEUR)).rejects.toThrow(
+      NotFoundException,
+    );
     await expect(
-      service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, CONTROLEUR),
-    ).rejects.toThrow(NotFoundException);
-    await expect(
-      service.pointer({ seanceId: 'seance-1', statut: StatutPresence.ABSENT }, { ...CONTROLEUR, departementId: 'dept-2' }),
+      service.pointer(
+        { seanceId: 'seance-1', statut: StatutPresence.ABSENT },
+        { ...CONTROLEUR, departementId: 'dept-2' },
+      ),
     ).rejects.toThrow(NotFoundException);
     expect(prisma.controle.create).not.toHaveBeenCalled();
     expect(prisma.controle.update).not.toHaveBeenCalled();
@@ -164,10 +174,7 @@ describe('ControleService — déduction du statut de présence', () => {
 
   it('déclare absent au-delà du délai configuré', async () => {
     const { service } = preparer();
-    const controle: any = await service.pointer(
-      { seanceId: 'seance-1', heureArrivee: '08:45' },
-      CONTROLEUR,
-    );
+    const controle: any = await service.pointer({ seanceId: 'seance-1', heureArrivee: '08:45' }, CONTROLEUR);
     expect(controle.statut).toBe(StatutPresence.ABSENT);
     expect(controle.dureeMinutes).toBe(0);
   });
@@ -189,19 +196,13 @@ describe('ControleService — déduction du statut de présence', () => {
 
   it('retient la durée planifiée quand les heures réelles manquent', async () => {
     const { service } = preparer();
-    const controle: any = await service.pointer(
-      { seanceId: 'seance-1', statut: StatutPresence.PRESENT },
-      CONTROLEUR,
-    );
+    const controle: any = await service.pointer({ seanceId: 'seance-1', statut: StatutPresence.PRESENT }, CONTROLEUR);
     expect(controle.dureeMinutes).toBe(120);
   });
 
   it('applique la tolérance paramétrée par l’établissement', async () => {
     const { service } = preparer({ parametres: { TOLERANCE_RETARD_MIN: 30 } });
-    const controle: any = await service.pointer(
-      { seanceId: 'seance-1', heureArrivee: '08:25' },
-      CONTROLEUR,
-    );
+    const controle: any = await service.pointer({ seanceId: 'seance-1', heureArrivee: '08:25' }, CONTROLEUR);
     expect(controle.statut).toBe(StatutPresence.PRESENT);
   });
 });
@@ -225,7 +226,11 @@ describe('ControleService — année académique clôturée', () => {
       seance: { ...SEANCE, anneeId: 'annee-close', affectation: { ...SEANCE.affectation, anneeId: 'annee-open' } },
     });
     prisma.$queryRaw.mockResolvedValue([{ cloturee: true }]);
-    prisma.controle.findUnique.mockResolvedValue({ id: 'c-existing', controleurId: CONTROLEUR.id, statut: StatutPresence.ABSENT });
+    prisma.controle.findUnique.mockResolvedValue({
+      id: 'c-existing',
+      controleurId: CONTROLEUR.id,
+      statut: StatutPresence.ABSENT,
+    });
 
     await expect(service.pointer({ seanceId: 'seance-1' }, CONTROLEUR)).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.controle.create).not.toHaveBeenCalled();
@@ -238,11 +243,16 @@ describe('ControleService — année académique clôturée', () => {
     prisma.controle.findUnique.mockResolvedValue({
       id: 'c-existing',
       controleurId: 'user-2',
-      seance: { anneeId: 'annee-close', affectation: { enseignant: { id: 'ens-1', departementId: 'dep-1' }, anneeId: 'annee-open' } },
+      seance: {
+        anneeId: 'annee-close',
+        affectation: { enseignant: { id: 'ens-1', departementId: 'dep-1' }, anneeId: 'annee-open' },
+      },
     });
     prisma.$queryRaw.mockResolvedValue([{ cloturee: true }]);
 
-    await expect(service.supprimer('c-existing', { ...CONTROLEUR, role: Role.ADMIN })).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.supprimer('c-existing', { ...CONTROLEUR, role: Role.ADMIN })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.controle.delete).not.toHaveBeenCalled();
   });
 });
@@ -267,18 +277,15 @@ describe('ControleService — preuves et garde-fous', () => {
 
   it('exige le QR quand le paramètre l’impose', async () => {
     const { service } = preparer({ parametres: { QR_OBLIGATOIRE: true } });
-    await expect(
-      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('refuse une position hors du rayon de la salle si la géolocalisation est exigée', async () => {
     const { service } = preparer({ parametres: { GEOLOC_OBLIGATOIRE: true } });
     await expect(
-      service.pointer(
-        { seanceId: 'seance-1', heureArrivee: '08:05', latitude: 9.55, longitude: -13.6875 },
-        CONTROLEUR,
-      ),
+      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', latitude: 9.55, longitude: -13.6875 }, CONTROLEUR),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
@@ -294,16 +301,16 @@ describe('ControleService — preuves et garde-fous', () => {
 
   it('exige le comptage des étudiants quand le paramètre l’impose', async () => {
     const { service } = preparer({ parametres: { EFFECTIF_OBLIGATOIRE: true } });
-    await expect(
-      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('refuse le pointage d’un enseignant présent sans aucune attestation', async () => {
     const { service } = preparer({ parametres: { ATTESTATION_OBLIGATOIRE: true } });
-    await expect(
-      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('accepte le pointage dès qu’un moyen d’attestation est fourni', async () => {
@@ -326,18 +333,15 @@ describe('ControleService — preuves et garde-fous', () => {
   it('exige la signature manuscrite quand elle est spécifiquement imposée', async () => {
     const { service } = preparer({ parametres: { SIGNATURE_OBLIGATOIRE: true } });
     await expect(
-      service.pointer(
-        { seanceId: 'seance-1', heureArrivee: '08:05', codePinEnseignant: '1234' },
-        CONTROLEUR,
-      ),
+      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05', codePinEnseignant: '1234' }, CONTROLEUR),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('refuse de pointer une séance annulée', async () => {
     const { service } = preparer({ seance: { ...SEANCE, statut: StatutSeance.ANNULEE } });
-    await expect(
-      service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.pointer({ seanceId: 'seance-1', heureArrivee: '08:05' }, CONTROLEUR)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('met la séance à jour et journalise le pointage', async () => {
@@ -367,9 +371,7 @@ describe('ControleService — preuves et garde-fous', () => {
 describe('ControleService — synchronisation hors ligne', () => {
   it('isole les échecs sans interrompre le lot', async () => {
     const { service, prisma } = preparer();
-    prisma.seance.findUnique
-      .mockResolvedValueOnce(SEANCE)
-      .mockResolvedValueOnce(null); // deuxième séance inconnue
+    prisma.seance.findUnique.mockResolvedValueOnce(SEANCE).mockResolvedValueOnce(null); // deuxième séance inconnue
 
     const res = await service.synchroniser(
       {
@@ -397,7 +399,6 @@ describe('ControleService — synchronisation hors ligne', () => {
   });
 });
 
-
 describe('ControleService — périmètre de consultation', () => {
   const enseignant: AuthUser = { ...CONTROLEUR, role: Role.ENSEIGNANT, enseignantId: 'ens-1' };
   const chef: AuthUser = { ...CONTROLEUR, role: Role.CHEF_DEPARTEMENT, departementId: 'dep-1' };
@@ -410,9 +411,11 @@ describe('ControleService — périmètre de consultation', () => {
     prisma.controle.findMany = jest.fn().mockResolvedValue([]);
     prisma.controle.count = jest.fn().mockResolvedValue(0);
     await service.liste(query, user);
-    expect(prisma.controle.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ seance: { affectation: expected } }),
-    }));
+    expect(prisma.controle.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ seance: { affectation: expected } }),
+      }),
+    );
     expect(prisma.controle.count).toHaveBeenCalledWith({ where: prisma.controle.findMany.mock.calls[0][0].where });
   });
 
@@ -429,12 +432,14 @@ describe('ControleService — périmètre de consultation', () => {
 
     prisma.controle.findFirst.mockResolvedValue({ id: 'controle-1' });
     await service.findOne('controle-autre', controleur);
-    expect(prisma.controle.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 'controle-autre',
-        seance: { affectation: { enseignant: { departementId: 'dept-1' } } },
-      },
-    }));
+    expect(prisma.controle.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'controle-autre',
+          seance: { affectation: { enseignant: { departementId: 'dept-1' } } },
+        },
+      }),
+    );
   });
 
   it('retourne aux rôles terrain une projection sans signature, GPS, observation ni score biométrique', async () => {
@@ -485,11 +490,12 @@ describe('ControleService — périmètre de consultation', () => {
     prisma.controle.findFirst.mockResolvedValue(null);
     await expect(service.findOne('controle-autre', CONTROLEUR)).rejects.toBeInstanceOf(NotFoundException);
     expect(prisma.controle.findFirst.mock.calls[0][0].where).toEqual({
-      id: 'controle-autre', controleurId: CONTROLEUR.id,
+      id: 'controle-autre',
+      controleurId: CONTROLEUR.id,
     });
   });
 
-  it.each([enseignant, chef])('refuse un contrôle hors périmètre même avec son identifiant', async user => {
+  it.each([enseignant, chef])('refuse un contrôle hors périmètre même avec son identifiant', async (user) => {
     const { service, prisma } = preparer();
     prisma.controle.findFirst.mockResolvedValue(null);
     await expect(service.findOne('controle-autre', user)).rejects.toBeInstanceOf(NotFoundException);
@@ -532,10 +538,7 @@ describe('QR de salle — projection et périmètre', () => {
     await service.parQrSalle('secret-qr', CONTROLEUR);
     expect(prisma.seance.findMany.mock.calls[0][0].where).toMatchObject({
       salleId: 'salle-1',
-      OR: [
-        { controleurAssigneId: CONTROLEUR.id },
-        { controle: { is: { controleurId: CONTROLEUR.id } } },
-      ],
+      OR: [{ controleurAssigneId: CONTROLEUR.id }, { controle: { is: { controleurId: CONTROLEUR.id } } }],
     });
   });
 });
@@ -543,8 +546,14 @@ describe('QR de salle — projection et périmètre', () => {
 describe('ControleService — journal de corrections', () => {
   it('conserve les valeurs avant/après sans les preuves biométriques', async () => {
     const { service, prisma } = preparer();
-    prisma.controle.findUnique.mockResolvedValue({ id: 'c1', controleurId: CONTROLEUR.id,
-      statut: 'ABSENT', dureeMinutes: 0, signatureBase64: 'secret-signature', empreinteTemplate: 'secret-template' });
+    prisma.controle.findUnique.mockResolvedValue({
+      id: 'c1',
+      controleurId: CONTROLEUR.id,
+      statut: 'ABSENT',
+      dureeMinutes: 0,
+      signatureBase64: 'secret-signature',
+      empreinteTemplate: 'secret-template',
+    });
     await service.pointer({ seanceId: 'seance-1', heureArrivee: '08:10', heureFinReelle: '09:55' }, CONTROLEUR);
     const details = JSON.parse(prisma.auditLog.create.mock.calls[0][0].data.details);
     expect(details.avant.statut).toBe('ABSENT');
@@ -556,17 +565,28 @@ describe('ControleService — journal de corrections', () => {
     const { service, prisma } = preparer();
     prisma.auditLog.findMany = jest.fn().mockResolvedValue([]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(0);
-    await service.audit({ entite: 'Controle', action: 'POINTAGE_CORRECTION', userId: 'actor', acteur: 'Diallo',
-      dateDebut: '2026-01-01T00:00:00Z', dateFin: '2026-02-01T00:00:00Z' });
+    await service.audit({
+      entite: 'Controle',
+      action: 'POINTAGE_CORRECTION',
+      userId: 'actor',
+      acteur: 'Diallo',
+      dateDebut: '2026-01-01T00:00:00Z',
+      dateFin: '2026-02-01T00:00:00Z',
+    });
     const where = prisma.auditLog.findMany.mock.calls[0][0].where;
     expect(where).toEqual({
-      entite: 'Controle', action: 'POINTAGE_CORRECTION', userId: 'actor',
-      user: { OR: [
-        { nom: { contains: 'Diallo', mode: 'insensitive' } },
-        { prenom: { contains: 'Diallo', mode: 'insensitive' } },
-      ] },
+      entite: 'Controle',
+      action: 'POINTAGE_CORRECTION',
+      userId: 'actor',
+      user: {
+        OR: [
+          { nom: { contains: 'Diallo', mode: 'insensitive' } },
+          { prenom: { contains: 'Diallo', mode: 'insensitive' } },
+        ],
+      },
       createdAt: {
-        gte: new Date('2026-01-01T00:00:00Z'), lte: new Date('2026-02-01T23:59:59.999Z'),
+        gte: new Date('2026-01-01T00:00:00Z'),
+        lte: new Date('2026-02-01T23:59:59.999Z'),
       },
     });
     expect(prisma.auditLog.count).toHaveBeenCalledWith({ where });
@@ -574,33 +594,51 @@ describe('ControleService — journal de corrections', () => {
 
   it('expose le résumé d’un lot SMS et masque tout champ inattendu', async () => {
     const { service, prisma } = preparer();
-    prisma.auditLog.findMany = jest.fn().mockResolvedValue([{
-      action: 'SMS_DIFFUSION_DEMANDEE',
-      details: JSON.stringify({
-        lotId: '00000000-0000-4000-8000-000000000001', canal: 'SMS', statutInitial: 'EN_ATTENTE',
-        nombreDestinataires: 3, messagesPresents: 2,
-        telephone: '+224620000000', destinataireNom: 'Nom privé',
-        message: 'Contenu privé', reponseFournisseur: 'secret',
-      }),
-    }]);
+    prisma.auditLog.findMany = jest.fn().mockResolvedValue([
+      {
+        action: 'SMS_DIFFUSION_DEMANDEE',
+        details: JSON.stringify({
+          lotId: '00000000-0000-4000-8000-000000000001',
+          canal: 'SMS',
+          statutInitial: 'EN_ATTENTE',
+          nombreDestinataires: 3,
+          messagesPresents: 2,
+          telephone: '+224620000000',
+          destinataireNom: 'Nom privé',
+          message: 'Contenu privé',
+          reponseFournisseur: 'secret',
+        }),
+      },
+    ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(1);
 
     const result = await service.audit({} as any);
 
     expect(JSON.parse(result.data[0].details)).toEqual({
-      lotId: '00000000-0000-4000-8000-000000000001', canal: 'SMS', statutInitial: 'EN_ATTENTE',
-      nombreDestinataires: 3, messagesPresents: 2,
+      lotId: '00000000-0000-4000-8000-000000000001',
+      canal: 'SMS',
+      statutInitial: 'EN_ATTENTE',
+      nombreDestinataires: 3,
+      messagesPresents: 2,
     });
     expect(JSON.stringify(result)).not.toMatch(/\+224620000000|Nom privé|Contenu privé|secret/);
   });
 
   it('masque un résumé SMS mal formé au lieu de le publier', async () => {
     const { service, prisma } = preparer();
-    prisma.auditLog.findMany = jest.fn().mockResolvedValue([{
-      action: 'SMS_DIFFUSION_DEMANDEE',
-      details: JSON.stringify({ lotId: '00000000-0000-4000-8000-000000000001', canal: 'SMS', statutInitial: 'EN_ATTENTE',
-        nombreDestinataires: 51, messagesPresents: 0, telephone: '+224620000000' }),
-    }]);
+    prisma.auditLog.findMany = jest.fn().mockResolvedValue([
+      {
+        action: 'SMS_DIFFUSION_DEMANDEE',
+        details: JSON.stringify({
+          lotId: '00000000-0000-4000-8000-000000000001',
+          canal: 'SMS',
+          statutInitial: 'EN_ATTENTE',
+          nombreDestinataires: 51,
+          messagesPresents: 0,
+          telephone: '+224620000000',
+        }),
+      },
+    ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(1);
 
     const result = await service.audit({} as any);
@@ -626,39 +664,56 @@ describe('ControleService — journal de corrections', () => {
       { action: 'ETUDIANT_CREE', details: 'MAT-01 — Nom Prénom' },
       { action: 'PLAGIAT_ACQUITTE', details: 'Mémoire sensible : commentaire privé' },
       { action: 'EXAMEN_SCAN_REJETE', details: 'EX-01 — référence scannée privée' },
-      { action: 'ATTESTATION_MODIFICATION', details: JSON.stringify({
-        avant: { id: 'att-1', motif: 'usage avant privé' },
-        apres: { id: 'att-1', motif: 'usage après privé' },
-      }) },
-      { action: 'ATTRIBUTION_RETIREE', details: JSON.stringify({
-        motif: 'motif de retrait privé',
-        avant: { id: 'log-1', retireeMotif: null },
-        apres: { id: 'log-1', retireeMotif: 'donnée privée' },
-      }) },
+      {
+        action: 'ATTESTATION_MODIFICATION',
+        details: JSON.stringify({
+          avant: { id: 'att-1', motif: 'usage avant privé' },
+          apres: { id: 'att-1', motif: 'usage après privé' },
+        }),
+      },
+      {
+        action: 'ATTRIBUTION_RETIREE',
+        details: JSON.stringify({
+          motif: 'motif de retrait privé',
+          avant: { id: 'log-1', retireeMotif: null },
+          apres: { id: 'log-1', retireeMotif: 'donnée privée' },
+        }),
+      },
     ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(9);
 
     const result = await service.audit({} as any);
 
     expect(JSON.parse(result.data[0].details)).toEqual({
-      avant: { statut: 'ABSENT' }, apres: { statut: 'EXCUSE' },
+      avant: { statut: 'ABSENT' },
+      apres: { statut: 'EXCUSE' },
     });
     expect(result.data[1].details).toBe('QR régénéré');
     expect(result.data.slice(2, 7).every((ligne: any) => ligne.details === '[détails masqués]')).toBe(true);
     expect(JSON.parse(result.data[7].details)).toEqual({ avant: { id: 'att-1' }, apres: { id: 'att-1' } });
     expect(JSON.parse(result.data[8].details)).toEqual({ avant: { id: 'log-1' }, apres: { id: 'log-1' } });
-    expect(JSON.stringify(result)).not.toMatch(/diagnostic privé|usage avant privé|usage après privé|donnée privée|UP-PAT-SECRET|référence scannée privée|198\.51\.100\.42/);
+    expect(JSON.stringify(result)).not.toMatch(
+      /diagnostic privé|usage avant privé|usage après privé|donnée privée|UP-PAT-SECRET|référence scannée privée|198\.51\.100\.42/,
+    );
   });
 
   it('masque les détails de paie pour ne pas exposer les rémunérations dans le Journal', async () => {
     const { service, prisma } = preparer();
-    prisma.auditLog.findMany = jest.fn().mockResolvedValue([{
-      action: 'PAIE_RECALCULEE',
-      details: JSON.stringify({
-        avant: { montantTotal: 120000, lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 5000, montantBrut: 120000 }] },
-        apres: { montantTotal: 108000, lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 5000, retenue: 12000, montantNet: 108000 }] },
-      }),
-    }]);
+    prisma.auditLog.findMany = jest.fn().mockResolvedValue([
+      {
+        action: 'PAIE_RECALCULEE',
+        details: JSON.stringify({
+          avant: {
+            montantTotal: 120000,
+            lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 5000, montantBrut: 120000 }],
+          },
+          apres: {
+            montantTotal: 108000,
+            lignes: [{ enseignantId: 'enseignant-1', tauxHoraire: 5000, retenue: 12000, montantNet: 108000 }],
+          },
+        }),
+      },
+    ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(1);
 
     const result = await service.audit({} as any);
@@ -749,7 +804,11 @@ describe('ControleService — journal de corrections', () => {
         user: { nom: 'Électeur privé', prenom: 'Nom' },
         details: 'jeton-de-scrutin',
       },
-      { action: 'ELECTION_OUVERTE', user: null, details: '{"avant":{"statut":"BROUILLON"},"apres":{"statut":"OUVERTE"}}' },
+      {
+        action: 'ELECTION_OUVERTE',
+        user: null,
+        details: '{"avant":{"statut":"BROUILLON"},"apres":{"statut":"OUVERTE"}}',
+      },
     ]);
     prisma.auditLog.count = jest.fn().mockResolvedValue(1);
 
@@ -757,12 +816,16 @@ describe('ControleService — journal de corrections', () => {
 
     expect(result.data).toHaveLength(1);
     expect(result.data[0].action).toBe('ELECTION_OUVERTE');
-    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ action: { not: 'VOTE_DEPOSE' } }),
-    }));
-    expect(prisma.auditLog.count).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ action: { not: 'VOTE_DEPOSE' } }),
-    }));
+    expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ action: { not: 'VOTE_DEPOSE' } }),
+      }),
+    );
+    expect(prisma.auditLog.count).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ action: { not: 'VOTE_DEPOSE' } }),
+      }),
+    );
     expect(JSON.stringify(result)).not.toMatch(/VOTE_DEPOSE|Électeur privé|jeton-de-scrutin/);
   });
 

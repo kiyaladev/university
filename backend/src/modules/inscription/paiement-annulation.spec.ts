@@ -27,7 +27,8 @@ function preparer(liens: Record<string, unknown> = {}, statut: StatutPaiement = 
   };
   const tx: any = {
     paiement: {
-      findUnique: jest.fn()
+      findUnique: jest
+        .fn()
         .mockResolvedValueOnce(paiement)
         .mockResolvedValueOnce({ ...paiement, statut: StatutPaiement.ANNULE }),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -45,9 +46,21 @@ describe('Annulation des paiements — garde-fou des autres portefeuilles', () =
 
   it.each([
     ['une recharge resto', { recharges: [{ id: 'recharge-1' }] }, 'inscription.paiement_resto_annule_par_la_recharge'],
-    ['une recette externe', { rechargesRecette: { id: 'recette-1' } }, 'inscription.paiement_recette_geree_par_les_recettes'],
-    ['une demande de document', { demandeDocument: { id: 'demande-1' } }, 'inscription.paiement_document_annule_par_la_demande'],
-    ['une formation', { inscriptionFormation: { id: 'if-1' } }, 'inscription.paiement_formation_annule_par_la_formation'],
+    [
+      'une recette externe',
+      { rechargesRecette: { id: 'recette-1' } },
+      'inscription.paiement_recette_geree_par_les_recettes',
+    ],
+    [
+      'une demande de document',
+      { demandeDocument: { id: 'demande-1' } },
+      'inscription.paiement_document_annule_par_la_demande',
+    ],
+    [
+      'une formation',
+      { inscriptionFormation: { id: 'if-1' } },
+      'inscription.paiement_formation_annule_par_la_formation',
+    ],
   ])('refuse un paiement lié à %s sans rien écrire', async (_libelle, liens, message) => {
     const { tx, service } = preparer(liens);
 
@@ -74,12 +87,19 @@ describe('Annulation des paiements — garde-fou des autres portefeuilles', () =
   it('annule toujours un paiement d’inscription en attente, avec son journal', async () => {
     const { tx, service } = preparer();
 
-    await expect(service.annulerPaiement('paiement-1', dto, agent))
-      .resolves.toMatchObject({ statut: StatutPaiement.ANNULE });
-    expect(tx.paiement.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'paiement-1', statut: StatutPaiement.EN_ATTENTE },
-      data: expect.objectContaining({ statut: StatutPaiement.ANNULE, annuleParId: 'agent-1', motifAnnulation: 'Saisie en double' }),
-    }));
+    await expect(service.annulerPaiement('paiement-1', dto, agent)).resolves.toMatchObject({
+      statut: StatutPaiement.ANNULE,
+    });
+    expect(tx.paiement.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'paiement-1', statut: StatutPaiement.EN_ATTENTE },
+        data: expect.objectContaining({
+          statut: StatutPaiement.ANNULE,
+          annuleParId: 'agent-1',
+          motifAnnulation: 'Saisie en double',
+        }),
+      }),
+    );
     expect(tx.auditLog.create.mock.calls[0][0].data.action).toBe('PAIEMENT_ANNULE');
   });
 
@@ -95,10 +115,34 @@ describe('Liste /paiements — source calculée', () => {
   it('garde toutes les lignes, ajoute `source` et ne renvoie pas les liens techniques', async () => {
     const lignes = [
       { id: 'p-ins', inscriptionFormation: null, recharges: [], rechargesRecette: null, demandeDocument: null },
-      { id: 'p-for', inscriptionFormation: { id: 'if-1', numero: 'F-1' }, recharges: [], rechargesRecette: null, demandeDocument: null },
-      { id: 'p-res', inscriptionFormation: null, recharges: [{ id: 'r-1' }], rechargesRecette: null, demandeDocument: null },
-      { id: 'p-rec', inscriptionFormation: null, recharges: [], rechargesRecette: { id: 'rec-1' }, demandeDocument: null },
-      { id: 'p-doc', inscriptionFormation: null, recharges: [], rechargesRecette: null, demandeDocument: { id: 'd-1' } },
+      {
+        id: 'p-for',
+        inscriptionFormation: { id: 'if-1', numero: 'F-1' },
+        recharges: [],
+        rechargesRecette: null,
+        demandeDocument: null,
+      },
+      {
+        id: 'p-res',
+        inscriptionFormation: null,
+        recharges: [{ id: 'r-1' }],
+        rechargesRecette: null,
+        demandeDocument: null,
+      },
+      {
+        id: 'p-rec',
+        inscriptionFormation: null,
+        recharges: [],
+        rechargesRecette: { id: 'rec-1' },
+        demandeDocument: null,
+      },
+      {
+        id: 'p-doc',
+        inscriptionFormation: null,
+        recharges: [],
+        rechargesRecette: null,
+        demandeDocument: { id: 'd-1' },
+      },
     ];
     const prisma: any = {
       paiement: { findMany: jest.fn().mockResolvedValue(lignes), count: jest.fn().mockResolvedValue(5) },
@@ -122,7 +166,10 @@ describe('Liste /paiements — source calculée', () => {
       expect(p).not.toHaveProperty('demandeDocument');
     }
     // La sélection riche de la formation l'emporte sur celle du calcul de source.
-    expect(prisma.paiement.findMany.mock.calls[0][0].include.inscriptionFormation.select)
-      .toMatchObject({ numero: true, formationId: true, statut: true });
+    expect(prisma.paiement.findMany.mock.calls[0][0].include.inscriptionFormation.select).toMatchObject({
+      numero: true,
+      formationId: true,
+      statut: true,
+    });
   });
 });

@@ -132,13 +132,12 @@ function langue(lang: string): string {
 
 /** Document HTML A4 complet : enveloppe et style commun autour du contenu. */
 export function pageA4(options: OptionsPageA4): string {
-  const nom = typeof options.etablissement === 'string'
-    ? options.etablissement
-    : options.etablissement?.nom ?? '';
-  const entete = options.entete === undefined
-    ? `<div class="etab">${echapper(nom)}</div>
+  const nom = typeof options.etablissement === 'string' ? options.etablissement : (options.etablissement?.nom ?? '');
+  const entete =
+    options.entete === undefined
+      ? `<div class="etab">${echapper(nom)}</div>
     <div class="titre">${echapper(options.titre)}</div>`
-    : options.entete;
+      : options.entete;
 
   return `<!doctype html>
 <html lang="${echapper(langue(options.lang))}"><head><meta charset="utf-8">
@@ -146,11 +145,23 @@ export function pageA4(options: OptionsPageA4): string {
 <meta name="author" content="${echapper(nom)}">
 <style>${styleImpression(options.orientation, options.marge)}${options.styles ?? ''}</style></head>
 <body>
-${entete ? `  <header>
+${
+  entete
+    ? `  <header>
     ${entete}
   </header>
-` : ''}  ${options.corps}
-${options.piedDePage !== undefined ? `  <footer>${options.piedDePage}</footer>
-` : ''}${options.impressionAuto === false ? '' : `  ${IMPRESSION_AUTO}
-`}</body></html>`;
+`
+    : ''
+}  ${options.corps}
+${
+  options.piedDePage !== undefined
+    ? `  <footer>${options.piedDePage}</footer>
+`
+    : ''
+}${
+    options.impressionAuto === false
+      ? ''
+      : `  ${IMPRESSION_AUTO}
+`
+  }</body></html>`;
 }

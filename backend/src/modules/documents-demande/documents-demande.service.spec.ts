@@ -15,8 +15,13 @@ describe('Sécurité des demandes de documents', () => {
   it('refuse le rattachement à une inscription tierce avant de créer une demande', async () => {
     const db = { inscription: { findFirst: jest.fn().mockResolvedValue(null) }, $transaction: jest.fn() };
     const service = new DocumentsDemandeService(db as any);
-    await expect(service.creer({ type: 'ATTESTATION_SCOLARITE', inscriptionId: 'foreign' }, user)).rejects.toThrow(NotFoundException);
-    expect(db.inscription.findFirst).toHaveBeenCalledWith({ where: { id: 'foreign', etudiantId: 'owner' }, select: { id: true } });
+    await expect(service.creer({ type: 'ATTESTATION_SCOLARITE', inscriptionId: 'foreign' }, user)).rejects.toThrow(
+      NotFoundException,
+    );
+    expect(db.inscription.findFirst).toHaveBeenCalledWith({
+      where: { id: 'foreign', etudiantId: 'owner' },
+      select: { id: true },
+    });
     expect(db.$transaction).not.toHaveBeenCalled();
   });
   it('refuse la confirmation simulée par un étudiant en production', async () => {
@@ -27,16 +32,20 @@ describe('Sécurité des demandes de documents', () => {
     try {
       await expect(service.payer('doc', { mode: 'ESPECES', simuler: true }, user)).rejects.toThrow(BadRequestException);
       expect(load).not.toHaveBeenCalled();
-    } finally { process.env.NODE_ENV = oldEnv; }
+    } finally {
+      process.env.NODE_ENV = oldEnv;
+    }
   });
 
   it('filtre le détail par propriétaire dans la requête et masque un identifiant tiers', async () => {
     const db = { demandeDocument: { findFirst: jest.fn().mockResolvedValue(null) } };
     const service = new DocumentsDemandeService(db as any);
     await expect(service.findOnePour('demande-autre', user)).rejects.toThrow(NotFoundException);
-    expect(db.demandeDocument.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'demande-autre', etudiantId: 'owner' },
-    }));
+    expect(db.demandeDocument.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'demande-autre', etudiantId: 'owner' },
+      }),
+    );
   });
 
   it('permet au personnel autorisé de charger le détail par identifiant', async () => {
@@ -44,8 +53,10 @@ describe('Sécurité des demandes de documents', () => {
     const db = { demandeDocument: { findFirst: jest.fn().mockResolvedValue(demande) } };
     const service = new DocumentsDemandeService(db as any);
     await expect(service.findOnePour('demande-1', { ...user, role: Role.SCOLARITE } as any)).resolves.toBe(demande);
-    expect(db.demandeDocument.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'demande-1' },
-    }));
+    expect(db.demandeDocument.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'demande-1' },
+      }),
+    );
   });
 });

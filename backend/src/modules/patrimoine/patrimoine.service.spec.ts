@@ -11,9 +11,12 @@ describe('Résolution publique des QR du patrimoine', () => {
 
   it('renvoie une projection limitée aux informations utiles et exclut les équipements inactifs', async () => {
     const equipement = {
-      id: 'eq-1', libelle: 'Projecteur', actif: true,
+      id: 'eq-1',
+      libelle: 'Projecteur',
+      actif: true,
       categorie: { id: 'cat-1', code: 'VIDEO', libelle: 'Audiovisuel' },
-      departement: { nom: 'Informatique' }, salle: { id: 's-1', code: 'A12', nom: 'Salle A12' },
+      departement: { nom: 'Informatique' },
+      salle: { id: 's-1', code: 'A12', nom: 'Salle A12' },
     };
     const { db, service } = prepare(equipement);
 
@@ -40,8 +43,12 @@ describe('Résolution publique des QR du patrimoine', () => {
 
   it('n’écrit jamais le nouveau jeton QR dans le journal', async () => {
     const avant = {
-      id: 'eq-1', numeroInventaire: 'PAT-001', numeroSerie: 'SN-1', libelle: 'Projecteur',
-      categorieId: 'cat-1', qrCode: 'UP-PAT-jeton-ancien',
+      id: 'eq-1',
+      numeroInventaire: 'PAT-001',
+      numeroSerie: 'SN-1',
+      libelle: 'Projecteur',
+      categorieId: 'cat-1',
+      qrCode: 'UP-PAT-jeton-ancien',
     };
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ id: 'eq-1' }]),
@@ -88,12 +95,16 @@ describe('Tableau de bord patrimoine par année académique', () => {
 
     await service.dashboard('annee-1');
 
-    expect(prisma.equipementPatrimoine.aggregate).toHaveBeenCalledWith(expect.objectContaining({
-      where: { actif: true, dateAcquisition: { gte: debut, lte: fin } },
-    }));
-    expect(prisma.equipementPatrimoine.groupBy).toHaveBeenCalledWith(expect.objectContaining({
-      where: { actif: true, dateAcquisition: { gte: debut, lte: fin } },
-    }));
+    expect(prisma.equipementPatrimoine.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { actif: true, dateAcquisition: { gte: debut, lte: fin } },
+      }),
+    );
+    expect(prisma.equipementPatrimoine.groupBy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { actif: true, dateAcquisition: { gte: debut, lte: fin } },
+      }),
+    );
   });
 
   it('refuse un identifiant d’année inconnu', async () => {

@@ -2,15 +2,29 @@ import { UsersService } from './users';
 
 describe('projection des comptes utilisateurs', () => {
   const secret = {
-    id: 'user-1', email: 'admin@example.test', password: '$2a$hash', role: 'ADMIN',
-    nom: 'Diallo', prenom: 'Awa', telephone: '+224600000000', actif: true,
-    departementId: null, tentativesEchouees: 9, verrouilleJusqua: new Date(),
+    id: 'user-1',
+    email: 'admin@example.test',
+    password: '$2a$hash',
+    role: 'ADMIN',
+    nom: 'Diallo',
+    prenom: 'Awa',
+    telephone: '+224600000000',
+    actif: true,
+    departementId: null,
+    tentativesEchouees: 9,
+    verrouilleJusqua: new Date(),
     motDePasseModifieLe: new Date(),
   };
 
   const selection = {
-    id: true, email: true, nom: true, prenom: true, telephone: true,
-    role: true, actif: true, departementId: true,
+    id: true,
+    email: true,
+    nom: true,
+    prenom: true,
+    telephone: true,
+    role: true,
+    actif: true,
+    departementId: true,
   };
 
   it('limite la lecture par identifiant aux champs de profil et exclut tous les secrets', async () => {
@@ -22,8 +36,14 @@ describe('projection des comptes utilisateurs', () => {
     const service = new UsersService(prisma);
 
     await expect(service.findOne('user-1')).resolves.toEqual({
-      id: 'user-1', email: 'admin@example.test', role: 'ADMIN',
-      nom: 'Diallo', prenom: 'Awa', telephone: '+224600000000', actif: true, departementId: null,
+      id: 'user-1',
+      email: 'admin@example.test',
+      role: 'ADMIN',
+      nom: 'Diallo',
+      prenom: 'Awa',
+      telephone: '+224600000000',
+      actif: true,
+      departementId: null,
     });
     expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { id: 'user-1' }, select: selection });
   });
@@ -39,10 +59,18 @@ describe('projection des comptes utilisateurs', () => {
 
     const resultat = await service.list({} as any);
 
-    expect(resultat.data).toEqual([{
-      id: 'user-1', email: 'admin@example.test', role: 'ADMIN',
-      nom: 'Diallo', prenom: 'Awa', telephone: '+224600000000', actif: true, departementId: null,
-    }]);
+    expect(resultat.data).toEqual([
+      {
+        id: 'user-1',
+        email: 'admin@example.test',
+        role: 'ADMIN',
+        nom: 'Diallo',
+        prenom: 'Awa',
+        telephone: '+224600000000',
+        actif: true,
+        departementId: null,
+      },
+    ]);
     expect(prisma.user.findMany.mock.calls[0][0].select).toEqual(selection);
   });
 
@@ -59,20 +87,28 @@ describe('projection des comptes utilisateurs', () => {
 
     const resultat = await service.modifier('user-1', { password: 'Nouveau@2026' } as any);
 
-    expect(tx.user.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'user-1' },
-      select: { ...selection, password: true },
-      data: expect.objectContaining({
-        password: expect.any(String),
-        motDePasseModifieLe: expect.any(Date),
-        tentativesEchouees: 0,
-        verrouilleJusqua: null,
+    expect(tx.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'user-1' },
+        select: { ...selection, password: true },
+        data: expect.objectContaining({
+          password: expect.any(String),
+          motDePasseModifieLe: expect.any(Date),
+          tentativesEchouees: 0,
+          verrouilleJusqua: null,
+        }),
       }),
-    }));
+    );
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(resultat).toEqual({
-      id: 'user-1', email: 'admin@example.test', role: 'ADMIN',
-      nom: 'Diallo', prenom: 'Awa', telephone: '+224600000000', actif: true, departementId: null,
+      id: 'user-1',
+      email: 'admin@example.test',
+      role: 'ADMIN',
+      nom: 'Diallo',
+      prenom: 'Awa',
+      telephone: '+224600000000',
+      actif: true,
+      departementId: null,
     });
     const details = tx.auditLog.create.mock.calls[0][0].data.details;
     expect(details).toContain('motDePasse');

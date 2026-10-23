@@ -12,17 +12,20 @@ export class ParametresController {
   constructor(private readonly service: ParametresService) {}
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
-  @Get('pointage') reglesPointage() {
+  @Get('pointage')
+  reglesPointage() {
     return this.service.reglesPointage();
   }
 
   @Roles(Role.ADMIN)
-  @Get() liste() {
+  @Get()
+  liste() {
     return this.service.liste();
   }
 
   @Roles(Role.ADMIN)
-  @Put() enregistrer(@Body() dto: UpdateParametresDto, @CurrentUser() user: AuthUser) {
+  @Put()
+  enregistrer(@Body() dto: UpdateParametresDto, @CurrentUser() user: AuthUser) {
     return this.service.enregistrer(dto, user);
   }
 }

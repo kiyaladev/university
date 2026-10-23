@@ -170,9 +170,12 @@ export class AttestationsService {
     });
     if (!etudiant) throw new NotFoundException(t('attestations.etudiant_introuvable'));
 
-    const inscriptionInitiale = dto.inscriptionId ? await this.prisma.inscription.findUnique({
-      where: { id: dto.inscriptionId }, select: { anneeId: true },
-    }) : null;
+    const inscriptionInitiale = dto.inscriptionId
+      ? await this.prisma.inscription.findUnique({
+          where: { id: dto.inscriptionId },
+          select: { anneeId: true },
+        })
+      : null;
     if (dto.inscriptionId && !inscriptionInitiale) {
       throw new BadRequestException(t('attestations.inscription_introuvable'));
     }
@@ -207,10 +210,12 @@ export class AttestationsService {
     user: AuthUser,
     options: { reutiliserLibre?: boolean } = {},
   ) {
-    const promotion = dto.promotionId ? await tx.promotion.findUnique({
-      where: { id: dto.promotionId },
-      select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
-    }) : null;
+    const promotion = dto.promotionId
+      ? await tx.promotion.findUnique({
+          where: { id: dto.promotionId },
+          select: { id: true, anneeId: true, annee: { select: { libelle: true } } },
+        })
+      : null;
     if (dto.promotionId && !promotion) {
       throw new BadRequestException(t('common.academicPromotionNotFound'));
     }
@@ -230,8 +235,11 @@ export class AttestationsService {
         select: { etudiantId: true, anneeId: true, promotionId: true },
       });
       if (!inscription) throw new BadRequestException(t('attestations.inscription_introuvable'));
-      if (inscription.etudiantId !== dto.etudiantId || inscription.anneeId !== anneeIdRetenue
-        || (dto.promotionId && inscription.promotionId !== dto.promotionId)) {
+      if (
+        inscription.etudiantId !== dto.etudiantId ||
+        inscription.anneeId !== anneeIdRetenue ||
+        (dto.promotionId && inscription.promotionId !== dto.promotionId)
+      ) {
         throw new BadRequestException(t('attestations.rattachement_incoherent'));
       }
       promotionIdRetenue = inscription.promotionId;
@@ -250,9 +258,14 @@ export class AttestationsService {
       // Demande de document : une attestation déjà émise à la main et libre
       // (rattachée à aucune demande) est réutilisée au lieu d'être dupliquée.
       if (options.reutiliserLibre) {
-        const lien = await tx.demandeDocument.findUnique({ where: { attestationId: doublon.id }, select: { id: true } });
+        const lien = await tx.demandeDocument.findUnique({
+          where: { attestationId: doublon.id },
+          select: { id: true },
+        });
         if (!lien) return doublon;
-        throw new ConflictException(t('documents-demande.attestation_deja_liee_a_une_autre_demande', { numero: doublon.numero }));
+        throw new ConflictException(
+          t('documents-demande.attestation_deja_liee_a_une_autre_demande', { numero: doublon.numero }),
+        );
       }
       throw new ConflictException(
         t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { numero: doublon.numero }),
@@ -274,7 +287,10 @@ export class AttestationsService {
       },
       include: ATTESTATION_INCLUDE,
     });
-    await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, { avant: null, apres: this.instantaneAudit(cree) });
+    await journaliser(tx, user, 'ATTESTATION_EMISE', 'Attestation', cree.id, {
+      avant: null,
+      apres: this.instantaneAudit(cree),
+    });
     return cree;
   }
 
@@ -287,7 +303,10 @@ export class AttestationsService {
   async emettrePourDemandeTx(tx: Prisma.TransactionClient, dto: CreateAttestationDto, user: AuthUser) {
     let anneeId = dto.anneeId;
     if (!anneeId && dto.inscriptionId) {
-      const inscription = await tx.inscription.findUnique({ where: { id: dto.inscriptionId }, select: { anneeId: true } });
+      const inscription = await tx.inscription.findUnique({
+        where: { id: dto.inscriptionId },
+        select: { anneeId: true },
+      });
       if (!inscription) throw new BadRequestException(t('attestations.inscription_introuvable'));
       anneeId = inscription.anneeId;
     }
@@ -318,10 +337,18 @@ export class AttestationsService {
       }
       if (dto.type != null && dto.type !== actuel.type) {
         const doublon = await tx.attestation.findFirst({
-          where: { id: { not: id }, etudiantId: actuel.etudiantId, anneeId: actuel.anneeId,
-            type: dto.type, statut: StatutAttestation.EMISE },
+          where: {
+            id: { not: id },
+            etudiantId: actuel.etudiantId,
+            anneeId: actuel.anneeId,
+            type: dto.type,
+            statut: StatutAttestation.EMISE,
+          },
         });
-        if (doublon) throw new ConflictException(t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { numero: doublon.numero }));
+        if (doublon)
+          throw new ConflictException(
+            t('attestations.une_attestation_doublon_numero_est_deja_emise_pour_cet_etudi', { numero: doublon.numero }),
+          );
       }
       const miseAJour = await tx.attestation.update({
         where: { id },
@@ -331,14 +358,10 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await journaliser(
-        tx,
-        user,
-        'ATTESTATION_MODIFICATION',
-        'Attestation',
-        id,
-        { avant: this.instantaneAudit(actuel), apres: this.instantaneAudit(miseAJour) },
-      );
+      await journaliser(tx, user, 'ATTESTATION_MODIFICATION', 'Attestation', id, {
+        avant: this.instantaneAudit(actuel),
+        apres: this.instantaneAudit(miseAJour),
+      });
       return miseAJour;
     });
   }
@@ -363,14 +386,10 @@ export class AttestationsService {
         },
         include: ATTESTATION_INCLUDE,
       });
-      await journaliser(
-        tx,
-        user,
-        'ATTESTATION_REVOCATION',
-        'Attestation',
-        id,
-        { avant: this.instantaneAudit(attestation), apres: this.instantaneAudit(miseAJour) },
-      );
+      await journaliser(tx, user, 'ATTESTATION_REVOCATION', 'Attestation', id, {
+        avant: this.instantaneAudit(attestation),
+        apres: this.instantaneAudit(miseAJour),
+      });
       return miseAJour;
     });
   }
@@ -386,12 +405,7 @@ export class AttestationsService {
   // ------------------------------------------------------------- documentation
 
   /** Document A4 imprimable, ouvert dans un nouvel onglet : jeton vérifié à la main. */
-  async imprimer(
-    id: string,
-    token: string | undefined,
-    baseUrl: string,
-    _ip?: string,
-  ): Promise<string> {
+  async imprimer(id: string, token: string | undefined, baseUrl: string, _ip?: string): Promise<string> {
     try {
       await this.jwt.verify(token ?? '');
     } catch {
@@ -454,7 +468,7 @@ export class AttestationsService {
       return {
         valide: false,
         raison:
-          "Le numéro indiqué ne correspond à aucune attestation émise. Vérifiez la saisie : un document manuscrit ou un numéro non présent dans le registre est suspect.",
+          'Le numéro indiqué ne correspond à aucune attestation émise. Vérifiez la saisie : un document manuscrit ou un numéro non présent dans le registre est suspect.',
       };
     }
 
@@ -483,7 +497,7 @@ export class AttestationsService {
       return {
         valide: false,
         raison:
-          "Le code de vérification ne correspond pas à cette attestation : le document présenté est peut-être une copie falsifiée.",
+          'Le code de vérification ne correspond pas à cette attestation : le document présenté est peut-être une copie falsifiée.',
       };
     }
 
@@ -505,9 +519,7 @@ export class AttestationsService {
         emiseLe: attestation.emiseLe,
         etudiant: attestation.etudiant,
         annee: attestation.annee?.libelle ?? null,
-        promotion: attestation.promotion
-          ? `${attestation.promotion.nom} (${attestation.promotion.filiere.nom})`
-          : null,
+        promotion: attestation.promotion ? `${attestation.promotion.nom} (${attestation.promotion.filiere.nom})` : null,
       },
     };
   }

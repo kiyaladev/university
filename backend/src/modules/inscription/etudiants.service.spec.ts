@@ -12,7 +12,9 @@ describe('périmètres du registre étudiant', () => {
     const { prisma, service } = creerService();
 
     await service.listePour({ all: '1' } as any, {}, {
-      id: 'user-etudiant', role: Role.ETUDIANT, etudiantId: 'etudiant-1',
+      id: 'user-etudiant',
+      role: Role.ETUDIANT,
+      etudiantId: 'etudiant-1',
     } as any);
 
     expect(prisma.etudiant.findMany).toHaveBeenCalledWith(
@@ -26,16 +28,20 @@ describe('périmètres du registre étudiant', () => {
     prisma.etudiant.count.mockResolvedValue(1);
 
     await service.listePour({ all: '1' } as any, {}, {
-      id: 'user-scolarite', role: Role.SCOLARITE,
+      id: 'user-scolarite',
+      role: Role.SCOLARITE,
     } as any);
     await service.detailPour('etudiant-1', {
-      id: 'user-scolarite', role: Role.SCOLARITE,
+      id: 'user-scolarite',
+      role: Role.SCOLARITE,
     } as any);
 
-    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(1,
+    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({ omit: { qrRestoToken: true } }),
     );
-    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(2,
+    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({ omit: { qrRestoToken: true } }),
     );
   });
@@ -45,9 +51,12 @@ describe('périmètres du registre étudiant', () => {
     prisma.etudiant.findMany.mockResolvedValue([{ id: 'etudiant-1' }]);
 
     await service.listePour({ all: '1' } as any, {}, {
-      id: 'user-enseignant', role: Role.ENSEIGNANT, enseignantId: 'enseignant-1',
+      id: 'user-enseignant',
+      role: Role.ENSEIGNANT,
+      enseignantId: 'enseignant-1',
     } as any);
-    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(1,
+    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(
+      1,
       expect.objectContaining({
         where: { AND: [{}, { travauxEncadres: { some: { encadrantId: 'enseignant-1' } } }] },
         select: { id: true, matricule: true, nom: true, prenom: true, sexe: true, actif: true },
@@ -55,9 +64,12 @@ describe('périmètres du registre étudiant', () => {
     );
 
     await service.detailPour('etudiant-1', {
-      id: 'user-enseignant', role: Role.ENSEIGNANT, enseignantId: 'enseignant-1',
+      id: 'user-enseignant',
+      role: Role.ENSEIGNANT,
+      enseignantId: 'enseignant-1',
     } as any);
-    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(2,
+    expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({
         where: { AND: [{ id: 'etudiant-1' }, { travauxEncadres: { some: { encadrantId: 'enseignant-1' } } }] },
         select: { id: true, matricule: true, nom: true, prenom: true, sexe: true, actif: true },
@@ -69,15 +81,24 @@ describe('périmètres du registre étudiant', () => {
     const { prisma, service } = creerService();
     prisma.etudiant.findMany.mockResolvedValue([]);
 
-    await expect(service.detailPour('etudiant-hors-departement', {
-      id: 'user-chef', role: Role.CHEF_DEPARTEMENT, departementId: 'dept-1',
-    } as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      service.detailPour('etudiant-hors-departement', {
+        id: 'user-chef',
+        role: Role.CHEF_DEPARTEMENT,
+        departementId: 'dept-1',
+      } as any),
+    ).rejects.toBeInstanceOf(NotFoundException);
 
     expect(prisma.etudiant.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { AND: [{ id: 'etudiant-hors-departement' }, {
-          inscriptions: { some: { promotion: { filiere: { departementId: 'dept-1' } } } },
-        }] },
+        where: {
+          AND: [
+            { id: 'etudiant-hors-departement' },
+            {
+              inscriptions: { some: { promotion: { filiere: { departementId: 'dept-1' } } } },
+            },
+          ],
+        },
         select: expect.objectContaining({ matricule: true, inscriptions: expect.any(Object) }),
       }),
     );
@@ -93,18 +114,26 @@ describe('périmètres du registre étudiant', () => {
 
     for (const [index, where] of [
       { AND: [{}, { inscriptions: { some: { promotion: { filiere: { departementId: 'dept-1' } } } } }] },
-      { AND: [{ id: 'etudiant-1' }, { inscriptions: { some: { promotion: { filiere: { departementId: 'dept-1' } } } } }] },
+      {
+        AND: [
+          { id: 'etudiant-1' },
+          { inscriptions: { some: { promotion: { filiere: { departementId: 'dept-1' } } } } },
+        ],
+      },
     ].entries()) {
-      expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(index + 1, expect.objectContaining({
-        where,
-        select: expect.objectContaining({
-          id: true,
-          matricule: true,
-          telephone: true,
-          email: true,
-          _count: { select: { inscriptions: true } },
+      expect(prisma.etudiant.findMany).toHaveBeenNthCalledWith(
+        index + 1,
+        expect.objectContaining({
+          where,
+          select: expect.objectContaining({
+            id: true,
+            matricule: true,
+            telephone: true,
+            email: true,
+            _count: { select: { inscriptions: true } },
+          }),
         }),
-      }));
+      );
       const select = prisma.etudiant.findMany.mock.calls[index][0].select;
       expect(select).not.toHaveProperty('adresse');
       expect(select).not.toHaveProperty('dateNaissance');
@@ -116,8 +145,15 @@ describe('périmètres du registre étudiant', () => {
 describe('audit des fiches étudiant', () => {
   it('crée la fiche et son instantané minimisé dans la même transaction', async () => {
     const etudiant = {
-      id: 'etu-1', matricule: '2026-0001', nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F', actif: true,
-      email: 'private@example.test', telephone: '+224600000000', qrRestoToken: 'qr-secret',
+      id: 'etu-1',
+      matricule: '2026-0001',
+      nom: 'Diallo',
+      prenom: 'Aïssatou',
+      sexe: 'F',
+      actif: true,
+      email: 'private@example.test',
+      telephone: '+224600000000',
+      qrRestoToken: 'qr-secret',
     };
     const tx = {
       etudiant: {
@@ -136,13 +172,18 @@ describe('audit des fiches étudiant', () => {
     await service.creer({ nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F' } as any, { id: 'agent-1' } as any);
 
     expect(tx.etudiant.create).toHaveBeenCalledTimes(1);
-    expect(tx.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
-      userId: 'agent-1', action: 'ETUDIANT_CREE', entite: 'Etudiant', entiteId: 'etu-1',
-      details: JSON.stringify({
-        avant: null,
-        apres: { matricule: '2026-0001', nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F', actif: true },
+    expect(tx.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'agent-1',
+        action: 'ETUDIANT_CREE',
+        entite: 'Etudiant',
+        entiteId: 'etu-1',
+        details: JSON.stringify({
+          avant: null,
+          apres: { matricule: '2026-0001', nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F', actif: true },
+        }),
       }),
-    }) });
+    });
     expect(tx.auditLog.create.mock.calls[0][0].data.details).not.toContain('private@example.test');
     expect(tx.auditLog.create.mock.calls[0][0].data.details).not.toContain('+224600000000');
     expect(tx.auditLog.create.mock.calls[0][0].data.details).not.toContain('qr-secret');
@@ -151,9 +192,18 @@ describe('audit des fiches étudiant', () => {
 
   it('journalise avant/après dans la transaction sans coordonnées ni données de compte', async () => {
     const avant = {
-      id: 'etu-1', matricule: '2026-0001', nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F', actif: true,
-      email: 'private@example.test', telephone: '+224600000000', dateNaissance: new Date('2000-01-01'),
-      adresse: 'Adresse privée', qrRestoToken: 'qr-secret', userId: 'user-1',
+      id: 'etu-1',
+      matricule: '2026-0001',
+      nom: 'Diallo',
+      prenom: 'Aïssatou',
+      sexe: 'F',
+      actif: true,
+      email: 'private@example.test',
+      telephone: '+224600000000',
+      dateNaissance: new Date('2000-01-01'),
+      adresse: 'Adresse privée',
+      qrRestoToken: 'qr-secret',
+      userId: 'user-1',
     };
     const apres = { ...avant, nom: 'Barry', telephone: '+224611111111', dateNaissance: new Date('2001-02-03') };
     const tx = {
@@ -166,9 +216,15 @@ describe('audit des fiches étudiant', () => {
     const prisma: any = { $transaction: jest.fn((work) => work(tx)) };
     const service = new EtudiantsService(prisma);
 
-    await service.modifier('etu-1', {
-      nom: 'Barry', telephone: '+224611111111', dateNaissance: '2001-02-03',
-    } as any, { id: 'agent-1', role: Role.SCOLARITE } as any);
+    await service.modifier(
+      'etu-1',
+      {
+        nom: 'Barry',
+        telephone: '+224611111111',
+        dateNaissance: '2001-02-03',
+      } as any,
+      { id: 'agent-1', role: Role.SCOLARITE } as any,
+    );
 
     const details = JSON.parse(tx.auditLog.create.mock.calls[0][0].data.details);
     expect(details).toEqual({
@@ -184,7 +240,12 @@ describe('audit des fiches étudiant', () => {
 
   it('journalise la désactivation avec son état avant/après dans la transaction', async () => {
     const avant = {
-      id: 'etu-1', matricule: '2026-0001', nom: 'Diallo', prenom: 'Aïssatou', sexe: 'F', actif: true,
+      id: 'etu-1',
+      matricule: '2026-0001',
+      nom: 'Diallo',
+      prenom: 'Aïssatou',
+      sexe: 'F',
+      actif: true,
     };
     const tx = {
       etudiant: {

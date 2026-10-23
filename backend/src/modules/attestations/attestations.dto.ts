@@ -1,13 +1,6 @@
 import { PartialType, PickType } from '@nestjs/swagger';
 import { StatutAttestation, TypeAttestation } from '@prisma/client';
-import {
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
 /** Émission d'une attestation par la scolarité. */

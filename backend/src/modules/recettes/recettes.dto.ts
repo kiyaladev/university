@@ -38,5 +38,6 @@ export class RecetteQueryDto extends QueryDto {
   @IsOptional() @IsDateString() dateDebut?: string;
   @IsOptional() @IsDateString() dateFin?: string;
   @IsOptional() @IsString() client?: string;
-  @IsOptional() @IsIn([...Object.values(StatutPaiement), 'A_ENCAISSER']) paiementStatut?: StatutPaiement | 'A_ENCAISSER';
+  @IsOptional() @IsIn([...Object.values(StatutPaiement), 'A_ENCAISSER']) paiementStatut?:
+    StatutPaiement | 'A_ENCAISSER';
 }

@@ -37,15 +37,17 @@ describe('verrou d’année académique', () => {
 
   it('refuse une année close sur la branche SQL verrouillée', async () => {
     const query = jest.fn().mockResolvedValue([{ cloturee: true }]);
-    await expect(exigerAnneeOuverte({ $queryRaw: query } as any, 'annee-1'))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(exigerAnneeOuverte({ $queryRaw: query } as any, 'annee-1')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(query.mock.calls[0][0].join('?')).toContain('FOR SHARE');
   });
 
   it('refuse une année manquante sur la branche SQL verrouillée', async () => {
     const query = jest.fn().mockResolvedValue([]);
-    await expect(exigerAnneeOuverte({ $queryRaw: query } as any, 'annee-absente'))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(exigerAnneeOuverte({ $queryRaw: query } as any, 'annee-absente')).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(query.mock.calls[0][0].join('?')).toContain('FOR SHARE');
   });
 
@@ -61,8 +63,7 @@ describe('verrou d’année académique', () => {
   it('verrouille la promotion et refuse une année différente', async () => {
     const query = jest.fn().mockResolvedValue([{ anneeId: 'annee-2' }]);
     const prisma: any = { $queryRaw: query };
-    await expect(exigerPromotionMemeAnnee(prisma, 'promotion-1', 'annee-1'))
-      .rejects.toThrow('même année académique');
+    await expect(exigerPromotionMemeAnnee(prisma, 'promotion-1', 'annee-1')).rejects.toThrow('même année académique');
     expect(query.mock.calls[0][0].join('?')).toContain('FOR SHARE');
     expect(query.mock.calls[0][1]).toBe('promotion-1');
   });

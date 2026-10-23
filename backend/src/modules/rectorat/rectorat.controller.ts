@@ -4,16 +4,7 @@
  * Routes publiques : impression du bilan MESRS (le QR ministry scanne le
  * PDF, le jeton vérifie à la main comme les attestations).
  */
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -62,11 +53,7 @@ export class RectoratController {
    */
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION)
   @Get('bilan-mesrs/:id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     res.type('html').send(await this.service.imprimerBilan(id, jetonImprimable(req), base));
   }

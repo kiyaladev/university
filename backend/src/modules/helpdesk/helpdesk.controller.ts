@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
@@ -58,11 +47,7 @@ export class EquipementsController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/imprimer-qr')
-  async imprimerQr(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimerQr(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     const html = await this.service.imprimerQr(id, jetonImprimable(req), base);
     res.type('html').send(html);
@@ -81,11 +66,7 @@ export class EquipementsController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateEquipementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateEquipementDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -135,11 +116,7 @@ export class TicketsController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Post(':id/statut')
-  changerStatut(
-    @Param('id') id: string,
-    @Body() dto: TraiterTicketDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  changerStatut(@Param('id') id: string, @Body() dto: TraiterTicketDto, @CurrentUser() user: AuthUser) {
     return this.service.changerStatut(id, dto, user);
   }
 }

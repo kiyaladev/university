@@ -24,9 +24,7 @@ export function optionsJwt(config: LectureConfig) {
   // La valeur d'exemple de `.env.example` est publique : l'accepter revient
   // au même contournement qu'un secret absent.
   if (process.env.NODE_ENV === 'production' && (!secret || secret === JWT_SECRET_EXEMPLE)) {
-    throw new Error(
-      'JWT_SECRET est obligatoire en production. Générez-en une : openssl rand -hex 32',
-    );
+    throw new Error('JWT_SECRET est obligatoire en production. Générez-en une : openssl rand -hex 32');
   }
   return {
     secret: secret ?? JWT_SECRET_EXEMPLE,

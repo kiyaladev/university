@@ -24,12 +24,14 @@ describe('liaison du compte après OTP étudiant', () => {
     userId: 'user-1',
   };
 
-  function preparer(options: {
-    userId?: string | null;
-    linkedUser?: Record<string, unknown> | null;
-    userCreate?: jest.Mock;
-    collisionUser?: Record<string, unknown> | null;
-  } = {}) {
+  function preparer(
+    options: {
+      userId?: string | null;
+      linkedUser?: Record<string, unknown> | null;
+      userCreate?: jest.Mock;
+      collisionUser?: Record<string, unknown> | null;
+    } = {},
+  ) {
     const userCreate = options.userCreate ?? jest.fn();
     const userId = options.userId === undefined ? etudiant.userId : options.userId;
     const hasLinkedUserId = userId !== null;
@@ -65,8 +67,7 @@ describe('liaison du compte après OTP étudiant', () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Compte étudiant indisponible' } as never);
     const { service, jwt } = preparer({ linkedUser });
 
-    await expect(service.verifierCode('622000001', '123456'))
-      .rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.verifierCode('622000001', '123456')).rejects.toBeInstanceOf(ForbiddenException);
     expect(jwt.signAsync).not.toHaveBeenCalled();
   });
 
@@ -80,8 +81,7 @@ describe('liaison du compte après OTP étudiant', () => {
       collisionUser: { id: 'existing-admin', role: Role.ADMIN, actif: true, etudiant: null },
     });
 
-    await expect(service.verifierCode('622000001', '123456'))
-      .rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.verifierCode('622000001', '123456')).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.etudiant.update).not.toHaveBeenCalled();
     expect(jwt.signAsync).not.toHaveBeenCalled();
   });
@@ -118,10 +118,12 @@ describe('liaison du compte après OTP étudiant', () => {
       entite: 'Etudiant',
       entiteId: 'etu-1',
     });
-    expect(audit.details).toBe(JSON.stringify({
-      avant: null,
-      apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
-    }));
+    expect(audit.details).toBe(
+      JSON.stringify({
+        avant: null,
+        apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
+      }),
+    );
     expect(audit.details).not.toMatch(/622000001|2026-00001|Bah|Aminata|password/);
   });
 
@@ -146,18 +148,20 @@ describe('liaison du compte après OTP étudiant', () => {
   });
 
   it('retourne la même erreur pour un code absent et un code incorrect', async () => {
-    const messages = await Promise.all(['no_active_code', 'invalid_code'].map(async (raison) => {
-      const prisma: any = {};
-      const otp: any = { verifier: jest.fn().mockResolvedValue({ valid: false, raison }) };
-      const service = new PortailService(prisma, otp, {} as never);
-      try {
-        await service.verifierCode('622000001', '000000');
-      } catch (error) {
-        expect(error).toBeInstanceOf(BadRequestException);
-        return (error as BadRequestException).message;
-      }
-      throw new Error('La vérification aurait dû échouer');
-    }));
+    const messages = await Promise.all(
+      ['no_active_code', 'invalid_code'].map(async (raison) => {
+        const prisma: any = {};
+        const otp: any = { verifier: jest.fn().mockResolvedValue({ valid: false, raison }) };
+        const service = new PortailService(prisma, otp, {} as never);
+        try {
+          await service.verifierCode('622000001', '000000');
+        } catch (error) {
+          expect(error).toBeInstanceOf(BadRequestException);
+          return (error as BadRequestException).message;
+        }
+        throw new Error('La vérification aurait dû échouer');
+      }),
+    );
 
     expect(messages[0]).toBe(messages[1]);
   });
@@ -188,21 +192,23 @@ describe('résultats dans le portail étudiant', () => {
 
     const resultat = await service.resultats({ id: 'user-1', role: Role.ETUDIANT, etudiantId: 'etu-1' } as any);
 
-    expect(prisma.deliberationLigne.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        inscription: { etudiantId: 'etu-1' },
-        deliberation: { statut: 'VALIDEE' },
-      },
-      select: expect.objectContaining({
-        moyenne: true,
-        deliberation: {
-          select: expect.objectContaining({
-            promotion: { select: { nom: true } },
-            annee: { select: { libelle: true, dateDebut: true } },
-          }),
+    expect(prisma.deliberationLigne.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          inscription: { etudiantId: 'etu-1' },
+          deliberation: { statut: 'VALIDEE' },
         },
+        select: expect.objectContaining({
+          moyenne: true,
+          deliberation: {
+            select: expect.objectContaining({
+              promotion: { select: { nom: true } },
+              annee: { select: { libelle: true, dateDebut: true } },
+            }),
+          },
+        }),
       }),
-    }));
+    );
     expect(resultat).toMatchObject({
       deliberations: [{ id: 'ligne-1', moyenne: 15.5, promotion: 'L2 Informatique', annee: '2025-2026' }],
       finale: { decision: 'ADMIS' },
@@ -215,10 +221,18 @@ describe('résultats dans le portail étudiant', () => {
 
 describe('résultat final du portail étudiant', () => {
   const ligne = (id: string, session: string, annee: string, dateDebut: string, valideeLe: string) => ({
-    id, deliberationId: `d-${id}`, moyenne: 12, decision: 'ADMIS', mention: null, rang: null,
+    id,
+    deliberationId: `d-${id}`,
+    moyenne: 12,
+    decision: 'ADMIS',
+    mention: null,
+    rang: null,
     deliberation: {
-      session, statut: 'VALIDEE', valideeLe: new Date(valideeLe),
-      promotion: { nom: 'L' }, annee: { libelle: annee, dateDebut: new Date(dateDebut) },
+      session,
+      statut: 'VALIDEE',
+      valideeLe: new Date(valideeLe),
+      promotion: { nom: 'L' },
+      annee: { libelle: annee, dateDebut: new Date(dateDebut) },
     },
   });
 

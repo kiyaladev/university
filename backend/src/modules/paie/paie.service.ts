@@ -29,19 +29,8 @@
  *
  * Une feuille VALIDEE ou PAYEE est figée : tout recalcul rejette la requête.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  Prisma,
-  StatutEnseignant,
-  StatutPaie,
-  StatutPresence,
-  StatutSeance,
-} from '@prisma/client';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma, StatutEnseignant, StatutPaie, StatutPresence, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
@@ -70,11 +59,7 @@ export const MOIS_LIBELLES = [
 ] as const;
 
 /** Statuts de contrôle qui font « service fait » et donc heures payables. */
-const STATUTS_PAYES: StatutPresence[] = [
-  StatutPresence.PRESENT,
-  StatutPresence.RETARD,
-  StatutPresence.DEPART_ANTICIPE,
-];
+const STATUTS_PAYES: StatutPresence[] = [StatutPresence.PRESENT, StatutPresence.RETARD, StatutPresence.DEPART_ANTICIPE];
 
 const FEUILLE_INCLUDE = {
   lignes: {
@@ -135,20 +120,43 @@ export class PaieService {
     return this.trouver(id);
   }
 
-  private instantane(feuille: { statut: StatutPaie; montantTotal: number }, lignes: Array<{
-    enseignantId: string; tauxHoraire: number; heuresReelles: number; volumePrevu: number;
-    montantBrut: number; retenue: number; montantNet: number;
-  }>) {
+  private instantane(
+    feuille: { statut: StatutPaie; montantTotal: number },
+    lignes: Array<{
+      enseignantId: string;
+      tauxHoraire: number;
+      heuresReelles: number;
+      volumePrevu: number;
+      montantBrut: number;
+      retenue: number;
+      montantNet: number;
+    }>,
+  ) {
     return {
       statut: feuille.statut,
       montantTotal: feuille.montantTotal,
-      lignes: lignes.map(({ enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet }) => ({
-        enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet,
-      })),
+      lignes: lignes.map(
+        ({ enseignantId, tauxHoraire, heuresReelles, volumePrevu, montantBrut, retenue, montantNet }) => ({
+          enseignantId,
+          tauxHoraire,
+          heuresReelles,
+          volumePrevu,
+          montantBrut,
+          retenue,
+          montantNet,
+        }),
+      ),
     };
   }
 
-  private enregistrerModification(tx: Prisma.TransactionClient, userId: string, action: string, entiteId: string, avant: unknown, apres: unknown) {
+  private enregistrerModification(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    action: string,
+    entiteId: string,
+    avant: unknown,
+    apres: unknown,
+  ) {
     return tx.auditLog.create({
       data: {
         userId,
@@ -199,122 +207,133 @@ export class PaieService {
   async calculer(id: string, tous: boolean, user: AuthUser) {
     const feuille = await this.trouver(id);
     if (feuille.statut !== StatutPaie.BROUILLON) {
-      throw new BadRequestException(t('paie.feuille_feuille_statut_statutpaie_validee_validee_payee_les_', { 'feuille.statut': feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée' }));
+      throw new BadRequestException(
+        t('paie.feuille_feuille_statut_statutpaie_validee_validee_payee_les_', {
+          'feuille.statut': feuille.statut === StatutPaie.VALIDEE ? 'validée' : 'payée',
+        }),
+      );
     }
 
     const statutEnseignant = tous ? undefined : StatutEnseignant.VACATAIRE;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-      const [seances, affectations] = await Promise.all([
-        tx.seance.findMany({
-          where: {
-            statut: StatutSeance.CONTROLEE,
-            date: { gte: feuille.dateDebut, lte: feuille.dateFin },
-            controle: { is: { statut: { in: STATUTS_PAYES } } },
-            affectation: { enseignant: statutEnseignant ? { statut: statutEnseignant } : {} },
-          },
-          select: {
-            controle: { select: { dureeMinutes: true } },
-            affectation: { select: { enseignantId: true } },
-          },
-        }),
-        // Affectations « de la période » : l'année académique qui les porte
-        // recouvre la période de la feuille (début ≤ fin de feuille et
-        // fin ≥ début de feuille). Les heures contractuelles de l'année sont
-        // proratées nulle part : le volume est un repère, pas une limite.
-        tx.affectation.findMany({
-          where: {
-            ...(statutEnseignant ? { enseignant: { statut: statutEnseignant } } : {}),
-            annee: {
-              dateDebut: { lte: feuille.dateFin },
-              dateFin: { gte: feuille.dateDebut },
+      return await this.prisma.$transaction(
+        async (tx) => {
+          const [seances, affectations] = await Promise.all([
+            tx.seance.findMany({
+              where: {
+                statut: StatutSeance.CONTROLEE,
+                date: { gte: feuille.dateDebut, lte: feuille.dateFin },
+                controle: { is: { statut: { in: STATUTS_PAYES } } },
+                affectation: { enseignant: statutEnseignant ? { statut: statutEnseignant } : {} },
+              },
+              select: {
+                controle: { select: { dureeMinutes: true } },
+                affectation: { select: { enseignantId: true } },
+              },
+            }),
+            // Affectations « de la période » : l'année académique qui les porte
+            // recouvre la période de la feuille (début ≤ fin de feuille et
+            // fin ≥ début de feuille). Les heures contractuelles de l'année sont
+            // proratées nulle part : le volume est un repère, pas une limite.
+            tx.affectation.findMany({
+              where: {
+                ...(statutEnseignant ? { enseignant: { statut: statutEnseignant } } : {}),
+                annee: {
+                  dateDebut: { lte: feuille.dateFin },
+                  dateFin: { gte: feuille.dateDebut },
+                },
+              },
+              select: { enseignantId: true, volumeHorairePrevu: true },
+            }),
+          ]);
+
+          // Commentaires des lignes existantes : la loi du module, une ligne avec
+          // un commentaire (restitution, congé exceptionnel…) garde son texte lors
+          // d'un nouveau calcul.
+          const precedentes = await tx.lignePaie.findMany({
+            where: { feuilleId: id },
+            select: {
+              enseignantId: true,
+              commentaire: true,
+              tauxHoraire: true,
+              heuresReelles: true,
+              volumePrevu: true,
+              montantBrut: true,
+              retenue: true,
+              montantNet: true,
             },
-          },
-          select: { enseignantId: true, volumeHorairePrevu: true },
-        }),
-      ]);
+          });
+          const commentaires = new Map(
+            precedentes.filter((l) => l.commentaire).map((l) => [l.enseignantId, l.commentaire]),
+          );
 
-      // Commentaires des lignes existantes : la loi du module, une ligne avec
-      // un commentaire (restitution, congé exceptionnel…) garde son texte lors
-      // d'un nouveau calcul.
-      const precedentes = await tx.lignePaie.findMany({
-        where: { feuilleId: id },
-        select: {
-          enseignantId: true, commentaire: true, tauxHoraire: true, heuresReelles: true,
-          volumePrevu: true, montantBrut: true, retenue: true, montantNet: true,
+          // Agrégation minute par minute, par enseignant.
+          const minutes = new Map<string, number>();
+          for (const s of seances) {
+            const minutesEnseignant = minutes.get(s.affectation.enseignantId) ?? 0;
+            // Le filtre `controle: { is: { statut: { in: STATUTS_PAYES } } }` garantit
+            // un contrôle présent ; ?? 0 défensive pour la sûreté du typage.
+            minutes.set(s.affectation.enseignantId, minutesEnseignant + (s.controle?.dureeMinutes ?? 0));
+          }
+          const volume = new Map<string, number>();
+          for (const a of affectations) {
+            volume.set(a.enseignantId, (volume.get(a.enseignantId) ?? 0) + a.volumeHorairePrevu);
+          }
+
+          const enseignantsId = [...minutes.keys()];
+          const fiches = enseignantsId.length
+            ? await tx.enseignant.findMany({
+                where: { id: { in: enseignantsId } },
+                select: { id: true, tauxHoraire: true },
+              })
+            : [];
+          const taux = new Map(fiches.map((e) => [e.id, e.tauxHoraire]));
+
+          const lignes = enseignantsId.map((enseignantId) => {
+            const heuresReelles = Math.floor(minutes.get(enseignantId)! / 60);
+            const tauxHoraire = taux.get(enseignantId) ?? 0;
+            const montantBrut = round2(heuresReelles * tauxHoraire);
+            return {
+              enseignantId,
+              tauxHoraire,
+              heuresReelles,
+              volumePrevu: volume.get(enseignantId) ?? 0,
+              montantBrut,
+              retenue: 0,
+              montantNet: montantBrut,
+              commentaire: commentaires.get(enseignantId) ?? null,
+            };
+          });
+
+          await tx.lignePaie.deleteMany({ where: { feuilleId: feuille.id } });
+          if (lignes.length) {
+            await tx.lignePaie.createMany({
+              data: lignes.map((l) => ({ feuilleId: feuille.id, ...l })),
+            });
+          }
+
+          const ecriture = await tx.feuillePaie.updateMany({
+            where: { id: feuille.id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
+            data: { montantTotal: round2(lignes.reduce((t, l) => t + l.montantNet, 0)) },
+          });
+          if (ecriture.count !== 1) {
+            throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
+          }
+          const miseAJour = await tx.feuillePaie.findUnique({ where: { id: feuille.id }, include: FEUILLE_INCLUDE });
+          if (!miseAJour) throw new NotFoundException(t('paie.feuille_de_paie_introuvable'));
+          await this.enregistrerModification(
+            tx,
+            user.id,
+            'PAIE_RECALCULEE',
+            feuille.id,
+            this.instantane(feuille, precedentes),
+            this.instantane(miseAJour, lignes),
+          );
+          return miseAJour;
         },
-      });
-      const commentaires = new Map(
-        precedentes
-          .filter((l) => l.commentaire)
-          .map((l) => [l.enseignantId, l.commentaire]),
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       );
-
-      // Agrégation minute par minute, par enseignant.
-      const minutes = new Map<string, number>();
-      for (const s of seances) {
-        const minutesEnseignant = minutes.get(s.affectation.enseignantId) ?? 0;
-        // Le filtre `controle: { is: { statut: { in: STATUTS_PAYES } } }` garantit
-        // un contrôle présent ; ?? 0 défensive pour la sûreté du typage.
-        minutes.set(s.affectation.enseignantId, minutesEnseignant + (s.controle?.dureeMinutes ?? 0));
-      }
-      const volume = new Map<string, number>();
-      for (const a of affectations) {
-        volume.set(a.enseignantId, (volume.get(a.enseignantId) ?? 0) + a.volumeHorairePrevu);
-      }
-
-      const enseignantsId = [...minutes.keys()];
-      const fiches = enseignantsId.length
-        ? await tx.enseignant.findMany({
-            where: { id: { in: enseignantsId } },
-            select: { id: true, tauxHoraire: true },
-          })
-        : [];
-      const taux = new Map(fiches.map((e) => [e.id, e.tauxHoraire]));
-
-      const lignes = enseignantsId.map((enseignantId) => {
-        const heuresReelles = Math.floor(minutes.get(enseignantId)! / 60);
-        const tauxHoraire = taux.get(enseignantId) ?? 0;
-        const montantBrut = round2(heuresReelles * tauxHoraire);
-        return {
-          enseignantId,
-          tauxHoraire,
-          heuresReelles,
-          volumePrevu: volume.get(enseignantId) ?? 0,
-          montantBrut,
-          retenue: 0,
-          montantNet: montantBrut,
-          commentaire: commentaires.get(enseignantId) ?? null,
-        };
-      });
-
-      await tx.lignePaie.deleteMany({ where: { feuilleId: feuille.id } });
-      if (lignes.length) {
-        await tx.lignePaie.createMany({
-          data: lignes.map((l) => ({ feuilleId: feuille.id, ...l })),
-        });
-      }
-
-      const ecriture = await tx.feuillePaie.updateMany({
-        where: { id: feuille.id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
-        data: { montantTotal: round2(lignes.reduce((t, l) => t + l.montantNet, 0)) },
-      });
-      if (ecriture.count !== 1) {
-        throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
-      }
-      const miseAJour = await tx.feuillePaie.findUnique({ where: { id: feuille.id }, include: FEUILLE_INCLUDE });
-      if (!miseAJour) throw new NotFoundException(t('paie.feuille_de_paie_introuvable'));
-      await this.enregistrerModification(
-        tx,
-        user.id,
-        'PAIE_RECALCULEE',
-        feuille.id,
-        this.instantane(feuille, precedentes),
-        this.instantane(miseAJour, lignes),
-      );
-      return miseAJour;
-      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2034') {
         throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
@@ -345,7 +364,14 @@ export class PaieService {
       if (ecriture.count !== 1) throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
       const miseAJour = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
       if (!miseAJour) throw new NotFoundException(t('paie.feuille_de_paie_introuvable'));
-      await this.enregistrerModification(tx, user.id, 'PAIE_VALIDEE', id, this.instantane(feuille, feuille.lignes), this.instantane(miseAJour, miseAJour.lignes));
+      await this.enregistrerModification(
+        tx,
+        user.id,
+        'PAIE_VALIDEE',
+        id,
+        this.instantane(feuille, feuille.lignes),
+        this.instantane(miseAJour, miseAJour.lignes),
+      );
       return miseAJour;
     });
   }
@@ -365,7 +391,14 @@ export class PaieService {
       if (ecriture.count !== 1) throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
       const miseAJour = await tx.feuillePaie.findUnique({ where: { id }, include: FEUILLE_INCLUDE });
       if (!miseAJour) throw new NotFoundException(t('paie.feuille_de_paie_introuvable'));
-      await this.enregistrerModification(tx, user.id, 'PAIE_PAYEE', id, this.instantane(feuille, feuille.lignes), this.instantane(miseAJour, miseAJour.lignes));
+      await this.enregistrerModification(
+        tx,
+        user.id,
+        'PAIE_PAYEE',
+        id,
+        this.instantane(feuille, feuille.lignes),
+        this.instantane(miseAJour, miseAJour.lignes),
+      );
       return miseAJour;
     });
   }
@@ -382,7 +415,14 @@ export class PaieService {
         where: { id, statut: StatutPaie.BROUILLON, updatedAt: feuille.updatedAt },
       });
       if (suppression.count !== 1) throw new ConflictException(t('paie.ecriture_concurrente_reessayez'));
-      await this.enregistrerModification(tx, user.id, 'PAIE_SUPPRIMEE', id, this.instantane(feuille, feuille.lignes), null);
+      await this.enregistrerModification(
+        tx,
+        user.id,
+        'PAIE_SUPPRIMEE',
+        id,
+        this.instantane(feuille, feuille.lignes),
+        null,
+      );
       return { id };
     });
   }
@@ -395,7 +435,8 @@ export class PaieService {
     const edite = new Date().toLocaleString('fr-FR');
 
     const lignesHtml = feuille.lignes
-      .map((l) => `<tr>
+      .map(
+        (l) => `<tr>
         <td>${echapper(l.enseignant.nom)} ${echapper(l.enseignant.prenom)}<br>
             <small>${echapper(l.enseignant.matricule)}</small></td>
         <td class="num">${l.tauxHoraire.toLocaleString('fr-FR')}</td>
@@ -405,7 +446,8 @@ export class PaieService {
         <td class="num">${l.retenue.toLocaleString('fr-FR')}</td>
         <td class="num">${l.montantNet.toLocaleString('fr-FR')}</td>
         <td>${l.commentaire ? echapper(l.commentaire) : ''}</td>
-      </tr>`)
+      </tr>`,
+      )
       .join('');
 
     return pageA4({

@@ -1,15 +1,7 @@
 import { Body, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
-import {
-  IsBoolean,
-  IsEmail,
-  IsEnum,
-  IsOptional,
-  IsString,
-  IsUUID,
-  MinLength,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -107,14 +99,11 @@ export class UsersService extends CrudService {
         select: this.selectAudit(),
       });
       if (enseignantId) await tx.enseignant.update({ where: { id: enseignantId }, data: { userId: user.id } });
-      await journaliser(
-        tx,
-        acteur ?? null,
-        'UTILISATEUR_CREE',
-        'Utilisateur',
-        user.id,
-        { avant: null, apres: this.instantaneAudit(user), champsModifies: Object.keys(rest) },
-      );
+      await journaliser(tx, acteur ?? null, 'UTILISATEUR_CREE', 'Utilisateur', user.id, {
+        avant: null,
+        apres: this.instantaneAudit(user),
+        champsModifies: Object.keys(rest),
+      });
       return this.profilSecurise(user);
     });
   }
@@ -137,18 +126,15 @@ export class UsersService extends CrudService {
         select: this.selectAudit(),
       });
       if (enseignantId) await tx.enseignant.update({ where: { id: enseignantId }, data: { userId: id } });
-      await journaliser(
-        tx,
-        acteur ?? null,
-        'UTILISATEUR_MODIFIE',
-        'Utilisateur',
-        id,
-        {
-          avant: this.instantaneAudit(avant),
-          apres: this.instantaneAudit(apres),
-          champsModifies: [...Object.keys(rest), ...(password ? ['motDePasse'] : []), ...(enseignantId ? ['enseignantId'] : [])],
-        },
-      );
+      await journaliser(tx, acteur ?? null, 'UTILISATEUR_MODIFIE', 'Utilisateur', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(apres),
+        champsModifies: [
+          ...Object.keys(rest),
+          ...(password ? ['motDePasse'] : []),
+          ...(enseignantId ? ['enseignantId'] : []),
+        ],
+      });
       return this.profilSecurise(apres);
     });
   }
@@ -158,14 +144,10 @@ export class UsersService extends CrudService {
       const avant = await tx.user.findUnique({ where: { id }, select: this.selectAudit() });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Utilisateur' }));
       await supprimerOuConflit(() => tx.user.delete({ where: { id } }), 'referentiel.user_referenced_delete');
-      await journaliser(
-        tx,
-        acteur ?? null,
-        'UTILISATEUR_SUPPRIME',
-        'Utilisateur',
-        id,
-        { avant: this.instantaneAudit(avant), apres: null },
-      );
+      await journaliser(tx, acteur ?? null, 'UTILISATEUR_SUPPRIME', 'Utilisateur', id, {
+        avant: this.instantaneAudit(avant),
+        apres: null,
+      });
       return { id };
     });
   }

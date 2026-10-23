@@ -6,7 +6,7 @@ const verdicts = new Map<string, boolean>();
 
 export async function motDePasseDemo(hash: string): Promise<boolean> {
   if (verdicts.has(hash)) return verdicts.get(hash)!;
-  const demo = (await Promise.all(DEMO_PASSWORDS.map(password => bcrypt.compare(password, hash)))).some(Boolean);
+  const demo = (await Promise.all(DEMO_PASSWORDS.map((password) => bcrypt.compare(password, hash)))).some(Boolean);
   if (verdicts.size >= 1000) verdicts.clear();
   verdicts.set(hash, demo);
   return demo;

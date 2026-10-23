@@ -70,15 +70,10 @@ function fairePrisma(
           // `{ increment }` / `{ decrement }` : opérations atomiques appliquées
           // à la valeur courante, à la manière de la base. Une `Date` est
           // affectée telle quelle.
-          const operation =
-            valeur !== null && typeof valeur === 'object' && !(valeur instanceof Date)
-              ? valeur
-              : null;
+          const operation = valeur !== null && typeof valeur === 'object' && !(valeur instanceof Date) ? valeur : null;
           stockee[champ] =
             operation && ('increment' in operation || 'decrement' in operation)
-              ? Number(avant ?? 0) +
-                Number(operation.increment ?? 0) -
-                Number(operation.decrement ?? 0)
+              ? Number(avant ?? 0) + Number(operation.increment ?? 0) - Number(operation.decrement ?? 0)
               : valeur;
         }
         if (!select) return { ...stockee };
@@ -136,15 +131,17 @@ const jwt = { signAsync: jest.fn().mockResolvedValue('jeton') } as any;
 
 describe('AuthService — verrouillage après échecs', () => {
   it('retourne un profil de connexion minimal sans secrets ni état de verrouillage', async () => {
-    const prisma = fairePrisma(faireUtilisateur({
-      telephone: '+224620000000',
-      departementId: 'dep-1',
-      departement: { id: 'dep-1', code: 'INFO', nom: 'Informatique', budget: 5000 },
-      enseignant: { id: 'ens-1', matricule: 'ENS-001', empreinteTemplate: 'secret' },
-      tentativesEchouees: 4,
-      verrouilleJusqua: null,
-      motDePasseModifieLe: new Date('2026-01-01T00:00:00Z'),
-    }));
+    const prisma = fairePrisma(
+      faireUtilisateur({
+        telephone: '+224620000000',
+        departementId: 'dep-1',
+        departement: { id: 'dep-1', code: 'INFO', nom: 'Informatique', budget: 5000 },
+        enseignant: { id: 'ens-1', matricule: 'ENS-001', empreinteTemplate: 'secret' },
+        tentativesEchouees: 4,
+        verrouilleJusqua: null,
+        motDePasseModifieLe: new Date('2026-01-01T00:00:00Z'),
+      }),
+    );
     const service = new AuthService(prisma as any, jwt);
 
     const resultat = await service.login({
@@ -238,9 +235,9 @@ describe('AuthService — verrouillage après échecs', () => {
     const prisma = fairePrisma(faireUtilisateur({ tentativesEchouees: 9 }));
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      UnauthorizedException,
+    );
 
     // L'incrément franchit le seuil, puis le verrou est posé : compteur
     // remis à zéro, compte bloqué pour la durée configurée (15 min).
@@ -262,9 +259,9 @@ describe('AuthService — verrouillage après échecs', () => {
     const prisma = fairePrisma(faireUtilisateur({ verrouilleJusqua: dans5min }));
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any),
-    ).rejects.toThrow(/bloqué/);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any)).rejects.toThrow(
+      /bloqué/,
+    );
   });
 
   it('laisse repasser une fois le verrou expiré et remet le compteur à zéro', async () => {
@@ -272,9 +269,7 @@ describe('AuthService — verrouillage après échecs', () => {
     const prisma = fairePrisma(faireUtilisateur({ verrouilleJusqua: passe, tentativesEchouees: 0 }));
     const service = new AuthService(prisma as any, jwt);
 
-    const res = await service.login(
-      { email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any,
-    );
+    const res = await service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any);
 
     expect(res.token).toBe('jeton');
     expect(prisma.majs[0]).toMatchObject({ tentativesEchouees: 0, verrouilleJusqua: null });
@@ -300,10 +295,13 @@ describe('AuthService — verrouillage après échecs', () => {
     const prisma = fairePrisma(faireUtilisateur());
     const service = new AuthService(prisma as any, jwt);
 
-    await service.changePassword({ id: 'u-1' } as any, {
-      ancien: MOT_DE_PASSE,
-      nouveau: 'Nouveau@2026',
-    } as any);
+    await service.changePassword(
+      { id: 'u-1' } as any,
+      {
+        ancien: MOT_DE_PASSE,
+        nouveau: 'Nouveau@2026',
+      } as any,
+    );
 
     expect(prisma.majs[0].motDePasseModifieLe).toBeInstanceOf(Date);
     expect(prisma.traces).toHaveLength(1);
@@ -316,9 +314,15 @@ describe('AuthService — verrouillage après échecs', () => {
     const prisma = fairePrisma(faireUtilisateur(), { echecEcriture: 'audit' });
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(service.changePassword({ id: 'u-1' } as any, {
-      ancien: MOT_DE_PASSE, nouveau: 'Nouveau@2026',
-    } as any)).rejects.toThrow('journal indisponible');
+    await expect(
+      service.changePassword(
+        { id: 'u-1' } as any,
+        {
+          ancien: MOT_DE_PASSE,
+          nouveau: 'Nouveau@2026',
+        } as any,
+      ),
+    ).rejects.toThrow('journal indisponible');
 
     expect(prisma.majs).toEqual([]);
     expect(prisma.traces).toEqual([]);
@@ -335,9 +339,9 @@ describe('AuthService — atomicité compteur / journal', () => {
     const prisma = fairePrisma(faireUtilisateur({ tentativesEchouees: 1 }));
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      UnauthorizedException,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.majs).toHaveLength(1);
@@ -350,9 +354,9 @@ describe('AuthService — atomicité compteur / journal', () => {
     });
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(/journal indisponible/);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      /journal indisponible/,
+    );
 
     // Ni verrou sans trace, ni trace sans écriture : rien n'a été validé,
     // pas même l'incrément appliqué avant l'échec de l'écriture.
@@ -367,9 +371,9 @@ describe('AuthService — atomicité compteur / journal', () => {
     });
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(/compteur indisponible/);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      /compteur indisponible/,
+    );
 
     expect(prisma.majs).toEqual([]);
     expect(prisma.traces).toEqual([]);
@@ -410,9 +414,9 @@ describe('AuthService — atomicité compteur / journal', () => {
     const jeton = { signAsync: jest.fn().mockResolvedValue('jeton') } as any;
     const service = new AuthService(prisma as any, jeton);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any),
-    ).rejects.toThrow(/journal indisponible/);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE } as any)).rejects.toThrow(
+      /journal indisponible/,
+    );
 
     // Le compteur n'est pas remis à zéro « dans le vide » : la transaction
     // entière a été annulée, et aucun jeton n'a été délivré.
@@ -452,15 +456,9 @@ describe('AuthService — échecs concurrents', () => {
 
     // 2 + 2 et non 3 : c'est l'incrément en base qui compte, pas la lecture.
     expect(prisma.ligne()!.tentativesEchouees).toBe(4);
-    expect(prisma.majs).toEqual([
-      { tentativesEchouees: { increment: 1 } },
-      { tentativesEchouees: { increment: 1 } },
-    ]);
+    expect(prisma.majs).toEqual([{ tentativesEchouees: { increment: 1 } }, { tentativesEchouees: { increment: 1 } }]);
     // Chaque total est celui réellement atteint, donc numéroté sans trou.
-    expect(prisma.traces.map((t) => t.details).sort()).toEqual([
-      'Tentative échouée 3/10',
-      'Tentative échouée 4/10',
-    ]);
+    expect(prisma.traces.map((t) => t.details).sort()).toEqual(['Tentative échouée 3/10', 'Tentative échouée 4/10']);
   });
 
   it('décide le verrou sur le total réellement écrit, pas sur la valeur lue', async () => {
@@ -472,9 +470,9 @@ describe('AuthService — échecs concurrents', () => {
     });
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      UnauthorizedException,
+    );
 
     expect(prisma.ligne()!.tentativesEchouees).toBe(0);
     expect(prisma.ligne()!.verrouilleJusqua).toBeInstanceOf(Date);
@@ -504,9 +502,9 @@ describe('AuthService — échecs concurrents', () => {
     });
     const service = new AuthService(prisma as any, jwt);
 
-    await expect(
-      service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: 'faux' } as any)).rejects.toThrow(
+      UnauthorizedException,
+    );
 
     expect(prisma.ligne()!.verrouilleJusqua).toEqual(verrouilleParAutre);
     // L'écriture ne porte que sur le compteur : le champ du verrou n'est
@@ -551,32 +549,39 @@ describe('JwtStrategy — jetons antérieurs au changement de mot de passe', () 
     const prisma = fairePrisma(faireUtilisateur({ motDePasseModifieLe: change }));
     const strategie = new JwtStrategy(prisma as any, configDeTest);
 
-    await expect(
-      strategie.validate({ sub: 'u-1', iat: secondes(change) }),
-    ).resolves.toBeTruthy();
+    await expect(strategie.validate({ sub: 'u-1', iat: secondes(change) })).resolves.toBeTruthy();
   });
 });
 
-
 describe('Production — comptes de démonstration', () => {
   const nodeEnv = process.env.NODE_ENV;
-  beforeEach(() => { process.env.NODE_ENV = 'production'; });
-  afterEach(() => { process.env.NODE_ENV = nodeEnv; });
+  beforeEach(() => {
+    process.env.NODE_ENV = 'production';
+  });
+  afterEach(() => {
+    process.env.NODE_ENV = nodeEnv;
+  });
   it('refuse la connexion avec le mot de passe public du seed', async () => {
     const prisma = fairePrisma(faireUtilisateur());
     const service = new AuthService(prisma as any, jwt);
-    await expect(service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE }))
-      .rejects.toThrow(UnauthorizedException);
+    await expect(service.login({ email: 'controleur@unipresence.gn', password: MOT_DE_PASSE })).rejects.toThrow(
+      UnauthorizedException,
+    );
     expect(prisma.traces).toHaveLength(0);
   });
   it('refuse aussi un ancien jeton pour ce compte', async () => {
     const strategie = new JwtStrategy(fairePrisma(faireUtilisateur()) as any, configDeTest);
-    await expect(strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) }))
-      .rejects.toThrow(UnauthorizedException);
+    await expect(strategie.validate({ sub: 'u-1', iat: Math.floor(Date.now() / 1000) })).rejects.toThrow(
+      UnauthorizedException,
+    );
   });
   it('conserve un compte muni d’un mot de passe privé', async () => {
     const prisma = fairePrisma(faireUtilisateur({ password: bcrypt.hashSync('Prive-Audit-uniquement-!', 4) }));
-    await expect(new AuthService(prisma as any, jwt).login({ email: 'controleur@unipresence.gn', password: 'Prive-Audit-uniquement-!' }))
-      .resolves.toMatchObject({ token: 'jeton' });
+    await expect(
+      new AuthService(prisma as any, jwt).login({
+        email: 'controleur@unipresence.gn',
+        password: 'Prive-Audit-uniquement-!',
+      }),
+    ).resolves.toMatchObject({ token: 'jeton' });
   });
 });

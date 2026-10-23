@@ -37,9 +37,7 @@ describe('whereEtudiants', () => {
   });
 
   it('porte promotion et période sur un même dossier (createdAt)', () => {
-    expect(
-      whereEtudiants({ promotionId: PROMO, dateDebut: '2026-09-01', dateFin: '2026-09-30' }),
-    ).toEqual({
+    expect(whereEtudiants({ promotionId: PROMO, dateDebut: '2026-09-01', dateFin: '2026-09-30' })).toEqual({
       inscriptions: {
         some: { promotionId: PROMO, createdAt: { gte: DEBUT, lte: FIN_INCLUSE } },
       },
@@ -67,10 +65,7 @@ describe('whereInscriptions', () => {
     expect(whereInscriptions({ dateDebut: '2026-09-01' })).toEqual({
       AND: [
         {
-          OR: [
-            { dateInscription: { gte: DEBUT } },
-            { dateInscription: null, createdAt: { gte: DEBUT } },
-          ],
+          OR: [{ dateInscription: { gte: DEBUT } }, { dateInscription: null, createdAt: { gte: DEBUT } }],
         },
       ],
     });

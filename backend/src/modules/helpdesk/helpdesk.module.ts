@@ -11,9 +11,7 @@ import { EquipementsController, TicketsController } from './helpdesk.controller'
 import { EquipementsService, TicketsService } from './helpdesk.service';
 
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [EquipementsController, TicketsController],
   providers: [EquipementsService, TicketsService],
   exports: [EquipementsService, TicketsService],

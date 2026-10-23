@@ -25,9 +25,21 @@ export class ImpressionController {
     res.type('html').send(await html);
   }
 
-  @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
+  @ProtectedDocument(
+    Role.ADMIN,
+    Role.DIRECTION,
+    Role.SCOLARITE,
+    Role.CHEF_DEPARTEMENT,
+    Role.CONTROLEUR,
+    Role.ENSEIGNANT,
+  )
   @Get('registre')
-  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
+  async registre(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() query: RapportImprimableQueryDto,
+    @CurrentUser() user: AuthUser,
+  ) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.registre(perimetrePresence(query, user)));
   }
@@ -38,7 +50,8 @@ export class ImpressionController {
   async fiche(
     @Res() res: Response,
     @Param('id') id: string,
-    @Req() req: Request, @Query() query: RapportImprimableQueryDto,
+    @Req() req: Request,
+    @Query() query: RapportImprimableQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
     verifierJetonImprimable(this.jwt, req);
@@ -47,7 +60,12 @@ export class ImpressionController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() _user: AuthUser) {
+  async paiement(
+    @Res() res: Response,
+    @Req() req: Request,
+    @Query() query: RapportImprimableQueryDto,
+    @CurrentUser() _user: AuthUser,
+  ) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.etatPaiement(query));
   }
@@ -63,5 +81,4 @@ export class ImpressionController {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.affichesQr(user, query.salleId));
   }
-
 }

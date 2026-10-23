@@ -16,8 +16,12 @@ describe('Tarifs d’inscription — historique de modification', () => {
     };
     const service = new FraisService(prisma);
 
-    await expect(service.creerFrais({ anneeId: 'annee-1', promotionId: 'promotion-1', montant: 100 } as any, { id: 'scolarite-1' } as any))
-      .rejects.toThrow('même année académique');
+    await expect(
+      service.creerFrais(
+        { anneeId: 'annee-1', promotionId: 'promotion-1', montant: 100 } as any,
+        { id: 'scolarite-1' } as any,
+      ),
+    ).rejects.toThrow('même année académique');
     expect(tx.frais.create).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -59,7 +63,10 @@ describe('Tarifs d’inscription — historique de modification', () => {
 
   it('refuse dans la transaction de modifier un tarif d’une année clôturée', async () => {
     const tx = {
-      frais: { findUnique: jest.fn().mockResolvedValue({ id: 'frais-1', anneeId: 'annee-close', promotionId: 'promotion-1' }), update: jest.fn() },
+      frais: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'frais-1', anneeId: 'annee-close', promotionId: 'promotion-1' }),
+        update: jest.fn(),
+      },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: true }) },
       promotion: { findUnique: jest.fn() },
       auditLog: { create: jest.fn() },
@@ -70,8 +77,9 @@ describe('Tarifs d’inscription — historique de modification', () => {
     };
     const service = new FraisService(prisma);
 
-    await expect(service.modifierFrais('frais-1', { montant: 125 } as any, { id: 'scolarite-1' } as any))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.modifierFrais('frais-1', { montant: 125 } as any, { id: 'scolarite-1' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.frais.update).not.toHaveBeenCalled();
   });

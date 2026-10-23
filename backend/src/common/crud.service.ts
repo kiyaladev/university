@@ -12,10 +12,7 @@ import { paginer, pagine } from './pagination';
  * illisible pour une situation parfaitement normale. On la traduit en 409 avec
  * un message qui dit quoi faire.
  */
-export async function supprimerOuConflit<T>(
-  suppression: () => Promise<T>,
-  messageOrKey: string,
-): Promise<T> {
+export async function supprimerOuConflit<T>(suppression: () => Promise<T>, messageOrKey: string): Promise<T> {
   try {
     return await suppression();
   } catch (e) {
@@ -122,9 +119,7 @@ export class CrudService<T = any> {
       ...(this.options.omit && !this.options.select ? { omit: this.options.omit } : {}),
     });
     if (!item) {
-      throw new NotFoundException(
-        t('common.crud.itemNotFound', { label: this.options.label ?? this.model }),
-      );
+      throw new NotFoundException(t('common.crud.itemNotFound', { label: this.options.label ?? this.model }));
     }
     return item;
   }

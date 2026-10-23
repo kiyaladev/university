@@ -45,22 +45,21 @@ describe('résolution publique des QR d’équipement', () => {
 
     expect(findMany.mock.calls[0][0].select).not.toHaveProperty('codeQr');
     expect(findUnique.mock.calls[0][0].select).not.toHaveProperty('codeQr');
-    expect(findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'eq-1' },
-      select: expect.objectContaining({ libelle: true }),
-    }));
+    expect(findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'eq-1' },
+        select: expect.objectContaining({ libelle: true }),
+      }),
+    );
   });
 
   it('masque les codes inconnus et les équipements désactivés derrière un NotFound identique', async () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Équipement indisponible' } as never);
-    const findUnique = jest.fn()
+    const findUnique = jest
+      .fn()
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({ id: 'eq-2', libelle: 'Climatisation', emplacement: null, actif: false });
-    const service = new EquipementsService(
-      { equipementCampus: { findUnique } } as never,
-      {} as never,
-      {} as never,
-    );
+    const service = new EquipementsService({ equipementCampus: { findUnique } } as never, {} as never, {} as never);
 
     await expect(service.parCode('UP-IT-unknown')).rejects.toBeInstanceOf(NotFoundException);
     await expect(service.parCode('UP-IT-disabled')).rejects.toBeInstanceOf(NotFoundException);
@@ -70,11 +69,7 @@ describe('résolution publique des QR d’équipement', () => {
   it('rejette une référence anormalement longue sans requête en base', async () => {
     jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Équipement indisponible' } as never);
     const findUnique = jest.fn();
-    const service = new EquipementsService(
-      { equipementCampus: { findUnique } } as never,
-      {} as never,
-      {} as never,
-    );
+    const service = new EquipementsService({ equipementCampus: { findUnique } } as never, {} as never, {} as never);
 
     await expect(service.parCode('x'.repeat(65))).rejects.toBeInstanceOf(NotFoundException);
     expect(findUnique).not.toHaveBeenCalled();
@@ -83,7 +78,10 @@ describe('résolution publique des QR d’équipement', () => {
   it('imprime le vrai code QR même si les fiches d’inventaire le masquent', async () => {
     jest.mocked(QRCode.toDataURL).mockResolvedValue('data:image/png;base64,qr' as never);
     const findUnique = jest.fn().mockResolvedValue({
-      id: 'eq-1', libelle: 'Vidéoprojecteur', emplacement: 'Salle B12', codeQr: 'UP-IT-abc123',
+      id: 'eq-1',
+      libelle: 'Vidéoprojecteur',
+      emplacement: 'Salle B12',
+      codeQr: 'UP-IT-abc123',
     });
     const jwt = { verify: jest.fn().mockResolvedValue({}) };
     const parametres = { valeur: jest.fn().mockResolvedValue('Université') };
@@ -112,8 +110,14 @@ describe('visibilité des tickets du helpdesk', () => {
   afterEach(() => jest.restoreAllMocks());
 
   const utilisateur = (id: string, role: Role = Role.ENSEIGNANT) => ({
-    id, role, nom: 'Diallo', prenom: 'Aïssatou', email: `${id}@campus.test`,
-    departementId: null, enseignantId: null, etudiantId: null,
+    id,
+    role,
+    nom: 'Diallo',
+    prenom: 'Aïssatou',
+    email: `${id}@campus.test`,
+    departementId: null,
+    enseignantId: null,
+    etudiantId: null,
   });
 
   it('limite la liste d’un utilisateur ordinaire à ses déclarations, même avec les filtres', async () => {
@@ -123,15 +127,17 @@ describe('visibilité des tickets du helpdesk', () => {
 
     await service.liste({ statut: StatutTicket.OUVERT, equipementId: 'eq-1' }, utilisateur('user-1'));
 
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { utilisateurId: 'user-1', statut: StatutTicket.OUVERT, equipementId: 'eq-1' },
-    }));
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { utilisateurId: 'user-1', statut: StatutTicket.OUVERT, equipementId: 'eq-1' },
+      }),
+    );
     expect(count).toHaveBeenCalledWith({
       where: { utilisateurId: 'user-1', statut: StatutTicket.OUVERT, equipementId: 'eq-1' },
     });
   });
 
-  it.each([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION])('%s peut consulter le registre complet', async role => {
+  it.each([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION])('%s peut consulter le registre complet', async (role) => {
     const findMany = jest.fn().mockResolvedValue([]);
     const count = jest.fn().mockResolvedValue(0);
     const service = new TicketsService({ ticketSupport: { findMany, count } } as never);
@@ -147,11 +153,12 @@ describe('visibilité des tickets du helpdesk', () => {
     const findFirst = jest.fn().mockResolvedValue(null);
     const service = new TicketsService({ ticketSupport: { findFirst } } as never);
 
-    await expect(service.findTicket('ticket-1', utilisateur('user-1')))
-      .rejects.toBeInstanceOf(NotFoundException);
-    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'ticket-1', utilisateurId: 'user-1' },
-    }));
+    await expect(service.findTicket('ticket-1', utilisateur('user-1'))).rejects.toBeInstanceOf(NotFoundException);
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ticket-1', utilisateurId: 'user-1' },
+      }),
+    );
   });
 
   it('permet au déclarant de lire son ticket', async () => {
@@ -160,8 +167,10 @@ describe('visibilité des tickets du helpdesk', () => {
     const service = new TicketsService({ ticketSupport: { findFirst } } as never);
 
     await expect(service.findTicket('ticket-1', utilisateur('user-1'))).resolves.toEqual(ticket);
-    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'ticket-1', utilisateurId: 'user-1' },
-    }));
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ticket-1', utilisateurId: 'user-1' },
+      }),
+    );
   });
 });

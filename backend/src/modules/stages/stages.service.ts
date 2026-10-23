@@ -195,14 +195,25 @@ export class StagesService extends CrudService {
     } else {
       // Statut initial borné à PROPOSE / VALIDE : la suite appartient à la machine.
       if (donnees.statut && !['PROPOSE', 'VALIDE'].includes(donnees.statut)) {
-        throw new BadRequestException(t('stages.statut_initial_invalide_donnees_statut_creer_en_propose_puis', { 'donnees.statut': donnees.statut }));
+        throw new BadRequestException(
+          t('stages.statut_initial_invalide_donnees_statut_creer_en_propose_puis', {
+            'donnees.statut': donnees.statut,
+          }),
+        );
       }
     }
     // La création et sa trace sont committées ensemble : un dossier
     // enregistré sans journal (ou l'inverse) n'est pas reconstituable.
     return this.prisma.$transaction(async (tx) => {
       const cree = await tx.travailEncadre.create({ data: donnees, include: TRAVAIL_INCLUDE });
-      await journaliser(tx, user, 'TRAVAIL_ENCADRE_CREE', 'TravailEncadre', cree.id, avantApres(null, this.instantaneTravail(cree)));
+      await journaliser(
+        tx,
+        user,
+        'TRAVAIL_ENCADRE_CREE',
+        'TravailEncadre',
+        cree.id,
+        avantApres(null, this.instantaneTravail(cree)),
+      );
       return cree;
     });
   }
@@ -232,9 +243,7 @@ export class StagesService extends CrudService {
     // Changer d'encadrant relève de l'administration ou de la scolarité.
     if (encadrantId !== undefined && encadrantId !== travail.encadrantId) {
       if (![Role.ADMIN, Role.DIRECTION, Role.SCOLARITE].includes(user.role as any)) {
-        throw new ForbiddenException(
-          t('stages.seule_l_administration_peut_changer_l_encadrant_d_un_travail_'),
-        );
+        throw new ForbiddenException(t('stages.seule_l_administration_peut_changer_l_encadrant_d_un_travail_'));
       }
     }
     if (encadrantId !== undefined) donnees.encadrantId = encadrantId;
@@ -268,7 +277,9 @@ export class StagesService extends CrudService {
   async supprimer(id: string, user: AuthUser) {
     const travail: any = await this.findOne(id);
     if (![StatutEncadrement.PROPOSE, StatutEncadrement.VALIDE].includes(travail.statut)) {
-      throw new BadRequestException(t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { 'travail.statut': travail.statut }));
+      throw new BadRequestException(
+        t('stages.un_travail_travail_statut_ne_se_supprime_pas_abandonnez_le_o', { 'travail.statut': travail.statut }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       // L'état avant est relu dans la transaction : après la suppression, le
@@ -279,7 +290,14 @@ export class StagesService extends CrudService {
       });
       if (!avant) throw new NotFoundException(t('stages.ce_travail_ne_vous_appartient_pas'));
       await tx.travailEncadre.delete({ where: { id } });
-      await journaliser(tx, user, 'TRAVAIL_ENCADRE_SUPPRIME', 'TravailEncadre', id, avantApres(this.instantaneTravail(avant), null));
+      await journaliser(
+        tx,
+        user,
+        'TRAVAIL_ENCADRE_SUPPRIME',
+        'TravailEncadre',
+        id,
+        avantApres(this.instantaneTravail(avant), null),
+      );
       return { id };
     });
   }
@@ -356,9 +374,7 @@ export class StagesService extends CrudService {
 
     if (cible === StatutEncadrement.SOUTENU) {
       if (!travail.rapportRendu) {
-        throw new BadRequestException(
-          'La soutenance suppose le rapport rendu : cochez « rapport rendu » d’abord',
-        );
+        throw new BadRequestException('La soutenance suppose le rapport rendu : cochez « rapport rendu » d’abord');
       }
       if (!travail.soutenance) {
         throw new BadRequestException(
@@ -398,9 +414,7 @@ export class StagesService extends CrudService {
         throw new BadRequestException(t('stages.ce_travail_est_abandonnee_reactivez_le_avant_de_planifier_un'));
       }
       if (travail.statut !== StatutEncadrement.EN_COURS) {
-        throw new BadRequestException(
-          `Un dossier ${travail.statut} ne se soutient pas : il doit être EN_COURS`,
-        );
+        throw new BadRequestException(`Un dossier ${travail.statut} ne se soutient pas : il doit être EN_COURS`);
       }
       if (!travail.rapportRendu) {
         throw new BadRequestException(t('stages.le_rapport_doit_etre_rendu_avant_de_planifier_la_soutenance'));
@@ -442,7 +456,10 @@ export class StagesService extends CrudService {
         'SOUTENANCE_CREEE',
         'TravailEncadre',
         travail.id,
-        avantApres({ ...this.instantaneTravail(travail), soutenance: null }, { ...this.instantaneTravail(apres), soutenance: this.instantaneSoutenance(soutenance) }),
+        avantApres(
+          { ...this.instantaneTravail(travail), soutenance: null },
+          { ...this.instantaneTravail(apres), soutenance: this.instantaneSoutenance(soutenance) },
+        ),
       );
       return soutenance;
     });

@@ -7,12 +7,21 @@ jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: stri
 
 const USER = { id: 'sco-1', role: Role.SCOLARITE } as AuthUser;
 const EVALUATION = {
-  id: 'eval-1', intitule: 'Examen', type: TypeEvaluation.EXAMEN, statut: StatutEvaluation.OUVERTE,
-  anneeId: 'annee-1', promotionId: 'promo-1', matiereId: 'matiere-1', _count: { notes: 0 },
+  id: 'eval-1',
+  intitule: 'Examen',
+  type: TypeEvaluation.EXAMEN,
+  statut: StatutEvaluation.OUVERTE,
+  anneeId: 'annee-1',
+  promotionId: 'promo-1',
+  matiereId: 'matiere-1',
+  _count: { notes: 0 },
 };
 const DELIBERATION = {
-  id: 'delib-1', anneeId: 'annee-1', promotionId: 'promo-1',
-  statut: StatutDeliberation.BROUILLON, session: SessionDeliberation.NORMALE,
+  id: 'delib-1',
+  anneeId: 'annee-1',
+  promotionId: 'promo-1',
+  statut: StatutDeliberation.BROUILLON,
+  session: SessionDeliberation.NORMALE,
 };
 
 function preparer() {
@@ -35,13 +44,16 @@ function preparer() {
     evaluation: {
       findUnique: jest.fn().mockResolvedValue(EVALUATION),
       findFirst: jest.fn().mockResolvedValue(EVALUATION),
-      create: jest.fn(), update: jest.fn(), delete: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
     inscription: { findMany: jest.fn() },
     deliberation: {
       findUnique: jest.fn().mockResolvedValue(DELIBERATION),
       findFirst: jest.fn().mockResolvedValue(null),
-      create: jest.fn(), update: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
     },
     $transaction: jest.fn((cb) => cb(tx)),
   };
@@ -51,10 +63,18 @@ function preparer() {
 describe('Écritures de scolarité après clôture annuelle', () => {
   it('refuse la création d’une évaluation sur une année close', async () => {
     const { prisma, service } = preparer();
-    await expect(service.creerEvaluation({
-      intitule: 'Examen', type: TypeEvaluation.EXAMEN, matiereId: 'matiere-1',
-      anneeId: 'annee-1', promotionId: 'promo-1',
-    } as any, USER)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creerEvaluation(
+        {
+          intitule: 'Examen',
+          type: TypeEvaluation.EXAMEN,
+          matiereId: 'matiere-1',
+          anneeId: 'annee-1',
+          promotionId: 'promo-1',
+        } as any,
+        USER,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.evaluation.create).not.toHaveBeenCalled();
   });
 
@@ -63,8 +83,9 @@ describe('Écritures de scolarité après clôture annuelle', () => {
     await expect(service.modifierEvaluation('eval-1', {} as any, USER)).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.supprimerEvaluation('eval-1', USER)).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.cloturerEvaluation('eval-1', USER)).rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.saisirNotes({ evaluationId: 'eval-1', notes: [] } as any, USER))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.saisirNotes({ evaluationId: 'eval-1', notes: [] } as any, USER)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.evaluation.update).not.toHaveBeenCalled();
     expect(prisma.evaluation.delete).not.toHaveBeenCalled();
     expect(prisma.inscription.findMany).not.toHaveBeenCalled();
@@ -72,9 +93,16 @@ describe('Écritures de scolarité après clôture annuelle', () => {
 
   it('refuse la création d’une délibération sur une année close', async () => {
     const { prisma, service } = preparer();
-    await expect(service.creerDeliberation({
-      anneeId: 'annee-1', promotionId: 'promo-1', session: SessionDeliberation.NORMALE,
-    } as any, USER)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creerDeliberation(
+        {
+          anneeId: 'annee-1',
+          promotionId: 'promo-1',
+          session: SessionDeliberation.NORMALE,
+        } as any,
+        USER,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
@@ -83,19 +111,28 @@ describe('Écritures de scolarité après clôture annuelle', () => {
     prisma.anneeAcademique.findUnique.mockResolvedValue({ id: 'annee-1', cloturee: false });
     prisma.deliberation.findUnique.mockResolvedValue(null);
     tx.anneeAcademique.findUnique.mockResolvedValue({ cloturee: false });
-    tx.$queryRaw = jest.fn()
+    tx.$queryRaw = jest
+      .fn()
       .mockResolvedValueOnce([{ anneeId: 'annee-1' }])
       .mockResolvedValueOnce([{ cloturee: false }]);
     tx.promotion = { findUnique: jest.fn().mockResolvedValue({ anneeId: 'annee-1' }) };
-    tx.deliberation.create = jest.fn().mockImplementation(() => { throw new Error('stop après contrôle'); });
+    tx.deliberation.create = jest.fn().mockImplementation(() => {
+      throw new Error('stop après contrôle');
+    });
 
-    await expect(service.creerDeliberation({
-      anneeId: 'annee-1', promotionId: 'promo-1', session: SessionDeliberation.NORMALE,
-    } as any, USER)).rejects.toThrow('stop après contrôle');
+    await expect(
+      service.creerDeliberation(
+        {
+          anneeId: 'annee-1',
+          promotionId: 'promo-1',
+          session: SessionDeliberation.NORMALE,
+        } as any,
+        USER,
+      ),
+    ).rejects.toThrow('stop après contrôle');
 
     expect(tx.$queryRaw.mock.calls[1][0].join('?')).toContain('FOR SHARE');
-    expect(tx.$queryRaw.mock.invocationCallOrder[1])
-      .toBeLessThan(tx.deliberation.create.mock.invocationCallOrder[0]);
+    expect(tx.$queryRaw.mock.invocationCallOrder[1]).toBeLessThan(tx.deliberation.create.mock.invocationCallOrder[0]);
   });
 
   it('refuse le recalcul et la validation d’une délibération après clôture', async () => {

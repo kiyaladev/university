@@ -6,6 +6,10 @@ import { ServicesActifsDto, ServicesActifsService } from './services-actifs.serv
 @Controller('services-actifs')
 export class ServicesActifsController {
   constructor(private readonly service: ServicesActifsService) {}
-  @Public() @Get() liste() { return this.service.liste(); }
-  @Roles(Role.ADMIN) @Put() enregistrer(@Body() dto: ServicesActifsDto, @CurrentUser() user: AuthUser) { return this.service.enregistrer(dto, user); }
+  @Public() @Get() liste() {
+    return this.service.liste();
+  }
+  @Roles(Role.ADMIN) @Put() enregistrer(@Body() dto: ServicesActifsDto, @CurrentUser() user: AuthUser) {
+    return this.service.enregistrer(dto, user);
+  }
 }

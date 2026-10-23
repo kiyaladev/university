@@ -94,8 +94,16 @@ export class FicheService {
     const lignes: Array<[string, string]> = [
       ['Intitulé', travail.intitule],
       ['Description', travail.description ?? '—'],
-      ['Étudiant', `${travail.etudiant?.nom ?? ''} ${travail.etudiant?.prenom ?? ''}${travail.etudiant?.matricule ? ` (${travail.etudiant.matricule})` : ''}`],
-      ['Encadrant', travail.encadrantId ? `${travail.encadrant?.nom ?? ''} ${travail.encadrant?.prenom ?? ''}${travail.encadrant?.grade ? ` — ${travail.encadrant.grade}` : ''}` : 'À désigner'],
+      [
+        'Étudiant',
+        `${travail.etudiant?.nom ?? ''} ${travail.etudiant?.prenom ?? ''}${travail.etudiant?.matricule ? ` (${travail.etudiant.matricule})` : ''}`,
+      ],
+      [
+        'Encadrant',
+        travail.encadrantId
+          ? `${travail.encadrant?.nom ?? ''} ${travail.encadrant?.prenom ?? ''}${travail.encadrant?.grade ? ` — ${travail.encadrant.grade}` : ''}`
+          : 'À désigner',
+      ],
       ['Entreprise', travail.entreprise ?? '—'],
       ['Tuteur entreprise', travail.tuteurEntreprise ?? '—'],
       ['Lieu', travail.lieu ?? '—'],

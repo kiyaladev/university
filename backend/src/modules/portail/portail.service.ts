@@ -89,16 +89,14 @@ export class PortailService {
 
   /**
    * Étape 2 — vérification du code et remise du jeton.
-     * Un code valide prouve la possession du numéro : à partir de là seulement,
-     * l'existence du compte peut être confirmée.
+   * Un code valide prouve la possession du numéro : à partir de là seulement,
+   * l'existence du compte peut être confirmée.
    */
   async verifierCode(telephone: string, code: string, ip?: string) {
     const reponse = await this.otp.verifier(telephone, code);
     if (!reponse.valid) {
       if (reponse.raison === 'passerelle_injoignable') {
-        throw new ServiceUnavailableException(
-          t('portail.gateway_unavailable'),
-        );
+        throw new ServiceUnavailableException(t('portail.gateway_unavailable'));
       }
       // The gateway distinguishes a missing OTP from a wrong one. Collapse
       // those responses so this public endpoint cannot reveal registry hits.
@@ -172,14 +170,10 @@ export class PortailService {
           where: { id: etudiant.id },
           data: { userId: cree.id },
         });
-        await journaliser(
-          tx,
-          null,
-          'COMPTE_ETUDIANT_CREE',
-          'Etudiant',
-          etudiant.id,
-          { avant: null, apres: { compteLie: true, role: cree.role, actif: cree.actif } },
-        );
+        await journaliser(tx, null, 'COMPTE_ETUDIANT_CREE', 'Etudiant', etudiant.id, {
+          avant: null,
+          apres: { compteLie: true, role: cree.role, actif: cree.actif },
+        });
         return cree;
       });
     } catch (erreur) {
@@ -207,17 +201,10 @@ export class PortailService {
               }
             }
             if (lie.count === 1) {
-              await journaliser(
-                tx,
-                null,
-                'COMPTE_ETUDIANT_RATTACHE',
-                'Etudiant',
-                etudiant.id,
-                {
-                    avant: { compteLie: false },
-                    apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
-                  },
-              );
+              await journaliser(tx, null, 'COMPTE_ETUDIANT_RATTACHE', 'Etudiant', etudiant.id, {
+                avant: { compteLie: false },
+                apres: { compteLie: true, role: Role.ETUDIANT, actif: true },
+              });
             }
           });
           return existant;
@@ -257,8 +244,7 @@ export class PortailService {
 
     // Inscription courante : celle de l'année académique active, sinon la
     // plus récente.
-    const inscription =
-      etudiant.inscriptions.find((i) => i.annee?.active) ?? etudiant.inscriptions[0] ?? null;
+    const inscription = etudiant.inscriptions.find((i) => i.annee?.active) ?? etudiant.inscriptions[0] ?? null;
 
     let montantFrais = inscription?.montantFrais ?? 0;
     let devise = 'GNF';
@@ -399,7 +385,10 @@ export class PortailService {
     ];
     let indexFinale = -1;
     lignes.forEach((l, i) => {
-      if (indexFinale < 0) { indexFinale = i; return; }
+      if (indexFinale < 0) {
+        indexFinale = i;
+        return;
+      }
       const a = cle(l);
       const b = cle(lignes[indexFinale]);
       const ecart = a.map((v, k) => v - b[k]).find((d) => d !== 0) ?? 0;

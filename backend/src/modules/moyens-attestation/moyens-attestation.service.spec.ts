@@ -55,11 +55,13 @@ function preparer(options: { enseignant?: any; seuil?: number; appareil?: any } 
     },
     auditLog: { create: jest.fn().mockResolvedValue({}) },
     appareil: {
-      findUnique: jest.fn().mockResolvedValue(
-        options.appareil === undefined
-          ? { id: 'appareil-1', secret: SECRET_APPAREIL, actif: true }
-          : options.appareil,
-      ),
+      findUnique: jest
+        .fn()
+        .mockResolvedValue(
+          options.appareil === undefined
+            ? { id: 'appareil-1', secret: SECRET_APPAREIL, actif: true }
+            : options.appareil,
+        ),
       update: jest.fn().mockResolvedValue({}),
       create: jest.fn(({ data }: any) => Promise.resolve({ id: 'appareil-neuf', actif: true, ...data })),
     },
@@ -88,35 +90,36 @@ describe('Attestation — code personnel', () => {
     const { service } = preparer({
       enseignant: { codePin: await bcrypt.hash('4321', 10) },
     });
-    await expect(
-      service.verifierPreuves('ens-1', { codePinEnseignant: '0000' }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.verifierPreuves('ens-1', { codePinEnseignant: '0000' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('signale l’absence de code défini', async () => {
     const { service } = preparer();
-    await expect(
-      service.verifierPreuves('ens-1', { codePinEnseignant: '4321' }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.verifierPreuves('ens-1', { codePinEnseignant: '4321' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it('interdit à un enseignant de définir un code, même le sien', async () => {
     const { service } = preparer();
-    await expect(
-      service.definirCodePin('ens-1', { code: '1234' }, ENSEIGNANT_USER),
-    ).rejects.toThrow();
-    await expect(
-      service.definirCodePin('ens-2', { code: '1234' }, AUTRE_ENSEIGNANT),
-    ).rejects.toThrow();
+    await expect(service.definirCodePin('ens-1', { code: '1234' }, ENSEIGNANT_USER)).rejects.toThrow();
+    await expect(service.definirCodePin('ens-2', { code: '1234' }, AUTRE_ENSEIGNANT)).rejects.toThrow();
   });
 
   it('laisse l’administration réinitialiser un code', async () => {
     const { service, prisma } = preparer();
     const res = await service.reinitialiserCodePin('ens-1', ADMIN);
     expect(res.code).toMatch(/^\d{6}$/);
-    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: {
-      userId: ADMIN.id, action: 'PIN_REINITIALISE', entite: 'Enseignant', entiteId: 'ens-1',
-    } });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: {
+        userId: ADMIN.id,
+        action: 'PIN_REINITIALISE',
+        entite: 'Enseignant',
+        entiteId: 'ens-1',
+      },
+    });
     expect(JSON.stringify(prisma.auditLog.create.mock.calls[0][0].data)).not.toContain(res.code);
   });
 
@@ -127,19 +130,24 @@ describe('Attestation — code personnel', () => {
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.enseignant.update).toHaveBeenCalledWith({
-      where: { id: 'ens-1' }, data: { codePin: null, codePinDefiniLe: null },
+      where: { id: 'ens-1' },
+      data: { codePin: null, codePinDefiniLe: null },
     });
-    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: {
-      userId: ADMIN.id, action: 'PIN_SUPPRIME', entite: 'Enseignant', entiteId: 'ens-1',
-    } });
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: {
+        userId: ADMIN.id,
+        action: 'PIN_SUPPRIME',
+        entite: 'Enseignant',
+        entiteId: 'ens-1',
+      },
+    });
     expect(JSON.stringify(prisma.auditLog.create.mock.calls[0][0].data)).not.toContain('1234');
   });
 });
 
 describe('Attestation — enrôlement de l’empreinte', () => {
   const horodatage = () => new Date().toISOString();
-  const signerEnrolement = (id: string, h: string) =>
-    signer(`enrolement|${id}|${GABARIT}|${h}`);
+  const signerEnrolement = (id: string, h: string) => signer(`enrolement|${id}|${GABARIT}|${h}`);
 
   it('refuse d’enrôler sans le consentement de l’enseignant', async () => {
     const { service, prisma } = preparer();
@@ -243,14 +251,18 @@ describe('Attestation — purge biométrique', () => {
     await expect(service.purgerEmpreintesPerimees()).resolves.toEqual({ purges: 1 });
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(tx.enseignant.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: { in: ['ens-purge'] } },
-    }));
-    expect(audit).toEqual([expect.objectContaining({
-      action: 'EMPREINTE_PURGEE',
-      entite: 'Enseignant',
-      entiteId: 'ens-purge',
-    })]);
+    expect(tx.enseignant.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: { in: ['ens-purge'] } },
+      }),
+    );
+    expect(audit).toEqual([
+      expect.objectContaining({
+        action: 'EMPREINTE_PURGEE',
+        entite: 'Enseignant',
+        entiteId: 'ens-purge',
+      }),
+    ]);
     expect(base.empreinteTemplate).toBeNull();
     expect(JSON.stringify(audit)).not.toContain('gabarit-chiffre-confidentiel');
   });
@@ -283,34 +295,50 @@ describe('Accès au gabarit biométrique', () => {
   });
 
   it('limite les moyens du contrôleur à sa séance et journalise la consultation', async () => {
-    const { service, prisma } = preparer({ enseignant: { codePin: 'hash', empreinteTemplate: 'chiffre', empreinteDoigt: 'POUCE' } });
+    const { service, prisma } = preparer({
+      enseignant: { codePin: 'hash', empreinteTemplate: 'chiffre', empreinteDoigt: 'POUCE' },
+    });
     const controleur: AuthUser = { ...ADMIN, id: 'ctrl-1', role: Role.CONTROLEUR };
     prisma.seance.findFirst.mockResolvedValue({
-      id: 'seance-1', controleurAssigneId: 'ctrl-1', controle: null,
+      id: 'seance-1',
+      controleurAssigneId: 'ctrl-1',
+      controle: null,
       affectation: { enseignant: { departementId: 'dept-2' } },
     });
 
     await expect(service.moyens('ens-1', controleur, 'seance-1')).resolves.toEqual({
-      codePin: true, empreinte: true, empreinteDoigt: 'POUCE',
+      codePin: true,
+      empreinte: true,
+      empreinteDoigt: 'POUCE',
     });
-    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ id: 'seance-1', affectation: { enseignantId: 'ens-1' } }),
-    }));
-    expect(prisma.enseignant.findUnique).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'ens-1', actif: true },
-    }));
-    expect(prisma.auditLog.create).toHaveBeenCalledWith({ data: expect.objectContaining({
-      userId: 'ctrl-1', action: 'MOYENS_ATTESTATION_CONSULTES', entiteId: 'ens-1',
-      details: JSON.stringify({ seanceId: 'seance-1', role: Role.CONTROLEUR }),
-    }) });
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'seance-1', affectation: { enseignantId: 'ens-1' } }),
+      }),
+    );
+    expect(prisma.enseignant.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'ens-1', actif: true },
+      }),
+    );
+    expect(prisma.auditLog.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: 'ctrl-1',
+        action: 'MOYENS_ATTESTATION_CONSULTES',
+        entiteId: 'ens-1',
+        details: JSON.stringify({ seanceId: 'seance-1', role: Role.CONTROLEUR }),
+      }),
+    });
   });
 
   it('refuse tout rôle sans séance du jour pour cet enseignant', async () => {
     const { service, prisma } = preparer();
     await expect(service.gabarit('ens-1', 'seance-etrangere', ADMIN)).rejects.toThrow();
-    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ id: 'seance-etrangere', affectation: { enseignantId: 'ens-1' } }),
-    }));
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'seance-etrangere', affectation: { enseignantId: 'ens-1' } }),
+      }),
+    );
     expect(prisma.enseignant.findUnique).not.toHaveBeenCalled();
   });
 
@@ -324,20 +352,28 @@ describe('Accès au gabarit biométrique', () => {
     const { service, prisma } = preparer({ enseignant: { empreinteTemplate: GABARIT } });
     const controleur: AuthUser = { ...ADMIN, id: 'u-controleur', role: Role.CONTROLEUR };
     prisma.seance.findFirst.mockResolvedValue({
-      id: 'seance-1', controleurAssigneId: 'autre', controle: { controleurId: 'autre' },
+      id: 'seance-1',
+      controleurAssigneId: 'autre',
+      controle: { controleurId: 'autre' },
     });
     await expect(service.gabarit('ens-1', 'seance-1', controleur)).rejects.toThrow();
     expect(prisma.enseignant.findUnique).not.toHaveBeenCalled();
 
     prisma.seance.findFirst.mockResolvedValue({
-      id: 'seance-1', controleurAssigneId: 'u-controleur', controle: null,
+      id: 'seance-1',
+      controleurAssigneId: 'u-controleur',
+      controle: null,
     });
     await expect(service.gabarit('ens-1', 'seance-1', controleur)).resolves.toMatchObject({ template: GABARIT });
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        userId: 'u-controleur', action: 'GABARIT_BIOMETRIQUE_CONSULTE', entiteId: 'ens-1',
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: 'u-controleur',
+          action: 'GABARIT_BIOMETRIQUE_CONSULTE',
+          entiteId: 'ens-1',
+        }),
       }),
-    }));
+    );
   });
 });
 
@@ -473,7 +509,6 @@ describe('Attestation — hiérarchie des moyens', () => {
     expect(res).toEqual({ mode: AttestationMode.AUCUNE, valide: false });
   });
 });
-
 
 describe('Attestation — lecture signée par un appareil', () => {
   const horodatage = () => new Date().toISOString();

@@ -29,7 +29,9 @@ describe('filtreDepartement', () => {
 
   it('utilise la sentinelle pour un chef sans département', () => {
     expect(AUCUN_DEPARTEMENT).toBe('__aucun__');
-    expect(filtreDepartement(chefSansDepartement, 'enseignant')).toEqual({ enseignant: { departementId: '__aucun__' } });
+    expect(filtreDepartement(chefSansDepartement, 'enseignant')).toEqual({
+      enseignant: { departementId: '__aucun__' },
+    });
     expect(filtreDepartement(chefSansDepartement, 'promotion.filiere', '__aucun_departement__')).toEqual({
       promotion: { filiere: { departementId: '__aucun_departement__' } },
     });

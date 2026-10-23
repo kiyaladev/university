@@ -1,13 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsDateString, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
 export class CarteEtudianteQueryDto extends QueryDto {
@@ -60,10 +52,14 @@ export class VerifierNipDto {
 }
 
 export class VerifierCartePubliqueDto {
-  @IsString() @MinLength(1) @MaxLength(64)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   carte: string;
 
-  @IsString() @MinLength(1) @MaxLength(64)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   k: string;
 }
 

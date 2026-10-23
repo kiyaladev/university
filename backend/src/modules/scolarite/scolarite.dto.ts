@@ -33,13 +33,17 @@ export class EvaluationQueryDto extends QueryDto {
 }
 
 export class CreateEvaluationDto {
-  @IsString() @IsNotEmpty({ message: 'L’intitulé est obligatoire' }) @MaxLength(160)
+  @IsString()
+  @IsNotEmpty({ message: 'L’intitulé est obligatoire' })
+  @MaxLength(160)
   intitule: string;
 
   @IsEnum(TypeEvaluation, { message: 'Type d’évaluation inconnu' })
   type: TypeEvaluation = 'CC';
 
-  @IsOptional() @IsNumber() @Min(0.1)
+  @IsOptional()
+  @IsNumber()
+  @Min(0.1)
   coefficient?: number;
 
   @IsUUID() matiereId: string;
@@ -52,7 +56,10 @@ export class CreateEvaluationDto {
 }
 
 export class UpdateEvaluationDto {
-  @IsOptional() @IsString() @IsNotEmpty({ message: 'L’intitulé ne peut pas être vide' }) @MaxLength(160)
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty({ message: 'L’intitulé ne peut pas être vide' })
+  @MaxLength(160)
   intitule?: string;
 
   @IsOptional() @IsEnum(TypeEvaluation) type?: TypeEvaluation;
@@ -80,17 +87,23 @@ export class NoteLigneDto {
   @IsUUID() inscriptionId: string;
 
   /** Note /20 ; absente si l'étudiant n'est pas noté. */
-  @IsOptional() @IsNumber() @Min(0, { message: 'Une note ne peut pas être négative' }) @Max(20, { message: 'Une note ne peut pas dépasser 20' })
+  @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'Une note ne peut pas être négative' })
+  @Max(20, { message: 'Une note ne peut pas dépasser 20' })
   note?: number;
 
-  @IsOptional() @IsBoolean()
+  @IsOptional()
+  @IsBoolean()
   present?: boolean;
 }
 
 export class SaisieNotesDto {
   @IsUUID() @Type(() => String) evaluationId: string;
 
-  @IsArray() @ValidateNested({ each: true })  @Type(() => NoteLigneDto)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NoteLigneDto)
   notes: NoteLigneDto[];
 }
 
@@ -106,6 +119,7 @@ export class CreateDeliberationDto {
   @IsUUID() anneeId: string;
   @IsUUID() promotionId: string;
 
-  @IsOptional() @IsEnum(SessionDeliberation, { message: 'Session inconnue' })
+  @IsOptional()
+  @IsEnum(SessionDeliberation, { message: 'Session inconnue' })
   session?: SessionDeliberation = 'NORMALE';
 }

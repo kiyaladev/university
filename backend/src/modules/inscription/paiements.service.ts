@@ -7,13 +7,7 @@
  * `source` ; confirmation et annulation ne s'appliquent qu'aux paiements de
  * source INSCRIPTION, les autres se gèrent dans leur module.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ModePaiement, Prisma, StatutInscription, StatutPaiement } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
@@ -30,12 +24,7 @@ import {
 } from '../../common/finances';
 import { prochainNumeroPaiement } from './etudiants.service';
 import { MobileMoneyService } from './mobile-money.service';
-import {
-  AnnulerPaiementDto,
-  CreatePaiementDto,
-  PaiementQueryDto,
-  SimulerPaiementDto,
-} from './inscription.dto';
+import { AnnulerPaiementDto, CreatePaiementDto, PaiementQueryDto, SimulerPaiementDto } from './inscription.dto';
 
 export const PAIEMENT_INCLUDE = {
   etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
@@ -210,20 +199,22 @@ export class PaiementsService {
           }
           // Aucune conversion n'existe : un paiement de scolarité doit être
           // dans la devise du tarif du dossier, sinon le cumul n'a pas de sens.
-          const devisePaiement = inscription
-            ? await deviseDossier(tx, inscription)
-            : 'GNF';
+          const devisePaiement = inscription ? await deviseDossier(tx, inscription) : 'GNF';
           if (inscription && dto.devise && dto.devise !== devisePaiement) {
-            throw new BadRequestException(t('inscription.devise_incompatible', {
-              devise: dto.devise,
-              deviseDossier: devisePaiement,
-            }));
+            throw new BadRequestException(
+              t('inscription.devise_incompatible', {
+                devise: dto.devise,
+                deviseDossier: devisePaiement,
+              }),
+            );
           }
           if (inscription && dto.anneeId && dto.anneeId !== inscription.anneeId) {
             throw new BadRequestException(t('common.academicYearMismatch'));
           }
-          const anneeId = dto.anneeId ?? inscription?.anneeId
-            ?? (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id;
+          const anneeId =
+            dto.anneeId ??
+            inscription?.anneeId ??
+            (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id;
           if (!anneeId) {
             throw new BadRequestException(t('common.academicYearRequired'));
           }
@@ -234,23 +225,27 @@ export class PaiementsService {
           if (!annee) throw new BadRequestException(t('common.academicYearNotFound'));
           await exigerAnneeOuverte(tx, annee.id);
 
-          return creerPaiementTx(tx, {
-            data: {
-              reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
-              montant: dto.montant,
-              devise: dto.devise ?? devisePaiement,
-              mode: dto.mode,
-              operateur: dto.operateur ?? null,
-              telephone: dto.telephone ?? null,
-              nomComplet: dto.nomComplet ?? null,
-              motif: dto.motif ?? null,
-              inscriptionId: dto.inscriptionId ?? null,
-              anneeId: annee.id,
-              etudiantId: dto.etudiantId ?? inscription?.etudiantId ?? null,
-              creeParId: user.id,
+          return creerPaiementTx(
+            tx,
+            {
+              data: {
+                reference: await prochainNumeroPaiement(tx, anneeNumero(annee.libelle)),
+                montant: dto.montant,
+                devise: dto.devise ?? devisePaiement,
+                mode: dto.mode,
+                operateur: dto.operateur ?? null,
+                telephone: dto.telephone ?? null,
+                nomComplet: dto.nomComplet ?? null,
+                motif: dto.motif ?? null,
+                inscriptionId: dto.inscriptionId ?? null,
+                anneeId: annee.id,
+                etudiantId: dto.etudiantId ?? inscription?.etudiantId ?? null,
+                creeParId: user.id,
+              },
+              include: PAIEMENT_INCLUDE,
             },
-            include: PAIEMENT_INCLUDE,
-          }, { userId: user.id, instantane: instantanePaiement });
+            { userId: user.id, instantane: instantanePaiement },
+          );
         });
 
         if (paiement.mode === ModePaiement.MOBILE_MONEY && paiement.telephone) {
@@ -283,84 +278,87 @@ export class PaiementsService {
    */
   async simulerPaiement(id: string, dto: SimulerPaiementDto, user: AuthUser) {
     const reussi = dto.statut === 'REUSSI';
-    return this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
-      if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
-      // Les paiements des autres portefeuilles ont leur propre confirmation.
-      exigerSourceInscription(paiement, REFUS_SIMULATION);
-      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
-      if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
-        throw new BadRequestException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
-      }
-      if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
-        throw new BadRequestException(t('inscription.ce_paiement_est_deja_reussi_impossible_de_le_faire_echouer'));
-      }
-      if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') return paiement;
+    return this.prisma.$transaction(
+      async (tx) => {
+        const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
+        if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
+        // Les paiements des autres portefeuilles ont leur propre confirmation.
+        exigerSourceInscription(paiement, REFUS_SIMULATION);
+        await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
+        if (paiement.statut === StatutPaiement.ANNULE || paiement.statut === StatutPaiement.REMBOURSE) {
+          throw new BadRequestException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
+        }
+        if (paiement.statut === StatutPaiement.REUSSI && dto.statut !== 'REUSSI') {
+          throw new BadRequestException(t('inscription.ce_paiement_est_deja_reussi_impossible_de_le_faire_echouer'));
+        }
+        if (paiement.statut === StatutPaiement.REUSSI && dto.statut === 'REUSSI') return paiement;
 
-      const transition = await tx.paiement.updateMany({
-        where: { id, statut: paiement.statut },
-        data: {
-          statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
-          completeLe: reussi ? new Date() : null,
-        },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
-      }
-      const p = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-      if (!p) throw new NotFoundException(t('inscription.paiement_introuvable'));
-
-      let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
-      if (reussi && p?.inscriptionId) {
-        const dossier = await tx.inscription.findUnique({
-          where: { id: p.inscriptionId },
-          select: { statut: true, montantFrais: true, anneeId: true, promotionId: true },
-        });
-        // Seuls les paiements de scolarité, dans la devise du tarif, soldent
-        // le dossier : ni frais documentaires, ni montants d'une autre devise.
-        const cumul = await tx.paiement.aggregate({
-          where: {
-            inscriptionId: p.inscriptionId,
-            statut: StatutPaiement.REUSSI,
-            devise: dossier ? await deviseDossier(tx, dossier) : 'GNF',
-            ...PAIEMENT_SCOLARITE,
+        const transition = await tx.paiement.updateMany({
+          where: { id, statut: paiement.statut },
+          data: {
+            statut: reussi ? StatutPaiement.REUSSI : StatutPaiement.ECHOUE,
+            completeLe: reussi ? new Date() : null,
           },
-          _sum: { montant: true },
         });
-        if (
-          dossier &&
-          dossier.statut !== StatutInscription.VALIDEE &&
-          dossier.statut !== StatutInscription.ANNULEE &&
-          dossier.statut !== StatutInscription.PAYEE &&
-          (cumul._sum.montant ?? 0) >= dossier.montantFrais
-        ) {
-          const changement = await tx.inscription.updateMany({
-            where: { id: p.inscriptionId, statut: dossier.statut },
-            data: { statut: StatutInscription.PAYEE },
+        if (transition.count !== 1) {
+          throw new ConflictException(t('inscription.ce_paiement_est_clos_il_ne_peut_plus_etre_confirme'));
+        }
+        const p = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+        if (!p) throw new NotFoundException(t('inscription.paiement_introuvable'));
+
+        let inscriptionAudit: { avant: unknown; apres: unknown } | null = null;
+        if (reussi && p?.inscriptionId) {
+          const dossier = await tx.inscription.findUnique({
+            where: { id: p.inscriptionId },
+            select: { statut: true, montantFrais: true, anneeId: true, promotionId: true },
           });
-          if (changement.count === 1) {
-            inscriptionAudit = {
-              avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: dossier.montantFrais },
-              apres: { id: p.inscriptionId, statut: StatutInscription.PAYEE, montantFrais: dossier.montantFrais },
-            };
+          // Seuls les paiements de scolarité, dans la devise du tarif, soldent
+          // le dossier : ni frais documentaires, ni montants d'une autre devise.
+          const cumul = await tx.paiement.aggregate({
+            where: {
+              inscriptionId: p.inscriptionId,
+              statut: StatutPaiement.REUSSI,
+              devise: dossier ? await deviseDossier(tx, dossier) : 'GNF',
+              ...PAIEMENT_SCOLARITE,
+            },
+            _sum: { montant: true },
+          });
+          if (
+            dossier &&
+            dossier.statut !== StatutInscription.VALIDEE &&
+            dossier.statut !== StatutInscription.ANNULEE &&
+            dossier.statut !== StatutInscription.PAYEE &&
+            (cumul._sum.montant ?? 0) >= dossier.montantFrais
+          ) {
+            const changement = await tx.inscription.updateMany({
+              where: { id: p.inscriptionId, statut: dossier.statut },
+              data: { statut: StatutInscription.PAYEE },
+            });
+            if (changement.count === 1) {
+              inscriptionAudit = {
+                avant: { id: p.inscriptionId, statut: dossier.statut, montantFrais: dossier.montantFrais },
+                apres: { id: p.inscriptionId, statut: StatutInscription.PAYEE, montantFrais: dossier.montantFrais },
+              };
+            }
           }
         }
-      }
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'PAIEMENT_SIMULE',
-          entite: 'Paiement',
-          entiteId: id,
-          details: JSON.stringify({
-            avant: instantanePaiement(paiement),
-            apres: instantanePaiement(p),
-            inscription: inscriptionAudit,
-          }),
-        },
-      });
-      return p;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        await tx.auditLog.create({
+          data: {
+            userId: user.id,
+            action: 'PAIEMENT_SIMULE',
+            entite: 'Paiement',
+            entiteId: id,
+            details: JSON.stringify({
+              avant: instantanePaiement(paiement),
+              apres: instantanePaiement(p),
+              inscription: inscriptionAudit,
+            }),
+          },
+        });
+        return p;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -370,40 +368,43 @@ export class PaiementsService {
    * demande de document ou l'inscription à la formation qui les porte.
    */
   async annulerPaiement(id: string, dto: AnnulerPaiementDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
-      if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
-      exigerSourceInscription(paiement, REFUS_ANNULATION);
-      await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
-      if (paiement.statut === StatutPaiement.REUSSI) {
-        throw new BadRequestException(t('inscription.paiement_deja_encaisse_il_ne_peut_plus_etre_annule'));
-      }
-      if (paiement.statut === StatutPaiement.ANNULE) {
-        throw new BadRequestException(t('inscription.ce_paiement_est_deja_annule'));
-      }
-      const transition = await tx.paiement.updateMany({
-        where: { id, statut: paiement.statut },
-        data: {
-          statut: StatutPaiement.ANNULE,
-          annuleLe: new Date(),
-          annuleParId: user.id,
-          motifAnnulation: dto.motif,
-        },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(t('inscription.ce_paiement_est_deja_annule'));
-      }
-      const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: 'PAIEMENT_ANNULE',
-          entite: 'Paiement',
-          entiteId: id,
-          details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
-        },
-      });
-      return maj;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const paiement = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_AVEC_SOURCE_INCLUDE });
+        if (!paiement) throw new NotFoundException(t('inscription.paiement_introuvable'));
+        exigerSourceInscription(paiement, REFUS_ANNULATION);
+        await exigerAnneeOuverte(tx, paiement.anneeId ?? paiement.inscription?.anneeId);
+        if (paiement.statut === StatutPaiement.REUSSI) {
+          throw new BadRequestException(t('inscription.paiement_deja_encaisse_il_ne_peut_plus_etre_annule'));
+        }
+        if (paiement.statut === StatutPaiement.ANNULE) {
+          throw new BadRequestException(t('inscription.ce_paiement_est_deja_annule'));
+        }
+        const transition = await tx.paiement.updateMany({
+          where: { id, statut: paiement.statut },
+          data: {
+            statut: StatutPaiement.ANNULE,
+            annuleLe: new Date(),
+            annuleParId: user.id,
+            motifAnnulation: dto.motif,
+          },
+        });
+        if (transition.count !== 1) {
+          throw new ConflictException(t('inscription.ce_paiement_est_deja_annule'));
+        }
+        const maj = await tx.paiement.findUnique({ where: { id }, include: PAIEMENT_INCLUDE });
+        await tx.auditLog.create({
+          data: {
+            userId: user.id,
+            action: 'PAIEMENT_ANNULE',
+            entite: 'Paiement',
+            entiteId: id,
+            details: JSON.stringify({ avant: instantanePaiement(paiement), apres: instantanePaiement(maj) }),
+          },
+        });
+        return maj;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }

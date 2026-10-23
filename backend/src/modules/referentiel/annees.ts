@@ -1,4 +1,17 @@
-import { BadRequestException, Body, ConflictException, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  ConflictException,
+  Controller,
+  Delete,
+  Get,
+  Injectable,
+  NotFoundException,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Prisma, Role } from '@prisma/client';
 import { IsBoolean, IsDateString, IsOptional, IsString } from 'class-validator';
@@ -78,7 +91,10 @@ export class AnneesService extends CrudService {
           action: 'ANNEE_ACADEMIQUE_MODIFIEE',
           entite: 'AnneeAcademique',
           entiteId: annee.id,
-          details: JSON.stringify({ avant: this.instantane(annee), apres: { ...this.instantane(annee), active: false } }),
+          details: JSON.stringify({
+            avant: this.instantane(annee),
+            apres: { ...this.instantane(annee), active: false },
+          }),
         },
       });
     }
@@ -94,60 +110,61 @@ export class AnneesService extends CrudService {
       dateFin,
       ...(dto.active !== undefined ? { active: dto.active } : {}),
     };
-    return this.prisma.$transaction(async (tx) => {
-      if (dto.active) await this.desactiverAutres(tx, undefined, user.id);
-      const annee = await tx.anneeAcademique.create({ data: creation });
-      await journaliser(tx, user, 'ANNEE_ACADEMIQUE_CREEE', 'AnneeAcademique', annee.id, { avant: null, apres: this.instantane(annee) });
-      return annee;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        if (dto.active) await this.desactiverAutres(tx, undefined, user.id);
+        const annee = await tx.anneeAcademique.create({ data: creation });
+        await journaliser(tx, user, 'ANNEE_ACADEMIQUE_CREEE', 'AnneeAcademique', annee.id, {
+          avant: null,
+          apres: this.instantane(annee),
+        });
+        return annee;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   async modifier(id: string, dto: UpdateAnneeDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const actuelle = await tx.anneeAcademique.findUnique({ where: { id } });
-      if (!actuelle) throw new NotFoundException(t('common.notFound'));
-      if (actuelle.cloturee) {
-        if (dto.cloturee === false) {
-          throw new BadRequestException(t('common.academicYearReopenRequiresAudit'));
+    return this.prisma.$transaction(
+      async (tx) => {
+        const actuelle = await tx.anneeAcademique.findUnique({ where: { id } });
+        if (!actuelle) throw new NotFoundException(t('common.notFound'));
+        if (actuelle.cloturee) {
+          if (dto.cloturee === false) {
+            throw new BadRequestException(t('common.academicYearReopenRequiresAudit'));
+          }
+          const champsModifies = Object.keys(dto).filter((champ) => champ !== 'cloturee');
+          if (champsModifies.length) throw new BadRequestException(t('common.academicYearClosed'));
+          return actuelle;
         }
-        const champsModifies = Object.keys(dto).filter(champ => champ !== 'cloturee');
-        if (champsModifies.length) throw new BadRequestException(t('common.academicYearClosed'));
-        return actuelle;
-      }
 
-      this.verifierPeriode(
-        dto.dateDebut ? toDateOnly(dto.dateDebut) : actuelle.dateDebut,
-        dto.dateFin ? toDateOnly(dto.dateFin) : actuelle.dateFin,
-      );
-
-      if (dto.cloturee === true) {
-        const annee = await tx.anneeAcademique.update({
-          where: { id },
-          data: { ...this.prepare(dto), active: false, cloturee: true },
-        });
-        await journaliser(
-          tx,
-          user,
-          'ANNEE_ACADEMIQUE_CLOTUREE',
-          'AnneeAcademique',
-          id,
-          { avant: this.instantane(actuelle), apres: this.instantane(annee) },
+        this.verifierPeriode(
+          dto.dateDebut ? toDateOnly(dto.dateDebut) : actuelle.dateDebut,
+          dto.dateFin ? toDateOnly(dto.dateFin) : actuelle.dateFin,
         );
-        return annee;
-      }
 
-      if (dto.active) await this.desactiverAutres(tx, id, user.id);
-      const annee = await tx.anneeAcademique.update({ where: { id }, data: this.prepare(dto) });
-      await journaliser(
-        tx,
-        user,
-        'ANNEE_ACADEMIQUE_MODIFIEE',
-        'AnneeAcademique',
-        id,
-        { avant: this.instantane(actuelle), apres: this.instantane(annee) },
-      );
-      return annee;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        if (dto.cloturee === true) {
+          const annee = await tx.anneeAcademique.update({
+            where: { id },
+            data: { ...this.prepare(dto), active: false, cloturee: true },
+          });
+          await journaliser(tx, user, 'ANNEE_ACADEMIQUE_CLOTUREE', 'AnneeAcademique', id, {
+            avant: this.instantane(actuelle),
+            apres: this.instantane(annee),
+          });
+          return annee;
+        }
+
+        if (dto.active) await this.desactiverAutres(tx, id, user.id);
+        const annee = await tx.anneeAcademique.update({ where: { id }, data: this.prepare(dto) });
+        await journaliser(tx, user, 'ANNEE_ACADEMIQUE_MODIFIEE', 'AnneeAcademique', id, {
+          avant: this.instantane(actuelle),
+          apres: this.instantane(annee),
+        });
+        return annee;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -156,48 +173,52 @@ export class AnneesService extends CrudService {
    * l'efface pas.
    */
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const annee = await tx.anneeAcademique.findUnique({
-        where: { id },
-        select: {
-          id: true, libelle: true, dateDebut: true, dateFin: true, active: true, cloturee: true,
-          _count: {
-            select: {
-              promotions: true,
-              affectations: true,
-              seances: true,
-              inscriptions: true,
-              paiements: true,
-              evaluations: true,
-              deliberations: true,
-              attestations: true,
-              feuillesPaie: true,
-              frais: true,
-              attributionsLogement: true,
-              statistiquesMesrs: true,
-              examens: true,
+    return this.prisma.$transaction(
+      async (tx) => {
+        const annee = await tx.anneeAcademique.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            libelle: true,
+            dateDebut: true,
+            dateFin: true,
+            active: true,
+            cloturee: true,
+            _count: {
+              select: {
+                promotions: true,
+                affectations: true,
+                seances: true,
+                inscriptions: true,
+                paiements: true,
+                evaluations: true,
+                deliberations: true,
+                attestations: true,
+                feuillesPaie: true,
+                frais: true,
+                attributionsLogement: true,
+                statistiquesMesrs: true,
+                examens: true,
+              },
             },
           },
-        },
-      });
-      if (!annee) throw new NotFoundException(t('common.notFound'));
-      if (annee.cloturee) throw new BadRequestException(t('common.academicYearClosed'));
-      if (Object.values(annee._count).some((count) => count > 0)) {
-        throw new ConflictException(t('referentiel.annee_referenced_delete'));
-      }
-      return supprimerOuConflit(async () => {
-        await tx.anneeAcademique.delete({ where: { id } });
-        await journaliser(
-          tx,
-          user ?? null,
-          'ANNEE_ACADEMIQUE_SUPPRIMEE',
-          'AnneeAcademique',
-          id,
-          { avant: this.instantane(annee), apres: null },
-        );
-        return { id };
-      }, 'referentiel.annee_referenced_delete');
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        });
+        if (!annee) throw new NotFoundException(t('common.notFound'));
+        if (annee.cloturee) throw new BadRequestException(t('common.academicYearClosed'));
+        if (Object.values(annee._count).some((count) => count > 0)) {
+          throw new ConflictException(t('referentiel.annee_referenced_delete'));
+        }
+        return supprimerOuConflit(async () => {
+          await tx.anneeAcademique.delete({ where: { id } });
+          await journaliser(tx, user ?? null, 'ANNEE_ACADEMIQUE_SUPPRIMEE', 'AnneeAcademique', id, {
+            avant: this.instantane(annee),
+            apres: null,
+          });
+          return { id };
+        }, 'referentiel.annee_referenced_delete');
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }
 
@@ -220,17 +241,20 @@ export class AnneesController {
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Post() create(@Body() dto: CreateAnneeDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateAnneeDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateAnneeDto, @CurrentUser() user: AuthUser) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateAnneeDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.remove(id, user);
   }
 }

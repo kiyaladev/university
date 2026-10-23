@@ -75,12 +75,20 @@ function transaction(base: any, tx: any) {
 
 describe('Journal avant/après des réclamations', () => {
   const etudiant = {
-    id: 'user-1', role: Role.ETUDIANT, etudiantId: 'etudiant-1',
-    nom: 'Ndiaye', prenom: 'Awa', email: 'awa.ndiaye@exemple.test', telephone: '+221771234567',
+    id: 'user-1',
+    role: Role.ETUDIANT,
+    etudiantId: 'etudiant-1',
+    nom: 'Ndiaye',
+    prenom: 'Awa',
+    email: 'awa.ndiaye@exemple.test',
+    telephone: '+221771234567',
   } as unknown as AuthUser;
   const admin = {
-    id: 'admin-1', role: Role.ADMIN,
-    nom: 'Bassène', prenom: 'Ibrahima', email: 'ibrahima.bassene@exemple.test',
+    id: 'admin-1',
+    role: Role.ADMIN,
+    nom: 'Bassène',
+    prenom: 'Ibrahima',
+    email: 'ibrahima.bassene@exemple.test',
   } as unknown as AuthUser;
 
   const dossier = (extra: Record<string, unknown> = {}) => ({
@@ -89,7 +97,7 @@ describe('Journal avant/après des réclamations', () => {
     type: TypeReclamation.INSCRIPTION,
     // Textes libres et données personnelles : rien de tout cela ne doit
     // atteindre le journal.
-    sujet: 'Refus d\'inscription après résultats',
+    sujet: "Refus d'inscription après résultats",
     description: 'Mon nom est Ndiaye et ma date de naissance est le 04/05/2004',
     notes: '[2026-10-02 09:00 Ibrahima Bassène] Dossier incomplet, motif interne',
     nomAuteur: 'Awa Ndiaye',
@@ -106,7 +114,13 @@ describe('Journal avant/après des réclamations', () => {
     creeLe: new Date('2026-10-01T08:00:00.000Z'),
     fermeLe: null,
     _count: { messages: 1 },
-    etudiant: { id: 'etudiant-1', matricule: 'ETU-2026-0042', nom: 'Ndiaye', prenom: 'Awa', telephone: '+221771234567' },
+    etudiant: {
+      id: 'etudiant-1',
+      matricule: 'ETU-2026-0042',
+      nom: 'Ndiaye',
+      prenom: 'Awa',
+      telephone: '+221771234567',
+    },
     ...extra,
   });
 
@@ -136,14 +150,14 @@ describe('Journal avant/après des réclamations', () => {
 
   /** Valeurs sensibles qui ne doivent apparaître dans aucune entrée de journal. */
   const VALEURS_INTERDITES = [
-    'Refus d\'inscription après résultats',   // sujet
-    'date de naissance',                        // description
-    'Dossier incomplet',                       // note interne
-    'Awa Ndiaye',                              // nom d'auteur / matricule porteur
-    'awa.ndiaye@exemple.test',                 // adresse de l'auteur
-    'ETU-2026-0042',                            // matricule
-    '+221771234567',                            // téléphone
-    'Bassène',                                  // nom de l'agent
+    "Refus d'inscription après résultats", // sujet
+    'date de naissance', // description
+    'Dossier incomplet', // note interne
+    'Awa Ndiaye', // nom d'auteur / matricule porteur
+    'awa.ndiaye@exemple.test', // adresse de l'auteur
+    'ETU-2026-0042', // matricule
+    '+221771234567', // téléphone
+    'Bassène', // nom de l'agent
   ];
 
   function preparer() {
@@ -160,14 +174,19 @@ describe('Journal avant/après des réclamations', () => {
       messageReclamation: {
         count: jest.fn().mockResolvedValue(1),
         create: jest.fn().mockResolvedValue({
-          id: 'msg-2', reclamationId: 'rec-1', auteurId: 'admin-1',
+          id: 'msg-2',
+          reclamationId: 'rec-1',
+          auteurId: 'admin-1',
           auteur: { id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.ADMIN },
           nomAffichage: 'Ibrahima Bassène',
-          contenu: 'Votre dossier a été réexaminé', joint: null,
+          contenu: 'Votre dossier a été réexaminé',
+          joint: null,
           creeLe: new Date('2026-10-02T10:00:00.000Z'),
         }),
       },
-      user: { findFirst: jest.fn().mockResolvedValue({ id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.ADMIN }) },
+      user: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.ADMIN }),
+      },
     };
     const prisma: any = {
       reclamation: {
@@ -181,7 +200,10 @@ describe('Journal avant/après des réclamations', () => {
       user: {
         findMany: jest.fn().mockResolvedValue([]),
         findFirst: jest.fn().mockResolvedValue({
-          id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.ADMIN,
+          id: 'admin-1',
+          nom: 'Bassène',
+          prenom: 'Ibrahima',
+          role: Role.ADMIN,
         }),
       },
       // Un journal écrit hors transaction serait visible ici.
@@ -205,11 +227,14 @@ describe('Journal avant/après des réclamations', () => {
   it("journalise l'ouverture dans la transaction, sans le sujet ni la description", async () => {
     const { service, prisma, journal, mutations } = preparer();
 
-    await service.creer({
-      type: TypeReclamation.INSCRIPTION,
-      sujet: 'Refus d\'inscription après résultats',
-      description: 'Mon nom est Ndiaye et ma date de naissance est le 04/05/2004',
-    } as any, admin);
+    await service.creer(
+      {
+        type: TypeReclamation.INSCRIPTION,
+        sujet: "Refus d'inscription après résultats",
+        description: 'Mon nom est Ndiaye et ma date de naissance est le 04/05/2004',
+      } as any,
+      admin,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mutations).toEqual(['create']);
@@ -231,17 +256,27 @@ describe('Journal avant/après des réclamations', () => {
 
   it("consigne l'anonymat et l'absence de fiche rattachée, jamais l'identité déclarée", async () => {
     const { service, tx, journal } = preparer();
-    tx.reclamation.create.mockResolvedValue(dossier({
-      anonyme: true, etudiantId: null, nomAuteur: 'Awa Ndiaye',
-      emailAuteur: 'awa.ndiaye@exemple.test', etudiant: null,
-    }));
+    tx.reclamation.create.mockResolvedValue(
+      dossier({
+        anonyme: true,
+        etudiantId: null,
+        nomAuteur: 'Awa Ndiaye',
+        emailAuteur: 'awa.ndiaye@exemple.test',
+        etudiant: null,
+      }),
+    );
 
-    await service.creer({
-      type: TypeReclamation.INSCRIPTION,
-      sujet: 'Refus d\'inscription après résultats',
-      description: 'Mon nom est Ndiaye et ma date de naissance est le 04/05/2004',
-      anonyme: true, nomAuteur: 'Awa Ndiaye', emailAuteur: 'awa.ndiaye@exemple.test',
-    } as any, etudiant);
+    await service.creer(
+      {
+        type: TypeReclamation.INSCRIPTION,
+        sujet: "Refus d'inscription après résultats",
+        description: 'Mon nom est Ndiaye et ma date de naissance est le 04/05/2004',
+        anonyme: true,
+        nomAuteur: 'Awa Ndiaye',
+        emailAuteur: 'awa.ndiaye@exemple.test',
+      } as any,
+      etudiant,
+    );
 
     const ecrit = details(journal);
     expect(journal[0].data.userId).toBeNull();
@@ -251,13 +286,17 @@ describe('Journal avant/après des réclamations', () => {
     expectPasDeFuite(journal);
   });
 
-  it("journalise le message sans son texte ni sa pièce jointe", async () => {
+  it('journalise le message sans son texte ni sa pièce jointe', async () => {
     const { service, prisma, journal, mutations } = preparer();
 
-    await service.posterMessage('rec-1', {
-      contenu: 'Votre dossier a été réexaminé',
-      joint: 'data:image/png;base64,QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo',
-    } as any, admin);
+    await service.posterMessage(
+      'rec-1',
+      {
+        contenu: 'Votre dossier a été réexaminé',
+        joint: 'data:image/png;base64,QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo',
+      } as any,
+      admin,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mutations).toEqual(['create']);
@@ -293,8 +332,13 @@ describe('Journal avant/après des réclamations', () => {
     tx.reclamation.findFirst.mockResolvedValue(dossier({ anonyme: true, etudiantId: null }));
     tx.messageReclamation.count.mockResolvedValue(0);
     tx.messageReclamation.create.mockResolvedValue({
-      id: 'msg-3', reclamationId: 'rec-1', auteurId: null, auteur: null,
-      nomAffichage: 'Anonyme', contenu: 'Je relance ma demande', joint: null,
+      id: 'msg-3',
+      reclamationId: 'rec-1',
+      auteurId: null,
+      auteur: null,
+      nomAffichage: 'Anonyme',
+      contenu: 'Je relance ma demande',
+      joint: null,
       creeLe: new Date('2026-10-02T12:00:00.000Z'),
     });
 
@@ -313,11 +357,13 @@ describe('Journal avant/après des réclamations', () => {
   it('journalise la résolution avec les deux états et sans le motif de rejet', async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     prisma.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
-    tx.reclamation.update.mockResolvedValue(dossier({
-      statut: StatutReclamation.RESOLUE,
-      notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
-      fermeLe: new Date('2026-10-02T11:00:00.000Z'),
-    }));
+    tx.reclamation.update.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.RESOLUE,
+        notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
+        fermeLe: new Date('2026-10-02T11:00:00.000Z'),
+      }),
+    );
     tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
 
     await service.changerStatut(
@@ -348,11 +394,13 @@ describe('Journal avant/après des réclamations', () => {
 
   it("journalise l'affectation et la prise en charge automatique, sans le nom de l'agent", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    tx.reclamation.update.mockResolvedValue(dossier({
-      statut: StatutReclamation.EN_COURS,
-      assigneAId: 'admin-1',
-      assigneA: { id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.DIRECTION },
-    }));
+    tx.reclamation.update.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.EN_COURS,
+        assigneAId: 'admin-1',
+        assigneA: { id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.DIRECTION },
+      }),
+    );
 
     await service.assigner('rec-1', { assigneAId: 'admin-1' } as any, admin);
 
@@ -378,16 +426,22 @@ describe('Journal avant/après des réclamations', () => {
     expectPasDeFuite(journal);
   });
 
-  it("journalise une réassignation sans prise en charge quand le dossier est déjà repris", async () => {
+  it('journalise une réassignation sans prise en charge quand le dossier est déjà repris', async () => {
     const { service, tx, journal } = preparer();
-    tx.reclamation.findUnique.mockResolvedValue(dossier({
-      statut: StatutReclamation.EN_COURS, assigneAId: 'scolarite-1',
-      assigneA: { id: 'scolarite-1', nom: 'Sow', prenom: 'Fatou', role: Role.SCOLARITE },
-    }));
-    tx.reclamation.update.mockResolvedValue(dossier({
-      statut: StatutReclamation.EN_COURS, assigneAId: 'admin-1',
-      assigneA: { id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.DIRECTION },
-    }));
+    tx.reclamation.findUnique.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.EN_COURS,
+        assigneAId: 'scolarite-1',
+        assigneA: { id: 'scolarite-1', nom: 'Sow', prenom: 'Fatou', role: Role.SCOLARITE },
+      }),
+    );
+    tx.reclamation.update.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.EN_COURS,
+        assigneAId: 'admin-1',
+        assigneA: { id: 'admin-1', nom: 'Bassène', prenom: 'Ibrahima', role: Role.DIRECTION },
+      }),
+    );
 
     await service.assigner('rec-1', { assigneAId: 'admin-1' } as any, admin);
 
@@ -405,9 +459,12 @@ describe('Journal avant/après des réclamations', () => {
     const maintenant = new Date('2026-10-03T09:00:00.000Z');
     jest.useFakeTimers().setSystemTime(maintenant);
     prisma.reclamation.findUnique.mockResolvedValue(dossier({ creeLe: new Date('2026-10-03T08:00:00.000Z') }));
-    tx.reclamation.update.mockResolvedValue(dossier({
-      escaladeLe: maintenant, assigneA: null,
-    }));
+    tx.reclamation.update.mockResolvedValue(
+      dossier({
+        escaladeLe: maintenant,
+        assigneA: null,
+      }),
+    );
     tx.reclamation.findUnique.mockResolvedValue(dossier({ creeLe: new Date('2026-10-03T08:00:00.000Z') }));
 
     try {
@@ -436,23 +493,29 @@ describe('Journal avant/après des réclamations', () => {
     expectPasDeFuite(journal);
   });
 
-  it("journalise la clôture sans la note de décision", async () => {
+  it('journalise la clôture sans la note de décision', async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    prisma.reclamation.findUnique.mockResolvedValue(dossier({
-      statut: StatutReclamation.REJETEE,
-      notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
-      fermeLe: new Date('2026-10-02T11:00:00.000Z'),
-    }));
-    tx.reclamation.update.mockResolvedValue(dossier({
-      statut: StatutReclamation.REJETEE,
-      notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne\nCLÔTURE — rejetée',
-      fermeLe: new Date('2026-10-02T11:00:00.000Z'),
-    }));
-    tx.reclamation.findUnique.mockResolvedValue(dossier({
-      statut: StatutReclamation.REJETEE,
-      notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
-      fermeLe: new Date('2026-10-02T11:00:00.000Z'),
-    }));
+    prisma.reclamation.findUnique.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.REJETEE,
+        notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
+        fermeLe: new Date('2026-10-02T11:00:00.000Z'),
+      }),
+    );
+    tx.reclamation.update.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.REJETEE,
+        notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne\nCLÔTURE — rejetée',
+        fermeLe: new Date('2026-10-02T11:00:00.000Z'),
+      }),
+    );
+    tx.reclamation.findUnique.mockResolvedValue(
+      dossier({
+        statut: StatutReclamation.REJETEE,
+        notes: '[2026-10-02 11:00 Ibrahima Bassène] Dossier incomplet, motif interne',
+        fermeLe: new Date('2026-10-02T11:00:00.000Z'),
+      }),
+    );
 
     await service.cloturer('rec-1', { noteCloture: 'Dossier incomplet, motif interne' } as any, admin);
 
@@ -480,10 +543,15 @@ describe('Journal avant/après des réclamations', () => {
     jest.useFakeTimers().setSystemTime(maintenant);
     prisma.reclamation.findMany.mockResolvedValue([
       {
-        id: 'rec-1', numero: 'REC-2026-00001', creeLe: new Date('2026-10-01T08:00:00.000Z'),
-        delaiEscaladeHeures: 48, type: TypeReclamation.INSCRIPTION,
-        priorite: PrioriteReclamation.NORMALE, statut: StatutReclamation.OUVERTE,
-        anonyme: false, escaladeLe: null,
+        id: 'rec-1',
+        numero: 'REC-2026-00001',
+        creeLe: new Date('2026-10-01T08:00:00.000Z'),
+        delaiEscaladeHeures: 48,
+        type: TypeReclamation.INSCRIPTION,
+        priorite: PrioriteReclamation.NORMALE,
+        statut: StatutReclamation.OUVERTE,
+        anonyme: false,
+        escaladeLe: null,
       },
     ]);
     tx.reclamation.updateMany.mockResolvedValue({ count: 1 });
@@ -532,12 +600,19 @@ describe('Journal avant/après des réclamations', () => {
     const { service, prisma, tx, journal } = preparer();
     const maintenant = new Date('2026-10-03T09:00:00.000Z');
     jest.useFakeTimers().setSystemTime(maintenant);
-    prisma.reclamation.findMany.mockResolvedValue([{
-      id: 'rec-1', numero: 'REC-2026-00001', creeLe: new Date('2026-10-01T08:00:00.000Z'),
-      delaiEscaladeHeures: 48, type: TypeReclamation.INSCRIPTION,
-      priorite: PrioriteReclamation.NORMALE, statut: StatutReclamation.OUVERTE,
-      anonyme: false, escaladeLe: null,
-    }]);
+    prisma.reclamation.findMany.mockResolvedValue([
+      {
+        id: 'rec-1',
+        numero: 'REC-2026-00001',
+        creeLe: new Date('2026-10-01T08:00:00.000Z'),
+        delaiEscaladeHeures: 48,
+        type: TypeReclamation.INSCRIPTION,
+        priorite: PrioriteReclamation.NORMALE,
+        statut: StatutReclamation.OUVERTE,
+        anonyme: false,
+        escaladeLe: null,
+      },
+    ]);
     tx.reclamation.updateMany.mockResolvedValue({ count: 0 });
 
     try {
@@ -546,9 +621,15 @@ describe('Journal avant/après des réclamations', () => {
       jest.useRealTimers();
     }
 
-    expect(tx.reclamation.updateMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'rec-1', statut: { in: [StatutReclamation.OUVERTE, StatutReclamation.EN_COURS, StatutReclamation.EN_ATTENTE_REPONSE] }, escaladeLe: null },
-    }));
+    expect(tx.reclamation.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'rec-1',
+          statut: { in: [StatutReclamation.OUVERTE, StatutReclamation.EN_COURS, StatutReclamation.EN_ATTENTE_REPONSE] },
+          escaladeLe: null,
+        },
+      }),
+    );
     expect(journal).toEqual([]);
   });
 
@@ -561,13 +642,20 @@ describe('Journal avant/après des réclamations', () => {
   it('convertit un conflit de sérialisation en 409 sans garder mutation ni journal', async () => {
     const { service, tx, mutations, journal } = preparer();
     tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
-    tx.reclamation.update.mockRejectedValue(new Prisma.PrismaClientKnownRequestError('serialization conflict', {
-      code: 'P2034', clientVersion: 'test',
-    }));
+    tx.reclamation.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('serialization conflict', {
+        code: 'P2034',
+        clientVersion: 'test',
+      }),
+    );
 
-    await expect(service.changerStatut(
-      'rec-1', { statut: StatutReclamation.RESOLUE, commentaire: 'Décision concurrente' } as any, admin,
-    )).rejects.toMatchObject({
+    await expect(
+      service.changerStatut(
+        'rec-1',
+        { statut: StatutReclamation.RESOLUE, commentaire: 'Décision concurrente' } as any,
+        admin,
+      ),
+    ).rejects.toMatchObject({
       status: 409,
       response: { message: 'reclamations.ecriture_concurrente_reessayez' },
     });
@@ -580,9 +668,13 @@ describe('Journal avant/après des réclamations', () => {
     tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.EN_COURS }));
     flags.echecEcriture = 'update';
 
-    await expect(service.changerStatut(
-      'rec-1', { statut: StatutReclamation.RESOLUE, commentaire: 'Dossier incomplet' } as any, admin,
-    )).rejects.toThrow('mutation refusée');
+    await expect(
+      service.changerStatut(
+        'rec-1',
+        { statut: StatutReclamation.RESOLUE, commentaire: 'Dossier incomplet' } as any,
+        admin,
+      ),
+    ).rejects.toThrow('mutation refusée');
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -592,8 +684,7 @@ describe('Journal avant/après des réclamations', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reclamation.findFirst.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLUE }));
 
-    await expect(service.posterMessage('rec-1', { contenu: 'Dernier essai' } as any, etudiant))
-      .rejects.toThrow();
+    await expect(service.posterMessage('rec-1', { contenu: 'Dernier essai' } as any, etudiant)).rejects.toThrow();
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mutations).toEqual([]);
@@ -604,9 +695,9 @@ describe('Journal avant/après des réclamations', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reclamation.findUnique.mockResolvedValue(dossier({ statut: StatutReclamation.RESOLUE }));
 
-    await expect(service.changerStatut(
-      'rec-1', { statut: StatutReclamation.EN_COURS } as any, admin,
-    )).rejects.toThrow('reclamations.transition_de_statut_non_autorisee');
+    await expect(service.changerStatut('rec-1', { statut: StatutReclamation.EN_COURS } as any, admin)).rejects.toThrow(
+      'reclamations.transition_de_statut_non_autorisee',
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(mutations).toEqual([]);
@@ -617,8 +708,9 @@ describe('Journal avant/après des réclamations', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecJournal = true;
 
-    await expect(service.assigner('rec-1', { assigneAId: 'admin-1' } as any, admin))
-      .rejects.toThrow('journal indisponible');
+    await expect(service.assigner('rec-1', { assigneAId: 'admin-1' } as any, admin)).rejects.toThrow(
+      'journal indisponible',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);

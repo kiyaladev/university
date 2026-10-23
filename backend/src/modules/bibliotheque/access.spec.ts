@@ -6,14 +6,19 @@ import { RechercheService } from './recherche.service';
 import { t } from '../../common/i18n';
 
 describe('Fonds privé de la bibliothèque', () => {
-  it.each([null, Role.ETUDIANT, Role.CONTROLEUR, Role.CHEF_DEPARTEMENT])('ne donne pas le fonds privé à %s', role => {
-    expect(fondsComplet(role ? { role } as any : null)).toBe(false);
+  it.each([null, Role.ETUDIANT, Role.CONTROLEUR, Role.CHEF_DEPARTEMENT])('ne donne pas le fonds privé à %s', (role) => {
+    expect(fondsComplet(role ? ({ role } as any) : null)).toBe(false);
   });
-  it.each([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.ENSEIGNANT])('autorise le personnel documentaire %s', role => {
-    expect(fondsComplet({ role } as any)).toBe(true);
-  });
+  it.each([Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.ENSEIGNANT])(
+    'autorise le personnel documentaire %s',
+    (role) => {
+      expect(fondsComplet({ role } as any)).toBe(true);
+    },
+  );
   it('un étudiant ne peut forcer public=false dans la liste', async () => {
-    const prisma = { documentDepot: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) } };
+    const prisma = {
+      documentDepot: { findMany: jest.fn().mockResolvedValue([]), count: jest.fn().mockResolvedValue(0) },
+    };
     const service = new BibliothequeService(prisma as any, {} as any);
     await service.liste({ public: 'false' }, { role: Role.ETUDIANT } as any);
     expect(prisma.documentDepot.findMany.mock.calls[0][0].where.public).toBe(true);
@@ -29,20 +34,34 @@ describe('Fonds privé de la bibliothèque', () => {
   });
   it('retire les matricules, identifiants personnels et déposant des métadonnées publiques', async () => {
     const doc = {
-      id: 'doc-1', titre: 'Cours publié', fichier: null,
-      enseignantId: 'ens-id', etudiantId: 'etu-id', deposeParId: 'user-id',
+      id: 'doc-1',
+      titre: 'Cours publié',
+      fichier: null,
+      enseignantId: 'ens-id',
+      etudiantId: 'etu-id',
+      deposeParId: 'user-id',
       departement: { id: 'dept-id', nom: 'Informatique' },
-      enseignant: { id: 'ens-id', matricule: 'ENS-001', nom: 'Barry', prenom: 'Awa', departementId: 'dept-id', departement: { id: 'dept-id', nom: 'Informatique' } },
+      enseignant: {
+        id: 'ens-id',
+        matricule: 'ENS-001',
+        nom: 'Barry',
+        prenom: 'Awa',
+        departementId: 'dept-id',
+        departement: { id: 'dept-id', nom: 'Informatique' },
+      },
       etudiant: { id: 'etu-id', matricule: 'ETU-001', nom: 'Diallo', prenom: 'Moussa' },
       deposePar: { id: 'user-id', nom: 'Admin', prenom: 'A', role: Role.ADMIN },
     };
-    const prisma = { documentDepot: { findMany: jest.fn().mockResolvedValue([doc]), count: jest.fn().mockResolvedValue(1) } };
+    const prisma = {
+      documentDepot: { findMany: jest.fn().mockResolvedValue([doc]), count: jest.fn().mockResolvedValue(1) },
+    };
     const service = new BibliothequeService(prisma as any, {} as any);
 
     const resultat = await service.liste({} as any, null);
 
     expect(resultat.data[0]).toMatchObject({
-      id: 'doc-1', titre: 'Cours publié',
+      id: 'doc-1',
+      titre: 'Cours publié',
       enseignant: { nom: 'Barry', prenom: 'Awa', departement: { nom: 'Informatique' } },
     });
     expect(resultat.data[0]).not.toHaveProperty('etudiant');
@@ -57,10 +76,12 @@ describe('Fonds privé de la bibliothèque', () => {
     const prisma = { documentDepot: { findFirst } };
     const service = new BibliothequeService(prisma as any, {} as any);
     await expect(service.detailPour('foreign', { role: Role.ETUDIANT } as any)).rejects.toThrow(NotFoundException);
-    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'foreign', public: true },
-      omit: { fichier: true, contenuTexte: true },
-    }));
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'foreign', public: true },
+        omit: { fichier: true, contenuTexte: true },
+      }),
+    );
   });
   it('masque un document privé sans fichier aux visiteurs anonymes', async () => {
     const findFirst = jest.fn().mockResolvedValue(null);
@@ -69,15 +90,18 @@ describe('Fonds privé de la bibliothèque', () => {
     const error = await service.fichier('private-draft', null).catch((reason) => reason);
     expect(error).toBeInstanceOf(NotFoundException);
     expect(error.message).toBe(t('bibliotheque.document_introuvable'));
-    expect(findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'private-draft', public: true },
-      omit: { contenuTexte: true },
-    }));
+    expect(findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'private-draft', public: true },
+        omit: { contenuTexte: true },
+      }),
+    );
   });
 
   it('exclut les colonnes volumineuses de la réhydratation FTS', async () => {
     const prisma = {
-      $queryRaw: jest.fn()
+      $queryRaw: jest
+        .fn()
         .mockResolvedValueOnce([{ id: 'doc-1', rank: 1 }])
         .mockResolvedValueOnce([{ count: 1n }]),
       documentDepot: { findMany: jest.fn().mockResolvedValue([{ id: 'doc-1' }]) },
@@ -99,7 +123,10 @@ describe('Fonds privé de la bibliothèque', () => {
   it('journalise le téléchargement authentifié dans la transaction du compteur sans copier le fichier', async () => {
     const documentDepot = {
       findFirst: jest.fn().mockResolvedValue({
-        id: 'doc-prive', titre: 'Cours privé', fichier: 'data:application/pdf;base64,UERG', typeMime: 'application/pdf',
+        id: 'doc-prive',
+        titre: 'Cours privé',
+        fichier: 'data:application/pdf;base64,UERG',
+        typeMime: 'application/pdf',
       }),
       update: jest.fn().mockResolvedValue({}),
     };
@@ -115,12 +142,15 @@ describe('Fonds privé de la bibliothèque', () => {
 
     expect(resultat.octets.toString()).toBe('PDF');
     expect(documentDepot.update).toHaveBeenCalledWith({
-      where: { id: 'doc-prive' }, data: { telechargements: { increment: 1 } },
+      where: { id: 'doc-prive' },
+      data: { telechargements: { increment: 1 } },
     });
     expect(auditLog.create).toHaveBeenCalledWith({
       data: {
-        userId: 'agent-1', action: 'DOCUMENT_DEPOT_TELECHARGE',
-        entite: 'DocumentDepot', entiteId: 'doc-prive',
+        userId: 'agent-1',
+        action: 'DOCUMENT_DEPOT_TELECHARGE',
+        entite: 'DocumentDepot',
+        entiteId: 'doc-prive',
       },
     });
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
@@ -131,7 +161,10 @@ describe('Fonds privé de la bibliothèque', () => {
   it('ne crée pas d’acteur artificiel pour le téléchargement anonyme d’un document public', async () => {
     const documentDepot = {
       findFirst: jest.fn().mockResolvedValue({
-        id: 'doc-public', titre: 'Cours public', fichier: 'data:text/plain;base64,SGVsbG8=', typeMime: 'text/plain',
+        id: 'doc-public',
+        titre: 'Cours public',
+        fichier: 'data:text/plain;base64,SGVsbG8=',
+        typeMime: 'text/plain',
       }),
       update: jest.fn().mockResolvedValue({}),
     };
@@ -151,7 +184,8 @@ describe('Fonds privé de la bibliothèque', () => {
 
   it('utilise une projection personnelle sûre pendant la réhydratation FTS', async () => {
     const prisma = {
-      $queryRaw: jest.fn()
+      $queryRaw: jest
+        .fn()
         .mockResolvedValueOnce([{ id: 'doc-1', rank: 1 }])
         .mockResolvedValueOnce([{ count: 1n }]),
       documentDepot: { findMany: jest.fn().mockResolvedValue([{ id: 'doc-1' }]) },
@@ -161,7 +195,11 @@ describe('Fonds privé de la bibliothèque', () => {
 
     const include = prisma.documentDepot.findMany.mock.calls[0][0].include;
     expect(include.enseignant.select).toEqual({
-      id: true, matricule: true, nom: true, prenom: true, departement: true,
+      id: true,
+      matricule: true,
+      nom: true,
+      prenom: true,
+      departement: true,
     });
     expect(include.etudiant.select).toEqual({ id: true, matricule: true, nom: true, prenom: true });
     expect(include.enseignant.include).toBeUndefined();
@@ -169,15 +207,23 @@ describe('Fonds privé de la bibliothèque', () => {
   });
   it('retire les données personnelles des résultats FTS anonymes', async () => {
     const prisma = {
-      $queryRaw: jest.fn()
+      $queryRaw: jest
+        .fn()
         .mockResolvedValueOnce([{ id: 'doc-1', rank: 1 }])
         .mockResolvedValueOnce([{ count: 1n }]),
-      documentDepot: { findMany: jest.fn().mockResolvedValue([{
-        id: 'doc-1', etudiantId: 'etu-id', enseignantId: 'ens-id', deposeParId: 'user-id',
-        etudiant: { id: 'etu-id', matricule: 'ETU-001', nom: 'Diallo' },
-        enseignant: { id: 'ens-id', matricule: 'ENS-001', nom: 'Barry', prenom: 'Awa' },
-        deposePar: { id: 'user-id', role: Role.ADMIN },
-      }]) },
+      documentDepot: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            id: 'doc-1',
+            etudiantId: 'etu-id',
+            enseignantId: 'ens-id',
+            deposeParId: 'user-id',
+            etudiant: { id: 'etu-id', matricule: 'ETU-001', nom: 'Diallo' },
+            enseignant: { id: 'ens-id', matricule: 'ENS-001', nom: 'Barry', prenom: 'Awa' },
+            deposePar: { id: 'user-id', role: Role.ADMIN },
+          },
+        ]),
+      },
     };
     const service = new RechercheService(prisma as any);
 

@@ -47,9 +47,15 @@ describe('Audit des transitions d’inscription', () => {
 
   it('refuse la validation d’un dossier rattaché à une année close', async () => {
     const avant = {
-      id: 'ins-closed', numero: 'INS-2024-00001', etudiantId: 'etu-1', anneeId: 'annee-close',
-      promotionId: 'promo-1', statut: StatutInscription.PAYEE, montantFrais: 250000,
-      etudiant: { nom: 'Diallo', prenom: 'Aïssatou' }, promotion: { filiere: { departementId: 'dep-1' } },
+      id: 'ins-closed',
+      numero: 'INS-2024-00001',
+      etudiantId: 'etu-1',
+      anneeId: 'annee-close',
+      promotionId: 'promo-1',
+      statut: StatutInscription.PAYEE,
+      montantFrais: 250000,
+      etudiant: { nom: 'Diallo', prenom: 'Aïssatou' },
+      promotion: { filiere: { departementId: 'dep-1' } },
     };
     const tx = {
       inscription: { updateMany: jest.fn(), findUnique: jest.fn() },
@@ -62,8 +68,9 @@ describe('Audit des transitions d’inscription', () => {
     };
     const service = new InscriptionService(prisma, {} as any, {} as any);
 
-    await expect(service.validerInscription('ins-closed', { id: 'agent-1', role: Role.SCOLARITE } as AuthUser))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.validerInscription('ins-closed', { id: 'agent-1', role: Role.SCOLARITE } as AuthUser),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.inscription.updateMany).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });

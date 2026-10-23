@@ -10,14 +10,19 @@ jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => undefined } }));
  * LignePaie.enseignantId) sont en ON DELETE RESTRICT : la base refuse la
  * suppression (P2003) et l'utilisateur reçoit un 409 explicite, pas une 500.
  */
-const refusFk = () => new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
-  code: 'P2003', clientVersion: 'test',
-});
+const refusFk = () =>
+  new Prisma.PrismaClientKnownRequestError('Foreign key constraint failed', {
+    code: 'P2003',
+    clientVersion: 'test',
+  });
 
 describe('Suppressions refusées par une clé étrangère RESTRICT', () => {
   it('refuse la suppression d’une matière dont les évaluations portent des notes', async () => {
     const tx = {
-      matiere: { findUnique: jest.fn().mockResolvedValue({ id: 'matiere-1', code: 'MAT1' }), delete: jest.fn().mockRejectedValue(refusFk()) },
+      matiere: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'matiere-1', code: 'MAT1' }),
+        delete: jest.fn().mockRejectedValue(refusFk()),
+      },
       auditLog: { create: jest.fn() },
     };
     const service = new MatieresService({ $transaction: (fn: any) => fn(tx) } as any);
@@ -30,7 +35,10 @@ describe('Suppressions refusées par une clé étrangère RESTRICT', () => {
 
   it('refuse la suppression d’un enseignant qui a des lignes de paie', async () => {
     const tx = {
-      enseignant: { findUnique: jest.fn().mockResolvedValue({ id: 'ens-1', matricule: 'E1' }), delete: jest.fn().mockRejectedValue(refusFk()) },
+      enseignant: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'ens-1', matricule: 'E1' }),
+        delete: jest.fn().mockRejectedValue(refusFk()),
+      },
       auditLog: { create: jest.fn() },
     };
     const service = new EnseignantsService({ $transaction: (fn: any) => fn(tx) } as any);

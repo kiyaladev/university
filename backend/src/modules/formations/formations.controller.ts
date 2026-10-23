@@ -5,19 +5,7 @@
  * Les routes « publiques » sont déclarées avant « :id » pour que le mot ne
  * soit jamais capturé comme identifiant.
  */
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Ip,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
@@ -72,11 +60,7 @@ export class FormationsController {
     courant: { limit: 10, ttl: 900_000 },
   })
   @Post(':id/inscription')
-  inscrire(
-    @Param('id') id: string,
-    @Body() dto: InscriptionFormationPubliqueDto,
-    @Ip() ip: string,
-  ) {
+  inscrire(@Param('id') id: string, @Body() dto: InscriptionFormationPubliqueDto, @Ip() ip: string) {
     return this.service.inscriptionPublique(id, dto, ip);
   }
 
@@ -162,11 +146,7 @@ export class FormationsController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get(':id/certificat')
-  async certificat(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async certificat(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     res.type('html').send(await this.service.certificat(id, jetonImprimable(req), base));
   }

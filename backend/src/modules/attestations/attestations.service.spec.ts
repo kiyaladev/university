@@ -10,7 +10,10 @@ describe('Mutations après révocation des attestations', () => {
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false }]),
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
-      attestation: { findUnique: jest.fn().mockResolvedValue({ ...avant, statut: StatutAttestation.REVOQUEE }), update: jest.fn() },
+      attestation: {
+        findUnique: jest.fn().mockResolvedValue({ ...avant, statut: StatutAttestation.REVOQUEE }),
+        update: jest.fn(),
+      },
       auditLog: { create: jest.fn() },
     };
     const prisma = {
@@ -19,7 +22,13 @@ describe('Mutations après révocation des attestations', () => {
       $transaction: (fn: any) => fn(tx),
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
-    await expect(service[operation]('attestation-1', { motif: 'Recette', motifRevocation: 'Recette' } as any, { id: 'admin' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service[operation](
+        'attestation-1',
+        { motif: 'Recette', motifRevocation: 'Recette' } as any,
+        { id: 'admin' } as any,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.attestation.update).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -37,9 +46,11 @@ describe('Lecture du registre des attestations', () => {
 
     await service.liste({} as any);
 
-    expect(prisma.attestation.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      include: ATTESTATION_INCLUDE,
-    }));
+    expect(prisma.attestation.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: ATTESTATION_INCLUDE,
+      }),
+    );
     expect(ATTESTATION_INCLUDE).toMatchObject({
       annee: { select: { libelle: true } },
       promotion: { select: { nom: true, filiere: { select: { nom: true } } } },
@@ -52,10 +63,15 @@ describe('Lecture du registre des attestations', () => {
 describe('Vérification publique des attestations', () => {
   it('confirme la révocation sans publier son motif confidentiel', async () => {
     const prisma = {
-      attestation: { findUnique: jest.fn().mockResolvedValue({
-        id: 'attestation-1', qrToken: 'secret', statut: StatutAttestation.REVOQUEE,
-        revoqueeLe: new Date('2026-10-01'), motifRevocation: 'information confidentielle',
-      }) },
+      attestation: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'attestation-1',
+          qrToken: 'secret',
+          statut: StatutAttestation.REVOQUEE,
+          revoqueeLe: new Date('2026-10-01'),
+          motifRevocation: 'information confidentielle',
+        }),
+      },
       verificationAttestation: { create: jest.fn().mockResolvedValue({ id: 'verification-1' }) },
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
@@ -131,8 +147,9 @@ describe('Vérification publique des attestations', () => {
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
 
-    await expect(service.modifier('attestation-1', { motif: 'Correction' } as any, { id: 'user-1' } as any))
-      .rejects.toThrow();
+    await expect(
+      service.modifier('attestation-1', { motif: 'Correction' } as any, { id: 'user-1' } as any),
+    ).rejects.toThrow();
 
     expect(tx.attestation.update).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
@@ -197,7 +214,18 @@ describe('Cohérence année-promotion des attestations', () => {
       $transaction: (fn: any) => fn(tx),
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
-    await expect(service.creer({ etudiantId: 'etudiant-1', anneeId: 'annee-1', promotionId: 'promotion-1', inscriptionId: 'inscription-1', type: TypeAttestation.SCOLARITE } as any, { id: 'admin' } as any)).rejects.toThrow('attestations.rattachement_incoherent');
+    await expect(
+      service.creer(
+        {
+          etudiantId: 'etudiant-1',
+          anneeId: 'annee-1',
+          promotionId: 'promotion-1',
+          inscriptionId: 'inscription-1',
+          type: TypeAttestation.SCOLARITE,
+        } as any,
+        { id: 'admin' } as any,
+      ),
+    ).rejects.toThrow('attestations.rattachement_incoherent');
     expect(tx.attestation.create).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -205,23 +233,54 @@ describe('Cohérence année-promotion des attestations', () => {
   it('renvoie une erreur métier pour une inscription inexistante avant toute transaction', async () => {
     const prisma = {
       etudiant: { findUnique: jest.fn().mockResolvedValue({ id: 'etudiant-1' }) },
-      inscription: { findUnique: jest.fn().mockResolvedValue(null) }, $transaction: jest.fn(),
+      inscription: { findUnique: jest.fn().mockResolvedValue(null) },
+      $transaction: jest.fn(),
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
-    await expect(service.creer({ etudiantId: 'etudiant-1', inscriptionId: 'absente', type: TypeAttestation.SCOLARITE } as any, { id: 'admin' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creer(
+        { etudiantId: 'etudiant-1', inscriptionId: 'absente', type: TypeAttestation.SCOLARITE } as any,
+        { id: 'admin' } as any,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   it('refuse un changement de type qui créerait une deuxième attestation active', async () => {
-    const actuel = { id: 'attestation-1', etudiantId: 'etudiant-1', anneeId: 'annee-1', type: TypeAttestation.SITUATION, statut: StatutAttestation.EMISE };
+    const actuel = {
+      id: 'attestation-1',
+      etudiantId: 'etudiant-1',
+      anneeId: 'annee-1',
+      type: TypeAttestation.SITUATION,
+      statut: StatutAttestation.EMISE,
+    };
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false }]),
-      attestation: { findUnique: jest.fn().mockResolvedValue(actuel), findFirst: jest.fn().mockResolvedValue({ numero: 'ATT-EXISTANTE' }), update: jest.fn() }, auditLog: { create: jest.fn() },
+      attestation: {
+        findUnique: jest.fn().mockResolvedValue(actuel),
+        findFirst: jest.fn().mockResolvedValue({ numero: 'ATT-EXISTANTE' }),
+        update: jest.fn(),
+      },
+      auditLog: { create: jest.fn() },
     };
-    const prisma = { attestation: tx.attestation, anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) }, $transaction: (fn: any) => fn(tx) };
+    const prisma = {
+      attestation: tx.attestation,
+      anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
+      $transaction: (fn: any) => fn(tx),
+    };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
-    await expect(service.modifier(actuel.id, { type: TypeAttestation.SCOLARITE }, { id: 'admin' } as any)).rejects.toBeInstanceOf(ConflictException);
-    expect(tx.attestation.findFirst).toHaveBeenCalledWith({ where: { id: { not: actuel.id }, etudiantId: actuel.etudiantId, anneeId: actuel.anneeId, type: TypeAttestation.SCOLARITE, statut: StatutAttestation.EMISE } });
+    await expect(
+      service.modifier(actuel.id, { type: TypeAttestation.SCOLARITE }, { id: 'admin' } as any),
+    ).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.attestation.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: { not: actuel.id },
+        etudiantId: actuel.etudiantId,
+        anneeId: actuel.anneeId,
+        type: TypeAttestation.SCOLARITE,
+        statut: StatutAttestation.EMISE,
+      },
+    });
     expect(tx.attestation.update).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -229,7 +288,11 @@ describe('Cohérence année-promotion des attestations', () => {
   it('refuse une attestation dont l’année ne correspond pas à la promotion', async () => {
     const annee = { id: 'annee-b', libelle: '2026-2027', cloturee: false };
     const tx = {
-      promotion: { findUnique: jest.fn().mockResolvedValue({ id: 'promotion-a', anneeId: 'annee-a', annee: { libelle: '2025-2026' } }) },
+      promotion: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: 'promotion-a', anneeId: 'annee-a', annee: { libelle: '2025-2026' } }),
+      },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: false }) },
       attestation: { findFirst: jest.fn(), create: jest.fn() },
       auditLog: { create: jest.fn() },
@@ -241,12 +304,17 @@ describe('Cohérence année-promotion des attestations', () => {
     };
     const service = new AttestationsService(prisma as any, {} as any, {} as any);
 
-    await expect(service.creer({
-      type: TypeAttestation.SCOLARITE,
-      etudiantId: 'etudiant-1',
-      anneeId: 'annee-b',
-      promotionId: 'promotion-a',
-    } as any, { id: 'scolarite-1' } as any)).rejects.toThrow('common.academicPromotionMismatch');
+    await expect(
+      service.creer(
+        {
+          type: TypeAttestation.SCOLARITE,
+          etudiantId: 'etudiant-1',
+          anneeId: 'annee-b',
+          promotionId: 'promotion-a',
+        } as any,
+        { id: 'scolarite-1' } as any,
+      ),
+    ).rejects.toThrow('common.academicPromotionMismatch');
 
     expect(tx.attestation.create).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();

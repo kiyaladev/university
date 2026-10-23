@@ -9,23 +9,29 @@ describe('ScolariteService — audit des notes', () => {
 
     await service.listerNotes({} as any, { role: Role.SCOLARITE } as any);
 
-    expect(noteFindMany).toHaveBeenCalledWith(expect.objectContaining({
-      include: expect.objectContaining({
-        inscription: {
-          include: {
-            etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
-            promotion: true,
+    expect(noteFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.objectContaining({
+          inscription: {
+            include: {
+              etudiant: { select: { id: true, matricule: true, nom: true, prenom: true } },
+              promotion: true,
+            },
           },
-        },
+        }),
       }),
-    }));
+    );
   });
 
   it('journalise les valeurs avant/après et les notes dans la même transaction', async () => {
     const noteUpsert = jest.fn().mockResolvedValue({});
     const auditCreate = jest.fn().mockResolvedValue({});
     const tx = {
-      evaluation: { findFirst: jest.fn().mockResolvedValue({ id: 'eval-1', anneeId: 'annee-1', promotionId: 'promo-1', statut: 'OUVERTE' }) },
+      evaluation: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValue({ id: 'eval-1', anneeId: 'annee-1', promotionId: 'promo-1', statut: 'OUVERTE' }),
+      },
       inscription: { findMany: jest.fn().mockResolvedValue([{ id: 'ins-1' }, { id: 'ins-2' }]) },
       note: {
         findMany: jest.fn().mockResolvedValue([{ inscriptionId: 'ins-1', note: 10, present: true }]),
@@ -38,13 +44,16 @@ describe('ScolariteService — audit des notes', () => {
     const service = new ScolariteService(prisma as any);
     const acteur = { id: 'scolarite-1', role: Role.SCOLARITE } as any;
 
-    await service.saisirNotes({
-      evaluationId: 'eval-1',
-      notes: [
-        { inscriptionId: 'ins-1', note: 14, present: true },
-        { inscriptionId: 'ins-2', note: 18, present: false },
-      ],
-    } as any, acteur);
+    await service.saisirNotes(
+      {
+        evaluationId: 'eval-1',
+        notes: [
+          { inscriptionId: 'ins-1', note: 14, present: true },
+          { inscriptionId: 'ins-2', note: 18, present: false },
+        ],
+      } as any,
+      acteur,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(noteUpsert).toHaveBeenCalledTimes(2);

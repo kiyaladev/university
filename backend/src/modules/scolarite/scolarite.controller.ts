@@ -3,18 +3,7 @@
  *  rapports : ouverts dans un nouvel onglet sans en-tête Authorization, le
  *  jeton est passé en URL et vérifié ici à la main.
  */
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
@@ -169,11 +158,7 @@ export class DeliberationsController {
   @ProtectedDocument(...NOTES)
   @Get(':id/imprimer')
   @DocumentScope('deliberation', { [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId' })
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimerPv(id));
   }

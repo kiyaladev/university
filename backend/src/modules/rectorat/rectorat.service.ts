@@ -35,11 +35,7 @@
  *   • Patrimoine obsolescence : compte les EquipementPatrimoine où l'âge
  *     depuis dateAcquisition dépasse obsolescenceMois (mois glissants).
  */
-import {
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   Prisma,
@@ -86,9 +82,7 @@ export class RectoratService {
     ]);
 
     return {
-      anneeActive: anneeActive
-        ? { id: anneeActive.id, libelle: anneeActive.libelle }
-        : null,
+      anneeActive: anneeActive ? { id: anneeActive.id, libelle: anneeActive.libelle } : null,
       effectif,
       nbReclamationsEnCours: reclamations,
       nbIncidentsHelpdesk24h: tickets24h,
@@ -121,32 +115,31 @@ export class RectoratService {
 
     const whereInscriptions = { anneeId: annee.id, ...baseInscriptionNonAnnulee() };
 
-    const [effectifTotal, parPromotion, delibs, masseDuMois, ens, vac, reclamations, tickets24h] =
-      await Promise.all([
-        this.prisma.inscription.count({ where: whereInscriptions }),
-        this.prisma.inscription.groupBy({
-          by: ['promotionId'],
-          where: whereInscriptions,
-          _count: { _all: true },
-        }),
-        this.prisma.deliberation.findMany({
-          where: {
-            anneeId: annee.id,
-            session: SessionDeliberation.NORMALE,
-            statut: StatutDeliberation.VALIDEE,
-          },
-          select: { tauxReussite: true },
-        }),
-        this.masseSalarialeMois(),
-        this.prisma.enseignant.count({
-          where: { statut: { in: statutsEnseignantsPayes() }, actif: true },
-        }),
-        this.prisma.enseignant.count({
-          where: { statut: 'VACATAIRE', actif: true },
-        }),
-        this.prisma.reclamation.count({ where: { statut: { notIn: reclamationFermee() } } }),
-        this.prisma.ticketSupport.count({ where: { createdAt: { gte: ilYA1JOUR() } } }),
-      ]);
+    const [effectifTotal, parPromotion, delibs, masseDuMois, ens, vac, reclamations, tickets24h] = await Promise.all([
+      this.prisma.inscription.count({ where: whereInscriptions }),
+      this.prisma.inscription.groupBy({
+        by: ['promotionId'],
+        where: whereInscriptions,
+        _count: { _all: true },
+      }),
+      this.prisma.deliberation.findMany({
+        where: {
+          anneeId: annee.id,
+          session: SessionDeliberation.NORMALE,
+          statut: StatutDeliberation.VALIDEE,
+        },
+        select: { tauxReussite: true },
+      }),
+      this.masseSalarialeMois(),
+      this.prisma.enseignant.count({
+        where: { statut: { in: statutsEnseignantsPayes() }, actif: true },
+      }),
+      this.prisma.enseignant.count({
+        where: { statut: 'VACATAIRE', actif: true },
+      }),
+      this.prisma.reclamation.count({ where: { statut: { notIn: reclamationFermee() } } }),
+      this.prisma.ticketSupport.count({ where: { createdAt: { gte: ilYA1JOUR() } } }),
+    ]);
 
     const promotions = parPromotion.length
       ? await this.prisma.promotion.findMany({
@@ -166,9 +159,7 @@ export class RectoratService {
     }>;
     const tauxReussite =
       delibsValides.length > 0
-        ? round2(
-            delibsValides.reduce((acc, d) => acc + (d.tauxReussite ?? 0), 0) / delibsValides.length,
-          )
+        ? round2(delibsValides.reduce((acc, d) => acc + (d.tauxReussite ?? 0), 0) / delibsValides.length)
         : 0;
 
     return {
@@ -332,44 +323,60 @@ export class RectoratService {
   /** Regroupement par catégorie pour le snapshot MESRS. */
   private async patrimoineParCategorie() {
     const groupes = await this.prisma.equipementPatrimoine.groupBy({
-      by: ['categorieId'], where: { actif: true },
-      _count: { _all: true }, _sum: { valeurAcquisition: true },
+      by: ['categorieId'],
+      where: { actif: true },
+      _count: { _all: true },
+      _sum: { valeurAcquisition: true },
     });
-    const categories = groupes.length ? await this.prisma.categoriePatrimoine.findMany({
-      where: { id: { in: groupes.map((g) => g.categorieId) } },
-      select: { id: true, libelle: true, code: true },
-    }) : [];
+    const categories = groupes.length
+      ? await this.prisma.categoriePatrimoine.findMany({
+          where: { id: { in: groupes.map((g) => g.categorieId) } },
+          select: { id: true, libelle: true, code: true },
+        })
+      : [];
     const parId = new Map(categories.map((c) => [c.id, c]));
     return groupes.flatMap((g) => {
       const categorie = parId.get(g.categorieId);
-      return categorie ? [{
-        code: categorie.code,
-        libelle: categorie.libelle,
-        nombre: g._count._all,
-        valeur: round2(g._sum.valeurAcquisition ?? 0),
-      }] : [];
+      return categorie
+        ? [
+            {
+              code: categorie.code,
+              libelle: categorie.libelle,
+              nombre: g._count._all,
+              valeur: round2(g._sum.valeurAcquisition ?? 0),
+            },
+          ]
+        : [];
     });
   }
 
   /** Regroupement par département. */
   private async patrimoineParDepartement() {
     const groupes = await this.prisma.equipementPatrimoine.groupBy({
-      by: ['departementId'], where: { actif: true, departementId: { not: null } },
-      _count: { _all: true }, _sum: { valeurAcquisition: true },
+      by: ['departementId'],
+      where: { actif: true, departementId: { not: null } },
+      _count: { _all: true },
+      _sum: { valeurAcquisition: true },
     });
-    const departements = groupes.length ? await this.prisma.departement.findMany({
-      where: { id: { in: groupes.map((g) => g.departementId!).filter(Boolean) } },
-      select: { id: true, code: true, nom: true },
-    }) : [];
+    const departements = groupes.length
+      ? await this.prisma.departement.findMany({
+          where: { id: { in: groupes.map((g) => g.departementId!).filter(Boolean) } },
+          select: { id: true, code: true, nom: true },
+        })
+      : [];
     const parId = new Map(departements.map((d) => [d.id, d]));
     return groupes.flatMap((g) => {
       const departement = g.departementId ? parId.get(g.departementId) : undefined;
-      return departement ? [{
-        code: departement.code,
-        nom: departement.nom,
-        nombre: g._count._all,
-        valeur: round2(g._sum.valeurAcquisition ?? 0),
-      }] : [];
+      return departement
+        ? [
+            {
+              code: departement.code,
+              nom: departement.nom,
+              nombre: g._count._all,
+              valeur: round2(g._sum.valeurAcquisition ?? 0),
+            },
+          ]
+        : [];
     });
   }
 
@@ -425,14 +432,16 @@ export class RectoratService {
       <tr><th>Promotion</th><th>Niveau</th><th>Filière</th><th class="num">Effectif</th></tr>
     </thead>
     <tbody>
-      ${promos.length
-        ? promos
-            .map(
-              (p: any) =>
-                `<tr><td>${echapper(p.nom)}</td><td>${echapper(p.niveau ?? '—')}</td><td>${echapper(p.filiere?.nom ?? '—')}</td><td class="num">${p.effectif}</td></tr>`,
-            )
-            .join('')
-        : '<tr><td colspan="4" class="vide">Aucune promotion active</td></tr>'}
+      ${
+        promos.length
+          ? promos
+              .map(
+                (p: any) =>
+                  `<tr><td>${echapper(p.nom)}</td><td>${echapper(p.niveau ?? '—')}</td><td>${echapper(p.filiere?.nom ?? '—')}</td><td class="num">${p.effectif}</td></tr>`,
+              )
+              .join('')
+          : '<tr><td colspan="4" class="vide">Aucune promotion active</td></tr>'
+      }
     </tbody>
   </table>
 
@@ -442,14 +451,16 @@ export class RectoratService {
       <tr><th>Catégorie</th><th class="num">Nombre</th><th class="num">Valeur (GNF)</th></tr>
     </thead>
     <tbody>
-      ${cats.length
-        ? cats
-            .map(
-              (c: any) =>
-                `<tr><td>${echapper(c.libelle)} <small>(${echapper(c.code)})</small></td><td class="num">${c.nombre}</td><td class="num">${montant(c.valeur)}</td></tr>`,
-            )
-            .join('')
-        : '<tr><td colspan="3" class="vide">Aucun équipement</td></tr>'}
+      ${
+        cats.length
+          ? cats
+              .map(
+                (c: any) =>
+                  `<tr><td>${echapper(c.libelle)} <small>(${echapper(c.code)})</small></td><td class="num">${c.nombre}</td><td class="num">${montant(c.valeur)}</td></tr>`,
+              )
+              .join('')
+          : '<tr><td colspan="3" class="vide">Aucun équipement</td></tr>'
+      }
     </tbody>
   </table>
 
@@ -458,14 +469,16 @@ export class RectoratService {
       <tr><th>Département</th><th class="num">Équipements</th><th class="num">Valeur (GNF)</th></tr>
     </thead>
     <tbody>
-      ${depts.length
-        ? depts
-            .map(
-              (d2: any) =>
-                `<tr><td>${echapper(d2.nom)} <small>(${echapper(d2.code)})</small></td><td class="num">${d2.nombre}</td><td class="num">${montant(d2.valeur)}</td></tr>`,
-            )
-            .join('')
-        : '<tr><td colspan="3" class="vide">Aucun rattachement</td></tr>'}
+      ${
+        depts.length
+          ? depts
+              .map(
+                (d2: any) =>
+                  `<tr><td>${echapper(d2.nom)} <small>(${echapper(d2.code)})</small></td><td class="num">${d2.nombre}</td><td class="num">${montant(d2.valeur)}</td></tr>`,
+              )
+              .join('')
+          : '<tr><td colspan="3" class="vide">Aucun rattachement</td></tr>'
+      }
     </tbody>
   </table>
 

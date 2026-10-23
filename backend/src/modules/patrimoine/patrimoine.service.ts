@@ -118,9 +118,7 @@ export class PatrimoineService {
       const data = {
         ...(dto.code !== undefined ? { code: dto.code.trim() } : {}),
         ...(dto.libelle !== undefined ? { libelle: dto.libelle.trim() } : {}),
-        ...(dto.dureeAmortissement !== undefined
-          ? { dureeAmortissement: dto.dureeAmortissement }
-          : {}),
+        ...(dto.dureeAmortissement !== undefined ? { dureeAmortissement: dto.dureeAmortissement } : {}),
       };
       const apres = await tx.categoriePatrimoine.update({
         where: { id },
@@ -145,7 +143,12 @@ export class PatrimoineService {
     await this.prisma.$transaction(async (tx) => {
       const cat = await this.categorieCourante(tx, id);
       if (cat._count && (cat._count as any).equipements > 0) {
-        throw new ConflictException(t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', { 'cat.libelle': cat.libelle, '(cat._count as any).equipements': (cat._count as any).equipements }));
+        throw new ConflictException(
+          t('patrimoine.categorie_cat_libelle_cat_count_as_any_equipements_equipemen', {
+            'cat.libelle': cat.libelle,
+            '(cat._count as any).equipements': (cat._count as any).equipements,
+          }),
+        );
       }
       await tx.categoriePatrimoine.delete({ where: { id } });
       await journaliser(tx, user, 'PATRIMOINE_CATEGORIE_SUPPRIMEE', 'CategoriePatrimoine', id, {
@@ -246,14 +249,10 @@ export class PatrimoineService {
           const cible = (e.meta?.target as string[]) ?? [];
           if (cible.includes('qrCode')) continue;
           if (cible.includes('numeroSerie')) {
-            throw new BadRequestException(
-              `Un équipement porte déjà le numéro de série ${numeroSerie}`,
-            );
+            throw new BadRequestException(`Un équipement porte déjà le numéro de série ${numeroSerie}`);
           }
           if (cible.includes('numeroInventaire')) {
-            throw new BadRequestException(
-              `Un équipement porte déjà le numéro d'inventaire ${numeroInventaire}`,
-            );
+            throw new BadRequestException(`Un équipement porte déjà le numéro d'inventaire ${numeroInventaire}`);
           }
         }
         throw e;
@@ -274,18 +273,10 @@ export class PatrimoineService {
         ...(dto.dateAcquisition !== undefined
           ? { dateAcquisition: dto.dateAcquisition ? new Date(dto.dateAcquisition) : null }
           : {}),
-        ...(dto.valeurAcquisition !== undefined
-          ? { valeurAcquisition: dto.valeurAcquisition }
-          : {}),
-        ...(dto.numeroInventaire !== undefined
-          ? { numeroInventaire: dto.numeroInventaire.trim() }
-          : {}),
-        ...(dto.obsolescenceMois !== undefined
-          ? { obsolescenceMois: dto.obsolescenceMois }
-          : {}),
-        ...(dto.actif !== undefined
-          ? { actif: dto.actif === 'true' || dto.actif === '1' }
-          : {}),
+        ...(dto.valeurAcquisition !== undefined ? { valeurAcquisition: dto.valeurAcquisition } : {}),
+        ...(dto.numeroInventaire !== undefined ? { numeroInventaire: dto.numeroInventaire.trim() } : {}),
+        ...(dto.obsolescenceMois !== undefined ? { obsolescenceMois: dto.obsolescenceMois } : {}),
+        ...(dto.actif !== undefined ? { actif: dto.actif === 'true' || dto.actif === '1' } : {}),
       };
       const maj = await tx.equipementPatrimoine.update({
         where: { id },
@@ -311,7 +302,12 @@ export class PatrimoineService {
       const equipement = await this.equipementCourant(tx, id);
       const reparations = await tx.reparationMateriel.count({ where: { equipementId: id } });
       if (reparations > 0) {
-        throw new ConflictException(t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', { 'equipement.numeroInventaire': equipement.numeroInventaire, reparations }));
+        throw new ConflictException(
+          t('patrimoine.equipement_numeroinventaire_reparations_reparation_s_consign', {
+            'equipement.numeroInventaire': equipement.numeroInventaire,
+            reparations,
+          }),
+        );
       }
       await tx.equipementPatrimoine.delete({ where: { id } });
       await journaliser(tx, user, 'PATRIMOINE_EQUIPEMENT_SUPPRIME', 'EquipementPatrimoine', id, {
@@ -389,11 +385,7 @@ export class PatrimoineService {
    * simultanées ne peuvent pas laisser deux fiches ouvertes, ni une fiche
    * sans trace.
    */
-  async declarerReparation(
-    equipementId: string,
-    dto: DeclarationReparationDto,
-    user: AuthUser,
-  ) {
+  async declarerReparation(equipementId: string, dto: DeclarationReparationDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const equipement = await this.equipementCourant(tx, equipementId);
       const ouverte = await tx.reparationMateriel.findFirst({
@@ -403,7 +395,12 @@ export class PatrimoineService {
         },
       });
       if (ouverte) {
-        throw new ConflictException(t('patrimoine.equipement_numeroinventaire_a_deja_une_reparation_en_cours_o', { 'equipement.numeroInventaire': equipement.numeroInventaire, 'ouverte.statut': ouverte.statut }));
+        throw new ConflictException(
+          t('patrimoine.equipement_numeroinventaire_a_deja_une_reparation_en_cours_o', {
+            'equipement.numeroInventaire': equipement.numeroInventaire,
+            'ouverte.statut': ouverte.statut,
+          }),
+        );
       }
       const reparation = await tx.reparationMateriel.create({
         data: {
@@ -438,11 +435,7 @@ export class PatrimoineService {
    * consignée, l'équipement reprend son état normal. Clôture de la fiche et
    * libération de l'équipement partagent la transaction et leur journal.
    */
-  async resoudreReparation(
-    equipementId: string,
-    dto: ResolutionReparationDto,
-    user: AuthUser,
-  ) {
+  async resoudreReparation(equipementId: string, dto: ResolutionReparationDto, user: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const equipement = await this.equipementCourant(tx, equipementId);
       const ouverte = await tx.reparationMateriel.findFirst({
@@ -453,7 +446,11 @@ export class PatrimoineService {
         orderBy: { dateDeclaration: 'desc' },
       });
       if (!ouverte) {
-        throw new BadRequestException(t('patrimoine.equipement_numeroinventaire_n_a_pas_de_reparation_en_cours', { 'equipement.numeroInventaire': equipement.numeroInventaire }));
+        throw new BadRequestException(
+          t('patrimoine.equipement_numeroinventaire_n_a_pas_de_reparation_en_cours', {
+            'equipement.numeroInventaire': equipement.numeroInventaire,
+          }),
+        );
       }
       const reparation = await tx.reparationMateriel.update({
         where: { id: ouverte.id },
@@ -552,11 +549,16 @@ export class PatrimoineService {
         _sum: { valeurAcquisition: true },
       }),
       this.prisma.equipementPatrimoine.groupBy({
-        by: ['categorieId'], where, _count: { _all: true }, _sum: { valeurAcquisition: true },
+        by: ['categorieId'],
+        where,
+        _count: { _all: true },
+        _sum: { valeurAcquisition: true },
       }),
       this.prisma.equipementPatrimoine.groupBy({
-        by: ['departementId'], where: { ...where, departementId: { not: null } },
-        _count: { _all: true }, _sum: { valeurAcquisition: true },
+        by: ['departementId'],
+        where: { ...where, departementId: { not: null } },
+        _count: { _all: true },
+        _sum: { valeurAcquisition: true },
       }),
       this.prisma.equipementPatrimoine.count({ where: { ...where, enReparation: true } }),
       this.obsolescenceActuelle(where),
@@ -564,14 +566,18 @@ export class PatrimoineService {
     // Recharger uniquement les libellés des groupes présents, jamais toutes
     // les lignes d'équipement du parc.
     const [categoriesNommees, departementsNommes] = await Promise.all([
-      categories.length ? this.prisma.categoriePatrimoine.findMany({
-        where: { id: { in: categories.map((g) => g.categorieId) } },
-        select: { id: true, code: true, libelle: true },
-      }) : Promise.resolve([]),
-      departements.length ? this.prisma.departement.findMany({
-        where: { id: { in: departements.map((g) => g.departementId!).filter(Boolean) } },
-        select: { id: true, code: true, nom: true },
-      }) : Promise.resolve([]),
+      categories.length
+        ? this.prisma.categoriePatrimoine.findMany({
+            where: { id: { in: categories.map((g) => g.categorieId) } },
+            select: { id: true, code: true, libelle: true },
+          })
+        : Promise.resolve([]),
+      departements.length
+        ? this.prisma.departement.findMany({
+            where: { id: { in: departements.map((g) => g.departementId!).filter(Boolean) } },
+            select: { id: true, code: true, nom: true },
+          })
+        : Promise.resolve([]),
     ]);
     const categoriesParId = new Map<string, { id: string; code: string; libelle: string }>(
       categoriesNommees.map((c) => [c.id, c] as const),
@@ -579,14 +585,20 @@ export class PatrimoineService {
     const departementsParId = new Map<string, { id: string; code: string; nom: string }>(
       departementsNommes.map((d) => [d.id, d] as const),
     );
-    const parCategorie = categories.flatMap((g) => {
-      const c = categoriesParId.get(g.categorieId);
-      return c ? [{ code: c.code, libelle: c.libelle, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
-    }).sort((a, b) => b.nombre - a.nombre);
-    const parDepartement = departements.flatMap((g) => {
-      const d = g.departementId ? departementsParId.get(g.departementId) : undefined;
-      return d ? [{ code: d.code, nom: d.nom, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
-    }).sort((a, b) => b.nombre - a.nombre);
+    const parCategorie = categories
+      .flatMap((g) => {
+        const c = categoriesParId.get(g.categorieId);
+        return c
+          ? [{ code: c.code, libelle: c.libelle, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }]
+          : [];
+      })
+      .sort((a, b) => b.nombre - a.nombre);
+    const parDepartement = departements
+      .flatMap((g) => {
+        const d = g.departementId ? departementsParId.get(g.departementId) : undefined;
+        return d ? [{ code: d.code, nom: d.nom, nombre: g._count._all, valeur: g._sum.valeurAcquisition ?? 0 }] : [];
+      })
+      .sort((a, b) => b.nombre - a.nombre);
 
     return {
       total: totaux._count._all,
@@ -600,9 +612,10 @@ export class PatrimoineService {
 
   private async obsolescenceActuelle(where: Prisma.EquipementPatrimoineWhereInput): Promise<number> {
     const parAnnee = where.dateAcquisition as Prisma.DateTimeFilter | undefined;
-    const bornes = parAnnee?.gte && parAnnee.lte
-      ? Prisma.sql`AND "dateAcquisition" >= ${parAnnee.gte} AND "dateAcquisition" <= ${parAnnee.lte}`
-      : Prisma.empty;
+    const bornes =
+      parAnnee?.gte && parAnnee.lte
+        ? Prisma.sql`AND "dateAcquisition" >= ${parAnnee.gte} AND "dateAcquisition" <= ${parAnnee.lte}`
+        : Prisma.empty;
     const lignes = await this.prisma.$queryRaw<Array<{ count: bigint }>>(Prisma.sql`
       SELECT COUNT(*)::bigint AS count
       FROM "EquipementPatrimoine"
@@ -637,9 +650,7 @@ export class PatrimoineService {
       errorCorrectionLevel: 'M',
     });
 
-    const valeur = equipement.valeurAcquisition
-      ? `${equipement.valeurAcquisition.toLocaleString('fr-FR')} GNF`
-      : '—';
+    const valeur = equipement.valeurAcquisition ? `${equipement.valeurAcquisition.toLocaleString('fr-FR')} GNF` : '—';
     const dateAquis = equipement.dateAcquisition
       ? new Date(equipement.dateAcquisition).toLocaleDateString('fr-FR')
       : '—';
@@ -756,7 +767,6 @@ export class PatrimoineService {
       prestataireFourni: Boolean(reparation.prestataire),
     };
   }
-
 }
 
 // Référence pour le typage Prisma — le préfixe est utilisé pour la séquence

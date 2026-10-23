@@ -152,12 +152,13 @@ export class EquipementsService extends CrudService {
    * nécessaire au formulaire de signalement, sans recopier le code secret.
    */
   async parCode(codeQr: string) {
-    const equipement = codeQr.length > 64
-      ? null
-      : await this.prisma.equipementCampus.findUnique({
-          where: { codeQr },
-          select: { id: true, libelle: true, emplacement: true, actif: true },
-        });
+    const equipement =
+      codeQr.length > 64
+        ? null
+        : await this.prisma.equipementCampus.findUnique({
+            where: { codeQr },
+            select: { id: true, libelle: true, emplacement: true, actif: true },
+          });
     if (!equipement || !equipement.actif) {
       throw new NotFoundException(t('helpdesk.equipement_inconnu_ou_desactive'));
     }

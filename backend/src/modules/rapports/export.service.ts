@@ -24,11 +24,7 @@ export function cellule(valeur: unknown): string {
 }
 
 function versCsv(entetes: string[], lignes: unknown[][]): string {
-  return (
-    BOM +
-    [entetes, ...lignes].map((l) => l.map(cellule).join(SEPARATEUR)).join('\r\n') +
-    '\r\n'
-  );
+  return BOM + [entetes, ...lignes].map((l) => l.map(cellule).join(SEPARATEUR)).join('\r\n') + '\r\n';
 }
 
 @Injectable()

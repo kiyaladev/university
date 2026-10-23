@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
@@ -23,11 +14,7 @@ import {
   UpdateChambreDto,
   UpdateResidenceDto,
 } from './cites.dto';
-import {
-  AttributionsService,
-  ChambresService,
-  ResidencesService,
-} from './cites.service';
+import { AttributionsService, ChambresService, ResidencesService } from './cites.service';
 
 /** Parc : les résidences sont gérées par l'administration avec la scolarité
  *  et la direction ; leur structure n'est supprimable que par un administrateur. */
@@ -47,17 +34,20 @@ export class ResidencesController {
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Post() create(@Body() dto: CreateResidenceDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateResidenceDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateResidenceDto, @CurrentUser() user: AuthUser) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateResidenceDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.remove(id, user);
   }
 }
@@ -83,17 +73,20 @@ export class ChambresController {
 
   /** La structure du parc (chambres, loyers) relève de la direction. */
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Post() create(@Body() dto: CreateChambreDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateChambreDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Put(':id') update(@Param('id') id: string, @Body() dto: UpdateChambreDto, @CurrentUser() user: AuthUser) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateChambreDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.remove(id, user);
   }
 }
@@ -115,26 +108,21 @@ export class AttributionsController {
 
   /** La demande est posée par la scolarité ou la direction, sur pièce. */
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
-  @Post() creer(@Body() dto: CreateAttributionDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  creer(@Body() dto: CreateAttributionDto, @CurrentUser() user: AuthUser) {
     return this.service.creer(dto, user);
   }
 
   /** Seul le jury (direction) tranche — jamais la demande elle-même. */
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Put(':id/decider') decider(
-    @Param('id') id: string,
-    @Body() dto: DeciderAttributionDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id/decider')
+  decider(@Param('id') id: string, @Body() dto: DeciderAttributionDto, @CurrentUser() user: AuthUser) {
     return this.service.decider(id, dto, user);
   }
 
   @Roles(Role.ADMIN)
-  @Put(':id/retirer') retirer(
-    @Param('id') id: string,
-    @Body() dto: RetirerAttributionDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id/retirer')
+  retirer(@Param('id') id: string, @Body() dto: RetirerAttributionDto, @CurrentUser() user: AuthUser) {
     return this.service.retirer(id, dto, user);
   }
 }

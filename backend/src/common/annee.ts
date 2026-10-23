@@ -14,7 +14,8 @@ interface DepotAnnee {
 export async function exigerAnneeOuverte(db: DepotAnnee, anneeId?: string | null): Promise<void> {
   if (!anneeId) return;
   if (typeof (db as any).$queryRaw === 'function') {
-    const lignes = await (db as any).$queryRaw`SELECT "cloturee" FROM "AnneeAcademique" WHERE "id" = ${anneeId} FOR SHARE`;
+    const lignes = await (db as any)
+      .$queryRaw`SELECT "cloturee" FROM "AnneeAcademique" WHERE "id" = ${anneeId} FOR SHARE`;
     const annee = lignes[0] as { cloturee: boolean } | undefined;
     if (!annee) throw new BadRequestException(t('common.academicYearNotFound'));
     if (annee.cloturee) throw new AnneeAcademiqueClotureeException(t('common.academicYearClosed'));
@@ -38,9 +39,11 @@ export async function exigerPromotionMemeAnnee(
   promotionId: string,
   anneeId: string,
 ): Promise<void> {
-  const promotion = typeof (db as any).$queryRaw === 'function'
-    ? ((await (db as any).$queryRaw`SELECT "anneeId" FROM "Promotion" WHERE "id" = ${promotionId} FOR SHARE`)[0] as { anneeId: string } | undefined)
-    : await db.promotion.findUnique({ where: { id: promotionId }, select: { anneeId: true } });
+  const promotion =
+    typeof (db as any).$queryRaw === 'function'
+      ? ((await (db as any).$queryRaw`SELECT "anneeId" FROM "Promotion" WHERE "id" = ${promotionId} FOR SHARE`)[0] as
+          { anneeId: string } | undefined)
+      : await db.promotion.findUnique({ where: { id: promotionId }, select: { anneeId: true } });
   if (!promotion) throw new BadRequestException(t('common.academicPromotionNotFound'));
   if (promotion.anneeId !== anneeId) {
     throw new BadRequestException(t('common.academicPromotionMismatch'));

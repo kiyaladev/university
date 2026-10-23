@@ -12,8 +12,12 @@ import { MatieresService } from '../referentiel/matieres';
 import { SallesService } from '../referentiel/salles';
 import { COLONNES, lireCsv } from './csv';
 import {
-  ImportCsvDto, LigneCreneauImport, LigneEnseignantImport, LigneMatiereImport,
-  LigneSalleImport, TypeImportReferentiel,
+  ImportCsvDto,
+  LigneCreneauImport,
+  LigneEnseignantImport,
+  LigneMatiereImport,
+  LigneSalleImport,
+  TypeImportReferentiel,
 } from './imports.dto';
 
 const CONFIG = {
@@ -35,7 +39,10 @@ const CONFIG = {
   [TypeImportReferentiel.CRENEAUX]: {
     schema: LigneCreneauImport,
     requis: ['affectationId', 'jourSemaine', 'heureDebut', 'heureFin'],
-    cle: (r: any) => [r.affectationId, r.jourSemaine, r.heureDebut, r.heureFin, r.dateDebut ?? '', r.dateFin ?? ''].join('|').toLocaleLowerCase('fr'),
+    cle: (r: any) =>
+      [r.affectationId, r.jourSemaine, r.heureDebut, r.heureFin, r.dateDebut ?? '', r.dateFin ?? '']
+        .join('|')
+        .toLocaleLowerCase('fr'),
   },
 } as const;
 
@@ -49,12 +56,22 @@ function normaliserValeur(cle: string, valeur: string): unknown {
   if (valeur === '') return undefined;
   if (['tauxHoraire', 'volumeHoraireTotal', 'credits', 'capacite', 'jourSemaine'].includes(cle)) {
     if (cle === 'jourSemaine') {
-      const jour = valeur.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('fr').replace(/\.$/, '');
-      const index = JOURS.findIndex((nom, numero) => numero > 0
-        && [nom.toLocaleLowerCase('fr'), nom.slice(0, 3).toLocaleLowerCase('fr')].includes(jour));
+      const jour = valeur
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLocaleLowerCase('fr')
+        .replace(/\.$/, '');
+      const index = JOURS.findIndex(
+        (nom, numero) =>
+          numero > 0 && [nom.toLocaleLowerCase('fr'), nom.slice(0, 3).toLocaleLowerCase('fr')].includes(jour),
+      );
       if (index > 0) return String(index);
     }
-    const nombre = valeur.trim().replace(/(?:€|gnf|fcfa)\s*$/i, '').trim();
+    const nombre = valeur
+      .trim()
+      .replace(/(?:€|gnf|fcfa)\s*$/i, '')
+      .trim();
     if (/^-?\d{1,3}(?:[ \u00a0\u202f\u2009]\d{3})+,\d+$/.test(nombre)) {
       return nombre.replace(/[\s\u00a0\u202f\u2009]/g, '').replace(',', '.');
     }
@@ -69,10 +86,21 @@ function normaliserValeur(cle: string, valeur: string): unknown {
     if (heure) return `${heure[1].padStart(2, '0')}:${heure[2]}`;
   }
   if (cle === 'type') {
-    const type = valeur.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase('fr');
+    const type = valeur
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLocaleLowerCase('fr');
     const types: Record<string, string> = {
-      'cours magistral': 'CM', cm: 'CM', 'travaux diriges': 'TD', td: 'TD',
-      'travaux pratiques': 'TP', tp: 'TP', examen: 'EXAMEN', 'examen final': 'EXAMEN', conference: 'CONFERENCE',
+      'cours magistral': 'CM',
+      cm: 'CM',
+      'travaux diriges': 'TD',
+      td: 'TD',
+      'travaux pratiques': 'TP',
+      tp: 'TP',
+      examen: 'EXAMEN',
+      'examen final': 'EXAMEN',
+      conference: 'CONFERENCE',
     };
     if (types[type]) return types[type];
   }
@@ -80,9 +108,8 @@ function normaliserValeur(cle: string, valeur: string): unknown {
   if (['dateDebut', 'dateFin'].includes(cle)) {
     const dateLocale = valeur.trim().match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/);
     if (dateLocale) {
-      const annee = dateLocale[3].length === 2
-        ? `${Number(dateLocale[3]) < 70 ? '20' : '19'}${dateLocale[3]}`
-        : dateLocale[3];
+      const annee =
+        dateLocale[3].length === 2 ? `${Number(dateLocale[3]) < 70 ? '20' : '19'}${dateLocale[3]}` : dateLocale[3];
       return `${annee}-${dateLocale[2].padStart(2, '0')}-${dateLocale[1].padStart(2, '0')}`;
     }
     if (/^\d+(?:\.\d+)?$/.test(valeur)) {
@@ -116,38 +143,52 @@ export class ImportsService {
   private async dejaPresent(type: TypeImportReferentiel, ligne: LignePreparee): Promise<boolean> {
     const r = ligne.donnees as any;
     if (type === TypeImportReferentiel.ENSEIGNANTS) {
-      return Boolean(await this.prisma.enseignant.findFirst({
-        where: { matricule: { equals: r.matricule, mode: 'insensitive' } }, select: { id: true },
-      }));
+      return Boolean(
+        await this.prisma.enseignant.findFirst({
+          where: { matricule: { equals: r.matricule, mode: 'insensitive' } },
+          select: { id: true },
+        }),
+      );
     }
     if (type === TypeImportReferentiel.MATIERES) {
-      return Boolean(await this.prisma.matiere.findFirst({
-        where: { code: { equals: r.code, mode: 'insensitive' } }, select: { id: true },
-      }));
+      return Boolean(
+        await this.prisma.matiere.findFirst({
+          where: { code: { equals: r.code, mode: 'insensitive' } },
+          select: { id: true },
+        }),
+      );
     }
     if (type === TypeImportReferentiel.SALLES) {
-      return Boolean(await this.prisma.salle.findFirst({
-        where: { code: { equals: r.code, mode: 'insensitive' } }, select: { id: true },
-      }));
+      return Boolean(
+        await this.prisma.salle.findFirst({
+          where: { code: { equals: r.code, mode: 'insensitive' } },
+          select: { id: true },
+        }),
+      );
     }
-    return Boolean(await this.prisma.creneau.findFirst({
-      where: {
-        affectationId: r.affectationId,
-        jourSemaine: r.jourSemaine,
-        heureDebut: r.heureDebut,
-        heureFin: r.heureFin,
-        dateDebut: r.dateDebut ? toDateOnly(r.dateDebut) : null,
-        dateFin: r.dateFin ? toDateOnly(r.dateFin) : null,
-      },
-      select: { id: true },
-    }));
+    return Boolean(
+      await this.prisma.creneau.findFirst({
+        where: {
+          affectationId: r.affectationId,
+          jourSemaine: r.jourSemaine,
+          heureDebut: r.heureDebut,
+          heureFin: r.heureFin,
+          dateDebut: r.dateDebut ? toDateOnly(r.dateDebut) : null,
+          dateFin: r.dateFin ? toDateOnly(r.dateFin) : null,
+        },
+        select: { id: true },
+      }),
+    );
   }
 
   private async verifierReferences(type: TypeImportReferentiel, ligne: LignePreparee): Promise<string[]> {
     const r = ligne.donnees as any;
     const erreurs: string[] = [];
     if ((type === TypeImportReferentiel.ENSEIGNANTS || type === TypeImportReferentiel.MATIERES) && r.departementId) {
-      const departement = await this.prisma.departement.findUnique({ where: { id: r.departementId }, select: { id: true } });
+      const departement = await this.prisma.departement.findUnique({
+        where: { id: r.departementId },
+        select: { id: true },
+      });
       if (!departement) erreurs.push('Le département indiqué n’existe pas.');
     }
     if (type === TypeImportReferentiel.CRENEAUX) {
@@ -161,10 +202,16 @@ export class ImportsService {
         try {
           await this.creneaux.verifierImport(r);
         } catch (cause) {
-          const response = cause instanceof BadRequestException ? cause.getResponse() as any : null;
-          erreurs.push(...(Array.isArray(response?.message)
-            ? response.message
-            : [typeof response?.message === 'string' ? response.message : 'Le créneau ne respecte pas les règles de planification.']));
+          const response = cause instanceof BadRequestException ? (cause.getResponse() as any) : null;
+          erreurs.push(
+            ...(Array.isArray(response?.message)
+              ? response.message
+              : [
+                  typeof response?.message === 'string'
+                    ? response.message
+                    : 'Le créneau ne respecte pas les règles de planification.',
+                ]),
+          );
         }
       }
     }
@@ -186,9 +233,11 @@ export class ImportsService {
     }
     const vues = new Set<string>();
     const lignes: LignePreparee[] = csv.lignes.map((ligne) => {
-      const brut = Object.fromEntries(Object.entries(ligne.donnees)
-        .map(([cle, valeur]) => [cle, normaliserValeur(cle, valeur)])
-        .filter(([, valeur]) => valeur !== undefined));
+      const brut = Object.fromEntries(
+        Object.entries(ligne.donnees)
+          .map(([cle, valeur]) => [cle, normaliserValeur(cle, valeur)])
+          .filter(([, valeur]) => valeur !== undefined),
+      );
       const instance = plainToInstance(config.schema as any, brut, { enableImplicitConversion: false }) as any;
       const erreurs = messagesValidation(instance);
       const cle = config.cle(instance);
@@ -206,8 +255,8 @@ export class ImportsService {
       while (prochaine < lignes.length) {
         const preparee = lignes[prochaine++];
         if (preparee.erreurs.length) continue;
-        preparee.erreurs.push(...await this.verifierReferences(dto.type, preparee));
-        if (!preparee.erreurs.length && await this.dejaPresent(dto.type, preparee)) {
+        preparee.erreurs.push(...(await this.verifierReferences(dto.type, preparee)));
+        if (!preparee.erreurs.length && (await this.dejaPresent(dto.type, preparee))) {
           preparee.erreurs.push('Un enregistrement portant cette clé existe déjà.');
         }
       }
@@ -251,14 +300,22 @@ export class ImportsService {
         importees += 1;
       } catch (cause) {
         const prisma = cause as Prisma.PrismaClientKnownRequestError;
-        const message = prisma?.code === 'P2002'
-          ? 'Un enregistrement portant cette clé a été créé entre-temps.'
-          : cause instanceof BadRequestException
-            ? (cause.getResponse() as any)?.message ?? 'Ligne refusée par les règles métier.'
-            : 'La ligne n’a pas pu être créée ; vérifiez ses références et les règles métier.';
+        const message =
+          prisma?.code === 'P2002'
+            ? 'Un enregistrement portant cette clé a été créé entre-temps.'
+            : cause instanceof BadRequestException
+              ? ((cause.getResponse() as any)?.message ?? 'Ligne refusée par les règles métier.')
+              : 'La ligne n’a pas pu être créée ; vérifiez ses références et les règles métier.';
         erreurs.push({ numero: ligne.numero, erreurs: Array.isArray(message) ? message : [message] });
       }
     }
-    return { type: dto.type, lignesLues: lignes.length, importees, rejetees: erreurs.length, erreurs, colonnesIgnorees };
+    return {
+      type: dto.type,
+      lignesLues: lignes.length,
+      importees,
+      rejetees: erreurs.length,
+      erreurs,
+      colonnesIgnorees,
+    };
   }
 }

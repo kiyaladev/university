@@ -11,8 +11,7 @@ import { PatrimoineController } from './patrimoine.controller';
 import { PatrimoineService } from './patrimoine.service';
 
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [PatrimoineController],
   providers: [PatrimoineService],
   exports: [PatrimoineService],

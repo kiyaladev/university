@@ -33,22 +33,32 @@ const signatureBase64 = `data:image/png;base64,${png.toString('base64')}`;
 
 describe('RelevePdfService', () => {
   const user: AuthUser = {
-    id: 'user-1', role: Role.CHEF_DEPARTEMENT, departementId: '12345678-1234-1234-1234-123456789012',
+    id: 'user-1',
+    role: Role.CHEF_DEPARTEMENT,
+    departementId: '12345678-1234-1234-1234-123456789012',
   } as AuthUser;
 
   function service() {
     const prisma = {
-      user: { findUnique: jest.fn().mockResolvedValue({
-        id: user.id, nom: 'Diallo', prenom: 'Aminata', role: Role.CHEF_DEPARTEMENT,
-        actif: true, departementId: user.departementId,
-      }) },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: user.id,
+          nom: 'Diallo',
+          prenom: 'Aminata',
+          role: Role.CHEF_DEPARTEMENT,
+          actif: true,
+          departementId: user.departementId,
+        }),
+      },
       departement: { findUnique: jest.fn().mockResolvedValue({ id: user.departementId, nom: 'Sciences' }) },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
-    const rapports = { registre: jest.fn().mockResolvedValue({
-      lignes: [],
-      synthese: { planifiees: 0, controlees: 0, tauxControle: 0, assurees: 0, tauxPresence: 0, heuresRealisees: 0 },
-    }) };
+    const rapports = {
+      registre: jest.fn().mockResolvedValue({
+        lignes: [],
+        synthese: { planifiees: 0, controlees: 0, tauxControle: 0, assurees: 0, tauxPresence: 0, heuresRealisees: 0 },
+      }),
+    };
     const parametres = { valeur: jest.fn().mockResolvedValue('Université test') };
     return {
       subject: new RelevePdfService(prisma as any, rapports as any, parametres as any),
@@ -59,12 +69,15 @@ describe('RelevePdfService', () => {
 
   it('génère un PDF signé et journalise ses empreintes', async () => {
     const { subject, prisma, rapports } = service();
-    const result = await subject.generer({
-      departementId: user.departementId!,
-      dateDebut: '2026-09-28',
-      dateFin: '2026-10-04',
-      signatureBase64,
-    }, user);
+    const result = await subject.generer(
+      {
+        departementId: user.departementId!,
+        dateDebut: '2026-09-28',
+        dateFin: '2026-10-04',
+        signatureBase64,
+      },
+      user,
+    );
 
     expect(result.pdf.subarray(0, 4).toString()).toBe('%PDF');
     expect(result.numero).toMatch(/^RH-2026-/);
@@ -73,19 +86,26 @@ describe('RelevePdfService', () => {
       expect.objectContaining({ departementId: user.departementId }),
       true,
     );
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: 'RAPPORT_HEBDOMADAIRE_SIGNE', entiteId: result.numero }),
-    }));
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'RAPPORT_HEBDOMADAIRE_SIGNE', entiteId: result.numero }),
+      }),
+    );
   });
 
   it('refuse au chef de signer le relevé d’un autre département', async () => {
     const { subject, prisma } = service();
-    await expect(subject.generer({
-      departementId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      dateDebut: '2026-09-28',
-      dateFin: '2026-10-04',
-      signatureBase64,
-    }, user)).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(
+      subject.generer(
+        {
+          departementId: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+          dateDebut: '2026-09-28',
+          dateFin: '2026-10-04',
+          signatureBase64,
+        },
+        user,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
     expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 });

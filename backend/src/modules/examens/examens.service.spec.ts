@@ -49,7 +49,10 @@ describe('Périmètre des examens et scans', () => {
     const { db, service } = prepare();
     const resultat = await service.listeScans(examen.id, { pageSize: 10000 } as any, admin);
     expect(db.scanExamen.findMany.mock.calls[0][0].include.inscription.select.etudiant.select).toEqual({
-      id: true, matricule: true, nom: true, prenom: true,
+      id: true,
+      matricule: true,
+      nom: true,
+      prenom: true,
     });
     expect(db.scanExamen.findMany.mock.calls[0][0]).toMatchObject({ skip: 0, take: 1000 });
     expect(resultat).toEqual({ data: [], total: 1234, page: 1, pageSize: 1000 });
@@ -57,7 +60,11 @@ describe('Périmètre des examens et scans', () => {
 
   it('attribue le scan à la session courante, jamais à l’identifiant fourni par le client', async () => {
     const { db, service } = prepare();
-    await service.scanner({ examenId: examen.id, reference: 'inconnue', scanneurId: 'spoofed-user' } as any, undefined, controleur);
+    await service.scanner(
+      { examenId: examen.id, reference: 'inconnue', scanneurId: 'spoofed-user' } as any,
+      undefined,
+      controleur,
+    );
     expect(db.scanExamen.create.mock.calls[0][0].data.scanneurId).toBe(controleur.id);
   });
 
@@ -66,15 +73,20 @@ describe('Périmètre des examens et scans', () => {
     db.$queryRaw = jest.fn(async (requete: TemplateStringsArray) => {
       const sql = requete.join(' ');
       if (sql.includes('FROM "AnneeAcademique"')) return [{ cloturee: false }];
-      if (sql.includes('FROM "Examen"')) return [{
-        anneeId: examen.anneeId, statut: StatutExamen.TERMINE, surveillantId: examen.surveillantId,
-      }];
+      if (sql.includes('FROM "Examen"'))
+        return [
+          {
+            anneeId: examen.anneeId,
+            statut: StatutExamen.TERMINE,
+            surveillantId: examen.surveillantId,
+          },
+        ];
       return [];
     });
 
-    await expect(service.scanner(
-      { examenId: examen.id, reference: 'inconnue' } as any, undefined, controleur,
-    )).rejects.toThrow('examens.scan_exige_examen_en_cours');
+    await expect(
+      service.scanner({ examenId: examen.id, reference: 'inconnue' } as any, undefined, controleur),
+    ).rejects.toThrow('examens.scan_exige_examen_en_cours');
 
     expect(db.scanExamen.create).not.toHaveBeenCalled();
   });
@@ -82,17 +94,15 @@ describe('Périmètre des examens et scans', () => {
   it('refuse les scans tant que l’examen est planifié', async () => {
     const { db, service } = prepare();
     db.examen.findUnique.mockResolvedValue({ ...examen, statut: StatutExamen.PLANIFIE });
-    await expect(service.scanner(
-      { examenId: examen.id, reference: 'inconnue' } as any, undefined, controleur,
-    )).rejects.toThrow('examens.scan_exige_examen_en_cours');
+    await expect(
+      service.scanner({ examenId: examen.id, reference: 'inconnue' } as any, undefined, controleur),
+    ).rejects.toThrow('examens.scan_exige_examen_en_cours');
     expect(db.scanExamen.create).not.toHaveBeenCalled();
   });
 
   it('masque un jeton QR resto même si la référence reçue est en minuscules', async () => {
     const { db, service } = prepare();
-    await service.scanner(
-      { examenId: examen.id, reference: 'up-resto-secret' } as any, undefined, controleur,
-    );
+    await service.scanner({ examenId: examen.id, reference: 'up-resto-secret' } as any, undefined, controleur);
     expect(db.scanExamen.create.mock.calls[0][0].data.matriculeSaisi).toBe('[QR masqué]');
   });
 
@@ -101,25 +111,34 @@ describe('Périmètre des examens et scans', () => {
     db.$queryRaw = jest.fn(async (requete: TemplateStringsArray) => {
       const sql = requete.join(' ');
       if (sql.includes('FROM "AnneeAcademique"')) return [{ cloturee: false }];
-      if (sql.includes('FROM "Examen"')) return [{
-        anneeId: examen.anneeId, statut: examen.statut, surveillantId: examen.surveillantId,
-      }];
+      if (sql.includes('FROM "Examen"'))
+        return [
+          {
+            anneeId: examen.anneeId,
+            statut: examen.statut,
+            surveillantId: examen.surveillantId,
+          },
+        ];
       return [];
     });
 
     await service.scanner({ examenId: examen.id, reference: 'inconnue' } as any, undefined, controleur);
 
-    expect(db.$queryRaw.mock.calls.some(([requete]: [TemplateStringsArray]) =>
-      requete.join(' ').includes('FROM "Examen"') && requete.join(' ').includes('FOR UPDATE'),
-    )).toBe(true);
+    expect(
+      db.$queryRaw.mock.calls.some(
+        ([requete]: [TemplateStringsArray]) =>
+          requete.join(' ').includes('FROM "Examen"') && requete.join(' ').includes('FOR UPDATE'),
+      ),
+    ).toBe(true);
   });
 
   it('refuse la création et les scans rattachés à une année clôturée', async () => {
     const { db, service } = prepare();
     db.anneeAcademique.findUnique.mockResolvedValue({ id: 'year-1', cloturee: true });
     await expect(service.creer({ anneeId: 'year-1' } as any, admin)).rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.scanner({ examenId: examen.id, reference: '123' } as any, undefined, controleur))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.scanner({ examenId: examen.id, reference: '123' } as any, undefined, controleur),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(db.examen.create).not.toHaveBeenCalled();
     expect(db.scanExamen.create).not.toHaveBeenCalled();
   });
@@ -127,8 +146,9 @@ describe('Périmètre des examens et scans', () => {
   it('refuse un examen dont la promotion appartient à une autre année', async () => {
     const { db, service } = prepare();
     db.promotion.findUnique.mockResolvedValue({ anneeId: 'year-2' });
-    await expect(service.creer({ anneeId: 'year-1', promotionId: 'promo-1' } as any, admin))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.creer({ anneeId: 'year-1', promotionId: 'promo-1' } as any, admin)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(db.examen.create).not.toHaveBeenCalled();
     expect(db.auditLog.create).not.toHaveBeenCalled();
   });
@@ -140,7 +160,8 @@ describe('Annulation d’un examen (PUT /examens/:id/statut)', () => {
     const examen = { id: 'exam-1', anneeId: 'year-1', codeExamen: 'EX-1', statut };
     const db: any = {
       examen: {
-        findUnique: jest.fn()
+        findUnique: jest
+          .fn()
           .mockResolvedValueOnce(examen)
           .mockResolvedValueOnce(examen)
           .mockResolvedValue({ ...examen, statut: StatutExamen.ANNULE }),
@@ -168,7 +189,9 @@ describe('Annulation d’un examen (PUT /examens/:id/statut)', () => {
     'refuse d’annuler un examen %s',
     async (statut) => {
       const { db, service } = prepare(statut);
-      await expect(service.changerStatut('exam-1', StatutExamen.ANNULE, admin)).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.changerStatut('exam-1', StatutExamen.ANNULE, admin)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
       expect(db.examen.updateMany).not.toHaveBeenCalled();
     },
   );

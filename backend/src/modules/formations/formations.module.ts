@@ -14,9 +14,7 @@ import { FormationsController } from './formations.controller';
 import { FormationsService } from './formations.service';
 
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [FormationsController],
   providers: [FormationsService],
   exports: [FormationsService],

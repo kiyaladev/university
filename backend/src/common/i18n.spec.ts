@@ -6,7 +6,7 @@ describe('traduction hors et dans le contexte de requête', () => {
     jest.restoreAllMocks();
   });
 
-  it('interpole les variables quand aucun contexte n\'est disponible', () => {
+  it("interpole les variables quand aucun contexte n'est disponible", () => {
     // Cron, boot ou test : le repli lit le catalogue français du disque.
     expect(t('common.crud.itemNotFound', { label: 'Salle' })).toContain('Salle');
   });
@@ -24,7 +24,7 @@ describe('traduction hors et dans le contexte de requête', () => {
     });
   });
 
-  it('n\'embarque pas d\'objet args vide quand il n\'y a rien à interpoler', () => {
+  it("n'embarque pas d'objet args vide quand il n'y a rien à interpoler", () => {
     const ctx = { t: jest.fn().mockReturnValue('texte') };
     jest.spyOn(I18nContext, 'current').mockReturnValue(ctx as any);
 

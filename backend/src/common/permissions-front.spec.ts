@@ -31,7 +31,12 @@ const ROUTES: Record<string, string[]> = {
   'rapports.signerReleve': ['POST /impression/releve-hebdomadaire'],
   'affectations.supprimer': ['DELETE /affectations/:id'],
   'structure.gerer': ['POST /annees', 'POST /departements', 'POST /filieres', 'POST /promotions'],
-  'structure.supprimer': ['DELETE /annees/:id', 'DELETE /departements/:id', 'DELETE /filieres/:id', 'DELETE /promotions/:id'],
+  'structure.supprimer': [
+    'DELETE /annees/:id',
+    'DELETE /departements/:id',
+    'DELETE /filieres/:id',
+    'DELETE /promotions/:id',
+  ],
   'salles.gerer': ['POST /salles', 'PUT /salles/:id'],
   'salles.supprimer': ['DELETE /salles/:id'],
   'etudiants.gerer': ['POST /etudiants', 'PUT /etudiants/:id'],
@@ -147,10 +152,12 @@ function lireRoutesBack(): Map<string, Role[] | null> {
 
 const describeSiFront = existsSync(FICHIER_FRONT) ? describe : describe.skip;
 
-describeSiFront('matrice des droits du frontend face aux @Roles de l\'API', () => {
+describeSiFront("matrice des droits du frontend face aux @Roles de l'API", () => {
   const front = existsSync(FICHIER_FRONT) ? lireMatriceFront(readFileSync(FICHIER_FRONT, 'utf8')) : {};
   let back: Map<string, Role[] | null>;
-  beforeAll(() => { back = lireRoutesBack(); }, 60_000);
+  beforeAll(() => {
+    back = lireRoutesBack();
+  }, 60_000);
 
   it('lit la matrice du frontend', () => {
     expect(Object.keys(front).length).toBeGreaterThan(50);
@@ -170,7 +177,9 @@ describeSiFront('matrice des droits du frontend face aux @Roles de l\'API', () =
       // Un rôle autorisé par l'interface mais refusé par l'API mène à un 403.
       expect({ route, refuses: rolesFront.filter((r) => !rolesBack!.includes(r)) }).toEqual({ route, refuses: [] });
       // Un rôle admis par l'API mais masqué par l'interface doit être assumé.
-      const masques = rolesBack!.filter((r) => !rolesFront.includes(r) && !(MASQUES_ASSUMES[permission] ?? []).includes(r));
+      const masques = rolesBack!.filter(
+        (r) => !rolesFront.includes(r) && !(MASQUES_ASSUMES[permission] ?? []).includes(r),
+      );
       expect({ route, masques }).toEqual({ route, masques: [] });
     }
   });

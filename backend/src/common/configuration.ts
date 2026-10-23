@@ -48,7 +48,7 @@ const url = (v: string | undefined) => {
     const u = new URL(v!.trim());
     return u.protocol === 'http:' || u.protocol === 'https:' ? null : 'doit commencer par http:// ou https://';
   } catch {
-    return 'n\'est pas une URL valide';
+    return "n'est pas une URL valide";
   }
 };
 
@@ -63,16 +63,20 @@ export const SCHEMA_CONFIGURATION: Regle[] = [
     description: 'Secret de signature des jetons',
     bloquant: (v, prod) =>
       prod && (vide(v) || v === JWT_SECRET_EXEMPLE)
-        ? 'est obligatoire en production et ne peut pas valoir l\'exemple public. Générez-en une : openssl rand -hex 32'
+        ? "est obligatoire en production et ne peut pas valoir l'exemple public. Générez-en une : openssl rand -hex 32"
         : null,
     avertissement: (v, prod) =>
-      !prod && (vide(v) || v === JWT_SECRET_EXEMPLE) ? 'absent ou valeur d\'exemple : acceptable en développement seulement' : null,
+      !prod && (vide(v) || v === JWT_SECRET_EXEMPLE)
+        ? "absent ou valeur d'exemple : acceptable en développement seulement"
+        : null,
   },
   {
     nom: 'JWT_EXPIRES_IN',
     description: 'Durée de vie des jetons (défaut 12h)',
     avertissement: (v) =>
-      vide(v) || /^\d+(\.\d+)?\s*(ms|s|m|h|d|w|y)?$/i.test(v!.trim()) ? null : `format de durée inattendu (« ${v} », ex. 12h)`,
+      vide(v) || /^\d+(\.\d+)?\s*(ms|s|m|h|d|w|y)?$/i.test(v!.trim())
+        ? null
+        : `format de durée inattendu (« ${v} », ex. 12h)`,
   },
   {
     nom: 'NODE_ENV',
@@ -80,27 +84,32 @@ export const SCHEMA_CONFIGURATION: Regle[] = [
     avertissement: (v) =>
       vide(v) || ['production', 'development', 'test'].includes(v!) ? null : `valeur inattendue « ${v} »`,
   },
-  { nom: 'PORT', description: 'Port d\'écoute (défaut 5031)', avertissement: entierPositif },
-  { nom: 'HOST', description: 'Interface d\'écoute (défaut 0.0.0.0)' },
+  { nom: 'PORT', description: "Port d'écoute (défaut 5031)", avertissement: entierPositif },
+  { nom: 'HOST', description: "Interface d'écoute (défaut 0.0.0.0)" },
   {
     nom: 'CORS_ORIGINS',
     description: 'Origines autorisées, séparées par des virgules',
-    avertissement: (v, prod) => (prod && vide(v) ? 'absente en production : toutes les origines croisées sont refusées' : null),
+    avertissement: (v, prod) =>
+      prod && vide(v) ? 'absente en production : toutes les origines croisées sont refusées' : null,
   },
   {
     nom: 'BIOMETRIE_SECRET',
     description: 'Secret partagé avec la passerelle biométrique',
     avertissement: (v, prod) =>
       prod && (vide(v) || v === BIOMETRIE_SECRET_EXEMPLE)
-        ? 'absent ou valeur d\'exemple : les preuves de la passerelle biométrique seront refusées'
+        ? "absent ou valeur d'exemple : les preuves de la passerelle biométrique seront refusées"
         : null,
   },
   {
     nom: 'BIOMETRIE_CHIFFREMENT_CLE',
-    description: 'Clé de chiffrement des gabarits d\'empreinte',
-    avertissement: (v, prod) => (prod && vide(v) ? 'absente : l\'enrôlement d\'empreintes échouera' : null),
+    description: "Clé de chiffrement des gabarits d'empreinte",
+    avertissement: (v, prod) => (prod && vide(v) ? "absente : l'enrôlement d'empreintes échouera" : null),
   },
-  { nom: 'BIOMETRIE_CONSERVATION_JOURS', description: 'Conservation des gabarits (défaut 90 j)', avertissement: entierPositif },
+  {
+    nom: 'BIOMETRIE_CONSERVATION_JOURS',
+    description: 'Conservation des gabarits (défaut 90 j)',
+    avertissement: entierPositif,
+  },
   { nom: 'AUTH_ECHECS_MAX', description: 'Échecs avant verrouillage (défaut 10)', avertissement: entierPositif },
   { nom: 'AUTH_VERROU_MINUTES', description: 'Durée du verrouillage (défaut 15 min)', avertissement: entierPositif },
   { nom: 'URL_APPLICATION', description: 'URL publique des liens et QR imprimés', avertissement: url },
@@ -109,11 +118,13 @@ export const SCHEMA_CONFIGURATION: Regle[] = [
     nom: 'OTP_API_KEY',
     description: 'Clé de la passerelle SMS',
     avertissement: (v, prod) =>
-      prod && (vide(v) || v === CLE_API_EXEMPLE) ? 'absente ou valeur d\'exemple : la passerelle SMS risque de refuser les envois' : null,
+      prod && (vide(v) || v === CLE_API_EXEMPLE)
+        ? "absente ou valeur d'exemple : la passerelle SMS risque de refuser les envois"
+        : null,
   },
   { nom: 'OTP_MESSAGE_TEMPLATE', description: 'Gabarit facultatif du SMS OTP' },
   { nom: 'MOBILE_MONEY_URL', description: 'Opérateur Mobile Money (vide : simulation)', avertissement: url },
-  { nom: 'MOBILE_MONEY_API_KEY', description: 'Clé de l\'opérateur Mobile Money' },
+  { nom: 'MOBILE_MONEY_API_KEY', description: "Clé de l'opérateur Mobile Money" },
 ];
 
 export interface BilanConfiguration {

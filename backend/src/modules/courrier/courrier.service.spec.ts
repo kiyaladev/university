@@ -15,7 +15,9 @@ describe('Périmètre des courriers', () => {
     type: TypeCourrier.ENTRANT,
     statut: StatutCourrier.EN_CIRCUIT,
     enregistreParId: 'auteur',
-    circuits: [{ id: 'etape-sco', courrierId: 'courrier-1', roleValideur: 'Secrétariat', statut: StatutCourrier.EN_CIRCUIT }],
+    circuits: [
+      { id: 'etape-sco', courrierId: 'courrier-1', roleValideur: 'Secrétariat', statut: StatutCourrier.EN_CIRCUIT },
+    ],
   };
   const prepare = () => {
     const db: any = {
@@ -64,7 +66,8 @@ describe('Périmètre des courriers', () => {
     const { db, service } = prepare();
     await service.liste({ dateDebut: '2026-10-01', dateFin: '2026-10-06' } as any, admin);
     expect(db.courrier.findMany.mock.calls[0][0].where.AND[0].OR).toContainEqual({
-      dateReception: null, dateEnvoi: null,
+      dateReception: null,
+      dateEnvoi: null,
       createdAt: { gte: new Date('2026-10-01T00:00:00.000Z'), lt: new Date('2026-10-07T00:00:00.000Z') },
     });
   });
@@ -93,7 +96,9 @@ describe('Périmètre des courriers', () => {
   it('refuse un chef sans département et la création pour un autre département', async () => {
     const { db, service } = prepare();
     await expect(service.creer({} as any, chef)).rejects.toThrow();
-    await expect(service.creer({ departementId: 'dep-b' } as any, { ...chef, departementId: 'dep-a' })).rejects.toThrow();
+    await expect(
+      service.creer({ departementId: 'dep-b' } as any, { ...chef, departementId: 'dep-a' }),
+    ).rejects.toThrow();
     expect(db.$transaction).not.toHaveBeenCalled();
   });
 
@@ -106,12 +111,17 @@ describe('Périmètre des courriers', () => {
   it('permet à la scolarité de parapher une étape Secrétariat', async () => {
     const { db, service } = prepare();
     const auditCreate = jest.fn();
-    db.$transaction.mockImplementation(async (fn: (tx: any) => unknown) => fn({
-      $queryRaw: jest.fn().mockResolvedValue([{ id: 'courrier-1' }]),
-      circuitCourrier: { updateMany: jest.fn().mockResolvedValue({ count: 1 }), count: jest.fn().mockResolvedValue(1) },
-      courrier: { findUnique: jest.fn().mockResolvedValue(courrier) },
-      auditLog: { create: auditCreate },
-    }));
+    db.$transaction.mockImplementation(async (fn: (tx: any) => unknown) =>
+      fn({
+        $queryRaw: jest.fn().mockResolvedValue([{ id: 'courrier-1' }]),
+        circuitCourrier: {
+          updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+          count: jest.fn().mockResolvedValue(1),
+        },
+        courrier: { findUnique: jest.fn().mockResolvedValue(courrier) },
+        auditLog: { create: auditCreate },
+      }),
+    );
     db.circuitCourrier.findUnique.mockResolvedValue(courrier.circuits[0]);
     await service.parapher(courrier.id, 'etape-sco', {}, scolarite);
     expect(db.$transaction).toHaveBeenCalledTimes(1);

@@ -24,11 +24,7 @@ import { PaiementsService } from './paiements.service';
 import { MobileMoneyModule } from './mobile-money.module';
 
 @Module({
-  imports: [
-    AuthModule,
-    ParametresModule,
-    MobileMoneyModule,
-  ],
+  imports: [AuthModule, ParametresModule, MobileMoneyModule],
   controllers: [
     InscriptionPubliqueController,
     EtudiantsController,

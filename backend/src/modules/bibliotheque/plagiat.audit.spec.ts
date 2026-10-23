@@ -34,10 +34,12 @@ describe('PlagiatService — journal avant/après', () => {
 
     await service.acquitter('suspicion-1', StatutSuspicionPlagiat.CONFIRME, user, 'Texte confidentiel du mémoire');
 
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'suspicion-1' },
-      data: expect.objectContaining({ statut: StatutSuspicionPlagiat.CONFIRME }),
-    }));
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'suspicion-1' },
+        data: expect.objectContaining({ statut: StatutSuspicionPlagiat.CONFIRME }),
+      }),
+    );
     const trace = auditLog.create.mock.calls[0][0].data;
     expect(trace).toMatchObject({
       userId: 'direction-1',

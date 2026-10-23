@@ -13,7 +13,16 @@ export interface ResultatCsv {
 export const COLONNES: Record<string, string[]> = {
   matricule: ['matricule', 'matricule enseignant', 'id enseignant'],
   nom: ['nom', 'nom enseignant', 'nom de l’enseignant', "nom de l'enseignant", 'lastname', 'surname'],
-  prenom: ['prenom', 'first name', 'firstname', 'prénom', 'prenom enseignant', 'prénom enseignant', 'prenom de l’enseignant', "prenom de l'enseignant"],
+  prenom: [
+    'prenom',
+    'first name',
+    'firstname',
+    'prénom',
+    'prenom enseignant',
+    'prénom enseignant',
+    'prenom de l’enseignant',
+    "prenom de l'enseignant",
+  ],
   email: ['email', 'courriel', 'e-mail'],
   telephone: ['telephone', 'téléphone', 'tel', 'phone'],
   grade: ['grade', 'titre', 'fonction'],
@@ -22,15 +31,46 @@ export const COLONNES: Record<string, string[]> = {
   departementId: ['departement id', 'departementid', 'id departement'],
   actif: ['actif', 'active', 'enabled'],
   code: ['code', 'code matiere', 'code salle'],
-  intitule: ['intitule', 'intitulé', 'intitule de la matiere', 'intitulé de la matière', 'matiere', 'matière', 'libelle', 'libellé'],
+  intitule: [
+    'intitule',
+    'intitulé',
+    'intitule de la matiere',
+    'intitulé de la matière',
+    'matiere',
+    'matière',
+    'libelle',
+    'libellé',
+  ],
   volumeHoraireTotal: ['volume horaire', 'volume horaire total', 'volumehorairetotal', 'volume horaire (h)'],
   credits: ['credits', 'crédits', 'credit'],
   batiment: ['batiment', 'bâtiment', 'building'],
   capacite: ['capacite', 'capacité', 'places', 'nombre de places', 'capacite de la salle', 'capacité de la salle'],
   affectationId: ['affectation id', 'affectationid', 'id affectation'],
   jourSemaine: ['jour', 'jour semaine', 'jour de la semaine', 'joursemaine', 'day', 'day of week'],
-  heureDebut: ['heure debut', 'heure début', 'heure de debut', 'heure de début', 'heuredebut', 'heure de debut du cours', 'heure de début du cours', 'heure debut cours', 'debut cours', 'debut', 'début', 'start time'],
-  heureFin: ['heure fin', 'heure de fin', 'heurefin', 'heure de fin du cours', 'heure fin cours', 'fin cours', 'fin', 'end time'],
+  heureDebut: [
+    'heure debut',
+    'heure début',
+    'heure de debut',
+    'heure de début',
+    'heuredebut',
+    'heure de debut du cours',
+    'heure de début du cours',
+    'heure debut cours',
+    'debut cours',
+    'debut',
+    'début',
+    'start time',
+  ],
+  heureFin: [
+    'heure fin',
+    'heure de fin',
+    'heurefin',
+    'heure de fin du cours',
+    'heure fin cours',
+    'fin cours',
+    'fin',
+    'end time',
+  ],
   type: ['type', 'type cours', 'type de cours', 'typecours'],
   salleId: ['salle id', 'salleid', 'id salle'],
   dateDebut: ['date debut', 'date début', 'date de debut', 'date de début', 'datedebut'],
@@ -40,8 +80,13 @@ export const COLONNES: Record<string, string[]> = {
 function normaliserCleEntete(entete: string): string {
   return entete
     .replace(/^\uFEFF/, '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .trim().toLocaleLowerCase('fr').replace(/[_-]+/g, ' ').replace(/\s*\([^)]*\)\s*$/, '').replace(/\s+/g, ' ');
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('fr')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s*\([^)]*\)\s*$/, '')
+    .replace(/\s+/g, ' ');
 }
 
 export function normaliserEntete(entete: string): string | undefined {
@@ -56,11 +101,14 @@ function decouperLigne(ligne: string, separateur: string): string[] {
   for (let i = 0; i < ligne.length; i += 1) {
     const caractere = ligne[i];
     if (caractere === '"') {
-      if (guillemets && ligne[i + 1] === '"') { champ += '"'; i += 1; }
-      else if (guillemets || champ.length === 0) guillemets = !guillemets;
+      if (guillemets && ligne[i + 1] === '"') {
+        champ += '"';
+        i += 1;
+      } else if (guillemets || champ.length === 0) guillemets = !guillemets;
       else champ += caractere;
     } else if (!guillemets && caractere === separateur) {
-      cellules.push(champ); champ = '';
+      cellules.push(champ);
+      champ = '';
     } else champ += caractere;
   }
   cellules.push(champ);
@@ -85,11 +133,17 @@ function separateurEntete(contenu: string): { separateur: string; ligneEntete: n
         difference: Math.abs(nbPointVirgule - nbVirgule),
       };
     }
-    for (const [separateur, cellules] of [[';', pointVirgule], [',', virgule]] as const) {
+    for (const [separateur, cellules] of [
+      [';', pointVirgule],
+      [',', virgule],
+    ] as const) {
       const score = cellules.filter((cellule) => normaliserEntete(cellule) !== undefined).length;
       if (score < 2) continue;
-      if (!meilleureEntete || score > meilleureEntete.score
-        || (score === meilleureEntete.score && cellules.length > meilleureEntete.colonnes)) {
+      if (
+        !meilleureEntete ||
+        score > meilleureEntete.score ||
+        (score === meilleureEntete.score && cellules.length > meilleureEntete.colonnes)
+      ) {
         meilleureEntete = { separateur, ligne: index + 1, score, colonnes: cellules.length };
       }
     }
@@ -112,14 +166,18 @@ export function lireCsv(contenuBrut: string): ResultatCsv {
   for (let i = 0; i < contenu.length; i += 1) {
     const caractere = contenu[i];
     if (caractere === '"') {
-      if (guillemets && contenu[i + 1] === '"') { champ += '"'; i += 1; }
-      else if (guillemets || champ.length === 0) guillemets = !guillemets;
+      if (guillemets && contenu[i + 1] === '"') {
+        champ += '"';
+        i += 1;
+      } else if (guillemets || champ.length === 0) guillemets = !guillemets;
       else champ += caractere;
     } else if (!guillemets && caractere === separateur) {
-      valeurs.push(champ); champ = '';
+      valeurs.push(champ);
+      champ = '';
     } else if (!guillemets && (caractere === '\n' || caractere === '\r')) {
       if (caractere === '\r' && contenu[i + 1] === '\n') i += 1;
-      valeurs.push(champ); champ = '';
+      valeurs.push(champ);
+      champ = '';
       if (valeurs.some((v) => v.trim() !== '')) table.push({ valeurs, ligne: debutLigne });
       valeurs = [];
       ligne += 1;
@@ -129,14 +187,26 @@ export function lireCsv(contenuBrut: string): ResultatCsv {
       if (caractere === '\n') ligne += 1;
     }
   }
-  if (guillemets) return { entetes: [], colonnesIgnorees: [], lignes: [], erreurs: [`Guillemets CSV non refermés près de la ligne ${ligne}.`] };
+  if (guillemets)
+    return {
+      entetes: [],
+      colonnesIgnorees: [],
+      lignes: [],
+      erreurs: [`Guillemets CSV non refermés près de la ligne ${ligne}.`],
+    };
   if (champ.length || valeurs.length) {
     valeurs.push(champ);
     if (valeurs.some((v) => v.trim() !== '')) table.push({ valeurs, ligne: debutLigne });
   }
   if (!table.length) return { entetes: [], colonnesIgnorees: [], lignes: [], erreurs: ['Le fichier est vide.'] };
 
-  const indexEnteteTable = ligneEntete === null ? 0 : Math.max(0, table.findIndex((row) => row.ligne === ligneEntete));
+  const indexEnteteTable =
+    ligneEntete === null
+      ? 0
+      : Math.max(
+          0,
+          table.findIndex((row) => row.ligne === ligneEntete),
+        );
   const entete = table[indexEnteteTable];
   const entetesBrutes = entete.valeurs;
   const entetes = entetesBrutes.map(normaliserEntete);

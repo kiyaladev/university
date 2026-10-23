@@ -36,7 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user || !user.actif) {
       throw new UnauthorizedException(t('auth.compte_inexistant_ou_desactive'));
     }
-    if (process.env.NODE_ENV === 'production' && await motDePasseDemo(user.password)) {
+    if (process.env.NODE_ENV === 'production' && (await motDePasseDemo(user.password))) {
       throw new UnauthorizedException(t('auth.compte_inexistant_ou_desactive'));
     }
 

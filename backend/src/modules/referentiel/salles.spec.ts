@@ -5,14 +5,21 @@ import { SallesService } from './salles';
 describe('Projection des salles', () => {
   const user = (role: Role) => ({ role }) as AuthUser;
   const salle = {
-    id: 'salle-1', code: 'S204', nom: 'Salle 204', batiment: 'A', capacite: 30,
-    actif: true, qrToken: 'secret-qr', latitude: 12, longitude: 13, rayonMetres: 80,
+    id: 'salle-1',
+    code: 'S204',
+    nom: 'Salle 204',
+    batiment: 'A',
+    capacite: 30,
+    actif: true,
+    qrToken: 'secret-qr',
+    latitude: 12,
+    longitude: 13,
+    rayonMetres: 80,
   };
 
   function preparer() {
-    const project = (select?: Record<string, boolean>) => select
-      ? Object.fromEntries(Object.keys(select).map((key) => [key, salle[key as keyof typeof salle]]))
-      : salle;
+    const project = (select?: Record<string, boolean>) =>
+      select ? Object.fromEntries(Object.keys(select).map((key) => [key, salle[key as keyof typeof salle]])) : salle;
     const prisma = {
       salle: {
         findMany: jest.fn(({ select }: any = {}) => Promise.resolve([project(select)])),
@@ -26,9 +33,11 @@ describe('Projection des salles', () => {
   it('limite la liste des rôles opérationnels aux informations utiles', async () => {
     const { service, prisma } = preparer();
     const result = await service.listePour({ all: '1' } as any, user(Role.CONTROLEUR));
-    expect(prisma.salle.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      select: { id: true, code: true, nom: true, batiment: true, capacite: true, actif: true },
-    }));
+    expect(prisma.salle.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: { id: true, code: true, nom: true, batiment: true, capacite: true, actif: true },
+      }),
+    );
     expect(prisma.salle.findMany.mock.calls[0][0].select).not.toHaveProperty('qrToken');
     expect(prisma.salle.findMany.mock.calls[0][0].select).not.toHaveProperty('latitude');
     expect(result.data[0]).not.toHaveProperty('qrToken');

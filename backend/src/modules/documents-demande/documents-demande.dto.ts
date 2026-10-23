@@ -11,11 +11,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import {
-  ModePaiement,
-  StatutDemande,
-  TypeDemandeDocument,
-} from '@prisma/client';
+import { ModePaiement, StatutDemande, TypeDemandeDocument } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 
 const TELEPHONE = /^\+?[\d\s().-]{6,20}$/;
@@ -105,7 +101,7 @@ export class CreerTarifDto {
   montant: number;
 
   @IsInt()
-  @Min(1, { message: 'Le délai doit être d\'au moins une heure' })
+  @Min(1, { message: "Le délai doit être d'au moins une heure" })
   delaiHeures: number;
 }
 

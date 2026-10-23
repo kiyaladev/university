@@ -25,10 +25,12 @@ describe('Mutations de référentiels liées à une année', () => {
     jest.spyOn(service, 'findOne').mockResolvedValue(affectation as any);
     const update = jest.spyOn(service, 'update').mockResolvedValue({} as any);
 
-    await expect(service.creerPour({ anneeId: anneeFermee } as any, { role: Role.ADMIN } as any))
-      .rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.modifierPour('aff-1', {}, { role: Role.ADMIN } as any))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creerPour({ anneeId: anneeFermee } as any, { role: Role.ADMIN } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.modifierPour('aff-1', {}, { role: Role.ADMIN } as any)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     await expect(service.remove('aff-1', { role: Role.ADMIN } as any)).rejects.toBeInstanceOf(BadRequestException);
 
     expect(create).not.toHaveBeenCalled();
@@ -61,9 +63,17 @@ describe('Mutations de référentiels liées à une année', () => {
     prisma.$transaction = jest.fn((operation: any) => operation(prisma));
     const service = new AffectationsService(prisma);
 
-    await expect(service.creerPour({
-      anneeId: 'annee-1', promotionId: 'promo-1', enseignantId: 'ens-1', matiereId: 'mat-1',
-    } as any, { role: Role.ADMIN, id: 'admin-1' } as any)).rejects.toThrow('même année académique');
+    await expect(
+      service.creerPour(
+        {
+          anneeId: 'annee-1',
+          promotionId: 'promo-1',
+          enseignantId: 'ens-1',
+          matiereId: 'mat-1',
+        } as any,
+        { role: Role.ADMIN, id: 'admin-1' } as any,
+      ),
+    ).rejects.toThrow('même année académique');
     expect(prisma.affectation.create).not.toHaveBeenCalled();
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
@@ -75,7 +85,8 @@ describe('Mutations de référentiels liées à une année', () => {
       auditLog: { create: jest.fn() },
     };
     const prisma: any = {
-      $queryRaw: jest.fn()
+      $queryRaw: jest
+        .fn()
         .mockResolvedValueOnce([{ cloturee: false }])
         .mockResolvedValueOnce([{ anneeId: anneeFermee }]),
       $transaction: jest.fn((operation: any) => operation(tx)),
@@ -83,9 +94,17 @@ describe('Mutations de référentiels liées à une année', () => {
     };
     const service = new AffectationsService(prisma);
 
-    await expect(service.creerPour({
-      anneeId: anneeFermee, promotionId: 'promo-1', enseignantId: 'ens-1', matiereId: 'mat-1',
-    } as any, { role: Role.ADMIN, id: 'admin-1' } as any)).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.creerPour(
+        {
+          anneeId: anneeFermee,
+          promotionId: 'promo-1',
+          enseignantId: 'ens-1',
+          matiereId: 'mat-1',
+        } as any,
+        { role: Role.ADMIN, id: 'admin-1' } as any,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.$queryRaw).toHaveBeenCalledTimes(1);

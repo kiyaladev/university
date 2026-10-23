@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
@@ -81,11 +71,7 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ADMIN)
   @Put('tarifs/:id')
-  modifierTarif(
-    @Param('id') id: string,
-    @Body() dto: ModifierTarifDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifierTarif(@Param('id') id: string, @Body() dto: ModifierTarifDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierTarif(id, dto, user);
   }
 
@@ -107,11 +93,7 @@ export class DocumentsDemandeController {
 
   @Roles(Role.ETUDIANT)
   @Post(':id/payer')
-  payer(
-    @Param('id') id: string,
-    @Body() dto: PayerDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  payer(@Param('id') id: string, @Body() dto: PayerDto, @CurrentUser() user: AuthUser) {
     return this.service.payer(id, dto, user);
   }
 
@@ -119,51 +101,31 @@ export class DocumentsDemandeController {
 
   @Roles(...ROLES_GESTION)
   @Post(':id/confirmer-paiement')
-  confirmerPaiement(
-    @Param('id') id: string,
-    @Body() dto: ModePaiementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  confirmerPaiement(@Param('id') id: string, @Body() dto: ModePaiementDto, @CurrentUser() user: AuthUser) {
     return this.service.confirmerPaiement(id, dto, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Post(':id/lancer-traitement')
-  lancerTraitement(
-    @Param('id') id: string,
-    @Body() _dto: LancerTraitementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  lancerTraitement(@Param('id') id: string, @Body() _dto: LancerTraitementDto, @CurrentUser() user: AuthUser) {
     return this.service.lancerTraitement(id, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Post(':id/prete')
-  marquerPrete(
-    @Param('id') id: string,
-    @Body() dto: MarquerPreteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  marquerPrete(@Param('id') id: string, @Body() dto: MarquerPreteDto, @CurrentUser() user: AuthUser) {
     return this.service.marquerPrete(id, dto, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Post(':id/remettre')
-  remettre(
-    @Param('id') id: string,
-    @Body() dto: RemettreDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  remettre(@Param('id') id: string, @Body() dto: RemettreDto, @CurrentUser() user: AuthUser) {
     return this.service.remettre(id, dto, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Post(':id/rejeter')
-  rejeter(
-    @Param('id') id: string,
-    @Body() dto: RejeterDemandeDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  rejeter(@Param('id') id: string, @Body() dto: RejeterDemandeDto, @CurrentUser() user: AuthUser) {
     return this.service.rejeter(id, dto, user);
   }
 
@@ -172,11 +134,7 @@ export class DocumentsDemandeController {
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.ETUDIANT)
   @DocumentScope('demandeDocument', { [Role.ETUDIANT]: 'etudiantId' })
   @Get(':id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     try {
       await this.jwt.verify(jetonImprimable(req) ?? '');
     } catch {

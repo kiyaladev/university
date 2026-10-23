@@ -1,13 +1,5 @@
 import { PartialType } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsEmail,
-  IsIn,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsDateString, IsEmail, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { QueryDto } from '../../common/dto';
 
 export const TYPES_BADGE = ['VISITEUR', 'INTERVENANT', 'TECHNICIEN', 'VIP'] as const;
@@ -45,10 +37,14 @@ export class CreateBadgeDto {
  * l'identifiant et le jeton : le vigile scanne, il ne se connecte pas.
  */
 export class VerifierBadgePubliqueDto {
-  @IsString() @MinLength(1) @MaxLength(64)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   badge: string;
 
-  @IsString() @MinLength(1) @MaxLength(64)
+  @IsString()
+  @MinLength(1)
+  @MaxLength(64)
   k: string;
 }
 
@@ -57,7 +53,9 @@ export class UpdateBadgeDto extends PartialType(CreateBadgeDto) {
 }
 
 export class AnnulerBadgeDto {
-  @IsString() @MinLength(3) @MaxLength(500)
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
   motif: string;
 }
 

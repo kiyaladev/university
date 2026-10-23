@@ -11,14 +11,25 @@ describe('Lecture de la carte restaurant au guichet', () => {
 
   const preparer = (role: Role = Role.CONTROLEUR) => {
     const etudiant = {
-      id: 'etudiant-1', matricule: 'E-2026-001', nom: 'Diallo', prenom: 'Awa',
-      telephone: '+224600000001', qrRestoToken: 'UP-RESTO-secret',
+      id: 'etudiant-1',
+      matricule: 'E-2026-001',
+      nom: 'Diallo',
+      prenom: 'Awa',
+      telephone: '+224600000001',
+      qrRestoToken: 'UP-RESTO-secret',
     };
     const prisma: any = {
-      user: { findUnique: jest.fn().mockResolvedValue({
-        id: 'guichet-1', actif: true, role, motDePasseModifieLe: null,
-        departementId: null, etudiant: null, enseignant: null,
-      }) },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'guichet-1',
+          actif: true,
+          role,
+          motDePasseModifieLe: null,
+          departementId: null,
+          etudiant: null,
+          enseignant: null,
+        }),
+      },
       etudiant: { findUnique: jest.fn().mockResolvedValue(etudiant) },
       portefeuilleResto: {
         upsert: jest.fn().mockResolvedValue({ id: 'portefeuille-1', etudiantId: etudiant.id, solde: 42 }),
@@ -62,8 +73,12 @@ describe('Lecture de la carte restaurant au guichet', () => {
 
   it('conserve le premier QR créé quand deux lectures arrivent en même temps', async () => {
     const etudiant = {
-      id: 'etudiant-1', matricule: 'E-2026-001', nom: 'Diallo', prenom: 'Awa',
-      telephone: '+224600000001', qrRestoToken: null,
+      id: 'etudiant-1',
+      matricule: 'E-2026-001',
+      nom: 'Diallo',
+      prenom: 'Awa',
+      telephone: '+224600000001',
+      qrRestoToken: null,
     };
     let jetonGagnant = '';
     const updateMany = jest.fn(({ data }: { data: { qrRestoToken: string } }) => {
@@ -91,15 +106,26 @@ describe('Lecture de la carte restaurant au guichet', () => {
 
   it('crée ou récupère le portefeuille par upsert atomique', async () => {
     const etudiant = {
-      id: 'etudiant-1', matricule: 'E-2026-001', nom: 'Diallo', prenom: 'Awa',
-      telephone: '+224600000001', qrRestoToken: 'UP-RESTO-secret',
+      id: 'etudiant-1',
+      matricule: 'E-2026-001',
+      nom: 'Diallo',
+      prenom: 'Awa',
+      telephone: '+224600000001',
+      qrRestoToken: 'UP-RESTO-secret',
     };
     const portefeuille = { id: 'portefeuille-1', etudiantId: etudiant.id, solde: 42 };
     const prisma: any = {
-      user: { findUnique: jest.fn().mockResolvedValue({
-        id: 'guichet-1', actif: true, role: Role.CONTROLEUR,
-        motDePasseModifieLe: null, departementId: null, etudiant: null, enseignant: null,
-      }) },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'guichet-1',
+          actif: true,
+          role: Role.CONTROLEUR,
+          motDePasseModifieLe: null,
+          departementId: null,
+          etudiant: null,
+          enseignant: null,
+        }),
+      },
       etudiant: { findUnique: jest.fn().mockResolvedValue(etudiant) },
       portefeuilleResto: { upsert: jest.fn().mockResolvedValue(portefeuille) },
     };

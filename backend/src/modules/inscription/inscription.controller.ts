@@ -90,10 +90,14 @@ export class EtudiantsController {
 
   @Get()
   liste(@Query() query: EtudiantQueryDto, @CurrentUser() user: AuthUser) {
-    return this.service.listePour(query, {
-      ...(user.role === Role.ETUDIANT ? { id: user.etudiantId ?? "__aucun__" } : {}),
-      ...whereEtudiants(query),
-    }, user);
+    return this.service.listePour(
+      query,
+      {
+        ...(user.role === Role.ETUDIANT ? { id: user.etudiantId ?? '__aucun__' } : {}),
+        ...whereEtudiants(query),
+      },
+      user,
+    );
   }
 
   @Get(':id')
@@ -145,11 +149,7 @@ export class FraisController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateFraisDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateFraisDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierFrais(id, dto, user);
   }
 
@@ -184,21 +184,13 @@ export class PaiementsController {
    */
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post(':id/simuler')
-  simuler(
-    @Param('id') id: string,
-    @Body() dto: SimulerPaiementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  simuler(@Param('id') id: string, @Body() dto: SimulerPaiementDto, @CurrentUser() user: AuthUser) {
     return this.service.simulerPaiement(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
   @Post(':id/annuler')
-  annuler(
-    @Param('id') id: string,
-    @Body() dto: AnnulerPaiementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  annuler(@Param('id') id: string, @Body() dto: AnnulerPaiementDto, @CurrentUser() user: AuthUser) {
     return this.service.annulerPaiement(id, dto, user);
   }
 }
@@ -250,11 +242,7 @@ export class InscriptionsController {
     [Role.CHEF_DEPARTEMENT]: 'promotion.filiere.departementId',
   })
   @Get(':id/attestation-inscription')
-  async attestation(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async attestation(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     let user: AuthUser;
     try {
       // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.

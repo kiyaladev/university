@@ -1,14 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
@@ -59,11 +49,7 @@ export class CourrierController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateCourrierDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateCourrierDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -85,11 +71,7 @@ export class CourrierController {
   /** ADMIN : EN_CIRCUIT → TRAITE → CLASSE → ARCHIVE. */
   @Roles(Role.ADMIN)
   @Post(':id/cloturer')
-  cloturer(
-    @Param('id') id: string,
-    @Body() dto: CloturerCourrierDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  cloturer(@Param('id') id: string, @Body() dto: CloturerCourrierDto, @CurrentUser() user: AuthUser) {
     return this.service.cloturer(id, dto, user);
   }
 
@@ -99,11 +81,7 @@ export class CourrierController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT)
   @Get(':id/imprimer')
-  async imprimer(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimer(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
     const user = req.user as AuthUser;
     verifierJetonImprimable(this.jwt, req);

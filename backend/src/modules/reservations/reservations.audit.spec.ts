@@ -87,8 +87,12 @@ describe('Journal avant/après des réservations de salle', () => {
     refuseMotif: null,
     // La salle n'est jamais projetée : jeton QR et coordonnées restent hors journal.
     salle: {
-      id: 'salle-1', code: 'AMPHI-A', nom: 'Amphi A',
-      qrToken: 'jeton-qr-salle', latitude: 9.6412, longitude: -13.5786,
+      id: 'salle-1',
+      code: 'AMPHI-A',
+      nom: 'Amphi A',
+      qrToken: 'jeton-qr-salle',
+      latitude: 9.6412,
+      longitude: -13.5786,
     },
   });
 
@@ -133,16 +137,19 @@ describe('Journal avant/après des réservations de salle', () => {
 
   const details = (journal: any[]) => JSON.parse(journal[0].data.details);
 
-  it("journalise la demande dans la transaction, sans motif ni données de salle", async () => {
+  it('journalise la demande dans la transaction, sans motif ni données de salle', async () => {
     const { service, prisma, journal, mutations } = preparer();
 
-    await service.creer({
-      salleId: 'salle-1',
-      motif: 'Événement privé confidentiel',
-      dateJour: '2026-10-02',
-      heureDebut: '09:00',
-      heureFin: '10:00',
-    } as any, enseignant);
+    await service.creer(
+      {
+        salleId: 'salle-1',
+        motif: 'Événement privé confidentiel',
+        dateJour: '2026-10-02',
+        heureDebut: '09:00',
+        heureFin: '10:00',
+      } as any,
+      enseignant,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(prisma.$transaction.mock.calls[0][1]).toEqual({ isolationLevel: 'Serializable' });
@@ -170,7 +177,9 @@ describe('Journal avant/après des réservations de salle', () => {
   it('journalise la modification du créneau avec les états avant et après', async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reservationSalle.update.mockResolvedValue({
-      ...demande(), heureDebut: '11:00', heureFin: '12:00',
+      ...demande(),
+      heureDebut: '11:00',
+      heureFin: '12:00',
     });
 
     await service.modifier('reservation-1', { heureDebut: '11:00', heureFin: '12:00' } as any, enseignant);
@@ -188,9 +197,12 @@ describe('Journal avant/après des réservations de salle', () => {
     });
     const ecrit = details(journal);
     expect(ecrit.avant).toEqual(instantane(StatutReservationSalle.EN_ATTENTE));
-    expect(ecrit.apres).toEqual(instantane(StatutReservationSalle.EN_ATTENTE, {
-      heureDebut: '11:00', heureFin: '12:00',
-    }));
+    expect(ecrit.apres).toEqual(
+      instantane(StatutReservationSalle.EN_ATTENTE, {
+        heureDebut: '11:00',
+        heureFin: '12:00',
+      }),
+    );
     expect(ecrit.champsModifies).toEqual(['heureDebut', 'heureFin']);
   });
 
@@ -217,10 +229,12 @@ describe('Journal avant/après des réservations de salle', () => {
     });
     const ecrit = details(journal);
     expect(ecrit.avant).toEqual(instantane(StatutReservationSalle.EN_ATTENTE));
-    expect(ecrit.apres).toEqual(instantane(StatutReservationSalle.REFUSEE, {
-      refuseParId: 'admin-1',
-      refuseMotifFourni: true,
-    }));
+    expect(ecrit.apres).toEqual(
+      instantane(StatutReservationSalle.REFUSEE, {
+        refuseParId: 'admin-1',
+        refuseMotifFourni: true,
+      }),
+    );
     expect(ecrit.champsModifies).toEqual(['statut', 'refuseParId', 'refuseMotif']);
     expect(ecrit.refuseMotifFourni).toBe(true);
     expect(journal[0].data.details).not.toContain('motif de refus confidentiel');
@@ -229,7 +243,8 @@ describe('Journal avant/après des réservations de salle', () => {
   it('journalise la confirmation, seule transition sans motif associé', async () => {
     const { service, prisma, tx, journal } = preparer();
     tx.reservationSalle.update.mockResolvedValue({
-      ...demande(), statut: StatutReservationSalle.CONFIRMEE,
+      ...demande(),
+      statut: StatutReservationSalle.CONFIRMEE,
     });
 
     await service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin);
@@ -270,8 +285,9 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecEcriture = 'update';
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin))
-      .rejects.toThrow('mutation refusée');
+    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+      'mutation refusée',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -281,8 +297,9 @@ describe('Journal avant/après des réservations de salle', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecJournal = true;
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin))
-      .rejects.toThrow('journal indisponible');
+    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+      'journal indisponible',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -291,11 +308,13 @@ describe('Journal avant/après des réservations de salle', () => {
   it("n'ouvre aucune transaction ni journal sur une demande déjà statuée", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.reservationSalle.findUnique.mockResolvedValue({
-      ...demande(), statut: StatutReservationSalle.CONFIRMEE,
+      ...demande(),
+      statut: StatutReservationSalle.CONFIRMEE,
     });
 
-    await expect(service.modifier('reservation-1', { heureDebut: '11:00' } as any, enseignant))
-      .rejects.toThrow('reservations.une_reservation_deja_statuee_ne_peut_plus_etre_modifiee');
+    await expect(service.modifier('reservation-1', { heureDebut: '11:00' } as any, enseignant)).rejects.toThrow(
+      'reservations.une_reservation_deja_statuee_ne_peut_plus_etre_modifiee',
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(journal).toEqual([]);
@@ -304,13 +323,19 @@ describe('Journal avant/après des réservations de salle', () => {
 
   it('vérifie le conflit dans la transaction avant de confirmer', async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
-    tx.reservationSalle.findMany.mockResolvedValue([{
-      ...demande(), id: 'reservation-overlap', statut: StatutReservationSalle.CONFIRMEE,
-      heureDebut: '09:30', heureFin: '10:30',
-    }]);
+    tx.reservationSalle.findMany.mockResolvedValue([
+      {
+        ...demande(),
+        id: 'reservation-overlap',
+        statut: StatutReservationSalle.CONFIRMEE,
+        heureDebut: '09:30',
+        heureFin: '10:30',
+      },
+    ]);
 
-    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin))
-      .rejects.toThrow('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_');
+    await expect(service.decider('reservation-1', { statut: 'CONFIRMEE' } as any, admin)).rejects.toThrow(
+      'reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_',
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: 'Serializable' });
     expect(tx.reservationSalle.findMany).toHaveBeenCalled();
@@ -323,14 +348,30 @@ describe('Journal avant/après des réservations de salle', () => {
     const collision = Object.assign(new Error('serialization failure'), { code: 'P2034' });
     prisma.$transaction.mockRejectedValue(collision);
 
-    await expect(service.creer({
-      salleId: 'salle-1', motif: 'test', dateJour: '2026-10-02',
-      heureDebut: '09:00', heureFin: '10:00',
-    } as any, enseignant)).rejects.toBeInstanceOf(ConflictException);
-    await expect(service.creer({
-      salleId: 'salle-1', motif: 'test', dateJour: '2026-10-02',
-      heureDebut: '09:00', heureFin: '10:00',
-    } as any, enseignant)).rejects.toThrow('reservations.ecriture_concurrente_reessayez');
+    await expect(
+      service.creer(
+        {
+          salleId: 'salle-1',
+          motif: 'test',
+          dateJour: '2026-10-02',
+          heureDebut: '09:00',
+          heureFin: '10:00',
+        } as any,
+        enseignant,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+    await expect(
+      service.creer(
+        {
+          salleId: 'salle-1',
+          motif: 'test',
+          dateJour: '2026-10-02',
+          heureDebut: '09:00',
+          heureFin: '10:00',
+        } as any,
+        enseignant,
+      ),
+    ).rejects.toThrow('reservations.ecriture_concurrente_reessayez');
 
     expect(journal).toEqual([]);
     expect(mutations).toEqual([]);

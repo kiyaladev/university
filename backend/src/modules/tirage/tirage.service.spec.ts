@@ -10,10 +10,20 @@ describe('Tirage lié à une année académique', () => {
       examen: { findUnique: jest.fn().mockResolvedValue({ id: 'exam-1', codeExamen: 'EX-01', anneeId: 'annee-1' }) },
       tirage: {
         findUnique: jest.fn().mockResolvedValue({
-          id: 'tirage-1', stade: StadeTirage.PROGRAMME, empreinteSource: 'abc123', nbExemplaires: 10,
-          examen: { id: 'exam-1', codeExamen: 'EX-01', intitule: 'Partiel', anneeId: 'annee-1', annee: { id: 'annee-1' } },
+          id: 'tirage-1',
+          stade: StadeTirage.PROGRAMME,
+          empreinteSource: 'abc123',
+          nbExemplaires: 10,
+          examen: {
+            id: 'exam-1',
+            codeExamen: 'EX-01',
+            intitule: 'Partiel',
+            anneeId: 'annee-1',
+            annee: { id: 'annee-1' },
+          },
         }),
-        create: jest.fn(), update: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
       },
       anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ cloturee: anneeCloturee }) },
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: anneeCloturee }]),
@@ -26,10 +36,17 @@ describe('Tirage lié à une année académique', () => {
   it('refuse de créer un tirage rattaché à un examen d’année clôturée', async () => {
     const { prisma, tx, service } = preparer(true);
 
-    await expect(service.creer({
-      examenId: 'exam-1', dateTirage: '2026-09-01', nbExemplaires: 10,
-      empreinteSource: 'abc123',
-    } as any, { id: 'agent-1' } as any)).rejects.toThrow(BadRequestException);
+    await expect(
+      service.creer(
+        {
+          examenId: 'exam-1',
+          dateTirage: '2026-09-01',
+          nbExemplaires: 10,
+          empreinteSource: 'abc123',
+        } as any,
+        { id: 'agent-1' } as any,
+      ),
+    ).rejects.toThrow(BadRequestException);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.$queryRaw.mock.calls[0][0].join('?')).toContain('FOR SHARE');
@@ -40,8 +57,9 @@ describe('Tirage lié à une année académique', () => {
   it('refuse une transition de tirage close avant toute mutation', async () => {
     const { tx, service } = preparer(true);
 
-    await expect(service.imprimer('tirage-1', { empreinteSource: 'abc123' } as any, { id: 'agent-1' } as any))
-      .rejects.toThrow(BadRequestException);
+    await expect(
+      service.imprimer('tirage-1', { empreinteSource: 'abc123' } as any, { id: 'agent-1' } as any),
+    ).rejects.toThrow(BadRequestException);
 
     expect(tx.$queryRaw.mock.calls[0][0].join('?')).toContain('FOR SHARE');
     expect(tx.tirage.update).not.toHaveBeenCalled();
@@ -54,7 +72,9 @@ describe('Tirage lié à une année académique', () => {
     ['recuperer', StadeTirage.DISTRIBUE],
   ])('refuse le stade %s/%s pour contourner le contrôle de son endpoint', async (method, stade) => {
     const { prisma, tx, service } = preparer(false);
-    await expect((service as any)[method]('tirage-1', { stade }, { id: 'agent' })).rejects.toBeInstanceOf(BadRequestException);
+    await expect((service as any)[method]('tirage-1', { stade }, { id: 'agent' })).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(tx.tirage.update).not.toHaveBeenCalled();
   });
@@ -62,9 +82,13 @@ describe('Tirage lié à une année académique', () => {
   it('refuse une impression dont l’état a changé pendant l’acquisition du verrou', async () => {
     const { tx, service } = preparer(false);
     const initial = await tx.tirage.findUnique();
-    tx.tirage.findUnique.mockResolvedValueOnce(initial).mockResolvedValueOnce({ ...initial, stade: StadeTirage.IMPRIME });
-    await expect(service.imprimer('tirage-1', { empreinteSource: 'abc123' }, { id: 'agent' } as any)).rejects.toBeInstanceOf(BadRequestException);
-    expect(tx.$queryRaw.mock.calls.some(args => args[0].join('?').includes('FOR UPDATE'))).toBe(true);
+    tx.tirage.findUnique
+      .mockResolvedValueOnce(initial)
+      .mockResolvedValueOnce({ ...initial, stade: StadeTirage.IMPRIME });
+    await expect(
+      service.imprimer('tirage-1', { empreinteSource: 'abc123' }, { id: 'agent' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(tx.$queryRaw.mock.calls.some((args) => args[0].join('?').includes('FOR UPDATE'))).toBe(true);
     expect(tx.tirage.update).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -75,12 +99,24 @@ describe('Tirage — contrôle anti-substitution à l’impression', () => {
 
   function preparer() {
     const tirage = {
-      id: 'tirage-1', stade: StadeTirage.PROGRAMME, empreinteSource: ATTENDUE, nbExemplaires: 10,
-      dateTirage: new Date('2026-09-01'), empreinteExemplaires: null, imprimeur: null,
+      id: 'tirage-1',
+      stade: StadeTirage.PROGRAMME,
+      empreinteSource: ATTENDUE,
+      nbExemplaires: 10,
+      dateTirage: new Date('2026-09-01'),
+      empreinteExemplaires: null,
+      imprimeur: null,
       examen: {
-        id: 'exam-1', codeExamen: 'EX-01', intitule: 'Partiel', anneeId: 'annee-1', dateExamen: new Date('2026-09-02'),
-        annee: { id: 'annee-1', libelle: '2026-2027' }, promotion: { nom: 'L1' }, matiere: { intitule: 'Algèbre' },
-        salle: null, surveillant: null,
+        id: 'exam-1',
+        codeExamen: 'EX-01',
+        intitule: 'Partiel',
+        anneeId: 'annee-1',
+        dateExamen: new Date('2026-09-02'),
+        annee: { id: 'annee-1', libelle: '2026-2027' },
+        promotion: { nom: 'L1' },
+        matiere: { intitule: 'Algèbre' },
+        salle: null,
+        surveillant: null,
       },
     };
     const tx: any = {
@@ -105,8 +141,9 @@ describe('Tirage — contrôle anti-substitution à l’impression', () => {
 
   it('refuse une empreinte différente de celle du sujet validé, sans rien écrire', async () => {
     const { tx, service } = preparer();
-    await expect(service.imprimer('tirage-1', { empreinteSource: 'b'.repeat(64) }, { id: 'agent' } as any))
-      .rejects.toThrow('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr');
+    await expect(
+      service.imprimer('tirage-1', { empreinteSource: 'b'.repeat(64) }, { id: 'agent' } as any),
+    ).rejects.toThrow('tirage.empreinte_source_fournie_ne_correspond_pas_a_celle_enregistr');
     expect(tx.tirage.update).not.toHaveBeenCalled();
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
@@ -114,17 +151,20 @@ describe('Tirage — contrôle anti-substitution à l’impression', () => {
   it('refuse le préfixe exposé à la place de l’empreinte complète', async () => {
     const { tx, service } = preparer();
     const { empreinteSource: prefixe } = await service.trouver('tirage-1');
-    await expect(service.imprimer('tirage-1', { empreinteSource: prefixe }, { id: 'agent' } as any))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.imprimer('tirage-1', { empreinteSource: prefixe }, { id: 'agent' } as any),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.tirage.update).not.toHaveBeenCalled();
   });
 
   it('accepte l’empreinte exacte, quelle que soit la casse', async () => {
     const { tx, service } = preparer();
     await service.imprimer('tirage-1', { empreinteSource: ATTENDUE.toUpperCase() }, { id: 'agent' } as any);
-    expect(tx.tirage.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ stade: StadeTirage.IMPRIME, imprimeurId: 'agent' }),
-    }));
+    expect(tx.tirage.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ stade: StadeTirage.IMPRIME, imprimeurId: 'agent' }),
+      }),
+    );
   });
 
   it('n’expose pas l’empreinte attendue d’un tirage programmé (liste, fiche, bordereau)', async () => {

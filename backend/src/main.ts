@@ -75,7 +75,10 @@ async function bootstrap() {
   // En production, une liste d'origines vide ne doit jamais faire réfléchir
   // n'importe quel Origin tout en autorisant les cookies : on refuse tout.
   if (!origins.length && enProduction) {
-    Logger.error('CORS_ORIGINS est requis en production (liste d\u2019origines séparées par des virgules)', 'Bootstrap');
+    Logger.error(
+      'CORS_ORIGINS est requis en production (liste d\u2019origines séparées par des virgules)',
+      'Bootstrap',
+    );
   }
 
   app.enableCors({
@@ -90,9 +93,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('UniPrésence API')
-    .setDescription(
-      "Contrôle numérique de la présence des enseignants pendant les séances de cours",
-    )
+    .setDescription('Contrôle numérique de la présence des enseignants pendant les séances de cours')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
@@ -101,28 +102,25 @@ async function bootstrap() {
   if (enProduction) {
     const jwt = app.get(JwtService);
     const identite = app.get(JwtStrategy);
-    app.use(
-      ['/api/docs', '/api/docs-json', '/api/docs-yaml'],
-      async (req, res, next) => {
-        const entete = req.headers.authorization ?? '';
-        if (!entete.startsWith('Bearer ')) {
-          res.status(401).json({ statutCode: 401, message: 'Documentation désactivée' });
+    app.use(['/api/docs', '/api/docs-json', '/api/docs-yaml'], async (req, res, next) => {
+      const entete = req.headers.authorization ?? '';
+      if (!entete.startsWith('Bearer ')) {
+        res.status(401).json({ statutCode: 401, message: 'Documentation désactivée' });
+        return;
+      }
+      try {
+        const charge = await jwt.verifyAsync(entete.slice(7));
+        const utilisateur = await identite.validate(charge);
+        if (utilisateur.role !== 'ADMIN') {
+          res.status(403).json({ statutCode: 403, message: 'Réservé aux administrateurs' });
           return;
         }
-        try {
-          const charge = await jwt.verifyAsync(entete.slice(7));
-          const utilisateur = await identite.validate(charge);
-          if (utilisateur.role !== 'ADMIN') {
-            res.status(403).json({ statutCode: 403, message: 'Réservé aux administrateurs' });
-            return;
-          }
-        } catch {
-          res.status(401).json({ statutCode: 401, message: 'Jeton invalide' });
-          return;
-        }
-        next();
-      },
-    );
+      } catch {
+        res.status(401).json({ statutCode: 401, message: 'Jeton invalide' });
+        return;
+      }
+      next();
+    });
   }
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
 

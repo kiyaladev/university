@@ -51,10 +51,7 @@ export class PrismaExceptionFilter extends BaseExceptionFilter {
 
     if (exception instanceof HttpException) return super.catch(exception, host);
 
-    this.logger.error(
-      `Erreur non gérée : ${(exception as Error)?.message ?? exception}`,
-      (exception as Error)?.stack,
-    );
+    this.logger.error(`Erreur non gérée : ${(exception as Error)?.message ?? exception}`, (exception as Error)?.stack);
     return super.catch(new HttpException(t('common.internalError'), HttpStatus.INTERNAL_SERVER_ERROR), host);
   }
 }

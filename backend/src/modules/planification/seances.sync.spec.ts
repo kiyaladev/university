@@ -15,8 +15,12 @@ const entree = {
 function preparer() {
   const prisma: any = {
     affectation: {
-      findUnique: jest.fn().mockResolvedValue({ id: entree.affectationId, anneeId: 'annee-1', annee: { cloturee: false } }),
-      findFirst: jest.fn().mockResolvedValue({ id: entree.affectationId, anneeId: 'annee-1', annee: { cloturee: false } }),
+      findUnique: jest
+        .fn()
+        .mockResolvedValue({ id: entree.affectationId, anneeId: 'annee-1', annee: { cloturee: false } }),
+      findFirst: jest
+        .fn()
+        .mockResolvedValue({ id: entree.affectationId, anneeId: 'annee-1', annee: { cloturee: false } }),
     },
     seance: {
       findUnique: jest.fn().mockResolvedValue(null),
@@ -35,9 +39,11 @@ describe('Synchronisation idempotente des séances hors ligne', () => {
     const resultat = await service.synchroniser({ seances: [entree] } as any);
 
     expect(resultat).toMatchObject({ recus: 1, synchronisees: 1, echecs: [] });
-    expect(prisma.seance.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ id: entree.idClient, affectationId: entree.affectationId }),
-    }));
+    expect(prisma.seance.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ id: entree.idClient, affectationId: entree.affectationId }),
+      }),
+    );
     expect(prisma.seance.create.mock.calls[0][0].data).not.toHaveProperty('idClient');
   });
 

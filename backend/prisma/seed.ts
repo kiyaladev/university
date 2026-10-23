@@ -49,8 +49,7 @@ const signatureDemo = (graine: number) => {
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
 const dateOnly = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
 const minutes = (h: string) => Number(h.slice(0, 2)) * 60 + Number(h.slice(3, 5));
-const heure = (m: number) =>
-  `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+const heure = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 
 async function main() {
   if (process.env.NODE_ENV === 'production') throw new Error('Le seed de démonstration est interdit en production.');
@@ -249,9 +248,7 @@ async function main() {
             ? {
                 // Chiffré comme en production : le seed ne doit pas être le
                 // seul endroit où de la biométrie traîne en clair.
-                empreinteTemplate: chiffrer(
-                  `SIMU-${matricule}-${Buffer.from(matricule).toString('base64url')}`,
-                ),
+                empreinteTemplate: chiffrer(`SIMU-${matricule}-${Buffer.from(matricule).toString('base64url')}`),
                 empreinteDoigt: 'index droit',
                 empreinteEnroleeLe: new Date(),
                 empreinteConsentementLe: new Date(),
@@ -331,9 +328,19 @@ async function main() {
   // --------------------------------------------------------------- affectations
   const plan: Array<[number, number, number]> = [
     // [enseignant, matière, promotion]
-    [0, 0, 0], [1, 1, 1], [0, 2, 2], [9, 3, 2], [2, 4, 3],
-    [3, 5, 0], [4, 6, 4], [6, 7, 5], [5, 8, 5], [7, 9, 6], [8, 10, 6],
-    [1, 0, 6], [9, 1, 3],
+    [0, 0, 0],
+    [1, 1, 1],
+    [0, 2, 2],
+    [9, 3, 2],
+    [2, 4, 3],
+    [3, 5, 0],
+    [4, 6, 4],
+    [6, 7, 5],
+    [5, 8, 5],
+    [7, 9, 6],
+    [8, 10, 6],
+    [1, 0, 6],
+    [9, 1, 3],
   ];
 
   const affectations = await Promise.all(
@@ -432,8 +439,7 @@ async function main() {
                 : StatutPresence.DEPART_ANTICIPE;
 
       const present = statut !== StatutPresence.ABSENT;
-      const retardMin =
-        statut === StatutPresence.RETARD ? 18 + Math.floor(alea() * 20) : Math.floor(alea() * 10);
+      const retardMin = statut === StatutPresence.RETARD ? 18 + Math.floor(alea() * 20) : Math.floor(alea() * 10);
       const arrivee = heure(minutes(c.heureDebut) + retardMin);
       const finReelle =
         statut === StatutPresence.DEPART_ANTICIPE
@@ -463,18 +469,12 @@ async function main() {
           attestation: modeAttestation,
           attestationValide: present,
           attestationLe: present ? new Date(`${jourIso}T${arrivee}:00.000Z`) : null,
-          signatureBase64:
-            modeAttestation === AttestationMode.SIGNATURE ? signatureDemo(alea() * 10) : null,
-          empreinteScore:
-            modeAttestation === AttestationMode.EMPREINTE
-              ? 62 + Math.floor(alea() * 36)
-              : null,
+          signatureBase64: modeAttestation === AttestationMode.SIGNATURE ? signatureDemo(alea() * 10) : null,
+          empreinteScore: modeAttestation === AttestationMode.EMPREINTE ? 62 + Math.floor(alea() * 36) : null,
           heureArrivee: present ? arrivee : null,
           heureFinReelle: present ? finReelle : null,
           dureeMinutes: Math.max(0, duree),
-          effectifPresent: present
-            ? Math.floor(promotion.effectif * (0.45 + alea() * 0.45))
-            : null,
+          effectifPresent: present ? Math.floor(promotion.effectif * (0.45 + alea() * 0.45)) : null,
           thematiqueTraitee: present ? piocher(themes) : null,
           observation:
             statut === StatutPresence.ABSENT
@@ -491,8 +491,7 @@ async function main() {
             MethodeVerification.GEOLOCALISATION,
           ]),
           qrSalleValide: alea() < 0.6,
-          enseignantRemplacantId:
-            statut === StatutPresence.REMPLACE ? piocher(enseignants).id : null,
+          enseignantRemplacantId: statut === StatutPresence.REMPLACE ? piocher(enseignants).id : null,
           horodatage: new Date(`${jourIso}T${arrivee}:00.000Z`),
         },
       });
@@ -591,9 +590,7 @@ async function main() {
     ),
   );
   await Promise.all(
-    etudiants.map((e, i) =>
-      prisma.etudiant.update({ where: { id: e.id }, data: { userId: comptesEtudiants[i].id } }),
-    ),
+    etudiants.map((e, i) => prisma.etudiant.update({ where: { id: e.id }, data: { userId: comptesEtudiants[i].id } })),
   );
 
   // Tarifs d'inscription : 500 000 GNF en L1, 650 000 GNF en L2 (Génie Logiciel)
@@ -702,12 +699,14 @@ async function main() {
 
   // ---- 1. Patrimoine & Matériel pédagogique ----
   const categoriesPatrimoine = await Promise.all([
-    prisma.categoriePatrimoine.create({ data: { code: 'VIDEOPROJ', libelle: 'Vidéoprojecteur', dureeAmortissement: 60 } }),
-    prisma.categoriePatrimoine.create({ data: { code: 'ORDI',     libelle: 'Ordinateur',      dureeAmortissement: 36 } }),
-    prisma.categoriePatrimoine.create({ data: { code: 'MICRO',    libelle: 'Microphone',      dureeAmortissement: 48 } }),
-    prisma.categoriePatrimoine.create({ data: { code: 'CHAISE',   libelle: 'Chaise',         dureeAmortissement: 120 } }),
-    prisma.categoriePatrimoine.create({ data: { code: 'TABLEAU',  libelle: 'Tableau blanc',  dureeAmortissement: 120 } }),
-    prisma.categoriePatrimoine.create({ data: { code: 'IMPRIM',   libelle: 'Imprimante',     dureeAmortissement: 60 } }),
+    prisma.categoriePatrimoine.create({
+      data: { code: 'VIDEOPROJ', libelle: 'Vidéoprojecteur', dureeAmortissement: 60 },
+    }),
+    prisma.categoriePatrimoine.create({ data: { code: 'ORDI', libelle: 'Ordinateur', dureeAmortissement: 36 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'MICRO', libelle: 'Microphone', dureeAmortissement: 48 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'CHAISE', libelle: 'Chaise', dureeAmortissement: 120 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'TABLEAU', libelle: 'Tableau blanc', dureeAmortissement: 120 } }),
+    prisma.categoriePatrimoine.create({ data: { code: 'IMPRIM', libelle: 'Imprimante', dureeAmortissement: 60 } }),
   ]);
   const equipementsPatrimoine: Awaited<ReturnType<typeof prisma.equipementPatrimoine.create>>[] = [];
   const numInv = 1;
@@ -715,17 +714,17 @@ async function main() {
   const eqList = [
     { libelle: 'Vidéoprojecteur Epson EB-X41', cat: 'VIDEOPROJ', valeur: 850000, salle: salleAmphi, dept: info.id },
     { libelle: 'Vidéoprojecteur Epson EB-X41', cat: 'VIDEOPROJ', valeur: 850000, salle: allSalles[1], dept: math.id },
-    { libelle: 'Vidéoprojecteur BenQ MS550',   cat: 'VIDEOPROJ', valeur: 720000, salle: salle204, dept: info.id },
-    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI',    valeur: 1450000, salle: allSalles[5], dept: info.id },
-    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI',    valeur: 1450000, salle: allSalles[5], dept: info.id },
-    { libelle: 'Ordinateur Lenovo ThinkCentre', cat: 'ORDI',     valeur: 1200000, salle: salle204, dept: math.id },
-    { libelle: 'Microphone sans fil Shure',   cat: 'MICRO',    valeur: 320000, salle: salleAmphi, dept: null },
-    { libelle: 'Microphone sans fil Shure',   cat: 'MICRO',    valeur: 320000, salle: allSalles[1], dept: null },
+    { libelle: 'Vidéoprojecteur BenQ MS550', cat: 'VIDEOPROJ', valeur: 720000, salle: salle204, dept: info.id },
+    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI', valeur: 1450000, salle: allSalles[5], dept: info.id },
+    { libelle: 'Ordinateur Dell OptiPlex 7090', cat: 'ORDI', valeur: 1450000, salle: allSalles[5], dept: info.id },
+    { libelle: 'Ordinateur Lenovo ThinkCentre', cat: 'ORDI', valeur: 1200000, salle: salle204, dept: math.id },
+    { libelle: 'Microphone sans fil Shure', cat: 'MICRO', valeur: 320000, salle: salleAmphi, dept: null },
+    { libelle: 'Microphone sans fil Shure', cat: 'MICRO', valeur: 320000, salle: allSalles[1], dept: null },
     { libelle: 'Chaise pédagogique (lot de 50)', cat: 'CHAISE', valeur: 350000, salle: salleAmphi, dept: null },
     { libelle: 'Chaise pédagogique (lot de 40)', cat: 'CHAISE', valeur: 280000, salle: allSalles[1], dept: null },
-    { libelle: 'Tableau blanc interactif',    cat: 'TABLEAU',  valeur: 480000, salle: salleAmphi, dept: info.id },
-    { libelle: 'Tableau blanc interactif',    cat: 'TABLEAU',  valeur: 480000, salle: salle204, dept: info.id },
-    { libelle: 'Imprimante HP LaserJet Pro',  cat: 'IMPRIM',   valeur: 620000, salle: allSalles[4], dept: eco.id },
+    { libelle: 'Tableau blanc interactif', cat: 'TABLEAU', valeur: 480000, salle: salleAmphi, dept: info.id },
+    { libelle: 'Tableau blanc interactif', cat: 'TABLEAU', valeur: 480000, salle: salle204, dept: info.id },
+    { libelle: 'Imprimante HP LaserJet Pro', cat: 'IMPRIM', valeur: 620000, salle: allSalles[4], dept: eco.id },
   ];
   for (const eq of eqList) {
     const cat = categoriesPatrimoine.find((c) => c.code === eq.cat)!;
@@ -779,12 +778,20 @@ async function main() {
       expediteur: 'Direction Générale CBG',
       dateReception: dateOnly('2026-08-01'),
       numeroReference: 'CBG/REF/2026/0042',
-      fichier: null, typeMime: null, tailleKo: null,
+      fichier: null,
+      typeMime: null,
+      tailleKo: null,
       statut: 'EN_CIRCUIT',
       enregistreParId: scolariteUser.id,
       circuits: {
         create: [
-          { ordre: 1, roleValideur: 'Secrétariat général', statut: 'TRAITE', parapheLe: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), commentaire: 'Réception et enregistrement' },
+          {
+            ordre: 1,
+            roleValideur: 'Secrétariat général',
+            statut: 'TRAITE',
+            parapheLe: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+            commentaire: 'Réception et enregistrement',
+          },
           { ordre: 2, roleValideur: 'Recteur', statut: 'EN_CIRCUIT', commentaire: 'Pour signature' },
         ],
       },
@@ -802,8 +809,18 @@ async function main() {
       traiteParId: directionUser.id,
       circuits: {
         create: [
-          { ordre: 1, roleValideur: 'Direction des études', statut: 'TRAITE', parapheLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-          { ordre: 2, roleValideur: 'Recteur', statut: 'TRAITE', parapheLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+          {
+            ordre: 1,
+            roleValideur: 'Direction des études',
+            statut: 'TRAITE',
+            parapheLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+          },
+          {
+            ordre: 2,
+            roleValideur: 'Recteur',
+            statut: 'TRAITE',
+            parapheLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+          },
         ],
       },
     },
@@ -831,7 +848,8 @@ async function main() {
       promotionId: promoL1Info.id,
       anneeId: anneeActive!.id,
       dateExamen: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-      heureDebut: '08:00', heureFin: '10:00',
+      heureDebut: '08:00',
+      heureFin: '10:00',
       salleId: salleAmphi.id,
       nbInscrits: 8,
       codeExamen: 'EXAM-2026-0001',
@@ -848,7 +866,8 @@ async function main() {
       promotionId: promoL1Info.id,
       anneeId: anneeActive!.id,
       dateExamen: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      heureDebut: '14:00', heureFin: '15:30',
+      heureDebut: '14:00',
+      heureFin: '15:30',
       salleId: salle204.id,
       nbInscrits: 8,
       codeExamen: 'EXAM-2026-0002',
@@ -857,7 +876,9 @@ async function main() {
     },
   });
   // Scans d'exemple (5 étudiants déjà scannés pour le partiel)
-  const inscriptionsL1 = await prisma.inscription.findMany({ where: { promotionId: promoL1Info.id, statut: 'VALIDEE' } });
+  const inscriptionsL1 = await prisma.inscription.findMany({
+    where: { promotionId: promoL1Info.id, statut: 'VALIDEE' },
+  });
   for (let i = 0; i < Math.min(5, inscriptionsL1.length); i++) {
     await prisma.scanExamen.create({
       data: {
@@ -896,7 +917,8 @@ async function main() {
       imprimeurId: adminUser.id,
       nbExemplaires: 12,
       empreinteSource: 'sha256:abc123def456...',
-      empreinteExemplaires: 'sha256:ex1,sha256:ex2,sha256:ex3,sha256:ex4,sha256:ex5,sha256:ex6,sha256:ex7,sha256:ex8,sha256:ex9,sha256:ex10,sha256:ex11,sha256:ex12',
+      empreinteExemplaires:
+        'sha256:ex1,sha256:ex2,sha256:ex3,sha256:ex4,sha256:ex5,sha256:ex6,sha256:ex7,sha256:ex8,sha256:ex9,sha256:ex10,sha256:ex11,sha256:ex12',
       circuitImpression: 'Salle reprographie A → Coffre-fort direction',
       stade: 'RECUPERE',
       notes: 'Tirage conforme — 12 copies conformes aux émargements',
@@ -915,64 +937,121 @@ async function main() {
 
   // ---- 5. Régie des recettes ----
   await Promise.all([
-    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00001', type: 'LOCATION_AMPHI', libelle: 'Location Amphithéâtre A — Colloque AUF', description: 'Colloque sous-régional 2 jours', montant: 2500000, date: dateOnly('2026-08-05'), client: 'Agence Universitaire de la Francophonie' } }),
-    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00002', type: 'ANALYSE_LABO', libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008', description: 'Spectrométrie IR + UV-Vis', montant: 850000, date: dateOnly('2026-08-08'), client: 'Compagnie Minière de Dinguiraye', factureNum: 'FA-2026-0021' } }),
-    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00003', type: 'PRESTATION_FORMATION', libelle: 'Formation continue Excel avancé — Cohorte 1', description: '24h sur 4 jours, 18 participants', montant: 1800000, date: dateOnly('2026-07-22'), client: 'Banque Centrale de Guinée' } }),
-    prisma.recetteExterne.create({ data: { numero: 'REC-2026-00004', type: 'PRESTATION_CONSEIL', libelle: 'Audit organisationnel — Service pédagogique', montant: 450000, date: dateOnly('2026-08-12'), client: 'Université Kindia' } }),
+    prisma.recetteExterne.create({
+      data: {
+        numero: 'REC-2026-00001',
+        type: 'LOCATION_AMPHI',
+        libelle: 'Location Amphithéâtre A — Colloque AUF',
+        description: 'Colloque sous-régional 2 jours',
+        montant: 2500000,
+        date: dateOnly('2026-08-05'),
+        client: 'Agence Universitaire de la Francophonie',
+      },
+    }),
+    prisma.recetteExterne.create({
+      data: {
+        numero: 'REC-2026-00002',
+        type: 'ANALYSE_LABO',
+        libelle: 'Analyse spectrométrique — Échantillon CMDT-2026-008',
+        description: 'Spectrométrie IR + UV-Vis',
+        montant: 850000,
+        date: dateOnly('2026-08-08'),
+        client: 'Compagnie Minière de Dinguiraye',
+        factureNum: 'FA-2026-0021',
+      },
+    }),
+    prisma.recetteExterne.create({
+      data: {
+        numero: 'REC-2026-00003',
+        type: 'PRESTATION_FORMATION',
+        libelle: 'Formation continue Excel avancé — Cohorte 1',
+        description: '24h sur 4 jours, 18 participants',
+        montant: 1800000,
+        date: dateOnly('2026-07-22'),
+        client: 'Banque Centrale de Guinée',
+      },
+    }),
+    prisma.recetteExterne.create({
+      data: {
+        numero: 'REC-2026-00004',
+        type: 'PRESTATION_CONSEIL',
+        libelle: 'Audit organisationnel — Service pédagogique',
+        montant: 450000,
+        date: dateOnly('2026-08-12'),
+        client: 'Université Kindia',
+      },
+    }),
   ]);
 
   // ---- 6. Réclamations & Requêtes ----
   const reclamations: Awaited<ReturnType<typeof prisma.reclamation.create>>[] = [];
-  reclamations.push(await prisma.reclamation.create({
-    data: {
-      numero: 'REC-CLAIM-00001',
-      type: 'NOTE_MANQUANTE',
-      sujet: 'Note de CC absente',
-      description: 'Ma note de contrôle continu d\u2019algorithmique n\u2019est pas affichée. J\u2019ai composé la semaine du 12 mai.',
-      etudiantId: etudiants[0].id,
-      priorite: 'NORMALE',
-      statut: 'EN_COURS',
-      assigneAId: scolariteUser.id,
-      messages: {
-        create: [
-          { contenu: 'Bonjour, j\u2019ai composé mon CC le 12 mai mais la note n\u2019apparaît pas dans mon bulletin. Merci de vérifier.', nomAffichage: 'Sory DOUMBOUYA', creeLe: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
-          { contenu: 'Bonjour, nous vérifions avec l\u2019enseignant et revenons vers vous sous 48h.', auteurId: scolariteUser.id, nomAffichage: 'Scolarité', creeLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-        ],
+  reclamations.push(
+    await prisma.reclamation.create({
+      data: {
+        numero: 'REC-CLAIM-00001',
+        type: 'NOTE_MANQUANTE',
+        sujet: 'Note de CC absente',
+        description:
+          'Ma note de contrôle continu d\u2019algorithmique n\u2019est pas affichée. J\u2019ai composé la semaine du 12 mai.',
+        etudiantId: etudiants[0].id,
+        priorite: 'NORMALE',
+        statut: 'EN_COURS',
+        assigneAId: scolariteUser.id,
+        messages: {
+          create: [
+            {
+              contenu:
+                'Bonjour, j\u2019ai composé mon CC le 12 mai mais la note n\u2019apparaît pas dans mon bulletin. Merci de vérifier.',
+              nomAffichage: 'Sory DOUMBOUYA',
+              creeLe: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
+            },
+            {
+              contenu: 'Bonjour, nous vérifions avec l\u2019enseignant et revenons vers vous sous 48h.',
+              auteurId: scolariteUser.id,
+              nomAffichage: 'Scolarité',
+              creeLe: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+            },
+          ],
+        },
       },
-    },
-  }));
-  reclamations.push(await prisma.reclamation.create({
-    data: {
-      numero: 'REC-CLAIM-00002',
-      type: 'ERREUR_SAISIE',
-      sujet: 'Erreur de saisie sur mon relevé',
-      description: 'Ma note de maths affiche 7/20 mais j\u2019ai eu 14/20 à l\u2019examen.',
-      etudiantId: etudiants[1].id,
-      priorite: 'HAUTE',
-      statut: 'RESOLUE',
-      assigneAId: scolariteUser.id,
-      fermeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      messages: {
-        create: [
-          { contenu: 'Note corrigée après vérification.', auteurId: scolariteUser.id, nomAffichage: 'Scolarité' },
-        ],
+    }),
+  );
+  reclamations.push(
+    await prisma.reclamation.create({
+      data: {
+        numero: 'REC-CLAIM-00002',
+        type: 'ERREUR_SAISIE',
+        sujet: 'Erreur de saisie sur mon relevé',
+        description: 'Ma note de maths affiche 7/20 mais j\u2019ai eu 14/20 à l\u2019examen.',
+        etudiantId: etudiants[1].id,
+        priorite: 'HAUTE',
+        statut: 'RESOLUE',
+        assigneAId: scolariteUser.id,
+        fermeLe: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        messages: {
+          create: [
+            { contenu: 'Note corrigée après vérification.', auteurId: scolariteUser.id, nomAffichage: 'Scolarité' },
+          ],
+        },
       },
-    },
-  }));
-  reclamations.push(await prisma.reclamation.create({
-    data: {
-      numero: 'REC-CLAIM-00003',
-      type: 'ENSEIGNEMENT',
-      sujet: 'Cours non dispensés depuis 3 semaines',
-      description: 'Le cours de Base de données n\u2019a pas eu lieu depuis le début du mois.',
-      anonyme: true,
-      nomAuteur: 'Étudiant L3 INFO',
-      emailAuteur: 'anonyme@ugan.gn',
-      priorite: 'URGENTE',
-      statut: 'OUVERTE',
-      departementId: info.id,
-    },
-  }));
+    }),
+  );
+  reclamations.push(
+    await prisma.reclamation.create({
+      data: {
+        numero: 'REC-CLAIM-00003',
+        type: 'ENSEIGNEMENT',
+        sujet: 'Cours non dispensés depuis 3 semaines',
+        description: 'Le cours de Base de données n\u2019a pas eu lieu depuis le début du mois.',
+        anonyme: true,
+        nomAuteur: 'Étudiant L3 INFO',
+        emailAuteur: 'anonyme@ugan.gn',
+        priorite: 'URGENTE',
+        statut: 'OUVERTE',
+        departementId: info.id,
+      },
+    }),
+  );
 
   // ---- 7. Demandes de documents en ligne ----
   await Promise.all([
@@ -983,10 +1062,49 @@ async function main() {
     prisma.tarifDemande.create({ data: { type: 'ATTESTATION_REUSSITE', montant: 30000, delaiHeures: 24 } }),
   ]);
   await Promise.all([
-    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00001', type: 'ATTESTATION_SCOLARITE', motif: 'Dossier de bourse', etudiantId: etudiants[0].id, frais: 25000, statut: 'PRETE', notification: 'Votre attestation est prête au guichet', traiteParId: scolariteUser.id } }),
-    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00002', type: 'RELEVE_NOTES', motif: 'Constitution dossier master', etudiantId: etudiants[1].id, frais: 35000, statut: 'EN_TRAITEMENT', traiteParId: scolariteUser.id } }),
-    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00003', type: 'DUPLICATA_CARTE', motif: 'Carte perdue', etudiantId: etudiants[2].id, frais: 50000, statut: 'PAYEE' } }),
-    prisma.demandeDocument.create({ data: { numero: 'DOC-2026-00004', type: 'ATTESTATION_FREQUENTATION', motif: 'Stage en entreprise', etudiantId: etudiants[2].id, frais: 15000, statut: 'EN_ATTENTE_PAIEMENT' } }),
+    prisma.demandeDocument.create({
+      data: {
+        numero: 'DOC-2026-00001',
+        type: 'ATTESTATION_SCOLARITE',
+        motif: 'Dossier de bourse',
+        etudiantId: etudiants[0].id,
+        frais: 25000,
+        statut: 'PRETE',
+        notification: 'Votre attestation est prête au guichet',
+        traiteParId: scolariteUser.id,
+      },
+    }),
+    prisma.demandeDocument.create({
+      data: {
+        numero: 'DOC-2026-00002',
+        type: 'RELEVE_NOTES',
+        motif: 'Constitution dossier master',
+        etudiantId: etudiants[1].id,
+        frais: 35000,
+        statut: 'EN_TRAITEMENT',
+        traiteParId: scolariteUser.id,
+      },
+    }),
+    prisma.demandeDocument.create({
+      data: {
+        numero: 'DOC-2026-00003',
+        type: 'DUPLICATA_CARTE',
+        motif: 'Carte perdue',
+        etudiantId: etudiants[2].id,
+        frais: 50000,
+        statut: 'PAYEE',
+      },
+    }),
+    prisma.demandeDocument.create({
+      data: {
+        numero: 'DOC-2026-00004',
+        type: 'ATTESTATION_FREQUENTATION',
+        motif: 'Stage en entreprise',
+        etudiantId: etudiants[2].id,
+        frais: 15000,
+        statut: 'EN_ATTENTE_PAIEMENT',
+      },
+    }),
   ]);
 
   // ---- 8. Carte étudiante numérique ----
@@ -1007,28 +1125,178 @@ async function main() {
 
   // ---- 9. Badges visiteurs ----
   await Promise.all([
-    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00001', type: 'VISITEUR', nom: 'CAMARA', prenom: 'Alpha Boubacar', organisation: 'Banque Mondiale', dateValidite: new Date(Date.now() + 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
-    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00002', type: 'INTERVENANT', nom: 'DIALLO', prenom: 'Mamadou Saliou', fonction: 'Conférencier invité', organisation: 'AUF Dakar', dateValidite: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
-    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00003', type: 'TECHNICIEN', nom: 'SYLLA', prenom: 'Moussa', fonction: 'Maintenance réseau', organisation: 'SOGETEL', dateValidite: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
-    prisma.badgeAcces.create({ data: { numero: 'BADGE-2026-00004', type: 'VIP', nom: 'BARRY', prenom: 'Hadja Mariama', fonction: 'Ministre de l\u2019Enseignement Supérieur', organisation: 'MESRS', dateValidite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}` } }),
+    prisma.badgeAcces.create({
+      data: {
+        numero: 'BADGE-2026-00001',
+        type: 'VISITEUR',
+        nom: 'CAMARA',
+        prenom: 'Alpha Boubacar',
+        organisation: 'Banque Mondiale',
+        dateValidite: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}`,
+      },
+    }),
+    prisma.badgeAcces.create({
+      data: {
+        numero: 'BADGE-2026-00002',
+        type: 'INTERVENANT',
+        nom: 'DIALLO',
+        prenom: 'Mamadou Saliou',
+        fonction: 'Conférencier invité',
+        organisation: 'AUF Dakar',
+        dateValidite: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
+        qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}`,
+      },
+    }),
+    prisma.badgeAcces.create({
+      data: {
+        numero: 'BADGE-2026-00003',
+        type: 'TECHNICIEN',
+        nom: 'SYLLA',
+        prenom: 'Moussa',
+        fonction: 'Maintenance réseau',
+        organisation: 'SOGETEL',
+        dateValidite: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+        qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}`,
+      },
+    }),
+    prisma.badgeAcces.create({
+      data: {
+        numero: 'BADGE-2026-00004',
+        type: 'VIP',
+        nom: 'BARRY',
+        prenom: 'Hadja Mariama',
+        fonction: 'Ministre de l\u2019Enseignement Supérieur',
+        organisation: 'MESRS',
+        dateValidite: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        qrToken: `UP-BADGE-${randomBytes(10).toString('base64url')}`,
+      },
+    }),
   ]);
 
   // ---- 10. VOD ----
   await Promise.all([
-    prisma.coursVOD.create({ data: { titre: 'Introduction à l\u2019algorithmique', description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, enseignantId: enseignant1?.id, type: 'VIDEO', url: '/media/demonstration/video.mp4', thumbnailUrl: '/media/demonstration/vignette.svg', dureeSecondes: 3, transcription: 'Support de démonstration local, aucun cours réel.', public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), nbVues: 87, nbComplets: 42, creeParId: adminUser.id } }),
-    prisma.coursVOD.create({ data: { titre: 'Bases de données relationnelles', description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, enseignantId: enseignant2?.id, type: 'VIDEO', url: '/media/demonstration/video.mp4', dureeSecondes: 3, public: true, statut: 'EN_LIGNE', dateMiseEnLigne: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), nbVues: 52, nbComplets: 21, creeParId: adminUser.id } }),
-    prisma.coursVOD.create({ data: { titre: 'Microéconomie — CM 5', description: 'Démonstration : placeholder audio silencieux local de 3 secondes, aucun cours réel.', matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, type: 'AUDIO', url: '/media/demonstration/audio.mp3', dureeSecondes: 3, public: true, statut: 'EN_LIGNE', nbVues: 24, creeParId: adminUser.id } }),
+    prisma.coursVOD.create({
+      data: {
+        titre: 'Introduction à l\u2019algorithmique',
+        description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.',
+        matiereId: allMatieres.find((m) => m.code === 'INF101')!.id,
+        enseignantId: enseignant1?.id,
+        type: 'VIDEO',
+        url: '/media/demonstration/video.mp4',
+        thumbnailUrl: '/media/demonstration/vignette.svg',
+        dureeSecondes: 3,
+        transcription: 'Support de démonstration local, aucun cours réel.',
+        public: true,
+        statut: 'EN_LIGNE',
+        dateMiseEnLigne: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        nbVues: 87,
+        nbComplets: 42,
+        creeParId: adminUser.id,
+      },
+    }),
+    prisma.coursVOD.create({
+      data: {
+        titre: 'Bases de données relationnelles',
+        description: 'Démonstration : placeholder vidéo local de 3 secondes, aucun cours réel.',
+        matiereId: allMatieres.find((m) => m.code === 'INF201')!.id,
+        enseignantId: enseignant2?.id,
+        type: 'VIDEO',
+        url: '/media/demonstration/video.mp4',
+        dureeSecondes: 3,
+        public: true,
+        statut: 'EN_LIGNE',
+        dateMiseEnLigne: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+        nbVues: 52,
+        nbComplets: 21,
+        creeParId: adminUser.id,
+      },
+    }),
+    prisma.coursVOD.create({
+      data: {
+        titre: 'Microéconomie — CM 5',
+        description: 'Démonstration : placeholder audio silencieux local de 3 secondes, aucun cours réel.',
+        matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id,
+        type: 'AUDIO',
+        url: '/media/demonstration/audio.mp3',
+        dureeSecondes: 3,
+        public: true,
+        statut: 'EN_LIGNE',
+        nbVues: 24,
+        creeParId: adminUser.id,
+      },
+    }),
   ]);
 
   // ---- 11. Scolarité : Évaluations + Notes + Délibérations ( ----
   // Utiliser promoL1Info (L1 GL) et promoL1Eco = L1 GES
   const promoL1Ges = allPromotions.find((p) => p.niveau === Niveau.L1 && p.filiere?.code === 'GES')!;
   const evaluations = await Promise.all([
-    prisma.evaluation.create({ data: { intitule: 'CC1 Algorithmique', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
-    prisma.evaluation.create({ data: { intitule: 'Examen final Algorithmique', type: 'EXAMEN', coefficient: 2, matiereId: allMatieres.find((m) => m.code === 'INF101')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
-    prisma.evaluation.create({ data: { intitule: 'CC1 Bases de données', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'INF201')!.id, promotionId: promoL1Info.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
-    prisma.evaluation.create({ data: { intitule: 'Examen Microéconomie', type: 'EXAMEN', coefficient: 2, matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id, promotionId: promoL1Ges.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
-    prisma.evaluation.create({ data: { intitule: 'CC1 Mathématiques', type: 'CC', coefficient: 1, matiereId: allMatieres.find((m) => m.code === 'MAT101')!.id, promotionId: promoM1Math!.id, anneeId: anneeActive!.id, semestre: 1, date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000), statut: 'CLOTUREE' } }),
+    prisma.evaluation.create({
+      data: {
+        intitule: 'CC1 Algorithmique',
+        type: 'CC',
+        coefficient: 1,
+        matiereId: allMatieres.find((m) => m.code === 'INF101')!.id,
+        promotionId: promoL1Info.id,
+        anneeId: anneeActive!.id,
+        semestre: 1,
+        date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        statut: 'CLOTUREE',
+      },
+    }),
+    prisma.evaluation.create({
+      data: {
+        intitule: 'Examen final Algorithmique',
+        type: 'EXAMEN',
+        coefficient: 2,
+        matiereId: allMatieres.find((m) => m.code === 'INF101')!.id,
+        promotionId: promoL1Info.id,
+        anneeId: anneeActive!.id,
+        semestre: 1,
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        statut: 'CLOTUREE',
+      },
+    }),
+    prisma.evaluation.create({
+      data: {
+        intitule: 'CC1 Bases de données',
+        type: 'CC',
+        coefficient: 1,
+        matiereId: allMatieres.find((m) => m.code === 'INF201')!.id,
+        promotionId: promoL1Info.id,
+        anneeId: anneeActive!.id,
+        semestre: 1,
+        date: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+        statut: 'CLOTUREE',
+      },
+    }),
+    prisma.evaluation.create({
+      data: {
+        intitule: 'Examen Microéconomie',
+        type: 'EXAMEN',
+        coefficient: 2,
+        matiereId: allMatieres.find((m) => m.code === 'ECO101')!.id,
+        promotionId: promoL1Ges.id,
+        anneeId: anneeActive!.id,
+        semestre: 1,
+        date: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
+        statut: 'CLOTUREE',
+      },
+    }),
+    prisma.evaluation.create({
+      data: {
+        intitule: 'CC1 Mathématiques',
+        type: 'CC',
+        coefficient: 1,
+        matiereId: allMatieres.find((m) => m.code === 'MAT101')!.id,
+        promotionId: promoM1Math!.id,
+        anneeId: anneeActive!.id,
+        semestre: 1,
+        date: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
+        statut: 'CLOTUREE',
+      },
+    }),
   ]);
 
   // Saisie des notes — 5 étudiants x 5 évaluations
@@ -1064,7 +1332,19 @@ async function main() {
     },
   });
   // Lignes de délibération — calcul moyenne pondérée par crédits
-  const creditsParMatiere: Record<string, number> = { INF101: 6, INF201: 4, ECO101: 3, MAT101: 5, MAT301: 4, GES201: 4, GC301: 4, GC302: 4, INF301: 6, INF302: 4, RES201: 4 };
+  const creditsParMatiere: Record<string, number> = {
+    INF101: 6,
+    INF201: 4,
+    ECO101: 3,
+    MAT101: 5,
+    MAT301: 4,
+    GES201: 4,
+    GC301: 4,
+    GC302: 4,
+    INF301: 6,
+    INF302: 4,
+    RES201: 4,
+  };
   for (const ins of inscriptionsL1.slice(0, 5)) {
     const mesNotes = notesCreees.filter((n) => n.inscriptionId === ins.id);
     if (!mesNotes.length) continue;
@@ -1090,14 +1370,22 @@ async function main() {
       denTotal += credits;
     }
     const moyenneGenerale = denTotal === 0 ? 0 : numTotal / denTotal;
-    const decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT' = moyenneGenerale >= 10 ? 'ADMIS' : moyenneGenerale >= 8 ? 'AJOURNE' : 'DEFAILLANT';
+    const decision: 'ADMIS' | 'AJOURNE' | 'DEFAILLANT' =
+      moyenneGenerale >= 10 ? 'ADMIS' : moyenneGenerale >= 8 ? 'AJOURNE' : 'DEFAILLANT';
     await prisma.deliberationLigne.create({
       data: {
         deliberationId: deliberationL1.id,
         inscriptionId: ins.id,
         moyenne: Math.round(moyenneGenerale * 100) / 100,
         decision,
-        mention: moyenneGenerale >= 16 ? 'Très bien' : moyenneGenerale >= 14 ? 'Bien' : moyenneGenerale >= 12 ? 'Assez bien' : 'Passable',
+        mention:
+          moyenneGenerale >= 16
+            ? 'Très bien'
+            : moyenneGenerale >= 14
+              ? 'Bien'
+              : moyenneGenerale >= 12
+                ? 'Assez bien'
+                : 'Passable',
         rang: 0, // recalculé après la boucle
       },
     });
@@ -1179,15 +1467,57 @@ async function main() {
     },
   });
   const candidatsL1 = await Promise.all([
-    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'DOUMBOUYA', prenom: 'Sory', etudiantId: etudiants[0].id, ordre: 1, programme: 'Améliorer la communication avec la scolarité, organiser des sessions de tutorat' } }),
-    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'DIALLO',   prenom: 'Mariama', etudiantId: etudiants[1].id, ordre: 2, programme: 'Bibliothèque ouverte 24/7, plus de TP' } }),
-    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'BALDÉ',    prenom: 'Alpha', etudiantId: etudiants[2].id, ordre: 3, programme: 'Représentation équitable des L1 INFO' } }),
-    prisma.candidatElection.create({ data: { electionId: electionDelegue.id, nom: 'CAMARA',   prenom: 'Mariama', etudiantId: etudiants[2].id, ordre: 4, programme: 'Sorties pédagogiques, ouverture bibliothèque' } }),
+    prisma.candidatElection.create({
+      data: {
+        electionId: electionDelegue.id,
+        nom: 'DOUMBOUYA',
+        prenom: 'Sory',
+        etudiantId: etudiants[0].id,
+        ordre: 1,
+        programme: 'Améliorer la communication avec la scolarité, organiser des sessions de tutorat',
+      },
+    }),
+    prisma.candidatElection.create({
+      data: {
+        electionId: electionDelegue.id,
+        nom: 'DIALLO',
+        prenom: 'Mariama',
+        etudiantId: etudiants[1].id,
+        ordre: 2,
+        programme: 'Bibliothèque ouverte 24/7, plus de TP',
+      },
+    }),
+    prisma.candidatElection.create({
+      data: {
+        electionId: electionDelegue.id,
+        nom: 'BALDÉ',
+        prenom: 'Alpha',
+        etudiantId: etudiants[2].id,
+        ordre: 3,
+        programme: 'Représentation équitable des L1 INFO',
+      },
+    }),
+    prisma.candidatElection.create({
+      data: {
+        electionId: electionDelegue.id,
+        nom: 'CAMARA',
+        prenom: 'Mariama',
+        etudiantId: etudiants[2].id,
+        ordre: 4,
+        programme: 'Sorties pédagogiques, ouverture bibliothèque',
+      },
+    }),
   ]);
   // Quelques votes déjà enregistrés
-  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[0].id } });
-  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[1].id, etudiantId: etudiants[1].id } });
-  await prisma.voteElection.create({ data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[2].id } });
+  await prisma.voteElection.create({
+    data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[0].id },
+  });
+  await prisma.voteElection.create({
+    data: { electionId: electionDelegue.id, candidatId: candidatsL1[1].id, etudiantId: etudiants[1].id },
+  });
+  await prisma.voteElection.create({
+    data: { electionId: electionDelegue.id, candidatId: candidatsL1[0].id, etudiantId: etudiants[2].id },
+  });
 
   await prisma.election.create({
     data: {
@@ -1248,9 +1578,49 @@ async function main() {
 
   // ---- Documentation — Bibliothèque ----
   await Promise.all([
-    prisma.documentDepot.create({ data: { titre: 'Algorithmes de tri: état de l\u2019art', type: 'ARTICLE', auteurs: 'DIALLO M., CAMARA S.', anneeEdition: 2025, resume: 'Comparaison des complexités asymptotiques', motsClefs: ['algorithmes','tri','complexité'], contenuTexte: 'Les algorithmes de tri sont au cœur de l\u2019informatique. Cet article compare les complexités asymptotiques...', empreinteHash: 'sha256:doc1hash', public: true, deposeParId: adminUser.id } }),
-    prisma.documentDepot.create({ data: { titre: 'Mémoire de Master: détection de plagiat', type: 'MEMOIRE', auteurs: 'Sory DOUMBOUYA', anneeEdition: 2026, resume: 'Système anti-plagiat pour mémoires', motsClefs: ['plagiat','mémoire'], contenuTexte: 'Ce mémoire présente un système anti-plagiat utilisant la similarité de Jaccard...', empreinteHash: 'sha256:doc2hash', public: true, deposeParId: adminUser.id } }),
-    prisma.documentDepot.create({ data: { titre: 'Thèse: Microfinance en Guinée', type: 'THESE', auteurs: 'Mariama DIALLO', anneeEdition: 2024, resume: 'Impact socio-économique de la microfinance rurale', motsClefs: ['microfinance','Guinée','économie'], contenuTexte: 'Cette thèse analyse l\u2019impact de la microfinance rurale en Guinée entre 2010 et 2023...', empreinteHash: 'sha256:doc3hash', public: true, deposeParId: adminUser.id } }),
+    prisma.documentDepot.create({
+      data: {
+        titre: 'Algorithmes de tri: état de l\u2019art',
+        type: 'ARTICLE',
+        auteurs: 'DIALLO M., CAMARA S.',
+        anneeEdition: 2025,
+        resume: 'Comparaison des complexités asymptotiques',
+        motsClefs: ['algorithmes', 'tri', 'complexité'],
+        contenuTexte:
+          'Les algorithmes de tri sont au cœur de l\u2019informatique. Cet article compare les complexités asymptotiques...',
+        empreinteHash: 'sha256:doc1hash',
+        public: true,
+        deposeParId: adminUser.id,
+      },
+    }),
+    prisma.documentDepot.create({
+      data: {
+        titre: 'Mémoire de Master: détection de plagiat',
+        type: 'MEMOIRE',
+        auteurs: 'Sory DOUMBOUYA',
+        anneeEdition: 2026,
+        resume: 'Système anti-plagiat pour mémoires',
+        motsClefs: ['plagiat', 'mémoire'],
+        contenuTexte: 'Ce mémoire présente un système anti-plagiat utilisant la similarité de Jaccard...',
+        empreinteHash: 'sha256:doc2hash',
+        public: true,
+        deposeParId: adminUser.id,
+      },
+    }),
+    prisma.documentDepot.create({
+      data: {
+        titre: 'Thèse: Microfinance en Guinée',
+        type: 'THESE',
+        auteurs: 'Mariama DIALLO',
+        anneeEdition: 2024,
+        resume: 'Impact socio-économique de la microfinance rurale',
+        motsClefs: ['microfinance', 'Guinée', 'économie'],
+        contenuTexte: 'Cette thèse analyse l\u2019impact de la microfinance rurale en Guinée entre 2010 et 2023...',
+        empreinteHash: 'sha256:doc3hash',
+        public: true,
+        deposeParId: adminUser.id,
+      },
+    }),
   ]);
 
   console.log('→ Seed étendu OK');
@@ -1265,7 +1635,9 @@ async function main() {
   const votantsGlobal = await prisma.user.findMany({ where: { role: 'ETUDIANT' } });
 
   const allSallesList = await prisma.salle.findMany();
-  const allPromotionsList = await prisma.promotion.findMany({ include: { filiere: { include: { departement: true } } } });
+  const allPromotionsList = await prisma.promotion.findMany({
+    include: { filiere: { include: { departement: true } } },
+  });
   const allMatieresList = await prisma.matiere.findMany();
   const allAnnee = await prisma.anneeAcademique.findFirst({ where: { active: true } });
 
@@ -1307,7 +1679,7 @@ async function main() {
   for (const etu of etudiantsExistants) {
     // Choisit une promotion au hasard
     const promo = piocher(allPromotionsList);
-    const frais = 500000 + (piocher([0, 25000, 50000, 100000]));
+    const frais = 500000 + piocher([0, 25000, 50000, 100000]);
     const statut = piocher(['VALIDEE', 'VALIDEE', 'VALIDEE', 'PAYEE', 'PAYEE', 'EN_ATTENTE_PAIEMENT']);
     const anneeCible = allAnnee!;
     try {
@@ -1319,7 +1691,10 @@ async function main() {
           promotionId: promo.id,
           statut: statut as any,
           montantFrais: frais,
-          dateInscription: statut === 'VALIDEE' ? new Date(Date.now() - 60 * 24 * 60 * 60 * 1000) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          dateInscription:
+            statut === 'VALIDEE'
+              ? new Date(Date.now() - 60 * 24 * 60 * 60 * 1000)
+              : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           valideeLe: statut === 'VALIDEE' ? new Date(Date.now() - 50 * 24 * 60 * 60 * 1000) : null,
         },
       });
@@ -1336,7 +1711,7 @@ async function main() {
     const ins = allInscriptions[i % allInscriptions.length];
     const mode = modesPaiement[i % modesPaiement.length];
     const operateur = mode === 'MOBILE_MONEY' ? operateurs[i % 2] : null;
-    const statut = (i % 7 === 0) ? 'EN_ATTENTE' : 'REUSSI';
+    const statut = i % 7 === 0 ? 'EN_ATTENTE' : 'REUSSI';
     await prisma.paiement.create({
       data: {
         reference: `PAY-2026-${String(100 + i).padStart(5, '0')}`,
@@ -1358,9 +1733,9 @@ async function main() {
   // ---------- 4. Évaluations multiples par promotion ----------
   const evalsByPromo = new Map<string, number>();
   for (const promo of allPromotionsList) {
-    const matieresPromo = allMatieresList.filter((m) => 
-      m.departementId === promo.filiere.departementId || m.departementId === null
-    ).slice(0, 4);
+    const matieresPromo = allMatieresList
+      .filter((m) => m.departementId === promo.filiere.departementId || m.departementId === null)
+      .slice(0, 4);
     for (const mat of matieresPromo) {
       const types = ['CC', 'CC', 'EXAMEN', 'RATTRAPAGE'];
       for (let i = 0; i < 2; i++) {
@@ -1453,11 +1828,26 @@ async function main() {
   }
 
   // ---------- 7. Lignes de délibération (moyenne pondérée par crédits) ----------
-  const creditsParMatiere2: Record<string, number> = { INF101: 6, INF201: 4, INF301: 6, INF302: 4, RES201: 4, ECO101: 3, GES201: 4, GC301: 4, GC302: 4, MAT101: 5, MAT301: 4 };
+  const creditsParMatiere2: Record<string, number> = {
+    INF101: 6,
+    INF201: 4,
+    INF301: 6,
+    INF302: 4,
+    RES201: 4,
+    ECO101: 3,
+    GES201: 4,
+    GC301: 4,
+    GC302: 4,
+    MAT101: 5,
+    MAT301: 4,
+  };
   for (const { delib, promo } of deliberationsCreees) {
     const evalList = evalByPromo.get(promo.id) ?? [];
     if (evalList.length === 0) continue;
-    const lignesMap = new Map<string, { num: number; den: number; parMatiere: Map<string, { num: number; den: number }> }>();
+    const lignesMap = new Map<
+      string,
+      { num: number; den: number; parMatiere: Map<string, { num: number; den: number }> }
+    >();
     // Pour chaque ligne de délibération, calculer la moyenne par UE
     const notesByEV = new Map<string, Map<string, number>>(); // evalId -> inscriptionId -> note
     const allNotes = await prisma.note.findMany({ where: { evaluationId: { in: evalList.map((e) => e.id) } } });
@@ -1466,7 +1856,10 @@ async function main() {
       const ev = evalList.find((e) => e.id === n.evaluationId)!;
       const m = allMatieresList.find((mat) => mat.id === ev.matiereId)!;
       let cur = notesByEV.get(n.evaluationId);
-      if (!cur) { cur = new Map(); notesByEV.set(n.evaluationId, cur); }
+      if (!cur) {
+        cur = new Map();
+        notesByEV.set(n.evaluationId, cur);
+      }
       cur.set(n.inscriptionId, n.note);
       const curL = lignesMap.get(n.inscriptionId) ?? { num: 0, den: 0, parMatiere: new Map() };
       const curM = curL.parMatiere.get(m.code) ?? { num: 0, den: 0 };
@@ -1491,8 +1884,20 @@ async function main() {
       }
       const moyenneGenerale = denTotal === 0 ? 0 : numTotal / denTotal;
       const decision = moyenneGenerale >= 10 ? 'ADMIS' : moyenneGenerale >= 8 ? 'AJOURNE' : 'DEFAILLANT';
-      const mention = moyenneGenerale >= 16 ? 'Très bien' : moyenneGenerale >= 14 ? 'Bien' : moyenneGenerale >= 12 ? 'Assez bien' : 'Passable';
-      lignesAvecMoy.push({ inscriptionId: inscId, moyenne: Math.round(moyenneGenerale * 100) / 100, decision, mention });
+      const mention =
+        moyenneGenerale >= 16
+          ? 'Très bien'
+          : moyenneGenerale >= 14
+            ? 'Bien'
+            : moyenneGenerale >= 12
+              ? 'Assez bien'
+              : 'Passable';
+      lignesAvecMoy.push({
+        inscriptionId: inscId,
+        moyenne: Math.round(moyenneGenerale * 100) / 100,
+        decision,
+        mention,
+      });
     }
     // Trier par moyenne desc, assigner rang
     lignesAvecMoy.sort((a, b) => b.moyenne - a.moyenne);
@@ -1549,8 +1954,10 @@ async function main() {
 
   // ---------- 9. Plus de courrier + circuits ----------
   const expeditionListe = [
-    ['MESRS', 'Demande de subvention'], ['UNESCO', 'Partenariat éducation'],
-    ['AUF', 'Bourse doctorat'], ['CBG', 'Convention partenariat'],
+    ['MESRS', 'Demande de subvention'],
+    ['UNESCO', 'Partenariat éducation'],
+    ['AUF', 'Bourse doctorat'],
+    ['CBG', 'Convention partenariat'],
     ['BAC', 'Agrément'],
   ];
   for (let i = 0; i < 10; i++) {
@@ -1570,8 +1977,17 @@ async function main() {
         traiteParId: statut === 'TRAITE' || statut === 'CLASSE' ? adminUser.id : null,
         circuits: {
           create: [
-            { ordre: 1, roleValideur: 'Secrétariat général', statut: 'TRAITE', parapheLe: new Date(Date.now() - i * 24 * 60 * 60 * 1000) },
-            { ordre: 2, roleValideur: 'Recteur', statut: statut === 'CLASSE' ? 'TRAITE' : statut === 'ARCHIVE' ? 'TRAITE' : 'EN_CIRCUIT' },
+            {
+              ordre: 1,
+              roleValideur: 'Secrétariat général',
+              statut: 'TRAITE',
+              parapheLe: new Date(Date.now() - i * 24 * 60 * 60 * 1000),
+            },
+            {
+              ordre: 2,
+              roleValideur: 'Recteur',
+              statut: statut === 'CLASSE' ? 'TRAITE' : statut === 'ARCHIVE' ? 'TRAITE' : 'EN_CIRCUIT',
+            },
           ],
         },
       },
@@ -1593,7 +2009,8 @@ async function main() {
         promotionId: promo.id,
         anneeId: allAnnee!.id,
         dateExamen: date,
-        heureDebut: '08:00', heureFin: '10:00',
+        heureDebut: '08:00',
+        heureFin: '10:00',
         salleId: piocher(allSallesList).id,
         nbInscrits: 8,
         nbPresents: statut === 'TERMINE' ? 7 : 0,
@@ -1653,7 +2070,10 @@ async function main() {
           prestataire: i % 3 === 0 ? 'Tech Service Conakry' : 'SOGETEL Maintenance',
           cout: (i % 5) * 15000 + 25000,
           statut: i % 6 === 0 ? 'TERMINE' : 'EN_COURS',
-          dateResolution: i % 6 === 0 ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+          dateResolution:
+            i % 6 === 0
+              ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+              : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
           declareParId: piocher(allUsers.filter((u) => u.role === 'SCOLARITE')).id,
           resoluParId: i % 6 === 0 ? adminUser.id : null,
         },
@@ -1736,7 +2156,10 @@ async function main() {
 
   // ---------- 14. Cités: +5 résidences, +30 chambres, +20 attributions ----------
   const residencesExistantes = await prisma.residence.findMany();
-  const nouvelleResidence = residencesExistantes.length > 0 ? residencesExistantes[0] : await prisma.residence.create({ data: { code: 'CAMPUS', nom: 'Campus principal', capacite: 500 } });
+  const nouvelleResidence =
+    residencesExistantes.length > 0
+      ? residencesExistantes[0]
+      : await prisma.residence.create({ data: { code: 'CAMPUS', nom: 'Campus principal', capacite: 500 } });
   const roomTypes = ['CHAMBRE_PARTAGEE', 'CHAMBRE_SIMPLE', 'STUDIO', 'APPARTEMENT'];
   for (let i = 0; i < 30; i++) {
     const chambre = await prisma.chambre.create({
@@ -1774,7 +2197,9 @@ async function main() {
   // ---------- 15. VOD: +10 vues ----------
   const allCoursVOD = await prisma.coursVOD.findMany();
   for (const vod of allCoursVOD) {
-    const etuList = piocher(allUsers.filter((u) => u.role === 'ETUDIANT')).id ? await prisma.user.findMany({ where: { role: 'ETUDIANT' } }) : [];
+    const etuList = piocher(allUsers.filter((u) => u.role === 'ETUDIANT')).id
+      ? await prisma.user.findMany({ where: { role: 'ETUDIANT' } })
+      : [];
     for (let i = 0; i < 5; i++) {
       const etu = etuList[i % etuList.length];
       if (!etu) continue;
@@ -1805,7 +2230,7 @@ async function main() {
         genereParId: adminUser.id,
         genereLe: moisDate,
         donnees: {
-          effectifTotal: 5 + (i * 2),
+          effectifTotal: 5 + i * 2,
           effectifL1: 2 + i,
           effectifL2: 1 + i,
           effectifL3: 1 + i,
@@ -1817,7 +2242,7 @@ async function main() {
           nbIncidentsHelpdesk: (i % 5) + 1,
           tauxReussiteL1: 60 + (i % 30),
           tauxReussiteGlobal: 70 + (i % 25),
-          masseSalariale: 12000000 + (i * 1000000),
+          masseSalariale: 12000000 + i * 1000000,
         },
       },
     });
@@ -1844,7 +2269,7 @@ async function main() {
     await prisma.notification.create({
       data: {
         telephone: etu?.telephone ?? '622000000',
-        message: `Notification ${i+1} — Annonce importante`,
+        message: `Notification ${i + 1} — Annonce importante`,
         destinataireNom: `${etu?.nom} ${etu?.prenom}`,
         etudiantId: etu?.id,
         statut: statut as any,
@@ -1860,7 +2285,13 @@ async function main() {
   const allEtudiants2 = await prisma.etudiant.findMany();
   for (let i = 0; i < 10; i++) {
     const etu = piocher(allEtudiants2);
-    const type = piocher(['ATTESTATION_SCOLARITE', 'RELEVE_NOTES', 'DUPLICATA_CARTE', 'ATTESTATION_FREQUENTATION', 'ATTESTATION_REUSSITE']);
+    const type = piocher([
+      'ATTESTATION_SCOLARITE',
+      'RELEVE_NOTES',
+      'DUPLICATA_CARTE',
+      'ATTESTATION_FREQUENTATION',
+      'ATTESTATION_REUSSITE',
+    ]);
     const statut = piocher(['EN_ATTENTE_PAIEMENT', 'PAYEE', 'EN_TRAITEMENT', 'PRETE', 'REMISE']);
     const frais = type === 'RELEVE_NOTES' ? 35000 : type === 'DUPLICATA_CARTE' ? 50000 : 25000;
     try {
@@ -2042,7 +2473,8 @@ async function main() {
   // ---------- 23. +10 Casiers de tirages passés ----------
   for (let i = 0; i < 10; i++) {
     const mat = piocher(allMatieresList);
-    const promo = allPromotionsList.find((p) => p.id === inscriptionsByPromo.get(p.id)?.[0]?.promotionId) ?? allPromotionsList[0];
+    const promo =
+      allPromotionsList.find((p) => p.id === inscriptionsByPromo.get(p.id)?.[0]?.promotionId) ?? allPromotionsList[0];
     const date = new Date(Date.now() - (i + 5) * 24 * 60 * 60 * 1000);
     const examen = await prisma.examen.create({
       data: {
@@ -2052,7 +2484,8 @@ async function main() {
         promotionId: promo.id,
         anneeId: allAnnee!.id,
         dateExamen: date,
-        heureDebut: '08:00', heureFin: '10:00',
+        heureDebut: '08:00',
+        heureFin: '10:00',
         salleId: piocher(allSallesList).id,
         nbInscrits: 5,
         codeExamen: `EXAM-2026-${String(200 + i).padStart(4, '0')}`,
@@ -2067,7 +2500,10 @@ async function main() {
         imprimeurId: adminUser.id,
         nbExemplaires: 8,
         empreinteSource: `sha256:historique_${i}`,
-        empreinteExemplaires: Array(8).fill(0).map((_, j) => `sha256:h_${i}_${j}`).join(','),
+        empreinteExemplaires: Array(8)
+          .fill(0)
+          .map((_, j) => `sha256:h_${i}_${j}`)
+          .join(','),
         circuitImpression: 'Salle reprographie A',
         stade: piocher(['RECUPERE', 'DISTRIBUE', 'MIS_SOUS_PLI']),
       },
@@ -2099,7 +2535,14 @@ async function main() {
   for (let i = 0; i < 15; i++) {
     const type = piocher(['LOCATION_AMPHI', 'ANALYSE_LABO', 'PRESTATION_FORMATION', 'PRESTATION_CONSEIL']);
     const date = new Date(Date.now() - i * 12 * 24 * 60 * 60 * 1000);
-    const montant = type === 'LOCATION_AMPHI' ? 2500000 : type === 'ANALYSE_LABO' ? 850000 : type === 'PRESTATION_FORMATION' ? 1800000 : 450000;
+    const montant =
+      type === 'LOCATION_AMPHI'
+        ? 2500000
+        : type === 'ANALYSE_LABO'
+          ? 850000
+          : type === 'PRESTATION_FORMATION'
+            ? 1800000
+            : 450000;
     await prisma.recetteExterne.create({
       data: {
         numero: `REC-2026-${String(100 + i).padStart(4, '0')}`,
@@ -2140,7 +2583,11 @@ async function main() {
         fermeLe: status === 'FERMEE' ? new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) : null,
         messages: {
           create: [
-            { contenu: `Bonjour, j'ai un problème: ${sujet.toLowerCase()}.`, nomAffichage: `${etu.nom} ${etu.prenom}`, creeLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+            {
+              contenu: `Bonjour, j'ai un problème: ${sujet.toLowerCase()}.`,
+              nomAffichage: `${etu.nom} ${etu.prenom}`,
+              creeLe: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+            },
           ],
         },
       },
@@ -2149,8 +2596,9 @@ async function main() {
 
   console.log('→ Boost terminé');
 
-
-  console.log(`✔ ${etudiants.length} étudiants, ${inscriptions.length} inscriptions, ${paiements.length} paiements (Module 1)`);
+  console.log(
+    `✔ ${etudiants.length} étudiants, ${inscriptions.length} inscriptions, ${paiements.length} paiements (Module 1)`,
+  );
 
   console.log('\nComptes fictifs de recette créés (accès local uniquement).');
 }

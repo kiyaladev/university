@@ -1,16 +1,7 @@
 import { Body, Controller, Delete, Get, Injectable, NotFoundException, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role, StatutEnseignant } from '@prisma/client';
-import {
-  IsBoolean,
-  IsEmail,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
@@ -21,8 +12,14 @@ import { t } from '../../common/i18n';
 import { journaliser } from '../../common/audit';
 
 export const ENSEIGNANT_LECTURE_MINIMALE = {
-  id: true, matricule: true, nom: true, prenom: true, grade: true,
-  statut: true, actif: true, departementId: true,
+  id: true,
+  matricule: true,
+  nom: true,
+  prenom: true,
+  grade: true,
+  statut: true,
+  actif: true,
+  departementId: true,
   departement: { select: { id: true, nom: true } },
 } as const;
 
@@ -75,7 +72,8 @@ export class EnseignantsService extends CrudService {
       return new CrudService(this.prisma, 'enseignant', {
         searchFields: ['nom', 'prenom', 'matricule'],
         orderBy: [{ nom: 'asc' }, { prenom: 'asc' }],
-        select: ENSEIGNANT_LECTURE_MINIMALE, label: 'Enseignant',
+        select: ENSEIGNANT_LECTURE_MINIMALE,
+        label: 'Enseignant',
       });
     }
     return this;
@@ -85,7 +83,9 @@ export class EnseignantsService extends CrudService {
     return this.lecture(user).findAll(query, {
       ...(estChefDeDepartement(user)
         ? filtreDepartement(user)
-        : query.departementId ? { departementId: query.departementId } : {}),
+        : query.departementId
+          ? { departementId: query.departementId }
+          : {}),
       ...(query.statut ? { statut: query.statut } : {}),
     });
   }
@@ -113,14 +113,11 @@ export class EnseignantsService extends CrudService {
     exigerPerimetre(user, dto.departementId);
     return this.prisma.$transaction(async (tx) => {
       const cree = await tx.enseignant.create({ data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user,
-        'ENSEIGNANT_CREE',
-        'Enseignant',
-        cree.id,
-        { avant: null, apres: this.instantaneAudit(cree), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, user, 'ENSEIGNANT_CREE', 'Enseignant', cree.id, {
+        avant: null,
+        apres: this.instantaneAudit(cree),
+        champsModifies: Object.keys(dto),
+      });
       return cree;
     });
   }
@@ -133,18 +130,11 @@ export class EnseignantsService extends CrudService {
       exigerPerimetre(user, cible.departementId);
       exigerPerimetre(user, dto.departementId ?? cible.departementId);
       const maj = await tx.enseignant.update({ where: { id }, data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user,
-        'ENSEIGNANT_MODIFIE',
-        'Enseignant',
-        id,
-        {
-          avant: this.instantaneAudit(cible),
-          apres: this.instantaneAudit(maj),
-          champsModifies: Object.keys(dto),
-        },
-      );
+      await journaliser(tx, user, 'ENSEIGNANT_MODIFIE', 'Enseignant', id, {
+        avant: this.instantaneAudit(cible),
+        apres: this.instantaneAudit(maj),
+        champsModifies: Object.keys(dto),
+      });
       return maj;
     });
   }
@@ -153,8 +143,14 @@ export class EnseignantsService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.enseignant.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Enseignant' }));
-      await supprimerOuConflit(() => tx.enseignant.delete({ where: { id } }), 'referentiel.enseignant_referenced_delete');
-      await journaliser(tx, user, 'ENSEIGNANT_SUPPRIME', 'Enseignant', id, { avant: this.instantaneAudit(avant), apres: null });
+      await supprimerOuConflit(
+        () => tx.enseignant.delete({ where: { id } }),
+        'referentiel.enseignant_referenced_delete',
+      );
+      await journaliser(tx, user, 'ENSEIGNANT_SUPPRIME', 'Enseignant', id, {
+        avant: this.instantaneAudit(avant),
+        apres: null,
+      });
       return { id };
     });
   }
@@ -173,19 +169,18 @@ export class EnseignantsController {
     return this.service.detailPour(id, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Post() create(@Body() dto: CreateEnseignantDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  create(@Body() dto: CreateEnseignantDto, @CurrentUser() user: AuthUser) {
     return this.service.creerPour(dto, user);
   }
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Put(':id') update(
-    @Param('id') id: string,
-    @Body() dto: UpdateEnseignantDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id')
+  update(@Param('id') id: string, @Body() dto: UpdateEnseignantDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierPour(id, dto, user);
   }
   @Roles(Role.ADMIN)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

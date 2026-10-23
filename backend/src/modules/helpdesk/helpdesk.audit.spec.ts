@@ -14,13 +14,7 @@
  *  - une lecture — liste, fiche, statistiques, résolution de QR — n'écrit rien.
  */
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import {
-  CategorieIncident,
-  Prisma,
-  PrioriteTicket,
-  Role,
-  StatutTicket,
-} from '@prisma/client';
+import { CategorieIncident, Prisma, PrioriteTicket, Role, StatutTicket } from '@prisma/client';
 import type { AuthUser } from '../../common/decorators';
 import { EquipementsService, TicketsService } from './helpdesk.service';
 
@@ -172,7 +166,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
     return { service: new EquipementsService(prisma, {} as never, {} as never), prisma, tx, ...ecritures };
   }
 
-  it("journalise la création dans la transaction, sans le code QR imprimé", async () => {
+  it('journalise la création dans la transaction, sans le code QR imprimé', async () => {
     const { service, prisma, journal, mutations } = preparer();
 
     const cree = await service.creer({ libelle: 'Vidéoprojecteur S204' } as any, admin);
@@ -198,7 +192,9 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
   it("conserve l'état avant et après d'une désactivation, champ par champ", async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.equipementCampus.update.mockResolvedValue({
-      ...EQUIPEMENT, libelle: 'Vidéoprojecteur S204 — hors service', actif: false,
+      ...EQUIPEMENT,
+      libelle: 'Vidéoprojecteur S204 — hors service',
+      actif: false,
     });
 
     await service.modifier('eq-1', { libelle: 'Vidéoprojecteur S204 — hors service', actif: false } as any, admin);
@@ -256,8 +252,9 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
     tx.equipementCampus.findUnique.mockResolvedValue(null);
 
     await expect(service.supprimer('eq-inconnu', admin)).rejects.toBeInstanceOf(NotFoundException);
-    await expect(service.modifier('eq-inconnu', { actif: false } as any, admin))
-      .rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.modifier('eq-inconnu', { actif: false } as any, admin)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -267,8 +264,9 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecJournal = true;
 
-    await expect(service.creer({ libelle: 'Climatisation amphi' } as any, admin))
-      .rejects.toThrow('journal indisponible');
+    await expect(service.creer({ libelle: 'Climatisation amphi' } as any, admin)).rejects.toThrow(
+      'journal indisponible',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -278,8 +276,7 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecEcriture = 'update';
 
-    await expect(service.modifier('eq-1', { actif: false } as any, admin))
-      .rejects.toThrow('mutation refusée');
+    await expect(service.modifier('eq-1', { actif: false } as any, admin)).rejects.toThrow('mutation refusée');
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -299,7 +296,13 @@ describe("Journal avant/après de l'inventaire d'équipements", () => {
 });
 
 describe('Journal avant/après des tickets de support', () => {
-  const enseignant = { id: 'user-1', role: Role.ENSEIGNANT, nom: 'Diallo', prenom: 'Aïssatou', email: 'aissatou.diallo@campus.test' } as AuthUser;
+  const enseignant = {
+    id: 'user-1',
+    role: Role.ENSEIGNANT,
+    nom: 'Diallo',
+    prenom: 'Aïssatou',
+    email: 'aissatou.diallo@campus.test',
+  } as AuthUser;
   const agent = { id: 'agent-1', role: Role.ADMIN } as AuthUser;
 
   function preparer() {
@@ -335,7 +338,7 @@ describe('Journal avant/après des tickets de support', () => {
     priorite: PrioriteTicket.HAUTE,
   } as any;
 
-  it("journalise la déclaration dans la transaction, sans le texte ni le contact", async () => {
+  it('journalise la déclaration dans la transaction, sans le texte ni le contact', async () => {
     const { service, prisma, journal, mutations } = preparer();
 
     const ticket = await service.declarer(declaration, enseignant);
@@ -363,12 +366,15 @@ describe('Journal avant/après des tickets de support', () => {
     expect(ticket).toBe(TICKET);
   });
 
-  it("reprend sur conflit de numéro sans laisser de trace de la tentative avortée", async () => {
+  it('reprend sur conflit de numéro sans laisser de trace de la tentative avortée', async () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.ticketSupport.create
-      .mockRejectedValueOnce(new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002', clientVersion: '6.19.3',
-      }))
+      .mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: '6.19.3',
+        }),
+      )
       .mockResolvedValueOnce(TICKET);
 
     await service.declarer(declaration, enseignant);
@@ -395,7 +401,8 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, prisma, tx, journal, mutations } = preparer();
     tx.ticketSupport.create.mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002', clientVersion: '6.19.3',
+        code: 'P2002',
+        clientVersion: '6.19.3',
       }),
     );
 
@@ -411,8 +418,9 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, prisma, journal, mutations } = preparer();
     prisma.equipementCampus.findUnique.mockResolvedValue({ ...EQUIPEMENT, actif: false });
 
-    await expect(service.declarer({ ...declaration, equipementId: 'eq-1' }, enseignant))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.declarer({ ...declaration, equipementId: 'eq-1' }, enseignant)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(mutations).toEqual([]);
@@ -455,7 +463,7 @@ describe('Journal avant/après des tickets de support', () => {
     expect(brut).not.toContain('aissatou.diallo@campus.test');
   });
 
-  it("trace la clôture sur clicheLe plutôt que sur traiteLe", async () => {
+  it('trace la clôture sur clicheLe plutôt que sur traiteLe', async () => {
     const { service, tx, journal } = preparer();
     tx.ticketSupport.update.mockResolvedValue({
       ...TICKET,
@@ -480,8 +488,9 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, prisma, journal, mutations } = preparer();
     prisma.ticketSupport.findUnique.mockResolvedValue({ ...TICKET, statut: StatutTicket.RESOLU });
 
-    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.RESOLU } as any, agent))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.changerStatut('ticket-1', { statut: StatutTicket.RESOLU } as any, agent),
+    ).rejects.toBeInstanceOf(BadRequestException);
 
     expect(prisma.$transaction).not.toHaveBeenCalled();
     expect(mutations).toEqual([]);
@@ -491,10 +500,13 @@ describe('Journal avant/après des tickets de support', () => {
   it('refuse une prise en charge après une résolution concurrente', async () => {
     const { service, tx, journal, mutations } = preparer();
     tx.ticketSupport.findUnique.mockResolvedValue({ ...TICKET, statut: StatutTicket.RESOLU });
-    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent),
+    ).rejects.toBeInstanceOf(BadRequestException);
     expect(tx.$queryRaw).toHaveBeenCalled();
-    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(tx.ticketSupport.findUnique.mock.invocationCallOrder[0]);
+    expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.ticketSupport.findUnique.mock.invocationCallOrder[0],
+    );
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
   });
@@ -503,8 +515,9 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecEcriture = 'update';
 
-    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent))
-      .rejects.toThrow('mutation refusée');
+    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent)).rejects.toThrow(
+      'mutation refusée',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -514,8 +527,9 @@ describe('Journal avant/après des tickets de support', () => {
     const { service, flags, journal, mutations } = preparer();
     flags.echecJournal = true;
 
-    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent))
-      .rejects.toThrow('journal indisponible');
+    await expect(service.changerStatut('ticket-1', { statut: StatutTicket.EN_COURS } as any, agent)).rejects.toThrow(
+      'journal indisponible',
+    );
 
     expect(mutations).toEqual([]);
     expect(journal).toEqual([]);
@@ -523,9 +537,7 @@ describe('Journal avant/après des tickets de support', () => {
 
   it("n'écrit rien sur une lecture : registre, fiche et statistiques", async () => {
     const { service, prisma, journal } = preparer();
-    prisma.ticketSupport.groupBy.mockResolvedValue([
-      { statut: StatutTicket.OUVERT, _count: { _all: 2 } },
-    ]);
+    prisma.ticketSupport.groupBy.mockResolvedValue([{ statut: StatutTicket.OUVERT, _count: { _all: 2 } }]);
 
     await service.liste({}, agent);
     await service.findTicket('ticket-1', enseignant);

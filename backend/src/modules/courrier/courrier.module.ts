@@ -9,8 +9,7 @@ import { CourrierService } from './courrier.service';
  * ou tout autre circuit fourni à la création).
  */
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [CourrierController],
   providers: [CourrierService],
   exports: [CourrierService],

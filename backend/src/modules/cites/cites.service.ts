@@ -73,14 +73,11 @@ export class ResidencesService extends CrudService {
   async creer(dto: CreateResidenceDto, user?: AuthUser) {
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.residence.create({ data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user ?? null,
-        'RESIDENCE_CREEE',
-        'Residence',
-        creee.id,
-        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, user ?? null, 'RESIDENCE_CREEE', 'Residence', creee.id, {
+        avant: null,
+        apres: this.instantaneAudit(creee),
+        champsModifies: Object.keys(dto),
+      });
       return creee;
     });
   }
@@ -90,34 +87,52 @@ export class ResidencesService extends CrudService {
       const avant = await tx.residence.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
       const apres = await tx.residence.update({ where: { id }, data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user ?? null,
-        'RESIDENCE_MODIFIEE',
-        'Residence',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, user ?? null, 'RESIDENCE_MODIFIEE', 'Residence', id, {
+        avant: this.instantaneAudit(avant),
+        apres: this.instantaneAudit(apres),
+        champsModifies: Object.keys(dto),
+      });
       return apres;
     });
   }
 
   /** Le parc est un référentiel : on ne supprime que les résidences vides. */
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const residence = await tx.residence.findUnique({
-        where: { id },
-        select: { id: true, code: true, nom: true, ville: true, adresse: true, capacite: true, responsable: true, actif: true, _count: { select: { chambres: true } } },
-      });
-      if (!residence) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
-      const nb = residence._count.chambres;
-      if (nb > 0) {
-        throw new BadRequestException(t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', { 'residence.nom': residence.nom, nb }));
-      }
-      await tx.residence.delete({ where: { id } });
-      await journaliser(tx, user ?? null, 'RESIDENCE_SUPPRIMEE', 'Residence', id, { avant: this.instantaneAudit(residence), apres: null });
-      return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const residence = await tx.residence.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            code: true,
+            nom: true,
+            ville: true,
+            adresse: true,
+            capacite: true,
+            responsable: true,
+            actif: true,
+            _count: { select: { chambres: true } },
+          },
+        });
+        if (!residence) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Résidence' }));
+        const nb = residence._count.chambres;
+        if (nb > 0) {
+          throw new BadRequestException(
+            t('cites.impossible_de_supprimer_la_residence_residence_nom_nb_chambr', {
+              'residence.nom': residence.nom,
+              nb,
+            }),
+          );
+        }
+        await tx.residence.delete({ where: { id } });
+        await journaliser(tx, user ?? null, 'RESIDENCE_SUPPRIMEE', 'Residence', id, {
+          avant: this.instantaneAudit(residence),
+          apres: null,
+        });
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }
 
@@ -152,14 +167,11 @@ export class ChambresService extends CrudService {
     }
     return this.prisma.$transaction(async (tx) => {
       const creee = await tx.chambre.create({ data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user ?? null,
-        'CHAMBRE_CREEE',
-        'Chambre',
-        creee.id,
-        { avant: null, apres: this.instantaneAudit(creee), champsModifies: Object.keys(dto) },
-      );
+      await journaliser(tx, user ?? null, 'CHAMBRE_CREEE', 'Chambre', creee.id, {
+        avant: null,
+        apres: this.instantaneAudit(creee),
+        champsModifies: Object.keys(dto),
+      });
       return creee;
     });
   }
@@ -170,49 +182,70 @@ export class ChambresService extends CrudService {
    * transparence de l'attribution.
    */
   async modifier(id: string, dto: UpdateChambreDto, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const avant = await tx.chambre.findUnique({ where: { id } });
-      if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
-      if (dto.statut !== undefined) {
-        const accordee = await tx.attributionLogement.findFirst({
-          where: { chambreId: id, statut: StatutAttributionLogement.ACCORDEE },
+    return this.prisma.$transaction(
+      async (tx) => {
+        const avant = await tx.chambre.findUnique({ where: { id } });
+        if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
+        if (dto.statut !== undefined) {
+          const accordee = await tx.attributionLogement.findFirst({
+            where: { chambreId: id, statut: StatutAttributionLogement.ACCORDEE },
+          });
+          if (dto.statut === StatutChambre.OCCUPEE && !accordee) {
+            throw new BadRequestException(t('cites.cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi'));
+          }
+          if (accordee && dto.statut !== StatutChambre.OCCUPEE) {
+            throw new BadRequestException(t('cites.activeAllocationRequiresOccupied'));
+          }
+        }
+        const apres = await tx.chambre.update({ where: { id }, data: dto, include: this.options.include });
+        await journaliser(tx, user ?? null, 'CHAMBRE_MODIFIEE', 'Chambre', id, {
+          avant: this.instantaneAudit(avant),
+          apres: this.instantaneAudit(apres),
+          champsModifies: Object.keys(dto),
         });
-        if (dto.statut === StatutChambre.OCCUPEE && !accordee) {
-          throw new BadRequestException(t('cites.cette_chambre_ne_peut_pas_passer_en_occupee_aucune_attributi'));
-        }
-        if (accordee && dto.statut !== StatutChambre.OCCUPEE) {
-          throw new BadRequestException(t('cites.activeAllocationRequiresOccupied'));
-        }
-      }
-      const apres = await tx.chambre.update({ where: { id }, data: dto, include: this.options.include });
-      await journaliser(
-        tx,
-        user ?? null,
-        'CHAMBRE_MODIFIEE',
-        'Chambre',
-        id,
-        { avant: this.instantaneAudit(avant), apres: this.instantaneAudit(apres), champsModifies: Object.keys(dto) },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /** Une chambre avec un historique d'attributions se conserve. */
   async remove(id: string, user?: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const chambre = await tx.chambre.findUnique({
-        where: { id },
-        select: { id: true, code: true, residenceId: true, categorie: true, lits: true, loyer: true, devise: true, statut: true, _count: { select: { attributions: true } } },
-      });
-      if (!chambre) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
-      const nb = chambre._count.attributions;
-      if (nb > 0) {
-        throw new BadRequestException(t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', { 'chambre.code': chambre.code, nb }));
-      }
-      await tx.chambre.delete({ where: { id } });
-      await journaliser(tx, user ?? null, 'CHAMBRE_SUPPRIMEE', 'Chambre', id, { avant: this.instantaneAudit(chambre), apres: null });
-      return { id };
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    return this.prisma.$transaction(
+      async (tx) => {
+        const chambre = await tx.chambre.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            code: true,
+            residenceId: true,
+            categorie: true,
+            lits: true,
+            loyer: true,
+            devise: true,
+            statut: true,
+            _count: { select: { attributions: true } },
+          },
+        });
+        if (!chambre) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Chambre' }));
+        const nb = chambre._count.attributions;
+        if (nb > 0) {
+          throw new BadRequestException(
+            t('cites.impossible_de_supprimer_la_chambre_chambre_code_nb_attributi', {
+              'chambre.code': chambre.code,
+              nb,
+            }),
+          );
+        }
+        await tx.chambre.delete({ where: { id } });
+        await journaliser(tx, user ?? null, 'CHAMBRE_SUPPRIMEE', 'Chambre', id, {
+          avant: this.instantaneAudit(chambre),
+          apres: null,
+        });
+        return { id };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 }
 
@@ -254,90 +287,83 @@ export class AttributionsService extends CrudService {
    *   pas avoir deux chambres accordées sur la même année.
    */
   async creer(dto: CreateAttributionDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const anneeId = dto.anneeId
-        ?? (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id
-        ?? undefined;
-      await exigerAnneeOuverte(tx, anneeId);
-      const chambre = await tx.chambre.findUnique({ where: { id: dto.chambreId } });
-      if (!chambre) throw new BadRequestException(t('cites.chambre_introuvable'));
-      if (chambre.statut === StatutChambre.OCCUPEE) {
-        throw new BadRequestException(t('cites.la_chambre_est_deja_occupee'));
-      }
-      if (chambre.statut === StatutChambre.MAINTENANCE) {
-        throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
-      }
-
-      if (anneeId) {
-        const accordee = await tx.attributionLogement.findFirst({
-          where: {
-            etudiantId: dto.etudiantId,
-            anneeId,
-            statut: StatutAttributionLogement.ACCORDEE,
-          },
-        });
-        if (accordee) {
-          throw new BadRequestException(t('cites.cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou'));
+    return this.prisma.$transaction(
+      async (tx) => {
+        const anneeId =
+          dto.anneeId ??
+          (await tx.anneeAcademique.findFirst({ where: { active: true, cloturee: false } }))?.id ??
+          undefined;
+        await exigerAnneeOuverte(tx, anneeId);
+        const chambre = await tx.chambre.findUnique({ where: { id: dto.chambreId } });
+        if (!chambre) throw new BadRequestException(t('cites.chambre_introuvable'));
+        if (chambre.statut === StatutChambre.OCCUPEE) {
+          throw new BadRequestException(t('cites.la_chambre_est_deja_occupee'));
         }
-      }
-
-      // Chambre réservée : seuls sa demande et cet étudiant peuvent la compléter.
-      if (chambre.statut === StatutChambre.RESERVEE) {
-        const enAttente: any = await tx.attributionLogement.findFirst({
-          where: { chambreId: dto.chambreId, statut: StatutAttributionLogement.EN_ATTENTE },
-          include: ATTRIBUTION_INCLUDE,
-        });
-        if (!enAttente || enAttente.etudiantId !== dto.etudiantId) {
-          throw new BadRequestException(t('cites.la_chambre_est_deja_reservee_pour_un_autre_etudiant'));
+        if (chambre.statut === StatutChambre.MAINTENANCE) {
+          throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
         }
-        await exigerAnneeOuverte(tx, enAttente.anneeId);
-        const miseAJour = await tx.attributionLogement.update({
-          where: { id: enAttente.id },
+
+        if (anneeId) {
+          const accordee = await tx.attributionLogement.findFirst({
+            where: {
+              etudiantId: dto.etudiantId,
+              anneeId,
+              statut: StatutAttributionLogement.ACCORDEE,
+            },
+          });
+          if (accordee) {
+            throw new BadRequestException(t('cites.cet_etudiant_a_deja_une_chambre_accordee_pour_l_annee_en_cou'));
+          }
+        }
+
+        // Chambre réservée : seuls sa demande et cet étudiant peuvent la compléter.
+        if (chambre.statut === StatutChambre.RESERVEE) {
+          const enAttente: any = await tx.attributionLogement.findFirst({
+            where: { chambreId: dto.chambreId, statut: StatutAttributionLogement.EN_ATTENTE },
+            include: ATTRIBUTION_INCLUDE,
+          });
+          if (!enAttente || enAttente.etudiantId !== dto.etudiantId) {
+            throw new BadRequestException(t('cites.la_chambre_est_deja_reservee_pour_un_autre_etudiant'));
+          }
+          await exigerAnneeOuverte(tx, enAttente.anneeId);
+          const miseAJour = await tx.attributionLogement.update({
+            where: { id: enAttente.id },
+            data: {
+              ...(dto.anneeId ? { anneeId: dto.anneeId } : {}),
+              critereScore: dto.critereScore,
+              justificatif: dto.justificatif,
+            },
+            include: ATTRIBUTION_INCLUDE,
+          });
+          await journaliser(tx, user, 'ATTRIBUTION_MODIFIEE', 'AttributionLogement', miseAJour.id, {
+            avant: this.instantaneAudit(enAttente),
+            apres: this.instantaneAudit(miseAJour),
+          });
+          return miseAJour;
+        }
+
+        const attribution = await tx.attributionLogement.create({
           data: {
-            ...(dto.anneeId ? { anneeId: dto.anneeId } : {}),
+            chambreId: dto.chambreId,
+            etudiantId: dto.etudiantId,
+            anneeId: anneeId ?? null,
             critereScore: dto.critereScore,
             justificatif: dto.justificatif,
           },
           include: ATTRIBUTION_INCLUDE,
         });
-        await journaliser(
-          tx,
-          user,
-          'ATTRIBUTION_MODIFIEE',
-          'AttributionLogement',
-          miseAJour.id,
-          {
-              avant: this.instantaneAudit(enAttente),
-              apres: this.instantaneAudit(miseAJour),
-            },
-        );
-        return miseAJour;
-      }
-
-      const attribution = await tx.attributionLogement.create({
-        data: {
-          chambreId: dto.chambreId,
-          etudiantId: dto.etudiantId,
-          anneeId: anneeId ?? null,
-          critereScore: dto.critereScore,
-          justificatif: dto.justificatif,
-        },
-        include: ATTRIBUTION_INCLUDE,
-      });
-      await tx.chambre.update({
-        where: { id: dto.chambreId },
-        data: { statut: StatutChambre.RESERVEE },
-      });
-      await journaliser(
-        tx,
-        user,
-        'ATTRIBUTION_CREEE',
-        'AttributionLogement',
-        attribution.id,
-        { avant: null, apres: this.instantaneAudit(attribution) },
-      );
-      return attribution;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        await tx.chambre.update({
+          where: { id: dto.chambreId },
+          data: { statut: StatutChambre.RESERVEE },
+        });
+        await journaliser(tx, user, 'ATTRIBUTION_CREEE', 'AttributionLogement', attribution.id, {
+          avant: null,
+          apres: this.instantaneAudit(attribution),
+        });
+        return attribution;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -346,106 +372,103 @@ export class AttributionsService extends CrudService {
    * attribution par chambre). REFUSEE : la chambre redevient libre.
    */
   async decider(id: string, dto: DeciderAttributionDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const attribution: any = await tx.attributionLogement.findUnique({
-        where: { id },
-        include: ATTRIBUTION_INCLUDE,
-      });
-      if (!attribution) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, attribution.anneeId);
-      if (attribution.statut !== StatutAttributionLogement.EN_ATTENTE) {
-        throw new BadRequestException(t('cites.cette_demande_a_deja_ete_traitee'));
-      }
-
-      if (dto.statut === StatutAttributionLogement.ACCORDEE) {
-        if (attribution.chambre.statut === StatutChambre.MAINTENANCE) {
-          throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
-        }
-        // Une autre demande peut avoir été accordée depuis le dépôt.
-        // La lecture dans la transaction sérialisable protège aussi deux
-        // décisions concurrentes portant sur des chambres différentes.
-        const concurrente = await tx.attributionLogement.findFirst({
-          where: {
-            id: { not: id },
-            statut: StatutAttributionLogement.ACCORDEE,
-            OR: [
-              { etudiantId: attribution.etudiantId, anneeId: attribution.anneeId },
-              { chambreId: attribution.chambreId },
-            ],
-          },
+    return this.prisma.$transaction(
+      async (tx) => {
+        const attribution: any = await tx.attributionLogement.findUnique({
+          where: { id },
+          include: ATTRIBUTION_INCLUDE,
         });
-        if (concurrente) {
-          throw new BadRequestException(t('cites.existingAllocationConflict'));
+        if (!attribution) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, attribution.anneeId);
+        if (attribution.statut !== StatutAttributionLogement.EN_ATTENTE) {
+          throw new BadRequestException(t('cites.cette_demande_a_deja_ete_traitee'));
         }
-      }
 
-      const transition = await tx.attributionLogement.updateMany({
-        where: { id, statut: StatutAttributionLogement.EN_ATTENTE },
-        data: dto.statut === StatutAttributionLogement.ACCORDEE
-          ? {
+        if (dto.statut === StatutAttributionLogement.ACCORDEE) {
+          if (attribution.chambre.statut === StatutChambre.MAINTENANCE) {
+            throw new BadRequestException(t('cites.la_chambre_est_en_maintenance_aucune_demande_possible'));
+          }
+          // Une autre demande peut avoir été accordée depuis le dépôt.
+          // La lecture dans la transaction sérialisable protège aussi deux
+          // décisions concurrentes portant sur des chambres différentes.
+          const concurrente = await tx.attributionLogement.findFirst({
+            where: {
+              id: { not: id },
               statut: StatutAttributionLogement.ACCORDEE,
-              accordeeLe: new Date(),
-              accorderParId: user.id,
-            }
-          : { statut: StatutAttributionLogement.REFUSEE, accorderParId: user.id },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(t('cites.cette_demande_a_deja_ete_traitee'));
-      }
+              OR: [
+                { etudiantId: attribution.etudiantId, anneeId: attribution.anneeId },
+                { chambreId: attribution.chambreId },
+              ],
+            },
+          });
+          if (concurrente) {
+            throw new BadRequestException(t('cites.existingAllocationConflict'));
+          }
+        }
 
-      const autresEnAttente = dto.statut === StatutAttributionLogement.ACCORDEE
-        ? await tx.attributionLogement.findMany({
-          where: {
-            chambreId: attribution.chambreId,
-            anneeId: attribution.anneeId,
-            statut: StatutAttributionLogement.EN_ATTENTE,
-            id: { not: id },
-          },
-          select: { id: true },
-        })
-        : [];
-      if (dto.statut === StatutAttributionLogement.ACCORDEE) {
-        await tx.attributionLogement.updateMany({
-          where: {
-            chambreId: attribution.chambreId,
-            anneeId: attribution.anneeId,
-            statut: StatutAttributionLogement.EN_ATTENTE,
-            id: { not: id },
-          },
-          data: { statut: StatutAttributionLogement.REFUSEE },
+        const transition = await tx.attributionLogement.updateMany({
+          where: { id, statut: StatutAttributionLogement.EN_ATTENTE },
+          data:
+            dto.statut === StatutAttributionLogement.ACCORDEE
+              ? {
+                  statut: StatutAttributionLogement.ACCORDEE,
+                  accordeeLe: new Date(),
+                  accorderParId: user.id,
+                }
+              : { statut: StatutAttributionLogement.REFUSEE, accorderParId: user.id },
         });
-        await tx.chambre.update({
-          where: { id: attribution.chambreId },
-          data: { statut: StatutChambre.OCCUPEE },
-        });
-      } else {
-        await tx.chambre.update({
-          where: { id: attribution.chambreId },
-          data: { statut: StatutChambre.LIBRE },
-        });
-      }
+        if (transition.count !== 1) {
+          throw new ConflictException(t('cites.cette_demande_a_deja_ete_traitee'));
+        }
 
-      const apres: any = await tx.attributionLogement.findUnique({
-        where: { id },
-        include: ATTRIBUTION_INCLUDE,
-      });
-      await journaliser(
-        tx,
-        user,
-        `ATTRIBUTION_${dto.statut}`,
-        'AttributionLogement',
-        id,
-        {
-            commentaire: dto.commentaire ?? null,
-            autresRefusees: dto.statut === StatutAttributionLogement.ACCORDEE
-              ? autresEnAttente.map((autre) => autre.id)
-              : [],
-            avant: this.instantaneAudit(attribution),
-            apres: this.instantaneAudit(apres),
-          },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        const autresEnAttente =
+          dto.statut === StatutAttributionLogement.ACCORDEE
+            ? await tx.attributionLogement.findMany({
+                where: {
+                  chambreId: attribution.chambreId,
+                  anneeId: attribution.anneeId,
+                  statut: StatutAttributionLogement.EN_ATTENTE,
+                  id: { not: id },
+                },
+                select: { id: true },
+              })
+            : [];
+        if (dto.statut === StatutAttributionLogement.ACCORDEE) {
+          await tx.attributionLogement.updateMany({
+            where: {
+              chambreId: attribution.chambreId,
+              anneeId: attribution.anneeId,
+              statut: StatutAttributionLogement.EN_ATTENTE,
+              id: { not: id },
+            },
+            data: { statut: StatutAttributionLogement.REFUSEE },
+          });
+          await tx.chambre.update({
+            where: { id: attribution.chambreId },
+            data: { statut: StatutChambre.OCCUPEE },
+          });
+        } else {
+          await tx.chambre.update({
+            where: { id: attribution.chambreId },
+            data: { statut: StatutChambre.LIBRE },
+          });
+        }
+
+        const apres: any = await tx.attributionLogement.findUnique({
+          where: { id },
+          include: ATTRIBUTION_INCLUDE,
+        });
+        await journaliser(tx, user, `ATTRIBUTION_${dto.statut}`, 'AttributionLogement', id, {
+          commentaire: dto.commentaire ?? null,
+          autresRefusees:
+            dto.statut === StatutAttributionLogement.ACCORDEE ? autresEnAttente.map((autre) => autre.id) : [],
+          avant: this.instantaneAudit(attribution),
+          apres: this.instantaneAudit(apres),
+        });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   /**
@@ -453,60 +476,56 @@ export class AttributionsService extends CrudService {
    * une autre demande en attente la maintient réservée.
    */
   async retirer(id: string, dto: RetirerAttributionDto, user: AuthUser) {
-    return this.prisma.$transaction(async (tx) => {
-      const attribution: any = await tx.attributionLogement.findUnique({
-        where: { id },
-        include: ATTRIBUTION_INCLUDE,
-      });
-      if (!attribution) throw new NotFoundException(t('common.notFound'));
-      await exigerAnneeOuverte(tx, attribution.anneeId);
-      if (
-        attribution.statut === StatutAttributionLogement.REFUSEE
-        || attribution.statut === StatutAttributionLogement.RETIREE
-      ) {
-        throw new BadRequestException(t('cites.cette_attribution_n_est_plus_reversible'));
-      }
+    return this.prisma.$transaction(
+      async (tx) => {
+        const attribution: any = await tx.attributionLogement.findUnique({
+          where: { id },
+          include: ATTRIBUTION_INCLUDE,
+        });
+        if (!attribution) throw new NotFoundException(t('common.notFound'));
+        await exigerAnneeOuverte(tx, attribution.anneeId);
+        if (
+          attribution.statut === StatutAttributionLogement.REFUSEE ||
+          attribution.statut === StatutAttributionLogement.RETIREE
+        ) {
+          throw new BadRequestException(t('cites.cette_attribution_n_est_plus_reversible'));
+        }
 
-      const transition = await tx.attributionLogement.updateMany({
-        where: { id, statut: attribution.statut },
-        data: {
-          statut: StatutAttributionLogement.RETIREE,
-          retireeLe: new Date(),
-          retireeMotif: dto.motif,
-        },
-      });
-      if (transition.count !== 1) {
-        throw new ConflictException(t('cites.cette_attribution_n_est_plus_reversible'));
-      }
-      const autreAttente = await tx.attributionLogement.findFirst({
+        const transition = await tx.attributionLogement.updateMany({
+          where: { id, statut: attribution.statut },
+          data: {
+            statut: StatutAttributionLogement.RETIREE,
+            retireeLe: new Date(),
+            retireeMotif: dto.motif,
+          },
+        });
+        if (transition.count !== 1) {
+          throw new ConflictException(t('cites.cette_attribution_n_est_plus_reversible'));
+        }
+        const autreAttente = await tx.attributionLogement.findFirst({
           where: {
             chambreId: attribution.chambreId,
             anneeId: attribution.anneeId,
             statut: StatutAttributionLogement.EN_ATTENTE,
-          id: { not: id },
-        },
-      });
-      await tx.chambre.update({
-        where: { id: attribution.chambreId },
-        data: { statut: autreAttente ? StatutChambre.RESERVEE : StatutChambre.LIBRE },
-      });
-      const apres: any = await tx.attributionLogement.findUnique({
-        where: { id },
-        include: ATTRIBUTION_INCLUDE,
-      });
-      await journaliser(
-        tx,
-        user,
-        'ATTRIBUTION_RETIREE',
-        'AttributionLogement',
-        id,
-        {
-            avant: this.instantaneAudit(attribution),
-            apres: this.instantaneAudit(apres),
+            id: { not: id },
           },
-      );
-      return apres;
-    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+        });
+        await tx.chambre.update({
+          where: { id: attribution.chambreId },
+          data: { statut: autreAttente ? StatutChambre.RESERVEE : StatutChambre.LIBRE },
+        });
+        const apres: any = await tx.attributionLogement.findUnique({
+          where: { id },
+          include: ATTRIBUTION_INCLUDE,
+        });
+        await journaliser(tx, user, 'ATTRIBUTION_RETIREE', 'AttributionLogement', id, {
+          avant: this.instantaneAudit(attribution),
+          apres: this.instantaneAudit(apres),
+        });
+        return apres;
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
   }
 
   private instantaneAudit(attribution: any) {

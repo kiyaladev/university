@@ -14,11 +14,7 @@ export class ReleveHebdomadaireController {
 
   @ProtectedDocument(Role.CHEF_DEPARTEMENT)
   @Post('releve-hebdomadaire')
-  async generer(
-    @Body() dto: ReleveHebdomadaireDto,
-    @CurrentUser() user: AuthUser,
-    @Res() res: Response,
-  ) {
+  async generer(@Body() dto: ReleveHebdomadaireDto, @CurrentUser() user: AuthUser, @Res() res: Response) {
     const { numero, pdf, pdfHash } = await this.relevePdf.generer(dto, user);
     res
       .type('application/pdf')

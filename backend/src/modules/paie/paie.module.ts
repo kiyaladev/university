@@ -10,9 +10,7 @@ import { PaieService } from './paie.service';
  * les séances contrôlées d'UniPrésence, avec impression A4 signée.
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [PaieController],
   providers: [PaieService],
   exports: [PaieService],

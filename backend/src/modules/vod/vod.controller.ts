@@ -1,24 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Ip,
-  Param,
-  Post,
-  Put,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Ip, Param, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { VodService } from './vod.service';
-import {
-  ArchiverVODDto,
-  CreateCoursVODDto,
-  EnregistrerVueDto,
-  UpdateCoursVODDto,
-  VodQueryDto,
-} from './vod.dto';
+import { ArchiverVODDto, CreateCoursVODDto, EnregistrerVueDto, UpdateCoursVODDto, VodQueryDto } from './vod.dto';
 
 /**
  * Plateforme VOD — cours filmés ou retranscrits.
@@ -76,11 +61,7 @@ export class VodController {
 
   @Roles(Role.ADMIN, Role.ENSEIGNANT)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateCoursVODDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateCoursVODDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -92,11 +73,7 @@ export class VodController {
 
   @Roles(Role.ADMIN, Role.ENSEIGNANT)
   @Post(':id/archiver')
-  archiver(
-    @Param('id') id: string,
-    @Body() dto: ArchiverVODDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  archiver(@Param('id') id: string, @Body() dto: ArchiverVODDto, @CurrentUser() user: AuthUser) {
     return this.service.archiver(id, dto, user);
   }
 

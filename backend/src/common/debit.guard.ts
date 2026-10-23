@@ -12,9 +12,9 @@ import { ThrottlerGuard } from '@nestjs/throttler';
  * `req.ip` est calculé par Express à partir de `trust proxy` : c'est l'adresse
  * ajoutée par nginx, celle de la vraie socket, que le client ne contrôle pas.
  *
-   * Une session authentifiée compte pour elle-même. L'identité vient de
-   * `req.user`, déjà validée par JwtAuthGuard, jamais d'un Bearer fourni par le
-   * client : les routes publiques restent ainsi comptées par adresse réelle.
+ * Une session authentifiée compte pour elle-même. L'identité vient de
+ * `req.user`, déjà validée par JwtAuthGuard, jamais d'un Bearer fourni par le
+ * client : les routes publiques restent ainsi comptées par adresse réelle.
  */
 @Injectable()
 export class DebitGuard extends ThrottlerGuard {
@@ -31,7 +31,9 @@ export class DebitGuard extends ThrottlerGuard {
     if (nom !== 'connexion') return base;
 
     const requete = context.switchToHttp().getRequest();
-    const compte = String(requete.body?.email ?? '').toLowerCase().trim();
+    const compte = String(requete.body?.email ?? '')
+      .toLowerCase()
+      .trim();
     return `${base}:${compte}`;
   }
 

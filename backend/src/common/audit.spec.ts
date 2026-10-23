@@ -12,7 +12,13 @@ describe('journaliser', () => {
     const { create, client: c } = client();
     await journaliser(c, user, 'ACTION', 'Entite', 'e1', { avant: null, apres: { a: 1 } });
     expect(create).toHaveBeenCalledWith({
-      data: { userId: 'u1', action: 'ACTION', entite: 'Entite', entiteId: 'e1', details: '{"avant":null,"apres":{"a":1}}' },
+      data: {
+        userId: 'u1',
+        action: 'ACTION',
+        entite: 'Entite',
+        entiteId: 'e1',
+        details: '{"avant":null,"apres":{"a":1}}',
+      },
     });
   });
 
@@ -30,7 +36,7 @@ describe('journaliser', () => {
     expect(create.mock.calls[0][0].data).toMatchObject({ entiteId: null, details: 'Motif libre' });
   });
 
-  it("rattache la ligne à aucun compte sans utilisateur", async () => {
+  it('rattache la ligne à aucun compte sans utilisateur', async () => {
     const { create, client: c } = client();
     await journaliser(c, null, 'ACTION', 'Entite', 'e1', {});
     expect(create.mock.calls[0][0].data).toMatchObject({ userId: null, details: '{}' });
@@ -44,7 +50,9 @@ describe('journaliser', () => {
 
 describe('avantApres', () => {
   it('garde l’ordre avant, apres puis le complément', () => {
-    expect(JSON.stringify(avantApres(1, 2, { champsModifies: ['x'] }))).toBe('{"avant":1,"apres":2,"champsModifies":["x"]}');
+    expect(JSON.stringify(avantApres(1, 2, { champsModifies: ['x'] }))).toBe(
+      '{"avant":1,"apres":2,"champsModifies":["x"]}',
+    );
     expect(avantApres(null, { a: 1 })).toEqual({ avant: null, apres: { a: 1 } });
   });
 });

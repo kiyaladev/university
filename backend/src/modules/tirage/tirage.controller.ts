@@ -1,24 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import type { Request, Response } from 'express';
 import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/decorators';
-import {
-  CreateTirageDto,
-  ImprimerTirageDto,
-  TirageQueryDto,
-  UpdateStadeTirageDto,
-} from './tirage.dto';
+import { CreateTirageDto, ImprimerTirageDto, TirageQueryDto, UpdateStadeTirageDto } from './tirage.dto';
 import { TirageService } from './tirage.service';
 import { verifierJetonImprimable } from '../../common/jeton-imprimable';
 
@@ -56,41 +42,25 @@ export class TirageController {
    */
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/imprimer')
-  imprimer(
-    @Param('id') id: string,
-    @Body() dto: ImprimerTirageDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  imprimer(@Param('id') id: string, @Body() dto: ImprimerTirageDto, @CurrentUser() user: AuthUser) {
     return this.service.imprimer(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/mettre-sous-pli')
-  mettreSousPli(
-    @Param('id') id: string,
-    @Body() dto: UpdateStadeTirageDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  mettreSousPli(@Param('id') id: string, @Body() dto: UpdateStadeTirageDto, @CurrentUser() user: AuthUser) {
     return this.service.mettreSousPli(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/distribuer')
-  distribuer(
-    @Param('id') id: string,
-    @Body() dto: UpdateStadeTirageDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  distribuer(@Param('id') id: string, @Body() dto: UpdateStadeTirageDto, @CurrentUser() user: AuthUser) {
     return this.service.distribuer(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/recuperer')
-  recuperer(
-    @Param('id') id: string,
-    @Body() dto: UpdateStadeTirageDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  recuperer(@Param('id') id: string, @Body() dto: UpdateStadeTirageDto, @CurrentUser() user: AuthUser) {
     return this.service.recuperer(id, dto, user);
   }
 
@@ -106,11 +76,7 @@ export class TirageController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE)
   @Get(':id/imprimer-bordereau')
-  async imprimerBordereau(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimerBordereau(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     // Le secret vient du JwtService injecté : plus de clé en dur à resynchroniser.
     verifierJetonImprimable(this.jwt, req);
     res.type('html').send(await this.service.imprimerBordereau(id));

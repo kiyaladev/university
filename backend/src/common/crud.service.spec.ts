@@ -23,10 +23,12 @@ describe('tri des listes génériques', () => {
 
     const resultat = await s.findAll({ all: '1' });
 
-    expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({
-      skip: 0,
-      take: 1000,
-    }));
+    expect(s['delegate'].findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 1000,
+      }),
+    );
     expect(resultat).toMatchObject({ total: 1400, page: 1, pageSize: 1000 });
   });
 
@@ -39,9 +41,7 @@ describe('tri des listes génériques', () => {
   it("accepte un champ déclaré dans l'ordre par défaut", async () => {
     const s = service({ nom: 'asc' });
     await s.findAll({ sort: 'nom', order: 'desc' });
-    expect(s['delegate'].findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { nom: 'desc' } }),
-    );
+    expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { nom: 'desc' } }));
   });
 
   it('refuse un champ absent du modèle avec une 400 explicite', async () => {
@@ -54,29 +54,21 @@ describe('tri des listes génériques', () => {
   it('utilise les sortFields explicites quand le service en déclare', async () => {
     const s = service({ nom: 'asc' }, ['nom', 'capacite']);
     await s.findAll({ sort: 'capacite' });
-    expect(s['delegate'].findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { capacite: 'asc' } }),
-    );
+    expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { capacite: 'asc' } }));
   });
 
   it('retombe sur le tri par défaut quand aucun tri est demandé', async () => {
     const s = service({ nom: 'asc' });
     await s.findAll({});
-    expect(s['delegate'].findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { nom: 'asc' } }),
-    );
+    expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { nom: 'asc' } }));
   });
 
   it('prend la première clé quand le tri par défaut en donne plusieurs', async () => {
     const s = service([{ date: 'desc' }, { heureDebut: 'asc' }]);
     await s.findAll({ sort: 'date', order: 'desc' });
-    expect(s['delegate'].findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ orderBy: { date: 'desc' } }),
-    );
+    expect(s['delegate'].findMany).toHaveBeenCalledWith(expect.objectContaining({ orderBy: { date: 'desc' } }));
     // heureDebut n'est pas exposée : le tri est refusé plutôt que de laisser
     // Prisma renvoyer une erreur de validation.
-    return expect(s.findAll({ sort: 'heureDebut' })).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
+    return expect(s.findAll({ sort: 'heureDebut' })).rejects.toBeInstanceOf(BadRequestException);
   });
 });

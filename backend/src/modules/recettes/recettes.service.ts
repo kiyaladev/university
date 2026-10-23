@@ -21,12 +21,7 @@ import { Paginated } from '../../common/dto';
 import { toDateOnly } from '../../common/utils';
 import { prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
-import {
-  CreateRecetteDto,
-  EncaisserRecetteDto,
-  RecetteQueryDto,
-  UpdateRecetteDto,
-} from './recettes.dto';
+import { CreateRecetteDto, EncaisserRecetteDto, RecetteQueryDto, UpdateRecetteDto } from './recettes.dto';
 
 /** Préfixe des références de paiement des recettes externes ("PAY-X-2026-00001"). */
 export const PREFIXE_PAIEMENT_RECETTE = 'PAY-X-';
@@ -50,13 +45,15 @@ export class RecettesService {
     const where: Prisma.RecetteExterneWhereInput = {
       ...(query.type ? { type: query.type } : {}),
       ...(query.client ? { client: { contains: query.client, mode: 'insensitive' } } : {}),
-      ...(query.search?.trim() ? {
-        OR: [
-          { numero: { contains: query.search.trim(), mode: 'insensitive' } },
-          { libelle: { contains: query.search.trim(), mode: 'insensitive' } },
-          { client: { contains: query.search.trim(), mode: 'insensitive' } },
-        ],
-      } : {}),
+      ...(query.search?.trim()
+        ? {
+            OR: [
+              { numero: { contains: query.search.trim(), mode: 'insensitive' } },
+              { libelle: { contains: query.search.trim(), mode: 'insensitive' } },
+              { client: { contains: query.search.trim(), mode: 'insensitive' } },
+            ],
+          }
+        : {}),
     };
 
     if (query.dateDebut || query.dateFin) {
@@ -129,12 +126,11 @@ export class RecettesService {
       const actuel = await tx.recetteExterne.findUnique({ where: { id }, include: RECETTE_INCLUDE });
       if (!actuel) throw new NotFoundException(t('recettes.recette_introuvable'));
       const dateCible = dto.date !== undefined ? toDateOnly(dto.date) : actuel.date;
-      const modifieMontantComptable = (
+      const modifieMontantComptable =
         (dto.montant !== undefined && dto.montant !== actuel.montant) ||
         (dto.devise !== undefined && dto.devise !== actuel.devise) ||
         (dto.type !== undefined && dto.type !== actuel.type) ||
-        dateCible.getTime() !== actuel.date.getTime()
-      );
+        dateCible.getTime() !== actuel.date.getTime();
       if (actuel.paiementId && modifieMontantComptable) {
         throw new ConflictException(t('recettes.modification_comptable_apres_encaissement_interdite'));
       }
@@ -201,8 +197,7 @@ export class RecettesService {
    * Une recette déjà encaissée ne peut plus l'être à nouveau — refusée.
    */
   async encaisser(id: string, dto: EncaisserRecetteDto, user: AuthUser) {
-    const modeEnum: ModePaiement =
-      (dto.mode as ModePaiement | undefined) ?? ModePaiement.ESPECES;
+    const modeEnum: ModePaiement = (dto.mode as ModePaiement | undefined) ?? ModePaiement.ESPECES;
 
     for (let tentative = 0; tentative < 10; tentative++) {
       try {
@@ -261,7 +256,11 @@ export class RecettesService {
               action: 'RECETTE_ENCAISSEE',
               entite: 'RecetteExterne',
               entiteId: id,
-              details: JSON.stringify({ avant, apres: this.instantaneAudit(miseAJour), paiementReference: cree.reference }),
+              details: JSON.stringify({
+                avant,
+                apres: this.instantaneAudit(miseAJour),
+                paiementReference: cree.reference,
+              }),
             },
           });
           return miseAJour;
@@ -358,10 +357,7 @@ export class RecettesService {
    * antérieurs gardent leur référence "PAY-R-…" : elle reste valide, seule la
    * séquence des nouveaux encaissements repart sous "PAY-X-".
    */
-  private async prochainNumeroPaiement(
-    tx: Prisma.TransactionClient,
-    annee: string,
-  ): Promise<string> {
+  private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
     return prochainNumeroTx(tx, 'paiement', 'reference', `${PREFIXE_PAIEMENT_RECETTE}${annee}-`, 5);
   }
 }

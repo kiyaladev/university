@@ -9,9 +9,7 @@ function delegate(valeurs: string[]): Numerotable & { findMany: jest.Mock } {
     findMany: jest.fn(async (args: any) => {
       const champ = args.select ? Object.keys(args.select)[0] : 'numero';
       const prefixe = args?.where?.[champ]?.startsWith ?? '';
-      return valeurs
-        .filter((valeur) => valeur.startsWith(prefixe))
-        .map((valeur) => ({ [champ]: valeur }));
+      return valeurs.filter((valeur) => valeur.startsWith(prefixe)).map((valeur) => ({ [champ]: valeur }));
     }),
   };
 }
@@ -58,9 +56,7 @@ describe('numérotation séquentielle', () => {
   it('la variante transactionnelle interroge le bon modèle', async () => {
     const paiement = delegate(['PAY-2026-00002']);
     const tx = { paiement };
-    expect(await prochainNumeroTx(tx as any, 'paiement', 'reference', 'PAY-2026-', 5)).toBe(
-      'PAY-2026-00003',
-    );
+    expect(await prochainNumeroTx(tx as any, 'paiement', 'reference', 'PAY-2026-', 5)).toBe('PAY-2026-00003');
     expect(paiement.findMany).toHaveBeenCalled();
   });
 });

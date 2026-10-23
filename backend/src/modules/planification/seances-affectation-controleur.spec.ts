@@ -18,12 +18,22 @@ describe('Affectation des tournées contrôleurs', () => {
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
     const prisma: any = {
-      seance: { findUnique: jest.fn().mockResolvedValue({
-        id: 'seance-1', anneeId: 'annee-1', controleurAssigneId: null,
-      }) },
-      user: { findUnique: jest.fn().mockResolvedValue({
-        id: 'ctrl-1', nom: 'Diallo', prenom: 'Aminata', role, actif,
-      }) },
+      seance: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'seance-1',
+          anneeId: 'annee-1',
+          controleurAssigneId: null,
+        }),
+      },
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'ctrl-1',
+          nom: 'Diallo',
+          prenom: 'Aminata',
+          role,
+          actif,
+        }),
+      },
       $transaction: jest.fn((operation) => operation(tx)),
     };
     return { service: new SeancesService(prisma), prisma, tx };
@@ -33,29 +43,38 @@ describe('Affectation des tournées contrôleurs', () => {
     const { service, prisma, tx } = preparer();
     await service.affecterControleur('seance-1', { controleurId: 'ctrl-1' }, user);
 
-    expect(tx.seance.update).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'seance-1' }, data: { controleurAssigneId: 'ctrl-1' },
-    }));
-    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        userId: user.id, action: 'CONTROLEUR_AFFECTE_SEANCE', entiteId: 'seance-1',
-        details: JSON.stringify({ avant: { controleurAssigneId: null }, apres: { controleurAssigneId: 'ctrl-1' } }),
+    expect(tx.seance.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'seance-1' },
+        data: { controleurAssigneId: 'ctrl-1' },
       }),
-    }));
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          userId: user.id,
+          action: 'CONTROLEUR_AFFECTE_SEANCE',
+          entiteId: 'seance-1',
+          details: JSON.stringify({ avant: { controleurAssigneId: null }, apres: { controleurAssigneId: 'ctrl-1' } }),
+        }),
+      }),
+    );
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it('refuse un compte qui n’est pas un contrôleur actif', async () => {
     const { service, prisma } = preparer({ actif: false });
-    await expect(service.affecterControleur('seance-1', { controleurId: 'ctrl-1' }, user))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.affecterControleur('seance-1', { controleurId: 'ctrl-1' }, user)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
   it('refuse de changer la tournée d’une année clôturée', async () => {
     const { service, prisma } = preparer({ cloturee: true });
-    await expect(service.affecterControleur('seance-1', { controleurId: 'ctrl-1' }, user))
-      .rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.affecterControleur('seance-1', { controleurId: 'ctrl-1' }, user)).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 

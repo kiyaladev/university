@@ -9,8 +9,27 @@ import { PREFIXE_SERVICE_ACTIF } from './parametres.service';
 
 /** Les services obligatoires portent aussi les archives et le rapprochement. */
 export const SERVICES = [
-  { id: 'presence', obligatoire: true, pilote: false, prefixes: ['controles', 'seances', 'creneaux', 'attestation', 'justificatifs', 'rapports', 'impression', 'export'] },
-  { id: 'scolarite', obligatoire: true, pilote: false, prefixes: ['etudiants', 'inscriptions', 'inscription-publique', 'frais', 'evaluations', 'notes', 'deliberations', 'portail'] },
+  {
+    id: 'presence',
+    obligatoire: true,
+    pilote: false,
+    prefixes: ['controles', 'seances', 'creneaux', 'attestation', 'justificatifs', 'rapports', 'impression', 'export'],
+  },
+  {
+    id: 'scolarite',
+    obligatoire: true,
+    pilote: false,
+    prefixes: [
+      'etudiants',
+      'inscriptions',
+      'inscription-publique',
+      'frais',
+      'evaluations',
+      'notes',
+      'deliberations',
+      'portail',
+    ],
+  },
   { id: 'finances', obligatoire: true, pilote: false, prefixes: ['paiements', 'feuilles-paie', 'recettes'] },
   { id: 'documentsEtudiants', obligatoire: true, pilote: false, prefixes: ['documents-demande', 'attestations'] },
   { id: 'reclamations', obligatoire: false, pilote: false, prefixes: ['reclamations'] },
@@ -31,18 +50,22 @@ export const SERVICES = [
   { id: 'notifications', obligatoire: false, pilote: true, prefixes: ['notifications'] },
   { id: 'rectorat', obligatoire: false, pilote: true, prefixes: ['rectorat'] },
 ] as const;
-const IDS = SERVICES.map(s => s.id);
+const IDS = SERVICES.map((s) => s.id);
 const IDS_VALIDES = new Set<string>(IDS);
 const PREFIXE = PREFIXE_SERVICE_ACTIF;
 
 export class ServiceActifDto {
   @IsIn(IDS) id: string;
   @Transform(({ obj, key }) => obj[key], { toClassOnly: true })
-  @IsBoolean() actif: boolean;
+  @IsBoolean()
+  actif: boolean;
 }
 export class ServicesActifsDto {
-  @IsArray() @ArrayMaxSize(SERVICES.length) @ArrayUnique((s: ServiceActifDto) => s.id)
-  @ValidateNested({ each: true }) @Type(() => ServiceActifDto)
+  @IsArray()
+  @ArrayMaxSize(SERVICES.length)
+  @ArrayUnique((s: ServiceActifDto) => s.id)
+  @ValidateNested({ each: true })
+  @Type(() => ServiceActifDto)
   services: ServiceActifDto[];
 }
 
@@ -75,8 +98,8 @@ export class ServicesActifsService {
     const generation = this.generation;
     const chargement = this.prisma.parametre
       .findMany({ where: { cle: { startsWith: PREFIXE } }, select: { cle: true, valeur: true } })
-      .then(rows => {
-        const valeurs = new Map(rows.map(r => [r.cle, r.valeur]));
+      .then((rows) => {
+        const valeurs = new Map(rows.map((r) => [r.cle, r.valeur]));
         if (generation === this.generation) {
           this.cache = { valeurs, expireA: Date.now() + DUREE_CACHE_SERVICES_MS };
         }
@@ -99,16 +122,26 @@ export class ServicesActifsService {
   async liste() {
     const valeurs = await this.valeurs();
     // Les installations existantes gardent leurs accès jusqu'au choix ADMIN.
-    return SERVICES.map(({ id, obligatoire, pilote }) => ({ id, obligatoire, pilote, actif: obligatoire || valeurs.get(PREFIXE + id) !== 'false' }));
+    return SERVICES.map(({ id, obligatoire, pilote }) => ({
+      id,
+      obligatoire,
+      pilote,
+      actif: obligatoire || valeurs.get(PREFIXE + id) !== 'false',
+    }));
   }
   async actif(id: string) {
-    const service = SERVICES.find(s => s.id === id);
+    const service = SERVICES.find((s) => s.id === id);
     if (!service || service.obligatoire) return true;
     return (await this.valeurs()).get(PREFIXE + id) !== 'false';
   }
   async enregistrer(dto: ServicesActifsDto, user: AuthUser) {
-    if (dto.services.some(s => !IDS_VALIDES.has(s.id) || typeof s.actif !== 'boolean') || new Set(dto.services.map(s => s.id)).size !== dto.services.length) throw new BadRequestException(t('common.invalidServices'));
-    if (dto.services.some(s => !s.actif && SERVICES.find(def => def.id === s.id)?.obligatoire)) throw new BadRequestException(t('common.requiredService'));
+    if (
+      dto.services.some((s) => !IDS_VALIDES.has(s.id) || typeof s.actif !== 'boolean') ||
+      new Set(dto.services.map((s) => s.id)).size !== dto.services.length
+    )
+      throw new BadRequestException(t('common.invalidServices'));
+    if (dto.services.some((s) => !s.actif && SERVICES.find((def) => def.id === s.id)?.obligatoire))
+      throw new BadRequestException(t('common.requiredService'));
     try {
       await this.ecrire(dto, user);
     } finally {
@@ -119,20 +152,21 @@ export class ServicesActifsService {
   }
 
   private async ecrire(dto: ServicesActifsDto, user: AuthUser) {
-    await this.prisma.$transaction(async tx => {
+    await this.prisma.$transaction(async (tx) => {
       for (const service of dto.services) {
         const cle = PREFIXE + service.id;
         const avant = await tx.parametre.findUnique({ where: { cle }, select: { valeur: true } });
         if ((avant?.valeur !== 'false') === service.actif) continue;
-        await tx.parametre.upsert({ where: { cle }, create: { cle, valeur: String(service.actif) }, update: { valeur: String(service.actif) } });
-        await journaliser(
-          tx,
-          user,
-          'SERVICE_ACTIVATION_MODIFIEE',
-          'Parametre',
-          cle,
-          { service: service.id, avant: { actif: avant?.valeur !== 'false' }, apres: { actif: service.actif } },
-        );
+        await tx.parametre.upsert({
+          where: { cle },
+          create: { cle, valeur: String(service.actif) },
+          update: { valeur: String(service.actif) },
+        });
+        await journaliser(tx, user, 'SERVICE_ACTIVATION_MODIFIEE', 'Parametre', cle, {
+          service: service.id,
+          avant: { actif: avant?.valeur !== 'false' },
+          apres: { actif: service.actif },
+        });
       }
     });
   }

@@ -13,10 +13,7 @@ import { AttestationsModule } from '../attestations/attestations.module';
  * à la main dans le service.
  */
 @Module({
-  imports: [
-    MobileMoneyModule,
-    AttestationsModule,
-  ],
+  imports: [MobileMoneyModule, AttestationsModule],
   controllers: [DocumentsDemandeController],
   providers: [DocumentsDemandeService],
   exports: [DocumentsDemandeService],

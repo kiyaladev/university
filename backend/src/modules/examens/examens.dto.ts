@@ -1,12 +1,4 @@
-import {
-  IsDateString,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { StatutExamen, TypeExamen } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 

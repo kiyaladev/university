@@ -10,16 +10,12 @@ function fichiersTs(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entree) => {
     const absolu = path.join(dir, entree.name);
     if (entree.isDirectory()) return fichiersTs(absolu);
-    return entree.isFile() && entree.name.endsWith('.ts') && !/\.(spec|test)\.ts$/.test(entree.name)
-      ? [absolu]
-      : [];
+    return entree.isFile() && entree.name.endsWith('.ts') && !/\.(spec|test)\.ts$/.test(entree.name) ? [absolu] : [];
   });
 }
 
 function estDecorateur(noeud: ts.Decorator, nom: string): boolean {
-  const expression = ts.isCallExpression(noeud.expression)
-    ? noeud.expression.expression
-    : noeud.expression;
+  const expression = ts.isCallExpression(noeud.expression) ? noeud.expression.expression : noeud.expression;
   return ts.isIdentifier(expression) && expression.text === nom;
 }
 
@@ -31,7 +27,7 @@ describe('métadonnées des routes imprimables protégées', () => {
       const source = ts.createSourceFile(fichier, fs.readFileSync(fichier, 'utf8'), ts.ScriptTarget.Latest, true);
       for (const declaration of source.statements.filter(ts.isClassDeclaration)) {
         for (const membre of declaration.members.filter(ts.isMethodDeclaration)) {
-          const decorateurs = ts.canHaveDecorators(membre) ? ts.getDecorators(membre) ?? [] : [];
+          const decorateurs = ts.canHaveDecorators(membre) ? (ts.getDecorators(membre) ?? []) : [];
           if (!decorateurs.some((decorateur) => estDecorateur(decorateur, 'ProtectedDocument'))) continue;
           if (!declaration.name || !ts.isIdentifier(membre.name)) continue;
           routes.push({

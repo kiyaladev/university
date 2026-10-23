@@ -1,16 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Ip,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request, Response } from 'express';
@@ -18,13 +6,7 @@ import { AuthUser, CurrentUser, Roles, ProtectedDocument } from '../../common/de
 import { baseApplicative } from '../../common/utils';
 import { ElectionsService } from './elections.service';
 import { jetonImprimable } from '../../common/jeton-imprimable';
-import {
-  CreateCandidatDto,
-  CreateElectionDto,
-  ElectionQueryDto,
-  UpdateElectionDto,
-  VoterDto,
-} from './elections.dto';
+import { CreateCandidatDto, CreateElectionDto, ElectionQueryDto, UpdateElectionDto, VoterDto } from './elections.dto';
 
 /**
  * Plateforme d'élection des délégués et représentants.
@@ -75,11 +57,7 @@ export class ElectionsController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id')
-  modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdateElectionDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifier(@Param('id') id: string, @Body() dto: UpdateElectionDto, @CurrentUser() user: AuthUser) {
     return this.service.modifier(id, dto, user);
   }
 
@@ -108,34 +86,30 @@ export class ElectionsController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Post(':id/candidats')
-  ajouterCandidat(
-    @Param('id') id: string,
-    @Body() dto: CreateCandidatDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  ajouterCandidat(@Param('id') id: string, @Body() dto: CreateCandidatDto, @CurrentUser() user: AuthUser) {
     return this.service.ajouterCandidat(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Delete(':id/candidats/:candidId')
-  supprimerCandidat(
-    @Param('id') id: string,
-    @Param('candidId') candidId: string,
-    @CurrentUser() user: AuthUser,
-  ) {
+  supprimerCandidat(@Param('id') id: string, @Param('candidId') candidId: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimerCandidat(id, candidId, user);
   }
 
   @Post('vote')
-  voter(
-    @Body() dto: VoterDto,
-    @CurrentUser() user: AuthUser,
-    @Ip() ip: string,
-  ) {
+  voter(@Body() dto: VoterDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
     return this.service.voter(dto, user, ip);
   }
 
-  @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.ENSEIGNANT, Role.CONTROLEUR, Role.ETUDIANT)
+  @ProtectedDocument(
+    Role.ADMIN,
+    Role.SCOLARITE,
+    Role.DIRECTION,
+    Role.CHEF_DEPARTEMENT,
+    Role.ENSEIGNANT,
+    Role.CONTROLEUR,
+    Role.ETUDIANT,
+  )
   @Get(':id/imprimer-bulletin')
   async imprimerBulletin(
     @Param('id') id: string,

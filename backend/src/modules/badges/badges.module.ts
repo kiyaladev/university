@@ -10,9 +10,7 @@ import { BadgesService } from './badges.service';
  * main — même motif que les modules attestations / formations / rapports.
  */
 @Module({
-  imports: [
-    ParametresModule,
-  ],
+  imports: [ParametresModule],
   controllers: [BadgesController],
   providers: [BadgesService],
   exports: [BadgesService],

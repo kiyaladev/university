@@ -10,16 +10,19 @@ describe('ParametresService — règles de pointage minimales', () => {
     };
     const service = new ParametresService(prisma);
 
-    await expect(service.reglesPointage()).resolves.toEqual([
-      { cle: 'ATTESTATION_OBLIGATOIRE', valeur: 'false' },
-    ]);
+    await expect(service.reglesPointage()).resolves.toEqual([{ cle: 'ATTESTATION_OBLIGATOIRE', valeur: 'false' }]);
     expect(prisma.parametre.findUnique).toHaveBeenCalledTimes(1);
   });
 
   it('réserve la liste complète à ADMIN et limite la route utilisée au pointage', () => {
     expect(Reflect.getMetadata(ROLES_KEY, ParametresController.prototype.liste)).toEqual([Role.ADMIN]);
     expect(Reflect.getMetadata(ROLES_KEY, ParametresController.prototype.reglesPointage)).toEqual([
-      Role.ADMIN, Role.SCOLARITE, Role.DIRECTION, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT,
+      Role.ADMIN,
+      Role.SCOLARITE,
+      Role.DIRECTION,
+      Role.CHEF_DEPARTEMENT,
+      Role.CONTROLEUR,
+      Role.ENSEIGNANT,
     ]);
   });
 
@@ -31,36 +34,49 @@ describe('ParametresService — règles de pointage minimales', () => {
     };
     const tx: any = {
       parametre: {
-        findUnique: jest.fn(({ where }: any) => Promise.resolve(
-          anciennesValeurs[where.cle] === undefined ? null : { cle: where.cle, valeur: anciennesValeurs[where.cle] },
-        )),
-        upsert: jest.fn(({ where, create }: any) => Promise.resolve({
-          cle: where.cle,
-          valeur: create.valeur,
-        })),
+        findUnique: jest.fn(({ where }: any) =>
+          Promise.resolve(
+            anciennesValeurs[where.cle] === undefined ? null : { cle: where.cle, valeur: anciennesValeurs[where.cle] },
+          ),
+        ),
+        upsert: jest.fn(({ where, create }: any) =>
+          Promise.resolve({
+            cle: where.cle,
+            valeur: create.valeur,
+          }),
+        ),
       },
       auditLog: { create: auditCreate },
     };
     const prisma: any = {
       $transaction: jest.fn((operation) => operation(tx)),
-      parametre: { findMany: jest.fn().mockResolvedValue([
-        { cle: 'ABSENCE_APRES_MIN', valeur: '45' },
-        { cle: 'CLE_INCONNUE', valeur: 'nouveau-secret' },
-      ]) },
+      parametre: {
+        findMany: jest.fn().mockResolvedValue([
+          { cle: 'ABSENCE_APRES_MIN', valeur: '45' },
+          { cle: 'CLE_INCONNUE', valeur: 'nouveau-secret' },
+        ]),
+      },
       auditLog: { create: jest.fn() },
     };
     const service = new ParametresService(prisma);
 
-    await service.enregistrer({ parametres: [
-      { cle: 'ABSENCE_APRES_MIN', valeur: '45' },
-      { cle: 'CLE_INCONNUE', valeur: 'nouveau-secret', description: 'description privée' },
-    ] }, { id: 'admin-1' } as any);
+    await service.enregistrer(
+      {
+        parametres: [
+          { cle: 'ABSENCE_APRES_MIN', valeur: '45' },
+          { cle: 'CLE_INCONNUE', valeur: 'nouveau-secret', description: 'description privée' },
+        ],
+      },
+      { id: 'admin-1' } as any,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(auditCreate).toHaveBeenCalledTimes(2);
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
     expect(JSON.parse(auditCreate.mock.calls[0][0].data.details)).toMatchObject({
-      cle: 'ABSENCE_APRES_MIN', avant: { valeur: '30' }, apres: { valeur: '45' },
+      cle: 'ABSENCE_APRES_MIN',
+      avant: { valeur: '30' },
+      apres: { valeur: '45' },
     });
     const inconnu = auditCreate.mock.calls[1][0].data;
     expect(inconnu).toMatchObject({ userId: 'admin-1', action: 'PARAMETRE_MODIFIE', entiteId: 'CLE_INCONNUE' });
@@ -68,7 +84,8 @@ describe('ParametresService — règles de pointage minimales', () => {
     expect(inconnu.details).not.toContain('nouveau-secret');
     expect(inconnu.details).not.toContain('description privée');
     expect(JSON.parse(inconnu.details)).toMatchObject({
-      avant: { configure: true }, apres: { configure: true },
+      avant: { configure: true },
+      apres: { configure: true },
     });
   });
 
@@ -83,8 +100,9 @@ describe('ParametresService — règles de pointage minimales', () => {
     const prisma: any = { $transaction: jest.fn((operation) => operation(tx)) };
     const service = new ParametresService(prisma);
 
-    await expect(service.enregistrer({ parametres: [{ cle: 'TOLERANCE_RETARD_MIN', valeur: '20' }] }))
-      .rejects.toThrow('audit indisponible');
+    await expect(service.enregistrer({ parametres: [{ cle: 'TOLERANCE_RETARD_MIN', valeur: '20' }] })).rejects.toThrow(
+      'audit indisponible',
+    );
     expect(tx.parametre.upsert).toHaveBeenCalledTimes(1);
   });
 });

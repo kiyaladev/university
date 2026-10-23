@@ -3,11 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { MoyensAttestationService } from './moyens-attestation.service';
-import {
-  DefinirCodePinDto,
-  EnrolerAppareilDto,
-  EnrolerEmpreinteDto,
-} from './moyens-attestation.dto';
+import { DefinirCodePinDto, EnrolerAppareilDto, EnrolerEmpreinteDto } from './moyens-attestation.dto';
 
 /**
  * Moyens d'attestation d'un enseignant. Ils sont administrés par
@@ -25,21 +21,13 @@ export class MoyensAttestationController {
   /** Consulté par l'écran de pointage pour savoir quoi proposer au contrôleur. */
   @Roles(...GESTION, Role.CONTROLEUR)
   @Get('enseignants/:id/moyens')
-  moyens(
-    @Param('id') id: string,
-    @Query('seanceId') seanceId: string | undefined,
-    @CurrentUser() user: AuthUser,
-  ) {
+  moyens(@Param('id') id: string, @Query('seanceId') seanceId: string | undefined, @CurrentUser() user: AuthUser) {
     return this.service.moyens(id, user, seanceId);
   }
 
   @Roles(...GESTION)
   @Put('enseignants/:id/code-pin')
-  definirPin(
-    @Param('id') id: string,
-    @Body() dto: DefinirCodePinDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  definirPin(@Param('id') id: string, @Body() dto: DefinirCodePinDto, @CurrentUser() user: AuthUser) {
     return this.service.definirCodePin(id, dto, user);
   }
 
@@ -57,11 +45,7 @@ export class MoyensAttestationController {
 
   @Roles(...GESTION)
   @Put('enseignants/:id/empreinte')
-  enrolerEmpreinte(
-    @Param('id') id: string,
-    @Body() dto: EnrolerEmpreinteDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  enrolerEmpreinte(@Param('id') id: string, @Body() dto: EnrolerEmpreinteDto, @CurrentUser() user: AuthUser) {
     return this.service.enrolerEmpreinte(id, dto, user);
   }
 

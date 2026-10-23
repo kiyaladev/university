@@ -67,17 +67,12 @@ export class OtpClient {
       });
       const donnees = (await reponse.json().catch(() => ({}))) as T & { error?: string };
       if (!reponse.ok) {
-        this.journal.warn(
-          `Passerelle ${chemin} : HTTP ${reponse.status}`,
-        );
+        this.journal.warn(`Passerelle ${chemin} : HTTP ${reponse.status}`);
         return null;
       }
       return donnees;
     } catch (erreur) {
-      const motif =
-        erreur instanceof Error && erreur.name === 'AbortError'
-          ? 'délai dépassé (8 s)'
-          : 'injoignable';
+      const motif = erreur instanceof Error && erreur.name === 'AbortError' ? 'délai dépassé (8 s)' : 'injoignable';
       this.journal.warn(`Passerelle ${chemin} ${motif}`);
       return null;
     } finally {
@@ -108,7 +103,8 @@ export class OtpClient {
 
   async envoyerSms(telephone: string, message: string): Promise<ReponseEnvoiOtp> {
     const reponse = await this.poster<ReponseEnvoiOtp>('/api/sms/send', {
-      phone: numerique(telephone), message,
+      phone: numerique(telephone),
+      message,
     });
     if (!reponse) return { ok: false, raison: t('sms.gatewayUnavailable') };
     if (typeof reponse.ok !== 'boolean' || (reponse.ok && !Number.isSafeInteger(reponse.requestId))) {
@@ -119,10 +115,12 @@ export class OtpClient {
 
   async verifier(telephone: string, code: string): Promise<ReponseVerificationOtp> {
     const reponse = await this.poster<{ valid?: boolean; reason?: string; remainingAttempts?: number }>(
-      '/api/otp/verify', {
-      phone: numerique(telephone),
-      code,
-    });
+      '/api/otp/verify',
+      {
+        phone: numerique(telephone),
+        code,
+      },
+    );
     if (!reponse || typeof reponse.valid !== 'boolean') {
       return { valid: false, raison: 'passerelle_injoignable', tentativesRestantes: 0 };
     }
@@ -130,7 +128,8 @@ export class OtpClient {
       valid: reponse.valid,
       ...(typeof reponse.reason === 'string' ? { raison: reponse.reason } : {}),
       ...(Number.isSafeInteger(reponse.remainingAttempts) && reponse.remainingAttempts! >= 0
-        ? { tentativesRestantes: reponse.remainingAttempts } : {}),
+        ? { tentativesRestantes: reponse.remainingAttempts }
+        : {}),
     };
   }
 }

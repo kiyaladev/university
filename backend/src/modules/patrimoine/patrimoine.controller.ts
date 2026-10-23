@@ -4,18 +4,7 @@
  * Routes publiques : résolution par QR (scan terrain) et impression
  * d'étiquette (la fenêtre d'impression n'envoie pas l'Authorization).
  */
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Role } from '@prisma/client';
@@ -61,11 +50,7 @@ export class PatrimoineController {
 
   @Roles(...ROLES_GESTION)
   @Put('categories/:id')
-  modifierCategorie(
-    @Param('id') id: string,
-    @Body() dto: UpdateCategorieDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifierCategorie(@Param('id') id: string, @Body() dto: UpdateCategorieDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierCategorie(id, dto, user);
   }
 
@@ -101,11 +86,7 @@ export class PatrimoineController {
    */
   @ProtectedDocument(Role.ADMIN, Role.SCOLARITE, Role.DIRECTION)
   @Get('equipements/:id/imprimer')
-  async imprimerEtiquette(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ) {
+  async imprimerEtiquette(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
     const base = baseApplicative(req);
     res.type('html').send(await this.service.imprimerEtiquette(id, jetonImprimable(req), base));
   }
@@ -123,11 +104,7 @@ export class PatrimoineController {
 
   @Roles(...ROLES_GESTION)
   @Put('equipements/:id')
-  modifierEquipement(
-    @Param('id') id: string,
-    @Body() dto: UpdateEquipementDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  modifierEquipement(@Param('id') id: string, @Body() dto: UpdateEquipementDto, @CurrentUser() user: AuthUser) {
     return this.service.modifierEquipement(id, dto, user);
   }
 
@@ -147,21 +124,13 @@ export class PatrimoineController {
 
   @Roles(...ROLES_GESTION)
   @Post('equipements/:id/reparation')
-  declarerReparation(
-    @Param('id') id: string,
-    @Body() dto: DeclarationReparationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  declarerReparation(@Param('id') id: string, @Body() dto: DeclarationReparationDto, @CurrentUser() user: AuthUser) {
     return this.service.declarerReparation(id, dto, user);
   }
 
   @Roles(...ROLES_GESTION)
   @Post('equipements/:id/reparation/resoudre')
-  resoudreReparation(
-    @Param('id') id: string,
-    @Body() dto: ResolutionReparationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  resoudreReparation(@Param('id') id: string, @Body() dto: ResolutionReparationDto, @CurrentUser() user: AuthUser) {
     return this.service.resoudreReparation(id, dto, user);
   }
 

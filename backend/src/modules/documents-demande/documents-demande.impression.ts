@@ -14,9 +14,9 @@ const STYLE = `
 export function demandeDocumentHtml(demande: any, etablissement: Etablissement): string {
   const numero = echapper(demande.numero);
   const type = echapper(demande.type);
-  const etudiant = echapper(demande.etudiant
-    ? `${demande.etudiant.prenom ?? ''} ${demande.etudiant.nom ?? ''}`.trim()
-    : '—');
+  const etudiant = echapper(
+    demande.etudiant ? `${demande.etudiant.prenom ?? ''} ${demande.etudiant.nom ?? ''}`.trim() : '—',
+  );
   const matricule = echapper(demande.etudiant?.matricule ?? '—');
   const inscription = echapper(demande.inscription?.numero ?? '—');
   return pageA4({

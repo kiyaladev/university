@@ -38,10 +38,12 @@ export class PointageDto {
   /** Laissé vide : déduit automatiquement de l'heure d'arrivée. */
   @IsOptional() @IsEnum(StatutPresence) statut?: StatutPresence;
 
-  @IsOptional() @Matches(HEURE, { message: 'Heure d’arrivée au format HH:mm' })
+  @IsOptional()
+  @Matches(HEURE, { message: 'Heure d’arrivée au format HH:mm' })
   heureArrivee?: string;
 
-  @IsOptional() @Matches(HEURE, { message: 'Heure de fin au format HH:mm' })
+  @IsOptional()
+  @Matches(HEURE, { message: 'Heure de fin au format HH:mm' })
   heureFinReelle?: string;
 
   @IsOptional() @IsInt() @Min(0) effectifPresent?: number;
@@ -56,17 +58,22 @@ export class PointageDto {
   // --- Attestation donnée par l'enseignant sur l'appareil du contrôleur,
   //     en salle (une seule de ces preuves suffit)
   /** Signature manuscrite tracée sur l'écran du contrôleur. */
-  @IsOptional() @IsString() @MaxLength(1_000_000) @Matches(SIGNATURE_PNG)
+  @IsOptional()
+  @IsString()
+  @MaxLength(1_000_000)
+  @Matches(SIGNATURE_PNG)
   signatureBase64?: string;
 
   /** Code personnel de l'enseignant saisi sur l'écran du contrôleur. */
-  @IsOptional() @Matches(/^\d{4,6}$/, { message: 'Le code personnel comporte 4 à 6 chiffres' })
+  @IsOptional()
+  @Matches(/^\d{4,6}$/, { message: 'Le code personnel comporte 4 à 6 chiffres' })
   codePinEnseignant?: string;
 
   /** Résultat signé par la passerelle biométrique (lecteur d'empreintes). */
-  @IsOptional() @ValidateNested() @Type(() => PreuveEmpreinteDto)
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PreuveEmpreinteDto)
   empreinte?: PreuveEmpreinteDto;
-
 
   /** Cours assuré par un remplaçant. */
   @IsOptional() @IsUUID() enseignantRemplacantId?: string;
@@ -79,7 +86,9 @@ export class PointageDto {
 export class UpdatePointageDto extends PartialType(PointageDto) {}
 
 export class SyncPointagesDto {
-  @IsArray() @ValidateNested({ each: true }) @Type(() => PointageDto)
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PointageDto)
   pointages: PointageDto[];
 }
 

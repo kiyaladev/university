@@ -46,9 +46,7 @@ export class AuthService {
 
     if (user?.verrouilleJusqua && user.verrouilleJusqua > new Date()) {
       const minutes = Math.ceil((user.verrouilleJusqua.getTime() - Date.now()) / 60000);
-      throw new UnauthorizedException(
-        `Trop de tentatives : compte bloqué pendant encore ${minutes} minute(s).`,
-      );
+      throw new UnauthorizedException(`Trop de tentatives : compte bloqué pendant encore ${minutes} minute(s).`);
     }
 
     if (!user || !(await bcrypt.compare(dto.password, user.password))) {
@@ -60,7 +58,7 @@ export class AuthService {
     if (!user.actif) {
       throw new UnauthorizedException(t('auth.compte_desactive_contactez_l_administrateur'));
     }
-    if (process.env.NODE_ENV === 'production' && await motDePasseDemo(user.password)) {
+    if (process.env.NODE_ENV === 'production' && (await motDePasseDemo(user.password))) {
       throw new UnauthorizedException(t('auth.identifiants_incorrects'));
     }
 

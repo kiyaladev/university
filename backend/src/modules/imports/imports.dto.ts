@@ -1,8 +1,19 @@
 import 'reflect-metadata';
 import { Transform, Type } from 'class-transformer';
 import {
-  IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength,
-  Matches, Max, Min,
+  IsBoolean,
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  Matches,
+  Max,
+  Min,
 } from 'class-validator';
 import { StatutEnseignant, TypeCours } from '@prisma/client';
 

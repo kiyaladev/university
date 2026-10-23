@@ -78,9 +78,8 @@ export class DocumentsAttestation {
       errorCorrectionLevel: 'M',
     });
 
-    const statut = a.statut === StatutAttestation.REVOQUEE
-      ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>'
-      : '';
+    const statut =
+      a.statut === StatutAttestation.REVOQUEE ? '<div class="revoque">DOCUMENT RÉVOQUÉ — SANS VALEUR LÉGALE</div>' : '';
 
     return pageA4({
       titre: `${libelle} ${a.numero}`,
@@ -134,7 +133,9 @@ export class DocumentsAttestation {
   private parcours(a: AttestationImprimable): string {
     const morceaux: string[] = [];
     if (a.promotion?.nom) {
-      morceaux.push(`${echapper(a.promotion.nom)}${a.promotion.filiere?.nom ? ` (${echapper(a.promotion.filiere.nom)})` : ''}`);
+      morceaux.push(
+        `${echapper(a.promotion.nom)}${a.promotion.filiere?.nom ? ` (${echapper(a.promotion.filiere.nom)})` : ''}`,
+      );
     }
     if (a.annee?.libelle) {
       morceaux.push(`année académique ${echapper(a.annee.libelle)}`);
@@ -142,9 +143,7 @@ export class DocumentsAttestation {
     if (a.inscription?.numero) {
       morceaux.push(`inscription n° ${echapper(a.inscription.numero)}`);
     }
-    return morceaux.length
-      ? `est inscrit(e) ${morceaux.join(', ')}`
-      : 'est un(e) étudiant(e) de cet établissement';
+    return morceaux.length ? `est inscrit(e) ${morceaux.join(', ')}` : 'est un(e) étudiant(e) de cet établissement';
   }
 
   private finalite(a: AttestationImprimable): string {

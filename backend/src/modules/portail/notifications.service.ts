@@ -1,26 +1,11 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
-import {
-  DecisionJury,
-  Prisma,
-  StatutDeliberation,
-  StatutInscription,
-  StatutNotification,
-} from '@prisma/client';
+import { DecisionJury, Prisma, StatutDeliberation, StatutInscription, StatutNotification } from '@prisma/client';
 import { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { numerique } from './otp.client';
 import { SmsService } from './sms.service';
-import {
-  DiffusionNotificationDto,
-  DiffusionResultatsDto,
-  ListeNotificationsQueryDto,
-} from './portail.dto';
+import { DiffusionNotificationDto, DiffusionResultatsDto, ListeNotificationsQueryDto } from './portail.dto';
 
 /**
  * Notifications SMS : diffusion manuelle ou automatique des résultats de
@@ -149,9 +134,7 @@ export class NotificationsService {
       .map((c) => {
         const header = t('sms.resultsHeader', { promotion: libellePromotion });
         const body = t('sms.resultsBody', { name: c.nom, average: c.ligne.moyenne.toFixed(2) });
-        const decisionLabel = c.ligne.decision === DecisionJury.ADMIS
-          ? t('sms.resultsAdmis')
-          : t('sms.resultsAjourne');
+        const decisionLabel = c.ligne.decision === DecisionJury.ADMIS ? t('sms.resultsAdmis') : t('sms.resultsAjourne');
         const rankLabel = c.ligne.rang != null ? t('sms.resultsRank', { rank: c.ligne.rang }) : '';
         const corps = `${header} : ${body} — ${decisionLabel}${rankLabel}`;
         return {
@@ -250,15 +233,15 @@ export class NotificationsService {
    * Retourne un tableau de { date, EN_ATTENTE, ENVOYEE, ECHOUE } par jour calendaire.
    * Les jours sans envoi sont retournés avec 0 pour assurer la continuité du graphique.
    */
-  async repartitionQuotidienne(jours: number): Promise<Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>> {
+  async repartitionQuotidienne(
+    jours: number,
+  ): Promise<Array<{ date: string; EN_ATTENTE: number; ENVOYEE: number; ECHOUE: number }>> {
     const depuis = new Date();
     depuis.setUTCDate(depuis.getUTCDate() - jours + 1);
     depuis.setUTCHours(0, 0, 0, 0);
 
     // Postgres date_trunc pour grouper par jour (UTC) — portable, performant
-    const lignes = await this.prisma.$queryRaw<
-      Array<{ jour: Date; statut: StatutNotification; n: bigint }>
-    >`
+    const lignes = await this.prisma.$queryRaw<Array<{ jour: Date; statut: StatutNotification; n: bigint }>>`
       SELECT date_trunc('day', "createdAt") AS jour,
              statut,
              COUNT(*)::bigint AS n

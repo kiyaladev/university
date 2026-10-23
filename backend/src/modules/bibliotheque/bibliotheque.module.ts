@@ -16,9 +16,7 @@ import { RechercheService } from './recherche.service';
  *    doublons + tableau de bord + acquittement humain).
  */
 @Module({
-  imports: [
-    AuthModule,
-  ],
+  imports: [AuthModule],
   controllers: [BibliothequeController],
   providers: [BibliothequeService, RechercheService, PlagiatService],
   exports: [BibliothequeService, RechercheService, PlagiatService],

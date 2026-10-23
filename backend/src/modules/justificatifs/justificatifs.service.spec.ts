@@ -22,10 +22,12 @@ describe('Périmètre des justificatifs', () => {
   it('borne la liste et retire la pièce jointe pour un enseignant', async () => {
     const { service, prisma } = preparer();
     await service.liste({ all: '1' } as any, enseignant);
-    expect(prisma.justificatif.findMany.mock.calls[0][0]).toEqual(expect.objectContaining({
-      where: { enseignantId: 'ens-1' },
-      select: expect.not.objectContaining({ piece: true }),
-    }));
+    expect(prisma.justificatif.findMany.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        where: { enseignantId: 'ens-1' },
+        select: expect.not.objectContaining({ piece: true }),
+      }),
+    );
     expect(prisma.justificatif.findMany.mock.calls[0][0].select.seance).toEqual({
       select: expect.objectContaining({ date: true, heureDebut: true, heureFin: true }),
     });
@@ -45,37 +47,47 @@ describe('Périmètre des justificatifs', () => {
   it('borne aussi le détail par enseignant et ne sélectionne pas la pièce', async () => {
     const { service, prisma } = preparer();
     await service.findOnePour('just-1', enseignant);
-    expect(prisma.justificatif.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'just-1', enseignantId: 'ens-1' },
-      select: expect.not.objectContaining({ piece: true }),
-    }));
+    expect(prisma.justificatif.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'just-1', enseignantId: 'ens-1' },
+        select: expect.not.objectContaining({ piece: true }),
+      }),
+    );
   });
 
   it('masque un justificatif appartenant à un autre enseignant', async () => {
     const { service, prisma } = preparer();
     prisma.justificatif.findFirst.mockResolvedValue(null);
     await expect(service.findOnePour('foreign', enseignant)).rejects.toThrow(NotFoundException);
-    expect(prisma.justificatif.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: { id: 'foreign', enseignantId: 'ens-1' },
-    }));
+    expect(prisma.justificatif.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'foreign', enseignantId: 'ens-1' },
+      }),
+    );
   });
 
   it('ignore le département demandé par un chef et borne sa liste à son profil', async () => {
     const { service, prisma } = preparer();
-    await service.liste({ departementId: 'dept-other' } as any, {
-      role: Role.CHEF_DEPARTEMENT,
+    await service.liste(
+      { departementId: 'dept-other' } as any,
+      {
+        role: Role.CHEF_DEPARTEMENT,
+        departementId: 'dept-own',
+        enseignantId: null,
+      } as any,
+    );
+    expect(prisma.justificatif.findMany.mock.calls[0][0].where.seance.affectation.promotion.filiere).toEqual({
       departementId: 'dept-own',
-      enseignantId: null,
-    } as any);
-    expect(prisma.justificatif.findMany.mock.calls[0][0].where.seance.affectation.promotion.filiere)
-      .toEqual({ departementId: 'dept-own' });
+    });
     expect(prisma.justificatif.findMany.mock.calls[0][0].where.enseignant).toBeUndefined();
   });
 
   it('borne aussi l’accès direct du chef par le département du cours', async () => {
     const { service, prisma } = preparer();
     await service.findOnePour('justificatif-1', {
-      role: Role.CHEF_DEPARTEMENT, departementId: 'dept-own', enseignantId: null,
+      role: Role.CHEF_DEPARTEMENT,
+      departementId: 'dept-own',
+      enseignantId: null,
     } as any);
     expect(prisma.justificatif.findFirst.mock.calls[0][0].where).toMatchObject({
       seance: { affectation: { promotion: { filiere: { departementId: 'dept-own' } } } },
@@ -86,14 +98,10 @@ describe('Périmètre des justificatifs', () => {
     const { service, prisma } = preparer();
     const chef = { role: Role.CHEF_DEPARTEMENT, departementId: 'dept-own', enseignantId: null } as any;
     await service.liste({ all: '1' } as any, chef);
-    expect(prisma.justificatif.findMany.mock.calls[0][0].select).toEqual(
-      expect.not.objectContaining({ piece: true }),
-    );
+    expect(prisma.justificatif.findMany.mock.calls[0][0].select).toEqual(expect.not.objectContaining({ piece: true }));
 
     await service.findOnePour('just-1', chef);
-    expect(prisma.justificatif.findFirst.mock.calls[0][0].select).toEqual(
-      expect.not.objectContaining({ piece: true }),
-    );
+    expect(prisma.justificatif.findFirst.mock.calls[0][0].select).toEqual(expect.not.objectContaining({ piece: true }));
   });
 
   it('n’inclut que l’identité utile de l’enseignant dans le registre du personnel', async () => {
@@ -117,40 +125,75 @@ describe('Périmètre des justificatifs', () => {
     const contexte = jest.spyOn(I18nContext, 'current').mockReturnValue({ t: () => 'Séance introuvable' } as any);
     const { service, prisma } = preparer();
     prisma.seance.findFirst.mockResolvedValue(null);
-    await expect(service.deposer({ seanceId: 'session-other', type: 'MALADIE', motif: 'motif' } as any, {
-      role: Role.CHEF_DEPARTEMENT, id: 'chef-1', departementId: 'dept-own', enseignantId: null,
-    } as any)).rejects.toThrow(BadRequestException);
-    expect(prisma.seance.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 'session-other',
-        affectation: { promotion: { filiere: { departementId: 'dept-own' } } },
-      },
-    }));
+    await expect(
+      service.deposer(
+        { seanceId: 'session-other', type: 'MALADIE', motif: 'motif' } as any,
+        {
+          role: Role.CHEF_DEPARTEMENT,
+          id: 'chef-1',
+          departementId: 'dept-own',
+          enseignantId: null,
+        } as any,
+      ),
+    ).rejects.toThrow(BadRequestException);
+    expect(prisma.seance.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'session-other',
+          affectation: { promotion: { filiere: { departementId: 'dept-own' } } },
+        },
+      }),
+    );
     contexte.mockRestore();
   });
 
   it('compare bien la fiche d’un enseignant à son profil sur un dépôt direct', async () => {
     const { service, prisma } = preparer();
     prisma.seance.findFirst.mockResolvedValue({ affectation: { enseignantId: 'ens-autre' } });
-    await expect(service.deposer({ seanceId: 'seance-1', type: 'MALADIE', motif: 'motif' } as any, {
-      role: Role.ENSEIGNANT, id: 'user-1', enseignantId: 'ens-1', departementId: null,
-    } as any)).rejects.toThrow();
+    await expect(
+      service.deposer(
+        { seanceId: 'seance-1', type: 'MALADIE', motif: 'motif' } as any,
+        {
+          role: Role.ENSEIGNANT,
+          id: 'user-1',
+          enseignantId: 'ens-1',
+          departementId: null,
+        } as any,
+      ),
+    ).rejects.toThrow();
   });
 
   it('fournit une erreur métier de repli hors contexte HTTP', async () => {
     const { service, prisma } = preparer();
     prisma.seance.findFirst.mockResolvedValue(null);
-    await expect(service.deposer({ seanceId: 'absente', type: 'MALADIE', motif: 'motif' } as any, {
-      role: Role.ADMIN, id: 'admin-1', enseignantId: null, departementId: null,
-    } as any)).rejects.toThrow(/introuvable/i);
+    await expect(
+      service.deposer(
+        { seanceId: 'absente', type: 'MALADIE', motif: 'motif' } as any,
+        {
+          role: Role.ADMIN,
+          id: 'admin-1',
+          enseignantId: null,
+          departementId: null,
+        } as any,
+      ),
+    ).rejects.toThrow(/introuvable/i);
   });
 
   it('ne laisse pas un chef traiter un justificatif hors de son département', async () => {
     const { service, prisma } = preparer();
     prisma.justificatif.findFirst.mockResolvedValue(null);
-    await expect(service.traiter('foreign', { statut: 'VALIDE' } as any, {
-      role: Role.CHEF_DEPARTEMENT, id: 'chef-1', departementId: 'dept-own', enseignantId: null,
-    } as any)).rejects.toThrow(NotFoundException);
+    await expect(
+      service.traiter(
+        'foreign',
+        { statut: 'VALIDE' } as any,
+        {
+          role: Role.CHEF_DEPARTEMENT,
+          id: 'chef-1',
+          departementId: 'dept-own',
+          enseignantId: null,
+        } as any,
+      ),
+    ).rejects.toThrow(NotFoundException);
     expect(prisma.justificatif.update).not.toHaveBeenCalled();
   });
 });

@@ -1,24 +1,10 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  Query,
-  Req,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { AuthUser, CurrentUser, Roles } from '../../common/decorators';
 import { QueryDto } from '../../common/dto';
-import {
-  CreateExamenDto,
-  ExamenQueryDto,
-  ScanExamenDto,
-  UpdateExamenStatutDto,
-} from './examens.dto';
+import { CreateExamenDto, ExamenQueryDto, ScanExamenDto, UpdateExamenStatutDto } from './examens.dto';
 import { ExamensService } from './examens.service';
 
 @ApiTags('Examens')
@@ -63,11 +49,7 @@ export class ExamensController {
 
   @Roles(Role.ADMIN, Role.SCOLARITE)
   @Put(':id/statut')
-  changerStatut(
-    @Param('id') id: string,
-    @Body() dto: UpdateExamenStatutDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  changerStatut(@Param('id') id: string, @Body() dto: UpdateExamenStatutDto, @CurrentUser() user: AuthUser) {
     return this.service.changerStatut(id, dto.statut, user);
   }
 
@@ -96,11 +78,7 @@ export class ExamensController {
    */
   @Roles(Role.ADMIN, Role.SCOLARITE, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Post('scan')
-  scan(
-    @Body() dto: ScanExamenDto,
-    @Req() req: Request,
-    @CurrentUser() user: AuthUser,
-  ) {
+  scan(@Body() dto: ScanExamenDto, @Req() req: Request, @CurrentUser() user: AuthUser) {
     const ip = (req.headers['x-forwarded-for'] as string) ?? req.socket.remoteAddress ?? undefined;
     return this.service.scanner(dto, ip, user);
   }

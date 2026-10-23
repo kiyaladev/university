@@ -20,12 +20,14 @@ export class ControleController {
 
   /** Scan du QR affiché dans la salle : renvoie la salle et ses séances du jour. */
   @Roles(...CONTROLEURS, Role.SCOLARITE)
-  @Get('salle/:token') parQr(@Param('token') token: string, @CurrentUser() user: AuthUser) {
+  @Get('salle/:token')
+  parQr(@Param('token') token: string, @CurrentUser() user: AuthUser) {
     return this.service.parQrSalle(token, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Get('audit') audit(@Query() query: AuditQueryDto) {
+  @Get('audit')
+  audit(@Query() query: AuditQueryDto) {
     return this.service.audit(query);
   }
 
@@ -35,32 +37,27 @@ export class ControleController {
 
   /** Pointage d'une séance en salle. */
   @Roles(...CONTROLEURS)
-  @Post() pointer(@Body() dto: PointageDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
+  @Post()
+  pointer(@Body() dto: PointageDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
     return this.service.pointer(dto, user, ip);
   }
 
   /** Envoi groupé des pointages saisis hors connexion. */
   @Roles(...CONTROLEURS)
-  @Post('sync') sync(
-    @Body() dto: SyncPointagesDto,
-    @CurrentUser() user: AuthUser,
-    @Ip() ip: string,
-  ) {
+  @Post('sync')
+  sync(@Body() dto: SyncPointagesDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
     return this.service.synchroniser(dto, user, ip);
   }
 
   @Roles(...CONTROLEURS)
-  @Put(':id') modifier(
-    @Param('id') id: string,
-    @Body() dto: UpdatePointageDto,
-    @CurrentUser() user: AuthUser,
-    @Ip() ip: string,
-  ) {
+  @Put(':id')
+  modifier(@Param('id') id: string, @Body() dto: UpdatePointageDto, @CurrentUser() user: AuthUser, @Ip() ip: string) {
     return this.service.modifier(id, dto, user, ip);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Delete(':id') supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  supprimer(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.supprimer(id, user);
   }
 }

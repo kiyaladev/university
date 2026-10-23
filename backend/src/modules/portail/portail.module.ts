@@ -11,8 +11,7 @@ import { OtpClient } from './otp.client';
  * étudiant, diffusion et historique des SMS.
  */
 @Module({
-  imports: [
-  ],
+  imports: [],
   controllers: [PortailController, NotificationsController],
   providers: [PortailService, NotificationsService, SmsService, OtpClient],
   exports: [PortailService, SmsService, OtpClient],

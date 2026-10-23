@@ -16,23 +16,12 @@
  * identifiants techniques, dates et présence des contenus — jamais le titre,
  * la description, l'URL du média, le nom de l'enseignant, ni qui a regardé.
  */
-import {
-  BadRequestException,
-  Injectable,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutVOD } from '@prisma/client';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import {
-  ArchiverVODDto,
-  CreateCoursVODDto,
-  EnregistrerVueDto,
-  UpdateCoursVODDto,
-  VodQueryDto,
-} from './vod.dto';
+import { ArchiverVODDto, CreateCoursVODDto, EnregistrerVueDto, UpdateCoursVODDto, VodQueryDto } from './vod.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { avantApres, journaliser } from '../../common/audit';
 
@@ -125,19 +114,27 @@ export class VodService {
 
   private lectureWhere(user: AuthUser): Prisma.CoursVODWhereInput {
     if (([Role.ADMIN, Role.SCOLARITE, Role.DIRECTION] as Role[]).includes(user.role)) return {};
-    if (user.role === Role.ETUDIANT) return {
-      statut: StatutVOD.EN_LIGNE,
-      OR: [{ public: true }, { inscription: { etudiantId: user.etudiantId ?? '__aucun__' } }],
-    };
-    if (user.role === Role.ENSEIGNANT) return { OR: [
-      { creeParId: user.id }, { enseignantId: user.enseignantId ?? '__aucun__' },
-      { public: true, statut: StatutVOD.EN_LIGNE },
-    ] };
+    if (user.role === Role.ETUDIANT)
+      return {
+        statut: StatutVOD.EN_LIGNE,
+        OR: [{ public: true }, { inscription: { etudiantId: user.etudiantId ?? '__aucun__' } }],
+      };
+    if (user.role === Role.ENSEIGNANT)
+      return {
+        OR: [
+          { creeParId: user.id },
+          { enseignantId: user.enseignantId ?? '__aucun__' },
+          { public: true, statut: StatutVOD.EN_LIGNE },
+        ],
+      };
     return { public: true, statut: StatutVOD.EN_LIGNE };
   }
 
   async trouverPour(id: string, user: AuthUser) {
-    const vod = await this.prisma.coursVOD.findFirst({ where: { id, AND: [this.lectureWhere(user)] }, include: VOD_INCLUDE });
+    const vod = await this.prisma.coursVOD.findFirst({
+      where: { id, AND: [this.lectureWhere(user)] },
+      include: VOD_INCLUDE,
+    });
     if (!vod) throw new NotFoundException(t('common.notFound'));
     return vod;
   }
@@ -264,10 +261,7 @@ export class VodService {
 
     const vods = await this.prisma.coursVOD.findMany({
       where: {
-        OR: [
-          { public: true },
-          { inscriptionId: { in: inscriptions.map((i) => i.id) } },
-        ],
+        OR: [{ public: true }, { inscriptionId: { in: inscriptions.map((i) => i.id) } }],
         statut: StatutVOD.EN_LIGNE,
       },
       include: {
@@ -325,7 +319,7 @@ export class VodService {
           description: dto.description ?? null,
           matiereId: dto.matiereId ?? null,
           seanceId: dto.seanceId ?? null,
-          enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : dto.enseignantId ?? null,
+          enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : (dto.enseignantId ?? null),
           type: dto.type,
           url: dto.url,
           thumbnailUrl: dto.thumbnailUrl ?? null,
@@ -352,7 +346,9 @@ export class VodService {
       ...(dto.description !== undefined ? { description: dto.description } : {}),
       ...(dto.matiereId !== undefined ? { matiereId: dto.matiereId } : {}),
       ...(dto.seanceId !== undefined ? { seanceId: dto.seanceId } : {}),
-      ...(dto.enseignantId !== undefined ? { enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : dto.enseignantId } : {}),
+      ...(dto.enseignantId !== undefined
+        ? { enseignantId: user.role === Role.ENSEIGNANT ? user.enseignantId : dto.enseignantId }
+        : {}),
       ...(dto.type !== undefined ? { type: dto.type } : {}),
       ...(dto.url !== undefined ? { url: dto.url } : {}),
       ...(dto.thumbnailUrl !== undefined ? { thumbnailUrl: dto.thumbnailUrl } : {}),
@@ -395,7 +391,9 @@ export class VodService {
       const avant = await this.verrouiller(tx, id);
       this.verifierAuteur(avant, user);
       if (avant.statut !== StatutVOD.BROUILLON && avant.statut !== StatutVOD.HORS_LIGNE) {
-        throw new BadRequestException(t('vod.cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors', { statut: avant.statut }));
+        throw new BadRequestException(
+          t('vod.cette_ressource_est_deja_vod_statut_seul_un_brouillon_ou_un_hors', { statut: avant.statut }),
+        );
       }
       const miseAJour = await tx.coursVOD.update({
         where: { id },
@@ -457,8 +455,7 @@ export class VodService {
     await this.trouverPour(id, user);
     const dureeSignalee = Math.max(0, Math.floor(dto.dureeSecondes || 0));
     const positionSignalee = Math.max(0, Math.floor(dto.positionSecondes || 0));
-    const termineAuto =
-      dureeSignalee > 0 && positionSignalee / dureeSignalee >= SEUIL_COMPLET;
+    const termineAuto = dureeSignalee > 0 && positionSignalee / dureeSignalee >= SEUIL_COMPLET;
     const termine = dto.termine ?? termineAuto;
 
     // La ligne et les compteurs évoluent ensemble. Les incréments SQL

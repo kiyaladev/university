@@ -9,13 +9,7 @@
  *   CODE_PIN  code personnel composé sur l'écran du contrôleur
  *   SIGNATURE signature manuscrite tracée sur l'écran du contrôleur
  */
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { AttestationMode, Role } from '@prisma/client';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -24,11 +18,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ParametresService } from '../parametres/parametres.service';
 import { AuthUser } from '../../common/decorators';
 import { chiffrer, dechiffrer } from '../../common/coffre';
-import {
-  DefinirCodePinDto,
-  EnrolerEmpreinteDto,
-  PreuveEmpreinteDto,
-} from './moyens-attestation.dto';
+import { DefinirCodePinDto, EnrolerEmpreinteDto, PreuveEmpreinteDto } from './moyens-attestation.dto';
 import { t } from '../../common/i18n';
 import { BIOMETRIE_SECRET_EXEMPLE } from '../../common/configuration';
 import { toDateOnly } from '../../common/utils';
@@ -86,9 +76,7 @@ export class MoyensAttestationService {
       if (cible.departementId && cible.departementId === user.departementId) return;
       throw new NotFoundException(t('attestation.enseignant_introuvable'));
     }
-    throw new ForbiddenException(
-      t('attestation.seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u'),
-    );
+    throw new ForbiddenException(t('attestation.seule_la_scolarite_peut_definir_les_moyens_d_attestation_d_u'));
   }
 
   async definirCodePin(enseignantId: string, dto: DefinirCodePinDto, user: AuthUser) {
@@ -162,18 +150,11 @@ export class MoyensAttestationService {
       const cree = await tx.appareil.create({
         data: { libelle, secret, userId: user.id },
       });
-      await journaliser(
-        tx,
-        user,
-        'APPAREIL_ENROLE',
-        'Appareil',
-        cree.id,
-        {
-            avant: null,
-            apres: { libelle: cree.libelle, actif: cree.actif },
-            champsModifies: ['libelle', 'actif'],
-          },
-      );
+      await journaliser(tx, user, 'APPAREIL_ENROLE', 'Appareil', cree.id, {
+        avant: null,
+        apres: { libelle: cree.libelle, actif: cree.actif },
+        champsModifies: ['libelle', 'actif'],
+      });
       return cree;
     });
     return { appareilId: appareil.id, secret, libelle: appareil.libelle };
@@ -191,18 +172,11 @@ export class MoyensAttestationService {
         where: { id },
         data: { actif: false, revoqueLe: new Date() },
       });
-      await journaliser(
-        tx,
-        user,
-        'APPAREIL_REVOQUE',
-        'Appareil',
-        id,
-        {
-            avant: { libelle: avant.libelle, actif: avant.actif },
-            apres: { libelle: apres.libelle, actif: apres.actif },
-            champsModifies: ['actif'],
-          },
-      );
+      await journaliser(tx, user, 'APPAREIL_REVOQUE', 'Appareil', id, {
+        avant: { libelle: avant.libelle, actif: avant.actif },
+        apres: { libelle: apres.libelle, actif: apres.actif },
+        champsModifies: ['actif'],
+      });
     });
     return { message: 'Appareil révoqué : ses lectures d’empreinte ne sont plus acceptées' };
   }
@@ -376,8 +350,8 @@ export class MoyensAttestationService {
     if (
       user.role === Role.CONTROLEUR &&
       seance.controleurAssigneId !== user.id &&
-      seance.controle?.controleurId !== user.id
-      && (!user.departementId || seance.affectation.enseignant.departementId !== user.departementId)
+      seance.controle?.controleurId !== user.id &&
+      (!user.departementId || seance.affectation.enseignant.departementId !== user.departementId)
     ) {
       throw new NotFoundException(t('attestation.enseignant_introuvable'));
     }
@@ -385,7 +359,10 @@ export class MoyensAttestationService {
     if (!e.empreinteTemplate) {
       throw new BadRequestException(t('attestation.aucune_empreinte_enrolee_pour_cet_enseignant'));
     }
-    await journaliser(this.prisma, user, 'GABARIT_BIOMETRIQUE_CONSULTE', 'Enseignant', enseignantId, { seanceId, role: user.role });
+    await journaliser(this.prisma, user, 'GABARIT_BIOMETRIQUE_CONSULTE', 'Enseignant', enseignantId, {
+      seanceId,
+      role: user.role,
+    });
     // Déchiffré uniquement ici, pour la comparaison faite par la passerelle.
     return { template: dechiffrer(e.empreinteTemplate), doigt: e.empreinteDoigt };
   }
@@ -419,7 +396,10 @@ export class MoyensAttestationService {
       ) {
         throw new NotFoundException(t('attestation.enseignant_introuvable'));
       }
-      await journaliser(this.prisma, user, 'MOYENS_ATTESTATION_CONSULTES', 'Enseignant', enseignantId, { seanceId, role: user.role });
+      await journaliser(this.prisma, user, 'MOYENS_ATTESTATION_CONSULTES', 'Enseignant', enseignantId, {
+        seanceId,
+        role: user.role,
+      });
     }
     const e = await this.prisma.enseignant.findUnique({
       where: { id: enseignantId, actif: true },
@@ -437,10 +417,7 @@ export class MoyensAttestationService {
    * Valide l'attestation fournie lors d'un pointage. Retient la modalité la plus
    * forte parmi celles présentées.
    */
-  async verifierPreuves(
-    enseignantId: string,
-    preuves: PreuvesAttestation,
-  ): Promise<ResultatAttestation> {
+  async verifierPreuves(enseignantId: string, preuves: PreuvesAttestation): Promise<ResultatAttestation> {
     // 1. Empreinte lue par la passerelle
     if (preuves.empreinte) {
       const { score, horodatage, signature } = preuves.empreinte;
@@ -451,9 +428,7 @@ export class MoyensAttestationService {
       if (!enseignant.empreinteTemplate) {
         throw new BadRequestException(t('attestation.aucune_empreinte_n_est_enrolee_pour_cet_enseignant'));
       }
-      const gabarit = createHash('sha256')
-        .update(dechiffrer(enseignant.empreinteTemplate))
-        .digest('hex');
+      const gabarit = createHash('sha256').update(dechiffrer(enseignant.empreinteTemplate)).digest('hex');
 
       // La charge signée nomme l'appareil : un résultat volé sur un téléphone
       // ne peut pas être rejoué au nom d'un autre.
@@ -492,5 +467,4 @@ export class MoyensAttestationService {
 
     return { mode: AttestationMode.AUCUNE, valide: false };
   }
-
 }

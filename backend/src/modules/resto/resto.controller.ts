@@ -67,31 +67,19 @@ export class RestoController {
 
   @Roles(...GESTIONNAIRES)
   @Post('portefeuilles/:id/recharger')
-  recharger(
-    @Param('id') id: string,
-    @Body() dto: RechargerPortefeuilleDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  recharger(@Param('id') id: string, @Body() dto: RechargerPortefeuilleDto, @CurrentUser() user: AuthUser) {
     return this.service.recharger(id, dto, user);
   }
 
   @Roles(...GESTIONNAIRES)
   @Post('recharges/:id/simuler')
-  simulerRecharge(
-    @Param('id') id: string,
-    @Body() dto: SimulerRechargeDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  simulerRecharge(@Param('id') id: string, @Body() dto: SimulerRechargeDto, @CurrentUser() user: AuthUser) {
     return this.service.simulerRecharge(id, dto, user);
   }
 
   @Roles(...GESTIONNAIRES)
   @Post('consommations/:id/annuler')
-  annuler(
-    @Param('id') id: string,
-    @Body() dto: AnnulerConsommationDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  annuler(@Param('id') id: string, @Body() dto: AnnulerConsommationDto, @CurrentUser() user: AuthUser) {
     return this.service.annulerConsommation(id, dto, user);
   }
 

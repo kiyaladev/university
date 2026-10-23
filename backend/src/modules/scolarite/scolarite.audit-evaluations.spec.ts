@@ -4,9 +4,17 @@ import { ScolariteService } from './scolarite.service';
 
 const USER = { id: 'scolarite-1', role: Role.SCOLARITE } as AuthUser;
 const EVALUATION: any = {
-  id: 'eval-1', intitule: 'Partiel', type: TypeEvaluation.EXAMEN, coefficient: 1,
-  matiereId: 'matiere-1', anneeId: 'annee-1', promotionId: 'promotion-1',
-  semestre: 1, date: null, statut: StatutEvaluation.OUVERTE, _count: { notes: 0 },
+  id: 'eval-1',
+  intitule: 'Partiel',
+  type: TypeEvaluation.EXAMEN,
+  coefficient: 1,
+  matiereId: 'matiere-1',
+  anneeId: 'annee-1',
+  promotionId: 'promotion-1',
+  semestre: 1,
+  date: null,
+  statut: StatutEvaluation.OUVERTE,
+  _count: { notes: 0 },
 };
 
 function preparer(apres: any = EVALUATION, anneePromotion = 'annee-1') {
@@ -38,10 +46,16 @@ function preparer(apres: any = EVALUATION, anneePromotion = 'annee-1') {
 describe('Journal avant/après des évaluations', () => {
   it('journalise la création dans la transaction', async () => {
     const { prisma, tx, auditLog, service } = preparer();
-    await service.creerEvaluation({
-      intitule: 'Partiel', type: TypeEvaluation.EXAMEN,
-      matiereId: 'matiere-1', anneeId: 'annee-1', promotionId: 'promotion-1',
-    } as any, USER);
+    await service.creerEvaluation(
+      {
+        intitule: 'Partiel',
+        type: TypeEvaluation.EXAMEN,
+        matiereId: 'matiere-1',
+        anneeId: 'annee-1',
+        promotionId: 'promotion-1',
+      } as any,
+      USER,
+    );
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.evaluation.create).toHaveBeenCalledTimes(1);
@@ -53,10 +67,18 @@ describe('Journal avant/après des évaluations', () => {
 
   it('refuse une évaluation qui associe une promotion d’une autre année', async () => {
     const { tx, auditLog, service } = preparer(EVALUATION, 'annee-2');
-    await expect(service.creerEvaluation({
-      intitule: 'Partiel', type: TypeEvaluation.EXAMEN,
-      matiereId: 'matiere-1', anneeId: 'annee-1', promotionId: 'promotion-1',
-    } as any, USER)).rejects.toThrow('même année académique');
+    await expect(
+      service.creerEvaluation(
+        {
+          intitule: 'Partiel',
+          type: TypeEvaluation.EXAMEN,
+          matiereId: 'matiere-1',
+          anneeId: 'annee-1',
+          promotionId: 'promotion-1',
+        } as any,
+        USER,
+      ),
+    ).rejects.toThrow('même année académique');
     expect(tx.evaluation.create).not.toHaveBeenCalled();
     expect(auditLog.create).not.toHaveBeenCalled();
   });

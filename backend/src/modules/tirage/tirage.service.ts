@@ -8,11 +8,7 @@
  *     corresponde à l'empreinte source enregistrée ;
  *   - les transitions ultérieures rejettent toute étape sautée.
  */
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import * as crypto from 'node:crypto';
 import { t } from '../../common/i18n';
 import { Prisma, StadeTirage } from '@prisma/client';
@@ -21,12 +17,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
 import { exigerAnneeOuverte } from '../../common/annee';
-import {
-  CreateTirageDto,
-  ImprimerTirageDto,
-  TirageQueryDto,
-  UpdateStadeTirageDto,
-} from './tirage.dto';
+import { CreateTirageDto, ImprimerTirageDto, TirageQueryDto, UpdateStadeTirageDto } from './tirage.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { journaliser } from '../../common/audit';
 
@@ -184,14 +175,24 @@ export class TirageService {
     stadeAttendu: StadeTirage,
   ) {
     if (dto.stade !== stadeAttendu) {
-      throw new BadRequestException(t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { 'tirage.stade': stadeAttendu, 'dto.stade': dto.stade }));
+      throw new BadRequestException(
+        t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', {
+          'tirage.stade': stadeAttendu,
+          'dto.stade': dto.stade,
+        }),
+      );
     }
     return this.prisma.$transaction(async (tx) => {
       const tirage = await this.trouverDans(tx, id);
       await exigerAnneeOuverte(tx, tirage.examen.anneeId);
       const cible = TRANSITIONS[tirage.stade];
       if (!cible || cible !== dto.stade) {
-        throw new BadRequestException(t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', { 'tirage.stade': tirage.stade, 'dto.stade': dto.stade }));
+        throw new BadRequestException(
+          t('tirage.transition_impossible_depuis_tirage_stade_vers_dto_stade', {
+            'tirage.stade': tirage.stade,
+            'dto.stade': dto.stade,
+          }),
+        );
       }
       const maj = await tx.tirage.update({
         where: { id },
@@ -239,14 +240,23 @@ export class TirageService {
       const tirage = await this.trouverDans(tx, id);
       await exigerAnneeOuverte(tx, tirage.examen.anneeId);
       if (tirage.stade !== StadeTirage.PROGRAMME) {
-        throw new BadRequestException(t('tirage.tirage_tirage_stade_annulation_possible_uniquement_depuis_program', { stade: tirage.stade }));
+        throw new BadRequestException(
+          t('tirage.tirage_tirage_stade_annulation_possible_uniquement_depuis_program', { stade: tirage.stade }),
+        );
       }
       const maj = await tx.tirage.update({
         where: { id },
         data: { stade: StadeTirage.ANNULE },
         include: TIRAGE_INCLUDE,
       });
-      await journaliser(tx, user, 'TIRAGE_ANNULE', 'Tirage', id, `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`);
+      await journaliser(
+        tx,
+        user,
+        'TIRAGE_ANNULE',
+        'Tirage',
+        id,
+        `Annulation du tirage de l'examen ${tirage.examen.codeExamen}`,
+      );
       return maj;
     });
   }
@@ -261,8 +271,7 @@ export class TirageService {
   async imprimerBordereau(id: string): Promise<string> {
     // Avant impression, le bordereau ne révèle pas non plus l'empreinte attendue.
     const t = masquerEmpreinte(await this.charger(id));
-    const empreinteCourte = (h: string | null | undefined) =>
-      h ? `${h.slice(0, 16)}…` : '—';
+    const empreinteCourte = (h: string | null | undefined) => (h ? `${h.slice(0, 16)}…` : '—');
 
     const etablissement = await chargerEtablissement(this.prisma);
 

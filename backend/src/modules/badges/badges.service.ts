@@ -67,10 +67,7 @@ export class BadgesService {
   // ---------------------------------------------------------------- calcul
 
   /** Numéro séquentiel par année : "BADGE-AAAA-NNNNN". */
-  private async prochainNumero(
-    tx: Prisma.TransactionClient,
-    annee: string,
-  ): Promise<string> {
+  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
     return prochainNumeroTx(tx, 'badgeAcces', 'numero', `${PREFIXE}${annee}-`, 5);
   }
 
@@ -189,18 +186,11 @@ export class BadgesService {
             },
             include: BADGE_INCLUDE,
           });
-          await journaliser(
-            tx,
-            user,
-            'BADGE_ACCES_EMIS',
-            'BadgeAcces',
-            badge.id,
-            {
-                avant: null,
-                apres: this.instantaneAudit(badge),
-                champsModifies: ['type', 'statut', 'dateValidite', 'zonesAccess', 'qrToken', 'photoUrl'],
-              },
-          );
+          await journaliser(tx, user, 'BADGE_ACCES_EMIS', 'BadgeAcces', badge.id, {
+            avant: null,
+            apres: this.instantaneAudit(badge),
+            champsModifies: ['type', 'statut', 'dateValidite', 'zonesAccess', 'qrToken', 'photoUrl'],
+          });
           return badge;
         });
         break;
@@ -239,21 +229,15 @@ export class BadgesService {
       };
       const maj = await tx.badgeAcces.update({ where: { id }, data, include: BADGE_INCLUDE });
       const statut = this.evaluerStatut(maj);
-      const final = statut !== maj.statut
-        ? await tx.badgeAcces.update({ where: { id }, data: { statut }, include: BADGE_INCLUDE })
-        : maj;
-      await journaliser(
-        tx,
-        user,
-        'BADGE_ACCES_MODIFIE',
-        'BadgeAcces',
-        id,
-        {
-            avant: this.instantaneAudit(badge),
-            apres: this.instantaneAudit(final),
-            champsModifies: [...Object.keys(data), ...(statut !== badge.statut ? ['statut'] : [])],
-          },
-      );
+      const final =
+        statut !== maj.statut
+          ? await tx.badgeAcces.update({ where: { id }, data: { statut }, include: BADGE_INCLUDE })
+          : maj;
+      await journaliser(tx, user, 'BADGE_ACCES_MODIFIE', 'BadgeAcces', id, {
+        avant: this.instantaneAudit(badge),
+        apres: this.instantaneAudit(final),
+        champsModifies: [...Object.keys(data), ...(statut !== badge.statut ? ['statut'] : [])],
+      });
       return final;
     });
   }
@@ -271,19 +255,12 @@ export class BadgesService {
         data: { statut: StatutBadge.ANNULE, motif: dto.motif },
         include: BADGE_INCLUDE,
       });
-      await journaliser(
-        tx,
-        user,
-        'BADGE_ACCES_ANNULE',
-        'BadgeAcces',
-        id,
-        {
-            avant: this.instantaneAudit(badge),
-            apres: this.instantaneAudit(miseAJour),
-            motifFourni: Boolean(dto.motif),
-            champsModifies: ['statut', 'motif'],
-          },
-      );
+      await journaliser(tx, user, 'BADGE_ACCES_ANNULE', 'BadgeAcces', id, {
+        avant: this.instantaneAudit(badge),
+        apres: this.instantaneAudit(miseAJour),
+        motifFourni: Boolean(dto.motif),
+        champsModifies: ['statut', 'motif'],
+      });
       return miseAJour;
     });
   }
@@ -308,18 +285,11 @@ export class BadgesService {
       }
       const miseAJour = await tx.badgeAcces.findUnique({ where: { id }, include: BADGE_INCLUDE });
       if (!miseAJour) throw new NotFoundException(t('badges.badge_introuvable'));
-      await journaliser(
-        tx,
-        user,
-        'BADGE_ACCES_RALLONGE',
-        'BadgeAcces',
-        id,
-        {
-            avant: this.instantaneAudit(badge),
-            apres: this.instantaneAudit(miseAJour),
-            champsModifies: ['dateValidite', 'statut'],
-          },
-      );
+      await journaliser(tx, user, 'BADGE_ACCES_RALLONGE', 'BadgeAcces', id, {
+        avant: this.instantaneAudit(badge),
+        apres: this.instantaneAudit(miseAJour),
+        champsModifies: ['dateValidite', 'statut'],
+      });
       return miseAJour;
     });
   }
@@ -379,7 +349,7 @@ export class BadgesService {
       return {
         valide: false,
         raison:
-          "Le code de vérification ne correspond pas à ce badge : le document présenté est peut-être une copie falsifiée.",
+          'Le code de vérification ne correspond pas à ce badge : le document présenté est peut-être une copie falsifiée.',
       };
     }
     if (statutEffectif === StatutBadge.ANNULE) {
@@ -427,5 +397,4 @@ export class BadgesService {
   }
 
   // ---------------------------------------------------------------- journal
-
 }

@@ -13,11 +13,7 @@
  * autre'` : le porteur litigieux reste tracé, mais le compteur `nbPresents`
  * n'est pas incrémenté et un audit `EXAMEN_SCAN_REJETE` est inscrit.
  */
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, StatutExamen } from '@prisma/client';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -134,9 +130,8 @@ export class ExamensService {
       totalScans: valide + rejete,
       scansValides: valide,
       scansRejetes: rejete,
-      tauxPresence: examen && examen.nbInscrits > 0
-        ? Math.round((examen.nbPresents / examen.nbInscrits) * 1000) / 10
-        : 0,
+      tauxPresence:
+        examen && examen.nbInscrits > 0 ? Math.round((examen.nbPresents / examen.nbInscrits) * 1000) / 10 : 0,
     };
   }
 
@@ -164,7 +159,10 @@ export class ExamensService {
         },
         include: EXAMEN_INCLUDE,
       });
-      await journaliser(tx, user, 'EXAMEN_CREE', 'Examen', examen.id, { avant: null, apres: this.instantaneAudit(examen) });
+      await journaliser(tx, user, 'EXAMEN_CREE', 'Examen', examen.id, {
+        avant: null,
+        apres: this.instantaneAudit(examen),
+      });
       return examen;
     });
   }
@@ -189,14 +187,10 @@ export class ExamensService {
         throw new BadRequestException(t('examens.transition_statut_invalide'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'EXAMEN_STATUT',
-        'Examen',
-        id,
-        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
-      );
+      await journaliser(tx, user, 'EXAMEN_STATUT', 'Examen', id, {
+        avant: this.instantaneAudit(examen),
+        apres: this.instantaneAudit(maj),
+      });
       return maj;
     });
   }
@@ -232,14 +226,10 @@ export class ExamensService {
         throw new BadRequestException(t('examens.examen_deja_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'EXAMEN_DEMARRE',
-        'Examen',
-        id,
-        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
-      );
+      await journaliser(tx, user, 'EXAMEN_DEMARRE', 'Examen', id, {
+        avant: this.instantaneAudit(examen),
+        apres: this.instantaneAudit(maj),
+      });
       return maj;
     });
   }
@@ -262,14 +252,10 @@ export class ExamensService {
         throw new BadRequestException(t('examens.seul_un_examen_en_cours_peut_etre_termine'));
       }
       const maj: any = await tx.examen.findUnique({ where: { id }, include: EXAMEN_INCLUDE });
-      await journaliser(
-        tx,
-        user,
-        'EXAMEN_TERMINE',
-        'Examen',
-        id,
-        { avant: this.instantaneAudit(examen), apres: this.instantaneAudit(maj) },
-      );
+      await journaliser(tx, user, 'EXAMEN_TERMINE', 'Examen', id, {
+        avant: this.instantaneAudit(examen),
+        apres: this.instantaneAudit(maj),
+      });
       return maj;
     });
   }
@@ -413,15 +399,18 @@ export class ExamensService {
     // Garder le même ordre de verrouillage que les autres mutations : année,
     // puis examen, pour éviter un interblocage pendant la clôture d'année.
     await exigerAnneeOuverte(tx, anneeId);
-    const examen = typeof (tx as any).$queryRaw === 'function'
-      ? ((await (tx as any).$queryRaw`
+    const examen =
+      typeof (tx as any).$queryRaw === 'function'
+        ? ((
+            await (tx as any).$queryRaw`
           SELECT "anneeId", "statut", "surveillantId"
           FROM "Examen" WHERE "id" = ${examenId} FOR UPDATE
-        `)[0] as { anneeId: string; statut: StatutExamen; surveillantId: string | null } | undefined)
-      : await tx.examen.findUnique({
-          where: { id: examenId },
-          select: { anneeId: true, statut: true, surveillantId: true },
-        });
+        `
+          )[0] as { anneeId: string; statut: StatutExamen; surveillantId: string | null } | undefined)
+        : await tx.examen.findUnique({
+            where: { id: examenId },
+            select: { anneeId: true, statut: true, surveillantId: true },
+          });
     if (!examen) throw new NotFoundException(t('examens.examen_introuvable'));
     if (examen.anneeId !== anneeId) throw new BadRequestException(t('examens.examen_introuvable'));
     if ((user.role === Role.CONTROLEUR || user.role === Role.ENSEIGNANT) && examen.surveillantId !== user.id) {

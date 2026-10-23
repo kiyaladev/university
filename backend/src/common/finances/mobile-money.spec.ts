@@ -67,9 +67,13 @@ describe('transmettreMobileMoney', () => {
     const { tx, prisma, options } = preparer({ mode: 'operateur', transactionId: 'tx-1' });
     const include = { etudiant: true };
 
-    await expect(transmettreMobileMoney(PAIEMENT, { ...options, include })).resolves.toMatchObject({ transactionId: 'tx-1' });
+    await expect(transmettreMobileMoney(PAIEMENT, { ...options, include })).resolves.toMatchObject({
+      transactionId: 'tx-1',
+    });
     expect(tx.paiement.update).toHaveBeenCalledWith({ where: { id: 'p-1' }, data: { transactionId: 'tx-1' }, include });
-    expect(prisma.auditLog.create.mock.calls.map((c: any[]) => c[0].data.action)).toEqual(['PAIEMENT_MOBILE_MONEY_TENTATIVE']);
+    expect(prisma.auditLog.create.mock.calls.map((c: any[]) => c[0].data.action)).toEqual([
+      'PAIEMENT_MOBILE_MONEY_TENTATIVE',
+    ]);
     expect(tx.auditLog.create.mock.calls[0][0].data.action).toBe('PAIEMENT_TRANSACTION_LIEE');
   });
 

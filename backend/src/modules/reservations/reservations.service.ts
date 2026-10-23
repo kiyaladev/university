@@ -76,9 +76,7 @@ export class ReservationsService extends CrudService {
   /** Une collision de sérialisation est une demande concurrente à rejouer,
    * pas une erreur serveur. Les quatre mutations de réservation partagent
    * cette traduction pour éviter d'exposer l'erreur SQL au client. */
-  private async transactionSerializable<T>(
-    operation: (tx: Prisma.TransactionClient) => Promise<T>,
-  ): Promise<T> {
+  private async transactionSerializable<T>(operation: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
     try {
       return await this.prisma.$transaction(operation, {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -162,7 +160,10 @@ export class ReservationsService extends CrudService {
 
     if (collision) {
       throw new ConflictException(
-        t('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_', { debut: collision.heureDebut, fin: collision.heureFin }),
+        t('reservations.cette_salle_est_deja_reservee_de_collision_heuredebut_a_collision_', {
+          debut: collision.heureDebut,
+          fin: collision.heureFin,
+        }),
       );
     }
   }
@@ -214,7 +215,8 @@ export class ReservationsService extends CrudService {
   async modifier(id: string, dto: UpdateReservationDto, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
       const existante: any = await tx.reservationSalle.findUnique({
-        where: { id }, include: RESERVATION_INCLUDE,
+        where: { id },
+        include: RESERVATION_INCLUDE,
       });
       if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
@@ -251,7 +253,8 @@ export class ReservationsService extends CrudService {
   async supprimer(id: string, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
       const existante: any = await tx.reservationSalle.findUnique({
-        where: { id }, include: RESERVATION_INCLUDE,
+        where: { id },
+        include: RESERVATION_INCLUDE,
       });
       if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.demandeurId !== user.id && user.role !== Role.ADMIN) {
@@ -273,7 +276,8 @@ export class ReservationsService extends CrudService {
   async decider(id: string, dto: DeciderReservationDto, user: AuthUser) {
     return this.transactionSerializable(async (tx) => {
       const existante: any = await tx.reservationSalle.findUnique({
-        where: { id }, include: RESERVATION_INCLUDE,
+        where: { id },
+        include: RESERVATION_INCLUDE,
       });
       if (!existante) throw new NotFoundException(t('reservations.reservation_introuvable'));
       if (existante.statut !== StatutReservationSalle.EN_ATTENTE) {
@@ -335,16 +339,14 @@ export class ReservationsService extends CrudService {
           orderBy: { code: 'asc' },
         });
 
-    const perimetreSeances = user.role === Role.ENSEIGNANT
-      ? { affectation: { enseignantId: user.enseignantId ?? '__aucun_enseignant__' } }
-      : estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
-        ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
-        : user.role === Role.CONTROLEUR
-          ? { OR: [
-              { controleurAssigneId: user.id },
-              { controle: { is: { controleurId: user.id } } },
-            ] }
-          : {};
+    const perimetreSeances =
+      user.role === Role.ENSEIGNANT
+        ? { affectation: { enseignantId: user.enseignantId ?? '__aucun_enseignant__' } }
+        : estChefDeDepartement(user) || (user.role === Role.CONTROLEUR && user.departementId)
+          ? { affectation: { enseignant: { departementId: user.departementId ?? '__aucun_departement__' } } }
+          : user.role === Role.CONTROLEUR
+            ? { OR: [{ controleurAssigneId: user.id }, { controle: { is: { controleurId: user.id } } }] }
+            : {};
 
     const [reservations, seances, listeSalles] = await Promise.all([
       this.prisma.reservationSalle.findMany({
@@ -377,9 +379,20 @@ export class ReservationsService extends CrudService {
 
     const parDate = new Map(jours.map((j) => [j.date, j]));
     for (const r of reservations) {
-      const vue = this.gestionnaire(user) || r.demandeurId === user.id
-        ? r
-        : { ...r, motif: null, organisme: null, responsable: null, demandeurId: null, demandeur: null, refuseParId: null, refusePar: null, refuseMotif: null };
+      const vue =
+        this.gestionnaire(user) || r.demandeurId === user.id
+          ? r
+          : {
+              ...r,
+              motif: null,
+              organisme: null,
+              responsable: null,
+              demandeurId: null,
+              demandeur: null,
+              refuseParId: null,
+              refusePar: null,
+              refuseMotif: null,
+            };
       parDate.get(isoDate(r.dateJour))?.reservations.push(vue);
     }
     for (const s of seances) parDate.get(isoDate(s.date))?.seances.push(s);

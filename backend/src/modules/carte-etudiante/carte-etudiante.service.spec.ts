@@ -5,27 +5,49 @@ import { BadRequestException } from '@nestjs/common';
 jest.mock('nestjs-i18n', () => ({ I18nContext: { current: () => ({ t: (key: string) => key }) } }));
 
 describe('Protection des données de la carte étudiante', () => {
-  it.each(['modifier', 'revoquer', 'definirNip'] as const)('refuse %s lorsque la carte a été révoquée avant la prise du verrou', async (operation) => {
-    let statut = 'EMISE';
-    const tx = {
-      $queryRaw: jest.fn().mockImplementation(async () => { statut = 'REVOQUEE'; return []; }),
-      carteEtudiante: { findUnique: jest.fn().mockImplementation(async () => ({ statut })), update: jest.fn() },
-      auditLog: { create: jest.fn() },
-    };
-    const service = new CarteEtudianteService({ $transaction: (fn: any) => fn(tx) } as any, {} as any, {} as any);
-    await expect(service[operation]('carte-1', { nip: '1234', motif: 'Recette' } as any, { id: 'user-1', role: 'ETUDIANT', etudiantId: 'etudiant-1' } as any)).rejects.toBeInstanceOf(BadRequestException);
-    expect(tx.carteEtudiante.update).not.toHaveBeenCalled();
-    expect(tx.auditLog.create).not.toHaveBeenCalled();
-  });
+  it.each(['modifier', 'revoquer', 'definirNip'] as const)(
+    'refuse %s lorsque la carte a été révoquée avant la prise du verrou',
+    async (operation) => {
+      let statut = 'EMISE';
+      const tx = {
+        $queryRaw: jest.fn().mockImplementation(async () => {
+          statut = 'REVOQUEE';
+          return [];
+        }),
+        carteEtudiante: { findUnique: jest.fn().mockImplementation(async () => ({ statut })), update: jest.fn() },
+        auditLog: { create: jest.fn() },
+      };
+      const service = new CarteEtudianteService({ $transaction: (fn: any) => fn(tx) } as any, {} as any, {} as any);
+      await expect(
+        service[operation](
+          'carte-1',
+          { nip: '1234', motif: 'Recette' } as any,
+          { id: 'user-1', role: 'ETUDIANT', etudiantId: 'etudiant-1' } as any,
+        ),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(tx.carteEtudiante.update).not.toHaveBeenCalled();
+      expect(tx.auditLog.create).not.toHaveBeenCalled();
+    },
+  );
 
-  it.each([null, new Date('2099-01-01')])('accepte seulement le bon NIP d’une carte active encore valide (%s)', async (dateValidite) => {
-    const prisma = { carteEtudiante: { findUnique: jest.fn().mockResolvedValue({
-      active: true, statut: 'EMISE', dateValidite, nip: await bcrypt.hash('1234', 4),
-    }) } };
-    const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
-    expect(await service.verifierNip('carte-1', { nip: '1234' } as any)).toEqual({ ok: true });
-    expect(await service.verifierNip('carte-1', { nip: '9876' } as any)).toEqual({ ok: false });
-  });
+  it.each([null, new Date('2099-01-01')])(
+    'accepte seulement le bon NIP d’une carte active encore valide (%s)',
+    async (dateValidite) => {
+      const prisma = {
+        carteEtudiante: {
+          findUnique: jest.fn().mockResolvedValue({
+            active: true,
+            statut: 'EMISE',
+            dateValidite,
+            nip: await bcrypt.hash('1234', 4),
+          }),
+        },
+      };
+      const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
+      expect(await service.verifierNip('carte-1', { nip: '1234' } as any)).toEqual({ ok: true });
+      expect(await service.verifierNip('carte-1', { nip: '9876' } as any)).toEqual({ ok: false });
+    },
+  );
 
   it.each([
     { active: true, statut: 'EMISE', dateValidite: new Date('2000-01-01') },
@@ -39,17 +61,24 @@ describe('Protection des données de la carte étudiante', () => {
 
   it('journalise une vérification QR expirée comme un échec', async () => {
     const prisma = {
-      carteEtudiante: { findUnique: jest.fn().mockResolvedValue({
-        id: 'carte-1', qrToken: 'secret', statut: 'EMISE', active: true,
-        dateValidite: new Date('2000-01-01'),
-      }) },
+      carteEtudiante: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'carte-1',
+          qrToken: 'secret',
+          statut: 'EMISE',
+          active: true,
+          dateValidite: new Date('2000-01-01'),
+        }),
+      },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
     const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);
     expect(await service.verifier({ carte: 'carte-1', k: 'secret' } as any)).toMatchObject({ valide: false });
-    expect(prisma.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ action: 'VERIF_CARTE_ECHEC' }),
-    }));
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'VERIF_CARTE_ECHEC' }),
+      }),
+    );
   });
 
   const carte = {
@@ -70,10 +99,12 @@ describe('Protection des données de la carte étudiante', () => {
 
     const resultat = await service.liste({ all: '1', pageSize: 1_000_000 } as any);
 
-    expect(prisma.carteEtudiante.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      skip: 0,
-      take: 1000,
-    }));
+    expect(prisma.carteEtudiante.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        skip: 0,
+        take: 1000,
+      }),
+    );
     expect(resultat).toMatchObject({ total: 5000, page: 1, pageSize: 1000 });
   });
 
@@ -102,7 +133,11 @@ describe('Protection des données de la carte étudiante', () => {
       auditLog: { create: auditCreate },
     };
     const prisma: any = {
-      etudiant: { findUnique: jest.fn().mockResolvedValue({ id: 'etudiant-1', nom: 'Diallo', prenom: 'Aminata', matricule: 'MAT-1' }) },
+      etudiant: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: 'etudiant-1', nom: 'Diallo', prenom: 'Aminata', matricule: 'MAT-1' }),
+      },
       carteEtudiante: { findUnique: jest.fn().mockResolvedValue(null) },
       $transaction: jest.fn((operation) => operation(tx)),
     };
@@ -190,12 +225,20 @@ describe('Protection des données de la carte étudiante', () => {
     const details = JSON.parse(auditCreate.mock.calls[0][0].data.details);
     expect(details).toEqual({
       avant: {
-        id: 'carte-1', statut: 'EMISE', active: true, dateValidite: carte.dateValidite.toISOString(),
-        photoPresente: true, nipConfigure: true,
+        id: 'carte-1',
+        statut: 'EMISE',
+        active: true,
+        dateValidite: carte.dateValidite.toISOString(),
+        photoPresente: true,
+        nipConfigure: true,
       },
       apres: {
-        id: 'carte-1', statut: 'EMISE', active: true, dateValidite: maj.dateValidite.toISOString(),
-        photoPresente: true, nipConfigure: true,
+        id: 'carte-1',
+        statut: 'EMISE',
+        active: true,
+        dateValidite: maj.dateValidite.toISOString(),
+        photoPresente: true,
+        nipConfigure: true,
       },
       champsModifies: ['dateValidite'],
     });
@@ -218,7 +261,11 @@ describe('Protection des données de la carte étudiante', () => {
       },
       auditLog: { create: auditCreate },
     };
-    const service = new CarteEtudianteService({ $transaction: jest.fn((operation) => operation(tx)) } as any, {} as any, {} as any);
+    const service = new CarteEtudianteService(
+      { $transaction: jest.fn((operation) => operation(tx)) } as any,
+      {} as any,
+      {} as any,
+    );
 
     await service.revoquer('carte-1', { motif: 'situation privée' } as any, { id: 'admin' } as any);
 
@@ -231,12 +278,18 @@ describe('Protection des données de la carte étudiante', () => {
 
   it('ne révèle pas le motif de révocation dans la vérification QR publique', async () => {
     const prisma = {
-      carteEtudiante: { findUnique: jest.fn().mockResolvedValue({
-        id: 'carte-1', qrToken: 'jeton-qr-secret', statut: 'REVOQUEE', active: false,
-        dateEmission: new Date('2026-09-01T00:00:00Z'), dateValidite: null,
-        motifRevocation: 'information personnelle',
-        etudiant: { matricule: 'MAT-1', nom: 'Diallo', prenom: 'Aminata' },
-      }) },
+      carteEtudiante: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'carte-1',
+          qrToken: 'jeton-qr-secret',
+          statut: 'REVOQUEE',
+          active: false,
+          dateEmission: new Date('2026-09-01T00:00:00Z'),
+          dateValidite: null,
+          motifRevocation: 'information personnelle',
+          etudiant: { matricule: 'MAT-1', nom: 'Diallo', prenom: 'Aminata' },
+        }),
+      },
       auditLog: { create: jest.fn().mockResolvedValue(undefined) },
     };
     const service = new CarteEtudianteService(prisma as any, {} as any, {} as any);

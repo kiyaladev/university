@@ -16,10 +16,12 @@ describe('bornes temporelles des rapports', () => {
     const prisma: any = { seance: { findMany: jest.fn().mockResolvedValue([]) } };
     const service = new RapportsService(prisma);
 
-    await expect(service.presenceEnseignants({ dateDebut: '2026-10-10', dateFin: '2026-10-01' } as any))
-      .rejects.toThrow(BadRequestException);
-    await expect(service.presenceEnseignants({ dateDebut: '2024-01-01', dateFin: '2026-01-01' } as any))
-      .rejects.toThrow(BadRequestException);
+    await expect(
+      service.presenceEnseignants({ dateDebut: '2026-10-10', dateFin: '2026-10-01' } as any),
+    ).rejects.toThrow(BadRequestException);
+    await expect(
+      service.presenceEnseignants({ dateDebut: '2024-01-01', dateFin: '2026-01-01' } as any),
+    ).rejects.toThrow(BadRequestException);
     expect(prisma.seance.findMany).not.toHaveBeenCalled();
   });
 });
@@ -27,14 +29,23 @@ describe('bornes temporelles des rapports', () => {
 describe('projection du registre de présence', () => {
   it('ne renvoie jamais la signature biométrique dans le rapport JSON', async () => {
     const seance = {
-      id: 'seance-1', date: new Date('2026-10-03T00:00:00Z'), heureDebut: '08:00', heureFin: '10:00',
-      type: 'COURS', thematique: 'Analyse', salle: { code: 'A1' },
+      id: 'seance-1',
+      date: new Date('2026-10-03T00:00:00Z'),
+      heureDebut: '08:00',
+      heureFin: '10:00',
+      type: 'COURS',
+      thematique: 'Analyse',
+      salle: { code: 'A1' },
       affectation: {
         enseignant: { nom: 'Barry', prenom: 'Awa', matricule: 'ENS-01' },
-        matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1' },
+        matiere: { intitule: 'Mathématiques' },
+        promotion: { nom: 'L1' },
       },
       controle: {
-        statut: 'PRESENT', heureArrivee: '08:00', heureFinReelle: '10:00', dureeMinutes: 120,
+        statut: 'PRESENT',
+        heureArrivee: '08:00',
+        heureFinReelle: '10:00',
+        dureeMinutes: 120,
         observation: 'donnée privée du contrôleur',
         signatureBase64: 'signature-biometrique-secrete',
       },
@@ -57,13 +68,20 @@ describe('projection du registre de présence', () => {
 
   it('réserve l’observation libre aux rôles de gestion', async () => {
     const seance = {
-      id: 'seance-1', date: new Date('2026-10-03T00:00:00Z'), heureDebut: '08:00', heureFin: '10:00',
-      type: 'COURS', thematique: 'Analyse', salle: { code: 'A1' },
+      id: 'seance-1',
+      date: new Date('2026-10-03T00:00:00Z'),
+      heureDebut: '08:00',
+      heureFin: '10:00',
+      type: 'COURS',
+      thematique: 'Analyse',
+      salle: { code: 'A1' },
       affectation: {
         enseignant: { nom: 'Barry', prenom: 'Awa', matricule: 'ENS-01' },
-        matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1' },
+        matiere: { intitule: 'Mathématiques' },
+        promotion: { nom: 'L1' },
       },
-      controle: { statut: 'PRESENT', observation: 'incident privé' }, justificatif: null,
+      controle: { statut: 'PRESENT', observation: 'incident privé' },
+      justificatif: null,
     };
     const prisma: any = { seance: { findMany: jest.fn().mockResolvedValue([seance]) } };
     const service = new RapportsService(prisma);
@@ -76,13 +94,20 @@ describe('projection du registre de présence', () => {
 
   it('réserve les signatures à la génération interne du relevé PDF', async () => {
     const seance = {
-      id: 'seance-1', date: new Date('2026-10-03T00:00:00Z'), heureDebut: '08:00', heureFin: '10:00',
-      type: 'COURS', thematique: 'Analyse', salle: { code: 'A1' },
+      id: 'seance-1',
+      date: new Date('2026-10-03T00:00:00Z'),
+      heureDebut: '08:00',
+      heureFin: '10:00',
+      type: 'COURS',
+      thematique: 'Analyse',
+      salle: { code: 'A1' },
       affectation: {
         enseignant: { nom: 'Barry', prenom: 'Awa', matricule: 'ENS-01' },
-        matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1' },
+        matiere: { intitule: 'Mathématiques' },
+        promotion: { nom: 'L1' },
       },
-      controle: { statut: 'PRESENT', signatureBase64: 'signature-biometrique-secrete' }, justificatif: null,
+      controle: { statut: 'PRESENT', signatureBase64: 'signature-biometrique-secrete' },
+      justificatif: null,
     };
     const prisma: any = { seance: { findMany: jest.fn().mockResolvedValue([seance]) } };
     const service = new RapportsService(prisma);
@@ -97,11 +122,19 @@ describe('projection de la fiche de présence enseignant', () => {
     const prisma: any = {
       enseignant: {
         findUnique: jest.fn().mockResolvedValue({
-          id: 'ens-1', matricule: 'ENS-01', nom: 'Barry', prenom: 'Awa', grade: 'MC',
-          statut: 'PERMANENT', departementId: 'dep-1',
+          id: 'ens-1',
+          matricule: 'ENS-01',
+          nom: 'Barry',
+          prenom: 'Awa',
+          grade: 'MC',
+          statut: 'PERMANENT',
+          departementId: 'dep-1',
           departement: { id: 'dep-1', code: 'INFO', nom: 'Informatique', budget: 1000 },
-          email: 'awa@example.gn', latitude: 10, tauxHoraire: 200000,
-          empreinteTemplate: 'secret', codePin: '9876',
+          email: 'awa@example.gn',
+          latitude: 10,
+          tauxHoraire: 200000,
+          empreinteTemplate: 'secret',
+          codePin: '9876',
         }),
       },
       seance: { findMany: jest.fn().mockResolvedValue([]) },
@@ -124,15 +157,23 @@ describe('projection de la fiche de présence enseignant', () => {
       },
     });
     expect(resultat.enseignant).toEqual({
-      id: 'ens-1', matricule: 'ENS-01', nom: 'Barry', prenom: 'Awa', grade: 'MC',
-      statut: 'PERMANENT', departementId: 'dep-1',
+      id: 'ens-1',
+      matricule: 'ENS-01',
+      nom: 'Barry',
+      prenom: 'Awa',
+      grade: 'MC',
+      statut: 'PERMANENT',
+      departementId: 'dep-1',
       departement: { id: 'dep-1', code: 'INFO', nom: 'Informatique' },
     });
   });
 
   it('masque les observations libres dans la fiche sauf demande explicite de gestion', async () => {
     const seance = {
-      id: 'seance-1', date: new Date('2026-10-03T00:00:00Z'), heureDebut: '08:00', heureFin: '10:00',
+      id: 'seance-1',
+      date: new Date('2026-10-03T00:00:00Z'),
+      heureDebut: '08:00',
+      heureFin: '10:00',
       affectation: { matiere: { intitule: 'Mathématiques' }, promotion: { nom: 'L1' } },
       controle: { observation: 'incident privé' },
     };

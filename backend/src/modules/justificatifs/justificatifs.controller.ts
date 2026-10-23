@@ -22,21 +22,20 @@ export class JustificatifsController {
 
   /** Déposé par l'administration pour le compte de l'enseignant, sur pièce. */
   @Roles(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT)
-  @Post() deposer(@Body() dto: CreateJustificatifDto, @CurrentUser() user: AuthUser) {
+  @Post()
+  deposer(@Body() dto: CreateJustificatifDto, @CurrentUser() user: AuthUser) {
     return this.service.deposer(dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION, Role.CHEF_DEPARTEMENT)
-  @Put(':id/traiter') traiter(
-    @Param('id') id: string,
-    @Body() dto: TraiterJustificatifDto,
-    @CurrentUser() user: AuthUser,
-  ) {
+  @Put(':id/traiter')
+  traiter(@Param('id') id: string, @Body() dto: TraiterJustificatifDto, @CurrentUser() user: AuthUser) {
     return this.service.traiter(id, dto, user);
   }
 
   @Roles(Role.ADMIN, Role.DIRECTION)
-  @Delete(':id') remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.service.remove(id, user);
   }
 }

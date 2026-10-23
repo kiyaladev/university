@@ -19,7 +19,14 @@ describe('imports CSV de référentiels', () => {
     const matieres: any = { create: jest.fn() };
     const salles: any = { creer: jest.fn() };
     const creneaux: any = { creer: jest.fn(), verifierImport: jest.fn() };
-    return { prisma, enseignants, matieres, salles, creneaux, service: new ImportsService(prisma, enseignants, matieres, salles, creneaux) };
+    return {
+      prisma,
+      enseignants,
+      matieres,
+      salles,
+      creneaux,
+      service: new ImportsService(prisma, enseignants, matieres, salles, creneaux),
+    };
   };
   const dto = (contenu: string): ImportCsvDto => ({ type: TypeImportReferentiel.ENSEIGNANTS, contenu });
 
@@ -37,12 +44,12 @@ describe('imports CSV de référentiels', () => {
 
   it('prévisualise les accents et rejette doublons internes et existants ligne par ligne', async () => {
     const { prisma, service } = prepare();
-    prisma.enseignant.findFirst.mockImplementation(({ where }: any) => Promise.resolve(
-      where.matricule.equals.toLocaleUpperCase('fr') === 'T-03' ? { id: 'old' } : null,
-    ));
-    const resultat = await service.previsualiser(dto(
-      'Matricule;Nom;Prénom\nT-01;Bah;Awa\nT-02;Camara;Moussa\nT-02;Diallo;Mariam\nt-03;Keita;Fanta',
-    ));
+    prisma.enseignant.findFirst.mockImplementation(({ where }: any) =>
+      Promise.resolve(where.matricule.equals.toLocaleUpperCase('fr') === 'T-03' ? { id: 'old' } : null),
+    );
+    const resultat = await service.previsualiser(
+      dto('Matricule;Nom;Prénom\nT-01;Bah;Awa\nT-02;Camara;Moussa\nT-02;Diallo;Mariam\nt-03;Keita;Fanta'),
+    );
     expect(resultat).toMatchObject({ lignesLues: 4, valides: 2, rejetees: 2 });
     expect(resultat.erreurs.map((e) => e.numero)).toEqual([4, 5]);
     expect(resultat.erreurs[0].erreurs[0]).toContain('Doublon dans le fichier');
@@ -51,12 +58,13 @@ describe('imports CSV de référentiels', () => {
 
   it('applique les lignes valides sans abandonner les erreurs des autres', async () => {
     const { prisma, enseignants, service } = prepare();
-    prisma.enseignant.findFirst.mockImplementation(({ where }: any) => Promise.resolve(
-      where.matricule.equals === 'T-02' ? { id: 'old' } : null,
-    ));
-    const resultat = await service.importer(dto(
-      'matricule;nom;prenom\nT-01;Bah;Awa\nT-02;Camara;Moussa\n;Sans;Matricule',
-    ), user);
+    prisma.enseignant.findFirst.mockImplementation(({ where }: any) =>
+      Promise.resolve(where.matricule.equals === 'T-02' ? { id: 'old' } : null),
+    );
+    const resultat = await service.importer(
+      dto('matricule;nom;prenom\nT-01;Bah;Awa\nT-02;Camara;Moussa\n;Sans;Matricule'),
+      user,
+    );
     expect(resultat).toMatchObject({ lignesLues: 3, importees: 1, rejetees: 2 });
     expect(enseignants.creerPour).toHaveBeenCalledTimes(1);
     expect(enseignants.creerPour).toHaveBeenCalledWith(expect.objectContaining({ matricule: 'T-01' }), user);
@@ -65,14 +73,14 @@ describe('imports CSV de référentiels', () => {
 
   it('refuse un fichier dont une colonne obligatoire est absente', async () => {
     const { service } = prepare();
-    await expect(service.previsualiser(dto('matricule;nom\nT-01;Bah'))).rejects.toThrow('Colonnes obligatoires absentes');
+    await expect(service.previsualiser(dto('matricule;nom\nT-01;Bah'))).rejects.toThrow(
+      'Colonnes obligatoires absentes',
+    );
   });
 
   it('signale explicitement les colonnes non reconnues qui seraient sinon ignorées', async () => {
     const { service } = prepare();
-    const resultat = await service.previsualiser(dto(
-      'matricule;nom;prenom;Département\nT-01;Bah;Awa;D-1',
-    ));
+    const resultat = await service.previsualiser(dto('matricule;nom;prenom;Département\nT-01;Bah;Awa;D-1'));
     expect(resultat.valides).toBe(1);
     expect(resultat.colonnesIgnorees).toEqual(['Département']);
   });
@@ -85,7 +93,8 @@ describe('imports CSV de référentiels', () => {
     });
     expect(resultat.valides).toBe(1);
     expect(prisma.enseignant.findFirst).toHaveBeenCalledWith({
-      where: { matricule: { equals: 'T-01', mode: 'insensitive' } }, select: { id: true },
+      where: { matricule: { equals: 'T-01', mode: 'insensitive' } },
+      select: { id: true },
     });
   });
 
@@ -105,16 +114,19 @@ describe('imports CSV de référentiels', () => {
     creneaux.verifierImport.mockResolvedValue(undefined);
     const resultat = await service.previsualiser({
       type: TypeImportReferentiel.CRENEAUX,
-      contenu: 'Affectation ID;Jour de la semaine;Heure de début;Heure de fin;Type de cours;Date de début\n00000000-0000-4000-8000-000000000001;Lundi;8h00;10:00;Travaux dirigés;05/10/26',
+      contenu:
+        'Affectation ID;Jour de la semaine;Heure de début;Heure de fin;Type de cours;Date de début\n00000000-0000-4000-8000-000000000001;Lundi;8h00;10:00;Travaux dirigés;05/10/26',
     });
     expect(resultat.valides).toBe(1);
-    expect(creneaux.verifierImport).toHaveBeenCalledWith(expect.objectContaining({
-      jourSemaine: 1,
-      heureDebut: '08:00',
-      heureFin: '10:00',
-      type: 'TD',
-      dateDebut: '2026-10-05',
-    }));
+    expect(creneaux.verifierImport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jourSemaine: 1,
+        heureDebut: '08:00',
+        heureFin: '10:00',
+        type: 'TD',
+        dateDebut: '2026-10-05',
+      }),
+    );
   });
 
   it('signale un identifiant de département inexistant avant la création', async () => {
@@ -145,25 +157,35 @@ describe('imports CSV de référentiels', () => {
     prisma.affectation.findUnique.mockResolvedValue({ id: '00000000-0000-4000-8000-000000000001' });
     creneaux.verifierImport.mockResolvedValue(undefined);
 
-    const resultat = await service.importer({
-      type: TypeImportReferentiel.CRENEAUX,
-      contenu: 'affectationId;jourSemaine;heureDebut;heureFin\n00000000-0000-4000-8000-000000000001;1;08:00;10:00',
-    }, user);
+    const resultat = await service.importer(
+      {
+        type: TypeImportReferentiel.CRENEAUX,
+        contenu: 'affectationId;jourSemaine;heureDebut;heureFin\n00000000-0000-4000-8000-000000000001;1;08:00;10:00',
+      },
+      user,
+    );
 
     expect(resultat).toMatchObject({ importees: 1, rejetees: 0 });
-    expect(creneaux.creer).toHaveBeenCalledWith(expect.objectContaining({
-      affectationId: '00000000-0000-4000-8000-000000000001', jourSemaine: 1,
-    }), user);
+    expect(creneaux.creer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        affectationId: '00000000-0000-4000-8000-000000000001',
+        jourSemaine: 1,
+      }),
+      user,
+    );
   });
 
   it('normalise les dates de créneau pour le contrôle des doublons en base', async () => {
     const { prisma, service } = prepare();
     await service.previsualiser({
       type: TypeImportReferentiel.CRENEAUX,
-      contenu: 'affectationId;jourSemaine;heureDebut;heureFin;dateDebut;dateFin\n00000000-0000-4000-8000-000000000001;1;08:00;10:00;2026-10-05;2026-12-20',
+      contenu:
+        'affectationId;jourSemaine;heureDebut;heureFin;dateDebut;dateFin\n00000000-0000-4000-8000-000000000001;1;08:00;10:00;2026-10-05;2026-12-20',
     });
-    expect(prisma.creneau.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ dateDebut: expect.any(Date), dateFin: expect.any(Date) }),
-    }));
+    expect(prisma.creneau.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ dateDebut: expect.any(Date), dateFin: expect.any(Date) }),
+      }),
+    );
   });
 });

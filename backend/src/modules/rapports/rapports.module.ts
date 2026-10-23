@@ -11,10 +11,14 @@ import { ReleveHebdomadaireController } from './releve-pdf.controller';
 import { RelevePdfService } from './releve-pdf.service';
 
 @Module({
-  imports: [
-    ParametresModule,
+  imports: [ParametresModule],
+  controllers: [
+    RapportsController,
+    ImpressionController,
+    ExportController,
+    ReleveHebdomadaireController,
+    CouvertureControleursController,
   ],
-  controllers: [RapportsController, ImpressionController, ExportController, ReleveHebdomadaireController, CouvertureControleursController],
   providers: [RapportsService, ImpressionService, ExportService, RelevePdfService],
   exports: [RapportsService],
 })

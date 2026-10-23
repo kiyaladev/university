@@ -4,12 +4,7 @@ import { QueryDto } from '../../common/dto';
  * Matricule séquentiel par année ("2026-0004"), jeton QR resto généré à la
  * création, compte portail (User role ETUDIANT) rattaché sur demande.
  */
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { t } from '../../common/i18n';
 import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
@@ -55,26 +50,17 @@ const ETUDIANT_DEPARTEMENT_SELECT = {
 } satisfies Prisma.EtudiantSelect;
 
 /** "2026-0001" — INE du candidat, année du libellé scolaire (2025-2026 → 2026). */
-export async function prochainMatricule(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+export async function prochainMatricule(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'etudiant', 'matricule', `${annee}-`, 4);
 }
 
 /** "INS-2026-00042" — dossier d'inscription. */
-export async function prochainNumeroInscription(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+export async function prochainNumeroInscription(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'inscription', 'numero', `INS-${annee}-`, 5);
 }
 
 /** "PAY-2026-00001" — transaction de paiement. */
-export async function prochainNumeroPaiement(
-  tx: Prisma.TransactionClient,
-  annee: string,
-): Promise<string> {
+export async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
   return prochainNumeroTx(tx, 'paiement', 'reference', `PAY-${annee}-`, 5);
 }
 
@@ -86,30 +72,37 @@ export class EtudiantsService extends CrudService {
       orderBy: [{ matricule: 'desc' }],
       include: ETUDIANT_INCLUDE,
       omit: { qrRestoToken: true },
-      label: "Étudiant",
+      label: 'Étudiant',
     });
   }
 
   private lecture(user: AuthUser): CrudService {
-    if (user.role === Role.CHEF_DEPARTEMENT) return new CrudService(this.prisma, 'etudiant', {
-      searchFields: ['nom', 'prenom', 'matricule', 'telephone', 'email'], orderBy: [{ matricule: 'desc' }],
-      select: ETUDIANT_DEPARTEMENT_SELECT, label: 'Étudiant',
-    });
+    if (user.role === Role.CHEF_DEPARTEMENT)
+      return new CrudService(this.prisma, 'etudiant', {
+        searchFields: ['nom', 'prenom', 'matricule', 'telephone', 'email'],
+        orderBy: [{ matricule: 'desc' }],
+        select: ETUDIANT_DEPARTEMENT_SELECT,
+        label: 'Étudiant',
+      });
     if (user.role !== Role.ENSEIGNANT) return this;
     return new CrudService(this.prisma, 'etudiant', {
-      searchFields: ['nom', 'prenom', 'matricule'], orderBy: [{ matricule: 'desc' }],
-      select: { id: true, matricule: true, nom: true, prenom: true, sexe: true, actif: true }, label: 'Étudiant',
+      searchFields: ['nom', 'prenom', 'matricule'],
+      orderBy: [{ matricule: 'desc' }],
+      select: { id: true, matricule: true, nom: true, prenom: true, sexe: true, actif: true },
+      label: 'Étudiant',
     });
   }
 
   private perimetre(user: AuthUser) {
     if (user.role === Role.ETUDIANT) return { id: user.etudiantId ?? '__aucun__' };
-    if (user.role === Role.CHEF_DEPARTEMENT) return {
-      inscriptions: { some: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } },
-    };
-    if (user.role === Role.ENSEIGNANT) return {
-      travauxEncadres: { some: { encadrantId: user.enseignantId ?? '__aucun__' } },
-    };
+    if (user.role === Role.CHEF_DEPARTEMENT)
+      return {
+        inscriptions: { some: { promotion: { filiere: { departementId: user.departementId ?? '__aucun__' } } } },
+      };
+    if (user.role === Role.ENSEIGNANT)
+      return {
+        travauxEncadres: { some: { encadrantId: user.enseignantId ?? '__aucun__' } },
+      };
     return {};
   }
 
@@ -170,9 +163,7 @@ export class EtudiantsService extends CrudService {
           const etudiant = await tx.etudiant.create({
             data: {
               ...donnees,
-              ...(donnees.dateNaissance
-                ? { dateNaissance: toDateOnly(donnees.dateNaissance) }
-                : {}),
+              ...(donnees.dateNaissance ? { dateNaissance: toDateOnly(donnees.dateNaissance) } : {}),
               matricule: await prochainMatricule(tx, annee),
               qrRestoToken: this.nouveauQrResto(),
               userId: compte?.id ?? null,

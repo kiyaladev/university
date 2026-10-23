@@ -19,7 +19,13 @@ export function projectionPubliqueDocument(doc: Record<string, any>): Record<str
   } = doc;
   const enseignant = publicDoc.enseignant
     ? (() => {
-        const { id: _id, matricule: _matricule, departementId: _departementIdEnseignant, departement: departementEnseignant, ...reste } = publicDoc.enseignant;
+        const {
+          id: _id,
+          matricule: _matricule,
+          departementId: _departementIdEnseignant,
+          departement: departementEnseignant,
+          ...reste
+        } = publicDoc.enseignant;
         return {
           ...reste,
           ...(departementEnseignant ? { departement: { nom: departementEnseignant.nom } } : {}),

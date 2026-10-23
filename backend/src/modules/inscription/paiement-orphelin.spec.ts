@@ -37,9 +37,11 @@ describe('Paiements sans inscription', () => {
 
     await service.creerPaiement({ montant: 5000, mode: 'ESPECES' } as any, { id: 'agent-1' } as any);
 
-    expect(tx.paiement.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ anneeId: 'year-1', inscriptionId: null }),
-    }));
+    expect(tx.paiement.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ anneeId: 'year-1', inscriptionId: null }),
+      }),
+    );
     expect(tx.auditLog.create).toHaveBeenCalledTimes(1);
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
   });
@@ -54,8 +56,9 @@ describe('Paiements sans inscription', () => {
     const prisma = { $transaction: jest.fn((operation: (db: typeof tx) => unknown) => operation(tx)) };
     const service = new PaiementsService(prisma as any, {} as any);
 
-    await expect(service.creerPaiement({ montant: 5000, mode: 'ESPECES' } as any, { id: 'agent-1' } as any))
-      .rejects.toThrow(BadRequestException);
+    await expect(
+      service.creerPaiement({ montant: 5000, mode: 'ESPECES' } as any, { id: 'agent-1' } as any),
+    ).rejects.toThrow(BadRequestException);
     expect(tx.paiement.create).not.toHaveBeenCalled();
   });
 });

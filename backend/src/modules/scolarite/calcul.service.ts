@@ -129,9 +129,7 @@ export function moyenneUe(epreuves: Epreuve[]): {
 }
 
 /** Σ(moyenneUE × créditsUE) / Σ(créditsUE) sur les UE jugées. */
-export function moyenneGenerale(
-  matieres: Array<{ moyenne: number | null; credits: number }>,
-): number | null {
+export function moyenneGenerale(matieres: Array<{ moyenne: number | null; credits: number }>): number | null {
   let somme = 0;
   let credits = 0;
   for (const m of matieres) {
@@ -160,8 +158,7 @@ export function decider(matieres: MatiereAEtudier[]): ResultatEtudiant {
       decision: 'DEFAILLANT',
       mention: null,
       moyenneGenerale: moyenneGenerale(matieres),
-      motif:
-        'Matière en défaut : aucune note exploitable sur au moins une épreuve clôturée',
+      motif: 'Matière en défaut : aucune note exploitable sur au moins une épreuve clôturée',
     };
   }
 
@@ -170,10 +167,7 @@ export function decider(matieres: MatiereAEtudier[]): ResultatEtudiant {
   // « Défaut d'absence » : une matière sous 5/20 alors qu'une absence a été
   // consignée sur une épreuve clôturée — l'admission est exclue.
   const defautAbsence = matieres.some(
-    (m) =>
-      m.moyenne !== null &&
-      m.moyenne < REGLES_DELIBERATION.seuilDefautAbsence &&
-      m.absenceCloturee,
+    (m) => m.moyenne !== null && m.moyenne < REGLES_DELIBERATION.seuilDefautAbsence && m.absenceCloturee,
   );
 
   if (admissible && !defautAbsence) {
@@ -198,11 +192,6 @@ export function decider(matieres: MatiereAEtudier[]): ResultatEtudiant {
 /** Rang dans la classe : moyenne décroissante, ex aequo par nom puis prénom. */
 export function classer<T extends CandidatTri>(candidats: T[]): (T & { rang: number })[] {
   return [...candidats]
-    .sort(
-      (a, b) =>
-        b.moyenne - a.moyenne ||
-        a.nom.localeCompare(b.nom, 'fr') ||
-        a.prenom.localeCompare(b.prenom, 'fr'),
-    )
+    .sort((a, b) => b.moyenne - a.moyenne || a.nom.localeCompare(b.nom, 'fr') || a.prenom.localeCompare(b.prenom, 'fr'))
     .map((c, i) => ({ ...c, rang: i + 1 }));
 }

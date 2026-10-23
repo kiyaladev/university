@@ -12,9 +12,13 @@ describe('Émission depuis une demande de document', () => {
     const tx = {
       $queryRaw: jest.fn().mockResolvedValue([{ cloturee: false, anneeId: 'annee-1' }]),
       inscription: {
-        findUnique: jest.fn().mockResolvedValue({ anneeId: 'annee-1', etudiantId: 'etudiant-1', promotionId: 'promo-1' }),
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ anneeId: 'annee-1', etudiantId: 'etudiant-1', promotionId: 'promo-1' }),
       },
-      anneeAcademique: { findUnique: jest.fn().mockResolvedValue({ id: 'annee-1', libelle: '2026-2027', cloturee: false }) },
+      anneeAcademique: {
+        findUnique: jest.fn().mockResolvedValue({ id: 'annee-1', libelle: '2026-2027', cloturee: false }),
+      },
       attestation: {
         findFirst: jest.fn().mockResolvedValue(doublon),
         findMany: jest.fn().mockResolvedValue([]),
@@ -30,12 +34,17 @@ describe('Émission depuis une demande de document', () => {
   it("émet dans la transaction de l'appelant, sur l'année de l'inscription", async () => {
     const { tx, service } = monter(null);
     await expect(service.emettrePourDemandeTx(tx as any, dto, user)).resolves.toMatchObject({ id: 'att-neuve' });
-    expect(tx.attestation.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({
-        anneeId: 'annee-1', inscriptionId: 'inscription-1', promotionId: 'promo-1',
-        type: TypeAttestation.SCOLARITE, emiseParId: 'scolarite',
+    expect(tx.attestation.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          anneeId: 'annee-1',
+          inscriptionId: 'inscription-1',
+          promotionId: 'promo-1',
+          type: TypeAttestation.SCOLARITE,
+          emiseParId: 'scolarite',
+        }),
       }),
-    }));
+    );
     expect(tx.auditLog.create).toHaveBeenCalled();
   });
 
@@ -43,7 +52,10 @@ describe('Émission depuis une demande de document', () => {
     const existante = { id: 'att-manuelle', numero: 'ATT-2026-00004' };
     const { tx, service } = monter(existante);
     await expect(service.emettrePourDemandeTx(tx as any, dto, user)).resolves.toBe(existante);
-    expect(tx.demandeDocument.findUnique).toHaveBeenCalledWith({ where: { attestationId: 'att-manuelle' }, select: { id: true } });
+    expect(tx.demandeDocument.findUnique).toHaveBeenCalledWith({
+      where: { attestationId: 'att-manuelle' },
+      select: { id: true },
+    });
     expect(tx.attestation.create).not.toHaveBeenCalled();
   });
 
