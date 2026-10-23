@@ -3,6 +3,7 @@
  *  séance ne peut exister que sur une affectation. */
 import {
   Body,
+  ConflictException,
   Controller,
   Delete,
   ForbiddenException,
@@ -17,7 +18,8 @@ import {
 import { ApiBearerAuth, ApiTags, PartialType } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { IsInt, IsOptional, IsUUID, Min } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
+import { t } from '../../common/i18n';
 import { exigerAnneeOuverte, exigerPromotionMemeAnnee } from '../../common/annee';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
@@ -141,8 +143,21 @@ export class AffectationsService extends CrudService {
       const avant: any = await tx.affectation.findUnique({ where: { id }, include: AFFECTATION_INCLUDE });
       if (!avant) throw new ForbiddenException();
       await exigerAnneeOuverte(tx, avant.anneeId);
-      await tx.affectation.delete({ where: { id } });
-      await journaliser(tx, user ?? null, 'AFFECTATION_SUPPRIMEE', 'Affectation', id, { avant: this.instantaneAudit(avant), apres: null });
+      // Contrôles et justificatifs sont des preuves (base de la paie) : une
+      // affectation qui en porte ne se supprime pas. Les séances seulement
+      // planifiées s'effacent explicitement ; Seance.affectationId est en
+      // RESTRICT, une preuve posée entre-temps fait échouer le DELETE (409).
+      const pointees = await tx.seance.count({
+        where: { affectationId: id, OR: [{ controle: { isNot: null } }, { justificatif: { isNot: null } }] },
+      });
+      if (pointees > 0) {
+        throw new ConflictException(t('referentiel.affectation_seances_pointees', { nombre: pointees }));
+      }
+      const { count: seancesSupprimees } = await tx.seance.deleteMany({
+        where: { affectationId: id, controle: { is: null }, justificatif: { is: null } },
+      });
+      await supprimerOuConflit(() => tx.affectation.delete({ where: { id } }), 'referentiel.affectation_referenced_delete');
+      await journaliser(tx, user ?? null, 'AFFECTATION_SUPPRIMEE', 'Affectation', id, { avant: this.instantaneAudit(avant), apres: null, seancesSupprimees });
       return { id };
     });
   }

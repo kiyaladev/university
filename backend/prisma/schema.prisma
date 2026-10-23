@@ -611,7 +611,7 @@ model Creneau {
 model Seance {
   id            String      @id @default(uuid())
   affectationId String
-  affectation   Affectation @relation(fields: [affectationId], references: [id], onDelete: Cascade)
+  affectation   Affectation @relation(fields: [affectationId], references: [id], onDelete: Restrict)
 
   creneauId String?
   creneau   Creneau? @relation(fields: [creneauId], references: [id], onDelete: SetNull)
@@ -650,7 +650,7 @@ model Seance {
 model Controle {
   id       String @id @default(uuid())
   seanceId String @unique
-  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Restrict)
 
   controleurId String
   controleur   User   @relation("ControleAgent", fields: [controleurId], references: [id], onDelete: Restrict)
@@ -696,10 +696,10 @@ model Controle {
 model Justificatif {
   id       String @id @default(uuid())
   seanceId String @unique
-  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Cascade)
+  seance   Seance @relation(fields: [seanceId], references: [id], onDelete: Restrict)
 
   enseignantId String
-  enseignant   Enseignant @relation(fields: [enseignantId], references: [id], onDelete: Cascade)
+  enseignant   Enseignant @relation(fields: [enseignantId], references: [id], onDelete: Restrict)
 
   type   TypeJustificatif   @default(AUTRE)
   motif  String

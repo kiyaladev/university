@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Prisma, Role, StatutSeance } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { AuthUser } from '../../common/decorators';
 import { isoDate, jourSemaine, toDateOnly, dureeMinutes } from '../../common/utils';
 import {
@@ -463,7 +463,16 @@ export class SeancesService extends CrudService {
       const avant: any = await tx.seance.findUnique({ where: { id }, include: SEANCE_INCLUDE });
       if (!avant) throw new NotFoundException(t('common.notFound'));
       await exigerAnneeOuverte(tx, avant.anneeId);
-      await tx.seance.delete({ where: { id } });
+      // Un contrôle ou un justificatif est une preuve (base de la paie) : la
+      // séance se garde, elle s'annule. FK en RESTRICT : une preuve posée
+      // entre-temps fait échouer le DELETE, traduit en 409.
+      const preuves = await tx.seance.findUnique({
+        where: { id }, select: { controle: { select: { id: true } }, justificatif: { select: { id: true } } },
+      });
+      if (preuves?.controle || preuves?.justificatif) {
+        throw new ConflictException(t('planification.seance_pointee_non_supprimable'));
+      }
+      await supprimerOuConflit(() => tx.seance.delete({ where: { id } }), 'planification.seance_pointee_non_supprimable');
       await journaliser(tx, user ?? null, 'SEANCE_SUPPRIMEE', 'Seance', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

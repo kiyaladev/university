@@ -12,5 +12,6 @@
   "controleurAffectationRequired": "Choose a controller or send null to remove the assignment.",
   "controleurAffectationInvalid": "The controller was not found, is inactive, or does not have the required role.",
   "tourneePeriodInvalid": "The end date must be on or after the start date.",
-  "tourneePeriodTooLong": "The assignment period cannot exceed 400 days."
+  "tourneePeriodTooLong": "The assignment period cannot exceed 400 days.",
+  "seance_pointee_non_supprimable": "This session has an attendance check or a justification: it is proof of service and cannot be deleted. Cancel it instead."
 }
