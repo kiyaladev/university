@@ -117,7 +117,7 @@ describe('shared/services/file-chiffree', () => {
     ]);
   });
 
-  it('recopie les clés de chiffrement de l’ancienne base puis la retire', async () => {
+  it('recopie les clés de chiffrement de l’ancienne base et la conserve', async () => {
     const cle = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
       'encrypt',
       'decrypt',
@@ -129,7 +129,7 @@ describe('shared/services/file-chiffree', () => {
 
     await expect(migrerBaseCrypto()).resolves.toBe(1);
     const bases = await indexedDB.databases();
-    expect(bases.map((base) => base.name)).not.toContain(BASE_LEGACY);
+    expect(bases.map((base) => base.name)).toContain(BASE_LEGACY);
     // La file reste déchiffrable : rien n'est perdu.
     await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, PROPRIETAIRE, [])).resolves.toEqual([
       { seanceId: 'seance-1' },

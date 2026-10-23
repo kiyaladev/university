@@ -95,9 +95,10 @@ async function importerCleLegacy(proprietaire: string, courante: IDBDatabase): P
 }
 
 /**
- * Copie toutes les clés de chiffrement de l'ancienne base vers la nouvelle,
- * puis retire l'ancienne base. La reprise est idempotente : la rejouer ne
- * perd aucune clé.
+ * Copie toutes les clés de chiffrement de l'ancienne base vers la nouvelle.
+ * L'ancienne base est conservée (quelques octets) : elle reste un recours si
+ * une file chiffrée avec une ancienne clé réapparaît. La reprise est
+ * idempotente : la rejouer ne perd aucune clé.
  */
 export async function migrerBaseCrypto(): Promise<number> {
   if (!(await baseExiste(BASE_LEGACY))) return 0;
@@ -132,22 +133,11 @@ export async function migrerBaseCrypto(): Promise<number> {
       }
     }
     legacy.close();
-    await supprimerBase(BASE_LEGACY);
     return reprises;
   } catch {
     legacy.close();
     return 0;
   }
-}
-
-function supprimerBase(nom: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (!globalThis.indexedDB) return resolve();
-    const demande = indexedDB.deleteDatabase(nom);
-    demande.onsuccess = () => resolve();
-    demande.onerror = () => resolve();
-    demande.onblocked = () => resolve();
-  });
 }
 
 async function obtenirCle(proprietaire: string): Promise<CryptoKey> {

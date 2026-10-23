@@ -21,8 +21,8 @@ export default defineBoot(async () => {
   // Les clés de stockage sont synchrones : la reprise est faite avant tout
   // le reste, pour qu'aucun service ne lise une clé abandonnée.
   migrerClesLocales();
-  // Les clés de chiffrement de la base renommée sont recopiées, puis
-  // l'ancienne base est retirée.
+  // Les clés de chiffrement de la base renommée sont recopiées ; l'ancienne
+  // base est conservée en recours.
   await migrerBaseCrypto();
   // Les caches du service worker ne portent aucune donnée unique.
   await migrerCaches();
