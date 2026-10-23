@@ -2,7 +2,8 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { i18n } from '../boot/i18n';
-import { lireToken } from '@/shared/services/session';
+import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
+import { CLE_AFFECTATIONS, CLE_FILE_SEANCES, CLE_SALLES, clePour } from '@/shared/services/cles-stockage';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Affectation, Salle, Seance, TypeCours } from '../types';
 
@@ -23,23 +24,12 @@ interface SeanceEnFile extends NouvelleSeance {
   salle: Salle | null;
 }
 
-const CLE = 'unipresence_file_seances';
-const CLE_AFFECTATIONS = 'unipresence_affectations_tournee';
-const CLE_SALLES = 'unipresence_salles_tournee';
+const CLE = CLE_FILE_SEANCES;
 const PEREMPTION_JOURS = 7;
 const AGE_AFFECTATIONS_MAX = 24 * 60 * 60 * 1000;
 
 function proprietaire(): string {
-  try {
-    const payload = JSON.parse(atob(lireToken().split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return payload.sub || '';
-  } catch {
-    return '';
-  }
-}
-
-function clePour(prefixe: string, owner: string) {
-  return `${prefixe}_${owner}`;
+  return proprietaireDepuisToken(lireToken());
 }
 
 function idClient(): string {

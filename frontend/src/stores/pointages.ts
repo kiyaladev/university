@@ -8,20 +8,15 @@ import { defineStore } from 'pinia';
 import { Notify } from 'quasar';
 import { api } from '../boot/axios';
 import { useSeancesStore } from './seances';
-import { lireToken } from '@/shared/services/session';
+import { lireToken, proprietaireDepuisToken } from '@/shared/services/session';
+import { CLE_FILE_POINTAGES } from '@/shared/services/cles-stockage';
 import { ecrireFileChiffree, lireFileChiffree } from '@/shared/services/file-chiffree';
 import { normaliserJetonsStatuts } from '@/shared/utils/statuts';
 import type { Pointage } from '../types';
 
-const CLE_FILE = 'unipresence_file_pointages';
+const CLE_FILE = CLE_FILE_POINTAGES;
 function proprietaire(): string {
-  try {
-    const token = lireToken();
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    return payload.sub || '';
-  } catch {
-    return '';
-  }
+  return proprietaireDepuisToken(lireToken());
 }
 function cleFile(owner: string): string {
   return `${CLE_FILE}_${owner}`;

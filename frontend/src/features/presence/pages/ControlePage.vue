@@ -307,6 +307,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useReferentielsStore } from '@/stores/referentiels';
 import DialoguePointage from '../components/DialoguePointage.vue';
 import DialogueSeance from '../components/DialogueSeance.vue';
+import { cleTourneePreparee } from '@/shared/services/cles-stockage';
 import {
   ICONE_ATTESTATION,
   LIBELLE_ATTESTATION,
@@ -347,7 +348,7 @@ async function preparerTournee() {
     seancesHorsLigne.enregistrerAffectations(affectations.data.data ?? []);
     seancesHorsLigne.enregistrerSalles(salles);
     localStorage.setItem(
-      `unipresence_tournee_preparee_${auth.utilisateur.id}`,
+      cleTourneePreparee(auth.utilisateur.id),
       JSON.stringify({ date: date.value, prepareeLe: new Date().toISOString() }),
     );
     $q.notify({ type: 'positive', message: t('dashboard.actions.roundPrepared') });

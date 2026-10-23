@@ -251,6 +251,7 @@ import { useReferentielsStore } from '@/stores/referentiels';
 import { useSeancesStore } from '@/stores/seances';
 import Graphique from '@/shared/components/Graphique.vue';
 import BarreTaux from '@/shared/components/BarreTaux.vue';
+import { cleTourneePreparee } from '@/shared/services/cles-stockage';
 import {
   LIBELLE_STATUT_PRESENCE,
   aujourdhui,
@@ -323,7 +324,7 @@ const preparationEnCours = ref(false);
 const tourneePrepareeLe = ref<string | null>(null);
 const clePreparation = computed(() => {
   const userId = auth.utilisateur?.id;
-  return userId ? `unipresence_tournee_preparee_${userId}` : null;
+  return userId ? cleTourneePreparee(userId) : null;
 });
 const heurePreparation = computed(() => {
   if (!tourneePrepareeLe.value) return '';

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { api } from '../boot/axios';
 import { enrolerAppareilSiNecessaire } from '@/shared/services/empreinte';
 import { ecrireToken, effacerToken, lireToken } from '@/shared/services/session';
+import { CACHE_API, CACHE_API_ANCIEN } from '@/shared/services/cles-stockage';
 import { useReferentielsStore } from './referentiels';
 import type { Role, Utilisateur } from '../types';
 import { roleAutorise, type Permission } from '../navigation/permissions';
@@ -116,7 +117,7 @@ export const useAuthStore = defineStore('auth', {
       useReferentielsStore().vider();
       effacerToken();
       if ('caches' in window) {
-        void Promise.all(['unipresence-api', 'unipresence-api-v2'].map((name) => caches.delete(name)));
+        void Promise.all([CACHE_API_ANCIEN, CACHE_API].map((name) => caches.delete(name)));
       }
     },
   },

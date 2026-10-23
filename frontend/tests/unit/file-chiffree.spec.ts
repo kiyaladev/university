@@ -9,89 +9,17 @@ vi.mock('quasar', () => ({ Notify: { create: vi.fn() } }));
 vi.mock('../../src/boot/i18n', () => ({ i18n: { global: { t: (cle: string) => cle } } }));
 vi.mock('../../src/stores/seances', () => ({ useSeancesStore: () => ({ synchroniser: vi.fn() }) }));
 
+import { creerIndexedDbFaux, creerStockageFaux, jetonPour } from './stockage-outil';
+
 const PROPRIETAIRE = 'agent-test';
-const CLE_FILE = 'unipresence_file_pointages';
+const CLE_FILE = 'university_file_pointages';
 const CLE_FILE_PROPRIETAIRE = `${CLE_FILE}_${PROPRIETAIRE}`;
 
-interface FauxRequete {
-  onsuccess: (() => void) | null;
-  onerror: (() => void) | null;
-  onupgradeneeded?: (() => void) | null;
-  result: unknown;
-  error: unknown;
-}
-
-/**
- * IndexedDB minimal : le service y conserve la clé AES-GCM du compte, avec la
- * seule exigence d'`extractable: false` — la clé n'est jamais lisible.
- */
-function creerIndexedDbFaux() {
-  const bases = new Map<string, Map<string, Map<string, unknown>>>();
-  return {
-    open(base: string) {
-      const requete: FauxRequete = { onsuccess: null, onerror: null, result: null, error: null };
-      queueMicrotask(() => {
-        const magasins = bases.get(base) ?? new Map<string, Map<string, unknown>>();
-        bases.set(base, magasins);
-        requete.result = {
-          objectStoreNames: { contains: (nom: string) => magasins.has(nom) },
-          createObjectStore: (nom: string) => {
-            magasins.set(nom, new Map<string, unknown>());
-            return nom;
-          },
-          transaction: (nom: string) => {
-            const tx = {
-              oncomplete: null as (() => void) | null,
-              onerror: null as (() => void) | null,
-              onabort: null as (() => void) | null,
-              objectStore: () => ({
-                get(cle: string) {
-                  const lecture: FauxRequete = { onsuccess: null, onerror: null, result: undefined, error: null };
-                  queueMicrotask(() => {
-                    lecture.result = magasins.get(nom)?.get(cle);
-                    lecture.onsuccess?.();
-                  });
-                  return lecture;
-                },
-                put(valeur: { proprietaire: string }) {
-                  magasins.get(nom)?.set(valeur.proprietaire, valeur);
-                },
-              }),
-            };
-            setTimeout(() => tx.oncomplete?.(), 0);
-            return tx;
-          },
-          close: () => undefined,
-        };
-        requete.onupgradeneeded?.();
-        requete.onsuccess?.();
-      });
-      return requete;
-    },
-  };
-}
-
-function creerLocalStorageFaux() {
-  const valeurs = new Map<string, string>();
-  return {
-    getItem: (cle: string) => valeurs.get(cle) ?? null,
-    setItem: (cle: string, valeur: string) => {
-      valeurs.set(cle, valeur);
-    },
-    removeItem: (cle: string) => {
-      valeurs.delete(cle);
-    },
-    clear: () => valeurs.clear(),
-  };
-}
-
 beforeEach(async () => {
-  vi.stubGlobal('localStorage', creerLocalStorageFaux());
+  vi.stubGlobal('localStorage', creerStockageFaux());
+  vi.stubGlobal('sessionStorage', creerStockageFaux());
   vi.stubGlobal('indexedDB', creerIndexedDbFaux());
-  localStorage.setItem(
-    'unipresence_token',
-    `e30.${Buffer.from(JSON.stringify({ sub: PROPRIETAIRE })).toString('base64')}.signature-de-recette`,
-  );
+  localStorage.setItem('university_token', jetonPour(PROPRIETAIRE));
   api.post.mockReset();
   // Chaque scénario repart d'une application neuve : le cache de clé du
   // service et l'instance Pinia ne doivent pas survivre d'un test à l'autre.
@@ -147,6 +75,7 @@ describe('shared/services/file-chiffree', () => {
 
     await expect(lireFileChiffree(CLE_FILE_PROPRIETAIRE, 'autre-compte', [])).rejects.toThrow();
   });
+
 });
 
 describe('stores/pointages', () => {

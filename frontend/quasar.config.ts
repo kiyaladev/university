@@ -4,6 +4,10 @@ import { defineConfig } from '#q-app/wrappers';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// La config est empaquetée par esbuild : elle peut donc reprendre les
+// services de l'application, qui n'ont aucune dépendance au navigateur.
+import { CACHE_API } from './src/shared/services/cles-stockage';
+import { decoderChargeUtile } from './src/shared/services/session';
 
 export default defineConfig((ctx) => {
   const inclureMediasDemo = ctx.dev || Boolean(process.env.QA_BUILD_DIR && process.env.INCLUDE_DEMO_MEDIA === 'true');
@@ -12,7 +16,7 @@ export default defineConfig((ctx) => {
     throw new Error('Une API locale exige QA_BUILD_DIR : le dossier servi en production ne doit pas recevoir un build de recette.');
   }
   return {
-    boot: ['axios', 'i18n', 'accessibilite'],
+    boot: ['stockage', 'axios', 'i18n', 'accessibilite'],
 
     css: ['app.scss'],
 
@@ -105,7 +109,7 @@ export default defineConfig((ctx) => {
               request.method === 'GET' && url.pathname.startsWith('/api/') && !url.searchParams.has('token'),
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'unipresence-api-v2',
+              cacheName: CACHE_API,
               plugins: [{
                 // Le cache HTTP ignore Authorization : une clé propre à la
                 // session empêche de lire le résultat du compte précédent.
@@ -120,10 +124,8 @@ export default defineConfig((ctx) => {
                 cachedResponseWillBeUsed: async ({ request, cachedResponse }: any) => {
                   const authorization = request.headers.get('Authorization');
                   if (authorization) {
-                    try {
-                      const payload = JSON.parse(atob(authorization.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-                      if (!payload.exp || payload.exp * 1000 <= Date.now()) return null;
-                    } catch { return null; }
+                    const charge = decoderChargeUtile(authorization);
+                    if (!charge?.exp || charge.exp * 1000 <= Date.now()) return null;
                   }
                   return cachedResponse;
                 },
