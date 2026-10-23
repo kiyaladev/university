@@ -1444,7 +1444,7 @@ async function main() {
     });
     for (const ens of vacataires) {
       const heures = Math.round((8 + Math.random() * 16) * 10) / 10;
-      const montantNet = heures * ens.tauxHoraire;
+      const montantNet = heures * Number(ens.tauxHoraire);
       await prisma.lignePaie.create({
         data: {
           feuilleId: feuille.id,
