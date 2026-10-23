@@ -2,7 +2,7 @@
 export default {
   signage: {
     overline: 'Personnel de l’université',
-    brand: 'UniPrésence',
+    brand: 'University',
     tagline:
       'Le registre du contrôleur, salle par salle : il relève la séance, fait signer ou poser le doigt à l’enseignant, et l’heure est consignée.',
     facts: {

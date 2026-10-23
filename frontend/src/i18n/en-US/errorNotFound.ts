@@ -2,7 +2,7 @@
 export default {
   code: 'Error 404',
   title: 'Page not found',
-  text: 'The address {adresse} doesn’t match any UniPrésence page. The link may be outdated, or the section may have been renamed.',
+  text: 'The address {adresse} doesn’t match any University page. The link may be outdated, or the section may have been renamed.',
   actions: {
     backHome: 'Back to my home',
     login: 'Sign in',

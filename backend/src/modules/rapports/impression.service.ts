@@ -78,7 +78,7 @@ export class ImpressionService {
     <div class="sous-titre">${sousTitre}</div>`,
       corps: contenu,
       piedDePage:
-        '<span>UniPrésence — contrôle numérique de présence des enseignants</span>' + `<span>Édité le ${edite}</span>`,
+        '<span>University — contrôle numérique de présence des enseignants</span>' + `<span>Édité le ${edite}</span>`,
     });
   }
 

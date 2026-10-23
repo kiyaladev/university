@@ -564,7 +564,7 @@ export class CourrierService {
     <div class="signature">Le Chef de département</div>
     <div class="signature">Les Archives</div>
   </div>`,
-      piedDePage: `<span>UniPrésence — registre du courrier</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
+      piedDePage: `<span>University — registre du courrier</span><span>Édité le ${new Date().toLocaleString('fr-FR')}</span>`,
     });
   }
 }

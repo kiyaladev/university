@@ -570,7 +570,7 @@ export class InscriptionService {
     <div class="signature">La scolarité</div>
     <div class="signature">Le Directeur des études</div>
   </div>`,
-      piedDePage: `<span>UniPrésence — registre des inscriptions</span><span>Édité le ${edite}</span>`,
+      piedDePage: `<span>University — registre des inscriptions</span><span>Édité le ${edite}</span>`,
     });
   }
 }

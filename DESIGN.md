@@ -1,6 +1,6 @@
 ---
-name: UniPrésence
-description: Le registre de contrôle des séances dans la grammaire d'Apple — sobre et aéré — aux trois couleurs du drapeau guinéen, employées en touches.
+name: University
+description: La plateforme de gestion universitaire — présences, scolarité, finances, campus, documents — dans la grammaire d'Apple : sobre et aéré, aux trois couleurs du drapeau guinéen, employées en touches.
 # Valeurs relevées sur `frontend/src/css/quasar.variables.scss` et
 # `frontend/src/css/app.scss`, seules sources appliquées à l'exécution.
 # Les neutres viennent des variables `--sk-*` de `main.built.css` d'apple.com,
@@ -164,13 +164,15 @@ components:
     rounded: "{rounded.md}"
 ---
 
-# Design System: UniPrésence
+# Design System: University
 
 ## Overview
 
 **Creative North Star : la sobriété d'Apple, aux couleurs du drapeau**
 
 L'application se lit sans effort et sans bruit. Du blanc, un gris, de l'encre. La couleur ne sert qu'à dire un état — jamais à décorer une surface, jamais à signaler qu'un élément est important. Une page entière peut n'avoir aucune couleur, et c'est le cas normal, pas un manque.
+
+Cette grammaire couvre **toute la plateforme**, pas seulement le registre : la tournée du contrôleur comme le guichet de la scolarité, la feuille de paie comme le portail de l'étudiant, la bibliothèque comme le rectorat. Un même écran de notes, une même plaque, un même champ de statut — du terrain au bureau, d'une rubrique à l'autre. Ce qui change d'un écran à l'autre n'est jamais sa matière, seulement sa densité.
 
 Les neutres sont relevés sur apple.com plutôt que devinés : ils viennent des variables `--sk-*` de `main.built.css` — l'encre `#1D1D1F`, le gris secondaire `#6E6E73`, le gris de section `#F5F5F7`, le filet `#D2D2D7`. Le principe qu'on en retient tient en une observation : sur une page d'Apple, la seule teinte saturée est le bouton d'achat.
 
@@ -180,7 +182,7 @@ Les teintes officielles ne tiennent pas toujours le contraste : `#009460` avec d
 
 La structure, c'est l'air. Ce qui était séparé par un trait épais l'est désormais par du vide ; le filet — un cheveu de 1 px — ne reste que là où le vide ne suffit pas. La page est grise et les surfaces posées dessus sont blanches, l'inverse du réflexe habituel, et c'est ce qui fait respirer un écran de gestion.
 
-La densité reste celle d'un registre de terrain : le contrôleur travaille debout, une main occupée, sur un téléphone d'entrée de gamme. Un chiffre géant est un chiffre que quelqu'un cherche en levant les yeux. Mais il se lit en encre, pas en couleur.
+La densité reste celle d'un registre de terrain : le contrôleur travaille debout, une main occupée, sur un téléphone d'entrée de gamme. Un chiffre géant est un chiffre que quelqu'un cherche en levant les yeux. Mais il se lit en encre, pas en couleur. Les écrans de bureau — scolarité, finances, rectorat — gardent la même matière et la même aération ; ils serrent simplement la grille au lieu d'étaler les registres en grandes plaques.
 
 Refus explicites portés par le code : l'aplat saturé pleine largeur, le filet de 2 px qui structure, la capitale criée, l'angle vif, et la carte cernée sans ombre. Le monde précédent — le panneau émaillé peint à la main — n'a plus cours ; ses noms de classes survivent (`.plaque`, `.champ`, `.lettrage`, `.pochoir`, `.bandeau`) parce qu'ils désignent toujours les mêmes rôles, mais leur matière a entièrement changé. Les trois couleurs reviennent de ce monde-là ; leur emploi, lui, n'a rien à voir : elles ponctuent au lieu de couvrir.
 
@@ -273,6 +275,8 @@ Sur un appareil Apple, `-apple-system` attrape SF Pro : rien à charger, et le t
 Le rythme d'espacement est unique et à six pas : **4, 8, 16, 24, 40, 64 px** (`--up-1` à `--up-6`). Chaque cran est plus large que dans le monde précédent : l'aération est le premier symptôme de la sobriété qu'on vise. Aucune valeur hors de cette échelle, sauf ajustement optique local de 2 à 6 px.
 
 La surface maîtresse — la tournée — s'organise en trois régions : chrome translucide en haut de fenêtre, bandeau de journée (une surface blanche arrondie posée sur le gris), puis la pile de plaques. Chaque plaque est une grille de trois colonnes : bloc d'heure sur fond gris à gauche, identité au centre (`minmax(0, 1fr)`), champ d'action ou de statut à droite sur toute la hauteur — la cible du pouce.
+
+Les autres rubriques — scolarité, finances, campus, administration — reprennent la même armature : chrome translucide, bandeau de journée ou de section posé sur le gris, plaques blanches et registres. Une fiche d'étudiant, une feuille de paie et une réservation de cité sont des plaques du même système ; seule la colonne de gauche change.
 
 Trois seuils responsives, tous exprimés en largeur maximale de contenu plutôt qu'en étirement :
 - **≤ 599 px (téléphone)** : la plaque passe à deux colonnes, le champ d'action bascule sous le corps sur toute la largeur ; boutons et champs de saisie à 44 px, items de liste à 48 px.
@@ -392,6 +396,6 @@ Ressort critiquement amorti par défaut, réponse 0,3–0,4 s, **aucun dépassem
 
 ---
 
-> **Sidecar.** `.impeccable/design.json` a été régénéré avec cette bascule : mêmes hexadécimaux, mêmes rayons, mêmes règles, plus huit spécimens de composants (plaque de séance, champ de statut, bouton, champ de saisie, chrome, segmented control, note, en-tête de registre) rendus dans la grammaire Apple. En cas de divergence, ce fichier-ci fait foi.
+> **Sidecar.** `.impeccable/design.json` a été régénéré avec cette bascule : mêmes hexadécimaux, mêmes rayons, mêmes règles, plus huit spécimens de composants (plaque de séance, champ de statut, bouton, champ de saisie, chrome, segmented control, note, en-tête de registre) rendus dans la grammaire Apple. En cas de divergence, ce fichier-ci fait foi. Ses spécimens portent encore l'ancien nom de marque : le sidecar reste à régénérer — tant que ce n'est pas fait, ce fichier-ci fait foi, y compris sur le nom.
 >
 > **Vérification.** La bascule a été contrôlée écran par écran, et pas seulement compilée : un balayage automatisé mesure le contraste de chaque nœud de texte contre son fond réel sur 39 écrans en thème clair et 43 en thème sombre. Il ne reste aucun texte sous 2:1. Ce balayage a fait ressortir quatre défauts que la lecture seule n'aurait pas donnés — `q-btn-toggle` qui marque l'option choisie par `bg-primary` et non par `q-btn--active` ; `--up-primary` employée mais jamais déclarée ; `text-secondary` figé à #1D1D1F donc invisible en sombre ; et une règle `.etat-vide .q-icon` trop large qui grisait l'icône du bouton d'action posé dans l'état vide.
