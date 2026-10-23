@@ -28,7 +28,7 @@ import {
   DefinirCodePinDto,
   EnrolerEmpreinteDto,
   PreuveEmpreinteDto,
-} from './attestation.dto';
+} from './moyens-attestation.dto';
 import { t } from '../../common/i18n';
 import { BIOMETRIE_SECRET_EXEMPLE } from '../../common/configuration';
 import { toDateOnly } from '../../common/utils';
@@ -51,8 +51,8 @@ export interface ResultatAttestation {
 }
 
 @Injectable()
-export class AttestationService {
-  private readonly journal = new Logger(AttestationService.name);
+export class MoyensAttestationService {
+  private readonly journal = new Logger(MoyensAttestationService.name);
 
   constructor(
     private prisma: PrismaService,

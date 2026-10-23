@@ -25,7 +25,7 @@ import { ReferentielModule } from './modules/referentiel/referentiel.module';
 import { PlanificationModule } from './modules/planification/planification.module';
 import { ImportsModule } from './modules/imports/imports.module';
 import { ControleModule } from './modules/controle/controle.module';
-import { AttestationModule } from './modules/attestation/attestation.module';
+import { MoyensAttestationModule } from './modules/moyens-attestation/moyens-attestation.module';
 import { JustificatifsModule } from './modules/justificatifs/justificatifs.module';
 import { RapportsModule } from './modules/rapports/rapports.module';
 import { ParametresModule } from './modules/parametres/parametres.module';
@@ -88,7 +88,7 @@ import { ServicesActifsGuard } from './modules/parametres/services-actifs.guard'
     PlanificationModule,
     ImportsModule,
     ControleModule,
-    AttestationModule,
+    MoyensAttestationModule,
     JustificatifsModule,
     RapportsModule,
     ParametresModule,

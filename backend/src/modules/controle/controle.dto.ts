@@ -17,7 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { QueryDto } from '../../common/dto';
-import { PreuveEmpreinteDto } from '../attestation/attestation.dto';
+import { PreuveEmpreinteDto } from '../moyens-attestation/moyens-attestation.dto';
 import { SIGNATURE_PNG } from '../../common/utils';
 
 const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;

@@ -359,7 +359,7 @@ backend/
                               matières, affectations
   src/modules/planification/  créneaux (emploi du temps) + séances + génération
   src/modules/controle/       pointage, synchronisation hors ligne, QR, audit
-  src/modules/attestation/    code personnel et empreinte signée par la passerelle
+  src/modules/moyens-attestation/ code personnel et empreinte signée par la passerelle
   src/common/guards.ts        JWT, rôles, et lecture seule du compte enseignant
   src/modules/justificatifs/  dépôt et arbitrage des absences
   src/modules/rapports/       statistiques + états imprimables HTML A4
