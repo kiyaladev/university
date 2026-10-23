@@ -472,6 +472,8 @@ model Promotion {
 
   @@unique([nom, anneeId])
   @@index([anneeId])
+  // Les promotions sont listées par filière (structure LMD).
+  @@index([filiereId])
 }
 
 model Salle {
@@ -625,6 +627,9 @@ model Creneau {
   seances Seance[]
 
   @@index([jourSemaine])
+  // Les créneaux sont filtrés par affectation (emploi du temps d'un enseignant
+  // ou d'une promotion) et supprimés avec elle.
+  @@index([affectationId])
 }
 
 // ---------------------------------------------------------------------------
@@ -667,6 +672,9 @@ model Seance {
   @@index([date, statut])
   @@index([controleurAssigneId, date])
   @@index([salleId, date])
+  // Le planning et le contrôle des années ouvertes filtrent les séances par
+  // année académique.
+  @@index([anneeId])
 }
 
 /// Le pointage : ce que le contrôleur consignait auparavant dans son registre.
@@ -1004,6 +1012,8 @@ model Deliberation {
   lignes DeliberationLigne[]
 
   @@unique([anneeId, promotionId, session])
+  // Les délibérations sont listées par promotion (jury d'une promotion).
+  @@index([promotionId])
 }
 
 /// Ligne de résultat d'un étudiant à une délibération.
@@ -1075,6 +1085,8 @@ model VerificationAttestation {
   verifieeLe    DateTime    @default(now())
 
   @@index([verifieeLe])
+  // Le journal des vérifications est relu par attestation (QR public).
+  @@index([attestationId])
 }
 
 // ---------------------------------------------------------------------------
