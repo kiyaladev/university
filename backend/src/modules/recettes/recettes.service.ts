@@ -200,7 +200,11 @@ export class RecettesService {
           const annee = String(recette.date.getUTCFullYear());
           const cree = await creerPaiementTx(tx, {
             data: {
-              reference: await this.prochainNumeroPaiement(tx, annee),
+              // "PAY-X-2026-00001" — préfixe propre aux recettes externes, distinct du
+              // resto ("PAY-R-") et des inscriptions ("PAY-"). Les encaissements
+              // antérieurs gardent leur référence "PAY-R-…" : elle reste valide, seule la
+              // séquence des nouveaux encaissements repart sous "PAY-X-".
+              reference: await prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RECETTE, annee),
               montant: recette.montant,
               devise: recette.devise,
               mode: modeEnum,
@@ -329,16 +333,6 @@ export class RecettesService {
   }
 
   // ------------------------------------------------------- helpers
-
-  /**
-   * "PAY-X-2026-00001" — préfixe propre aux recettes externes, distinct du
-   * resto ("PAY-R-") et des inscriptions ("PAY-"). Les encaissements
-   * antérieurs gardent leur référence "PAY-R-…" : elle reste valide, seule la
-   * séquence des nouveaux encaissements repart sous "PAY-X-".
-   */
-  private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RECETTE, annee);
-  }
 }
 
 const MOIS_LIBELLES = [

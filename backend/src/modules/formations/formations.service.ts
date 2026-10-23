@@ -89,16 +89,6 @@ const LIBELLE_STATUT_INSCRIPTION: Record<string, string> = {
   ANNULE: 'Annulé',
 };
 
-/** "FOR-2026-00001" — dossier d'inscription à une formation continue. */
-async function prochainNumeroFormation(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.FORMATION, annee);
-}
-
-/** "PAY-F-2026-00001" — paiement Mobile Money d'une formation (PAY-F-AAAA). */
-async function prochaineReferencePaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_FORMATION, annee);
-}
-
 @Injectable()
 export class FormationsService {
   constructor(
@@ -210,7 +200,8 @@ export class FormationsService {
           }
           const paiement = await creerPaiementTx(tx, {
             data: {
-              reference: await prochaineReferencePaiement(tx, annee),
+              // "PAY-F-2026-00001" — paiement Mobile Money d'une formation (PAY-F-AAAA).
+              reference: await prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_FORMATION, annee),
               montant: formationCourante.prix,
               devise: formationCourante.devise,
               mode: 'MOBILE_MONEY',
@@ -224,7 +215,8 @@ export class FormationsService {
           });
           const inscription = await tx.inscriptionFormation.create({
             data: {
-              numero: await prochainNumeroFormation(tx, annee),
+              // "FOR-2026-00001" — dossier d'inscription à une formation continue.
+              numero: await prochainNumeroSerie(tx, SERIES_NUMERO.FORMATION, annee),
               formationId,
               etudiantId,
               nomComplet: dto.nomComplet,

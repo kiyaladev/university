@@ -336,15 +336,6 @@ export class TicketsService extends CrudService {
     return ticket;
   }
 
-  /**
-   * Numéro séquentiel par année : "TKT-2026-0001". Le compteur se lit dans la
-   * base ; deux déclarations simultanées tentent le même numéro, la contrainte
-   * @unique départage et la création recommence avec le suivant.
-   */
-  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.TICKET_SUPPORT, annee);
-  }
-
   /** Déclaration rapide : n'importe quel utilisateur connecté. */
   async declarer(dto: DeclarerTicketDto, user: AuthUser) {
     if (dto.equipementId) {
@@ -360,7 +351,7 @@ export class TicketsService extends CrudService {
     return avecNumeroUnique(
       () =>
         this.prisma.$transaction(async (tx) => {
-          const numero = await this.prochainNumero(tx, annee);
+          const numero = await prochainNumeroSerie(tx, SERIES_NUMERO.TICKET_SUPPORT, annee);
           const ticket = await tx.ticketSupport.create({
             data: {
               numero,

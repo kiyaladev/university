@@ -16,7 +16,7 @@ import { Paginated } from '../../common/dto';
 import { pagine, paginer } from '../../common/pagination';
 import { t } from '../../common/i18n';
 import { exigerAnneeOuverte } from '../../common/annee';
-import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie } from '../../common/numero';
+import { SERIES_NUMERO, avecNumeroUnique, millesimeSerie, prochainNumeroSerie } from '../../common/numero';
 import { toMontant } from '../../common/finances/montant';
 import {
   PAIEMENT_SOURCE_INCLUDE,
@@ -25,7 +25,6 @@ import {
   sourcePaiement,
   transmettreMobileMoney,
 } from '../../common/finances';
-import { prochainNumeroPaiement } from './etudiants.service';
 import { MobileMoneyService } from './mobile-money.service';
 import { AnnulerPaiementDto, CreatePaiementDto, PaiementQueryDto, SimulerPaiementDto } from './inscription.dto';
 
@@ -231,8 +230,9 @@ export class PaiementsService {
             tx,
             {
               data: {
-                reference: await prochainNumeroPaiement(
+                reference: await prochainNumeroSerie(
                   tx,
+                  SERIES_NUMERO.PAIEMENT_INSCRIPTION,
                   millesimeSerie(SERIES_NUMERO.PAIEMENT_INSCRIPTION, annee.libelle),
                 ),
                 montant: dto.montant,

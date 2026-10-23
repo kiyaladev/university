@@ -50,25 +50,6 @@ const ETUDIANT_DEPARTEMENT_SELECT = {
   },
 } satisfies Prisma.EtudiantSelect;
 
-/** "2026-0001" — INE du candidat, année du libellé scolaire (2025-2026 → 2026). */
-export async function prochainMatricule(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.MATRICULE, annee);
-}
-
-/** "INS-2026-00042" — dossier d'inscription. */
-export async function prochainNumeroInscription(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.INSCRIPTION, annee);
-}
-
-/**
- * "PAY-2026-00001" — transaction de paiement de scolarité. Préfixe propre aux
- * inscriptions : les autres portefeuilles ont leur propre préfixe (documents
- * "PAY-D-", formations "PAY-F-", resto "PAY-R-", recettes "PAY-X-").
- */
-export async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_INSCRIPTION, annee);
-}
-
 @Injectable()
 export class EtudiantsService extends CrudService {
   constructor(prisma: PrismaService) {
@@ -169,7 +150,7 @@ export class EtudiantsService extends CrudService {
             data: {
               ...donnees,
               ...(donnees.dateNaissance ? { dateNaissance: toDateOnly(donnees.dateNaissance) } : {}),
-              matricule: await prochainMatricule(tx, annee),
+              matricule: await prochainNumeroSerie(tx, SERIES_NUMERO.MATRICULE, annee),
               qrRestoToken: this.nouveauQrResto(),
               userId: compte?.id ?? null,
             },

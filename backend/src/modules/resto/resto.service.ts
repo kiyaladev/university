@@ -580,7 +580,8 @@ export class RestoService {
         this.prisma.$transaction(async (tx) => {
           const paiement = await creerPaiementTx(tx, {
             data: {
-              reference: await prochainNumeroPaiement(tx, annee),
+              // "PAY-R-2026-00001" — référence des paiements du portefeuille resto.
+              reference: await prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RESTAURATION, annee),
               montant: args.montant,
               devise: 'GNF',
               mode: args.mode,
@@ -668,9 +669,4 @@ export class RestoService {
 /** Le jeton encodé dans le QR de la carte resto : aléatoire, unique. */
 function nouveauQrRestoToken(): string {
   return `UP-RESTO-${randomBytes(12).toString('base64url')}`;
-}
-
-/** "PAY-R-2026-00001" — référence des paiements du portefeuille resto. */
-async function prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-  return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_RESTAURATION, annee);
 }

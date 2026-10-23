@@ -114,23 +114,6 @@ export class DocumentsDemandeService extends CrudService {
     });
   }
 
-  /** Numéro séquentiel par année : "DOC-2026-00001". */
-  private async prochainNumero(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.DOCUMENT_DEMANDE, annee);
-  }
-
-  /**
-   * Numéro séquentiel "PAY-D-AAAA-NNNNN" pour le paiement lié. Le préfixe est
-   * propre aux demandes de documents : les paiements de scolarité gardent
-   * "PAY-AAAA-NNNNN", les deux séries ne se confondent plus (même millésime
-   * ou non) et l'origine d'une référence se lit dans le préfixe. Les
-   * paiements de documents émis avant cette décision gardent leur ancienne
-   * référence "PAY-…", toujours valide.
-   */
-  private async prochainNumeroPaiement(tx: Prisma.TransactionClient, annee: string): Promise<string> {
-    return prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE, annee);
-  }
-
   // ---------------------------------------------------------- lecture
 
   async liste(
@@ -365,7 +348,8 @@ export class DocumentsDemandeService extends CrudService {
     return avecNumeroUnique(
       () =>
         this.prisma.$transaction(async (tx) => {
-          const numero = await this.prochainNumero(tx, annee);
+          // Numéro séquentiel par année : "DOC-2026-00001".
+          const numero = await prochainNumeroSerie(tx, SERIES_NUMERO.DOCUMENT_DEMANDE, annee);
           const demande = await tx.demandeDocument.create({
             data: {
               numero,
@@ -450,7 +434,13 @@ export class DocumentsDemandeService extends CrudService {
               t('documents-demande.un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la'),
             );
           }
-          const reference = await this.prochainNumeroPaiement(tx, annee);
+          // Numéro séquentiel "PAY-D-AAAA-NNNNN" pour le paiement lié. Le préfixe est
+          // propre aux demandes de documents : les paiements de scolarité gardent
+          // "PAY-AAAA-NNNNN", les deux séries ne se confondent plus (même millésime
+          // ou non) et l'origine d'une référence se lit dans le préfixe. Les
+          // paiements de documents émis avant cette décision gardent leur ancienne
+          // référence "PAY-…", toujours valide.
+          const reference = await prochainNumeroSerie(tx, SERIES_NUMERO.PAIEMENT_DOCUMENT_DEMANDE, annee);
           const paiementId = randomUUID();
           const inscription = demande.inscriptionId
             ? await tx.inscription.findUnique({
