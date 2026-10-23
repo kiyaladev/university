@@ -1,8 +1,7 @@
 <template>
   <q-page class="notes-page">
     <page-header :title="$t('notes.title')" :subtitle="$t('notes.subtitle')">
-      <template #actions>
-<div class="col-auto" v-if="evaluationActive">
+      <template v-if="evaluationActive" #actions>
         <q-badge
           :color="evaluationActive.statut === 'OUVERTE' ? 'positive' : 'grey-7'"
           class="q-px-sm q-py-xs text-body2"
@@ -13,7 +12,6 @@
           />
           {{ LIBELLE_STATUT_EVALUATION[evaluationActive.statut] }}
         </q-badge>
-      </div>
       </template>
     </page-header>
 
@@ -83,22 +81,24 @@
       />
     </div>
 
-    <div v-else class="carte q-pa-lg text-center text-grey-6">
-      <q-icon name="table_chart" size="48px" class="q-mb-sm" />
-      <div>{{ $t('notes.emptyState.title') }}</div>
-      <div class="text-caption q-mt-xs">
-        {{ $t('notes.emptyState.hint') }}
-      </div>
-      <q-btn
-        class="q-mt-md"
-        unelevated
-        color="primary"
-        no-caps
-        icon="fact_check"
-        :label="$t('notes.actions.browseEvaluations')"
-        @click="allerAuxEvaluations"
-      />
-    </div>
+    <etat-vide
+      v-else
+      class="carte"
+      icone="table_chart"
+      :titre="$t('notes.emptyState.title')"
+      :aide="$t('notes.emptyState.hint')"
+    >
+      <template #action>
+        <q-btn
+          unelevated
+          color="primary"
+          no-caps
+          icon="fact_check"
+          :label="$t('notes.actions.browseEvaluations')"
+          @click="allerAuxEvaluations"
+        />
+      </template>
+    </etat-vide>
   </q-page>
 </template>
 
@@ -112,6 +112,8 @@ import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
 import AutocompleteAsync from '../components/AutocompleteAsync.vue';
 import NotesSaisieMasse from '../components/NotesSaisieMasse.vue';
+import EtatVide from '../components/EtatVide.vue';
+import { useConfirmation } from '../composables/useConfirmation';
 import { LIBELLE_STATUT_EVALUATION, LIBELLE_TYPE_EVALUATION } from '../utils/libelles';
 import type { Evaluation, Note, TypeEvaluation } from '../types';
 
@@ -120,6 +122,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 /** Qui saisit les notes (direction comprise, elle arbitre) — cf. `PUT /notes/saisie`. */
 const peutSaisir = () => auth.aRole(['ADMIN', 'SCOLARITE', 'CHEF_DEPARTEMENT', 'DIRECTION']);
@@ -233,23 +236,22 @@ async function enregistrer(payload: {
   }
 }
 
-function cloturer() {
+async function cloturer() {
   if (!evaluationActive.value) return;
   const e = evaluationActive.value;
-  $q.dialog({
-    title: t('notes.dialogs.close.title'),
+  const ok = await confirmer({
+    titre: t('notes.dialogs.close.title'),
     message: t('notes.dialogs.close.message', { name: e.intitule }),
-    cancel: true,
-    ok: { color: 'primary', label: t('notes.dialogs.close.confirm'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/evaluations/${e.id}/cloturer`);
-      $q.notify({ type: 'positive', message: t('notes.messages.closed') });
-      await choisir({ ...e, statut: 'CLOTUREE' });
-    } catch {
-      /* Notification gérée par l’intercepteur axios */
-    }
+    ok: t('notes.dialogs.close.confirm'),
   });
+  if (!ok) return;
+  try {
+    await api.post(`/evaluations/${e.id}/cloturer`);
+    $q.notify({ type: 'positive', message: t('notes.messages.closed') });
+    await choisir({ ...e, statut: 'CLOTUREE' });
+  } catch {
+    /* Notification gérée par l’intercepteur axios */
+  }
 }
 
 /** Ouvre la feuille demandée par l'URL (`/notes?evaluation=…`). */

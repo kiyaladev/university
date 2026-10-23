@@ -1,13 +1,7 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="row items-center q-col-gutter-md q-mb-md">
-      <div class="col">
-        <h1 class="page-titre">{{ $t('examens.title') }}</h1>
-        <div class="page-sous-titre">
-          {{ $t('examens.subtitle') }}
-        </div>
-      </div>
-      <div class="col-auto">
+    <page-header :title="$t('examens.title')" :subtitle="$t('examens.subtitle')">
+      <template #actions>
         <q-btn
           v-if="peutCreer"
           unelevated
@@ -17,8 +11,6 @@
           :label="$t('examens.actions.schedule')"
           @click="dialogOuvert = true"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           outline
           color="secondary"
@@ -27,8 +19,6 @@
           :label="$t('examens.actions.scanStation')"
           @click="allerScan(null)"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           v-if="peutVoirTirage"
           outline
@@ -38,8 +28,8 @@
           :label="$t('examens.actions.draw')"
           @click="allerTirage(null)"
         />
-      </div>
-    </div>
+      </template>
+    </page-header>
 
     <filter-bar
       v-model="filtres"
@@ -96,25 +86,24 @@
       :rows="examensFiltres"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="ex.chargement"
       :pagination="{ rowsPerPage: 0 }"
       @row-click="(_, row) => ouvrirFiche(row)"
     >
       <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="quiz" size="32px" color="grey-5" />
-          <div class="q-mt-sm">{{ messageVide }}</div>
-          <q-btn
-            v-if="peutCreer && onglet === 'PLANIFIE'"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('examens.actions.schedule')"
-            class="q-mt-sm"
-            @click="dialogOuvert = true"
-          />
-        </div>
+        <etat-vide icone="quiz" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="peutCreer && onglet === 'PLANIFIE'"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('examens.actions.schedule')"
+              @click="dialogOuvert = true"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-type="p">
@@ -263,34 +252,31 @@
         </q-card>
       </div>
       <div v-if="!examensFiltres.length" class="col-12">
-        <div class="etat-vide plaque">
-          <q-icon name="quiz" size="32px" color="grey-5" />
-          <div class="q-mt-sm">{{ messageVide }}</div>
-          <q-btn
-            v-if="peutCreer && onglet === 'PLANIFIE'"
-            unelevated
-            color="primary"
-            no-caps
-            icon="add"
-            :label="$t('examens.actions.schedule')"
-            class="q-mt-sm"
-            @click="dialogOuvert = true"
-          />
-        </div>
+        <etat-vide class="plaque" icone="quiz" :titre="messageVide">
+          <template #action>
+            <q-btn
+              v-if="peutCreer && onglet === 'PLANIFIE'"
+              unelevated
+              color="primary"
+              no-caps
+              icon="add"
+              :label="$t('examens.actions.schedule')"
+              @click="dialogOuvert = true"
+            />
+          </template>
+        </etat-vide>
       </div>
     </div>
 
     <pagination-bar
-      v-if="total"
-      :page="filtres.page"
-      :page-size="filtres.pageSize"
-      :total="total"
-      @update:page="(v) => { filtres.page = v; charger(); }"
-      @update:page-size="(v) => { filtres.pageSize = v; filtres.page = 1; charger(); }"
-      @tous="chargerTout"
+      v-if="ex.total"
+      v-model:page="ex.page"
+      v-model:page-size="ex.pageSize"
+      :total="ex.total"
+      @tous="ex.pageSize = Math.max(ex.total, 200)"
     />
 
-    <examen-dialog v-model="dialogOuvert" @cree="charger" />
+    <examen-dialog v-model="dialogOuvert" @enregistre="ex.recharger()" />
 
     <!-- Fiche de l'examen : les trois maillons de la chaîne au même endroit -->
     <q-dialog v-model="dialogFiche" :maximized="$q.screen.lt.md">
@@ -375,10 +361,7 @@
             :pagination="{ rowsPerPage: 0 }"
           >
             <template #no-data>
-              <div class="etat-vide">
-                <q-icon name="qr_code_scanner" size="28px" color="grey-5" />
-                <div class="q-mt-sm">{{ $t('examens.sheet.noScans') }}</div>
-              </div>
+              <etat-vide icone="qr_code_scanner" :titre="$t('examens.sheet.noScans')" />
             </template>
             <template #body-cell-valide="p">
               <q-td :props="p">
@@ -400,12 +383,16 @@
 <script setup lang="ts">
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import { usePresentationListe } from '../composables/presentationListe';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
 import { useAuthStore } from '../stores/auth';
+import { pageApi, useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import PageHeader from '../components/PageHeader.vue';
+import EtatVide from '../components/EtatVide.vue';
 import FilterBar from '../components/FilterBar.vue';
 import PaginationBar from '../components/PaginationBar.vue';
 import ChampDate from '../components/ChampDate.vue';
@@ -425,18 +412,18 @@ const $q = useQuasar();
 const { t } = useI18n();
 const auth = useAuthStore();
 const router = useRouter();
+const { confirmer } = useConfirmation();
 
-const onglet = ref<StatutExamen>('PLANIFIE');
 const modeVue = usePresentationListe();
-const examens = ref<Examen[]>([]);
-const total = ref(0);
-const chargement = ref(false);
 const dialogOuvert = ref(false);
 
 const dialogFiche = ref(false);
 const examenFiche = ref<Examen | null>(null);
 const scans = ref<ScanExamen[]>([]);
 const chargementScans = ref(false);
+
+/** Le statut est porté par les onglets ; la réinitialisation des filtres le garde. */
+const onglet = ref<StatutExamen>('PLANIFIE');
 
 /** Les épreuves planifiées sont devant nous : la fenêtre par défaut regarde en avant. */
 function filtresParDefaut() {
@@ -448,12 +435,34 @@ function filtresParDefaut() {
     anneeId: null as string | null,
     dateDebut: decalerJours(aujourdhui(), -30),
     dateFin: decalerJours(aujourdhui(), 90),
-    page: 1,
-    pageSize: 20,
   };
 }
 
 const filtres = ref<Record<string, any>>(filtresParDefaut());
+
+/** La recherche texte n'est pas gérée par `/examens` : elle reste locale. */
+const ex = reactive(
+  useListePaginee<Examen>({
+    filtres,
+    syncUrl: true,
+    clesLocales: ['recherche'],
+    charger: ({ filtres: f, ...p }) =>
+      api
+        .get('/examens', {
+          params: {
+            ...pageApi(p),
+            statut: onglet.value,
+            type: f.type || undefined,
+            matiereId: f.matiereId || undefined,
+            promotionId: f.promotionId || undefined,
+            anneeId: f.anneeId || undefined,
+            dateDebut: f.dateDebut || undefined,
+            dateFin: f.dateFin || undefined,
+          },
+        })
+        .then((r) => r.data),
+  }),
+);
 
 const peutCreer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 const peutDemarrer = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'CONTROLEUR']));
@@ -493,8 +502,8 @@ const chipsFiltres = computed(() => {
  */
 const examensFiltres = computed(() => {
   const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
-  if (!q) return examens.value;
-  return examens.value.filter((e) =>
+  if (!q) return ex.lignes;
+  return ex.lignes.filter((e) =>
     [e.codeExamen, e.intitule, e.matiere?.intitule, e.promotion?.nom]
       .filter(Boolean)
       .some((v) => String(v).toLowerCase().includes(q)),
@@ -551,42 +560,14 @@ function libelleType(s: string) {
   return LIBELLE_TYPE_EXAMEN[s] ?? s;
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/examens', {
-      params: {
-        statut: onglet.value,
-        type: filtres.value.type || undefined,
-        matiereId: filtres.value.matiereId || undefined,
-        promotionId: filtres.value.promotionId || undefined,
-        anneeId: filtres.value.anneeId || undefined,
-        dateDebut: filtres.value.dateDebut || undefined,
-        dateFin: filtres.value.dateFin || undefined,
-        page: filtres.value.page,
-        pageSize: filtres.value.pageSize,
-      },
-    });
-    examens.value = data.data ?? [];
-    total.value = data.total ?? examens.value.length;
-  } catch {
-    examens.value = [];
-    total.value = 0;
-  } finally {
-    chargement.value = false;
-  }
-}
-
-async function chargerTout() {
-  filtres.value.page = 1;
-  filtres.value.pageSize = Math.max(total.value, 200);
-  await charger();
-}
-
 function reinitialiser() {
   filtres.value = filtresParDefaut();
-  charger();
 }
+
+// Changer d'onglet ramène en page 1 (le setter recharge).
+watch(onglet, () => {
+  ex.page = 1;
+});
 
 /** Fiche : infos de l'examen + journal des scans, avec les liens de la chaîne. */
 async function ouvrirFiche(e: Examen) {
@@ -614,62 +595,37 @@ function allerScan(e: Examen | null) {
   void router.push({ name: 'scan-examen', query: e ? { examenId: e.id } : {} });
 }
 
-function demarrer(e: Examen) {
-  $q.dialog({
-    title: t('examens.confirm.startTitle'),
+/** Passe l'examen à l'étape suivante, puis montre l'onglet où il se trouve désormais. */
+async function changerStatut(e: Examen, action: 'demarrer' | 'terminer', cible: StatutExamen, message: string) {
+  try {
+    await api.post(`/examens/${e.id}/${action}`);
+  } catch {
+    return; /* notifié par l'intercepteur */
+  }
+  $q.notify({ type: 'positive', message });
+  // Le changement d'onglet déclenche lui-même le rechargement.
+  if (onglet.value === cible) await ex.recharger();
+  else onglet.value = cible;
+}
+
+async function demarrer(e: Examen) {
+  const ok = await confirmer({
+    titre: t('examens.confirm.startTitle'),
     message: t('examens.confirm.startMessage', { code: e.codeExamen, title: e.intitule }),
-    cancel: true,
-    ok: { color: 'positive', label: t('examens.confirm.startAction'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/examens/${e.id}/demarrer`);
-      $q.notify({ type: 'positive', message: t('examens.messages.started') });
-      // Le changement d'onglet déclenche lui-même le rechargement.
-      if (onglet.value === 'EN_COURS') await charger();
-      else onglet.value = 'EN_COURS';
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('examens.confirm.startAction'),
   });
+  if (ok) await changerStatut(e, 'demarrer', 'EN_COURS', t('examens.messages.started'));
 }
 
-function terminer(e: Examen) {
-  $q.dialog({
-    title: t('examens.confirm.finishTitle'),
+async function terminer(e: Examen) {
+  const ok = await confirmer({
+    titre: t('examens.confirm.finishTitle'),
     message: t('examens.confirm.finishMessage', { code: e.codeExamen, title: e.intitule }),
-    cancel: true,
-    ok: { color: 'negative', label: t('examens.confirm.finishAction'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/examens/${e.id}/terminer`);
-      $q.notify({ type: 'positive', message: t('examens.messages.finished') });
-      if (onglet.value === 'TERMINE') await charger();
-      else onglet.value = 'TERMINE';
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+    ok: t('examens.confirm.finishAction'),
+    danger: true,
   });
+  if (ok) await changerStatut(e, 'terminer', 'TERMINE', t('examens.messages.finished'));
 }
-
-watch(onglet, () => {
-  filtres.value.page = 1;
-  charger();
-});
-watch(
-  () => [
-    filtres.value.type,
-    filtres.value.matiereId,
-    filtres.value.promotionId,
-    filtres.value.anneeId,
-    filtres.value.dateDebut,
-    filtres.value.dateFin,
-  ],
-  () => {
-    filtres.value.page = 1;
-    charger();
-  },
-);
-onMounted(charger);
 </script>
 
 <style scoped lang="scss">

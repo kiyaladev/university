@@ -1,8 +1,7 @@
 <template>
   <q-page class="q-pa-md">
     <page-header :title="$t('deliberations.title')" :subtitle="$t('deliberations.subtitle')">
-      <template #actions>
-<div class="col-auto">
+      <template v-if="peutSaisir || peutVoirBulletins" #actions>
         <q-btn
           v-if="peutSaisir"
           unelevated
@@ -12,8 +11,6 @@
           :label="$t('deliberations.actions.newDeliberation')"
           @click="dialogOuvert = true"
         />
-      </div>
-      <div class="col-auto">
         <q-btn
           v-if="peutVoirBulletins"
           outline
@@ -23,7 +20,6 @@
           :label="$t('deliberations.actions.reportCards')"
           @click="allerBulletins(null)"
         />
-      </div>
       </template>
     </page-header>
 
@@ -80,7 +76,7 @@
       :rows="deliberationsPage"
       :columns="colonnes"
       row-key="id"
-      :loading="chargement"
+      :loading="delib.chargement"
       :pagination="{ rowsPerPage: 0 }"
       @row-click="(_, row) => ouvrirDetail(row)"
     >
@@ -154,20 +150,19 @@
     </q-card></div>
   </template>
 <template #no-data>
-        <div class="etat-vide">
-          <q-icon name="gavel" size="32px" color="grey-5" />
-          <div class="q-mt-sm">{{ $t('deliberations.emptyState.message') }}</div>
-          <q-btn
-            v-if="peutSaisir"
-            unelevated
-            color="primary"
-            no-caps
-            icon="gavel"
-            :label="$t('deliberations.actions.newDeliberation')"
-            class="q-mt-sm"
-            @click="dialogOuvert = true"
-          />
-        </div>
+        <etat-vide icone="gavel" :titre="$t('deliberations.emptyState.message')">
+          <template #action>
+            <q-btn
+              v-if="peutSaisir"
+              unelevated
+              color="primary"
+              no-caps
+              icon="gavel"
+              :label="$t('deliberations.actions.newDeliberation')"
+              @click="dialogOuvert = true"
+            />
+          </template>
+        </etat-vide>
       </template>
 
       <template #body-cell-session="p">
@@ -271,7 +266,7 @@
       :annees="annees"
       :promotions="promotions"
       :matieres="matieres"
-      @enregistre="charger"
+      @enregistre="delib.recharger()"
     />
 
     <!-- Détail des lignes : les décisions individuelles du jury -->
@@ -308,12 +303,7 @@
             :pagination="{ rowsPerPage: 0 }"
           >
             <template #no-data>
-              <div class="etat-vide">
-                <q-icon name="how_to_reg" size="28px" color="grey-5" />
-                <div class="q-mt-sm">
-                  {{ $t('deliberations.detail.emptyLines') }}
-                </div>
-              </div>
+              <etat-vide icone="how_to_reg" :titre="$t('deliberations.detail.emptyLines')" />
             </template>
             <template #body-cell-moyenne="p">
               <q-td :props="p" class="text-center chiffres">
@@ -355,12 +345,14 @@
 <script setup lang="ts">
 import ActionsSecondaires from '../components/ActionsSecondaires.vue';
 import PageHeader from '../components/PageHeader.vue';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { useQuasar, type QTableColumn } from 'quasar';
 import { api } from '../boot/axios';
-
+import { useListePaginee } from '../composables/useListePaginee';
+import { useConfirmation } from '../composables/useConfirmation';
+import EtatVide from '../components/EtatVide.vue';
 import { useAuthStore } from '../stores/auth';
 import { useReferentielsStore } from '../stores/referentiels';
 import DeliberationDialog from '../components/DeliberationDialog.vue';
@@ -383,6 +375,7 @@ const referentiels = useReferentielsStore();
 const peutVoirBulletins = computed(() => auth.aRole(['ADMIN', 'SCOLARITE', 'DIRECTION']));
 const router = useRouter();
 const { t } = useI18n();
+const { confirmer } = useConfirmation();
 
 /** La liste renvoie l'effectif agrégé, absent du modèle partagé. */
 interface DeliberationListe extends Deliberation {
@@ -393,16 +386,33 @@ const peutSaisir = computed(() => auth.aRole(['ADMIN', 'SCOLARITE']));
 /** Le jury : direction et administrateur figent les résultats. */
 const estJury = computed(() => auth.aRole(['ADMIN', 'DIRECTION']));
 
-const deliberations = ref<DeliberationListe[]>([]);
 const annees = ref<AnneeAcademique[]>([]);
 const promotions = ref<Promotion[]>([]);
 const matieres = ref<Matiere[]>([]);
-const chargement = ref(false);
 
+/** Pagination locale : l'API rend tout (`all=1`), on découpe ici. */
 const page = ref(1);
 const pageSize = ref(15);
 
-const filtres = ref<Record<string, any>>({});
+const FILTRES_VIDES = { recherche: '', anneeId: null, promotionId: null, session: null, statut: null };
+const filtres = ref<Record<string, any>>({ ...FILTRES_VIDES });
+
+/**
+ * `/deliberations` ne filtre que sur l'année : promotion, session, statut et
+ * recherche sont appliqués ici, sur la liste complète déjà chargée (`all=1`).
+ */
+const delib = reactive(
+  useListePaginee<DeliberationListe>({
+    filtres,
+    pageSize: 0,
+    syncUrl: true,
+    clesLocales: ['recherche', 'promotionId', 'session', 'statut'],
+    charger: ({ filtres: f }) =>
+      api
+        .get('/deliberations', { params: { all: '1', anneeId: f.anneeId || undefined } })
+        .then((r) => r.data),
+  }),
+);
 
 const dialogOuvert = ref(false);
 const dialogDetail = ref(false);
@@ -455,13 +465,9 @@ const chips = computed(() => {
   return cs;
 });
 
-/**
- * `/deliberations` ne filtre que sur l'année : promotion, session, statut et
- * recherche sont appliqués ici, sur la liste complète déjà chargée (`all=1`).
- */
 const deliberationsFiltrees = computed(() => {
   const q = String(filtres.value.recherche ?? '').toLowerCase().trim();
-  return deliberations.value.filter((d) => {
+  return delib.lignes.filter((d) => {
     if (filtres.value.promotionId && d.promotionId !== filtres.value.promotionId) return false;
     if (filtres.value.session && d.session !== filtres.value.session) return false;
     if (filtres.value.statut && d.statut !== filtres.value.statut) return false;
@@ -530,39 +536,29 @@ async function ouvrirDetail(d: DeliberationListe) {
   }
 }
 
-function calculer(d: DeliberationListe) {
-  $q.dialog({
-    title: t('deliberations.dialogs.recalculate.title'),
-    message: t('deliberations.dialogs.recalculate.message'),
-    cancel: true,
-    ok: { color: 'primary', label: t('deliberations.dialogs.recalculate.ok'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/deliberations/${d.id}/calculer`);
-      $q.notify({ type: 'positive', message: t('deliberations.messages.recalculated') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
+/** Confirme, appelle l'action du jury puis recharge la liste. */
+async function agir(d: DeliberationListe, action: 'calculer' | 'valider', cle: 'recalculate' | 'validate', succes: string) {
+  const ok = await confirmer({
+    titre: t(`deliberations.dialogs.${cle}.title`),
+    message: t(`deliberations.dialogs.${cle}.message`),
+    ok: t(`deliberations.dialogs.${cle}.ok`),
   });
+  if (!ok) return;
+  try {
+    await api.post(`/deliberations/${d.id}/${action}`);
+  } catch {
+    return; /* notifié par l'intercepteur */
+  }
+  $q.notify({ type: 'positive', message: succes });
+  await delib.recharger();
+}
+
+function calculer(d: DeliberationListe) {
+  void agir(d, 'calculer', 'recalculate', t('deliberations.messages.recalculated'));
 }
 
 function valider(d: DeliberationListe) {
-  $q.dialog({
-    title: t('deliberations.dialogs.validate.title'),
-    html: false,
-    message: t('deliberations.dialogs.validate.message'),
-    cancel: { flat: true, label: t('deliberations.actions.back'), noCaps: true },
-    ok: { color: 'positive', label: t('deliberations.dialogs.validate.ok'), unelevated: true, noCaps: true },
-  }).onOk(async () => {
-    try {
-      await api.post(`/deliberations/${d.id}/valider`);
-      $q.notify({ type: 'positive', message: t('deliberations.messages.validated') });
-      await charger();
-    } catch {
-      /* notifié par l'intercepteur */
-    }
-  });
+  void agir(d, 'valider', 'validate', t('deliberations.messages.validated'));
 }
 
 /** Délibération → bulletins : la page Bulletins s'ouvre sur la même promotion. */
@@ -575,32 +571,13 @@ function allerBulletins(d: DeliberationListe | null) {
   });
 }
 
-async function charger() {
-  chargement.value = true;
-  try {
-    const { data } = await api.get('/deliberations', {
-      params: { all: '1', anneeId: filtres.value.anneeId || undefined },
-    });
-    deliberations.value = data.data ?? [];
-  } catch {
-    deliberations.value = [];
-  } finally {
-    chargement.value = false;
-  }
-}
-
 function reinitialiser() {
-  filtres.value = {};
-  page.value = 1;
-  charger();
+  filtres.value = { ...FILTRES_VIDES };
 }
 
-watch(() => filtres.value.anneeId, () => {
-  page.value = 1;
-  charger();
-});
+// Tout changement de filtre ramène à la première page locale.
 watch(
-  () => [filtres.value.promotionId, filtres.value.session, filtres.value.statut, filtres.value.recherche],
+  () => [filtres.value.anneeId, filtres.value.promotionId, filtres.value.session, filtres.value.statut, filtres.value.recherche],
   () => {
     page.value = 1;
   },
@@ -612,7 +589,6 @@ onMounted(async () => {
     referentiels.promotions(),
     referentiels.matieres().catch(() => []),
   ]);
-  await charger();
 });
 </script>
 
