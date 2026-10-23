@@ -13,6 +13,227 @@ import { ValidationPipeCompatStatuts } from './common/statuts';
 import { ErreurHttpFilter } from './common/filters/erreur-http.filter';
 import { t } from './common/i18n';
 
+/**
+ * Les `operationId` Swagger sont restés identiques à ceux d'avant le renommage
+ * des méthodes en français : par défaut, @nestjs/swagger les dérive du nom de
+ * la méthode du contrôleur (`SallesController_create`). Cette table restitue
+ * l'ancien nom pour chaque couple contrôleur/méthode, afin que les clients
+ * générés à partir du document OpenAPI continuent de pointer les mêmes
+ * opérations.
+ */
+const OPERATION_IDS_LEGACY: Record<string, Record<string, string>> = {
+  BibliothequeController: {
+    lister: 'liste',
+  },
+  ResidencesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  ChambresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  AttributionsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ElectionsController: {
+    lister: 'liste',
+  },
+  EquipementsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  TicketsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ReclamationsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  ReservationsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  RestoController: {
+    lire: 'detail',
+  },
+  VodController: {
+    lister: 'liste',
+  },
+  AttestationsController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  BadgesController: {
+    lister: 'liste',
+  },
+  CarteEtudianteController: {
+    lister: 'liste',
+  },
+  CourrierController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  DocumentsDemandeController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  PaieController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  RecettesController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ControleController: {
+    lire: 'findOne',
+    lister: 'liste',
+  },
+  JustificatifsController: {
+    lire: 'findOne',
+    lister: 'liste',
+    supprimer: 'remove',
+  },
+  CreneauxController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  SeancesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  TirageController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ExamensController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  FormationsController: {
+    lister: 'liste',
+  },
+  EtudiantsController: {
+    lire: 'detail',
+    lister: 'liste',
+    supprimer: 'remove',
+  },
+  FraisController: {
+    lister: 'liste',
+  },
+  PaiementsController: {
+    lister: 'liste',
+  },
+  InscriptionsController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  EvaluationsController: {
+    lire: 'detail',
+  },
+  DeliberationsController: {
+    lire: 'detail',
+  },
+  TravauxEncadresController: {
+    lire: 'detail',
+    lister: 'liste',
+  },
+  ParametresController: {
+    lister: 'liste',
+  },
+  ServicesActifsController: {
+    lister: 'liste',
+  },
+  AffectationsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  AnneesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  DepartementsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  EnseignantsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  FilieresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  MatieresController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  PromotionsController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  SallesController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+  UsersController: {
+    creer: 'create',
+    lister: 'findAll',
+    lire: 'findOne',
+    supprimer: 'remove',
+    modifier: 'update',
+  },
+};
+
+/** Restitue l'`operationId` historique d'une opération, à défaut de celui par défaut. */
+function operationIdFactory(controllerKey: string, methodKey: string): string {
+  const legacy = OPERATION_IDS_LEGACY[controllerKey]?.[methodKey];
+  if (legacy) return `${controllerKey}_${legacy}`;
+  return controllerKey ? `${controllerKey}_${methodKey}` : methodKey;
+}
+
 async function bootstrap() {
   // `bodyParser: false` : les analyseurs de corps sont enregistrés à la main
   // juste après, avec la limite de 8 Mo. Le double enregistrement (option
@@ -130,7 +351,7 @@ async function bootstrap() {
       next();
     });
   }
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config));
+  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, config, { operationIdFactory }));
 
   const port = Number(process.env.PORT ?? 5031);
   const host = process.env.HOST ?? '0.0.0.0';
