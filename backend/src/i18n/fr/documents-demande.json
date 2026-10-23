@@ -15,5 +15,7 @@
   "un_paiement_a_deja_ete_initie_pour_cette_demande_attendez_la": "Un paiement a déjà été initié pour cette demande : attendez la confirmation ou contactez la scolarité.",
   "cette_demande_n_est_pas_encore_prete_a_etre_traitee_paiement": "Cette demande n'est pas encore prête à être traitée : paiement en attente ou déjà terminée.",
   "cette_demande_n_est_pas_marquee_comme_prete": "Cette demande n'est pas marquée comme prête.",
-  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé."
+  "cette_demande_n_est_pas_encore_prete_a_etre_traitee": "Cette demande n’est pas prête à être traitée : paiement en attente ou traitement déjà terminé.",
+  "attestation_deja_liee_a_une_autre_demande": "L’attestation {numero} de même type et de même année est déjà remise au titre d’une autre demande. Révoquez-la avant d’en émettre une nouvelle.",
+  "attestation_service_indisponible": "L’émission de l’attestation vérifiable est indisponible : la demande n’a pas été marquée prête."
 }

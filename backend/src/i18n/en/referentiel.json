@@ -4,5 +4,8 @@
   "filiere_referenced_delete": "This programme cannot be deleted: academic years are still attached. Please delete or reassign them first.",
   "promotion_referenced_delete": "This academic year cannot be deleted: data is still attached (enrollments, assignments, fees…). Please handle them first.",
   "annee_referenced_delete": "This academic year cannot be deleted: data is still attached (programmes, enrollments, sessions…). Please close it instead of deleting.",
-  "annee_dates_incoherentes": "The end date of an academic year must be after its start date."
+  "annee_dates_incoherentes": "The end date of an academic year must be after its start date.",
+  "matiere_referenced_delete": "This course cannot be deleted: grades have already been recorded for its assessments. Grades are academic records and are never erased.",
+  "enseignant_referenced_delete": "This teacher cannot be deleted: payroll lines or attendance checks are attached to them. Deactivate the record instead.",
+  "user_referenced_delete": "This account cannot be deleted: it is referenced by recorded checks or other records. Deactivate it instead."
 }

@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { DocumentsDemandeController } from './documents-demande.controller';
 import { DocumentsDemandeService } from './documents-demande.service';
 import { MobileMoneyModule } from '../inscription/mobile-money.module';
+import { AttestationsModule } from '../attestations/attestations.module';
 
 /**
  * Plateforme de demande de documents en ligne : l'étudiant formule une
@@ -15,6 +16,7 @@ import { MobileMoneyModule } from '../inscription/mobile-money.module';
 @Module({
   imports: [
     MobileMoneyModule,
+    AttestationsModule,
   ],
   controllers: [DocumentsDemandeController],
   providers: [DocumentsDemandeService],

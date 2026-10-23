@@ -11,7 +11,7 @@ import {
   IsUUID,
   Min,
 } from 'class-validator';
-import { CrudService } from '../../common/crud.service';
+import { CrudService, supprimerOuConflit } from '../../common/crud.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryDto } from '../../common/dto';
 import { Roles, CurrentUser } from '../../common/decorators';
@@ -153,7 +153,7 @@ export class EnseignantsService extends CrudService {
     return this.prisma.$transaction(async (tx) => {
       const avant = await tx.enseignant.findUnique({ where: { id } });
       if (!avant) throw new NotFoundException(t('common.crud.itemNotFound', { label: 'Enseignant' }));
-      await tx.enseignant.delete({ where: { id } });
+      await supprimerOuConflit(() => tx.enseignant.delete({ where: { id } }), 'referentiel.enseignant_referenced_delete');
       await journaliser(tx, user, 'ENSEIGNANT_SUPPRIME', 'Enseignant', id, { avant: this.instantaneAudit(avant), apres: null });
       return { id };
     });
