@@ -12,7 +12,7 @@ import type { Formation } from '@/types';
 
 /** Champs acceptés à la création ou à la modification d'une formation. */
 export interface CorpsFormation {
-  intitule: string;
+  titre: string;
   description?: string | null;
   categorie?: string | null;
   prix: number;

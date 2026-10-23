@@ -124,10 +124,10 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useQuasar } from 'quasar';
-import { api } from '@/boot/axios';
 import ChampDate from '@/shared/components/ChampDate.vue';
 import DialogueFormulaire from '@/shared/components/DialogueFormulaire.vue';
 import { DEVISE, LIBELLE_STATUT_FORMATION } from '@/shared/utils/libelles';
+import { formationsAdminService } from '../services/formations';
 import type { Formation, StatutFormation } from '@/types';
 
 const ouvert = defineModel<boolean>({ required: true });
@@ -212,10 +212,10 @@ async function enregistrer() {
       statut: form.value.statut,
     };
     if (props.formation) {
-      await api.put(`/formations/${props.formation.id}`, payload);
+      await formationsAdminService.modifier(props.formation.id, payload);
       $q.notify({ type: 'positive', message: t('formationsAdmin.dialog.messages.updated') });
     } else {
-      await api.post('/formations', payload);
+      await formationsAdminService.creer(payload);
       $q.notify({ type: 'positive', message: t('formationsAdmin.dialog.messages.created') });
     }
     emit('enregistre');

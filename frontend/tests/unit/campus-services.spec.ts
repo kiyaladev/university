@@ -377,10 +377,10 @@ describe('campus/services/documents et formations', () => {
     api.post.mockResolvedValue({ data: { id: 'f1' } });
     api.put.mockResolvedValue({ data: { id: 'f1' } });
 
-    await formationsAdminService.creer({ intitule: 'Formation', prix: 50000 });
+    await formationsAdminService.creer({ titre: 'Formation', prix: 50000 });
     await formationsAdminService.modifier('f1', { prix: 60000 });
 
-    expect(api.post).toHaveBeenCalledWith('/formations', { intitule: 'Formation', prix: 50000 }, {});
+    expect(api.post).toHaveBeenCalledWith('/formations', { titre: 'Formation', prix: 50000 }, {});
     expect(api.put).toHaveBeenCalledWith('/formations/f1', { prix: 60000 }, {});
   });
 });
