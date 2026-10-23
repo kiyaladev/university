@@ -26,3 +26,9 @@ telechargement/
 
 # Sauvegardes de la base
 backups/
+
+# Captures d'écran et journaux des recettes : archivés hors dépôt
+# (/var/backups/university/audit-archive-AAAAMMJJ.tar.gz, voir docs/audits/README.md).
+audit/**/*.png
+audit/**/*.log
+!audit/simplification-2026-10-13/**
