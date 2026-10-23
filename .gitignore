@@ -33,8 +33,6 @@ backups/
 
 # Captures d'écran et journaux des recettes : archivés hors dépôt
 # (/var/backups/university/audit-archive-AAAAMMJJ.tar.gz, voir docs/audits/README.md).
-# Les *.log sont ignorés par la règle globale ci-dessus ; les *.png le sont
-# partout, sauf les ressources d'interface qui font partie de l'application.
-*.png
-!frontend/public/icons/*.png
-!frontend/src-capacitor/android/app/src/main/res/**/*.png
+# Les *.log sont ignorés par la règle globale ci-dessus.
+docs/audits/**/*.png
+audit/**/*.png
