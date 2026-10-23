@@ -53,7 +53,8 @@ import { ElectionsModule } from './modules/elections/elections.module';
 import { CarteEtudianteModule } from './modules/carte-etudiante/carte-etudiante.module';
 import { BadgesModule } from './modules/badges/badges.module';
 import { VodModule } from './modules/vod/vod.module';
-import { ServicesActifsModule, ServicesActifsGuard } from './modules/services-actifs/services-actifs.module';
+import { ServicesActifsModule } from './modules/services-actifs/services-actifs.module';
+import { ServicesActifsGuard } from './modules/services-actifs/services-actifs.guard';
 
 @ApiTags('Santé')
 @Controller()

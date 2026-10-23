@@ -47,7 +47,7 @@ import { t } from '../../common/i18n';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { round2, isoDate } from '../../common/utils';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { CreateFeuillePaieDto, FeuilleQueryDto } from './paie.dto';
 import { paginer, pagine } from '../../common/pagination';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';

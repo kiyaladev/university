@@ -21,7 +21,7 @@ import { AuthUser } from '../../common/decorators';
 import { CrudService } from '../../common/crud.service';
 import { t } from '../../common/i18n';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION, STYLE_ETIQUETTES } from '../../common/impression';
 import {

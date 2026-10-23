@@ -49,7 +49,7 @@ import { ModePaiement, Prisma, Role, StatutConsommation, StatutPaiement, type Et
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import {

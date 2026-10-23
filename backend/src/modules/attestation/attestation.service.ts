@@ -21,7 +21,7 @@ import { AttestationMode, Role } from '@prisma/client';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { AuthUser } from '../../common/decorators';
 import { chiffrer, dechiffrer } from '../../common/coffre';
 import {

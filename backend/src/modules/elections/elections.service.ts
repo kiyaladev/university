@@ -39,7 +39,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
 import { t } from '../../common/i18n';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import {
   CreateCandidatDto,
   CreateElectionDto,

@@ -30,7 +30,7 @@ import { AuthUser } from '../../common/decorators';
 import { Paginated, QueryDto } from '../../common/dto';
 import { isoDate, toDateOnly } from '../../common/utils';
 import { chargerEtablissement, echapper, pageA4, PALETTE_IMPRESSION as P } from '../../common/impression';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { anneeNumero, prochainNumeroTx } from '../../common/numero';
 import { creerPaiementTx } from '../../common/finances';
 import { t } from '../../common/i18n';

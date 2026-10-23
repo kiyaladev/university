@@ -5,7 +5,7 @@ import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/co
 import { t } from '../../common/i18n';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { chargerEtablissement, echapper, pageA4 } from '../../common/impression';
 
 const LIBELLE_TYPE: Record<string, string> = {

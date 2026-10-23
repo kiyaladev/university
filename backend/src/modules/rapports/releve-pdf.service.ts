@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { AuthUser } from '../../common/decorators';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement, PALETTE_IMPRESSION as P } from '../../common/impression';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { RapportsService } from './rapports.service';
 import { ReleveHebdomadaireDto } from './rapports.dto';
 import { journaliser } from '../../common/audit';

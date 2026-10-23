@@ -23,7 +23,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { QueryDto } from '../../common/dto';
 import { distanceMetres, dureeMinutes, toDateOnly, toMinutes } from '../../common/utils';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { AttestationService } from '../attestation/attestation.service';
 import { ControleQueryDto, PointageDto, SyncPointagesDto, UpdatePointageDto } from './controle.dto';
 import { t } from '../../common/i18n';

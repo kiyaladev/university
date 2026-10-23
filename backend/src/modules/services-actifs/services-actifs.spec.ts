@@ -3,9 +3,11 @@ import { BadRequestException, Controller, Get, NotFoundException } from '@nestjs
 import { Reflector } from '@nestjs/core';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { ServicesActifsController, ServicesActifsDto, ServicesActifsGuard, ServicesActifsService } from './services-actifs.module';
+import { ServicesActifsController } from './services-actifs.controller';
+import { ServicesActifsGuard } from './services-actifs.guard';
+import { ServicesActifsDto, ServicesActifsService } from './services-actifs.service';
 import { IS_PUBLIC_KEY, ROLES_KEY } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 
 describe('Activation des services', () => {
   it('préserve les accès existants et rend les services essentiels non désactivables', async () => {

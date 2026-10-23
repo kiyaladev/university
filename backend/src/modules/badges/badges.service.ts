@@ -20,7 +20,7 @@ import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { chargerEtablissement } from '../../common/impression';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import {
   AnnulerBadgeDto,
   BadgeQueryDto,

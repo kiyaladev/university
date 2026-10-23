@@ -19,7 +19,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
 import { Paginated } from '../../common/dto';
 import { isoDate, toDateOnly } from '../../common/utils';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import {
   EtudiantsService,
   prochainMatricule,

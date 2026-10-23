@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/decorators';
-import { ParametresService } from '../parametres/parametres.module';
+import { ParametresService } from '../parametres/parametres.service';
 import { RapportsService } from './rapports.service';
 import { RapportQueryDto } from './rapports.dto';
 import { signaturePng } from '../../common/utils';
