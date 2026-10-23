@@ -10,7 +10,7 @@ import { ParametresModule } from '../parametres/parametres.module';
 import { RapportsService } from './rapports.service';
 import { ImpressionService } from './impression.service';
 import { ExportService } from './export.service';
-import { RapportQueryDto, perimetrePresence } from './rapports.dto';
+import { AffichesQrQueryDto, RapportImprimableQueryDto, RapportQueryDto, perimetrePresence } from './rapports.dto';
 import { CouvertureControleursController } from './couverture-controleurs.controller';
 import { ReleveHebdomadaireController } from './releve-pdf.controller';
 import { RelevePdfService } from './releve-pdf.service';
@@ -86,7 +86,7 @@ export class ImpressionController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('registre')
-  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.registre(perimetrePresence(query, user)));
   }
@@ -97,7 +97,7 @@ export class ImpressionController {
   async fiche(
     @Res() res: Response,
     @Param('id') id: string,
-    @Req() req: Request, @Query() query: RapportQueryDto & { token?: string },
+    @Req() req: Request, @Query() query: RapportImprimableQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
     verifierJetonImprimable(this.jwt, req);
@@ -106,7 +106,7 @@ export class ImpressionController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, this.impression.etatPaiement(query));
   }
@@ -116,7 +116,7 @@ export class ImpressionController {
   async qr(
     @Res() res: Response,
     @Req() req: Request,
-    @Query() query: { token?: string; salleId?: string },
+    @Query() query: AffichesQrQueryDto,
     @CurrentUser() user: AuthUser,
   ) {
     verifierJetonImprimable(this.jwt, req);
@@ -143,7 +143,7 @@ export class ExportController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('presence-enseignants')
-  async presence(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async presence(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(
       res,
@@ -154,21 +154,21 @@ export class ExportController {
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('volume-horaire')
-  async volume(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async volume(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'volume-horaire', this.exports.volumeHoraire(perimetrePresence(query, user)));
   }
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE)
   @Get('etat-paiement')
-  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async paiement(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     await this.envoyer(res, 'etat-paiement', this.exports.etatPaiement(query));
   }
 
   @ProtectedDocument(Role.ADMIN, Role.DIRECTION, Role.SCOLARITE, Role.CHEF_DEPARTEMENT, Role.CONTROLEUR, Role.ENSEIGNANT)
   @Get('registre')
-  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportQueryDto & { token?: string }, @CurrentUser() user: AuthUser) {
+  async registre(@Res() res: Response, @Req() req: Request, @Query() query: RapportImprimableQueryDto, @CurrentUser() user: AuthUser) {
     verifierJetonImprimable(this.jwt, req);
     const inclureObservations = user.role === Role.ADMIN
       || user.role === Role.DIRECTION

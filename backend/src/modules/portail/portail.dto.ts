@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsObject,
   IsOptional,
@@ -10,6 +11,7 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { StatutNotification } from '@prisma/client';
 import { QueryDto } from '../../common/dto';
 
@@ -79,4 +81,21 @@ export class ListeNotificationsQueryDto extends QueryDto {
     message: 'Statut de notification inconnu',
   })
   statut?: StatutNotification;
+}
+
+/** Populations dont on sait estimer le nombre de destinataires joignables. */
+export const MODES_ESTIMATION = ['tous', 'tousInscrits', 'vacataires', 'enseignants'] as const;
+
+export class EstimationDestinatairesQueryDto {
+  @IsOptional()
+  @IsIn(MODES_ESTIMATION, { message: 'Mode de diffusion inconnu' })
+  mode?: (typeof MODES_ESTIMATION)[number];
+}
+
+export class RepartitionNotificationsQueryDto {
+  /** Fenêtre en jours ; le contrôleur la borne ensuite entre 1 et 90. */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt({ message: 'Le nombre de jours doit être un entier' })
+  jours?: number;
 }

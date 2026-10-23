@@ -1,6 +1,6 @@
 import { AuthUser } from '../../common/decorators';
 import { Role, StatutEnseignant } from '@prisma/client';
-import { IsDateString, IsEnum, IsOptional, IsUUID, Matches, MaxLength } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString, IsUUID, Matches, MaxLength } from 'class-validator';
 import { estChefDeDepartement } from '../../common/perimetre';
 
 export class RapportQueryDto {
@@ -13,6 +13,20 @@ export class RapportQueryDto {
   @IsOptional() @IsUUID() promotionId?: string;
   @IsOptional() @IsUUID() salleId?: string;
   @IsOptional() @IsEnum(StatutEnseignant) statutEnseignant?: StatutEnseignant;
+}
+
+/**
+ * Filtres d'un état imprimable ou d'un export : mêmes critères que les
+ * rapports, plus le jeton facultatif passé en URL (voir jeton-imprimable.ts).
+ */
+export class RapportImprimableQueryDto extends RapportQueryDto {
+  @IsOptional() @IsString() @MaxLength(4096) token?: string;
+}
+
+/** Affiches QR : une salle précise, ou toutes les salles si absente. */
+export class AffichesQrQueryDto {
+  @IsOptional() @IsString() @MaxLength(4096) token?: string;
+  @IsOptional() @IsUUID() salleId?: string;
 }
 
 /** Le chef signe un relevé limité à son département et à une semaine civile. */

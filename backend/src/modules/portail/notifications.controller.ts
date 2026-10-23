@@ -7,7 +7,9 @@ import { NotificationsService } from './notifications.service';
 import {
   DiffusionNotificationDto,
   DiffusionResultatsDto,
+  EstimationDestinatairesQueryDto,
   ListeNotificationsQueryDto,
+  RepartitionNotificationsQueryDto,
 } from './portail.dto';
 
 const ROLES_DIFFUSION = [Role.ADMIN, Role.DIRECTION, Role.SCOLARITE] as const;
@@ -42,7 +44,7 @@ export class NotificationsController {
   /** Estimation du nombre de destinataires avant l'envoi (preview). */
   @Roles(...ROLES_DIFFUSION)
   @Get('destinataires/estimes')
-  async destinatairesEstimes(@Query() query: { mode?: string }) {
+  async destinatairesEstimes(@Query() query: EstimationDestinatairesQueryDto) {
     const total = await this.notifications.estimerDestinataires(query.mode);
     return { total };
   }
@@ -50,8 +52,8 @@ export class NotificationsController {
   /** Répartition quotidienne des notifications sur les N derniers jours (pour graphique). */
   @Roles(...ROLES_DIFFUSION)
   @Get('stats/repartition')
-  async repartition(@Query() query: { jours?: string }) {
-    const jours = Math.min(90, Math.max(1, Number(query.jours ?? 30)));
+  async repartition(@Query() query: RepartitionNotificationsQueryDto) {
+    const jours = Math.min(90, Math.max(1, query.jours ?? 30));
     return this.notifications.repartitionQuotidienne(jours);
   }
 
